@@ -9,9 +9,12 @@ uniform sampler2D uShorelineDistanceTexture;
 uniform sampler2D uWaterTexture;
 uniform sampler2D uGrassTexture;
 uniform sampler2D uSandTexture;
+uniform sampler2D uStructureGroundTexture;
 uniform sampler2D uRockTexture;
 uniform sampler2D uSnowTexture;
 uniform float uWaterTextureEnabled;
+uniform float uVillageGroundTextureEnabled;
+uniform float uCityGroundTextureEnabled;
 uniform float uTimeSeconds;
 uniform float uGrassAmbientLight;
 uniform float uGrassTextureDetail;
@@ -164,6 +167,21 @@ float getMaterialSemanticMountainAtCell(vec2 cell) {
   ).g;
 
   return step(0.5, semanticMountain) *
+    getMaterialSemanticLandAtCell(cell) *
+    semanticInside;
+}
+
+float getMaterialSemanticStructureGroundAtCell(vec2 cell) {
+  vec2 cellIndex = cell - uMaterialSemanticBounds.xy;
+  vec2 semanticUv = (cellIndex + vec2(0.5)) /
+    max(uMaterialSemanticTextureSize, vec2(1.0));
+  float semanticInside = getMaterialSemanticInsideAmount(cell);
+  float semanticStructure = texture2D(
+    uMaterialSemanticTexture,
+    clamp(semanticUv, 0.0, 1.0)
+  ).b;
+
+  return semanticStructure *
     getMaterialSemanticLandAtCell(cell) *
     semanticInside;
 }
@@ -449,7 +467,7 @@ float getHexGridLine(vec2 point, vec2 cell) {
   neighborDistance = min(neighborDistance, length(point - hexToPixel(cell + vec2(-1.0, 1.0))));
 
   float boundaryDistance = abs(neighborDistance - centerDistance);
-  float lineWidth = 0.026;
+  float lineWidth = 0.1;
 
   return 1.0 - smoothstep(0.0, lineWidth, boundaryDistance);
 }
@@ -522,6 +540,18 @@ vec3 sampleSandMaterial(vec2 uv) {
     uSandTexture,
     fract(uv * uBeachTextureTiling + vec2(0.17, -0.09))
   ).rgb;
+}
+
+vec3 sampleStructureGroundMaterial(vec2 point, vec2 cell, float cityAmount) {
+  vec2 localPoint = point - hexToPixel(cell);
+  vec2 tileUv = clamp(
+    vec2(localPoint.x / 1.7320508 + 0.5, localPoint.y / 2.0 + 0.5),
+    0.0,
+    1.0
+  );
+  float atlasX = mix(tileUv.x * 0.5, 0.5 + tileUv.x * 0.5, cityAmount);
+
+  return texture2D(uStructureGroundTexture, vec2(atlasX, tileUv.y)).rgb;
 }
 
 vec3 sampleRockMaterial(vec2 uv) {
@@ -653,6 +683,51 @@ float getMountainTerrainAmount(
     0.0,
     1.0
   );
+}
+
+float getLocalCityGroundEdgeInset(
+  vec2 point,
+  vec2 cell,
+  vec2 neighborOffset,
+  float currentCityGround
+) {
+  float neighborStructure = getMaterialSemanticStructureGroundAtCell(cell + neighborOffset);
+  float neighborCityGround = step(0.75, neighborStructure) * uCityGroundTextureEnabled;
+  float exposedEdge = currentCityGround * (1.0 - neighborCityGround);
+  if (exposedEdge < 0.5) {
+    return 1.0;
+  }
+
+  vec2 center = hexToPixel(cell);
+  vec2 neighborCenter = hexToPixel(cell + neighborOffset);
+  vec2 edgeNormal = normalize(neighborCenter - center);
+  vec2 edgeTangent = vec2(-edgeNormal.y, edgeNormal.x);
+  vec2 edgeCenter = (center + neighborCenter) * 0.5;
+  float edgeDepth = dot(point - edgeCenter, -edgeNormal);
+  float alongEdge = abs(dot(point - edgeCenter, edgeTangent));
+  float edgeNoise = sampleMountainEdgeNoise(point, cell, neighborOffset, edgeCenter, edgeTangent);
+  float endpointGuard = 1.0 - smoothstep(0.44, 0.66, alongEdge);
+  float raggedDepth =
+    edgeDepth +
+    (edgeNoise - 0.5) * 0.24 +
+    (valueNoise(point * 6.30 + hash(cell + neighborOffset) * 13.0) - 0.5) * 0.09;
+  float insetWidth = mix(0.26, 0.52, edgeNoise);
+  float inset = smoothstep(0.03, insetWidth, raggedDepth);
+
+  return mix(1.0, inset, endpointGuard * exposedEdge);
+}
+
+float getCityStructureGroundAmount(vec2 point, vec2 cell, float cityGroundAmount) {
+  float edgeInset = 1.0;
+
+  edgeInset = min(edgeInset, getLocalCityGroundEdgeInset(point, cell, vec2(1.0, 0.0), cityGroundAmount));
+  edgeInset = min(edgeInset, getLocalCityGroundEdgeInset(point, cell, vec2(-1.0, 0.0), cityGroundAmount));
+  edgeInset = min(edgeInset, getLocalCityGroundEdgeInset(point, cell, vec2(0.0, 1.0), cityGroundAmount));
+  edgeInset = min(edgeInset, getLocalCityGroundEdgeInset(point, cell, vec2(0.0, -1.0), cityGroundAmount));
+  edgeInset = min(edgeInset, getLocalCityGroundEdgeInset(point, cell, vec2(1.0, -1.0), cityGroundAmount));
+  edgeInset = min(edgeInset, getLocalCityGroundEdgeInset(point, cell, vec2(-1.0, 1.0), cityGroundAmount));
+
+  return clamp(cityGroundAmount * edgeInset, 0.0, 1.0);
 }
 
 float sampleLayeredWaterFlowNoise(vec2 uv, vec2 flow) {
@@ -859,6 +934,30 @@ void main() {
     clamp(fineSandTransition * 0.42 + sparseSandDust * 0.62, 0.0, 0.78)
   );
   vec3 landTexture = mix(sandyGrassTexture, sandTexture, sandMaterialMask);
+  float structureGround = getMaterialSemanticStructureGroundAtCell(hexCell);
+  float cityGroundTextureSelector = step(0.75, structureGround) * uCityGroundTextureEnabled;
+  float cityGroundAmount = cityGroundTextureSelector;
+  float villageGroundAmount =
+    step(0.25, structureGround) *
+    (1.0 - step(0.75, structureGround)) *
+    uVillageGroundTextureEnabled;
+  cityGroundAmount = getCityStructureGroundAmount(
+    hexPoint,
+    hexCell,
+    cityGroundAmount
+  );
+  float structureGroundAmount = max(villageGroundAmount, cityGroundAmount);
+  vec3 structureGroundTexture = sampleStructureGroundMaterial(
+    hexPoint,
+    hexCell,
+    cityGroundTextureSelector
+  );
+  structureGroundTexture = clamp(
+    mix(structureGroundTexture, landTexture, 0.10),
+    0.0,
+    1.0
+  );
+  landTexture = mix(landTexture, structureGroundTexture, structureGroundAmount);
   float mountainAmount = getMountainTerrainAmount(
     hexPoint,
     hexCell,

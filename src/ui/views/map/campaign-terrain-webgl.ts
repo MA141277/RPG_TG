@@ -5,17 +5,40 @@ import type {
 } from "../../../application/navigation/travel-to-coordinate";
 import type {
   CampaignHexGridDefinition,
+  CampaignFortCityRulesDefinition,
+  CampaignMapNodeMeshDefinition,
   CampaignVegetationMeshDefinition,
   CampaignVegetationRulesDefinition,
 } from "../../../domain/map";
 import actorFragmentShaderRaw from "./shaders/campaign-actor.frag.glsl?raw";
 import actorVertexShaderRaw from "./shaders/campaign-actor.vert.glsl?raw";
+import fortCityFragmentShaderRaw from "./shaders/campaign-fort-city.frag.glsl?raw";
+import fortCityInstancedVertexShaderRaw from "./shaders/campaign-fort-city-instanced.vert.glsl?raw";
 import terrainFragmentShaderRaw from "./shaders/campaign-terrain.frag.glsl?raw";
 import terrainVertexShaderRaw from "./shaders/campaign-terrain.vert.glsl?raw";
+import structureShadowFragmentShaderRaw from "./shaders/campaign-structure-shadow.frag.glsl?raw";
 import vegetationFragmentShaderRaw from "./shaders/campaign-vegetation.frag.glsl?raw";
 import vegetationShadowFragmentShaderRaw from "./shaders/campaign-vegetation-shadow.frag.glsl?raw";
 import vegetationShadowVertexShaderRaw from "./shaders/campaign-vegetation-shadow.vert.glsl?raw";
 import vegetationVertexShaderRaw from "./shaders/campaign-vegetation.vert.glsl?raw";
+import {
+  getRegisteredCampaignFortCityAsset,
+  type RegisteredCampaignFortCityAsset,
+} from "./campaign-fort-city-asset-registry";
+import {
+  IDENTITY_MATRIX_4,
+  clamp,
+  createPerspectiveMatrix,
+  createRotationXMatrix,
+  createScaleMatrix,
+  createTranslationMatrix,
+  easeOutCubic,
+  invertMatrix4,
+  multiplyMatrices,
+  readMatrixValue,
+  smoothstep,
+  type Mat4,
+} from "./campaign-terrain-math";
 
 type CampaignTerrainInput = {
   canvas: HTMLCanvasElement;
@@ -24,8 +47,13 @@ type CampaignTerrainInput = {
   materialUrl: string;
   campaignHexGridUrl: string | null;
   campaignVegetationRulesUrl: string | null;
+  campaignFortCityAssetId: string | null;
+  campaignFortCityRulesUrl: string | null;
+  campaignFortWallMeshUrl: string | null;
   grassTextureUrl: string | null;
   sandTextureUrl: string | null;
+  villageGroundTextureUrl: string | null;
+  cityGroundTextureUrl: string | null;
   rockTextureUrl: string | null;
   snowTextureUrl: string | null;
   waterTextureUrl: string | null;
@@ -47,12 +75,23 @@ type CityDepthMeshData = {
   indices: Uint32Array;
 };
 
+type FortWallMeshData = {
+  vertices: Float32Array;
+  indices: Uint32Array;
+  drawGroups: FortWallMeshDrawGroup[];
+};
+
 type VegetationMeshData = {
   vertices: Float32Array;
   indices: Uint32Array;
   shadowVertices: Float32Array;
   shadowIndices: Uint32Array;
   instanceCount: number;
+};
+
+type CampaignProjectedShadowMeshData = {
+  vertices: Float32Array;
+  indices: Uint16Array;
 };
 
 type VegetationMeshAsset = {
@@ -75,6 +114,33 @@ type CampaignVegetationRulesAsset = CampaignVegetationRulesDefinition & {
 
 type CampaignVegetationAsset = {
   rules: CampaignVegetationRulesAsset;
+  meshesById: Map<string, VegetationMeshAsset>;
+  meshPromisesById: Map<string, Promise<VegetationMeshAsset | null>>;
+  failedMeshIds: Set<string>;
+};
+
+type CampaignFortCityRulesAsset = CampaignFortCityRulesDefinition & {
+  variants: Array<CampaignFortCityRulesDefinition["variants"][number] & {
+    meshUrl: string;
+  }>;
+};
+
+type CampaignSettlementVillageRulesAsset = NonNullable<
+  CampaignFortCityRulesDefinition["settlementVillage"]
+> & {
+  variants: CampaignFortCityRulesAsset["variants"];
+};
+
+type CampaignStructureBuildingRulesAsset = {
+  count: CampaignFortCityRulesAsset["count"];
+  lod: CampaignFortCityRulesAsset["lod"];
+  variants: CampaignFortCityRulesAsset["variants"];
+  placement: CampaignFortCityRulesAsset["placement"];
+  shader: CampaignFortCityRulesAsset["shader"];
+};
+
+type CampaignFortCityAsset = {
+  rules: CampaignFortCityRulesAsset;
   meshesById: Map<string, VegetationMeshAsset>;
   meshPromisesById: Map<string, Promise<VegetationMeshAsset | null>>;
   failedMeshIds: Set<string>;
@@ -116,6 +182,72 @@ type CampaignVegetationInstance = {
   colorJitter: number;
 };
 
+type CampaignFortCityBuildingInstance = {
+  mesh: VegetationMeshAsset | null;
+  variant: CampaignFortCityRulesAsset["variants"][number];
+  u: number;
+  v: number;
+  rotation: number;
+  scale: number;
+  colorJitter: number;
+  footprintRadius: number;
+};
+
+type CampaignStructureBuildingCacheKind = "city" | "village";
+
+type CampaignStructureBuildingCellCacheEntry = {
+  signature: string;
+  instances: CampaignFortCityBuildingInstance[];
+};
+
+type CampaignStructureBuildingChunkCache = Map<
+  string,
+  CampaignStructureBuildingCellCacheEntry
+>;
+
+type CampaignStructureBuildingCache = Map<
+  string,
+  CampaignStructureBuildingChunkCache
+>;
+
+type CampaignFortCityInstancedBatch = {
+  mesh: VegetationMeshAsset;
+  variant: CampaignFortCityRulesAsset["variants"][number];
+  instances: CampaignFortCityBuildingInstance[];
+  instanceData: Float32Array;
+};
+
+type CampaignFortCityInstancedRenderModel = {
+  signature: string;
+  batches: CampaignFortCityInstancedBatch[];
+  instanceCount: number;
+};
+
+type CampaignFortCityInstancedVariantResource = {
+  mesh: VegetationMeshAsset;
+  vertexBuffer: WebGLBuffer;
+  indexBuffer: WebGLBuffer;
+  indexCount: number;
+};
+
+type CampaignFortCityVisibleFort = {
+  fort: FortCityInstance;
+  targetCount: number;
+  priority: number;
+};
+
+type CampaignFortCityFortAllocation = {
+  fort: FortCityInstance;
+  count: number;
+  targetCount: number;
+};
+
+type CampaignFortCityAcceptedPoint = {
+  x: number;
+  y: number;
+  radius: number;
+};
+
 type CityDepthMeshAsset = {
   positions: Float32Array;
   normals: Float32Array;
@@ -125,6 +257,58 @@ type CityDepthMeshAsset = {
   u: number;
   v: number;
   minHeight: number;
+};
+
+type FortWallMeshAsset = {
+  positions: Float32Array;
+  normals: Float32Array;
+  uvs: Float32Array;
+  indices: Uint32Array;
+  drawGroups: Array<{
+    materialName: string;
+    textureUrl: string | null;
+    start: number;
+    count: number;
+  }>;
+  placement: CampaignMapNodeMeshDefinition["placement"];
+  texturesByUrl: Map<string, HTMLImageElement>;
+};
+
+type FortWallMeshDrawGroup = {
+  textureUrl: string | null;
+  start: number;
+  count: number;
+};
+
+type FortWallInstance = {
+  u: number;
+  v: number;
+  key: string;
+  x: number;
+  y: number;
+};
+
+type FortCityInstance = FortWallInstance;
+
+type CampaignRuntimeMarker = {
+  id: string;
+  cityId: string | null;
+  name: string;
+  x: number;
+  y: number;
+  kind: "city" | "settlement" | "fort" | "landmark";
+  summary: string;
+  isRevealed: boolean;
+  left: number;
+  bottom: number;
+  u: number;
+  v: number;
+  historicalCharacters: {
+    primary: string[];
+    secondary: string[];
+    background: string[];
+    notes: string;
+  } | null;
 };
 
 type CityDepthMeshAssetJson = {
@@ -204,8 +388,6 @@ type ActorAnimationPlaybackState = {
   blendDurationMs: number;
 };
 
-type Mat4 = Float32Array;
-
 const GRID_COLUMNS = 768;
 const GRID_ROWS = 680;
 const HEIGHT_SCALE = 0.0675;
@@ -270,9 +452,22 @@ const TERRAIN_DIRECTIONAL_LIGHT_STRENGTH = 0.18;
 const TERRAIN_BACK_SHADOW_STRENGTH = 0.32;
 const TERRAIN_STEEP_SHADOW_STRENGTH = 0;
 const TERRAIN_WATER_SHADOW_STRENGTH = 0.12;
+const CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH = 0.18;
+const CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH = 0.32;
+const CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH = 0;
 const TERRAIN_CAMERA_LIGHT_HEIGHT = 0.26;
 const TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL = 0.58;
 const TERRAIN_LAND_TEXTURE_TILING = 7.5;
+const CAMPAIGN_STRUCTURE_SHADOW_OPACITY = 0.18;
+const CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_X = 0.64;
+const CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_Y = 0.46;
+const CAMPAIGN_STRUCTURE_SHADOW_LIGHT_OFFSET_SCALE = 0.08;
+const CAMPAIGN_STRUCTURE_SHADOW_LIFT = 0.00050;
+const CAMPAIGN_ACTOR_SHADOW_OPACITY = 0.52;
+const CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_X = 1.18;
+const CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_Y = 0.72;
+const CAMPAIGN_ACTOR_SHADOW_LIGHT_OFFSET_SCALE = 0.30;
+const CAMPAIGN_ACTOR_SHADOW_LIFT = 0.00046;
 const TERRAIN_SNOW_HEIGHT_START = 0.38;
 const TERRAIN_SNOW_HEIGHT_FULL = 0.42;
 const SHORELINE_DISTANCE_TEXTURE_DISTANCE_RANGE = 4.25;
@@ -348,6 +543,7 @@ const vegetationVertexShaderSource = vegetationVertexShaderRaw;
 const vegetationFragmentShaderSource = vegetationFragmentShaderRaw;
 const vegetationShadowVertexShaderSource = vegetationShadowVertexShaderRaw;
 const vegetationShadowFragmentShaderSource = vegetationShadowFragmentShaderRaw;
+const structureShadowFragmentShaderSource = structureShadowFragmentShaderRaw;
 export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
   rotationDegrees: 0,
   pitchDegrees: 0,
@@ -372,12 +568,6 @@ export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
   shadeMax: 1.0,
 };
 const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
-const IDENTITY_MATRIX_4 = new Float32Array([
-  1, 0, 0, 0,
-  0, 1, 0, 0,
-  0, 0, 1, 0,
-  0, 0, 0, 1,
-]);
 
 export type CampaignTerrainCamera = {
   scale: number;
@@ -457,6 +647,9 @@ let campaignTerrainRenderStats: CampaignTerrainRenderStats = {
   rendererCount: 0,
   pendingRendererCount: 0,
 };
+let terrainChunkLoadingDeferredUntilMs = 0;
+let terrainChunkLoadingHoldCount = 0;
+let terrainChunkLoadingResumeTimeoutId: number | null = null;
 
 type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
@@ -521,7 +714,9 @@ type CampaignMaterialSemanticModel = {
   cells: GridCoordinate[];
   landByCellKey: Map<string, boolean>;
   mountainByCellKey: Map<string, boolean>;
+  terrainByCellKey: Map<string, string>;
   referenceHeightByCellKey: Map<string, number>;
+  structureGroundByCellKey: Map<string, "village" | "city">;
 };
 
 type CampaignHexGridAsset = CampaignHexGridDefinition;
@@ -543,6 +738,7 @@ const shorelineChainEdgesBySemanticModel = new WeakMap<
   CampaignMaterialSemanticModel,
   ShorelineChainEdge[]
 >();
+const campaignMarkerSourceCache = new WeakMap<HTMLScriptElement, CampaignRuntimeMarker[]>();
 let campaignTerrainChunkCacheDbPromise: Promise<IDBDatabase | null> | null = null;
 
 type ShorelineChainEdge = {
@@ -602,6 +798,72 @@ export function getCampaignTerrainRenderStats(): CampaignTerrainRenderStats {
     rendererCount: activeRenderers.size,
     pendingRendererCount: pendingRendererCanvases.size,
   };
+}
+
+export function deferCampaignTerrainChunkLoadingUntil(timestampMs: number): void {
+  if (!Number.isFinite(timestampMs)) {
+    return;
+  }
+
+  terrainChunkLoadingDeferredUntilMs = Math.max(
+    terrainChunkLoadingDeferredUntilMs,
+    timestampMs
+  );
+  scheduleCampaignTerrainChunkLoadingResume();
+}
+
+export function holdCampaignTerrainChunkLoading(): () => void {
+  let released = false;
+  terrainChunkLoadingHoldCount += 1;
+  if (terrainChunkLoadingResumeTimeoutId != null) {
+    window.clearTimeout(terrainChunkLoadingResumeTimeoutId);
+    terrainChunkLoadingResumeTimeoutId = null;
+  }
+
+  return () => {
+    if (released) {
+      return;
+    }
+
+    released = true;
+    terrainChunkLoadingHoldCount = Math.max(terrainChunkLoadingHoldCount - 1, 0);
+    scheduleCampaignTerrainChunkLoadingResume();
+  };
+}
+
+function getCampaignTerrainChunkLoadingResumeDelayMs(): number {
+  return Math.max(terrainChunkLoadingDeferredUntilMs - performance.now(), 0);
+}
+
+function isCampaignTerrainChunkLoadingDeferred(): boolean {
+  return terrainChunkLoadingHoldCount > 0 ||
+    getCampaignTerrainChunkLoadingResumeDelayMs() > 0;
+}
+
+function isCampaignTerrainChunkLoadingHeld(): boolean {
+  return terrainChunkLoadingHoldCount > 0;
+}
+
+function scheduleCampaignTerrainChunkLoadingResume(): void {
+  if (terrainChunkLoadingResumeTimeoutId != null) {
+    window.clearTimeout(terrainChunkLoadingResumeTimeoutId);
+    terrainChunkLoadingResumeTimeoutId = null;
+  }
+
+  if (terrainChunkLoadingHoldCount > 0) {
+    return;
+  }
+
+  const delayMs = getCampaignTerrainChunkLoadingResumeDelayMs();
+  if (delayMs <= 0) {
+    requestCampaignTerrainRender("static");
+    return;
+  }
+
+  terrainChunkLoadingResumeTimeoutId = window.setTimeout(() => {
+    terrainChunkLoadingResumeTimeoutId = null;
+    requestCampaignTerrainRender("static");
+  }, delayMs);
 }
 
 function clampTerrainBeachTuning(
@@ -911,10 +1173,20 @@ function readCampaignTerrainInput(canvas: HTMLCanvasElement): CampaignTerrainInp
       renderMode === "terrain"
         ? canvas.dataset.mapVegetationRulesUrl ?? null
         : null,
+    campaignFortCityAssetId:
+      renderMode === "terrain" ? canvas.dataset.campaignFortCityAssetId ?? null : null,
+    campaignFortCityRulesUrl:
+      renderMode === "terrain" ? canvas.dataset.campaignFortCityRulesUrl ?? null : null,
+    campaignFortWallMeshUrl:
+      renderMode === "terrain" ? canvas.dataset.campaignFortWallMeshUrl ?? null : null,
     grassTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapGrassTextureUrl ?? null : null,
     sandTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapSandTextureUrl ?? null : null,
+    villageGroundTextureUrl:
+      renderMode === "terrain" ? canvas.dataset.mapVillageGroundTextureUrl ?? null : null,
+    cityGroundTextureUrl:
+      renderMode === "terrain" ? canvas.dataset.mapCityGroundTextureUrl ?? null : null,
     rockTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapRockTextureUrl ?? null : null,
     snowTextureUrl:
@@ -933,8 +1205,13 @@ function getCampaignTerrainInputSignature(input: CampaignTerrainInput): string {
     input.materialUrl,
     input.campaignHexGridUrl ?? "",
     input.campaignVegetationRulesUrl ?? "",
+    input.campaignFortCityAssetId ?? "",
+    input.campaignFortCityRulesUrl ?? "",
+    input.campaignFortWallMeshUrl ?? "",
     input.grassTextureUrl ?? "",
     input.sandTextureUrl ?? "",
+    input.villageGroundTextureUrl ?? "",
+    input.cityGroundTextureUrl ?? "",
     input.rockTextureUrl ?? "",
     input.snowTextureUrl ?? "",
     input.waterTextureUrl ?? "",
@@ -1031,6 +1308,29 @@ async function initCampaignTerrainWebGl(
       return null;
     })
     : Promise.resolve(null);
+  const fortWallAssetPromise =
+    renderTerrain && input.campaignFortWallMeshUrl != null
+      ? loadCampaignFortWallMeshAsset(input.campaignFortWallMeshUrl).catch(
+        (error: unknown) => {
+          console.error("Failed to load campaign fort wall mesh asset.", error);
+          return null;
+        }
+      )
+      : Promise.resolve(null);
+  const fortCityAssetPromise =
+    renderTerrain &&
+      (input.campaignFortCityAssetId != null ||
+        input.campaignFortCityRulesUrl != null)
+      ? loadCampaignFortCityAsset({
+        assetId: input.campaignFortCityAssetId,
+        rulesUrl: input.campaignFortCityRulesUrl,
+      }).catch(
+        (error: unknown) => {
+          console.error("Failed to load campaign fort city asset.", error);
+          return null;
+        }
+      )
+      : Promise.resolve(null);
   const campaignHexGridPromise =
     input.campaignHexGridUrl == null
       ? Promise.resolve(null)
@@ -1068,6 +1368,20 @@ async function initCampaignTerrainWebGl(
         return null;
       })
       : Promise.resolve(null);
+  const villageGroundTextureImagePromise =
+    renderTerrain && input.villageGroundTextureUrl != null
+      ? loadImage(input.villageGroundTextureUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign village ground texture.", error);
+        return null;
+      })
+      : Promise.resolve(null);
+  const cityGroundTextureImagePromise =
+    renderTerrain && input.cityGroundTextureUrl != null
+      ? loadImage(input.cityGroundTextureUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign city ground texture.", error);
+        return null;
+      })
+      : Promise.resolve(null);
   const rockTextureImagePromise =
     renderTerrain && input.rockTextureUrl != null
       ? loadImage(input.rockTextureUrl).catch((error: unknown) => {
@@ -1088,10 +1402,14 @@ async function initCampaignTerrainWebGl(
     waterTextureImage,
     grassTextureImage,
     sandTextureImage,
+    villageGroundTextureImage,
+    cityGroundTextureImage,
     rockTextureImage,
     snowTextureImage,
     actorAsset,
     cityDepthAsset,
+    fortWallAsset,
+    fortCityAsset,
     campaignHexGrid,
     vegetationAsset,
   ] = await Promise.all([
@@ -1100,10 +1418,14 @@ async function initCampaignTerrainWebGl(
     waterTextureImagePromise,
     grassTextureImagePromise,
     sandTextureImagePromise,
+    villageGroundTextureImagePromise,
+    cityGroundTextureImagePromise,
     rockTextureImagePromise,
     snowTextureImagePromise,
     actorAssetPromise,
     cityDepthAssetPromise,
+    fortWallAssetPromise,
+    fortCityAssetPromise,
     campaignHexGridPromise,
     vegetationAssetPromise,
   ]);
@@ -1111,6 +1433,7 @@ async function initCampaignTerrainWebGl(
     input,
     materialImage,
     campaignHexGrid,
+    fortCityRules: fortCityAsset?.rules ?? null,
   });
   const { materialSemanticModel, travelGrid } = semanticData;
   const vegetationCells =
@@ -1127,10 +1450,30 @@ async function initCampaignTerrainWebGl(
     vegetationVertexShaderSource,
     vegetationFragmentShaderSource
   );
+  const fortCityProgram = createProgram(
+    gl,
+    vegetationVertexShaderSource,
+    fortCityFragmentShaderRaw
+  );
+  const fortCityInstancedArrays =
+    renderTerrain ? gl.getExtension("ANGLE_instanced_arrays") : null;
+  const fortCityInstancedProgram =
+    fortCityInstancedArrays == null
+      ? null
+      : createProgram(
+        gl,
+        fortCityInstancedVertexShaderRaw,
+        fortCityFragmentShaderRaw
+      );
   const vegetationShadowProgram = createProgram(
     gl,
     vegetationShadowVertexShaderSource,
     vegetationShadowFragmentShaderSource
+  );
+  const structureShadowProgram = createProgram(
+    gl,
+    vegetationShadowVertexShaderSource,
+    structureShadowFragmentShaderSource
   );
   const positionLocation = gl.getAttribLocation(program, "aPosition");
   const uvLocation = gl.getAttribLocation(program, "aUv");
@@ -1169,8 +1512,20 @@ async function initCampaignTerrainWebGl(
   const waterTextureLocation = gl.getUniformLocation(program, "uWaterTexture");
   const grassTextureLocation = gl.getUniformLocation(program, "uGrassTexture");
   const sandTextureLocation = gl.getUniformLocation(program, "uSandTexture");
+  const structureGroundTextureLocation = gl.getUniformLocation(
+    program,
+    "uStructureGroundTexture"
+  );
   const rockTextureLocation = gl.getUniformLocation(program, "uRockTexture");
   const snowTextureLocation = gl.getUniformLocation(program, "uSnowTexture");
+  const villageGroundTextureEnabledLocation = gl.getUniformLocation(
+    program,
+    "uVillageGroundTextureEnabled"
+  );
+  const cityGroundTextureEnabledLocation = gl.getUniformLocation(
+    program,
+    "uCityGroundTextureEnabled"
+  );
   const waterTextureEnabledLocation = gl.getUniformLocation(
     program,
     "uWaterTextureEnabled"
@@ -1293,6 +1648,136 @@ async function initCampaignTerrainWebGl(
     vegetationProgram,
     "uTerrainSteepShadowStrength"
   );
+  const fortCityPositionLocation = gl.getAttribLocation(
+    fortCityProgram,
+    "aPosition"
+  );
+  const fortCityNormalLocation = gl.getAttribLocation(fortCityProgram, "aNormal");
+  const fortCityColorLocation = gl.getAttribLocation(fortCityProgram, "aColor");
+  const fortCityMatrixLocation = gl.getUniformLocation(fortCityProgram, "uMatrix");
+  const fortCityCameraTiltSinCosLocation = gl.getUniformLocation(
+    fortCityProgram,
+    "uTerrainCameraTiltSinCos"
+  );
+  const fortCityAmbientLocation = gl.getUniformLocation(fortCityProgram, "uAmbient");
+  const fortCityDirectionalLocation = gl.getUniformLocation(
+    fortCityProgram,
+    "uDirectional"
+  );
+  const fortCityViewportSizeLocation = gl.getUniformLocation(
+    fortCityProgram,
+    "uTerrainViewportSize"
+  );
+  const fortCityCameraLightHeightLocation = gl.getUniformLocation(
+    fortCityProgram,
+    "uTerrainCameraLightHeight"
+  );
+  const fortCityCameraLightHorizontalPullLocation = gl.getUniformLocation(
+    fortCityProgram,
+    "uTerrainCameraLightHorizontalPull"
+  );
+  const fortCityTerrainDirectionalLightStrengthLocation = gl.getUniformLocation(
+    fortCityProgram,
+    "uTerrainDirectionalLightStrength"
+  );
+  const fortCityTerrainBackShadowStrengthLocation = gl.getUniformLocation(
+    fortCityProgram,
+    "uTerrainBackShadowStrength"
+  );
+  const fortCityTerrainSteepShadowStrengthLocation = gl.getUniformLocation(
+    fortCityProgram,
+    "uTerrainSteepShadowStrength"
+  );
+  const fortCityInstancedPositionLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aPosition");
+  const fortCityInstancedNormalLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aNormal");
+  const fortCityInstancedColorLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aColor");
+  const fortCityInstancedCenterLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceCenter");
+  const fortCityInstancedRotationLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceRotation");
+  const fortCityInstancedWorldScaleLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceWorldScale");
+  const fortCityInstancedLiftLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceLift");
+  const fortCityInstancedColorJitterLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceColorJitter");
+  const fortCityInstancedMatrixLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(fortCityInstancedProgram, "uMatrix");
+  const fortCityInstancedCameraTiltSinCosLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainCameraTiltSinCos"
+      );
+  const fortCityInstancedAmbientLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(fortCityInstancedProgram, "uAmbient");
+  const fortCityInstancedDirectionalLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(fortCityInstancedProgram, "uDirectional");
+  const fortCityInstancedViewportSizeLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(fortCityInstancedProgram, "uTerrainViewportSize");
+  const fortCityInstancedCameraLightHeightLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainCameraLightHeight"
+      );
+  const fortCityInstancedCameraLightHorizontalPullLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainCameraLightHorizontalPull"
+      );
+  const fortCityInstancedTerrainDirectionalLightStrengthLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainDirectionalLightStrength"
+      );
+  const fortCityInstancedTerrainBackShadowStrengthLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainBackShadowStrength"
+      );
+  const fortCityInstancedTerrainSteepShadowStrengthLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainSteepShadowStrength"
+      );
   const vegetationShadowPositionLocation = gl.getAttribLocation(
     vegetationShadowProgram,
     "aPosition"
@@ -1306,14 +1791,37 @@ async function initCampaignTerrainWebGl(
     vegetationShadowProgram,
     "uOpacity"
   );
+  const structureShadowPositionLocation = gl.getAttribLocation(
+    structureShadowProgram,
+    "aPosition"
+  );
+  const structureShadowUvLocation = gl.getAttribLocation(structureShadowProgram, "aUv");
+  const structureShadowMatrixLocation = gl.getUniformLocation(
+    structureShadowProgram,
+    "uMatrix"
+  );
+  const structureShadowOpacityLocation = gl.getUniformLocation(
+    structureShadowProgram,
+    "uOpacity"
+  );
   const actorVertexBuffer = gl.createBuffer();
   const actorIndexBuffer = gl.createBuffer();
   const cityDepthVertexBuffer = gl.createBuffer();
   const cityDepthIndexBuffer = gl.createBuffer();
+  const fortCityVertexBuffer = gl.createBuffer();
+  const fortCityIndexBuffer = gl.createBuffer();
+  const settlementVillageVertexBuffer = gl.createBuffer();
+  const settlementVillageIndexBuffer = gl.createBuffer();
+  const fortCityInstancedInstanceBuffer =
+    fortCityInstancedProgram == null ? null : gl.createBuffer();
+  const fortWallVertexBuffer = gl.createBuffer();
+  const fortWallIndexBuffer = gl.createBuffer();
   const vegetationVertexBuffer = gl.createBuffer();
   const vegetationIndexBuffer = gl.createBuffer();
   const vegetationShadowVertexBuffer = gl.createBuffer();
   const vegetationShadowIndexBuffer = gl.createBuffer();
+  const projectedShadowVertexBuffer = gl.createBuffer();
+  const projectedShadowIndexBuffer = gl.createBuffer();
   const texture = createTexture(gl, textureImage);
   const materialTexture = createTexture(gl, materialImage);
   const materialSemanticTexture = createTexture(
@@ -1326,6 +1834,13 @@ async function initCampaignTerrainWebGl(
   );
   const grassTexture = createTexture(gl, grassTextureImage ?? textureImage);
   const sandTexture = createTexture(gl, sandTextureImage ?? textureImage);
+  const structureGroundTexture = createTexture(
+    gl,
+    createStructureGroundTextureAtlas(
+      villageGroundTextureImage ?? grassTextureImage ?? textureImage,
+      cityGroundTextureImage ?? grassTextureImage ?? textureImage
+    )
+  );
   const rockTexture = createTexture(gl, rockTextureImage ?? textureImage);
   const snowTexture = createTexture(gl, snowTextureImage ?? textureImage);
   const waterTexture =
@@ -1344,6 +1859,12 @@ async function initCampaignTerrainWebGl(
       });
   const cityDepthTexture =
     cityDepthAsset == null ? null : createTexture(gl, cityDepthAsset.textureImage);
+  const fortWallTexturesByUrl = new Map<string, WebGLTexture>();
+  if (fortWallAsset != null) {
+    for (const [textureUrl, textureImage] of fortWallAsset.texturesByUrl.entries()) {
+      fortWallTexturesByUrl.set(textureUrl, createRepeatableTexture(gl, textureImage));
+    }
+  }
 
   const missingResources = [
     positionLocation < 0 ? "aPosition" : null,
@@ -1362,8 +1883,11 @@ async function initCampaignTerrainWebGl(
     waterTextureLocation == null ? "uWaterTexture" : null,
     grassTextureLocation == null ? "uGrassTexture" : null,
     sandTextureLocation == null ? "uSandTexture" : null,
+    structureGroundTextureLocation == null ? "uStructureGroundTexture" : null,
     rockTextureLocation == null ? "uRockTexture" : null,
     snowTextureLocation == null ? "uSnowTexture" : null,
+    villageGroundTextureEnabledLocation == null ? "uVillageGroundTextureEnabled" : null,
+    cityGroundTextureEnabledLocation == null ? "uCityGroundTextureEnabled" : null,
     waterTextureEnabledLocation == null ? "uWaterTextureEnabled" : null,
     timeSecondsLocation == null ? "uTimeSeconds" : null,
     grassAmbientLightLocation == null ? "uGrassAmbientLight" : null,
@@ -1424,18 +1948,112 @@ async function initCampaignTerrainWebGl(
     vegetationTerrainSteepShadowStrengthLocation == null
       ? "vegetation.uTerrainSteepShadowStrength"
       : null,
+    fortCityPositionLocation < 0 ? "fortCity.aPosition" : null,
+    fortCityNormalLocation < 0 ? "fortCity.aNormal" : null,
+    fortCityColorLocation < 0 ? "fortCity.aColor" : null,
+    fortCityMatrixLocation == null ? "fortCity.uMatrix" : null,
+    fortCityCameraTiltSinCosLocation == null ? "fortCity.uTerrainCameraTiltSinCos" : null,
+    fortCityAmbientLocation == null ? "fortCity.uAmbient" : null,
+    fortCityDirectionalLocation == null ? "fortCity.uDirectional" : null,
+    fortCityViewportSizeLocation == null ? "fortCity.uTerrainViewportSize" : null,
+    fortCityCameraLightHeightLocation == null ? "fortCity.uTerrainCameraLightHeight" : null,
+    fortCityCameraLightHorizontalPullLocation == null
+      ? "fortCity.uTerrainCameraLightHorizontalPull"
+      : null,
+    fortCityTerrainDirectionalLightStrengthLocation == null
+      ? "fortCity.uTerrainDirectionalLightStrength"
+      : null,
+    fortCityTerrainBackShadowStrengthLocation == null
+      ? "fortCity.uTerrainBackShadowStrength"
+      : null,
+    fortCityTerrainSteepShadowStrengthLocation == null
+      ? "fortCity.uTerrainSteepShadowStrength"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedPositionLocation < 0
+      ? "fortCityInstanced.aPosition"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedNormalLocation < 0
+      ? "fortCityInstanced.aNormal"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedColorLocation < 0
+      ? "fortCityInstanced.aColor"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedCenterLocation < 0
+      ? "fortCityInstanced.aInstanceCenter"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedRotationLocation < 0
+      ? "fortCityInstanced.aInstanceRotation"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedWorldScaleLocation < 0
+      ? "fortCityInstanced.aInstanceWorldScale"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedLiftLocation < 0
+      ? "fortCityInstanced.aInstanceLift"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedColorJitterLocation < 0
+      ? "fortCityInstanced.aInstanceColorJitter"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedMatrixLocation == null
+      ? "fortCityInstanced.uMatrix"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedCameraTiltSinCosLocation == null
+      ? "fortCityInstanced.uTerrainCameraTiltSinCos"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedAmbientLocation == null
+      ? "fortCityInstanced.uAmbient"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedDirectionalLocation == null
+      ? "fortCityInstanced.uDirectional"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedViewportSizeLocation == null
+      ? "fortCityInstanced.uTerrainViewportSize"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedCameraLightHeightLocation == null
+      ? "fortCityInstanced.uTerrainCameraLightHeight"
+      : null,
+    fortCityInstancedProgram != null &&
+      fortCityInstancedCameraLightHorizontalPullLocation == null
+      ? "fortCityInstanced.uTerrainCameraLightHorizontalPull"
+      : null,
+    fortCityInstancedProgram != null &&
+      fortCityInstancedTerrainDirectionalLightStrengthLocation == null
+      ? "fortCityInstanced.uTerrainDirectionalLightStrength"
+      : null,
+    fortCityInstancedProgram != null &&
+      fortCityInstancedTerrainBackShadowStrengthLocation == null
+      ? "fortCityInstanced.uTerrainBackShadowStrength"
+      : null,
+    fortCityInstancedProgram != null &&
+      fortCityInstancedTerrainSteepShadowStrengthLocation == null
+      ? "fortCityInstanced.uTerrainSteepShadowStrength"
+      : null,
     vegetationShadowPositionLocation < 0 ? "vegetationShadow.aPosition" : null,
     vegetationShadowUvLocation < 0 ? "vegetationShadow.aUv" : null,
     vegetationShadowMatrixLocation == null ? "vegetationShadow.uMatrix" : null,
     vegetationShadowOpacityLocation == null ? "vegetationShadow.uOpacity" : null,
+    structureShadowPositionLocation < 0 ? "structureShadow.aPosition" : null,
+    structureShadowUvLocation < 0 ? "structureShadow.aUv" : null,
+    structureShadowMatrixLocation == null ? "structureShadow.uMatrix" : null,
+    structureShadowOpacityLocation == null ? "structureShadow.uOpacity" : null,
     actorVertexBuffer == null ? "actor.vertexBuffer" : null,
     actorIndexBuffer == null ? "actor.indexBuffer" : null,
     cityDepthVertexBuffer == null ? "cityDepth.vertexBuffer" : null,
     cityDepthIndexBuffer == null ? "cityDepth.indexBuffer" : null,
+    fortCityVertexBuffer == null ? "fortCity.vertexBuffer" : null,
+    fortCityIndexBuffer == null ? "fortCity.indexBuffer" : null,
+    settlementVillageVertexBuffer == null ? "settlementVillage.vertexBuffer" : null,
+    settlementVillageIndexBuffer == null ? "settlementVillage.indexBuffer" : null,
+    fortCityInstancedProgram != null && fortCityInstancedInstanceBuffer == null
+      ? "fortCityInstanced.instanceBuffer"
+      : null,
+    fortWallVertexBuffer == null ? "fortWall.vertexBuffer" : null,
+    fortWallIndexBuffer == null ? "fortWall.indexBuffer" : null,
     vegetationVertexBuffer == null ? "vegetation.vertexBuffer" : null,
     vegetationIndexBuffer == null ? "vegetation.indexBuffer" : null,
     vegetationShadowVertexBuffer == null ? "vegetationShadow.vertexBuffer" : null,
     vegetationShadowIndexBuffer == null ? "vegetationShadow.indexBuffer" : null,
+    projectedShadowVertexBuffer == null ? "projectedShadow.vertexBuffer" : null,
+    projectedShadowIndexBuffer == null ? "projectedShadow.indexBuffer" : null,
   ].filter((resource): resource is string => resource != null);
   if (missingResources.length > 0) {
     throw new Error(
@@ -1450,21 +2068,38 @@ async function initCampaignTerrainWebGl(
     }
   }
   let cityDepthMesh: CityDepthMeshData | null = null;
+  let fortCityMesh: VegetationMeshData | null = null;
+  let settlementVillageMesh: VegetationMeshData | null = null;
+  let fortWallMesh: FortWallMeshData | null = null;
   gl.enable(gl.DEPTH_TEST);
   gl.disable(gl.BLEND);
   gl.disable(gl.CULL_FACE);
   let frameId: number | null = null;
   let isDisposed = false;
   let hasPendingRender = false;
-  let lastRequestedRenderReason: "static" | "dynamic" | null = null;
   let projectedPointsNeedSync = true;
   let lastActorSignature = "";
   let lastCityDepthMeshSignature = "";
+  let lastFortCityMeshSignature = "";
+  let lastFortCityInstancedModelSignature = "";
+  let lastFortCityShadowMeshSignature = "";
+  let lastSettlementVillageMeshSignature = "";
+  let lastSettlementVillageInstancedModelSignature = "";
+  let lastSettlementVillageShadowMeshSignature = "";
+  let lastFortWallMeshSignature = "";
+  let lastCampaignMarkerLayerSignature = "";
   let lastVegetationMeshSignature = "";
   let lastChunkShorelineSignature = getShorelineDistanceTextureSignature(terrainBeachTuning);
   let lastCanvasWidth = 0;
   let lastCanvasHeight = 0;
   let vegetationMesh: VegetationMeshData | null = null;
+  let fortCityInstancedModel: CampaignFortCityInstancedRenderModel | null = null;
+  let settlementVillageInstancedModel: CampaignFortCityInstancedRenderModel | null = null;
+  let fortCityShadowMesh: CampaignProjectedShadowMeshData | null = null;
+  let settlementVillageShadowMesh: CampaignProjectedShadowMeshData | null = null;
+  const structureBuildingCache: CampaignStructureBuildingCache = new Map();
+  const fortCityInstancedVariantResourcesById =
+    new Map<string, CampaignFortCityInstancedVariantResource>();
   const actorAnimationState = createActorAnimationPlaybackState();
   const animatesTerrainWater = renderTerrain && waterTexture != null;
   const animatesActorModel = shouldRenderActorInThisCanvas && actorAsset != null && actorTexture != null;
@@ -1474,6 +2109,9 @@ async function initCampaignTerrainWebGl(
   const chunkDataByKey = new Map<string, CampaignTerrainChunkData>();
   const chunkResourcesByKey = new Map<string, CampaignTerrainChunkRenderResource>();
   const pendingChunkKeys = new Set<string>();
+  const deferredChunkUploadsByKey = new Map<string, CampaignTerrainChunkData>();
+  let deferredChunkUploadTimeoutId: number | null = null;
+  let lastRequestedRenderReason: "static" | "dynamic" | null = null;
   const sampleHeightAtUv = (u: number, v: number): number =>
     sampleHeightFromCampaignTerrainChunks({
       materialSemanticModel,
@@ -1486,6 +2124,307 @@ async function initCampaignTerrainWebGl(
     materialSemanticModel,
     sampleHeightAtUv,
   };
+  const clearCampaignStructureRenderModels = (): void => {
+    lastFortCityMeshSignature = "";
+    lastFortCityInstancedModelSignature = "";
+    lastFortCityShadowMeshSignature = "";
+    lastSettlementVillageMeshSignature = "";
+    lastSettlementVillageInstancedModelSignature = "";
+    lastSettlementVillageShadowMeshSignature = "";
+    fortCityMesh = null;
+    settlementVillageMesh = null;
+    fortCityInstancedModel = null;
+    settlementVillageInstancedModel = null;
+    fortCityShadowMesh = null;
+    settlementVillageShadowMesh = null;
+  };
+  const clearCampaignStructureBuildingCache = (): void => {
+    structureBuildingCache.clear();
+    clearCampaignStructureRenderModels();
+  };
+  const drawCampaignProjectedShadowMesh = (
+    mesh: CampaignProjectedShadowMeshData | null,
+    opacity: number,
+    terrainMatrix: Mat4
+  ): void => {
+    if (mesh == null || mesh.indices.length <= 0 || opacity <= 0) {
+      return;
+    }
+
+    gl.useProgram(vegetationShadowProgram);
+    gl.bindBuffer(gl.ARRAY_BUFFER, projectedShadowVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, projectedShadowIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.DYNAMIC_DRAW);
+    const shadowStride = 5 * Float32Array.BYTES_PER_ELEMENT;
+    gl.enableVertexAttribArray(vegetationShadowPositionLocation);
+    gl.vertexAttribPointer(
+      vegetationShadowPositionLocation,
+      3,
+      gl.FLOAT,
+      false,
+      shadowStride,
+      0
+    );
+    gl.enableVertexAttribArray(vegetationShadowUvLocation);
+    gl.vertexAttribPointer(
+      vegetationShadowUvLocation,
+      2,
+      gl.FLOAT,
+      false,
+      shadowStride,
+      3 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.uniformMatrix4fv(vegetationShadowMatrixLocation, false, terrainMatrix);
+    gl.uniform1f(vegetationShadowOpacityLocation, opacity);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+  };
+  const drawCampaignStructureShadowMesh = (
+    mesh: CampaignProjectedShadowMeshData | null,
+    opacity: number,
+    terrainMatrix: Mat4
+  ): void => {
+    if (mesh == null || mesh.indices.length <= 0 || opacity <= 0) {
+      return;
+    }
+
+    gl.useProgram(structureShadowProgram);
+    gl.bindBuffer(gl.ARRAY_BUFFER, projectedShadowVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, projectedShadowIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.DYNAMIC_DRAW);
+    const shadowStride = 5 * Float32Array.BYTES_PER_ELEMENT;
+    gl.enableVertexAttribArray(structureShadowPositionLocation);
+    gl.vertexAttribPointer(
+      structureShadowPositionLocation,
+      3,
+      gl.FLOAT,
+      false,
+      shadowStride,
+      0
+    );
+    gl.enableVertexAttribArray(structureShadowUvLocation);
+    gl.vertexAttribPointer(
+      structureShadowUvLocation,
+      2,
+      gl.FLOAT,
+      false,
+      shadowStride,
+      3 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.uniformMatrix4fv(structureShadowMatrixLocation, false, terrainMatrix);
+    gl.uniform1f(structureShadowOpacityLocation, opacity);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+  };
+  const drawCampaignFortCityInstancedModel = (
+    model: CampaignFortCityInstancedRenderModel,
+    rules: CampaignStructureBuildingRulesAsset,
+    terrainMatrix: Mat4,
+    terrainCameraTiltRadians: number,
+    polygonOffsetFactor: number,
+    polygonOffsetUnits: number
+  ): boolean => {
+    const programForDraw = fortCityInstancedProgram;
+    const arraysForDraw = fortCityInstancedArrays;
+    const instanceBufferForDraw = fortCityInstancedInstanceBuffer;
+    const matrixForDraw = fortCityInstancedMatrixLocation;
+    const tiltForDraw = fortCityInstancedCameraTiltSinCosLocation;
+    const ambientForDraw = fortCityInstancedAmbientLocation;
+    const directionalForDraw = fortCityInstancedDirectionalLocation;
+    const viewportSizeForDraw = fortCityInstancedViewportSizeLocation;
+    const lightHeightForDraw = fortCityInstancedCameraLightHeightLocation;
+    const lightHorizontalPullForDraw =
+      fortCityInstancedCameraLightHorizontalPullLocation;
+    const terrainDirectionalForDraw =
+      fortCityInstancedTerrainDirectionalLightStrengthLocation;
+    const terrainBackShadowForDraw =
+      fortCityInstancedTerrainBackShadowStrengthLocation;
+    const terrainSteepShadowForDraw =
+      fortCityInstancedTerrainSteepShadowStrengthLocation;
+    if (
+      programForDraw == null ||
+      arraysForDraw == null ||
+      instanceBufferForDraw == null ||
+      matrixForDraw == null ||
+      tiltForDraw == null ||
+      ambientForDraw == null ||
+      directionalForDraw == null ||
+      viewportSizeForDraw == null ||
+      lightHeightForDraw == null ||
+      lightHorizontalPullForDraw == null ||
+      terrainDirectionalForDraw == null ||
+      terrainBackShadowForDraw == null ||
+      terrainSteepShadowForDraw == null
+    ) {
+      return false;
+    }
+    if (model.instanceCount <= 0) {
+      return true;
+    }
+
+    gl.useProgram(programForDraw);
+    gl.uniformMatrix4fv(matrixForDraw, false, terrainMatrix);
+    gl.uniform2f(
+      tiltForDraw,
+      Math.sin(terrainCameraTiltRadians),
+      Math.cos(terrainCameraTiltRadians)
+    );
+    gl.uniform1f(ambientForDraw, rules.shader.ambient);
+    gl.uniform1f(directionalForDraw, rules.shader.directional);
+    gl.uniform2f(viewportSizeForDraw, input.canvas.width, input.canvas.height);
+    gl.uniform1f(lightHeightForDraw, TERRAIN_CAMERA_LIGHT_HEIGHT);
+    gl.uniform1f(
+      lightHorizontalPullForDraw,
+      TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL
+    );
+    gl.uniform1f(
+      terrainDirectionalForDraw,
+      CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH
+    );
+    gl.uniform1f(terrainBackShadowForDraw, CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH);
+    gl.uniform1f(terrainSteepShadowForDraw, CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH);
+    gl.disable(gl.BLEND);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(polygonOffsetFactor, polygonOffsetUnits);
+    gl.depthMask(true);
+
+    const vertexStride = 9 * Float32Array.BYTES_PER_ELEMENT;
+    const instanceStride = 8 * Float32Array.BYTES_PER_ELEMENT;
+    for (const batch of model.batches) {
+      if (batch.instances.length <= 0) {
+        continue;
+      }
+      const resource = getOrCreateCampaignFortCityInstancedVariantResource({
+        gl,
+        resourcesById: fortCityInstancedVariantResourcesById,
+        mesh: batch.mesh,
+      });
+      if (resource == null) {
+        continue;
+      }
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, resource.vertexBuffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, resource.indexBuffer);
+      gl.enableVertexAttribArray(fortCityInstancedPositionLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedPositionLocation,
+        3,
+        gl.FLOAT,
+        false,
+        vertexStride,
+        0
+      );
+      gl.enableVertexAttribArray(fortCityInstancedNormalLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedNormalLocation,
+        3,
+        gl.FLOAT,
+        false,
+        vertexStride,
+        3 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(fortCityInstancedColorLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedColorLocation,
+        3,
+        gl.FLOAT,
+        false,
+        vertexStride,
+        6 * Float32Array.BYTES_PER_ELEMENT
+      );
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, instanceBufferForDraw);
+      gl.bufferData(gl.ARRAY_BUFFER, batch.instanceData, gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(fortCityInstancedCenterLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedCenterLocation,
+        3,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        0
+      );
+      gl.enableVertexAttribArray(fortCityInstancedRotationLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedRotationLocation,
+        2,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        3 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(fortCityInstancedWorldScaleLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedWorldScaleLocation,
+        1,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        5 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(fortCityInstancedLiftLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedLiftLocation,
+        1,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        6 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(fortCityInstancedColorJitterLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedColorJitterLocation,
+        1,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        7 * Float32Array.BYTES_PER_ELEMENT
+      );
+      arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedCenterLocation, 1);
+      arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedRotationLocation, 1);
+      arraysForDraw.vertexAttribDivisorANGLE(
+        fortCityInstancedWorldScaleLocation,
+        1
+      );
+      arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedLiftLocation, 1);
+      arraysForDraw.vertexAttribDivisorANGLE(
+        fortCityInstancedColorJitterLocation,
+        1
+      );
+      arraysForDraw.drawElementsInstancedANGLE(
+        gl.TRIANGLES,
+        resource.indexCount,
+        gl.UNSIGNED_INT,
+        0,
+        batch.instances.length
+      );
+    }
+
+    arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedCenterLocation, 0);
+    arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedRotationLocation, 0);
+    arraysForDraw.vertexAttribDivisorANGLE(
+      fortCityInstancedWorldScaleLocation,
+      0
+    );
+    arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedLiftLocation, 0);
+    arraysForDraw.vertexAttribDivisorANGLE(
+      fortCityInstancedColorJitterLocation,
+      0
+    );
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    return true;
+  };
   const uploadCampaignTerrainChunk = (chunk: CampaignTerrainChunkData): void => {
     if (isDisposed) {
       return;
@@ -1496,7 +2435,10 @@ async function initCampaignTerrainWebGl(
       projectedPointsNeedSync = true;
       lastVegetationMeshSignature = "";
       lastCityDepthMeshSignature = "";
+      clearCampaignStructureRenderModels();
+      lastFortWallMeshSignature = "";
       cityDepthMesh = null;
+      fortWallMesh = null;
       return;
     }
 
@@ -1530,12 +2472,56 @@ async function initCampaignTerrainWebGl(
     projectedPointsNeedSync = true;
     lastVegetationMeshSignature = "";
     lastCityDepthMeshSignature = "";
+    clearCampaignStructureRenderModels();
+    lastFortWallMeshSignature = "";
     cityDepthMesh = null;
+    fortWallMesh = null;
+  };
+  const scheduleDeferredChunkUploadFlush = (): void => {
+    if (deferredChunkUploadTimeoutId != null) {
+      window.clearTimeout(deferredChunkUploadTimeoutId);
+      deferredChunkUploadTimeoutId = null;
+    }
+
+    if (isCampaignTerrainChunkLoadingHeld()) {
+      return;
+    }
+
+    const delayMs = getCampaignTerrainChunkLoadingResumeDelayMs();
+    if (delayMs <= 0) {
+      requestRender("static");
+      return;
+    }
+
+    deferredChunkUploadTimeoutId = window.setTimeout(() => {
+      deferredChunkUploadTimeoutId = null;
+      requestRender("static");
+    }, delayMs);
+  };
+  const flushDeferredChunkUploads = (): void => {
+    if (deferredChunkUploadsByKey.size <= 0) {
+      return;
+    }
+    if (isCampaignTerrainChunkLoadingDeferred()) {
+      scheduleDeferredChunkUploadFlush();
+      return;
+    }
+
+    for (const chunk of deferredChunkUploadsByKey.values()) {
+      uploadCampaignTerrainChunk(chunk);
+    }
+    deferredChunkUploadsByKey.clear();
   };
   const ensureCampaignTerrainChunkKeys = (keys: Iterable<string>): void => {
+    if (isCampaignTerrainChunkLoadingDeferred()) {
+      scheduleCampaignTerrainChunkLoadingResume();
+      return;
+    }
+
     for (const chunkKey of keys) {
       if (
         chunkResourcesByKey.has(chunkKey) ||
+        deferredChunkUploadsByKey.has(chunkKey) ||
         pendingChunkKeys.has(chunkKey)
       ) {
         continue;
@@ -1549,6 +2535,12 @@ async function initCampaignTerrainWebGl(
         beachTuning: terrainBeachTuning,
       }).then((chunk) => {
         pendingChunkKeys.delete(chunkKey);
+        if (isCampaignTerrainChunkLoadingDeferred()) {
+          deferredChunkUploadsByKey.set(chunk.key, chunk);
+          scheduleDeferredChunkUploadFlush();
+          return;
+        }
+
         uploadCampaignTerrainChunk(chunk);
         requestRender("static");
       }).catch((error: unknown) => {
@@ -1579,10 +2571,10 @@ async function initCampaignTerrainWebGl(
     }
 
     const renderStartedAtMs = performance.now();
-    let drawCalls = 0;
     frameId = null;
     hasPendingRender = false;
     resizeCanvasToDisplaySize(input.canvas);
+    flushDeferredChunkUploads();
     const resized =
       input.canvas.width !== lastCanvasWidth || input.canvas.height !== lastCanvasHeight;
     if (resized) {
@@ -1609,8 +2601,96 @@ async function initCampaignTerrainWebGl(
       chunkDataByKey.clear();
       lastChunkShorelineSignature = chunkShorelineSignature;
       lastVegetationMeshSignature = "";
+      clearCampaignStructureBuildingCache();
+      lastFortWallMeshSignature = "";
       cityDepthMesh = null;
+      fortWallMesh = null;
     }
+
+    if (renderTerrain) {
+      const campaignMarkerLayerSignature = syncCampaignMarkerLayer({
+        canvas: input.canvas,
+        materialSemanticModel,
+        loadedChunkKeys: new Set(chunkResourcesByKey.keys()),
+      });
+      if (campaignMarkerLayerSignature !== lastCampaignMarkerLayerSignature) {
+        lastCampaignMarkerLayerSignature = campaignMarkerLayerSignature;
+        projectedPointsNeedSync = true;
+        clearCampaignStructureBuildingCache();
+        lastFortWallMeshSignature = "";
+        fortWallMesh = null;
+      }
+    }
+
+    const loadedChunkKeys = new Set(chunkResourcesByKey.keys());
+    const fortInstances = renderTerrain
+      ? readCampaignFortWallInstances(
+        input.canvas,
+        loadedChunkKeys,
+        fortCityAsset?.rules ?? null
+      )
+      : [];
+    const fortCityBuildingInstances =
+      renderTerrain && fortCityAsset != null
+        ? createCampaignFortCityBuildingInstances({
+          asset: fortCityAsset,
+          rules: fortCityAsset.rules,
+          fortInstances,
+          matrix: createTerrainMatrix(
+            input.canvas.width / Math.max(input.canvas.height, 1)
+          ),
+          sampleHeightAtUv,
+          onVariantMeshNeeded: (variant) => {
+            ensureCampaignFortCityVariantMesh(fortCityAsset, variant, () => {
+              clearCampaignStructureBuildingCache();
+              requestRender("static");
+            });
+          },
+          cacheKind: "city",
+          structureBuildingCache,
+        })
+        : [];
+    const settlementVillageRules =
+      fortCityAsset == null
+        ? null
+        : getCampaignSettlementVillageRules(fortCityAsset.rules);
+    const settlementVillageInstances =
+      renderTerrain && settlementVillageRules != null
+        ? readCampaignSettlementVillageInstances({
+          canvas: input.canvas,
+          loadedChunkKeys,
+          materialSemanticModel,
+          cityHexKeys: new Set(fortInstances.map((instance) => instance.key)),
+          rules: fortCityAsset?.rules ?? null,
+        })
+        : [];
+    const settlementVillageBuildingInstances =
+      renderTerrain && fortCityAsset != null && settlementVillageRules != null
+        ? createCampaignFortCityBuildingInstances({
+          asset: fortCityAsset,
+          rules: settlementVillageRules,
+          fortInstances: settlementVillageInstances,
+          matrix: createTerrainMatrix(
+            input.canvas.width / Math.max(input.canvas.height, 1)
+          ),
+          sampleHeightAtUv,
+          onVariantMeshNeeded: (variant) => {
+            ensureCampaignFortCityVariantMesh(fortCityAsset, variant, () => {
+              clearCampaignStructureBuildingCache();
+              requestRender("static");
+            });
+          },
+          cacheKind: "village",
+          structureBuildingCache,
+        })
+        : [];
+    const fortStructureAvoidancePoints = renderTerrain
+      ? createCampaignFortStructureAvoidancePoints(
+        fortInstances,
+        [...fortCityBuildingInstances, ...settlementVillageBuildingInstances],
+        fortCityAsset?.rules ?? null
+      )
+      : [];
 
     if (renderTerrain) {
       gl.useProgram(program);
@@ -1632,6 +2712,9 @@ async function initCampaignTerrainWebGl(
       gl.activeTexture(gl.TEXTURE6);
       gl.bindTexture(gl.TEXTURE_2D, snowTexture);
       gl.uniform1i(snowTextureLocation, 6);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, structureGroundTexture);
+      gl.uniform1i(structureGroundTextureLocation, 0);
       gl.uniform1i(shorelineDistanceTextureLocation, 7);
       gl.activeTexture(gl.TEXTURE8);
       gl.bindTexture(gl.TEXTURE_2D, materialSemanticTexture);
@@ -1649,6 +2732,14 @@ async function initCampaignTerrainWebGl(
         materialSemanticModel.cellRows
       );
       gl.uniform1f(waterTextureEnabledLocation, waterTexture == null ? 0 : 1);
+      gl.uniform1f(
+        villageGroundTextureEnabledLocation,
+        villageGroundTextureImage == null ? 0 : 1
+      );
+      gl.uniform1f(
+        cityGroundTextureEnabledLocation,
+        cityGroundTextureImage == null ? 0 : 1
+      );
       gl.uniform1f(timeSecondsLocation, performance.now() * 0.001);
       gl.uniform1f(heightScaleLocation, HEIGHT_SCALE);
       gl.uniform2f(
@@ -1758,7 +2849,6 @@ async function initCampaignTerrainWebGl(
           gl.UNSIGNED_INT,
           0
         );
-        drawCalls += 1;
       };
 
       for (const chunkResource of chunkResourcesByKey.values()) {
@@ -1770,7 +2860,8 @@ async function initCampaignTerrainWebGl(
       const terrainMatrix = createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1));
       const avoidancePoints = readCampaignVegetationAvoidancePoints(
         input.canvas,
-        vegetationAsset.rules
+        vegetationAsset.rules,
+        fortStructureAvoidancePoints
       );
       const vegetationMeshSignature = getCampaignVegetationMeshSignature(
         input.canvas,
@@ -1845,7 +2936,6 @@ async function initCampaignTerrainWebGl(
             gl.UNSIGNED_INT,
             0
           );
-          drawCalls += 1;
           gl.depthMask(true);
           gl.disable(gl.BLEND);
         }
@@ -1904,15 +2994,15 @@ async function initCampaignTerrainWebGl(
         );
         gl.uniform1f(
           vegetationTerrainDirectionalLightStrengthLocation,
-          TERRAIN_DIRECTIONAL_LIGHT_STRENGTH
+          CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH
         );
         gl.uniform1f(
           vegetationTerrainBackShadowStrengthLocation,
-          TERRAIN_BACK_SHADOW_STRENGTH
+          CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH
         );
         gl.uniform1f(
           vegetationTerrainSteepShadowStrengthLocation,
-          TERRAIN_STEEP_SHADOW_STRENGTH
+          CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH
         );
         gl.disable(gl.BLEND);
         gl.disable(gl.CULL_FACE);
@@ -1920,7 +3010,318 @@ async function initCampaignTerrainWebGl(
         gl.polygonOffset(-4, -8);
         gl.depthMask(true);
         gl.drawElements(gl.TRIANGLES, vegetationMesh.indices.length, gl.UNSIGNED_INT, 0);
-        drawCalls += 1;
+        gl.disable(gl.POLYGON_OFFSET_FILL);
+      }
+    }
+
+    if (
+      renderTerrain &&
+      settlementVillageRules != null &&
+      settlementVillageBuildingInstances.length > 0
+    ) {
+      const terrainMatrix = createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1));
+      const settlementVillageMeshSignature = getCampaignFortCityMeshSignature(
+        settlementVillageBuildingInstances
+      );
+      if (
+        settlementVillageShadowMesh == null ||
+        settlementVillageMeshSignature !== lastSettlementVillageShadowMeshSignature
+      ) {
+        settlementVillageShadowMesh = createCampaignFortCityShadowMesh({
+          instances: settlementVillageBuildingInstances,
+          sampleHeightAtUv,
+          rules: settlementVillageRules,
+          matrix: terrainMatrix,
+          viewportAspectRatio: input.canvas.width / Math.max(input.canvas.height, 1),
+        });
+        lastSettlementVillageShadowMeshSignature = settlementVillageMeshSignature;
+      }
+      drawCampaignStructureShadowMesh(
+        settlementVillageShadowMesh,
+        CAMPAIGN_STRUCTURE_SHADOW_OPACITY * 0.82,
+        terrainMatrix
+      );
+      const drewSettlementVillageInstanced =
+        fortCityInstancedProgram != null &&
+        (() => {
+          if (
+            settlementVillageInstancedModel == null ||
+            settlementVillageMeshSignature !==
+              lastSettlementVillageInstancedModelSignature
+          ) {
+            settlementVillageInstancedModel =
+              createCampaignFortCityInstancedRenderModel({
+                instances: settlementVillageBuildingInstances,
+                sampleHeightAtUv,
+                rules: settlementVillageRules,
+                signature: settlementVillageMeshSignature,
+              });
+            lastSettlementVillageInstancedModelSignature =
+              settlementVillageMeshSignature;
+          }
+
+          return drawCampaignFortCityInstancedModel(
+            settlementVillageInstancedModel,
+            settlementVillageRules,
+            terrainMatrix,
+            terrainCameraTilt,
+            -4.75,
+            -8.75
+          );
+        })();
+
+      if (!drewSettlementVillageInstanced) {
+        if (
+          settlementVillageMesh == null ||
+          settlementVillageMeshSignature !== lastSettlementVillageMeshSignature
+        ) {
+          settlementVillageMesh = createCampaignFortCityMesh({
+            instances: settlementVillageBuildingInstances,
+            sampleHeightAtUv,
+            rules: settlementVillageRules,
+          });
+          gl.bindBuffer(gl.ARRAY_BUFFER, settlementVillageVertexBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, settlementVillageMesh.vertices, gl.DYNAMIC_DRAW);
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, settlementVillageIndexBuffer);
+          gl.bufferData(
+            gl.ELEMENT_ARRAY_BUFFER,
+            settlementVillageMesh.indices,
+            gl.DYNAMIC_DRAW
+          );
+          lastSettlementVillageMeshSignature = settlementVillageMeshSignature;
+        }
+      }
+
+      if (
+        !drewSettlementVillageInstanced &&
+        settlementVillageMesh != null &&
+        settlementVillageMesh.indices.length > 0
+      ) {
+        gl.useProgram(fortCityProgram);
+        gl.bindBuffer(gl.ARRAY_BUFFER, settlementVillageVertexBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, settlementVillageIndexBuffer);
+        const fortCityStride = 9 * Float32Array.BYTES_PER_ELEMENT;
+        gl.enableVertexAttribArray(fortCityPositionLocation);
+        gl.vertexAttribPointer(
+          fortCityPositionLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortCityStride,
+          0
+        );
+        gl.enableVertexAttribArray(fortCityNormalLocation);
+        gl.vertexAttribPointer(
+          fortCityNormalLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortCityStride,
+          3 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.enableVertexAttribArray(fortCityColorLocation);
+        gl.vertexAttribPointer(
+          fortCityColorLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortCityStride,
+          6 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.uniformMatrix4fv(fortCityMatrixLocation, false, terrainMatrix);
+        gl.uniform2f(
+          fortCityCameraTiltSinCosLocation,
+          Math.sin(terrainCameraTilt),
+          Math.cos(terrainCameraTilt)
+        );
+        gl.uniform1f(fortCityAmbientLocation, settlementVillageRules.shader.ambient);
+        gl.uniform1f(
+          fortCityDirectionalLocation,
+          settlementVillageRules.shader.directional
+        );
+        gl.uniform2f(
+          fortCityViewportSizeLocation,
+          input.canvas.width,
+          input.canvas.height
+        );
+        gl.uniform1f(fortCityCameraLightHeightLocation, TERRAIN_CAMERA_LIGHT_HEIGHT);
+        gl.uniform1f(
+          fortCityCameraLightHorizontalPullLocation,
+          TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL
+        );
+        gl.uniform1f(
+          fortCityTerrainDirectionalLightStrengthLocation,
+          CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH
+        );
+        gl.uniform1f(
+          fortCityTerrainBackShadowStrengthLocation,
+          CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH
+        );
+        gl.uniform1f(
+          fortCityTerrainSteepShadowStrengthLocation,
+          CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH
+        );
+        gl.disable(gl.BLEND);
+        gl.disable(gl.CULL_FACE);
+        gl.enable(gl.POLYGON_OFFSET_FILL);
+        gl.polygonOffset(-4.75, -8.75);
+        gl.depthMask(true);
+        gl.drawElements(
+          gl.TRIANGLES,
+          settlementVillageMesh.indices.length,
+          gl.UNSIGNED_INT,
+          0
+        );
+        gl.disable(gl.POLYGON_OFFSET_FILL);
+      }
+    }
+
+    if (
+      renderTerrain &&
+      fortCityAsset != null &&
+      fortCityBuildingInstances.length > 0
+    ) {
+      const terrainMatrix = createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1));
+      const fortCityMeshSignature = getCampaignFortCityMeshSignature(
+        fortCityBuildingInstances
+      );
+      if (
+        fortCityShadowMesh == null ||
+        fortCityMeshSignature !== lastFortCityShadowMeshSignature
+      ) {
+        fortCityShadowMesh = createCampaignFortCityShadowMesh({
+          instances: fortCityBuildingInstances,
+          sampleHeightAtUv,
+          rules: fortCityAsset.rules,
+          matrix: terrainMatrix,
+          viewportAspectRatio: input.canvas.width / Math.max(input.canvas.height, 1),
+        });
+        lastFortCityShadowMeshSignature = fortCityMeshSignature;
+      }
+      drawCampaignStructureShadowMesh(
+        fortCityShadowMesh,
+        CAMPAIGN_STRUCTURE_SHADOW_OPACITY,
+        terrainMatrix
+      );
+      const drewFortCityInstanced =
+        fortCityInstancedProgram != null &&
+        (() => {
+          if (
+            fortCityInstancedModel == null ||
+            fortCityMeshSignature !== lastFortCityInstancedModelSignature
+          ) {
+            fortCityInstancedModel = createCampaignFortCityInstancedRenderModel({
+              instances: fortCityBuildingInstances,
+              sampleHeightAtUv,
+              rules: fortCityAsset.rules,
+              signature: fortCityMeshSignature,
+            });
+            lastFortCityInstancedModelSignature = fortCityMeshSignature;
+          }
+
+          return drawCampaignFortCityInstancedModel(
+            fortCityInstancedModel,
+            fortCityAsset.rules,
+            terrainMatrix,
+            terrainCameraTilt,
+            -5,
+            -9
+          );
+        })();
+
+      if (!drewFortCityInstanced) {
+        if (
+          fortCityMesh == null ||
+          fortCityMeshSignature !== lastFortCityMeshSignature
+        ) {
+          fortCityMesh = createCampaignFortCityMesh({
+            instances: fortCityBuildingInstances,
+            sampleHeightAtUv,
+            rules: fortCityAsset.rules,
+          });
+          gl.bindBuffer(gl.ARRAY_BUFFER, fortCityVertexBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, fortCityMesh.vertices, gl.DYNAMIC_DRAW);
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fortCityIndexBuffer);
+          gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, fortCityMesh.indices, gl.DYNAMIC_DRAW);
+          lastFortCityMeshSignature = fortCityMeshSignature;
+        }
+      }
+
+      if (
+        !drewFortCityInstanced &&
+        fortCityMesh != null &&
+        fortCityMesh.indices.length > 0
+      ) {
+        gl.useProgram(fortCityProgram);
+        gl.bindBuffer(gl.ARRAY_BUFFER, fortCityVertexBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fortCityIndexBuffer);
+        const fortCityStride = 9 * Float32Array.BYTES_PER_ELEMENT;
+        gl.enableVertexAttribArray(fortCityPositionLocation);
+        gl.vertexAttribPointer(
+          fortCityPositionLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortCityStride,
+          0
+        );
+        gl.enableVertexAttribArray(fortCityNormalLocation);
+        gl.vertexAttribPointer(
+          fortCityNormalLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortCityStride,
+          3 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.enableVertexAttribArray(fortCityColorLocation);
+        gl.vertexAttribPointer(
+          fortCityColorLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortCityStride,
+          6 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.uniformMatrix4fv(fortCityMatrixLocation, false, terrainMatrix);
+        gl.uniform2f(
+          fortCityCameraTiltSinCosLocation,
+          Math.sin(terrainCameraTilt),
+          Math.cos(terrainCameraTilt)
+        );
+        gl.uniform1f(fortCityAmbientLocation, fortCityAsset.rules.shader.ambient);
+        gl.uniform1f(
+          fortCityDirectionalLocation,
+          fortCityAsset.rules.shader.directional
+        );
+        gl.uniform2f(
+          fortCityViewportSizeLocation,
+          input.canvas.width,
+          input.canvas.height
+        );
+        gl.uniform1f(fortCityCameraLightHeightLocation, TERRAIN_CAMERA_LIGHT_HEIGHT);
+        gl.uniform1f(
+          fortCityCameraLightHorizontalPullLocation,
+          TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL
+        );
+        gl.uniform1f(
+          fortCityTerrainDirectionalLightStrengthLocation,
+          CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH
+        );
+        gl.uniform1f(
+          fortCityTerrainBackShadowStrengthLocation,
+          CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH
+        );
+        gl.uniform1f(
+          fortCityTerrainSteepShadowStrengthLocation,
+          CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH
+        );
+        gl.disable(gl.BLEND);
+        gl.disable(gl.CULL_FACE);
+        gl.enable(gl.POLYGON_OFFSET_FILL);
+        gl.polygonOffset(-5, -9);
+        gl.depthMask(true);
+        gl.drawElements(gl.TRIANGLES, fortCityMesh.indices.length, gl.UNSIGNED_INT, 0);
         gl.disable(gl.POLYGON_OFFSET_FILL);
       }
     }
@@ -1987,7 +3388,86 @@ async function initCampaignTerrainWebGl(
       gl.disable(gl.CULL_FACE);
       gl.depthMask(true);
       gl.drawElements(gl.TRIANGLES, cityDepthMesh.indices.length, gl.UNSIGNED_INT, 0);
-      drawCalls += 1;
+    }
+
+    if (renderTerrain && fortWallAsset != null && fortWallTexturesByUrl.size > 0) {
+      const fortWallMeshSignature = getCampaignFortWallMeshSignature(
+        fortInstances
+      );
+      if (fortWallMesh == null || fortWallMeshSignature !== lastFortWallMeshSignature) {
+        fortWallMesh = createCampaignFortWallMesh(
+          fortWallAsset,
+          fortInstances,
+          sampleHeightAtUv
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, fortWallVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, fortWallMesh.vertices, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fortWallIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, fortWallMesh.indices, gl.DYNAMIC_DRAW);
+        lastFortWallMeshSignature = fortWallMeshSignature;
+      }
+
+      if (fortWallMesh.indices.length > 0) {
+        gl.useProgram(actorProgram);
+        gl.bindBuffer(gl.ARRAY_BUFFER, fortWallVertexBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fortWallIndexBuffer);
+        const fortWallStride = 8 * Float32Array.BYTES_PER_ELEMENT;
+        gl.enableVertexAttribArray(actorPositionLocation);
+        gl.vertexAttribPointer(
+          actorPositionLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortWallStride,
+          0
+        );
+        gl.enableVertexAttribArray(actorNormalLocation);
+        gl.vertexAttribPointer(
+          actorNormalLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortWallStride,
+          3 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.enableVertexAttribArray(actorUvLocation);
+        gl.vertexAttribPointer(
+          actorUvLocation,
+          2,
+          gl.FLOAT,
+          false,
+          fortWallStride,
+          6 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.uniformMatrix4fv(
+          actorMatrixLocation,
+          false,
+          createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1))
+        );
+        gl.uniform3f(actorLightLocation, -0.58, 0.52, 0.62);
+        gl.uniform3f(actorTintLocation, 1, 1, 1);
+        gl.uniform1f(actorForceOpaqueAlphaLocation, 0);
+        gl.disable(gl.CULL_FACE);
+        gl.depthMask(true);
+        for (const drawGroup of fortWallMesh.drawGroups) {
+          const textureObject =
+            drawGroup.textureUrl == null
+              ? null
+              : fortWallTexturesByUrl.get(drawGroup.textureUrl);
+          if (textureObject == null || drawGroup.count <= 0) {
+            continue;
+          }
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D, textureObject);
+          gl.uniform1i(actorTextureLocation, 0);
+          gl.drawElements(
+            gl.TRIANGLES,
+            drawGroup.count,
+            gl.UNSIGNED_INT,
+            drawGroup.start * Uint32Array.BYTES_PER_ELEMENT
+          );
+        }
+      }
     }
 
     const actor = readCampaignActorData(input.canvas);
@@ -2003,6 +3483,19 @@ async function initCampaignTerrainWebGl(
         lastActorSignature = actorSignature;
       }
       const actorHeight = sampleHeightAtUv(actor.u, actor.v);
+      const terrainMatrix = createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1));
+      const actorShadowMesh = createCampaignActorShadowMesh({
+        actor,
+        height: actorHeight,
+        model: actorAsset.model,
+        matrix: terrainMatrix,
+        viewportAspectRatio: input.canvas.width / Math.max(input.canvas.height, 1),
+      });
+      drawCampaignProjectedShadowMesh(
+        actorShadowMesh,
+        CAMPAIGN_ACTOR_SHADOW_OPACITY,
+        terrainMatrix
+      );
       const actorMesh = createActorMesh(
         actor,
         actorHeight,
@@ -2046,7 +3539,7 @@ async function initCampaignTerrainWebGl(
       gl.uniformMatrix4fv(
         actorMatrixLocation,
         false,
-        createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1))
+        terrainMatrix
       );
       gl.uniform3f(actorLightLocation, -0.92, 0.28, 0.36);
       gl.activeTexture(gl.TEXTURE0);
@@ -2056,7 +3549,6 @@ async function initCampaignTerrainWebGl(
       gl.uniform1f(actorForceOpaqueAlphaLocation, 1);
       gl.disable(gl.CULL_FACE);
       gl.drawElements(gl.TRIANGLES, actorMesh.indices.length, gl.UNSIGNED_SHORT, 0);
-      drawCalls += 1;
       gl.disable(gl.CULL_FACE);
     } else {
       if (lastActorSignature !== "") {
@@ -2077,7 +3569,7 @@ async function initCampaignTerrainWebGl(
       canvasWidth: input.canvas.width,
       canvasHeight: input.canvas.height,
       lastRenderDurationMs: performance.now() - renderStartedAtMs,
-      lastDrawCalls: drawCalls,
+      lastDrawCalls: 0,
       lastRenderReason: lastRequestedRenderReason,
       renderCount: campaignTerrainRenderStats.renderCount + 1,
       rendererCount: activeRenderers.size,
@@ -2136,6 +3628,9 @@ async function initCampaignTerrainWebGl(
       if (dynamicAnimationTimeoutId != null) {
         window.clearTimeout(dynamicAnimationTimeoutId);
       }
+      if (deferredChunkUploadTimeoutId != null) {
+        window.clearTimeout(deferredChunkUploadTimeoutId);
+      }
 
       window.removeEventListener("resize", handleResize);
       for (const chunkResource of chunkResourcesByKey.values()) {
@@ -2148,15 +3643,32 @@ async function initCampaignTerrainWebGl(
       gl.deleteBuffer(actorIndexBuffer);
       gl.deleteBuffer(cityDepthVertexBuffer);
       gl.deleteBuffer(cityDepthIndexBuffer);
+      gl.deleteBuffer(fortCityVertexBuffer);
+      gl.deleteBuffer(fortCityIndexBuffer);
+      gl.deleteBuffer(settlementVillageVertexBuffer);
+      gl.deleteBuffer(settlementVillageIndexBuffer);
+      if (fortCityInstancedInstanceBuffer != null) {
+        gl.deleteBuffer(fortCityInstancedInstanceBuffer);
+      }
+      for (const resource of fortCityInstancedVariantResourcesById.values()) {
+        gl.deleteBuffer(resource.vertexBuffer);
+        gl.deleteBuffer(resource.indexBuffer);
+      }
+      fortCityInstancedVariantResourcesById.clear();
+      gl.deleteBuffer(fortWallVertexBuffer);
+      gl.deleteBuffer(fortWallIndexBuffer);
       gl.deleteBuffer(vegetationVertexBuffer);
       gl.deleteBuffer(vegetationIndexBuffer);
       gl.deleteBuffer(vegetationShadowVertexBuffer);
       gl.deleteBuffer(vegetationShadowIndexBuffer);
+      gl.deleteBuffer(projectedShadowVertexBuffer);
+      gl.deleteBuffer(projectedShadowIndexBuffer);
       gl.deleteTexture(texture);
       gl.deleteTexture(materialTexture);
       gl.deleteTexture(materialSemanticTexture);
       gl.deleteTexture(grassTexture);
       gl.deleteTexture(sandTexture);
+      gl.deleteTexture(structureGroundTexture);
       gl.deleteTexture(rockTexture);
       gl.deleteTexture(snowTexture);
       if (waterTexture != null) {
@@ -2168,10 +3680,18 @@ async function initCampaignTerrainWebGl(
       if (cityDepthTexture != null) {
         gl.deleteTexture(cityDepthTexture);
       }
+      for (const fortWallTexture of fortWallTexturesByUrl.values()) {
+        gl.deleteTexture(fortWallTexture);
+      }
       gl.deleteProgram(program);
       gl.deleteProgram(actorProgram);
       gl.deleteProgram(vegetationProgram);
+      gl.deleteProgram(fortCityProgram);
+      if (fortCityInstancedProgram != null) {
+        gl.deleteProgram(fortCityInstancedProgram);
+      }
       gl.deleteProgram(vegetationShadowProgram);
+      gl.deleteProgram(structureShadowProgram);
     },
   };
 }
@@ -2203,8 +3723,12 @@ function getCampaignTerrainSemanticData(input: {
   input: CampaignTerrainInput;
   materialImage: HTMLImageElement;
   campaignHexGrid: CampaignHexGridAsset | null;
+  fortCityRules: CampaignFortCityRulesAsset | null;
 }): Promise<CampaignTerrainSemanticData> {
-  const signature = getCampaignTerrainSemanticDataSignature(input.input);
+  const signature = getCampaignTerrainSemanticDataSignature(
+    input.input,
+    input.fortCityRules
+  );
   const cachedData = campaignTerrainSemanticDataCache.get(signature);
   if (cachedData != null) {
     return cachedData;
@@ -2223,10 +3747,16 @@ function getCampaignTerrainSemanticData(input: {
   return dataPromise;
 }
 
-function getCampaignTerrainSemanticDataSignature(input: CampaignTerrainInput): string {
+function getCampaignTerrainSemanticDataSignature(
+  input: CampaignTerrainInput,
+  fortCityRules: CampaignFortCityRulesAsset | null
+): string {
   return [
     input.materialUrl,
     input.campaignHexGridUrl ?? "",
+    getCampaignMarkerSourceSignature(input.canvas),
+    fortCityRules?.fortifiedNodeIds?.join(",") ?? "",
+    fortCityRules?.settlementVillage == null ? "" : "settlement-village",
   ].join("|");
 }
 
@@ -2234,6 +3764,7 @@ function createCampaignTerrainSemanticData(input: {
   input: CampaignTerrainInput;
   materialImage: HTMLImageElement;
   campaignHexGrid: CampaignHexGridAsset | null;
+  fortCityRules: CampaignFortCityRulesAsset | null;
 }): CampaignTerrainSemanticData {
   const materialLandMask =
     input.campaignHexGrid == null ? sampleMaterialLandMask(input.materialImage) : null;
@@ -2245,11 +3776,94 @@ function createCampaignTerrainSemanticData(input: {
         materialLandMask?.columns ?? 1,
         materialLandMask?.rows ?? 1
       );
+  applyCampaignStructureGroundSemanticOverlay(
+    materialSemanticModel,
+    input.input.canvas,
+    input.fortCityRules
+  );
 
   return {
     materialSemanticModel,
     travelGrid: createHexTravelGrid(materialSemanticModel),
   };
+}
+
+function getCampaignMarkerSourceSignature(canvas: HTMLCanvasElement): string {
+  const stage = canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  const sourceElement = stage?.querySelector<HTMLScriptElement>(
+    "script[data-campaign-marker-source]"
+  );
+
+  return sourceElement?.textContent ?? "";
+}
+
+function applyCampaignStructureGroundSemanticOverlay(
+  materialSemanticModel: CampaignMaterialSemanticModel,
+  canvas: HTMLCanvasElement,
+  rules: CampaignFortCityRulesAsset | null
+): void {
+  const stage = canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  if (stage == null) {
+    return;
+  }
+
+  const fortifiedNodeIds = new Set(rules?.fortifiedNodeIds ?? []);
+  const cityCells = new Set<string>();
+
+  for (const marker of readCampaignRuntimeMarkers(stage)) {
+    if (!Number.isFinite(marker.u) || !Number.isFinite(marker.v)) {
+      continue;
+    }
+
+    const cell = getCampaignTerrainHexCellAtUv(marker.u, marker.v);
+    if (!isPlainTerrainHexCell(materialSemanticModel, cell)) {
+      continue;
+    }
+
+    const cellKey = getHexCellKey(cell.x, cell.y);
+    const isCityStructure =
+      marker.kind === "city" ||
+      marker.kind === "fort" ||
+      fortifiedNodeIds.has(marker.id);
+    if (isCityStructure) {
+      cityCells.add(cellKey);
+      setCampaignStructureGroundSemanticCell(materialSemanticModel, cell, "city");
+      continue;
+    }
+
+    if (marker.kind === "settlement" && !cityCells.has(cellKey)) {
+      setCampaignStructureGroundSemanticCell(materialSemanticModel, cell, "village");
+    }
+  }
+}
+
+function setCampaignStructureGroundSemanticCell(
+  materialSemanticModel: CampaignMaterialSemanticModel,
+  cell: GridCoordinate,
+  ground: "village" | "city"
+): void {
+  const pixelX = cell.x - materialSemanticModel.minCellX;
+  const pixelY = cell.y - materialSemanticModel.minCellY;
+  if (
+    pixelX < 0 ||
+    pixelX >= materialSemanticModel.textureColumns ||
+    pixelY < 0 ||
+    pixelY >= materialSemanticModel.textureRows
+  ) {
+    return;
+  }
+
+  const cellKey = getHexCellKey(cell.x, cell.y);
+  const currentGround = materialSemanticModel.structureGroundByCellKey.get(cellKey);
+  if (currentGround === "city" && ground === "village") {
+    return;
+  }
+
+  const pixelOffset =
+    (pixelY * materialSemanticModel.textureColumns + pixelX) * 4;
+  materialSemanticModel.source.data[pixelOffset + 2] =
+    ground === "city" ? 255 : 128;
+  materialSemanticModel.structureGroundByCellKey.set(cellKey, ground);
 }
 
 function getCampaignTerrainChunkKey(chunk: CampaignTerrainChunkCoordinate): string {
@@ -3118,6 +4732,109 @@ function ensureCampaignVegetationVariantMesh(
   asset.meshPromisesById.set(variant.id, promise);
 }
 
+async function loadCampaignFortCityAsset(input: {
+  assetId: string | null;
+  rulesUrl: string | null;
+}): Promise<CampaignFortCityAsset> {
+  if (input.assetId != null) {
+    const registeredAsset = getRegisteredCampaignFortCityAsset(input.assetId);
+    if (registeredAsset != null) {
+      return createRegisteredCampaignFortCityAsset(registeredAsset);
+    }
+  }
+
+  if (input.rulesUrl == null) {
+    throw new Error("Campaign fort city asset is missing a registered asset id or rules URL.");
+  }
+
+  const rules = await loadJson<CampaignFortCityRulesDefinition>(input.rulesUrl);
+  validateCampaignFortCityRules(rules);
+  const normalizedRules: CampaignFortCityRulesAsset = {
+    ...rules,
+    variants: rules.variants.map((variant) => ({
+      ...variant,
+      meshUrl: resolveAssetUrl(variant.meshUrl, input.rulesUrl as string),
+    })),
+  };
+
+  return {
+    rules: normalizedRules,
+    meshesById: new Map(),
+    meshPromisesById: new Map(),
+    failedMeshIds: new Set(),
+  };
+}
+
+function createRegisteredCampaignFortCityAsset(
+  registeredAsset: RegisteredCampaignFortCityAsset
+): CampaignFortCityAsset {
+  validateCampaignFortCityRules(registeredAsset.rules);
+  const meshesById = new Map<string, VegetationMeshAsset>();
+
+  for (const variant of registeredAsset.rules.variants) {
+    const mesh = registeredAsset.meshesByVariantId[variant.id];
+    if (mesh == null) {
+      throw new Error(`Registered campaign fort city mesh "${variant.id}" is missing.`);
+    }
+    validateCampaignVegetationMesh(mesh);
+    meshesById.set(variant.id, createVegetationMeshAsset(mesh));
+  }
+
+  return {
+    rules: registeredAsset.rules as CampaignFortCityRulesAsset,
+    meshesById,
+    meshPromisesById: new Map(),
+    failedMeshIds: new Set(),
+  };
+}
+
+function createVegetationMeshAsset(
+  mesh: CampaignVegetationMeshDefinition
+): VegetationMeshAsset {
+  return {
+    id: mesh.id,
+    positions: new Float32Array(mesh.positions),
+    normals: new Float32Array(mesh.normals),
+    colors: new Float32Array(mesh.colors),
+    indices: new Uint32Array(mesh.indices),
+    bounds: mesh.bounds,
+  };
+}
+
+function ensureCampaignFortCityVariantMesh(
+  asset: CampaignFortCityAsset,
+  variant: CampaignFortCityRulesAsset["variants"][number],
+  onLoaded: () => void
+): void {
+  if (
+    asset.meshesById.has(variant.id) ||
+    asset.meshPromisesById.has(variant.id) ||
+    asset.failedMeshIds.has(variant.id)
+  ) {
+    return;
+  }
+
+  const promise = loadCampaignVegetationMeshAsset(variant.meshUrl)
+    .then((mesh) => {
+      asset.meshesById.set(variant.id, mesh);
+      onLoaded();
+      return mesh;
+    })
+    .catch((error: unknown) => {
+      asset.failedMeshIds.add(variant.id);
+      console.error(
+        `Failed to load campaign fort city mesh "${variant.id}".`,
+        error
+      );
+      return null;
+    })
+    .finally(() => {
+      asset.meshPromisesById.delete(variant.id);
+    });
+
+  asset.meshPromisesById.set(variant.id, promise);
+}
+
 function resolveAssetUrl(value: string, baseUrl: string): string {
   if (/^(https?:|file:|blob:|\/)/.test(value)) {
     return value;
@@ -3133,6 +4850,23 @@ function validateCampaignVegetationRules(
   }
   if (rules.environment === "" || rules.variants.length === 0) {
     throw new Error("Campaign vegetation rules must declare an environment and variants.");
+  }
+}
+
+function validateCampaignFortCityRules(
+  rules: CampaignFortCityRulesDefinition
+): void {
+  if (rules.format !== "campaign-fort-city-rules-v1") {
+    throw new Error(`Unsupported campaign fort city rules format "${rules.format}".`);
+  }
+  if (rules.variants.length === 0) {
+    throw new Error("Campaign fort city rules must declare at least one variant.");
+  }
+  if (rules.count.max < rules.count.min || rules.count.max <= 0) {
+    throw new Error("Campaign fort city rules count range is invalid.");
+  }
+  if (rules.lod.maxVisibleInstances <= 0) {
+    throw new Error("Campaign fort city rules must declare a positive visible instance limit.");
   }
 }
 
@@ -3296,6 +5030,49 @@ async function loadCampaignCityDepthMeshAsset(
   };
 }
 
+async function loadCampaignFortWallMeshAsset(
+  meshUrl: string
+): Promise<FortWallMeshAsset> {
+  const asset = await loadJson<CampaignMapNodeMeshDefinition>(meshUrl);
+  if (asset.format !== "campaign-map-node-mesh-v1") {
+    throw new Error(`Unsupported campaign map node mesh format "${asset.format}".`);
+  }
+  if (
+    asset.positions.length % 3 !== 0 ||
+    asset.normals.length !== asset.positions.length ||
+    asset.uvs.length !== (asset.positions.length / 3) * 2 ||
+    asset.indices.length % 3 !== 0
+  ) {
+    throw new Error("Campaign map node mesh arrays are inconsistent.");
+  }
+
+  const textureUrls = Array.from(
+    new Set(
+      asset.drawGroups
+        .map((drawGroup) => drawGroup.textureUrl)
+        .filter((textureUrl): textureUrl is string => textureUrl != null)
+    )
+  );
+  const texturesByUrl = new Map<string, HTMLImageElement>();
+  const absoluteMeshUrl = new URL(meshUrl, window.location.href).toString();
+  await Promise.all(
+    textureUrls.map(async (textureUrl) => {
+      const resolvedTextureUrl = new URL(textureUrl, absoluteMeshUrl).toString();
+      texturesByUrl.set(textureUrl, await loadImage(resolvedTextureUrl));
+    })
+  );
+
+  return {
+    positions: new Float32Array(asset.positions),
+    normals: new Float32Array(asset.normals),
+    uvs: new Float32Array(asset.uvs),
+    indices: new Uint32Array(asset.indices),
+    drawGroups: asset.drawGroups,
+    placement: asset.placement,
+    texturesByUrl,
+  };
+}
+
 function createCityDepthMesh(
   asset: CityDepthMeshAsset,
   sampleHeightAtUv: (u: number, v: number) => number,
@@ -3369,6 +5146,1470 @@ function createCityDepthMesh(
   };
 }
 
+function createCampaignFortWallMesh(
+  asset: FortWallMeshAsset,
+  instances: FortWallInstance[],
+  sampleHeightAtUv: (u: number, v: number) => number
+): FortWallMeshData {
+  const sourceVertexCount = asset.positions.length / 3;
+  const vertices = new Float32Array(instances.length * sourceVertexCount * 8);
+  const groupIndicesByTextureUrl = new Map<string | null, number[]>();
+  const rotation = asset.placement.rotationDegrees * Math.PI / 180;
+  const rotationCos = Math.cos(rotation);
+  const rotationSin = Math.sin(rotation);
+
+  for (let instanceIndex = 0; instanceIndex < instances.length; instanceIndex += 1) {
+    const instance = instances[instanceIndex];
+    if (instance == null) {
+      continue;
+    }
+    const terrainHeight = sampleHeightAtUv(instance.u, instance.v);
+    const center = createTerrainWorldPoint(instance.u, instance.v, terrainHeight);
+    const vertexBase = instanceIndex * sourceVertexCount;
+    const outputVertexOffset = instanceIndex * sourceVertexCount * 8;
+
+    for (let vertexIndex = 0; vertexIndex < sourceVertexCount; vertexIndex += 1) {
+      const sourcePositionOffset = vertexIndex * 3;
+      const sourceUvOffset = vertexIndex * 2;
+      const outputOffset = outputVertexOffset + vertexIndex * 8;
+      const localX =
+        (asset.positions[sourcePositionOffset] ?? 0) * asset.placement.baseWorldScale;
+      const localY =
+        (asset.positions[sourcePositionOffset + 1] ?? 0) *
+        asset.placement.baseWorldScale;
+      const rotatedX = localX * rotationCos - localY * rotationSin;
+      const rotatedY = localX * rotationSin + localY * rotationCos;
+      const normalX = asset.normals[sourcePositionOffset] ?? 0;
+      const normalY = asset.normals[sourcePositionOffset + 1] ?? 0;
+      const rotatedNormalX = normalX * rotationCos - normalY * rotationSin;
+      const rotatedNormalY = normalX * rotationSin + normalY * rotationCos;
+
+      vertices[outputOffset] =
+        center[0] + (asset.placement.offsetX ?? 0) + rotatedX;
+      vertices[outputOffset + 1] =
+        center[1] + (asset.placement.offsetY ?? 0) + rotatedY;
+      vertices[outputOffset + 2] =
+        center[2] +
+        asset.placement.lift +
+        (asset.positions[sourcePositionOffset + 2] ?? 0) * asset.placement.baseWorldScale;
+      vertices[outputOffset + 3] = rotatedNormalX;
+      vertices[outputOffset + 4] = rotatedNormalY;
+      vertices[outputOffset + 5] = asset.normals[sourcePositionOffset + 2] ?? 1;
+      vertices[outputOffset + 6] = asset.uvs[sourceUvOffset] ?? 0;
+      vertices[outputOffset + 7] = asset.uvs[sourceUvOffset + 1] ?? 0;
+    }
+
+    for (const drawGroup of asset.drawGroups) {
+      if (drawGroup.count <= 0) {
+        continue;
+      }
+
+      let indices = groupIndicesByTextureUrl.get(drawGroup.textureUrl);
+      if (indices == null) {
+        indices = [];
+        groupIndicesByTextureUrl.set(drawGroup.textureUrl, indices);
+      }
+
+      const end = drawGroup.start + drawGroup.count;
+      for (let index = drawGroup.start; index < end; index += 1) {
+        indices.push((asset.indices[index] ?? 0) + vertexBase);
+      }
+    }
+  }
+
+  const indexChunks = Array.from(groupIndicesByTextureUrl.entries())
+    .filter(([, indices]) => indices.length > 0)
+    .sort(([leftTextureUrl], [rightTextureUrl]) =>
+      String(leftTextureUrl ?? "").localeCompare(String(rightTextureUrl ?? ""))
+    );
+  const mergedIndices: number[] = [];
+  const drawGroups: FortWallMeshDrawGroup[] = [];
+  for (const [textureUrl, indices] of indexChunks) {
+    const start = mergedIndices.length;
+    for (const index of indices) {
+      mergedIndices.push(index);
+    }
+    drawGroups.push({
+      textureUrl,
+      start,
+      count: indices.length,
+    });
+  }
+
+  return {
+    vertices,
+    indices: new Uint32Array(mergedIndices),
+    drawGroups,
+  };
+}
+
+function syncCampaignMarkerLayer(input: {
+  canvas: HTMLCanvasElement;
+  materialSemanticModel: CampaignMaterialSemanticModel;
+  loadedChunkKeys: Set<string>;
+}): string {
+  const stage = input.canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  if (stage == null) {
+    return "";
+  }
+
+  const markerLayer = stage.querySelector<HTMLElement>("[data-campaign-marker-layer]");
+  if (markerLayer == null) {
+    return "";
+  }
+
+  const markers = readCampaignRuntimeMarkers(stage);
+  const visibleMarkers = markers.filter((marker) =>
+    isCampaignRuntimeMarkerInLoadedPlainTerrain({
+      marker,
+      materialSemanticModel: input.materialSemanticModel,
+      loadedChunkKeys: input.loadedChunkKeys,
+    })
+  );
+  const signature = visibleMarkers
+    .map(
+      (marker) =>
+        `${marker.id}:${marker.kind}:${marker.isRevealed ? "1" : "0"}:${marker.u.toFixed(5)}:${marker.v.toFixed(5)}`
+    )
+    .join("|");
+
+  if (markerLayer.dataset.campaignMarkerLayerSignature === signature) {
+    return signature;
+  }
+
+  syncCampaignRuntimeMarkerElements(markerLayer, visibleMarkers);
+  markerLayer.dataset.campaignMarkerLayerSignature = signature;
+  return signature;
+}
+
+function syncCampaignRuntimeMarkerElements(
+  markerLayer: HTMLElement,
+  visibleMarkers: CampaignRuntimeMarker[]
+): void {
+  const visibleMarkerIds = new Set(visibleMarkers.map((marker) => marker.id));
+  for (const markerElement of Array.from(
+    markerLayer.querySelectorAll<HTMLElement>("[data-campaign-marker-id]")
+  )) {
+    const markerId = markerElement.dataset.campaignMarkerId;
+    if (markerId != null && visibleMarkerIds.has(markerId)) {
+      continue;
+    }
+
+    const summaryElement =
+      markerId == null
+        ? null
+        : markerLayer.querySelector<HTMLElement>(
+          `[data-campaign-marker-summary-id="${escapeCssAttributeValue(markerId)}"]`
+        );
+    markerElement.remove();
+    summaryElement?.remove();
+  }
+
+  const markerElementsById = new Map<string, HTMLElement>();
+  markerLayer
+    .querySelectorAll<HTMLElement>("[data-campaign-marker-id]")
+    .forEach((element) => {
+      const markerId = element.dataset.campaignMarkerId;
+      if (markerId != null) {
+        markerElementsById.set(markerId, element);
+      }
+    });
+  const summaryElementsById = new Map<string, HTMLElement>();
+  markerLayer
+    .querySelectorAll<HTMLElement>("[data-campaign-marker-summary-id]")
+    .forEach((element) => {
+      const markerId = element.dataset.campaignMarkerSummaryId;
+      if (markerId != null) {
+        summaryElementsById.set(markerId, element);
+      }
+    });
+
+  for (const marker of visibleMarkers) {
+    const renderedElements = createCampaignRuntimeMarkerElements(marker);
+    let markerElement = markerElementsById.get(marker.id) ?? null;
+    let summaryElement = summaryElementsById.get(marker.id) ?? null;
+
+    if (markerElement == null) {
+      markerElement = renderedElements.markerElement;
+    } else {
+      syncCampaignRuntimeMarkerElement(
+        markerElement,
+        renderedElements.markerElement
+      );
+    }
+
+    if (summaryElement == null) {
+      summaryElement = renderedElements.summaryElement;
+    } else {
+      syncCampaignRuntimeMarkerElement(
+        summaryElement,
+        renderedElements.summaryElement
+      );
+    }
+
+    markerLayer.append(markerElement, summaryElement);
+  }
+}
+
+function createCampaignRuntimeMarkerElements(marker: CampaignRuntimeMarker): {
+  markerElement: HTMLElement;
+  summaryElement: HTMLElement;
+} {
+  const template = document.createElement("template");
+  template.innerHTML = renderCampaignRuntimeMarker(marker);
+  const markerElement = template.content.querySelector<HTMLElement>(
+    "[data-campaign-marker-id]"
+  );
+  const summaryElement = template.content.querySelector<HTMLElement>(
+    "[data-campaign-marker-summary-id]"
+  );
+  if (markerElement == null || summaryElement == null) {
+    throw new Error("Failed to render campaign runtime marker elements.");
+  }
+
+  return {
+    markerElement,
+    summaryElement,
+  };
+}
+
+function syncCampaignRuntimeMarkerElement(
+  preservedElement: HTMLElement,
+  replacementElement: HTMLElement
+): void {
+  const dynamicProjectionAttributes = new Set([
+    "style",
+    "hidden",
+    "data-terrain-projection-ready",
+  ]);
+
+  for (const attribute of Array.from(preservedElement.attributes)) {
+    if (dynamicProjectionAttributes.has(attribute.name)) {
+      continue;
+    }
+    if (!replacementElement.hasAttribute(attribute.name)) {
+      preservedElement.removeAttribute(attribute.name);
+    }
+  }
+
+  for (const attribute of Array.from(replacementElement.attributes)) {
+    if (dynamicProjectionAttributes.has(attribute.name)) {
+      continue;
+    }
+    preservedElement.setAttribute(attribute.name, attribute.value);
+  }
+
+  if (preservedElement.dataset.campaignMarkerContentSignature !==
+    replacementElement.dataset.campaignMarkerContentSignature) {
+    preservedElement.innerHTML = replacementElement.innerHTML;
+  }
+}
+
+function isCampaignRuntimeMarkerInLoadedPlainTerrain(input: {
+  marker: CampaignRuntimeMarker;
+  materialSemanticModel: CampaignMaterialSemanticModel;
+  loadedChunkKeys: Set<string>;
+}): boolean {
+  if (!Number.isFinite(input.marker.u) || !Number.isFinite(input.marker.v)) {
+    return false;
+  }
+
+  const hexCell = getCampaignTerrainHexCellAtUv(input.marker.u, input.marker.v);
+  const chunkKey = getCampaignTerrainChunkKey(
+    getCampaignTerrainChunkForHexCell(hexCell)
+  );
+  return (
+    input.loadedChunkKeys.has(chunkKey) &&
+    isPlainTerrainHexCell(input.materialSemanticModel, hexCell)
+  );
+}
+
+function readCampaignRuntimeMarkers(stage: HTMLElement): CampaignRuntimeMarker[] {
+  const sourceElement = stage.querySelector<HTMLScriptElement>(
+    "script[data-campaign-marker-source]"
+  );
+  if (sourceElement == null) {
+    return [];
+  }
+
+  const cachedMarkers = campaignMarkerSourceCache.get(sourceElement);
+  if (cachedMarkers != null) {
+    return cachedMarkers;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(sourceElement.textContent ?? "[]");
+  } catch (error) {
+    console.error("Failed to parse campaign marker source.", error);
+    campaignMarkerSourceCache.set(sourceElement, []);
+    return [];
+  }
+
+  const markers = Array.isArray(parsed)
+    ? parsed.filter(isCampaignRuntimeMarker)
+    : [];
+  campaignMarkerSourceCache.set(sourceElement, markers);
+  return markers;
+}
+
+function isCampaignRuntimeMarker(value: unknown): value is CampaignRuntimeMarker {
+  if (value == null || typeof value !== "object") {
+    return false;
+  }
+
+  const marker = value as Partial<CampaignRuntimeMarker>;
+  return (
+    typeof marker.id === "string" &&
+    (typeof marker.cityId === "string" || marker.cityId == null) &&
+    typeof marker.name === "string" &&
+    Number.isFinite(marker.x) &&
+    Number.isFinite(marker.y) &&
+    (marker.kind === "city" ||
+      marker.kind === "settlement" ||
+      marker.kind === "fort" ||
+      marker.kind === "landmark") &&
+    typeof marker.summary === "string" &&
+    typeof marker.isRevealed === "boolean" &&
+    Number.isFinite(marker.left) &&
+    Number.isFinite(marker.bottom) &&
+    Number.isFinite(marker.u) &&
+    Number.isFinite(marker.v)
+  );
+}
+
+function renderCampaignRuntimeMarker(marker: CampaignRuntimeMarker): string {
+  const displayName = getCampaignMarkerDisplayName(marker.name);
+  const markerName = escapeHtml(marker.name);
+  const markerSummary = escapeHtml(marker.summary);
+  const contentSignature = escapeHtml(getCampaignRuntimeMarkerContentSignature(marker));
+  const markerPositionStyle =
+    `--marker-left:${marker.left.toFixed(3)}%; --marker-bottom:${marker.bottom.toFixed(3)}%;`;
+  const markerInteractionAttributes = marker.isRevealed
+    ? `
+          data-map-node-id="${escapeHtml(marker.id)}"
+          data-map-node-name="${markerName}"
+          title="${markerName} (${marker.x}, ${marker.y})"
+        `
+    : `
+          disabled
+          aria-hidden="true"
+          tabindex="-1"
+          data-map-node-revealed="false"
+        `;
+  const markerProjectionAttributes = `
+          data-terrain-projected-point="true"
+          data-map-height-u="${marker.u.toFixed(5)}"
+          data-map-height-v="${marker.v.toFixed(5)}"
+        `;
+
+  return `
+        <button
+          class="c-campaign-marker ${getCampaignMarkerClass(marker.kind)}"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
+          data-campaign-marker-id="${escapeHtml(marker.id)}"
+          data-campaign-marker-content-signature="${contentSignature}"
+          data-map-x="${marker.x}"
+          data-map-y="${marker.y}"
+          data-city-id="${escapeHtml(marker.cityId ?? "")}"
+          ${markerInteractionAttributes}
+        >
+          <span class="c-campaign-marker__dot"></span>
+          <span class="c-campaign-marker__label">${escapeHtml(displayName)}</span>
+        </button>
+        <span
+          class="c-campaign-marker__summary"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
+          data-campaign-marker-summary-id="${escapeHtml(marker.id)}"
+          data-campaign-marker-content-signature="${contentSignature}"
+          aria-hidden="true"
+          data-map-node-revealed="${marker.isRevealed ? "true" : "false"}"
+        >
+          <strong>${markerName}</strong>
+          ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
+          ${renderCampaignRuntimeMarkerHistoricalCharacters(marker)}
+        </span>
+      `;
+}
+
+function getCampaignRuntimeMarkerContentSignature(
+  marker: CampaignRuntimeMarker
+): string {
+  return JSON.stringify({
+    name: marker.name,
+    kind: marker.kind,
+    summary: marker.summary,
+    isRevealed: marker.isRevealed,
+    historicalCharacters: marker.historicalCharacters,
+  });
+}
+
+function getCampaignMarkerClass(kind: CampaignRuntimeMarker["kind"]): string {
+  if (kind === "fort") {
+    return "c-campaign-marker--fort";
+  }
+
+  if (kind === "settlement" || kind === "city") {
+    return "c-campaign-marker--settlement";
+  }
+
+  return "c-campaign-marker--landmark";
+}
+
+function getCampaignMarkerDisplayName(name: string): string {
+  const markerIndex = Math.max(
+    name.lastIndexOf("\u2605"),
+    name.lastIndexOf("\u203b"),
+    name.lastIndexOf("\u25cf")
+  );
+  if (markerIndex >= 0) {
+    return name.slice(markerIndex + 1).trim();
+  }
+
+  return name.replace(/^\u3010(.+)\u3011$/, "$1");
+}
+
+function renderCampaignRuntimeMarkerHistoricalCharacters(
+  marker: CampaignRuntimeMarker
+): string {
+  if (marker.historicalCharacters == null) {
+    return "";
+  }
+
+  const characterGroups = [
+    renderCampaignRuntimeMarkerCharacterGroup(
+      "Primary: ",
+      marker.historicalCharacters.primary
+    ),
+    renderCampaignRuntimeMarkerCharacterGroup(
+      "Related: ",
+      marker.historicalCharacters.secondary
+    ),
+    renderCampaignRuntimeMarkerCharacterGroup(
+      "Background: ",
+      marker.historicalCharacters.background
+    ),
+  ]
+    .filter((item) => item !== "")
+    .join("");
+  const notes =
+    marker.historicalCharacters.notes === ""
+      ? ""
+      : `<span><b>Notes: </b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
+
+  return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
+}
+
+function renderCampaignRuntimeMarkerCharacterGroup(
+  label: string,
+  names: string[]
+): string {
+  if (names.length === 0) {
+    return "";
+  }
+
+  return `<span><b>${label}</b>${names.map(escapeHtml).join(" / ")}</span>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function escapeCssAttributeValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+}
+
+function readCampaignFortWallInstances(
+  canvas: HTMLCanvasElement,
+  loadedChunkKeys: Set<string>,
+  rules: CampaignFortCityRulesAsset | null
+): FortWallInstance[] {
+  const stage = canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  if (stage == null || loadedChunkKeys.size === 0) {
+    return [];
+  }
+
+  const fortifiedNodeIds = new Set(rules?.fortifiedNodeIds ?? []);
+  const instancesByHexKey = new Map<string, FortWallInstance>();
+  for (const marker of stage.querySelectorAll<HTMLElement>(
+    "[data-campaign-marker-id][data-map-height-u][data-map-height-v]"
+  )) {
+    const markerId = marker.dataset.campaignMarkerId;
+    const isFortMarker = marker.classList.contains("c-campaign-marker--fort");
+    if (!isFortMarker && (markerId == null || !fortifiedNodeIds.has(markerId))) {
+      continue;
+    }
+
+    const u = Number(marker.dataset.mapHeightU);
+    const v = Number(marker.dataset.mapHeightV);
+    if (!Number.isFinite(u) || !Number.isFinite(v)) {
+      continue;
+    }
+
+    const hexCell = getCampaignTerrainHexCellAtUv(u, v);
+    const chunkKey = getCampaignTerrainChunkKey(
+      getCampaignTerrainChunkForHexCell(hexCell)
+    );
+    if (!loadedChunkKeys.has(chunkKey)) {
+      continue;
+    }
+
+    const center = hexToPixel(hexCell.x, hexCell.y);
+    const instance = {
+      u: hexPointToTerrainU(center.x),
+      v: hexPointToTerrainV(center.y),
+      key: getHexCellKey(hexCell.x, hexCell.y),
+      x: hexCell.x,
+      y: hexCell.y,
+    };
+    instancesByHexKey.set(instance.key, instance);
+  }
+
+  return Array.from(instancesByHexKey.values()).sort((left, right) =>
+    left.key.localeCompare(right.key)
+  );
+}
+
+function getCampaignSettlementVillageRules(
+  rules: CampaignFortCityRulesAsset
+): CampaignSettlementVillageRulesAsset | null {
+  if (rules.settlementVillage == null) {
+    return null;
+  }
+
+  return {
+    ...rules.settlementVillage,
+    variants: rules.variants,
+  };
+}
+
+function readCampaignSettlementVillageInstances(input: {
+  canvas: HTMLCanvasElement;
+  loadedChunkKeys: Set<string>;
+  materialSemanticModel: CampaignMaterialSemanticModel;
+  cityHexKeys: Set<string>;
+  rules: CampaignFortCityRulesAsset | null;
+}): FortCityInstance[] {
+  const stage = input.canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  if (stage == null || input.loadedChunkKeys.size === 0) {
+    return [];
+  }
+
+  const fortifiedNodeIds = new Set(input.rules?.fortifiedNodeIds ?? []);
+  const cityHexKeys = new Set(input.cityHexKeys);
+  const markers = readCampaignRuntimeMarkers(stage);
+
+  for (const marker of markers) {
+    if (
+      marker.kind !== "city" &&
+      marker.kind !== "fort" &&
+      !fortifiedNodeIds.has(marker.id)
+    ) {
+      continue;
+    }
+
+    const cell = getCampaignTerrainHexCellAtUv(marker.u, marker.v);
+    cityHexKeys.add(getHexCellKey(cell.x, cell.y));
+  }
+
+  const instancesByHexKey = new Map<string, FortCityInstance>();
+  for (const marker of markers) {
+    if (marker.kind !== "settlement" || fortifiedNodeIds.has(marker.id)) {
+      continue;
+    }
+
+    const hexCell = getCampaignTerrainHexCellAtUv(marker.u, marker.v);
+    const hexKey = getHexCellKey(hexCell.x, hexCell.y);
+    if (
+      cityHexKeys.has(hexKey) ||
+      !isPlainTerrainHexCell(input.materialSemanticModel, hexCell)
+    ) {
+      continue;
+    }
+
+    const chunkKey = getCampaignTerrainChunkKey(
+      getCampaignTerrainChunkForHexCell(hexCell)
+    );
+    if (!input.loadedChunkKeys.has(chunkKey)) {
+      continue;
+    }
+
+    const center = hexToPixel(hexCell.x, hexCell.y);
+    instancesByHexKey.set(hexKey, {
+      u: hexPointToTerrainU(center.x),
+      v: hexPointToTerrainV(center.y),
+      key: hexKey,
+      x: hexCell.x,
+      y: hexCell.y,
+    });
+  }
+
+  return Array.from(instancesByHexKey.values()).sort((left, right) =>
+    left.key.localeCompare(right.key)
+  );
+}
+
+function getCampaignFortWallMeshSignature(
+  instances: FortWallInstance[]
+): string {
+  return instances.map((instance) => instance.key).join(",");
+}
+
+function createCampaignFortCityFortAllocations(
+  fortInstances: FortCityInstance[],
+  rules: CampaignStructureBuildingRulesAsset,
+  matrix: Mat4,
+  sampleHeightAtUv: (u: number, v: number) => number
+): CampaignFortCityFortAllocation[] {
+  const visibleForts = fortInstances
+    .map((fort): CampaignFortCityVisibleFort | null => {
+      const visibility = getCampaignFortCityVisibility(
+        fort,
+        matrix,
+        sampleHeightAtUv
+      );
+      if (visibility == null) {
+        return null;
+      }
+
+      return {
+        fort,
+        targetCount: getCampaignFortCityTargetCount(fort, rules),
+        priority: visibility.priority,
+      };
+    })
+    .filter((item): item is CampaignFortCityVisibleFort => item != null);
+  const totalTargetCount = visibleForts.reduce(
+    (sum, item) => sum + item.targetCount,
+    0
+  );
+  const budget = Math.min(
+    Math.max(Math.floor(rules.lod.maxVisibleInstances), 0),
+    totalTargetCount
+  );
+  if (budget <= 0) {
+    return [];
+  }
+
+  const sortedForts = visibleForts.sort(
+    (left, right) =>
+      seededRandom01(left.fort.x, left.fort.y, 631) -
+        seededRandom01(right.fort.x, right.fort.y, 631) ||
+      left.priority - right.priority
+  );
+  if (budget < sortedForts.length) {
+    return sortedForts.slice(0, budget).map((item) => ({
+      fort: item.fort,
+      count: 1,
+      targetCount: item.targetCount,
+    }));
+  }
+
+  const allocations = sortedForts.map((item) => ({
+    item,
+    count: 1,
+    remainder: 0,
+  }));
+  const extraBudget = budget - allocations.length;
+  const totalExtraTarget = allocations.reduce(
+    (sum, allocation) => sum + Math.max(allocation.item.targetCount - 1, 0),
+    0
+  );
+  let assignedExtra = 0;
+
+  if (extraBudget > 0 && totalExtraTarget > 0) {
+    for (const allocation of allocations) {
+      const rawExtra =
+        (Math.max(allocation.item.targetCount - 1, 0) / totalExtraTarget) *
+        extraBudget;
+      const extra = Math.min(
+        Math.floor(rawExtra),
+        Math.max(allocation.item.targetCount - allocation.count, 0)
+      );
+      allocation.count += extra;
+      allocation.remainder = rawExtra - extra;
+      assignedExtra += extra;
+    }
+
+    allocations
+      .filter((allocation) => allocation.count < allocation.item.targetCount)
+      .sort(
+        (left, right) =>
+          right.remainder - left.remainder ||
+          seededRandom01(left.item.fort.x, left.item.fort.y, 647) -
+            seededRandom01(right.item.fort.x, right.item.fort.y, 647)
+      )
+      .slice(0, extraBudget - assignedExtra)
+      .forEach((allocation) => {
+        allocation.count += 1;
+      });
+  }
+
+  return allocations
+    .filter((allocation) => allocation.count > 0)
+    .map((allocation) => ({
+      fort: allocation.item.fort,
+      count: allocation.count,
+      targetCount: allocation.item.targetCount,
+    }));
+}
+
+function getCampaignFortCityVisibility(
+  fort: FortCityInstance,
+  matrix: Mat4,
+  sampleHeightAtUv: (u: number, v: number) => number
+): { priority: number } | null {
+  const height = sampleHeightAtUv(fort.u, fort.v);
+  const screenPoint = projectPoint(matrix, createTerrainWorldPoint(fort.u, fort.v, height));
+  const isVisible =
+    screenPoint.w > 0 &&
+    screenPoint.z >= -1.45 &&
+    screenPoint.z <= 1.45 &&
+    screenPoint.x >= -1.65 &&
+    screenPoint.x <= 1.65 &&
+    screenPoint.y >= -1.65 &&
+    screenPoint.y <= 1.65;
+  if (!isVisible) {
+    return null;
+  }
+
+  return {
+    priority: Math.hypot(screenPoint.x, screenPoint.y),
+  };
+}
+
+function getCampaignFortCityTargetCount(
+  fort: FortCityInstance,
+  rules: CampaignStructureBuildingRulesAsset
+): number {
+  const min = Math.max(Math.floor(rules.count.min), 0);
+  const max = Math.max(Math.floor(rules.count.max), min);
+  return min + Math.floor(seededRandom01(fort.x, fort.y, 503) * (max - min + 1));
+}
+
+function createCampaignFortCityBuildingInstances(input: {
+  asset: CampaignFortCityAsset;
+  rules: CampaignStructureBuildingRulesAsset;
+  fortInstances: FortCityInstance[];
+  matrix: Mat4;
+  sampleHeightAtUv: (u: number, v: number) => number;
+  onVariantMeshNeeded: (
+    variant: CampaignFortCityRulesAsset["variants"][number]
+  ) => void;
+  cacheKind?: CampaignStructureBuildingCacheKind;
+  structureBuildingCache?: CampaignStructureBuildingCache;
+}): CampaignFortCityBuildingInstance[] {
+  const rules = input.rules;
+  const instances: CampaignFortCityBuildingInstance[] = [];
+  const maxAttemptsPerBuilding = Math.max(
+    Math.floor(rules.placement.maxAttemptsPerBuilding),
+    1
+  );
+  const allocations = createCampaignFortCityFortAllocations(
+    input.fortInstances,
+    rules,
+    input.matrix,
+    input.sampleHeightAtUv
+  );
+  const rulesSignature =
+    input.structureBuildingCache == null
+      ? ""
+      : getCampaignStructureBuildingRulesSignature(rules);
+  const meshReadinessSignature =
+    input.structureBuildingCache == null
+      ? ""
+      : getCampaignFortCityVariantMeshReadinessSignature(input.asset, rules);
+
+  for (const allocation of allocations) {
+    const cellInstances =
+      input.cacheKind == null || input.structureBuildingCache == null
+        ? createCampaignFortCityBuildingInstancesForFort({
+          asset: input.asset,
+          rules,
+          fort: allocation.fort,
+          targetCount: allocation.targetCount,
+          maxAttemptsPerBuilding,
+          onVariantMeshNeeded: input.onVariantMeshNeeded,
+        })
+        : getCachedCampaignFortCityBuildingInstancesForFort({
+          asset: input.asset,
+          rules,
+          fort: allocation.fort,
+          targetCount: allocation.targetCount,
+          maxAttemptsPerBuilding,
+          onVariantMeshNeeded: input.onVariantMeshNeeded,
+          cacheKind: input.cacheKind,
+          structureBuildingCache: input.structureBuildingCache,
+          rulesSignature,
+          meshReadinessSignature,
+        });
+    instances.push(...cellInstances.slice(0, allocation.count));
+  }
+
+  return instances;
+}
+
+function getCachedCampaignFortCityBuildingInstancesForFort(input: {
+  asset: CampaignFortCityAsset;
+  rules: CampaignStructureBuildingRulesAsset;
+  fort: FortCityInstance;
+  targetCount: number;
+  maxAttemptsPerBuilding: number;
+  onVariantMeshNeeded: (
+    variant: CampaignFortCityRulesAsset["variants"][number]
+  ) => void;
+  cacheKind: CampaignStructureBuildingCacheKind;
+  structureBuildingCache: CampaignStructureBuildingCache;
+  rulesSignature: string;
+  meshReadinessSignature: string;
+}): CampaignFortCityBuildingInstance[] {
+  const chunkKey = getCampaignTerrainChunkKey(
+    getCampaignTerrainChunkForHexCell({
+      x: input.fort.x,
+      y: input.fort.y,
+    })
+  );
+  const cellKey = `${input.cacheKind}:${input.fort.key}`;
+  const signature = [
+    input.cacheKind,
+    input.fort.key,
+    input.targetCount,
+    input.rulesSignature,
+    input.meshReadinessSignature,
+  ].join("|");
+  let chunkCache = input.structureBuildingCache.get(chunkKey);
+  if (chunkCache == null) {
+    chunkCache = new Map();
+    input.structureBuildingCache.set(chunkKey, chunkCache);
+  }
+  const cached = chunkCache.get(cellKey);
+  if (cached != null && cached.signature === signature) {
+    return cached.instances;
+  }
+
+  const instances = createCampaignFortCityBuildingInstancesForFort({
+    asset: input.asset,
+    rules: input.rules,
+    fort: input.fort,
+    targetCount: input.targetCount,
+    maxAttemptsPerBuilding: input.maxAttemptsPerBuilding,
+    onVariantMeshNeeded: input.onVariantMeshNeeded,
+  });
+  chunkCache.set(cellKey, {
+    signature,
+    instances,
+  });
+  return instances;
+}
+
+function createCampaignFortCityBuildingInstancesForFort(input: {
+  asset: CampaignFortCityAsset;
+  rules: CampaignStructureBuildingRulesAsset;
+  fort: FortCityInstance;
+  targetCount: number;
+  maxAttemptsPerBuilding: number;
+  onVariantMeshNeeded: (
+    variant: CampaignFortCityRulesAsset["variants"][number]
+  ) => void;
+}): CampaignFortCityBuildingInstance[] {
+  const instances: CampaignFortCityBuildingInstance[] = [];
+  const fortCenter = hexToPixel(input.fort.x, input.fort.y);
+  const accepted: CampaignFortCityAcceptedPoint[] = [];
+  const variantUsage = new Map<string, number>();
+
+  for (let slotIndex = 0; slotIndex < input.targetCount; slotIndex += 1) {
+    let placedInstance: {
+      instance: CampaignFortCityBuildingInstance;
+      point: CampaignFortCityAcceptedPoint;
+    } | null = null;
+    const variantAttempts = getCampaignFortCityVariantAttemptOrder({
+      rules: input.rules,
+      fort: input.fort,
+      slotIndex,
+      variantUsage,
+    });
+
+    for (const variant of variantAttempts) {
+      placedInstance = createCampaignFortCityBuildingInstance({
+        asset: input.asset,
+        rules: input.rules,
+        fort: input.fort,
+        fortCenter,
+        accepted,
+        slotIndex,
+        variant,
+        maxAttemptCount: input.maxAttemptsPerBuilding,
+        onVariantMeshNeeded: input.onVariantMeshNeeded,
+      });
+      if (placedInstance != null) {
+        break;
+      }
+    }
+
+    if (placedInstance != null) {
+      instances.push(placedInstance.instance);
+      accepted.push(placedInstance.point);
+      variantUsage.set(
+        placedInstance.instance.variant.id,
+        (variantUsage.get(placedInstance.instance.variant.id) ?? 0) + 1
+      );
+    }
+  }
+
+  return instances;
+}
+
+function createCampaignFortCityBuildingInstance(input: {
+  asset: CampaignFortCityAsset;
+  rules: CampaignStructureBuildingRulesAsset;
+  fort: FortCityInstance;
+  fortCenter: { x: number; y: number };
+  accepted: CampaignFortCityAcceptedPoint[];
+  slotIndex: number;
+  variant: CampaignFortCityRulesAsset["variants"][number];
+  maxAttemptCount: number;
+  onVariantMeshNeeded: (
+    variant: CampaignFortCityRulesAsset["variants"][number]
+  ) => void;
+}): {
+  instance: CampaignFortCityBuildingInstance;
+  point: CampaignFortCityAcceptedPoint;
+} | null {
+  const variant = input.variant;
+  const placement = getCampaignFortCityVariantPlacement(input.rules, variant);
+  const scale =
+    placement.scaleMin +
+    seededRandom01(
+      input.fort.x,
+      input.fort.y,
+      587 + input.slotIndex * 67
+    ) *
+      Math.max(placement.scaleMax - placement.scaleMin, 0);
+  const footprintRadius = placement.footprintRadius * Math.max(scale, 0.01);
+  const point = getCampaignFortCityBestCandidatePoint({
+    rules: input.rules,
+    fort: input.fort,
+    fortCenter: input.fortCenter,
+    accepted: input.accepted,
+    slotIndex: input.slotIndex,
+    maxAttemptCount: input.maxAttemptCount,
+    footprintRadius,
+  });
+
+  if (point == null) {
+    return null;
+  }
+
+  const mesh = input.asset.meshesById.get(variant.id) ?? null;
+  if (mesh == null) {
+    input.onVariantMeshNeeded(variant);
+  }
+  const instance: CampaignFortCityBuildingInstance = {
+    mesh,
+    variant,
+    u: hexPointToTerrainU(point.x),
+    v: hexPointToTerrainV(point.y),
+    rotation:
+      seededRandom01(
+        input.fort.x,
+        input.fort.y,
+        601 + input.slotIndex * 71
+      ) *
+      Math.PI *
+      2,
+    scale,
+    colorJitter:
+      0.92 +
+      seededRandom01(
+        input.fort.x,
+        input.fort.y,
+        617 + input.slotIndex * 73
+      ) *
+        0.16,
+    footprintRadius,
+  };
+
+  return {
+    instance,
+    point: {
+      x: point.x,
+      y: point.y,
+      radius: instance.footprintRadius,
+    },
+  };
+}
+
+function getCampaignFortCityBestCandidatePoint(input: {
+  rules: CampaignStructureBuildingRulesAsset;
+  fort: FortCityInstance;
+  fortCenter: { x: number; y: number };
+  accepted: CampaignFortCityAcceptedPoint[];
+  slotIndex: number;
+  maxAttemptCount: number;
+  footprintRadius: number;
+}): { x: number; y: number } | null {
+  const availableRadius = Math.max(
+    input.rules.placement.outerRadius - input.footprintRadius,
+    input.rules.placement.innerRadius
+  );
+  let bestPoint: { x: number; y: number } | null = null;
+  let bestScore = Number.NEGATIVE_INFINITY;
+
+  for (let attemptIndex = 0; attemptIndex < input.maxAttemptCount; attemptIndex += 1) {
+    const point = getCampaignFortCityBuildingCandidatePoint({
+      fort: input.fort,
+      fortCenter: input.fortCenter,
+      slotIndex: input.slotIndex,
+      attemptIndex,
+      radius: availableRadius,
+    });
+    const score =
+      input.accepted.length === 0
+        ? 0
+        : Math.min(
+            ...input.accepted.map(
+              (item) =>
+                getDistance(point, item) -
+                item.radius -
+                input.footprintRadius -
+                input.rules.placement.minSpacing
+            )
+          );
+
+    if (score >= 0 && (bestPoint == null || score > bestScore)) {
+      bestPoint = point;
+      bestScore = score;
+      if (input.accepted.length === 0) {
+        break;
+      }
+    }
+  }
+
+  return bestPoint;
+}
+
+function getCampaignFortCityBuildingCandidatePoint(input: {
+  fort: FortCityInstance;
+  fortCenter: { x: number; y: number };
+  slotIndex: number;
+  attemptIndex: number;
+  radius: number;
+}): { x: number; y: number } {
+  for (let retryIndex = 0; retryIndex < 8; retryIndex += 1) {
+    const seedBase =
+      661 + input.slotIndex * 97 + input.attemptIndex * 43 + retryIndex * 17;
+    const localX =
+      (seededRandom01(input.fort.x, input.fort.y, seedBase) * 2 - 1) *
+      input.radius *
+      (Math.sqrt(3) / 2);
+    const localY =
+      (seededRandom01(input.fort.x, input.fort.y, seedBase + 7) * 2 - 1) *
+      input.radius;
+
+    if (isPointInsideCampaignFortCityHex(localX, localY, input.radius)) {
+      return {
+        x: input.fortCenter.x + localX,
+        y: input.fortCenter.y + localY,
+      };
+    }
+  }
+
+  const fallbackAngle =
+    seededRandom01(input.fort.x, input.fort.y, 673 + input.slotIndex * 101) *
+    Math.PI *
+    2;
+  const fallbackRadius =
+    Math.sqrt(
+      seededRandom01(
+        input.fort.x,
+        input.fort.y,
+        677 + input.slotIndex * 103 + input.attemptIndex * 47
+      )
+    ) *
+    input.radius *
+    0.86;
+
+  return {
+    x: input.fortCenter.x + Math.cos(fallbackAngle) * fallbackRadius,
+    y: input.fortCenter.y + Math.sin(fallbackAngle) * fallbackRadius,
+  };
+}
+
+function isPointInsideCampaignFortCityHex(
+  x: number,
+  y: number,
+  radius: number
+): boolean {
+  return (
+    Math.abs(y) <= radius &&
+    Math.abs(Math.sqrt(3) * x + y) <= 2 * radius &&
+    Math.abs(Math.sqrt(3) * x - y) <= 2 * radius
+  );
+}
+
+function createCampaignFortStructureAvoidancePoints(
+  fortInstances: FortCityInstance[],
+  buildingInstances: CampaignFortCityBuildingInstance[],
+  rules: CampaignFortCityRulesAsset | null
+): CampaignVegetationAvoidancePoint[] {
+  const wallRadius = rules?.avoidance.wallRadius ?? 0.64;
+  const buildingRadiusPadding = rules?.avoidance.buildingRadiusPadding ?? 0.08;
+
+  return [
+    ...fortInstances.map((instance) => ({
+      u: instance.u,
+      v: instance.v,
+      radius: wallRadius,
+    })),
+    ...buildingInstances.map((instance) => ({
+      u: instance.u,
+      v: instance.v,
+      radius: instance.footprintRadius + buildingRadiusPadding,
+    })),
+  ];
+}
+
+function getCampaignFortCityMeshSignature(
+  instances: CampaignFortCityBuildingInstance[]
+): string {
+  return instances
+    .map(
+      (instance) =>
+        [
+          instance.variant.id,
+          instance.mesh == null ? "pending" : "ready",
+          instance.u.toFixed(4),
+          instance.v.toFixed(4),
+          instance.rotation.toFixed(3),
+          instance.scale.toFixed(3),
+        ].join(":")
+    )
+    .join("|");
+}
+
+function getCampaignStructureBuildingRulesSignature(
+  rules: CampaignStructureBuildingRulesAsset
+): string {
+  return JSON.stringify({
+    count: rules.count,
+    placement: rules.placement,
+    variants: rules.variants.map((variant) => ({
+      id: variant.id,
+      weight: variant.weight,
+      placement: variant.placement ?? null,
+    })),
+  });
+}
+
+function getCampaignFortCityVariantMeshReadinessSignature(
+  asset: CampaignFortCityAsset,
+  rules: CampaignStructureBuildingRulesAsset
+): string {
+  return rules.variants
+    .map((variant) => `${variant.id}:${asset.meshesById.has(variant.id) ? 1 : 0}`)
+    .join(",");
+}
+
+function createCampaignFortCityInstancedRenderModel(input: {
+  instances: CampaignFortCityBuildingInstance[];
+  sampleHeightAtUv: (u: number, v: number) => number;
+  rules: CampaignStructureBuildingRulesAsset;
+  signature: string;
+}): CampaignFortCityInstancedRenderModel {
+  const groupedInstances = new Map<
+    string,
+    {
+      mesh: VegetationMeshAsset;
+      variant: CampaignFortCityRulesAsset["variants"][number];
+      instances: CampaignFortCityBuildingInstance[];
+    }
+  >();
+  for (const instance of input.instances) {
+    if (instance.mesh == null) {
+      continue;
+    }
+    const group = groupedInstances.get(instance.variant.id);
+    if (group == null) {
+      groupedInstances.set(instance.variant.id, {
+        mesh: instance.mesh,
+        variant: instance.variant,
+        instances: [instance],
+      });
+      continue;
+    }
+
+    group.instances.push(instance);
+  }
+
+  const batches = Array.from(groupedInstances.values())
+    .sort((left, right) => left.variant.id.localeCompare(right.variant.id))
+    .map((group): CampaignFortCityInstancedBatch => {
+      const instanceData = new Float32Array(group.instances.length * 8);
+      const placement = getCampaignFortCityVariantPlacement(
+        input.rules,
+        group.variant
+      );
+      for (let index = 0; index < group.instances.length; index += 1) {
+        const instance = group.instances[index];
+        if (instance == null) {
+          continue;
+        }
+        const height = input.sampleHeightAtUv(instance.u, instance.v);
+        const center = createTerrainWorldPoint(instance.u, instance.v, height);
+        const outputOffset = index * 8;
+        instanceData[outputOffset] = center[0];
+        instanceData[outputOffset + 1] = center[1];
+        instanceData[outputOffset + 2] = center[2];
+        instanceData[outputOffset + 3] = Math.cos(instance.rotation);
+        instanceData[outputOffset + 4] = Math.sin(instance.rotation);
+        instanceData[outputOffset + 5] = placement.baseWorldScale * instance.scale;
+        instanceData[outputOffset + 6] = placement.lift;
+        instanceData[outputOffset + 7] = instance.colorJitter;
+      }
+
+      return {
+        mesh: group.mesh,
+        variant: group.variant,
+        instances: group.instances,
+        instanceData,
+      };
+    });
+
+  return {
+    signature: input.signature,
+    batches,
+    instanceCount: batches.reduce(
+      (sum, batch) => sum + batch.instances.length,
+      0
+    ),
+  };
+}
+
+function getOrCreateCampaignFortCityInstancedVariantResource(input: {
+  gl: WebGLRenderingContext;
+  resourcesById: Map<string, CampaignFortCityInstancedVariantResource>;
+  mesh: VegetationMeshAsset;
+}): CampaignFortCityInstancedVariantResource | null {
+  const cached = input.resourcesById.get(input.mesh.id);
+  if (cached != null && cached.mesh === input.mesh) {
+    return cached;
+  }
+  if (cached != null) {
+    input.gl.deleteBuffer(cached.vertexBuffer);
+    input.gl.deleteBuffer(cached.indexBuffer);
+    input.resourcesById.delete(input.mesh.id);
+  }
+
+  const vertexBuffer = input.gl.createBuffer();
+  const indexBuffer = input.gl.createBuffer();
+  if (vertexBuffer == null || indexBuffer == null) {
+    if (vertexBuffer != null) {
+      input.gl.deleteBuffer(vertexBuffer);
+    }
+    if (indexBuffer != null) {
+      input.gl.deleteBuffer(indexBuffer);
+    }
+    return null;
+  }
+
+  input.gl.bindBuffer(input.gl.ARRAY_BUFFER, vertexBuffer);
+  input.gl.bufferData(
+    input.gl.ARRAY_BUFFER,
+    createCampaignFortCityInstancedVariantVertices(input.mesh),
+    input.gl.STATIC_DRAW
+  );
+  input.gl.bindBuffer(input.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  input.gl.bufferData(
+    input.gl.ELEMENT_ARRAY_BUFFER,
+    input.mesh.indices,
+    input.gl.STATIC_DRAW
+  );
+
+  const resource: CampaignFortCityInstancedVariantResource = {
+    mesh: input.mesh,
+    vertexBuffer,
+    indexBuffer,
+    indexCount: input.mesh.indices.length,
+  };
+  input.resourcesById.set(input.mesh.id, resource);
+  return resource;
+}
+
+function createCampaignFortCityInstancedVariantVertices(
+  mesh: VegetationMeshAsset
+): Float32Array {
+  const sourceVertexCount = mesh.positions.length / 3;
+  const vertices = new Float32Array(sourceVertexCount * 9);
+  for (let sourceVertexIndex = 0; sourceVertexIndex < sourceVertexCount; sourceVertexIndex += 1) {
+    const sourceOffset = sourceVertexIndex * 3;
+    const outputOffset = sourceVertexIndex * 9;
+    vertices[outputOffset] = mesh.positions[sourceOffset] ?? 0;
+    vertices[outputOffset + 1] = mesh.positions[sourceOffset + 1] ?? 0;
+    vertices[outputOffset + 2] = mesh.positions[sourceOffset + 2] ?? 0;
+    vertices[outputOffset + 3] = mesh.normals[sourceOffset] ?? 0;
+    vertices[outputOffset + 4] = mesh.normals[sourceOffset + 1] ?? 0;
+    vertices[outputOffset + 5] = mesh.normals[sourceOffset + 2] ?? 1;
+    vertices[outputOffset + 6] = mesh.colors[sourceOffset] ?? 1;
+    vertices[outputOffset + 7] = mesh.colors[sourceOffset + 1] ?? 1;
+    vertices[outputOffset + 8] = mesh.colors[sourceOffset + 2] ?? 1;
+  }
+
+  return vertices;
+}
+
+function createCampaignFortCityMesh(input: {
+  instances: CampaignFortCityBuildingInstance[];
+  sampleHeightAtUv: (u: number, v: number) => number;
+  rules: CampaignStructureBuildingRulesAsset;
+}): VegetationMeshData {
+  const drawableInstances = input.instances.filter(
+    (instance): instance is CampaignFortCityBuildingInstance & {
+      mesh: VegetationMeshAsset;
+    } => instance.mesh != null
+  );
+  const vertexCount = drawableInstances.reduce(
+    (sum, instance) => sum + instance.mesh.positions.length / 3,
+    0
+  );
+  const indexCount = drawableInstances.reduce(
+    (sum, instance) => sum + instance.mesh.indices.length,
+    0
+  );
+  const vertices = new Float32Array(vertexCount * 9);
+  const indices = new Uint32Array(indexCount);
+  let vertexOffset = 0;
+  let indexOffset = 0;
+
+  for (const instance of drawableInstances) {
+    const height = input.sampleHeightAtUv(instance.u, instance.v);
+    const center = createTerrainWorldPoint(instance.u, instance.v, height);
+    const rotationCos = Math.cos(instance.rotation);
+    const rotationSin = Math.sin(instance.rotation);
+    const placement = getCampaignFortCityVariantPlacement(
+      input.rules,
+      instance.variant
+    );
+    const worldScale = placement.baseWorldScale * instance.scale;
+    const sourceVertexCount = instance.mesh.positions.length / 3;
+
+    for (let sourceVertexIndex = 0; sourceVertexIndex < sourceVertexCount; sourceVertexIndex += 1) {
+      const sourcePositionOffset = sourceVertexIndex * 3;
+      const outputOffset = (vertexOffset + sourceVertexIndex) * 9;
+      const localX = (instance.mesh.positions[sourcePositionOffset] ?? 0) * worldScale;
+      const localY = (instance.mesh.positions[sourcePositionOffset + 1] ?? 0) * worldScale;
+      const localZ = (instance.mesh.positions[sourcePositionOffset + 2] ?? 0) * worldScale;
+      const rotatedX = localX * rotationCos - localY * rotationSin;
+      const rotatedY = localX * rotationSin + localY * rotationCos;
+      const normalX = instance.mesh.normals[sourcePositionOffset] ?? 0;
+      const normalY = instance.mesh.normals[sourcePositionOffset + 1] ?? 0;
+      const normalZ = instance.mesh.normals[sourcePositionOffset + 2] ?? 1;
+      const rotatedNormal = normalizeVector3([
+        normalX * rotationCos - normalY * rotationSin,
+        normalX * rotationSin + normalY * rotationCos,
+        normalZ,
+      ]);
+
+      vertices[outputOffset] = center[0] + rotatedX;
+      vertices[outputOffset + 1] = center[1] + rotatedY;
+      vertices[outputOffset + 2] = center[2] + localZ + placement.lift;
+      vertices[outputOffset + 3] = rotatedNormal[0];
+      vertices[outputOffset + 4] = rotatedNormal[1];
+      vertices[outputOffset + 5] = rotatedNormal[2];
+      vertices[outputOffset + 6] = clamp(
+        (instance.mesh.colors[sourcePositionOffset] ?? 1) * instance.colorJitter,
+        0,
+        1
+      );
+      vertices[outputOffset + 7] = clamp(
+        (instance.mesh.colors[sourcePositionOffset + 1] ?? 1) * instance.colorJitter,
+        0,
+        1
+      );
+      vertices[outputOffset + 8] = clamp(
+        (instance.mesh.colors[sourcePositionOffset + 2] ?? 1) * instance.colorJitter,
+        0,
+        1
+      );
+    }
+
+    for (let index = 0; index < instance.mesh.indices.length; index += 1) {
+      indices[indexOffset + index] =
+        vertexOffset + (instance.mesh.indices[index] ?? 0);
+    }
+    vertexOffset += sourceVertexCount;
+    indexOffset += instance.mesh.indices.length;
+  }
+
+  return {
+    vertices,
+    indices,
+    shadowVertices: new Float32Array(),
+    shadowIndices: new Uint32Array(),
+    instanceCount: drawableInstances.length,
+  };
+}
+
+function getCampaignFortCityVariantAttemptOrder(input: {
+  rules: CampaignStructureBuildingRulesAsset;
+  fort: FortCityInstance;
+  slotIndex: number;
+  variantUsage: Map<string, number>;
+}): CampaignStructureBuildingRulesAsset["variants"] {
+  return [...input.rules.variants].sort((left, right) => {
+    const usageDelta =
+      (input.variantUsage.get(left.id) ?? 0) -
+      (input.variantUsage.get(right.id) ?? 0);
+    if (usageDelta !== 0) {
+      return usageDelta;
+    }
+
+    const leftIndex = input.rules.variants.indexOf(left);
+    const rightIndex = input.rules.variants.indexOf(right);
+    const leftWeight = Math.max(left.weight, 0);
+    const rightWeight = Math.max(right.weight, 0);
+    const weightDelta = rightWeight - leftWeight;
+    const leftTieBreaker = seededRandom01(
+      input.fort.x,
+      input.fort.y,
+      541 + input.slotIndex * 53 + leftIndex * 97
+    );
+    const rightTieBreaker = seededRandom01(
+      input.fort.x,
+      input.fort.y,
+      541 + input.slotIndex * 53 + rightIndex * 97
+    );
+
+    return weightDelta || leftTieBreaker - rightTieBreaker;
+  });
+}
+
+function getCampaignFortCityVariantPlacement(
+  rules: CampaignStructureBuildingRulesAsset,
+  variant: CampaignFortCityRulesAsset["variants"][number]
+): {
+  scaleMin: number;
+  scaleMax: number;
+  baseWorldScale: number;
+  lift: number;
+  footprintRadius: number;
+} {
+  return {
+    scaleMin: variant.placement?.scaleMin ?? rules.placement.scaleMin,
+    scaleMax: variant.placement?.scaleMax ?? rules.placement.scaleMax,
+    baseWorldScale:
+      variant.placement?.baseWorldScale ?? rules.placement.baseWorldScale,
+    lift: variant.placement?.lift ?? rules.placement.lift,
+    footprintRadius:
+      variant.placement?.footprintRadius ?? rules.placement.footprintRadius,
+  };
+}
+
 function snapTerrainUvToHexCenter(u: number, v: number): { u: number; v: number } {
   const point = terrainUvToHexPoint(u, v);
   const cell = pixelToRoundedHex(point.x, point.y);
@@ -3388,47 +6629,6 @@ function normalizeVector3(input: [number, number, number]): [number, number, num
     input[1] / length,
     input[2] / length,
   ];
-}
-
-function sampleHeightImage(
-  image: HTMLImageElement,
-  columns: number,
-  rows: number
-): Float32Array {
-  const canvas = document.createElement("canvas");
-  canvas.width = columns;
-  canvas.height = rows;
-
-  const context = canvas.getContext("2d", { willReadFrequently: true });
-  if (context == null) {
-    throw new Error("Failed to create heightmap sampling context.");
-  }
-
-  context.drawImage(image, 0, 0, columns, rows);
-  const data = context.getImageData(0, 0, columns, rows).data;
-  const heights = new Float32Array(columns * rows);
-
-  for (let index = 0; index < heights.length; index += 1) {
-    const pixelOffset = index * 4;
-    const red = data[pixelOffset] ?? 0;
-    const green = data[pixelOffset + 1] ?? red;
-    const blue = data[pixelOffset + 2] ?? red;
-    heights[index] = getHeightFromHeightmapColor(red, green, blue);
-  }
-
-  return heights;
-}
-
-function sampleHeightImageFromRequiredImage(
-  image: HTMLImageElement | null,
-  columns: number,
-  rows: number
-): Float32Array {
-  if (image == null) {
-    throw new Error("Campaign height image is required for maps without a hex grid.");
-  }
-
-  return sampleHeightImage(image, columns, rows);
 }
 
 function sampleMaterialLandMask(
@@ -3482,7 +6682,9 @@ function createCampaignMaterialSemanticModel(
   const pixels = new Uint8ClampedArray(textureColumns * textureRows * 4);
   const landByCellKey = new Map<string, boolean>();
   const mountainByCellKey = new Map<string, boolean>();
+  const terrainByCellKey = new Map<string, string>();
   const referenceHeightByCellKey = new Map<string, number>();
+  const structureGroundByCellKey = new Map<string, "village" | "city">();
 
   for (const cell of cells) {
     const isLand = isHexPassableAtHexPoint(
@@ -3498,6 +6700,7 @@ function createCampaignMaterialSemanticModel(
 
     landByCellKey.set(getHexCellKey(cell.x, cell.y), isLand);
     mountainByCellKey.set(getHexCellKey(cell.x, cell.y), false);
+    terrainByCellKey.set(getHexCellKey(cell.x, cell.y), isLand ? "平原" : "");
     referenceHeightByCellKey.set(getHexCellKey(cell.x, cell.y), 0);
     pixels[pixelOffset] = value;
     pixels[pixelOffset + 1] = 0;
@@ -3516,7 +6719,9 @@ function createCampaignMaterialSemanticModel(
     cells,
     landByCellKey,
     mountainByCellKey,
+    terrainByCellKey,
     referenceHeightByCellKey,
+    structureGroundByCellKey,
   };
 }
 
@@ -3543,7 +6748,9 @@ function createCampaignMaterialSemanticModelFromHexGrid(
   const pixels = new Uint8ClampedArray(textureColumns * textureRows * 4);
   const landByCellKey = new Map<string, boolean>();
   const mountainByCellKey = new Map<string, boolean>();
+  const terrainByCellKey = new Map<string, string>();
   const referenceHeightByCellKey = new Map<string, number>();
+  const structureGroundByCellKey = new Map<string, "village" | "city">();
 
   for (const cell of campaignHexGrid.cells) {
     const pixelX = cell.x - minCellX;
@@ -3565,6 +6772,7 @@ function createCampaignMaterialSemanticModelFromHexGrid(
 
     landByCellKey.set(getHexCellKey(cell.x, cell.y), cell.land);
     mountainByCellKey.set(getHexCellKey(cell.x, cell.y), mountainValue > 0);
+    terrainByCellKey.set(getHexCellKey(cell.x, cell.y), cell.land ? cell.terrain : "");
     referenceHeightByCellKey.set(
       getHexCellKey(cell.x, cell.y),
       cell.land ? clamp(cell.referenceHeight, 0, 1) : 0
@@ -3586,7 +6794,9 @@ function createCampaignMaterialSemanticModelFromHexGrid(
     cells,
     landByCellKey,
     mountainByCellKey,
+    terrainByCellKey,
     referenceHeightByCellKey,
+    structureGroundByCellKey,
   };
 }
 
@@ -3625,7 +6835,8 @@ function getCampaignVegetationCellsForChunks(
 
 function readCampaignVegetationAvoidancePoints(
   canvas: HTMLCanvasElement,
-  rules: CampaignVegetationRulesAsset
+  rules: CampaignVegetationRulesAsset,
+  structureAvoidancePoints: CampaignVegetationAvoidancePoint[] = []
 ): CampaignVegetationAvoidancePoint[] {
   const stage = canvas.closest<HTMLElement>("[data-campaign-map-transform]");
   if (stage == null) {
@@ -3648,16 +6859,8 @@ function readCampaignVegetationAvoidancePoints(
     .forEach((element) => {
       appendPoint(element, rules.avoidance.markerRadius);
     });
-  stage
-    .querySelectorAll<HTMLElement>("[data-campaign-player='true'][data-map-height-u][data-map-height-v]")
-    .forEach((element) => {
-      appendPoint(element, rules.avoidance.playerRadius);
-    });
-  stage
-    .querySelectorAll<HTMLElement>("[data-campaign-travel-path-point][data-map-height-u][data-map-height-v]")
-    .forEach((element) => {
-      appendPoint(element, rules.avoidance.pathRadius);
-    });
+
+  points.push(...structureAvoidancePoints);
 
   return points;
 }
@@ -4277,22 +7480,59 @@ function appendCampaignVegetationShadowGeometry(
     instance.mesh.bounds.max[2] - instance.mesh.bounds.min[2],
     0.0001
   ) * worldScale;
-  const shadowLength =
-    Math.max(width, height * 0.58) *
-    rules.shadow.radiusScaleX *
-    (1 + clamp(rules.shadow.lightOffsetScale, 0, 0.72));
-  const shadowWidth = Math.max(width * 0.42, height * 0.12) * rules.shadow.radiusScaleY;
-  const shadowDirection = getCampaignVegetationShadowWorldDirection(
+  appendCampaignProjectedShadowGeometry({
+    vertices,
+    indices,
+    vertexOffset,
+    indexOffset,
     center,
+    width,
+    height,
     matrix,
-    getCampaignVegetationTerrainShadowScreenDirection(center, matrix, viewportAspectRatio)
+    viewportAspectRatio,
+    radiusScaleX: rules.shadow.radiusScaleX,
+    radiusScaleY: rules.shadow.radiusScaleY,
+    lightOffsetScale: rules.shadow.lightOffsetScale,
+    lift: rules.shadow.lift,
+  });
+}
+
+function appendCampaignProjectedShadowGeometry(input: {
+  vertices: Float32Array;
+  indices: Uint16Array | Uint32Array;
+  vertexOffset: number;
+  indexOffset: number;
+  center: [number, number, number];
+  width: number;
+  height: number;
+  matrix: Mat4;
+  viewportAspectRatio: number;
+  radiusScaleX: number;
+  radiusScaleY: number;
+  lightOffsetScale: number;
+  lift: number;
+}): void {
+  const shadowLength =
+    Math.max(input.width, input.height * 0.58) *
+    input.radiusScaleX *
+    (1 + clamp(input.lightOffsetScale, 0, 0.72));
+  const shadowWidth =
+    Math.max(input.width * 0.42, input.height * 0.12) * input.radiusScaleY;
+  const shadowDirection = getCampaignVegetationShadowWorldDirection(
+    input.center,
+    input.matrix,
+    getCampaignVegetationTerrainShadowScreenDirection(
+      input.center,
+      input.matrix,
+      input.viewportAspectRatio
+    )
   );
   const perpendicular: [number, number] = [-shadowDirection[1], shadowDirection[0]];
-  const rootX = center[0];
-  const rootY = center[1];
+  const rootX = input.center[0];
+  const rootY = input.center[1];
   const farX = rootX + shadowDirection[0] * shadowLength;
   const farY = rootY + shadowDirection[1] * shadowLength;
-  const shadowZ = center[2] + rules.shadow.lift;
+  const shadowZ = input.center[2] + input.lift;
   const corners: Array<{
     x: number;
     y: number;
@@ -4327,20 +7567,219 @@ function appendCampaignVegetationShadowGeometry(
 
   for (let index = 0; index < corners.length; index += 1) {
     const corner = corners[index] ?? { x: rootX, y: rootY, u: 0, v: 0 };
-    const offset = (vertexOffset + index) * 5;
-    vertices[offset] = corner.x;
-    vertices[offset + 1] = corner.y;
-    vertices[offset + 2] = shadowZ;
-    vertices[offset + 3] = corner.u;
-    vertices[offset + 4] = corner.v;
+    const offset = (input.vertexOffset + index) * 5;
+    input.vertices[offset] = corner.x;
+    input.vertices[offset + 1] = corner.y;
+    input.vertices[offset + 2] = shadowZ;
+    input.vertices[offset + 3] = corner.u;
+    input.vertices[offset + 4] = corner.v;
   }
 
-  indices[indexOffset] = vertexOffset;
-  indices[indexOffset + 1] = vertexOffset + 1;
-  indices[indexOffset + 2] = vertexOffset + 2;
-  indices[indexOffset + 3] = vertexOffset;
-  indices[indexOffset + 4] = vertexOffset + 2;
-  indices[indexOffset + 5] = vertexOffset + 3;
+  input.indices[input.indexOffset] = input.vertexOffset;
+  input.indices[input.indexOffset + 1] = input.vertexOffset + 1;
+  input.indices[input.indexOffset + 2] = input.vertexOffset + 2;
+  input.indices[input.indexOffset + 3] = input.vertexOffset;
+  input.indices[input.indexOffset + 4] = input.vertexOffset + 2;
+  input.indices[input.indexOffset + 5] = input.vertexOffset + 3;
+}
+
+function appendCampaignStructureBlobShadowGeometry(input: {
+  vertices: Float32Array;
+  indices: Uint16Array | Uint32Array;
+  vertexOffset: number;
+  indexOffset: number;
+  center: [number, number, number];
+  width: number;
+  height: number;
+  footprintRadius: number;
+  matrix: Mat4;
+  viewportAspectRatio: number;
+  radiusScaleX: number;
+  radiusScaleY: number;
+  lightOffsetScale: number;
+  lift: number;
+}): void {
+  const shadowDirection = getCampaignVegetationShadowWorldDirection(
+    input.center,
+    input.matrix,
+    getCampaignVegetationTerrainShadowScreenDirection(
+      input.center,
+      input.matrix,
+      input.viewportAspectRatio
+    )
+  );
+  const perpendicular: [number, number] = [-shadowDirection[1], shadowDirection[0]];
+  const visualRadius = Math.max(input.width * 0.50, 0.0001);
+  const placementRadius = Math.max(input.footprintRadius * 0.42, 0.0001);
+  const footprintRadius = clamp(
+    Math.max(visualRadius, placementRadius),
+    visualRadius * 0.72,
+    visualRadius * 1.35
+  );
+  const shadowHalfWidth = footprintRadius * input.radiusScaleX;
+  const shadowHalfLength =
+    Math.max(footprintRadius * 0.58, input.height * 0.040) *
+    input.radiusScaleY;
+  const shadowOffset =
+    Math.max(footprintRadius * 0.18, input.height * 0.018) *
+    clamp(input.lightOffsetScale, 0, 0.24);
+  const centerX = input.center[0] + shadowDirection[0] * shadowOffset;
+  const centerY = input.center[1] + shadowDirection[1] * shadowOffset;
+  const shadowZ = input.center[2] + input.lift;
+  const corners: Array<{
+    x: number;
+    y: number;
+    u: number;
+    v: number;
+  }> = [
+    {
+      x: centerX - perpendicular[0] * shadowHalfWidth - shadowDirection[0] * shadowHalfLength,
+      y: centerY - perpendicular[1] * shadowHalfWidth - shadowDirection[1] * shadowHalfLength,
+      u: -1,
+      v: -1,
+    },
+    {
+      x: centerX + perpendicular[0] * shadowHalfWidth - shadowDirection[0] * shadowHalfLength,
+      y: centerY + perpendicular[1] * shadowHalfWidth - shadowDirection[1] * shadowHalfLength,
+      u: 1,
+      v: -1,
+    },
+    {
+      x: centerX + perpendicular[0] * shadowHalfWidth + shadowDirection[0] * shadowHalfLength,
+      y: centerY + perpendicular[1] * shadowHalfWidth + shadowDirection[1] * shadowHalfLength,
+      u: 1,
+      v: 1,
+    },
+    {
+      x: centerX - perpendicular[0] * shadowHalfWidth + shadowDirection[0] * shadowHalfLength,
+      y: centerY - perpendicular[1] * shadowHalfWidth + shadowDirection[1] * shadowHalfLength,
+      u: -1,
+      v: 1,
+    },
+  ];
+
+  for (let index = 0; index < corners.length; index += 1) {
+    const corner = corners[index] ?? { x: centerX, y: centerY, u: 0, v: 0 };
+    const offset = (input.vertexOffset + index) * 5;
+    input.vertices[offset] = corner.x;
+    input.vertices[offset + 1] = corner.y;
+    input.vertices[offset + 2] = shadowZ;
+    input.vertices[offset + 3] = corner.u;
+    input.vertices[offset + 4] = corner.v;
+  }
+
+  input.indices[input.indexOffset] = input.vertexOffset;
+  input.indices[input.indexOffset + 1] = input.vertexOffset + 1;
+  input.indices[input.indexOffset + 2] = input.vertexOffset + 2;
+  input.indices[input.indexOffset + 3] = input.vertexOffset;
+  input.indices[input.indexOffset + 4] = input.vertexOffset + 2;
+  input.indices[input.indexOffset + 5] = input.vertexOffset + 3;
+}
+
+function createCampaignFortCityShadowMesh(input: {
+  instances: CampaignFortCityBuildingInstance[];
+  sampleHeightAtUv: (u: number, v: number) => number;
+  rules: CampaignStructureBuildingRulesAsset;
+  matrix: Mat4;
+  viewportAspectRatio: number;
+}): CampaignProjectedShadowMeshData {
+  const drawableInstances = input.instances.filter(
+    (instance): instance is CampaignFortCityBuildingInstance & {
+      mesh: VegetationMeshAsset;
+    } => instance.mesh != null
+  );
+  const shadowVertices = new Float32Array(drawableInstances.length * 4 * 5);
+  const shadowIndices = new Uint16Array(drawableInstances.length * 6);
+  let shadowVertexOffset = 0;
+  let shadowIndexOffset = 0;
+
+  for (const instance of drawableInstances) {
+    const height = input.sampleHeightAtUv(instance.u, instance.v);
+    const center = createTerrainWorldPoint(instance.u, instance.v, height);
+    const placement = getCampaignFortCityVariantPlacement(
+      input.rules,
+      instance.variant
+    );
+    const worldScale = placement.baseWorldScale * instance.scale;
+    const width = Math.max(
+      instance.mesh.bounds.max[0] - instance.mesh.bounds.min[0],
+      instance.mesh.bounds.max[1] - instance.mesh.bounds.min[1],
+      0.0001
+    ) * worldScale;
+    const meshHeight = Math.max(
+      instance.mesh.bounds.max[2] - instance.mesh.bounds.min[2],
+      0.0001
+    ) * worldScale;
+    appendCampaignStructureBlobShadowGeometry({
+      vertices: shadowVertices,
+      indices: shadowIndices,
+      vertexOffset: shadowVertexOffset,
+      indexOffset: shadowIndexOffset,
+      center,
+      width,
+      height: meshHeight,
+      footprintRadius: instance.footprintRadius,
+      matrix: input.matrix,
+      viewportAspectRatio: input.viewportAspectRatio,
+      radiusScaleX: CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_X,
+      radiusScaleY: CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_Y,
+      lightOffsetScale: CAMPAIGN_STRUCTURE_SHADOW_LIGHT_OFFSET_SCALE,
+      lift: CAMPAIGN_STRUCTURE_SHADOW_LIFT,
+    });
+    shadowVertexOffset += 4;
+    shadowIndexOffset += 6;
+  }
+
+  return {
+    vertices: shadowVertices.subarray(0, shadowVertexOffset * 5),
+    indices: shadowIndices.subarray(0, shadowIndexOffset),
+  };
+}
+
+function createCampaignActorShadowMesh(input: {
+  actor: CampaignActorData;
+  height: number;
+  model: ActorModelAsset;
+  matrix: Mat4;
+  viewportAspectRatio: number;
+}): CampaignProjectedShadowMeshData {
+  const center = createTerrainWorldPoint(
+    input.actor.u,
+    input.actor.v,
+    input.height
+  );
+  const scale = getCampaignActorModelWorldScale(input.model);
+  const width = Math.max(
+    input.model.bounds.max[0] - input.model.bounds.min[0],
+    input.model.bounds.max[1] - input.model.bounds.min[1],
+    0.0001
+  ) * scale;
+  const height = Math.max(
+    input.model.bounds.max[2] - input.model.bounds.min[2],
+    0.0001
+  ) * scale;
+  const shadowVertices = new Float32Array(4 * 5);
+  const shadowIndices = new Uint16Array(6);
+  appendCampaignProjectedShadowGeometry({
+    vertices: shadowVertices,
+    indices: shadowIndices,
+    vertexOffset: 0,
+    indexOffset: 0,
+    center,
+    width,
+    height,
+    matrix: input.matrix,
+    viewportAspectRatio: input.viewportAspectRatio,
+    radiusScaleX: CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_X,
+    radiusScaleY: CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_Y,
+    lightOffsetScale: CAMPAIGN_ACTOR_SHADOW_LIGHT_OFFSET_SCALE,
+    lift: CAMPAIGN_ACTOR_SHADOW_LIFT,
+  });
+
+  return {
+    vertices: shadowVertices,
+    indices: shadowIndices,
+  };
 }
 
 function getCampaignVegetationTerrainShadowScreenDirection(
@@ -4451,15 +7890,6 @@ function pixelToRoundedHex(x: number, y: number): { x: number; y: number } {
   }
 
   return { x: roundedX, y: roundedY };
-}
-
-function getHeightFromHeightmapColor(red: number, green: number, blue: number): number {
-  if (isWaterHeightColor(red, green, blue)) {
-    return 0;
-  }
-
-  const luminance = (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255;
-  return Math.max(0, Math.min(luminance, 1));
 }
 
 function syncProjectedPoints(input: {
@@ -5185,10 +8615,6 @@ function getDistance(
   return Math.hypot(right.x - left.x, right.y - left.y);
 }
 
-function isWaterHeightColor(red: number, green: number, blue: number): boolean {
-  return blue > 72 && blue > red * 1.35 && blue > green * 1.18;
-}
-
 function isWaterMaterialColor(red: number, green: number, blue: number): boolean {
   return red >= 56 && green < 31 && blue < 31;
 }
@@ -5330,11 +8756,6 @@ function createActorMesh(
   animations: ActorAnimationSetAsset,
   animationState: ActorAnimationPlaybackState
 ): ActorMeshData {
-  const scaleCompensation = clamp(
-    ACTOR_REFERENCE_CAMERA_SCALE / Math.max(currentCamera.scale, 0.0001),
-    0.18,
-    1.6
-  );
   const angle =
     actor.facingDegrees * Math.PI / 180 +
     (Number.isFinite(model.facingOffsetDegrees)
@@ -5354,7 +8775,7 @@ function createActorMesh(
     actor.v,
     height
   );
-  const scale = ACTOR_MODEL_BASE_SCALE * model.scale * scaleCompensation;
+  const scale = getCampaignActorModelWorldScale(model);
   const positions = model.positions;
   const normals = model.normals;
   const vertexBoneInfluenceIndices = model.vertexBoneInfluenceIndices;
@@ -5433,6 +8854,16 @@ function createActorMesh(
     vertices: output,
     indices: model.indices,
   };
+}
+
+function getCampaignActorModelWorldScale(model: ActorModelAsset): number {
+  const scaleCompensation = clamp(
+    ACTOR_REFERENCE_CAMERA_SCALE / Math.max(currentCamera.scale, 0.0001),
+    0.18,
+    1.6
+  );
+
+  return ACTOR_MODEL_BASE_SCALE * model.scale * scaleCompensation;
 }
 
 function createSingleInfluenceIndices(vertexBoneIndices: Uint16Array): Uint16Array {
@@ -5864,635 +9295,6 @@ function nlerpQuaternion(
   ]);
 }
 
-function createSmoothTerrainHeightSamples(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  materialLandMask: Uint8Array,
-  materialColumns: number,
-  materialRows: number
-): Float32Array {
-  let currentHeights: Float32Array<ArrayBufferLike> = new Float32Array(heights.length);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const isLand = sampleLandMaskAt(
-        materialLandMask,
-        materialColumns,
-        materialRows,
-        u,
-        v
-      ) > 0;
-      currentHeights[y * columns + x] = isLand ? heights[y * columns + x] ?? 0 : 0;
-    }
-  }
-
-  for (let pass = 0; pass < SMOOTH_TERRAIN_PASSES; pass += 1) {
-    currentHeights = smoothTerrainHeightPass(
-      currentHeights,
-      columns,
-      rows,
-      materialLandMask,
-      materialColumns,
-      materialRows
-    );
-  }
-
-  return currentHeights;
-}
-
-function createCampaignHexReferenceHeightSamples(
-  materialSemanticModel: CampaignMaterialSemanticModel,
-  columns: number,
-  rows: number
-): Float32Array {
-  let heightSamples: Float32Array = new Float32Array(columns * rows);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const point = terrainUvToHexPoint(u, v);
-      const cell = pixelToRoundedHex(point.x, point.y);
-      const cellKey = getHexCellKey(cell.x, cell.y);
-
-      heightSamples[y * columns + x] =
-        materialSemanticModel.landByCellKey.get(cellKey) === true
-          ? materialSemanticModel.referenceHeightByCellKey.get(cellKey) ?? 0
-          : 0;
-    }
-  }
-
-  for (let pass = 0; pass < SMOOTH_TERRAIN_PASSES; pass += 1) {
-    heightSamples = smoothCampaignHexReferenceHeightPass(
-      heightSamples,
-      columns,
-      rows,
-      materialSemanticModel
-    );
-  }
-
-  return heightSamples;
-}
-
-function smoothCampaignHexReferenceHeightPass(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): Float32Array {
-  const smoothedHeights = new Float32Array(heights);
-  const maxX = Math.max(columns - 1, 0);
-  const maxY = Math.max(rows - 1, 0);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      if (!isLandTerrainSample(materialSemanticModel, u, v)) {
-        smoothedHeights[y * columns + x] = 0;
-        continue;
-      }
-
-      const outputIndex = y * columns + x;
-      const centerHeight = heights[outputIndex] ?? 0;
-      let heightSum = 0;
-      let heightWeight = 0;
-      for (const sample of SMOOTH_TERRAIN_KERNEL) {
-        const sampleX = clamp(x + sample.x, 0, maxX);
-        const sampleY = clamp(y + sample.y, 0, maxY);
-        const sampleU = sampleX / Math.max(columns - 1, 1);
-        const sampleV = sampleY / Math.max(rows - 1, 1);
-        if (!isLandTerrainSample(materialSemanticModel, sampleU, sampleV)) {
-          continue;
-        }
-
-        heightSum += (heights[sampleY * columns + sampleX] ?? centerHeight) *
-          sample.weight;
-        heightWeight += sample.weight;
-      }
-
-      if (heightWeight <= 0) {
-        continue;
-      }
-
-      smoothedHeights[outputIndex] =
-        centerHeight + (heightSum / heightWeight - centerHeight) * 0.42;
-    }
-  }
-
-  return smoothedHeights;
-}
-
-type NonMountainHeightCellStats = {
-  sum: number;
-  count: number;
-  average: number;
-};
-
-function createNonMountainFlattenedHeightSamples(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): Float32Array {
-  const cellStats = createNonMountainHeightCellStats(
-    heights,
-    columns,
-    rows,
-    materialSemanticModel
-  );
-  const flattenedHeights = new Float32Array(heights);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const point = terrainUvToHexPoint(u, v);
-      const cell = pixelToRoundedHex(point.x, point.y);
-      if (!isNonMountainTerrainHexCell(materialSemanticModel, cell)) {
-        continue;
-      }
-
-      const cellStatsForSample = cellStats.get(getHexCellKey(cell.x, cell.y));
-      if (cellStatsForSample == null || cellStatsForSample.count <= 0) {
-        continue;
-      }
-
-      const index = y * columns + x;
-      const frame = getHexLocalMountainFrame(point, cell);
-      const interiorAmount =
-        1 - smoothstepRange(
-          NON_MOUNTAIN_HEIGHT_EDGE_FADE_START,
-          NON_MOUNTAIN_HEIGHT_EDGE_FADE_END,
-          frame.hexRadius
-        );
-      const flattenStrength = NON_MOUNTAIN_HEIGHT_FLATTEN_STRENGTH * interiorAmount;
-      const currentHeight = heights[index] ?? 0;
-      flattenedHeights[index] =
-        currentHeight +
-        (cellStatsForSample.average - currentHeight) * flattenStrength;
-    }
-  }
-
-  return smoothNonMountainFlattenedHeightSamples(
-    flattenedHeights,
-    columns,
-    rows,
-    materialSemanticModel
-  );
-}
-
-function createNonMountainHeightCellStats(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): Map<string, NonMountainHeightCellStats> {
-  const cellStats = new Map<string, NonMountainHeightCellStats>();
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const point = terrainUvToHexPoint(u, v);
-      const cell = pixelToRoundedHex(point.x, point.y);
-      if (!isNonMountainTerrainHexCell(materialSemanticModel, cell)) {
-        continue;
-      }
-
-      const key = getHexCellKey(cell.x, cell.y);
-      const stats = cellStats.get(key) ?? { sum: 0, count: 0, average: 0 };
-      stats.sum += heights[y * columns + x] ?? 0;
-      stats.count += 1;
-      cellStats.set(key, stats);
-    }
-  }
-
-  for (const stats of cellStats.values()) {
-    stats.average = stats.count > 0 ? stats.sum / stats.count : 0;
-  }
-
-  return cellStats;
-}
-
-function smoothNonMountainFlattenedHeightSamples(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): Float32Array {
-  const smoothedHeights = new Float32Array(heights);
-  const maxX = Math.max(columns - 1, 0);
-  const maxY = Math.max(rows - 1, 0);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const point = terrainUvToHexPoint(u, v);
-      const cell = pixelToRoundedHex(point.x, point.y);
-      if (!isNonMountainTerrainHexCell(materialSemanticModel, cell)) {
-        continue;
-      }
-
-      const outputIndex = y * columns + x;
-      const centerHeight = heights[outputIndex] ?? 0;
-      let heightSum = 0;
-      let heightWeight = 0;
-      for (const sample of SMOOTH_TERRAIN_KERNEL) {
-        const sampleX = clamp(x + sample.x, 0, maxX);
-        const sampleY = clamp(y + sample.y, 0, maxY);
-        const sampleU = sampleX / Math.max(columns - 1, 1);
-        const sampleV = sampleY / Math.max(rows - 1, 1);
-        const samplePoint = terrainUvToHexPoint(sampleU, sampleV);
-        const sampleCell = pixelToRoundedHex(samplePoint.x, samplePoint.y);
-        if (sampleCell.x !== cell.x || sampleCell.y !== cell.y) {
-          continue;
-        }
-
-        heightSum += (heights[sampleY * columns + sampleX] ?? centerHeight) *
-          sample.weight;
-        heightWeight += sample.weight;
-      }
-
-      if (heightWeight <= 0) {
-        continue;
-      }
-
-      smoothedHeights[outputIndex] =
-        centerHeight +
-        (heightSum / heightWeight - centerHeight) *
-          NON_MOUNTAIN_HEIGHT_SMOOTH_STRENGTH;
-    }
-  }
-
-  return smoothedHeights;
-}
-
-function createMountainFloorHeightSamples(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): Float32Array {
-  let floorHeights: Float32Array<ArrayBufferLike> = new Float32Array(heights);
-  let seededSamples = createMountainFloorSeedMask(
-    heights,
-    columns,
-    rows,
-    materialSemanticModel
-  );
-  const fallbackFloorHeight = createMountainFloorFallbackHeight(
-    heights,
-    seededSamples
-  );
-
-  for (let pass = 0; pass < MOUNTAIN_FLOOR_DIFFUSION_PASSES; pass += 1) {
-    const nextHeights: Float32Array<ArrayBufferLike> = new Float32Array(floorHeights);
-    const nextSeededSamples = new Uint8Array(seededSamples);
-    let filledAnySample = false;
-
-    for (let y = 0; y < rows; y += 1) {
-      const v = y / Math.max(rows - 1, 1);
-      for (let x = 0; x < columns; x += 1) {
-        const u = x / Math.max(columns - 1, 1);
-        const point = terrainUvToHexPoint(u, v);
-        const cell = pixelToRoundedHex(point.x, point.y);
-        if (!isMountainHexCell(materialSemanticModel, cell)) {
-          continue;
-        }
-
-        const index = y * columns + x;
-        if (seededSamples[index] === 1) {
-          continue;
-        }
-
-        const neighborHeight = sampleSeededNeighborHeight(
-          floorHeights,
-          seededSamples,
-          columns,
-          rows,
-          x,
-          y
-        );
-        if (neighborHeight == null) {
-          continue;
-        }
-
-        nextHeights[index] = neighborHeight;
-        nextSeededSamples[index] = 1;
-        filledAnySample = true;
-      }
-    }
-
-    floorHeights = nextHeights;
-    seededSamples = nextSeededSamples;
-    if (!filledAnySample) {
-      break;
-    }
-  }
-
-  fillUnseededMountainFloorSamples(
-    floorHeights,
-    seededSamples,
-    fallbackFloorHeight,
-    columns,
-    rows,
-    materialSemanticModel
-  );
-
-  for (let pass = 0; pass < MOUNTAIN_FLOOR_SMOOTH_PASSES; pass += 1) {
-    floorHeights = smoothMountainFloorHeightSamples(
-      floorHeights,
-      columns,
-      rows,
-      materialSemanticModel
-    );
-  }
-
-  return floorHeights;
-}
-
-function createMountainFloorFallbackHeight(
-  heights: Float32Array,
-  seededSamples: Uint8Array
-): number {
-  let seededHeightSum = 0;
-  let seededCount = 0;
-  let fallbackHeightSum = 0;
-  let fallbackCount = 0;
-
-  for (let index = 0; index < heights.length; index += 1) {
-    const height = heights[index] ?? 0;
-    if (!Number.isFinite(height)) {
-      continue;
-    }
-
-    fallbackHeightSum += height;
-    fallbackCount += 1;
-    if (seededSamples[index] === 1) {
-      seededHeightSum += height;
-      seededCount += 1;
-    }
-  }
-
-  if (seededCount > 0) {
-    return seededHeightSum / seededCount;
-  }
-
-  return fallbackCount > 0 ? fallbackHeightSum / fallbackCount : 0;
-}
-
-function fillUnseededMountainFloorSamples(
-  heights: Float32Array,
-  seededSamples: Uint8Array,
-  fallbackFloorHeight: number,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): void {
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const point = terrainUvToHexPoint(u, v);
-      const cell = pixelToRoundedHex(point.x, point.y);
-      if (!isMountainHexCell(materialSemanticModel, cell)) {
-        continue;
-      }
-
-      const index = y * columns + x;
-      if (seededSamples[index] === 1) {
-        continue;
-      }
-
-      heights[index] = fallbackFloorHeight;
-      seededSamples[index] = 1;
-    }
-  }
-}
-
-function createMountainFloorSeedMask(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): Uint8Array {
-  const seededSamples = new Uint8Array(columns * rows);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const point = terrainUvToHexPoint(u, v);
-      const cell = pixelToRoundedHex(point.x, point.y);
-      const index = y * columns + x;
-
-      if (!isLandTerrainSample(materialSemanticModel, u, v)) {
-        seededSamples[index] = 0;
-        continue;
-      }
-
-      if (isMountainHexCell(materialSemanticModel, cell)) {
-        seededSamples[index] = 0;
-        continue;
-      }
-
-      seededSamples[index] = Number.isFinite(heights[index]) ? 1 : 0;
-    }
-  }
-
-  return seededSamples;
-}
-
-function sampleSeededNeighborHeight(
-  heights: Float32Array,
-  seededSamples: Uint8Array,
-  columns: number,
-  rows: number,
-  x: number,
-  y: number
-): number | null {
-  const maxX = Math.max(columns - 1, 0);
-  const maxY = Math.max(rows - 1, 0);
-  let heightSum = 0;
-  let heightWeight = 0;
-
-  for (const sample of SMOOTH_TERRAIN_KERNEL) {
-    const sampleX = clamp(x + sample.x, 0, maxX);
-    const sampleY = clamp(y + sample.y, 0, maxY);
-    const sampleIndex = sampleY * columns + sampleX;
-    if (seededSamples[sampleIndex] !== 1) {
-      continue;
-    }
-
-    heightSum += (heights[sampleIndex] ?? 0) * sample.weight;
-    heightWeight += sample.weight;
-  }
-
-  return heightWeight > 0 ? heightSum / heightWeight : null;
-}
-
-function smoothMountainFloorHeightSamples(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): Float32Array {
-  const smoothedHeights = new Float32Array(heights);
-  const maxX = Math.max(columns - 1, 0);
-  const maxY = Math.max(rows - 1, 0);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const point = terrainUvToHexPoint(u, v);
-      const cell = pixelToRoundedHex(point.x, point.y);
-      if (!isMountainHexCell(materialSemanticModel, cell)) {
-        continue;
-      }
-
-      const outputIndex = y * columns + x;
-      const centerHeight = heights[outputIndex] ?? 0;
-      let heightSum = 0;
-      let landWeight = 0;
-      for (const sample of SMOOTH_TERRAIN_KERNEL) {
-        const sampleX = clamp(x + sample.x, 0, maxX);
-        const sampleY = clamp(y + sample.y, 0, maxY);
-        const sampleU = sampleX / Math.max(columns - 1, 1);
-        const sampleV = sampleY / Math.max(rows - 1, 1);
-        if (!isLandTerrainSample(materialSemanticModel, sampleU, sampleV)) {
-          continue;
-        }
-
-        heightSum += (heights[sampleY * columns + sampleX] ?? centerHeight) *
-          sample.weight;
-        landWeight += sample.weight;
-      }
-
-      if (landWeight <= 0) {
-        continue;
-      }
-
-      smoothedHeights[outputIndex] =
-        centerHeight +
-        (heightSum / landWeight - centerHeight) *
-          MOUNTAIN_HEIGHT_CONTINUITY_BLEND;
-    }
-  }
-
-  return smoothedHeights;
-}
-
-function createCampaignMountainHeightSamples(
-  terrainBaseHeights: Float32Array,
-  referenceHeights: Float32Array,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): Float32Array {
-  const mountainHeights = new Float32Array(terrainBaseHeights);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const index = y * columns + x;
-      if (!isLandTerrainSample(materialSemanticModel, u, v)) {
-        mountainHeights[index] = 0;
-        continue;
-      }
-
-      const point = terrainUvToHexPoint(u, v);
-      const cell = pixelToRoundedHex(point.x, point.y);
-      if (!isMountainHexCell(materialSemanticModel, cell)) {
-        continue;
-      }
-
-      const terrainBaseHeight = terrainBaseHeights[index] ?? 0;
-      const referenceHeight = referenceHeights[index] ?? terrainBaseHeight;
-      const boundaryFactor = getMountainBoundaryHeightFactor(
-        materialSemanticModel,
-        point,
-        cell
-      );
-      const mountainHeight = createMountainHeightAtPoint(
-        point,
-        terrainBaseHeight,
-        referenceHeight,
-        boundaryFactor
-      );
-
-      mountainHeights[index] = mountainHeight;
-    }
-  }
-
-  return smoothMountainContinuityHeightPass(
-    mountainHeights,
-    terrainBaseHeights,
-    columns,
-    rows,
-    materialSemanticModel
-  );
-}
-
-function smoothMountainContinuityHeightPass(
-  heights: Float32Array,
-  terrainBaseHeights: Float32Array,
-  columns: number,
-  rows: number,
-  materialSemanticModel: CampaignMaterialSemanticModel
-): Float32Array {
-  const smoothedHeights = new Float32Array(heights);
-  const maxX = Math.max(columns - 1, 0);
-  const maxY = Math.max(rows - 1, 0);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const outputIndex = y * columns + x;
-      if (!isLandTerrainSample(materialSemanticModel, u, v)) {
-        smoothedHeights[outputIndex] = 0;
-        continue;
-      }
-
-      let heightSum = 0;
-      let landWeight = 0;
-      for (const sample of SMOOTH_TERRAIN_KERNEL) {
-        const sampleX = clamp(x + sample.x, 0, maxX);
-        const sampleY = clamp(y + sample.y, 0, maxY);
-        const sampleU = sampleX / Math.max(columns - 1, 1);
-        const sampleV = sampleY / Math.max(rows - 1, 1);
-        if (!isLandTerrainSample(materialSemanticModel, sampleU, sampleV)) {
-          continue;
-        }
-
-        heightSum += (heights[sampleY * columns + sampleX] ?? heights[outputIndex] ?? 0) *
-          sample.weight;
-        landWeight += sample.weight;
-      }
-
-      if (landWeight <= 0) {
-        continue;
-      }
-
-      const centerHeight = heights[outputIndex] ?? 0;
-      const terrainBaseHeight = terrainBaseHeights[outputIndex] ?? centerHeight;
-      const smoothHeight = heightSum / landWeight;
-      const continuityHeight =
-        centerHeight + (smoothHeight - centerHeight) * MOUNTAIN_HEIGHT_CONTINUITY_BLEND;
-      smoothedHeights[outputIndex] = Math.max(terrainBaseHeight, continuityHeight);
-    }
-  }
-
-  return smoothedHeights;
-}
-
 function createMountainHeightAtPoint(
   point: { x: number; y: number },
   terrainBaseHeight: number,
@@ -6913,6 +9715,18 @@ function isLandTerrainHexCell(
   return materialSemanticModel.landByCellKey.get(getHexCellKey(cell.x, cell.y)) === true;
 }
 
+function isPlainTerrainHexCell(
+  materialSemanticModel: CampaignMaterialSemanticModel,
+  cell: GridCoordinate
+): boolean {
+  const cellKey = getHexCellKey(cell.x, cell.y);
+
+  return (
+    materialSemanticModel.landByCellKey.get(cellKey) === true &&
+    materialSemanticModel.terrainByCellKey.get(cellKey) === "平原"
+  );
+}
+
 function isLandTerrainSample(
   materialSemanticModel: CampaignMaterialSemanticModel,
   u: number,
@@ -6967,80 +9781,6 @@ function smoothstepRange(edge0: number, edge1: number, value: number): number {
   return amount * amount * (3 - 2 * amount);
 }
 
-function smoothTerrainHeightPass(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  materialLandMask: Uint8Array,
-  materialColumns: number,
-  materialRows: number
-): Float32Array {
-  const smoothedHeights = new Float32Array(heights.length);
-  const maxX = Math.max(columns - 1, 0);
-  const maxY = Math.max(rows - 1, 0);
-
-  for (let y = 0; y < rows; y += 1) {
-    const v = y / Math.max(rows - 1, 1);
-    for (let x = 0; x < columns; x += 1) {
-      const u = x / Math.max(columns - 1, 1);
-      const outputIndex = y * columns + x;
-      const centerHeight = heights[outputIndex] ?? 0;
-      const isLand = sampleLandMaskAt(
-        materialLandMask,
-        materialColumns,
-        materialRows,
-        u,
-        v
-      ) > 0;
-
-      if (!isLand) {
-        smoothedHeights[outputIndex] = 0;
-        continue;
-      }
-
-      let heightSum = 0;
-      let landWeight = 0;
-      let totalWeight = 0;
-      for (const sample of SMOOTH_TERRAIN_KERNEL) {
-        const sampleX = clamp(x + sample.x, 0, maxX);
-        const sampleY = clamp(y + sample.y, 0, maxY);
-        const sampleU = sampleX / Math.max(columns - 1, 1);
-        const sampleV = sampleY / Math.max(rows - 1, 1);
-        totalWeight += sample.weight;
-
-        if (
-          sampleLandMaskAt(
-            materialLandMask,
-            materialColumns,
-            materialRows,
-            sampleU,
-            sampleV
-          ) <= 0
-        ) {
-          continue;
-        }
-
-        heightSum += (heights[sampleY * columns + sampleX] ?? centerHeight) * sample.weight;
-        landWeight += sample.weight;
-      }
-
-      if (landWeight <= 0 || totalWeight <= 0) {
-        smoothedHeights[outputIndex] = centerHeight;
-        continue;
-      }
-
-      const coastAmount = 1 - landWeight / totalWeight;
-      const blend =
-        SMOOTH_TERRAIN_LAND_BLEND +
-        (SMOOTH_TERRAIN_COAST_BLEND - SMOOTH_TERRAIN_LAND_BLEND) * coastAmount;
-      smoothedHeights[outputIndex] =
-        centerHeight + (heightSum / landWeight - centerHeight) * blend;
-    }
-  }
-
-  return smoothedHeights;
-}
-
 function createHexTravelGrid(materialSemanticModel: CampaignMaterialSemanticModel): HexTravelGrid {
   const hexCells = materialSemanticModel.cells;
   const passableHexKeys = new Set<string>();
@@ -7072,64 +9812,6 @@ function createHexTravelGrid(materialSemanticModel: CampaignMaterialSemanticMode
     passableHexKeys,
     bounds,
   };
-}
-
-function createSmoothTerrainMesh(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  meshStep: number
-): MeshData {
-  const vertices: number[] = [];
-  const indices: number[] = [];
-  const columnSamples = createTerrainMeshSampleIndices(columns, meshStep);
-  const rowSamples = createTerrainMeshSampleIndices(rows, meshStep);
-  const vertexColumns = columnSamples.length;
-
-  for (const sampleY of rowSamples) {
-    const v = sampleY / Math.max(rows - 1, 1);
-    for (const sampleX of columnSamples) {
-      const u = sampleX / Math.max(columns - 1, 1);
-      addSmoothTerrainVertex(
-        vertices,
-        u,
-        v,
-        sampleHeightAt(heights, columns, rows, u, v),
-        createSmoothTerrainNormal(heights, columns, rows, u, v)
-      );
-    }
-  }
-
-  for (let row = 0; row < rowSamples.length - 1; row += 1) {
-    for (let column = 0; column < columnSamples.length - 1; column += 1) {
-      const topLeft = row * vertexColumns + column;
-      const topRight = topLeft + 1;
-      const bottomLeft = topLeft + vertexColumns;
-      const bottomRight = bottomLeft + 1;
-      indices.push(topLeft, bottomLeft, topRight, topRight, bottomLeft, bottomRight);
-    }
-  }
-
-  return {
-    vertices: new Float32Array(vertices),
-    indices: new Uint32Array(indices),
-  };
-}
-
-function createTerrainMeshSampleIndices(count: number, step: number): number[] {
-  const sampleIndices: number[] = [];
-  const safeStep = Math.max(Math.floor(step), 1);
-
-  for (let index = 0; index < count; index += safeStep) {
-    sampleIndices.push(index);
-  }
-
-  const lastIndex = Math.max(count - 1, 0);
-  if (sampleIndices[sampleIndices.length - 1] !== lastIndex) {
-    sampleIndices.push(lastIndex);
-  }
-
-  return sampleIndices;
 }
 
 function getTerrainHexCells(): Array<{ x: number; y: number }> {
@@ -7199,62 +9881,6 @@ function addTerrainVertex(
   );
 
   return vertexIndex;
-}
-
-function createSmoothTerrainNormal(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  u: number,
-  v: number
-): [number, number, number] {
-  const deltaU = TERRAIN_NORMAL_SAMPLE_RADIUS_PIXELS / Math.max(columns - 1, 1);
-  const deltaV = TERRAIN_NORMAL_SAMPLE_RADIUS_PIXELS / Math.max(rows - 1, 1);
-  const leftHeight = sampleSmoothedHeightAt(heights, columns, rows, u - deltaU, v);
-  const rightHeight = sampleSmoothedHeightAt(heights, columns, rows, u + deltaU, v);
-  const topHeight = sampleSmoothedHeightAt(heights, columns, rows, u, v - deltaV);
-  const bottomHeight = sampleSmoothedHeightAt(heights, columns, rows, u, v + deltaV);
-  const tangentU: [number, number, number] = [
-    deltaU * 2,
-    0,
-    (rightHeight - leftHeight) * HEIGHT_SCALE * TERRAIN_NORMAL_RELIEF_SCALE,
-  ];
-  const tangentV: [number, number, number] = [
-    0,
-    -deltaV * 2,
-    (bottomHeight - topHeight) * HEIGHT_SCALE * TERRAIN_NORMAL_RELIEF_SCALE,
-  ];
-
-  return normalizeVector3([
-    tangentV[1] * tangentU[2] - tangentV[2] * tangentU[1],
-    tangentV[2] * tangentU[0] - tangentV[0] * tangentU[2],
-    tangentV[0] * tangentU[1] - tangentV[1] * tangentU[0],
-  ]);
-}
-
-function sampleSmoothedHeightAt(
-  heights: Float32Array,
-  columns: number,
-  rows: number,
-  u: number,
-  v: number
-): number {
-  const radiusU = TERRAIN_NORMAL_SMOOTH_RADIUS_PIXELS / Math.max(columns - 1, 1);
-  const radiusV = TERRAIN_NORMAL_SMOOTH_RADIUS_PIXELS / Math.max(rows - 1, 1);
-  const center = sampleHeightAt(heights, columns, rows, u, v);
-  const horizontal =
-    sampleHeightAt(heights, columns, rows, u - radiusU, v) +
-    sampleHeightAt(heights, columns, rows, u + radiusU, v);
-  const vertical =
-    sampleHeightAt(heights, columns, rows, u, v - radiusV) +
-    sampleHeightAt(heights, columns, rows, u, v + radiusV);
-  const diagonal =
-    sampleHeightAt(heights, columns, rows, u - radiusU, v - radiusV) +
-    sampleHeightAt(heights, columns, rows, u + radiusU, v - radiusV) +
-    sampleHeightAt(heights, columns, rows, u - radiusU, v + radiusV) +
-    sampleHeightAt(heights, columns, rows, u + radiusU, v + radiusV);
-
-  return (center * 4 + horizontal * 2 + vertical * 2 + diagonal) / 16;
 }
 
 function terrainUvToHexPoint(u: number, v: number): { x: number; y: number } {
@@ -7344,18 +9970,70 @@ function createTexture(
   return texture;
 }
 
-function updateTextureImage(
+function createStructureGroundTextureAtlas(
+  villageImage: CanvasImageSource,
+  cityImage: CanvasImageSource
+): HTMLCanvasElement {
+  const width = 2048;
+  const height = 1024;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (context == null) {
+    throw new Error("Failed to create campaign structure ground texture atlas.");
+  }
+
+  context.drawImage(villageImage, 0, 0, width / 2, height);
+  context.drawImage(cityImage, width / 2, 0, width / 2, height);
+  return canvas;
+}
+
+function createRepeatableTexture(
   gl: WebGLRenderingContext,
-  texture: WebGLTexture,
-  image: TexImageSource
-): void {
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  image: HTMLImageElement
+): WebGLTexture {
+  const width = Math.max(image.naturalWidth || image.width, 1);
+  const height = Math.max(image.naturalHeight || image.height, 1);
+  const repeatableImage =
+    isPowerOfTwo(width) && isPowerOfTwo(height)
+      ? image
+      : createPowerOfTwoTextureCanvas(image, width, height);
+
+  return createTexture(gl, repeatableImage, {
+    wrapS: gl.REPEAT,
+    wrapT: gl.REPEAT,
+  });
+}
+
+function createPowerOfTwoTextureCanvas(
+  image: HTMLImageElement,
+  width: number,
+  height: number
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = nextPowerOfTwo(width);
+  canvas.height = nextPowerOfTwo(height);
+
+  const context = canvas.getContext("2d");
+  if (context == null) {
+    throw new Error("Failed to create repeatable texture canvas.");
+  }
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
+function isPowerOfTwo(value: number): boolean {
+  return value > 0 && (value & (value - 1)) === 0;
+}
+
+function nextPowerOfTwo(value: number): number {
+  return 2 ** Math.ceil(Math.log2(Math.max(value, 1)));
 }
 
 function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): void {
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, 1);
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
   const width = Math.max(Math.floor(canvas.clientWidth * pixelRatio), 1);
   const height = Math.max(Math.floor(canvas.clientHeight * pixelRatio), 1);
 
@@ -7586,174 +10264,3 @@ function createProgram(
   return program;
 }
 
-function multiplyMatrices(left: Mat4, right: Mat4): Mat4 {
-  const result = new Float32Array(16);
-
-  for (let row = 0; row < 4; row += 1) {
-    for (let column = 0; column < 4; column += 1) {
-      result[column * 4 + row] =
-        readMatrixValue(left, row) * readMatrixValue(right, column * 4) +
-        readMatrixValue(left, 4 + row) * readMatrixValue(right, column * 4 + 1) +
-        readMatrixValue(left, 8 + row) * readMatrixValue(right, column * 4 + 2) +
-        readMatrixValue(left, 12 + row) * readMatrixValue(right, column * 4 + 3);
-    }
-  }
-
-  return result;
-}
-
-function invertMatrix4(matrix: Mat4): Mat4 {
-  const m: [
-    number, number, number, number,
-    number, number, number, number,
-    number, number, number, number,
-    number, number, number, number,
-  ] = [
-    readMatrixValue(matrix, 0),
-    readMatrixValue(matrix, 1),
-    readMatrixValue(matrix, 2),
-    readMatrixValue(matrix, 3),
-    readMatrixValue(matrix, 4),
-    readMatrixValue(matrix, 5),
-    readMatrixValue(matrix, 6),
-    readMatrixValue(matrix, 7),
-    readMatrixValue(matrix, 8),
-    readMatrixValue(matrix, 9),
-    readMatrixValue(matrix, 10),
-    readMatrixValue(matrix, 11),
-    readMatrixValue(matrix, 12),
-    readMatrixValue(matrix, 13),
-    readMatrixValue(matrix, 14),
-    readMatrixValue(matrix, 15),
-  ];
-  const inverse = new Float32Array(16);
-  inverse[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] -
-    m[9] * m[6] * m[15] + m[9] * m[7] * m[14] +
-    m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
-  inverse[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] +
-    m[8] * m[6] * m[15] - m[8] * m[7] * m[14] -
-    m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
-  inverse[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] -
-    m[8] * m[5] * m[15] + m[8] * m[7] * m[13] +
-    m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
-  inverse[12] = -m[4] * m[9] * m[14] + m[4] * m[10] * m[13] +
-    m[8] * m[5] * m[14] - m[8] * m[6] * m[13] -
-    m[12] * m[5] * m[10] + m[12] * m[6] * m[9];
-  inverse[1] = -m[1] * m[10] * m[15] + m[1] * m[11] * m[14] +
-    m[9] * m[2] * m[15] - m[9] * m[3] * m[14] -
-    m[13] * m[2] * m[11] + m[13] * m[3] * m[10];
-  inverse[5] = m[0] * m[10] * m[15] - m[0] * m[11] * m[14] -
-    m[8] * m[2] * m[15] + m[8] * m[3] * m[14] +
-    m[12] * m[2] * m[11] - m[12] * m[3] * m[10];
-  inverse[9] = -m[0] * m[9] * m[15] + m[0] * m[11] * m[13] +
-    m[8] * m[1] * m[15] - m[8] * m[3] * m[13] -
-    m[12] * m[1] * m[11] + m[12] * m[3] * m[9];
-  inverse[13] = m[0] * m[9] * m[14] - m[0] * m[10] * m[13] -
-    m[8] * m[1] * m[14] + m[8] * m[2] * m[13] +
-    m[12] * m[1] * m[10] - m[12] * m[2] * m[9];
-  inverse[2] = m[1] * m[6] * m[15] - m[1] * m[7] * m[14] -
-    m[5] * m[2] * m[15] + m[5] * m[3] * m[14] +
-    m[13] * m[2] * m[7] - m[13] * m[3] * m[6];
-  inverse[6] = -m[0] * m[6] * m[15] + m[0] * m[7] * m[14] +
-    m[4] * m[2] * m[15] - m[4] * m[3] * m[14] -
-    m[12] * m[2] * m[7] + m[12] * m[3] * m[6];
-  inverse[10] = m[0] * m[5] * m[15] - m[0] * m[7] * m[13] -
-    m[4] * m[1] * m[15] + m[4] * m[3] * m[13] +
-    m[12] * m[1] * m[7] - m[12] * m[3] * m[5];
-  inverse[14] = -m[0] * m[5] * m[14] + m[0] * m[6] * m[13] +
-    m[4] * m[1] * m[14] - m[4] * m[2] * m[13] -
-    m[12] * m[1] * m[6] + m[12] * m[2] * m[5];
-  inverse[3] = -m[1] * m[6] * m[11] + m[1] * m[7] * m[10] +
-    m[5] * m[2] * m[11] - m[5] * m[3] * m[10] -
-    m[9] * m[2] * m[7] + m[9] * m[3] * m[6];
-  inverse[7] = m[0] * m[6] * m[11] - m[0] * m[7] * m[10] -
-    m[4] * m[2] * m[11] + m[4] * m[3] * m[10] +
-    m[8] * m[2] * m[7] - m[8] * m[3] * m[6];
-  inverse[11] = -m[0] * m[5] * m[11] + m[0] * m[7] * m[9] +
-    m[4] * m[1] * m[11] - m[4] * m[3] * m[9] -
-    m[8] * m[1] * m[7] + m[8] * m[3] * m[5];
-  inverse[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] -
-    m[4] * m[1] * m[10] + m[4] * m[2] * m[9] +
-    m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
-
-  const determinant =
-    m[0] * readMatrixValue(inverse, 0) +
-    m[1] * readMatrixValue(inverse, 4) +
-    m[2] * readMatrixValue(inverse, 8) +
-    m[3] * readMatrixValue(inverse, 12);
-  if (Math.abs(determinant) <= 0.0000001) {
-    return IDENTITY_MATRIX_4;
-  }
-
-  for (let index = 0; index < 16; index += 1) {
-    inverse[index] = readMatrixValue(inverse, index) / determinant;
-  }
-  return inverse;
-}
-
-function readMatrixValue(matrix: Mat4, index: number): number {
-  return matrix[index] ?? 0;
-}
-
-function easeOutCubic(value: number): number {
-  const clampedValue = clamp(value, 0, 1);
-
-  return 1 - (1 - clampedValue) ** 3;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
-function smoothstep(value: number): number {
-  const clampedValue = clamp(value, 0, 1);
-  return clampedValue * clampedValue * (3 - 2 * clampedValue);
-}
-
-function createPerspectiveMatrix(
-  fovRadians: number,
-  aspectRatio: number,
-  near: number,
-  far: number
-): Mat4 {
-  const f = 1 / Math.tan(fovRadians / 2);
-  const rangeInverse = 1 / (near - far);
-
-  return new Float32Array([
-    f / aspectRatio, 0, 0, 0,
-    0, f, 0, 0,
-    0, 0, (near + far) * rangeInverse, -1,
-    0, 0, near * far * rangeInverse * 2, 0,
-  ]);
-}
-
-function createTranslationMatrix(x: number, y: number, z: number): Mat4 {
-  return new Float32Array([
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    x, y, z, 1,
-  ]);
-}
-
-function createRotationXMatrix(angleRadians: number): Mat4 {
-  const cosine = Math.cos(angleRadians);
-  const sine = Math.sin(angleRadians);
-
-  return new Float32Array([
-    1, 0, 0, 0,
-    0, cosine, sine, 0,
-    0, -sine, cosine, 0,
-    0, 0, 0, 1,
-  ]);
-}
-
-function createScaleMatrix(x: number, y: number, z: number): Mat4 {
-  return new Float32Array([
-    x, 0, 0, 0,
-    0, y, 0, 0,
-    0, 0, z,
-    0,
-    0, 0, 0, 1,
-  ]);
-}

@@ -3223,6 +3223,24 @@ test("campaign terrain canvas receives fort city model profile attributes", () =
   assert.doesNotMatch(mapViewSource, /scenario-packs\/zhuyuanzhang\/assets\/map-nodes/);
 });
 
+test("campaign fort city model renderer ports cyh instanced draw path", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const terrainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "campaign-terrain-webgl.ts"),
+    "utf8"
+  );
+
+  assert.match(terrainSource, /campaignFortCityAssetId/);
+  assert.match(terrainSource, /getRegisteredCampaignFortCityAsset/);
+  assert.match(terrainSource, /drawCampaignFortCityInstancedModel/);
+  assert.match(terrainSource, /createCampaignFortCityBuildingInstances/);
+  assert.match(terrainSource, /readCampaignFortWallInstances/);
+  assert.match(terrainSource, /createCampaignFortCityShadowMesh/);
+  assert.match(terrainSource, /campaign-fort-city-instanced\.vert\.glsl/);
+  assert.match(terrainSource, /campaign-structure-shadow\.frag\.glsl/);
+});
+
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
   const {
     loadContentPackFromManifestText,
