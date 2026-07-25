@@ -293,6 +293,8 @@ function appendSettlementAuthoringDiagnostics(
       }
     }
 
+    appendLegacySettlementResultDiagnostics(settlementRecord, fieldPath, diagnostics);
+
     (settlementRecord.contents ?? []).forEach((content, contentIndex) => {
       const contentFieldPath = `${fieldPath}.contents[${contentIndex}]`;
       if (content == null || typeof content !== "object" || Array.isArray(content)) {
@@ -305,8 +307,22 @@ function appendSettlementAuthoringDiagnostics(
       }
 
       const contentRecord = content as Record<string, unknown>;
+      const targetFamily = contentRecord.targetFamily;
       const attributeType = contentRecord.attributeType;
       const operation = contentRecord.operation;
+      if (
+        targetFamily !== "person" &&
+        targetFamily !== "city" &&
+        targetFamily !== "building"
+      ) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `${contentFieldPath}.targetFamily`,
+          message: "Settlement content targetFamily must be person, city, or building.",
+        });
+        return;
+      }
+
       if (
         attributeType !== "number" &&
         attributeType !== "boolean" &&
@@ -338,6 +354,50 @@ function appendSettlementAuthoringDiagnostics(
       }
     });
   });
+}
+
+function appendLegacySettlementResultDiagnostics(
+  settlementRecord: ScriptEditorProjectDefinition["settlements"][number],
+  fieldPath: string,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  const rawResults = (settlementRecord as Record<string, unknown>).results;
+  if (rawResults == null) {
+    return;
+  }
+  if (!Array.isArray(rawResults)) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `${fieldPath}.results`,
+      message: "Legacy settlement result routing must be an array.",
+    });
+    return;
+  }
+
+  const nextEventIds = new Set<string>();
+  for (const result of rawResults) {
+    if (result == null || typeof result !== "object" || Array.isArray(result)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.results`,
+        message: "Legacy settlement result routing rows must be objects.",
+      });
+      return;
+    }
+    const nextEventId =
+      typeof (result as Record<string, unknown>).nextEventId === "string"
+        ? ((result as Record<string, unknown>).nextEventId as string).trim()
+        : "";
+    nextEventIds.add(nextEventId);
+  }
+
+  if (nextEventIds.size > 1) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `${fieldPath}.results`,
+      message: "Ambiguous legacy settlement result routing must fail closed.",
+    });
+  }
 }
 
 function appendMountedBuildingDiagnostics(

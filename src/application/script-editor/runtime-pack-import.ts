@@ -675,7 +675,10 @@ function readImportedSettlementNextEventId(
     if (result == null || typeof result !== "object" || Array.isArray(result)) {
       throw new Error("Imported legacy settlement result must be an object.");
     }
-    nextEventIds.add(readString((result as Record<string, unknown>).nextEventId));
+    const nextEventId = readString((result as Record<string, unknown>).nextEventId);
+    if (nextEventId.length > 0) {
+      nextEventIds.add(nextEventId);
+    }
   }
 
   if (nextEventIds.size > 1) {

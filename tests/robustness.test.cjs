@@ -7447,6 +7447,88 @@ test("script editor runtime export rejects invalid settlement content operation"
   );
 });
 
+test("script editor runtime export rejects invalid settlement content target family", () => {
+  const {
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+      contents: [
+        {
+          targetFamily: "inventory",
+          targetId: "item.rice",
+          attributeKey: "stock",
+          attributeType: "number",
+          operation: "add",
+          value: 1,
+        },
+      ],
+    },
+  ];
+
+  const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  assert.equal(
+    diagnostics.some(
+      (diagnostic) =>
+        diagnostic.code === "invalid-field" &&
+        diagnostic.fieldPath === "project.settlements[0].contents[0].targetFamily" &&
+        /targetFamily|person|city|building/i.test(diagnostic.message)
+    ),
+    true
+  );
+});
+
+test("script editor runtime export rejects ambiguous legacy settlement result routing", () => {
+  const {
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.follow-up.success",
+      title: "Success Follow Up",
+      actions: [{ type: "closeBuilding" }],
+    },
+    {
+      id: "event.follow-up.failure",
+      title: "Failure Follow Up",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+      results: [
+        {
+          id: "result.success",
+          label: "Success",
+          nextEventId: "event.follow-up.success",
+        },
+        {
+          id: "result.failure",
+          label: "Failure",
+          nextEventId: "event.follow-up.failure",
+        },
+      ],
+    },
+  ];
+
+  const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  assert.equal(
+    diagnostics.some(
+      (diagnostic) =>
+        diagnostic.code === "invalid-field" &&
+        diagnostic.fieldPath === "project.settlements[0].results" &&
+        /legacy settlement result|ambiguous nextEventId/i.test(diagnostic.message)
+    ),
+    true
+  );
+});
+
 test("script editor runtime import fails closed on ambiguous legacy settlement result routing", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
@@ -7604,6 +7686,50 @@ test("script editor runtime import migrates legacy settlement result routing whe
       ],
     },
   ]);
+});
+
+test("script editor runtime import preserves settlement nextEventId when legacy settlement result routing is empty", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+      nextEventId: "event.follow-up",
+    },
+  ];
+  project.events = [
+    {
+      id: "event.follow-up",
+      title: "Follow Up Event",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const settlements = JSON.parse(files["settlements.json"]);
+  settlements[0].results = [
+    {
+      id: "result.stale",
+      label: "Stale",
+      nextEventId: "",
+    },
+  ];
+  files["settlements.json"] = JSON.stringify(settlements, null, 2);
+
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    createImportedFilesFromSerializedJsonRecord(files, "empty-legacy-settlement-pack")
+  );
+
+  assert.equal(
+    importedProject.settlements[0]?.nextEventId,
+    "event.follow-up"
+  );
 });
 
 test(
