@@ -78,6 +78,12 @@ function applySettlementContent(
   if (content.attributeType === "number" && content.operation === "subtract") {
     return applyNumericDelta(state, content, context, -Number(content.value));
   }
+  if (
+    (content.attributeType === "boolean" || content.attributeType === "enum") &&
+    content.operation !== "set"
+  ) {
+    return state;
+  }
   return applyTypedSet(state, content, context);
 }
 

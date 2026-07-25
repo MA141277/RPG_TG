@@ -25895,6 +25895,58 @@ test("runtime settlement applies structured settlement content rows directly", (
   assert.notEqual(result, gameState);
 });
 
+test("runtime settlement fails closed for invalid boolean and enum operations", () => {
+  const {
+    applySettlementContents,
+  } = require("../.test-dist/core/runtime/runtime-settlement.js");
+  const gameState = {
+    people: {
+      "person.hero": {
+        id: "person.hero",
+        mood: "steady",
+      },
+    },
+    buildings: {
+      "building.home": {
+        id: "building.home",
+        isOpen: true,
+      },
+    },
+  };
+
+  const result = applySettlementContents(
+    gameState,
+    {
+      id: "settlement.invalid.boolean-enum",
+      title: "Invalid Boolean Enum Settlement",
+      contents: [
+        {
+          targetFamily: "building",
+          targetId: "building.home",
+          attributeKey: "isOpen",
+          attributeType: "boolean",
+          operation: "add",
+          value: false,
+        },
+        {
+          targetFamily: "person",
+          targetId: "person.hero",
+          attributeKey: "mood",
+          attributeType: "enum",
+          operation: "subtract",
+          value: "inspired",
+        },
+      ],
+    },
+    {
+      people: gameState.people,
+      buildings: gameState.buildings,
+    }
+  );
+
+  assert.equal(result.buildings["building.home"].isOpen, true);
+  assert.equal(result.people["person.hero"].mood, "steady");
+});
 test("runtime dispatch propagates task character property mutation effect status", () => {
   const {
     dispatchRuntimeRequest,
