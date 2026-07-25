@@ -154,20 +154,35 @@ const path = require("node:path");
 
 // Residue candidates are still inventoried before cleanup; canonical runtime
 // fields remain live runtime contracts and are audited separately.
-const LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATHS = [
-  "baseAttributes.security",
-  "baseAttributes.level",
-  "baseAttributes.outputMultiplier",
-  "baseAttributes.damaged",
-  "population?: number",
+const LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATTERNS = [
+  {
+    label: "baseAttributes.security",
+    pattern: /"baseAttributes\.security"\s*:/,
+  },
+  {
+    label: "baseAttributes.level",
+    pattern: /"baseAttributes\.level"\s*:/,
+  },
+  {
+    label: "baseAttributes.outputMultiplier",
+    pattern: /"baseAttributes\.outputMultiplier"\s*:/,
+  },
+  {
+    label: "baseAttributes.damaged",
+    pattern: /"baseAttributes\.damaged"\s*:/,
+  },
+  {
+    label: "population?: number",
+    pattern: /\bpopulation\?\s*:\s*number\b/,
+  },
 ];
 
-const LEGACY_CUTOVER_CANONICAL_RUNTIME_FIELDS = [
-  "danger",
-  "level",
-  "outputMultiplier",
-  "damaged",
-];
+const LEGACY_CUTOVER_CANONICAL_RUNTIME_FIELDS = {
+  danger: "number",
+  level: "number",
+  outputMultiplier: "number",
+  damaged: "boolean",
+};
 
 const playerCharacterId = "char.player";
 const keepHouse = prototypeHouses.find(
@@ -26431,24 +26446,23 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
       scenarioPackLoaderSource,
       runtimeSettlementSource,
     ].join("\n");
-    const canonicalRuntimeInventorySource = [
-      scenarioPackLoaderSource,
-      runtimeSettlementSource,
-    ].join("\n");
-
-    for (const residueCandidatePath of LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATHS) {
-      assert.equal(
-        residueCandidateInventorySource.includes(residueCandidatePath),
-        true,
-        `missing residue candidate inventory path ${residueCandidatePath}`
+    for (const residueCandidate of LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATTERNS) {
+      assert.match(
+        residueCandidateInventorySource,
+        residueCandidate.pattern,
+        `missing residue candidate inventory path ${residueCandidate.label}`
       );
     }
 
-    for (const canonicalRuntimeField of LEGACY_CUTOVER_CANONICAL_RUNTIME_FIELDS) {
-      assert.equal(
-        canonicalRuntimeInventorySource.includes(canonicalRuntimeField),
-        true,
-        `missing canonical runtime field inventory ${canonicalRuntimeField}`
+    for (const [canonicalRuntimeField, attributeType] of Object.entries(
+      LEGACY_CUTOVER_CANONICAL_RUNTIME_FIELDS
+    )) {
+      assert.match(
+        scenarioPackLoaderSource,
+        new RegExp(
+          `(^|\\n)\\s*${canonicalRuntimeField}\\s*:\\s*\\{\\s*attributeType:\\s*"${attributeType}"\\s*\\}`
+        ),
+        `missing canonical runtime field metadata ${canonicalRuntimeField}`
       );
     }
 
@@ -26463,9 +26477,14 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
       cityBuildingAuthoringSource,
       /typeof base\.outputMultiplier === "number"/
     );
-    assert.match(runtimeSettlementSource, /baseAttributes\.security|baseAttributes\.level/);
-    assert.match(schemaSource, /population\?: number/);
-    assert.match(runtimeSettlementSource, /danger|level|outputMultiplier|damaged/);
+    assert.match(runtimeSettlementSource, /"baseAttributes\.security"\s*:\s*"danger"/);
+    assert.match(runtimeSettlementSource, /"baseAttributes\.level"\s*:\s*"level"/);
+    assert.match(
+      runtimeSettlementSource,
+      /"baseAttributes\.outputMultiplier"\s*:\s*"outputMultiplier"/
+    );
+    assert.match(runtimeSettlementSource, /"baseAttributes\.damaged"\s*:\s*"damaged"/);
+    assert.match(schemaSource, /\bpopulation\?\s*:\s*number\b/);
     assert.match(saveMigrationsSource, /export function migrateSaveEnvelope/);
     assert.doesNotMatch(
       saveMigrationsSource,
