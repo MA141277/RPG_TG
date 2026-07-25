@@ -3208,6 +3208,21 @@ test("campaign fort city model assets are engine-owned and not imported by map U
   assert.doesNotMatch(mapViewSource, /fort-city\/building-/);
 });
 
+test("campaign terrain canvas receives fort city model profile attributes", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /data-campaign-fort-city-asset-id/);
+  assert.match(mapViewSource, /data-campaign-fort-wall-mesh-url/);
+  assert.match(mapViewSource, /campaignStructureProfile\?\.fortCityAssetId/);
+  assert.match(mapViewSource, /campaignStructureProfile\?\.fortWallMeshUrl/);
+  assert.doesNotMatch(mapViewSource, /scenario-packs\/zhuyuanzhang\/assets\/map-nodes/);
+});
+
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
   const {
     loadContentPackFromManifestText,

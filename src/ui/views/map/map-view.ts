@@ -556,6 +556,14 @@ function renderCampaignMapVisualLayer(
           data-campaign-city-u="${cityDepthMeshU.toFixed(5)}"
           data-campaign-city-v="${cityDepthMeshV.toFixed(5)}"
         `;
+  const fortCityAssetAttributes =
+    campaignStructureProfile?.fortCityAssetId == null
+      ? ""
+      : `data-campaign-fort-city-asset-id="${campaignStructureProfile.fortCityAssetId}"`;
+  const fortWallMeshAttributes =
+    campaignStructureProfile?.fortWallMeshUrl == null
+      ? ""
+      : `data-campaign-fort-wall-mesh-url="${campaignStructureProfile.fortWallMeshUrl}"`;
   const terrainCanvasMarkup =
     !canRenderWebGlTerrain
       ? ""
@@ -574,6 +582,8 @@ function renderCampaignMapVisualLayer(
           ${model.snowTextureImageUrl == null ? "" : `data-map-snow-texture-url="${model.snowTextureImageUrl}"`}
           ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
           ${cityDepthMeshAttributes}
+          ${fortCityAssetAttributes}
+          ${fortWallMeshAttributes}
           aria-label="${model.mapName} terrain"
         ></canvas>
       `;
