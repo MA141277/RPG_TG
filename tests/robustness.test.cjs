@@ -152,6 +152,23 @@ const {
 const fs = require("node:fs");
 const path = require("node:path");
 
+// Residue candidates are still inventoried before cleanup; canonical runtime
+// fields remain live runtime contracts and are audited separately.
+const LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATHS = [
+  "baseAttributes.security",
+  "baseAttributes.level",
+  "baseAttributes.outputMultiplier",
+  "baseAttributes.damaged",
+  "population?: number",
+];
+
+const LEGACY_CUTOVER_CANONICAL_RUNTIME_FIELDS = [
+  "danger",
+  "level",
+  "outputMultiplier",
+  "damaged",
+];
+
 const playerCharacterId = "char.player";
 const keepHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "keep-house"
@@ -26374,6 +26391,86 @@ test("runtime settlement applies UI-authored city and building baseAttributes ke
   assert.equal(result.buildings["building.home"].baseAttributes.damaged, false);
   assert.equal(result.buildings["building.home"].baseAttributes.level, 3);
   assert.equal(Object.hasOwn(result.cities["city.start"], "baseAttributes.prosperity"), false);
+});
+
+test("legacy cutover inventory separates canonical keep fields from residue candidates", () => {
+    const schemaSource = fs.readFileSync(
+      path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+      "utf8"
+    );
+    const cityBuildingAuthoringSource = fs.readFileSync(
+      path.join(process.cwd(), "src/application/script-editor/city-building-authoring.ts"),
+      "utf8"
+    );
+    const runtimePackExportSource = fs.readFileSync(
+      path.join(process.cwd(), "src/application/script-editor/runtime-pack-export.ts"),
+      "utf8"
+    );
+    const runtimePackImportSource = fs.readFileSync(
+      path.join(process.cwd(), "src/application/script-editor/runtime-pack-import.ts"),
+      "utf8"
+    );
+    const scenarioPackLoaderSource = fs.readFileSync(
+      path.join(process.cwd(), "src/application/scenario/scenario-pack-loader.ts"),
+      "utf8"
+    );
+    const runtimeSettlementSource = fs.readFileSync(
+      path.join(process.cwd(), "src/core/runtime/runtime-settlement.ts"),
+      "utf8"
+    );
+    const saveMigrationsSource = fs.readFileSync(
+      path.join(process.cwd(), "src/core/save/save-migrations.ts"),
+      "utf8"
+    );
+
+    const residueCandidateInventorySource = [
+      schemaSource,
+      cityBuildingAuthoringSource,
+      runtimePackExportSource,
+      runtimePackImportSource,
+      scenarioPackLoaderSource,
+      runtimeSettlementSource,
+    ].join("\n");
+    const canonicalRuntimeInventorySource = [
+      scenarioPackLoaderSource,
+      runtimeSettlementSource,
+    ].join("\n");
+
+    for (const residueCandidatePath of LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATHS) {
+      assert.equal(
+        residueCandidateInventorySource.includes(residueCandidatePath),
+        true,
+        `missing residue candidate inventory path ${residueCandidatePath}`
+      );
+    }
+
+    for (const canonicalRuntimeField of LEGACY_CUTOVER_CANONICAL_RUNTIME_FIELDS) {
+      assert.equal(
+        canonicalRuntimeInventorySource.includes(canonicalRuntimeField),
+        true,
+        `missing canonical runtime field inventory ${canonicalRuntimeField}`
+      );
+    }
+
+    assert.match(
+      cityBuildingAuthoringSource,
+      /normalizeCityBaseAttributes[\s\S]*security[\s\S]*population/
+    );
+    assert.match(cityBuildingAuthoringSource, /normalizeBuildingBaseAttributes/);
+    assert.match(cityBuildingAuthoringSource, /typeof base\.level === "number"/);
+    assert.match(cityBuildingAuthoringSource, /typeof base\.damaged === "boolean"/);
+    assert.match(
+      cityBuildingAuthoringSource,
+      /typeof base\.outputMultiplier === "number"/
+    );
+    assert.match(runtimeSettlementSource, /baseAttributes\.security|baseAttributes\.level/);
+    assert.match(schemaSource, /population\?: number/);
+    assert.match(runtimeSettlementSource, /danger|level|outputMultiplier|damaged/);
+    assert.match(saveMigrationsSource, /export function migrateSaveEnvelope/);
+    assert.doesNotMatch(
+      saveMigrationsSource,
+      /baseAttributes\.(security|level|outputMultiplier|damaged)|\bdanger\b|\bpopulation\b/
+    );
 });
 
 test("story runtime settlement event applies contents and starts settlement follow-up", () => {

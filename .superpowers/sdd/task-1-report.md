@@ -36,3 +36,25 @@ Status: DONE_WITH_CONCERNS
 ### Verification
 - `npm.cmd run build:test`: passed.
 - `node --test tests\robustness.test.cjs --test-name-pattern "settlement|person custom attribute"`: passed, 512 passing, 0 failing, 176 skipped.
+
+## Fix Wave 2
+
+### Summary
+- Renamed the task-local inventory constants so the classification matches the task brief:
+  - residue candidates still present before cleanup:
+    - `baseAttributes.security`
+    - `baseAttributes.level`
+    - `baseAttributes.outputMultiplier`
+    - `baseAttributes.damaged`
+    - `population?: number`
+  - canonical runtime fields also present:
+    - `danger`
+    - `level`
+    - `outputMultiplier`
+    - `damaged`
+- Updated the guard comment and grouped the assertion loops around those two classifications without changing the underlying inventory behavior.
+- Commit subject recorded for this fix wave: `test: clarify task 1 inventory guard classification`
+
+### Verification
+- Executed: `node --test tests/robustness.test.cjs --test-name-pattern "legacy cutover inventory separates canonical keep fields from residue candidates"`
+- Result: passed with exit code `0`; in this environment the run still executed the full `tests/robustness.test.cjs` file and finished with `559` passing, `0` failing, and `176` skipped.
