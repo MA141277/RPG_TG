@@ -13,8 +13,29 @@ export function runProgressionRuntime(input: {
   metricValue: number;
   occurredAt: string;
 }): ProgressionRuntimeResult {
+  if (input.binding.enabled === false) {
+    return {
+      state: input.state,
+      settlementInstances: [],
+      diagnostics: [
+        `progression-runtime:skipped-disabled-binding:${input.binding.id}`,
+      ],
+    };
+  }
+
+  const resolvedOwnerId = resolveOwnerId(input.binding);
+  if (resolvedOwnerId == null) {
+    return {
+      state: input.state,
+      settlementInstances: [],
+      diagnostics: [
+        `progression-runtime:skipped-unresolved-owner:${input.binding.id}`,
+      ],
+    };
+  }
+
   const ownerKind = input.binding.owner.ownerKind;
-  const ownerId = input.binding.owner.ownerId ?? "";
+  const ownerId = resolvedOwnerId;
   const ownerKey = createOwnerKey(ownerKind, ownerId);
   const current =
     input.state.trackStatesByOwnerKey[ownerKey]?.[input.track.id] ?? null;
@@ -148,4 +169,9 @@ function upsertTrackState(
 
 function createOwnerKey(ownerKind: string, ownerId: string): string {
   return `${ownerKind}:${ownerId}`;
+}
+
+function resolveOwnerId(binding: ProgressTrackBinding): string | null {
+  const ownerId = binding.owner.ownerId?.trim();
+  return ownerId != null && ownerId.length > 0 ? ownerId : null;
 }

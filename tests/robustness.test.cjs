@@ -26583,20 +26583,20 @@ test("progression runtime emits settlement instances only for target-tier conver
     },
     track: {
       id: "track.cultivation",
-      title: "修为阶段轨道",
-      metricLabel: "修为值",
+      title: "Cultivation Track",
+      metricLabel: "Cultivation",
       ownerKind: "person",
       allowDemotion: true,
       tiers: [
         {
           id: "tier.1",
-          title: "入门",
+          title: "Entry",
           threshold: 0,
           targetTierSettlementId: "settlement.tier.1",
         },
         {
           id: "tier.2",
-          title: "熟练",
+          title: "Skilled",
           threshold: 100,
           targetTierSettlementId: "settlement.tier.2",
         },
@@ -26623,6 +26623,105 @@ test("progression runtime emits settlement instances only for target-tier conver
     metricValue: 100,
   });
   assert.equal(result.eventRequests, undefined);
+});
+
+test("progression runtime skips unresolved concrete owners instead of collapsing into a shared owner bucket", () => {
+  const { runProgressionRuntime } = require("../.test-dist/core/runtime/progression-runtime.js");
+  const initialState = {
+    trackStatesByOwnerKey: {},
+  };
+
+  const result = runProgressionRuntime({
+    state: initialState,
+    track: {
+      id: "track.cultivation",
+      title: "Cultivation Track",
+      metricLabel: "Cultivation",
+      ownerKind: "person",
+      allowDemotion: true,
+      tiers: [
+        {
+          id: "tier.1",
+          title: "Entry",
+          threshold: 0,
+          targetTierSettlementId: "settlement.tier.1",
+        },
+      ],
+    },
+    binding: {
+      id: "binding.player.cultivation.unresolved",
+      trackId: "track.cultivation",
+      owner: { ownerKind: "person", ownerTag: "player-party" },
+      enabled: true,
+    },
+    metricValue: 25,
+    occurredAt: "2026-07-25T01:00:00.000Z",
+  });
+
+  assert.deepEqual(result.state, initialState);
+  assert.deepEqual(result.settlementInstances, []);
+  assert.deepEqual(result.diagnostics, [
+    "progression-runtime:skipped-unresolved-owner:binding.player.cultivation.unresolved",
+  ]);
+  assert.equal(result.state.trackStatesByOwnerKey["person:"], undefined);
+});
+
+test("progression runtime skips disabled bindings without updating state or settlement instances", () => {
+  const { runProgressionRuntime } = require("../.test-dist/core/runtime/progression-runtime.js");
+  const initialState = {
+    trackStatesByOwnerKey: {
+      "person:char.player": {
+        "track.cultivation": {
+          trackId: "track.cultivation",
+          ownerKind: "person",
+          ownerId: "char.player",
+          metricValue: 90,
+          currentTierId: "tier.1",
+          enteredTierHistory: ["tier.1"],
+          updatedAt: "2026-07-25T00:00:00.000Z",
+        },
+      },
+    },
+  };
+
+  const result = runProgressionRuntime({
+    state: initialState,
+    track: {
+      id: "track.cultivation",
+      title: "Cultivation Track",
+      metricLabel: "Cultivation",
+      ownerKind: "person",
+      allowDemotion: true,
+      tiers: [
+        {
+          id: "tier.1",
+          title: "Entry",
+          threshold: 0,
+          targetTierSettlementId: "settlement.tier.1",
+        },
+        {
+          id: "tier.2",
+          title: "Skilled",
+          threshold: 100,
+          targetTierSettlementId: "settlement.tier.2",
+        },
+      ],
+    },
+    binding: {
+      id: "binding.player.cultivation.disabled",
+      trackId: "track.cultivation",
+      owner: { ownerKind: "person", ownerId: "char.player" },
+      enabled: false,
+    },
+    metricValue: 100,
+    occurredAt: "2026-07-25T01:00:00.000Z",
+  });
+
+  assert.deepEqual(result.state, initialState);
+  assert.deepEqual(result.settlementInstances, []);
+  assert.deepEqual(result.diagnostics, [
+    "progression-runtime:skipped-disabled-binding:binding.player.cultivation.disabled",
+  ]);
 });
 
 test("runtime dispatch keeps progression settlement handoff on the shared settlement seam", () => {

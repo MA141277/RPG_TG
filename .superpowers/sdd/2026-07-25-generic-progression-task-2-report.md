@@ -110,3 +110,57 @@ npm.cmd run typecheck
 ## Result
 
 Task 2 is complete within the requested boundary and is ready for commit.
+
+---
+
+## 2026-07-25 Review Fix Batch
+
+### Review Findings Addressed
+
+- High: `progression-runtime` no longer collapses unresolved bindings into `ownerId: ""` or the shared `person:` owner bucket. Unresolved bindings now short-circuit before state upsert and emit no canonical settlement payload.
+- Medium: `progression-runtime` now respects `binding.enabled === false` as a strict no-op and emits neither state updates nor settlement instances for disabled bindings.
+- Low: bounded regression tests now cover both preconditions explicitly.
+
+### Code Changes
+
+- Updated `src/core/runtime/progression-runtime.ts` to short-circuit disabled bindings before any runtime work.
+- Updated `src/core/runtime/progression-runtime.ts` to require a concrete non-empty `ownerId` before computing the owner key, mutating progression state, or emitting a target-tier settlement payload.
+- Updated `tests/robustness.test.cjs` with two bounded regression tests:
+  - `progression runtime skips unresolved concrete owners instead of collapsing into a shared owner bucket`
+  - `progression runtime skips disabled bindings without updating state or settlement instances`
+
+### Red Verification
+
+Commands run:
+
+```bash
+npm.cmd run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "progression runtime emits settlement instances only for target-tier convergence|progression runtime skips unresolved concrete owners instead of collapsing into a shared owner bucket|progression runtime skips disabled bindings without updating state or settlement instances|runtime dispatch keeps progression settlement handoff on the shared settlement seam"
+```
+
+Observed failure summary before the fix:
+
+- unresolved-owner test failed because runtime wrote `trackStatesByOwnerKey["person:"]` with `ownerId: ""`
+- disabled-binding test failed because runtime advanced to `tier.2` and mutated state despite `enabled: false`
+
+### Green Verification
+
+Commands run:
+
+```bash
+npm.cmd run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "progression runtime emits settlement instances only for target-tier convergence|progression runtime skips unresolved concrete owners instead of collapsing into a shared owner bucket|progression runtime skips disabled bindings without updating state or settlement instances|runtime dispatch keeps progression settlement handoff on the shared settlement seam"
+npm.cmd run typecheck
+```
+
+Output summary:
+
+- `npm.cmd run build:test`: passed
+- focused `node --test ...`: `704` tests, `528` passed, `0` failed, `176` skipped
+- `npm.cmd run typecheck`: passed
+
+### Scope Notes
+
+- The fix stays on the existing `runProgressionRuntime(...)` to `settleRuntimeEffects(...)` seam.
+- No authored progression settlement-template execution was added.
+- No alternate routing or execution path was introduced.
