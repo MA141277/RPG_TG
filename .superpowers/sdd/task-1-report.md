@@ -1,41 +1,73 @@
-# Task 1 Report
+# Task 1 Report: Inventory Canonical Versus Residue Paths
 
-Status: DONE_WITH_CONCERNS
+## Scope
 
-## Summary
-- Converged the Script Editor settlement domain shape to settlement-level `nextEventId` plus executable typed `contents` rows.
-- Added typed person custom-attribute records and helper support for explicit `number` attributes, including numeric value preservation.
-- Kept event as the only routing owner; no resolver, selector, or intermediate routing layer was introduced.
-- Updated settlement follow-up validation to read settlement-level `nextEventId`.
-- Updated `docs/change-log.md` for the settlement domain/runtime validation shape change.
+- Dispatch scope honored: test-only.
+- Modified file: `tests/robustness.test.cjs`
+- Report output: `.superpowers/sdd/task-1-report.md`
+- No production files, docs, plans, or runtime/domain code were changed.
 
-## TDD Evidence
-- Red: `node --test tests\robustness.test.cjs --test-name-pattern "settlement|person custom attribute"` failed with missing `updateScriptEditorSettlementContentField` and missing typed person attribute fields.
-- Green: same focused command passed with 512 passing, 0 failing, 176 skipped.
+## Files Read
+
+- `src/domain/script-editor-project.ts`
+- `src/application/script-editor/city-building-authoring.ts`
+- `src/application/script-editor/runtime-pack-export.ts`
+- `src/application/script-editor/runtime-pack-import.ts`
+- `src/application/scenario/scenario-pack-loader.ts`
+- `src/core/runtime/runtime-settlement.ts`
+- `src/core/save/save-migrations.ts`
+
+## TDD Notes
+
+1. Red step check:
+   - Ran `node --test tests/robustness.test.cjs --test-name-pattern "legacy cutover inventory separates canonical keep fields from residue candidates"`.
+   - In this workspace, the named inventory test already existed before my edit, so the brief's expected initial failure no longer reproduced.
+   - The current Node test runner also executed the full file despite the name pattern, so verification evidence comes from the full-file run output.
+
+2. Green step:
+   - Kept the existing canonical-vs-residue inventory split.
+   - Added a short task-local comment clarifying the classification intent.
+   - Added `city-building-authoring.ts` to the inventory audit so the test now covers the authoring surface named in the brief.
+   - Added explicit authoring assertions that audit legacy/residue `baseAttributes.*` handling on the Script Editor normalization path without treating those aliases as canonical flat runtime fields.
+
+3. Refactor step:
+   - Relaxed one overly strict regex after the first post-edit run showed it depended on field order inside `normalizeBuildingBaseAttributes`.
+   - Replaced it with smaller assertions for `level`, `damaged`, and `outputMultiplier`.
+
+## Test Change Summary
+
+- The inventory guard continues to distinguish:
+  - residue candidates still present before cleanup:
+    - `baseAttributes.security`
+    - `baseAttributes.level`
+    - `baseAttributes.outputMultiplier`
+    - `baseAttributes.damaged`
+    - `population?: number`
+  - canonical runtime fields also present:
+    - `danger`
+    - `level`
+    - `outputMultiplier`
+    - `damaged`
+- The test still inventories residue candidates as present, rather than requiring cleanup to have happened already.
+- The test now explicitly audits residue/legacy authoring handling on the Script Editor normalization surface in addition to schema/export/import/runtime surfaces.
 
 ## Verification
-- `npm.cmd run build:test`: passed.
-- `node --test tests\robustness.test.cjs --test-name-pattern "settlement|person custom attribute"`: passed, 512 passing, 0 failing, 176 skipped.
-- `npm.cmd run build`: passed.
-- `npm.cmd test`: failed on existing unrelated `script editor city profile UI exposes mounted building and npc controls`; failure expects `appendScriptEditorCityMountedBuildingNpc(city, buildingIndex, nextNpcId)` in `src/ui/main-ui/main-ui-flow.js`.
+
+- Executed:
+  - `node --test tests/robustness.test.cjs --test-name-pattern "legacy cutover inventory separates canonical keep fields from residue candidates"`
+- Result:
+  - Pass
+  - In this environment the run exercised the full `tests/robustness.test.cjs` file and completed green.
+
+## Commit Scope Handling
+
+- `tests/robustness.test.cjs` already had large unrelated uncommitted changes in the working tree before this task work.
+- To keep this dispatch scoped, staging/commit must include only the inventory-guard hunk(s) for this task plus this report file, leaving unrelated test edits unstaged.
 
 ## Concerns
-- Full suite is not green because of the unrelated city-building source-pattern assertion above.
-- `src/ui/main-ui/main-ui-flow.js` still has legacy settlement-result authoring UI text/import names; compatibility exports now delegate those old names to the new content/settlement-level helpers without recreating `results`, because this task is not the full settlement UI rollout.
 
-## Fix Wave 1
-
-### Summary
-- Added a regression proving legacy settlement `description` and `results` input fields are stripped by `normalizeScriptEditorSettlementRecord()`.
-- Replaced the settlement normalizer spread return with a clean minimal settlement object.
-
-### TDD Evidence
-- Red: `node --test tests\robustness.test.cjs --test-name-pattern "settlement|person custom attribute"` failed before rebuilding/fixing with `true !== false` on the legacy `description` leakage assertion.
-- Green: after the normalizer fix and `npm.cmd run build:test`, the same focused command passed with 512 passing, 0 failing, 176 skipped.
-
-### Verification
-- `npm.cmd run build:test`: passed.
-- `node --test tests\robustness.test.cjs --test-name-pattern "settlement|person custom attribute"`: passed, 512 passing, 0 failing, 176 skipped.
+- The workspace did not start from the brief's expected red state because the inventory guard already existed in the working tree.
+- `--test-name-pattern` did not narrow execution to the single named test in this environment; verification still passed, but on the full file run.
 
 ## Fix Wave 2
 
@@ -58,12 +90,25 @@ Status: DONE_WITH_CONCERNS
 ### Verification
 - Executed: `node --test tests/robustness.test.cjs --test-name-pattern "legacy cutover inventory separates canonical keep fields from residue candidates"`
 - Result: passed with exit code `0`; in this environment the run still executed the full `tests/robustness.test.cjs` file and finished with `559` passing, `0` failing, and `176` skipped.
+
 ## Fix Wave 3
 
 ### Summary
 - Strengthened the canonical runtime field audit so flat runtime keys are matched through surrounding source syntax instead of bare substrings that residue aliases could satisfy.
 - Kept the residue candidate inventory on explicit alias-path patterns.
 - Recorded the follow-up code fix commit for this wave: `69f21643 test: harden task 1 inventory field guard`
+
+### Verification
+- Executed: `node --test tests/robustness.test.cjs --test-name-pattern "legacy cutover inventory separates canonical keep fields from residue candidates"`
+- Result: passed with exit code `0`; in this environment the run executed the full `tests/robustness.test.cjs` file and finished with `559` passing, `0` failing, and `176` skipped.
+
+## Fix Wave 4
+
+### Summary
+- Replaced the pooled residue blob audit with source-by-source residue assertions for schema, runtime export, runtime import, scenario loader, and runtime settlement surfaces.
+- Kept canonical runtime field assertions separate and explicit in the scenario-loader audit.
+- Clarified the report language so Script Editor authoring assertions are described as residue/legacy authoring handling checks rather than canonical flat-runtime handling.
+- Commit details for this wave: `test: separate task 1 residue inventory by named surface`
 
 ### Verification
 - Executed: `node --test tests/robustness.test.cjs --test-name-pattern "legacy cutover inventory separates canonical keep fields from residue candidates"`

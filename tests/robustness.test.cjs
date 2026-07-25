@@ -3884,6 +3884,59 @@ test("scenario pack loader rejects settlement contents with invalid typed values
   );
 });
 
+test("scenario pack loader rejects unsupported city population settlement content", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [
+    {
+      id: "city.start",
+      name: "Starting City",
+      baseAttributes: { prosperity: 50 },
+      profileMap: { displayName: "Starting City", description: "", tags: [] },
+      extendedAttributes: [],
+      mountedBuildings: [],
+      menuEntries: [],
+      access: {},
+    },
+  ];
+  project.settlements = [
+    {
+      id: "settlement.population.unsupported",
+      title: "Population Unsupported",
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedSettlements = JSON.parse(files["settlements.json"]);
+  exportedSettlements[0].contents = [
+    {
+      targetFamily: "city",
+      targetId: "city.start",
+      attributeKey: "baseAttributes.population",
+      attributeType: "number",
+      operation: "set",
+      value: 12000,
+    },
+  ];
+  files["settlements.json"] = JSON.stringify(exportedSettlements, null, 2);
+
+  await assert.rejects(
+    () =>
+      loadScenarioPackFromFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          files,
+          "unsupported-population-settlement-pack"
+        )
+      ),
+    /baseAttributes\.population|eligible settlement attribute|attributeKey/i
+  );
+});
+
 test("built-in Liu Bang pack uses event-bindings instead of event-body trigger fields", async () => {
   const {
     loadScenarioPackFromFiles,
@@ -4458,6 +4511,10 @@ test("script editor runtime preview keeps failures in the editor and exposes exi
   assert.match(mainUiSource, /c-main-ui-runtime-preview-session-banner/);
   assert.match(mainUiSource, /c-runtime-preview-exit--session/);
   assert.match(mainUiSource, /exitScriptEditorRuntimePreview\(\)/);
+  assert.match(mainUiSource, /this\.onExitRuntimePreview\?\.\(\)/);
+  assert.match(mainUiSource, /enterScriptEditorRuntimePreviewSession\(\)/);
+  assert.match(mainUiSource, /this\.currentScreen === "runtime-preview"/);
+  assert.match(mainUiSource, /运行预览已进入游戏，会话仍由编辑器托管/);
   assert.match(mainUiSource, /restoreScriptEditorRuntimePreviewReturnContext/);
   assert.match(mainUiSource, /scriptEditorSelection/);
   assert.match(mainUiSource, /scriptEditorEventTab/);
@@ -4473,6 +4530,41 @@ test("script editor runtime preview keeps failures in the editor and exposes exi
   assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-session-banner\s*{[\s\S]*?top:\s*16px;[\s\S]*?right:\s*16px;/);
   assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-session-banner\s*{[\s\S]*?z-index:\s*2001;/);
   assert.match(mainUiStyles, /pointer-events:\s*auto/);
+});
+
+test("script editor settlement authoring syncs creator inputs before preview export", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const onInputBlock = mainUiSource.slice(
+    mainUiSource.indexOf("onInput(event) {"),
+    mainUiSource.indexOf("onCompositionEnd(event) {")
+  );
+
+  assert.match(onInputBlock, /\[data-script-editor-settlement-field\]/);
+  assert.match(onInputBlock, /\[data-script-editor-settlement-content-field\]/);
+  assert.match(onInputBlock, /this\.applyScriptEditorSettlementContentField\(index, field, target\.value\)/);
+});
+
+test("main startup and preview wiring keeps settlement-aware startup bootstrap and runtime preview teardown", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.match(mainSource, /settlementDefinitionsById:\s*activeContentContext\.storyContent\.settlementDefinitionsById/);
+  assert.match(mainSource, /progressTrackDefinitionsById:\s*activeContentContext\.storyContent\.progressTrackDefinitionsById/);
+  assert.match(mainSource, /progressTrackBindingsById:\s*activeContentContext\.storyContent\.progressTrackBindingsById/);
+  assert.match(mainSource, /cityDefinitionsById:\s*activeContentContext\.storyContent\.cityDefinitionsById/);
+  assert.match(mainSource, /houseDefinitionsById:\s*activeContentContext\.storyContent\.houseDefinitionsById/);
+  assert.match(mainSource, /onExitRuntimePreview:\s*exitScriptEditorRuntimePreviewSession/);
+  assert.match(mainSource, /function exitScriptEditorRuntimePreviewSession\(\): void/);
+  assert.match(mainSource, /pendingScenarioStartupRequest = null;/);
+  assert.match(mainSource, /resetMainGameRuntime\(\);/);
+  assert.match(mainSource, /setGameVisibility\(false\);/);
+  assert.match(mainSource, /const SCENARIO_PENDING_ENTRY_EVENT_ID_VARIABLE =/);
+  assert.match(mainSource, /\[SCENARIO_PENDING_ENTRY_EVENT_ID_VARIABLE\]:\s*profile\.entryEventId/);
+  assert.match(mainSource, /type:\s*"consume-deferred-entry-event"/);
+  assert.match(mainSource, /mainUiFlow\.enterScriptEditorRuntimePreviewSession\(\)/);
+  assert.doesNotMatch(mainSource, /mainUiFlow\.setScreen\("runtime-preview"\)/);
 });
 
 test(
@@ -4784,6 +4876,27 @@ test("city and building status materializers overlay current values without muta
     activityLocationId: "market",
     backAction: { label: "Back", targetView: "city" },
   });
+});
+
+test("presenter and render coordinator materialize city and building runtime status truth", () => {
+  const stagePresenterSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/stage-presenters.ts"),
+    "utf8"
+  );
+  const renderCoordinatorSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/app-render-coordinator.ts"),
+    "utf8"
+  );
+
+  assert.match(stagePresenterSource, /materializeCityDefinitions/);
+  assert.match(stagePresenterSource, /materializeBuildingDefinitions/);
+  assert.match(stagePresenterSource, /input\.appState\.cityStatusById/);
+  assert.match(stagePresenterSource, /input\.appState\.buildingStatusById/);
+
+  assert.match(renderCoordinatorSource, /materializeCityDefinitions/);
+  assert.match(renderCoordinatorSource, /materializeBuildingDefinitions/);
+  assert.match(renderCoordinatorSource, /appState\.cityStatusById/);
+  assert.match(renderCoordinatorSource, /appState\.buildingStatusById/);
 });
 
 test("runtime property mutation applies numeric custom properties through CharacterStatus patches", () => {
@@ -7831,6 +7944,42 @@ test("script editor runtime export rejects ambiguous legacy settlement result ro
   );
 });
 
+test("script editor runtime export rejects unsupported city population settlement content", () => {
+  const {
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.population.unsupported",
+      title: "Population Unsupported",
+      contents: [
+        {
+          targetFamily: "city",
+          targetId: "city.start",
+          attributeKey: "baseAttributes.population",
+          attributeType: "number",
+          operation: "set",
+          value: 12000,
+        },
+      ],
+    },
+  ];
+
+  const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  assert.equal(
+    diagnostics.some(
+      (diagnostic) =>
+        diagnostic.code === "invalid-field" &&
+        diagnostic.fieldPath === "project.settlements[0].contents[0].attributeKey" &&
+        /eligible calculable settlement attribute|baseAttributes\.population/i.test(
+          diagnostic.message
+        )
+    ),
+    true
+  );
+});
+
 test("script editor runtime export rejects conflicting legacy and settlement nextEventId routing", () => {
   const {
     validateScriptEditorProjectForRuntimeExport,
@@ -10188,6 +10337,7 @@ test("scenario pack loader rejects progression tiers that reference missing sett
     {
       id: "track.cultivation",
       title: "Cultivation Track",
+      metricKey: "stamina",
       metricLabel: "Cultivation",
       ownerKind: "person",
       tiers: [
@@ -10215,6 +10365,104 @@ test("scenario pack loader rejects progression tiers that reference missing sett
         )
       ),
     /targetTierSettlementId|settlement\.missing|track\.cultivation|tier\.1/i
+  );
+});
+
+test("scenario pack loader rejects invalid progression bindings and unsupported owner tags", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.progressTracks = [
+    {
+      id: "track.cultivation",
+      title: "Cultivation Track",
+      metricKey: "stamina",
+      metricLabel: "Cultivation",
+      ownerKind: "person",
+      tiers: [
+        {
+          id: "tier.1",
+          title: "Entry",
+          threshold: 0,
+        },
+      ],
+    },
+  ];
+  project.progressTrackBindings = [
+    {
+      id: "binding.player.cultivation",
+      trackId: "track.cultivation",
+      owner: { ownerKind: "person", ownerId: "person.hero" },
+      enabled: true,
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const bindings = JSON.parse(files["progress-track-bindings.json"]);
+  bindings[0].trackId = "track.missing";
+  bindings.push({
+    id: "binding.player.owner-kind-mismatch",
+    trackId: "track.cultivation",
+    owner: { ownerKind: "city", ownerId: "city.start" },
+    enabled: true,
+  });
+  bindings.push({
+    id: "binding.player.owner-tag",
+    trackId: "track.cultivation",
+    owner: { ownerKind: "person", ownerId: "person.hero", ownerTag: "player-party" },
+    enabled: true,
+  });
+  files["progress-track-bindings.json"] = JSON.stringify(bindings, null, 2);
+
+  await assert.rejects(
+    () =>
+      loadScenarioPackFromFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          files,
+          "progression-invalid-binding-pack"
+        )
+      ),
+    /trackId|ownerKind|ownerTag|track\.missing|track\.cultivation|player-party/i
+  );
+});
+
+test("script editor runtime export rejects invalid progression binding references and owner tags", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.progressTracks = [
+    {
+      id: "track.cultivation",
+      title: "Cultivation Track",
+      metricKey: "stamina",
+      metricLabel: "Cultivation",
+      ownerKind: "person",
+      tiers: [
+        {
+          id: "tier.1",
+          title: "Entry",
+          threshold: 0,
+        },
+      ],
+    },
+  ];
+  project.progressTrackBindings = [
+    {
+      id: "binding.player.invalid",
+      trackId: "track.missing",
+      owner: { ownerKind: "city", ownerId: "city.start", ownerTag: "player-party" },
+      enabled: true,
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /trackId|ownerKind|ownerTag|track\.missing|player-party/i
   );
 });
 
@@ -10444,6 +10692,7 @@ test("script editor workspace shell exposes progression authoring families in ga
     {
       id: "track.cultivation",
       title: "Cultivation Track",
+      metricKey: "stamina",
       metricLabel: "Cultivation",
       ownerKind: "person",
       tiers: [],
@@ -10466,7 +10715,32 @@ test("script editor workspace shell exposes progression authoring families in ga
 
   assert.deepEqual(
     gameplayGroup?.nodes.map((node) => node.family),
-    ["events", "progressTracks", "progressTrackBindings"]
+    ["events", "stageConfiguration"]
+  );
+});
+
+test("script editor workspace shell exposes stage configuration creator module", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /stageConfiguration|阶段配置/);
+});
+
+test("script editor no longer exposes progression tracks and bindings as parallel first-level creator entries", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    source,
+    /families:\s*\[[^\]]*"progressTracks"[^\]]*"progressTrackBindings"[^\]]*\]/s
   );
 });
 
@@ -11075,6 +11349,7 @@ test("script editor workspace shell surfaces progression tier settlement blocker
     {
       id: "track.cultivation",
       title: "Cultivation Track",
+      metricKey: "stamina",
       metricLabel: "Cultivation",
       ownerKind: "person",
       allowDemotion: true,
@@ -14854,6 +15129,7 @@ test("progression resources round-trip through runtime-pack export import and lo
     {
       id: "track.cultivation",
       title: "Cultivation Track",
+      metricKey: "stamina",
       metricLabel: "Cultivation",
       ownerKind: "person",
       allowDemotion: true,
@@ -16731,6 +17007,7 @@ test("script editor settlement authoring exposes settlement module and event set
   assert.match(source, /data-script-editor-settlement-content-field="attributeKey"/);
   assert.match(source, /data-script-editor-settlement-content-field="operation"/);
   assert.match(source, /data-script-editor-settlement-content-field="value"/);
+  assert.doesNotMatch(source, /baseAttributes\.population/);
   assert.match(
     source,
     /type="number"[\s\S]*data-script-editor-settlement-content-field="value"/
@@ -17196,7 +17473,7 @@ test("script editor workspace groups creator navigation using current world, nar
       { id: "narrative", families: ["storyNodes", "dialogues", "minigames", "settlements"] },
       {
         id: "gameplay",
-        families: ["events", "progressTracks", "progressTrackBindings"],
+        families: ["events", "stageConfiguration"],
       },
       { id: "library", families: ["portraits", "portraitVariants", "textEntries"] },
     ]
@@ -26347,6 +26624,56 @@ test("runtime settlement applies structured settlement content rows directly", (
   assert.notEqual(result, gameState);
 });
 
+test("runtime settlement executes progression settlement instances through authored settlement templates", () => {
+  const {
+    settleRuntimeEffects,
+  } = require("../.test-dist/core/runtime/runtime-settlement.js");
+  const player = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    stamina: 100,
+  };
+
+  const result = settleRuntimeEffects({
+    state: createRuntimeState(),
+    effects: [],
+    settlementInstances: [
+      {
+        settlementId: "settlement.tier.2",
+        payload: {
+          ownerKind: "person",
+          ownerId: player.id,
+          trackId: "track.cultivation",
+          fromTierId: "tier.1",
+          toTierId: "tier.2",
+          metricValue: 100,
+        },
+      },
+    ],
+    settlementDefinitionsById: {
+      "settlement.tier.2": {
+        id: "settlement.tier.2",
+        title: "Tier 2 Settlement",
+        contents: [
+          {
+            targetFamily: "person",
+            targetId: player.id,
+            attributeKey: "stamina",
+            attributeType: "number",
+            operation: "add",
+            value: 5,
+          },
+        ],
+      },
+    },
+    emittedBy: "progression-runtime",
+    appliedBy: "runtime-settlement",
+    characterDefinitions: [player],
+  });
+
+  assert.equal(result.unsupportedEffects.length, 0);
+  assert.equal(result.characterDefinitions[0].stamina, 105);
+});
+
 test("runtime settlement applies UI-authored city and building baseAttributes keys", () => {
   const {
     applySettlementContents,
@@ -26438,20 +26765,68 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
       "utf8"
     );
 
-    const residueCandidateInventorySource = [
-      schemaSource,
-      cityBuildingAuthoringSource,
-      runtimePackExportSource,
-      runtimePackImportSource,
-      scenarioPackLoaderSource,
-      runtimeSettlementSource,
-    ].join("\n");
-    for (const residueCandidate of LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATTERNS) {
-      assert.match(
-        residueCandidateInventorySource,
+    const residueCandidatePatternByLabel = new Map(
+      LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATTERNS.map((residueCandidate) => [
+        residueCandidate.label,
         residueCandidate.pattern,
-        `missing residue candidate inventory path ${residueCandidate.label}`
-      );
+      ])
+    );
+    const residueCandidateSurfaces = [
+      {
+        sourceLabel: "script editor schema",
+        sourceText: schemaSource,
+        residueLabels: ["population?: number"],
+      },
+      {
+        sourceLabel: "runtime pack export",
+        sourceText: runtimePackExportSource,
+        residueLabels: [
+          "baseAttributes.security",
+          "baseAttributes.level",
+          "baseAttributes.outputMultiplier",
+          "baseAttributes.damaged",
+        ],
+      },
+      {
+        sourceLabel: "runtime pack import",
+        sourceText: runtimePackImportSource,
+        residueLabels: [
+          "baseAttributes.security",
+          "baseAttributes.level",
+          "baseAttributes.outputMultiplier",
+          "baseAttributes.damaged",
+        ],
+      },
+      {
+        sourceLabel: "scenario pack loader",
+        sourceText: scenarioPackLoaderSource,
+        residueLabels: [
+          "baseAttributes.security",
+          "baseAttributes.level",
+          "baseAttributes.outputMultiplier",
+          "baseAttributes.damaged",
+        ],
+      },
+      {
+        sourceLabel: "runtime settlement",
+        sourceText: runtimeSettlementSource,
+        residueLabels: [
+          "baseAttributes.security",
+          "baseAttributes.level",
+          "baseAttributes.outputMultiplier",
+          "baseAttributes.damaged",
+        ],
+      },
+    ];
+
+    for (const surface of residueCandidateSurfaces) {
+      for (const residueLabel of surface.residueLabels) {
+        assert.match(
+          surface.sourceText,
+          residueCandidatePatternByLabel.get(residueLabel),
+          `missing residue candidate inventory path ${residueLabel} in ${surface.sourceLabel}`
+        );
+      }
     }
 
     for (const [canonicalRuntimeField, attributeType] of Object.entries(
@@ -26564,6 +26939,550 @@ test("story runtime settlement event applies contents and starts settlement foll
   assert.equal(result.state.runtime.eventHistory["event.followup"].firedCount, 1);
   assert.equal(result.state.dialogue.activeEventId, "event.followup");
   assert.equal(result.state.dialogue.activeDialogueId, "dialogue.followup");
+});
+
+test("indoor-screen follow-up forwards settlement definitions into settlement-triggered story runtime", () => {
+  const {
+    applyIndoorScreenStoryFollowUp,
+  } = require("../.test-dist/application/runtime/indoor-screen-story-follow-up.js");
+  const hero = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    stamina: 100,
+  };
+  const baseState = createBaseState();
+
+  const result = applyIndoorScreenStoryFollowUp({
+    appState: {
+      gameState: {
+        ...baseState,
+        world: {
+          ...baseState.world,
+          currentCityId: "city.start",
+          currentHouseId: "building.home",
+        },
+        ui: {
+          ...baseState.ui,
+          currentView: "house",
+        },
+      },
+      characterDefinitions: [hero],
+      playerCoordinate: { x: 0, y: 0 },
+      campaignActorState: {
+        facingDegrees: 0,
+        isMoving: false,
+      },
+      campaignTravelState: null,
+      modalState: null,
+      locationDialogueState: null,
+      beggingMiniGameState: null,
+      cityMenuState: null,
+      cityDirectoryState: null,
+      autoAdvanceState: null,
+      uiLayouts: {},
+      layoutEditor: {},
+    },
+    content: {
+      eventDefinitionsById: {
+        "event.house.settlement": {
+          id: "event.house.settlement",
+          chapterId: "chapter.prototype",
+          name: "House Settlement",
+          occurrence: "once",
+          type: "settlement",
+          dialogueId: "",
+          settlementId: "settlement.house.reward",
+        },
+      },
+      eventBindingsById: {
+        "binding.house.indoor-screen": {
+          id: "binding.house.indoor-screen",
+          eventId: "event.house.settlement",
+          owner: {
+            family: "building",
+            id: "building.home",
+          },
+          trigger: {
+            timing: "after",
+            action: "indoor-screen-shown",
+          },
+          enabled: true,
+        },
+      },
+      settlementDefinitionsById: {
+        "settlement.house.reward": {
+          id: "settlement.house.reward",
+          title: "House Reward",
+          contents: [
+            {
+              targetFamily: "person",
+              targetId: playerCharacterId,
+              attributeKey: "stamina",
+              attributeType: "number",
+              operation: "add",
+              value: 12,
+            },
+          ],
+        },
+      },
+      dialogueDefinitionsById: {},
+      cityDefinitionsById: {},
+      houseDefinitionsById: {},
+    },
+  });
+
+  assert.equal(result.characterDefinitions[0].stamina, 112);
+  assert.equal(
+    result.gameState.runtime.eventHistory["event.house.settlement"].firedCount,
+    1
+  );
+});
+
+test("startup story bootstrap applies settlement entry events with settlement content dependencies", () => {
+  const {
+    applyStartupStoryBootstrap,
+  } = require("../.test-dist/application/startup/startup-story-bootstrap.js");
+  const hero = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    stamina: 100,
+  };
+
+  const result = applyStartupStoryBootstrap({
+    appState: {
+      gameState: createBaseState(),
+      characterDefinitions: [hero],
+      playerCoordinate: { x: 0, y: 0 },
+      campaignActorState: {
+        facingDegrees: 0,
+        isMoving: false,
+      },
+      campaignTravelState: null,
+      modalState: null,
+      locationDialogueState: null,
+      beggingMiniGameState: null,
+      cityMenuState: null,
+      cityDirectoryState: null,
+      autoAdvanceState: null,
+      uiLayouts: {},
+      layoutEditor: {},
+    },
+    bootstrap: {
+      eventId: "event.startup.settlement",
+    },
+    content: {
+      eventDefinitionsById: {
+        "event.startup.settlement": {
+          id: "event.startup.settlement",
+          chapterId: "chapter.prototype",
+          name: "Startup Settlement",
+          occurrence: "once",
+          type: "settlement",
+          dialogueId: "",
+          settlementId: "settlement.startup.reward",
+        },
+        "event.startup.followup": {
+          id: "event.startup.followup",
+          chapterId: "chapter.prototype",
+          name: "Startup Follow Up",
+          occurrence: "once",
+          dialogueId: "dialogue.startup.followup",
+        },
+      },
+      settlementDefinitionsById: {
+        "settlement.startup.reward": {
+          id: "settlement.startup.reward",
+          title: "Startup Reward",
+          nextEventId: "event.startup.followup",
+          contents: [
+            {
+              targetFamily: "person",
+              targetId: playerCharacterId,
+              attributeKey: "stamina",
+              attributeType: "number",
+              operation: "set",
+              value: 177,
+            },
+          ],
+        },
+      },
+      dialogueDefinitionsById: {
+        "dialogue.startup.followup": {
+          id: "dialogue.startup.followup",
+          name: "Startup Follow Up",
+          nodes: [
+            {
+              type: "narration",
+              text: "Startup settlement follow-up fired.",
+            },
+          ],
+        },
+      },
+      activityDefinitionsById: {},
+      textEntriesById: {},
+    },
+  });
+
+  assert.equal(result.characterDefinitions[0].stamina, 177);
+  assert.equal(result.gameState.dialogue.activeEventId, "event.startup.followup");
+  assert.equal(
+    result.gameState.runtime.eventHistory["event.startup.settlement"].firedCount,
+    1
+  );
+});
+
+test("startup story bootstrap writes city and building settlement results into appState status truth", () => {
+  const {
+    applyStartupStoryBootstrap,
+  } = require("../.test-dist/application/startup/startup-story-bootstrap.js");
+  const baseState = createBaseState();
+
+  const result = applyStartupStoryBootstrap({
+    appState: {
+      gameState: {
+        ...baseState,
+        world: {
+          ...baseState.world,
+          currentCityId: "city.status.runtime",
+          currentHouseId: "house.status.runtime",
+        },
+      },
+      characterDefinitions: [
+        {
+          ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+        },
+      ],
+      playerCoordinate: { x: 0, y: 0 },
+      campaignActorState: {
+        facingDegrees: 0,
+        isMoving: false,
+      },
+      campaignTravelState: null,
+      modalState: null,
+      locationDialogueState: null,
+      beggingMiniGameState: null,
+      cityMenuState: null,
+      cityDirectoryState: null,
+      autoAdvanceState: null,
+      uiLayouts: {},
+      layoutEditor: {},
+    },
+    bootstrap: {
+      eventId: "event.startup.city-building-settlement",
+    },
+    content: {
+      eventDefinitionsById: {
+        "event.startup.city-building-settlement": {
+          id: "event.startup.city-building-settlement",
+          chapterId: "chapter.prototype",
+          name: "City Building Settlement",
+          occurrence: "once",
+          type: "settlement",
+          dialogueId: "",
+          settlementId: "settlement.city-building.status",
+        },
+      },
+      settlementDefinitionsById: {
+        "settlement.city-building.status": {
+          id: "settlement.city-building.status",
+          title: "City Building Status",
+          contents: [
+            {
+              targetFamily: "city",
+              targetId: "city.status.runtime",
+              attributeKey: "travelCost",
+              attributeType: "number",
+              operation: "set",
+              value: 6,
+            },
+            {
+              targetFamily: "city",
+              targetId: "city.status.runtime",
+              attributeKey: "baseAttributes.prosperity",
+              attributeType: "number",
+              operation: "set",
+              value: 72,
+            },
+            {
+              targetFamily: "building",
+              targetId: "house.status.runtime",
+              attributeKey: "baseAttributes.level",
+              attributeType: "number",
+              operation: "set",
+              value: 3,
+            },
+          ],
+        },
+      },
+      dialogueDefinitionsById: {},
+      activityDefinitionsById: {},
+      textEntriesById: {},
+      cityDefinitionsById: {
+        "city.status.runtime": {
+          id: "city.status.runtime",
+          name: "Runtime City",
+          regionId: "region.runtime",
+          mapNodeId: "map.runtime",
+          houseIds: ["house.status.runtime"],
+          neighbourCityIds: [],
+          travelCost: 2,
+          tags: ["trade"],
+          prosperity: 45,
+          danger: 20,
+          specialDemand: [],
+        },
+      },
+      houseDefinitionsById: {
+        "house.status.runtime": {
+          id: "house.status.runtime",
+          cityId: "city.status.runtime",
+          name: "Runtime House",
+          type: "custom",
+          characterIds: [],
+          defaultCharacterId: null,
+          moduleId: "custom.module",
+          activityLocationId: "market",
+          backAction: { label: "Back", targetView: "city" },
+        },
+      },
+    },
+  });
+
+  assert.deepEqual(result.cityStatusById["city.status.runtime"], {
+    valuePatch: {
+      travelCost: 6,
+      prosperity: 72,
+    },
+  });
+  assert.deepEqual(result.buildingStatusById["house.status.runtime"], {
+    runtimePatch: {
+      level: 3,
+    },
+  });
+});
+
+test("main runtime orchestrator consumes deferred after-map-entry settlement events once", () => {
+  const {
+    createMainRuntimeOrchestrator,
+  } = require("../.test-dist/application/runtime/main-runtime-orchestrator.js");
+  const pendingEntryVariableKey = "__scenario.pendingEntryEventId";
+  const hero = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    stamina: 100,
+  };
+  let appState = {
+    gameState: {
+      ...createBaseState(),
+      runtime: {
+        ...createBaseState().runtime,
+        variables: {
+          [pendingEntryVariableKey]: "event.startup.settlement",
+        },
+      },
+    },
+    characterDefinitions: [hero],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+  const orchestrator = createMainRuntimeOrchestrator({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    setPlayerCharacterId: () => {},
+    getStoryContent: () => ({
+      eventDefinitionsById: {
+        "event.startup.settlement": {
+          id: "event.startup.settlement",
+          chapterId: "chapter.prototype",
+          name: "Deferred Startup Settlement",
+          occurrence: "once",
+          type: "settlement",
+          dialogueId: "",
+          settlementId: "settlement.startup.reward",
+        },
+        "event.startup.followup": {
+          id: "event.startup.followup",
+          chapterId: "chapter.prototype",
+          name: "Startup Follow Up",
+          occurrence: "once",
+          dialogueId: "dialogue.startup.followup",
+        },
+      },
+      settlementDefinitionsById: {
+        "settlement.startup.reward": {
+          id: "settlement.startup.reward",
+          title: "Startup Reward",
+          nextEventId: "event.startup.followup",
+          contents: [
+            {
+              targetFamily: "person",
+              targetId: playerCharacterId,
+              attributeKey: "stamina",
+              attributeType: "number",
+              operation: "set",
+              value: 177,
+            },
+          ],
+        },
+      },
+      dialogueDefinitionsById: {
+        "dialogue.startup.followup": {
+          id: "dialogue.startup.followup",
+          name: "Startup Follow Up",
+          nodes: [
+            {
+              type: "narration",
+              text: "Deferred startup fired.",
+            },
+          ],
+        },
+      },
+      activityDefinitionsById: {},
+      textEntriesById: {},
+    }),
+    resetMainGameRuntime: () => {},
+    setActiveContentContext: () => {},
+    recreateHouseRuntime: () => {},
+    setGameVisibility: () => {},
+    hideMainUiFlow: () => {},
+  });
+
+  const result = orchestrator.execute({
+    type: "consume-deferred-entry-event",
+    variableKey: pendingEntryVariableKey,
+    state: appState.gameState,
+    characterDefinitions: appState.characterDefinitions,
+  });
+
+  assert.equal(result.characterDefinitions[0].stamina, 177);
+  assert.equal(result.gameState.dialogue.activeEventId, "event.startup.followup");
+  assert.equal(
+    Object.hasOwn(result.gameState.runtime.variables, pendingEntryVariableKey),
+    false
+  );
+});
+
+test("story runtime settlement events run progression tracks and apply emitted settlement instances", () => {
+  const {
+    startStoryEventById,
+  } = require("../.test-dist/application/story/story-runtime.js");
+  const {
+    createActiveGameContentContext,
+  } = require("../.test-dist/application/content/active-game-content.js");
+  const hero = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    stamina: 90,
+  };
+  const content = createActiveGameContentContext({
+    schemaVersion: 1,
+    id: "pack.progression.live",
+    title: "Live Progression Pack",
+    characters: [hero],
+    events: [
+      {
+        id: "event.progression.training",
+        chapterId: "chapter.prototype",
+        name: "Training Settlement",
+        occurrence: "once",
+        type: "settlement",
+        dialogueId: "",
+        settlementId: "settlement.progression.training",
+      },
+    ],
+    settlements: [
+      {
+        id: "settlement.progression.training",
+        title: "Training Settlement",
+        contents: [
+          {
+            targetFamily: "person",
+            targetId: playerCharacterId,
+            attributeKey: "stamina",
+            attributeType: "number",
+            operation: "add",
+            value: 10,
+          },
+        ],
+      },
+      {
+        id: "settlement.progression.tier.2",
+        title: "Tier 2 Settlement",
+        contents: [
+          {
+            targetFamily: "person",
+            targetId: playerCharacterId,
+            attributeKey: "stamina",
+            attributeType: "number",
+            operation: "add",
+            value: 5,
+          },
+        ],
+      },
+    ],
+    progressTracks: [
+      {
+        id: "track.cultivation",
+        title: "Cultivation Track",
+        metricKey: "stamina",
+        metricLabel: "Cultivation",
+        ownerKind: "person",
+        allowDemotion: true,
+        tiers: [
+          {
+            id: "tier.1",
+            title: "Entry",
+            threshold: 0,
+          },
+          {
+            id: "tier.2",
+            title: "Skilled",
+            threshold: 100,
+            targetTierSettlementId: "settlement.progression.tier.2",
+          },
+        ],
+      },
+    ],
+    progressTrackBindings: [
+      {
+        id: "binding.player.cultivation",
+        trackId: "track.cultivation",
+        owner: {
+          ownerKind: "person",
+          ownerId: playerCharacterId,
+        },
+        enabled: true,
+      },
+    ],
+    dialogues: [],
+  }).storyContent;
+
+  const result = startStoryEventById(
+    {
+      state: createBaseState(),
+      characterDefinitions: [hero],
+    },
+    content,
+    "event.progression.training"
+  );
+
+  assert.equal(result.characterDefinitions[0].stamina, 105);
+  assert.equal(
+    result.state.runtime.progression.trackStatesByOwnerKey["person:char.player"][
+      "track.cultivation"
+    ].currentTierId,
+    "tier.2"
+  );
 });
 
 test("runtime dispatch propagates task character property mutation effect status", () => {
@@ -27388,7 +28307,9 @@ test("progression runtime contract exports canonical track and settlement payloa
   assert.match(source, /export type ProgressTrackBinding = \{/);
   assert.match(source, /export type ProgressTrackRuntimeState = \{/);
   assert.match(source, /export type ProgressionTierSettlementPayload = \{/);
+  assert.match(source, /metricKey: string;/);
   assert.match(source, /targetTierSettlementId\?: string \| null;/);
+  assert.doesNotMatch(source, /ownerTag\?: string;/);
 });
 
 test("runtime state reserves a unified progression runtime partition", () => {
@@ -27422,6 +28343,7 @@ test("progression runtime emits settlement instances only for target-tier conver
     track: {
       id: "track.cultivation",
       title: "Cultivation Track",
+      metricKey: "stamina",
       metricLabel: "Cultivation",
       ownerKind: "person",
       allowDemotion: true,
@@ -27474,6 +28396,7 @@ test("progression runtime skips unresolved concrete owners instead of collapsing
     track: {
       id: "track.cultivation",
       title: "Cultivation Track",
+      metricKey: "stamina",
       metricLabel: "Cultivation",
       ownerKind: "person",
       allowDemotion: true,
@@ -27489,7 +28412,7 @@ test("progression runtime skips unresolved concrete owners instead of collapsing
     binding: {
       id: "binding.player.cultivation.unresolved",
       trackId: "track.cultivation",
-      owner: { ownerKind: "person", ownerTag: "player-party" },
+      owner: { ownerKind: "person" },
       enabled: true,
     },
     metricValue: 25,
@@ -27527,6 +28450,7 @@ test("progression runtime skips disabled bindings without updating state or sett
     track: {
       id: "track.cultivation",
       title: "Cultivation Track",
+      metricKey: "stamina",
       metricLabel: "Cultivation",
       ownerKind: "person",
       allowDemotion: true,
@@ -27605,9 +28529,28 @@ test("script editor progression authoring exposes Chinese track and binding cont
   assert.match(source, /阶段/);
   assert.match(source, /允许回退/);
   assert.match(source, /data-script-editor-progress-track-field="title"/);
+  assert.match(source, /data-script-editor-progress-track-field="metricKey"/);
   assert.match(source, /data-script-editor-progress-track-tier-field="threshold"/);
   assert.match(source, /data-script-editor-progress-binding-field="ownerKind"/);
+  assert.doesNotMatch(source, /data-script-editor-progress-binding-field="ownerTag"/);
   assert.doesNotMatch(source, /data-script-editor-progress-track-field="id"/);
+});
+
+test("script editor stage configuration creator module merges object binding rule editing and help into one surface", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(source, /SCRIPT_EDITOR_STAGE_CONFIGURATION_FAMILY = "stageConfiguration"/);
+  assert.match(source, /renderScriptEditorStageConfigurationEditor\(\)/);
+  assert.match(source, /data-script-editor-action="open-stage-configuration-help"/);
+  assert.match(source, /data-script-editor-action="close-stage-configuration-help"/);
+  assert.match(source, /data-script-editor-action="add-stage-configuration-binding"/);
+  assert.match(source, /data-script-editor-action="remove-stage-configuration-binding"/);
+  assert.match(source, /data-script-editor-action="add-stage-configuration-track"/);
+  assert.match(source, /data-script-editor-action="remove-stage-configuration-track"/);
+  assert.match(source, /data-script-editor-progress-binding-field="ownerId"/);
 });
 
 test("script editor workflow helpers support progression draft upsert and remove", () => {
