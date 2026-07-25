@@ -66,6 +66,11 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "progressTrackBindings",
 ] as const;
 
+export const SCRIPT_EDITOR_STAGE_CONFIGURATION_SOURCE_FAMILIES = [
+  "progressTracks",
+  "progressTrackBindings",
+] as const satisfies readonly ScriptEditorProjectFileKey[];
+
 export type ScriptEditorMinimalWorkflowFamily =
   (typeof SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES)[number];
 

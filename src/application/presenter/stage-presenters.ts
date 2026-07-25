@@ -15,6 +15,8 @@ import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { HouseDefinition } from "../../domain/house";
+import { materializeBuildingDefinitions } from "../../domain/building-status";
+import { materializeCityDefinitions } from "../../domain/city-status";
 import type { AppPresenterStageOutput } from "./presenter-output";
 
 export type StagePresenterInput = {
@@ -35,7 +37,14 @@ export function createStagePresenterOutput(
   input: StagePresenterInput
 ): AppPresenterStageOutput {
   const currentView = input.appState.gameState.ui.currentView;
-  const cityDefinitions = input.cityDefinitions ?? [input.cityDefinition];
+  const cityDefinitions = materializeCityDefinitions(
+    input.cityDefinitions ?? [input.cityDefinition],
+    input.appState.cityStatusById ?? {}
+  );
+  const houseDefinitions = materializeBuildingDefinitions(
+    input.houseDefinitions,
+    input.appState.buildingStatusById ?? {}
+  );
   const activeCityDefinition =
     cityDefinitions.find(
       (cityDefinition) =>
@@ -49,13 +58,13 @@ export function createStagePresenterOutput(
   }
 
   if (currentView === "city") {
-    return selectCityModuleStage({
-      appState: input.appState,
-      activeCityDefinition,
-      houseDefinitions: input.houseDefinitions,
-      cityEntries: input.cityEntries,
-      citySceneMapping,
-    });
+      return selectCityModuleStage({
+        appState: input.appState,
+        activeCityDefinition,
+        houseDefinitions,
+        cityEntries: input.cityEntries,
+        citySceneMapping,
+      });
   }
 
   if (currentView === "city-3d") {
@@ -68,12 +77,12 @@ export function createStagePresenterOutput(
 
   if (currentView === "house") {
     return selectBuildingModuleStage({
-      appState: input.appState,
-      cityDefinitions,
-      houseDefinitions: input.houseDefinitions,
-      buildingArrangements: input.buildingArrangements,
-      cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
-      playerCharacterId: input.playerCharacterId,
+        appState: input.appState,
+        cityDefinitions,
+        houseDefinitions,
+        buildingArrangements: input.buildingArrangements,
+        cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
+        playerCharacterId: input.playerCharacterId,
       textEntriesById: input.textEntriesById,
     });
   }
@@ -113,7 +122,7 @@ export function createStagePresenterOutput(
           },
         },
         activeCityDefinition,
-        houseDefinitions: input.houseDefinitions,
+        houseDefinitions,
         cityEntries: input.cityEntries,
         citySceneMapping,
       });
@@ -127,7 +136,7 @@ export function createStagePresenterOutput(
         ? selectCityModuleUnderlay({
             appState: input.appState,
             activeCityDefinition,
-            houseDefinitions: input.houseDefinitions,
+            houseDefinitions,
             cityEntries: input.cityEntries,
             citySceneMapping,
           })
@@ -146,7 +155,7 @@ export function createStagePresenterOutput(
               },
             },
             cityDefinitions,
-            houseDefinitions: input.houseDefinitions,
+            houseDefinitions,
             buildingArrangements: input.buildingArrangements,
             cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
             playerCharacterId: input.playerCharacterId,

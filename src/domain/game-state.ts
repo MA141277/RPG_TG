@@ -14,6 +14,7 @@ import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
 import type { TaskRuntimeState } from "../core/contracts/task-runtime";
 import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
+import type { RuntimeProgressState } from "../core/contracts/progression-runtime";
 import type { CampaignMapExplorationState } from "./map-exploration";
 
 export type ViewName =
@@ -92,6 +93,7 @@ export type GameState = {
     cityMarkets: Record<CityId, CityMarketData>;
     activitySession: ActiveActivitySession;
     mapExploration: CampaignMapExplorationState;
+    progression?: RuntimeProgressState;
     eventHistory: Record<
       EventId,
       {

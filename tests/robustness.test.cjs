@@ -13670,70 +13670,6 @@ test(
 );
 
 test(
-  "script editor city and building custom attributes fail closed on retired untyped payloads",
-  () => {
-    const {
-      normalizeScriptEditorBuildingRecord,
-      normalizeScriptEditorCityRecord,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
-
-    const city = normalizeScriptEditorCityRecord({
-      id: "city.start",
-      name: "Start City",
-      extendedAttributes: [
-        { key: "specialDemand", value: ["salt", "tea"] },
-        { key: "tradeRank", value: 3 },
-      ],
-    });
-    const building = normalizeScriptEditorBuildingRecord({
-      id: "building.market",
-      cityId: "city.start",
-      name: "Market",
-      extendedAttributes: [{ key: "taxRate", value: 5 }],
-    });
-
-    assert.deepEqual(city.extendedAttributes, [
-      { key: "specialDemand", type: "string", value: "" },
-      { key: "tradeRank", type: "string", value: "" },
-    ]);
-    assert.deepEqual(building.extendedAttributes, [
-      { key: "taxRate", type: "string", value: "" },
-    ]);
-  }
-);
-
-test(
-  "script editor runtime materializer only consumes typed specialDemand enums and preserves all matching entries",
-  () => {
-    const {
-      materializeScriptEditorCityBuildingRuntimeFamilies,
-    } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
-
-    const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
-      ...createExportableScriptEditorProjectDefinition(),
-      cities: [
-        {
-          id: "city.start",
-          name: "Start City",
-          mapNodeId: "node.start",
-          extendedAttributes: [
-            { key: "specialDemand", type: "enum", value: "salt", options: ["salt"] },
-            { key: "specialDemand", type: "enum", value: "tea", options: ["tea"] },
-            { key: "specialDemand", value: ["legacy-rice"] },
-          ],
-          mountedBuildings: [],
-          menuEntries: [],
-          access: {},
-        },
-      ],
-      buildings: [],
-    });
-
-    assert.deepEqual(runtimeFamilies.cities[0].specialDemand, ["salt", "tea"]);
-  }
-);
-
-test(
   "script editor runtime export preserves city and building access conditions as a runtime family",
   () => {
     const {
@@ -16383,6 +16319,71 @@ test(
       }),
       null
     );
+  }
+);
+
+test(
+  "script editor city and building custom attributes fail closed on retired untyped payloads",
+  () => {
+    const {
+      normalizeScriptEditorBuildingRecord,
+      normalizeScriptEditorCityRecord,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    const city = normalizeScriptEditorCityRecord({
+      id: "city.start",
+      name: "Start City",
+      extendedAttributes: [
+        { key: "specialDemand", value: ["salt", "tea"] },
+        { key: "tradeRank", value: 3 },
+      ],
+    });
+    const building = normalizeScriptEditorBuildingRecord({
+      id: "building.market",
+      cityId: "city.start",
+      name: "Market",
+      extendedAttributes: [{ key: "taxRate", value: 5 }],
+    });
+
+    assert.deepEqual(city.extendedAttributes, [
+      { key: "specialDemand", type: "string", value: "" },
+      { key: "tradeRank", type: "string", value: "" },
+    ]);
+    assert.deepEqual(building.extendedAttributes, [
+      { key: "taxRate", type: "string", value: "" },
+    ]);
+  }
+);
+
+test(
+  "script editor runtime materializer only consumes typed specialDemand enums and preserves all matching entries",
+  () => {
+    const {
+      materializeScriptEditorCityBuildingRuntimeFamilies,
+    } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
+
+    const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
+      ...createExportableScriptEditorProjectDefinition(),
+      cities: [
+        {
+          id: "city.start",
+          name: "Start City",
+          mapNodeId: "node.start",
+          extendedAttributes: [
+            { key: "specialDemand", type: "enum", value: "salt", options: ["salt"] },
+            { key: "specialDemand", type: "enum", value: "tea", options: ["tea"] },
+            { key: "specialDemand", value: ["legacy-rice"] },
+          ],
+          mountedBuildings: [],
+          menuEntries: [],
+          access: {},
+        },
+      ],
+      buildings: [],
+      buildingArrangements: [],
+    });
+
+    assert.deepEqual(runtimeFamilies.cities[0].specialDemand, ["salt", "tea"]);
   }
 );
 
@@ -26777,14 +26778,14 @@ test("runtime settlement applies canonical city and building runtime keys", () =
     cities: {
       "city.start": {
         id: "city.start",
-          prosperity: 50,
+        prosperity: 50,
       },
     },
     buildings: {
       "building.home": {
         id: "building.home",
-          damaged: true,
-          level: 1,
+        damaged: true,
+        level: 1,
       },
     },
   };
@@ -28668,6 +28669,140 @@ test("script editor stage configuration creator module merges object binding rul
   assert.match(source, /data-script-editor-action="add-stage-configuration-track"/);
   assert.match(source, /data-script-editor-action="remove-stage-configuration-track"/);
   assert.match(source, /data-script-editor-progress-binding-field="ownerId"/);
+});
+
+
+
+test("script editor stage configuration authoring can produce a creator-authored rule that validates and exports", () => {
+  const {
+    upsertScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const {
+    createDefaultScriptEditorProgressTrackBindingRecord,
+    createDefaultScriptEditorProgressTrackRecord,
+    updateScriptEditorProgressTrackBindingField,
+    updateScriptEditorProgressTrackField,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+
+  let project = createExportableScriptEditorProjectDefinition();
+
+  let binding = createDefaultScriptEditorProgressTrackBindingRecord(0);
+  project = upsertScriptEditorWorkflowRecord(
+    project,
+    "progressTrackBindings",
+    binding
+  );
+  assert.equal(project.progressTrackBindings.length, 1);
+  assert.equal(project.progressTrackBindings[0].id, "progress-binding.new.1");
+
+  let track = createDefaultScriptEditorProgressTrackRecord(0);
+  track = updateScriptEditorProgressTrackField(track, "metricKey", "experience");
+  track = updateScriptEditorProgressTrackField(track, "metricLabel", "经验");
+  project = upsertScriptEditorWorkflowRecord(project, "progressTracks", track);
+  assert.equal(project.progressTracks.length, 1);
+  assert.equal(project.progressTracks[0].id, "progress-track.new.1");
+
+  binding = updateScriptEditorProgressTrackBindingField(
+    project.progressTrackBindings[0],
+    "trackId",
+    track.id
+  );
+  binding = updateScriptEditorProgressTrackBindingField(
+    binding,
+    "ownerKind",
+    "person"
+  );
+  binding = updateScriptEditorProgressTrackBindingField(
+    binding,
+    "ownerId",
+    "person.hero"
+  );
+  project = upsertScriptEditorWorkflowRecord(
+    project,
+    "progressTrackBindings",
+    binding
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), []);
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedTracks = JSON.parse(files["progress-tracks.json"]);
+  const exportedBindings = JSON.parse(files["progress-track-bindings.json"]);
+  assert.equal(exportedTracks.length, 1);
+  assert.equal(exportedTracks[0].id, "progress-track.new.1");
+  assert.equal(exportedTracks[0].metricKey, "experience");
+  assert.equal(exportedBindings.length, 1);
+  assert.equal(exportedBindings[0].trackId, "progress-track.new.1");
+  assert.equal(exportedBindings[0].owner.ownerKind, "person");
+  assert.equal(exportedBindings[0].owner.ownerId, "person.hero");
+});
+
+/* test.skip("script editor stage configuration clears stale applied object when creator changes object type", () => {
+  const {
+    updateScriptEditorProgressTrackBindingField,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  let binding = {
+  project.progressTracks = [
+    {
+      id: "track.progress.person",
+      title: "人物成长",
+      metricKey: "stamina",
+      metricLabel: "经验",
+      ownerKind: "person",
+      allowDemotion: false,
+      tiers: [],
+    },
+  ];
+  project.progressTrackBindings = [
+    {
+      id: "binding.progress.hero",
+      trackId: "track.progress.person",
+      owner: {
+        ownerKind: "person",
+        ownerId: "person.hero",
+      },
+      enabled: true,
+    },
+  ];
+  const flow = await createScriptEditorMainUiFlowTestHarness(project);
+
+  flow.selectScriptEditorFamily("stageConfiguration", "binding.progress.hero");
+  flow.applyScriptEditorProgressTrackBindingField("ownerKind", "city");
+
+  assert.equal(
+    flow.scriptEditorProject.progressTrackBindings[0].owner.ownerKind,
+    "city"
+  );
+  assert.equal(
+    flow.scriptEditorProject.progressTrackBindings[0].owner.ownerId,
+    ""
+  );
+}); */
+
+test("script editor stage configuration binding helper clears stale applied object when creator changes object type", () => {
+  const {
+    updateScriptEditorProgressTrackBindingField,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  let binding = {
+    id: "binding.progress.hero",
+    trackId: "track.progress.person",
+    owner: {
+      ownerKind: "person",
+      ownerId: "person.hero",
+    },
+    enabled: true,
+  };
+
+  binding = updateScriptEditorProgressTrackBindingField(binding, "ownerKind", "city");
+
+  assert.equal(binding.owner.ownerKind, "city");
+  assert.equal(binding.owner.ownerId, "");
 });
 
 test("script editor workflow helpers support progression draft upsert and remove", () => {

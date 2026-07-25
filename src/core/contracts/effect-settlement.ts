@@ -3,6 +3,7 @@ import type { RuntimeState } from "./runtime-state";
 import type { ProgressionSettlementInstance } from "./progression-runtime";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CharacterStatusById } from "../../domain/character-status";
+import type { SettlementDefinition } from "../../domain/content-pack";
 
 export type EffectEmitter =
   | "runtime-router"
@@ -19,6 +20,7 @@ export type EffectSettlementInput = {
   state: RuntimeState;
   effects: Effect[];
   settlementInstances?: ProgressionSettlementInstance[];
+  settlementDefinitionsById?: Record<string, SettlementDefinition | undefined>;
   emittedBy: EffectEmitter;
   appliedBy: EffectSettlementApplier;
   characterDefinitions?: CharacterDefinition[];

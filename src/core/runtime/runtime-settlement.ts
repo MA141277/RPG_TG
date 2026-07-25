@@ -3,7 +3,9 @@ import type {
   EffectSettlementInput,
   EffectSettlementResult,
 } from "../contracts/effect-settlement";
+import type { ProgressionSettlementInstance } from "../contracts/progression-runtime";
 import type { RuntimeState } from "../contracts/runtime-state";
+import type { CharacterDefinition } from "../../domain/character";
 import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
 import { mutateCharacterNumericProperty } from "../../application/character/runtime-property-mutation";
 import { advanceGameStateTimeSegments } from "../../application/time/time-progression";
@@ -65,6 +67,43 @@ export function applySettlementContents<TState extends SettlementRuntimeTargetSt
   }
 
   return nextState as TState;
+}
+
+export function applySettlementInstances<TState extends SettlementRuntimeTargetState>(
+  gameState: TState,
+  input: {
+    settlementInstances: readonly ProgressionSettlementInstance[];
+    settlementDefinitionsById?: Record<string, ExportedSettlement | undefined>;
+    context?: SettlementRuntimeContext;
+  }
+): {
+  state: TState;
+  warnings: string[];
+} {
+  let nextState = gameState;
+  const warnings: string[] = [];
+
+  for (const settlementInstance of input.settlementInstances) {
+    const settlement =
+      input.settlementDefinitionsById?.[settlementInstance.settlementId];
+    if (settlement == null) {
+      warnings.push(
+        `missing-progression-settlement:${settlementInstance.settlementId}`
+      );
+      continue;
+    }
+
+    nextState = applySettlementContents(
+      nextState,
+      settlement,
+      input.context
+    );
+  }
+
+  return {
+    state: nextState,
+    warnings,
+  };
 }
 
 function applySettlementContent(
@@ -251,7 +290,44 @@ export function settleRuntimeEffects(
   const warnings: string[] = [];
 
   if ((input.settlementInstances?.length ?? 0) > 0) {
-    // Progression settlement instances now converge through the shared settlement seam.
+    const settlementInput = input as EffectSettlementInput & {
+      settlementDefinitionsById?: Record<string, ExportedSettlement | undefined>;
+    };
+    if (nextCharacterDefinitions == null) {
+      warnings.push(
+        `unsupported-progression-settlement:missing-character-definitions:emitted-by:${input.emittedBy}`
+      );
+    } else if (settlementInput.settlementDefinitionsById == null) {
+      warnings.push(
+        `unsupported-progression-settlement:missing-settlement-definitions:emitted-by:${input.emittedBy}`
+      );
+    } else {
+      const peopleById = Object.fromEntries(
+        nextCharacterDefinitions.map((character) => [
+          character.id,
+          character as unknown as Record<string, unknown>,
+        ])
+      );
+      const appliedProgressionSettlements = applySettlementInstances(
+        {
+          people: peopleById,
+        },
+        {
+          settlementInstances: input.settlementInstances ?? [],
+          settlementDefinitionsById: settlementInput.settlementDefinitionsById,
+          context: {
+            people: peopleById,
+          },
+        }
+      );
+      nextCharacterDefinitions = nextCharacterDefinitions.map(
+        (character) =>
+          (appliedProgressionSettlements.state.people?.[character.id] as
+            | CharacterDefinition
+            | undefined) ?? character
+      );
+      warnings.push(...appliedProgressionSettlements.warnings);
+    }
   }
 
   for (const effect of input.effects) {

@@ -6,6 +6,10 @@ import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../contracts/progression-runtime";
 import { runDialogueUntilPause } from "../../application/dialogue/dialogue-runner";
 import {
   triggerStoryEvents,
@@ -44,6 +48,8 @@ export function runStoryTriggerRuntime(input: {
   eventDefinitionsById: Record<string, EventDefinition>;
   eventBindingsById?: Record<string, EventBinding>;
   settlementDefinitionsById?: Record<string, SettlementDefinition>;
+  progressTrackDefinitionsById?: Record<string, ProgressTrackDefinition>;
+  progressTrackBindingsById?: Record<string, ProgressTrackBinding>;
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   cityDefinitionsById?: Record<string, CityDefinition>;
@@ -52,6 +58,8 @@ export function runStoryTriggerRuntime(input: {
 }): {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  cityDefinitions?: CityDefinition[];
+  houseDefinitions?: HouseDefinition[];
   session: DialogueRuntimeResult["session"];
   taskInputs: DialogueRuntimeResult["taskInputs"];
   effects: DialogueRuntimeResult["effects"];
@@ -65,6 +73,8 @@ export function runStoryTriggerRuntime(input: {
       eventDefinitionsById: input.eventDefinitionsById,
       eventBindingsById: input.eventBindingsById,
       settlementDefinitionsById: input.settlementDefinitionsById,
+      progressTrackDefinitionsById: input.progressTrackDefinitionsById,
+      progressTrackBindingsById: input.progressTrackBindingsById,
       dialogueDefinitionsById: input.dialogueDefinitionsById,
       activityDefinitionsById: input.activityDefinitionsById,
       cityDefinitionsById: input.cityDefinitionsById,
@@ -85,6 +95,12 @@ export function runStoryTriggerRuntime(input: {
     return {
       state: storyResult.state,
       characterDefinitions: storyResult.characterDefinitions,
+      ...(storyResult.cityDefinitions == null
+        ? {}
+        : { cityDefinitions: storyResult.cityDefinitions }),
+      ...(storyResult.houseDefinitions == null
+        ? {}
+        : { houseDefinitions: storyResult.houseDefinitions }),
       session: null,
       taskInputs: [],
       effects: [],
@@ -94,6 +110,12 @@ export function runStoryTriggerRuntime(input: {
   return {
     state: storyResult.state,
     characterDefinitions: storyResult.characterDefinitions,
+    ...(storyResult.cityDefinitions == null
+      ? {}
+      : { cityDefinitions: storyResult.cityDefinitions }),
+    ...(storyResult.houseDefinitions == null
+      ? {}
+      : { houseDefinitions: storyResult.houseDefinitions }),
     session: createDialogueSession(storyResult.state),
     taskInputs: input.eventDefinitionsById[activeEventId]?.taskInputs ?? [],
     effects: [],

@@ -5,6 +5,18 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-26 Stage Configuration Regression Hardening And Governance Sync
+
+### Changed
+- Updated [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts:1) so changing a stage-configuration binding's applied object type now clears the stale `ownerId` immediately instead of preserving an invalid cross-type reference into later export and runtime consumption.
+- Added regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) for two creator-realistic paths: authoring a stage rule through binding-plus-track data and changing the applied object type without carrying over the old object id.
+- Updated [tests/city-building-mount-authoring.test.cjs](/D:/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs:1) so the mounted-NPC UI source guard accepts the current multi-line helper call shape instead of falsely failing on formatting-only line breaks.
+- Updated [docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md](/D:/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md:1) to bring the closed-version `routing_basis` field back in sync with the current Blueprint governance contract enforced by the repository tests.
+
+### Impact
+- Stage configuration authoring no longer leaves stale applied-object ids behind when creators switch object types, so exported rule data and downstream settlement-runtime consumption stay type-consistent.
+- Full repository verification is green again across authoring regressions, mounted-building UI guards, and Blueprint governance checks.
+
 ## 2026-07-25 Authoring Runtime Legacy Cutover Closeout
 
 ### Changed

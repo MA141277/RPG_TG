@@ -156,6 +156,166 @@ First-version authoring should not support:
 - cross-track linked conditions
 - creator-authored composite rule expressions
 
+## Creator-Facing Script Editor Layout Patch
+
+The Script Editor should present this feature as one creator-facing module instead of exposing the underlying rule/binding split as two parallel first-level entries.
+
+Required creator-facing module name:
+
+- `闃舵閰嶇疆`
+
+This module name is the primary creator-facing term for navigation and page titles.
+
+The following terms remain valid as internal/resource language, but should not remain parallel first-level creator modules:
+
+- `闃舵杞ㄩ亾`
+- `杞ㄩ亾缁戝畾`
+
+### Layout Rules
+
+The module must use the Script Editor's standard content layout:
+
+- left record list
+- right editor panel
+
+The workbench-style summary header area from the earlier draft must not remain.
+
+Specifically, the creator-facing page must not keep a large summary band that mixes:
+
+- oversized workbench title
+- current object summary cards
+- status snapshot cards
+- handoff or queue summary cards
+
+This feature should read like the editor's other authoring modules instead of a separate workbench surface.
+
+### Primary Creator View
+
+The left list should be organized by concrete authored usage targets rather than by reusable rule templates.
+
+Required list perspective:
+
+- `搴旂敤瀵硅薄`
+
+Reason:
+
+- creators usually think "I want to configure stage logic for this person/city/building"
+- creators do not naturally start from the reusable rule table
+- the used object is the main authored subject, while the track is the rule it references
+
+Each left-list item should display creator-facing summary information such as:
+
+- object name
+- object type
+- current rule name
+- enabled state
+
+Required left-list actions:
+
+- search objects
+- create stage configuration
+- delete stage configuration
+
+`create stage configuration` is the creator-facing action label. The underlying data creation may still land as a `ProgressTrackBinding`, but the editor should not require the creator to reason in that term.
+
+### Right-Side Editor Structure
+
+The right editor panel should be arranged in creator task order and should keep object configuration and rule editing on the same page.
+
+Required sections:
+
+1. `閰嶇疆瀵硅薄`
+   - object type
+   - object identifier
+   - enabled state
+2. `浣跨敤瑙勫垯`
+   - current rule
+   - switch rule
+   - create rule
+   - duplicate rule
+   - edit current rule
+3. `闃舵瑙勫垯`
+   - rule name
+   - metric source
+   - allow demotion
+   - tier rows
+   - threshold
+   - target-tier settlement
+
+This structure should let the creator complete the full workflow on one page:
+
+1. choose the object
+2. confirm or switch the rule used by that object
+3. edit the rule details directly
+
+The creator should not need to bounce between a "track page" and a separate "binding page" to finish one coherent authoring task.
+
+### Help Entry
+
+The module should include a creator-facing help button.
+
+Required button label:
+
+- `甯姪`
+
+Placement rule:
+
+- place it in the module's internal editor header, top-right
+- do not place it in the global top bar
+- keep its visual style aligned with the existing Script Editor button treatment
+
+Clicking the help button should open a modal titled:
+
+- `闃舵閰嶇疆浣跨敤璇存槑`
+
+The help modal should include two sections:
+
+1. `鍔熻兘璇存槑`
+   - explains that stage configuration assigns threshold-based rule progression to people, cities, or buildings
+   - explains that each object uses one rule
+   - explains that threshold hits emit settlement instances and those instances are handled by settlement runtime for final state change
+2. `鎿嶄綔娴佺▼`
+   - choose or create a stage configuration
+   - choose the object
+   - choose the rule
+   - configure tier names, thresholds, and target-tier settlements
+   - save so runtime can consume the authored configuration
+
+Required close action label:
+
+- `鎴戠煡閬撲簡`
+
+### Creator Terminology Rules
+
+Creator-facing labels should prefer business-language wording over contract wording.
+
+Recommended creator-facing mappings:
+
+- module name = `闃舵閰嶇疆`
+- track term in-page = `瑙勫垯`
+- `metricKey` = `杩涘害鍊兼潵婧?`
+- `ownerKind` = `瀵硅薄绫诲瀷`
+- `ownerId` = `瀵硅薄鏍囪瘑`
+- `targetTierSettlementId` = `闃舵鐩爣缁撶畻`
+
+Raw keys, ids, or contract field names must not become the primary visible panel language.
+
+If internal identifiers are shown for debugging or conflict inspection, they should stay secondary and not dominate the creator-facing surface.
+
+### Boundary Reminder
+
+This creator-facing page reorganization does not change the underlying resource or runtime boundaries.
+
+The following remain unchanged:
+
+- `progress-tracks.json` remains the reusable rule resource
+- `progress-track-bindings.json` remains the object-to-rule usage resource
+- `ProgressionRuntime` still evaluates convergence and emits settlement instances only
+- `SettlementRuntime` still owns all final property/state mutation
+- event routing remains the only formal routing owner
+
+This patch changes how creators understand and operate the feature, not how runtime truth is partitioned internally.
+
 ## Runtime Boundary
 
 Progression must become a formal runtime boundary rather than a feature-specific helper.

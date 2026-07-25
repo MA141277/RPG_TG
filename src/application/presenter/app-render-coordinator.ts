@@ -5,6 +5,8 @@ import type { ActiveGameContentContext } from "../content/active-game-content";
 import type { CityDefinition } from "../../domain/city";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { MapDefinition } from "../../domain/map";
+import { materializeBuildingDefinitions } from "../../domain/building-status";
+import { materializeCityDefinitions } from "../../domain/city-status";
 import { assertExists } from "../../shared/assert";
 import { renderApp as renderAppMarkup } from "../../ui/app-render";
 
@@ -71,7 +73,20 @@ export function createAppRenderCoordinator(
     const appState = dependencies.getAppState();
     const appRoot = dependencies.getAppRoot();
     const currentMapDefinition = dependencies.getCurrentMapDefinition();
-    const currentCityDefinition = dependencies.getCurrentCityDefinition(appState);
+    const materializedCityDefinitions = materializeCityDefinitions(
+      activeContentContext.cities,
+      appState.cityStatusById ?? {}
+    );
+    const materializedHouseDefinitions = materializeBuildingDefinitions(
+      activeContentContext.houses,
+      appState.buildingStatusById ?? {}
+    );
+    const currentCityDefinition =
+      materializedCityDefinitions.find(
+        (cityDefinition) =>
+          cityDefinition.id === appState.gameState.world.currentCityId
+      ) ??
+      dependencies.getCurrentCityDefinition(appState);
 
     assertExists(currentMapDefinition, "Missing active map definition for render.");
     assertExists(currentCityDefinition, "Missing active city definition for render.");
@@ -86,8 +101,8 @@ export function createAppRenderCoordinator(
       appState,
       playerCharacterId: dependencies.getPlayerCharacterId(),
       cityDefinition: currentCityDefinition,
-      cityDefinitions: activeContentContext.cities,
-      houseDefinitions: activeContentContext.houses,
+      cityDefinitions: materializedCityDefinitions,
+      houseDefinitions: materializedHouseDefinitions,
       buildingArrangements: activeContentContext.buildingArrangements,
       cityEntries: activeContentContext.cityEntries,
       cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
@@ -103,8 +118,8 @@ export function createAppRenderCoordinator(
       playerCharacterId: dependencies.getPlayerCharacterId(),
       mapDefinition: currentMapDefinition,
       cityDefinition: currentCityDefinition,
-      cityDefinitions: activeContentContext.cities,
-      houseDefinitions: activeContentContext.houses,
+      cityDefinitions: materializedCityDefinitions,
+      houseDefinitions: materializedHouseDefinitions,
       cityEntries: activeContentContext.cityEntries,
       cardDefinitions: activeContentContext.cards,
       cityNpcPoolDefinitions: activeContentContext.cityNpcPools,

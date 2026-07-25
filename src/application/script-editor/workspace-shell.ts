@@ -8,15 +8,22 @@ import type {
   ScriptEditorProjectFileKey,
   ScriptEditorTextEntryRecord,
 } from "../../domain/script-editor-project";
+import { SCRIPT_EDITOR_STAGE_CONFIGURATION_SOURCE_FAMILIES } from "./minimal-workflow";
 import {
   validateScriptEditorProjectForRuntimeExport,
   type ScriptEditorRuntimeExportDiagnostic,
 } from "./runtime-pack-export";
 
+export type ScriptEditorWorkspaceFamily =
+  | ScriptEditorProjectFileKey
+  | "stageConfiguration";
+
 export type ScriptEditorWorkspaceSelection = {
-  family: ScriptEditorProjectFileKey;
+  family: ScriptEditorWorkspaceFamily;
   entityId?: string | null;
 };
+
+const STAGE_CONFIGURATION_FAMILY = "stageConfiguration" as const;
 
 export type ScriptEditorWorkspaceViewModel = {
   projectId: string;
@@ -30,7 +37,7 @@ export type ScriptEditorWorkspaceViewModel = {
   handoffSummary: ScriptEditorWorkspaceHandoffSummary;
   auxiliaryPanel: ScriptEditorWorkspaceAuxiliaryPanel;
   selection: {
-    family: ScriptEditorProjectFileKey;
+    family: ScriptEditorWorkspaceFamily;
     entityId: string | null;
   };
 };
@@ -61,7 +68,7 @@ export type ScriptEditorWorkspaceTreeGroup = {
 
 export type ScriptEditorWorkspaceTreeNode = {
   id: string;
-  family: ScriptEditorProjectFileKey;
+  family: ScriptEditorWorkspaceFamily;
   entityId: string | null;
   label: string;
   description: string;
@@ -134,6 +141,7 @@ export type ScriptEditorWorkspaceExportTarget = {
 };
 
 const FAMILY_LABELS: Record<string, string> = {
+  stageConfiguration: "阶段配置",
   progressTracks: "阶段轨道",
   progressTrackBindings: "轨道绑定",
   settlements: "结算",
@@ -157,7 +165,7 @@ const FAMILY_LABELS: Record<string, string> = {
 const TREE_GROUPS: Array<{
   id: string;
   label: string;
-  families: ScriptEditorProjectFileKey[];
+  families: ScriptEditorWorkspaceFamily[];
 }> = [
   {
     id: "project",
@@ -177,7 +185,7 @@ const TREE_GROUPS: Array<{
   {
     id: "gameplay",
     label: "玩法",
-    families: ["events", "progressTracks", "progressTrackBindings"],
+    families: ["events", "stageConfiguration"],
   },
   {
     id: "library",
@@ -204,10 +212,6 @@ const DEFERRED_EXPORT_TARGET_FAMILIES = new Set<ScriptEditorProjectFileKey>([
 
 const BLOCKER_ONLY_WORKSPACE_FAMILIES = new Set<ScriptEditorProjectFileKey>([]);
 
-const gameplayTreeGroup = TREE_GROUPS.find((group) => group.id === "gameplay");
-if (gameplayTreeGroup != null) {
-  gameplayTreeGroup.families = ["events", "progressTracks", "progressTrackBindings"];
-}
 DEFERRED_SHELL_FAMILIES.add("quests");
 
 const ISSUE_SEVERITY_ORDER: Record<
@@ -229,7 +233,9 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
   const visibleFamilies = new Set<ScriptEditorProjectFileKey>([
     "storyPack",
     ...(input.visibleFamilies ??
-      (Object.keys(FAMILY_LABELS) as ScriptEditorProjectFileKey[])),
+      (Object.keys(FAMILY_LABELS).filter(
+        (family) => family !== STAGE_CONFIGURATION_FAMILY
+      ) as ScriptEditorProjectFileKey[])),
   ]);
   const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(project);
   const attentionFamilies = collectAttentionFamilies(exportDiagnostics);
@@ -257,9 +263,14 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
       id: group.id,
       label: group.label,
       nodes: group.families
-        .filter((family) => visibleFamilies.has(family))
+        .filter((family) => isWorkspaceFamilyVisible(family, visibleFamilies))
         .map((family) =>
-          createTreeNode(project, family, selection, attentionFamilies.has(family))
+          createTreeNode(
+            project,
+            family,
+            selection,
+            hasWorkspaceFamilyAttention(family, attentionFamilies)
+          )
         ),
     })).filter((group) => group.nodes.length > 0),
     inspector: createInspector(
@@ -293,7 +304,7 @@ function createBadges(
 }
 
 function createNavigationItems(
-  family: ScriptEditorProjectFileKey
+  family: ScriptEditorWorkspaceFamily
 ): ScriptEditorWorkspaceNavigationItem[] {
   void family;
   return [];
@@ -347,16 +358,15 @@ function createToolbarActions(
 
 function createTreeNode(
   project: ScriptEditorProjectDefinition,
-  family: ScriptEditorProjectFileKey,
+  family: ScriptEditorWorkspaceFamily,
   selection: {
-    family: ScriptEditorProjectFileKey;
+    family: ScriptEditorWorkspaceFamily;
     entityId: string | null;
   },
   hasAttention: boolean
 ): ScriptEditorWorkspaceTreeNode {
-  const count = getFamilyCount(project, family);
-  const previewRecord =
-    family === "storyPack" ? project.storyPack : getFamilyRecords(project, family)[0] ?? null;
+  const count = getWorkspaceFamilyCount(project, family);
+  const previewRecord = getWorkspaceFamilyPreviewRecord(project, family);
 
   return {
     id: `node.${family}`,
@@ -364,21 +374,23 @@ function createTreeNode(
     entityId: selection.family === family ? selection.entityId : null,
     label: getFamilyLabel(family),
     description:
-      previewRecord == null ? "当前家族还没有对象。" : describeRecord(previewRecord),
+      previewRecord == null
+        ? createEmptyWorkspaceFamilyDescription(family)
+        : describeRecord(previewRecord),
     itemCount: count,
     isSelected: selection.family === family,
     tone: hasAttention ? "warning" : "neutral",
   };
 }
 
-function getFamilyLabel(family: ScriptEditorProjectFileKey): string {
+function getFamilyLabel(family: ScriptEditorWorkspaceFamily): string {
   return FAMILY_LABELS[family] ?? family;
 }
 
 function createInspector(
   project: ScriptEditorProjectDefinition,
   selection: {
-    family: ScriptEditorProjectFileKey;
+    family: ScriptEditorWorkspaceFamily;
     entityId: string | null;
   },
   exportDiagnostics: ScriptEditorRuntimeExportDiagnostic[],
@@ -392,7 +404,7 @@ function createInspector(
     );
   }
 
-  const records = getFamilyRecords(project, selection.family);
+  const records = getWorkspaceFamilyRecords(project, selection.family);
   const selectedRecord =
     selection.entityId == null
       ? records[0] ?? null
@@ -421,7 +433,7 @@ function createInspector(
       },
       {
         label: "当前阶段",
-        value: DEFERRED_SHELL_FAMILIES.has(selection.family)
+        value: isDeferredWorkspaceFamily(selection.family)
           ? "占位/交接"
           : "作者面已就绪",
       },
@@ -446,10 +458,10 @@ function createInspector(
             {
               id: `handoff.${selection.family}`,
               title: "后续队列交接",
-              body: DEFERRED_SHELL_FAMILIES.has(selection.family)
+              body: isDeferredWorkspaceFamily(selection.family)
                 ? "该家族当前只进入工作台导航和交接范围，不在本队列内实现最终 compile 或完整运行时落点。"
                 : "该家族已经可以稳定承接后续 PRD 队列，不需要重复搭建工作台壳层。",
-              tone: DEFERRED_SHELL_FAMILIES.has(selection.family)
+              tone: isDeferredWorkspaceFamily(selection.family)
                 ? "warning"
                 : "success",
             },
@@ -539,18 +551,21 @@ function resolveSelection(
   requestedSelection: ScriptEditorWorkspaceSelection | undefined,
   visibleFamilies: ReadonlySet<ScriptEditorProjectFileKey>
 ): {
-  family: ScriptEditorProjectFileKey;
+  family: ScriptEditorWorkspaceFamily;
   entityId: string | null;
 } {
   const family = requestedSelection?.family ?? "storyPack";
-  if (family === "storyPack" || !visibleFamilies.has(family)) {
+  if (
+    family === "storyPack" ||
+    !isWorkspaceFamilyVisible(family, visibleFamilies)
+  ) {
     return {
       family: "storyPack",
       entityId: null,
     };
   }
 
-  const records = getFamilyRecords(project, family);
+  const records = getWorkspaceFamilyRecords(project, family);
   if (records.length === 0) {
     return {
       family,
@@ -579,7 +594,7 @@ function resolveSelection(
 function createAuxiliaryPanel(input: {
   project: ScriptEditorProjectDefinition;
   selection: {
-    family: ScriptEditorProjectFileKey;
+    family: ScriptEditorWorkspaceFamily;
     entityId: string | null;
   };
   exportDiagnostics: ScriptEditorRuntimeExportDiagnostic[];
@@ -653,7 +668,7 @@ function createAuxiliaryPanel(input: {
 function createPreviewCards(
   project: ScriptEditorProjectDefinition,
   selection: {
-    family: ScriptEditorProjectFileKey;
+    family: ScriptEditorWorkspaceFamily;
     entityId: string | null;
   },
   issues: ScriptEditorWorkspaceValidationIssue[]
@@ -661,7 +676,7 @@ function createPreviewCards(
   const selectedRecord =
     selection.family === "storyPack"
       ? project.storyPack
-      : getFamilyRecords(project, selection.family).find(
+      : getWorkspaceFamilyRecords(project, selection.family).find(
           (record) => record.id === selection.entityId
         ) ?? null;
   const selectionLabel =
@@ -704,22 +719,34 @@ function createPreviewCards(
       id: "preview.export",
       title: "导出落点预估",
       body: exportPreview,
-      tone: DEFERRED_EXPORT_TARGET_FAMILIES.has(selection.family) ? "warning" : "neutral",
+      tone:
+        selection.family !== STAGE_CONFIGURATION_FAMILY &&
+        DEFERRED_EXPORT_TARGET_FAMILIES.has(selection.family)
+          ? "warning"
+          : "neutral",
     },
   ];
 }
 
 function describeSelectionLinkPreview(
   project: ScriptEditorProjectDefinition,
-  family: ScriptEditorProjectFileKey,
+  family: ScriptEditorWorkspaceFamily,
   entityId: string | null
 ): string {
   if (family === "storyPack") {
     return `项目当前收录人物 ${project.people.length}、城市 ${project.cities.length}、事件 ${project.events.length}、玩法绑定 ${project.minigames.length}。`;
   }
 
+  if (family === STAGE_CONFIGURATION_FAMILY && entityId === "__stage_config_link__") {
+    return `褰撳墠宸叉湁 ${project.progressTrackBindings?.length ?? 0} 涓厤缃璞★紝鍏朵腑寮曠敤 ${project.progressTracks?.length ?? 0} 鏉￠樁娈佃鍒欍€?`;
+  }
+
   if (entityId == null) {
     return "当前未选择具体对象，先从对象树选中记录后再查看联动摘要。";
+  }
+
+  if (family === STAGE_CONFIGURATION_FAMILY) {
+    return "闃舵閰嶇疆浣滀负鍒涗綔闈㈢殑缁熶竴鍏ュ彛锛屽簳灞備粛鍒嗗埆钀藉埌 progress-tracks.json 涓?progress-track-bindings.json銆?";
   }
 
   if (family === "people") {
@@ -768,9 +795,13 @@ function describeSelectionLinkPreview(
 
 function describeSelectionExportPreview(
   project: ScriptEditorProjectDefinition,
-  family: ScriptEditorProjectFileKey,
+  family: ScriptEditorWorkspaceFamily,
   entityId: string | null
 ): string {
+  if (family === STAGE_CONFIGURATION_FAMILY) {
+    return "闃舵閰嶇疆浣滀负鍒涗綔闈㈢殑缁熶竴鍏ュ彛锛屽簳灞備粛鍒嗗埆钀藉埌 progress-tracks.json 涓?progress-track-bindings.json銆?";
+  }
+
   if (family === "storyPack") {
     return "项目级信息会落到 pack.json 与 scenario-profile.json，辅助区会在导出前汇总阻塞项与兼容残留。";
   }
@@ -1361,7 +1392,7 @@ function resolveIssueTab(
 function createExportTargets(
   project: ScriptEditorProjectDefinition,
   selection: {
-    family: ScriptEditorProjectFileKey;
+    family: ScriptEditorWorkspaceFamily;
     entityId: string | null;
   },
   exportDiagnostics: ScriptEditorRuntimeExportDiagnostic[]
@@ -1388,6 +1419,25 @@ function createExportTargets(
 
   const blockedStatus =
     relevantDiagnostics.length > 0 ? "blocked" : "ready";
+
+  if (family === STAGE_CONFIGURATION_FAMILY) {
+    return [
+      buildTarget(
+        "export.stage-configuration-tracks",
+        "闃舵瑙勫垯",
+        "progress-tracks.json",
+        "闃舵瑙勫垯浼氬鍑哄埌 progress-tracks.json锛岀敤浜庢壙杞藉彲澶嶇敤鐨勯槇鍊煎拰闃舵瀹氫箟銆?",
+        blockedStatus
+      ),
+      buildTarget(
+        "export.stage-configuration-bindings",
+        "搴旂敤瀵硅薄",
+        "progress-track-bindings.json",
+        "搴旂敤瀵硅薄浼氬鍑哄埌 progress-track-bindings.json锛岀敤浜庢寕鎺ュ叿浣撳璞′笌鍏朵娇鐢ㄧ殑闃舵瑙勫垯銆?",
+        blockedStatus
+      ),
+    ];
+  }
 
   switch (family) {
     case "storyPack":
@@ -1537,6 +1587,92 @@ function collectAttentionFamilies(
   }
 
   return families;
+}
+
+function isWorkspaceFamilyVisible(
+  family: ScriptEditorWorkspaceFamily,
+  visibleFamilies: ReadonlySet<ScriptEditorProjectFileKey>
+): boolean {
+  if (family === STAGE_CONFIGURATION_FAMILY) {
+    return SCRIPT_EDITOR_STAGE_CONFIGURATION_SOURCE_FAMILIES.every((sourceFamily) =>
+      visibleFamilies.has(sourceFamily)
+    );
+  }
+
+  return visibleFamilies.has(family);
+}
+
+function hasWorkspaceFamilyAttention(
+  family: ScriptEditorWorkspaceFamily,
+  attentionFamilies: ReadonlySet<ScriptEditorProjectFileKey>
+): boolean {
+  if (family === STAGE_CONFIGURATION_FAMILY) {
+    return SCRIPT_EDITOR_STAGE_CONFIGURATION_SOURCE_FAMILIES.some((sourceFamily) =>
+      attentionFamilies.has(sourceFamily)
+    );
+  }
+
+  return attentionFamilies.has(family);
+}
+
+function isDeferredWorkspaceFamily(
+  family: ScriptEditorWorkspaceFamily
+): boolean {
+  return (
+    family !== STAGE_CONFIGURATION_FAMILY &&
+    DEFERRED_SHELL_FAMILIES.has(family)
+  );
+}
+
+function getWorkspaceFamilyCount(
+  project: ScriptEditorProjectDefinition,
+  family: ScriptEditorWorkspaceFamily
+): number {
+  if (family === STAGE_CONFIGURATION_FAMILY) {
+    return project.progressTrackBindings?.length ?? 0;
+  }
+
+  return getFamilyCount(project, family);
+}
+
+function getWorkspaceFamilyPreviewRecord(
+  project: ScriptEditorProjectDefinition,
+  family: ScriptEditorWorkspaceFamily
+): Record<string, unknown> | null {
+  if (family === "storyPack") {
+    return project.storyPack;
+  }
+
+  if (family === STAGE_CONFIGURATION_FAMILY) {
+    return project.progressTrackBindings?.[0] ?? null;
+  }
+
+  return getFamilyRecords(project, family)[0] ?? null;
+}
+
+function createEmptyWorkspaceFamilyDescription(
+  family: ScriptEditorWorkspaceFamily
+): string {
+  if (family === STAGE_CONFIGURATION_FAMILY) {
+    return "褰撳墠杩樻病鏈夐樁娈甸厤缃璞°€?";
+  }
+
+  return "褰撳墠瀹舵棌杩樻病鏈夊璞°€?";
+}
+
+function getWorkspaceFamilyRecords(
+  project: ScriptEditorProjectDefinition,
+  family: ScriptEditorWorkspaceFamily
+): ScriptEditorEntityRecord[] | ScriptEditorTextEntryRecord[] | ScriptEditorActivityRecord[] {
+  if (family === STAGE_CONFIGURATION_FAMILY) {
+    return project.progressTrackBindings ?? [];
+  }
+
+  if (family === "storyPack") {
+    return [];
+  }
+
+  return getFamilyRecords(project, family);
 }
 
 function getFamilyCount(

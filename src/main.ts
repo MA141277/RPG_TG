@@ -199,6 +199,8 @@ const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MAX_DURATION_MS = 18000 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
 const ACTIVITY_QTE_INTERVAL_MS = 90;
+const SCENARIO_PENDING_ENTRY_EVENT_ID_VARIABLE =
+  "__scenario.pendingEntryEventId";
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
@@ -323,10 +325,19 @@ function bootstrapStartupStoryAppState(input: {
     bootstrap: input.bootstrap,
     content: {
       eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
+      settlementDefinitionsById:
+        activeContentContext.storyContent.settlementDefinitionsById,
+      progressTrackDefinitionsById:
+        activeContentContext.storyContent.progressTrackDefinitionsById,
+      progressTrackBindingsById:
+        activeContentContext.storyContent.progressTrackBindingsById,
       dialogueDefinitionsById:
         activeContentContext.storyContent.dialogueDefinitionsById,
       activityDefinitionsById:
         activeContentContext.storyContent.activityDefinitionsById,
+      cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
+      houseDefinitionsById:
+        activeContentContext.storyContent.houseDefinitionsById,
       textEntriesById: activeContentContext.storyContent.textEntriesById,
     },
   });
@@ -552,10 +563,18 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
   getStoryContent: () => ({
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
     eventBindingsById: activeContentContext.storyContent.eventBindingsById,
+    settlementDefinitionsById:
+      activeContentContext.storyContent.settlementDefinitionsById,
+    progressTrackDefinitionsById:
+      activeContentContext.storyContent.progressTrackDefinitionsById,
+    progressTrackBindingsById:
+      activeContentContext.storyContent.progressTrackBindingsById,
     dialogueDefinitionsById:
       activeContentContext.storyContent.dialogueDefinitionsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
+    cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
+    houseDefinitionsById: activeContentContext.storyContent.houseDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,
   }),
   resetMainGameRuntime,
@@ -566,6 +585,24 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
     mainUiFlow.hide();
   },
 });
+
+function exitScriptEditorRuntimePreviewSession(): void {
+  pendingScenarioStartupRequest = null;
+  currentPlayerCharacterId = defaultPlayerCharacterId;
+  resetMainGameRuntime();
+  setActiveContentContext(
+    entryShellBootstrapState.createStartupContentContext(
+      builtinStartupActivation
+    )
+  );
+  appState =
+    prototypeStartupAppStateBuilder.createPrototypeAppState(
+      currentPlayerCharacterId
+    );
+  setGameVisibility(false);
+  renderApp();
+}
+
 const startupSessionApplyCoordinator = createStartupSessionApplyCoordinator({
   configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
   mainRuntimeOrchestrator,
@@ -594,6 +631,7 @@ const mainUiFlow = new MainUiFlow({
   onStartScenarioPack: startScenarioPackWithLoading,
   onStartLoadedScenarioPack: startLoadedScenarioPackWithLoading,
   onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
+  onExitRuntimePreview: exitScriptEditorRuntimePreviewSession,
   loadSaveData,
   getAppState: () => appState,
 });
@@ -1092,6 +1130,32 @@ function applyPostNavigationStoryTrigger(
     return;
   }
 
+  if (timing === "city-enter") {
+    const deferredEntryResult = mainRuntimeOrchestrator.execute({
+      type: "consume-deferred-entry-event",
+      variableKey: SCENARIO_PENDING_ENTRY_EVENT_ID_VARIABLE,
+      state: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+    });
+    if (deferredEntryResult.didChange) {
+      appState = {
+        ...appState,
+        ...(deferredEntryResult.gameState == null
+          ? {}
+          : { gameState: deferredEntryResult.gameState }),
+        ...(deferredEntryResult.characterDefinitions == null
+          ? {}
+          : { characterDefinitions: deferredEntryResult.characterDefinitions }),
+        ...(deferredEntryResult.cityStatusById === undefined
+          ? {}
+          : { cityStatusById: deferredEntryResult.cityStatusById }),
+        ...(deferredEntryResult.buildingStatusById === undefined
+          ? {}
+          : { buildingStatusById: deferredEntryResult.buildingStatusById }),
+      };
+    }
+  }
+
   const triggerResult = mainRuntimeOrchestrator.execute({
     type: "trigger-story-events",
     timing,
@@ -1110,6 +1174,12 @@ function applyPostNavigationStoryTrigger(
     ...(triggerResult.characterDefinitions == null
       ? {}
       : { characterDefinitions: triggerResult.characterDefinitions }),
+    ...(triggerResult.cityStatusById === undefined
+      ? {}
+      : { cityStatusById: triggerResult.cityStatusById }),
+    ...(triggerResult.buildingStatusById === undefined
+      ? {}
+      : { buildingStatusById: triggerResult.buildingStatusById }),
   };
 }
 
@@ -1685,7 +1755,7 @@ function startMainGameWithLoading(
       selectedCharacter,
     }).then((didStart) => {
       if (didStart && request.previewSession === true) {
-        mainUiFlow.setScreen("runtime-preview");
+        mainUiFlow.enterScriptEditorRuntimePreviewSession();
       }
     });
     return;
@@ -2002,6 +2072,14 @@ function createScenarioPackAppState(
         variables: {
           ...nextAppState.gameState.runtime.variables,
           ...(profile.initialRuntime?.variables ?? {}),
+          ...(profile.launchPolicy?.entryEventTiming === "after-map-entry" &&
+          typeof profile.entryEventId === "string" &&
+          profile.entryEventId.length > 0
+            ? {
+                [SCENARIO_PENDING_ENTRY_EVENT_ID_VARIABLE]:
+                  profile.entryEventId,
+              }
+            : {}),
         },
       },
     },

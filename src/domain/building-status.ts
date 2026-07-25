@@ -85,3 +85,65 @@ export function mergeBuildingStatusMaps(
     statusById
   );
 }
+
+export function createBuildingStatusPatch(
+  authoredDefinition: HouseDefinition,
+  runtimeDefinition: HouseDefinition
+): BuildingStatus | null {
+  const profilePatch: NonNullable<BuildingStatus["profilePatch"]> = {};
+  const runtimePatch: NonNullable<BuildingStatus["runtimePatch"]> = {};
+
+  if (runtimeDefinition.name !== authoredDefinition.name) {
+    profilePatch.name = runtimeDefinition.name;
+  }
+  if (runtimeDefinition.defaultCharacterId !== authoredDefinition.defaultCharacterId) {
+    profilePatch.defaultCharacterId = runtimeDefinition.defaultCharacterId;
+  }
+  if (
+    runtimeDefinition.level !== authoredDefinition.level &&
+    runtimeDefinition.level !== undefined
+  ) {
+    runtimePatch.level = runtimeDefinition.level;
+  }
+  if (
+    runtimeDefinition.damaged !== authoredDefinition.damaged &&
+    runtimeDefinition.damaged !== undefined
+  ) {
+    runtimePatch.damaged = runtimeDefinition.damaged;
+  }
+  if (
+    runtimeDefinition.outputMultiplier !== authoredDefinition.outputMultiplier &&
+    runtimeDefinition.outputMultiplier !== undefined
+  ) {
+    runtimePatch.outputMultiplier = runtimeDefinition.outputMultiplier;
+  }
+
+  return Object.keys(profilePatch).length === 0 &&
+    Object.keys(runtimePatch).length === 0
+    ? null
+    : {
+        ...(Object.keys(profilePatch).length === 0 ? {} : { profilePatch }),
+        ...(Object.keys(runtimePatch).length === 0 ? {} : { runtimePatch }),
+      };
+}
+
+export function deriveBuildingStatusById(
+  authoredDefinitionsById: Record<string, HouseDefinition>,
+  runtimeDefinitions: readonly HouseDefinition[]
+): BuildingStatusById {
+  const nextStatusById: BuildingStatusById = {};
+
+  for (const runtimeDefinition of runtimeDefinitions) {
+    const authoredDefinition = authoredDefinitionsById[runtimeDefinition.id];
+    if (authoredDefinition == null) {
+      continue;
+    }
+
+    const patch = createBuildingStatusPatch(authoredDefinition, runtimeDefinition);
+    if (patch != null) {
+      nextStatusById[runtimeDefinition.id] = patch;
+    }
+  }
+
+  return nextStatusById;
+}

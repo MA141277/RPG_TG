@@ -248,7 +248,7 @@ test(
     assert.match(mainUiSource, /findNextScriptEditorCityMountedNpcId/);
     assert.match(
       mainUiSource,
-      /appendScriptEditorCityMountedBuildingNpc\(city, buildingIndex, nextNpcId\)/
+      /appendScriptEditorCityMountedBuildingNpc\(\s*city,\s*buildingIndex,\s*nextNpcId\s*\)/
     );
     const actionHandlerBlock = mainUiSource.match(
       /async handleScriptEditorAction\(action, actionElement = null\) \{[\s\S]*?\n  selectScriptEditorFamily/

@@ -2,7 +2,7 @@ import type { CityDefinition } from "./city";
 
 export type CityStatus = {
   valuePatch?: Partial<
-    Pick<CityDefinition, "prosperity" | "danger" | "specialDemand">
+    Pick<CityDefinition, "travelCost" | "prosperity" | "danger" | "specialDemand">
   >;
 };
 
@@ -76,4 +76,52 @@ export function mergeCityStatusMaps(
       mergeCityStatusById(nextStatusById, cityId, patch),
     statusById
   );
+}
+
+export function createCityStatusPatch(
+  authoredDefinition: CityDefinition,
+  runtimeDefinition: CityDefinition
+): CityStatus | null {
+  const valuePatch: NonNullable<CityStatus["valuePatch"]> = {};
+
+  if (runtimeDefinition.travelCost !== authoredDefinition.travelCost) {
+    valuePatch.travelCost = runtimeDefinition.travelCost;
+  }
+  if (runtimeDefinition.prosperity !== authoredDefinition.prosperity) {
+    valuePatch.prosperity = runtimeDefinition.prosperity;
+  }
+  if (runtimeDefinition.danger !== authoredDefinition.danger) {
+    valuePatch.danger = runtimeDefinition.danger;
+  }
+  if (
+    runtimeDefinition.specialDemand.length !== authoredDefinition.specialDemand.length ||
+    runtimeDefinition.specialDemand.some(
+      (entry, index) => entry !== authoredDefinition.specialDemand[index]
+    )
+  ) {
+    valuePatch.specialDemand = [...runtimeDefinition.specialDemand];
+  }
+
+  return Object.keys(valuePatch).length === 0 ? null : { valuePatch };
+}
+
+export function deriveCityStatusById(
+  authoredDefinitionsById: Record<string, CityDefinition>,
+  runtimeDefinitions: readonly CityDefinition[]
+): CityStatusById {
+  const nextStatusById: CityStatusById = {};
+
+  for (const runtimeDefinition of runtimeDefinitions) {
+    const authoredDefinition = authoredDefinitionsById[runtimeDefinition.id];
+    if (authoredDefinition == null) {
+      continue;
+    }
+
+    const patch = createCityStatusPatch(authoredDefinition, runtimeDefinition);
+    if (patch != null) {
+      nextStatusById[runtimeDefinition.id] = patch;
+    }
+  }
+
+  return nextStatusById;
 }

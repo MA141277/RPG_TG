@@ -26,6 +26,7 @@ type MainUiFlowOptions = {
     scenarioPack: ScenarioPackDefinition
   ): ScriptEditorRuntimePreviewStartResult | Promise<ScriptEditorRuntimePreviewStartResult>;
   onImportScenarioPackFiles?(files: File[]): void | Promise<void>;
+  onExitRuntimePreview?(): void;
   loadSaveData(): Promise<SaveDataResult> | SaveDataResult;
   getAppState(): AppState;
 };
@@ -38,6 +39,7 @@ export class MainUiFlow {
   showMainMenu(): void;
   showCharacterSelect(): void;
   hide(): void;
+  enterScriptEditorRuntimePreviewSession(): void;
   setCharacters(characters: CharacterDefinition[]): void;
   setScreen(screen: string): void;
 }

@@ -27,7 +27,7 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `closed-after-explicit-version-closeout-with-no-same-version-residue`
+- routing_basis: `closed-after-explicit-operator-closeout-with-no-same-family-residue`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - stop_reason: `none`

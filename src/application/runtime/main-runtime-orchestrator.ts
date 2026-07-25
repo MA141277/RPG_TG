@@ -9,13 +9,22 @@ import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
 import type { StartupSessionBootstrap } from "../startup/startup-session-coordinator";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../../core/contracts/progression-runtime";
 import { applyIndoorScreenStoryFollowUp } from "./indoor-screen-story-follow-up";
 import {
   advanceStoryDialogueStep,
   chooseStoryDialogueOption,
   getCurrentDialogueChoiceOptions,
+  startStoryEventById,
   type StoryTriggerTiming,
 } from "../story/story-runtime";
+import {
+  applyStoryRuntimeResultToAppState,
+  createStoryRuntimeDefinitionContext,
+} from "../story/story-runtime-state-bridge";
 import { runStoryTriggerRuntime } from "../../core/runtime/dialogue-runtime";
 
 export type MainRuntimeOrchestratorRequest =
@@ -35,12 +44,20 @@ export type MainRuntimeOrchestratorRequest =
       timing: StoryTriggerTiming;
       state: GameState;
       characterDefinitions: CharacterDefinition[];
+    }
+  | {
+      type: "consume-deferred-entry-event";
+      variableKey: string;
+      state: GameState;
+      characterDefinitions: CharacterDefinition[];
     };
 
 export type MainRuntimeOrchestratorResult = {
   appState: AppState;
   gameState?: GameState;
   characterDefinitions?: CharacterDefinition[];
+  cityStatusById?: AppState["cityStatusById"];
+  buildingStatusById?: AppState["buildingStatusById"];
   playerCharacterId?: string;
   didChange: boolean;
   shouldRender: boolean;
@@ -54,6 +71,8 @@ export type MainRuntimeOrchestratorDependencies = {
     eventDefinitionsById: Record<string, EventDefinition>;
     eventBindingsById?: Record<string, EventBinding>;
     settlementDefinitionsById?: Record<string, SettlementDefinition>;
+    progressTrackDefinitionsById?: Record<string, ProgressTrackDefinition>;
+    progressTrackBindingsById?: Record<string, ProgressTrackBinding>;
     dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
     activityDefinitionsById?: Record<string, ActivityDefinition>;
     cityDefinitionsById?: Record<string, CityDefinition>;
@@ -70,6 +89,8 @@ export type MainRuntimeOrchestratorDependencies = {
 type StoryTimingResult = {
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
+  cityStatusById?: AppState["cityStatusById"];
+  buildingStatusById?: AppState["buildingStatusById"];
 };
 
 export function createMainRuntimeOrchestrator(
@@ -88,7 +109,12 @@ export function createMainRuntimeOrchestrator(
     state: GameState,
     characterDefinitions: CharacterDefinition[]
   ): StoryTimingResult {
+    const appState = dependencies.getAppState();
     const storyContent = dependencies.getStoryContent();
+    const runtimeDefinitionContext = createStoryRuntimeDefinitionContext(
+      appState,
+      storyContent
+    );
     const result = runStoryTriggerRuntime({
       timing,
       state,
@@ -100,6 +126,18 @@ export function createMainRuntimeOrchestrator(
       ...(storyContent.settlementDefinitionsById == null
         ? {}
         : { settlementDefinitionsById: storyContent.settlementDefinitionsById }),
+      ...(storyContent.progressTrackDefinitionsById == null
+        ? {}
+        : {
+            progressTrackDefinitionsById:
+              storyContent.progressTrackDefinitionsById,
+          }),
+      ...(storyContent.progressTrackBindingsById == null
+        ? {}
+        : {
+            progressTrackBindingsById:
+              storyContent.progressTrackBindingsById,
+          }),
       dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
       ...(storyContent.activityDefinitionsById == null
         ? {}
@@ -113,11 +151,19 @@ export function createMainRuntimeOrchestrator(
       ...(storyContent.textEntriesById == null
         ? {}
         : { textEntriesById: storyContent.textEntriesById }),
+      ...runtimeDefinitionContext,
     });
+    const projectedAppState = applyStoryRuntimeResultToAppState(
+      appState,
+      storyContent,
+      result
+    );
 
     return {
-      gameState: result.state,
-      characterDefinitions: result.characterDefinitions,
+      gameState: projectedAppState.gameState,
+      characterDefinitions: projectedAppState.characterDefinitions,
+      cityStatusById: projectedAppState.cityStatusById,
+      buildingStatusById: projectedAppState.buildingStatusById,
     };
   }
 
@@ -156,9 +202,59 @@ export function createMainRuntimeOrchestrator(
           appState: dependencies.getAppState(),
           gameState: result.gameState,
           characterDefinitions: result.characterDefinitions,
+          cityStatusById: result.cityStatusById,
+          buildingStatusById: result.buildingStatusById,
           didChange:
             result.gameState !== request.state ||
             result.characterDefinitions !== request.characterDefinitions,
+          shouldRender: false,
+        };
+      }
+
+      if (request.type === "consume-deferred-entry-event") {
+        const deferredEventId = request.state.runtime.variables[request.variableKey];
+        if (typeof deferredEventId !== "string" || deferredEventId.trim().length === 0) {
+          return getNoopResult();
+        }
+
+        const nextVariables = {
+          ...request.state.runtime.variables,
+        };
+        delete nextVariables[request.variableKey];
+        const deferredState = {
+          ...request.state,
+          runtime: {
+            ...request.state.runtime,
+            variables: nextVariables,
+          },
+        };
+        const storyContent = dependencies.getStoryContent();
+        const runtimeDefinitionContext = createStoryRuntimeDefinitionContext(
+          dependencies.getAppState(),
+          storyContent
+        );
+        const result = startStoryEventById(
+          {
+            state: deferredState,
+            characterDefinitions: request.characterDefinitions,
+            ...runtimeDefinitionContext,
+          },
+          storyContent,
+          deferredEventId
+        );
+        const projectedAppState = applyStoryRuntimeResultToAppState(
+          dependencies.getAppState(),
+          storyContent,
+          result
+        );
+
+        return {
+          appState: dependencies.getAppState(),
+          gameState: projectedAppState.gameState,
+          characterDefinitions: projectedAppState.characterDefinitions,
+          cityStatusById: projectedAppState.cityStatusById,
+          buildingStatusById: projectedAppState.buildingStatusById,
+          didChange: true,
           shouldRender: false,
         };
       }
@@ -167,10 +263,15 @@ export function createMainRuntimeOrchestrator(
       const storyContent = dependencies.getStoryContent();
 
       if (request.type === "advance-story-dialogue") {
+        const runtimeDefinitionContext = createStoryRuntimeDefinitionContext(
+          appState,
+          storyContent
+        );
         const result = advanceStoryDialogueStep(
           {
             state: appState.gameState,
             characterDefinitions: appState.characterDefinitions,
+            ...runtimeDefinitionContext,
           },
           {
             eventDefinitionsById: storyContent.eventDefinitionsById,
@@ -179,12 +280,13 @@ export function createMainRuntimeOrchestrator(
             textEntriesById: storyContent.textEntriesById,
           }
         );
+        const appliedStoryAppState = applyStoryRuntimeResultToAppState(
+          appState,
+          storyContent,
+          result
+        );
         const nextAppState = applyIndoorScreenStoryFollowUp({
-          appState: {
-            ...appState,
-            gameState: result.state,
-            characterDefinitions: result.characterDefinitions,
-          },
+          appState: appliedStoryAppState,
           content: storyContent,
         });
         dependencies.setAppState(nextAppState);
@@ -193,6 +295,8 @@ export function createMainRuntimeOrchestrator(
           appState: nextAppState,
           gameState: nextAppState.gameState,
           characterDefinitions: nextAppState.characterDefinitions,
+          cityStatusById: nextAppState.cityStatusById,
+          buildingStatusById: nextAppState.buildingStatusById,
           didChange: true,
           shouldRender: true,
         };
@@ -210,10 +314,15 @@ export function createMainRuntimeOrchestrator(
         return getNoopResult();
       }
 
+      const runtimeDefinitionContext = createStoryRuntimeDefinitionContext(
+        appState,
+        storyContent
+      );
       const result = chooseStoryDialogueOption(
         {
           state: appState.gameState,
           characterDefinitions: appState.characterDefinitions,
+          ...runtimeDefinitionContext,
         },
         {
           eventDefinitionsById: storyContent.eventDefinitionsById,
@@ -223,12 +332,13 @@ export function createMainRuntimeOrchestrator(
         },
         selectedOption
       );
+      const appliedStoryAppState = applyStoryRuntimeResultToAppState(
+        appState,
+        storyContent,
+        result
+      );
       const nextAppState = applyIndoorScreenStoryFollowUp({
-        appState: {
-          ...appState,
-          gameState: result.state,
-          characterDefinitions: result.characterDefinitions,
-        },
+        appState: appliedStoryAppState,
         content: storyContent,
       });
       dependencies.setAppState(nextAppState);
@@ -237,6 +347,8 @@ export function createMainRuntimeOrchestrator(
         appState: nextAppState,
         gameState: nextAppState.gameState,
         characterDefinitions: nextAppState.characterDefinitions,
+        cityStatusById: nextAppState.cityStatusById,
+        buildingStatusById: nextAppState.buildingStatusById,
         didChange: true,
         shouldRender: true,
       };

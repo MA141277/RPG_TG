@@ -14,6 +14,7 @@ import type {
   ScriptEditorEventRecord,
   ScriptEditorFlowRecord,
   ScriptEditorProjectDefinition,
+  ScriptEditorProgressTrackRecord,
   ScriptEditorRuntimePackSchemaVersion,
   ScriptEditorSettlementContentRecord,
   ScriptEditorStoryPackRecord,
@@ -600,6 +601,8 @@ function appendProgressTrackAuthoringDiagnostics(
   project: ScriptEditorProjectDefinition,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): void {
+  const allowedTrackOwnerKinds = new Set(["person", "city", "building", "*"]);
+  const allowedBindingOwnerKinds = new Set(["person", "city", "building"]);
   const settlementIds = new Set(
     project.settlements
       .map((settlementRecord) =>
@@ -607,12 +610,62 @@ function appendProgressTrackAuthoringDiagnostics(
       )
       .filter((settlementId) => settlementId.length > 0)
   );
+  const progressTracksById: Record<string, ScriptEditorProgressTrackRecord> = {};
+  for (const trackRecord of project.progressTracks ?? []) {
+    const trackId =
+      typeof trackRecord.id === "string" ? trackRecord.id.trim() : "";
+    if (trackId.length > 0) {
+      progressTracksById[trackId] = trackRecord;
+    }
+  }
+  const ownerIdsByKind = {
+    person: new Set(
+      (project.people ?? [])
+        .map((personRecord) =>
+          typeof personRecord.id === "string" ? personRecord.id.trim() : ""
+        )
+        .filter((personId) => personId.length > 0)
+    ),
+    city: new Set(
+      (project.cities ?? [])
+        .map((cityRecord) =>
+          typeof cityRecord.id === "string" ? cityRecord.id.trim() : ""
+        )
+        .filter((cityId) => cityId.length > 0)
+    ),
+    building: new Set(
+      (project.buildings ?? [])
+        .map((buildingRecord) =>
+          typeof buildingRecord.id === "string" ? buildingRecord.id.trim() : ""
+        )
+        .filter((buildingId) => buildingId.length > 0)
+    ),
+  };
 
   (project.progressTracks ?? []).forEach((trackRecord, trackIndex) => {
     const trackId =
       typeof trackRecord.id === "string" && trackRecord.id.length > 0
         ? trackRecord.id
         : `progress-track.${trackIndex + 1}`;
+    const metricKey =
+      typeof trackRecord.metricKey === "string" ? trackRecord.metricKey.trim() : "";
+    if (metricKey.length === 0) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `project.progressTracks[${trackIndex}].metricKey`,
+        message: `Progress track "${trackId}" must declare a non-empty metricKey.`,
+      });
+    }
+    const ownerKind =
+      typeof trackRecord.ownerKind === "string" ? trackRecord.ownerKind.trim() : "";
+    if (!allowedTrackOwnerKinds.has(ownerKind)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `project.progressTracks[${trackIndex}].ownerKind`,
+        message:
+          `Progress track "${trackId}" ownerKind "${ownerKind}" is not supported by the first progression runtime slice.`,
+      });
+    }
     const tiers = Array.isArray(trackRecord.tiers) ? trackRecord.tiers : [];
 
     tiers.forEach((tierRecord, tierIndex) => {
@@ -636,6 +689,99 @@ function appendProgressTrackAuthoringDiagnostics(
           `Progress tier "${trackId}:${tierId}" references missing settlement "${settlementId}" through targetTierSettlementId.`,
       });
     });
+  });
+
+  (project.progressTrackBindings ?? []).forEach((bindingRecord, bindingIndex) => {
+    const fieldPath = `project.progressTrackBindings[${bindingIndex}]`;
+    const bindingId =
+      typeof bindingRecord.id === "string" && bindingRecord.id.length > 0
+        ? bindingRecord.id
+        : `progress-binding.${bindingIndex + 1}`;
+    const trackId =
+      typeof bindingRecord.trackId === "string" ? bindingRecord.trackId.trim() : "";
+    if (trackId.length === 0) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.trackId`,
+        message: `Progress binding "${bindingId}" must declare a non-empty trackId.`,
+      });
+      return;
+    }
+    const trackRecord = progressTracksById[trackId];
+    if (trackRecord == null) {
+      diagnostics.push({
+        code: "missing-reference",
+        fieldPath: `${fieldPath}.trackId`,
+        message:
+          `Progress binding "${bindingId}" references missing track "${trackId}" through trackId.`,
+      });
+      return;
+    }
+
+    const ownerKind =
+      typeof bindingRecord.owner?.ownerKind === "string"
+        ? bindingRecord.owner.ownerKind.trim()
+        : "";
+    if (!allowedBindingOwnerKinds.has(ownerKind)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.owner.ownerKind`,
+        message:
+          `Progress binding "${bindingId}" ownerKind "${ownerKind}" is not supported by the first progression runtime slice.`,
+      });
+    }
+    const trackOwnerKind =
+      typeof trackRecord.ownerKind === "string" ? trackRecord.ownerKind.trim() : "";
+    if (
+      trackOwnerKind.length > 0 &&
+      trackOwnerKind !== "*" &&
+      ownerKind.length > 0 &&
+      trackOwnerKind !== ownerKind
+    ) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.owner.ownerKind`,
+        message:
+          `Progress binding "${bindingId}" ownerKind "${ownerKind}" does not match track "${trackId}" ownerKind "${trackOwnerKind}".`,
+      });
+    }
+    const ownerId =
+      typeof bindingRecord.owner?.ownerId === "string"
+        ? bindingRecord.owner.ownerId.trim()
+        : "";
+    if (ownerId.length === 0) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.owner.ownerId`,
+        message:
+          `Progress binding "${bindingId}" must declare a concrete ownerId in the first progression runtime slice.`,
+      });
+    } else if (
+      (ownerKind === "person" || ownerKind === "city" || ownerKind === "building") &&
+      !ownerIdsByKind[ownerKind].has(ownerId)
+    ) {
+      diagnostics.push({
+        code: "missing-reference",
+        fieldPath: `${fieldPath}.owner.ownerId`,
+        message:
+          `Progress binding "${bindingId}" references missing ${ownerKind} owner "${ownerId}".`,
+      });
+    }
+    const ownerTag =
+      typeof (bindingRecord.owner as Record<string, unknown> | undefined)?.ownerTag ===
+      "string"
+        ? String(
+            (bindingRecord.owner as Record<string, unknown>).ownerTag
+          ).trim()
+        : "";
+    if (ownerTag.length > 0) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.owner.ownerTag`,
+        message:
+          `Progress binding "${bindingId}" ownerTag is not supported in the first progression runtime slice.`,
+      });
+    }
   });
 }
 

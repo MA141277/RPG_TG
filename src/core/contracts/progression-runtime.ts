@@ -11,6 +11,7 @@ export type ProgressTierDefinition = {
 export type ProgressTrackDefinition = {
   id: string;
   title: string;
+  metricKey: string;
   metricLabel: string;
   ownerKind: string | "*";
   allowDemotion?: boolean;
@@ -20,7 +21,6 @@ export type ProgressTrackDefinition = {
 export type ProgressOwnerSelector = {
   ownerKind: string;
   ownerId?: string;
-  ownerTag?: string;
 };
 
 export type ProgressTrackBinding = {

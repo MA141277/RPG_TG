@@ -21,6 +21,10 @@ import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { MapDefinition, MapNode } from "../../domain/map";
 import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../../core/contracts/progression-runtime";
+import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
 } from "../../domain/portrait-resource";
@@ -67,6 +71,10 @@ export type ActiveGameContent = {
   eventBindingsById: Record<string, EventBinding>;
   settlements: SettlementDefinition[];
   settlementDefinitionsById: Record<string, SettlementDefinition>;
+  progressTracks: ProgressTrackDefinition[];
+  progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
+  progressTrackBindings: ProgressTrackBinding[];
+  progressTrackBindingsById: Record<string, ProgressTrackBinding>;
   dialogueDefinitions: RuntimeDialogueDefinition[];
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   taskDefinitions: TaskDefinition[];
@@ -121,12 +129,14 @@ export type ActiveGameContentContext = {
   characterManager: CharacterManager;
   taskDefinitionsById: Record<string, TaskDefinition>;
   flowPlayablesById: Record<string, FlowPlayableDefinition>;
-  storyContent: {
-    eventDefinitionsById: Record<string, EventDefinition>;
-    eventBindingsById: Record<string, EventBinding>;
-    settlementDefinitionsById: Record<string, SettlementDefinition>;
-    dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
-    activityDefinitionsById: Record<string, ActivityDefinition>;
+    storyContent: {
+      eventDefinitionsById: Record<string, EventDefinition>;
+      eventBindingsById: Record<string, EventBinding>;
+      settlementDefinitionsById: Record<string, SettlementDefinition>;
+      progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
+      progressTrackBindingsById: Record<string, ProgressTrackBinding>;
+      dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
+      activityDefinitionsById: Record<string, ActivityDefinition>;
     flowPlayablesById: Record<string, FlowPlayableDefinition>;
     cityDefinitionsById: Record<string, CityDefinition>;
     houseDefinitionsById: Record<string, HouseDefinition>;
@@ -151,6 +161,8 @@ export function createActiveGameContent(
   const eventDefinitions = resolvedPack.events ?? [];
   const eventBindings = resolvedPack.eventBindings ?? [];
   const settlements = resolvedPack.settlements ?? [];
+  const progressTracks = resolvedPack.progressTracks ?? [];
+  const progressTrackBindings = resolvedPack.progressTrackBindings ?? [];
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
   const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
@@ -224,6 +236,14 @@ export function createActiveGameContent(
     settlements,
     settlementDefinitionsById: Object.fromEntries(
       settlements.map((settlement) => [settlement.id, settlement])
+    ),
+    progressTracks,
+    progressTrackDefinitionsById: Object.fromEntries(
+      progressTracks.map((trackDefinition) => [trackDefinition.id, trackDefinition])
+    ),
+    progressTrackBindings,
+    progressTrackBindingsById: Object.fromEntries(
+      progressTrackBindings.map((binding) => [binding.id, binding])
     ),
     dialogueDefinitions,
     dialogueDefinitionsById: Object.fromEntries(
@@ -306,6 +326,8 @@ export function createActiveGameContentContext(
       eventDefinitionsById: gameContent.eventDefinitionsById,
       eventBindingsById: gameContent.eventBindingsById,
       settlementDefinitionsById: gameContent.settlementDefinitionsById,
+      progressTrackDefinitionsById: gameContent.progressTrackDefinitionsById,
+      progressTrackBindingsById: gameContent.progressTrackBindingsById,
       dialogueDefinitionsById: gameContent.dialogueDefinitionsById,
       activityDefinitionsById: gameContent.activityDefinitionsById,
       flowPlayablesById: gameContent.flowPlayablesById,
@@ -373,6 +395,14 @@ export function mergeContentPacks(
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
     eventBindings: mergeById(basePack.eventBindings ?? [], overridePack.eventBindings ?? []),
     settlements: mergeById(basePack.settlements ?? [], overridePack.settlements ?? []),
+    progressTracks: mergeById(
+      basePack.progressTracks ?? [],
+      overridePack.progressTracks ?? []
+    ),
+    progressTrackBindings: mergeById(
+      basePack.progressTrackBindings ?? [],
+      overridePack.progressTrackBindings ?? []
+    ),
     dialogues: mergeById(basePack.dialogues ?? [], overridePack.dialogues ?? []),
     tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
@@ -433,6 +463,8 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     events: pack.events ?? [],
     eventBindings: pack.eventBindings ?? [],
     settlements: pack.settlements ?? [],
+    progressTracks: pack.progressTracks ?? [],
+    progressTrackBindings: pack.progressTrackBindings ?? [],
     dialogues: pack.dialogues ?? [],
     tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],

@@ -286,13 +286,17 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     assertRuntimeSettlementDefinitions(rawSettlements, value as Record<string, unknown>);
   }
   const rawProgressTracks = (value as Record<string, unknown>).progressTracks;
-  if (rawProgressTracks != null) {
-    assertRuntimeProgressTrackDefinitions(rawProgressTracks, rawSettlements);
-  }
+  const progressTrackDefinitionsById =
+    rawProgressTracks == null
+      ? {}
+      : assertRuntimeProgressTrackDefinitions(rawProgressTracks, rawSettlements);
   const rawProgressTrackBindings = (value as Record<string, unknown>)
     .progressTrackBindings;
   if (rawProgressTrackBindings != null) {
-    assertArray(rawProgressTrackBindings, "scenario progressTrackBindings");
+    assertRuntimeProgressTrackBindings(
+      rawProgressTrackBindings,
+      progressTrackDefinitionsById
+    );
   }
   assertArray(value.events, "scenario events");
   assertRuntimeEventsDoNotUseRetiredTriggerFields(value.events);
@@ -665,12 +669,26 @@ function assertRuntimeSettlementContentValue(
   }
 }
 
+const SUPPORTED_PROGRESS_TRACK_OWNER_KINDS = [
+  "person",
+  "city",
+  "building",
+  "*",
+] as const;
+
+const SUPPORTED_PROGRESS_BINDING_OWNER_KINDS = [
+  "person",
+  "city",
+  "building",
+] as const;
+
 function assertRuntimeProgressTrackDefinitions(
   progressTracks: unknown,
   settlements: unknown
-): void {
+): Record<string, { ownerKind: string | "*" }> {
   assertArray(progressTracks, "scenario progressTracks");
   const settlementIds = new Set<string>();
+  const trackDefinitionsById: Record<string, { ownerKind: string | "*" }> = {};
 
   if (Array.isArray(settlements)) {
     settlements.forEach((settlementDefinition, index) => {
@@ -684,9 +702,33 @@ function assertRuntimeProgressTrackDefinitions(
   progressTracks.forEach((trackDefinition, trackIndex) => {
     assertObject(trackDefinition, `scenario progressTracks[${trackIndex}]`);
     const trackIdValue =
-      typeof trackDefinition.id === "string" && trackDefinition.id.trim().length > 0
-        ? trackDefinition.id.trim()
-        : `progressTracks[${trackIndex}]`;
+      typeof trackDefinition.id === "string" ? trackDefinition.id.trim() : "";
+    if (trackIdValue.length === 0) {
+      throw new Error(
+        `scenario progressTracks[${trackIndex}].id must be a non-empty string.`
+      );
+    }
+    const metricKeyValue =
+      typeof trackDefinition.metricKey === "string"
+        ? trackDefinition.metricKey.trim()
+        : "";
+    if (metricKeyValue.length === 0) {
+      throw new Error(
+        `scenario progressTracks[${trackIndex}].metricKey must be a non-empty string.`
+      );
+    }
+    const ownerKindValue =
+      typeof trackDefinition.ownerKind === "string"
+        ? trackDefinition.ownerKind.trim()
+        : "";
+    assertEnum(
+      ownerKindValue,
+      `scenario progressTracks[${trackIndex}].ownerKind`,
+      SUPPORTED_PROGRESS_TRACK_OWNER_KINDS
+    );
+    trackDefinitionsById[trackIdValue] = {
+      ownerKind: ownerKindValue,
+    };
     assertArray(
       trackDefinition.tiers,
       `scenario progressTracks[${trackIndex}].tiers`
@@ -714,6 +756,77 @@ function assertRuntimeProgressTrackDefinitions(
         );
       }
     });
+  });
+
+  return trackDefinitionsById;
+}
+
+function assertRuntimeProgressTrackBindings(
+  progressTrackBindings: unknown,
+  trackDefinitionsById: Record<string, { ownerKind: string | "*" }>
+): void {
+  assertArray(progressTrackBindings, "scenario progressTrackBindings");
+
+  progressTrackBindings.forEach((bindingDefinition, bindingIndex) => {
+    assertObject(
+      bindingDefinition,
+      `scenario progressTrackBindings[${bindingIndex}]`
+    );
+    const trackIdValue =
+      typeof bindingDefinition.trackId === "string"
+        ? bindingDefinition.trackId.trim()
+        : "";
+    if (trackIdValue.length === 0) {
+      throw new Error(
+        `scenario progressTrackBindings[${bindingIndex}].trackId must be a non-empty string.`
+      );
+    }
+    const trackDefinition = trackDefinitionsById[trackIdValue];
+    if (trackDefinition == null) {
+      throw new Error(
+        `scenario progressTrackBindings[${bindingIndex}].trackId references missing progression track "${trackIdValue}".`
+      );
+    }
+
+    assertObject(
+      bindingDefinition.owner,
+      `scenario progressTrackBindings[${bindingIndex}].owner`
+    );
+    const ownerKindValue =
+      typeof bindingDefinition.owner.ownerKind === "string"
+        ? bindingDefinition.owner.ownerKind.trim()
+        : "";
+    assertEnum(
+      ownerKindValue,
+      `scenario progressTrackBindings[${bindingIndex}].owner.ownerKind`,
+      SUPPORTED_PROGRESS_BINDING_OWNER_KINDS
+    );
+    if (
+      trackDefinition.ownerKind !== "*" &&
+      trackDefinition.ownerKind !== ownerKindValue
+    ) {
+      throw new Error(
+        `scenario progressTrackBindings[${bindingIndex}] ownerKind "${ownerKindValue}" does not match progression track "${trackIdValue}" ownerKind "${trackDefinition.ownerKind}".`
+      );
+    }
+    const ownerIdValue =
+      typeof bindingDefinition.owner.ownerId === "string"
+        ? bindingDefinition.owner.ownerId.trim()
+        : "";
+    if (ownerIdValue.length === 0) {
+      throw new Error(
+        `scenario progressTrackBindings[${bindingIndex}].owner.ownerId must be a non-empty string.`
+      );
+    }
+    const ownerTagValue =
+      typeof bindingDefinition.owner.ownerTag === "string"
+        ? bindingDefinition.owner.ownerTag.trim()
+        : "";
+    if (ownerTagValue.length > 0) {
+      throw new Error(
+        `scenario progressTrackBindings[${bindingIndex}].owner.ownerTag is not supported in the first progression runtime slice.`
+      );
+    }
   });
 }
 

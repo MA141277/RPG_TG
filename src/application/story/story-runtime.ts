@@ -14,9 +14,11 @@ import type { HouseDefinition } from "../../domain/house";
 import { runEventBindingRuntime } from "../../core/runtime/event-binding-runtime";
 import { createRuntimeTriggerContext } from "../../core/runtime/event-binding-contract";
 import {
+  applySettlementInstances,
   applySettlementContents,
   type ExportedSettlement,
 } from "../../core/runtime/runtime-settlement";
+import { runProgressionRuntime } from "../../core/runtime/progression-runtime";
 import { startEvent } from "../events/event-runner";
 import { runEventPlayableRuntime } from "../events/event-playable-runtime";
 import { resolveDialogueChoiceOption } from "../dialogue/dialogue-choice-resolver";
@@ -24,6 +26,10 @@ import {
   advanceDialogue,
   runDialogueUntilPause,
 } from "../dialogue/dialogue-runner";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../../core/contracts/progression-runtime";
 
 export type StoryTriggerTiming =
   | "manual"
@@ -48,6 +54,10 @@ type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   eventBindingsById?: Record<string, EventBinding> | undefined;
   settlementDefinitionsById?: Record<string, StorySettlementDefinition> | undefined;
+  progressTrackDefinitionsById?:
+    | Record<string, ProgressTrackDefinition>
+    | undefined;
+  progressTrackBindingsById?: Record<string, ProgressTrackBinding> | undefined;
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   cityDefinitionsById?: Record<string, CityDefinition> | undefined;
@@ -245,14 +255,219 @@ function startStoryEvent(
           ),
         }),
   };
+  const progressedRuntime = applyStoryProgressionAfterSettlement(
+    nextRuntime,
+    content
+  );
   const nextEventId =
     typeof settlement.nextEventId === "string" ? settlement.nextEventId.trim() : "";
   if (nextEventId.length === 0 || nextEventId === eventDefinition.id) {
-    return nextRuntime;
+    return progressedRuntime;
   }
 
   const nextEvent = content.eventDefinitionsById[nextEventId];
-  return nextEvent == null ? nextRuntime : startStoryEvent(nextRuntime, content, nextEvent);
+  return nextEvent == null
+    ? progressedRuntime
+    : startStoryEvent(progressedRuntime, content, nextEvent);
+}
+
+function applyStoryProgressionAfterSettlement(
+  runtime: StoryRuntimeContext,
+  content: StoryContent
+): StoryRuntimeContext {
+  const trackDefinitionsById = content.progressTrackDefinitionsById ?? {};
+  const bindings = Object.values(content.progressTrackBindingsById ?? {});
+  if (bindings.length === 0 || Object.keys(trackDefinitionsById).length === 0) {
+    return runtime;
+  }
+
+  const settlementState = createStorySettlementState(runtime, content);
+  let nextProgressionState = runtime.state.runtime.progression ?? {
+    trackStatesByOwnerKey: {},
+  };
+  const settlementInstances = [];
+  const occurredAt = createStoryProgressionOccurredAt(runtime.state);
+
+  for (const binding of bindings) {
+    const track = trackDefinitionsById[binding.trackId];
+    if (track == null) {
+      continue;
+    }
+    const metricValue = readStoryProgressionMetricValue(
+      settlementState,
+      track,
+      binding
+    );
+    if (metricValue == null) {
+      continue;
+    }
+    const result = runProgressionRuntime({
+      state: nextProgressionState,
+      track,
+      binding,
+      metricValue,
+      occurredAt,
+    });
+    nextProgressionState = result.state;
+    settlementInstances.push(...result.settlementInstances);
+  }
+
+  const progressedRuntime: StoryRuntimeContext = {
+    ...runtime,
+    state: {
+      ...runtime.state,
+      runtime: {
+        ...runtime.state.runtime,
+        progression: nextProgressionState,
+      },
+    },
+  };
+  if (settlementInstances.length === 0) {
+    return progressedRuntime;
+  }
+
+  const appliedSettlements = applySettlementInstances(settlementState, {
+    settlementInstances,
+    ...(content.settlementDefinitionsById == null
+      ? {}
+      : { settlementDefinitionsById: content.settlementDefinitionsById }),
+    context: settlementState,
+  });
+  return applyStorySettlementState(progressedRuntime, appliedSettlements.state);
+}
+
+function createStorySettlementState(
+  runtime: StoryRuntimeContext,
+  content: StoryContent
+): {
+  people: Record<string, Record<string, unknown>>;
+  cities: Record<string, Record<string, unknown>>;
+  buildings: Record<string, Record<string, unknown>>;
+} {
+  return {
+    people: Object.fromEntries(
+      runtime.characterDefinitions.map((character) => [
+        character.id,
+        character as unknown as Record<string, unknown>,
+      ])
+    ),
+    cities: Object.fromEntries(
+      (runtime.cityDefinitions ?? Object.values(content.cityDefinitionsById ?? {})).map(
+        (city) => [city.id, city as unknown as Record<string, unknown>]
+      )
+    ),
+    buildings: Object.fromEntries(
+      (runtime.houseDefinitions ?? Object.values(content.houseDefinitionsById ?? {})).map(
+        (house) => [house.id, house as unknown as Record<string, unknown>]
+      )
+    ),
+  };
+}
+
+function applyStorySettlementState(
+  runtime: StoryRuntimeContext,
+  settlementState: {
+    people: Record<string, Record<string, unknown>>;
+    cities: Record<string, Record<string, unknown>>;
+    buildings: Record<string, Record<string, unknown>>;
+  }
+): StoryRuntimeContext {
+  return {
+    ...runtime,
+    characterDefinitions: runtime.characterDefinitions.map(
+      (character) =>
+        (settlementState.people?.[character.id] as CharacterDefinition | undefined) ??
+        character
+    ),
+    ...(runtime.cityDefinitions == null
+      ? {}
+      : {
+          cityDefinitions: runtime.cityDefinitions.map(
+            (city) =>
+              (settlementState.cities?.[city.id] as CityDefinition | undefined) ?? city
+          ),
+        }),
+    ...(runtime.houseDefinitions == null
+      ? {}
+      : {
+          houseDefinitions: runtime.houseDefinitions.map(
+            (house) =>
+              (settlementState.buildings?.[house.id] as HouseDefinition | undefined) ??
+              house
+          ),
+        }),
+  };
+}
+
+function readStoryProgressionMetricValue(
+  settlementState: {
+    people: Record<string, Record<string, unknown>>;
+    cities: Record<string, Record<string, unknown>>;
+    buildings: Record<string, Record<string, unknown>>;
+  },
+  track: ProgressTrackDefinition,
+  binding: ProgressTrackBinding
+): number | null {
+  const ownerId = binding.owner.ownerId?.trim() ?? "";
+  if (ownerId.length === 0) {
+    return null;
+  }
+
+  const owner =
+    binding.owner.ownerKind === "person"
+      ? settlementState.people[ownerId]
+      : binding.owner.ownerKind === "city"
+        ? settlementState.cities[ownerId]
+        : binding.owner.ownerKind === "building"
+          ? settlementState.buildings[ownerId]
+          : undefined;
+  if (owner == null) {
+    return null;
+  }
+
+  const pathValue = readStoryProgressionRecordPath(owner, track.metricKey);
+  if (typeof pathValue === "number" && Number.isFinite(pathValue)) {
+    return pathValue;
+  }
+  const customProperties = owner.customProperties;
+  if (
+    customProperties != null &&
+    typeof customProperties === "object" &&
+    !Array.isArray(customProperties)
+  ) {
+    const customValue = (customProperties as Record<string, unknown>)[track.metricKey];
+    if (typeof customValue === "number" && Number.isFinite(customValue)) {
+      return customValue;
+    }
+  }
+
+  return null;
+}
+
+function readStoryProgressionRecordPath(
+  target: Record<string, unknown>,
+  metricKey: string
+): unknown {
+  const parts = metricKey.split(".").filter((part) => part.length > 0);
+  if (parts.length === 0) {
+    return undefined;
+  }
+
+  let current: unknown = target;
+  for (const part of parts) {
+    if (current == null || typeof current !== "object" || Array.isArray(current)) {
+      return undefined;
+    }
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
+}
+
+function createStoryProgressionOccurredAt(state: GameState): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${String(state.calendar.year).padStart(4, "0")}-${pad(
+    state.calendar.month
+  )}-${pad(state.calendar.day)}T00:00:00.000Z`;
 }
 
 function buildTriggerContext(

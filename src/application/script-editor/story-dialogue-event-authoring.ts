@@ -330,6 +330,7 @@ export function createDefaultScriptEditorProgressTrackRecord(
         ? indexOrId
         : `progress-track.new.${suffix}`,
     title: `阶段轨道 ${suffix}`,
+    metricKey: "",
     metricLabel: "进度值",
     ownerKind: "person",
     allowDemotion: false,
@@ -350,7 +351,6 @@ export function createDefaultScriptEditorProgressTrackBindingRecord(
     owner: {
       ownerKind: "person",
       ownerId: "",
-      ownerTag: "",
     },
     enabled: true,
   };
@@ -463,6 +463,7 @@ export function normalizeScriptEditorProgressTrackRecord(
   return {
     id: normalizeString(record.id, "progress-track.unknown"),
     title: normalizeString(record.title, record.id),
+    metricKey: normalizeOptionalTrimmedString(record.metricKey),
     metricLabel: normalizeString(record.metricLabel, "进度值"),
     ownerKind: normalizeString(record.ownerKind, "person"),
     allowDemotion: record.allowDemotion === true,
@@ -479,7 +480,6 @@ export function normalizeScriptEditorProgressTrackBindingRecord(
     owner: {
       ownerKind: normalizeString(record.owner?.ownerKind, "person"),
       ownerId: normalizeOptionalTrimmedString(record.owner?.ownerId),
-      ownerTag: normalizeOptionalTrimmedString(record.owner?.ownerTag),
     },
     enabled: record.enabled !== false,
   };
@@ -846,7 +846,7 @@ export function updateScriptEditorSettlementField(
 
 export function updateScriptEditorProgressTrackField(
   record: ScriptEditorProgressTrackRecord,
-  field: "id" | "title" | "metricLabel" | "ownerKind" | "allowDemotion",
+  field: "id" | "title" | "metricKey" | "metricLabel" | "ownerKind" | "allowDemotion",
   value: string | boolean
 ): ScriptEditorProgressTrackRecord {
   if (field === "allowDemotion") {
@@ -906,18 +906,28 @@ export function updateScriptEditorProgressTrackTierField(
 
 export function updateScriptEditorProgressTrackBindingField(
   record: ScriptEditorProgressTrackBindingRecord,
-  field: "id" | "trackId" | "enabled" | "ownerKind" | "ownerId" | "ownerTag",
+  field: "id" | "trackId" | "enabled" | "ownerKind" | "ownerId",
   value: string | boolean
 ): ScriptEditorProgressTrackBindingRecord {
   if (field === "enabled") {
     return { ...record, enabled: value === true };
   }
-  if (field === "ownerKind" || field === "ownerId" || field === "ownerTag") {
+  if (field === "ownerKind") {
     return {
       ...record,
       owner: {
         ...record.owner,
-        [field]: String(value).trim(),
+        ownerKind: String(value).trim(),
+        ownerId: "",
+      },
+    };
+  }
+  if (field === "ownerId") {
+    return {
+      ...record,
+      owner: {
+        ...record.owner,
+        ownerId: String(value).trim(),
       },
     };
   }
