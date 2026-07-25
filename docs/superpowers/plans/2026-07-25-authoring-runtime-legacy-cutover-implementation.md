@@ -19,12 +19,12 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `closed`
 - Last Updated: `2026-07-25`
-- Current Focus: `Plan written; awaiting execution mode selection.`
-- Next Step: `Execute Task 1 to inventory canonical versus residue paths before deleting any contract surface.`
-- Verification: `Plan not yet executed`
-- Notes: `Primary safety rule: inventory before removal to avoid deleting live canonical consumers.`
+- Current Focus: `Legacy cutover implementation is fully landed and verified; live repository governance continues from Blueprint docs, not this historical superpowers child.`
+- Next Step: `For current repository work, resume from docs/blueprints/project-progress.md unless another explicit legacy superpowers artifact is resumed.`
+- Verification: `Task 1 review-clean. Task 2 targeted verification passed before commit fcedfcb. Task 3 verification passed before commit 9d229e2: cmd /c npm run build:test; node --test tests/robustness.test.cjs. Task 4 targeted verification passed before commit ad35905: cmd /c npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime import and scenario loader reject compatibility paths after cutover|script editor runtime import fails closed on ambiguous legacy settlement result routing|script editor runtime import fails closed on mixed empty legacy settlement result routing|script editor runtime import rejects conflicting legacy and settlement nextEventId routing|script editor runtime import rejects legacy settlement result routing even when unambiguous|script editor runtime import rejects empty legacy settlement result routing residue|script editor runtime-pack import rejects unsupported ui reserve families without compatibility import". Task 5 targeted verification passed before commit 4fd7345: cmd /c npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "save loading rejects retired legacy envelopes after cutover|loadSaveEnvelope rejects retired legacy save envelopes|save migration module rejects direct legacy envelope upgrade requests|loadSaveEnvelope rejects a missing selected mod id|loadSaveEnvelope normalizes engine selected mod id to the envelope selected mod id|loadSaveEnvelope preserves imported mod source descriptors for restore|state sync runtime". Task 6 full verification passed: cmd /c npm run build:test; node --test tests/robustness.test.cjs; cmd /c npm run lint:plans.`
+- Notes: `Primary safety rule stayed inventory before removal throughout execution. Task 3 through Task 5 used scoped staging because shared runtime-pack/save/test surfaces contained unrelated live worktree edits outside this plan's slice.`
 
 ## Progress Log
 
@@ -32,6 +32,26 @@
   - Summary: `Created the implementation plan for the no-transition authoring/runtime legacy cutover and encoded the do-not-overclean constraint as a global execution rule.`
   - Verification: `Plan authoring only`
   - Next: `Run the inventory task and classify every candidate as canonical-keep or safe-to-remove residue.`
+- 2026-07-25
+  - Summary: `Completed Task 1 with review-clean inventory classification, then landed Task 2 as commit fcedfcb to type city/building extended attributes and remove retired population schema residue.`
+  - Verification: `Task 1 review clean; Task 2 targeted verification passed before commit fcedfcb.`
+  - Next: `Finish Task 2 review closeout and continue Task 3 by cutting settlement alias keys over to canonical runtime names.`
+- 2026-07-25
+  - Summary: `Completed the local Task 3 cutover by removing alias-style settlement key rewrite handling from runtime settlement, converging editor/export/import/loader/UI surfaces on canonical city/building runtime keys, and correcting the new typed-attribute regression tests to reflect the true contract boundary.`
+  - Verification: `cmd /c npm run build:test; node --test tests/robustness.test.cjs`
+  - Next: `Commit the scoped Task 3 diff, then remove compatibility import and retired loader acceptance paths in Task 4.`
+- 2026-07-25
+  - Summary: `Completed the local Task 4 fail-close cutover by rejecting retired settlement results routing in both runtime-pack import and scenario-pack loading, and by renaming the importer's creator-facing validation failure surface away from compatibility-import wording.`
+  - Verification: `cmd /c npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "runtime import and scenario loader reject compatibility paths after cutover|script editor runtime import fails closed on ambiguous legacy settlement result routing|script editor runtime import fails closed on mixed empty legacy settlement result routing|script editor runtime import rejects conflicting legacy and settlement nextEventId routing|script editor runtime import rejects legacy settlement result routing even when unambiguous|script editor runtime import rejects empty legacy settlement result routing residue|script editor runtime-pack import rejects unsupported ui reserve families without compatibility import"`
+  - Next: `Commit the scoped Task 4 diff, then remove legacy save migration acceptance in Task 5.`
+- 2026-07-25
+  - Summary: `Completed the local Task 5 cutover by replacing legacy save migration with current-envelope-only normalization, rejecting retired save payloads at load time, and removing legacy runtime-state fallback from the shared state-sync seam.`
+  - Verification: `cmd /c npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "save loading rejects retired legacy envelopes after cutover|loadSaveEnvelope rejects retired legacy save envelopes|save migration module rejects direct legacy envelope upgrade requests|loadSaveEnvelope rejects a missing selected mod id|loadSaveEnvelope normalizes engine selected mod id to the envelope selected mod id|loadSaveEnvelope preserves imported mod source descriptors for restore|state sync runtime"`
+  - Next: `Commit the scoped Task 5 diff, then run Task 6 full verification and documentation closeout.`
+- 2026-07-25
+  - Summary: `Landed the remaining cutover slices as commits 9d229e2, ad35905, and 4fd7345, then closed the plan after full build, regression, and plan-lint verification.`
+  - Verification: `cmd /c npm run build:test; node --test tests/robustness.test.cjs; cmd /c npm run lint:plans`
+  - Next: `Return live repository execution to docs/blueprints/project-progress.md; this legacy implementation plan is historical evidence only.`
 
 ---
 
@@ -129,7 +149,7 @@
 - Consumes: existing settlement key lists, typed attribute contracts, save migration entrypoints
 - Produces: a tested classification matrix of `canonical-keep` versus `safe-to-remove` paths recorded in test fixtures and execution notes
 
-- [ ] **Step 1: Write the failing inventory test**
+- [x] **Step 1: Write the failing inventory test**
 
 Add a source-audit test that asserts known residue candidates are still present before the cutover and that live canonical fields are separately enumerated.
 
@@ -144,7 +164,7 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -156,7 +176,7 @@ Expected:
 
 - `FAIL` because the new inventory test does not exist yet.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 Add the inventory test and, if needed, a small helper comment block in the test file that names the current candidate categories:
 
@@ -170,7 +190,7 @@ const LEGACY_CUTOVER_RESIDUE_CANDIDATES = [
 ];
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -182,7 +202,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/robustness.test.cjs
@@ -207,7 +227,7 @@ git commit -m "test: add legacy cutover inventory guard" -m "Summary:
   - `ScriptEditorBuildingRecord.extendedAttributes?: ScriptEditorTypedAttributeRecord[]`
   - normalized city/building authoring helpers that preserve typed metadata
 
-- [ ] **Step 1: Write the failing authoring contract test**
+- [x] **Step 1: Write the failing authoring contract test**
 
 Add a test that asserts city/building extended attributes are typed and that retired schema fields like `population` are absent.
 
@@ -221,7 +241,7 @@ test("city and building authoring use typed attributes and remove retired popula
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -233,7 +253,7 @@ Expected:
 
 - `FAIL` because city/building authoring still use weak custom attribute entries and the schema still contains `population`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Change the schema and authoring normalizers so city/building `extendedAttributes` use `ScriptEditorTypedAttributeRecord[]` and remove `population` from the city base attribute schema.
 
@@ -249,7 +269,7 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
 };
 ```
 
-- [ ] **Step 4: Run the targeted tests**
+- [x] **Step 4: Run the targeted tests**
 
 Run:
 
@@ -261,7 +281,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/domain/script-editor-project.ts src/application/script-editor/city-building-authoring.ts src/application/script-editor/city-building-runtime-materializer.ts src/ui/main-ui/main-ui-flow.js tests/robustness.test.cjs
@@ -287,7 +307,7 @@ git commit -m "refactor: type city building custom attributes" -m "Summary:
   - canonical building settlement keys such as `level`, `outputMultiplier`, `damaged`
   - rejection of alias keys such as `baseAttributes.security`
 
-- [ ] **Step 1: Write the failing canonical-key tests**
+- [x] **Step 1: Write the failing canonical-key tests**
 
 Add tests that reject alias keys and require the canonical runtime names instead.
 
@@ -302,7 +322,7 @@ test("settlement contract rejects alias keys and accepts canonical runtime keys"
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -314,7 +334,7 @@ Expected:
 
 - `FAIL` because alias settlement keys still exist in UI, validation tables, and runtime rewrite logic.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Replace alias-style key lists with canonical runtime key lists and remove rewrite-table handling from settlement runtime.
 
@@ -326,7 +346,7 @@ const CITY_SETTLEMENT_ATTRIBUTES = {
 };
 ```
 
-- [ ] **Step 4: Run the targeted tests**
+- [x] **Step 4: Run the targeted tests**
 
 Run:
 
@@ -339,7 +359,7 @@ Expected:
 - `PASS`
 - the old alias-based test names may need to be renamed to canonical-key wording during the task.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/ui/main-ui/main-ui-flow.js src/application/script-editor/runtime-pack-export.ts src/application/script-editor/runtime-pack-import.ts src/application/scenario/scenario-pack-loader.ts src/core/runtime/runtime-settlement.ts tests/robustness.test.cjs
@@ -362,7 +382,7 @@ git commit -m "refactor: cut settlement aliases to canonical keys" -m "Summary:
   - hard rejection for retired pack families and routing residue
   - no compatibility import path
 
-- [ ] **Step 1: Write the failing rejection tests**
+- [x] **Step 1: Write the failing rejection tests**
 
 Add tests that assert compatibility import and legacy settlement-routing residue are rejected outright.
 
@@ -375,7 +395,7 @@ test("runtime import and scenario loader reject compatibility paths after cutove
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -387,7 +407,7 @@ Expected:
 
 - `FAIL` because compatibility and legacy-routing branches still exist.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Delete compatibility import branches and old settlement result routing helpers so the importer/loader only accept the canonical format.
 
@@ -397,7 +417,7 @@ throw new Error(
 );
 ```
 
-- [ ] **Step 4: Run the targeted tests**
+- [x] **Step 4: Run the targeted tests**
 
 Run:
 
@@ -434,7 +454,7 @@ git commit -m "refactor: remove compatibility import paths" -m "Summary:
   - a single accepted save envelope contract
   - rejection of legacy saves instead of migration
 
-- [ ] **Step 1: Write the failing save-rejection test**
+- [x] **Step 1: Write the failing save-rejection test**
 
 Add a test that expects legacy save envelopes to be rejected rather than upgraded.
 
@@ -447,7 +467,7 @@ test("save loading rejects retired legacy envelopes after cutover", async () => 
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -459,7 +479,7 @@ Expected:
 
 - `FAIL` because legacy save normalization and migration code still exist.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Remove legacy envelope migration support and fail closed when the loaded save structure is not the current contract.
 
@@ -469,7 +489,7 @@ if (!isCurrentSaveEnvelope(value)) {
 }
 ```
 
-- [ ] **Step 4: Run the targeted tests**
+- [x] **Step 4: Run the targeted tests**
 
 Run:
 
@@ -505,7 +525,7 @@ git commit -m "refactor: remove legacy save migration support" -m "Summary:
   - completed plan governance fields
   - final verification evidence
 
-- [ ] **Step 1: Update changelog and plan status**
+- [x] **Step 1: Update changelog and plan status**
 
 Record the cutover in `docs/change-log.md` and update this plan's `Execution State`, `Progress Log`, `Exit Check`, and `Completion Checklist`.
 
@@ -514,7 +534,7 @@ Record the cutover in `docs/change-log.md` and update this plan's `Execution Sta
 - Verification: `cmd /c npm run build:test && node --test tests/robustness.test.cjs`
 ```
 
-- [ ] **Step 2: Run the full verification suite**
+- [x] **Step 2: Run the full verification suite**
 
 Run:
 
@@ -529,7 +549,7 @@ Expected:
 - `PASS` for build and tests
 - `PASS` for plan lint
 
-- [ ] **Step 3: Mark the plan complete**
+- [x] **Step 3: Mark the plan complete**
 
 Update the plan:
 
@@ -540,7 +560,7 @@ Update the plan:
 
 Then add the closeout block once repository sync is recorded.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/change-log.md docs/superpowers/plans/2026-07-25-authoring-runtime-legacy-cutover-implementation.md tests/robustness.test.cjs
@@ -551,33 +571,33 @@ git commit -m "docs: close legacy cutover plan" -m "Summary:
 
 ## Exit Check
 
-- [ ] `Inventory classified every removed path as residue and every retained path as the canonical consumer.`
-- [ ] `City and building custom attributes are typed and settlement uses only canonical keys plus typed calculable attributes.`
-- [ ] `Import, loader, runtime, and save/load reject retired shapes with no compatibility branch left.`
-- [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] `Inventory classified every removed path as residue and every retained path as the canonical consumer.`
+- [x] `City and building custom attributes are typed and settlement uses only canonical keys plus typed calculable attributes.`
+- [x] `Import, loader, runtime, and save/load reject retired shapes with no compatibility branch left.`
+- [x] Project progress sync is updated if the child state changed.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
-- Closed Child: `not-closed`
+- Closed Child: `Authoring runtime legacy cutover implementation`
 - Parent Task: `Authoring runtime legacy cutover`
 - Parent Stage: `Explicitly resumed legacy superpowers planning`
-- Closeout Status: `not-closed`
-- Project Progress Synced: `no`
+- Closeout Status: `closed`
+- Project Progress Synced: `yes - docs/superpowers/project-progress.md was updated to record the explicit legacy-plan resume and closeout while preserving Blueprint as the live repository entry.`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `Execute Task 1 and keep the inventory-first safety rule in force.`
-- Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-25-authoring-runtime-legacy-cutover-implementation.md`
-- Push Status: `not-run`
+- Next Required Action: `For current repository work, resume from docs/blueprints/project-progress.md. Reopen docs/superpowers/** only when a specific historical artifact is explicitly resumed again.`
+- Next Entry Document: `docs/blueprints/project-progress.md`
+- Next Owner Document: `docs/blueprints/blueprint.md`
+- Push Status: `not-requested`
 - Push Commit: `none`
-- Resume From: `Open this implementation plan and start with Task 1 to classify canonical keep paths before deletion.`
+- Resume From: `Open docs/blueprints/project-progress.md for the next live repository step; this legacy implementation plan is now historical evidence only.`
 
 `Push Commit` must point to a commit message that uses `<type>: <brief title>` plus a `Summary:` section with at least one bullet when push succeeds. If push fails, use `none`, record the failed sync result in `Progress Log`, and continue the next lawful handoff from the written governance truth.

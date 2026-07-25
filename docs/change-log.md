@@ -5,6 +5,52 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-25 Authoring Runtime Legacy Cutover Closeout
+
+### Changed
+- Updated [src/application/script-editor/runtime-pack-import.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts:1) and [src/application/scenario/scenario-pack-loader.ts](/D:/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts:1) so retired settlement `results` routing no longer imports, normalizes, or validates as a compatibility path; both surfaces now fail closed on the retired field instead of accepting or translating it.
+- Updated [src/core/save/save-migrations.ts](/D:/workspace/project/RPG_TG/src/core/save/save-migrations.ts:1), [src/core/save/save-loader.ts](/D:/workspace/project/RPG_TG/src/core/save/save-loader.ts:1), [src/core/runtime/state-sync-core-seam.ts](/D:/workspace/project/RPG_TG/src/core/runtime/state-sync-core-seam.ts:1), [src/core/runtime/state-sync-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/state-sync-runtime.ts:1), and [src/core/contracts/state-sync-runtime.ts](/D:/workspace/project/RPG_TG/src/core/contracts/state-sync-runtime.ts:1) so save/load and state-sync now accept only the current canonical envelope/runtime-state contract and reject retired legacy envelopes instead of migrating them forward.
+- Updated [docs/superpowers/plans/2026-07-25-authoring-runtime-legacy-cutover-implementation.md](/D:/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-25-authoring-runtime-legacy-cutover-implementation.md:1) and [docs/superpowers/project-progress.md](/D:/workspace/project/RPG_TG/docs/superpowers/project-progress.md:1) to record the explicit legacy-plan resume, commit trail, full verification evidence, and the handoff back to Blueprint as the live repository entry.
+
+### Impact
+- Old editor imports, old scenario packs, and old saves no longer receive compatibility upgrade behavior on this path; the repository now keeps one canonical authoring/runtime/save contract and fails closed on retired shapes.
+- The historical superpowers cutover child is now closed, while live repository execution continues from Blueprint governance rather than from this legacy implementation plan.
+
+## 2026-07-25 Settlement Canonical Key Cutover
+
+### Changed
+- Updated [src/core/runtime/runtime-settlement.ts](/D:/workspace/project/RPG_TG/src/core/runtime/runtime-settlement.ts:1) so settlement execution no longer rewrites alias-style city/building attribute keys and instead applies only the authored canonical runtime keys directly.
+- Updated [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts:1), [src/application/script-editor/runtime-pack-import.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts:1), [src/application/scenario/scenario-pack-loader.ts](/D:/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts:1), and [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) so settlement authoring, export, import, validation, and creator-facing attribute selection now converge on canonical city keys `travelCost` / `prosperity` / `danger` and canonical building keys `level` / `outputMultiplier` / `damaged`.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) with regression coverage for canonical settlement keys, typed custom-attribute fail-close behavior, and the real materializer boundary for repeated `specialDemand` enum entries.
+
+### Impact
+- Settlement authoring and runtime now agree on one formal city/building key contract instead of preserving alias-style fallback behavior.
+- Retired alias keys such as `baseAttributes.security`, `baseAttributes.prosperity`, `baseAttributes.level`, `baseAttributes.outputMultiplier`, and `baseAttributes.damaged` no longer remain on the supported settlement path.
+
+## 2026-07-25 Stage Configuration Creator UI Reorg
+
+### Changed
+- Updated [src/application/script-editor/workspace-shell.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts:1) and [src/application/script-editor/minimal-workflow.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts:1) so creator-facing gameplay navigation now collapses `progressTracks` and `progressTrackBindings` into one synthetic `stageConfiguration` / `阶段配置` entry while leaving the underlying resource files unchanged.
+- Updated [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) to merge the old dual progression editors into one object-led `阶段配置` authoring surface, using bindings as the left-side concrete subject and embedding object configuration, rule binding, and stage-rule editing on the same page.
+- Updated [src/styles/script-editor.css](/D:/workspace/project/RPG_TG/src/styles/script-editor.css:1) with creator-surface styles for the merged stage-configuration sections and the in-context help modal.
+- Added regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) for the unified navigation entry and the merged creator-facing stage-configuration module actions/help surface.
+
+### Impact
+- Script Editor creators now start from the authored application object they care about instead of choosing between separate “阶段轨道” and “轨道绑定” top-level modules.
+- The creator surface still does not execute final progression effects directly: authored thresholds continue to lower into settlement instances, and all final property or state changes remain owned by the settlement runtime on the existing event-routed path.
+
+## 2026-07-25 Generic Progression Final Runtime Wiring And Validation
+
+### Changed
+- Updated [src/application/content/active-game-content.ts](/D:/workspace/project/RPG_TG/src/application/content/active-game-content.ts:1), [src/application/runtime/main-runtime-orchestrator.ts](/D:/workspace/project/RPG_TG/src/application/runtime/main-runtime-orchestrator.ts:1), [src/application/runtime/indoor-screen-story-follow-up.ts](/D:/workspace/project/RPG_TG/src/application/runtime/indoor-screen-story-follow-up.ts:1), [src/core/runtime/dialogue-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/dialogue-runtime.ts:1), and [src/application/story/story-runtime.ts](/D:/workspace/project/RPG_TG/src/application/story/story-runtime.ts:1) so authored `progress-tracks.json` and `progress-track-bindings.json` now flow into the live settlement-event runtime path instead of stopping at export/import only.
+- Updated [src/core/runtime/runtime-settlement.ts](/D:/workspace/project/RPG_TG/src/core/runtime/runtime-settlement.ts:1) and [src/core/contracts/effect-settlement.ts](/D:/workspace/project/RPG_TG/src/core/contracts/effect-settlement.ts:1) so progression-emitted settlement instances can resolve authored settlement templates through the shared settlement seam instead of being accepted and dropped.
+- Updated [src/core/contracts/progression-runtime.ts](/D:/workspace/project/RPG_TG/src/core/contracts/progression-runtime.ts:1), [src/application/scenario/scenario-pack-loader.ts](/D:/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts:1), [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts:1), [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts:1), and [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) to require `metricKey`, remove creator-facing `ownerTag` authoring, and fail closed on unsupported or dangling progression bindings.
+- Added live-path and settlement-execution regressions in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) for story-runtime progression execution, shared settlement-instance execution, and binding validation failures.
+
+### Impact
+- Stage-track authoring is now live in gameplay on the existing event-owned settlement path: settlement events can update a metric, progression evaluates the authored track, and tier convergence executes only through authored settlement instances.
+- Progression still does not become a second router or write final gameplay mutations directly; event remains the only formal routing owner and settlement remains the only execution seam for tier effects.
+
 ## 2026-07-25 Structured Settlement Final Fix Wave
 
 ### Changed
@@ -3789,7 +3835,12 @@
 - Added bounded settlement-reference validation for `targetTierSettlementId` on progression tiers during runtime-pack export validation and scenario-pack loading.
 - Updated [src/application/script-editor/workspace-shell.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts) so progression-track export blockers are routed through the existing workspace validation surface instead of being treated as generic story-pack residue.
 - Added Task 3 regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs) for progression resource export/import, loader rejection on missing settlement references, and workspace-shell blocker surfacing.
+- Updated [src/core/contracts/progression-runtime.ts](/D:/workspace/project/RPG_TG/src/core/contracts/progression-runtime.ts), [src/core/runtime/progression-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/progression-runtime.ts), [src/core/runtime/runtime-dispatch.ts](/D:/workspace/project/RPG_TG/src/core/runtime/runtime-dispatch.ts), [src/core/runtime/runtime-settlement.ts](/D:/workspace/project/RPG_TG/src/core/runtime/runtime-settlement.ts), [src/application/story/story-runtime.ts](/D:/workspace/project/RPG_TG/src/application/story/story-runtime.ts), [src/application/runtime/main-runtime-orchestrator.ts](/D:/workspace/project/RPG_TG/src/application/runtime/main-runtime-orchestrator.ts), and [src/application/runtime/indoor-screen-story-follow-up.ts](/D:/workspace/project/RPG_TG/src/application/runtime/indoor-screen-story-follow-up.ts) so progression evaluation now emits settlement instances only and the existing Event-routing chain immediately hands those instances to the shared settlement runtime for final state changes.
+- Updated [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts), [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js), and [src/domain/script-editor-project.ts](/D:/workspace/project/RPG_TG/src/domain/script-editor-project.ts) so Script Editor now exposes Chinese creator-facing progression track and binding authoring without surfacing `ownerTag` or raw internal field ids as primary panel language.
+- Tightened first-slice fail-closed validation so unsupported progression binding owners and any authored `ownerTag` are rejected during export and scenario-pack loading instead of falling through to runtime.
+- Added progression-focused regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs) for settlement-instance-only runtime behavior, direct runtime-dispatch handoff, Script Editor authoring labels, non-tail id allocation, and live story settlement application.
 
 ### Impact
-- Script Editor progression tracks and bindings now survive the runtime-pack resource chain without adding any new editor authoring UI in this slice.
-- Missing tier settlement targets now fail closed at export, load, and creator-facing blocker stages instead of leaking invalid progression references into authored scenario packs.
+- Script Editor can now author generic progression tracks and bindings end to end, export them into runtime packs, import them back, and validate them through the same bounded resource chain.
+- Progression itself no longer performs final writes: every resulting attribute or state change now passes through authored settlement instances and the shared settlement runtime, which keeps the existing Event-routing ownership intact.
+- Missing settlement targets, unsupported binding owners, and stray `ownerTag` authoring now fail closed before runtime instead of creating hidden fallback behavior.

@@ -13,7 +13,7 @@
 - Next Required Action: `For current repository work, resume from docs/blueprints/project-progress.md. Reopen docs/superpowers/** only for explicitly legacy-governed work.`
 - Next Entry Document: `docs/blueprints/project-progress.md`
 - Next Owner Document: `docs/blueprints/blueprint.md`
-- Last Closed Item: `Central governance replacement audit`
+- Last Closed Item: `Authoring runtime legacy cutover implementation`
 - Push Status: `not-pushed`
 - Push Commit: `none`
 - Resume From: `Open docs/blueprints/project-progress.md unless the user explicitly asks to resume a legacy superpowers-governed artifact.`
@@ -28,7 +28,11 @@
   - Summary: `Blueprint governance superseded repository-wide resume control for current work. This superpowers progress entry is now historical unless a legacy superpowers artifact is explicitly resumed.`
   - Verification: `Document consistency check`
   - Next: `Use docs/blueprints/project-progress.md as the live repository entry for current work.`
+- 2026-07-25
+  - Summary: `Explicitly resumed the historical plan docs/superpowers/plans/2026-07-25-authoring-runtime-legacy-cutover-implementation.md, landed the remaining canonical cutover commits, and closed the legacy child after final verification.`
+  - Verification: `cmd /c npm run build:test; node --test tests/robustness.test.cjs; cmd /c npm run lint:plans`
+  - Next: `Return all live repository execution to docs/blueprints/project-progress.md unless another specific legacy superpowers artifact is explicitly resumed.`
 
 ## Latest Closeout
 
-Legacy superpowers progress is now historical by default. Live repository-wide Blueprint truth is owned under `docs/blueprints/**`.
+Legacy superpowers progress is now historical by default. The explicitly resumed legacy cutover child was closed on 2026-07-25, and live repository-wide execution truth remains owned under `docs/blueprints/**`.
