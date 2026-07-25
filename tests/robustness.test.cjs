@@ -10477,10 +10477,10 @@ test("script editor person authoring queue renders current json-backed person at
   assert.match(mainUiSource, /data-script-editor-person-attribute-field="label"/);
   assert.match(mainUiSource, /data-script-editor-person-attribute-field="type"/);
   assert.match(mainUiSource, /data-script-editor-person-attribute-field="value"/);
-  assert.match(mainUiSource, /鏁板€?/);
-  assert.match(mainUiSource, /寮€鍏?/);
-  assert.match(mainUiSource, /閫夐」/);
-  assert.match(mainUiSource, /鏂囨湰/);
+  assert.match(mainUiSource, /数值/);
+  assert.match(mainUiSource, /开关/);
+  assert.match(mainUiSource, /选项/);
+  assert.match(mainUiSource, /文本/);
   assert.match(mainUiSource, /placeholder="属性键"/);
   assert.match(mainUiSource, /placeholder="属性名"/);
   assert.match(mainUiSource, /data-script-editor-action="remove-person-attribute"/);
@@ -15737,7 +15737,7 @@ test("script editor settlement authoring exposes settlement module and event set
   assert.doesNotMatch(source, /data-script-editor-settlement-field="description"/);
   assert.doesNotMatch(source, /data-script-editor-settlement-result-field="id"/);
   assert.match(source, /data-script-editor-settlement-field="nextEventId"/);
-  assert.match(source, /缁撶畻鍐呭/);
+  assert.match(source, /结算内容/);
   assert.match(source, /data-script-editor-settlement-content-field="targetFamily"/);
   assert.match(source, /data-script-editor-settlement-content-field="targetId"/);
   assert.match(source, /data-script-editor-settlement-content-field="attributeKey"/);

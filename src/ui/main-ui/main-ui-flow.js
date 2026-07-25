@@ -296,10 +296,10 @@ const SCRIPT_EDITOR_EVENT_BINDING_TRIGGER_OPTIONS_BY_OWNER = {
 };
 
 const SCRIPT_EDITOR_PERSON_ATTRIBUTE_TYPE_OPTIONS = [
-  { value: "number", label: "鏁板€?" },
-  { value: "boolean", label: "寮€鍏?" },
-  { value: "enum", label: "閫夐」" },
-  { value: "string", label: "鏂囨湰" },
+  { value: "number", label: "数值" },
+  { value: "boolean", label: "开关" },
+  { value: "enum", label: "选项" },
+  { value: "string", label: "文本" },
 ];
 
 const SCRIPT_EDITOR_SETTLEMENT_TARGET_FAMILY_OPTIONS = [
@@ -4525,7 +4525,7 @@ export class MainUiFlow {
                       <div class="c-script-editor-narrative-panel__header">
                         <div>
                           <p class="c-script-editor-editor-card__eyebrow">结算</p>
-                          <h3 class="c-script-editor-editor-card__title">缁撶畻鍐呭</h3>
+                          <h3 class="c-script-editor-editor-card__title">结算内容</h3>
                         </div>
                         <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-settlement-content">
                           新增结算内容
