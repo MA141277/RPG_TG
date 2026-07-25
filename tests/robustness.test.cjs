@@ -26937,10 +26937,14 @@ test("event-routing call chain immediately hands progression settlement instance
     "utf8"
   );
 
-  assert.match(source, /progression/i);
-  assert.match(source, /settleRuntimeEffects/);
-  assert.match(source, /settlementInstances/);
-  assert.match(source, /appliedBy: "runtime-settlement"/);
+  assert.match(
+    source,
+    /const progressionSettlementInstances = routed\.settlementInstances \?\? \[\];/
+  );
+  assert.match(
+    source,
+    /const settledProgression =\s*progressionSettlementInstances\.length === 0\s*\?\s*finalState\s*:\s*settleRuntimeEffects\(\{\s*state: finalState\.state,\s*effects: \[\],\s*settlementInstances: progressionSettlementInstances,\s*emittedBy: "progression-runtime",\s*appliedBy: "runtime-settlement"/s
+  );
   assert.doesNotMatch(source, /runProgressionRuntime\([^)]*\)\.state/);
 });
 

@@ -20,13 +20,13 @@
 ## 2026-07-25 Generic Progression Track Task 5 Full-Chain Verification And Documentation
 
 ### Changed
-- Added final Task 5 regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:14436) for authoring data round-trip through runtime-pack export/import and loader, plus source-level proof that the Event-routing chain immediately hands progression settlement instances to `SettlementRuntime`.
-- Added first-version `阶段轨道` authoring and runtime support.
-- Progression now emits settlement instances only; the Event-routing chain immediately hands them to `SettlementRuntime`.
-- Runtime-pack export/import and loader now understand `progress-tracks.json` and `progress-track-bindings.json`.
+- Added final Task 5 regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:14800) for authoring data round-trip through runtime-pack export/import and loader, plus a dispatch source guard that proves `routed.settlementInstances` is handed into the shared settlement seam as `progressionSettlementInstances`.
+- Documented the already-landed first-version `阶段轨道` authoring and runtime support.
+- Progression still emits settlement instances only, and the verified Event-routing handoff routes those instances into `SettlementRuntime` via the shared `settleRuntimeEffects(...)` seam.
+- Runtime-pack export/import and loader round-trip `progress-tracks.json` and `progress-track-bindings.json`.
 
 ### Impact
-- The Task 1-4 generic progression slices now have end-to-end regression proof across authoring data -> runtime-pack resources -> loader -> shared settlement handoff into runtime settlement execution.
+- The Task 1-4 generic progression slices now have bounded regression proof across authoring data -> runtime-pack resources -> loader round-trip, plus source-level proof of the shared settlement handoff in `runtime-dispatch.ts`.
 - No new progression runtime behavior was added in this verification slice beyond the already-landed chain.
 
 ## 2026-07-25 Generic Progression Track Task 1 Contracts And Schema
