@@ -3763,6 +3763,95 @@ test("scenario pack loader rejects malformed settlement content rows", async () 
   );
 });
 
+test("scenario pack loader rejects settlement contents with invalid typed values and targets", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [
+    {
+      id: "city.start",
+      name: "Starting City",
+      baseAttributes: { prosperity: 50 },
+      profileMap: { displayName: "Starting City", description: "", tags: [] },
+      extendedAttributes: [],
+      mountedBuildings: [],
+      menuEntries: [],
+      access: {},
+    },
+  ];
+  project.buildings = [
+    {
+      id: "building.home",
+      cityId: "city.start",
+      name: "Home",
+      baseAttributes: {
+        houseType: "custom",
+        characterIds: [],
+        defaultCharacterId: null,
+        activityLocationId: "custom",
+        damaged: true,
+      },
+      profileMap: { displayName: "Home", description: "", tags: [] },
+      extendedAttributes: [],
+      menuEntries: [],
+      access: {},
+      backAction: { label: "Back", targetView: "city" },
+      entryBinding: { defaultPersonId: "", returnTarget: "city" },
+    },
+  ];
+  project.settlements = [
+    {
+      id: "settlement.invalid.loader",
+      title: "Invalid Loader Settlement",
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedSettlements = JSON.parse(files["settlements.json"]);
+  exportedSettlements[0].contents = [
+    {
+      targetFamily: "city",
+      targetId: "city.start",
+      attributeKey: "baseAttributes.prosperity",
+      attributeType: "number",
+      operation: "set",
+      value: "not-a-number",
+    },
+    {
+      targetFamily: "building",
+      targetId: "building.missing",
+      attributeKey: "baseAttributes.damaged",
+      attributeType: "boolean",
+      operation: "set",
+      value: false,
+    },
+    {
+      targetFamily: "building",
+      targetId: "building.home",
+      attributeKey: "baseAttributes.damaged",
+      attributeType: "boolean",
+      operation: "set",
+      value: "false",
+    },
+  ];
+  files["settlements.json"] = JSON.stringify(exportedSettlements, null, 2);
+
+  await assert.rejects(
+    () =>
+      loadScenarioPackFromFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          files,
+          "invalid-settlement-content-values-pack"
+        )
+      ),
+    /settlement|targetId|attributeKey|value|finite|boolean|missing/i
+  );
+});
+
 test("built-in Liu Bang pack uses event-bindings instead of event-body trigger fields", async () => {
   const {
     loadScenarioPackFromFiles,
@@ -7532,6 +7621,136 @@ test("script editor runtime export rejects invalid settlement content target fam
   );
 });
 
+test("script editor runtime export rejects settlement content target value and eligibility gaps", () => {
+  const {
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.people = [
+    {
+      id: "person.hero",
+      name: "Hero",
+      role: "playable",
+      extendedAttributes: [
+        {
+          key: "mood",
+          label: "Mood",
+          type: "enum",
+          value: "steady",
+          options: ["steady", "inspired"],
+        },
+      ],
+    },
+  ];
+  project.cities = [
+    {
+      id: "city.start",
+      name: "Starting City",
+      baseAttributes: { prosperity: 50 },
+      profileMap: { displayName: "Starting City", description: "", tags: [] },
+      extendedAttributes: [],
+      mountedBuildings: [],
+      menuEntries: [],
+      access: {},
+    },
+  ];
+  project.buildings = [
+    {
+      id: "building.home",
+      cityId: "city.start",
+      name: "Home",
+      baseAttributes: {
+        houseType: "custom",
+        characterIds: [],
+        defaultCharacterId: null,
+        activityLocationId: "custom",
+        damaged: true,
+      },
+      profileMap: { displayName: "Home", description: "", tags: [] },
+      extendedAttributes: [],
+      menuEntries: [],
+      access: {},
+      backAction: { label: "Back", targetView: "city" },
+      entryBinding: { defaultPersonId: "", returnTarget: "city" },
+    },
+  ];
+  project.settlements = [
+    {
+      id: "settlement.invalid.contents",
+      title: "Invalid Contents",
+      contents: [
+        {
+          targetFamily: "city",
+          targetId: "",
+          attributeKey: "baseAttributes.prosperity",
+          attributeType: "number",
+          operation: "set",
+          value: 10,
+        },
+        {
+          targetFamily: "city",
+          targetId: "city.start",
+          attributeKey: "",
+          attributeType: "number",
+          operation: "set",
+          value: 10,
+        },
+        {
+          targetFamily: "city",
+          targetId: "city.missing",
+          attributeKey: "baseAttributes.prosperity",
+          attributeType: "number",
+          operation: "set",
+          value: 10,
+        },
+        {
+          targetFamily: "city",
+          targetId: "city.start",
+          attributeKey: "profileMap.displayName",
+          attributeType: "number",
+          operation: "set",
+          value: 10,
+        },
+        {
+          targetFamily: "city",
+          targetId: "city.start",
+          attributeKey: "baseAttributes.prosperity",
+          attributeType: "number",
+          operation: "set",
+          value: "not-a-number",
+        },
+        {
+          targetFamily: "building",
+          targetId: "building.home",
+          attributeKey: "baseAttributes.damaged",
+          attributeType: "boolean",
+          operation: "set",
+          value: "false",
+        },
+        {
+          targetFamily: "person",
+          targetId: "person.hero",
+          attributeKey: "mood",
+          attributeType: "enum",
+          operation: "set",
+          value: "angry",
+        },
+      ],
+    },
+  ];
+
+  const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  const messages = diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+
+  assert.match(messages, /targetId.*non-empty/i);
+  assert.match(messages, /attributeKey.*non-empty/i);
+  assert.match(messages, /missing target|target.*missing/i);
+  assert.match(messages, /not settlement-operable|eligible|calculable/i);
+  assert.match(messages, /finite number/i);
+  assert.match(messages, /boolean value/i);
+  assert.match(messages, /enum option/i);
+});
+
 test("script editor runtime export rejects ambiguous legacy settlement result routing", () => {
   const {
     validateScriptEditorProjectForRuntimeExport,
@@ -7575,6 +7794,51 @@ test("script editor runtime export rejects ambiguous legacy settlement result ro
         diagnostic.code === "invalid-field" &&
         diagnostic.fieldPath === "project.settlements[0].results" &&
         /legacy settlement result|ambiguous nextEventId/i.test(diagnostic.message)
+    ),
+    true
+  );
+});
+
+test("script editor runtime export rejects conflicting legacy and settlement nextEventId routing", () => {
+  const {
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.follow-up.settlement",
+      title: "Settlement Follow Up",
+      actions: [{ type: "closeBuilding" }],
+    },
+    {
+      id: "event.follow-up.legacy",
+      title: "Legacy Follow Up",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+  project.settlements = [
+    {
+      id: "settlement.conflict",
+      title: "Conflicting Settlement",
+      nextEventId: "event.follow-up.settlement",
+      results: [
+        {
+          id: "result.success",
+          label: "Success",
+          nextEventId: "event.follow-up.legacy",
+        },
+      ],
+    },
+  ];
+
+  const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+
+  assert.equal(
+    diagnostics.some(
+      (diagnostic) =>
+        diagnostic.code === "invalid-field" &&
+        diagnostic.fieldPath === "project.settlements[0].results" &&
+        /conflicting|ambiguous|nextEventId/i.test(diagnostic.message)
     ),
     true
   );
@@ -7709,6 +7973,106 @@ test("script editor runtime import fails closed on mixed empty legacy settlement
     loaderModule.parseScenarioPack = originalParseScenarioPack;
     delete require.cache[importerPath];
   }
+});
+
+test("script editor runtime import rejects settlement content instead of normalizing invalid values", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.invalid.import",
+      title: "Invalid Import Settlement",
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const settlements = JSON.parse(files["settlements.json"]);
+  settlements[0].contents = [
+    {
+      targetFamily: "city",
+      targetId: "",
+      attributeKey: "baseAttributes.prosperity",
+      attributeType: "number",
+      operation: "set",
+      value: "not-a-number",
+    },
+    {
+      targetFamily: "building",
+      targetId: "building.home",
+      attributeKey: "",
+      attributeType: "boolean",
+      operation: "set",
+      value: "false",
+    },
+  ];
+  files["settlements.json"] = JSON.stringify(settlements, null, 2);
+
+  await assert.rejects(
+    () =>
+      loadScriptEditorProjectFromScenarioPackFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          files,
+          "invalid-import-settlement-pack"
+        )
+      ),
+    /targetId|attributeKey|finite number|boolean value/i
+  );
+});
+
+test("script editor runtime import rejects conflicting legacy and settlement nextEventId routing", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.conflict",
+      title: "Conflicting Settlement",
+      nextEventId: "event.follow-up.settlement",
+    },
+  ];
+  project.events = [
+    {
+      id: "event.follow-up.settlement",
+      title: "Settlement Follow Up",
+      actions: [{ type: "closeBuilding" }],
+    },
+    {
+      id: "event.follow-up.legacy",
+      title: "Legacy Follow Up",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const settlements = JSON.parse(files["settlements.json"]);
+  settlements[0].results = [
+    {
+      id: "result.success",
+      label: "Success",
+      nextEventId: "event.follow-up.legacy",
+    },
+  ];
+  files["settlements.json"] = JSON.stringify(settlements, null, 2);
+
+  await assert.rejects(
+    () =>
+      loadScriptEditorProjectFromScenarioPackFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          files,
+          "conflicting-legacy-settlement-pack"
+        )
+      ),
+    /conflicting|ambiguous|nextEventId/i
+  );
 });
 
 test("script editor runtime import migrates legacy settlement result routing when unambiguous", async () => {
@@ -16335,6 +16699,22 @@ test("script editor settlement authoring exposes settlement module and event set
   assert.match(source, /data-script-editor-settlement-content-field="attributeKey"/);
   assert.match(source, /data-script-editor-settlement-content-field="operation"/);
   assert.match(source, /data-script-editor-settlement-content-field="value"/);
+  assert.match(
+    source,
+    /type="number"[\s\S]*data-script-editor-settlement-content-field="value"/
+  );
+  assert.match(
+    source,
+    /<select[\s\S]*data-script-editor-settlement-content-field="value"[\s\S]*value="true"[\s\S]*value="false"/
+  );
+  assert.match(
+    source,
+    /<select[\s\S]*data-script-editor-settlement-content-field="value"[\s\S]*getScriptEditorSettlementEnumValueOptions/
+  );
+  assert.doesNotMatch(
+    source,
+    /<input[^>]+type="text"[^>]+data-script-editor-settlement-content-field="value"/
+  );
   assert.match(source, /data-script-editor-event-field="type"/);
   assert.match(source, /data-script-editor-event-field="settlementId"/);
   assert.match(source, /data-script-editor-event-field="nextEventId"/);
@@ -25933,6 +26313,141 @@ test("runtime settlement applies structured settlement content rows directly", (
   assert.equal(result.buildings["building.home"].isOpen, false);
   assert.equal(result.people["person.hero"].mood, "inspired");
   assert.notEqual(result, gameState);
+});
+
+test("runtime settlement applies UI-authored city and building baseAttributes keys", () => {
+  const {
+    applySettlementContents,
+  } = require("../.test-dist/core/runtime/runtime-settlement.js");
+  const gameState = {
+    cities: {
+      "city.start": {
+        id: "city.start",
+        baseAttributes: {
+          prosperity: 50,
+        },
+      },
+    },
+    buildings: {
+      "building.home": {
+        id: "building.home",
+        baseAttributes: {
+          damaged: true,
+          level: 1,
+        },
+      },
+    },
+  };
+
+  const result = applySettlementContents(gameState, {
+    id: "settlement.ui-authored-keys",
+    title: "UI Authored Keys",
+    contents: [
+      {
+        targetFamily: "city",
+        targetId: "city.start",
+        attributeKey: "baseAttributes.prosperity",
+        attributeType: "number",
+        operation: "add",
+        value: 15,
+      },
+      {
+        targetFamily: "building",
+        targetId: "building.home",
+        attributeKey: "baseAttributes.damaged",
+        attributeType: "boolean",
+        operation: "set",
+        value: false,
+      },
+      {
+        targetFamily: "building",
+        targetId: "building.home",
+        attributeKey: "baseAttributes.level",
+        attributeType: "number",
+        operation: "set",
+        value: 3,
+      },
+    ],
+  });
+
+  assert.equal(result.cities["city.start"].baseAttributes.prosperity, 65);
+  assert.equal(result.buildings["building.home"].baseAttributes.damaged, false);
+  assert.equal(result.buildings["building.home"].baseAttributes.level, 3);
+  assert.equal(Object.hasOwn(result.cities["city.start"], "baseAttributes.prosperity"), false);
+});
+
+test("story runtime settlement event applies contents and starts settlement follow-up", () => {
+  const {
+    startStoryEventById,
+  } = require("../.test-dist/application/story/story-runtime.js");
+  const hero = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    stamina: 100,
+  };
+  const result = startStoryEventById(
+    {
+      state: createBaseState(),
+      characterDefinitions: [hero],
+    },
+    {
+      eventDefinitionsById: {
+        "event.settlement": {
+          id: "event.settlement",
+          chapterId: "chapter.prototype",
+          name: "Settlement Event",
+          occurrence: "once",
+          type: "settlement",
+          dialogueId: "",
+          settlementId: "settlement.opening",
+        },
+        "event.followup": {
+          id: "event.followup",
+          chapterId: "chapter.prototype",
+          name: "Follow Up",
+          occurrence: "once",
+          dialogueId: "dialogue.followup",
+        },
+      },
+      settlementDefinitionsById: {
+        "settlement.opening": {
+          id: "settlement.opening",
+          title: "Opening Settlement",
+          nextEventId: "event.followup",
+          contents: [
+            {
+              targetFamily: "person",
+              targetId: playerCharacterId,
+              attributeKey: "stamina",
+              attributeType: "number",
+              operation: "add",
+              value: 25,
+            },
+          ],
+        },
+      },
+      dialogueDefinitionsById: {
+        "dialogue.followup": {
+          id: "dialogue.followup",
+          name: "Follow Up Dialogue",
+          nodes: [
+            {
+              type: "dialogue",
+              characterId: playerCharacterId,
+              side: "left",
+              text: "The settlement follow-up is active.",
+            },
+          ],
+        },
+      },
+    },
+    "event.settlement"
+  );
+
+  assert.equal(result.characterDefinitions[0].stamina, 125);
+  assert.equal(result.state.runtime.eventHistory["event.settlement"].firedCount, 1);
+  assert.equal(result.state.runtime.eventHistory["event.followup"].firedCount, 1);
+  assert.equal(result.state.dialogue.activeEventId, "event.followup");
+  assert.equal(result.state.dialogue.activeDialogueId, "dialogue.followup");
 });
 
 test("runtime dispatch propagates task character property mutation effect status", () => {

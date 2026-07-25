@@ -6,6 +6,41 @@ import { assertHouseModuleDefaults } from "../content/house-module-defaults";
 import { GAME_VIEW_NAMES } from "../../domain/game-state";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 
+type SettlementAttributeMetadata = {
+  attributeType: "number" | "boolean" | "enum";
+  options?: readonly string[];
+};
+
+const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
+  age: { attributeType: "number" },
+  stamina: { attributeType: "number" },
+  "stats.leadership": { attributeType: "number" },
+  "stats.martial": { attributeType: "number" },
+  "stats.intelligence": { attributeType: "number" },
+  "stats.politics": { attributeType: "number" },
+  "stats.charm": { attributeType: "number" },
+  "stats.fame": { attributeType: "number" },
+  "stats.gold": { attributeType: "number" },
+};
+
+const CITY_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
+  travelCost: { attributeType: "number" },
+  prosperity: { attributeType: "number" },
+  danger: { attributeType: "number" },
+  "baseAttributes.prosperity": { attributeType: "number" },
+  "baseAttributes.security": { attributeType: "number" },
+  "baseAttributes.population": { attributeType: "number" },
+};
+
+const BUILDING_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
+  level: { attributeType: "number" },
+  outputMultiplier: { attributeType: "number" },
+  damaged: { attributeType: "boolean" },
+  "baseAttributes.level": { attributeType: "number" },
+  "baseAttributes.outputMultiplier": { attributeType: "number" },
+  "baseAttributes.damaged": { attributeType: "boolean" },
+};
+
 export async function loadScenarioPackFromUrl(
   url: string
 ): Promise<ScenarioPackDefinition> {
@@ -254,7 +289,7 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   }
   const rawSettlements = (value as Record<string, unknown>).settlements;
   if (rawSettlements != null) {
-    assertRuntimeSettlementDefinitions(rawSettlements);
+    assertRuntimeSettlementDefinitions(rawSettlements, value as Record<string, unknown>);
   }
   const rawProgressTracks = (value as Record<string, unknown>).progressTracks;
   if (rawProgressTracks != null) {
@@ -371,8 +406,12 @@ function assertRuntimeEventsDoNotUseRetiredTriggerFields(events: unknown[]): voi
   });
 }
 
-function assertRuntimeSettlementDefinitions(settlements: unknown): void {
+function assertRuntimeSettlementDefinitions(
+  settlements: unknown,
+  pack: Record<string, unknown>
+): void {
   assertArray(settlements, "scenario settlements");
+  const metadataContext = createRuntimeSettlementMetadataContext(pack);
   settlements.forEach((settlementDefinition, settlementIndex) => {
     assertObject(
       settlementDefinition,
@@ -381,7 +420,10 @@ function assertRuntimeSettlementDefinitions(settlements: unknown): void {
     if (Object.hasOwn(settlementDefinition, "results")) {
       assertLegacySettlementResultsRouteUnambiguously(
         settlementDefinition.results,
-        settlementIndex
+        settlementIndex,
+        typeof settlementDefinition.nextEventId === "string"
+          ? settlementDefinition.nextEventId.trim()
+          : ""
       );
     }
     if (settlementDefinition.contents != null) {
@@ -418,9 +460,219 @@ function assertRuntimeSettlementDefinitions(settlements: unknown): void {
             `scenario settlements[${settlementIndex}].contents[${contentIndex}] attribute type requires operation set.`
           );
         }
+        assertRuntimeSettlementContentTargetAndValue(
+          contentDefinition,
+          settlementIndex,
+          contentIndex,
+          metadataContext
+        );
       });
     }
   });
+}
+
+type RuntimeSettlementMetadataContext = {
+  peopleById: Record<string, Record<string, unknown>>;
+  citiesById: Record<string, Record<string, unknown>>;
+  buildingsById: Record<string, Record<string, unknown>>;
+};
+
+function createRuntimeSettlementMetadataContext(
+  pack: Record<string, unknown>
+): RuntimeSettlementMetadataContext {
+  return {
+    peopleById: indexRuntimeSettlementRecords(pack.characters),
+    citiesById: indexRuntimeSettlementRecords(pack.cities),
+    buildingsById: indexRuntimeSettlementRecords(pack.houses),
+  };
+}
+
+function indexRuntimeSettlementRecords(
+  value: unknown
+): Record<string, Record<string, unknown>> {
+  if (!Array.isArray(value)) {
+    return {};
+  }
+  const recordsById: Record<string, Record<string, unknown>> = {};
+  for (const record of value) {
+    if (record == null || typeof record !== "object" || Array.isArray(record)) {
+      continue;
+    }
+    const id =
+      typeof (record as Record<string, unknown>).id === "string"
+        ? ((record as Record<string, unknown>).id as string).trim()
+        : "";
+    if (id.length > 0) {
+      recordsById[id] = record as Record<string, unknown>;
+    }
+  }
+  return recordsById;
+}
+
+function assertRuntimeSettlementContentTargetAndValue(
+  contentDefinition: Record<string, unknown>,
+  settlementIndex: number,
+  contentIndex: number,
+  context: RuntimeSettlementMetadataContext
+): void {
+  const fieldPath = `scenario settlements[${settlementIndex}].contents[${contentIndex}]`;
+  const targetFamily = contentDefinition.targetFamily as "person" | "city" | "building";
+  const attributeType = contentDefinition.attributeType as "number" | "boolean" | "enum";
+  const targetId =
+    typeof contentDefinition.targetId === "string"
+      ? contentDefinition.targetId.trim()
+      : "";
+  const attributeKey =
+    typeof contentDefinition.attributeKey === "string"
+      ? contentDefinition.attributeKey.trim()
+      : "";
+
+  if (targetId.length === 0) {
+    throw new Error(`${fieldPath}.targetId must be a non-empty string.`);
+  }
+  if (attributeKey.length === 0) {
+    throw new Error(`${fieldPath}.attributeKey must be a non-empty string.`);
+  }
+
+  const metadata = resolveRuntimeSettlementAttributeMetadata(
+    targetFamily,
+    targetId,
+    attributeKey,
+    attributeType,
+    contentDefinition.value,
+    fieldPath,
+    context
+  );
+  if (metadata.attributeType !== attributeType) {
+    throw new Error(
+      `${fieldPath}.attributeType does not match the eligible settlement attribute.`
+    );
+  }
+  assertRuntimeSettlementContentValue(
+    contentDefinition.value,
+    metadata,
+    fieldPath
+  );
+}
+
+function resolveRuntimeSettlementAttributeMetadata(
+  targetFamily: "person" | "city" | "building",
+  targetId: string,
+  attributeKey: string,
+  declaredAttributeType: "number" | "boolean" | "enum",
+  value: unknown,
+  fieldPath: string,
+  context: RuntimeSettlementMetadataContext
+): SettlementAttributeMetadata {
+  if (targetFamily === "person") {
+    const person = context.peopleById[targetId];
+    if (person == null) {
+      throw new Error(`${fieldPath}.targetId references missing person target.`);
+    }
+    const metadata =
+      PERSON_SETTLEMENT_BASE_ATTRIBUTES[attributeKey] ??
+      resolveRuntimeCharacterCustomPropertyMetadata(person, attributeKey) ??
+      inferRuntimeSettlementValueMetadata(
+        declaredAttributeType,
+        value
+      );
+    if (metadata != null) {
+      return metadata;
+    }
+  } else if (targetFamily === "city") {
+    if (context.citiesById[targetId] == null) {
+      throw new Error(`${fieldPath}.targetId references missing city target.`);
+    }
+    const metadata = CITY_SETTLEMENT_BASE_ATTRIBUTES[attributeKey];
+    if (metadata != null) {
+      return metadata;
+    }
+  } else {
+    if (context.buildingsById[targetId] == null) {
+      throw new Error(`${fieldPath}.targetId references missing building target.`);
+    }
+    const metadata = BUILDING_SETTLEMENT_BASE_ATTRIBUTES[attributeKey];
+    if (metadata != null) {
+      return metadata;
+    }
+  }
+
+  throw new Error(
+    `${fieldPath}.attributeKey must be an eligible calculable settlement attribute.`
+  );
+}
+
+function resolveRuntimeCharacterCustomPropertyMetadata(
+  person: Record<string, unknown>,
+  attributeKey: string
+): SettlementAttributeMetadata | null {
+  const customProperties = person.customProperties;
+  if (
+    customProperties == null ||
+    typeof customProperties !== "object" ||
+    Array.isArray(customProperties)
+  ) {
+    return null;
+  }
+  const value = (customProperties as Record<string, unknown>)[attributeKey];
+  if (typeof value === "number") {
+    return { attributeType: "number" };
+  }
+  if (typeof value === "boolean") {
+    return { attributeType: "boolean" };
+  }
+  return null;
+}
+
+function inferRuntimeSettlementValueMetadata(
+  declaredAttributeType: "number" | "boolean" | "enum",
+  value: unknown
+): SettlementAttributeMetadata | null {
+  if (
+    declaredAttributeType === "number" &&
+    typeof value === "number" &&
+    Number.isFinite(value)
+  ) {
+    return { attributeType: "number" };
+  }
+  if (declaredAttributeType === "boolean" && typeof value === "boolean") {
+    return { attributeType: "boolean" };
+  }
+  if (
+    declaredAttributeType === "enum" &&
+    typeof value === "string" &&
+    value.trim().length > 0
+  ) {
+    return { attributeType: "enum" };
+  }
+  return null;
+}
+
+function assertRuntimeSettlementContentValue(
+  value: unknown,
+  metadata: SettlementAttributeMetadata,
+  fieldPath: string
+): void {
+  if (metadata.attributeType === "number") {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      throw new Error(`${fieldPath}.value must be a finite number.`);
+    }
+    return;
+  }
+
+  if (metadata.attributeType === "boolean") {
+    if (typeof value !== "boolean") {
+      throw new Error(`${fieldPath}.value must be a boolean value type.`);
+    }
+    return;
+  }
+
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`${fieldPath}.value must be a non-empty enum option.`);
+  }
+  if ((metadata.options?.length ?? 0) > 0 && !metadata.options?.includes(value)) {
+    throw new Error(`${fieldPath}.value must be one of the enum options.`);
+  }
 }
 
 function assertRuntimeProgressTrackDefinitions(
@@ -477,7 +729,8 @@ function assertRuntimeProgressTrackDefinitions(
 
 function assertLegacySettlementResultsRouteUnambiguously(
   results: unknown,
-  settlementIndex: number
+  settlementIndex: number,
+  settlementNextEventId: string
 ): void {
   assertArray(results, `scenario settlements[${settlementIndex}].results`);
   const nextEventIds = new Set<string>();
@@ -496,6 +749,16 @@ function assertLegacySettlementResultsRouteUnambiguously(
   if (nextEventIds.size > 1) {
     throw new Error(
       "Ambiguous legacy settlement result routing must fail closed."
+    );
+  }
+  const legacyNextEventId = [...nextEventIds][0] ?? "";
+  if (
+    legacyNextEventId.length > 0 &&
+    settlementNextEventId.length > 0 &&
+    legacyNextEventId !== settlementNextEventId
+  ) {
+    throw new Error(
+      "Conflicting legacy settlement result routing and settlement nextEventId is ambiguous and must fail closed."
     );
   }
 }

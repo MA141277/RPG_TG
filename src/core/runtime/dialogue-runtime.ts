@@ -1,8 +1,11 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
+import type { CityDefinition } from "../../domain/city";
+import type { SettlementDefinition } from "../../domain/content-pack";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { HouseDefinition } from "../../domain/house";
 import { runDialogueUntilPause } from "../../application/dialogue/dialogue-runner";
 import {
   triggerStoryEvents,
@@ -40,8 +43,11 @@ export function runStoryTriggerRuntime(input: {
   characterDefinitions: CharacterDefinition[];
   eventDefinitionsById: Record<string, EventDefinition>;
   eventBindingsById?: Record<string, EventBinding>;
+  settlementDefinitionsById?: Record<string, SettlementDefinition>;
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
+  cityDefinitionsById?: Record<string, CityDefinition>;
+  houseDefinitionsById?: Record<string, HouseDefinition>;
   textEntriesById?: Record<string, string>;
 }): {
   state: GameState;
@@ -58,8 +64,11 @@ export function runStoryTriggerRuntime(input: {
     {
       eventDefinitionsById: input.eventDefinitionsById,
       eventBindingsById: input.eventBindingsById,
+      settlementDefinitionsById: input.settlementDefinitionsById,
       dialogueDefinitionsById: input.dialogueDefinitionsById,
       activityDefinitionsById: input.activityDefinitionsById,
+      cityDefinitionsById: input.cityDefinitionsById,
+      houseDefinitionsById: input.houseDefinitionsById,
       textEntriesById: input.textEntriesById,
     },
     {

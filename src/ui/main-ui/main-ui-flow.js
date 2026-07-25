@@ -1950,6 +1950,7 @@ export class MainUiFlow {
         value: attribute.key,
         label: attribute.label?.trim() || attribute.key,
         attributeType: attribute.type,
+        options: attribute.type === "enum" ? attribute.options ?? [] : undefined,
       }));
   }
 
@@ -1965,6 +1966,7 @@ export class MainUiFlow {
               value: attribute.key,
               label: attribute.label?.trim() || attribute.key,
               attributeType,
+              options: Array.isArray(attribute.value) ? attribute.value : undefined,
             };
       })
       .filter(Boolean);
@@ -1989,6 +1991,17 @@ export class MainUiFlow {
       attributeKey,
     }).find((entry) => entry.value === attributeKey);
     return option?.attributeType ?? "number";
+  }
+
+  getScriptEditorSettlementEnumValueOptions(content) {
+    const option = this.getScriptEditorSettlementAttributeOptions(content).find(
+      (entry) => entry.value === content.attributeKey
+    );
+    const options = Array.isArray(option?.options) ? option.options : [];
+    return options.map((value) => ({
+      value,
+      label: value,
+    }));
   }
 
   getScriptEditorSettlementOperationOptions(attributeType) {
@@ -4646,7 +4659,7 @@ export class MainUiFlow {
               </label>
               <label class="c-script-editor-form-field">
                 <span>值</span>
-                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(String(content.value ?? ""))}" data-script-editor-settlement-content-field="value" data-script-editor-settlement-content-index="${index}" />
+                ${this.renderScriptEditorSettlementContentValueControl(content, index)}
               </label>
             </div>
             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-settlement-content" data-script-editor-settlement-content-index="${index}">
@@ -4656,6 +4669,37 @@ export class MainUiFlow {
         `;
       })
       .join("");
+  }
+
+  renderScriptEditorSettlementContentValueControl(content, index) {
+    if (content.attributeType === "boolean") {
+      return `
+        <select class="c-script-editor-form-field__input" data-script-editor-settlement-content-field="value" data-script-editor-settlement-content-index="${index}">
+          ${this.renderScriptEditorSelectOptions(
+            [
+              { value: "true", label: "true" },
+              { value: "false", label: "false" },
+            ],
+            String(content.value === true),
+            "Select boolean value"
+          )}
+        </select>
+      `;
+    }
+
+    if (content.attributeType === "enum") {
+      return `
+        <select class="c-script-editor-form-field__input" data-script-editor-settlement-content-field="value" data-script-editor-settlement-content-index="${index}">
+          ${this.renderScriptEditorSelectOptions(
+            this.getScriptEditorSettlementEnumValueOptions(content),
+            String(content.value ?? ""),
+            "Select enum value"
+          )}
+        </select>
+      `;
+    }
+
+    return `<input class="c-script-editor-form-field__input" type="number" step="any" value="${escapeHtml(String(content.value ?? ""))}" data-script-editor-settlement-content-field="value" data-script-editor-settlement-content-index="${index}" />`;
   }
 
   renderScriptEditorProgressTrackEditor(records, selectedRecord) {

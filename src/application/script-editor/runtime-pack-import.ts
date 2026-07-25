@@ -31,8 +31,10 @@ import {
   type ScriptEditorProjectDefinition,
   type ScriptEditorRuntimePackSchemaVersion,
   type ScriptEditorRuntimeRecord,
+  type ScriptEditorSettlementContentRecord,
   type ScriptEditorStoryPackRecord,
   type ScriptEditorTextEntryRecord,
+  type ScriptEditorTypedAttributeRecord,
 } from "../../domain/script-editor-project";
 import type { EventDefinition } from "../../domain/event";
 import type { LocationAccessDefinition } from "../../domain/location-access";
@@ -87,6 +89,36 @@ type RuntimePackManifestFiles = {
   uiLayouts?: string;
   uiSkins?: string;
   uiAssetCatalogs?: string;
+};
+
+type SettlementAttributeMetadata = {
+  attributeType: ScriptEditorSettlementContentRecord["attributeType"];
+  options?: readonly string[];
+};
+
+const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
+  age: { attributeType: "number" },
+  stamina: { attributeType: "number" },
+  "stats.leadership": { attributeType: "number" },
+  "stats.martial": { attributeType: "number" },
+  "stats.intelligence": { attributeType: "number" },
+  "stats.politics": { attributeType: "number" },
+  "stats.charm": { attributeType: "number" },
+  "stats.fame": { attributeType: "number" },
+  "stats.gold": { attributeType: "number" },
+};
+
+const CITY_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
+  travelCost: { attributeType: "number" },
+  "baseAttributes.prosperity": { attributeType: "number" },
+  "baseAttributes.security": { attributeType: "number" },
+  "baseAttributes.population": { attributeType: "number" },
+};
+
+const BUILDING_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
+  "baseAttributes.level": { attributeType: "number" },
+  "baseAttributes.outputMultiplier": { attributeType: "number" },
+  "baseAttributes.damaged": { attributeType: "boolean" },
 };
 
 type RuntimePackManifest = {
@@ -638,6 +670,7 @@ function mapImportedSettlements(
   if (!Array.isArray(settlements)) {
     return [];
   }
+  const metadataContext = createImportedSettlementMetadataContext(rawPack);
 
   return settlements.map((value, index) => {
     if (value == null || typeof value !== "object" || Array.isArray(value)) {
@@ -649,7 +682,12 @@ function mapImportedSettlements(
     const nextEventId = readImportedSettlementNextEventId(settlement);
     const contents = Array.isArray(settlement.contents)
       ? settlement.contents.map((content, contentIndex) =>
-          mapImportedSettlementContent(content, index, contentIndex)
+          mapImportedSettlementContent(
+            content,
+            index,
+            contentIndex,
+            metadataContext
+          )
         )
       : [];
 
@@ -690,15 +728,24 @@ function readImportedSettlementNextEventId(
   }
 
   const legacyNextEventId = [...nextEventIds][0] ?? "";
-  return legacyNextEventId.length === 0
-    ? readString(settlement.nextEventId)
-    : legacyNextEventId;
+  const settlementNextEventId = readString(settlement.nextEventId);
+  if (
+    legacyNextEventId.length > 0 &&
+    settlementNextEventId.length > 0 &&
+    legacyNextEventId !== settlementNextEventId
+  ) {
+    throw new Error(
+      "Conflicting legacy settlement result routing and settlement nextEventId is ambiguous and must fail closed."
+    );
+  }
+  return legacyNextEventId.length === 0 ? settlementNextEventId : legacyNextEventId;
 }
 
 function mapImportedSettlementContent(
   value: unknown,
   settlementIndex: number,
-  contentIndex: number
+  contentIndex: number,
+  metadataContext: ImportedSettlementMetadataContext
 ): NonNullable<ScriptEditorProjectDefinition["settlements"][number]["contents"]>[number] {
   if (value == null || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(
@@ -710,6 +757,8 @@ function mapImportedSettlementContent(
   const targetFamily = readString(content.targetFamily);
   const attributeType = readString(content.attributeType);
   const operation = readString(content.operation);
+  const targetId = readString(content.targetId);
+  const attributeKey = readString(content.attributeKey);
   if (
     targetFamily !== "person" &&
     targetFamily !== "city" &&
@@ -738,29 +787,239 @@ function mapImportedSettlementContent(
       `Imported settlements[${settlementIndex}].contents[${contentIndex}] attribute type requires operation set.`
     );
   }
+  if (targetId.length === 0) {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}].targetId must be non-empty.`
+    );
+  }
+  if (attributeKey.length === 0) {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}].attributeKey must be non-empty.`
+    );
+  }
+
+  const metadata = resolveImportedSettlementAttributeMetadata(
+    metadataContext,
+    targetFamily,
+    targetId,
+    attributeKey,
+    attributeType,
+    content.value,
+    settlementIndex,
+    contentIndex
+  );
+  if (metadata.attributeType !== attributeType) {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}].attributeType does not match eligible attributeKey type.`
+    );
+  }
 
   return {
     targetFamily,
-    targetId: readString(content.targetId),
-    attributeKey: readString(content.attributeKey),
+    targetId,
+    attributeKey,
     attributeType,
     operation,
-    value: normalizeImportedSettlementValue(content.value, attributeType),
+    value: normalizeImportedSettlementValue(
+      content.value,
+      metadata,
+      settlementIndex,
+      contentIndex
+    ),
   };
 }
 
 function normalizeImportedSettlementValue(
   value: unknown,
-  attributeType: "number" | "boolean" | "enum"
+  metadata: SettlementAttributeMetadata,
+  settlementIndex: number,
+  contentIndex: number
 ): string | number | boolean {
-  if (attributeType === "number") {
-    const numberValue = typeof value === "number" ? value : Number(readString(value));
-    return Number.isFinite(numberValue) ? numberValue : 0;
+  if (metadata.attributeType === "number") {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      throw new Error(
+        `Imported settlements[${settlementIndex}].contents[${contentIndex}].value must be a finite number.`
+      );
+    }
+    return value;
   }
-  if (attributeType === "boolean") {
-    return value === true || readString(value) === "true";
+  if (metadata.attributeType === "boolean") {
+    if (typeof value !== "boolean") {
+      throw new Error(
+        `Imported settlements[${settlementIndex}].contents[${contentIndex}].value must be a boolean value type.`
+      );
+    }
+    return value;
   }
-  return readString(value);
+  const enumValue = readString(value);
+  if (enumValue.length === 0) {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}].value must be a non-empty enum option.`
+    );
+  }
+  if ((metadata.options?.length ?? 0) > 0 && !metadata.options?.includes(enumValue)) {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}].value must be one of the enum options.`
+    );
+  }
+  return enumValue;
+}
+
+type ImportedSettlementMetadataContext = {
+  peopleById: Record<string, Record<string, unknown>>;
+  citiesById: Record<string, Record<string, unknown>>;
+  buildingsById: Record<string, Record<string, unknown>>;
+};
+
+function createImportedSettlementMetadataContext(
+  rawPack: Record<string, unknown>
+): ImportedSettlementMetadataContext {
+  return {
+    peopleById: indexImportedRecords(rawPack.characters),
+    citiesById: indexImportedRecords(rawPack.cities),
+    buildingsById: indexImportedRecords(rawPack.houses),
+  };
+}
+
+function indexImportedRecords(value: unknown): Record<string, Record<string, unknown>> {
+  if (!Array.isArray(value)) {
+    return {};
+  }
+  const recordsById: Record<string, Record<string, unknown>> = {};
+  for (const record of value) {
+    if (record == null || typeof record !== "object" || Array.isArray(record)) {
+      continue;
+    }
+    const id = readString((record as Record<string, unknown>).id);
+    if (id.length > 0) {
+      recordsById[id] = record as Record<string, unknown>;
+    }
+  }
+  return recordsById;
+}
+
+function resolveImportedSettlementAttributeMetadata(
+  context: ImportedSettlementMetadataContext,
+  targetFamily: ScriptEditorSettlementContentRecord["targetFamily"],
+  targetId: string,
+  attributeKey: string,
+  declaredAttributeType: ScriptEditorSettlementContentRecord["attributeType"],
+  value: unknown,
+  settlementIndex: number,
+  contentIndex: number
+): SettlementAttributeMetadata {
+  if (targetFamily === "person") {
+    const person = context.peopleById[targetId];
+    if (person == null) {
+      throw new Error(
+        `Imported settlements[${settlementIndex}].contents[${contentIndex}].targetId references missing person target.`
+      );
+    }
+    const metadata =
+      PERSON_SETTLEMENT_BASE_ATTRIBUTES[attributeKey] ??
+      resolveImportedTypedAttributeMetadata(person.extendedAttributes, attributeKey) ??
+      resolveImportedCustomPropertyMetadata(person.customProperties, attributeKey) ??
+      inferImportedSettlementValueMetadata(declaredAttributeType, value);
+    if (metadata != null) {
+      return metadata;
+    }
+  } else if (targetFamily === "city") {
+    if (context.citiesById[targetId] == null) {
+      throw new Error(
+        `Imported settlements[${settlementIndex}].contents[${contentIndex}].targetId references missing city target.`
+      );
+    }
+    const metadata = CITY_SETTLEMENT_BASE_ATTRIBUTES[attributeKey];
+    if (metadata != null) {
+      return metadata;
+    }
+  } else {
+    if (context.buildingsById[targetId] == null) {
+      throw new Error(
+        `Imported settlements[${settlementIndex}].contents[${contentIndex}].targetId references missing building target.`
+      );
+    }
+    const metadata = BUILDING_SETTLEMENT_BASE_ATTRIBUTES[attributeKey];
+    if (metadata != null) {
+      return metadata;
+    }
+  }
+
+  throw new Error(
+    `Imported settlements[${settlementIndex}].contents[${contentIndex}].attributeKey must be an eligible calculable settlement attribute.`
+  );
+}
+
+function resolveImportedTypedAttributeMetadata(
+  value: unknown,
+  attributeKey: string
+): SettlementAttributeMetadata | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  const attribute = value.find(
+    (entry): entry is ScriptEditorTypedAttributeRecord =>
+      entry != null &&
+      typeof entry === "object" &&
+      !Array.isArray(entry) &&
+      readString((entry as Record<string, unknown>).key) === attributeKey
+  );
+  if (
+    attribute == null ||
+    (attribute.type !== "number" &&
+      attribute.type !== "boolean" &&
+      attribute.type !== "enum")
+  ) {
+    return null;
+  }
+  return {
+    attributeType: attribute.type,
+    ...(attribute.type === "enum" ? { options: attribute.options ?? [] } : {}),
+  };
+}
+
+function resolveImportedCustomPropertyMetadata(
+  value: unknown,
+  attributeKey: string
+): SettlementAttributeMetadata | null {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const currentValue = (value as Record<string, unknown>)[attributeKey];
+  if (typeof currentValue === "number") {
+    return { attributeType: "number" };
+  }
+  if (typeof currentValue === "boolean") {
+    return { attributeType: "boolean" };
+  }
+  if (typeof currentValue === "string") {
+    return { attributeType: "enum" };
+  }
+  return null;
+}
+
+function inferImportedSettlementValueMetadata(
+  declaredAttributeType: ScriptEditorSettlementContentRecord["attributeType"],
+  value: unknown
+): SettlementAttributeMetadata | null {
+  if (
+    declaredAttributeType === "number" &&
+    typeof value === "number" &&
+    Number.isFinite(value)
+  ) {
+    return { attributeType: "number" };
+  }
+  if (declaredAttributeType === "boolean" && typeof value === "boolean") {
+    return { attributeType: "boolean" };
+  }
+  if (
+    declaredAttributeType === "enum" &&
+    typeof value === "string" &&
+    value.trim().length > 0
+  ) {
+    return { attributeType: "enum" };
+  }
+  return null;
 }
 
 function mapImportedPlayableIntegrations(

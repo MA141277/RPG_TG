@@ -41,6 +41,22 @@ const SETTLEMENT_TARGET_COLLECTION_BY_FAMILY = {
   keyof SettlementRuntimeTargetState
 >;
 
+const RUNTIME_ATTRIBUTE_ALIASES: Record<
+  ExportedSettlementContent["targetFamily"],
+  Record<string, string>
+> = {
+  person: {},
+  city: {
+    "baseAttributes.prosperity": "prosperity",
+    "baseAttributes.security": "danger",
+  },
+  building: {
+    "baseAttributes.level": "level",
+    "baseAttributes.damaged": "damaged",
+    "baseAttributes.outputMultiplier": "outputMultiplier",
+  },
+};
+
 export function applyEffects(
   state: RuntimeState,
   effects: Effect[]
@@ -72,6 +88,12 @@ function applySettlementContent(
   content: ExportedSettlementContent,
   context: SettlementRuntimeContext
 ): SettlementRuntimeTargetState {
+  if (
+    (content.attributeType === "boolean" || content.attributeType === "enum") &&
+    content.operation !== "set"
+  ) {
+    return state;
+  }
   if (content.attributeType === "number" && content.operation === "add") {
     return applyNumericDelta(state, content, context, Number(content.value));
   }
@@ -129,7 +151,17 @@ function readSettlementTargetValue(
   context: SettlementRuntimeContext
 ): unknown {
   const target = readSettlementTarget(state, content, context);
-  return target?.[content.attributeKey];
+  if (target == null) {
+    return undefined;
+  }
+
+  const pathValue = readRecordPath(target, content.attributeKey);
+  if (pathValue !== undefined) {
+    return pathValue;
+  }
+
+  const alias = readRuntimeAttributeAlias(content);
+  return alias == null ? undefined : target[alias];
 }
 
 function patchSettlementTargetValue(
@@ -145,17 +177,91 @@ function patchSettlementTargetValue(
   if (collection == null || target == null) {
     return state;
   }
+  const alias = readRuntimeAttributeAlias(content);
+  const nextTarget =
+    hasRecordPath(target, content.attributeKey) || alias == null || !hasOwn(target, alias)
+      ? patchRecordPath(target, content.attributeKey, value)
+      : {
+          ...target,
+          [alias]: value,
+        };
 
   return {
     ...state,
     [collectionKey]: {
       ...collection,
-      [content.targetId]: {
-        ...target,
-        [content.attributeKey]: value,
-      },
+      [content.targetId]: nextTarget,
     },
   };
+}
+
+function readRuntimeAttributeAlias(
+  content: ExportedSettlementContent
+): string | undefined {
+  return RUNTIME_ATTRIBUTE_ALIASES[content.targetFamily]?.[content.attributeKey];
+}
+
+function readRecordPath(target: SettlementTargetRecord, attributeKey: string): unknown {
+  const parts = attributeKey.split(".").filter((part) => part.length > 0);
+  if (parts.length === 0) {
+    return undefined;
+  }
+
+  let current: unknown = target;
+  for (const part of parts) {
+    if (current == null || typeof current !== "object" || Array.isArray(current)) {
+      return undefined;
+    }
+    current = (current as SettlementTargetRecord)[part];
+  }
+  return current;
+}
+
+function hasRecordPath(target: SettlementTargetRecord, attributeKey: string): boolean {
+  return readRecordPath(target, attributeKey) !== undefined;
+}
+
+function patchRecordPath(
+  target: SettlementTargetRecord,
+  attributeKey: string,
+  value: string | number | boolean
+): SettlementTargetRecord {
+  const parts = attributeKey.split(".").filter((part) => part.length > 0);
+  if (parts.length === 0) {
+    return target;
+  }
+  return patchRecordPathParts(target, parts, value);
+}
+
+function patchRecordPathParts(
+  target: SettlementTargetRecord,
+  parts: string[],
+  value: string | number | boolean
+): SettlementTargetRecord {
+  const [head, ...tail] = parts;
+  if (head == null) {
+    return target;
+  }
+  if (tail.length === 0) {
+    return {
+      ...target,
+      [head]: value,
+    };
+  }
+
+  const current = target[head];
+  const currentRecord =
+    current != null && typeof current === "object" && !Array.isArray(current)
+      ? (current as SettlementTargetRecord)
+      : {};
+  return {
+    ...target,
+    [head]: patchRecordPathParts(currentRecord, tail, value),
+  };
+}
+
+function hasOwn(target: SettlementTargetRecord, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(target, key);
 }
 
 function readSettlementTarget(

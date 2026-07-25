@@ -5,6 +5,19 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-25 Structured Settlement Final Fix Wave
+
+### Changed
+- Threaded exported settlement definitions through active content and story runtime content so `event.type = "settlement"` resolves `settlementId`, applies structured `contents[]`, then continues through settlement-level `nextEventId` using the existing event-owned start path.
+- Made runtime settlement mutation path-aware for authored keys such as `baseAttributes.prosperity`, `baseAttributes.level`, and `baseAttributes.damaged`, with flat runtime aliases preserved where the active target is already materialized flat.
+- Tightened settlement content validation in runtime-pack export/import and scenario-pack loading for non-empty target/attribute ids, target existence, attribute eligibility/type, finite numeric values, boolean value types, enum option membership where authored options exist, and conflicting legacy `results[].nextEventId` vs settlement-level `nextEventId`.
+- Replaced free-text settlement value authoring with typed controls: numeric input for number attributes, true/false select for boolean attributes, and enum option select for enum attributes.
+
+### Impact
+- Event remains the only routing owner, while settlement follow-up remains settlement-level.
+- Invalid or ambiguous settlement-result compatibility data now fails closed before it can become active runtime content.
+- City/building settlement authoring keys now match the runtime mutation semantics used by production settlement execution.
+
 ## 2026-07-25 Generic Progression Track Task 2 Runtime And Settlement Handoff
 
 ### Changed

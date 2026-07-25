@@ -15,7 +15,9 @@ import type {
   ScriptEditorFlowRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorRuntimePackSchemaVersion,
+  ScriptEditorSettlementContentRecord,
   ScriptEditorStoryPackRecord,
+  ScriptEditorTypedAttributeRecord,
 } from "../../domain/script-editor-project";
 import { SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION } from "../../domain/script-editor-project";
 import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
@@ -86,6 +88,36 @@ type RuntimePackManifestFiles = {
   historicalCharacters: string;
   historicalCityRosters: string;
   historicalCharacterIdByCharacterId: string;
+};
+
+type SettlementAttributeMetadata = {
+  attributeType: ScriptEditorSettlementContentRecord["attributeType"];
+  options?: readonly string[];
+};
+
+const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
+  age: { attributeType: "number" },
+  stamina: { attributeType: "number" },
+  "stats.leadership": { attributeType: "number" },
+  "stats.martial": { attributeType: "number" },
+  "stats.intelligence": { attributeType: "number" },
+  "stats.politics": { attributeType: "number" },
+  "stats.charm": { attributeType: "number" },
+  "stats.fame": { attributeType: "number" },
+  "stats.gold": { attributeType: "number" },
+};
+
+const CITY_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
+  travelCost: { attributeType: "number" },
+  "baseAttributes.prosperity": { attributeType: "number" },
+  "baseAttributes.security": { attributeType: "number" },
+  "baseAttributes.population": { attributeType: "number" },
+};
+
+const BUILDING_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
+  "baseAttributes.level": { attributeType: "number" },
+  "baseAttributes.outputMultiplier": { attributeType: "number" },
+  "baseAttributes.damaged": { attributeType: "boolean" },
 };
 
 type RuntimePackManifest = {
@@ -317,6 +349,14 @@ function appendSettlementAuthoringDiagnostics(
       const targetFamily = contentRecord.targetFamily;
       const attributeType = contentRecord.attributeType;
       const operation = contentRecord.operation;
+      const targetId =
+        typeof contentRecord.targetId === "string"
+          ? contentRecord.targetId.trim()
+          : "";
+      const attributeKey =
+        typeof contentRecord.attributeKey === "string"
+          ? contentRecord.attributeKey.trim()
+          : "";
       if (
         targetFamily !== "person" &&
         targetFamily !== "city" &&
@@ -328,6 +368,22 @@ function appendSettlementAuthoringDiagnostics(
           message: "Settlement content targetFamily must be person, city, or building.",
         });
         return;
+      }
+
+      if (targetId.length === 0) {
+        diagnostics.push({
+          code: "missing-field",
+          fieldPath: `${contentFieldPath}.targetId`,
+          message: "Settlement content targetId must be non-empty.",
+        });
+      }
+
+      if (attributeKey.length === 0) {
+        diagnostics.push({
+          code: "missing-field",
+          fieldPath: `${contentFieldPath}.attributeKey`,
+          message: "Settlement content attributeKey must be non-empty.",
+        });
       }
 
       if (
@@ -359,8 +415,186 @@ function appendSettlementAuthoringDiagnostics(
           message: "Settlement content attribute type boolean or enum requires operation set.",
         });
       }
+
+      const metadata = resolveScriptEditorSettlementAttributeMetadata(
+        project,
+        targetFamily,
+        targetId,
+        attributeKey,
+        contentFieldPath,
+        diagnostics
+      );
+      if (metadata == null) {
+        return;
+      }
+      if (metadata.attributeType !== attributeType) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `${contentFieldPath}.attributeType`,
+          message:
+            `Settlement content attributeKey "${attributeKey}" is ${metadata.attributeType}, not ${attributeType}.`,
+        });
+        return;
+      }
+
+      appendSettlementValueDiagnostic(
+        contentRecord.value,
+        metadata,
+        `${contentFieldPath}.value`,
+        diagnostics
+      );
     });
   });
+}
+
+function resolveScriptEditorSettlementAttributeMetadata(
+  project: ScriptEditorProjectDefinition,
+  targetFamily: ScriptEditorSettlementContentRecord["targetFamily"],
+  targetId: string,
+  attributeKey: string,
+  contentFieldPath: string,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): SettlementAttributeMetadata | null {
+  if (targetId.length === 0 || attributeKey.length === 0) {
+    return null;
+  }
+
+  if (targetFamily === "person") {
+    const person = project.people.find((record) => record.id === targetId);
+    if (person == null) {
+      diagnostics.push({
+        code: "missing-reference",
+        fieldPath: `${contentFieldPath}.targetId`,
+        message: `Settlement content targetId "${targetId}" does not resolve to a person target.`,
+      });
+      return null;
+    }
+    return (
+      PERSON_SETTLEMENT_BASE_ATTRIBUTES[attributeKey] ??
+      resolveTypedSettlementAttributeMetadata(person.extendedAttributes, attributeKey) ??
+      pushIneligibleSettlementAttributeDiagnostic(
+        attributeKey,
+        `${contentFieldPath}.attributeKey`,
+        diagnostics
+      )
+    );
+  }
+
+  if (targetFamily === "city") {
+    if (!project.cities.some((record) => record.id === targetId)) {
+      diagnostics.push({
+        code: "missing-reference",
+        fieldPath: `${contentFieldPath}.targetId`,
+        message: `Settlement content targetId "${targetId}" does not resolve to a city target.`,
+      });
+      return null;
+    }
+    return (
+      CITY_SETTLEMENT_BASE_ATTRIBUTES[attributeKey] ??
+      pushIneligibleSettlementAttributeDiagnostic(
+        attributeKey,
+        `${contentFieldPath}.attributeKey`,
+        diagnostics
+      )
+    );
+  }
+
+  if (!project.buildings.some((record) => record.id === targetId)) {
+    diagnostics.push({
+      code: "missing-reference",
+      fieldPath: `${contentFieldPath}.targetId`,
+      message: `Settlement content targetId "${targetId}" does not resolve to a building target.`,
+    });
+    return null;
+  }
+  return (
+    BUILDING_SETTLEMENT_BASE_ATTRIBUTES[attributeKey] ??
+    pushIneligibleSettlementAttributeDiagnostic(
+      attributeKey,
+      `${contentFieldPath}.attributeKey`,
+      diagnostics
+    )
+  );
+}
+
+function resolveTypedSettlementAttributeMetadata(
+  attributes: readonly ScriptEditorTypedAttributeRecord[] | undefined,
+  attributeKey: string
+): SettlementAttributeMetadata | null {
+  const attribute = (attributes ?? []).find((entry) => entry.key === attributeKey);
+  if (
+    attribute == null ||
+    (attribute.type !== "number" &&
+      attribute.type !== "boolean" &&
+      attribute.type !== "enum")
+  ) {
+    return null;
+  }
+  return {
+    attributeType: attribute.type,
+    ...(attribute.type === "enum" ? { options: attribute.options ?? [] } : {}),
+  };
+}
+
+function pushIneligibleSettlementAttributeDiagnostic(
+  attributeKey: string,
+  fieldPath: string,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): null {
+  diagnostics.push({
+    code: "invalid-field",
+    fieldPath,
+    message:
+      `Settlement content attributeKey "${attributeKey}" must be an eligible calculable settlement attribute.`,
+  });
+  return null;
+}
+
+function appendSettlementValueDiagnostic(
+  value: unknown,
+  metadata: SettlementAttributeMetadata,
+  fieldPath: string,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  if (metadata.attributeType === "number") {
+    const numericValue = typeof value === "number" ? value : NaN;
+    if (!Number.isFinite(numericValue)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath,
+        message: "Settlement content number value must be a finite number.",
+      });
+    }
+    return;
+  }
+
+  if (metadata.attributeType === "boolean") {
+    if (typeof value !== "boolean") {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath,
+        message: "Settlement content boolean value must use a boolean value type.",
+      });
+    }
+    return;
+  }
+
+  if (typeof value !== "string" || value.trim().length === 0) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath,
+      message: "Settlement content enum value must be a non-empty string.",
+    });
+    return;
+  }
+
+  if ((metadata.options?.length ?? 0) > 0 && !metadata.options?.includes(value)) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath,
+      message: "Settlement content enum value must be one of the authored enum options.",
+    });
+  }
 }
 
 function appendProgressTrackAuthoringDiagnostics(
@@ -446,6 +680,25 @@ function appendLegacySettlementResultDiagnostics(
       code: "invalid-field",
       fieldPath: `${fieldPath}.results`,
       message: "Ambiguous legacy settlement result routing must fail closed.",
+    });
+    return;
+  }
+
+  const legacyNextEventId = [...nextEventIds][0] ?? "";
+  const settlementNextEventId =
+    typeof settlementRecord.nextEventId === "string"
+      ? settlementRecord.nextEventId.trim()
+      : "";
+  if (
+    legacyNextEventId.length > 0 &&
+    settlementNextEventId.length > 0 &&
+    legacyNextEventId !== settlementNextEventId
+  ) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `${fieldPath}.results`,
+      message:
+        "Conflicting legacy settlement result routing and settlement nextEventId is ambiguous and must fail closed.",
     });
   }
 }

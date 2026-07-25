@@ -24,12 +24,12 @@
 
 ## Execution State
 
-- Status: `closed`
+- Status: `running`
 - Last Updated: `2026-07-25`
-- Current Focus: `Task 4 complete: runtime settlement executes structured contents and docs closeout is recorded.`
-- Next Step: `No next child remains for this implementation plan.`
-- Verification: `npm.cmd run build:test and node --test tests/robustness.test.cjs --test-name-pattern "settlement|person custom attribute|runtime settlement" passed after the Task 4 red/green cycle.`
-- Notes: `Current repository execution truth still lives under docs/blueprints/**; this plan is closed as implementation evidence derived from the approved settlement structured authoring spec.`
+- Current Focus: `Final structured-settlement fix wave is implemented across production event runtime wiring, path-aware city/building mutations, fail-closed validation, legacy routing conflict rejection, and typed settlement value controls.`
+- Next Step: `Run final whole-branch review after resolving or waiving the unrelated city-building source assertion that blocks npm test.`
+- Verification: `npm.cmd run build:test passed; focused settlement robustness run passed with 542 passing, 0 failing, 176 skipped; npm test is blocked by an unrelated city-building mounted NPC UI source assertion.`
+- Notes: `Current repository execution truth still lives under docs/blueprints/**; this plan remains open until final whole-branch review and broader-suite disposition are clean.`
 
 ## Progress Log
 
@@ -53,6 +53,14 @@
   - Summary: `Completed Task 4. Runtime settlement now consumes structured contents[] directly for person, city, and building targets, and docs/change-log.md records the final authoring/runtime closeout.`
   - Verification: `RED node --test tests/robustness.test.cjs --test-name-pattern "runtime settlement" failed with applySettlementContents missing; GREEN npm.cmd run build:test and node --test tests/robustness.test.cjs --test-name-pattern "settlement|person custom attribute|runtime settlement" passed.`
   - Next: `No next child; plan closed.`
+- 2026-07-25
+  - Summary: `Final whole-branch review rejected closeout. Remaining blockers are: settlement events still do not execute settlement contents through production runtime flow; city/building authoring keys do not match runtime mutation semantics; settlement content validation is still not fail-closed enough for target/value eligibility; conflicting legacy nextEventId truth can still pass; and boolean/enum settlement value controls are still free-text in the editor.`
+  - Verification: `Whole-branch review returned Ready to merge = No with three Critical issues and two Important issues.`
+  - Next: `Execute one final fix wave spanning runtime content wiring, path-aware city/building settlement keys, deeper fail-closed validation, conflicting legacy routing rejection, and typed boolean/enum value controls.`
+- 2026-07-25
+  - Summary: `Implemented the final structured-settlement fix wave. Active content now carries settlements into story runtime content, settlement events apply contents and follow settlement-level nextEventId through the normal event start path, city/building authored baseAttributes keys mutate through path-aware runtime semantics, validation fails closed across export/import/loader for target/value/type gaps and conflicting legacy routing, and the settlement editor uses typed value controls.`
+  - Verification: `RED focused settlement regressions failed before implementation; GREEN npm.cmd run build:test passed and node --test tests/robustness.test.cjs --test-name-pattern "story runtime settlement|UI-authored city|settlement content target value|conflicting legacy|invalid typed values|settlement authoring|legacy settlement result routing" passed with 542 passing, 0 failing, 176 skipped. npm test remains blocked by unrelated tests/city-building-mount-authoring.test.cjs source assertion expecting appendScriptEditorCityMountedBuildingNpc(city, buildingIndex, nextNpcId) as a single-line source match. npm.cmd run lint:plans remains blocked by unrelated untracked docs/superpowers/plans/2026-07-25-generic-progression-track-implementation.md missing required Execution State and Progress Log sections.`
+  - Next: `Run final review once the unrelated city-building assertion is resolved or accepted as outside this settlement fix wave.`
 
 ---
 

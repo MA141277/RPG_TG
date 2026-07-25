@@ -3,8 +3,11 @@ import type { ActiveGameContentContext } from "../content/active-game-content";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { CharacterDefinition } from "../../domain/character";
+import type { CityDefinition } from "../../domain/city";
+import type { SettlementDefinition } from "../../domain/content-pack";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { HouseDefinition } from "../../domain/house";
 import type { StartupSessionBootstrap } from "../startup/startup-session-coordinator";
 import { applyIndoorScreenStoryFollowUp } from "./indoor-screen-story-follow-up";
 import {
@@ -50,8 +53,11 @@ export type MainRuntimeOrchestratorDependencies = {
   getStoryContent(): {
     eventDefinitionsById: Record<string, EventDefinition>;
     eventBindingsById?: Record<string, EventBinding>;
+    settlementDefinitionsById?: Record<string, SettlementDefinition>;
     dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
     activityDefinitionsById?: Record<string, ActivityDefinition>;
+    cityDefinitionsById?: Record<string, CityDefinition>;
+    houseDefinitionsById?: Record<string, HouseDefinition>;
     textEntriesById?: Record<string, string>;
   };
   resetMainGameRuntime(): void;
@@ -91,10 +97,19 @@ export function createMainRuntimeOrchestrator(
       ...(storyContent.eventBindingsById == null
         ? {}
         : { eventBindingsById: storyContent.eventBindingsById }),
+      ...(storyContent.settlementDefinitionsById == null
+        ? {}
+        : { settlementDefinitionsById: storyContent.settlementDefinitionsById }),
       dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
       ...(storyContent.activityDefinitionsById == null
         ? {}
         : { activityDefinitionsById: storyContent.activityDefinitionsById }),
+      ...(storyContent.cityDefinitionsById == null
+        ? {}
+        : { cityDefinitionsById: storyContent.cityDefinitionsById }),
+      ...(storyContent.houseDefinitionsById == null
+        ? {}
+        : { houseDefinitionsById: storyContent.houseDefinitionsById }),
       ...(storyContent.textEntriesById == null
         ? {}
         : { textEntriesById: storyContent.textEntriesById }),

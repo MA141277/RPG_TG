@@ -34,6 +34,22 @@ import type {
 } from "../core/contracts/progression-runtime";
 import type { FlowPlayableDefinition } from "./playables/flow";
 
+export type SettlementContentDefinition = {
+  targetFamily: "person" | "city" | "building";
+  targetId: string;
+  attributeKey: string;
+  attributeType: "number" | "boolean" | "enum";
+  operation: "add" | "subtract" | "set";
+  value: string | number | boolean;
+};
+
+export type SettlementDefinition = {
+  id: string;
+  title?: string;
+  nextEventId?: string;
+  contents?: SettlementContentDefinition[];
+};
+
 export type ContentPackDefinition = {
   schemaVersion: 1;
   id: string;
@@ -48,6 +64,7 @@ export type ContentPackDefinition = {
   characters?: CharacterDefinition[];
   events?: EventDefinition[];
   eventBindings?: EventBinding[];
+  settlements?: SettlementDefinition[];
   progressTracks?: ProgressTrackDefinition[];
   progressTrackBindings?: ProgressTrackBinding[];
   dialogues?: RuntimeDialogueDefinition[];
