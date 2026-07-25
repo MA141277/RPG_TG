@@ -3725,6 +3725,44 @@ test("scenario pack loader rejects settlement events without settlementId", asyn
   );
 });
 
+test("scenario pack loader rejects malformed settlement content rows", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedSettlements = JSON.parse(files["settlements.json"]);
+  exportedSettlements[0].contents = [
+    {
+      targetId: "person.hero",
+      attributeKey: "merit",
+      value: 1,
+    },
+  ];
+  files["settlements.json"] = JSON.stringify(exportedSettlements, null, 2);
+
+  await assert.rejects(
+    () =>
+      loadScenarioPackFromFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          files,
+          "malformed-settlement-content-pack"
+        )
+      ),
+    /settlements\[0\]\.contents\[0\]\.(targetFamily|attributeType|operation)|must be one of/i
+  );
+});
+
 test("built-in Liu Bang pack uses event-bindings instead of event-body trigger fields", async () => {
   const {
     loadScenarioPackFromFiles,

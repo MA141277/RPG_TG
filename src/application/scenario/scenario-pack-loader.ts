@@ -385,17 +385,17 @@ function assertRuntimeSettlementDefinitions(settlements: unknown): void {
           contentDefinition,
           `scenario settlements[${settlementIndex}].contents[${contentIndex}]`
         );
-        assertOptionalEnum(
+        assertEnum(
           contentDefinition.targetFamily,
           `scenario settlements[${settlementIndex}].contents[${contentIndex}].targetFamily`,
           ["person", "city", "building"]
         );
-        assertOptionalEnum(
+        assertEnum(
           contentDefinition.attributeType,
           `scenario settlements[${settlementIndex}].contents[${contentIndex}].attributeType`,
           ["number", "boolean", "enum"]
         );
-        assertOptionalEnum(
+        assertEnum(
           contentDefinition.operation,
           `scenario settlements[${settlementIndex}].contents[${contentIndex}].operation`,
           ["add", "subtract", "set"]
