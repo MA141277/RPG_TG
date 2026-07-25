@@ -63,6 +63,7 @@ type RuntimePackManifestFiles = {
   houses: string;
   buildingArrangements: string;
   cityEntries: string;
+  settlements: string;
   events: string;
   eventBindings: string;
   dialogues: string;
@@ -108,6 +109,7 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   houses: "./houses.json",
   buildingArrangements: "./building-arrangements.json",
   cityEntries: "./city-entries.json",
+  settlements: "./settlements.json",
   events: "./events.json",
   eventBindings: "./event-bindings.json",
   dialogues: "./dialogues.json",
@@ -153,6 +155,7 @@ export function validateScriptEditorProjectForRuntimeExport(
     materializeScriptEditorCityBuildingRuntimeFamilies(project);
   appendMountedBuildingDiagnostics(project, diagnostics);
   appendCityBuildingCustomAttributeDiagnostics(project, diagnostics);
+  appendSettlementAuthoringDiagnostics(project, diagnostics);
   const exportedDialogues = narrativeRuntime.dialogues;
   const exportedEvents = extractRuntimeEvents(
     project,
@@ -191,6 +194,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       houses: cityBuildingRuntimeFamilies.houses,
       buildingArrangements: cityBuildingRuntimeFamilies.buildingArrangements,
       cityEntries: cityBuildingRuntimeFamilies.cityEntries,
+      settlements: project.settlements,
       events: exportedEvents,
       eventBindings: exportedEventBindings,
       dialogues: exportedDialogues,
@@ -259,6 +263,79 @@ function appendCityBuildingCustomAttributeDiagnostics(
         message:
           `Building custom attribute "${key}" cannot be exported to the current runtime HouseDefinition contract.`,
       });
+    });
+  });
+}
+
+function appendSettlementAuthoringDiagnostics(
+  project: ScriptEditorProjectDefinition,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  const firstSettlementIndexByTitle = new Map<string, number>();
+
+  project.settlements.forEach((settlementRecord, settlementIndex) => {
+    const fieldPath = `project.settlements[${settlementIndex}]`;
+    const title =
+      typeof settlementRecord.title === "string"
+        ? settlementRecord.title.trim()
+        : "";
+    const normalizedTitle = title.toLocaleLowerCase();
+    if (normalizedTitle.length > 0) {
+      const firstIndex = firstSettlementIndexByTitle.get(normalizedTitle);
+      if (firstIndex == null) {
+        firstSettlementIndexByTitle.set(normalizedTitle, settlementIndex);
+      } else {
+        diagnostics.push({
+          code: "duplicate-id",
+          fieldPath: `${fieldPath}.title`,
+          message: "Duplicate settlement title.",
+        });
+      }
+    }
+
+    (settlementRecord.contents ?? []).forEach((content, contentIndex) => {
+      const contentFieldPath = `${fieldPath}.contents[${contentIndex}]`;
+      if (content == null || typeof content !== "object" || Array.isArray(content)) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: contentFieldPath,
+          message: "Settlement content row must be an object.",
+        });
+        return;
+      }
+
+      const contentRecord = content as Record<string, unknown>;
+      const attributeType = contentRecord.attributeType;
+      const operation = contentRecord.operation;
+      if (
+        attributeType !== "number" &&
+        attributeType !== "boolean" &&
+        attributeType !== "enum"
+      ) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `${contentFieldPath}.attributeType`,
+          message: "Settlement content attribute type must be number, boolean, or enum.",
+        });
+        return;
+      }
+
+      if (operation !== "add" && operation !== "subtract" && operation !== "set") {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `${contentFieldPath}.operation`,
+          message: "Settlement content operation must be add, subtract, or set.",
+        });
+        return;
+      }
+
+      if ((attributeType === "boolean" || attributeType === "enum") && operation !== "set") {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `${contentFieldPath}.operation`,
+          message: "Settlement content attribute type boolean or enum requires operation set.",
+        });
+      }
     });
   });
 }
@@ -367,6 +444,9 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityEntries)]: stringifyJson(
       cityBuildingRuntimeFamilies.cityEntries
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.settlements)]: stringifyJson(
+      project.settlements
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.events)]: stringifyJson(
       exportedEvents

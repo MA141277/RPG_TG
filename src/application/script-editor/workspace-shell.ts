@@ -1326,6 +1326,16 @@ function resolveIssueTab(
     return "basics";
   }
 
+  if (family === "settlements") {
+    if (remainder.startsWith("contents")) {
+      return "contents";
+    }
+    if (remainder.startsWith("nextEventId")) {
+      return "routing";
+    }
+    return "profile";
+  }
+
   if (family === "storyNodes") {
     return remainder.startsWith("related") ? "links" : "profile";
   }

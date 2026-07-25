@@ -7397,63 +7397,213 @@ test("script editor settlement event export preserves formal settlement event ty
   assert.equal(importedProject.events[0]?.settlementId, "settlement.opening.default");
 });
 
-test("script editor project save and load preserve settlement result entries", async () => {
+test("script editor runtime export rejects duplicate settlement title", () => {
   const {
-    serializeScriptEditorProjectToFiles,
-  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.success",
+      title: "Opening Settlement",
+    },
+    {
+      id: "settlement.opening.failure",
+      title: "Opening Settlement",
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /duplicate settlement title/i
+  );
+});
+
+test("script editor runtime export rejects invalid settlement content operation", () => {
   const {
-    loadScriptEditorProjectFromFiles,
-  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
       id: "settlement.opening.default",
       title: "Opening Settlement",
-      results: [
+      contents: [
         {
-          id: "result.success",
-          label: "Success",
-          nextEventId: "event.follow-up",
-        },
-        {
-          id: "result.close",
-          label: "Close",
-          nextEventId: "",
+          targetFamily: "person",
+          targetId: "person.hero",
+          attributeKey: "flag.ready",
+          attributeType: "boolean",
+          operation: "add",
+          value: true,
         },
       ],
     },
   ];
-  project.events.push({
-    id: "event.follow-up",
-    title: "Follow Up Event",
-    destination: { family: "dialogue", targetId: "dialogue.opening" },
-  });
 
-  const serializedFiles = serializeScriptEditorProjectToFiles(project);
-  const savedSettlements = JSON.parse(serializedFiles["settlements.json"]);
-  const loadedProject = await loadScriptEditorProjectFromFiles(
-    createImportedFilesFromSerializedJsonRecord(serializedFiles, "settlement-result-project")
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /attribute type|operation/i
   );
+});
 
-  assert.deepEqual(savedSettlements, [
+test("script editor runtime import fails closed on ambiguous legacy settlement result routing", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
     {
       id: "settlement.opening.default",
       title: "Opening Settlement",
-      results: [
+    },
+  ];
+  project.events = [
+    {
+      id: "event.settlement.opening",
+      title: "Opening Settlement Event",
+      type: "settlement",
+      settlementId: "settlement.opening.default",
+      actions: [{ type: "closeBuilding" }],
+    },
+    {
+      id: "event.follow-up.success",
+      title: "Success Follow Up",
+      actions: [{ type: "closeBuilding" }],
+    },
+    {
+      id: "event.follow-up.failure",
+      title: "Failure Follow Up",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const manifest = JSON.parse(files["pack.json"]);
+  manifest.files.settlements = "./settlements.json";
+  files["pack.json"] = JSON.stringify(manifest, null, 2);
+  files["settlements.json"] = JSON.stringify(
+    [
+      {
+        id: "settlement.opening.default",
+        title: "Opening Settlement",
+        results: [
+          {
+            id: "result.success",
+            label: "Success",
+            nextEventId: "event.follow-up.success",
+          },
+          {
+            id: "result.failure",
+            label: "Failure",
+            nextEventId: "event.follow-up.failure",
+          },
+        ],
+      },
+    ],
+    null,
+    2
+  );
+
+  await assert.rejects(
+    () =>
+      loadScriptEditorProjectFromScenarioPackFiles(
+        createImportedFilesFromSerializedJsonRecord(files, "ambiguous-legacy-settlement-pack")
+      ),
+    /legacy settlement result|ambiguous nextEventId/i
+  );
+});
+
+test("script editor runtime import migrates legacy settlement result routing when unambiguous", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+    },
+  ];
+  project.events = [
+    {
+      id: "event.settlement.opening",
+      title: "Opening Settlement Event",
+      type: "settlement",
+      settlementId: "settlement.opening.default",
+      actions: [{ type: "closeBuilding" }],
+    },
+    {
+      id: "event.follow-up",
+      title: "Follow Up Event",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const manifest = JSON.parse(files["pack.json"]);
+  manifest.files.settlements = "./settlements.json";
+  files["pack.json"] = JSON.stringify(manifest, null, 2);
+  files["settlements.json"] = JSON.stringify(
+    [
+      {
+        id: "settlement.opening.default",
+        title: "Opening Settlement",
+        results: [
+          {
+            id: "result.success",
+            label: "Success",
+            nextEventId: "event.follow-up",
+          },
+          {
+            id: "result.close",
+            label: "Close",
+            nextEventId: "event.follow-up",
+          },
+        ],
+        contents: [
+          {
+            targetFamily: "person",
+            targetId: "person.hero",
+            attributeKey: "merit",
+            attributeType: "number",
+            operation: "add",
+            value: 5,
+          },
+        ],
+      },
+    ],
+    null,
+    2
+  );
+
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    createImportedFilesFromSerializedJsonRecord(files, "safe-legacy-settlement-pack")
+  );
+
+  assert.deepEqual(importedProject.settlements, [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+      nextEventId: "event.follow-up",
+      contents: [
         {
-          id: "result.success",
-          label: "Success",
-          nextEventId: "event.follow-up",
-        },
-        {
-          id: "result.close",
-          label: "Close",
-          nextEventId: "",
+          targetFamily: "person",
+          targetId: "person.hero",
+          attributeKey: "merit",
+          attributeType: "number",
+          operation: "add",
+          value: 5,
         },
       ],
     },
   ]);
-  assert.deepEqual(loadedProject.settlements, savedSettlements);
 });
 
 test(

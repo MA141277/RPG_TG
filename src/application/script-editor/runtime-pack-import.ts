@@ -65,6 +65,7 @@ type RuntimePackManifestFiles = {
   cities?: string;
   houses?: string;
   buildingArrangements?: string;
+  settlements?: string;
   maps?: string;
   cityEntries?: string;
   textEntries?: string;
@@ -243,7 +244,7 @@ export function importScenarioPackToScriptEditorProject(
     ),
     buildingArrangements: readBuildingArrangementsFamily(rawPack),
     cityEntries: pack.cityEntries ?? [],
-    settlements: [],
+    settlements: mapImportedSettlements(rawPack),
     events: mapImportedEvents(pack.events ?? [], importedMinigames),
     eventBindings: mapImportedEventBindings(rawPack),
     dialogues: mapImportedRuntimeDialogues(rawPack),
@@ -624,6 +625,134 @@ function mapTextEntries(
     id,
     text,
   }));
+}
+
+function mapImportedSettlements(
+  rawPack: Record<string, unknown>
+): ScriptEditorProjectDefinition["settlements"] {
+  const settlements = rawPack.settlements;
+  if (!Array.isArray(settlements)) {
+    return [];
+  }
+
+  return settlements.map((value, index) => {
+    if (value == null || typeof value !== "object" || Array.isArray(value)) {
+      throw new Error(`Imported settlements[${index}] must be an object.`);
+    }
+
+    const settlement = value as Record<string, unknown>;
+    const id = readString(settlement.id) || `settlement.imported.${index + 1}`;
+    const nextEventId = readImportedSettlementNextEventId(settlement);
+    const contents = Array.isArray(settlement.contents)
+      ? settlement.contents.map((content, contentIndex) =>
+          mapImportedSettlementContent(content, index, contentIndex)
+        )
+      : [];
+
+    return {
+      id,
+      title: readString(settlement.title) || id,
+      ...(nextEventId.length === 0 ? {} : { nextEventId }),
+      ...(contents.length === 0 ? {} : { contents }),
+    };
+  });
+}
+
+function readImportedSettlementNextEventId(
+  settlement: Record<string, unknown>
+): string {
+  if (!Object.hasOwn(settlement, "results")) {
+    return readString(settlement.nextEventId);
+  }
+
+  const results = settlement.results;
+  if (!Array.isArray(results)) {
+    throw new Error("Imported legacy settlement results must be an array.");
+  }
+
+  const nextEventIds = new Set<string>();
+  for (const result of results) {
+    if (result == null || typeof result !== "object" || Array.isArray(result)) {
+      throw new Error("Imported legacy settlement result must be an object.");
+    }
+    nextEventIds.add(readString((result as Record<string, unknown>).nextEventId));
+  }
+
+  if (nextEventIds.size > 1) {
+    throw new Error(
+      "Ambiguous legacy settlement result routing must fail closed."
+    );
+  }
+
+  return [...nextEventIds][0] ?? readString(settlement.nextEventId);
+}
+
+function mapImportedSettlementContent(
+  value: unknown,
+  settlementIndex: number,
+  contentIndex: number
+): NonNullable<ScriptEditorProjectDefinition["settlements"][number]["contents"]>[number] {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}] must be an object.`
+    );
+  }
+
+  const content = value as Record<string, unknown>;
+  const targetFamily = readString(content.targetFamily);
+  const attributeType = readString(content.attributeType);
+  const operation = readString(content.operation);
+  if (
+    targetFamily !== "person" &&
+    targetFamily !== "city" &&
+    targetFamily !== "building"
+  ) {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}].targetFamily must be person, city, or building.`
+    );
+  }
+  if (
+    attributeType !== "number" &&
+    attributeType !== "boolean" &&
+    attributeType !== "enum"
+  ) {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}].attributeType must be number, boolean, or enum.`
+    );
+  }
+  if (operation !== "add" && operation !== "subtract" && operation !== "set") {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}].operation must be add, subtract, or set.`
+    );
+  }
+  if ((attributeType === "boolean" || attributeType === "enum") && operation !== "set") {
+    throw new Error(
+      `Imported settlements[${settlementIndex}].contents[${contentIndex}] attribute type requires operation set.`
+    );
+  }
+
+  return {
+    targetFamily,
+    targetId: readString(content.targetId),
+    attributeKey: readString(content.attributeKey),
+    attributeType,
+    operation,
+    value: normalizeImportedSettlementValue(content.value, attributeType),
+  };
+}
+
+function normalizeImportedSettlementValue(
+  value: unknown,
+  attributeType: "number" | "boolean" | "enum"
+): string | number | boolean {
+  if (attributeType === "number") {
+    const numberValue = typeof value === "number" ? value : Number(readString(value));
+    return Number.isFinite(numberValue) ? numberValue : 0;
+  }
+  if (attributeType === "boolean") {
+    return value === true || readString(value) === "true";
+  }
+  return readString(value);
 }
 
 function mapImportedPlayableIntegrations(

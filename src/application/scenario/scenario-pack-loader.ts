@@ -252,13 +252,17 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.cityEntries != null) {
     assertArray(value.cityEntries, "scenario city entries");
   }
+  const rawSettlements = (value as Record<string, unknown>).settlements;
+  if (rawSettlements != null) {
+    assertRuntimeSettlementDefinitions(rawSettlements);
+  }
   assertArray(value.events, "scenario events");
   assertRuntimeEventsDoNotUseRetiredTriggerFields(value.events);
   assertRuntimeEventsPreserveCanonicalRoutingContracts(
     value.events,
-    isRecord((value as Record<string, unknown>).settlements) ||
-      Array.isArray((value as Record<string, unknown>).settlements)
-      ? (value as Record<string, unknown>).settlements
+    isRecord(rawSettlements) ||
+      Array.isArray(rawSettlements)
+      ? rawSettlements
       : undefined
   );
   if (value.eventBindings != null) {
@@ -356,6 +360,83 @@ function assertRuntimeEventsDoNotUseRetiredTriggerFields(events: unknown[]): voi
       );
     }
   });
+}
+
+function assertRuntimeSettlementDefinitions(settlements: unknown): void {
+  assertArray(settlements, "scenario settlements");
+  settlements.forEach((settlementDefinition, settlementIndex) => {
+    assertObject(
+      settlementDefinition,
+      `scenario settlements[${settlementIndex}]`
+    );
+    if (Object.hasOwn(settlementDefinition, "results")) {
+      assertLegacySettlementResultsRouteUnambiguously(
+        settlementDefinition.results,
+        settlementIndex
+      );
+    }
+    if (settlementDefinition.contents != null) {
+      assertArray(
+        settlementDefinition.contents,
+        `scenario settlements[${settlementIndex}].contents`
+      );
+      settlementDefinition.contents.forEach((contentDefinition, contentIndex) => {
+        assertObject(
+          contentDefinition,
+          `scenario settlements[${settlementIndex}].contents[${contentIndex}]`
+        );
+        assertOptionalEnum(
+          contentDefinition.targetFamily,
+          `scenario settlements[${settlementIndex}].contents[${contentIndex}].targetFamily`,
+          ["person", "city", "building"]
+        );
+        assertOptionalEnum(
+          contentDefinition.attributeType,
+          `scenario settlements[${settlementIndex}].contents[${contentIndex}].attributeType`,
+          ["number", "boolean", "enum"]
+        );
+        assertOptionalEnum(
+          contentDefinition.operation,
+          `scenario settlements[${settlementIndex}].contents[${contentIndex}].operation`,
+          ["add", "subtract", "set"]
+        );
+        if (
+          (contentDefinition.attributeType === "boolean" ||
+            contentDefinition.attributeType === "enum") &&
+          contentDefinition.operation !== "set"
+        ) {
+          throw new Error(
+            `scenario settlements[${settlementIndex}].contents[${contentIndex}] attribute type requires operation set.`
+          );
+        }
+      });
+    }
+  });
+}
+
+function assertLegacySettlementResultsRouteUnambiguously(
+  results: unknown,
+  settlementIndex: number
+): void {
+  assertArray(results, `scenario settlements[${settlementIndex}].results`);
+  const nextEventIds = new Set<string>();
+  results.forEach((resultDefinition, resultIndex) => {
+    assertObject(
+      resultDefinition,
+      `scenario settlements[${settlementIndex}].results[${resultIndex}]`
+    );
+    const nextEventId =
+      typeof resultDefinition.nextEventId === "string"
+        ? resultDefinition.nextEventId.trim()
+        : "";
+    nextEventIds.add(nextEventId);
+  });
+
+  if (nextEventIds.size > 1) {
+    throw new Error(
+      "Ambiguous legacy settlement result routing must fail closed."
+    );
+  }
 }
 
 function assertRuntimeEventsPreserveCanonicalRoutingContracts(
@@ -506,6 +587,7 @@ type ScenarioPackManifestFiles = {
   buildingArrangements?: string;
   maps?: string;
   cityEntries?: string;
+  settlements?: string;
   textEntries?: string;
   eventBindings?: string;
   activities?: string;
