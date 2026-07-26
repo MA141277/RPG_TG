@@ -1,0 +1,11 @@
+[
+  {
+    "id": "event.progression.training",
+    "chapterId": "chapter.prototype",
+    "name": "Progression Training Settlement",
+    "occurrence": "once",
+    "type": "settlement",
+    "dialogueId": "",
+    "settlementId": "settlement.progression.training"
+  }
+]

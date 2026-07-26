@@ -5,16 +5,43 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-26 Script Editor Relation Draft Row Regression Hardening
+
+### Changed
+- Updated [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts:1) so creator-facing relation arrays for story-node links, dialogue participants, and event relations preserve blank draft rows during authoring normalization instead of filtering them out immediately after the creator clicks `新增关联`.
+- Updated [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) so the Event editor's stable `事件信息` page now includes the authored relation-object fields directly instead of leaving them behind unreachable internal tab branches.
+- Updated [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) so workspace-scope Script Editor notices render on the creator workbench itself, and blocked `运行预览` / `剧本导出` clicks now route through the existing validation feedback path instead of failing silently.
+- Added regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) to lock the authoring contract that blank draft relation rows remain editable for those three creator surfaces.
+- Expanded [tests/browser-script-editor-deep-actions-smoke.test.cjs](/D:/workspace/project/RPG_TG/tests/browser-script-editor-deep-actions-smoke.test.cjs:1) so the browser smoke now exercises add/remove flows for story-node related people, dialogue participants, and event related people on the real Script Editor surface.
+
+### Impact
+- Script Editor creators can now click `新增关联` and immediately see an editable empty row on the current panel instead of having the row disappear during normalization.
+- The guarded behavior now covers the shared string-relation authoring pattern across story, dialogue, and event surfaces, reducing the chance of the same regression reappearing in one panel while another remains green.
+- When preview/export is blocked by incomplete creator data, the workbench now shows the blocking reason in-place instead of leaving creators with a no-op toolbar button.
+
 ## 2026-07-26 Stage Configuration Regression Hardening And Governance Sync
+
+## 2026-07-26 Browser Stage And Settlement Smoke Coverage
+
+### Changed
+- Updated [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:1) with a read-only `window.__rpgTgTest.getRuntimeSnapshot()` test seam so browser automation can inspect the active pack, player state, progression runtime state, and event history without bypassing event routing or settlement execution boundaries.
+- Added [tests/browser-stage-settlement-smoke.test.cjs](/D:/workspace/project/RPG_TG/tests/browser-stage-settlement-smoke.test.cjs:1) plus the imported runtime-pack fixture under [tests/fixtures/scenario-packs/browser-stage-settlement-smoke](/D:/workspace/project/RPG_TG/tests/fixtures/scenario-packs/browser-stage-settlement-smoke/pack.json:1) to exercise a creator-realistic browser flow: open JSON scenario selection, import a pack, trigger an immediate settlement event, and verify stage convergence plus settlement-runtime execution.
+- Updated [package.json](/D:/workspace/project/RPG_TG/package.json:1) so the new browser smoke test runs from the main repository test command when Playwright is available, while still failing closed on real browser/runtime regressions instead of reimplementing the path in Node-only assertions.
+
+### Impact
+- The repository now has a browser-level regression that covers the actual import and startup path for stage progression, authored settlement instances, and settlement-runtime consumption in one smoke slice.
+- The new test seam remains read-only: progression still emits only settlement instances, and all final gameplay mutations still pass through the settlement runtime on the existing event-routed path.
 
 ### Changed
 - Updated [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts:1) so changing a stage-configuration binding's applied object type now clears the stale `ownerId` immediately instead of preserving an invalid cross-type reference into later export and runtime consumption.
+- Updated [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) so stage-configuration progress track text and threshold inputs now sync during `input`, not only on `change`, keeping preview/export validation aligned with what creators have typed before they leave the field.
 - Added regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) for two creator-realistic paths: authoring a stage rule through binding-plus-track data and changing the applied object type without carrying over the old object id.
 - Updated [tests/city-building-mount-authoring.test.cjs](/D:/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs:1) so the mounted-NPC UI source guard accepts the current multi-line helper call shape instead of falsely failing on formatting-only line breaks.
 - Updated [docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md](/D:/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md:1) to bring the closed-version `routing_basis` field back in sync with the current Blueprint governance contract enforced by the repository tests.
 
 ### Impact
 - Stage configuration authoring no longer leaves stale applied-object ids behind when creators switch object types, so exported rule data and downstream settlement-runtime consumption stay type-consistent.
+- Creators can now type `经验字段` and similar stage-rule values, then immediately click `运行预览` or `剧本导出` without being blocked by stale pre-edit validation state.
 - Full repository verification is green again across authoring regressions, mounted-building UI guards, and Blueprint governance checks.
 
 ## 2026-07-25 Authoring Runtime Legacy Cutover Closeout

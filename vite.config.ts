@@ -114,7 +114,7 @@ export default defineConfig({
   appType: "mpa",
   server: {
     watch: {
-      ignored: ["**/.codex-temp/**"],
+      ignored: ["**/.codex-temp/**", "**/.superpowers/**"],
     },
   },
   plugins: [

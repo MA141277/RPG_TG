@@ -1,0 +1,35 @@
+{
+  "id": "scenario.browser.progression_smoke",
+  "title": "Browser Progression Smoke",
+  "playerCharacterId": "char.browser.smoke",
+  "chapterId": "chapter.prototype",
+  "initialCalendar": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "initialLocation": {
+    "mapId": "map.yuanmo_campaign",
+    "cityId": "city.browser.smoke",
+    "houseId": null,
+    "view": "map"
+  },
+  "initialPlayerCoordinate": {
+    "x": 334,
+    "y": 318
+  },
+  "initialUi": {
+    "reviewDateText": "Smoke Review",
+    "mainHouseMissionText": "Verify progression settlement routing"
+  },
+  "entryEventId": "event.progression.training",
+  "launchPolicy": {
+    "characterSelection": "fixed",
+    "initialView": "map",
+    "entryEventTiming": "immediate"
+  },
+  "tags": [
+    "test",
+    "browser-smoke"
+  ]
+}

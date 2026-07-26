@@ -1,0 +1,30 @@
+[
+  {
+    "id": "settlement.progression.training",
+    "title": "Training Settlement",
+    "contents": [
+      {
+        "targetFamily": "person",
+        "targetId": "char.browser.smoke",
+        "attributeKey": "stamina",
+        "attributeType": "number",
+        "operation": "add",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "id": "settlement.progression.tier.2",
+    "title": "Tier 2 Settlement",
+    "contents": [
+      {
+        "targetFamily": "person",
+        "targetId": "char.browser.smoke",
+        "attributeKey": "stamina",
+        "attributeType": "number",
+        "operation": "add",
+        "value": 5
+      }
+    ]
+  }
+]

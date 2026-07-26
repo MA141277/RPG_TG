@@ -678,6 +678,40 @@ function getCurrentPlayerCharacter(): CharacterDefinition | null {
   );
 }
 
+function cloneTestDebugValue<T>(value: T): T {
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
+  }
+
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function getRpgTgTestDebugSnapshot(): RpgTgTestDebugSnapshot {
+  return cloneTestDebugValue({
+    activePackId: activeContentContext.packId,
+    activePackTitle: activeContentContext.gameContent.title,
+    currentPlayerCharacterId: currentPlayerCharacterId ?? null,
+    currentView: appState.gameState.ui.currentView,
+    currentCityId: appState.gameState.world.currentCityId,
+    currentHouseId: appState.gameState.world.currentHouseId,
+    playerCharacter: getCurrentPlayerCharacter(),
+    progression: appState.gameState.runtime.progression ?? null,
+    eventHistory: appState.gameState.runtime.eventHistory,
+  });
+}
+
+function attachRpgTgTestDebugApi(): void {
+  const debugRoot = window as Window & {
+    __rpgTgTest?: RpgTgTestDebugApi;
+  };
+
+  debugRoot.__rpgTgTest = {
+    getRuntimeSnapshot: getRpgTgTestDebugSnapshot,
+  };
+}
+
+attachRpgTgTestDebugApi();
+
 function getCurrentCityUiContext(): {
   cityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];
@@ -1712,6 +1746,22 @@ type PendingScenarioStartupRequest =
       source: ModSourceDescriptor;
       previewSession?: true;
     };
+
+type RpgTgTestDebugSnapshot = {
+  activePackId: string;
+  activePackTitle: string;
+  currentPlayerCharacterId: string | null;
+  currentView: AppState["gameState"]["ui"]["currentView"];
+  currentCityId: string;
+  currentHouseId: string | null;
+  playerCharacter: CharacterDefinition | null;
+  progression: GameState["runtime"]["progression"] | null;
+  eventHistory: GameState["runtime"]["eventHistory"];
+};
+
+type RpgTgTestDebugApi = {
+  getRuntimeSnapshot(): RpgTgTestDebugSnapshot;
+};
 
 let pendingScenarioStartupRequest: PendingScenarioStartupRequest | null = null;
 

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "kind": "scenario-pack",
+  "id": "scenario-pack.browser.progression-smoke",
+  "title": "Browser Progression Smoke",
+  "description": "Minimal browser smoke scenario for progression and settlement runtime.",
+  "files": {
+    "scenarioProfile": "scenario-profile.json",
+    "cities": "cities.json",
+    "characters": "characters.json",
+    "events": "events.json",
+    "dialogues": "dialogues.json",
+    "settlements": "settlements.json",
+    "progressTracks": "progress-tracks.json",
+    "progressTrackBindings": "progress-track-bindings.json"
+  }
+}

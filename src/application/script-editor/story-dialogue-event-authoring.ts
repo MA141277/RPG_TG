@@ -314,7 +314,7 @@ export function createDefaultScriptEditorSettlementRecord(
       typeof indexOrId === "string"
         ? indexOrId
         : `settlement.new.${suffix}`,
-    title: `缁撶畻 ${suffix}`,
+    title: `结算 ${suffix}`,
     nextEventId: "",
     contents: [createDefaultScriptEditorSettlementContentRecord()],
   };
@@ -388,9 +388,11 @@ export function normalizeScriptEditorStoryNodeRecord(
     chapterId: normalizeOptionalString(record.chapterId),
     summary: normalizeOptionalString(record.summary),
     progressMode: normalizeStoryProgressMode(record.progressMode),
-    relatedPersonIds: normalizeStringArray(record.relatedPersonIds),
-    relatedDialogueIds: normalizeStringArray(record.relatedDialogueIds),
-    relatedEventIds: normalizeStringArray(record.relatedEventIds),
+    relatedPersonIds: normalizeStringArray(record.relatedPersonIds, { preserveEmptyEntries: true }),
+    relatedDialogueIds: normalizeStringArray(record.relatedDialogueIds, {
+      preserveEmptyEntries: true,
+    }),
+    relatedEventIds: normalizeStringArray(record.relatedEventIds, { preserveEmptyEntries: true }),
   };
 }
 
@@ -401,7 +403,9 @@ export function normalizeScriptEditorDialogueRecord(
     ...record,
     title: normalizeString(record.title, record.id),
     storyNodeId: normalizeOptionalString(record.storyNodeId),
-    participantPersonIds: normalizeStringArray(record.participantPersonIds),
+    participantPersonIds: normalizeStringArray(record.participantPersonIds, {
+      preserveEmptyEntries: true,
+    }),
     nodes: (record.nodes ?? []).map(normalizeDialogueNodeRecord),
     ...(Array.isArray(record.followUps) && record.followUps.length > 0
       ? { followUps: record.followUps.map(normalizeDialogueFollowUp) }
@@ -435,9 +439,15 @@ export function normalizeScriptEditorEventRecord(
     destination: normalizeEventDestination(record.destination),
     relations: {
       storyNodeId: normalizeOptionalString(record.relations?.storyNodeId),
-      personIds: normalizeStringArray(record.relations?.personIds),
-      cityIds: normalizeStringArray(record.relations?.cityIds),
-      buildingIds: normalizeStringArray(record.relations?.buildingIds),
+      personIds: normalizeStringArray(record.relations?.personIds, {
+        preserveEmptyEntries: true,
+      }),
+      cityIds: normalizeStringArray(record.relations?.cityIds, {
+        preserveEmptyEntries: true,
+      }),
+      buildingIds: normalizeStringArray(record.relations?.buildingIds, {
+        preserveEmptyEntries: true,
+      }),
     },
     previewSummary: {
       previewNotes: normalizeOptionalString(record.previewSummary?.previewNotes),
@@ -1581,8 +1591,16 @@ function normalizeOptionalTrimmedString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function normalizeStringArray(value: readonly string[] | undefined): string[] {
-  return Array.isArray(value)
-    ? value.map((entry) => (typeof entry === "string" ? entry : "")).filter(Boolean)
-    : [];
+function normalizeStringArray(
+  value: readonly string[] | undefined,
+  options: { preserveEmptyEntries?: boolean } = {}
+): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const normalizedEntries = value.map((entry) => (typeof entry === "string" ? entry : ""));
+  return options.preserveEmptyEntries === true
+    ? normalizedEntries
+    : normalizedEntries.filter(Boolean);
 }

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "city.browser.smoke",
+    "name": "Smoke City",
+    "regionId": "region.smoke",
+    "mapNodeId": "settlement.browser.smoke",
+    "mapPlacement": {
+      "mapId": "map.yuanmo_campaign",
+      "mapNodeId": "settlement.browser.smoke",
+      "x": 334,
+      "y": 318,
+      "kind": "settlement",
+      "label": "Smoke City",
+      "summary": "Progression settlement browser smoke test city."
+    },
+    "houseIds": [],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "test"
+    ],
+    "prosperity": 50,
+    "danger": 10,
+    "specialDemand": []
+  }
+]

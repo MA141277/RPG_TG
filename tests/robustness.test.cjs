@@ -4526,6 +4526,28 @@ test("script editor settlement authoring syncs creator inputs before preview exp
   assert.match(onInputBlock, /this\.applyScriptEditorSettlementContentField\(index, field, target\.value\)/);
 });
 
+test("script editor stage configuration authoring syncs creator inputs before preview export", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const onInputBlock = mainUiSource.slice(
+    mainUiSource.indexOf("onInput(event) {"),
+    mainUiSource.indexOf("onCompositionEnd(event) {")
+  );
+
+  assert.match(onInputBlock, /\[data-script-editor-progress-track-field\]/);
+  assert.match(
+    onInputBlock,
+    /this\.applyScriptEditorProgressTrackField\(field, target\.value\)/
+  );
+  assert.match(onInputBlock, /\[data-script-editor-progress-track-tier-field\]/);
+  assert.match(
+    onInputBlock,
+    /this\.applyScriptEditorProgressTrackTierField\(index, field, target\.value\)/
+  );
+});
+
 test("main startup and preview wiring keeps settlement-aware startup bootstrap and runtime preview teardown", () => {
   const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
 
@@ -11657,6 +11679,21 @@ test("script editor person authoring queue renders current json-backed person at
   assert.doesNotMatch(scriptEditorCssSource, /overflow-x:\s*auto;/);
 });
 
+test("script editor people surface renders numeric custom attribute values without crashing", async () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const escapeHtmlSource =
+    mainUiSource.match(/function escapeHtml\(value\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+
+  assert.match(escapeHtmlSource, /replaceAll/);
+
+  const escapeHtml = new Function(`${escapeHtmlSource}\nreturn escapeHtml;`)();
+
+  assert.equal(escapeHtml(100), "100");
+});
+
 test("script editor people search preserves IME composition until composition end", () => {
   const mainUiSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
@@ -12033,6 +12070,7 @@ test("script editor settlement workflow helpers support draft upsert and remove"
 
   assert.ok(draft);
   assert.match(draft.id, /^\d+$/);
+  assert.equal(draft.title, "结算 1");
 
   project = upsertScriptEditorWorkflowRecord(project, "settlements", draft);
   assert.equal(project.settlements.some((record) => record.id === draft.id), true);
@@ -17419,6 +17457,35 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.deepEqual(eventBinding.trigger, { timing: "after", action: "city-enter" });
   assert.equal(eventBinding.priority, 0);
   assert.equal(eventBinding.enabled, false);
+});
+
+test("script editor authoring normalization preserves blank draft relation rows for editing", () => {
+  const authoringHelpers = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  const {
+    appendScriptEditorDialogueParticipant,
+    appendScriptEditorEventRelationEntry,
+    appendScriptEditorStoryNodeRelation,
+    createDefaultScriptEditorDialogueRecord,
+    createDefaultScriptEditorEventRecord,
+    createDefaultScriptEditorStoryNodeRecord,
+    normalizeScriptEditorDialogueRecord,
+    normalizeScriptEditorEventRecord,
+    normalizeScriptEditorStoryNodeRecord,
+  } = authoringHelpers;
+
+  const storyNode = appendScriptEditorStoryNodeRelation(
+    createDefaultScriptEditorStoryNodeRecord(1),
+    "relatedPersonIds"
+  );
+  const dialogue = appendScriptEditorDialogueParticipant(createDefaultScriptEditorDialogueRecord(1));
+  const eventRecord = appendScriptEditorEventRelationEntry(
+    createDefaultScriptEditorEventRecord(1),
+    "personIds"
+  );
+
+  assert.deepEqual(normalizeScriptEditorStoryNodeRecord(storyNode).relatedPersonIds, [""]);
+  assert.deepEqual(normalizeScriptEditorDialogueRecord(dialogue).participantPersonIds, [""]);
+  assert.deepEqual(normalizeScriptEditorEventRecord(eventRecord).relations.personIds, [""]);
 });
 
 test("script editor event binding authoring helpers edit records and workflow membership", () => {
@@ -27603,6 +27670,109 @@ test("story runtime settlement events run progression tracks and apply emitted s
   );
 });
 
+test("story runtime does not evaluate progression before a settlement event executes", () => {
+  const {
+    startStoryEventById,
+  } = require("../.test-dist/application/story/story-runtime.js");
+  const {
+    createActiveGameContentContext,
+  } = require("../.test-dist/application/content/active-game-content.js");
+  const hero = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    stamina: 100,
+  };
+  const content = createActiveGameContentContext({
+    schemaVersion: 1,
+    id: "pack.progression.pre-settlement",
+    title: "Pre-Settlement Progression Pack",
+    characters: [hero],
+    events: [
+      {
+        id: "event.progression.narration",
+        chapterId: "chapter.prototype",
+        name: "Narration Before Settlement",
+        occurrence: "once",
+        dialogueId: "dialogue.progression.narration",
+      },
+    ],
+    settlements: [
+      {
+        id: "settlement.progression.tier.2",
+        title: "Tier 2 Settlement",
+        contents: [
+          {
+            targetFamily: "person",
+            targetId: playerCharacterId,
+            attributeKey: "stamina",
+            attributeType: "number",
+            operation: "add",
+            value: 5,
+          },
+        ],
+      },
+    ],
+    progressTracks: [
+      {
+        id: "track.cultivation",
+        title: "Cultivation Track",
+        metricKey: "stamina",
+        metricLabel: "Cultivation",
+        ownerKind: "person",
+        allowDemotion: true,
+        tiers: [
+          {
+            id: "tier.1",
+            title: "Entry",
+            threshold: 0,
+          },
+          {
+            id: "tier.2",
+            title: "Skilled",
+            threshold: 100,
+            targetTierSettlementId: "settlement.progression.tier.2",
+          },
+        ],
+      },
+    ],
+    progressTrackBindings: [
+      {
+        id: "binding.player.cultivation",
+        trackId: "track.cultivation",
+        owner: {
+          ownerKind: "person",
+          ownerId: playerCharacterId,
+        },
+        enabled: true,
+      },
+    ],
+    dialogues: [
+      {
+        id: "dialogue.progression.narration",
+        nodes: [
+          {
+            id: "dialogue-node.progression.narration",
+            type: "narration",
+            text: "Progression should wait for settlement execution.",
+          },
+        ],
+      },
+    ],
+  }).storyContent;
+
+  const result = startStoryEventById(
+    {
+      state: createBaseState(),
+      characterDefinitions: [hero],
+    },
+    content,
+    "event.progression.narration"
+  );
+
+  assert.equal(result.characterDefinitions[0].stamina, 100);
+  assert.equal(result.state.runtime.progression, undefined);
+  assert.equal(result.state.dialogue.activeEventId, "event.progression.narration");
+});
+
 test("runtime dispatch propagates task character property mutation effect status", () => {
   const {
     dispatchRuntimeRequest,
@@ -34203,6 +34373,7 @@ test("phase 3 scenario-pack validator keeps legacy builtin manifests on the acce
 });
 
 test("dev browser validation resources avoid mojibake paths and watcher profile crashes", () => {
+  const { spawnSync } = require("node:child_process");
   const fromCodePoints = (codePoints) => String.fromCodePoint(...codePoints);
   const mainUiCssSource = fs.readFileSync(
     path.join(process.cwd(), "src", "styles", "main-ui.css"),
@@ -34224,6 +34395,13 @@ test("dev browser validation resources avoid mojibake paths and watcher profile 
     fs.existsSync(path.join(process.cwd(), "ui", "yuansu", "人物选择ui", "backgroung.png"))
   );
   assert.match(viteConfigSource, /server:\s*\{[\s\S]*watch:\s*\{[\s\S]*ignored:[\s\S]*\.codex-temp/);
+  assert.match(viteConfigSource, /server:\s*\{[\s\S]*watch:\s*\{[\s\S]*ignored:[\s\S]*\.superpowers/);
+  const parseResult = spawnSync(
+    process.execPath,
+    ["--check", path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js")],
+    { encoding: "utf8" }
+  );
+  assert.equal(parseResult.status, 0, parseResult.stderr || parseResult.stdout);
 });
 
 test("flow playable is registered with a building owner integration", () => {

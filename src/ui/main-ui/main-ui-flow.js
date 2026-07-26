@@ -797,6 +797,7 @@ export class MainUiFlow {
     return `
       <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器工作流">
         ${this.renderScriptEditorFileInputs()}
+        ${this.renderScriptEditorNotice()}
         ${renderScriptEditorWorkspaceView(
           workspace,
           this.renderScriptEditorEditorPanel()
@@ -6106,6 +6107,15 @@ export class MainUiFlow {
           </label>
         </div>
         ${unsupportedDestinationNotice}
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>所属剧情 ID</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(eventRecord.relations?.storyNodeId ?? "")}" data-script-editor-event-story-node-id />
+          </label>
+        </div>
+        ${this.renderScriptEditorStringRelationPanel("关联人物", "event-related-people", eventRecord.relations?.personIds ?? [])}
+        ${this.renderScriptEditorStringRelationPanel("关联城市", "event-related-cities", eventRecord.relations?.cityIds ?? [])}
+        ${this.renderScriptEditorStringRelationPanel("关联建筑", "event-related-buildings", eventRecord.relations?.buildingIds ?? [])}
       </section>
     `;
   }
@@ -8244,6 +8254,26 @@ export class MainUiFlow {
       }
       return;
     }
+
+    if (target.matches("[data-script-editor-progress-track-field]")) {
+      const field = target.dataset.scriptEditorProgressTrackField;
+      if (field === "title" || field === "metricKey" || field === "metricLabel") {
+        this.applyScriptEditorProgressTrackField(field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-progress-track-tier-field]")) {
+      const field = target.dataset.scriptEditorProgressTrackTierField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorProgressTrackTierIndex ?? "-1",
+        10
+      );
+      if (field === "threshold" && Number.isInteger(index) && index >= 0) {
+        this.applyScriptEditorProgressTrackTierField(index, field, target.value);
+      }
+      return;
+    }
   }
 
   onCompositionEnd(event) {
@@ -8626,6 +8656,9 @@ export class MainUiFlow {
     }
 
     if (action === "preview-runtime") {
+      if (this.handleScriptEditorBlockedRuntimeAction()) {
+        return;
+      }
       await this.previewScriptEditorProjectRuntime();
       return;
     }
@@ -8636,6 +8669,9 @@ export class MainUiFlow {
     }
 
     if (action === "export") {
+      if (this.handleScriptEditorBlockedRuntimeAction()) {
+        return;
+      }
       await this.exportScriptEditorProject();
       return;
     }
@@ -11319,6 +11355,22 @@ export class MainUiFlow {
     this.render();
   }
 
+  handleScriptEditorBlockedRuntimeAction() {
+    if (this.scriptEditorProject == null) {
+      return false;
+    }
+
+    const diagnostics = validateScriptEditorProjectForRuntimeExport(
+      this.scriptEditorProject
+    );
+    if (diagnostics.length === 0) {
+      return false;
+    }
+
+    this.runScriptEditorValidation();
+    return true;
+  }
+
   async saveScriptEditorProject() {
     if (this.scriptEditorProject == null) {
       return;
@@ -13456,7 +13508,7 @@ function renderCharacterDetailTransitionText(currentText, previousText, options 
 }
 
 function escapeHtml(value) {
-  return value
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")

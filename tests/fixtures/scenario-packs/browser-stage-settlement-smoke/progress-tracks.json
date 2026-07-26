@@ -1,0 +1,23 @@
+[
+  {
+    "id": "track.cultivation",
+    "title": "Cultivation Track",
+    "metricKey": "stamina",
+    "metricLabel": "Stamina",
+    "ownerKind": "person",
+    "allowDemotion": true,
+    "tiers": [
+      {
+        "id": "tier.1",
+        "title": "Entry",
+        "threshold": 0
+      },
+      {
+        "id": "tier.2",
+        "title": "Skilled",
+        "threshold": 100,
+        "targetTierSettlementId": "settlement.progression.tier.2"
+      }
+    ]
+  }
+]

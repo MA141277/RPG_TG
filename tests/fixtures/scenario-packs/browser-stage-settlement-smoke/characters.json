@@ -1,0 +1,26 @@
+[
+  {
+    "id": "char.browser.smoke",
+    "name": "Smoke Hero",
+    "birthYear": 1,
+    "deathYear": 80,
+    "age": 20,
+    "title": "Tester",
+    "occupation": "Smoke Runner",
+    "affiliationLabel": "Smoke City",
+    "cityId": "city.browser.smoke",
+    "defaultSide": "right",
+    "stats": {
+      "leadership": 50,
+      "martial": 50,
+      "intelligence": 50,
+      "politics": 50,
+      "charm": 50,
+      "fame": 1,
+      "gold": 0
+    },
+    "stamina": 90,
+    "biography": "Minimal character for browser smoke coverage.",
+    "availableFunctions": []
+  }
+]
