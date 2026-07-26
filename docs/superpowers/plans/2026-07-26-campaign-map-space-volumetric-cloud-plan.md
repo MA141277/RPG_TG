@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-26`
-- Current Focus: `Task 3: verification and visual QA`
-- Next Step: `Dispatch Task 3 implementer subagent.`
-- Verification: `Task 2 targeted cloud shader/lifecycle tests passed and npm run typecheck passed; final Task 2 commit hash is recorded in the Task 2 report.`
+- Current Focus: `Implementation and verification complete locally; review/push remain before closeout.`
+- Next Step: `Review final diff and push when requested; do not mark closed while remote push is absent and known child 27 baseline remains unresolved.`
+- Verification: `npm run lint:plans passed for 69 files; npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs } passed 5/5 tests with 0 failures; npm run typecheck passed via tsc --noEmit -p tsconfig.json; npm run build passed with exit code 0 and existing Vite asset/chunk warnings; browser visual QA on http://127.0.0.1:5173/ reached ready terrain/cloud canvases, panned/zoomed the map, confirmed screenshot composition with terrain visible below cloud and UI above, and captured D:\RPG_TG\.tmp\campaign-map-space-volumetric-cloud.png.`
 - Notes: `The prior campaign fort/city renderer child remains completed-but-open because remote push is absent and the known child 27 baseline issue is unresolved. This child is user-promoted as new active work and must not mark the prior child closed.`
 
 ## Progress Log
@@ -31,6 +31,10 @@
   - Summary: `Completed Task 2 conservative map-space cloud slab shader path in commit 5d8e051e: the shader now reconstructs a terrain-owned map-space ray, intersects a finite cloud slab, samples procedural map-space density, raymarches with the fixed 12-step budget, and routes the primary cloud body through that volume while preserving the reveal/dissolve mask composition.`
   - Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab uses terrain projection uniforms" tests/robustness.test.cjs } failed as expected on missing buildMapSpaceCloudRay. GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs } passed 5/5 tests with 0 failures; npm run typecheck passed via tsc --noEmit -p tsconfig.json.`
   - Next: `Dispatch Task 3 implementer subagent.`
+- 2026-07-26
+  - Summary: `Completed Task 3 final verification, Edge/Playwright visual QA, changelog update, project-progress sync, and completed-but-open governance state for the campaign map-space volumetric cloud child.`
+  - Verification: `npm run lint:plans` passed for 69 files; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs }` passed 5/5 tests with 0 failures; `npm run typecheck` passed; `npm run build` passed with exit code 0 and existing Vite asset/chunk warnings; browser visual QA used Edge through Playwright on `http://127.0.0.1:5173/`, reached `[data-campaign-map-terrain]` and `[data-campaign-map-cloud]` with `is-ready` classes/nonzero dimensions, panned and zoomed the map, confirmed the captured PNG shows nonblank cloud body, terrain visible below cloud, revealed Hex holes aligned around explored terrain, and HUD/task UI above the cloud layer; screenshot: `D:\RPG_TG\.tmp\campaign-map-space-volumetric-cloud.png`.
+  - Next: `Review final diff and push when requested; do not mark closed while remote push is absent and known child 27 baseline remains unresolved.`
 
 ---
 
@@ -570,7 +574,7 @@ Update this plan:
 - Produces: screenshot `.tmp/campaign-map-space-volumetric-cloud.png`
 - Produces: plan `Execution State.Status = completed-but-open` unless push and closeout are explicitly completed
 
-- [ ] **Step 1: Run plan lint**
+- [x] **Step 1: Run plan lint**
 
 Run:
 
@@ -582,7 +586,7 @@ Expected:
 
 - `PASS`.
 
-- [ ] **Step 2: Run targeted cloud tests**
+- [x] **Step 2: Run targeted cloud tests**
 
 Run:
 
@@ -594,7 +598,7 @@ Expected:
 
 - `PASS`.
 
-- [ ] **Step 3: Run typecheck and production build**
+- [x] **Step 3: Run typecheck and production build**
 
 Run:
 
@@ -608,7 +612,7 @@ Expected:
 - `PASS`.
 - Existing Vite warnings are acceptable only if the build exits with code `0`.
 
-- [ ] **Step 4: Start or reuse the dev server**
+- [x] **Step 4: Start or reuse the dev server**
 
 Run:
 
@@ -621,7 +625,7 @@ Expected:
 - Vite serves the app on a local port, usually `http://127.0.0.1:5173/`.
 - If that port is occupied, use the printed Vite URL.
 
-- [ ] **Step 5: Browser visual verification**
+- [x] **Step 5: Browser visual verification**
 
 Use Playwright or the available browser tooling to:
 
@@ -640,7 +644,7 @@ Expected:
 - Cloud body does not visually behave like a purely fixed screen texture during pan/zoom.
 - Markers, hover overlays, and debug/global UI remain above the cloud layer.
 
-- [ ] **Step 6: Update change log**
+- [x] **Step 6: Update change log**
 
 Append a dated entry near the top of `docs/change-log.md`:
 
@@ -652,7 +656,7 @@ Append a dated entry near the top of `docs/change-log.md`:
 - The change keeps explored Hex reveal masks, drag/zoom animation freeze, terrain chunk reveal holds, and `window.rpgCloud` behavior within the existing cloud overlay boundary; it does not modify exploration state, terrain height, navigation, map nodes, save data, or `src/main.ts`.
 ```
 
-- [ ] **Step 7: Update project progress and plan state**
+- [x] **Step 7: Update project progress and plan state**
 
 Update `docs/superpowers/project-progress.md`:
 
@@ -675,7 +679,7 @@ Update this plan:
 - Set `Execution State.Verification` to the exact command results from Steps 1-5.
 - Append a `Progress Log` entry with verification and screenshot path.
 
-- [ ] **Step 8: Commit Task 3**
+- [x] **Step 8: Commit Task 3**
 
 Run:
 
@@ -691,25 +695,25 @@ Expected:
 
 ## Exit Check
 
-- [ ] `campaign-cloud-webgl.ts` consumes terrain-owned cloud projection uniforms.
-- [ ] `campaign-cloud.frag.glsl` uses a bounded map-space cloud slab path for the primary cloud body.
-- [ ] Existing reveal mask projection, dissolve, interaction freeze, terrain chunk hold, and `window.rpgCloud` behavior are preserved.
-- [ ] Cloud renderer does not sample terrain height data or mutate exploration/navigation/gameplay state.
-- [ ] `src/main.ts` has no new cloud projection or cloud behavior branch.
-- [ ] Targeted cloud tests pass.
-- [ ] `npm run lint:plans` passes.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run build` passes.
-- [ ] Browser visual verification is recorded.
-- [ ] Project progress sync is updated if the child state changed.
+- [x] `campaign-cloud-webgl.ts` consumes terrain-owned cloud projection uniforms.
+- [x] `campaign-cloud.frag.glsl` uses a bounded map-space cloud slab path for the primary cloud body.
+- [x] Existing reveal mask projection, dissolve, interaction freeze, terrain chunk hold, and `window.rpgCloud` behavior are preserved.
+- [x] Cloud renderer does not sample terrain height data or mutate exploration/navigation/gameplay state.
+- [x] `src/main.ts` has no new cloud projection or cloud behavior branch.
+- [x] Targeted cloud tests pass.
+- [x] `npm run lint:plans` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run build` passes.
+- [x] Browser visual verification is recorded.
+- [x] Project progress sync is updated if the child state changed.
 - [ ] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
@@ -717,7 +721,7 @@ Expected:
 - Parent Task: `Campaign Map-Space Volumetric Cloud`
 - Parent Stage: `Map Renderer Architecture`
 - Closeout Status: `completed-but-open`
-- Project Progress Synced: `no`
+- Project Progress Synced: `yes`
 - Next Child: `none`
 - Next Child Status: `none`
 - Next Required Action: `review-and-push-campaign-map-space-volumetric-cloud`

@@ -2,6 +2,12 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-26 Campaign Map-Space Volumetric Cloud Slab
+
+- `campaign-cloud-webgl.ts` now uploads terrain-owned cloud projection uniforms so the cloud shader can render the campaign cloud body in terrain/map space while preserving the existing reveal texture lifecycle.
+- `campaign-cloud.frag.glsl` replaces the primary screen-space cloud sea with a conservative fixed-budget map-space cloud slab raymarch using procedural density, wind drift, lightweight top/bottom lighting, and early alpha termination.
+- The change keeps explored Hex reveal masks, drag/zoom animation freeze, terrain chunk reveal holds, and `window.rpgCloud` behavior within the existing cloud overlay boundary; it does not modify exploration state, terrain height, navigation, map nodes, save data, or `src/main.ts`.
+
 ## 2026-07-24 Faction Review Flow
 
 - Normalized temple and keep review cadence into shared review semantics for assignment tables, contribution grades, praise, policy panels, advice prompt, and rank-gated task choices.

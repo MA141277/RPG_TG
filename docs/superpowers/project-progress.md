@@ -5,18 +5,18 @@
 - Current Stage: `Map Renderer Architecture`
 - Current Stage Status: `running`
 - Current Task: `Campaign Map-Space Volumetric Cloud`
-- Current Task Status: `running`
+- Current Task Status: `completed-but-open`
 - Current Child: `Campaign Map-Space Volumetric Cloud`
-- Current Child Status: `running`
+- Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-campaign-map-space-volumetric-cloud`
+- Next Required Action: `review-and-push-campaign-map-space-volumetric-cloud`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md from Task 1 using subagent-driven development; do not close until push succeeds and the known child 27 baseline is accepted or resolved.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md; do not close until push succeeds and the known child 27 baseline is accepted or resolved.`
 
 ## Progress Log
 
@@ -92,6 +92,10 @@
   - Summary: `Opened the campaign map-space volumetric cloud child after user selected the conservative terrain-aligned slab option and requested subagent-driven execution.`
   - Verification: `npm run lint:plans passed for 69 files.`
   - Next: `Execute docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md from Task 1 using subagent-driven development.`
+- 2026-07-26
+  - Summary: `Completed local Task 3 verification and governance sync for the campaign map-space volumetric cloud child; child remains completed-but-open pending review, push, and known child 27 baseline resolution.`
+  - Verification: `npm run lint:plans` passed for 69 files; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs }` passed 5/5 tests; `npm run typecheck` passed; `npm run build` passed with existing Vite asset/chunk warnings; Edge/Playwright visual QA on `http://127.0.0.1:5173/` reached ready terrain/cloud canvases, panned/zoomed the map, and captured `D:\RPG_TG\.tmp\campaign-map-space-volumetric-cloud.png`.
+  - Next: `Review final diff and push when requested; do not close while remote push is absent and the known child 27 baseline remains unresolved.`
 
 ## Latest Closeout
 
