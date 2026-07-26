@@ -12,9 +12,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-26`
-- Current Focus: `Implement Task 1 with subagent-driven development: add terrain cloud projection uniforms and boundary tests.`
-- Next Step: `Use superpowers:subagent-driven-development from Task 1; keep this plan updated after each completed reviewed task.`
-- Verification: `npm run lint:plans passed for 69 files.`
+- Current Focus: `Task 2: implement map-space cloud slab shader`
+- Next Step: `Dispatch Task 2 implementer subagent.`
+- Verification: `Task 1 targeted cloud boundary/lifecycle tests passed after commit c2f42734aac9040ca58bd18d3a4168086dd85cdc.`
 - Notes: `The prior campaign fort/city renderer child remains completed-but-open because remote push is absent and the known child 27 baseline issue is unresolved. This child is user-promoted as new active work and must not mark the prior child closed.`
 
 ## Progress Log
@@ -23,6 +23,10 @@
   - Summary: `Opened the campaign map-space volumetric cloud child after user selected the conservative map-space slab option and requested subagent-driven execution.`
   - Verification: `npm run lint:plans passed for 69 files.`
   - Next: `Execute Task 1 with a fresh subagent.`
+- 2026-07-26
+  - Summary: `Completed Task 1 terrain cloud projection uniform boundary in commit c2f42734aac9040ca58bd18d3a4168086dd85cdc: terrain now exposes a read-only cloud projection payload, cloud WebGL uploads uCloudCamera/uCloudProjection, and the shader declares MAX_MAP_SPACE_CLOUD_STEPS without replacing visible cloud rendering.`
+  - Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab uses terrain projection uniforms" tests/robustness.test.cjs } failed as expected on missing CampaignTerrainCloudProjectionUniforms. GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs } passed 5/5 tests.`
+  - Next: `Dispatch Task 2 implementer subagent.`
 
 ---
 
@@ -126,7 +130,7 @@
 - Produces: `export function getCampaignTerrainCloudProjectionUniforms(root: ParentNode): CampaignTerrainCloudProjectionUniforms`
 - Produces shader uniforms in `campaign-cloud-webgl.ts`: `uCloudCamera`, `uCloudProjection`
 
-- [ ] **Step 1: Write the failing boundary test**
+- [x] **Step 1: Write the failing boundary test**
 
 Add this test near the existing campaign cloud tests in `tests/robustness.test.cjs`:
 
@@ -186,7 +190,7 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
 });
 ```
 
-- [ ] **Step 2: Run the targeted test and confirm it fails**
+- [x] **Step 2: Run the targeted test and confirm it fails**
 
 Run:
 
@@ -198,7 +202,7 @@ Expected:
 
 - `FAIL` because `CampaignTerrainCloudProjectionUniforms`, `getCampaignTerrainCloudProjectionUniforms`, `uCloudCamera`, `uCloudProjection`, and `MAX_MAP_SPACE_CLOUD_STEPS` are not implemented yet.
 
-- [ ] **Step 3: Add terrain projection helper**
+- [x] **Step 3: Add terrain projection helper**
 
 In `src/ui/views/map/campaign-terrain-webgl.ts`, add the exported type near other campaign terrain export types and add the exported function near `getCampaignTerrainMapCoupledCamera()`:
 
@@ -243,7 +247,7 @@ export function getCampaignTerrainCloudProjectionUniforms(
 
 This helper must only read camera/canvas constants. It must not read `activeRenderers`, chunks, travel grids, height samples, or material semantic models.
 
-- [ ] **Step 4: Wire cloud projection uniforms through the cloud renderer**
+- [x] **Step 4: Wire cloud projection uniforms through the cloud renderer**
 
 In `src/ui/views/map/campaign-cloud-webgl.ts`:
 
@@ -270,7 +274,7 @@ gl.uniform4f(
 );
 ```
 
-- [ ] **Step 5: Add forward shader declarations for Task 2**
+- [x] **Step 5: Add forward shader declarations for Task 2**
 
 In `src/ui/views/map/shaders/campaign-cloud.frag.glsl`, add:
 
@@ -283,7 +287,7 @@ const int MAX_MAP_SPACE_CLOUD_STEPS = 12;
 
 Do not change visible cloud rendering in this task.
 
-- [ ] **Step 6: Run targeted cloud boundary tests**
+- [x] **Step 6: Run targeted cloud boundary tests**
 
 Run:
 
@@ -295,7 +299,7 @@ Expected:
 
 - `PASS` for the new boundary test and existing cloud lifecycle tests.
 
-- [ ] **Step 7: Commit Task 1**
+- [x] **Step 7: Commit Task 1**
 
 Run:
 
@@ -308,7 +312,7 @@ Expected:
 
 - Commit succeeds.
 
-- [ ] **Step 8: Sync progress and governance state**
+- [x] **Step 8: Sync progress and governance state**
 
 Update this plan:
 
