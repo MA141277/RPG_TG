@@ -15,6 +15,10 @@ import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { HouseDefinition } from "../../domain/house";
+import type {
+  MenuInstanceDefinition,
+  MenuResourceDefinition,
+} from "../../domain/menu";
 import { materializeBuildingDefinitions } from "../../domain/building-status";
 import { materializeCityDefinitions } from "../../domain/city-status";
 import type { AppPresenterStageOutput } from "./presenter-output";
@@ -28,6 +32,8 @@ export type StagePresenterInput = {
   cityEntries: CityEntryDefinition[];
   cityNpcPoolDefinitions: CityNpcPoolDefinition[];
   playerCharacterId: string;
+  menuResourcesById: Record<string, MenuResourceDefinition>;
+  menuInstancesById: Record<string, MenuInstanceDefinition>;
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
@@ -50,6 +56,13 @@ export function createStagePresenterOutput(
       (cityDefinition) =>
         cityDefinition.id === input.appState.gameState.world.currentCityId
     ) ?? input.cityDefinition;
+  const playerCharacter =
+    input.appState.characterDefinitions.find(
+      (characterDefinition) => characterDefinition.id === input.playerCharacterId
+    ) ?? input.appState.characterDefinitions[0];
+  if (playerCharacter == null) {
+    return { type: "empty" };
+  }
   const citySceneMapping =
     input.citySceneMappingsByCityId?.[activeCityDefinition.id] ?? null;
 
@@ -60,9 +73,12 @@ export function createStagePresenterOutput(
   if (currentView === "city") {
       return selectCityModuleStage({
         appState: input.appState,
+        playerCharacter,
         activeCityDefinition,
         houseDefinitions,
         cityEntries: input.cityEntries,
+        menuResourcesById: input.menuResourcesById,
+        menuInstancesById: input.menuInstancesById,
         citySceneMapping,
       });
   }
@@ -121,9 +137,12 @@ export function createStagePresenterOutput(
             },
           },
         },
+        playerCharacter,
         activeCityDefinition,
         houseDefinitions,
         cityEntries: input.cityEntries,
+        menuResourcesById: input.menuResourcesById,
+        menuInstancesById: input.menuInstancesById,
         citySceneMapping,
       });
     }
@@ -135,9 +154,12 @@ export function createStagePresenterOutput(
       input.appState.gameState.world.currentHouseId == null
         ? selectCityModuleUnderlay({
             appState: input.appState,
+            playerCharacter,
             activeCityDefinition,
             houseDefinitions,
             cityEntries: input.cityEntries,
+            menuResourcesById: input.menuResourcesById,
+            menuInstancesById: input.menuInstancesById,
             citySceneMapping,
           })
         : undefined;

@@ -13,27 +13,27 @@ export type ProgressTrackDefinition = {
   title: string;
   metricKey: string;
   metricLabel: string;
-  ownerKind: string | "*";
+  hostFamily: string | "*";
   allowDemotion?: boolean;
   tiers: ProgressTierDefinition[];
 };
 
-export type ProgressOwnerSelector = {
-  ownerKind: string;
-  ownerId?: string;
+export type ProgressHostReference = {
+  family: string;
+  id?: string;
 };
 
 export type ProgressTrackBinding = {
   id: string;
   trackId: string;
-  owner: ProgressOwnerSelector;
+  host: ProgressHostReference;
   enabled?: boolean;
 };
 
 export type ProgressTrackRuntimeState = {
   trackId: string;
-  ownerKind: string;
-  ownerId: string;
+  hostFamily: string;
+  hostId: string;
   metricValue: number;
   currentTierId: string | null;
   enteredTierHistory: string[];
@@ -41,15 +41,15 @@ export type ProgressTrackRuntimeState = {
 };
 
 export type RuntimeProgressState = {
-  trackStatesByOwnerKey: Record<
+  trackStatesByHostKey: Record<
     string,
     Record<string, ProgressTrackRuntimeState>
   >;
 };
 
 export type ProgressionTierSettlementPayload = {
-  ownerKind: string;
-  ownerId: string;
+  hostFamily: string;
+  hostId: string;
   trackId: string;
   fromTierId: string | null;
   toTierId: string | null;

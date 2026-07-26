@@ -362,6 +362,7 @@ function renderCitySceneUnderlay(
           activeCityDefinition: cityUnderlay.activeCityDefinition,
           activeCityHouseDefinitions: cityUnderlay.activeCityHouseDefinitions,
           activeCityEntries: cityUnderlay.activeCityEntries,
+          activeCityMenuEntries: cityUnderlay.activeCityMenuEntries,
           citySceneMapping: cityUnderlay.citySceneMapping,
         },
         playerCharacter,

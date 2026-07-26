@@ -71,6 +71,8 @@ type RuntimePackManifestFiles = {
   eventBindings: string;
   progressTracks: string;
   progressTrackBindings: string;
+  menuResources: string;
+  menuInstances: string;
   dialogues: string;
   activities: string;
   playables: string;
@@ -148,6 +150,8 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   eventBindings: "./event-bindings.json",
   progressTracks: "./progress-tracks.json",
   progressTrackBindings: "./progress-track-bindings.json",
+  menuResources: "./menu-resources.json",
+  menuInstances: "./menu-instances.json",
   dialogues: "./dialogues.json",
   activities: "./activities.json",
   playables: "./playables.json",
@@ -236,6 +240,8 @@ export function validateScriptEditorProjectForRuntimeExport(
       eventBindings: exportedEventBindings,
       progressTracks: project.progressTracks ?? [],
       progressTrackBindings: project.progressTrackBindings ?? [],
+      menuResources: project.menuResources,
+      menuInstances: project.menuInstances,
       dialogues: exportedDialogues,
       activities: project.activities,
       playables: playableRuntimeFamilies.playables,
@@ -618,7 +624,7 @@ function appendProgressTrackAuthoringDiagnostics(
       progressTracksById[trackId] = trackRecord;
     }
   }
-  const ownerIdsByKind = {
+  const hostIdsByFamily = {
     person: new Set(
       (project.people ?? [])
         .map((personRecord) =>
@@ -656,14 +662,14 @@ function appendProgressTrackAuthoringDiagnostics(
         message: `Progress track "${trackId}" must declare a non-empty metricKey.`,
       });
     }
-    const ownerKind =
-      typeof trackRecord.ownerKind === "string" ? trackRecord.ownerKind.trim() : "";
-    if (!allowedTrackOwnerKinds.has(ownerKind)) {
+    const hostFamily =
+      typeof trackRecord.hostFamily === "string" ? trackRecord.hostFamily.trim() : "";
+    if (!allowedTrackOwnerKinds.has(hostFamily)) {
       diagnostics.push({
         code: "invalid-field",
-        fieldPath: `project.progressTracks[${trackIndex}].ownerKind`,
+        fieldPath: `project.progressTracks[${trackIndex}].hostFamily`,
         message:
-          `Progress track "${trackId}" ownerKind "${ownerKind}" is not supported by the first progression runtime slice.`,
+          `Progress track "${trackId}" hostFamily "${hostFamily}" is not supported by the first progression runtime slice.`,
       });
     }
     const tiers = Array.isArray(trackRecord.tiers) ? trackRecord.tiers : [];
@@ -718,68 +724,68 @@ function appendProgressTrackAuthoringDiagnostics(
       return;
     }
 
-    const ownerKind =
-      typeof bindingRecord.owner?.ownerKind === "string"
-        ? bindingRecord.owner.ownerKind.trim()
+    const hostFamily =
+      typeof bindingRecord.host?.family === "string"
+        ? bindingRecord.host.family.trim()
         : "";
-    if (!allowedBindingOwnerKinds.has(ownerKind)) {
+    if (!allowedBindingOwnerKinds.has(hostFamily)) {
       diagnostics.push({
         code: "invalid-field",
-        fieldPath: `${fieldPath}.owner.ownerKind`,
+        fieldPath: `${fieldPath}.host.family`,
         message:
-          `Progress binding "${bindingId}" ownerKind "${ownerKind}" is not supported by the first progression runtime slice.`,
+          `Progress binding "${bindingId}" host family "${hostFamily}" is not supported by the first progression runtime slice.`,
       });
     }
-    const trackOwnerKind =
-      typeof trackRecord.ownerKind === "string" ? trackRecord.ownerKind.trim() : "";
+    const trackHostFamily =
+      typeof trackRecord.hostFamily === "string" ? trackRecord.hostFamily.trim() : "";
     if (
-      trackOwnerKind.length > 0 &&
-      trackOwnerKind !== "*" &&
-      ownerKind.length > 0 &&
-      trackOwnerKind !== ownerKind
+      trackHostFamily.length > 0 &&
+      trackHostFamily !== "*" &&
+      hostFamily.length > 0 &&
+      trackHostFamily !== hostFamily
     ) {
       diagnostics.push({
         code: "invalid-field",
-        fieldPath: `${fieldPath}.owner.ownerKind`,
+        fieldPath: `${fieldPath}.host.family`,
         message:
-          `Progress binding "${bindingId}" ownerKind "${ownerKind}" does not match track "${trackId}" ownerKind "${trackOwnerKind}".`,
+          `Progress binding "${bindingId}" host family "${hostFamily}" does not match track "${trackId}" hostFamily "${trackHostFamily}".`,
       });
     }
-    const ownerId =
-      typeof bindingRecord.owner?.ownerId === "string"
-        ? bindingRecord.owner.ownerId.trim()
+    const hostId =
+      typeof bindingRecord.host?.id === "string"
+        ? bindingRecord.host.id.trim()
         : "";
-    if (ownerId.length === 0) {
+    if (hostId.length === 0) {
       diagnostics.push({
         code: "invalid-field",
-        fieldPath: `${fieldPath}.owner.ownerId`,
+        fieldPath: `${fieldPath}.host.id`,
         message:
-          `Progress binding "${bindingId}" must declare a concrete ownerId in the first progression runtime slice.`,
+          `Progress binding "${bindingId}" must declare a concrete host id in the first progression runtime slice.`,
       });
     } else if (
-      (ownerKind === "person" || ownerKind === "city" || ownerKind === "building") &&
-      !ownerIdsByKind[ownerKind].has(ownerId)
+      (hostFamily === "person" || hostFamily === "city" || hostFamily === "building") &&
+      !hostIdsByFamily[hostFamily].has(hostId)
     ) {
       diagnostics.push({
         code: "missing-reference",
-        fieldPath: `${fieldPath}.owner.ownerId`,
+        fieldPath: `${fieldPath}.host.id`,
         message:
-          `Progress binding "${bindingId}" references missing ${ownerKind} owner "${ownerId}".`,
+          `Progress binding "${bindingId}" references missing ${hostFamily} host "${hostId}".`,
       });
     }
-    const ownerTag =
-      typeof (bindingRecord.owner as Record<string, unknown> | undefined)?.ownerTag ===
+    const hostTag =
+      typeof (bindingRecord.host as Record<string, unknown> | undefined)?.hostTag ===
       "string"
         ? String(
-            (bindingRecord.owner as Record<string, unknown>).ownerTag
+            (bindingRecord.host as Record<string, unknown>).hostTag
           ).trim()
         : "";
-    if (ownerTag.length > 0) {
+    if (hostTag.length > 0) {
       diagnostics.push({
         code: "invalid-field",
-        fieldPath: `${fieldPath}.owner.ownerTag`,
+        fieldPath: `${fieldPath}.host.hostTag`,
         message:
-          `Progress binding "${bindingId}" ownerTag is not supported in the first progression runtime slice.`,
+          `Progress binding "${bindingId}" hostTag is not supported in the first progression runtime slice.`,
       });
     }
   });
@@ -967,6 +973,12 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.progressTrackBindings)]:
       stringifyJson(project.progressTrackBindings ?? []),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.menuResources)]: stringifyJson(
+      project.menuResources
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.menuInstances)]: stringifyJson(
+      project.menuInstances
+    ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.dialogues)]: stringifyJson(
       exportedDialogues
     ),

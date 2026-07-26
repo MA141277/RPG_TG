@@ -3,6 +3,7 @@ import type {
   AppModalState,
   AppState,
 } from "../app-shell";
+import type { CityMenuEntryViewModel } from "../city-menu/city-menu";
 import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
@@ -19,6 +20,7 @@ export type PresenterCityStageOutput = {
   activeCityDefinition: CityDefinition;
   activeCityHouseDefinitions: HouseDefinition[];
   activeCityEntries: CityEntryDefinition[];
+  activeCityMenuEntries: CityMenuEntryViewModel[];
   citySceneMapping: CitySceneMapping | null;
 };
 

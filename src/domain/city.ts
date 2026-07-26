@@ -26,4 +26,5 @@ export type CityDefinition = {
   prosperity: number;
   danger: number;
   specialDemand: string[];
+  menuInstanceIds?: string[];
 };

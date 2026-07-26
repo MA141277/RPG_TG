@@ -19,7 +19,7 @@ const EXPECTED_PLAYER_ID = "char.browser.smoke";
 const EXPECTED_CITY_ID = "city.browser.smoke";
 const EXPECTED_EVENT_ID = "event.progression.training";
 const EXPECTED_TRACK_ID = "track.cultivation";
-const EXPECTED_OWNER_KEY = `person:${EXPECTED_PLAYER_ID}`;
+const EXPECTED_HOST_KEY = `person:${EXPECTED_PLAYER_ID}`;
 const EXPECTED_TIER_ID = "tier.2";
 
 test(
@@ -71,10 +71,10 @@ test(
     await page.locator('[data-main-ui-scenario-file]').setInputFiles(FIXTURE_DIRECTORY);
 
     await page.waitForFunction(
-      ({ expectedPackId, expectedPlayerId, expectedTrackId, expectedOwnerKey, expectedTierId, expectedEventId }) => {
+      ({ expectedPackId, expectedPlayerId, expectedTrackId, expectedHostKey, expectedTierId, expectedEventId }) => {
         const snapshot = window.__rpgTgTest?.getRuntimeSnapshot?.();
         const trackState =
-          snapshot?.progression?.trackStatesByOwnerKey?.[expectedOwnerKey]?.[
+          snapshot?.progression?.trackStatesByHostKey?.[expectedHostKey]?.[
             expectedTrackId
           ];
         const eventHistory = snapshot?.eventHistory?.[expectedEventId];
@@ -91,7 +91,7 @@ test(
         expectedPackId: EXPECTED_PACK_ID,
         expectedPlayerId: EXPECTED_PLAYER_ID,
         expectedTrackId: EXPECTED_TRACK_ID,
-        expectedOwnerKey: EXPECTED_OWNER_KEY,
+        expectedHostKey: EXPECTED_HOST_KEY,
         expectedTierId: EXPECTED_TIER_ID,
         expectedEventId: EXPECTED_EVENT_ID,
       },
@@ -102,7 +102,7 @@ test(
       window.__rpgTgTest.getRuntimeSnapshot()
     );
     const trackState =
-      snapshot.progression?.trackStatesByOwnerKey?.[EXPECTED_OWNER_KEY]?.[
+      snapshot.progression?.trackStatesByHostKey?.[EXPECTED_HOST_KEY]?.[
         EXPECTED_TRACK_ID
       ] ?? null;
 

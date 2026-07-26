@@ -11,6 +11,8 @@ const CONTENT_PACK_FILE_KEYS = [
   "characters",
   "events",
   "eventBindings",
+  "menuResources",
+  "menuInstances",
   "dialogues",
   "tasks",
   "flowPlayables",

@@ -339,7 +339,7 @@ export function createDefaultScriptEditorProgressTrackRecord(
     title: `阶段轨道 ${suffix}`,
     metricKey: "",
     metricLabel: "进度值",
-    ownerKind: "person",
+    hostFamily: "person",
     allowDemotion: false,
     tiers: [createDefaultScriptEditorProgressTrackTierRecord(0)],
   };
@@ -358,9 +358,9 @@ export function createDefaultScriptEditorProgressTrackBindingRecord(
             indexOrId
           ),
     trackId: "",
-    owner: {
-      ownerKind: "person",
-      ownerId: "",
+    host: {
+      family: "person",
+      id: "",
     },
     enabled: true,
   };
@@ -485,7 +485,7 @@ export function normalizeScriptEditorProgressTrackRecord(
     title: normalizeString(record.title, record.id),
     metricKey: normalizeOptionalTrimmedString(record.metricKey),
     metricLabel: normalizeString(record.metricLabel, "进度值"),
-    ownerKind: normalizeString(record.ownerKind, "person"),
+    hostFamily: normalizeString(record.hostFamily, "person"),
     allowDemotion: record.allowDemotion === true,
     tiers: (record.tiers ?? []).map(normalizeScriptEditorProgressTrackTierRecord),
   };
@@ -497,9 +497,9 @@ export function normalizeScriptEditorProgressTrackBindingRecord(
   return {
     id: normalizeString(record.id, "progress-binding.unknown"),
     trackId: normalizeOptionalTrimmedString(record.trackId),
-    owner: {
-      ownerKind: normalizeString(record.owner?.ownerKind, "person"),
-      ownerId: normalizeOptionalTrimmedString(record.owner?.ownerId),
+    host: {
+      family: normalizeString(record.host?.family, "person"),
+      id: normalizeOptionalTrimmedString(record.host?.id),
     },
     enabled: record.enabled !== false,
   };
@@ -866,7 +866,7 @@ export function updateScriptEditorSettlementField(
 
 export function updateScriptEditorProgressTrackField(
   record: ScriptEditorProgressTrackRecord,
-  field: "id" | "title" | "metricKey" | "metricLabel" | "ownerKind" | "allowDemotion",
+  field: "id" | "title" | "metricKey" | "metricLabel" | "hostFamily" | "allowDemotion",
   value: string | boolean
 ): ScriptEditorProgressTrackRecord {
   if (field === "allowDemotion") {
@@ -926,28 +926,28 @@ export function updateScriptEditorProgressTrackTierField(
 
 export function updateScriptEditorProgressTrackBindingField(
   record: ScriptEditorProgressTrackBindingRecord,
-  field: "id" | "trackId" | "enabled" | "ownerKind" | "ownerId",
+  field: "id" | "trackId" | "enabled" | "hostFamily" | "hostId",
   value: string | boolean
 ): ScriptEditorProgressTrackBindingRecord {
   if (field === "enabled") {
     return { ...record, enabled: value === true };
   }
-  if (field === "ownerKind") {
+  if (field === "hostFamily") {
     return {
       ...record,
-      owner: {
-        ...record.owner,
-        ownerKind: String(value).trim(),
-        ownerId: "",
+      host: {
+        ...record.host,
+        family: String(value).trim(),
+        id: "",
       },
     };
   }
-  if (field === "ownerId") {
+  if (field === "hostId") {
     return {
       ...record,
-      owner: {
-        ...record.owner,
-        ownerId: String(value).trim(),
+      host: {
+        ...record.host,
+        id: String(value).trim(),
       },
     };
   }

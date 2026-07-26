@@ -298,6 +298,30 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
       progressTrackDefinitionsById
     );
   }
+  const rawMenuResources = (value as Record<string, unknown>).menuResources;
+  const menuResourceIds =
+    rawMenuResources == null
+      ? new Set<string>()
+      : assertRuntimeMenuResources(rawMenuResources, value as Record<string, unknown>);
+  const rawMenuInstances = (value as Record<string, unknown>).menuInstances;
+  const menuInstanceIds =
+    rawMenuInstances == null
+      ? new Set<string>()
+      : assertRuntimeMenuInstances(rawMenuInstances, menuResourceIds);
+  if (value.cities != null) {
+    assertRuntimeLocationMenuInstanceReferences(
+      value.cities,
+      "cities",
+      menuInstanceIds
+    );
+  }
+  if (value.houses != null) {
+    assertRuntimeLocationMenuInstanceReferences(
+      value.houses,
+      "houses",
+      menuInstanceIds
+    );
+  }
   assertArray(value.events, "scenario events");
   assertRuntimeEventsDoNotUseRetiredTriggerFields(value.events);
   assertRuntimeEventsPreserveCanonicalRoutingContracts(
@@ -682,13 +706,21 @@ const SUPPORTED_PROGRESS_BINDING_OWNER_KINDS = [
   "building",
 ] as const;
 
+const SUPPORTED_MENU_TARGET_FAMILIES = [
+  "dialogue",
+  "event",
+  "trade",
+  "minigame",
+  "info",
+] as const;
+
 function assertRuntimeProgressTrackDefinitions(
   progressTracks: unknown,
   settlements: unknown
-): Record<string, { ownerKind: string | "*" }> {
+): Record<string, { hostFamily: string | "*" }> {
   assertArray(progressTracks, "scenario progressTracks");
   const settlementIds = new Set<string>();
-  const trackDefinitionsById: Record<string, { ownerKind: string | "*" }> = {};
+  const trackDefinitionsById: Record<string, { hostFamily: string | "*" }> = {};
 
   if (Array.isArray(settlements)) {
     settlements.forEach((settlementDefinition, index) => {
@@ -717,17 +749,17 @@ function assertRuntimeProgressTrackDefinitions(
         `scenario progressTracks[${trackIndex}].metricKey must be a non-empty string.`
       );
     }
-    const ownerKindValue =
-      typeof trackDefinition.ownerKind === "string"
-        ? trackDefinition.ownerKind.trim()
+    const hostFamilyValue =
+      typeof trackDefinition.hostFamily === "string"
+        ? trackDefinition.hostFamily.trim()
         : "";
     assertEnum(
-      ownerKindValue,
-      `scenario progressTracks[${trackIndex}].ownerKind`,
+      hostFamilyValue,
+      `scenario progressTracks[${trackIndex}].hostFamily`,
       SUPPORTED_PROGRESS_TRACK_OWNER_KINDS
     );
     trackDefinitionsById[trackIdValue] = {
-      ownerKind: ownerKindValue,
+      hostFamily: hostFamilyValue,
     };
     assertArray(
       trackDefinition.tiers,
@@ -763,7 +795,7 @@ function assertRuntimeProgressTrackDefinitions(
 
 function assertRuntimeProgressTrackBindings(
   progressTrackBindings: unknown,
-  trackDefinitionsById: Record<string, { ownerKind: string | "*" }>
+  trackDefinitionsById: Record<string, { hostFamily: string | "*" }>
 ): void {
   assertArray(progressTrackBindings, "scenario progressTrackBindings");
 
@@ -789,44 +821,194 @@ function assertRuntimeProgressTrackBindings(
     }
 
     assertObject(
-      bindingDefinition.owner,
-      `scenario progressTrackBindings[${bindingIndex}].owner`
+      bindingDefinition.host,
+      `scenario progressTrackBindings[${bindingIndex}].host`
     );
-    const ownerKindValue =
-      typeof bindingDefinition.owner.ownerKind === "string"
-        ? bindingDefinition.owner.ownerKind.trim()
+    const hostFamilyValue =
+      typeof bindingDefinition.host.family === "string"
+        ? bindingDefinition.host.family.trim()
         : "";
     assertEnum(
-      ownerKindValue,
-      `scenario progressTrackBindings[${bindingIndex}].owner.ownerKind`,
+      hostFamilyValue,
+      `scenario progressTrackBindings[${bindingIndex}].host.family`,
       SUPPORTED_PROGRESS_BINDING_OWNER_KINDS
     );
     if (
-      trackDefinition.ownerKind !== "*" &&
-      trackDefinition.ownerKind !== ownerKindValue
+      trackDefinition.hostFamily !== "*" &&
+      trackDefinition.hostFamily !== hostFamilyValue
     ) {
       throw new Error(
-        `scenario progressTrackBindings[${bindingIndex}] ownerKind "${ownerKindValue}" does not match progression track "${trackIdValue}" ownerKind "${trackDefinition.ownerKind}".`
+        `scenario progressTrackBindings[${bindingIndex}] host family "${hostFamilyValue}" does not match progression track "${trackIdValue}" hostFamily "${trackDefinition.hostFamily}".`
       );
     }
-    const ownerIdValue =
-      typeof bindingDefinition.owner.ownerId === "string"
-        ? bindingDefinition.owner.ownerId.trim()
+    const hostIdValue =
+      typeof bindingDefinition.host.id === "string"
+        ? bindingDefinition.host.id.trim()
         : "";
-    if (ownerIdValue.length === 0) {
+    if (hostIdValue.length === 0) {
       throw new Error(
-        `scenario progressTrackBindings[${bindingIndex}].owner.ownerId must be a non-empty string.`
+        `scenario progressTrackBindings[${bindingIndex}].host.id must be a non-empty string.`
       );
     }
-    const ownerTagValue =
-      typeof bindingDefinition.owner.ownerTag === "string"
-        ? bindingDefinition.owner.ownerTag.trim()
+    const hostTagValue =
+      typeof bindingDefinition.host.hostTag === "string"
+        ? bindingDefinition.host.hostTag.trim()
         : "";
-    if (ownerTagValue.length > 0) {
+    if (hostTagValue.length > 0) {
       throw new Error(
-        `scenario progressTrackBindings[${bindingIndex}].owner.ownerTag is not supported in the first progression runtime slice.`
+        `scenario progressTrackBindings[${bindingIndex}].host.hostTag is not supported in the first progression runtime slice.`
       );
     }
+  });
+}
+
+function assertRuntimeMenuResources(
+  menuResources: unknown,
+  pack: Record<string, unknown>
+): Set<string> {
+  assertArray(menuResources, "scenario menuResources");
+  const menuResourceIds = new Set<string>();
+  const dialogueIds = new Set(
+    Array.isArray(pack.dialogues)
+      ? pack.dialogues.flatMap((dialogue, index) => {
+          assertObject(dialogue, `scenario dialogues[${index}]`);
+          assertString(dialogue.id, `scenario dialogues[${index}].id`);
+          return [dialogue.id.trim()];
+        })
+      : []
+  );
+  const eventIds = new Set(
+    Array.isArray(pack.events)
+      ? pack.events.flatMap((eventDefinition, index) => {
+          assertObject(eventDefinition, `scenario events[${index}]`);
+          assertString(eventDefinition.id, `scenario events[${index}].id`);
+          return [eventDefinition.id.trim()];
+        })
+      : []
+  );
+  menuResources.forEach((menuResource, resourceIndex) => {
+    assertObject(menuResource, `scenario menuResources[${resourceIndex}]`);
+    assertString(
+      menuResource.id,
+      `scenario menuResources[${resourceIndex}].id`
+    );
+    assertString(
+      menuResource.title,
+      `scenario menuResources[${resourceIndex}].title`
+    );
+    menuResourceIds.add(menuResource.id.trim());
+    assertArray(
+      menuResource.entries,
+      `scenario menuResources[${resourceIndex}].entries`
+    );
+    menuResource.entries.forEach((entryDefinition, entryIndex) => {
+      assertObject(
+        entryDefinition,
+        `scenario menuResources[${resourceIndex}].entries[${entryIndex}]`
+      );
+      assertString(
+        entryDefinition.id,
+        `scenario menuResources[${resourceIndex}].entries[${entryIndex}].id`
+      );
+      assertString(
+        entryDefinition.label,
+        `scenario menuResources[${resourceIndex}].entries[${entryIndex}].label`
+      );
+      assertString(
+        entryDefinition.menuFamily,
+        `scenario menuResources[${resourceIndex}].entries[${entryIndex}].menuFamily`
+      );
+      assertEnum(
+        entryDefinition.targetFamily,
+        `scenario menuResources[${resourceIndex}].entries[${entryIndex}].targetFamily`,
+        SUPPORTED_MENU_TARGET_FAMILIES
+      );
+      const targetIdValue =
+        typeof entryDefinition.targetId === "string"
+          ? entryDefinition.targetId.trim()
+          : "";
+      if (
+        entryDefinition.targetFamily !== "info" &&
+        targetIdValue.length === 0
+      ) {
+        throw new Error(
+          `scenario menuResources[${resourceIndex}].entries[${entryIndex}].targetId must be a non-empty string.`
+        );
+      }
+      if (entryDefinition.targetFamily === "dialogue") {
+        if (!dialogueIds.has(targetIdValue)) {
+          throw new Error(
+            `scenario menuResources[${resourceIndex}].entries[${entryIndex}].targetId references missing dialogue "${entryDefinition.targetId}".`
+          );
+        }
+      } else if (entryDefinition.targetFamily === "event") {
+        if (!eventIds.has(targetIdValue)) {
+          throw new Error(
+            `scenario menuResources[${resourceIndex}].entries[${entryIndex}].targetId references missing event "${entryDefinition.targetId}".`
+          );
+        }
+      }
+    });
+  });
+
+  return menuResourceIds;
+}
+
+function assertRuntimeMenuInstances(
+  menuInstances: unknown,
+  menuResourceIds: ReadonlySet<string>
+): Set<string> {
+  assertArray(menuInstances, "scenario menuInstances");
+  const menuInstanceIds = new Set<string>();
+
+  menuInstances.forEach((menuInstance, instanceIndex) => {
+    assertObject(menuInstance, `scenario menuInstances[${instanceIndex}]`);
+    assertString(menuInstance.id, `scenario menuInstances[${instanceIndex}].id`);
+    assertString(
+      menuInstance.title,
+      `scenario menuInstances[${instanceIndex}].title`
+    );
+    assertString(
+      menuInstance.resourceId,
+      `scenario menuInstances[${instanceIndex}].resourceId`
+    );
+    if (!menuResourceIds.has(menuInstance.resourceId.trim())) {
+      throw new Error(
+        `scenario menuInstances[${instanceIndex}].resourceId references missing menu resource "${menuInstance.resourceId}".`
+      );
+    }
+    menuInstanceIds.add(menuInstance.id.trim());
+  });
+
+  return menuInstanceIds;
+}
+
+function assertRuntimeLocationMenuInstanceReferences(
+  locations: unknown,
+  familyLabel: "cities" | "houses",
+  menuInstanceIds: ReadonlySet<string>
+): void {
+  assertArray(locations, `scenario ${familyLabel}`);
+  locations.forEach((locationDefinition, locationIndex) => {
+    assertObject(locationDefinition, `scenario ${familyLabel}[${locationIndex}]`);
+    if (locationDefinition.menuInstanceIds == null) {
+      return;
+    }
+    assertArray(
+      locationDefinition.menuInstanceIds,
+      `scenario ${familyLabel}[${locationIndex}].menuInstanceIds`
+    );
+    locationDefinition.menuInstanceIds.forEach((menuInstanceId, menuInstanceIndex) => {
+      assertString(
+        menuInstanceId,
+        `scenario ${familyLabel}[${locationIndex}].menuInstanceIds[${menuInstanceIndex}]`
+      );
+      if (!menuInstanceIds.has(menuInstanceId.trim())) {
+        throw new Error(
+          `scenario ${familyLabel}[${locationIndex}].menuInstanceIds[${menuInstanceIndex}] references missing menu instance "${menuInstanceId}".`
+        );
+      }
+    });
   });
 }
 
@@ -971,6 +1153,8 @@ type ScenarioPackManifestFiles = {
   dialogues: string;
   progressTracks?: string;
   progressTrackBindings?: string;
+  menuResources?: string;
+  menuInstances?: string;
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;

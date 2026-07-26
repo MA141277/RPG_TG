@@ -16,7 +16,7 @@ const {
 } = require("../.test-dist/content/prototype-world.js");
 
 const PLAYER_CHARACTER_ID = "char.player";
-const OWNER_KEY = `person:${PLAYER_CHARACTER_ID}`;
+const HOST_KEY = `person:${PLAYER_CHARACTER_ID}`;
 const TRACK_ID = "track.cultivation";
 
 function createBaseState() {
@@ -96,7 +96,7 @@ function createCreatorFlowContent(hero) {
         title: "Cultivation Track",
         metricKey: "stamina",
         metricLabel: "Cultivation",
-        ownerKind: "person",
+        hostFamily: "person",
         allowDemotion: true,
         tiers: [
           {
@@ -117,9 +117,9 @@ function createCreatorFlowContent(hero) {
       {
         id: "binding.player.cultivation",
         trackId: TRACK_ID,
-        owner: {
-          ownerKind: "person",
-          ownerId: PLAYER_CHARACTER_ID,
+        host: {
+          family: "person",
+          id: PLAYER_CHARACTER_ID,
         },
         enabled: true,
       },
@@ -175,8 +175,8 @@ test(
       "event.progression.training"
     );
     const trackState =
-      settlementResult.state.runtime.progression?.trackStatesByOwnerKey?.[
-        OWNER_KEY
+      settlementResult.state.runtime.progression?.trackStatesByHostKey?.[
+        HOST_KEY
       ]?.[TRACK_ID] ?? null;
 
     assert.equal(settlementResult.characterDefinitions[0].stamina, 105);

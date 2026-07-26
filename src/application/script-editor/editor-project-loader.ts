@@ -11,6 +11,7 @@ import {
   type ScriptEditorProjectManifest,
   type ScriptEditorStoryPackRecord,
 } from "../../domain/script-editor-project";
+import { formalizeScriptEditorProjectMenus } from "./menu-authoring";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
 
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
@@ -18,6 +19,8 @@ const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFile
   "eventBindings",
   "progressTracks",
   "progressTrackBindings",
+  "menuResources",
+  "menuInstances",
   "flows",
   "portraits",
   "portraitVariants",
@@ -125,6 +128,14 @@ export function parseScriptEditorProject(
     value.progressTrackBindings ?? [],
     "script editor project progressTrackBindings"
   );
+  assertEntityRecordArray(
+    value.menuResources ?? [],
+    "script editor project menuResources"
+  );
+  assertEntityRecordArray(
+    value.menuInstances ?? [],
+    "script editor project menuInstances"
+  );
   assertEntityRecordArray(value.quests, "script editor project quests");
   assertEntityRecordArray(value.activities, "script editor project activities");
   assertEntityRecordArray(value.cards, "script editor project cards");
@@ -166,7 +177,7 @@ export function parseScriptEditorProject(
     "script editor project effectBundles"
   );
 
-  return {
+  return formalizeScriptEditorProjectMenus({
     ...(value as ScriptEditorProjectDefinition),
     completionState: normalizeScriptEditorProjectCompletionState(
       value.completionState
@@ -186,8 +197,12 @@ export function parseScriptEditorProject(
       (value.progressTrackBindings ?? []) as NonNullable<
         ScriptEditorProjectDefinition["progressTrackBindings"]
       >,
+    menuResources:
+      (value.menuResources ?? []) as ScriptEditorProjectDefinition["menuResources"],
+    menuInstances:
+      (value.menuInstances ?? []) as ScriptEditorProjectDefinition["menuInstances"],
     flows: (value.flows ?? []) as ScriptEditorProjectDefinition["flows"],
-  };
+  });
 }
 
 export const validateScriptEditorProjectDefinition = parseScriptEditorProject;

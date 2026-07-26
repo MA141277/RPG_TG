@@ -48,7 +48,6 @@ import {
   appendScriptEditorBuildingArrangementNpc,
   appendScriptEditorAccessCondition,
   appendScriptEditorLocationAttribute,
-  appendScriptEditorMenuEntry,
   readScriptEditorBuildingLayoutRecord,
   listScriptEditorCityBuildingArrangements,
   normalizeScriptEditorBuildingRecord,
@@ -62,13 +61,11 @@ import {
   removeScriptEditorCityMountedBuilding,
   removeScriptEditorCityMountedBuildingNpc,
   removeScriptEditorLocationAttribute,
-  removeScriptEditorMenuEntry,
   SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES,
   SCRIPT_EDITOR_BUILDING_LAYOUT_ACTION_FILTERS,
   SCRIPT_EDITOR_BUILDING_LAYOUT_CHARACTER_FILTERS,
   SCRIPT_EDITOR_BUILDING_LAYOUT_NODE_KINDS,
   SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS,
-  toggleScriptEditorMenuEntryFlag,
   updateScriptEditorAccessConditionField,
   updateScriptEditorAccessField,
   updateScriptEditorBuildingArrangementContainerActionItemField,
@@ -87,8 +84,18 @@ import {
   updateScriptEditorCityField,
   updateScriptEditorCityMapPlacementField,
   updateScriptEditorLocationAttribute,
-  updateScriptEditorMenuEntryField,
 } from "../../application/script-editor/city-building-authoring";
+import {
+  appendScriptEditorLocationMenuEntry,
+  countScriptEditorLocationMenuEntries,
+  formalizeScriptEditorProjectMenus,
+  listScriptEditorLocationMenuBundles,
+  removeScriptEditorLocationMenuEntry,
+  toggleScriptEditorLocationMenuEntryFlag,
+  updateScriptEditorLocationMenuEntryField,
+  updateScriptEditorLocationMenuInstanceTitle,
+  updateScriptEditorLocationMenuResourceTitle,
+} from "../../application/script-editor/menu-authoring";
 import {
   listScriptEditorLocationAccessConditionFieldOptions,
   readEditableScriptEditorLocationAccessConditions,
@@ -1472,7 +1479,7 @@ export class MainUiFlow {
         const candidateText = [
           this.getScriptEditorProgressBindingOwnerDisplay(binding),
           this.getScriptEditorProgressTrackTitleById(binding.trackId),
-          this.getScriptEditorProgressOwnerKindLabel(binding.owner?.ownerKind ?? ""),
+          this.getScriptEditorProgressOwnerKindLabel(binding.host?.family ?? ""),
         ]
           .filter((value) => typeof value === "string" && value.trim().length > 0)
           .join(" ")
@@ -1950,15 +1957,15 @@ export class MainUiFlow {
 
   getScriptEditorProgressBindingLabel(binding) {
     const ownerKindLabel = this.getScriptEditorProgressOwnerKindLabel(
-      binding.owner?.ownerKind ?? ""
+      binding.host?.family ?? ""
     );
-    const ownerId = binding.owner?.ownerId?.trim?.() ?? "";
+    const ownerId = binding.host?.id?.trim?.() ?? "";
     return ownerId.length > 0 ? `${ownerKindLabel} / ${ownerId}` : ownerKindLabel;
   }
 
   getScriptEditorProgressBindingOwnerDisplay(binding) {
-    const ownerKind = binding?.owner?.ownerKind ?? "";
-    const ownerId = binding?.owner?.ownerId?.trim?.() ?? "";
+    const ownerKind = binding?.host?.family ?? "";
+    const ownerId = binding?.host?.id?.trim?.() ?? "";
     const familyByOwnerKind = {
       person: "people",
       city: "cities",
@@ -4068,42 +4075,93 @@ export class MainUiFlow {
 
   renderScriptEditorLocationMenuPanel(family, location) {
     const isCityFamily = family === "cities";
-    const entries = location.menuEntries ?? [];
+    const menuBundles = this.getScriptEditorLocationMenuBundles(family, location.id);
+    const attachedInstanceIds = (location.menuInstanceIds ?? [])
+      .map((value) => String(value ?? "").trim())
+      .filter(Boolean);
+    const unresolvedInstanceIds = attachedInstanceIds.filter(
+      (instanceId) => !menuBundles.some((bundle) => bundle.instanceId === instanceId)
+    );
     return `
       <section class="c-script-editor-location-panel" aria-label="${isCityFamily ? "城市菜单分栏" : "建筑菜单分栏"}">
         <div class="c-script-editor-location-menu__header">
           <div>
             <p class="c-script-editor-editor-card__eyebrow">${isCityFamily ? "城市菜单" : "建筑菜单"}</p>
-            <h3 class="c-script-editor-editor-card__title">${isCityFamily ? "入口绑定型菜单族" : "功能菜单与入口挂载"}</h3>
+            <h3 class="c-script-editor-editor-card__title">${isCityFamily ? "位置挂载的菜单实例" : "入口挂载的菜单实例"}</h3>
           </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-location-menu-entry">
             新增菜单项
           </button>
         </div>
         <p class="c-script-editor-editor-card__hint">
-          菜单项只配置入口名称、所属功能族、绑定目标与可用状态，不在这里展开完整业务逻辑。
+          菜单入口现在归属于项目级 menu resource，并通过 location.menuInstanceIds 挂到城市或建筑；这里编辑的是当前挂载实例下的正式资源内容。
         </p>
         <div class="c-script-editor-location-menu__list">
-          ${entries
-            .map(
-              (entry, index) => `
+          ${
+            menuBundles.length === 0 && unresolvedInstanceIds.length === 0
+              ? `
                 <article class="c-script-editor-location-menu__item">
+                  <p class="c-script-editor-editor-card__hint">
+                    当前地点还没有挂载 menu instance。点击“新增菜单项”会自动创建主实例与资源。
+                  </p>
+                </article>
+              `
+              : ""
+          }
+          ${
+            unresolvedInstanceIds.length > 0
+              ? `
+                <article class="c-script-editor-location-menu__item">
+                  <p class="c-script-editor-editor-card__hint">
+                    检测到无法解析的 menu instance 引用：${escapeHtml(unresolvedInstanceIds.join(", "))}。请先修复辅助面板中的菜单引用问题。
+                  </p>
+                </article>
+              `
+              : ""
+          }
+          ${menuBundles
+            .map(
+              (bundle) => `
+                <article class="c-script-editor-location-menu__item" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
+                  <div class="c-script-editor-form-grid">
+                    <label class="c-script-editor-form-field">
+                      <span>实例标题</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.instanceTitle)}" data-script-editor-location-menu-instance-field="title" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>资源标题</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.resourceTitle)}" data-script-editor-location-menu-resource-field="title" data-script-editor-location-menu-resource-id="${escapeHtml(bundle.resourceId)}" />
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>实例 ID</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.instanceId)}" readonly />
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>资源 ID</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.resourceId)}" readonly />
+                    </label>
+                  </div>
+                  <div class="c-script-editor-location-menu__list">
+                    ${bundle.entries
+                      .map(
+                        (entry, index) => `
+                          <article class="c-script-editor-location-menu__item">
                   <div class="c-script-editor-form-grid">
                     <label class="c-script-editor-form-field">
                       <span>菜单 ID</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.id)}" data-script-editor-location-menu-field="id" data-script-editor-location-menu-index="${index}" />
+                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.id)}" data-script-editor-location-menu-field="id" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
                     </label>
                     <label class="c-script-editor-form-field">
                       <span>中文名称</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.label)}" data-script-editor-location-menu-field="label" data-script-editor-location-menu-index="${index}" />
+                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.label)}" data-script-editor-location-menu-field="label" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
                     </label>
                     <label class="c-script-editor-form-field">
                       <span>所属功能族</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.menuFamily)}" data-script-editor-location-menu-field="menuFamily" data-script-editor-location-menu-index="${index}" />
+                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.menuFamily)}" data-script-editor-location-menu-field="menuFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
                     </label>
                     <label class="c-script-editor-form-field">
                       <span>绑定目标类型</span>
-                      <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetFamily" data-script-editor-location-menu-index="${index}">
+                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
                         ${["dialogue", "event", "trade", "minigame", "info"]
                           .map(
                             (targetFamily) => `
@@ -4115,7 +4173,7 @@ export class MainUiFlow {
                     </label>
                     <label class="c-script-editor-form-field">
                       <span>绑定目标</span>
-                      <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetId" data-script-editor-location-menu-index="${index}">
+                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetId" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
                         ${this.renderScriptEditorSelectOptions(
                           this.getScriptEditorLocationMenuTargetOptions(entry.targetFamily),
                           entry.targetId,
@@ -4125,21 +4183,26 @@ export class MainUiFlow {
                     </label>
                     <label class="c-script-editor-form-field c-script-editor-form-field--wide">
                       <span>不可用提示</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.disabledHint)}" data-script-editor-location-menu-field="disabledHint" data-script-editor-location-menu-index="${index}" />
+                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.disabledHint)}" data-script-editor-location-menu-field="disabledHint" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
                     </label>
                   </div>
                   <div class="c-script-editor-location-menu__toggles">
                     <label class="c-script-editor-person-editor__toggle">
-                      <input type="checkbox" data-script-editor-location-menu-flag="isVisible" data-script-editor-location-menu-index="${index}" ${entry.isVisible ? "checked" : ""} />
+                            <input type="checkbox" data-script-editor-location-menu-flag="isVisible" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" ${entry.isVisible ? "checked" : ""} />
                       <span>显示</span>
                     </label>
                     <label class="c-script-editor-person-editor__toggle">
-                      <input type="checkbox" data-script-editor-location-menu-flag="isEnabled" data-script-editor-location-menu-index="${index}" ${entry.isEnabled ? "checked" : ""} />
+                            <input type="checkbox" data-script-editor-location-menu-flag="isEnabled" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" ${entry.isEnabled ? "checked" : ""} />
                       <span>可用</span>
                     </label>
-                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-location-menu-entry" data-script-editor-location-menu-index="${index}">
+                            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-location-menu-entry" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
                       删除菜单项
                     </button>
+                  </div>
+                </article>
+                        `
+                      )
+                      .join("")}
                   </div>
                 </article>
               `
@@ -4836,7 +4899,7 @@ export class MainUiFlow {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                  <span>${escapeHtml(this.getScriptEditorProgressOwnerKindLabel(normalizedRecord.ownerKind))} / ${escapeHtml(normalizedRecord.metricLabel)}</span>
+                  <span>${escapeHtml(this.getScriptEditorProgressOwnerKindLabel(normalizedRecord.hostFamily))} / ${escapeHtml(normalizedRecord.metricLabel)}</span>
                 </button>
               `;
             },
@@ -4862,10 +4925,10 @@ export class MainUiFlow {
                       </label>
                       <label class="c-script-editor-form-field">
                         <span>适用对象</span>
-                        <select class="c-script-editor-form-field__input" data-script-editor-progress-track-field="ownerKind">
+                        <select class="c-script-editor-form-field__input" data-script-editor-progress-track-field="hostFamily">
                           ${this.renderScriptEditorSelectOptions(
                             SCRIPT_EDITOR_PROGRESS_OWNER_KIND_OPTIONS,
-                            track.ownerKind ?? "",
+                            track.hostFamily ?? "",
                             "未设置适用对象"
                           )}
                         </select>
@@ -5005,17 +5068,17 @@ export class MainUiFlow {
                       </label>
                       <label class="c-script-editor-form-field">
                         <span>绑定对象类型</span>
-                        <select class="c-script-editor-form-field__input" data-script-editor-progress-binding-field="ownerKind">
+                        <select class="c-script-editor-form-field__input" data-script-editor-progress-binding-field="hostFamily">
                           ${this.renderScriptEditorSelectOptions(
                             SCRIPT_EDITOR_PROGRESS_OWNER_KIND_OPTIONS.filter((option) => option.value !== "*"),
-                            binding.owner?.ownerKind ?? "",
+                            binding.host?.family ?? "",
                             "未设置对象类型"
                           )}
                         </select>
                       </label>
                       <label class="c-script-editor-form-field">
                         <span>对象标识</span>
-                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(binding.owner?.ownerId ?? "")}" data-script-editor-progress-binding-field="ownerId" />
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(binding.host?.id ?? "")}" data-script-editor-progress-binding-field="hostId" />
                       </label>
                       <label class="c-script-editor-person-editor__toggle">
                         <input type="checkbox" data-script-editor-progress-binding-field="enabled" ${binding.enabled !== false ? "checked" : ""} />
@@ -5040,7 +5103,7 @@ export class MainUiFlow {
     const track = this.getSelectedScriptEditorProgressTrack();
     const trackOptions = this.getScriptEditorCreatorRecordOptions("progressTracks");
     const ownerOptions = this.getScriptEditorStageConfigurationOwnerOptions(
-      binding?.owner?.ownerKind ?? "person"
+      binding?.host?.family ?? "person"
     );
 
     return `
@@ -5133,22 +5196,22 @@ export class MainUiFlow {
                     <div class="c-script-editor-form-grid">
                       <label class="c-script-editor-form-field">
                         <span>对象类型</span>
-                        <select class="c-script-editor-form-field__input" data-script-editor-progress-binding-field="ownerKind">
+                        <select class="c-script-editor-form-field__input" data-script-editor-progress-binding-field="hostFamily">
                           ${this.renderScriptEditorSelectOptions(
                             SCRIPT_EDITOR_PROGRESS_OWNER_KIND_OPTIONS.filter(
                               (option) => option.value !== "*"
                             ),
-                            binding.owner?.ownerKind ?? "",
+                            binding.host?.family ?? "",
                             "未选择对象类型"
                           )}
                         </select>
                       </label>
                       <label class="c-script-editor-form-field">
                         <span>应用对象</span>
-                        <select class="c-script-editor-form-field__input" data-script-editor-progress-binding-field="ownerId">
+                        <select class="c-script-editor-form-field__input" data-script-editor-progress-binding-field="hostId">
                           ${this.renderScriptEditorSelectOptions(
                             ownerOptions,
-                            binding.owner?.ownerId ?? "",
+                            binding.host?.id ?? "",
                             "未选择应用对象"
                           )}
                         </select>
@@ -5264,7 +5327,7 @@ export class MainUiFlow {
                               <select class="c-script-editor-form-field__input" data-script-editor-progress-track-field="ownerKind">
                                 ${this.renderScriptEditorSelectOptions(
                                   SCRIPT_EDITOR_PROGRESS_OWNER_KIND_OPTIONS,
-                                  track.ownerKind ?? "",
+                                  track.hostFamily ?? "",
                                   "未设置适用对象类型"
                                 )}
                               </select>
@@ -6715,18 +6778,28 @@ export class MainUiFlow {
         summary: `${eventRecord.id} destination -> ${minigameId}`,
       }));
 
-    const locationRefs = [...this.scriptEditorProject.cities, ...this.scriptEditorProject.buildings]
-      .flatMap((location) =>
-        (location.menuEntries ?? [])
+    const locationRefs = [
+      ...this.scriptEditorProject.cities.map((location) => ({
+        family: "cities",
+        location,
+      })),
+      ...this.scriptEditorProject.buildings.map((location) => ({
+        family: "buildings",
+        location,
+      })),
+    ].flatMap(({ family, location }) =>
+      this.getScriptEditorLocationMenuBundles(family, location.id).flatMap((bundle) =>
+        bundle.entries
           .filter(
             (entry) =>
               entry.targetFamily === "minigame" && entry.targetId === minigameId
           )
           .map((entry) => ({
             label: `Location Menu / ${location.name || location.id}`,
-            summary: `${location.id}:${entry.id} -> ${minigameId}`,
+            summary: `${location.id}:${bundle.instanceId}:${entry.id} -> ${minigameId}`,
           }))
-      );
+      )
+    );
 
     return [...eventRefs, ...locationRefs];
   }
@@ -6842,7 +6915,7 @@ export class MainUiFlow {
       const description = String(location.description ?? "").trim();
       return description.length > 0
         ? description.slice(0, 20)
-        : `菜单 ${location.menuEntries?.length ?? 0} 项`;
+        : `菜单 ${this.getScriptEditorLocationMenuEntryCount(family, location.id)} 项`;
     }
 
     const summary = [
@@ -7561,7 +7634,7 @@ export class MainUiFlow {
         field === "title" ||
         field === "metricKey" ||
         field === "metricLabel" ||
-        field === "ownerKind" ||
+        field === "hostFamily" ||
         field === "allowDemotion"
       ) {
         const nextValue =
@@ -7594,7 +7667,7 @@ export class MainUiFlow {
     if (target.matches("[data-script-editor-progress-binding-field]")) {
       const field = target.dataset.scriptEditorProgressBindingField;
       if (
-        ["trackId", "ownerKind", "ownerId", "enabled"].includes(field ?? "")
+        ["trackId", "hostFamily", "hostId", "enabled"].includes(field ?? "")
       ) {
         const nextValue =
           field === "enabled" && target instanceof globalThis.HTMLInputElement
@@ -8059,6 +8132,7 @@ export class MainUiFlow {
 
     if (target.matches("[data-script-editor-location-menu-field]")) {
       const field = target.dataset.scriptEditorLocationMenuField;
+      const instanceId = target.dataset.scriptEditorLocationMenuInstanceId ?? "";
       const index = Number.parseInt(
         target.dataset.scriptEditorLocationMenuIndex ?? "-1",
         10
@@ -8067,10 +8141,29 @@ export class MainUiFlow {
         ["id", "label", "menuFamily", "targetFamily", "targetId", "disabledHint"].includes(
           field ?? ""
         ) &&
+        instanceId.length > 0 &&
         Number.isInteger(index) &&
         index >= 0
       ) {
-        this.applyScriptEditorLocationMenuField(index, field, target.value);
+        this.applyScriptEditorLocationMenuField(instanceId, index, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-location-menu-instance-field]")) {
+      const field = target.dataset.scriptEditorLocationMenuInstanceField;
+      const instanceId = target.dataset.scriptEditorLocationMenuInstanceId ?? "";
+      if (field === "title" && instanceId.length > 0) {
+        this.applyScriptEditorLocationMenuInstanceField(instanceId, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-location-menu-resource-field]")) {
+      const field = target.dataset.scriptEditorLocationMenuResourceField;
+      const resourceId = target.dataset.scriptEditorLocationMenuResourceId ?? "";
+      if (field === "title" && resourceId.length > 0) {
+        this.applyScriptEditorLocationMenuResourceField(resourceId, target.value);
       }
       return;
     }
@@ -8102,16 +8195,18 @@ export class MainUiFlow {
       target.matches("[data-script-editor-location-menu-flag]")
     ) {
       const field = target.dataset.scriptEditorLocationMenuFlag;
+      const instanceId = target.dataset.scriptEditorLocationMenuInstanceId ?? "";
       const index = Number.parseInt(
         target.dataset.scriptEditorLocationMenuIndex ?? "-1",
         10
       );
       if (
         (field === "isVisible" || field === "isEnabled") &&
+        instanceId.length > 0 &&
         Number.isInteger(index) &&
         index >= 0
       ) {
-        this.applyScriptEditorLocationMenuFlag(index, field, target.checked);
+        this.applyScriptEditorLocationMenuFlag(instanceId, index, field, target.checked);
       }
       return;
     }
@@ -8832,8 +8927,10 @@ export class MainUiFlow {
     }
 
     if (action === "remove-location-menu-entry") {
+      const instanceId =
+        actionElement?.dataset.scriptEditorLocationMenuInstanceId ?? "";
       if (Number.isInteger(locationMenuIndex) && locationMenuIndex >= 0) {
-        this.removeScriptEditorLocationMenuEntry(locationMenuIndex);
+        this.removeScriptEditorLocationMenuEntry(instanceId, locationMenuIndex);
       }
       return;
     }
@@ -10689,44 +10786,101 @@ export class MainUiFlow {
       );
     }
   }
-  applyScriptEditorLocationMenuField(index, field, value) {
-    const location = this.getSelectedScriptEditorLocation();
-    if (location == null) {
+  applyScriptEditorLocationMenuField(instanceId, index, field, value) {
+    if (this.scriptEditorProject == null) {
       return;
     }
 
     if (field === "targetFamily") {
-      const nextLocation = updateScriptEditorMenuEntryField(location, index, field, value);
-      const nextEntry = nextLocation.menuEntries?.[index] ?? null;
+      const nextProject = updateScriptEditorLocationMenuEntryField(
+        this.scriptEditorProject,
+        instanceId,
+        index,
+        field,
+        value
+      );
+      const nextBundle = nextProject == null
+        ? null
+        : listScriptEditorLocationMenuBundles(
+            nextProject,
+            this.scriptEditorSelection.family,
+            this.scriptEditorSelection.entityId
+          ).find((bundle) => bundle.instanceId === instanceId) ?? null;
+      const nextEntry = nextBundle?.entries?.[index] ?? null;
       const targetOptions = this.getScriptEditorLocationMenuTargetOptions(value);
       if (
         nextEntry != null &&
         nextEntry.targetId.length > 0 &&
         !targetOptions.some((option) => option.value === nextEntry.targetId)
       ) {
-        this.replaceSelectedScriptEditorLocation(
-          updateScriptEditorMenuEntryField(nextLocation, index, "targetId", "")
+        this.commitScriptEditorMenuProject(
+          updateScriptEditorLocationMenuEntryField(
+            nextProject,
+            instanceId,
+            index,
+            "targetId",
+            ""
+          )
         );
         return;
       }
 
-      this.replaceSelectedScriptEditorLocation(nextLocation);
+      this.commitScriptEditorMenuProject(nextProject);
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(
-      updateScriptEditorMenuEntryField(location, index, field, value)
+    this.commitScriptEditorMenuProject(
+      updateScriptEditorLocationMenuEntryField(
+        this.scriptEditorProject,
+        instanceId,
+        index,
+        field,
+        value
+      )
     );
   }
 
-  applyScriptEditorLocationMenuFlag(index, field, checked) {
-    const location = this.getSelectedScriptEditorLocation();
-    if (location == null) {
+  applyScriptEditorLocationMenuInstanceField(instanceId, value) {
+    if (this.scriptEditorProject == null) {
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(
-      toggleScriptEditorMenuEntryFlag(location, index, field, checked)
+    this.commitScriptEditorMenuProject(
+      updateScriptEditorLocationMenuInstanceTitle(
+        this.scriptEditorProject,
+        instanceId,
+        value
+      )
+    );
+  }
+
+  applyScriptEditorLocationMenuResourceField(resourceId, value) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    this.commitScriptEditorMenuProject(
+      updateScriptEditorLocationMenuResourceTitle(
+        this.scriptEditorProject,
+        resourceId,
+        value
+      )
+    );
+  }
+
+  applyScriptEditorLocationMenuFlag(instanceId, index, field, checked) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    this.commitScriptEditorMenuProject(
+      toggleScriptEditorLocationMenuEntryFlag(
+        this.scriptEditorProject,
+        instanceId,
+        index,
+        field,
+        checked
+      )
     );
   }
 
@@ -11313,22 +11467,35 @@ export class MainUiFlow {
   }
 
   addScriptEditorLocationMenuEntry() {
-    const location = this.getSelectedScriptEditorLocation();
-    if (location == null) {
+    if (
+      this.scriptEditorProject == null ||
+      (this.scriptEditorSelection.family !== "cities" &&
+        this.scriptEditorSelection.family !== "buildings") ||
+      this.scriptEditorSelection.entityId == null
+    ) {
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(appendScriptEditorMenuEntry(location));
+    this.commitScriptEditorMenuProject(
+      appendScriptEditorLocationMenuEntry(
+        this.scriptEditorProject,
+        this.scriptEditorSelection.family,
+        this.scriptEditorSelection.entityId
+      )
+    );
   }
 
-  removeScriptEditorLocationMenuEntry(index) {
-    const location = this.getSelectedScriptEditorLocation();
-    if (location == null) {
+  removeScriptEditorLocationMenuEntry(instanceId, index) {
+    if (this.scriptEditorProject == null || instanceId.length === 0) {
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(
-      removeScriptEditorMenuEntry(location, index)
+    this.commitScriptEditorMenuProject(
+      removeScriptEditorLocationMenuEntry(
+        this.scriptEditorProject,
+        instanceId,
+        index
+      )
     );
   }
 
@@ -11796,7 +11963,7 @@ export class MainUiFlow {
       ...createDefaultScriptEditorProgressTrackRecord(
         (this.scriptEditorProject.progressTracks ?? []).length
       ),
-      ownerKind: binding.owner?.ownerKind ?? "person",
+      hostFamily: binding.host?.family ?? "person",
     };
     const nextBinding = {
       ...binding,
@@ -11954,6 +12121,36 @@ export class MainUiFlow {
         variant.id === this.scriptEditorSelection.entityId ? nextVariant : variant
       ),
     });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  getScriptEditorLocationMenuBundles(family, locationId) {
+    if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    return listScriptEditorLocationMenuBundles(
+      this.scriptEditorProject,
+      family,
+      locationId
+    );
+  }
+
+  getScriptEditorLocationMenuEntryCount(family, locationId) {
+    if (this.scriptEditorProject == null) {
+      return 0;
+    }
+
+    return countScriptEditorLocationMenuEntries(
+      this.scriptEditorProject,
+      family,
+      locationId
+    );
+  }
+
+  commitScriptEditorMenuProject(project) {
+    this.commitScriptEditorProject(project);
     this.scriptEditorNotice = null;
     this.render();
   }
@@ -12378,10 +12575,13 @@ export class MainUiFlow {
   }
 
   commitScriptEditorProject(project) {
-    this.scriptEditorProject = project;
+    this.scriptEditorProject = formalizeScriptEditorProjectMenus(project);
     this.scriptEditorProjectLibrary = upsertScriptEditorProjectLibraryEntry(
       this.scriptEditorProjectLibrary,
-      createScriptEditorProjectLibraryEntry(project, this.scriptEditorProjectSource)
+      createScriptEditorProjectLibraryEntry(
+        this.scriptEditorProject,
+        this.scriptEditorProjectSource
+      )
     );
   }
 

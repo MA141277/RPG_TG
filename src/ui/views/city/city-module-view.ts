@@ -17,6 +17,7 @@ export function renderCityModuleView(input: {
     input.playerCharacter,
     input.stage.activeCityHouseDefinitions,
     input.stage.activeCityEntries,
+    input.stage.activeCityMenuEntries ?? [],
     input.cityMenuState,
     input.cityDirectoryState,
     input.citySceneMapping

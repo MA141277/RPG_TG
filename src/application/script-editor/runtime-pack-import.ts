@@ -62,6 +62,8 @@ type RuntimePackManifestFiles = {
   dialogues: string;
   progressTracks?: string;
   progressTrackBindings?: string;
+  menuResources?: string;
+  menuInstances?: string;
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
@@ -282,6 +284,8 @@ export function importScenarioPackToScriptEditorProject(
     eventBindings: mapImportedEventBindings(rawPack),
     progressTracks: readProgressTrackFamily(rawPack),
     progressTrackBindings: readProgressTrackBindingFamily(rawPack),
+    menuResources: readMenuResourceFamily(rawPack),
+    menuInstances: readMenuInstanceFamily(rawPack),
     dialogues: mapImportedRuntimeDialogues(rawPack),
     quests: pack.tasks ?? [],
     activities: pack.activities ?? [],
@@ -1205,6 +1209,24 @@ function readProgressTrackBindingFamily(
     rawPack,
     "progressTrackBindings"
   ) as NonNullable<ScriptEditorProjectDefinition["progressTrackBindings"]>;
+}
+
+function readMenuResourceFamily(
+  rawPack: Record<string, unknown>
+): ScriptEditorProjectDefinition["menuResources"] {
+  return readArrayFamily(
+    rawPack,
+    "menuResources"
+  ) as ScriptEditorProjectDefinition["menuResources"];
+}
+
+function readMenuInstanceFamily(
+  rawPack: Record<string, unknown>
+): ScriptEditorProjectDefinition["menuInstances"] {
+  return readArrayFamily(
+    rawPack,
+    "menuInstances"
+  ) as ScriptEditorProjectDefinition["menuInstances"];
 }
 
 function readPortraitFamily(

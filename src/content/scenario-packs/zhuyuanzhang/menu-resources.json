@@ -1,0 +1,58 @@
+[
+  {
+    "id": "menu-resource.city.default",
+    "title": "City Menu",
+    "entries": [
+      {
+        "id": "menu-entry.city.default.overview",
+        "label": "椋庡湡浜烘儏",
+        "menuFamily": "overview",
+        "targetFamily": "info",
+        "targetId": "city-panel.overview",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.intel",
+        "label": "鎯呮姤",
+        "menuFamily": "intel",
+        "targetFamily": "info",
+        "targetId": "city-panel.intel",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.locations",
+        "label": "鍦扮偣",
+        "menuFamily": "locations",
+        "targetFamily": "info",
+        "targetId": "city-panel.locations",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.management",
+        "label": "绠＄悊",
+        "menuFamily": "management",
+        "targetFamily": "info",
+        "targetId": "city-panel.management",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.begging",
+        "label": "鍖栫紭",
+        "menuFamily": "begging",
+        "targetFamily": "minigame",
+        "targetId": "city-begging",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      }
+    ]
+  }
+]

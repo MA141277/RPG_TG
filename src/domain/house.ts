@@ -28,6 +28,7 @@ export type HouseDefinition = {
   level?: number;
   damaged?: boolean;
   outputMultiplier?: number;
+  menuInstanceIds?: string[];
   backAction: {
     label: string;
     targetView: "city";

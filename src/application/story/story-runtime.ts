@@ -283,7 +283,7 @@ function applyStoryProgressionAfterSettlement(
 
   const settlementState = createStorySettlementState(runtime, content);
   let nextProgressionState = runtime.state.runtime.progression ?? {
-    trackStatesByOwnerKey: {},
+    trackStatesByHostKey: {},
   };
   const settlementInstances = [];
   const occurredAt = createStoryProgressionOccurredAt(runtime.state);
@@ -408,28 +408,28 @@ function readStoryProgressionMetricValue(
   track: ProgressTrackDefinition,
   binding: ProgressTrackBinding
 ): number | null {
-  const ownerId = binding.owner.ownerId?.trim() ?? "";
-  if (ownerId.length === 0) {
+  const hostId = binding.host.id?.trim() ?? "";
+  if (hostId.length === 0) {
     return null;
   }
 
-  const owner =
-    binding.owner.ownerKind === "person"
-      ? settlementState.people[ownerId]
-      : binding.owner.ownerKind === "city"
-        ? settlementState.cities[ownerId]
-        : binding.owner.ownerKind === "building"
-          ? settlementState.buildings[ownerId]
+  const hostRecord =
+    binding.host.family === "person"
+      ? settlementState.people[hostId]
+      : binding.host.family === "city"
+        ? settlementState.cities[hostId]
+        : binding.host.family === "building"
+          ? settlementState.buildings[hostId]
           : undefined;
-  if (owner == null) {
+  if (hostRecord == null) {
     return null;
   }
 
-  const pathValue = readStoryProgressionRecordPath(owner, track.metricKey);
+  const pathValue = readStoryProgressionRecordPath(hostRecord, track.metricKey);
   if (typeof pathValue === "number" && Number.isFinite(pathValue)) {
     return pathValue;
   }
-  const customProperties = owner.customProperties;
+  const customProperties = hostRecord.customProperties;
   if (
     customProperties != null &&
     typeof customProperties === "object" &&

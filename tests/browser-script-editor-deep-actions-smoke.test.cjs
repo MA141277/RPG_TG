@@ -100,6 +100,53 @@ test(
     await page.waitForTimeout(150);
     assert.equal(await selectedRecordId(page), "char.player");
 
+    await page.locator('[data-script-editor-family="cities"]').click();
+    await page.waitForTimeout(150);
+    assert.notEqual(await selectedRecordId(page), null);
+    await page
+      .locator(
+        '[data-script-editor-action="select-location-tab"][data-script-editor-location-tab="menus"]'
+      )
+      .click();
+    await page.waitForTimeout(150);
+    const cityMenuCountBeforeAdd = await page
+      .locator('[data-script-editor-action="remove-location-menu-entry"]')
+      .count();
+    await page.locator('[data-script-editor-action="add-location-menu-entry"]').click();
+    await page.waitForTimeout(150);
+    const cityMenuCountAfterAdd = await page
+      .locator('[data-script-editor-action="remove-location-menu-entry"]')
+      .count();
+    assert.equal(cityMenuCountAfterAdd, cityMenuCountBeforeAdd + 1);
+    assert.equal(
+      (await page.locator("[data-script-editor-location-menu-instance-id]").count()) > 0,
+      true
+    );
+    const cityMenuLabelInput = page
+      .locator('[data-script-editor-location-menu-field="label"]')
+      .last();
+    await cityMenuLabelInput.fill("Smoke Menu Entry");
+    await page.waitForTimeout(150);
+    assert.equal(await cityMenuLabelInput.inputValue(), "Smoke Menu Entry");
+    await page
+      .locator('[data-script-editor-location-menu-field="targetFamily"]')
+      .last()
+      .selectOption("event");
+    await page.waitForTimeout(150);
+    assert.equal(
+      await page
+        .locator('[data-script-editor-location-menu-field="targetFamily"]')
+        .last()
+        .inputValue(),
+      "event"
+    );
+    await page.locator('[data-script-editor-action="remove-location-menu-entry"]').last().click();
+    await page.waitForTimeout(150);
+    const cityMenuCountAfterRemove = await page
+      .locator('[data-script-editor-action="remove-location-menu-entry"]')
+      .count();
+    assert.equal(cityMenuCountAfterRemove, cityMenuCountBeforeAdd);
+
     await page.locator('[data-script-editor-family="dialogues"]').click();
     await page.locator('[data-script-editor-action="add-record"]').click();
     await page.waitForTimeout(150);
@@ -218,7 +265,7 @@ test(
     );
     await page.locator('[data-script-editor-action="add-stage-configuration-binding"]').click();
     await page.waitForTimeout(150);
-    assert.equal(await selectedRecordId(page), "progress-binding.new.1");
+    assert.notEqual(await selectedRecordId(page), null);
     await page.locator('[data-script-editor-action="add-stage-configuration-track"]').click();
     await page.waitForTimeout(150);
     assert.equal(

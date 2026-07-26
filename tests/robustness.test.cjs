@@ -10340,7 +10340,7 @@ test("scenario pack loader rejects progression tiers that reference missing sett
       title: "Cultivation Track",
       metricKey: "stamina",
       metricLabel: "Cultivation",
-      ownerKind: "person",
+      hostFamily: "person",
       tiers: [
         {
           id: "tier.1",
@@ -10369,7 +10369,7 @@ test("scenario pack loader rejects progression tiers that reference missing sett
   );
 });
 
-test("scenario pack loader rejects invalid progression bindings and unsupported owner tags", async () => {
+test("scenario pack loader rejects invalid progression bindings and unsupported host tags", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
@@ -10383,7 +10383,7 @@ test("scenario pack loader rejects invalid progression bindings and unsupported 
       title: "Cultivation Track",
       metricKey: "stamina",
       metricLabel: "Cultivation",
-      ownerKind: "person",
+      hostFamily: "person",
       tiers: [
         {
           id: "tier.1",
@@ -10397,7 +10397,7 @@ test("scenario pack loader rejects invalid progression bindings and unsupported 
     {
       id: "binding.player.cultivation",
       trackId: "track.cultivation",
-      owner: { ownerKind: "person", ownerId: "person.hero" },
+      host: { family: "person", id: "person.hero" },
       enabled: true,
     },
   ];
@@ -10408,13 +10408,13 @@ test("scenario pack loader rejects invalid progression bindings and unsupported 
   bindings.push({
     id: "binding.player.owner-kind-mismatch",
     trackId: "track.cultivation",
-    owner: { ownerKind: "city", ownerId: "city.start" },
+      host: { family: "city", id: "city.start" },
     enabled: true,
   });
   bindings.push({
     id: "binding.player.owner-tag",
     trackId: "track.cultivation",
-    owner: { ownerKind: "person", ownerId: "person.hero", ownerTag: "player-party" },
+      host: { family: "person", id: "person.hero", hostTag: "player-party" },
     enabled: true,
   });
   files["progress-track-bindings.json"] = JSON.stringify(bindings, null, 2);
@@ -10427,11 +10427,11 @@ test("scenario pack loader rejects invalid progression bindings and unsupported 
           "progression-invalid-binding-pack"
         )
       ),
-    /trackId|ownerKind|ownerTag|track\.missing|track\.cultivation|player-party/i
+    /trackId|hostFamily|hostTag|track\.missing|track\.cultivation|player-party/i
   );
 });
 
-test("script editor runtime export rejects invalid progression binding references and owner tags", () => {
+test("script editor runtime export rejects invalid progression binding references and host tags", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
@@ -10442,7 +10442,7 @@ test("script editor runtime export rejects invalid progression binding reference
       title: "Cultivation Track",
       metricKey: "stamina",
       metricLabel: "Cultivation",
-      ownerKind: "person",
+      hostFamily: "person",
       tiers: [
         {
           id: "tier.1",
@@ -10456,14 +10456,58 @@ test("script editor runtime export rejects invalid progression binding reference
     {
       id: "binding.player.invalid",
       trackId: "track.missing",
-      owner: { ownerKind: "city", ownerId: "city.start", ownerTag: "player-party" },
+      host: { family: "city", id: "city.start", hostTag: "player-party" },
       enabled: true,
     },
   ];
 
   assert.throws(
     () => exportScriptEditorProjectToScenarioPackFiles(project),
-    /trackId|ownerKind|ownerTag|track\.missing|player-party/i
+    /trackId|hostFamily|hostTag|track\.missing|player-party/i
+  );
+});
+
+test("scenario pack loader rejects missing menu resource and menu instance references", () => {
+  const { parseScenarioPack } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+
+  assert.throws(
+    () =>
+      parseScenarioPack({
+        schemaVersion: 1,
+        id: "pack.menu.invalid",
+        title: "Invalid Menu Pack",
+        scenarioProfile: {
+          id: "scenario.menu.invalid",
+          playerCharacterId: "person.hero",
+          chapterId: "chapter.menu.invalid",
+          initialLocation: {
+            mapId: "map.menu.invalid",
+            cityId: "city.start",
+            houseId: "building.home",
+            view: "city",
+          },
+        },
+        characters: [{ id: "person.hero", name: "Hero" }],
+        cities: [{ id: "city.start", name: "Start", regionId: "region.default", mapNodeId: "city.start", houseIds: ["building.home"], neighbourCityIds: [], travelCost: 1, tags: [], prosperity: 50, danger: 50, specialDemand: [], menuInstanceIds: ["menu-instance.missing"] }],
+        houses: [{ id: "building.home", cityId: "city.start", name: "Home", type: "custom", characterIds: [], defaultCharacterId: null, backAction: { label: "返回", targetView: "city" }, menuInstanceIds: ["menu-instance.home"] }],
+        events: [],
+        dialogues: [],
+        menuResources: [
+          {
+            id: "menu-resource.city.start",
+            title: "City Menu",
+            entries: [],
+          },
+        ],
+        menuInstances: [
+          {
+            id: "menu-instance.home",
+            title: "Home Menu",
+            resourceId: "menu-resource.missing",
+          },
+        ],
+      }),
+    /menu instance|menu resource|menu-instance\.missing|menu-resource\.missing/i
   );
 });
 
@@ -10575,8 +10619,158 @@ test(
     assert.deepEqual(importedProject.storyNodes, []);
     assert.equal(importedProject.textEntries[0]?.id, "text.opening");
     assert.equal(importedProject.textEntries[0]?.text, "Opening line.");
+    assert.equal(importedProject.menuResources.length, 2);
+    assert.equal(importedProject.menuInstances.length, 2);
+    assert.deepEqual(importedProject.cities[0]?.menuInstanceIds, [
+      "menu-instance.city.start.primary",
+    ]);
+    assert.deepEqual(importedProject.buildings[0]?.menuInstanceIds, [
+      "menu-instance.building.home.primary",
+    ]);
     assert.deepEqual(importedProject.conditionGroups, []);
     assert.deepEqual(importedProject.effectBundles, []);
+  }
+);
+
+test(
+  "script editor runtime export and import preserve formal menu resources, instances, and location references",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const project = createExportableScriptEditorProjectDefinition();
+
+    project.menuResources = [
+      {
+        id: "menu-resource.city.start",
+        title: "City Menu",
+        entries: [
+          {
+            id: "menu-entry.city.dialogue",
+            label: "City Dialogue",
+            menuFamily: "overview",
+            targetFamily: "dialogue",
+            targetId: "dialogue.city.opening",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
+        ],
+      },
+      {
+        id: "menu-resource.building.home",
+        title: "Building Menu",
+        entries: [
+          {
+            id: "menu-entry.building.event",
+            label: "Building Info",
+            menuFamily: "dialogue",
+            targetFamily: "info",
+            targetId: "",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
+        ],
+      },
+    ];
+    project.menuInstances = [
+      {
+        id: "menu-instance.city.start",
+        title: "City Menu Instance",
+        resourceId: "menu-resource.city.start",
+      },
+      {
+        id: "menu-instance.building.home",
+        title: "Building Menu Instance",
+        resourceId: "menu-resource.building.home",
+      },
+    ];
+    project.cities[0].menuInstanceIds = ["menu-instance.city.start"];
+    project.buildings[0].menuInstanceIds = ["menu-instance.building.home"];
+    project.dialogues = [
+      {
+        id: "dialogue.city.opening",
+        title: "City Opening",
+        nodes: [
+          {
+            id: "dialogue-node.city.opening.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.city.opening",
+            nextNodeId: "",
+            choiceTargetNodeId: "",
+          },
+        ],
+      },
+    ];
+    project.textEntries = [
+      ...project.textEntries,
+      { id: "text.city.opening", text: "City opening." },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedMenuResources = JSON.parse(files["menu-resources.json"]);
+    const exportedMenuInstances = JSON.parse(files["menu-instances.json"]);
+    const exportedCities = JSON.parse(files["cities.json"]);
+    const exportedHouses = JSON.parse(files["houses.json"]);
+
+    assert.deepEqual(exportedMenuResources, project.menuResources);
+    assert.deepEqual(exportedMenuInstances, project.menuInstances);
+    assert.deepEqual(exportedCities[0].menuInstanceIds, ["menu-instance.city.start"]);
+    assert.deepEqual(exportedHouses[0].menuInstanceIds, ["menu-instance.building.home"]);
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(files, "menu-chain-pack")
+    );
+
+    assert.deepEqual(importedProject.menuResources, project.menuResources);
+    assert.deepEqual(importedProject.menuInstances, project.menuInstances);
+    assert.deepEqual(importedProject.cities[0].menuInstanceIds, ["menu-instance.city.start"]);
+    assert.deepEqual(importedProject.buildings[0].menuInstanceIds, ["menu-instance.building.home"]);
+  }
+);
+
+test(
+  "script editor project parser formalizes legacy location menu entries into canonical menu resources and instances",
+  () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      parseScriptEditorProject,
+    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    const legacyProject = createDefaultScriptEditorProjectDefinition({
+      idBase: "legacy-menu-formalization",
+      title: "Legacy Menu Formalization",
+    });
+
+    legacyProject.menuResources = [];
+    legacyProject.menuInstances = [];
+    legacyProject.cities = legacyProject.cities.map((city) => ({
+      ...city,
+      menuInstanceIds: [],
+    }));
+    legacyProject.buildings = legacyProject.buildings.map((building) => ({
+      ...building,
+      menuInstanceIds: [],
+    }));
+
+    const parsedProject = parseScriptEditorProject(legacyProject);
+
+    assert.deepEqual(parsedProject.cities[0].menuInstanceIds, [
+      "menu-instance.city.start.primary",
+    ]);
+    assert.deepEqual(parsedProject.buildings[0].menuInstanceIds, [
+      "menu-instance.building.home.primary",
+    ]);
+    assert.equal(parsedProject.menuResources.length, 2);
+    assert.equal(parsedProject.menuInstances.length, 2);
+    assert.equal(parsedProject.menuResources[0].entries.length > 0, true);
+    assert.equal(parsedProject.menuInstances[0].resourceId.length > 0, true);
   }
 );
 
@@ -10695,7 +10889,7 @@ test("script editor workspace shell exposes progression authoring families in ga
       title: "Cultivation Track",
       metricKey: "stamina",
       metricLabel: "Cultivation",
-      ownerKind: "person",
+      hostFamily: "person",
       tiers: [],
     },
   ];
@@ -10703,9 +10897,9 @@ test("script editor workspace shell exposes progression authoring families in ga
     {
       id: "binding.cultivation.hero",
       trackId: "track.cultivation",
-      owner: {
-        ownerKind: "person",
-        ownerId: "person.hero",
+      host: {
+        family: "person",
+        id: "person.hero",
       },
       enabled: true,
     },
@@ -11383,7 +11577,7 @@ test("script editor workspace shell surfaces progression tier settlement blocker
       title: "Cultivation Track",
       metricKey: "stamina",
       metricLabel: "Cultivation",
-      ownerKind: "person",
+      hostFamily: "person",
       allowDemotion: true,
       tiers: [
         {
@@ -13075,15 +13269,19 @@ test(
       updateScriptEditorBuildingEntryBindingField,
       updateScriptEditorBuildingField,
       updateScriptEditorCityField,
-      updateScriptEditorMenuEntryField,
-      toggleScriptEditorMenuEntryFlag,
     } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    const {
+      appendScriptEditorLocationMenuEntry,
+      listScriptEditorLocationMenuBundles,
+      toggleScriptEditorLocationMenuEntryFlag,
+      updateScriptEditorLocationMenuEntryField,
+    } = require("../.test-dist/application/script-editor/menu-authoring.js");
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
 
     let city = createDefaultScriptEditorCityRecord(0);
     city = updateScriptEditorCityField(city, "name", "苦兰城");
-    city = updateScriptEditorMenuEntryField(city, 0, "targetFamily", "dialogue");
-    city = updateScriptEditorMenuEntryField(city, 0, "targetId", "dialogue.city.kulan");
-    city = toggleScriptEditorMenuEntryFlag(city, 0, "isEnabled", false);
     city = updateScriptEditorAccessField(city, "state", "visible-disabled");
     city = updateScriptEditorAccessField(
       city,
@@ -13097,6 +13295,35 @@ test(
     );
     city = updateScriptEditorAccessField(city, "blockedMessage", "暂未开放");
     city = updateScriptEditorCityField(city, "backgroundId", "chengzhen");
+
+    let project = createDefaultScriptEditorProjectDefinition();
+    project = {
+      ...project,
+      cities: [city],
+    };
+    project = appendScriptEditorLocationMenuEntry(project, "cities", city.id);
+    const cityMenuBundle = listScriptEditorLocationMenuBundles(project, "cities", city.id)[0];
+    project = updateScriptEditorLocationMenuEntryField(
+      project,
+      cityMenuBundle.instanceId,
+      0,
+      "targetFamily",
+      "dialogue"
+    );
+    project = updateScriptEditorLocationMenuEntryField(
+      project,
+      cityMenuBundle.instanceId,
+      0,
+      "targetId",
+      "dialogue.city.kulan"
+    );
+    project = toggleScriptEditorLocationMenuEntryFlag(
+      project,
+      cityMenuBundle.instanceId,
+      0,
+      "isEnabled",
+      false
+    );
 
     let building = createDefaultScriptEditorBuildingRecord(0, "city.kulan");
     building = updateScriptEditorBuildingEntryBindingField(
@@ -13119,9 +13346,19 @@ test(
     });
 
     assert.equal(city.name, "苦兰城");
-    assert.equal(city.menuEntries[0].targetFamily, "dialogue");
-    assert.equal(city.menuEntries[0].targetId, "dialogue.city.kulan");
-    assert.equal(city.menuEntries[0].isEnabled, false);
+    assert.equal(project.cities[0].menuEntries, undefined);
+    assert.equal(
+      listScriptEditorLocationMenuBundles(project, "cities", city.id)[0].entries[0].targetFamily,
+      "dialogue"
+    );
+    assert.equal(
+      listScriptEditorLocationMenuBundles(project, "cities", city.id)[0].entries[0].targetId,
+      "dialogue.city.kulan"
+    );
+    assert.equal(
+      listScriptEditorLocationMenuBundles(project, "cities", city.id)[0].entries[0].isEnabled,
+      false
+    );
     assert.equal("state" in city.access, false);
     assert.deepEqual(city.access.conditionExpression, {
       type: "compare",
@@ -15237,7 +15474,7 @@ test("progression resources round-trip through runtime-pack export import and lo
       title: "Cultivation Track",
       metricKey: "stamina",
       metricLabel: "Cultivation",
-      ownerKind: "person",
+      hostFamily: "person",
       allowDemotion: true,
       tiers: [
         {
@@ -15259,7 +15496,7 @@ test("progression resources round-trip through runtime-pack export import and lo
     {
       id: "binding.player.cultivation",
       trackId: "track.cultivation",
-      owner: { ownerKind: "person", ownerId: "person.hero" },
+      host: { family: "person", id: "person.hero" },
       enabled: true,
     },
   ];
@@ -16932,6 +17169,80 @@ test("city location deck uses only city entry buttons for building entry", () =>
   assert.doesNotMatch(renderLocationsDeckViewBlock, /visibleHouseDefinitions/);
 });
 
+test("city menu runtime resolves formal menu resource and instance chains into runtime menu entries", () => {
+  const {
+    resolveCityMenuEntries,
+  } = require("../.test-dist/application/city-menu/city-menu.js");
+
+  const entries = resolveCityMenuEntries({
+    cityDefinition: {
+      id: "city.start",
+      name: "Start City",
+      regionId: "region.default",
+      mapNodeId: "city.start",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 10,
+      specialDemand: [],
+      menuInstanceIds: ["menu-instance.city.start"],
+    },
+    playerCharacter: {
+      id: "person.player",
+      name: "Player Monk",
+      title: "Monk",
+    },
+    menuResourcesById: {
+      "menu-resource.city.start": {
+        id: "menu-resource.city.start",
+        title: "City Menu",
+        entries: [
+          {
+            id: "menu-entry.city.start.overview",
+            label: "Overview",
+            menuFamily: "overview",
+            targetFamily: "info",
+            targetId: "city-panel.overview",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
+          {
+            id: "menu-entry.city.start.begging",
+            label: "Begging",
+            menuFamily: "begging",
+            targetFamily: "minigame",
+            targetId: "city-begging",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
+        ],
+      },
+    },
+    menuInstancesById: {
+      "menu-instance.city.start": {
+        id: "menu-instance.city.start",
+        title: "Start City Menu",
+        resourceId: "menu-resource.city.start",
+      },
+    },
+  });
+
+  assert.deepEqual(
+    entries.map((entry) => ({
+      id: entry.id,
+      action: entry.action.type,
+    })),
+    [
+      { id: "menu-entry.city.start.overview", action: "panel" },
+      { id: "menu-entry.city.start.begging", action: "minigame" },
+    ]
+  );
+});
+
 test("city entry artwork class comes from city entry artwork id", () => {
   const cityViewSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/views/city/city-view.ts"),
@@ -16953,6 +17264,38 @@ test("city click handling no longer exposes direct house-id entry protocol", () 
 
   assert.doesNotMatch(mainSource, /\[data-house-id\]/);
   assert.doesNotMatch(appClickCoordinatorSource, /\[data-house-id\]/);
+});
+
+test("city menu runtime uses formal menu entry ids instead of hardcoded panel protocol", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const appClickCoordinatorSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/ui/app-click-coordinator.ts"),
+    "utf8"
+  );
+  const cityViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/city/city-view.ts"),
+    "utf8"
+  );
+  const packManifestSource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/scenario-packs/zhuyuanzhang/pack.json"),
+    "utf8"
+  );
+  const cityPackSource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/scenario-packs/zhuyuanzhang/cities.json"),
+    "utf8"
+  );
+
+  assert.match(mainSource, /\[data-city-menu-entry-id\]/);
+  assert.match(mainSource, /openCityMenuEntry/);
+  assert.doesNotMatch(mainSource, /\[data-city-menu-open\]/);
+  assert.doesNotMatch(mainSource, /openCityMenuPanel/);
+  assert.match(appClickCoordinatorSource, /\[data-city-menu-entry-id\]/);
+  assert.doesNotMatch(appClickCoordinatorSource, /\[data-city-menu-open\]/);
+  assert.match(cityViewSource, /data-city-menu-entry-id=/);
+  assert.doesNotMatch(cityViewSource, /data-city-menu-open=/);
+  assert.match(packManifestSource, /"menuResources": "menu-resources\.json"/);
+  assert.match(packManifestSource, /"menuInstances": "menu-instances\.json"/);
+  assert.match(cityPackSource, /"menuInstanceIds": \[\s*"menu-instance\.city\.default"\s*\]/);
 });
 
 test("non directory city entries enter the target building directly", () => {
@@ -17781,6 +18124,44 @@ test("script editor workspace groups creator navigation using current world, nar
   );
 });
 
+test("script editor workspace shell surfaces missing formal menu instance and resource references", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const project = createDefaultScriptEditorProjectDefinition();
+
+  project.menuResources = [];
+  project.menuInstances = [
+    {
+      id: "menu-instance.city.start.primary",
+      title: "Broken City Menu",
+      resourceId: "menu-resource.missing",
+    },
+  ];
+  project.cities[0].menuInstanceIds = [
+    "menu-instance.city.start.primary",
+    "menu-instance.city.start.missing",
+  ];
+  project.buildings[0].menuInstanceIds = [];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project,
+    selection: {
+      family: "cities",
+      entityId: "city.start",
+    },
+  });
+  const menuIssues = workspace.auxiliaryPanel.issues.filter(
+    (issue) => issue.targetFamily === "cities" && issue.targetTab === "menus"
+  );
+
+  assert.equal(menuIssues.some((issue) => issue.title === "菜单实例缺失"), true);
+  assert.equal(menuIssues.some((issue) => issue.title === "菜单资源缺失"), true);
+});
+
 test("script editor event binding conditions authoring preserves flag and variable conditions on EventBinding", () => {
   const {
     appendScriptEditorEventBindingConditionItem,
@@ -17978,40 +18359,64 @@ test("script editor event deletion removes all cross-record event references", (
   project.storyPack.entryEventId = deletedEventId;
 
   project.people[0].eventIds = [deletedEventId, keepEventId];
-  project.cities[0].menuEntries = [
+  project.menuResources = [
     {
-      id: "city.start.menu.event",
-      label: "City Event",
-      menuFamily: "overview",
-      targetFamily: "event",
-      targetId: deletedEventId,
-      isVisible: true,
-      isEnabled: true,
-      disabledHint: "",
+      id: "menu-resource.city.start",
+      title: "City Menu",
+      entries: [
+        {
+          id: "city.start.menu.event",
+          label: "City Event",
+          menuFamily: "overview",
+          targetFamily: "event",
+          targetId: deletedEventId,
+          isVisible: true,
+          isEnabled: true,
+          disabledHint: "",
+        },
+        {
+          id: "city.start.menu.dialogue",
+          label: "City Dialogue",
+          menuFamily: "overview",
+          targetFamily: "dialogue",
+          targetId: "dialogue.opening",
+          isVisible: true,
+          isEnabled: true,
+          disabledHint: "",
+        },
+      ],
     },
     {
-      id: "city.start.menu.dialogue",
-      label: "City Dialogue",
-      menuFamily: "overview",
-      targetFamily: "dialogue",
-      targetId: "dialogue.opening",
-      isVisible: true,
-      isEnabled: true,
-      disabledHint: "",
+      id: "menu-resource.building.home",
+      title: "Building Menu",
+      entries: [
+        {
+          id: "building.home.menu.event",
+          label: "Building Event",
+          menuFamily: "dialogue",
+          targetFamily: "event",
+          targetId: deletedEventId,
+          isVisible: true,
+          isEnabled: true,
+          disabledHint: "",
+        },
+      ],
     },
   ];
-  project.buildings[0].menuEntries = [
+  project.menuInstances = [
     {
-      id: "building.home.menu.event",
-      label: "Building Event",
-      menuFamily: "dialogue",
-      targetFamily: "event",
-      targetId: deletedEventId,
-      isVisible: true,
-      isEnabled: true,
-      disabledHint: "",
+      id: "menu-instance.city.start",
+      title: "City Menu Instance",
+      resourceId: "menu-resource.city.start",
+    },
+    {
+      id: "menu-instance.building.home",
+      title: "Building Menu Instance",
+      resourceId: "menu-resource.building.home",
     },
   ];
+  project.cities[0].menuInstanceIds = ["menu-instance.city.start"];
+  project.buildings[0].menuInstanceIds = ["menu-instance.building.home"];
   project.buildings[0].entryBinding = {
     defaultPersonId: "person.hero",
     returnTarget: "city",
@@ -18041,7 +18446,7 @@ test("script editor event deletion removes all cross-record event references", (
   assert.equal(nextProject.events.some((event) => event.id === deletedEventId), false);
   assert.equal(nextProject.storyPack.entryEventId, undefined);
   assert.deepEqual(nextProject.people[0].eventIds, [keepEventId]);
-  assert.deepEqual(nextProject.cities[0].menuEntries, [
+  assert.deepEqual(nextProject.menuResources[0].entries, [
     {
       id: "city.start.menu.dialogue",
       label: "City Dialogue",
@@ -18053,9 +18458,11 @@ test("script editor event deletion removes all cross-record event references", (
       disabledHint: "",
     },
   ]);
-  assert.deepEqual(nextProject.buildings[0].menuEntries, []);
+  assert.deepEqual(nextProject.menuResources[1].entries, []);
   assert.equal(nextProject.buildings[0].entryBinding.defaultPersonId, "person.hero");
   assert.equal(nextProject.buildings[0].entryBinding.returnTarget, "city");
+  assert.deepEqual(nextProject.cities[0].menuInstanceIds, ["menu-instance.city.start"]);
+  assert.deepEqual(nextProject.buildings[0].menuInstanceIds, ["menu-instance.building.home"]);
 
   const {
     exportScriptEditorProjectToScenarioPackFiles,
@@ -18063,8 +18470,19 @@ test("script editor event deletion removes all cross-record event references", (
   const exportedEvents = JSON.parse(
     exportScriptEditorProjectToScenarioPackFiles(nextProject)["events.json"]
   );
+  const exportedMenuResources = JSON.parse(
+    exportScriptEditorProjectToScenarioPackFiles(nextProject)["menu-resources.json"]
+  );
   assert.equal(exportedEvents.some((event) => event.id === deletedEventId), false);
   assert.equal(exportedEvents.some((event) => event.nextEventId === deletedEventId), false);
+  assert.equal(
+    exportedMenuResources[0].entries.some((entry) => entry.targetId === deletedEventId),
+    false
+  );
+  assert.equal(
+    exportedMenuResources[1].entries.some((entry) => entry.targetId === deletedEventId),
+    false
+  );
 });
 
 test(
@@ -26947,8 +27365,8 @@ test("runtime settlement executes progression settlement instances through autho
       {
         settlementId: "settlement.tier.2",
         payload: {
-          ownerKind: "person",
-          ownerId: player.id,
+          hostFamily: "person",
+          hostId: player.id,
           trackId: "track.cultivation",
           fromTierId: "tier.1",
           toTierId: "tier.2",
@@ -27765,7 +28183,7 @@ test("story runtime settlement events run progression tracks and apply emitted s
         title: "Cultivation Track",
         metricKey: "stamina",
         metricLabel: "Cultivation",
-        ownerKind: "person",
+        hostFamily: "person",
         allowDemotion: true,
         tiers: [
           {
@@ -27786,9 +28204,9 @@ test("story runtime settlement events run progression tracks and apply emitted s
       {
         id: "binding.player.cultivation",
         trackId: "track.cultivation",
-        owner: {
-          ownerKind: "person",
-          ownerId: playerCharacterId,
+        host: {
+          family: "person",
+          id: playerCharacterId,
         },
         enabled: true,
       },
@@ -27807,7 +28225,7 @@ test("story runtime settlement events run progression tracks and apply emitted s
 
   assert.equal(result.characterDefinitions[0].stamina, 105);
   assert.equal(
-    result.state.runtime.progression.trackStatesByOwnerKey["person:char.player"][
+    result.state.runtime.progression.trackStatesByHostKey["person:char.player"][
       "track.cultivation"
     ].currentTierId,
     "tier.2"
@@ -27861,7 +28279,7 @@ test("story runtime does not evaluate progression before a settlement event exec
         title: "Cultivation Track",
         metricKey: "stamina",
         metricLabel: "Cultivation",
-        ownerKind: "person",
+        hostFamily: "person",
         allowDemotion: true,
         tiers: [
           {
@@ -27882,9 +28300,9 @@ test("story runtime does not evaluate progression before a settlement event exec
       {
         id: "binding.player.cultivation",
         trackId: "track.cultivation",
-        owner: {
-          ownerKind: "person",
-          ownerId: playerCharacterId,
+        host: {
+          family: "person",
+          id: playerCharacterId,
         },
         enabled: true,
       },
@@ -28736,12 +29154,19 @@ test("progression runtime contract exports canonical track and settlement payloa
   );
 
   assert.match(source, /export type ProgressTrackDefinition = \{/);
+  assert.match(source, /hostFamily: string \| "\*";/);
+  assert.match(source, /export type ProgressHostReference = \{/);
   assert.match(source, /export type ProgressTrackBinding = \{/);
+  assert.match(source, /host: ProgressHostReference;/);
   assert.match(source, /export type ProgressTrackRuntimeState = \{/);
+  assert.match(source, /trackStatesByHostKey: Record</);
   assert.match(source, /export type ProgressionTierSettlementPayload = \{/);
+  assert.match(source, /hostFamily: string;/);
+  assert.match(source, /hostId: string;/);
   assert.match(source, /metricKey: string;/);
   assert.match(source, /targetTierSettlementId\?: string \| null;/);
   assert.doesNotMatch(source, /ownerTag\?: string;/);
+  assert.doesNotMatch(source, /hostTag\?: string;/);
 });
 
 test("runtime state reserves a unified progression runtime partition", () => {
@@ -28758,12 +29183,12 @@ test("progression runtime emits settlement instances only for target-tier conver
 
   const result = runProgressionRuntime({
     state: {
-      trackStatesByOwnerKey: {
+      trackStatesByHostKey: {
         "person:char.player": {
           "track.cultivation": {
             trackId: "track.cultivation",
-            ownerKind: "person",
-            ownerId: "char.player",
+            hostFamily: "person",
+            hostId: "char.player",
             metricValue: 90,
             currentTierId: "tier.1",
             enteredTierHistory: ["tier.1"],
@@ -28777,7 +29202,7 @@ test("progression runtime emits settlement instances only for target-tier conver
       title: "Cultivation Track",
       metricKey: "stamina",
       metricLabel: "Cultivation",
-      ownerKind: "person",
+      hostFamily: "person",
       allowDemotion: true,
       tiers: [
         {
@@ -28797,7 +29222,7 @@ test("progression runtime emits settlement instances only for target-tier conver
     binding: {
       id: "binding.player.cultivation",
       trackId: "track.cultivation",
-      owner: { ownerKind: "person", ownerId: "char.player" },
+      host: { family: "person", id: "char.player" },
       enabled: true,
     },
     metricValue: 100,
@@ -28807,8 +29232,8 @@ test("progression runtime emits settlement instances only for target-tier conver
   assert.equal(result.settlementInstances.length, 1);
   assert.equal(result.settlementInstances[0].settlementId, "settlement.tier.2");
   assert.deepEqual(result.settlementInstances[0].payload, {
-    ownerKind: "person",
-    ownerId: "char.player",
+    hostFamily: "person",
+    hostId: "char.player",
     trackId: "track.cultivation",
     fromTierId: "tier.1",
     toTierId: "tier.2",
@@ -28817,10 +29242,10 @@ test("progression runtime emits settlement instances only for target-tier conver
   assert.equal(result.eventRequests, undefined);
 });
 
-test("progression runtime skips unresolved concrete owners instead of collapsing into a shared owner bucket", () => {
+test("progression runtime skips unresolved concrete hosts instead of collapsing into a shared host bucket", () => {
   const { runProgressionRuntime } = require("../.test-dist/core/runtime/progression-runtime.js");
   const initialState = {
-    trackStatesByOwnerKey: {},
+    trackStatesByHostKey: {},
   };
 
   const result = runProgressionRuntime({
@@ -28830,7 +29255,7 @@ test("progression runtime skips unresolved concrete owners instead of collapsing
       title: "Cultivation Track",
       metricKey: "stamina",
       metricLabel: "Cultivation",
-      ownerKind: "person",
+        hostFamily: "person",
       allowDemotion: true,
       tiers: [
         {
@@ -28844,7 +29269,7 @@ test("progression runtime skips unresolved concrete owners instead of collapsing
     binding: {
       id: "binding.player.cultivation.unresolved",
       trackId: "track.cultivation",
-      owner: { ownerKind: "person" },
+      host: { family: "person" },
       enabled: true,
     },
     metricValue: 25,
@@ -28854,20 +29279,20 @@ test("progression runtime skips unresolved concrete owners instead of collapsing
   assert.deepEqual(result.state, initialState);
   assert.deepEqual(result.settlementInstances, []);
   assert.deepEqual(result.diagnostics, [
-    "progression-runtime:skipped-unresolved-owner:binding.player.cultivation.unresolved",
+    "progression-runtime:skipped-unresolved-host:binding.player.cultivation.unresolved",
   ]);
-  assert.equal(result.state.trackStatesByOwnerKey["person:"], undefined);
+  assert.equal(result.state.trackStatesByHostKey["person:"], undefined);
 });
 
 test("progression runtime skips disabled bindings without updating state or settlement instances", () => {
   const { runProgressionRuntime } = require("../.test-dist/core/runtime/progression-runtime.js");
   const initialState = {
-    trackStatesByOwnerKey: {
+      trackStatesByHostKey: {
       "person:char.player": {
         "track.cultivation": {
           trackId: "track.cultivation",
-          ownerKind: "person",
-          ownerId: "char.player",
+            hostFamily: "person",
+            hostId: "char.player",
           metricValue: 90,
           currentTierId: "tier.1",
           enteredTierHistory: ["tier.1"],
@@ -28884,7 +29309,7 @@ test("progression runtime skips disabled bindings without updating state or sett
       title: "Cultivation Track",
       metricKey: "stamina",
       metricLabel: "Cultivation",
-      ownerKind: "person",
+        hostFamily: "person",
       allowDemotion: true,
       tiers: [
         {
@@ -28904,7 +29329,7 @@ test("progression runtime skips disabled bindings without updating state or sett
     binding: {
       id: "binding.player.cultivation.disabled",
       trackId: "track.cultivation",
-      owner: { ownerKind: "person", ownerId: "char.player" },
+      host: { family: "person", id: "char.player" },
       enabled: false,
     },
     metricValue: 100,
@@ -28950,7 +29375,7 @@ test("script editor project definition declares progression track and binding fi
   );
 });
 
-test("script editor progression authoring exposes Chinese track and binding controls", () => {
+test("script editor progression authoring exposes Chinese track and host binding controls", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
@@ -28963,8 +29388,9 @@ test("script editor progression authoring exposes Chinese track and binding cont
   assert.match(source, /data-script-editor-progress-track-field="title"/);
   assert.match(source, /data-script-editor-progress-track-field="metricKey"/);
   assert.match(source, /data-script-editor-progress-track-tier-field="threshold"/);
-  assert.match(source, /data-script-editor-progress-binding-field="ownerKind"/);
+  assert.match(source, /data-script-editor-progress-binding-field="hostFamily"/);
   assert.doesNotMatch(source, /data-script-editor-progress-binding-field="ownerTag"/);
+  assert.doesNotMatch(source, /data-script-editor-progress-binding-field="hostTag"/);
   assert.doesNotMatch(source, /data-script-editor-progress-track-field="id"/);
 });
 
@@ -28982,7 +29408,7 @@ test("script editor stage configuration creator module merges object binding rul
   assert.match(source, /data-script-editor-action="remove-stage-configuration-binding"/);
   assert.match(source, /data-script-editor-action="add-stage-configuration-track"/);
   assert.match(source, /data-script-editor-action="remove-stage-configuration-track"/);
-  assert.match(source, /data-script-editor-progress-binding-field="ownerId"/);
+  assert.match(source, /data-script-editor-progress-binding-field="hostId"/);
 });
 
 
@@ -29027,12 +29453,12 @@ test("script editor stage configuration authoring can produce a creator-authored
   );
   binding = updateScriptEditorProgressTrackBindingField(
     binding,
-    "ownerKind",
+    "hostFamily",
     "person"
   );
   binding = updateScriptEditorProgressTrackBindingField(
     binding,
-    "ownerId",
+    "hostId",
     "person.hero"
   );
   project = upsertScriptEditorWorkflowRecord(
@@ -29051,8 +29477,8 @@ test("script editor stage configuration authoring can produce a creator-authored
   assert.equal(exportedTracks[0].metricKey, "experience");
   assert.equal(exportedBindings.length, 1);
   assert.equal(exportedBindings[0].trackId, "250001");
-  assert.equal(exportedBindings[0].owner.ownerKind, "person");
-  assert.equal(exportedBindings[0].owner.ownerId, "person.hero");
+  assert.equal(exportedBindings[0].host.family, "person");
+  assert.equal(exportedBindings[0].host.id, "person.hero");
 });
 
 /* test.skip("script editor stage configuration clears stale applied object when creator changes object type", () => {
@@ -29077,7 +29503,7 @@ test("script editor stage configuration authoring can produce a creator-authored
       id: "binding.progress.hero",
       trackId: "track.progress.person",
       owner: {
-        ownerKind: "person",
+        hostFamily: "person",
         ownerId: "person.hero",
       },
       enabled: true,
@@ -29098,7 +29524,7 @@ test("script editor stage configuration authoring can produce a creator-authored
   );
 }); */
 
-test("script editor stage configuration binding helper clears stale applied object when creator changes object type", () => {
+test("script editor stage configuration binding helper clears stale applied host when creator changes host family", () => {
   const {
     updateScriptEditorProgressTrackBindingField,
   } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
@@ -29106,17 +29532,17 @@ test("script editor stage configuration binding helper clears stale applied obje
   let binding = {
     id: "binding.progress.hero",
     trackId: "track.progress.person",
-    owner: {
-      ownerKind: "person",
-      ownerId: "person.hero",
+    host: {
+      family: "person",
+      id: "person.hero",
     },
     enabled: true,
   };
 
-  binding = updateScriptEditorProgressTrackBindingField(binding, "ownerKind", "city");
+  binding = updateScriptEditorProgressTrackBindingField(binding, "hostFamily", "city");
 
-  assert.equal(binding.owner.ownerKind, "city");
-  assert.equal(binding.owner.ownerId, "");
+  assert.equal(binding.host.family, "city");
+  assert.equal(binding.host.id, "");
 });
 
 test("script editor workflow helpers support progression draft upsert and remove", () => {

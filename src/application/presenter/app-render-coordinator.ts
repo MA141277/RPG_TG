@@ -107,6 +107,8 @@ export function createAppRenderCoordinator(
       cityEntries: activeContentContext.cityEntries,
       cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
       cityNameById: activeContentContext.cityNameById,
+      menuResourcesById: activeContentContext.gameContent.menuResourcesById,
+      menuInstancesById: activeContentContext.gameContent.menuInstancesById,
       textEntriesById: activeContentContext.textEntriesById,
       citySceneMappingsByCityId,
       dialogueDefinitionsById:

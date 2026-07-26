@@ -43,6 +43,7 @@ import {
   createDefaultScriptEditorSettlementRecord,
   createDefaultScriptEditorStoryNodeRecord,
 } from "./story-dialogue-event-authoring";
+import { formalizeScriptEditorProjectMenus } from "./menu-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
   allocateNextScriptEditorProjectCanonicalId,
@@ -98,7 +99,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
   const title = input?.title?.trim() || "Script Editor Demo Project";
   const defaultPortrait = createDefaultScriptEditorPortraitRecord(0);
 
-  return {
+  return formalizeScriptEditorProjectMenus({
     schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
     kind: SCRIPT_EDITOR_PROJECT_KIND,
     id: `project.${idBase}`,
@@ -174,6 +175,8 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
     settlements: [],
     progressTracks: [],
     progressTrackBindings: [],
+    menuResources: [],
+    menuInstances: [],
     events: [
       {
         ...createDefaultScriptEditorEventRecord(0),
@@ -232,7 +235,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
     ],
     conditionGroups: [],
     effectBundles: [],
-  };
+  });
 }
 
 export function listScriptEditorWorkflowFamilyRecords(
@@ -577,30 +580,10 @@ function removeEventReferencesFromScriptEditorProject(
         ? person
         : { ...person, eventIds: nextEventIds };
     }),
-    cities: project.cities.map((city) => {
-      const nextMenuEntries = removeMenuEntriesPointingToEvent(city.menuEntries, removedEventId);
-      if (nextMenuEntries === city.menuEntries || nextMenuEntries == null) {
-        return city;
-      }
-      return {
-        ...city,
-        menuEntries: nextMenuEntries,
-      };
-    }),
-    buildings: project.buildings.map((building) => {
-      const nextMenuEntries = removeMenuEntriesPointingToEvent(
-        building.menuEntries,
-        removedEventId
-      );
-      if (nextMenuEntries === building.menuEntries) {
-        return building;
-      }
-      const nextBuilding: ScriptEditorBuildingRecord = { ...building };
-      if (nextMenuEntries !== building.menuEntries && nextMenuEntries != null) {
-        nextBuilding.menuEntries = nextMenuEntries;
-      }
-      return nextBuilding;
-    }),
+    menuResources: project.menuResources.map((menuResource) => ({
+      ...menuResource,
+      entries: removeMenuEntriesPointingToEvent(menuResource.entries, removedEventId) ?? [],
+    })),
     dialogues: project.dialogues.map((dialogue) => {
       const nextFollowUps = removeDialogueEventFollowUps(dialogue.followUps, removedEventId);
       if (nextFollowUps === dialogue.followUps || nextFollowUps == null) {

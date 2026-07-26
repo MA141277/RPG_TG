@@ -159,6 +159,7 @@ function materializeCities(
           : 50,
       danger: 100 - security,
       specialDemand: readSpecialDemandAttributeOptions(city.extendedAttributes),
+      menuInstanceIds: readStringArray(city.menuInstanceIds),
     };
   });
 }
@@ -267,6 +268,7 @@ function materializeHouses(
         baseAttributes.requiresPlayerCurrentCityMatch === true,
       moduleId: baseAttributes.moduleId ?? null,
       activityLocationId: readActivityLocationId(baseAttributes.activityLocationId),
+      menuInstanceIds: readStringArray(building.menuInstanceIds),
     };
   });
 }

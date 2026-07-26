@@ -1,19 +1,28 @@
 import type { AppState } from "../app-shell";
+import { resolveCityMenuEntries } from "../city-menu/city-menu";
 import {
   isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
 } from "../story/story-stage-access";
+import type { CharacterDefinition } from "../../domain/character";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../domain/house";
+import type {
+  MenuInstanceDefinition,
+  MenuResourceDefinition,
+} from "../../domain/menu";
 import type { AppPresenterStageOutput } from "../presenter/presenter-output";
 
 export type CityModuleEntryInput = {
   appState: AppState;
+  playerCharacter: CharacterDefinition;
   activeCityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];
   cityEntries: CityEntryDefinition[];
+  menuResourcesById: Record<string, MenuResourceDefinition>;
+  menuInstancesById: Record<string, MenuInstanceDefinition>;
   citySceneMapping: CitySceneMapping | null;
 };
 
@@ -51,6 +60,12 @@ export function selectCityModuleUnderlay(
     activeCityDefinition: input.activeCityDefinition,
     activeCityHouseDefinitions,
     activeCityEntries,
+    activeCityMenuEntries: resolveCityMenuEntries({
+      cityDefinition: input.activeCityDefinition,
+      playerCharacter: input.playerCharacter,
+      menuResourcesById: input.menuResourcesById,
+      menuInstancesById: input.menuInstancesById,
+    }),
     citySceneMapping: input.citySceneMapping,
   };
 }

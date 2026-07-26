@@ -94,19 +94,6 @@ function createDefaultAccessRule(): ScriptEditorAccessRule {
   return {};
 }
 
-function createDefaultMenuEntry(idBase: string, menuFamily: string): ScriptEditorMenuEntry {
-  return {
-    id: `${idBase}.${slugifyMenuFamily(menuFamily)}`,
-    label: menuFamily,
-    menuFamily,
-    targetFamily: "info",
-    targetId: "",
-    isVisible: true,
-    isEnabled: true,
-    disabledHint: "",
-  };
-}
-
 function createDefaultBuildingEntryBinding(): ScriptEditorBuildingEntryBinding {
   return {
     defaultPersonId: "",
@@ -211,9 +198,6 @@ export function createDefaultScriptEditorCityRecord(
     extendedAttributes: [],
     mountedBuildings: [],
     description: "",
-    menuEntries: SCRIPT_EDITOR_CITY_DEFAULT_MENU_FAMILIES.map((family) =>
-      createDefaultMenuEntry(`${id}.menu`, family)
-    ),
     access: createDefaultAccessRule(),
   };
 }
@@ -242,9 +226,6 @@ export function createDefaultScriptEditorBuildingRecord(
     extendedAttributes: [],
     backAction: createDefaultBackAction(),
     description: "",
-    menuEntries: SCRIPT_EDITOR_BUILDING_DEFAULT_MENU_FAMILIES.map((family) =>
-      createDefaultMenuEntry(`${id}.menu`, family)
-    ),
     access: createDefaultAccessRule(),
     entryBinding: createDefaultBuildingEntryBinding(),
   };
@@ -254,6 +235,7 @@ export function normalizeScriptEditorCityRecord(
   city: Partial<ScriptEditorCityRecord> & { id: string }
 ): ScriptEditorCityRecord {
   const rawCity = city as Partial<ScriptEditorCityRecord> & Record<string, unknown>;
+  const normalizedMenuEntries = normalizeMenuEntries(city.menuEntries, `${city.id}.menu`);
   return {
     id: city.id,
     name: normalizeString(city.name, city.id),
@@ -281,7 +263,8 @@ export function normalizeScriptEditorCityRecord(
     profileMap: normalizeProfileMap(city.profileMap, city.description),
     extendedAttributes: normalizeCustomAttributes(city.extendedAttributes),
     description: normalizeOptionalString(city.description),
-    menuEntries: normalizeMenuEntries(city.menuEntries, `${city.id}.menu`),
+    ...(normalizedMenuEntries.length > 0 ? { menuEntries: normalizedMenuEntries } : {}),
+    menuInstanceIds: normalizeStringArray(rawCity.menuInstanceIds),
     access: normalizeAccessRule(city.access),
   };
 }
@@ -291,6 +274,7 @@ export function normalizeScriptEditorBuildingRecord(
 ): ScriptEditorBuildingRecord {
   const rawBuilding = building as Partial<ScriptEditorBuildingRecord> &
     Record<string, unknown>;
+  const normalizedMenuEntries = normalizeMenuEntries(building.menuEntries, `${building.id}.menu`);
   return {
     id: building.id,
     cityId: normalizeString(building.cityId, "city.start"),
@@ -300,7 +284,8 @@ export function normalizeScriptEditorBuildingRecord(
     profileMap: normalizeProfileMap(building.profileMap, building.description),
     extendedAttributes: normalizeCustomAttributes(building.extendedAttributes),
     description: normalizeOptionalString(building.description),
-    menuEntries: normalizeMenuEntries(building.menuEntries, `${building.id}.menu`),
+    ...(normalizedMenuEntries.length > 0 ? { menuEntries: normalizedMenuEntries } : {}),
+    menuInstanceIds: normalizeStringArray(rawBuilding.menuInstanceIds),
     access: normalizeAccessRule(building.access),
     entryBinding: normalizeBuildingEntryBinding(building.entryBinding),
     backAction: normalizeBackAction(building.backAction),
@@ -1126,78 +1111,6 @@ export function updateScriptEditorLocationAttribute<
   };
 }
 
-export function appendScriptEditorMenuEntry<
-  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
->(record: TRecord): TRecord {
-  const nextIndex = (record.menuEntries?.length ?? 0) + 1;
-  return {
-    ...record,
-    menuEntries: [
-      ...(record.menuEntries ?? []),
-      createDefaultMenuEntry(`${record.id}.menu`, `entry-${nextIndex}`),
-    ],
-  };
-}
-
-export function removeScriptEditorMenuEntry<
-  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
->(record: TRecord, index: number): TRecord {
-  return {
-    ...record,
-    menuEntries: (record.menuEntries ?? []).filter((_, itemIndex) => itemIndex !== index),
-  };
-}
-
-export function updateScriptEditorMenuEntryField<
-  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
->(
-  record: TRecord,
-  index: number,
-  field:
-    | "id"
-    | "label"
-    | "menuFamily"
-    | "targetFamily"
-    | "targetId"
-    | "disabledHint",
-  value: string
-): TRecord {
-  return {
-    ...record,
-    menuEntries: (record.menuEntries ?? []).map((entry, itemIndex) => {
-      if (itemIndex !== index) {
-        return entry;
-      }
-      if (field === "targetFamily") {
-        return {
-          ...entry,
-          targetFamily: normalizeMenuTargetFamily(value),
-        };
-      }
-      return {
-        ...entry,
-        [field]: value.trim(),
-      };
-    }),
-  };
-}
-
-export function toggleScriptEditorMenuEntryFlag<
-  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
->(
-  record: TRecord,
-  index: number,
-  field: "isVisible" | "isEnabled",
-  checked: boolean
-): TRecord {
-  return {
-    ...record,
-    menuEntries: (record.menuEntries ?? []).map((entry, itemIndex) =>
-      itemIndex === index ? { ...entry, [field]: checked } : entry
-    ),
-  };
-}
-
 export function updateScriptEditorAccessField<
   TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
 >(
@@ -1781,14 +1694,4 @@ function pickOptionalString<TKey extends string>(
 ): Partial<Record<TKey, string>> {
   const normalized = normalizeOptionalString(value);
   return normalized.length === 0 ? {} : { [key]: normalized } as Partial<Record<TKey, string>>;
-}
-
-function slugifyMenuFamily(value: string): string {
-  return (
-    value
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "menu"
-  );
 }

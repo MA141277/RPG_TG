@@ -2,9 +2,9 @@
   {
     "id": "binding.player.cultivation",
     "trackId": "track.cultivation",
-    "owner": {
-      "ownerKind": "person",
-      "ownerId": "char.browser.smoke"
+    "host": {
+      "family": "person",
+      "id": "char.browser.smoke"
     },
     "enabled": true
   }

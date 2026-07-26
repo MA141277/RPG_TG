@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-content-format-runtime-layout-and-module-capability-convergence`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/blueprint.md`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/stage-host-binding-and-menu-resource-runtime-convergence-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,14 +29,15 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-26-script-editor-content-format-runtime-layout-and-module-capability-convergence-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `docs/blueprints/queues/stage-host-binding-and-menu-resource-runtime-convergence-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `A new open successor version now exists and is the only lawful active Blueprint version.`
 - `The current active version was created on 2026-07-26 from the operator-approved unified requirement sheet covering Script Editor content format, runtime layout, runtime UI layering, covered-module capability completion, event-only routing, and no-compatibility full-chain convergence.`
-- `No child queue is admitted yet under the active version, so the next lawful Blueprint action before implementation is first-queue admission from the active version plan.`
+- `The current active version is now executing through queue.stage-host-binding-and-menu-resource-runtime-convergence after the first queue closed and synced through commit f4ec1e20 on origin/mod-first-dev, and that queue is now in its closeout-review task after the stage/menu implementation batch landed locally.`
+- `Resume from the active queue doc and its live active task rather than re-running admission or reopening the closed first queue from project entry.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `Closed versions remain historical evidence only and must not be resumed implicitly while this open successor version owns current execution truth.`
 

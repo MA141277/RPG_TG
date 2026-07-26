@@ -4,7 +4,7 @@
     "title": "Cultivation Track",
     "metricKey": "stamina",
     "metricLabel": "Stamina",
-    "ownerKind": "person",
+    "hostFamily": "person",
     "allowDemotion": true,
     "tiers": [
       {

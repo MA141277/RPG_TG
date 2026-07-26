@@ -3,15 +3,46 @@ import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { HouseDefinition } from "../../domain/house";
+import type {
+  MenuInstanceDefinition,
+  MenuResourceDefinition,
+  MenuTargetFamily,
+} from "../../domain/menu";
 
 export type CityMenuPanelId =
-  | "culture"
+  | "overview"
   | "intel"
   | "locations"
-  | "management"
-  | "begging";
+  | "management";
+
+export type CityMenuEntryAction =
+  | {
+      type: "panel";
+      panelId: CityMenuPanelId;
+    }
+  | {
+      type: "minigame";
+      minigameId: string;
+    }
+  | {
+      type: "unsupported";
+      targetFamily: MenuTargetFamily;
+      targetId: string;
+    };
+
+export type CityMenuEntryViewModel = {
+  id: string;
+  label: string;
+  menuFamily: string;
+  disabledHint: string;
+  isEnabled: boolean;
+  isSpecial: boolean;
+  action: CityMenuEntryAction;
+};
 
 export type CityMenuState = {
+  entryId: string;
+  title: string;
   panelId: CityMenuPanelId;
   intelItems: string[];
 };
@@ -213,23 +244,200 @@ export function createCityManagementViewModel(): CityManagementViewModel {
   };
 }
 
-export function createCityMenuState(input: {
-  panelId: CityMenuPanelId;
+export function resolveCityMenuEntries(input: {
   cityDefinition: CityDefinition;
-  houseDefinitions: HouseDefinition[];
-  cityEntries: CityEntryDefinition[];
-  cityNpcPoolDefinition: CityNpcPoolDefinition | null;
-  calendar: {
-    year: number;
-    month: number;
-    day: number;
-  };
-}): CityMenuState {
+  playerCharacter: CharacterDefinition;
+  menuResourcesById: Record<string, MenuResourceDefinition>;
+  menuInstancesById: Record<string, MenuInstanceDefinition>;
+}): CityMenuEntryViewModel[] {
+  return readTrimmedStringArray(input.cityDefinition.menuInstanceIds).flatMap(
+    (menuInstanceId) => {
+      const instance = input.menuInstancesById[menuInstanceId];
+      if (instance == null) {
+        return [];
+      }
+      const resource = input.menuResourcesById[instance.resourceId];
+      if (resource == null) {
+        return [];
+      }
+
+      return resource.entries
+        .filter((entry) => entry.isVisible !== false)
+        .flatMap((entry) => {
+          if (
+            isBeggingMenuFamily(entry.menuFamily) &&
+            !isPlayerMonkIdentity(input.playerCharacter)
+          ) {
+            return [];
+          }
+
+          const action = resolveCityMenuEntryAction(entry.menuFamily, entry.targetFamily, entry.targetId);
+          const isUnsupported = action.type === "unsupported";
+
+          return [
+            {
+              id: entry.id,
+              label: entry.label.trim().length > 0 ? entry.label : entry.menuFamily,
+              menuFamily: entry.menuFamily,
+              disabledHint: isUnsupported
+                ? entry.disabledHint.trim().length > 0
+                  ? entry.disabledHint
+                  : `Unsupported city menu target: ${entry.targetFamily}`
+                : entry.disabledHint,
+              isEnabled: entry.isEnabled !== false && !isUnsupported,
+              isSpecial: isBeggingMenuFamily(entry.menuFamily),
+              action,
+            },
+          ];
+        });
+    }
+  );
+}
+
+export function createCityMenuState(
+  input:
+    | {
+        entry: CityMenuEntryViewModel;
+        cityDefinition: CityDefinition;
+        houseDefinitions: HouseDefinition[];
+        cityEntries: CityEntryDefinition[];
+        cityNpcPoolDefinition: CityNpcPoolDefinition | null;
+        calendar: {
+          year: number;
+          month: number;
+          day: number;
+        };
+      }
+    | {
+        cityId: string;
+        cityName: string;
+        currentPanelId?: string;
+      }
+): CityMenuState | null {
+  if (!("entry" in input)) {
+    return {
+      entryId: input.cityId,
+      title: input.cityName,
+      panelId: normalizeLegacyCityMenuPanelId(input.currentPanelId),
+      intelItems: [],
+    };
+  }
+
+  if (input.entry.action.type !== "panel") {
+    return null;
+  }
+
   return {
-    panelId: input.panelId,
+    entryId: input.entry.id,
+    title: input.entry.label,
+    panelId: input.entry.action.panelId,
     intelItems:
-      input.panelId === "intel"
+      input.entry.action.panelId === "intel"
         ? createCityIntelItems(input)
         : [],
   };
+}
+
+function normalizeLegacyCityMenuPanelId(value: string | undefined): CityMenuPanelId {
+  switch (normalizeMenuKey(value ?? "")) {
+    case "intel":
+      return "intel";
+    case "locations":
+      return "locations";
+    case "management":
+      return "management";
+    case "actions":
+    case "overview":
+    case "culture":
+    default:
+      return "overview";
+  }
+}
+
+function resolveCityMenuEntryAction(
+  menuFamily: string,
+  targetFamily: MenuTargetFamily,
+  targetId: string
+): CityMenuEntryAction {
+  const panelId = resolveCityMenuPanelId(targetId, menuFamily);
+  if (panelId != null) {
+    return {
+      type: "panel",
+      panelId,
+    };
+  }
+
+  if (
+    targetFamily === "minigame" &&
+    (normalizeMenuKey(targetId) === "city-begging" || isBeggingMenuFamily(menuFamily))
+  ) {
+    return {
+      type: "minigame",
+      minigameId: targetId.trim().length > 0 ? targetId : "city-begging",
+    };
+  }
+
+  return {
+    type: "unsupported",
+    targetFamily,
+    targetId,
+  };
+}
+
+function resolveCityMenuPanelId(
+  targetId: string,
+  menuFamily: string
+): CityMenuPanelId | null {
+  const normalizedTargetId = normalizeMenuKey(targetId);
+  const normalizedFamily = normalizeMenuKey(menuFamily);
+
+  switch (normalizedTargetId) {
+    case "":
+      break;
+    case "city-panel.overview":
+    case "city-panel.culture":
+    case "overview":
+    case "culture":
+      return "overview";
+    case "city-panel.intel":
+    case "intel":
+      return "intel";
+    case "city-panel.locations":
+    case "locations":
+      return "locations";
+    case "city-panel.management":
+    case "management":
+      return "management";
+    default:
+      return null;
+  }
+
+  switch (normalizedFamily) {
+    case "overview":
+    case "culture":
+      return "overview";
+    case "intel":
+      return "intel";
+    case "locations":
+      return "locations";
+    case "management":
+      return "management";
+    default:
+      return null;
+  }
+}
+
+function normalizeMenuKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function isBeggingMenuFamily(value: string): boolean {
+  return normalizeMenuKey(value) === "begging";
+}
+
+function readTrimmedStringArray(value: readonly string[] | undefined): string[] {
+  return (value ?? []).flatMap((entry) => {
+    const normalized = typeof entry === "string" ? entry.trim() : "";
+    return normalized.length === 0 ? [] : [normalized];
+  });
 }

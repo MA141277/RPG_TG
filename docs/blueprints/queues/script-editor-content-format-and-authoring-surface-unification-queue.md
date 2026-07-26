@@ -7,26 +7,26 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-26`
 - governance_sync_source: `docs/blueprints/plans/2026-07-26-script-editor-content-format-runtime-layout-and-module-capability-convergence-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate`
-- next_task: `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate`
-- closeout_status: `in-progress`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
 - execution_closeout_status: `done`
 - topic_closure_status: `closed`
-- closure_basis: `ACC-FORMAT-001 and ACC-FORMAT-002 are now covered locally: canonical numeric draft-id adoption, creator-facing copy cleanup, and the required human-visible browser acceptance all passed. The active queue task is now the repository-sync gate before lawful handoff to the next version queue.`
+- closure_basis: `Queue closeout proof is complete and repository-sync gate succeeded: commit f4ec1e20 landed the first authoring-format baseline batch on mod-first-dev and push to origin/mod-first-dev succeeded after required browser acceptance and governed truth synchronization.`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
-- next_family_candidate: `item.stage-host-binding-and-menu-resource-runtime-convergence`
-- auto_continue_eligible: `true`
-- next_effect: `repository-sync-gate`
+- next_family_candidate: `none`
+- auto_continue_eligible: `false`
+- next_effect: `return-to-version-review`
 - auto_continue_policy: `required`
 - idle_after_task_completion: `forbidden`
 - queue_close_handoff: `version-plan-routing`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Queue closeout proof, browser acceptance, and governed routing truth are now recorded locally. Repository-sync gating is the only remaining required action before the next queue can be admitted.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository-sync gate satisfied: commit f4ec1e20 landed on mod-first-dev and push to origin/mod-first-dev succeeded after queue closeout proof and browser acceptance were recorded.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -243,13 +243,13 @@
 
 - queue_goal: `Execute the required-first authoring-format and numeric-id baseline so later module/runtime queues inherit one canonical creator-facing content structure.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Implementation is complete locally and the required browser acceptance has been observed. The live active task is now queue closeout proof plus repository-sync gating.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue is closed. Local implementation, browser acceptance, and repository-sync gating are complete, and control returns to the version plan for next-queue routing.`
 - task_briefs:
   - `task.script-editor-content-format-and-authoring-surface-unification.evidence-anchor-reconcile: completed after freezing the acceptance scope, source anchors, and no-over-narrowing boundaries for ACC-FORMAT-001 / 002.`
 - `task.script-editor-content-format-and-authoring-surface-unification.authoring-format-and-id-baseline-implementation: completed locally with canonical draft ids, grouped creator-facing authoring surfaces, event-structure cleanup, and passing automated coverage.`
-- `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate: active closeout, completeness review, browser-proof synchronization, and repository-sync gate.`
+- `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate: done after queue closeout proof, browser-proof synchronization, and successful repository sync through commit f4ec1e20 on origin/mod-first-dev.`
 
 ### Operator Snapshot Contract
 
@@ -385,8 +385,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-content-format-and-authoring-surface-unification.evidence-anchor-reconcile` | `done` | `Freeze the first queue's acceptance scope, implementation anchors, and no-over-narrowing boundary for ACC-FORMAT-001 / 002.` | `none` | `Completed from source audit: canonical allocator exists, but first-phase draft creators still emit *.new.* ids and creator-facing format drift remains across people/city/building/event surfaces.` |
-| `task.script-editor-content-format-and-authoring-surface-unification.authoring-format-and-id-baseline-implementation` | `active` | `Land canonical numeric draft ids, grouped creator-facing authoring surfaces, and event basic-info / destination / binding separation for the owned first-phase boundary.` | `task.script-editor-content-format-and-authoring-surface-unification.evidence-anchor-reconcile` | `This is the live active task after admission.` |
-| `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate` | `queued` | `Verify ACC-FORMAT-001 / 002 coverage, classify residue honestly, and run the repository-sync gate.` | `task.script-editor-content-format-and-authoring-surface-unification.authoring-format-and-id-baseline-implementation` | `May not claim later queue ownership.` |
+| `task.script-editor-content-format-and-authoring-surface-unification.authoring-format-and-id-baseline-implementation` | `done` | `Land canonical numeric draft ids, grouped creator-facing authoring surfaces, and event basic-info / destination / binding separation for the owned first-phase boundary.` | `task.script-editor-content-format-and-authoring-surface-unification.evidence-anchor-reconcile` | `Completed locally with passing build:test, robustness coverage, and the required browser acceptance notes.` |
+| `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate` | `done` | `Verify ACC-FORMAT-001 / 002 coverage, classify residue honestly, and run the repository-sync gate.` | `task.script-editor-content-format-and-authoring-surface-unification.authoring-format-and-id-baseline-implementation` | `Done. Commit f4ec1e20 landed on origin/mod-first-dev, so control returns to the version plan for stage/menu admission.` |
 
 ### Task Definitions
 
@@ -512,7 +512,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate`
-- state: `active`
+- state: `done`
 - task_kind: `queue-closeout`
 - scope:
   - `docs/blueprints/queues/script-editor-content-format-and-authoring-surface-unification-queue.md`
@@ -560,7 +560,7 @@
 - task_brief:
   - `Close out the first queue after verified implementation and route the next lawful queue.`
 - task_outcome_summary:
-  - `Active. Local closeout proof is now complete and the required human-visible browser acceptance has been observed; the remaining lawful action is the repository-sync gate before stage/menu admission.`
+- `Done. Queue closeout proof, browser acceptance, and repository-sync gating are all complete, so the next lawful action is version-plan routing into queue.stage-host-binding-and-menu-resource-runtime-convergence.`
 
 ### Progress Log
 
@@ -571,3 +571,4 @@
 - `2026-07-26`: `Local implementation proof is now complete. build:test, robustness coverage, lint:blueprints, lint:blueprint-skill, and blueprint:governance:check all pass after the canonical-id baseline and creator-facing copy cleanup batch, including the blocked minigame preview/export hint regression.`
 - `2026-07-26`: `Required browser acceptance is now recorded from the in-app browser: the template project opened visibly, people and building authoring still exposed grouped creator-facing fields, event authoring kept 后续事件 / 去向类型 / 去向目标 as separate visible controls, dialogue 节点 copy no longer leaked old routing jargon, and a new minigame draft now blocks preview/export with the creator-facing hint “玩法绑定需要填写所属对话，才能运行预览或导出剧本。” instead of ownerId-style developer wording.`
 - `2026-07-26`: `The queue auto-promoted task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate as the live active task. Repository-sync gating is now the only remaining lawful action before queue.stage-host-binding-and-menu-resource-runtime-convergence can be admitted.`
+- `2026-07-26`: `Repository-sync gate is now satisfied. Commit f4ec1e20 landed on mod-first-dev, push to origin/mod-first-dev succeeded, and the queue closed with no remaining same-family residue inside its bounded topic surface.`

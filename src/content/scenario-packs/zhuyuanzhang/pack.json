@@ -14,6 +14,8 @@
     "characters": "characters.json",
     "events": "events.json",
     "eventBindings": "event-bindings.json",
+    "menuResources": "menu-resources.json",
+    "menuInstances": "menu-instances.json",
     "textEntries": "text-entries.json",
     "activities": "activities.json",
     "cards": "cards.json",

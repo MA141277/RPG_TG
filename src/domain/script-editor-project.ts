@@ -16,6 +16,12 @@ import type {
   ProgressTrackBinding,
   ProgressTrackDefinition,
 } from "../core/contracts/progression-runtime";
+import type {
+  MenuEntryDefinition,
+  MenuInstanceDefinition,
+  MenuResourceDefinition,
+  MenuTargetFamily,
+} from "./menu";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
@@ -40,6 +46,8 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "eventBindings",
   "progressTracks",
   "progressTrackBindings",
+  "menuResources",
+  "menuInstances",
   "quests",
   "activities",
   "cards",
@@ -80,6 +88,8 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   eventBindings: "./event-bindings.json",
   progressTracks: "./progress-tracks.json",
   progressTrackBindings: "./progress-track-bindings.json",
+  menuResources: "./menu-resources.json",
+  menuInstances: "./menu-instances.json",
   quests: "./quests.json",
   activities: "./activities.json",
   cards: "./cards.json",
@@ -139,23 +149,10 @@ export type ScriptEditorProgressTrackTierRecord = ProgressTierDefinition;
 export type ScriptEditorProgressTrackRecord = ProgressTrackDefinition;
 export type ScriptEditorProgressTrackBindingRecord = ProgressTrackBinding;
 
-export type ScriptEditorMenuTargetFamily =
-  | "dialogue"
-  | "event"
-  | "trade"
-  | "minigame"
-  | "info";
-
-export type ScriptEditorMenuEntry = {
-  id: string;
-  label: string;
-  menuFamily: string;
-  targetFamily: ScriptEditorMenuTargetFamily;
-  targetId: string;
-  isVisible: boolean;
-  isEnabled: boolean;
-  disabledHint: string;
-};
+export type ScriptEditorMenuTargetFamily = MenuTargetFamily;
+export type ScriptEditorMenuEntry = MenuEntryDefinition;
+export type ScriptEditorMenuResourceRecord = MenuResourceDefinition;
+export type ScriptEditorMenuInstanceRecord = MenuInstanceDefinition;
 
 export type {
   LocationAccessConditionExpression,
@@ -229,6 +226,7 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
   extendedAttributes?: ScriptEditorTypedAttributeRecord[];
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
+  menuInstanceIds?: string[];
   access?: ScriptEditorAccessRule;
 };
 
@@ -356,6 +354,7 @@ export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
   extendedAttributes?: ScriptEditorTypedAttributeRecord[];
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
+  menuInstanceIds?: string[];
   access?: ScriptEditorAccessRule;
   entryBinding?: ScriptEditorBuildingEntryBinding;
   backAction?: HouseDefinition["backAction"];
@@ -701,6 +700,8 @@ export type ScriptEditorProjectDefinition = {
   eventBindings: ScriptEditorEventBindingRecord[];
   progressTracks?: ScriptEditorProgressTrackRecord[];
   progressTrackBindings?: ScriptEditorProgressTrackBindingRecord[];
+  menuResources: ScriptEditorMenuResourceRecord[];
+  menuInstances: ScriptEditorMenuInstanceRecord[];
   quests: ScriptEditorEntityRecord[];
   activities: ScriptEditorActivityRecord[];
   cards: ScriptEditorEntityRecord[];

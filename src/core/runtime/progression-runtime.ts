@@ -23,22 +23,22 @@ export function runProgressionRuntime(input: {
     };
   }
 
-  const resolvedOwnerId = resolveOwnerId(input.binding);
-  if (resolvedOwnerId == null) {
+  const resolvedHostId = resolveHostId(input.binding);
+  if (resolvedHostId == null) {
     return {
       state: input.state,
       settlementInstances: [],
       diagnostics: [
-        `progression-runtime:skipped-unresolved-owner:${input.binding.id}`,
+        `progression-runtime:skipped-unresolved-host:${input.binding.id}`,
       ],
     };
   }
 
-  const ownerKind = input.binding.owner.ownerKind;
-  const ownerId = resolvedOwnerId;
-  const ownerKey = createOwnerKey(ownerKind, ownerId);
+  const hostFamily = input.binding.host.family;
+  const hostId = resolvedHostId;
+  const hostKey = createHostKey(hostFamily, hostId);
   const current =
-    input.state.trackStatesByOwnerKey[ownerKey]?.[input.track.id] ?? null;
+    input.state.trackStatesByHostKey[hostKey]?.[input.track.id] ?? null;
   const nextTier = selectTargetTier({
     track: input.track,
     metricValue: input.metricValue,
@@ -48,10 +48,10 @@ export function runProgressionRuntime(input: {
   const enteredTierHistory = didChangeTier && nextTier != null
     ? [...(current?.enteredTierHistory ?? []), nextTier.id]
     : [...(current?.enteredTierHistory ?? [])];
-  const nextState = upsertTrackState(input.state, ownerKey, {
+  const nextState = upsertTrackState(input.state, hostKey, {
     trackId: input.track.id,
-    ownerKind,
-    ownerId,
+    hostFamily,
+    hostId,
     metricValue: input.metricValue,
     currentTierId: nextTier?.id ?? null,
     enteredTierHistory,
@@ -79,8 +79,8 @@ export function runProgressionRuntime(input: {
       {
         settlementId: nextTier.targetTierSettlementId,
         payload: {
-          ownerKind,
-          ownerId,
+          hostFamily,
+          hostId,
           trackId: input.track.id,
           fromTierId: current?.currentTierId ?? null,
           toTierId: nextTier.id,
@@ -153,25 +153,25 @@ function shouldEmitTargetTierSettlement(input: {
 
 function upsertTrackState(
   state: RuntimeProgressState,
-  ownerKey: string,
-  value: RuntimeProgressState["trackStatesByOwnerKey"][string][string]
+  hostKey: string,
+  value: RuntimeProgressState["trackStatesByHostKey"][string][string]
 ): RuntimeProgressState {
   return {
-    trackStatesByOwnerKey: {
-      ...state.trackStatesByOwnerKey,
-      [ownerKey]: {
-        ...(state.trackStatesByOwnerKey[ownerKey] ?? {}),
+    trackStatesByHostKey: {
+      ...state.trackStatesByHostKey,
+      [hostKey]: {
+        ...(state.trackStatesByHostKey[hostKey] ?? {}),
         [value.trackId]: value,
       },
     },
   };
 }
 
-function createOwnerKey(ownerKind: string, ownerId: string): string {
-  return `${ownerKind}:${ownerId}`;
+function createHostKey(hostFamily: string, hostId: string): string {
+  return `${hostFamily}:${hostId}`;
 }
 
-function resolveOwnerId(binding: ProgressTrackBinding): string | null {
-  const ownerId = binding.owner.ownerId?.trim();
-  return ownerId != null && ownerId.length > 0 ? ownerId : null;
+function resolveHostId(binding: ProgressTrackBinding): string | null {
+  const hostId = binding.host.id?.trim();
+  return hostId != null && hostId.length > 0 ? hostId : null;
 }

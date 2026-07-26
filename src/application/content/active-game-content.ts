@@ -9,6 +9,10 @@ import type {
   ContentPackDefinition,
   SettlementDefinition,
 } from "../../domain/content-pack";
+import type {
+  MenuInstanceDefinition,
+  MenuResourceDefinition,
+} from "../../domain/menu";
 import type { ModActivationResult } from "../../core/contracts/mod-runtime";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { EventBinding, EventDefinition } from "../../domain/event";
@@ -75,6 +79,10 @@ export type ActiveGameContent = {
   progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
   progressTrackBindings: ProgressTrackBinding[];
   progressTrackBindingsById: Record<string, ProgressTrackBinding>;
+  menuResources: MenuResourceDefinition[];
+  menuResourcesById: Record<string, MenuResourceDefinition>;
+  menuInstances: MenuInstanceDefinition[];
+  menuInstancesById: Record<string, MenuInstanceDefinition>;
   dialogueDefinitions: RuntimeDialogueDefinition[];
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   taskDefinitions: TaskDefinition[];
@@ -163,6 +171,8 @@ export function createActiveGameContent(
   const settlements = resolvedPack.settlements ?? [];
   const progressTracks = resolvedPack.progressTracks ?? [];
   const progressTrackBindings = resolvedPack.progressTrackBindings ?? [];
+  const menuResources = resolvedPack.menuResources ?? [];
+  const menuInstances = resolvedPack.menuInstances ?? [];
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
   const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
@@ -244,6 +254,14 @@ export function createActiveGameContent(
     progressTrackBindings,
     progressTrackBindingsById: Object.fromEntries(
       progressTrackBindings.map((binding) => [binding.id, binding])
+    ),
+    menuResources,
+    menuResourcesById: Object.fromEntries(
+      menuResources.map((resource) => [resource.id, resource])
+    ),
+    menuInstances,
+    menuInstancesById: Object.fromEntries(
+      menuInstances.map((instance) => [instance.id, instance])
     ),
     dialogueDefinitions,
     dialogueDefinitionsById: Object.fromEntries(
@@ -403,6 +421,14 @@ export function mergeContentPacks(
       basePack.progressTrackBindings ?? [],
       overridePack.progressTrackBindings ?? []
     ),
+    menuResources: mergeById(
+      basePack.menuResources ?? [],
+      overridePack.menuResources ?? []
+    ),
+    menuInstances: mergeById(
+      basePack.menuInstances ?? [],
+      overridePack.menuInstances ?? []
+    ),
     dialogues: mergeById(basePack.dialogues ?? [], overridePack.dialogues ?? []),
     tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
@@ -465,6 +491,8 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     settlements: pack.settlements ?? [],
     progressTracks: pack.progressTracks ?? [],
     progressTrackBindings: pack.progressTrackBindings ?? [],
+    menuResources: pack.menuResources ?? [],
+    menuInstances: pack.menuInstances ?? [],
     dialogues: pack.dialogues ?? [],
     tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],

@@ -19,13 +19,17 @@ import {
   updateOverlayView,
 } from "../app-actions";
 import type { AppState } from "../app-shell";
-import { createCityMenuState, isPlayerMonkIdentity, type CityMenuPanelId } from "../city-menu/city-menu";
+import {
+  createCityMenuState,
+  resolveCityMenuEntries,
+} from "../city-menu/city-menu";
 
 type CurrentCityUiContext = {
   cityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];
   cityEntries: CityEntryDefinition[];
   cityNpcPoolDefinition: CityNpcPoolDefinition | null;
+  cityMenuEntries: ReturnType<typeof resolveCityMenuEntries>;
 };
 
 export type AppClickCoordinatorDependencies = {
@@ -50,38 +54,41 @@ export function createAppClickCoordinator(
     dependencies.renderApp();
   }
 
-  function openCityMenuPanel(panelId: CityMenuPanelId): void {
-    const playerCharacter = dependencies.getCurrentPlayerCharacter();
-    if (playerCharacter == null) {
+  function openCityMenuEntry(entryId: string | undefined): void {
+    if (entryId == null) {
       return;
     }
-
-    if (panelId === "begging" && !isPlayerMonkIdentity(playerCharacter)) {
-      return;
-    }
-
-    if (panelId === "begging") {
-      dependencies.openBeggingMiniGame();
-      return;
-    }
-
     const appState = dependencies.getAppState();
     const cityContext = dependencies.getCurrentCityUiContext();
     if (cityContext == null) {
+      return;
+    }
+    const menuEntry = cityContext.cityMenuEntries.find((entry) => entry.id === entryId);
+    if (menuEntry == null || !menuEntry.isEnabled) {
+      return;
+    }
+    if (menuEntry.action.type === "minigame") {
+      if (menuEntry.action.minigameId === "city-begging") {
+        dependencies.openBeggingMiniGame();
+      }
+      return;
+    }
+    const cityMenuState = createCityMenuState({
+      entry: menuEntry,
+      cityDefinition: cityContext.cityDefinition,
+      houseDefinitions: cityContext.houseDefinitions,
+      cityEntries: cityContext.cityEntries,
+      cityNpcPoolDefinition: cityContext.cityNpcPoolDefinition,
+      calendar: appState.gameState.calendar,
+    });
+    if (cityMenuState == null) {
       return;
     }
 
     commitAppState(
       openCityMenu(
         closeCityDirectory(appState),
-        createCityMenuState({
-          panelId,
-          cityDefinition: cityContext.cityDefinition,
-          houseDefinitions: cityContext.houseDefinitions,
-          cityEntries: cityContext.cityEntries,
-          cityNpcPoolDefinition: cityContext.cityNpcPoolDefinition,
-          calendar: appState.gameState.calendar,
-        })
+        cityMenuState
       )
     );
   }
@@ -239,28 +246,11 @@ export function createAppClickCoordinator(
       return true;
     }
 
-    const startBeggingMiniGameButton = targetElement.closest<HTMLElement>(
-      "[data-action='start-begging-minigame']"
-    );
-    if (startBeggingMiniGameButton != null) {
-      dependencies.openBeggingMiniGame();
-      return true;
-    }
-
     const cityMenuOpenButton = targetElement.closest<HTMLElement>(
-      "[data-city-menu-open]"
+      "[data-city-menu-entry-id]"
     );
     if (cityMenuOpenButton != null) {
-      const panelId = cityMenuOpenButton.dataset.cityMenuOpen;
-      if (
-        panelId === "culture" ||
-        panelId === "intel" ||
-        panelId === "locations" ||
-        panelId === "management" ||
-        panelId === "begging"
-      ) {
-        openCityMenuPanel(panelId);
-      }
+      openCityMenuEntry(cityMenuOpenButton.dataset.cityMenuEntryId);
       return true;
     }
 

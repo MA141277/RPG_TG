@@ -6,7 +6,7 @@
 - version_id: `target.script-editor-content-format-runtime-layout-and-module-capability-convergence`
 - version_status: `open`
 - active_phase: `phase.promotion-review`
-- active_queue: `queue.script-editor-content-format-and-authoring-surface-unification`
+- active_queue: `queue.stage-host-binding-and-menu-resource-runtime-convergence`
 - decision_state: `active-execution`
 - next_decision: `queue-closeout-or-return-to-version-review`
 - next_action: `resume-active-queue`
@@ -23,12 +23,12 @@
 - intake_summary: `Create a new formal successor version from the operator-approved unified requirement sheet so Script Editor content format, runtime layout, and covered module capability completion can execute under one Blueprint target.`
 - intake_result: `promoted-to-admission`
 - intake_feedback_mode: `fixed-receipt`
-- closure_review_subject: `queue.script-editor-content-format-and-authoring-surface-unification`
-- closure_review_status: `routed`
+- closure_review_subject: `none`
+- closure_review_status: `none`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `post-first-queue-sync-gate`
-- next_lawful_queue_recommendation: `queue.stage-host-binding-and-menu-resource-runtime-convergence`
+- routing_basis: `none`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - stop_reason: `none`
 - stop_basis: `none`
@@ -43,8 +43,8 @@
   - `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
-  - `queue.script-editor-content-format-and-authoring-surface-unification: admitted and still active only for queue closeout / repository-sync gating; ACC-FORMAT-001 / 002 are covered locally and browser acceptance has been observed.`
-  - `queue.stage-host-binding-and-menu-resource-runtime-convergence: next lawful candidate after first-queue sync gate; owns stage-host references plus menu formalization.`
+  - `queue.script-editor-content-format-and-authoring-surface-unification: closed after canonical draft-id baseline convergence, creator-facing copy cleanup, browser acceptance, and repository sync through commit f4ec1e20 on origin/mod-first-dev.`
+  - `queue.stage-host-binding-and-menu-resource-runtime-convergence: admitted and active; it now owns the live evidence-anchor task for ACC-FORMAT-003 stage-host reference and menu formalization work.`
   - `queue.event-owned-routing-dialogue-playable-settlement-convergence: not yet admitted; follows menu/stage reference stabilization and owns the event-only routing conversion chain.`
   - `queue.runtime-layout-registry-and-ui-layering-convergence: not yet admitted; follows routing freeze and owns persisted runtime layout plus runtime UI layering.`
   - `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance: not yet admitted; required-final queue for chain consistency, fail-closed rejection, acceptance proof, and closeout.`
@@ -71,8 +71,8 @@
   - `The operator-approved requirement sheet is broader than one queue and therefore requires a parent target before queue admission.`
 - Activation conclusion:
   - `Formal target docs now exist for target.script-editor-content-format-runtime-layout-and-module-capability-convergence.`
-  - `queue.script-editor-content-format-and-authoring-surface-unification is now in queue-closeout / repository-sync-gate state after local ACC-FORMAT-001 / 002 coverage and browser acceptance completed.`
-  - `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate is the live active task until repository-sync truth is recorded.`
+  - `queue.script-editor-content-format-and-authoring-surface-unification is now closed after successful repository sync through commit f4ec1e20 on origin/mod-first-dev.`
+  - `queue.stage-host-binding-and-menu-resource-runtime-convergence is now the admitted active queue, and task.stage-host-binding-and-menu-resource-runtime-convergence.stage-host-and-menu-chain-implementation is the live active task after evidence reconciliation locked the real stage/menu ownership gaps.`
 
 ### Admission Review Record
 
@@ -89,7 +89,7 @@
 
 ### Version Lifecycle Rules
 
-- `This version remains open and the lawful execution truth currently runs through queue.script-editor-content-format-and-authoring-surface-unification until its repository-sync gate is recorded.`
+- `This version remains open and the lawful execution truth now runs through queue.stage-host-binding-and-menu-resource-runtime-convergence.`
 - `If active_queue = none in the future, that does not close the version; it means the version has returned to lawful queue admission or closeout review.`
 - `Implementation may proceed only through the admitted child queue doc and its live active task.`
 - `Do not split content-format unification, event-owned routing convergence, runtime-layout persistence, and covered-module capability completion into separate parent targets while this version remains open.`
@@ -149,16 +149,16 @@
 
 - receipt_join_status: `success`
 - receipt_join_type: `execution-queue`
-- receipt_join_queue_id: `queue.script-editor-content-format-and-authoring-surface-unification`
-- receipt_reason_code: `admission-routing-required`
+- receipt_join_queue_id: `queue.stage-host-binding-and-menu-resource-runtime-convergence`
+- receipt_reason_code: `phase-order-auto-admission`
 - receipt_reason_basis:
-  - `The open version shell required a lawful first admission, and queue.script-editor-content-format-and-authoring-surface-unification is the only approved first execution slice under the recorded phase order.`
-- receipt_active_queue: `queue.script-editor-content-format-and-authoring-surface-unification`
-- receipt_active_task: `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate`
+  - `The approved phase order and the completed repository-sync gate for queue.script-editor-content-format-and-authoring-surface-unification make queue.stage-host-binding-and-menu-resource-runtime-convergence the uniquely lawful next admission.`
+- receipt_active_queue: `queue.stage-host-binding-and-menu-resource-runtime-convergence`
+- receipt_active_task: `task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate`
 - receipt_queue_goal:
-  - `Execute the required-first authoring-format and numeric-id baseline so later module/runtime queues inherit one canonical creator-facing content structure.`
+  - `Converge stage host references and formal menu resource/runtime ownership on top of the settled first-queue authoring baseline.`
 - receipt_next_step:
-  - `Complete the first queue's repository-sync gate, then auto-route into queue.stage-host-binding-and-menu-resource-runtime-convergence.`
+  - `Continue from queue.stage-host-binding-and-menu-resource-runtime-convergence into its live closeout-review task rather than returning to idle version review after the implementation batch landed.`
 - receipt_human_action: `none-required`
 - receipt_internal_analysis_exposed: `false`
 
@@ -166,8 +166,8 @@
 
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger Type | Recheck Trigger Basis | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `item.script-editor-content-format-and-authoring-surface-unification` | `queue-candidate` | `queue.script-editor-content-format-and-authoring-surface-unification` | `candidate-recorded` | `none` | `It is the approved first phase and prerequisite baseline for every later queue.` | `ACC-FORMAT-001; ACC-FORMAT-002` | `src/application/script-editor/**; src/domain/script-editor-project.ts; src/ui/main-ui/**; tests/**` | `authoring-format convergence, id-rule convergence, creator-surface cleanup, event authoring structure normalization` | `stage/menu runtime completion, event-only routing retirement, runtime-layout persistence, final full-chain acceptance` | `This queue must execute first and must not be bypassed by later runtime-layout or routing work.` |
-| `item.stage-host-binding-and-menu-resource-runtime-convergence` | `queue-candidate` | `queue.stage-host-binding-and-menu-resource-runtime-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after authoring-format and id-rule baseline closes.` | `ACC-FORMAT-003` | `src/application/script-editor/**; src/application/runtime/**; src/content/**; tests/**` | `stage host-reference completion and menu formalization` | `event-owned routing conversion, runtime-layout persistence, final chain acceptance` | `Must preserve extensible host-family structure and runtime-consumed menu instances.` |
+| `item.script-editor-content-format-and-authoring-surface-unification` | `queue-candidate` | `queue.script-editor-content-format-and-authoring-surface-unification` | `closed` | `queue-closeout-complete` | `The first queue is now closed after repository sync through commit f4ec1e20 on origin/mod-first-dev.` | `ACC-FORMAT-001; ACC-FORMAT-002` | `src/application/script-editor/**; src/domain/script-editor-project.ts; src/ui/main-ui/**; tests/**` | `authoring-format convergence, id-rule convergence, creator-surface cleanup, event authoring structure normalization` | `stage/menu runtime completion, event-only routing retirement, runtime-layout persistence, final full-chain acceptance` | `This prerequisite baseline is now closed and may not be bypassed retroactively.` |
+| `item.stage-host-binding-and-menu-resource-runtime-convergence` | `queue-candidate` | `queue.stage-host-binding-and-menu-resource-runtime-convergence` | `admitted` | `queue-closeout` | `The first queue closed and repository sync succeeded, so stage/menu became the uniquely lawful next admission.` | `ACC-FORMAT-003` | `src/application/script-editor/**; src/application/runtime/**; src/content/**; tests/**` | `stage host-reference completion and menu formalization` | `event-owned routing conversion, runtime-layout persistence, final chain acceptance` | `Must preserve extensible host-family structure and runtime-consumed menu instances.` |
 | `item.event-owned-routing-dialogue-playable-settlement-convergence` | `queue-candidate` | `queue.event-owned-routing-dialogue-playable-settlement-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after stage/menu reference semantics are stable.` | `ACC-FORMAT-004` | `src/application/runtime/**; src/application/dialogue/**; src/application/playable/**; src/application/settlement/**; tests/**` | `event-only routing convergence plus dialogue/playable/settlement runtime completion` | `runtime-layout persistence or final acceptance ownership` | `Must not introduce a second router or preserve private continuation truth.` |
 | `item.runtime-layout-registry-and-ui-layering-convergence` | `queue-candidate` | `queue.runtime-layout-registry-and-ui-layering-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after routing boundary is frozen.` | `ACC-FORMAT-005` | `src/application/runtime/**; src/ui/**; preview/runtime save paths; tests/**` | `runtime-layout registry persistence, save-back, auto-load, and UI layering convergence` | `editor-page-layout governance or event-routing ownership` | `Must stay runtime/preview-scoped and must not expand into Script Editor page-layout redesign.` |
 | `item.preview-runtime-loading-full-chain-consistency-and-final-acceptance` | `queue-candidate` | `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance` | `candidate-recorded` | `queue-closeout` | `Recheck only after the implementation-bearing queues close.` | `ACC-FORMAT-006` | `export/import/loader/preview/runtime/startup paths; browser acceptance; tests/**` | `full-chain consistency, fail-closed rejection, final acceptance, residue guard` | `primary ownership of earlier implementation-bearing queues` | `Required-final queue only; it must not be used to hide unfinished earlier work.` |
@@ -176,8 +176,8 @@
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
-| `queue.script-editor-content-format-and-authoring-surface-unification` | `candidate-ready` | `immediately after its queue doc is written` | `This is the already approved first queue and the only lawful next implementation entry.` |
-| `queue.stage-host-binding-and-menu-resource-runtime-convergence` | `candidate-ready` | `only after queue.script-editor-content-format-and-authoring-surface-unification closes` | `Must inherit the settled id-rule and authoring-structure baseline.` |
+| `queue.script-editor-content-format-and-authoring-surface-unification` | `closed` | `already closed` | `Repository sync succeeded through commit f4ec1e20 on origin/mod-first-dev.` |
+| `queue.stage-host-binding-and-menu-resource-runtime-convergence` | `admitted` | `now active` | `It inherits the settled id-rule and authoring-structure baseline from the closed first queue.` |
 | `queue.event-owned-routing-dialogue-playable-settlement-convergence` | `candidate-ready` | `only after queue.stage-host-binding-and-menu-resource-runtime-convergence closes` | `Must not admit before stage/menu reference semantics are stable.` |
 | `queue.runtime-layout-registry-and-ui-layering-convergence` | `candidate-ready` | `only after queue.event-owned-routing-dialogue-playable-settlement-convergence closes` | `Must stay distinct from business-routing work.` |
 | `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance` | `candidate-ready` | `only after all implementation-bearing queues close` | `Required-final queue.` |
@@ -244,15 +244,15 @@
 - parent_spec_alignment:
   - `The created target preserves the operator-approved requirement sheet without dropping content-format, event-owned routing, runtime-layout persistence, or full-chain consistency boundaries.`
 - queue_claim_alignment:
-  - `The admitted first queue now owns ACC-FORMAT-001 / 002 only, and the active task remains bounded to canonical ids plus creator-surface convergence.`
+  - `The closed first queue now owns completed ACC-FORMAT-001 / 002 coverage only, and the newly admitted active queue owns ACC-FORMAT-003 only.`
 - over_narrowing_check:
   - `The first queue remains authoring-format plus id-rule convergence rather than a thinner runtime-layout or menu-only slice, so the version does not skip the approved prerequisite batch.`
 - residue_or_blocker_routing_check:
-  - `No blocker is recorded. Later acceptances remain routed to the recorded follow-up queues, and the next lawful action is the active implementation task inside the admitted first queue.`
+  - `No blocker is recorded. The first queue is closed and synced, stage/menu is now the active queue, and later acceptances remain routed to their recorded follow-up queues.`
 - verification_adequacy_check:
   - `Governed-doc verification must pass before this successor version shell is considered synchronized.`
 - next_lawful_action_check:
-  - `Resume task.script-editor-content-format-and-authoring-surface-unification.authoring-format-and-id-baseline-implementation.`
+  - `Resume task.stage-host-binding-and-menu-resource-runtime-convergence.stage-host-and-menu-chain-implementation.`
 
 ### Progress Log
 
@@ -260,3 +260,14 @@
 - `2026-07-26`: `Created the formal target spec and version plan, switched Blueprint entry pointers to the new open successor version, and recorded the five-queue portfolio in the already approved high-level phase order without admitting execution yet.`
 - `2026-07-26`: `Admitted queue.script-editor-content-format-and-authoring-surface-unification as the required-first execution queue, synchronized project-progress to the live queue doc, and exposed task.script-editor-content-format-and-authoring-surface-unification.authoring-format-and-id-baseline-implementation as the active task after evidence reconciliation completed.`
 - `2026-07-26`: `The first queue has now covered ACC-FORMAT-001 / 002 locally. Canonical draft-id adoption, creator-facing copy cleanup, automated verification, and required in-app browser acceptance all passed, so the version auto-promoted task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate as the live active task.`
+- `2026-07-26`: `Repository-sync gate for queue.script-editor-content-format-and-authoring-surface-unification is now satisfied. Commit f4ec1e20 landed on mod-first-dev, push to origin/mod-first-dev succeeded, and queue.stage-host-binding-and-menu-resource-runtime-convergence is now the uniquely lawful active queue under the approved phase order.`
+- `2026-07-26`: `queue.stage-host-binding-and-menu-resource-runtime-convergence evidence reconciliation is now complete. The source audit locked ACC-FORMAT-003 against the real production seams: stageConfiguration still fronts progressTrackBindings/progressTracks, and menu truth still lives inline on city/building menuEntries across authoring, validation, and workflow cleanup.`
+- `2026-07-26`: `The active stage/menu queue has now landed its first implementation slice on the stage side: progression contracts, Script Editor authoring helpers, runtime-pack export/import validation, story runtime consumption, browser smoke fixtures, and regression coverage now speak host-reference semantics instead of the earlier owner tuple.`
+- `2026-07-26`: `The version remains on queue.stage-host-binding-and-menu-resource-runtime-convergence because menu truth is still inline on city/building menuEntries and therefore the queue cannot yet claim ACC-FORMAT-003 closeout.`
+- `2026-07-26`: `Verification for the stage host slice is now fully green, including the existing stage settlement browser smoke. The version still remains on the same active queue because the formal menu resource/instance/runtime chain and menu-surface browser proof are still open work inside ACC-FORMAT-003.`
+- `2026-07-27`: `The active stage/menu queue has now landed the formal menu authoring/export/import slice too. Script Editor projects formalize legacy location-local menuEntries into menuResources/menuInstances plus location menuInstanceIds, MainUiFlow now edits the formal menu chain as the active creator path, workspace-shell validation resolves formal menu references, and browser smoke now exercises the converged menu surface.`
+- `2026-07-27`: `The same queue has now landed the runtime-side menu chain too. City presenter/render/click handling consumes formal menuResources/menuInstances, the built-in zhuyuanzhang pack now ships formal menu resource/instance files plus city menuInstanceIds, and city runtime actions dispatch through formal menu entry ids instead of hardcoded menu/panel branches.`
+- `2026-07-27`: `Active authoring residue narrowed in the same batch: default and normalized location records no longer keep empty inline menuEntries as active truth, menu formalization strips legacy menuEntries after generating menuInstanceIds, and the old inline menu-entry helper exports were retired from city-building authoring.`
+- `2026-07-27`: `Verification is green on the active queue surface after the runtime menu cutover: npm run build:test, node --test tests/robustness.test.cjs, node --test tests/browser-script-editor-deep-actions-smoke.test.cjs, npm run lint:blueprints, npm run lint:blueprint-skill, and npm run blueprint:governance:check all passed.`
+- `2026-07-27`: `The version still remains on queue.stage-host-binding-and-menu-resource-runtime-convergence, but the lawful next step is now queue closeout review rather than more implementation. ACC-FORMAT-003 is not yet declared closed; the queue must first classify the remaining compatibility-only menuEntries shell and attempt the repository-sync gate.`
+- `2026-07-27`: `Queue closeout review now judges the remaining menuEntries references as accepted compatibility-only residue rather than active production truth. The version therefore remains on the same active queue solely for the pending repository-sync gate, not for more stage/menu implementation.`

@@ -14,6 +14,10 @@ import type {
 import type { HouseDefinition } from "./house";
 import type { LocationAccessDefinition } from "./location-access";
 import type { MapDefinition } from "./map";
+import type {
+  MenuInstanceDefinition,
+  MenuResourceDefinition,
+} from "./menu";
 import type { UiAssetCatalog } from "./ui/asset-catalog";
 import type { ScreenLayoutPreset } from "./ui/screen-layout";
 import type { ScreenSchema } from "./ui/screen-schema";
@@ -67,6 +71,8 @@ export type ContentPackDefinition = {
   settlements?: SettlementDefinition[];
   progressTracks?: ProgressTrackDefinition[];
   progressTrackBindings?: ProgressTrackBinding[];
+  menuResources?: MenuResourceDefinition[];
+  menuInstances?: MenuInstanceDefinition[];
   dialogues?: RuntimeDialogueDefinition[];
   tasks?: TaskDefinition[];
   playables?: PlayableDefinition[];

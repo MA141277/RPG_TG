@@ -13,6 +13,11 @@ import {
   validateScriptEditorProjectForRuntimeExport,
   type ScriptEditorRuntimeExportDiagnostic,
 } from "./runtime-pack-export";
+import {
+  countScriptEditorLocationMenuEntries,
+  formalizeScriptEditorProjectMenus,
+  listScriptEditorLocationMenuBundles,
+} from "./menu-authoring";
 
 export type ScriptEditorWorkspaceFamily =
   | ScriptEditorProjectFileKey
@@ -229,7 +234,7 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
   visibleFamilies?: readonly ScriptEditorProjectFileKey[] | undefined;
   auxiliaryPanelOpen?: boolean | undefined;
 }): ScriptEditorWorkspaceViewModel {
-  const project = input.project;
+  const project = formalizeScriptEditorProjectMenus(input.project);
   const visibleFamilies = new Set<ScriptEditorProjectFileKey>([
     "storyPack",
     ...(input.visibleFamilies ??
@@ -759,7 +764,9 @@ function describeSelectionLinkPreview(
       family === "cities"
         ? project.cities.find((record) => record.id === entityId)
         : project.buildings.find((record) => record.id === entityId);
-    return `菜单入口 ${(location?.menuEntries ?? []).length} 条，访问状态 ${location?.access?.conditionExpression == null ? "default-allow" : "configured"}。`;
+    const menuEntryCount =
+      location == null ? 0 : countScriptEditorLocationMenuEntries(project, family, location.id);
+    return `菜单入口 ${menuEntryCount} 条，访问状态 ${location?.access?.conditionExpression == null ? "default-allow" : "configured"}。`;
   }
 
   if (family === "dialogues") {
@@ -957,24 +964,65 @@ function collectLinkedValidationIssues(
     }
   }
 
+  const menuResourceById = Object.fromEntries(
+    (project.menuResources ?? []).map((resource) => [resource.id, resource] as const)
+  );
+  const menuInstanceById = Object.fromEntries(
+    (project.menuInstances ?? []).map((instance) => [instance.id, instance] as const)
+  );
   for (const family of ["cities", "buildings"] as const) {
     for (const location of project[family]) {
-      for (const entry of location.menuEntries ?? []) {
-        const targetFamily = resolveAuthoringTargetFamily(entry.targetFamily);
-        if (targetFamily == null || entry.targetId.trim().length === 0) {
+      for (const menuInstanceId of location.menuInstanceIds ?? []) {
+        const trimmedInstanceId = menuInstanceId.trim();
+        if (trimmedInstanceId.length === 0) {
           continue;
         }
-
-        if (!hasRecord(project, targetFamily, entry.targetId)) {
+        const menuInstance = menuInstanceById[trimmedInstanceId];
+        if (menuInstance == null) {
           addMissingReferenceIssue({
-            id: `linked.${family}.menu.${location.id}.${entry.id}`,
+            id: `linked.${family}.menu-instance.${location.id}.${trimmedInstanceId}`,
             severity: "attention",
-            title: "菜单入口目标缺失",
-            message: `${FAMILY_LABELS[family]} ${location.id} 的菜单入口 ${entry.id} 指向的 ${entry.targetId} 不存在。`,
+            title: "菜单实例缺失",
+            message: `${FAMILY_LABELS[family]} ${location.id} 引用的菜单实例 ${trimmedInstanceId} 不存在。`,
             targetFamily: family,
             targetEntityId: location.id,
             targetTab: "menus",
           });
+          continue;
+        }
+        const resourceId = menuInstance.resourceId.trim();
+        const menuResource = menuResourceById[resourceId];
+        if (resourceId.length === 0 || menuResource == null) {
+          addMissingReferenceIssue({
+            id: `linked.${family}.menu-resource.${location.id}.${trimmedInstanceId}`,
+            severity: "attention",
+            title: "菜单资源缺失",
+            message: `${FAMILY_LABELS[family]} ${location.id} 的菜单实例 ${trimmedInstanceId} 指向的资源 ${resourceId || "(empty)"} 不存在。`,
+            targetFamily: family,
+            targetEntityId: location.id,
+            targetTab: "menus",
+          });
+        }
+      }
+
+      for (const bundle of listScriptEditorLocationMenuBundles(project, family, location.id)) {
+        for (const entry of bundle.entries) {
+          const targetFamily = resolveAuthoringTargetFamily(entry.targetFamily);
+          if (targetFamily == null || entry.targetId.trim().length === 0) {
+            continue;
+          }
+
+          if (!hasRecord(project, targetFamily, entry.targetId)) {
+            addMissingReferenceIssue({
+              id: `linked.${family}.menu.${location.id}.${bundle.instanceId}.${entry.id}`,
+              severity: "attention",
+              title: "菜单入口目标缺失",
+              message: `${FAMILY_LABELS[family]} ${location.id} 的菜单入口 ${entry.id} 指向的 ${entry.targetId} 不存在。`,
+              targetFamily: family,
+              targetEntityId: location.id,
+              targetTab: "menus",
+            });
+          }
         }
       }
     }
@@ -1319,7 +1367,10 @@ function resolveIssueTab(
   }
 
   if (family === "cities" || family === "buildings") {
-    if (remainder.startsWith("menuEntries")) {
+    if (
+      remainder.startsWith("menuEntries") ||
+      remainder.startsWith("menuInstanceIds")
+    ) {
       return "menus";
     }
     if (remainder.startsWith("access")) {

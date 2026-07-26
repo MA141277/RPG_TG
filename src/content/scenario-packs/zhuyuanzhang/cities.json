@@ -130,7 +130,10 @@
       "kind": "settlement",
       "label": "濠州",
       "summary": "剧情: 朱元璋和尚时期起点，钟离/皇觉寺附近 | 阵营: 红巾军/小明王宋 | 所有者: 郭子兴部，名义尊小明王韩林儿 | 相关NPC: 朱元璋、郭子兴、马氏、汤和、韩林儿 | 注记: 适合作为早年主线出生点"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.yingtian",
@@ -228,7 +231,10 @@
       "kind": "settlement",
       "label": "集庆路★上元",
       "summary": "剧情: 集庆路，后改应天府 | 阵营: 元廷江南重镇，后属朱元璋吴军 | 所有者: 早期为元廷/地方守臣，后为朱元璋 | 相关NPC: 朱元璋、李善长、徐达、常遇春、刘基 | 注记: 朱元璋当和尚时尚未入主"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.luzhou",
@@ -322,7 +328,10 @@
       "kind": "settlement",
       "label": "庐州路※合肥",
       "summary": "剧情: 江淮枢纽 | 阵营: 朱元璋吴军后期控制区 | 所有者: 早期多方争夺，后为朱元璋集团 | 相关NPC: 蓝玉、傅友德、耿炳文、徐达 | 注记: 适合放置从濠州转入军事集团的过渡事件"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.anqing",
@@ -410,7 +419,10 @@
       "kind": "settlement",
       "label": "安庆路※怀宁",
       "summary": "剧情: 江淮西线通道 | 阵营: 元末多方争夺，后属朱元璋吴军 | 所有者: 早期不稳，后为朱元璋集团 | 相关NPC: 汤和、邓愈、李文忠、丁普郎 | 注记: 可作为从濠州南下江南的过渡节点"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.taiping",
@@ -504,7 +516,10 @@
       "kind": "settlement",
       "label": "太平路※当涂",
       "summary": "剧情: 南下江南跳板 | 阵营: 朱元璋吴军后期据点 | 所有者: 朱元璋集团 | 相关NPC: 徐达、常遇春、李善长、胡惟庸 | 注记: 和尚时期未控制，起兵后逐步纳入"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.anfeng",
@@ -595,7 +610,10 @@
       "kind": "settlement",
       "label": "安丰路※安丰",
       "summary": "剧情: 小明王宋政权据点 | 阵营: 红巾军/小明王宋 | 所有者: 韩林儿、刘福通 | 相关NPC: 刘福通、韩林儿、盛文郁、白不信 | 注记: 朱元璋早年名义上的上级势力"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.runing",
@@ -685,7 +703,10 @@
       "kind": "settlement",
       "label": "颍州",
       "summary": "剧情: 红巾军活动区 | 阵营: 小明王宋 | 所有者: 刘福通/韩林儿系 | 相关NPC: 刘福通、韩童、杜遵道、白不信 | 注记: 可连接濠州早年起义线"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.huaian",
@@ -774,7 +795,10 @@
       "kind": "settlement",
       "label": "高邮府※高邮军",
       "summary": "剧情: 淮东门户 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、施耐庵、潘元绍 | 注记: 与濠州、扬州形成早期江淮压力线"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.yangzhou",
@@ -868,7 +892,10 @@
       "kind": "settlement",
       "label": "扬州路※江都",
       "summary": "剧情: 淮东盐运重镇 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、李伯升、饶介、施耐庵 | 注记: 朱元璋早期北东侧竞争者"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.suzhou",
@@ -961,7 +988,10 @@
       "kind": "settlement",
       "label": "平江路※吴县",
       "summary": "Region: 江浙行省 | Owner: venice | Level: large_city | Type: town"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.wuchang",
@@ -1057,7 +1087,10 @@
       "kind": "settlement",
       "label": "武昌路★江夏",
       "summary": "剧情: 陈汉核心城 | 阵营: 陈汉 | 所有者: 陈友谅集团 | 相关NPC: 张定边、陈理、罗复仁、陈友直 | 注记: 朱元璋早年尚未控制此地"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.nanchang",
@@ -1148,7 +1181,10 @@
       "kind": "settlement",
       "label": "龙兴路★南昌",
       "summary": "剧情: 洪都前线 | 阵营: 吴军后期据点 | 所有者: 朱元璋集团 | 相关NPC: 朱文正、花云、沐英、冯胜 | 注记: 和尚时期暂不归朱元璋，后续成为对陈汉前线"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.chongqing",
@@ -1236,7 +1272,10 @@
       "kind": "settlement",
       "label": "重庆路※巴县",
       "summary": "Region: 四川行省 | Owner: sicily | Level: large_town | Type: town"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.chengdu",
@@ -1327,7 +1366,10 @@
       "kind": "settlement",
       "label": "成都路★成都",
       "summary": "Region: 四川行省 | Owner: sicily | Level: large_city | Type: town"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.ningbo",
@@ -1418,7 +1460,10 @@
       "kind": "settlement",
       "label": "庆元路※鄞县",
       "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.wenzhou",
@@ -1506,7 +1551,10 @@
       "kind": "settlement",
       "label": "温州路※永嘉",
       "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.fuzhou",
@@ -1597,7 +1645,10 @@
       "kind": "settlement",
       "label": "福州路※闽县",
       "summary": "Region: 江浙行省 | Owner: spain | Level: large_town | Type: town"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.dadu",
@@ -1689,7 +1740,10 @@
       "kind": "settlement",
       "label": "大都路★大都",
       "summary": "Region: 中书省 | Owner: byzantium | Level: huge_city | Type: town"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.kaifeng",
@@ -1782,7 +1836,10 @@
       "kind": "settlement",
       "label": "汴梁路★开封",
       "summary": "剧情: 河南元军重镇 | 阵营: 元廷/扩廓帖木儿系 | 所有者: 元廷河南势力 | 相关NPC: 扩廓帖木儿、脱因帖木儿、阎思孝、陈秉直 | 注记: 朱元璋早期北方强敌"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.gongchang",
@@ -1873,7 +1930,10 @@
       "kind": "settlement",
       "label": "巩昌路※陇西",
       "summary": "Region: 陕西行省 | Owner: hre | Level: large_town | Type: town"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   },
   {
     "id": "city.fengyuan",
@@ -1961,6 +2021,9 @@
       "kind": "settlement",
       "label": "奉元路★咸宁",
       "summary": "Region: 陕西行省 | Owner: france | Level: large_city | Type: town"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
   }
 ]
