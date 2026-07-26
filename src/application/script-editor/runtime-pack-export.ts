@@ -1113,7 +1113,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
       diagnostics.push({
         code: "missing-field",
         fieldPath: `${fieldPath}.ownerId`,
-        message: `Minigame binding ownerId is required for ${ownerKind} owners.`,
+        message: createMinigameOwnerRequiredMessage(ownerKind),
       });
       continue;
     }
@@ -1302,6 +1302,19 @@ function readRequiredTrimmedString(
 
 function isPlayableOwnerKind(value: string): value is PlayableIntegrationDefinition["ownerDefaults"]["ownerKind"] & string {
   return value === "house" || value === "dialogue" || value === "task" || value === "external";
+}
+
+function createMinigameOwnerRequiredMessage(ownerKind: string): string {
+  if (ownerKind === "house") {
+    return "玩法绑定需要填写所属建筑，才能运行预览或导出剧本。";
+  }
+  if (ownerKind === "dialogue") {
+    return "玩法绑定需要填写所属对话，才能运行预览或导出剧本。";
+  }
+  if (ownerKind === "task") {
+    return "玩法绑定需要填写所属任务，才能运行预览或导出剧本。";
+  }
+  return "玩法绑定需要先补全所属对象，才能运行预览或导出剧本。";
 }
 
 function isPlayableReturnPolicy(value: string): value is PlayableReturnPolicy {

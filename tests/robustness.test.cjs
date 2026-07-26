@@ -11315,6 +11315,34 @@ test("script editor workspace shell surfaces settlement events missing settlemen
   );
 });
 
+test("script editor workspace shell surfaces creator-facing minigame owner hints for blocked preview and export", () => {
+  const {
+    createDefaultScriptEditorMinigameRecord,
+  } = require("../.test-dist/application/script-editor/minigame-binding-authoring.js");
+  const {
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.minigames = [createDefaultScriptEditorMinigameRecord(0)];
+
+  const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+  const expectedMessage = "玩法绑定需要填写所属对话，才能运行预览或导出剧本。";
+
+  assert.equal(exportDiagnostics[0]?.message, expectedMessage);
+  assert.equal(
+    workspace.toolbarActions.find((action) => action.id === "preview-runtime")?.description,
+    expectedMessage
+  );
+  assert.equal(
+    workspace.toolbarActions.find((action) => action.id === "export")?.description,
+    expectedMessage
+  );
+});
+
 test("script editor workspace shell accepts settlement events with existing settlement records", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
@@ -12112,6 +12140,18 @@ test("script editor draft creation allocates canonical numeric ids by family max
   assert.equal(personDraft.id, "110004");
   assert.equal(textEntryDraft.id, "440004");
   assert.equal(eventBindingDraft.id, "470002");
+});
+
+test("script editor numeric-index workflow draft fallback uses canonical numeric ids", () => {
+  const {
+    createScriptEditorWorkflowRecordDraft,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+
+  assert.equal(createScriptEditorWorkflowRecordDraft("quests", 0).id, "310001");
+  assert.equal(createScriptEditorWorkflowRecordDraft("textEntries", 0).id, "440001");
+  assert.equal(createScriptEditorWorkflowRecordDraft("storyNodes", 0).id, "450001");
+  assert.equal(createScriptEditorWorkflowRecordDraft("progressTracks", 0).id, "250001");
+  assert.equal(createScriptEditorWorkflowRecordDraft("progressTrackBindings", 0).id, "260001");
 });
 
 test("script editor person authoring helpers normalize trade and relation entry fields", () => {
@@ -16945,7 +16985,7 @@ test(
     assert.match(source, /data-script-editor-inspector-header-slot/);
     assert.match(source, /"add-dialogue-node"/);
     assert.doesNotMatch(source, /"add-dialogue-follow-up"/);
-    assert.match(source, /对话结束后的正式去向统一由事件绑定与事件 destination 负责/);
+    assert.doesNotMatch(source, /事件 destination|follow-up 路由真相|独立 follow-up|正式去向统一由事件绑定/);
     assert.doesNotMatch(
       source,
       /<input[^>]+data-script-editor-dialogue-node-field="(?:speakerPersonId|textId|nextNodeId|choiceTargetNodeId)"/
@@ -17095,6 +17135,63 @@ test("script editor owner-local event binding trigger edits keep the binding anc
     timing: "before",
     action: "building-leave",
   });
+});
+
+test("script editor event reverse-reference copy avoids implementation binding jargon", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const eventBindingsPanelSource =
+    source.match(/if \(this\.scriptEditorEventTab === "bindings"\) \{[\s\S]*?if \(this\.scriptEditorEventTab === "preview"\)/)?.[0] ?? "";
+
+  assert.doesNotMatch(
+    eventBindingsPanelSource,
+    /Event binding navigation panel|Event bindings|Readonly reverse references|No project-level bindings target this event\./
+  );
+});
+
+test("script editor standalone event-binding surface avoids raw project.eventBindings wording", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const independentSurfaceSource =
+    source.match(/renderScriptEditorEventBindingsEditor\(records, selectedRecord\) \{[\s\S]*?\n  renderScriptEditorOwnerLocalEventBindingsPanel/)?.[0] ?? "";
+
+  assert.doesNotMatch(
+    independentSurfaceSource,
+    /Event binding list|Add binding|Delete binding|Event binding authoring surface|project\.eventBindings/
+  );
+  assert.doesNotMatch(
+    independentSurfaceSource,
+    /\$\{escapeHtml\(normalizedBinding\.owner\.family\)\}:\$\{escapeHtml\(normalizedBinding\.owner\.id \?\? ""\)\} -> \$\{escapeHtml\(normalizedBinding\.eventId\)\}/
+  );
+});
+
+test("script editor dialogue nodes copy avoids mixed destination and follow-up routing truth", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const dialogueNodesSource =
+    source.match(/if \(this\.scriptEditorNarrativeTab === "nodes"\) \{[\s\S]*?if \(this\.scriptEditorNarrativeTab === "summary"\)/)?.[0] ?? "";
+
+  assert.doesNotMatch(
+    dialogueNodesSource,
+    /事件 destination|follow-up 路由真相|独立 follow-up|正式去向统一由事件绑定/
+  );
+});
+
+test("script editor dialogue summary copy avoids governance queue jargon", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const summaryPanelSource =
+    source.match(/if \(this\.scriptEditorNarrativeTab === "summary"\) \{[\s\S]*?return `[\s\S]*?`;\s*\n    }/)?.[0] ?? "";
+
+  assert.doesNotMatch(summaryPanelSource, /bounded 摘要预览|后续更深的事件与预览队列承接/);
+});
+
+test("script editor minigame copy avoids binding-runtime jargon in empty and reference states", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const minigameShellSource =
+    source.match(/renderScriptEditorMinigameEditor\(records, selectedRecord\)[\s\S]*?\n  renderScriptEditorEventBindingsEditor/)?.[0] ?? "";
+
+  assert.doesNotMatch(minigameShellSource, /binding、trigger 和 settlement|playable runtime/);
+  assert.doesNotMatch(
+    minigameShellSource,
+    /当前 binding|dialogue、event 和 location menu|当前 playable|当前 integration/
+  );
 });
 
 test("script editor tab selectors allow owner-local event tabs and reject event-body conditions tab", () => {
@@ -17454,12 +17551,56 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
       value: 0,
     },
   ]);
-  assert.equal(eventBinding.id, "event-binding.new.1");
+  assert.equal(eventBinding.id, "470001");
   assert.equal(eventBinding.eventId, "event.opening");
   assert.deepEqual(eventBinding.owner, { family: "city", id: "city.start" });
   assert.deepEqual(eventBinding.trigger, { timing: "after", action: "city-enter" });
   assert.equal(eventBinding.priority, 0);
   assert.equal(eventBinding.enabled, false);
+});
+
+test("script editor direct first-phase default creators use canonical numeric ids", () => {
+  const {
+    createDefaultScriptEditorFlowRecord,
+  } = require("../.test-dist/application/script-editor/flow-authoring.js");
+  const {
+    createDefaultScriptEditorMinigameRecord,
+  } = require("../.test-dist/application/script-editor/minigame-binding-authoring.js");
+  const {
+    createDefaultScriptEditorPersonRecord,
+  } = require("../.test-dist/application/script-editor/person-authoring.js");
+  const {
+    createDefaultScriptEditorPortraitRecord,
+    createDefaultScriptEditorPortraitVariantRecord,
+  } = require("../.test-dist/application/script-editor/portrait-authoring.js");
+  const {
+    createDefaultScriptEditorCityRecord,
+    createDefaultScriptEditorBuildingRecord,
+  } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+  const {
+    createDefaultScriptEditorDialogueRecord,
+    createDefaultScriptEditorEventBindingRecord,
+    createDefaultScriptEditorEventRecord,
+    createDefaultScriptEditorProgressTrackBindingRecord,
+    createDefaultScriptEditorProgressTrackRecord,
+    createDefaultScriptEditorSettlementRecord,
+    createDefaultScriptEditorStoryNodeRecord,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  assert.equal(createDefaultScriptEditorFlowRecord(0).id, "430001");
+  assert.equal(createDefaultScriptEditorMinigameRecord(0).id, "420001");
+  assert.equal(createDefaultScriptEditorPersonRecord(0).id, "110001");
+  assert.equal(createDefaultScriptEditorPortraitRecord(0).id, "120001");
+  assert.equal(createDefaultScriptEditorPortraitVariantRecord(0).id, "130001");
+  assert.equal(createDefaultScriptEditorCityRecord(0).id, "210001");
+  assert.equal(createDefaultScriptEditorBuildingRecord(0, "city.start").id, "220001");
+  assert.equal(createDefaultScriptEditorDialogueRecord(0).id, "410001");
+  assert.equal(createDefaultScriptEditorProgressTrackRecord(0).id, "250001");
+  assert.equal(createDefaultScriptEditorProgressTrackBindingRecord(0).id, "260001");
+  assert.equal(createDefaultScriptEditorStoryNodeRecord(0).id, "450001");
+  assert.equal(createDefaultScriptEditorEventRecord(0).id, "460001");
+  assert.equal(createDefaultScriptEditorSettlementRecord(0).id, "240001");
+  assert.equal(createDefaultScriptEditorEventBindingRecord(0).id, "470001");
 });
 
 test("script editor authoring normalization preserves blank draft relation rows for editing", () => {
@@ -28870,14 +29011,14 @@ test("script editor stage configuration authoring can produce a creator-authored
     binding
   );
   assert.equal(project.progressTrackBindings.length, 1);
-  assert.equal(project.progressTrackBindings[0].id, "progress-binding.new.1");
+  assert.equal(project.progressTrackBindings[0].id, "260001");
 
   let track = createDefaultScriptEditorProgressTrackRecord(0);
   track = updateScriptEditorProgressTrackField(track, "metricKey", "experience");
   track = updateScriptEditorProgressTrackField(track, "metricLabel", "经验");
   project = upsertScriptEditorWorkflowRecord(project, "progressTracks", track);
   assert.equal(project.progressTracks.length, 1);
-  assert.equal(project.progressTracks[0].id, "progress-track.new.1");
+  assert.equal(project.progressTracks[0].id, "250001");
 
   binding = updateScriptEditorProgressTrackBindingField(
     project.progressTrackBindings[0],
@@ -28906,10 +29047,10 @@ test("script editor stage configuration authoring can produce a creator-authored
   const exportedTracks = JSON.parse(files["progress-tracks.json"]);
   const exportedBindings = JSON.parse(files["progress-track-bindings.json"]);
   assert.equal(exportedTracks.length, 1);
-  assert.equal(exportedTracks[0].id, "progress-track.new.1");
+  assert.equal(exportedTracks[0].id, "250001");
   assert.equal(exportedTracks[0].metricKey, "experience");
   assert.equal(exportedBindings.length, 1);
-  assert.equal(exportedBindings[0].trackId, "progress-track.new.1");
+  assert.equal(exportedBindings[0].trackId, "250001");
   assert.equal(exportedBindings[0].owner.ownerKind, "person");
   assert.equal(exportedBindings[0].owner.ownerId, "person.hero");
 });
@@ -29051,7 +29192,7 @@ test("script editor workflow progression drafts avoid id reuse after non-tail de
     replacementTrackDraft
   );
 
-  assert.equal(replacementTrackDraft.id, "progress-track.new.4");
+  assert.equal(replacementTrackDraft.id, "250004");
   assert.equal(
     project.progressTracks.some((record) => record.id === trackDrafts[2].id),
     true
@@ -29087,7 +29228,7 @@ test("script editor workflow progression drafts avoid id reuse after non-tail de
     replacementBindingDraft
   );
 
-  assert.equal(replacementBindingDraft.id, "progress-binding.new.4");
+  assert.equal(replacementBindingDraft.id, "260004");
   assert.equal(
     project.progressTrackBindings.some((record) => record.id === bindingDrafts[2].id),
     true

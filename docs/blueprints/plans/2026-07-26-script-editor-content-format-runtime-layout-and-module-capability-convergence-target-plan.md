@@ -6,29 +6,29 @@
 - version_id: `target.script-editor-content-format-runtime-layout-and-module-capability-convergence`
 - version_status: `open`
 - active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `promotion-review`
+- active_queue: `queue.script-editor-content-format-and-authoring-surface-unification`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `active-queue`
 - post_queue_closeout_pause_policy: `auto-continue`
-- promotion_review_result: `none`
-- review_subject_id: `item.script-editor-content-format-runtime-layout-and-module-capability-convergence`
-- review_subject_classification: `future-target-promoted`
+- promotion_review_result: `admitted`
+- review_subject_id: `none`
+- review_subject_classification: `none`
 - proposed_queue_id: `none`
-- review_basis: `operator-approved-version-requirement-consolidation`
+- review_basis: `none`
 - admission_status: `none`
 - intake_status: `admission-review`
 - intake_item_id: `item.script-editor-content-format-runtime-layout-and-module-capability-convergence`
 - intake_summary: `Create a new formal successor version from the operator-approved unified requirement sheet so Script Editor content format, runtime layout, and covered module capability completion can execute under one Blueprint target.`
 - intake_result: `promoted-to-admission`
 - intake_feedback_mode: `fixed-receipt`
-- closure_review_subject: `none`
-- closure_review_status: `none`
+- closure_review_subject: `queue.script-editor-content-format-and-authoring-surface-unification`
+- closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `none`
-- next_lawful_queue_recommendation: `none`
+- routing_basis: `post-first-queue-sync-gate`
+- next_lawful_queue_recommendation: `queue.stage-host-binding-and-menu-resource-runtime-convergence`
 - auto_admission_ready: `false`
 - stop_reason: `none`
 - stop_basis: `none`
@@ -43,8 +43,8 @@
   - `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
-  - `queue.script-editor-content-format-and-authoring-surface-unification: not yet admitted; first lawful queue because authoring-format, id-rule, creator-surface, and event-structure convergence are prerequisite truth for later module/runtime work.`
-  - `queue.stage-host-binding-and-menu-resource-runtime-convergence: not yet admitted; follows authoring-format baseline and owns stage-host references plus menu formalization.`
+  - `queue.script-editor-content-format-and-authoring-surface-unification: admitted and still active only for queue closeout / repository-sync gating; ACC-FORMAT-001 / 002 are covered locally and browser acceptance has been observed.`
+  - `queue.stage-host-binding-and-menu-resource-runtime-convergence: next lawful candidate after first-queue sync gate; owns stage-host references plus menu formalization.`
   - `queue.event-owned-routing-dialogue-playable-settlement-convergence: not yet admitted; follows menu/stage reference stabilization and owns the event-only routing conversion chain.`
   - `queue.runtime-layout-registry-and-ui-layering-convergence: not yet admitted; follows routing freeze and owns persisted runtime layout plus runtime UI layering.`
   - `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance: not yet admitted; required-final queue for chain consistency, fail-closed rejection, acceptance proof, and closeout.`
@@ -71,7 +71,8 @@
   - `The operator-approved requirement sheet is broader than one queue and therefore requires a parent target before queue admission.`
 - Activation conclusion:
   - `Formal target docs now exist for target.script-editor-content-format-runtime-layout-and-module-capability-convergence.`
-  - `No child queue is admitted yet. The next lawful governance action is writing and admitting queue.script-editor-content-format-and-authoring-surface-unification as the first execution queue.`
+  - `queue.script-editor-content-format-and-authoring-surface-unification is now in queue-closeout / repository-sync-gate state after local ACC-FORMAT-001 / 002 coverage and browser acceptance completed.`
+  - `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate is the live active task until repository-sync truth is recorded.`
 
 ### Admission Review Record
 
@@ -84,13 +85,13 @@
   - `The requirement sheet defines one parent boundary larger than a single child queue and therefore must be promoted into a formal version before queue execution starts.`
   - `Because no currently open version lawfully owns this boundary, a successor version is the only lawful entry.`
 - Required truth sync:
-  - `Satisfied in this document batch for target creation and active-pointer switching only. Child-queue admission remains the next separate action.`
+  - `Satisfied in this document batch for first-queue admission, project-progress pointer switching, queue-governor creation, and live active-task exposure.`
 
 ### Version Lifecycle Rules
 
-- `This version is open and now becomes the lawful Blueprint active version with no admitted child queue yet.`
-- `If active_queue = none, that does not close the version; it means the version is waiting on lawful child-queue admission.`
-- `Do not implement code under this target without an admitted child queue doc and a live active task.`
+- `This version remains open and the lawful execution truth currently runs through queue.script-editor-content-format-and-authoring-surface-unification until its repository-sync gate is recorded.`
+- `If active_queue = none in the future, that does not close the version; it means the version has returned to lawful queue admission or closeout review.`
+- `Implementation may proceed only through the admitted child queue doc and its live active task.`
 - `Do not split content-format unification, event-owned routing convergence, runtime-layout persistence, and covered-module capability completion into separate parent targets while this version remains open.`
 - `Do not reintroduce story-node/plot-node scope into this parent target unless a later parent-spec change is explicitly recorded here first.`
 - `Task completion, queue closeout sync, admission sync, active queue switch, repository sync result recording, and doc-only state sync are not lawful stop points by themselves.`
@@ -135,8 +136,8 @@
 1. `Read project-progress -> blueprint -> active version plan -> active queue before touching a fresh child queue item.`
 2. `This target is now the active version, but child-queue admission still requires version-plan admission sync before any queue becomes execution truth.`
 3. `Before admitting any child queue, verify that it does not narrow the parent boundary by dropping numeric-id convergence, event-owned routing, runtime-layout persistence, or full-chain consistency.`
-4. `queue.script-editor-content-format-and-authoring-surface-unification is the only lawful first queue under this version.`
-5. `Only after version-plan admission truth exists and the admitted queue doc exposes queue_status=active plus a live active_task may implementation start.`
+4. `queue.script-editor-content-format-and-authoring-surface-unification was the only lawful first queue under this version and is now admitted.`
+5. `Implementation now resumes from the active queue doc and live active task rather than repeating admission review from scratch.`
 
 ### Queue Spec Integrity Rule
 
@@ -147,17 +148,17 @@
 ### Operator Receipt Record
 
 - receipt_join_status: `success`
-- receipt_join_type: `not-added`
-- receipt_join_queue_id: `none`
-- receipt_reason_code: `candidate-only-not-admitted`
+- receipt_join_type: `execution-queue`
+- receipt_join_queue_id: `queue.script-editor-content-format-and-authoring-surface-unification`
+- receipt_reason_code: `admission-routing-required`
 - receipt_reason_basis:
-  - `The approved requirement sheet is now promoted into a formal open successor version, but no execution queue has been admitted yet.`
-- receipt_active_queue: `none`
-- receipt_active_task: `none`
+  - `The open version shell required a lawful first admission, and queue.script-editor-content-format-and-authoring-surface-unification is the only approved first execution slice under the recorded phase order.`
+- receipt_active_queue: `queue.script-editor-content-format-and-authoring-surface-unification`
+- receipt_active_task: `task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate`
 - receipt_queue_goal:
-  - `none`
+  - `Execute the required-first authoring-format and numeric-id baseline so later module/runtime queues inherit one canonical creator-facing content structure.`
 - receipt_next_step:
-  - `Write and admit queue.script-editor-content-format-and-authoring-surface-unification as the first implementation queue under the new active version.`
+  - `Complete the first queue's repository-sync gate, then auto-route into queue.stage-host-binding-and-menu-resource-runtime-convergence.`
 - receipt_human_action: `none-required`
 - receipt_internal_analysis_exposed: `false`
 
@@ -243,17 +244,19 @@
 - parent_spec_alignment:
   - `The created target preserves the operator-approved requirement sheet without dropping content-format, event-owned routing, runtime-layout persistence, or full-chain consistency boundaries.`
 - queue_claim_alignment:
-  - `No queue is admitted yet; the plan claims target creation plus candidate portfolio only.`
+  - `The admitted first queue now owns ACC-FORMAT-001 / 002 only, and the active task remains bounded to canonical ids plus creator-surface convergence.`
 - over_narrowing_check:
   - `The first queue remains authoring-format plus id-rule convergence rather than a thinner runtime-layout or menu-only slice, so the version does not skip the approved prerequisite batch.`
 - residue_or_blocker_routing_check:
-  - `No blocker or residue is currently recorded; the next lawful action is first-queue admission.`
+  - `No blocker is recorded. Later acceptances remain routed to the recorded follow-up queues, and the next lawful action is the active implementation task inside the admitted first queue.`
 - verification_adequacy_check:
   - `Governed-doc verification must pass before this successor version shell is considered synchronized.`
 - next_lawful_action_check:
-  - `Write and admit queue.script-editor-content-format-and-authoring-surface-unification.`
+  - `Resume task.script-editor-content-format-and-authoring-surface-unification.authoring-format-and-id-baseline-implementation.`
 
 ### Progress Log
 
 - `2026-07-26`: `Created target.script-editor-content-format-runtime-layout-and-module-capability-convergence from the operator-approved unified requirement sheet rather than from version-memo promotion.`
 - `2026-07-26`: `Created the formal target spec and version plan, switched Blueprint entry pointers to the new open successor version, and recorded the five-queue portfolio in the already approved high-level phase order without admitting execution yet.`
+- `2026-07-26`: `Admitted queue.script-editor-content-format-and-authoring-surface-unification as the required-first execution queue, synchronized project-progress to the live queue doc, and exposed task.script-editor-content-format-and-authoring-surface-unification.authoring-format-and-id-baseline-implementation as the active task after evidence reconciliation completed.`
+- `2026-07-26`: `The first queue has now covered ACC-FORMAT-001 / 002 locally. Canonical draft-id adoption, creator-facing copy cleanup, automated verification, and required in-app browser acceptance all passed, so the version auto-promoted task.script-editor-content-format-and-authoring-surface-unification.queue-closeout-review-and-sync-gate as the live active task.`

@@ -5,6 +5,21 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-26 Script Editor Canonical Draft Id And Authoring Copy Convergence
+
+### Changed
+- Updated [src/application/script-editor/script-editor-id-allocation.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/script-editor-id-allocation.ts:1) to add canonical numeric-id families for `progressTracks` and `progressTrackBindings`, and to expose one shared `createDefaultScriptEditorCanonicalId(...)` helper for direct draft creators and workflow fallbacks.
+- Updated [src/application/script-editor/person-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts:1), [src/application/script-editor/portrait-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/portrait-authoring.ts:1), [src/application/script-editor/city-building-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts:1), [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts:1), [src/application/script-editor/minigame-binding-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/minigame-binding-authoring.ts:1), and [src/application/script-editor/flow-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/flow-authoring.ts:1) so the covered direct default creators now emit canonical numeric ids instead of legacy `*.new.*` ids.
+- Updated [src/application/script-editor/minimal-workflow.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts:1) so numeric-index draft fallback and project-backed draft allocation for quests, text entries, progression tracks, and progression bindings now share the canonical numeric-id path instead of legacy `task.new.*`, `text.new.*`, or `progress-*.new.*` fallbacks.
+- Updated [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) so the dialogue, event, minigame, and dedicated event-binding surfaces no longer present creators with raw `project.eventBindings`, reverse-reference, `playable runtime`, or `follow-up truth` implementation wording as the normal authoring copy.
+- Updated [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts:1) so missing minigame-owner export blockers now explain the missing dialogue/building/task host in creator-facing language, which also fixes the blocked `运行预览` / `剧本导出` toolbar hint after creating a new minigame draft.
+- Expanded [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) with canonical-id coverage for the widened draft families, workflow fallback regression guards, progression draft/export expectations, and source guards that block the retired implementation-facing authoring copy.
+
+### Impact
+- Covered Script Editor draft creation now stays on one canonical numeric-id rule across direct creators, workflow fallback, and progression-related authoring records, reducing mixed id truth between editor surfaces and persisted references.
+- Creator-facing narrative and minigame surfaces now explain authoring intent in domain language instead of exposing internal storage paths or runtime ownership jargon, keeping the first queue aligned with its authoring-copy cleanup boundary.
+- New minigame drafts no longer leak `ownerId`-style developer validation text into the top-level preview/export affordances, so creators see a direct next step when the default draft is still missing its owning dialogue/building/task.
+
 ## 2026-07-26 Script Editor Relation Draft Row Regression Hardening
 
 ### Changed

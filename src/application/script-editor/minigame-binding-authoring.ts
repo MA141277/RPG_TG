@@ -13,6 +13,7 @@ import type {
   ScriptEditorMinigameReturnPolicy,
   ScriptEditorMinigameTriggerSource,
 } from "../../domain/script-editor-project";
+import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_MINIGAME_OWNER_KINDS: readonly ScriptEditorMinigameOwnerKind[] = [
   "house",
@@ -96,7 +97,10 @@ export function createDefaultScriptEditorMinigameRecord(
 ): ScriptEditorMinigameRecord {
   const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: typeof indexOrId === "string" ? indexOrId : `minigame.new.${suffix}`,
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : createDefaultScriptEditorCanonicalId("minigames", indexOrId),
     title: `玩法绑定 ${suffix}`,
     description: "",
     playableId: "activity-qte",

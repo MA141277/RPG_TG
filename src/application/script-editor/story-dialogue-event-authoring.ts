@@ -20,6 +20,7 @@ import type {
   ScriptEditorStoryNodeRecord,
   ScriptEditorStoryProgressMode,
 } from "../../domain/script-editor-project";
+import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_STORY_PROGRESS_MODES: readonly ScriptEditorStoryProgressMode[] = [
   "block",
@@ -253,7 +254,7 @@ export function createDefaultScriptEditorStoryNodeRecord(
     id:
       typeof indexOrId === "string"
         ? indexOrId
-        : `story-node.new.${suffix}`,
+        : createDefaultScriptEditorCanonicalId("storyNodes", indexOrId),
     title: `剧情段 ${suffix}`,
     chapterId: `chapter.${suffix}`,
     summary: "",
@@ -269,7 +270,10 @@ export function createDefaultScriptEditorDialogueRecord(
 ): ScriptEditorDialogueRecord {
   const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: typeof indexOrId === "string" ? indexOrId : `dialogue.new.${suffix}`,
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : createDefaultScriptEditorCanonicalId("dialogues", indexOrId),
     title: `对话 ${suffix}`,
     storyNodeId: "",
     participantPersonIds: [],
@@ -282,7 +286,10 @@ export function createDefaultScriptEditorEventRecord(
 ): ScriptEditorEventRecord {
   const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: typeof indexOrId === "string" ? indexOrId : `event.new.${suffix}`,
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : createDefaultScriptEditorCanonicalId("events", indexOrId),
     title: `事件 ${suffix}`,
     description: "",
     triggerTiming: "manual",
@@ -313,7 +320,7 @@ export function createDefaultScriptEditorSettlementRecord(
     id:
       typeof indexOrId === "string"
         ? indexOrId
-        : `settlement.new.${suffix}`,
+        : createDefaultScriptEditorCanonicalId("settlements", indexOrId),
     title: `结算 ${suffix}`,
     nextEventId: "",
     contents: [createDefaultScriptEditorSettlementContentRecord()],
@@ -328,7 +335,7 @@ export function createDefaultScriptEditorProgressTrackRecord(
     id:
       typeof indexOrId === "string"
         ? indexOrId
-        : `progress-track.new.${suffix}`,
+        : createDefaultScriptEditorCanonicalId("progressTracks", indexOrId),
     title: `阶段轨道 ${suffix}`,
     metricKey: "",
     metricLabel: "进度值",
@@ -346,7 +353,10 @@ export function createDefaultScriptEditorProgressTrackBindingRecord(
     id:
       typeof indexOrId === "string"
         ? indexOrId
-        : `progress-binding.new.${suffix}`,
+        : createDefaultScriptEditorCanonicalId(
+            "progressTrackBindings",
+            indexOrId
+          ),
     trackId: "",
     owner: {
       ownerKind: "person",
@@ -364,7 +374,7 @@ export function createDefaultScriptEditorEventBindingRecord(
     id:
       typeof indexOrId === "string"
         ? indexOrId
-        : `event-binding.new.${suffix}`,
+        : createDefaultScriptEditorCanonicalId("eventBindings", indexOrId),
     eventId: "",
     owner: {
       family: "manual",

@@ -5376,7 +5376,7 @@ export class MainUiFlow {
             <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
             ${
               minigame == null
-                ? `<p class="c-script-editor-editor-card__hint">请选择一个玩法绑定后继续编辑。当前作者面只负责 binding、trigger 和 settlement 配置，不在这里落 playable runtime 机制。</p>`
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个玩法条目后继续编辑。本页集中整理玩法入口、触发时机与结算回流设置。</p>`
                 : `
                   <template data-script-editor-inspector-header-slot>
                     <div class="c-script-editor-minigame-editor__tabs" role="tablist" aria-label="玩法绑定详情分栏">
@@ -5580,7 +5580,7 @@ export class MainUiFlow {
               .join("")}
           </div>
           <p class="c-script-editor-editor-card__hint">
-            对话节点只负责演出顺序与内部节点跳转。对话结束后的正式去向统一由事件绑定与事件 destination 负责，本页不再维护独立 follow-up 路由真相。
+            对话节点只负责演出顺序与内部节点跳转。对话结束后的后续安排请到事件页继续设置。
           </p>
         </section>
       `;
@@ -5590,7 +5590,7 @@ export class MainUiFlow {
       return `
         <section class="c-script-editor-narrative-panel" aria-label="对话预览分栏">
           <p class="c-script-editor-editor-card__hint">
-            这里先提供 bounded 摘要预览：节点数 ${dialogue.nodes?.length ?? 0}，参与人物 ${dialogue.participantPersonIds?.length ?? 0}。真正演出预览与正式去向校验由后续更深的事件与预览队列承接。
+            这里先汇总节点数与参与人物数，方便快速检查当前对话规模。
           </p>
           <div class="c-script-editor-shell__cards">
             ${this.renderScriptEditorOverviewCard("节点顺序", `当前 ${dialogue.nodes?.length ?? 0} 个节点。`, "neutral")}
@@ -5992,17 +5992,17 @@ export class MainUiFlow {
       );
 
       return `
-        <section class="c-script-editor-narrative-panel" aria-label="Event binding navigation panel">
+        <section class="c-script-editor-narrative-panel" aria-label="事件关联分栏">
           <div class="c-script-editor-narrative-panel__header">
             <div>
-              <p class="c-script-editor-editor-card__eyebrow">Event bindings</p>
-              <h3 class="c-script-editor-editor-card__title">Readonly reverse references</h3>
+              <p class="c-script-editor-editor-card__eyebrow">事件关联</p>
+              <h3 class="c-script-editor-editor-card__title">引用当前事件的安排</h3>
             </div>
           </div>
           <div class="c-script-editor-narrative-list">
             ${
               eventBindings.length === 0
-                ? `<p class="c-script-editor-editor-card__hint">No project-level bindings target this event.</p>`
+                ? `<p class="c-script-editor-editor-card__hint">当前还没有条目会在这里接续这个事件。</p>`
                 : eventBindings
                     .map(
                       (binding) => `
@@ -6289,16 +6289,16 @@ export class MainUiFlow {
       return `
         <section class="c-script-editor-minigame-panel" aria-label="玩法绑定引用关系分栏">
           <p class="c-script-editor-editor-card__hint">
-            这里展示谁正在调用当前 binding。真正的调用源仍分别由 dialogue、event 和 location menu 作者面维护，避免把跨对象所有权挪进 minigame 本体。
+            这里汇总哪些条目会进入当前玩法，便于核对入口安排。
           </p>
           <div class="c-script-editor-shell__cards">
             ${this.renderScriptEditorOverviewCard("引用数", String(references.length), references.length === 0 ? "neutral" : "success")}
-            ${this.renderScriptEditorOverviewCard("当前 playable", minigame.playableId || "未设置", "neutral")}
-            ${this.renderScriptEditorOverviewCard("当前 integration", minigame.integrationId || "未设置", "neutral")}
+            ${this.renderScriptEditorOverviewCard("玩法原型", minigame.playableId || "未设置", "neutral")}
+            ${this.renderScriptEditorOverviewCard("接入方案", minigame.integrationId || "未设置", "neutral")}
           </div>
           <div class="c-script-editor-minigame-list">
             ${references.length === 0
-              ? `<p class="c-script-editor-editor-card__hint">当前还没有 dialogue、event 或 location menu 指向这个玩法绑定。</p>`
+              ? `<p class="c-script-editor-editor-card__hint">当前还没有作者面条目接到这个玩法。</p>`
               : references
                   .map(
                     (reference) => `
@@ -6356,12 +6356,12 @@ export class MainUiFlow {
           ${this.renderScriptEditorPaginatedRecordList({
             family: "eventBindings",
             records,
-            ariaLabel: "Event binding list",
+            ariaLabel: "事件安排列表",
             modifierClass: "c-script-editor-record-list--narrative",
             toolbar: `
               <div class="c-script-editor-record-list__toolbar">
                 <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-event-binding">
-                  Add binding
+                  新增安排
                 </button>
                 <button
                   type="button"
@@ -6370,7 +6370,7 @@ export class MainUiFlow {
                   data-script-editor-event-binding-id="${escapeHtml(binding?.id ?? "")}"
                   ${binding == null ? "disabled" : ""}
                 >
-                  Delete binding
+                  删除安排
                 </button>
               </div>
             `,
@@ -6383,7 +6383,7 @@ export class MainUiFlow {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedBinding.id)}</strong>
-                  <span>${escapeHtml(normalizedBinding.owner.family)}:${escapeHtml(normalizedBinding.owner.id ?? "")} -> ${escapeHtml(normalizedBinding.eventId)}</span>
+                  <span>${escapeHtml(this.getScriptEditorEventBindingOwnerFamilyLabel(normalizedBinding.owner.family))} / ${escapeHtml(normalizedBinding.owner.id ?? "未设置")} / ${escapeHtml(normalizedBinding.eventId || "未选择事件")}</span>
                 </button>
               `;
             },
@@ -6391,8 +6391,8 @@ export class MainUiFlow {
           <div class="c-script-editor-narrative-editor">
             ${
               binding == null
-                ? `<p class="c-script-editor-editor-card__hint">Select an event binding to edit project.eventBindings.</p>`
-                : `<section class="c-script-editor-narrative-panel" aria-label="Event binding authoring surface">${this.renderScriptEditorEventBindingEditor(selectedRecord)}</section>`
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个安排后继续编辑事件接续。</p>`
+                : `<section class="c-script-editor-narrative-panel" aria-label="事件接续编辑区">${this.renderScriptEditorEventBindingEditor(selectedRecord)}</section>`
             }
           </div>
         </div>

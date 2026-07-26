@@ -33,7 +33,10 @@ import {
   removeScriptEditorLocationAccessCondition,
   updateScriptEditorLocationAccessConditionField,
 } from "./location-access-authoring";
-import { allocateNextScriptEditorProjectCanonicalId } from "./script-editor-id-allocation";
+import {
+  allocateNextScriptEditorProjectCanonicalId,
+  createDefaultScriptEditorCanonicalId,
+} from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_CITY_DEFAULT_MENU_FAMILIES = [
   "overview",
@@ -187,7 +190,10 @@ export function createDefaultScriptEditorCityRecord(
   indexOrId: number | string
 ): ScriptEditorCityRecord {
   const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
-  const id = typeof indexOrId === "string" ? indexOrId : `city.new.${suffix}`;
+  const id =
+    typeof indexOrId === "string"
+      ? indexOrId
+      : createDefaultScriptEditorCanonicalId("cities", indexOrId);
   const name = `New City ${suffix}`;
   return {
     id,
@@ -218,7 +224,9 @@ export function createDefaultScriptEditorBuildingRecord(
 ): ScriptEditorBuildingRecord {
   const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   const id =
-    typeof indexOrId === "string" ? indexOrId : `building.new.${suffix}`;
+    typeof indexOrId === "string"
+      ? indexOrId
+      : createDefaultScriptEditorCanonicalId("buildings", indexOrId);
   const name = `New Building ${suffix}`;
   return {
     id,

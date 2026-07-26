@@ -10,6 +10,8 @@ const SCRIPT_EDITOR_CANONICAL_ID_FAMILY_CODE = {
   buildings: 22,
   buildingArrangements: 23,
   settlements: 24,
+  progressTracks: 25,
+  progressTrackBindings: 26,
   quests: 31,
   dialogues: 41,
   minigames: 42,
@@ -24,6 +26,15 @@ export type ScriptEditorCanonicalIdFamily =
   keyof typeof SCRIPT_EDITOR_CANONICAL_ID_FAMILY_CODE;
 
 type EntityLike = { id: string };
+
+export function createDefaultScriptEditorCanonicalId(
+  family: ScriptEditorCanonicalIdFamily,
+  index: number
+): string {
+  const familyCode = SCRIPT_EDITOR_CANONICAL_ID_FAMILY_CODE[family];
+  const sequenceBase = familyCode * 10 ** SCRIPT_EDITOR_CANONICAL_ID_SEQUENCE_WIDTH;
+  return String(sequenceBase + index + 1);
+}
 
 export function allocateNextScriptEditorCanonicalId(
   family: ScriptEditorCanonicalIdFamily,
@@ -74,6 +85,13 @@ export function allocateNextScriptEditorProjectCanonicalId(
       );
     case "settlements":
       return allocateNextScriptEditorCanonicalId(family, project.settlements);
+    case "progressTracks":
+      return allocateNextScriptEditorCanonicalId(family, project.progressTracks ?? []);
+    case "progressTrackBindings":
+      return allocateNextScriptEditorCanonicalId(
+        family,
+        project.progressTrackBindings ?? []
+      );
     case "quests":
       return allocateNextScriptEditorCanonicalId(family, project.quests);
     case "dialogues":

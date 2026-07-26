@@ -2,6 +2,7 @@ import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
 } from "../../domain/portrait-resource";
+import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 export type ScriptEditorPortraitResourceRecord = PortraitResourceDefinition;
 export type ScriptEditorPortraitVariantRecord = PortraitVariantDefinition;
@@ -22,7 +23,10 @@ export function createDefaultScriptEditorPortraitRecord(
 ): ScriptEditorPortraitResourceRecord {
   const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: typeof indexOrId === "string" ? indexOrId : `portrait.new.${suffix}`,
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : createDefaultScriptEditorCanonicalId("portraits", indexOrId),
     label: `立绘资源 ${suffix}`,
     portraitImage: "",
     avatarImage: "",
@@ -59,7 +63,7 @@ export function createDefaultScriptEditorPortraitVariantRecord(
     id:
       typeof indexOrId === "string"
         ? indexOrId
-        : `portrait-variant.new.${suffix}`,
+        : createDefaultScriptEditorCanonicalId("portraitVariants", indexOrId),
     label: `立绘变体 ${suffix}`,
     parentPortraitId: "",
     portraitId: "",

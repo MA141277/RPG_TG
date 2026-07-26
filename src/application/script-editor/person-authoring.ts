@@ -8,6 +8,7 @@ import type {
   ScriptEditorTypedAttributeRecord,
   ScriptEditorTypedAttributeType,
 } from "../../domain/script-editor-project";
+import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_PERSON_TAB_KEYS = [
   "profile",
@@ -135,7 +136,10 @@ export function createDefaultScriptEditorPersonRecord(
   const suffix =
     typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: typeof indexOrId === "string" ? indexOrId : `person.new.${suffix}`,
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : createDefaultScriptEditorCanonicalId("people", indexOrId),
     name: `人物 ${suffix}`,
     personType: suffix === 1 ? "角色" : "NPC",
     role: suffix === 1 ? "playable" : "support",

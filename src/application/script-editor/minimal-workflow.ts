@@ -44,7 +44,10 @@ import {
   createDefaultScriptEditorStoryNodeRecord,
 } from "./story-dialogue-event-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
-import { allocateNextScriptEditorProjectCanonicalId } from "./script-editor-id-allocation";
+import {
+  allocateNextScriptEditorProjectCanonicalId,
+  createDefaultScriptEditorCanonicalId,
+} from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "storyPack",
@@ -349,7 +352,7 @@ export function createScriptEditorWorkflowRecordDraft(
       return {
         id:
           project == null
-            ? `task.new.${legacyIndex + 1}`
+            ? createDefaultScriptEditorCanonicalId("quests", legacyIndex)
             : allocateNextScriptEditorProjectCanonicalId(project, "quests"),
         title: `Task ${(project?.quests.length ?? legacyIndex) + 1}`,
       };
@@ -375,7 +378,7 @@ export function createScriptEditorWorkflowRecordDraft(
       return {
         id:
           project == null
-            ? `text.new.${legacyIndex + 1}`
+            ? createDefaultScriptEditorCanonicalId("textEntries", legacyIndex)
             : allocateNextScriptEditorProjectCanonicalId(project, "textEntries"),
         text: `Text entry ${(project?.textEntries.length ?? legacyIndex) + 1}.`,
       };
@@ -407,18 +410,15 @@ export function createScriptEditorWorkflowRecordDraft(
       return createDefaultScriptEditorProgressTrackRecord(
         project == null
           ? legacyIndex
-          : allocateNextProgressDraftId(
-              project.progressTracks,
-              "progress-track.new."
-            )
+          : allocateNextScriptEditorProjectCanonicalId(project, "progressTracks")
       ) as ScriptEditorProgressTrackRecord;
     case "progressTrackBindings":
       return createDefaultScriptEditorProgressTrackBindingRecord(
         project == null
           ? legacyIndex
-          : allocateNextProgressDraftId(
-              project.progressTrackBindings,
-              "progress-binding.new."
+          : allocateNextScriptEditorProjectCanonicalId(
+              project,
+              "progressTrackBindings"
             )
       ) as ScriptEditorProgressTrackBindingRecord;
   }
@@ -560,27 +560,6 @@ function replaceOrAppendRecord<
   return records.map((record, index) =>
     index === existingIndex ? nextRecord : record
   );
-}
-
-function allocateNextProgressDraftId(
-  records:
-    | readonly ScriptEditorProgressTrackRecord[]
-    | readonly ScriptEditorProgressTrackBindingRecord[]
-    | undefined,
-  prefix: string
-): string {
-  let maxSuffix = 0;
-  for (const record of records ?? []) {
-    if (!record.id.startsWith(prefix)) {
-      continue;
-    }
-    const suffix = record.id.slice(prefix.length);
-    if (!/^\d+$/.test(suffix)) {
-      continue;
-    }
-    maxSuffix = Math.max(maxSuffix, Number.parseInt(suffix, 10));
-  }
-  return `${prefix}${maxSuffix + 1}`;
 }
 
 function removeEventReferencesFromScriptEditorProject(
