@@ -22,3 +22,5 @@
 - 2026-07-25: Campaign Map Visual Profile final review P3 coverage findings resolved (map-view direct asset import guards added; targeted command rerun with 4 matching tests passing).
 - 2026-07-25: Campaign Fort City Model Renderer completed-open locally (commits 331e40ee..8b6fb044; targeted fort/city contracts, lint:plans, typecheck, and build passed; Edge runtime screenshot captured at D:\RPG_TG\.tmp\campaign-fort-city-model-renderer.png; full npm test failed only known unrelated child 27 startup coordinator baseline, expected event.story.zhu_yuanzhang.haozhou_return_encounter, actual null).
 - 2026-07-26: Campaign Map-Space Volumetric Cloud Task 1 complete (commits 9d77a247..c2f42734, review clean; targeted cloud boundary/lifecycle tests passed 5/5).
+- 2026-07-26: Campaign Map-Space Volumetric Cloud Task 2 complete (commits 9b1cac02..9098ec02, review clean after governance log fix; targeted cloud slab tests and typecheck passed).
+- 2026-07-26: Campaign Map-Space Volumetric Cloud Task 3 complete (commits 9098ec02..7127db96, review clean; lint:plans, targeted cloud tests, typecheck, build, and Edge browser QA passed).
