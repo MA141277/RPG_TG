@@ -531,8 +531,110 @@ vec2 sampleDissolvedRevealFields(vec2 uv, float dissolveProgress) {
   );
 }
 
+const float MAP_SPACE_CLOUD_BOTTOM = 0.090;
+const float MAP_SPACE_CLOUD_TOP = 0.245;
+const float MAP_SPACE_CLOUD_DENSITY_SCALE = 1.18;
+const float MAP_SPACE_CLOUD_ALPHA_LIMIT = 0.965;
+const vec2 MAP_SPACE_CLOUD_WIND = vec2(0.018, -0.011);
+
+struct MapSpaceCloudRay {
+  vec3 origin;
+  vec3 direction;
+};
+
+MapSpaceCloudRay buildMapSpaceCloudRay(vec2 uv) {
+  float aspect = max(uCloudProjection.x, 0.1);
+  float safeScale = max(uCloudCamera.x, 0.1);
+  float tilt = uCloudCamera.w;
+  vec2 screen = (uv - 0.5) * vec2(aspect, 1.0);
+  vec2 mapCenter = vec2(0.5) + vec2(uCloudCamera.y, -uCloudCamera.z) * 0.0025;
+  vec2 mapPoint = mapCenter + screen / max(safeScale / 15.0, 0.25);
+  float cameraHeight = max(uCloudProjection.w, 0.1) + 0.42;
+  vec3 origin = vec3(mapPoint, cameraHeight);
+  vec3 direction = normalize(vec3(screen.x * 0.12, -sin(tilt) - screen.y * 0.10, -cos(tilt)));
+
+  return MapSpaceCloudRay(origin, direction);
+}
+
+vec2 intersectMapSpaceCloudSlab(MapSpaceCloudRay ray) {
+  if (abs(ray.direction.z) < 0.0001) {
+    return vec2(-1.0);
+  }
+
+  float tBottom = (MAP_SPACE_CLOUD_BOTTOM - ray.origin.z) / ray.direction.z;
+  float tTop = (MAP_SPACE_CLOUD_TOP - ray.origin.z) / ray.direction.z;
+  float tEnter = max(min(tBottom, tTop), 0.0);
+  float tExit = max(tBottom, tTop);
+
+  if (tExit <= tEnter) {
+    return vec2(-1.0);
+  }
+
+  return vec2(tEnter, tExit);
+}
+
+float sampleMapSpaceCloudDensity(vec3 point, float time) {
+  float heightRatio = clamp(
+    (point.z - MAP_SPACE_CLOUD_BOTTOM) /
+      max(MAP_SPACE_CLOUD_TOP - MAP_SPACE_CLOUD_BOTTOM, 0.0001),
+    0.0,
+    1.0
+  );
+  vec2 wind = MAP_SPACE_CLOUD_WIND * time;
+  vec3 noisePoint = vec3(point.xy * 2.35 + wind, point.z * 3.0);
+  float broad = proceduralFbm(noisePoint.xy + vec2(noisePoint.z * 0.37, -noisePoint.z * 0.21));
+  float billowed = billow(proceduralFbm(noisePoint.xy * 2.15 + vec2(noisePoint.z * 0.51, noisePoint.z * 0.28)));
+  float detail = textureFbm(noisePoint.xy * (3.80 * CLOUD_TEXTURE_SAMPLE_SCALE) + wind * 1.7);
+  float heightEnvelope = smoothstep(0.0, 0.25, heightRatio) * (1.0 - smoothstep(0.76, 1.0, heightRatio));
+  float density = broad * 0.50 + billowed * 0.32 + detail * 0.18;
+
+  return clamp((density - 0.43) * MAP_SPACE_CLOUD_DENSITY_SCALE * heightEnvelope, 0.0, 1.0);
+}
+
+vec4 sampleMapSpaceVolumetricCloud(vec2 uv, float time) {
+  MapSpaceCloudRay ray = buildMapSpaceCloudRay(uv);
+  vec2 segment = intersectMapSpaceCloudSlab(ray);
+  if (segment.x < 0.0) {
+    return vec4(0.0);
+  }
+
+  float segmentLength = segment.y - segment.x;
+  float stepSize = segmentLength / float(MAX_MAP_SPACE_CLOUD_STEPS);
+  vec3 accumulatedColor = vec3(0.0);
+  float accumulatedAlpha = 0.0;
+
+  for (int stepIndex = 0; stepIndex < MAX_MAP_SPACE_CLOUD_STEPS; stepIndex += 1) {
+    float stepRatio = (float(stepIndex) + 0.5) / float(MAX_MAP_SPACE_CLOUD_STEPS);
+    vec3 point = ray.origin + ray.direction * (segment.x + stepSize * (float(stepIndex) + 0.5));
+    float density = sampleMapSpaceCloudDensity(point, time);
+    float heightRatio = clamp((point.z - MAP_SPACE_CLOUD_BOTTOM) / max(MAP_SPACE_CLOUD_TOP - MAP_SPACE_CLOUD_BOTTOM, 0.0001), 0.0, 1.0);
+    float shadow = smoothstep(0.18, 0.88, density) * (1.0 - heightRatio * 0.36);
+    vec3 bottomColor = vec3(0.56, 0.65, 0.66);
+    vec3 midColor = vec3(0.84, 0.90, 0.88);
+    vec3 topColor = vec3(1.0, 0.99, 0.93);
+    vec3 stepColor = mix(bottomColor, topColor, heightRatio);
+    stepColor = mix(stepColor, midColor, 0.26 + stepRatio * 0.18);
+    stepColor = mix(stepColor, bottomColor, shadow * 0.44);
+    float stepAlpha = clamp(density * 0.22 * (1.0 - accumulatedAlpha), 0.0, 1.0);
+
+    accumulatedColor += stepColor * stepAlpha;
+    accumulatedAlpha += stepAlpha;
+    if (accumulatedAlpha >= MAP_SPACE_CLOUD_ALPHA_LIMIT) {
+      break;
+    }
+  }
+
+  return vec4(accumulatedColor / max(accumulatedAlpha, 0.001), clamp(accumulatedAlpha, 0.0, 1.0));
+}
+
 vec4 sampleArticleCloudSea(vec2 uv, float time) {
-  vec3 cloudSample = sampleArticleFlowingCloud(uv, time);
+  vec4 mapSpaceCloud = sampleMapSpaceVolumetricCloud(uv, time);
+  float mapSpaceLuminance = dot(mapSpaceCloud.rgb, vec3(0.299, 0.587, 0.114));
+  vec3 cloudSample = vec3(
+    mapSpaceCloud.a,
+    clamp(mapSpaceLuminance, 0.0, 1.0),
+    clamp(mapSpaceCloud.a * 0.72 + mapSpaceLuminance * 0.28, 0.0, 1.0)
+  );
   vec3 maskOffsetAndErosion = computeArticleMaskOffsetAndErosion(uv, time, cloudSample);
   vec2 distortedUv = clamp(uv + maskOffsetAndErosion.xy, vec2(0.0), vec2(1.0));
   float revealDissolve = computeRevealDissolveProgress(uv, time, cloudSample);
@@ -584,7 +686,7 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
     0.84,
     cloudSample.x * 0.70 + billow(cloudSample.y) * 0.16 + cloudDetail * 0.14
   );
-  float bodyAlpha = ARTICLE_BODY_ALPHA * cloudLobe * deepZone;
+  float bodyAlpha = ARTICLE_BODY_ALPHA * mapSpaceCloud.a * cloudLobe * deepZone;
   float rimAlpha = ARTICLE_RIM_BODY_ALPHA * edgeBand * (0.38 + cloudDensity * 0.62);
   float alpha = cloudMask * (bodyAlpha + rimAlpha);
   alpha = clamp(alpha, 0.0, 1.0);
@@ -606,8 +708,9 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
   vec3 shadowColor = vec3(0.56, 0.64, 0.65);
   vec3 midColor = vec3(0.83, 0.90, 0.89);
   vec3 lightColor = vec3(1.0, 0.99, 0.94);
-  vec3 cloudColor = mix(midColor, shadowColor, selfShadow * (0.50 + deepZone * 0.20));
-  cloudColor = mix(cloudColor, lightColor, cloudLight * 0.40 + cloudLobe * 0.22);
+  vec3 cloudColor = mix(mapSpaceCloud.rgb, shadowColor, selfShadow * (0.42 + deepZone * 0.16));
+  cloudColor = mix(cloudColor, midColor, 0.18);
+  cloudColor = mix(cloudColor, lightColor, cloudLight * 0.32 + cloudLobe * 0.16);
   cloudColor = mix(cloudColor, vec3(0.92, 0.96, 0.94), shallowZone * 0.22);
 
   float outerCloudBankField = sampleOuterCloudBankField(uv, time);

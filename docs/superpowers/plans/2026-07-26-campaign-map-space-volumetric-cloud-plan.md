@@ -12,9 +12,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-26`
-- Current Focus: `Task 2: implement map-space cloud slab shader`
-- Next Step: `Dispatch Task 2 implementer subagent.`
-- Verification: `Task 1 targeted cloud boundary/lifecycle tests passed after commit c2f42734aac9040ca58bd18d3a4168086dd85cdc.`
+- Current Focus: `Task 3: verification and visual QA`
+- Next Step: `Dispatch Task 3 implementer subagent.`
+- Verification: `Task 2 targeted cloud shader/lifecycle tests passed and npm run typecheck passed; final Task 2 commit hash is recorded in the Task 2 report.`
 - Notes: `The prior campaign fort/city renderer child remains completed-but-open because remote push is absent and the known child 27 baseline issue is unresolved. This child is user-promoted as new active work and must not mark the prior child closed.`
 
 ## Progress Log
@@ -27,6 +27,10 @@
   - Summary: `Completed Task 1 terrain cloud projection uniform boundary in commit c2f42734aac9040ca58bd18d3a4168086dd85cdc: terrain now exposes a read-only cloud projection payload, cloud WebGL uploads uCloudCamera/uCloudProjection, and the shader declares MAX_MAP_SPACE_CLOUD_STEPS without replacing visible cloud rendering.`
   - Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab uses terrain projection uniforms" tests/robustness.test.cjs } failed as expected on missing CampaignTerrainCloudProjectionUniforms. GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs } passed 5/5 tests.`
   - Next: `Dispatch Task 2 implementer subagent.`
+- 2026-07-26
+  - Summary: `Completed Task 2 conservative map-space cloud slab shader path: the shader now reconstructs a terrain-owned map-space ray, intersects a finite cloud slab, samples procedural map-space density, raymarches with the fixed 12-step budget, and routes the primary cloud body through that volume while preserving the reveal/dissolve mask composition.`
+  - Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab uses terrain projection uniforms" tests/robustness.test.cjs } failed as expected on missing buildMapSpaceCloudRay. GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs } passed 5/5 tests; npm run typecheck passed.`
+  - Next: `Dispatch Task 3 implementer subagent.`
 
 ---
 
@@ -334,7 +338,7 @@ Update this plan:
 - Consumes: `MAX_MAP_SPACE_CLOUD_STEPS = 12`
 - Produces: GLSL functions `buildMapSpaceCloudRay`, `intersectMapSpaceCloudSlab`, `sampleMapSpaceCloudDensity`, `sampleMapSpaceVolumetricCloud`
 
-- [ ] **Step 1: Strengthen the shader contract test**
+- [x] **Step 1: Strengthen the shader contract test**
 
 Extend the Task 1 test in `tests/robustness.test.cjs` with these assertions:
 
@@ -371,7 +375,7 @@ Extend the Task 1 test in `tests/robustness.test.cjs` with these assertions:
   );
 ```
 
-- [ ] **Step 2: Run the targeted test and confirm it fails**
+- [x] **Step 2: Run the targeted test and confirm it fails**
 
 Run:
 
@@ -383,7 +387,7 @@ Expected:
 
 - `FAIL` because the shader functions are not implemented yet.
 
-- [ ] **Step 3: Implement ray and slab helpers**
+- [x] **Step 3: Implement ray and slab helpers**
 
 In `campaign-cloud.frag.glsl`, add helpers before `sampleArticleCloudSea`:
 
@@ -433,7 +437,7 @@ vec2 intersectMapSpaceCloudSlab(MapSpaceCloudRay ray) {
 
 The implementation may tune constants to compile cleanly and match existing visual scale, but it must keep the conservative 12-step budget and finite slab model.
 
-- [ ] **Step 4: Implement density and accumulation helpers**
+- [x] **Step 4: Implement density and accumulation helpers**
 
 Add these helpers after the slab functions:
 
@@ -493,7 +497,7 @@ vec4 sampleMapSpaceVolumetricCloud(vec2 uv, float time) {
 }
 ```
 
-- [ ] **Step 5: Route existing cloud body through map-space volume while preserving reveal**
+- [x] **Step 5: Route existing cloud body through map-space volume while preserving reveal**
 
 In `sampleArticleCloudSea`, replace the old body cloud source with `sampleMapSpaceVolumetricCloud(uv, time)` while preserving:
 
@@ -506,7 +510,7 @@ In `sampleArticleCloudSea`, replace the old body cloud source with `sampleMapSpa
 
 The final visible cloud can still blend the map-space body with the existing outer puff helper if it remains masked by the reveal field. It must not return a fully screen-space `sampleArticleFlowingCloud` body as the primary cloud sea.
 
-- [ ] **Step 6: Run targeted tests**
+- [x] **Step 6: Run targeted tests**
 
 Run:
 
@@ -518,7 +522,7 @@ Expected:
 
 - `PASS` for new shader contract and existing lifecycle tests.
 
-- [ ] **Step 7: Run typecheck**
+- [x] **Step 7: Run typecheck**
 
 Run:
 
@@ -530,7 +534,7 @@ Expected:
 
 - `PASS`.
 
-- [ ] **Step 8: Commit Task 2**
+- [x] **Step 8: Commit Task 2**
 
 Run:
 
@@ -543,7 +547,7 @@ Expected:
 
 - Commit succeeds.
 
-- [ ] **Step 9: Sync progress and governance state**
+- [x] **Step 9: Sync progress and governance state**
 
 Update this plan:
 

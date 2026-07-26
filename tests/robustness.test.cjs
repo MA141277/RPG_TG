@@ -4219,6 +4219,36 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
     /MAX_MAP_SPACE_CLOUD_STEPS/,
     "Expected shader to declare an explicit bounded map-space cloud raymarch step budget."
   );
+  assert.match(
+    shaderSource,
+    /buildMapSpaceCloudRay/,
+    "Expected shader to reconstruct a map-space cloud ray."
+  );
+  assert.match(
+    shaderSource,
+    /intersectMapSpaceCloudSlab/,
+    "Expected shader to intersect the view ray with a finite cloud slab."
+  );
+  assert.match(
+    shaderSource,
+    /sampleMapSpaceCloudDensity/,
+    "Expected shader density to be sampled from map-space coordinates."
+  );
+  assert.match(
+    shaderSource,
+    /sampleMapSpaceVolumetricCloud/,
+    "Expected shader to render the cloud body through the map-space slab path."
+  );
+  assert.match(
+    shaderSource,
+    /for \(int stepIndex = 0; stepIndex < MAX_MAP_SPACE_CLOUD_STEPS; stepIndex \+= 1\)/,
+    "Expected raymarching to use a fixed bounded WebGL 1 loop."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /#define MAXIMUM_CLOUDS_STEPS 300|CLOUDS_MAX_VIEWING_DISTANCE 250000/,
+    "Expected this project not to copy the Cesium-scale high-step sphere-shell cloud budget."
+  );
 });
 
 test("campaign cloud freezes animation during map drag and zoom instead of using a css proxy", () => {
