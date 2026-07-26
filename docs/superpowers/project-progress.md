@@ -4,19 +4,19 @@
 
 - Current Stage: `Map Renderer Architecture`
 - Current Stage Status: `running`
-- Current Task: `Campaign Fort City Model Renderer`
-- Current Task Status: `completed-but-open`
-- Current Child: `Campaign Fort City Model Renderer`
-- Current Child Status: `completed-but-open`
+- Current Task: `Campaign Map-Space Volumetric Cloud`
+- Current Task Status: `running`
+- Current Child: `Campaign Map-Space Volumetric Cloud`
+- Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-and-push-campaign-fort-city-model-renderer`
+- Next Required Action: `execute-campaign-map-space-volumetric-cloud`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md; do not close until push succeeds and the child 27 baseline is accepted or resolved.`
+- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md from Task 1 using subagent-driven development; do not close until push succeeds and the known child 27 baseline is accepted or resolved.`
 
 ## Progress Log
 
@@ -88,6 +88,10 @@
   - Summary: `Added camera-scale LOD for the campaign structure model renderer so far zoom levels skip or reduce fort/city and village building allocations before expensive placement, shadow, instanced-buffer, and draw work.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign fort city model renderer applies camera-scale LOD before building placement" tests/robustness.test.cjs }`; `node --test --test-name-pattern "campaign fort city model renderer ports cyh instanced draw path|campaign fort city model renderer applies camera-scale LOD before building placement|campaign fort city model assets are engine-owned and not imported by map UI|campaign terrain canvas receives fort city model profile attributes|campaign map removes legacy city depth mesh model and texture assets|campaign map uses shoreamend visual renderer" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check` passed with only existing LF-to-CRLF working-copy warnings.`
   - Next: `Review final diff and push when requested; do not close while remote push is absent or the child 27 baseline remains unresolved/unaccepted.`
+- 2026-07-26
+  - Summary: `Opened the campaign map-space volumetric cloud child after user selected the conservative terrain-aligned slab option and requested subagent-driven execution.`
+  - Verification: `npm run lint:plans passed for 69 files.`
+  - Next: `Execute docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md from Task 1 using subagent-driven development.`
 
 ## Latest Closeout
 
