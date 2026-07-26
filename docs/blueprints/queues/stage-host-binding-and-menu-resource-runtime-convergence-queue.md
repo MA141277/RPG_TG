@@ -24,9 +24,9 @@
 - auto_continue_policy: `required`
 - idle_after_task_completion: `forbidden`
 - queue_close_handoff: `version-plan-routing`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Implementation truth is recorded locally and the queue has now auto-promoted into closeout review. Repository-sync gating is the current lawful next step, but it has not yet been attempted.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository-sync gate succeeded for the current closeout-review batch: commit 3b78445d landed on mod-first-dev and push to origin/mod-first-dev succeeded after bounded verification and governed truth synchronization.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -521,3 +521,4 @@
 - `2026-07-27`: `Post-cutover verification is green on the bounded queue surface: npm run build:test, node --test tests/robustness.test.cjs, node --test tests/browser-script-editor-deep-actions-smoke.test.cjs, npm run lint:blueprints, npm run lint:blueprint-skill, and npm run blueprint:governance:check all passed after the runtime menu-chain cutover and residue cleanup.`
 - `2026-07-27`: `The queue has now auto-promoted task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate as the live active task. ACC-FORMAT-003 is still not declared closed here; closeout review must first classify the remaining compatibility-only menuEntries shell and attempt repository sync.`
 - `2026-07-27`: `Closeout review now classifies the remaining menuEntries references as accepted non-production compatibility residue only: they live in import formalization, optional type contracts, imported-data normalization, and workspace issue-path mapping rather than in active authoring/runtime truth. Repository-sync gating is now the only remaining lawful action inside this queue.`
+- `2026-07-27`: `Repository-sync gating is now satisfied for the current queue batch. Commit 3b78445d landed on mod-first-dev, push to origin/mod-first-dev succeeded, and the closeout review now has a recorded remote-sync result rather than only local-record truth.`
