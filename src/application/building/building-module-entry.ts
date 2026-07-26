@@ -3,6 +3,10 @@ import type { BuildingArrangementDefinition } from "../../domain/building-arrang
 import type { CityDefinition } from "../../domain/city";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { HouseDefinition } from "../../domain/house";
+import type {
+  MenuInstanceDefinition,
+  MenuResourceDefinition,
+} from "../../domain/menu";
 import { matchesCanonicalBuildingOwnerId } from "../../core/runtime/building-owner-canonicalization";
 import type {
   AppPresenterStageOutput,
@@ -16,6 +20,8 @@ export type BuildingModuleEntryInput = {
   buildingArrangements?: BuildingArrangementDefinition[] | undefined;
   cityNpcPoolDefinitions: CityNpcPoolDefinition[];
   playerCharacterId: string;
+  menuResourcesById?: Record<string, MenuResourceDefinition> | undefined;
+  menuInstancesById?: Record<string, MenuInstanceDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
@@ -90,12 +96,14 @@ function projectActiveHouseDefinition(input: {
 }
 
 function createContainerViewModels(
+  activeHouse: HouseDefinition,
   arrangement: BuildingArrangementDefinition,
   input: BuildingModuleEntryInput
 ): BuildingContainerViewModel[] {
   const characterById = new Map(
     input.appState.characterDefinitions.map((character) => [character.id, character])
   );
+  const buildingMenuActions = resolveBuildingMenuActions(activeHouse, input);
 
   return arrangement.containers.map((container) => {
     if (container.type === "character-seats") {
@@ -134,18 +142,7 @@ function createContainerViewModels(
         id: container.id,
         type: "action-menu",
         ...(container.title == null ? {} : { title: container.title }),
-        actions: (container.items ?? [])
-          .filter((item) => item.isVisible !== false)
-          .map((item) => ({
-            id: item.id,
-            label: item.label,
-            eventId: item.eventId,
-            isVisible: item.isVisible !== false,
-            isEnabled: item.isEnabled !== false,
-            ...(item.disabledHint == null
-              ? {}
-              : { disabledHint: item.disabledHint }),
-          })),
+        actions: buildingMenuActions,
       };
     }
 
@@ -155,6 +152,63 @@ function createContainerViewModels(
       ...(container.title == null ? {} : { title: container.title }),
     };
   });
+}
+
+function resolveBuildingMenuActions(
+  activeHouse: HouseDefinition,
+  input: Pick<
+    BuildingModuleEntryInput,
+    "menuResourcesById" | "menuInstancesById"
+  >
+): Extract<BuildingContainerViewModel, { type: "action-menu" }>["actions"] {
+  const menuResourcesById = input.menuResourcesById ?? {};
+  const menuInstancesById = input.menuInstancesById ?? {};
+
+  return readTrimmedStringArray(activeHouse.menuInstanceIds).flatMap(
+    (menuInstanceId) => {
+      const instance = menuInstancesById[menuInstanceId];
+      if (instance == null) {
+        return [];
+      }
+      const resource = menuResourcesById[instance.resourceId];
+      if (resource == null) {
+        return [];
+      }
+
+      return resource.entries.flatMap((entry) => {
+        if (entry.isVisible === false || entry.targetFamily !== "event") {
+          return [];
+        }
+        const eventId = entry.targetId.trim();
+        if (eventId.length === 0) {
+          return [];
+        }
+        return [
+          {
+            id: entry.id,
+            label:
+              entry.label.trim().length > 0
+                ? entry.label
+                : entry.menuFamily.trim().length > 0
+                  ? entry.menuFamily
+                  : entry.id,
+            eventId,
+            isVisible: true,
+            isEnabled: entry.isEnabled !== false,
+            ...(entry.disabledHint.trim().length === 0
+              ? {}
+              : { disabledHint: entry.disabledHint }),
+          },
+        ];
+      });
+    }
+  );
+}
+
+function readTrimmedStringArray(values: readonly string[] | undefined): string[] {
+  return (values ?? [])
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter((value) => value.length > 0);
 }
 
 export function selectBuildingModuleStage(
@@ -180,7 +234,11 @@ export function selectBuildingModuleStage(
         activeArrangement,
       }),
       arrangement: activeArrangement,
-      containerViewModels: createContainerViewModels(activeArrangement, input),
+      containerViewModels: createContainerViewModels(
+        activeHouse,
+        activeArrangement,
+        input
+      ),
     };
   }
 

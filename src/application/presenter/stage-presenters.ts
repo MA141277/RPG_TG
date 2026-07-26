@@ -93,12 +93,14 @@ export function createStagePresenterOutput(
 
   if (currentView === "house") {
     return selectBuildingModuleStage({
-        appState: input.appState,
-        cityDefinitions,
-        houseDefinitions,
-        buildingArrangements: input.buildingArrangements,
-        cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
-        playerCharacterId: input.playerCharacterId,
+      appState: input.appState,
+      cityDefinitions,
+      houseDefinitions,
+      buildingArrangements: input.buildingArrangements,
+      cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
+      playerCharacterId: input.playerCharacterId,
+      menuResourcesById: input.menuResourcesById,
+      menuInstancesById: input.menuInstancesById,
       textEntriesById: input.textEntriesById,
     });
   }
@@ -121,6 +123,8 @@ export function createStagePresenterOutput(
         buildingArrangements: input.buildingArrangements,
         cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
         playerCharacterId: input.playerCharacterId,
+        menuResourcesById: input.menuResourcesById,
+        menuInstancesById: input.menuInstancesById,
         textEntriesById: input.textEntriesById,
       });
     }
@@ -181,6 +185,8 @@ export function createStagePresenterOutput(
             buildingArrangements: input.buildingArrangements,
             cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
             playerCharacterId: input.playerCharacterId,
+            menuResourcesById: input.menuResourcesById,
+            menuInstancesById: input.menuInstancesById,
             textEntriesById: input.textEntriesById,
           })
         : undefined;

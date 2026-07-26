@@ -664,7 +664,6 @@ export function appendScriptEditorBuildingArrangementContainer(
             type === "character-seats"
               ? { type: "arrangement-mounted-npcs", includeNpcIds: [] }
               : undefined,
-          items: type === "action-menu" ? [] : undefined,
         },
       ],
     };
@@ -703,7 +702,6 @@ export function updateScriptEditorBuildingArrangementContainerField(
             type === "character-seats"
               ? container.source ?? { type: "arrangement-mounted-npcs", includeNpcIds: [] }
               : undefined,
-          items: type === "action-menu" ? container.items ?? [] : undefined,
         };
       }
       const normalizedValue = value.trim();
@@ -889,85 +887,6 @@ export function updateScriptEditorBuildingArrangementLayoutNodeFlag(
       checked
         ? { ...node, [field]: true }
         : removeOptionalLayoutNodeField(node, field)
-  );
-}
-
-export function appendScriptEditorBuildingArrangementContainerActionItem(
-  project: ScriptEditorProjectDefinition,
-  arrangementId: string,
-  containerIndex: number
-): ScriptEditorProjectDefinition {
-  const defaultEvent = project.events[0] ?? null;
-  if (defaultEvent == null) {
-    return project;
-  }
-  return updateScriptEditorBuildingArrangementContainer(
-    project,
-    arrangementId,
-    containerIndex,
-    (container) => {
-      const nextIndex = (container.items ?? []).length + 1;
-      return {
-        ...container,
-        items: [
-          ...(container.items ?? []),
-          {
-            id: `${container.id}.action.${nextIndex}`,
-            label: defaultEvent.id,
-            eventId: defaultEvent.id,
-            isVisible: true,
-            isEnabled: true,
-          },
-        ],
-      };
-    }
-  );
-}
-
-export function removeScriptEditorBuildingArrangementContainerActionItem(
-  project: ScriptEditorProjectDefinition,
-  arrangementId: string,
-  containerIndex: number,
-  actionIndex: number
-): ScriptEditorProjectDefinition {
-  return updateScriptEditorBuildingArrangementContainer(
-    project,
-    arrangementId,
-    containerIndex,
-    (container) => ({
-      ...container,
-      items: (container.items ?? []).filter((_, entryIndex) => entryIndex !== actionIndex),
-    })
-  );
-}
-
-export function updateScriptEditorBuildingArrangementContainerActionItemField(
-  project: ScriptEditorProjectDefinition,
-  arrangementId: string,
-  containerIndex: number,
-  actionIndex: number,
-  field: "id" | "label" | "eventId" | "disabledHint",
-  value: string
-): ScriptEditorProjectDefinition {
-  return updateScriptEditorBuildingArrangementContainer(
-    project,
-    arrangementId,
-    containerIndex,
-    (container) => ({
-      ...container,
-      items: (container.items ?? []).map((item, entryIndex) => {
-        if (entryIndex !== actionIndex) {
-          return item;
-        }
-        const normalizedValue = value.trim();
-        if (field === "disabledHint" && normalizedValue.length === 0) {
-          const nextItem = { ...item };
-          delete nextItem.disabledHint;
-          return nextItem;
-        }
-        return { ...item, [field]: normalizedValue };
-      }),
-    })
   );
 }
 

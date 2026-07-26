@@ -158,7 +158,7 @@
 - receipt_queue_goal:
   - `Converge stage host references and formal menu resource/runtime ownership on top of the settled first-queue authoring baseline.`
 - receipt_next_step:
-  - `Continue from queue.stage-host-binding-and-menu-resource-runtime-convergence into its live closeout-review task rather than returning to idle version review after the implementation batch landed.`
+  - `Continue from queue.stage-host-binding-and-menu-resource-runtime-convergence on its resumed closeout-review task rather than treating the verified building-runtime cutover as a lawful stop.` 
 - receipt_human_action: `none-required`
 - receipt_internal_analysis_exposed: `false`
 
@@ -252,7 +252,7 @@
 - verification_adequacy_check:
   - `Governed-doc verification must pass before this successor version shell is considered synchronized.`
 - next_lawful_action_check:
-  - `Resume task.stage-host-binding-and-menu-resource-runtime-convergence.stage-host-and-menu-chain-implementation.`
+  - `Resume task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate.`
 
 ### Progress Log
 
@@ -272,3 +272,6 @@
 - `2026-07-27`: `The version still remains on queue.stage-host-binding-and-menu-resource-runtime-convergence, but the lawful next step is now queue closeout review rather than more implementation. ACC-FORMAT-003 is not yet declared closed; the queue must first classify the remaining compatibility-only menuEntries shell and attempt the repository-sync gate.`
 - `2026-07-27`: `Queue closeout review now judges the remaining menuEntries references as accepted compatibility-only residue rather than active production truth. The version therefore remains on the same active queue solely for the pending repository-sync gate, not for more stage/menu implementation.`
 - `2026-07-27`: `Repository-sync gate for the current stage/menu batch is now satisfied. Commit 3b78445d landed on mod-first-dev and push to origin/mod-first-dev succeeded, so the version now holds both verified implementation proof and a recorded remote-sync result while queue closeout judgement remains active.`
+- `2026-07-27`: `The attempted closeout review then found a same-family queue-owned gap: building runtime still consumes arrangement action-menu containers as menu production truth while building menuInstanceIds are only preserved through authoring/export/import/runtime loading. The version therefore stays on queue.stage-host-binding-and-menu-resource-runtime-convergence and returns to its implementation task rather than admitting the next queue or declaring ACC-FORMAT-003 closed.`
+- `2026-07-27`: `The returned implementation slice is now landed and re-verified. Building runtime action menus consume formal menuResources/menuInstances, built-in zhuyuanzhang building menu truth now lives in houses/menu-resources/menu-instances rather than arrangement action items, and the Script Editor building arrangement surface now treats inline action items as retired authoring residue instead of the active path.`
+- `2026-07-27`: `The version therefore remains on the same active queue but resumes queue-closeout review rather than implementation. ACC-FORMAT-003 is still not declared closed; Blueprint must now re-judge accepted residue and repository-sync truth on the updated building-formal-menu path before any next-queue admission decision.`

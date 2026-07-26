@@ -43,7 +43,6 @@ import {
   appendScriptEditorCityMountedBuildingNpc,
   appendScriptEditorBuildingArrangement,
   appendScriptEditorBuildingArrangementContainer,
-  appendScriptEditorBuildingArrangementContainerActionItem,
   appendScriptEditorBuildingArrangementLayoutNode,
   appendScriptEditorBuildingArrangementNpc,
   appendScriptEditorAccessCondition,
@@ -55,7 +54,6 @@ import {
   removeScriptEditorAccessCondition,
   removeScriptEditorBuildingArrangement,
   removeScriptEditorBuildingArrangementContainer,
-  removeScriptEditorBuildingArrangementContainerActionItem,
   removeScriptEditorBuildingArrangementLayoutNode,
   removeScriptEditorBuildingArrangementNpc,
   removeScriptEditorCityMountedBuilding,
@@ -68,7 +66,6 @@ import {
   SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS,
   updateScriptEditorAccessConditionField,
   updateScriptEditorAccessField,
-  updateScriptEditorBuildingArrangementContainerActionItemField,
   updateScriptEditorBuildingArrangementContainerField,
   updateScriptEditorBuildingArrangementField,
   updateScriptEditorBuildingArrangementLayoutField,
@@ -2932,7 +2929,6 @@ export class MainUiFlow {
     const npcOptions = (project.people ?? [])
       .map((person) => normalizeScriptEditorPersonRecord(person))
       .filter((person) => person.personType !== "瑙掕壊");
-    const eventOptions = project.events ?? [];
     const renderBuildingOptions = (selectedBuildingId) => `
       <option value="">未选择建筑</option>
       ${buildingOptions
@@ -2964,20 +2960,6 @@ export class MainUiFlow {
           <option value="${escapeHtml(type)}" ${type === selectedType ? "selected" : ""}>${escapeHtml(type)}</option>
         `
       ).join("");
-    const renderEventOptions = (selectedEventId) => `
-      <option value="">未选择事件</option>
-      ${eventOptions
-        .map(
-          (event) => `
-            <option value="${escapeHtml(event.id)}" ${event.id === selectedEventId ? "selected" : ""}>
-              ${escapeHtml(event.name ?? event.id)} (${escapeHtml(event.id)})
-            </option>
-          `
-        )
-        .join("")}
-    `;
-    const readArrangementLayout = (arrangement) =>
-      readScriptEditorBuildingLayoutRecord(arrangement.layout);
     const renderLayoutTemplateOptions = (selectedTemplateId) =>
       SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS.map(
         (templateId) => `
@@ -3205,32 +3187,9 @@ export class MainUiFlow {
                             ${
                               container.type === "action-menu"
                                 ? `
-                                  <div class="c-script-editor-location-menu__list">
-                                    ${(container.items ?? [])
-                                      .map(
-                                        (item, actionIndex) => `
-                                          <div class="c-script-editor-form-grid">
-                                            <label class="c-script-editor-form-field">
-                                              <span>动作标签</span>
-                                              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.label)}" data-script-editor-building-container-action-field="label" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}" />
-                                            </label>
-                                            <label class="c-script-editor-form-field">
-                                              <span>事件</span>
-                                              <select class="c-script-editor-form-field__input" data-script-editor-building-container-action-field="eventId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
-                                                ${renderEventOptions(item.eventId)}
-                                              </select>
-                                            </label>
-                                            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
-                                              删除动作
-                                            </button>
-                                          </div>
-                                        `
-                                      )
-                                      .join("")}
-                                  </div>
-                                  <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
-                                    新增动作
-                                  </button>
+                                  <p class="c-script-editor-editor-card__hint">
+                                    Action menus now come from menu resources and menu instances in the Menus tab. Arrangement editing only keeps the layout container shell.
+                                  </p>
                                 `
                                 : ""
                             }
@@ -3262,25 +3221,12 @@ export class MainUiFlow {
     const mountedBuildingIds = new Set(
       mountedBuildings.map((mountedBuilding) => mountedBuilding.buildingId).filter(Boolean)
     );
-    const eventOptions = project.events ?? [];
     const renderContainerTypeOptions = (selectedType) =>
       SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES.map(
         (type) => `
           <option value="${escapeHtml(type)}" ${type === selectedType ? "selected" : ""}>${escapeHtml(type)}</option>
         `
       ).join("");
-    const renderEventOptions = (selectedEventId) => `
-      <option value="">未选择事件</option>
-      ${eventOptions
-        .map(
-          (event) => `
-            <option value="${escapeHtml(event.id)}" ${event.id === selectedEventId ? "selected" : ""}>
-              ${escapeHtml(event.name ?? event.id)}
-            </option>
-          `
-        )
-        .join("")}
-    `;
     const renderLayoutTemplateOptions = (selectedTemplateId) =>
       SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS.map(
         (templateId) => `
@@ -3470,32 +3416,9 @@ export class MainUiFlow {
                       ${
                         container.type === "action-menu"
                           ? `
-                            <div class="c-script-editor-location-menu__list">
-                              ${(container.items ?? [])
-                                .map(
-                                  (item, actionIndex) => `
-                                    <div class="c-script-editor-form-grid">
-                                      <label class="c-script-editor-form-field">
-                                        <span>动作标签</span>
-                                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.label)}" data-script-editor-building-container-action-field="label" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}" />
-                                      </label>
-                                      <label class="c-script-editor-form-field">
-                                        <span>事件</span>
-                                        <select class="c-script-editor-form-field__input" data-script-editor-building-container-action-field="eventId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
-                                          ${renderEventOptions(item.eventId)}
-                                        </select>
-                                      </label>
-                                      <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
-                                        删除动作
-                                      </button>
-                                    </div>
-                                  `
-                                )
-                                .join("")}
-                            </div>
-                            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
-                              新增动作
-                            </button>
+                            <p class="c-script-editor-editor-card__hint">
+                              Action menus now come from menu resources and menu instances in the Menus tab. Arrangement editing only keeps the layout container shell.
+                            </p>
                           `
                           : ""
                       }
@@ -8062,36 +7985,6 @@ export class MainUiFlow {
       return;
     }
 
-    if (target.matches("[data-script-editor-building-container-action-field]")) {
-      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
-      const containerIndex = Number.parseInt(
-        target.dataset.scriptEditorBuildingContainerIndex ?? "-1",
-        10
-      );
-      const actionIndex = Number.parseInt(
-        target.dataset.scriptEditorBuildingContainerActionIndex ?? "-1",
-        10
-      );
-      const field = target.dataset.scriptEditorBuildingContainerActionField;
-      if (
-        arrangementId.length > 0 &&
-        Number.isInteger(containerIndex) &&
-        containerIndex >= 0 &&
-        Number.isInteger(actionIndex) &&
-        actionIndex >= 0 &&
-        ["id", "label", "eventId", "disabledHint"].includes(field ?? "")
-      ) {
-        this.applyScriptEditorBuildingContainerActionField(
-          arrangementId,
-          containerIndex,
-          actionIndex,
-          field,
-          target.value
-        );
-      }
-      return;
-    }
-
     if (target.matches("[data-script-editor-city-mounted-building-npc]")) {
       const buildingIndex = Number.parseInt(
         target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
@@ -9161,48 +9054,6 @@ export class MainUiFlow {
         containerIndex >= 0
       ) {
         this.removeScriptEditorBuildingArrangementContainer(arrangementId, containerIndex);
-      }
-      return;
-    }
-
-    if (action === "add-building-container-action") {
-      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
-      const containerIndex = Number.parseInt(
-        actionElement?.dataset.scriptEditorBuildingContainerIndex ?? "-1",
-        10
-      );
-      if (
-        arrangementId.length > 0 &&
-        Number.isInteger(containerIndex) &&
-        containerIndex >= 0
-      ) {
-        this.addScriptEditorBuildingContainerAction(arrangementId, containerIndex);
-      }
-      return;
-    }
-
-    if (action === "remove-building-container-action") {
-      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
-      const containerIndex = Number.parseInt(
-        actionElement?.dataset.scriptEditorBuildingContainerIndex ?? "-1",
-        10
-      );
-      const actionIndex = Number.parseInt(
-        actionElement?.dataset.scriptEditorBuildingContainerActionIndex ?? "-1",
-        10
-      );
-      if (
-        arrangementId.length > 0 &&
-        Number.isInteger(containerIndex) &&
-        containerIndex >= 0 &&
-        Number.isInteger(actionIndex) &&
-        actionIndex >= 0
-      ) {
-        this.removeScriptEditorBuildingContainerAction(
-          arrangementId,
-          containerIndex,
-          actionIndex
-        );
       }
       return;
     }
@@ -11318,65 +11169,6 @@ export class MainUiFlow {
         this.scriptEditorProject,
         arrangementId,
         containerIndex,
-        field,
-        value
-      )
-    );
-    this.scriptEditorNotice = null;
-    this.render();
-  }
-
-  addScriptEditorBuildingContainerAction(arrangementId, containerIndex) {
-    if (this.scriptEditorProject == null) {
-      return;
-    }
-    this.commitScriptEditorProject(
-      appendScriptEditorBuildingArrangementContainerActionItem(
-        this.scriptEditorProject,
-        arrangementId,
-        containerIndex
-      )
-    );
-    this.scriptEditorNotice = null;
-    this.render();
-  }
-
-  removeScriptEditorBuildingContainerAction(
-    arrangementId,
-    containerIndex,
-    actionIndex
-  ) {
-    if (this.scriptEditorProject == null) {
-      return;
-    }
-    this.commitScriptEditorProject(
-      removeScriptEditorBuildingArrangementContainerActionItem(
-        this.scriptEditorProject,
-        arrangementId,
-        containerIndex,
-        actionIndex
-      )
-    );
-    this.scriptEditorNotice = null;
-    this.render();
-  }
-
-  applyScriptEditorBuildingContainerActionField(
-    arrangementId,
-    containerIndex,
-    actionIndex,
-    field,
-    value
-  ) {
-    if (this.scriptEditorProject == null) {
-      return;
-    }
-    this.commitScriptEditorProject(
-      updateScriptEditorBuildingArrangementContainerActionItemField(
-        this.scriptEditorProject,
-        arrangementId,
-        containerIndex,
-        actionIndex,
         field,
         value
       )

@@ -10,7 +10,10 @@
     "backAction": {
       "label": "??",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.house.template.leader_residence.primary"
+    ]
   },
   {
     "id": "house.kulan.temple",
@@ -28,7 +31,10 @@
     "backAction": {
       "label": "杩斿洖婵犲窞",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.house.kulan.temple.primary"
+    ]
   },
   {
     "id": "house.template.keep",
@@ -41,7 +47,10 @@
     "backAction": {
       "label": "??",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.house.template.keep.primary"
+    ]
   },
   {
     "id": "house.template.tea_house",
@@ -55,7 +64,10 @@
     "backAction": {
       "label": "??",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.house.template.tea_house.primary"
+    ]
   },
   {
     "id": "house.template.market",
@@ -69,7 +81,10 @@
     "backAction": {
       "label": "??",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.house.template.market.primary"
+    ]
   },
   {
     "id": "house.template.grain_shop",
@@ -82,7 +97,10 @@
     "backAction": {
       "label": "??",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.house.template.grain_shop.primary"
+    ]
   },
   {
     "id": "house.template.medicine_house",
@@ -95,7 +113,10 @@
     "backAction": {
       "label": "??",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.house.template.medicine_house.primary"
+    ]
   },
   {
     "id": "house.template.inn",
@@ -109,7 +130,10 @@
     "backAction": {
       "label": "??",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.house.template.inn.primary"
+    ]
   },
   {
     "id": "house.template.temple",
@@ -122,7 +146,10 @@
     "backAction": {
       "label": "??",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.house.template.temple.primary"
+    ]
   },
   {
     "id": "home.template",
@@ -144,6 +171,9 @@
     "backAction": {
       "label": "??",
       "targetView": "city"
-    }
+    },
+    "menuInstanceIds": [
+      "menu-instance.home.template.primary"
+    ]
   }
 ]

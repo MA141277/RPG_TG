@@ -28,19 +28,7 @@
       {
         "id": "house.kulan.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -123,39 +111,7 @@
       {
         "id": "house.kulan.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "copy-scripture",
-            "label": "抄经",
-            "eventId": "event.building.house.kulan.temple.copy_scripture"
-          },
-          {
-            "id": "sweep-courtyard",
-            "label": "打扫庭院",
-            "eventId": "event.building.house.kulan.temple.sweep_courtyard"
-          },
-          {
-            "id": "carry-water",
-            "label": "挑水",
-            "eventId": "event.building.house.kulan.temple.carry_water"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -249,19 +205,7 @@
       {
         "id": "home_001.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -338,24 +282,7 @@
       {
         "id": "house.kulan.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -430,29 +357,7 @@
       {
         "id": "house.kulan.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -536,29 +441,7 @@
       {
         "id": "house.kulan.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -641,24 +524,7 @@
       {
         "id": "house.kulan.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -738,24 +604,7 @@
       {
         "id": "house.kulan.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -845,34 +694,7 @@
       {
         "id": "house.kulan.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -965,19 +787,7 @@
       {
         "id": "house.yingtian.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1055,29 +865,7 @@
       {
         "id": "house.yingtian.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1169,19 +957,7 @@
       {
         "id": "home.yingtian.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1251,24 +1027,7 @@
       {
         "id": "house.yingtian.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1338,29 +1097,7 @@
       {
         "id": "house.yingtian.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1441,29 +1178,7 @@
       {
         "id": "house.yingtian.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1544,24 +1259,7 @@
       {
         "id": "house.yingtian.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1639,24 +1337,7 @@
       {
         "id": "house.yingtian.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1737,34 +1418,7 @@
       {
         "id": "house.yingtian.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1849,19 +1503,7 @@
       {
         "id": "house.luzhou.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -1939,29 +1581,7 @@
       {
         "id": "house.luzhou.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2053,19 +1673,7 @@
       {
         "id": "home.luzhou.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2135,24 +1743,7 @@
       {
         "id": "house.luzhou.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2222,29 +1813,7 @@
       {
         "id": "house.luzhou.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2325,29 +1894,7 @@
       {
         "id": "house.luzhou.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2428,24 +1975,7 @@
       {
         "id": "house.luzhou.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2523,24 +2053,7 @@
       {
         "id": "house.luzhou.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2625,34 +2138,7 @@
       {
         "id": "house.luzhou.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2733,19 +2219,7 @@
       {
         "id": "house.anqing.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2823,29 +2297,7 @@
       {
         "id": "house.anqing.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -2937,19 +2389,7 @@
       {
         "id": "home.anqing.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3019,24 +2459,7 @@
       {
         "id": "house.anqing.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3106,29 +2529,7 @@
       {
         "id": "house.anqing.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3209,29 +2610,7 @@
       {
         "id": "house.anqing.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3312,24 +2691,7 @@
       {
         "id": "house.anqing.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3407,24 +2769,7 @@
       {
         "id": "house.anqing.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3507,34 +2852,7 @@
       {
         "id": "house.anqing.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3620,19 +2938,7 @@
       {
         "id": "house.taiping.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3710,29 +3016,7 @@
       {
         "id": "house.taiping.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3824,19 +3108,7 @@
       {
         "id": "home.taiping.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3906,24 +3178,7 @@
       {
         "id": "house.taiping.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -3993,29 +3248,7 @@
       {
         "id": "house.taiping.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4096,29 +3329,7 @@
       {
         "id": "house.taiping.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4199,24 +3410,7 @@
       {
         "id": "house.taiping.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4294,24 +3488,7 @@
       {
         "id": "house.taiping.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4395,34 +3572,7 @@
       {
         "id": "house.taiping.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4503,19 +3653,7 @@
       {
         "id": "house.anfeng.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4593,29 +3731,7 @@
       {
         "id": "house.anfeng.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4707,19 +3823,7 @@
       {
         "id": "home.anfeng.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4789,24 +3893,7 @@
       {
         "id": "house.anfeng.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4876,29 +3963,7 @@
       {
         "id": "house.anfeng.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -4979,29 +4044,7 @@
       {
         "id": "house.anfeng.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5082,24 +4125,7 @@
       {
         "id": "house.anfeng.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5177,24 +4203,7 @@
       {
         "id": "house.anfeng.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5280,34 +4289,7 @@
       {
         "id": "house.anfeng.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5388,19 +4370,7 @@
       {
         "id": "house.runing.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5478,29 +4448,7 @@
       {
         "id": "house.runing.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5592,19 +4540,7 @@
       {
         "id": "home.runing.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5674,24 +4610,7 @@
       {
         "id": "house.runing.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5761,29 +4680,7 @@
       {
         "id": "house.runing.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5864,29 +4761,7 @@
       {
         "id": "house.runing.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -5967,24 +4842,7 @@
       {
         "id": "house.runing.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6062,24 +4920,7 @@
       {
         "id": "house.runing.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6164,34 +5005,7 @@
       {
         "id": "house.runing.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6272,19 +5086,7 @@
       {
         "id": "house.huaian.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6362,29 +5164,7 @@
       {
         "id": "house.huaian.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6476,19 +5256,7 @@
       {
         "id": "home.huaian.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6558,24 +5326,7 @@
       {
         "id": "house.huaian.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6645,29 +5396,7 @@
       {
         "id": "house.huaian.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6748,29 +5477,7 @@
       {
         "id": "house.huaian.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6851,24 +5558,7 @@
       {
         "id": "house.huaian.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -6946,24 +5636,7 @@
       {
         "id": "house.huaian.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7047,34 +5720,7 @@
       {
         "id": "house.huaian.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7158,19 +5804,7 @@
       {
         "id": "house.yangzhou.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7248,29 +5882,7 @@
       {
         "id": "house.yangzhou.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7362,19 +5974,7 @@
       {
         "id": "home.yangzhou.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7444,24 +6044,7 @@
       {
         "id": "house.yangzhou.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7531,29 +6114,7 @@
       {
         "id": "house.yangzhou.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7634,29 +6195,7 @@
       {
         "id": "house.yangzhou.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7737,24 +6276,7 @@
       {
         "id": "house.yangzhou.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7832,24 +6354,7 @@
       {
         "id": "house.yangzhou.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -7935,34 +6440,7 @@
       {
         "id": "house.yangzhou.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8046,19 +6524,7 @@
       {
         "id": "house.suzhou.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8136,29 +6602,7 @@
       {
         "id": "house.suzhou.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8250,19 +6694,7 @@
       {
         "id": "home.suzhou.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8332,24 +6764,7 @@
       {
         "id": "house.suzhou.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8421,29 +6836,7 @@
       {
         "id": "house.suzhou.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8524,29 +6917,7 @@
       {
         "id": "house.suzhou.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8627,24 +6998,7 @@
       {
         "id": "house.suzhou.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8722,24 +7076,7 @@
       {
         "id": "house.suzhou.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8822,34 +7159,7 @@
       {
         "id": "house.suzhou.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -8934,19 +7244,7 @@
       {
         "id": "house.wuchang.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9024,29 +7322,7 @@
       {
         "id": "house.wuchang.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9138,19 +7414,7 @@
       {
         "id": "home.wuchang.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9220,24 +7484,7 @@
       {
         "id": "house.wuchang.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9307,29 +7554,7 @@
       {
         "id": "house.wuchang.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9410,29 +7635,7 @@
       {
         "id": "house.wuchang.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9513,24 +7716,7 @@
       {
         "id": "house.wuchang.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9608,24 +7794,7 @@
       {
         "id": "house.wuchang.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9712,34 +7881,7 @@
       {
         "id": "house.wuchang.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9822,19 +7964,7 @@
       {
         "id": "house.nanchang.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -9912,29 +8042,7 @@
       {
         "id": "house.nanchang.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10026,19 +8134,7 @@
       {
         "id": "home.nanchang.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10108,24 +8204,7 @@
       {
         "id": "house.nanchang.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10195,29 +8274,7 @@
       {
         "id": "house.nanchang.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10298,29 +8355,7 @@
       {
         "id": "house.nanchang.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10401,24 +8436,7 @@
       {
         "id": "house.nanchang.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10496,24 +8514,7 @@
       {
         "id": "house.nanchang.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10597,34 +8598,7 @@
       {
         "id": "house.nanchang.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10705,19 +8679,7 @@
       {
         "id": "house.chongqing.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10795,29 +8757,7 @@
       {
         "id": "house.chongqing.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10909,19 +8849,7 @@
       {
         "id": "home.chongqing.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -10991,24 +8919,7 @@
       {
         "id": "house.chongqing.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11078,29 +8989,7 @@
       {
         "id": "house.chongqing.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11181,29 +9070,7 @@
       {
         "id": "house.chongqing.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11284,24 +9151,7 @@
       {
         "id": "house.chongqing.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11379,24 +9229,7 @@
       {
         "id": "house.chongqing.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11479,34 +9312,7 @@
       {
         "id": "house.chongqing.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11589,19 +9395,7 @@
       {
         "id": "house.chengdu.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11679,29 +9473,7 @@
       {
         "id": "house.chengdu.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11793,19 +9565,7 @@
       {
         "id": "home.chengdu.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11875,24 +9635,7 @@
       {
         "id": "house.chengdu.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -11962,29 +9705,7 @@
       {
         "id": "house.chengdu.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12065,29 +9786,7 @@
       {
         "id": "house.chengdu.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12168,24 +9867,7 @@
       {
         "id": "house.chengdu.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12263,24 +9945,7 @@
       {
         "id": "house.chengdu.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12364,34 +10029,7 @@
       {
         "id": "house.chengdu.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12475,19 +10113,7 @@
       {
         "id": "house.ningbo.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12565,29 +10191,7 @@
       {
         "id": "house.ningbo.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12679,19 +10283,7 @@
       {
         "id": "home.ningbo.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12761,24 +10353,7 @@
       {
         "id": "house.ningbo.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12848,29 +10423,7 @@
       {
         "id": "house.ningbo.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -12951,29 +10504,7 @@
       {
         "id": "house.ningbo.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13054,24 +10585,7 @@
       {
         "id": "house.ningbo.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13149,24 +10663,7 @@
       {
         "id": "house.ningbo.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13249,34 +10746,7 @@
       {
         "id": "house.ningbo.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13357,19 +10827,7 @@
       {
         "id": "house.wenzhou.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13447,29 +10905,7 @@
       {
         "id": "house.wenzhou.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13561,19 +10997,7 @@
       {
         "id": "home.wenzhou.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13643,24 +11067,7 @@
       {
         "id": "house.wenzhou.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13730,29 +11137,7 @@
       {
         "id": "house.wenzhou.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13833,29 +11218,7 @@
       {
         "id": "house.wenzhou.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -13936,24 +11299,7 @@
       {
         "id": "house.wenzhou.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14031,24 +11377,7 @@
       {
         "id": "house.wenzhou.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14131,34 +11460,7 @@
       {
         "id": "house.wenzhou.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14242,19 +11544,7 @@
       {
         "id": "house.fuzhou.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14332,29 +11622,7 @@
       {
         "id": "house.fuzhou.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14446,19 +11714,7 @@
       {
         "id": "home.fuzhou.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14528,24 +11784,7 @@
       {
         "id": "house.fuzhou.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14615,29 +11854,7 @@
       {
         "id": "house.fuzhou.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14718,29 +11935,7 @@
       {
         "id": "house.fuzhou.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14821,24 +12016,7 @@
       {
         "id": "house.fuzhou.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -14916,24 +12094,7 @@
       {
         "id": "house.fuzhou.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15016,34 +12177,7 @@
       {
         "id": "house.fuzhou.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15127,19 +12261,7 @@
       {
         "id": "house.dadu.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15217,29 +12339,7 @@
       {
         "id": "house.dadu.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15331,19 +12431,7 @@
       {
         "id": "home.dadu.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15413,24 +12501,7 @@
       {
         "id": "house.dadu.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15500,29 +12571,7 @@
       {
         "id": "house.dadu.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15603,29 +12652,7 @@
       {
         "id": "house.dadu.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15706,24 +12733,7 @@
       {
         "id": "house.dadu.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15801,24 +12811,7 @@
       {
         "id": "house.dadu.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -15902,34 +12895,7 @@
       {
         "id": "house.dadu.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16012,19 +12978,7 @@
       {
         "id": "house.kaifeng.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16102,29 +13056,7 @@
       {
         "id": "house.kaifeng.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16216,19 +13148,7 @@
       {
         "id": "home.kaifeng.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16298,24 +13218,7 @@
       {
         "id": "house.kaifeng.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16385,29 +13288,7 @@
       {
         "id": "house.kaifeng.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16488,29 +13369,7 @@
       {
         "id": "house.kaifeng.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16591,24 +13450,7 @@
       {
         "id": "house.kaifeng.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16686,24 +13528,7 @@
       {
         "id": "house.kaifeng.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16789,34 +13614,7 @@
       {
         "id": "house.kaifeng.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16900,19 +13698,7 @@
       {
         "id": "house.gongchang.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -16990,29 +13776,7 @@
       {
         "id": "house.gongchang.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17104,19 +13868,7 @@
       {
         "id": "home.gongchang.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17186,24 +13938,7 @@
       {
         "id": "house.gongchang.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17273,29 +14008,7 @@
       {
         "id": "house.gongchang.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17376,29 +14089,7 @@
       {
         "id": "house.gongchang.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17479,24 +14170,7 @@
       {
         "id": "house.gongchang.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17574,24 +14248,7 @@
       {
         "id": "house.gongchang.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17674,34 +14331,7 @@
       {
         "id": "house.gongchang.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17782,19 +14412,7 @@
       {
         "id": "house.fengyuan.leader_residence.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "议事",
-            "eventId": "event.building.template.house.leader_residence.review"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.leader_residence.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17872,29 +14490,7 @@
       {
         "id": "house.fengyuan.temple.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.temple.review"
-          },
-          {
-            "id": "work",
-            "label": "寺内工作",
-            "eventId": "event.building.template.house.temple.work"
-          },
-          {
-            "id": "donate",
-            "label": "捐香火",
-            "eventId": "event.building.template.house.temple.donate"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.temple.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -17986,19 +14582,7 @@
       {
         "id": "home.fengyuan.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "rest",
-            "label": "休息",
-            "eventId": "event.building.template.home.rest"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.home.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -18068,24 +14652,7 @@
       {
         "id": "house.fengyuan.keep.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "review",
-            "label": "评定",
-            "eventId": "event.building.template.house.keep.review"
-          },
-          {
-            "id": "work",
-            "label": "安排工作",
-            "eventId": "event.building.template.house.keep.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.keep.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -18155,29 +14722,7 @@
       {
         "id": "house.fengyuan.tea_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.tea_house.talk"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.tea_house.intel"
-          },
-          {
-            "id": "tea",
-            "label": "喝茶",
-            "eventId": "event.building.template.house.tea_house.tea"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.tea_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -18258,29 +14803,7 @@
       {
         "id": "house.fengyuan.market.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.market.talk"
-          },
-          {
-            "id": "trade",
-            "label": "交易",
-            "eventId": "event.building.template.house.market.trade"
-          },
-          {
-            "id": "intel",
-            "label": "打听消息",
-            "eventId": "event.building.template.house.market.intel"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.market.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -18361,24 +14884,7 @@
       {
         "id": "house.fengyuan.grain_shop.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "trade",
-            "label": "粮食交易",
-            "eventId": "event.building.template.house.grain_shop.trade"
-          },
-          {
-            "id": "accounting",
-            "label": "账目核算",
-            "eventId": "event.building.template.house.grain_shop.accounting"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.grain_shop.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -18456,24 +14962,7 @@
       {
         "id": "house.fengyuan.medicine_house.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "treatment",
-            "label": "治疗",
-            "eventId": "event.building.template.house.medicine_house.treatment"
-          },
-          {
-            "id": "compounding",
-            "label": "炼药",
-            "eventId": "event.building.template.house.medicine_house.compounding"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.medicine_house.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {
@@ -18556,34 +15045,7 @@
       {
         "id": "house.fengyuan.inn.actions",
         "type": "action-menu",
-        "title": "功能",
-        "items": [
-          {
-            "id": "talk",
-            "label": "交谈",
-            "eventId": "event.building.template.house.inn.talk"
-          },
-          {
-            "id": "drink",
-            "label": "饮酒",
-            "eventId": "event.building.template.house.inn.drink"
-          },
-          {
-            "id": "gamble",
-            "label": "赌局",
-            "eventId": "event.building.template.house.inn.gamble"
-          },
-          {
-            "id": "work",
-            "label": "酒馆工作",
-            "eventId": "event.building.template.house.inn.work"
-          },
-          {
-            "id": "leave",
-            "label": "离开",
-            "eventId": "event.building.template.house.inn.leave"
-          }
-        ]
+        "title": "功能"
       }
     ],
     "layout": {

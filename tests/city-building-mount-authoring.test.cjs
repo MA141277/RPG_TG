@@ -287,7 +287,6 @@ test("script editor building arrangement authoring updates project-level arrange
     appendScriptEditorBuildingArrangement,
     appendScriptEditorBuildingArrangementNpc,
     appendScriptEditorBuildingArrangementContainer,
-    appendScriptEditorBuildingArrangementContainerActionItem,
     appendScriptEditorBuildingArrangementLayoutNode,
     updateScriptEditorBuildingArrangementContainerField,
     updateScriptEditorBuildingArrangementLayoutField,
@@ -386,11 +385,6 @@ test("script editor building arrangement authoring updates project-level arrange
     project,
     arrangementId,
     "action-menu"
-  );
-  project = appendScriptEditorBuildingArrangementContainerActionItem(
-    project,
-    arrangementId,
-    0
   );
   project = updateScriptEditorBuildingArrangementContainerField(
     project,
@@ -693,7 +687,10 @@ test("script editor city profile UI exposes building arrangement and generic con
   assert.match(plannerBlock, /data-script-editor-building-layout-node-field/);
   assert.match(plannerBlock, /data-script-editor-building-layout-node-flag/);
   assert.match(plannerBlock, /data-script-editor-building-container-field/);
-  assert.match(plannerBlock, /data-script-editor-building-container-action-field/);
+  assert.doesNotMatch(
+    plannerBlock,
+    /data-script-editor-building-container-action-field/
+  );
   assert.doesNotMatch(plannerBlock, /data-script-editor-building-arrangement-npc/);
   assert.doesNotMatch(plannerBlock, /data-script-editor-building-arrangement-primary-npc/);
   assert.doesNotMatch(plannerBlock, /data-script-editor-building-arrangement-field="id"/);

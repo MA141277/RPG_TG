@@ -5,7 +5,9 @@ import type {
   MenuTargetFamily,
 } from "../../domain/menu";
 import type {
+  ScriptEditorBuildingArrangementRecord,
   ScriptEditorBuildingRecord,
+  ScriptEditorBuildingContainerActionItem,
   ScriptEditorCityRecord,
   ScriptEditorProjectDefinition,
 } from "../../domain/script-editor-project";
@@ -36,6 +38,13 @@ const DEFAULT_BUILDING_MENU_FAMILIES = ["dialogue", "trade", "work", "rest"];
 export function formalizeScriptEditorProjectMenus(
   project: ScriptEditorProjectDefinition
 ): ScriptEditorProjectDefinition {
+  const locationFormalizedProject = formalizeLocationProjectMenus(project);
+  return formalizeBuildingArrangementProjectMenus(locationFormalizedProject);
+}
+
+function formalizeLocationProjectMenus(
+  project: ScriptEditorProjectDefinition
+): ScriptEditorProjectDefinition {
   const menuResources = [...(project.menuResources ?? [])];
   const menuInstances = [...(project.menuInstances ?? [])];
   let resourcesChanged = false;
@@ -53,7 +62,7 @@ export function formalizeScriptEditorProjectMenus(
     resourcesChanged ||= result.resourcesChanged;
     instancesChanged ||= result.instancesChanged;
     citiesChanged ||= result.locationChanged;
-    return result.location;
+      return result.location;
   });
 
   const nextBuildings = project.buildings.map((building) => {
@@ -77,6 +86,89 @@ export function formalizeScriptEditorProjectMenus(
     ...project,
     ...(citiesChanged ? { cities: nextCities } : {}),
     ...(buildingsChanged ? { buildings: nextBuildings } : {}),
+    ...(resourcesChanged ? { menuResources } : {}),
+    ...(instancesChanged ? { menuInstances } : {}),
+  };
+}
+
+function formalizeBuildingArrangementProjectMenus(
+  project: ScriptEditorProjectDefinition
+): ScriptEditorProjectDefinition {
+  const buildingArrangements = project.buildingArrangements ?? [];
+  const menuResources = [...(project.menuResources ?? [])];
+  const menuInstances = [...(project.menuInstances ?? [])];
+  let resourcesChanged = false;
+  let instancesChanged = false;
+  let buildingsChanged = false;
+  let arrangementsChanged = false;
+
+  const arrangementEntriesByBuildingId = new Map<string, MenuEntryDefinition[]>();
+  const nextArrangements = buildingArrangements.map((arrangement) => {
+    const actionMenuEntries = extractArrangementActionMenuEntries(arrangement);
+    if (actionMenuEntries.length > 0) {
+      const existingEntries = arrangementEntriesByBuildingId.get(arrangement.buildingId);
+      if (existingEntries == null) {
+        arrangementEntriesByBuildingId.set(arrangement.buildingId, actionMenuEntries);
+      }
+    }
+    const nextArrangement = stripArrangementActionMenuItems(arrangement);
+    arrangementsChanged ||= nextArrangement !== arrangement;
+    return nextArrangement;
+  });
+
+  const nextBuildings = project.buildings.map((building) => {
+    const normalizedMenuInstanceIds = readTrimmedStringArray(building.menuInstanceIds);
+    const actionMenuEntries = arrangementEntriesByBuildingId.get(building.id) ?? [];
+    if (actionMenuEntries.length > 0) {
+      const existingInstanceId =
+        normalizedMenuInstanceIds[0] ?? createGeneratedMenuInstanceId(building.id);
+      const existingInstance = menuInstances.find(
+        (instance) => instance.id === existingInstanceId
+      );
+      const resourceId =
+        existingInstance?.resourceId ?? createGeneratedMenuResourceId(building.id);
+      const title =
+        existingInstance?.title ?? createGeneratedMenuTitle(building, "buildings");
+      resourcesChanged ||= upsertMenuResource(menuResources, {
+        id: resourceId,
+        title,
+        entries: actionMenuEntries,
+      });
+      instancesChanged ||= upsertMenuInstance(menuInstances, {
+        id: existingInstanceId,
+        title,
+        resourceId,
+      });
+      buildingsChanged = true;
+      return stripLegacyLocationMenuEntries({
+        ...building,
+        menuInstanceIds:
+          normalizedMenuInstanceIds.length > 0
+            ? normalizedMenuInstanceIds
+            : [existingInstanceId],
+      } satisfies ScriptEditorBuildingRecord);
+    }
+
+    if (normalizedMenuInstanceIds.length > 0) {
+      const nextBuilding = stripLegacyLocationMenuEntries({
+        ...building,
+        menuInstanceIds: normalizedMenuInstanceIds,
+      } satisfies ScriptEditorBuildingRecord);
+      buildingsChanged ||= nextBuilding !== building;
+      return nextBuilding;
+    }
+
+    return building;
+  });
+
+  if (!resourcesChanged && !instancesChanged && !buildingsChanged && !arrangementsChanged) {
+    return project;
+  }
+
+  return {
+    ...project,
+    ...(buildingsChanged ? { buildings: nextBuildings } : {}),
+    ...(arrangementsChanged ? { buildingArrangements: nextArrangements } : {}),
     ...(resourcesChanged ? { menuResources } : {}),
     ...(instancesChanged ? { menuInstances } : {}),
   };
@@ -433,6 +525,55 @@ function stripLegacyLocationMenuEntries<TLocation extends ScriptEditorLocationRe
   };
   delete nextLocation.menuEntries;
   return nextLocation;
+}
+
+function extractArrangementActionMenuEntries(
+  arrangement: ScriptEditorBuildingArrangementRecord
+): MenuEntryDefinition[] {
+  const actionMenuContainer = arrangement.containers.find(
+    (container) => container.type === "action-menu"
+  );
+  if (actionMenuContainer == null) {
+    return [];
+  }
+  return (actionMenuContainer.items ?? []).flatMap((item) => {
+    const eventId = normalizeOptionalString(item.eventId);
+    if (eventId.length === 0) {
+      return [];
+    }
+    return [toMenuEntryDefinition(item)];
+  });
+}
+
+function toMenuEntryDefinition(
+  item: ScriptEditorBuildingContainerActionItem
+): MenuEntryDefinition {
+  return {
+    id: normalizeString(item.id, `menu-entry.${slugifyMenuFamily(item.label)}`),
+    label: normalizeString(item.label, item.id),
+    menuFamily: normalizeString(item.id, slugifyMenuFamily(item.label)),
+    targetFamily: "event",
+    targetId: normalizeOptionalString(item.eventId),
+    isVisible: item.isVisible !== false,
+    isEnabled: item.isEnabled !== false,
+    disabledHint: normalizeOptionalString(item.disabledHint),
+  };
+}
+
+function stripArrangementActionMenuItems(
+  arrangement: ScriptEditorBuildingArrangementRecord
+): ScriptEditorBuildingArrangementRecord {
+  let changed = false;
+  const nextContainers = arrangement.containers.map((container) => {
+    if (container.type !== "action-menu" || container.items == null) {
+      return container;
+    }
+    changed = true;
+    const nextContainer = { ...container };
+    delete nextContainer.items;
+    return nextContainer;
+  });
+  return changed ? { ...arrangement, containers: nextContainers } : arrangement;
 }
 
 function resolveMenuBundleIds(
