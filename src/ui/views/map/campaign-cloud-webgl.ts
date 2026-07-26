@@ -1,6 +1,7 @@
 import fallbackCloudNoiseTextureUrl from "../../../assets/yuanmo-map/yuanmo-fog-noise.png?url";
 import type { HexCoordinate } from "../../../application/navigation/travel-to-coordinate";
 import {
+  getCampaignTerrainCloudProjectionUniforms,
   getCampaignTerrainMapCoupledCamera,
   getCampaignTerrainProjectionSignature,
   holdCampaignTerrainChunkLoading,
@@ -204,6 +205,8 @@ function initCampaignCloudWebGl(
   const resolutionLocation = gl.getUniformLocation(program, "uResolution");
   const timeSecondsLocation = gl.getUniformLocation(program, "uTimeSeconds");
   const mapCameraLocation = gl.getUniformLocation(program, "uMapCamera");
+  const cloudCameraLocation = gl.getUniformLocation(program, "uCloudCamera");
+  const cloudProjectionLocation = gl.getUniformLocation(program, "uCloudProjection");
   const noiseTextureLocation = gl.getUniformLocation(program, "uNoiseTexture");
   const revealTextureLocation = gl.getUniformLocation(program, "uRevealTexture");
   const previousRevealTextureLocation = gl.getUniformLocation(
@@ -223,6 +226,8 @@ function initCampaignCloudWebGl(
     resolutionLocation == null ? "uResolution" : null,
     timeSecondsLocation == null ? "uTimeSeconds" : null,
     mapCameraLocation == null ? "uMapCamera" : null,
+    cloudCameraLocation == null ? "uCloudCamera" : null,
+    cloudProjectionLocation == null ? "uCloudProjection" : null,
     noiseTextureLocation == null ? "uNoiseTexture" : null,
     revealTextureLocation == null ? "uRevealTexture" : null,
     previousRevealTextureLocation == null ? "uPreviousRevealTexture" : null,
@@ -445,6 +450,22 @@ function initCampaignCloudWebGl(
       mapCamera.scale,
       mapCamera.offsetX,
       mapCamera.offsetY
+    );
+    const cloudProjection = getCampaignTerrainCloudProjectionUniforms(resolveProjectionRoot());
+    gl.uniform4f(
+      cloudCameraLocation,
+      cloudProjection.cameraScale,
+      cloudProjection.cameraOffsetX,
+      cloudProjection.cameraOffsetY,
+      cloudProjection.tiltRadians
+    );
+    gl.uniform4f(
+      cloudProjectionLocation,
+      cloudProjection.viewportAspectRatio,
+      cloudProjection.terrainScale,
+      cloudProjection.heightScale,
+      cloudProjection.cameraBaseDistance /
+        Math.max(cloudProjection.cameraReferenceScale, 0.0001)
     );
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, noiseTexture);

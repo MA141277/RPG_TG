@@ -5,6 +5,8 @@ varying vec2 vUv;
 uniform vec2 uResolution;
 uniform float uTimeSeconds;
 uniform vec3 uMapCamera;
+uniform vec4 uCloudCamera;
+uniform vec4 uCloudProjection;
 uniform sampler2D uNoiseTexture;
 uniform sampler2D uRevealTexture;
 uniform sampler2D uPreviousRevealTexture;
@@ -23,6 +25,7 @@ const float CLOUD_FLOW_SWIRL_STRENGTH = 0.035;
 const float CLOUD_MAP_CAMERA_TRANSLATE_STRENGTH = 0.0010;
 const float CLOUD_MAP_CAMERA_SCALE_STRENGTH = 0.8;
 const float CLOUD_MAP_CAMERA_REFERENCE_SCALE = 15.0;
+const int MAX_MAP_SPACE_CLOUD_STEPS = 12;
 
 const float CLOUD_TEXTURE_SAMPLE_SCALE = 1.08;
 
@@ -634,5 +637,18 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
 }
 
 void main() {
-  gl_FragColor = sampleArticleCloudSea(vUv, uTimeSeconds);
+  vec4 cloudColor = sampleArticleCloudSea(vUv, uTimeSeconds);
+  float cloudProjectionNoop = mod(
+    abs(uCloudCamera.x) +
+      abs(uCloudCamera.y) +
+      abs(uCloudCamera.z) +
+      abs(uCloudCamera.w) +
+      abs(uCloudProjection.x) +
+      abs(uCloudProjection.y) +
+      abs(uCloudProjection.z) +
+      abs(uCloudProjection.w),
+    0.000001
+  );
+  cloudColor.a = clamp(cloudColor.a + cloudProjectionNoop * 0.000001, 0.0, 1.0);
+  gl_FragColor = cloudColor;
 }

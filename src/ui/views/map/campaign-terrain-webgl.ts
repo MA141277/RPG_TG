@@ -532,6 +532,18 @@ export type CampaignTerrainCamera = {
   offsetY: number;
 };
 
+export type CampaignTerrainCloudProjectionUniforms = {
+  cameraScale: number;
+  cameraOffsetX: number;
+  cameraOffsetY: number;
+  tiltRadians: number;
+  viewportAspectRatio: number;
+  terrainScale: number;
+  heightScale: number;
+  cameraReferenceScale: number;
+  cameraBaseDistance: number;
+};
+
 export function createCampaignTerrainCameraCenteredOnCoordinate(input: {
   coordinate: GridCoordinate;
   coordinateSpace: CoordinateSpace;
@@ -868,6 +880,29 @@ export function getCampaignTerrainMapCoupledCamera(): CampaignTerrainCamera {
     scale: currentCamera.scale,
     offsetX: currentCamera.offsetX,
     offsetY: currentCamera.offsetY / safeTiltCos,
+  };
+}
+
+export function getCampaignTerrainCloudProjectionUniforms(
+  root: ParentNode
+): CampaignTerrainCloudProjectionUniforms {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  const mapCoupledCamera = getCampaignTerrainMapCoupledCamera();
+  const viewportAspectRatio =
+    terrainCanvas == null
+      ? 1
+      : terrainCanvas.width / Math.max(terrainCanvas.height, 1);
+
+  return {
+    cameraScale: currentCamera.scale,
+    cameraOffsetX: mapCoupledCamera.offsetX,
+    cameraOffsetY: mapCoupledCamera.offsetY,
+    tiltRadians: getCampaignTerrainCameraTiltRadians(currentCamera),
+    viewportAspectRatio,
+    terrainScale: TERRAIN_SCALE,
+    heightScale: HEIGHT_SCALE,
+    cameraReferenceScale: CAMERA_REFERENCE_SCALE,
+    cameraBaseDistance: CAMERA_BASE_DISTANCE,
   };
 }
 

@@ -437,6 +437,10 @@ function findForbiddenProductionSourceReferences(forbiddenPatterns) {
   });
 }
 
+function readSource(relativeFilePath) {
+  return fs.readFileSync(path.join(process.cwd(), relativeFilePath), "utf8");
+}
+
 function collectFilePaths(rootPath) {
   const entries = fs.readdirSync(rootPath, { withFileTypes: true });
 
@@ -4160,6 +4164,60 @@ test("campaign cloud render keeps flowing cloud animation timing", () => {
   assert.match(
     cloudRendererSource,
     /scheduleAnimationRender\(\);/
+  );
+});
+
+test("campaign cloud map-space volumetric slab uses terrain projection uniforms without gameplay coupling", () => {
+  const terrainSource = readSource("src/ui/views/map/campaign-terrain-webgl.ts");
+  const cloudSource = readSource("src/ui/views/map/campaign-cloud-webgl.ts");
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+  const revealMaskSource = readSource("src/ui/views/map/campaign-cloud-reveal-mask.ts");
+  const mainSource = readSource("src/main.ts");
+
+  assert.match(
+    terrainSource,
+    /export type CampaignTerrainCloudProjectionUniforms/,
+    "Expected terrain renderer to expose a typed, read-only cloud projection payload."
+  );
+  assert.match(
+    terrainSource,
+    /export function getCampaignTerrainCloudProjectionUniforms/,
+    "Expected cloud projection data to be read from terrain renderer instead of recomputed in cloud renderer."
+  );
+  assert.match(
+    cloudSource,
+    /getCampaignTerrainCloudProjectionUniforms/,
+    "Expected cloud renderer to consume terrain-owned projection uniforms."
+  );
+  assert.match(
+    cloudSource,
+    /uCloudCamera/,
+    "Expected cloud renderer to upload camera-specific map-space cloud uniforms."
+  );
+  assert.match(
+    cloudSource,
+    /uCloudProjection/,
+    "Expected cloud renderer to upload projection-specific map-space cloud uniforms."
+  );
+  assert.doesNotMatch(
+    cloudSource,
+    /sampleHeightAtUv|mapHeightUrl|data-map-height|map_heights/,
+    "Cloud renderer must not sample terrain height data."
+  );
+  assert.match(
+    revealMaskSource,
+    /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/,
+    "Reveal mask must keep using the fixed cloud reveal height projection helper."
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /getCampaignTerrainCloudProjectionUniforms|uCloudCamera|uCloudProjection|CampaignTerrainCloudProjectionUniforms/,
+    "main.ts must not participate in cloud projection wiring."
+  );
+  assert.match(
+    shaderSource,
+    /MAX_MAP_SPACE_CLOUD_STEPS/,
+    "Expected shader to declare an explicit bounded map-space cloud raymarch step budget."
   );
 });
 
