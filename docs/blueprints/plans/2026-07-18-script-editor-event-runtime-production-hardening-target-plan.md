@@ -4,13 +4,13 @@
 
 - document_role: `version-governor`
 - version_id: `target.script-editor-event-runtime-production-hardening`
-- version_status: `open`
-- active_phase: `phase.promotion-review`
+- version_status: `closed`
+- active_phase: `phase.version-closed`
 - active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `promotion-review`
+- decision_state: `closed`
+- next_decision: `version-closeout`
+- next_action: `write-version-closeout`
+- resume_gate: `closed`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
@@ -23,11 +23,11 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `none`
-- closure_review_status: `none`
+- closure_review_subject: `target.script-editor-event-runtime-production-hardening`
+- closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `none`
+- routing_basis: `closed-after-explicit-operator-closeout-with-no-live-same-version-queue`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - stop_reason: `none`
@@ -66,17 +66,23 @@
 - Admission basis:
   - `Source audit confirmed the new EventBindingRuntime path is production-active, while old event condition evaluator code, Script Editor event-body triggerTiming/conditionGroups residues, loader acceptance gaps, and Liu Bang built-in events.json trigger/conditions remain to be cleaned or guarded.`
 - Activation conclusion:
-  - `target.script-editor-event-runtime-production-hardening is the active version.`
-  - `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration is admitted as the active queue.`
-  - `The active task is evidence-anchor reconcile; business implementation has not started.`
+  - `target.script-editor-event-runtime-production-hardening is now closed historical evidence after explicit operator closeout on 2026-07-26.`
+  - `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration is done and no longer leaves a live active queue in this version.`
+  - `queue.city-building-module-entry-and-project-startup-authoring was routed onward into its own successor version rather than remaining same-version residue here.`
+
+### Version Closeout Review
+
+- `Closeout judgement: accepted. No active queue remains, the owned hardening/migration queue is done, and the later startup/module-entry topic was already routed into a successor version instead of remaining lawful same-version work here.`
+- `Closeout confirmation: the operator explicitly requested closing this residual open version on 2026-07-26 during open-version residue cleanup.`
+- `Future routing: any further event-runtime hardening or pack-migration follow-up must route through a lawful successor version rather than reopening this historical shell implicitly.`
 
 ### Version Lifecycle Rules
 
-- `This version remains open until explicit closeout is recorded here.`
-- `If active_queue = none, that does not close the version; it only returns the version to promotion-review or idle-open.`
+- `This version is closed and historical-only for execution purposes.`
+- `If active_queue = none, that does not by itself close a version; explicit closeout was required and is now recorded here.`
 - `Do not reopen target.script-editor-event-binding-runtime-replacement or target.script-editor-event-binding-post-closeout-fixups.`
 - `Do not absorb map/review provider-boundary work into this event-runtime hardening version.`
-- `Queue closeout may auto-advance; version closeout must not be inferred from queue completion alone.`
+- `Queue closeout may auto-advance; version closeout still required explicit operator confirmation and is now recorded.`
 
 ### Queue Admission Startup Rules
 

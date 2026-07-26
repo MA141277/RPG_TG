@@ -4,13 +4,13 @@
 
 - document_role: `version-governor`
 - version_id: `target.city-building-module-entry-and-project-startup-authoring`
-- version_status: `open`
-- active_phase: `phase.promotion-review`
+- version_status: `closed`
+- active_phase: `phase.version-closed`
 - active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `version-review`
+- decision_state: `closed`
+- next_decision: `version-closeout`
+- next_action: `write-version-closeout`
+- resume_gate: `closed`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
@@ -23,11 +23,11 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `none`
-- closure_review_status: `none`
+- closure_review_subject: `target.city-building-module-entry-and-project-startup-authoring`
+- closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `none`
+- routing_basis: `closed-after-explicit-operator-closeout-with-no-live-same-version-queue`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - stop_reason: `none`
@@ -71,7 +71,7 @@
 - Admission basis:
   - `The current open version remains lawful for same-version admission, and MEMO-014 is narrow enough to enter as a corrective active queue without widening unrelated event-runtime work.`
 - Activation conclusion:
-  - `target.city-building-module-entry-and-project-startup-authoring is the active version.`
+  - `target.city-building-module-entry-and-project-startup-authoring is now closed historical evidence after explicit operator closeout on 2026-07-26.`
   - `queue.script-editor-city-building-location-access-condition-authoring-correction is closed with buglist evidence recorded.`
   - `queue.script-editor-main-ui-flow-mojibake-repair-and-encoding-guard-hardening is closed.`
   - `queue.script-editor-city-mounted-npc-canonical-authoring-cleanup is closed locally; there is no current active task.`
@@ -80,15 +80,21 @@
   - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is closed after queue closeout/handoff.`
   - `queue.script-editor-ui-encoding-integrity-guard is closed after queue closeout/handoff.`
   - `queue.script-editor-city-building-background-authoring is closed after queue closeout/handoff.`
-  - `The version remains open and must not enter version closeout until a later explicit closeout review is requested.`
+  - `queue.script-editor-building-arrangement-container-flow-refactor was already promoted out to the successor target.building-arrangement-container-flow-refactor and is not live same-version residue here.`
+
+### Version Closeout Review
+
+- `Closeout judgement: accepted. No active queue remains, all directly owned queue docs are now done, and no uniquely lawful same-version admission remains inside this version after later startup/module-entry work either landed here or routed into successor targets.`
+- `Closeout confirmation: the operator explicitly requested closing this residual open version on 2026-07-26 during open-version residue cleanup.`
+- `Future routing: any further city/building startup, selector, mounted-NPC, or related authoring residue must route through a lawful successor version rather than reopening this historical shell implicitly.`
 
 ### Version Lifecycle Rules
 
-- `This version remains open until explicit closeout is recorded here.`
-- `If active_queue = none, that does not close the version; it only returns the version to promotion-review or idle-open.`
+- `This version is closed and historical-only for execution purposes.`
+- `If active_queue = none, that does not by itself close a version; explicit closeout was required and is now recorded here.`
 - `Do not reopen target.script-editor-event-binding-runtime-replacement, target.script-editor-event-binding-post-closeout-fixups, or target.city-building-definition-location-access-convergence.`
 - `Do not change EventBindingRuntime semantics in this version.`
-- `Do not absorb unrelated event-runtime cleanup or map/review cleanup unless a later admission review explicitly records that route.`
+- `Do not absorb unrelated event-runtime cleanup or map/review cleanup unless a later successor-version admission review explicitly records that route.`
 
 ### Queue Admission Startup Rules
 
