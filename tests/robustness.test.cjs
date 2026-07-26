@@ -4417,7 +4417,7 @@ test("script editor runtime preview launches from current in-memory project data
   assert.doesNotMatch(workspaceShellSource, /项目目录重新读取/);
   assert.match(
     mainUiSource,
-    /if \(action === "preview-runtime"\) \{\s*await this\.previewScriptEditorProjectRuntime\(\);/
+    /if \(action === "preview-runtime"\) \{\s*if \(this\.handleScriptEditorBlockedRuntimeAction\(\)\) \{\s*return;\s*\}\s*await this\.previewScriptEditorProjectRuntime\(\);/
   );
   assert.match(
     mainUiSource,
@@ -10936,7 +10936,10 @@ test("script editor workspace labels save and runtime export actions without mix
     mainUiSource,
     /项目根信息[\s\S]*data-script-editor-action="save"[\s\S]{0,120}导出/
   );
-  assert.match(mainUiSource, /if \(action === "export"\) \{\s*await this\.exportScriptEditorProject\(\);/);
+  assert.match(
+    mainUiSource,
+    /if \(action === "export"\) \{\s*if \(this\.handleScriptEditorBlockedRuntimeAction\(\)\) \{\s*return;\s*\}\s*await this\.exportScriptEditorProject\(\);/
+  );
   assert.match(mainUiSource, /if \(action === "save"\) \{\s*await this\.saveScriptEditorProject\(\);/);
 });
 
