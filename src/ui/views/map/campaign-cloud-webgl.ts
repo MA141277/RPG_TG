@@ -207,6 +207,7 @@ function initCampaignCloudWebGl(
   const mapCameraLocation = gl.getUniformLocation(program, "uMapCamera");
   const cloudCameraLocation = gl.getUniformLocation(program, "uCloudCamera");
   const cloudProjectionLocation = gl.getUniformLocation(program, "uCloudProjection");
+  const cloudViewLocation = gl.getUniformLocation(program, "uCloudView");
   const noiseTextureLocation = gl.getUniformLocation(program, "uNoiseTexture");
   const revealTextureLocation = gl.getUniformLocation(program, "uRevealTexture");
   const previousRevealTextureLocation = gl.getUniformLocation(
@@ -228,6 +229,7 @@ function initCampaignCloudWebGl(
     mapCameraLocation == null ? "uMapCamera" : null,
     cloudCameraLocation == null ? "uCloudCamera" : null,
     cloudProjectionLocation == null ? "uCloudProjection" : null,
+    cloudViewLocation == null ? "uCloudView" : null,
     noiseTextureLocation == null ? "uNoiseTexture" : null,
     revealTextureLocation == null ? "uRevealTexture" : null,
     previousRevealTextureLocation == null ? "uPreviousRevealTexture" : null,
@@ -464,8 +466,14 @@ function initCampaignCloudWebGl(
       cloudProjection.viewportAspectRatio,
       cloudProjection.terrainScale,
       cloudProjection.heightScale,
-      cloudProjection.cameraBaseDistance /
-        Math.max(cloudProjection.cameraReferenceScale, 0.0001)
+      cloudProjection.cameraOffsetUnit
+    );
+    gl.uniform4f(
+      cloudViewLocation,
+      cloudProjection.cameraReferenceScale,
+      cloudProjection.cameraBaseDistance,
+      cloudProjection.fovRadians,
+      0
     );
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, noiseTexture);

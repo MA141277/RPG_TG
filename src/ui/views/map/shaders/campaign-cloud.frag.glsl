@@ -7,6 +7,7 @@ uniform float uTimeSeconds;
 uniform vec3 uMapCamera;
 uniform vec4 uCloudCamera;
 uniform vec4 uCloudProjection;
+uniform vec4 uCloudView;
 uniform sampler2D uNoiseTexture;
 uniform sampler2D uRevealTexture;
 uniform sampler2D uPreviousRevealTexture;
@@ -531,8 +532,8 @@ vec2 sampleDissolvedRevealFields(vec2 uv, float dissolveProgress) {
   );
 }
 
-const float MAP_SPACE_CLOUD_BOTTOM = 0.090;
-const float MAP_SPACE_CLOUD_TOP = 0.245;
+const float MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS = 1.33;
+const float MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS = 3.63;
 const float MAP_SPACE_CLOUD_DENSITY_SCALE = 1.18;
 const float MAP_SPACE_CLOUD_ALPHA_LIMIT = 0.965;
 const vec2 MAP_SPACE_CLOUD_WIND = vec2(0.018, -0.011);
@@ -542,27 +543,68 @@ struct MapSpaceCloudRay {
   vec3 direction;
 };
 
+vec3 rotateCloudRayAroundX(vec3 point, float angle) {
+  float angleCos = cos(angle);
+  float angleSin = sin(angle);
+
+  return vec3(
+    point.x,
+    angleCos * point.y - angleSin * point.z,
+    angleSin * point.y + angleCos * point.z
+  );
+}
+
 MapSpaceCloudRay buildMapSpaceCloudRay(vec2 uv) {
   float aspect = max(uCloudProjection.x, 0.1);
   float safeScale = max(uCloudCamera.x, 0.1);
+  float terrainScale = max(uCloudProjection.y, 0.0001);
+  float cameraOffsetUnit = max(uCloudProjection.w, 0.000001);
+  float cameraReferenceScale = max(uCloudView.x, 0.0001);
+  float cameraBaseDistance = max(uCloudView.y, 0.0001);
+  float fovRadians = max(uCloudView.z, 0.0001);
+  float screenScale = safeScale / cameraReferenceScale;
   float tilt = uCloudCamera.w;
-  vec2 screen = (uv - 0.5) * vec2(aspect, 1.0);
-  vec2 mapCenter = vec2(0.5) + vec2(uCloudCamera.y, -uCloudCamera.z) * 0.0025;
-  vec2 mapPoint = mapCenter + screen / max(safeScale / 15.0, 0.25);
-  float cameraHeight = max(uCloudProjection.w, 0.1) + 0.42;
-  vec3 origin = vec3(mapPoint, cameraHeight);
-  vec3 direction = normalize(vec3(screen.x * 0.12, -sin(tilt) - screen.y * 0.10, -cos(tilt)));
+  vec2 ndc = uv * 2.0 - 1.0;
+  vec2 perspectiveNdc = ndc / max(screenScale, 0.0001);
+  float tanHalfFov = tan(fovRadians * 0.5);
+  vec3 viewDirection = normalize(vec3(
+    perspectiveNdc.x * aspect * tanHalfFov,
+    perspectiveNdc.y * tanHalfFov,
+    -1.0
+  ));
+  vec3 prePanOrigin = rotateCloudRayAroundX(
+    vec3(0.0, 0.0, cameraBaseDistance / cameraReferenceScale),
+    -tilt
+  );
+  vec3 prePanDirection = normalize(rotateCloudRayAroundX(viewDirection, -tilt));
+  vec2 terrainPan = vec2(
+    uCloudCamera.y * cameraOffsetUnit / safeScale,
+    -uCloudCamera.z * cameraOffsetUnit / safeScale
+  );
+  vec3 scaledOrigin = prePanOrigin - vec3(terrainPan, 0.0);
+  vec3 origin = vec3(
+    scaledOrigin.x / terrainScale,
+    scaledOrigin.y / terrainScale,
+    scaledOrigin.z
+  );
+  vec3 direction = normalize(vec3(
+    prePanDirection.x / terrainScale,
+    prePanDirection.y / terrainScale,
+    prePanDirection.z
+  ));
 
   return MapSpaceCloudRay(origin, direction);
 }
 
 vec2 intersectMapSpaceCloudSlab(MapSpaceCloudRay ray) {
+  float cloudBottom = MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS * uCloudProjection.z;
+  float cloudTop = MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS * uCloudProjection.z;
   if (abs(ray.direction.z) < 0.0001) {
     return vec2(-1.0);
   }
 
-  float tBottom = (MAP_SPACE_CLOUD_BOTTOM - ray.origin.z) / ray.direction.z;
-  float tTop = (MAP_SPACE_CLOUD_TOP - ray.origin.z) / ray.direction.z;
+  float tBottom = (cloudBottom - ray.origin.z) / ray.direction.z;
+  float tTop = (cloudTop - ray.origin.z) / ray.direction.z;
   float tEnter = max(min(tBottom, tTop), 0.0);
   float tExit = max(tBottom, tTop);
 
@@ -574,9 +616,11 @@ vec2 intersectMapSpaceCloudSlab(MapSpaceCloudRay ray) {
 }
 
 float sampleMapSpaceCloudDensity(vec3 point, float time) {
+  float cloudBottom = MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS * uCloudProjection.z;
+  float cloudTop = MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS * uCloudProjection.z;
   float heightRatio = clamp(
-    (point.z - MAP_SPACE_CLOUD_BOTTOM) /
-      max(MAP_SPACE_CLOUD_TOP - MAP_SPACE_CLOUD_BOTTOM, 0.0001),
+    (point.z - cloudBottom) /
+      max(cloudTop - cloudBottom, 0.0001),
     0.0,
     1.0
   );
@@ -607,7 +651,9 @@ vec4 sampleMapSpaceVolumetricCloud(vec2 uv, float time) {
     float stepRatio = (float(stepIndex) + 0.5) / float(MAX_MAP_SPACE_CLOUD_STEPS);
     vec3 point = ray.origin + ray.direction * (segment.x + stepSize * (float(stepIndex) + 0.5));
     float density = sampleMapSpaceCloudDensity(point, time);
-    float heightRatio = clamp((point.z - MAP_SPACE_CLOUD_BOTTOM) / max(MAP_SPACE_CLOUD_TOP - MAP_SPACE_CLOUD_BOTTOM, 0.0001), 0.0, 1.0);
+    float cloudBottom = MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS * uCloudProjection.z;
+    float cloudTop = MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS * uCloudProjection.z;
+    float heightRatio = clamp((point.z - cloudBottom) / max(cloudTop - cloudBottom, 0.0001), 0.0, 1.0);
     float shadow = smoothstep(0.18, 0.88, density) * (1.0 - heightRatio * 0.36);
     vec3 bottomColor = vec3(0.56, 0.65, 0.66);
     vec3 midColor = vec3(0.84, 0.90, 0.88);
@@ -741,17 +787,5 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
 
 void main() {
   vec4 cloudColor = sampleArticleCloudSea(vUv, uTimeSeconds);
-  float cloudProjectionNoop = mod(
-    abs(uCloudCamera.x) +
-      abs(uCloudCamera.y) +
-      abs(uCloudCamera.z) +
-      abs(uCloudCamera.w) +
-      abs(uCloudProjection.x) +
-      abs(uCloudProjection.y) +
-      abs(uCloudProjection.z) +
-      abs(uCloudProjection.w),
-    0.000001
-  );
-  cloudColor.a = clamp(cloudColor.a + cloudProjectionNoop * 0.000001, 0.0, 1.0);
   gl_FragColor = cloudColor;
 }

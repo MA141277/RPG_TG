@@ -4220,6 +4220,21 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
     "Expected shader to declare an explicit bounded map-space cloud raymarch step budget."
   );
   assert.match(
+    terrainSource,
+    /cameraOffsetUnit: CAMERA_OFFSET_UNIT/,
+    "Expected the terrain-owned cloud projection payload to expose the terrain camera offset unit."
+  );
+  assert.match(
+    terrainSource,
+    /fovRadians: FOV_RADIANS/,
+    "Expected the terrain-owned cloud projection payload to expose the terrain projection FOV."
+  );
+  assert.match(
+    cloudSource,
+    /uCloudView/,
+    "Expected cloud renderer to upload projection view constants instead of hardcoding shader ray values."
+  );
+  assert.match(
     shaderSource,
     /buildMapSpaceCloudRay/,
     "Expected shader to reconstruct a map-space cloud ray."
@@ -4244,10 +4259,62 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
     /for \(int stepIndex = 0; stepIndex < MAX_MAP_SPACE_CLOUD_STEPS; stepIndex \+= 1\)/,
     "Expected raymarching to use a fixed bounded WebGL 1 loop."
   );
+  assert.match(
+    shaderSource,
+    /uCloudCamera\.y \* cameraOffsetUnit \/ safeScale/,
+    "Expected shader pan reconstruction to use terrain camera offset unit divided by camera scale."
+  );
+  assert.match(
+    shaderSource,
+    /uCloudProjection\.y/,
+    "Expected shader ray reconstruction to use terrainScale from the projection payload."
+  );
+  assert.match(
+    shaderSource,
+    /uCloudProjection\.z/,
+    "Expected shader slab reconstruction to use heightScale from the projection payload."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /0\.0025|cloudProjectionNoop/,
+    "Expected shader to avoid the old raw camera offset approximation and no-op uniform retention."
+  );
   assert.doesNotMatch(
     shaderSource,
     /#define MAXIMUM_CLOUDS_STEPS 300|CLOUDS_MAX_VIEWING_DISTANCE 250000/,
     "Expected this project not to copy the Cesium-scale high-step sphere-shell cloud budget."
+  );
+});
+
+test("campaign cloud map-space volumetric slab pan basis matches terrain camera offset scale numerically", () => {
+  const cameraOffsetUnit = 0.0032;
+  const terrainScale = 1.46;
+  const rawShaderOffsetUnit = 0.0025;
+  const cameraOffset = 120;
+  const closeScale = 60;
+  const farScale = 15;
+
+  const resolveTerrainAlignedPan = (scale) =>
+    cameraOffset * cameraOffsetUnit / scale / terrainScale;
+  const resolveOldRawShaderPan = () => cameraOffset * rawShaderOffsetUnit;
+
+  assert.ok(
+    Math.abs(resolveTerrainAlignedPan(farScale) - 0.017534246575342466) <
+      Number.EPSILON
+  );
+  assert.ok(
+    Math.abs(resolveTerrainAlignedPan(closeScale) - 0.004383561643835616) <
+      Number.EPSILON
+  );
+  assert.ok(
+    Math.abs(
+      resolveTerrainAlignedPan(farScale) / resolveTerrainAlignedPan(closeScale) -
+        closeScale / farScale
+    ) < Number.EPSILON
+  );
+  assert.ok(
+    resolveOldRawShaderPan() > resolveTerrainAlignedPan(farScale) * 10,
+    "Raw shader offset math should be rejected because it ignores scale and terrainScale."
   );
 });
 

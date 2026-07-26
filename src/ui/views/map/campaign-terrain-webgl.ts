@@ -540,8 +540,10 @@ export type CampaignTerrainCloudProjectionUniforms = {
   viewportAspectRatio: number;
   terrainScale: number;
   heightScale: number;
+  cameraOffsetUnit: number;
   cameraReferenceScale: number;
   cameraBaseDistance: number;
+  fovRadians: number;
 };
 
 export function createCampaignTerrainCameraCenteredOnCoordinate(input: {
@@ -901,8 +903,10 @@ export function getCampaignTerrainCloudProjectionUniforms(
     viewportAspectRatio,
     terrainScale: TERRAIN_SCALE,
     heightScale: HEIGHT_SCALE,
+    cameraOffsetUnit: CAMERA_OFFSET_UNIT,
     cameraReferenceScale: CAMERA_REFERENCE_SCALE,
     cameraBaseDistance: CAMERA_BASE_DISTANCE,
+    fovRadians: FOV_RADIANS,
   };
 }
 

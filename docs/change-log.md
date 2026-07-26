@@ -7,6 +7,7 @@
 - `campaign-cloud-webgl.ts` now uploads terrain-owned cloud projection uniforms so the cloud shader can render the campaign cloud body in terrain/map space while preserving the existing reveal texture lifecycle.
 - `campaign-cloud.frag.glsl` replaces the primary screen-space cloud sea with a conservative fixed-budget map-space cloud slab raymarch using procedural density, wind drift, lightweight top/bottom lighting, and early alpha termination.
 - The change keeps explored Hex reveal masks, drag/zoom animation freeze, terrain chunk reveal holds, and `window.rpgCloud` behavior within the existing cloud overlay boundary; it does not modify exploration state, terrain height, navigation, map nodes, save data, or `src/main.ts`.
+- Final review fix: cloud ray reconstruction now uses terrain-owned `CAMERA_OFFSET_UNIT`, `TERRAIN_SCALE`, `HEIGHT_SCALE`, camera reference/base distance, and FOV uniforms instead of the previous raw shader offset approximation, and the no-op projection-uniform retention block was removed.
 
 ## 2026-07-24 Faction Review Flow
 
