@@ -42,7 +42,6 @@ type CampaignMarker = {
   y: number;
   kind: NonNullable<MapNode["kind"]>;
   summary: string;
-  structureVisual: MapNode["structureVisual"] | null;
   isRevealed: boolean;
   historicalCharacters: {
     primary: string[];
@@ -78,16 +77,14 @@ export type MapViewModel = {
   materialTextureImageUrl: string | null;
   grassTextureImageUrl: string | null;
   sandTextureImageUrl: string | null;
+  villageGroundTextureImageUrl: string | null;
+  cityGroundTextureImageUrl: string | null;
   rockTextureImageUrl: string | null;
   snowTextureImageUrl: string | null;
   waterTextureImageUrl: string | null;
   cloudNoiseTextureImageUrl: string | null;
   revealedHexKeys: string[];
   campaignStructureProfile: CampaignStructureVisualProfile | null;
-  cityDepthMeshCoordinate: {
-    x: number;
-    y: number;
-  } | null;
   cloudClearHexKeys: string[];
   campaignMarkers: CampaignMarker[];
   layers: MapLayer[];
@@ -199,6 +196,13 @@ export function createMapViewModel(input: {
     sandTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_sand_texture")
         ?.imageUrl ?? null,
+    villageGroundTextureImageUrl:
+      input.mapDefinition.layers?.find(
+        (layer) => layer.id === "map_village_ground_texture"
+      )?.imageUrl ?? null,
+    cityGroundTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_city_ground_texture")
+        ?.imageUrl ?? null,
     rockTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_rock_texture")
         ?.imageUrl ?? null,
@@ -215,7 +219,6 @@ export function createMapViewModel(input: {
       new Set(input.mapExplorationState?.revealedHexKeys ?? [])
     ).sort(),
     campaignStructureProfile,
-    cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
     cloudClearHexKeys,
     campaignMarkers: input.mapDefinition.nodes
       .map((node, index) => {
@@ -237,7 +240,6 @@ export function createMapViewModel(input: {
           y: node.y,
           kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
           summary: node.summary ?? "",
-          structureVisual: node.structureVisual ?? null,
           isRevealed: revealedHexKeySet.has(
             getHexKey(
               coordinateToRoundedHex(
@@ -307,31 +309,6 @@ function renderGridMap(model: MapViewModel): string {
   `;
 }
 
-function getMarkerClass(kind: CampaignMarker["kind"]): string {
-  if (kind === "fort") {
-    return "c-campaign-marker--fort";
-  }
-
-  if (kind === "settlement" || kind === "city") {
-    return "c-campaign-marker--settlement";
-  }
-
-  return "c-campaign-marker--landmark";
-}
-
-function getMarkerDisplayName(name: string): string {
-  const markerIndex = Math.max(
-    name.lastIndexOf("\u2605"),
-    name.lastIndexOf("\u203b"),
-    name.lastIndexOf("\u25cf")
-  );
-  if (markerIndex >= 0) {
-    return name.slice(markerIndex + 1).trim();
-  }
-
-  return name.replace(/^\u3010(.+)\u3011$/, "$1");
-}
-
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -340,135 +317,28 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function renderCharacterGroup(label: string, names: string[]): string {
-  if (names.length === 0) {
-    return "";
-  }
-
-  return `<span><b>${label}</b>${names.map(escapeHtml).join(" / ")}</span>`;
+function escapeJsonForHtmlScript(value: string): string {
+  return value
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }
 
-function renderHistoricalCharacters(
-  marker: CampaignMarker
-): string {
-  if (marker.historicalCharacters == null) {
-    return "";
-  }
+function renderCampaignMarkerRuntimeSource(model: MapViewModel): string {
+  const markerSource = model.campaignMarkers.map((marker) => ({
+    ...marker,
+    left: (marker.x / model.coordinateSpace.width) * 100,
+    bottom: (marker.y / model.coordinateSpace.height) * 100,
+    u: marker.x / model.coordinateSpace.width,
+    v: 1 - marker.y / model.coordinateSpace.height,
+  }));
 
-  const characterGroups = [
-    renderCharacterGroup("Primary: ", marker.historicalCharacters.primary),
-    renderCharacterGroup("Related: ", marker.historicalCharacters.secondary),
-    renderCharacterGroup("Background: ", marker.historicalCharacters.background),
-  ]
-    .filter((item) => item !== "")
-    .join("");
-  const notes =
-    marker.historicalCharacters.notes === ""
-      ? ""
-      : `<span><b>Notes: </b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
-
-  return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
-}
-
-function renderCampaignStructureVisuals(model: MapViewModel): string {
-  const buildingImageUrl =
-    model.campaignStructureProfile?.settlementBuildingImageUrl ?? null;
-  if (buildingImageUrl == null) {
-    return "";
-  }
-
-  return model.campaignMarkers
-    .map((marker) => {
-      const structureVisual = marker.structureVisual;
-      if (structureVisual?.kind !== "settlement-building" || !marker.isRevealed) {
-        return "";
-      }
-
-      const left = (marker.x / model.coordinateSpace.width) * 100;
-      const bottom = (marker.y / model.coordinateSpace.height) * 100;
-      const heightU = marker.x / model.coordinateSpace.width;
-      const heightV = 1 - marker.y / model.coordinateSpace.height;
-
-      return `
-        <span
-          class="c-campaign-hex-building"
-          style="--hex-building-left:${left.toFixed(3)}%; --hex-building-bottom:${bottom.toFixed(3)}%;"
-          data-campaign-structure-kind="${structureVisual.kind}"
-          data-terrain-projected-point="true"
-          data-map-height-u="${heightU.toFixed(5)}"
-          data-map-height-v="${heightV.toFixed(5)}"
-          aria-label="${escapeHtml(marker.name)}"
-        >
-          <img
-            class="c-campaign-hex-building__image"
-            src="${buildingImageUrl}"
-            alt=""
-            aria-hidden="true"
-          >
-        </span>
-      `;
-    })
-    .join("");
-}
-
-function renderCampaignMarkers(model: MapViewModel): string {
-  return model.campaignMarkers
-    .map((marker) => {
-      const left = (marker.x / model.coordinateSpace.width) * 100;
-      const bottom = (marker.y / model.coordinateSpace.height) * 100;
-      const heightU = marker.x / model.coordinateSpace.width;
-      const heightV = 1 - marker.y / model.coordinateSpace.height;
-      const displayName = getMarkerDisplayName(marker.name);
-      const markerName = escapeHtml(marker.name);
-      const markerSummary = escapeHtml(marker.summary);
-      const markerPositionStyle = `--marker-left:${left.toFixed(3)}%; --marker-bottom:${bottom.toFixed(3)}%;`;
-      const markerInteractionAttributes = marker.isRevealed
-        ? `
-          data-map-node-id="${marker.id}"
-          data-map-node-name="${markerName}"
-          title="${markerName} (${marker.x}, ${marker.y})"
-        `
-        : `
-          disabled
-          aria-hidden="true"
-          tabindex="-1"
-          data-map-node-revealed="false"
-        `;
-      const markerProjectionAttributes = `
-          data-terrain-projected-point="true"
-          data-map-height-u="${heightU.toFixed(5)}"
-          data-map-height-v="${heightV.toFixed(5)}"
-        `;
-
-      return `
-        <button
-          class="c-campaign-marker ${getMarkerClass(marker.kind)}"
-          style="${markerPositionStyle}"
-          ${markerProjectionAttributes}
-          data-campaign-marker-id="${escapeHtml(marker.id)}"
-          data-map-x="${marker.x}"
-          data-map-y="${marker.y}"
-          data-city-id="${marker.cityId ?? ""}"
-          ${markerInteractionAttributes}
-        >
-          <span class="c-campaign-marker__dot"></span>
-          <span class="c-campaign-marker__label">${escapeHtml(displayName)}</span>
-        </button>
-        <span
-          class="c-campaign-marker__summary"
-          style="${markerPositionStyle}"
-          ${markerProjectionAttributes}
-          data-campaign-marker-summary-id="${escapeHtml(marker.id)}"
-          aria-hidden="true"
-          data-map-node-revealed="${marker.isRevealed ? "true" : "false"}"
-        >
-          <strong>${markerName}</strong>
-          ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
-          ${renderHistoricalCharacters(marker)}
-        </span>
-      `;
-    })
-    .join("");
+  return `
+    <script type="application/json" data-campaign-marker-source="true">${escapeJsonForHtmlScript(JSON.stringify(markerSource))}</script>
+    <div class="c-campaign-marker-layer" data-campaign-marker-layer="true"></div>
+  `;
 }
 
 export function renderCampaignLayers(layers: MapLayer[]): string {
@@ -532,30 +402,9 @@ function renderCampaignMapVisualLayer(
 ): string {
   const canRenderWebGlTerrain =
     model.hexTextureAtlasImageUrl != null &&
-    model.heightmapImageUrl != null &&
-    model.materialTextureImageUrl != null;
+      model.heightmapImageUrl != null &&
+      model.materialTextureImageUrl != null;
   const campaignStructureProfile = model.campaignStructureProfile;
-  const cityDepthMeshU =
-    model.cityDepthMeshCoordinate == null
-      ? null
-      : model.cityDepthMeshCoordinate.x / model.coordinateSpace.width;
-  const cityDepthMeshV =
-    model.cityDepthMeshCoordinate == null
-      ? null
-      : 1 - model.cityDepthMeshCoordinate.y / model.coordinateSpace.height;
-  const cityDepthMeshAttributes =
-    campaignStructureProfile?.cityDepthMeshUrl == null ||
-    campaignStructureProfile?.cityDepthTextureUrl == null ||
-    cityDepthMeshU == null ||
-    cityDepthMeshV == null
-      ? ""
-      : `
-          data-campaign-structure-profile-id="${campaignStructureProfile.id}"
-          data-campaign-city-mesh-url="${campaignStructureProfile.cityDepthMeshUrl}"
-          data-campaign-city-texture-url="${campaignStructureProfile.cityDepthTextureUrl}"
-          data-campaign-city-u="${cityDepthMeshU.toFixed(5)}"
-          data-campaign-city-v="${cityDepthMeshV.toFixed(5)}"
-        `;
   const fortCityAssetAttributes =
     campaignStructureProfile?.fortCityAssetId == null
       ? ""
@@ -578,10 +427,11 @@ function renderCampaignMapVisualLayer(
           ${model.campaignVegetationRulesUrl == null ? "" : `data-map-vegetation-rules-url="${model.campaignVegetationRulesUrl}"`}
           ${model.grassTextureImageUrl == null ? "" : `data-map-grass-texture-url="${model.grassTextureImageUrl}"`}
           ${model.sandTextureImageUrl == null ? "" : `data-map-sand-texture-url="${model.sandTextureImageUrl}"`}
+          ${model.villageGroundTextureImageUrl == null ? "" : `data-map-village-ground-texture-url="${model.villageGroundTextureImageUrl}"`}
+          ${model.cityGroundTextureImageUrl == null ? "" : `data-map-city-ground-texture-url="${model.cityGroundTextureImageUrl}"`}
           ${model.rockTextureImageUrl == null ? "" : `data-map-rock-texture-url="${model.rockTextureImageUrl}"`}
           ${model.snowTextureImageUrl == null ? "" : `data-map-snow-texture-url="${model.snowTextureImageUrl}"`}
           ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
-          ${cityDepthMeshAttributes}
           ${fortCityAssetAttributes}
           ${fortWallMeshAttributes}
           aria-label="${model.mapName} terrain"
@@ -629,8 +479,7 @@ function renderCampaignMapVisualLayer(
       ${
         options.includeInteractivePoints
           ? `
-            ${renderCampaignStructureVisuals(model)}
-            ${renderCampaignMarkers(model)}
+            ${renderCampaignMarkerRuntimeSource(model)}
             ${actorCanvasMarkup}
             <span
               class="${playerClassName}"

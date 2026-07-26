@@ -1,0 +1,147 @@
+﻿# Review package
+Base: f017d921
+Head: 5847d1db
+
+## Commits
+5847d1db refactor: pass campaign structure profile urls to renderer
+
+## Stat
+ src/ui/views/map/map-view.ts | 14 ++++++--------
+ tests/robustness.test.cjs    | 15 +++++++++++++++
+ 2 files changed, 21 insertions(+), 8 deletions(-)
+
+## Diff
+diff --git a/src/ui/views/map/map-view.ts b/src/ui/views/map/map-view.ts
+index 0e15d884..7147524a 100644
+--- a/src/ui/views/map/map-view.ts
++++ b/src/ui/views/map/map-view.ts
+@@ -77,22 +77,20 @@ export type MapViewModel = {
+   hexTextureAtlasImageUrl: string | null;
+   materialTextureImageUrl: string | null;
+   grassTextureImageUrl: string | null;
+   sandTextureImageUrl: string | null;
+   rockTextureImageUrl: string | null;
+   snowTextureImageUrl: string | null;
+   waterTextureImageUrl: string | null;
+   cloudNoiseTextureImageUrl: string | null;
+   revealedHexKeys: string[];
+   campaignStructureProfile: CampaignStructureVisualProfile | null;
+-  cityDepthMeshAssetUrl: string | null;
+-  cityDepthTextureUrl: string | null;
+   cityDepthMeshCoordinate: {
+     x: number;
+     y: number;
+   } | null;
+   cloudClearHexKeys: string[];
+   campaignMarkers: CampaignMarker[];
+   layers: MapLayer[];
+   stats: MapStats | null;
+ };
+ 
+@@ -210,22 +208,20 @@ export function createMapViewModel(input: {
+     waterTextureImageUrl:
+       input.mapDefinition.layers?.find((layer) => layer.id === "map_water_noise")
+         ?.imageUrl ?? null,
+     cloudNoiseTextureImageUrl:
+       input.mapDefinition.layers?.find((layer) => layer.id === "map_fog_noise")
+         ?.imageUrl ?? null,
+     revealedHexKeys: Array.from(
+       new Set(input.mapExplorationState?.revealedHexKeys ?? [])
+     ).sort(),
+     campaignStructureProfile,
+-    cityDepthMeshAssetUrl: campaignStructureProfile?.cityDepthMeshUrl ?? null,
+-    cityDepthTextureUrl: campaignStructureProfile?.cityDepthTextureUrl ?? null,
+     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
+     cloudClearHexKeys,
+     campaignMarkers: input.mapDefinition.nodes
+       .map((node, index) => {
+         const nodeId = node.id ?? node.cityId ?? `map-node.${index}`;
+         const roster =
+           node.id == null ? null : historicalRosterByCityNodeId[node.id] ?? null;
+         const resolveCharacterNames = (characterIds: string[]) =>
+           characterIds.map(
+             (characterId) => historicalCharacterNameById[characterId] ?? characterId
+@@ -531,37 +527,39 @@ function renderCampaignMapVisualLayer(
+     transformClassName?: string;
+     transformDataAttribute?: string;
+     includeInteractivePoints: boolean;
+     ariaHidden?: boolean;
+   }
+ ): string {
+   const canRenderWebGlTerrain =
+     model.hexTextureAtlasImageUrl != null &&
+     model.heightmapImageUrl != null &&
+     model.materialTextureImageUrl != null;
++  const campaignStructureProfile = model.campaignStructureProfile;
+   const cityDepthMeshU =
+     model.cityDepthMeshCoordinate == null
+       ? null
+       : model.cityDepthMeshCoordinate.x / model.coordinateSpace.width;
+   const cityDepthMeshV =
+     model.cityDepthMeshCoordinate == null
+       ? null
+       : 1 - model.cityDepthMeshCoordinate.y / model.coordinateSpace.height;
+   const cityDepthMeshAttributes =
+-    model.cityDepthMeshAssetUrl == null ||
+-    model.cityDepthTextureUrl == null ||
++    campaignStructureProfile?.cityDepthMeshUrl == null ||
++    campaignStructureProfile?.cityDepthTextureUrl == null ||
+     cityDepthMeshU == null ||
+     cityDepthMeshV == null
+       ? ""
+       : `
+-          data-campaign-city-mesh-url="${model.cityDepthMeshAssetUrl}"
+-          data-campaign-city-texture-url="${model.cityDepthTextureUrl}"
++          data-campaign-structure-profile-id="${campaignStructureProfile.id}"
++          data-campaign-city-mesh-url="${campaignStructureProfile.cityDepthMeshUrl}"
++          data-campaign-city-texture-url="${campaignStructureProfile.cityDepthTextureUrl}"
+           data-campaign-city-u="${cityDepthMeshU.toFixed(5)}"
+           data-campaign-city-v="${cityDepthMeshV.toFixed(5)}"
+         `;
+   const terrainCanvasMarkup =
+     !canRenderWebGlTerrain
+       ? ""
+       : `
+         <canvas
+           class="c-campaign-map__terrain"
+           data-campaign-map-terrain="true"
+diff --git a/tests/robustness.test.cjs b/tests/robustness.test.cjs
+index 30287282..790c8aef 100644
+--- a/tests/robustness.test.cjs
++++ b/tests/robustness.test.cjs
+@@ -3124,20 +3124,35 @@ test("campaign map structures are node-driven instead of hardcoded Yuanmo buildi
+   assert.match(
+     yuanmoMapSource,
+     /"id": "settlement\.fenyang_province"[\s\S]*visualKind: "structure"[\s\S]*structureVisual: \{ kind: "settlement-building" \}/
+   );
+   assert.doesNotMatch(mapViewSource, /YUANMO_HEX_BUILDING/);
+   assert.doesNotMatch(mapViewSource, /renderCampaignHexBuilding/);
+   assert.match(mapViewSource, /renderCampaignStructureVisuals/);
+   assert.match(mapViewSource, /settlementBuildingImageUrl/);
+ });
+ 
++test("campaign terrain canvas receives structure profile urls as renderer attributes", () => {
++  const fs = require("node:fs");
++  const path = require("node:path");
++  const mapViewSource = fs.readFileSync(
++    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
++    "utf8"
++  );
++
++  assert.match(mapViewSource, /data-campaign-structure-profile-id/);
++  assert.match(mapViewSource, /data-campaign-city-mesh-url/);
++  assert.match(mapViewSource, /data-campaign-city-texture-url/);
++  assert.match(mapViewSource, /campaignStructureProfile\?\.cityDepthMeshUrl/);
++  assert.match(mapViewSource, /campaignStructureProfile\?\.cityDepthTextureUrl/);
++});
++
+ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
+   const {
+     loadContentPackFromManifestText,
+   } = require("../.test-dist/application/content/content-pack-loader.js");
+   const packRoot = path.join(
+     process.cwd(),
+     "src",
+     "content",
+     "scenario-packs",
+     "zhuyuanzhang"

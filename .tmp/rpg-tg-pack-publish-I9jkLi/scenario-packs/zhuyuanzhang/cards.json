@@ -1,0 +1,32 @@
+[
+  {
+    "id": "card.one_strike",
+    "name": "一齐攻击",
+    "category": "battle",
+    "skillDescription": "让部队集中攻击目标。",
+    "battlefieldDisplay": "战场全体突击",
+    "ammoCostText": "使用兵粮：没有限制",
+    "cardImageId": "card-image.one_strike",
+    "logicNotes": "用于强制推进战斗回合的核心合战卡。"
+  },
+  {
+    "id": "card.secret_step",
+    "name": "强袭",
+    "category": "secret-technique",
+    "skillDescription": "以快速行动突破防线。",
+    "battlefieldDisplay": "战场快速突入",
+    "ammoCostText": "使用兵粮：没有限制",
+    "cardImageId": "card-image.secret_step",
+    "logicNotes": "可作为忍术或特殊战术动作的基础。"
+  },
+  {
+    "id": "card.fire_attack",
+    "name": "火攻",
+    "category": "battle",
+    "skillDescription": "借火势破坏敌阵。",
+    "battlefieldDisplay": "战场火攻范围",
+    "ammoCostText": "使用兵粮：需要火具或火计资源",
+    "cardImageId": "card-image.fire_attack",
+    "logicNotes": "后续可绑定天气、地形和火攻成功率。"
+  }
+]

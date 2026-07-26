@@ -2018,8 +2018,6 @@ test("startup asset preloader gathers first-screen map webgl and image assets", 
     "data-map-snow-texture-url",
     "data-map-water-texture-url",
     "data-map-cloud-noise-url",
-    "data-campaign-city-texture-url",
-    "data-campaign-city-mesh-url",
     "data-campaign-player-sprite-url",
     "data-campaign-player-texture-url",
     "data-campaign-player-model-url",
@@ -2032,6 +2030,9 @@ test("startup asset preloader gathers first-screen map webgl and image assets", 
       `Expected startup asset preloader to collect ${attribute}.`
     );
   }
+
+  assert.doesNotMatch(preloaderSource, /data-campaign-city-texture-url/);
+  assert.doesNotMatch(preloaderSource, /data-campaign-city-mesh-url/);
 
   assert.match(
     preloaderSource,
@@ -3143,6 +3144,10 @@ test("campaign map structures are node-driven instead of hardcoded Yuanmo buildi
     path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
     "utf8"
   );
+  const profileSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "campaign-structure-visual-profiles.ts"),
+    "utf8"
+  );
 
   assert.match(mapDomainSource, /visualKind\?:\s*"structure"/);
   assert.match(mapDomainSource, /structureVisual\?:/);
@@ -3156,23 +3161,51 @@ test("campaign map structures are node-driven instead of hardcoded Yuanmo buildi
   );
   assert.doesNotMatch(mapViewSource, /YUANMO_HEX_BUILDING/);
   assert.doesNotMatch(mapViewSource, /renderCampaignHexBuilding/);
-  assert.match(mapViewSource, /renderCampaignStructureVisuals/);
-  assert.match(mapViewSource, /settlementBuildingImageUrl/);
+  assert.doesNotMatch(mapViewSource, /renderCampaignStructureVisuals/);
+  assert.doesNotMatch(mapViewSource, /settlementBuildingImageUrl/);
+  assert.doesNotMatch(profileSource, /settlementBuildingImageUrl/);
+  assert.doesNotMatch(profileSource, /20260715-120754\.png/);
+  assert.equal(
+    fs.existsSync(path.join(process.cwd(), "ui", "yuansu", "20260715-120754.png")),
+    false
+  );
 });
 
-test("campaign terrain canvas receives structure profile urls as renderer attributes", () => {
+test("campaign map removes legacy city depth mesh model and texture assets", () => {
   const fs = require("node:fs");
   const path = require("node:path");
   const mapViewSource = fs.readFileSync(
     path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
     "utf8"
   );
+  const profileSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "campaign-structure-visual-profiles.ts"),
+    "utf8"
+  );
+  const terrainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "campaign-terrain-webgl.ts"),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src", "main.ts"), "utf8");
+  const prototypeStyles = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "prototype.css"),
+    "utf8"
+  );
 
-  assert.match(mapViewSource, /data-campaign-structure-profile-id/);
-  assert.match(mapViewSource, /data-campaign-city-mesh-url/);
-  assert.match(mapViewSource, /data-campaign-city-texture-url/);
-  assert.match(mapViewSource, /campaignStructureProfile\?\.cityDepthMeshUrl/);
-  assert.match(mapViewSource, /campaignStructureProfile\?\.cityDepthTextureUrl/);
+  assert.equal(fs.existsSync(path.join(process.cwd(), "src", "3dasset", "city_hun")), false);
+  assert.doesNotMatch(profileSource, /cityDepthMeshUrl/);
+  assert.doesNotMatch(profileSource, /cityDepthTextureUrl/);
+  assert.doesNotMatch(profileSource, /city_hun/);
+  assert.doesNotMatch(profileSource, /texture_pbr_20250901/);
+  assert.doesNotMatch(mapViewSource, /cityDepthMeshCoordinate/);
+  assert.doesNotMatch(mapViewSource, /data-campaign-city-mesh-url/);
+  assert.doesNotMatch(mapViewSource, /data-campaign-city-texture-url/);
+  assert.doesNotMatch(mapViewSource, /data-campaign-city-u/);
+  assert.doesNotMatch(mapViewSource, /data-campaign-city-v/);
+  assert.doesNotMatch(terrainSource, /CityDepthMesh|cityDepth|campaignCityMesh/i);
+  assert.doesNotMatch(terrainSource, /data-campaign-city-mesh-url/);
+  assert.doesNotMatch(mainSource, /CampaignCityDepthMesh|campaignCityMesh|city-mesh/);
+  assert.doesNotMatch(prototypeStyles, /data-campaign-city-mesh-copy-status/);
 });
 
 test("campaign fort city model assets are engine-owned and not imported by map UI", () => {
@@ -3231,6 +3264,8 @@ test("campaign fort city model assets are engine-owned and not imported by map U
   );
   assert.match(profileSource, /fortCityAssetId: "builtin\.yuanmo\.fort-city"/);
   assert.match(profileSource, /fortWallMeshUrl:/);
+  assert.doesNotMatch(profileSource, /cityDepthMeshUrl/);
+  assert.doesNotMatch(profileSource, /cityDepthTextureUrl/);
   assert.doesNotMatch(mapViewSource, /scenario-packs\/zhuyuanzhang\/assets\/map-nodes/);
   assert.doesNotMatch(mapViewSource, /fort-city\/building-/);
 });
@@ -3266,6 +3301,207 @@ test("campaign fort city model renderer ports cyh instanced draw path", () => {
   assert.match(terrainSource, /createCampaignFortCityShadowMesh/);
   assert.match(terrainSource, /campaign-fort-city-instanced\.vert\.glsl/);
   assert.match(terrainSource, /campaign-structure-shadow\.frag\.glsl/);
+});
+
+test("campaign fort city model renderer applies camera-scale LOD before building placement", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const terrainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "campaign-terrain-webgl.ts"),
+    "utf8"
+  );
+
+  assert.match(terrainSource, /CAMPAIGN_STRUCTURE_MODEL_LOD_HIDE_BELOW_SCALE/);
+  assert.match(terrainSource, /CAMPAIGN_STRUCTURE_MODEL_LOD_REDUCED_BELOW_SCALE/);
+  assert.match(terrainSource, /CAMPAIGN_STRUCTURE_MODEL_LOD_REDUCED_BUDGET_RATIO/);
+  assert.match(terrainSource, /function getCampaignStructureModelLodBudget/);
+  assert.match(
+    terrainSource,
+    /if \(currentCamera\.scale < CAMPAIGN_STRUCTURE_MODEL_LOD_HIDE_BELOW_SCALE\) \{[\s\S]*?return 0;[\s\S]*?\}/
+  );
+  assert.match(
+    terrainSource,
+    /Math\.floor\(\s*maxVisibleInstances \* CAMPAIGN_STRUCTURE_MODEL_LOD_REDUCED_BUDGET_RATIO\s*\)/
+  );
+  assert.match(
+    terrainSource,
+    /const lodBudget = getCampaignStructureModelLodBudget\(rules\.lod\.maxVisibleInstances\);[\s\S]*?const budget = Math\.min\([\s\S]*?lodBudget,[\s\S]*?totalTargetCount[\s\S]*?\);/s,
+    "Expected LOD budget to cap visible structure placement before expensive building instance generation."
+  );
+  assert.match(
+    terrainSource,
+    /if \(budget <= 0\) \{[\s\S]*?return \[\];[\s\S]*?\}[\s\S]*?const sortedForts/s,
+    "Expected far zoom levels to skip building placement and shadow/model generation."
+  );
+});
+
+test("campaign map uses shoreamend visual renderer without legacy 2d structure sprites", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+  const cloudRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-webgl.ts"
+    ),
+    "utf8"
+  );
+  const prototypeStyles = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "prototype.css"),
+    "utf8"
+  );
+  const revealMaskPath = path.join(
+    process.cwd(),
+    "src",
+    "ui",
+    "views",
+    "map",
+    "campaign-cloud-reveal-mask.ts"
+  );
+
+  assert.equal(fs.existsSync(revealMaskPath), true);
+  assert.match(cloudRendererSource, /campaign-cloud-reveal-mask/);
+  assert.match(cloudRendererSource, /createCloudRevealMaskCanvas/);
+  assert.match(cloudRendererSource, /readCloudRevealMaskDescriptor/);
+  assert.match(cloudRendererSource, /holdCampaignTerrainChunkLoading/);
+  assert.match(cloudRendererSource, /CLOUD_REVEAL_TERRAIN_LOAD_BUFFER_MS/);
+  assert.match(mapViewSource, /cloudClearHexKeys/);
+  assert.match(mapViewSource, /data-map-village-ground-texture-url/);
+  assert.match(mapViewSource, /data-map-city-ground-texture-url/);
+  assert.doesNotMatch(mapViewSource, /renderCampaignStructureVisuals/);
+  assert.doesNotMatch(mapViewSource, /c-campaign-hex-building/);
+  assert.doesNotMatch(mapViewSource, /settlementBuildingImageUrl/);
+  assert.doesNotMatch(prototypeStyles, /c-campaign-hex-building/);
+  assert.match(prototypeStyles, /grid-template-columns:\s*10px max-content/);
+  assert.match(prototypeStyles, /\.c-campaign-marker__dot\s*\{[\s\S]*width:\s*10px/);
+  assert.match(prototypeStyles, /\.c-campaign-marker__dot\s*\{[\s\S]*height:\s*10px/);
+  assert.match(prototypeStyles, /\.c-campaign-marker__dot\s*\{[\s\S]*border:\s*1\.5px solid #090805/);
+  assert.match(prototypeStyles, /\.c-campaign-marker__dot\s*\{[\s\S]*border-radius:\s*999px/);
+  assert.match(prototypeStyles, /\.c-campaign-marker__dot\s*\{[\s\S]*background:\s*#ffe68a/);
+  assert.match(
+    prototypeStyles,
+    /\.c-campaign-marker--fort \.c-campaign-marker__dot\s*\{[\s\S]*background:\s*#9b9b91/
+  );
+  assert.match(prototypeStyles, /\.c-campaign-marker__label\s*\{[\s\S]*max-width:\s*256px/);
+  assert.match(prototypeStyles, /\.c-campaign-marker__label\s*\{[\s\S]*font-size:\s*14px/);
+  assert.doesNotMatch(prototypeStyles, /zhen\.png/);
+  assert.doesNotMatch(prototypeStyles, /cheng\.png/);
+});
+
+test("campaign map includes shoreamend settlement ground texture layers", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const yuanmoMapSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const yuanmoPackMapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang",
+      "maps.json"
+    ),
+    "utf8"
+  );
+
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "assets",
+        "yuanmo-map",
+        "campaign-village-ground-texture.png"
+      )
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "assets",
+        "yuanmo-map",
+        "campaign-city-ground-texture.png"
+      )
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "content",
+        "scenario-packs",
+        "zhuyuanzhang",
+        "assets",
+        "maps",
+        "campaign-village-ground-texture.png"
+      )
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "content",
+        "scenario-packs",
+        "zhuyuanzhang",
+        "assets",
+        "maps",
+        "campaign-city-ground-texture.png"
+      )
+    ),
+    true
+  );
+  assert.match(yuanmoMapSource, /map_village_ground_textureUrl/);
+  assert.match(yuanmoMapSource, /"id": "map_village_ground_texture"/);
+  assert.match(yuanmoMapSource, /map_city_ground_textureUrl/);
+  assert.match(yuanmoMapSource, /"id": "map_city_ground_texture"/);
+  assert.match(yuanmoPackMapSource, /"id": "map_village_ground_texture"/);
+  assert.match(yuanmoPackMapSource, /campaign-village-ground-texture\.png/);
+  assert.match(yuanmoPackMapSource, /"id": "map_city_ground_texture"/);
+  assert.match(yuanmoPackMapSource, /campaign-city-ground-texture\.png/);
+});
+
+test("campaign map marker runtime source feeds terrain structure ground overlay", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+  const terrainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "campaign-terrain-webgl.ts"),
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /renderCampaignMarkerRuntimeSource/);
+  assert.match(mapViewSource, /escapeJsonForHtmlScript/);
+  assert.match(mapViewSource, /data-campaign-marker-source="true"/);
+  assert.match(mapViewSource, /data-campaign-marker-layer="true"/);
+  assert.match(mapViewSource, /left:\s*\(marker\.x \/ model\.coordinateSpace\.width\) \* 100/);
+  assert.match(mapViewSource, /bottom:\s*\(marker\.y \/ model\.coordinateSpace\.height\) \* 100/);
+  assert.match(mapViewSource, /u:\s*marker\.x \/ model\.coordinateSpace\.width/);
+  assert.match(mapViewSource, /v:\s*1 - marker\.y \/ model\.coordinateSpace\.height/);
+  assert.doesNotMatch(mapViewSource, /function renderCampaignMarkers/);
+  assert.match(terrainSource, /readCampaignRuntimeMarkers\(stage\)/);
+  assert.match(terrainSource, /applyCampaignStructureGroundSemanticOverlay/);
+  assert.match(terrainSource, /syncCampaignMarkerLayer/);
 });
 
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
@@ -3840,7 +4076,6 @@ test("campaign map render keeps a unified low-resolution budget during zoom", ()
     ),
     "utf8"
   );
-
   assert.match(
     terrainRendererSource,
     /const pixelRatio = Math\.min\(window\.devicePixelRatio \|\| 1, 1\);/,
@@ -4085,7 +4320,7 @@ test("campaign map zoom uses a persistent target-chasing controller", () => {
   );
 });
 
-test("campaign map performance panel is hidden by default and exposes render stats on demand", () => {
+test("campaign map removes render stats performance debug panel path", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src", "main.ts"),
     "utf8"
@@ -4112,36 +4347,45 @@ test("campaign map performance panel is hidden by default and exposes render sta
     ),
     "utf8"
   );
+  const prototypeStyles = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "prototype.css"),
+    "utf8"
+  );
 
-  assert.match(
+  assert.doesNotMatch(
     mainSource,
     /rpgMapPerf\?: CampaignMapPerfConsoleCommand;/,
-    "Expected a console command for opening the map performance panel."
+    "Expected the map performance debug console command to be removed."
   );
-  assert.match(
+  assert.doesNotMatch(
     mainSource,
     /let campaignMapPerfPanelEnabled = false;/,
-    "Expected the map performance panel to be hidden by default."
+    "Expected the map performance panel toggle state to be removed."
   );
-  assert.match(
+  assert.doesNotMatch(
     mainSource,
-    /window\.rpgMapPerf = \(command = "status"\) => \{[\s\S]*?syncCampaignMapPerfPanel\(\);[\s\S]*?return getCampaignMapPerfSnapshot\(\);[\s\S]*?\};/s,
-    "Expected the performance command to toggle the panel and return a live snapshot."
+    /window\.rpgMapPerf|getCampaignMapPerfSnapshot|syncCampaignMapPerfPanel|formatMapPerfMs/,
+    "Expected the main runtime to stop aggregating map render stats for a debug panel."
   );
-  assert.match(
+  assert.doesNotMatch(
     mainSource,
     /data-campaign-map-perf-panel/,
-    "Expected the panel to use a stable DOM marker for browser inspection."
+    "Expected the map performance panel DOM marker to be removed."
   );
-  assert.match(
+  assert.doesNotMatch(
     terrainSource,
-    /export function getCampaignTerrainRenderStats\(\): CampaignTerrainRenderStats/,
-    "Expected terrain renderer stats to be readable by the perf panel."
+    /CampaignTerrainRenderStats|getCampaignTerrainRenderStats|campaignTerrainRenderStats|lastRenderDurationMs|lastDrawCalls/,
+    "Expected terrain renderer stats tracking to be removed with the perf panel."
   );
-  assert.match(
+  assert.doesNotMatch(
     cloudSource,
-    /export function getCampaignCloudRenderStats\(\): CampaignCloudRenderStats/,
-    "Expected cloud renderer stats to be readable by the perf panel."
+    /CampaignCloudRenderStats|getCampaignCloudRenderStats|campaignCloudRenderStats|lastRenderDurationMs|lastDrawCalls|interactionActive/,
+    "Expected cloud renderer stats tracking to be removed with the perf panel."
+  );
+  assert.doesNotMatch(
+    prototypeStyles,
+    /c-campaign-map-perf-panel/,
+    "Expected the orphaned performance panel styles to be removed."
   );
 });
 
@@ -4217,6 +4461,17 @@ test("campaign fog exploration stays active without the removed shader renderer"
     ),
     "utf8"
   );
+  const cloudRevealMaskSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-reveal-mask.ts"
+    ),
+    "utf8"
+  );
   const shaderRoot = path.join(
     process.cwd(),
     "src",
@@ -4258,7 +4513,7 @@ test("campaign fog exploration stays active without the removed shader renderer"
     /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/
   );
   assert.match(
-    cloudRendererSource,
+    cloudRevealMaskSource,
     /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/
   );
   assert.match(terrainRendererSource, /CLOUD_REVEAL_REFERENCE_HEIGHT/);

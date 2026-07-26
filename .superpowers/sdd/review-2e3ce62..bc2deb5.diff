@@ -1,0 +1,1613 @@
+﻿# Review package: 2e3ce62a..bc2deb5ad2f7d04bb303752d19172e275f05caef
+
+## Commits
+bc2deb5a Normalize temple review flow
+
+## Files changed
+ docs/change-log.md                                 |   6 +
+ .../plans/2026-07-24-faction-review-flow-plan.md   |  66 +++---
+ docs/superpowers/project-progress.md               |  10 +-
+ .../temple-house/temple-house-house-module.ts      | 244 +++++++++++++++++---
+ .../scenario-packs/zhuyuanzhang/activities.json    |   5 +
+ src/domain/house-modules/temple-house-session.ts   |  21 +-
+ src/domain/temple-house.ts                         |   1 +
+ tests/faction-review-ui-contract.test.cjs          |  18 ++
+ tests/robustness.test.cjs                          | 255 +++++++--------------
+ 9 files changed, 395 insertions(+), 231 deletions(-)
+
+## Diff
+diff --git a/docs/change-log.md b/docs/change-log.md
+index 3e0bf878..4da60b4e 100644
+--- a/docs/change-log.md
++++ b/docs/change-log.md
+@@ -1,14 +1,20 @@
+ ﻿# 变更记录
+ 
+ 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
+ 
++## 2026-07-24 Faction Review Flow
++
++- Normalized temple and keep review cadence into shared review semantics for assignment tables, contribution grades, praise, policy panels, advice prompt, and rank-gated task choices.
++- Added faction-internal merit rank tables for temple and Red Turban identities, with task choices displaying minimum identity requirements.
++- Added structured review assignment and policy panel view models so application modules no longer pass table-like HTML or paragraph-only reports.
++
+ ## 2026-07-24 Keep Faction Review Normalization
+ 
+ ### Changed
+ - keep house 评定流程改为 normalized cadence：开场、结构化委任表、表彰、形势、方略面板、进言选择、委任选择、已委任。
+ - keep house 普通委任任务改为使用 Red Turban faction merit rank 进行身份门槛判断，并在任务选择中显示最低身份要求。
+ - keep house 委任提交仍在 keep module 内本地完成，继续写入下次评定日期、当前 mission、UI mission text 与 `KEEP_HOUSE_VARIABLE_KEYS.lastAssignedTaskId`。
+ 
+ ### Impact
+ - keep review 不再根据玩家 fame 推导任务可接等级；后续 Red Turban 评定任务应继续通过 `reviewMinRankId` 和 shared faction review helpers 接入。
+ 
+diff --git a/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md b/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md
+index 4fd2fd71..29971c1a 100644
+--- a/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md
++++ b/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md
+@@ -21,45 +21,49 @@
+ - Completion labels must be exactly `赫赫之功`, `尽职尽责`, `差强人意`, `不尽人意`, `碌碌无为`.
+ - Policy panel fields must be `总目标`, `阶段目标`, `执行计划`.
+ - Ordinary task choice labels must append `（最低身份：身份名）`.
+ - Temple and Red Turban faction merit are tracked separately per faction.
+ - `发表意见` remains an extension point in this slice and may route to a placeholder response before ordinary assignment selection.
+ - Special story task support is an interface only in this slice; no story-specific special task content is required.
+ - If shared review interfaces, runtime session structure, registry shape, or cross-module wiring changes, update `docs/change-log.md`.
+ 
+ ## Execution State
+ 
+-- Status: `running`
++- Status: `completed-but-open`
+ - Last Updated: `2026-07-24`
+-- Current Focus: `Task 3 complete; Task 4 next`
+-- Next Step: `Execute Task 4 with failing temple flow tests first.`
+-- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "keep house" tests/robustness.test.cjs`; `npm run typecheck`
++- Current Focus: `Implementation complete; waiting for review/sync/push before closeout`
++- Next Step: `Review Task 4 diff and resolve or explicitly accept the known unrelated child 27 startup coordinator full-suite failure before closing.`
++- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "temple house review|temple review|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs`; `npm run lint:plans`; `npm run typecheck`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated `child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup`, expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; $env:npm_config_cache='D:\RPG_TG\.npm-cache'; npm run build`
+ - Notes: `Plan created after approval of docs/superpowers/specs/2026-07-24-faction-review-flow-design.md.`
+ 
+ ## Progress Log
+ 
+ - 2026-07-24
+   - Summary: `Created the implementation plan for normalized faction review flow after spec approval.`
+   - Verification: `npm run lint:plans`
+   - Next: `Run npm run lint:plans, then start Task 1 with TDD.`
+ - 2026-07-24
+   - Summary: `Completed Task 1 shared review domain helpers, faction merit runtime storage, and focused domain coverage.`
+   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }`; `npm run typecheck`
+   - Next: `Execute Task 2 with failing UI contract tests first.`
+ - 2026-07-24
+   - Summary: `Completed Task 2 structured review assignment table and policy panel overlay contracts with shared UI renderers.`
+   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-ui-contract.test.cjs }`
+   - Next: `Execute Task 3 with failing keep flow and rank-gate tests first.`
+ - 2026-07-24
+   - Summary: `Completed Task 3 keep review normalization with structured assignment table/policy stages, Red Turban merit rank gates, and visible minimum-identity task labels while preserving keep assignment commit effects.`
+   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "keep house" tests/robustness.test.cjs`; `npm run typecheck`
+   - Next: `Execute Task 4 with failing temple flow tests first.`
++- 2026-07-24
++  - Summary: `Completed Task 4 temple review normalization with shared review assignment rows, policy panel/advice stages, temple merit rank-gated work choices, and preserved temple work-plan assignment commits.`
++  - Verification: `RED npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }` failed on missing temple normalized review copy; `GREEN npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }` passed 11/11; `node --test --test-name-pattern "temple house review|temple review|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs` passed 4/4; `npm run lint:plans` passed; `npm run typecheck` passed; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated child 27 startup coordinator expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; $env:npm_config_cache='D:\RPG_TG\.npm-cache'; npm run build` passed.`
++  - Next: `Commit Task 4 changes and keep child completed-but-open until review, push, and the known unrelated full-suite failure are handled.`
+ 
+ ---
+ 
+ ## Based On Spec
+ 
+ - Primary spec:
+   - `docs/superpowers/specs/2026-07-24-faction-review-flow-design.md`
+ - Plan governance:
+   - `docs/superpowers/specs/plan-governance-spec.md`
+ - Canonical progress entry:
+@@ -731,21 +735,21 @@ Update this plan:
+ - Modify: `tests/faction-review-domain.test.cjs`
+ - Modify: `tests/faction-review-ui-contract.test.cjs`
+ - Modify: `docs/change-log.md`
+ - Modify: `docs/superpowers/project-progress.md`
+ - Modify: `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`
+ 
+ **Interfaces:**
+ - Consumes: Task 1 helpers and Task 2 overlays.
+ - Produces: temple review sequence matching the shared flow, with existing temple story gates preserved.
+ 
+-- [ ] **Step 1: Add failing temple source and flow contract tests**
++- [x] **Step 1: Add failing temple source and flow contract tests**
+ 
+ Append to `tests/faction-review-ui-contract.test.cjs`:
+ 
+ ```js
+ test("temple review source uses normalized review table, policy panel, and advice choices", () => {
+   const source = readSource("src/application/house-modules/temple-house/temple-house-house-module.ts");
+   for (const text of [
+     "这段时间大家辛苦了",
+     "看看大家这期间的进展吧",
+     "有谁要进言吗",
+@@ -753,151 +757,151 @@ test("temple review source uses normalized review table, policy panel, and advic
+     "一言不发",
+     "review-assignment-table",
+     "review-policy-panel",
+   ]) {
+     assert.match(source, new RegExp(text));
+   }
+   assert.doesNotMatch(source, /上期寺中贡献/);
+ });
+ ```
+ 
+-- [ ] **Step 2: Run targeted tests and verify RED**
++- [x] **Step 2: Run targeted tests and verify RED**
+ 
+ Run:
+ 
+ ```powershell
+ npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }
+ ```
+ 
+ Expected:
+ 
+ - Fails because temple still uses old contribution alert flow or lacks normalized advice choices.
+ 
+-- [ ] **Step 3: Add rank metadata to temple activities**
++- [x] **Step 3: Add rank metadata to temple activities**
+ 
+ Modify temple task definitions in `src/content/scenario-packs/zhuyuanzhang/activities.json`:
+ 
+ - ordinary first-week temple help tasks: `reviewMinRankId: "temple.laborer"`
+ - `beg-alms`: `reviewMinRankId: "temple.novice"` unless story-specific week logic forces it
+ - later relief/refugee-style tasks: use `temple.itinerant` or higher only if currently exposed by review choices
+ 
+-- [ ] **Step 4: Normalize temple contribution rows**
++- [x] **Step 4: Normalize temple contribution rows**
+ 
+ Use shared `ReviewAssignmentRow[]` for temple contribution entries:
+ 
+ - `characterName` from player and senior monk
+ - `assignmentTitle` from current or previous work plan label
+ - `contribution` from existing temple contribution values
+ - `grade` from `resolveReviewCompletionGrade`
+ 
+ Do not replace existing temple story flags or current work-plan commit behavior.
+ 
+-- [ ] **Step 5: Normalize temple meeting flow**
++- [x] **Step 5: Normalize temple meeting flow**
+ 
+ Update temple meeting progression to match the shared sequence:
+ 
+ - leader opening
+ - `review-assignment-table`
+ - praise
+ - situation
+ - policy panel
+ - advice prompt with `发表意见` and `一言不发`
+ - special-task hook default `none`
+ - ordinary work choices with minimum identity labels
+ 
+ Preserve existing special week behavior:
+ 
+ - third week and fourth week forced `beg-alms` choices still force the same work plan
+ - locked begging still blocks as before
+ - existing mission and review-date updates still happen in `submitReviewWorkPlan()`
+ 
+-- [ ] **Step 6: Ensure policy panel remains visible during advice prompt**
++- [x] **Step 6: Ensure policy panel remains visible during advice prompt**
+ 
+ Keep `sessionState.overlay` or an equivalent typed visible panel as `review-policy-panel` while dialogue text is `有谁要进言吗`.
+ 
+-- [ ] **Step 7: Update changelog and governance state**
++- [x] **Step 7: Update changelog and governance state**
+ 
+ Append to `docs/change-log.md`:
+ 
+ ```md
+ ## 2026-07-24 Faction Review Flow
+ 
+ - Normalized temple and keep review cadence into shared review semantics for assignment tables, contribution grades, praise, policy panels, advice prompt, and rank-gated task choices.
+ - Added faction-internal merit rank tables for temple and Red Turban identities, with task choices displaying minimum identity requirements.
+ - Added structured review assignment and policy panel view models so application modules no longer pass table-like HTML or paragraph-only reports.
+ ```
+ 
+ Update `docs/superpowers/project-progress.md` so the current task points to this plan as `completed-but-open` only after verification passes; otherwise keep status `running` and record the next concrete step.
+ 
+-- [ ] **Step 8: Run targeted verification**
++- [x] **Step 8: Run targeted verification**
+ 
+ Run:
+ 
+ ```powershell
+ npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }
+ ```
+ 
+ Expected:
+ 
+ - Targeted review tests pass.
+ 
+-- [ ] **Step 9: Run full verification**
++- [x] **Step 9: Run full verification**
+ 
+ Run:
+ 
+ ```powershell
+ npm run lint:plans
+ npm run typecheck
+ npm test
+ npm run build
+ ```
+ 
+ Expected:
+ 
+ - Each command exits 0.
+ 
+-- [ ] **Step 10: Update plan progress and close implementation state**
++- [x] **Step 10: Update plan progress and close implementation state**
+ 
+ Update this plan:
+ 
+ - mark Task 4 steps complete
+ - set `Execution State.Status` to `completed-but-open`
+ - set `Execution State.Current Focus` to `Implementation complete; waiting for review/sync/push before closeout`
+ - set `Execution State.Verification` to the exact commands that passed
+ - append a `Progress Log` entry with targeted and full verification
+ - check the `Exit Check` items that are satisfied
+ 
+ ## Exit Check
+ 
+-- [ ] `Temple and keep review flows share the same review semantics for table rows, grades, ranking, policy, and task-rank gating.`
+-- [ ] `The visible flow follows leader opening, assignment table, praise, situation, policy, advice, and assignment selection.`
+-- [ ] `Assignment table and policy panel are typed view models rendered in UI code.`
+-- [ ] `Temple and Red Turban rank tables are implemented and tested.`
+-- [ ] `Ordinary task choices show minimum identity labels.`
+-- [ ] `Special task hook exists and cleanly falls back to ordinary task choices when empty.`
+-- [ ] `No new review business logic is added to src/main.ts.`
++- [x] `Temple and keep review flows share the same review semantics for table rows, grades, ranking, policy, and task-rank gating.`
++- [x] `The visible flow follows leader opening, assignment table, praise, situation, policy, advice, and assignment selection.`
++- [x] `Assignment table and policy panel are typed view models rendered in UI code.`
++- [x] `Temple and Red Turban rank tables are implemented and tested.`
++- [x] `Ordinary task choices show minimum identity labels.`
++- [x] `Special task hook exists and cleanly falls back to ordinary task choices when empty.`
++- [x] `No new review business logic is added to src/main.ts.`
+ - [ ] `Required tests and verification commands pass.`
+-- [ ] `docs/change-log.md is updated.`
+-- [ ] `Project progress sync is updated if the child state changed.`
++- [x] `docs/change-log.md is updated.`
++- [x] `Project progress sync is updated if the child state changed.`
+ 
+ ## Completion Checklist
+ 
+-- [ ] Plan checkboxes updated
+-- [ ] `Execution State` updated
+-- [ ] `Progress Log` updated
+-- [ ] Verification recorded
++- [x] Plan checkboxes updated
++- [x] `Execution State` updated
++- [x] `Progress Log` updated
++- [x] Verification recorded
+ 
+ ## Child Closeout
+ 
+ - Closed Child: `Faction Review Flow`
+ - Parent Task: `Normalize faction review cadence`
+ - Parent Stage: `Faction Review Flow Implementation`
+-- Closeout Status: `not-closed`
+-- Project Progress Synced: `no`
++- Closeout Status: `completed-but-open`
++- Project Progress Synced: `yes`
+ - Next Child: `none`
+ - Next Child Status: `none`
+-- Next Required Action: `complete-implementation-and-verify`
++- Next Required Action: `review-commit-and-push-before-closeout`
+ - Next Entry Document: `docs/superpowers/project-progress.md`
+ - Next Owner Document: `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`
+ - Push Status: `not-pushed`
+ - Push Commit: `none`
+-- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md from the first unchecked task.`
++- Resume From: `Open docs/superpowers/project-progress.md, then review/commit/push Task 4; do not close this child while the known unrelated child 27 full-suite failure remains unresolved or unaccepted.`
+diff --git a/docs/superpowers/project-progress.md b/docs/superpowers/project-progress.md
+index 9fbfaf54..9d271685 100644
+--- a/docs/superpowers/project-progress.md
++++ b/docs/superpowers/project-progress.md
+@@ -1,29 +1,29 @@
+ # Project Progress
+ 
+ ## Current State
+ 
+ - Current Stage: `Faction Review Flow Implementation`
+ - Current Stage Status: `running`
+ - Current Task: `Normalize faction review cadence`
+ - Current Task Status: `running`
+ - Current Child: `Faction Review Flow`
+-- Current Child Status: `running`
++- Current Child Status: `completed-but-open`
+ - Next Child: `none`
+ - Next Child Status: `none`
+-- Next Required Action: `execute-plan-from-task-1`
++- Next Required Action: `review-commit-and-push-before-closeout`
+ - Next Entry Document: `docs/superpowers/project-progress.md`
+ - Next Owner Document: `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`
+ - Last Closed Item: `none`
+ - Push Status: `not-pushed`
+ - Push Commit: `none`
+-- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md from Task 1.`
++- Resume From: `Open docs/superpowers/project-progress.md, then review docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md for closeout; remaining blocker is the known unrelated child 27 startup coordinator test failure until fixed or accepted.`
+ 
+ ## Progress Log
+ 
+ - 2026-07-06
+   - Summary: `Created the first fail-closed progress-driven governance spec and started replacing the old weekly-governance entry surfaces.`
+   - Verification: `Not run as part of this doc-only change`
+   - Next: `Finish central governance docs, templates, and lint alignment, then re-audit repository references.`
+ - 2026-07-21
+   - Summary: `Opened the user-requested unified backpack inventory child to replace the visible valuables workflow with a shared item system.`
+   - Verification: `Not run`
+@@ -37,14 +37,18 @@
+   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/unified-backpack-inventory.test.cjs tests/backpack-ui-contract.test.cjs }`; `npm run typecheck`; `npm run build`; `npm run lint:plans`
+   - Next: `Review diff, commit/push if requested, then close or continue the inventory child.`
+ - 2026-07-21
+   - Summary: `Added the requested backpack entry directly to the campaign main-map bottom action layer so the map screen no longer depends on the generic HUD shortcut being visible.`
+   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/backpack-ui-contract.test.cjs }`; `npm run typecheck`; `npm run build`
+   - Next: `Review diff, commit/push if requested, then close or continue the inventory child.`
+ - 2026-07-24
+   - Summary: `Opened the faction review flow child to normalize temple and keep review cadence, contribution tables, policy announcement, advice prompt, and rank-gated assignment choices.`
+   - Verification: `npm run lint:plans`
+   - Next: `Execute docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md from Task 1.`
++- 2026-07-24
++  - Summary: `Completed temple review normalization for Task 4 with shared assignment table, policy panel, advice prompt, and rank-gated temple work choices; implementation remains completed-but-open pending review, push, and known unrelated full-suite failure resolution.`
++  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "temple house review|temple review|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs`; `npm run lint:plans`; `npm run typecheck`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated `child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup`, expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; $env:npm_config_cache='D:\RPG_TG\.npm-cache'; npm run build`
++  - Next: `Commit Task 4 changes, then push/review before child closeout; do not close while the known unrelated full-suite failure remains unresolved.`
+ 
+ ## Latest Closeout
+ 
+ No structured child closeout has been recorded for this governance migration batch yet.
+diff --git a/src/application/house-modules/temple-house/temple-house-house-module.ts b/src/application/house-modules/temple-house/temple-house-house-module.ts
+index 652e2ebf..331bdd78 100644
+--- a/src/application/house-modules/temple-house/temple-house-house-module.ts
++++ b/src/application/house-modules/temple-house/temple-house-house-module.ts
+@@ -9,20 +9,24 @@ import type {
+ } from "../../../domain/activity-session";
+ import {
+   FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS,
+   FORTUNE_BOARD_MAX_ANIMATION_TICK_MS,
+   FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
+   PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS,
+ } from "../../../domain/activity-session";
+ import type { CharacterDefinition } from "../../../domain/character";
+ import type { CalendarDate, GameState } from "../../../domain/game-state";
+ import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
++import type {
++  ReviewAssignmentRow,
++  ReviewPolicyPanel,
++} from "../../../domain/review";
+ import type {
+   ActiveHouseModuleSession,
+   HouseActionViewModel,
+   HouseModuleDefinition,
+   HouseModuleDispatchInput,
+   HouseModuleTransitionResult,
+   HouseModuleViewModel,
+   HouseOverlayViewModel,
+   MapAutoAdvanceSnapshot,
+ } from "../../../domain/house-module";
+@@ -84,31 +88,41 @@ import {
+ } from "../../time/council-priority";
+ import {
+   advanceGameStateOneDay,
+   formatCouncilStatusText,
+   getCouncilStatusText,
+ } from "../../time/time-progression";
+ import {
+   resolveTextEntry,
+   resolveTextTemplateEntry,
+ } from "../../content/text-resolution";
++import {
++  createReviewTaskChoiceViewModels,
++  getDefaultReviewSpecialTaskHookResult,
++  readFactionMerit,
++  resolveFactionMeritRank,
++  resolveReviewCompletionGrade,
++  TEMPLE_FACTION_RANKS,
++} from "../../review/faction-review";
+ import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
+ 
+ const DONATION_AMOUNT = 50;
+ const ASSIGN_TEMPLE_TASK_ACTION_PREFIX = "assign-temple-task:";
+ const CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX = "confirm-start-temple-task:";
+ const QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX = "quick-complete-temple-task:";
+ const TEMPLE_WORK_PLAY_ACTION_ID = "temple-work-board-play";
+ const TEMPLE_WORK_WAGER_MINUS_ACTION_ID = "temple-work-board-wager-minus";
+ const TEMPLE_WORK_WAGER_PLUS_ACTION_ID = "temple-work-board-wager-plus";
+ const TEMPLE_WORK_SPEED_FIELD_ID = "temple-work-board-speed";
+ const SELECT_REVIEW_WORK_ACTION_PREFIX = "select-review-work:";
++const TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID = "temple-review-give-advice";
++const TEMPLE_REVIEW_STAY_SILENT_ACTION_ID = "temple-review-stay-silent";
+ const OPEN_TEMPLE_WORK_MENU_ACTION_ID = "open-temple-work-menu";
+ const CLOSE_TEMPLE_WORK_MENU_ACTION_ID = "close-temple-work-menu";
+ const OPEN_TEMPLE_REST_MENU_ACTION_ID = "open-temple-rest-menu";
+ const CLOSE_TEMPLE_REST_MENU_ACTION_ID = "close-temple-rest-menu";
+ const OPEN_TEMPLE_REST_DAYS_ACTION_ID = "open-temple-rest-days";
+ const CONFIRM_TEMPLE_REST_DAYS_ACTION_ID = "confirm-temple-rest-days";
+ const TEMPLE_REST_ONE_DAY_ACTION_ID = "temple-rest-one-day";
+ const TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID = "temple-rest-until-council";
+ const TEMPLE_REST_UNTIL_RECOVERED_ACTION_ID = "temple-rest-until-recovered";
+ const TEMPLE_REST_DAYS_FIELD_ID = "temple-house-rest-days";
+@@ -169,20 +183,21 @@ function resolveTempleTemplateText(
+   );
+ }
+ 
+ type TempleTaskActivityDefinition = ActivityDefinition & {
+   houseModuleId: "temple-house";
+   taskId: string;
+   missionId: string;
+   titleTextId: string;
+   briefingTextId: string;
+   orderLineTextIds: string[];
++  reviewMinRankId?: string;
+ };
+ 
+ function isTempleTaskActivityDefinition(
+   activityDefinition: ActivityDefinition
+ ): activityDefinition is TempleTaskActivityDefinition {
+   return (
+     activityDefinition.houseModuleId === "temple-house" &&
+     typeof activityDefinition.taskId === "string" &&
+     typeof activityDefinition.missionId === "string" &&
+     typeof activityDefinition.titleTextId === "string" &&
+@@ -353,20 +368,21 @@ function resolveTempleTaskDefinition(
+ ): TempleHouseTaskDefinition {
+   return {
+     id: activityDefinition.taskId,
+     activityId: activityDefinition.id,
+     missionId: activityDefinition.missionId,
+     title: resolveTempleText(textEntriesById, activityDefinition.titleTextId),
+     briefing: resolveTempleText(textEntriesById, activityDefinition.briefingTextId),
+     orderLines: activityDefinition.orderLineTextIds.map((textId) =>
+       resolveTempleText(textEntriesById, textId)
+     ),
++    minRankId: activityDefinition.reviewMinRankId ?? "temple.laborer",
+   };
+ }
+ 
+ function getTempleTaskDefinitions(
+   activityDefinitionsById?: Record<string, ActivityDefinition>,
+   textEntriesById?: Record<string, string>
+ ): TempleHouseTaskDefinition[] {
+   const taskActivityDefinitionsById = new Map<
+     string,
+     TempleTaskActivityDefinition
+@@ -1662,29 +1678,75 @@ function getTempleContributionEntries(
+       contribution: seniorMonkContribution,
+     },
+     {
+       characterId: playerCharacter.id,
+       name: playerCharacter.name,
+       contribution: playerContribution,
+     },
+   ].sort((leftEntry, rightEntry) => rightEntry.contribution - leftEntry.contribution);
+ }
+ 
+-function getTempleContributionReportLines(
++function createTempleReviewAssignmentRows(
++  gameState: GameState,
+   contributionEntries: Array<{
++    characterId: string;
+     name: string;
+     contribution: number;
+-  }>
+-): string[] {
+-  return contributionEntries.map(
+-    (entry, index) => `${index + 1}. ${entry.name}：${entry.contribution} 点贡献`
+-  );
++  }>,
++  textEntriesById?: Record<string, string>
++): ReviewAssignmentRow[] {
++  const currentWorkPlan = readTempleWorkPlan(gameState);
++  const assignmentTitle =
++    getTempleWorkPlanLabel(gameState, currentWorkPlan, textEntriesById) || "寺中执事";
++
++  return contributionEntries.map((entry) => ({
++    characterId: entry.characterId,
++    characterName: entry.name,
++    assignmentTitle,
++    contribution: entry.contribution,
++    grade: resolveReviewCompletionGrade(entry.contribution),
++  }));
++}
++
++function createTempleReviewPolicyPanel(
++  gameState: GameState,
++  textEntriesById?: Record<string, string>
++): ReviewPolicyPanel {
++  const policyLines = getTempleMeetingPolicyLines(gameState, textEntriesById);
++
++  return {
++    overallGoal: "保全寺众",
++    phaseGoal: policyLines[0] ?? "",
++    executionPlan: policyLines[1] ?? policyLines[0] ?? "",
++  };
++}
++
++function createTempleReviewAssignmentTableOverlay(
++  rows: ReviewAssignmentRow[]
++): TempleHouseOverlayState {
++  return {
++    type: "review-assignment-table",
++    title: "委任",
++    rows,
++    confirmActionId: "close-review-assignment-table",
++    confirmLabel: "继续",
++  };
++}
++
++function createTempleReviewPolicyPanelOverlay(
++  policy: ReviewPolicyPanel
++): TempleHouseOverlayState {
++  return {
++    type: "review-policy-panel",
++    title: "方略",
++    policy,
++  };
+ }
+ 
+ function getTempleMeetingPraiseLines(
+   contributionEntries: Array<{
+     characterId: string;
+     name: string;
+     contribution: number;
+   }>,
+   playerCharacterId: string,
+   textEntriesById?: Record<string, string>
+@@ -1858,20 +1920,22 @@ function getTempleAssignDutyLines(
+         ),
+     resolveTempleText(
+       textEntriesById,
+       "runtime.zhu_yuanzhang.temple.review.assign.default.003"
+     ),
+   ];
+ }
+ 
+ function getReviewWorkChoices(
+   gameState: GameState,
++  playerCharacterId: string,
++  activityDefinitionsById?: Record<string, ActivityDefinition>,
+   textEntriesById?: Record<string, string>
+ ): Array<{
+   id: "temple-help" | "beg-alms";
+   label: string;
+   disabled?: boolean;
+   tone?: HouseActionViewModel["tone"];
+ }> {
+   if (!isMonkStoryStage(gameState)) {
+     return [];
+   }
+@@ -1898,42 +1962,75 @@ function getReviewWorkChoices(
+           "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.fourth_week.label"
+         ),
+         tone: "accent",
+       },
+     ];
+   }
+ 
+   const choices: Array<{
+     id: "temple-help" | "beg-alms";
+     label: string;
+-    disabled?: boolean;
+     tone?: HouseActionViewModel["tone"];
+   }> = [
+     {
+       id: "temple-help",
+       label: resolveTempleText(
+         textEntriesById,
+         "runtime.zhu_yuanzhang.temple.work_plan.temple_help.label"
+       ),
+     },
+     {
+       id: "beg-alms",
+       label: resolveTempleText(
+         textEntriesById,
+         getTempleBegAlmsWorkPlanTextId(gameState, true)
+       ),
+       tone: "accent",
+-      disabled: !isBeggingUnlocked(gameState),
+     },
+   ];
+ 
+-  return choices;
++  const playerMerit = readFactionMerit(gameState, "temple", playerCharacterId);
++  const playerRank = resolveFactionMeritRank(TEMPLE_FACTION_RANKS, playerMerit);
++  const templeHelpRankId =
++    getTaskDefinitionsByIds(
++      FIRST_WEEK_TEMPLE_TASK_IDS,
++      activityDefinitionsById,
++      textEntriesById
++    )[0]?.minRankId ?? "temple.laborer";
++  const begAlmsRankId = findTempleTaskDefinition(
++    "beg-alms",
++    activityDefinitionsById,
++    textEntriesById
++  ).minRankId;
++  const choiceViewModels = createReviewTaskChoiceViewModels({
++    currentRankId: playerRank.id,
++    ranks: TEMPLE_FACTION_RANKS,
++    tasks: choices.map((choice) => ({
++      id: choice.id,
++      label: choice.label,
++      minRankId:
++        choice.id === "beg-alms" ? begAlmsRankId : templeHelpRankId,
++    })),
++  });
++
++  return choiceViewModels.map((choiceViewModel) => {
++    const baseChoice = choices.find((choice) => choice.id === choiceViewModel.id);
++
++    return {
++      id: choiceViewModel.id as "temple-help" | "beg-alms",
++      label: choiceViewModel.label,
++      disabled:
++        choiceViewModel.disabled ||
++        (choiceViewModel.id === "beg-alms" && !isBeggingUnlocked(gameState)),
++      ...(baseChoice?.tone == null ? {} : { tone: baseChoice.tone }),
++    };
++  });
+ }
+ 
+ function getTempleRootActions(
+   gameState: GameState,
+   currentWorkPlan: TempleHouseWorkPlan,
+   dialoguePhase: TempleHouseSessionState["dialoguePhase"]
+ ): HouseActionViewModel[] {
+   if (!isMonkStoryStage(gameState)) {
+     return [
+       { id: OPEN_TEMPLE_REST_MENU_ACTION_ID, label: "休息", tone: "accent" },
+@@ -3041,71 +3138,89 @@ function handleAction(
+     );
+   }
+ 
+   if (input.request.actionId === "advance-temple-dialogue") {
+     if (sessionState.mode === "meeting") {
+       const contributionEntries = getTempleContributionEntries(
+         nextState,
+         playerCharacter,
+         seniorMonkCharacter
+       );
+-      const reviewWorkChoices = getReviewWorkChoices(
+-        nextState,
+-        input.textEntriesById
+-      );
+       switch (sessionState.meetingStage) {
+         case "intro":
+           return withSessionState(
+             {
+               gameState: nextState,
+               characterDefinitions: input.characterDefinitions,
+             },
+             sessionState,
+             {
+-              meetingStage: "contribution",
++              meetingStage: "assignment-table",
+               dialoguePhase: "open",
+-              overlay: createAlertOverlay(
+-                "上期寺中贡献",
+-                getTempleContributionReportLines(contributionEntries)
++              dialogueLines: ["看看大家这期间的进展吧。"],
++              overlay: createTempleReviewAssignmentTableOverlay(
++                createTempleReviewAssignmentRows(
++                  nextState,
++                  contributionEntries,
++                  input.textEntriesById
++                )
+               ),
+             }
+           );
+         case "praise":
++          return withSessionState(
++            {
++              gameState: nextState,
++              characterDefinitions: input.characterDefinitions,
++            },
++            sessionState,
++            {
++              meetingStage: "situation",
++              dialoguePhase: "open",
++              dialogueLines: [
++                "这段时间大家辛苦了。",
++                ...getTempleMeetingPolicyLines(
++                  nextState,
++                  input.textEntriesById
++                ).slice(0, 1),
++              ],
++            }
++          );
++        case "situation":
+           return withSessionState(
+             {
+               gameState: nextState,
+               characterDefinitions: input.characterDefinitions,
+             },
+             sessionState,
+             {
+               meetingStage: "policy",
+               dialoguePhase: "open",
+-              dialogueLines: getTempleMeetingPolicyLines(
+-                nextState,
+-                input.textEntriesById
++              dialogueLines: ["所以接下来的计划如下："],
++              overlay: createTempleReviewPolicyPanelOverlay(
++                createTempleReviewPolicyPanel(nextState, input.textEntriesById)
+               ),
+             }
+           );
+         case "policy":
+           return withSessionState(
+             {
+               gameState: nextState,
+               characterDefinitions: input.characterDefinitions,
+             },
+             sessionState,
+             {
+-              meetingStage: "assign-duty",
++              meetingStage: "advice",
+               dialoguePhase: "open",
+-              dialogueLines: getTempleAssignDutyLines(
+-                nextState,
+-                reviewWorkChoices,
+-                input.textEntriesById
++              dialogueLines: ["有谁要进言吗？"],
++              overlay: createTempleReviewPolicyPanelOverlay(
++                createTempleReviewPolicyPanel(nextState, input.textEntriesById)
+               ),
+             }
+           );
+         default:
+           return createTransitionResult(input, {
+             gameState: nextState,
+           });
+       }
+     }
+ 
+@@ -3116,20 +3231,69 @@ function handleAction(
+       },
+       sessionState,
+       {
+         meetingStage: "finished",
+         dialoguePhase: "open",
+         dialogueLines: getTempleOpenLines(input.textEntriesById),
+       }
+     );
+   }
+ 
++  if (
++    input.request.actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID ||
++    input.request.actionId === TEMPLE_REVIEW_STAY_SILENT_ACTION_ID
++  ) {
++    if (sessionState.mode === "meeting" && sessionState.meetingStage === "advice") {
++      const reviewWorkChoices = getReviewWorkChoices(
++        nextState,
++        input.playerCharacterId,
++        input.activityDefinitionsById,
++        input.textEntriesById
++      );
++      const adviceResponseLines =
++        input.request.actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID
++          ? ["此议暂且记下。"]
++          : [];
++      const specialTaskHookResult = getDefaultReviewSpecialTaskHookResult();
++      const specialTaskLines =
++        specialTaskHookResult.type === "none"
++          ? []
++          : specialTaskHookResult.descriptionLines;
++
++      return withSessionState(
++        {
++          gameState: nextState,
++          characterDefinitions: input.characterDefinitions,
++        },
++        sessionState,
++        {
++          meetingStage: "assign-duty",
++          dialoguePhase: "open",
++          overlay: null,
++          dialogueLines: [
++            ...adviceResponseLines,
++            ...specialTaskLines,
++            ...getTempleAssignDutyLines(
++              nextState,
++              reviewWorkChoices,
++              input.textEntriesById
++            ),
++          ],
++        }
++      );
++    }
++
++    return createTransitionResult(input, {
++      gameState: nextState,
++    });
++  }
++
+   if (input.request.actionId === "dismiss-dialogue") {
+     return withSessionState(
+       {
+         gameState: nextState,
+         characterDefinitions: input.characterDefinitions,
+       },
+       sessionState,
+       {
+         dialoguePhase: "idle",
+         dailyActionPanel: "root",
+@@ -3571,22 +3735,22 @@ function handleAction(
+       },
+       sessionState,
+       {
+         overlay: null,
+       },
+       [{ type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID }]
+     );
+   }
+ 
+   if (
+-    input.request.actionId === "close-temple-overlay" &&
+-    sessionState.meetingStage === "contribution"
++    input.request.actionId === "close-review-assignment-table" &&
++    sessionState.meetingStage === "assignment-table"
+   ) {
+     const contributionEntries = getTempleContributionEntries(
+       nextState,
+       playerCharacter,
+       seniorMonkCharacter
+     );
+ 
+     return withSessionState(
+       {
+         gameState: nextState,
+@@ -4210,20 +4374,28 @@ function selectOverlayViewModel(
+       targetStartPercent: overlay.targetStartPercent,
+       targetWidthPercent: overlay.targetWidthPercent,
+       helperLines: [
+         "指针会来回移动，点击“停手”将其停下。",
+         "停在金色区间内算成功，共判定三次。",
+       ],
+       stopActionId: "temple-work-stop",
+     };
+   }
+ 
++  if (overlay.type === "review-assignment-table") {
++    return overlay;
++  }
++
++  if (overlay.type === "review-policy-panel") {
++    return overlay;
++  }
++
+   return {
+     type: "result",
+     title: overlay.title,
+     grade: overlay.grade,
+     score: overlay.score,
+     rewardLines: overlay.rewardLines,
+     confirmActionId: "close-temple-result",
+     confirmLabel: "收工",
+   };
+ }
+@@ -4367,20 +4539,22 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
+     const beggingLastGrade = readTempleBeggingLastGrade(nextState);
+     const beggingFoodToSubmit = readTempleAvailableFood(nextState);
+     const dailyTasks = getDailyTempleTasks(
+       nextState,
+       currentWorkPlan,
+       input.activityDefinitionsById,
+       input.textEntriesById
+     );
+     const reviewWorkChoices = getReviewWorkChoices(
+       nextState,
++      input.playerCharacterId,
++      input.activityDefinitionsById,
+       input.textEntriesById
+     );
+     const templeTaskDefinitions = getTempleTaskDefinitions(
+       input.activityDefinitionsById,
+       input.textEntriesById
+     );
+     const dialogueOverrideSpeaker =
+       sessionState.dialogueOverride == null
+         ? null
+         : input.characterDefinitions.find(
+@@ -4398,20 +4572,24 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
+     const shouldShowDailyActions =
+       sessionState.mode === "daily" &&
+       sessionState.overlay == null &&
+       !hasActiveTempleWorkPlayable &&
+       sessionState.dialoguePhase === "open";
+     const shouldShowMeetingTasks =
+       sessionState.mode === "meeting" &&
+       sessionState.meetingStage === "assign-duty" &&
+       sessionState.overlay == null &&
+       !hasActiveTempleWorkPlayable;
++    const shouldShowMeetingAdvice =
++      sessionState.mode === "meeting" &&
++      sessionState.meetingStage === "advice" &&
++      !hasActiveTempleWorkPlayable;
+     const selectedTask =
+       sessionState.selectedTaskId == null
+         ? null
+         : templeTaskDefinitions.find(
+             (taskDefinition) => taskDefinition.id === sessionState.selectedTaskId
+           ) ?? null;
+     const meetingParticipantIds = getTempleMeetingParticipantIds(
+       input.houseDefinition.characterIds,
+       input.playerCharacterId,
+       abbotCharacter.id
+@@ -4506,43 +4684,51 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
+               position: "right",
+               textLines:
+                 sessionState.dialogueOverride?.textLines ??
+                 sessionState.dialogueLines,
+               advanceActionId:
+                 sessionState.dialogueOverride?.advanceActionId ??
+                 (sessionState.overlay == null &&
+                 ((sessionState.mode === "daily" &&
+                   sessionState.dialoguePhase === "greeting") ||
+                   (sessionState.mode === "meeting" &&
+-                    ["intro", "praise", "policy"].includes(sessionState.meetingStage)))
++                    ["intro", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
+                   ? "advance-temple-dialogue"
+                   : null),
+               advanceHintText:
+                 sessionState.dialogueOverride?.advanceHintText ??
+                 (sessionState.overlay == null &&
+                 ((sessionState.mode === "daily" &&
+                   sessionState.dialoguePhase === "greeting") ||
+                   (sessionState.mode === "meeting" &&
+-                    ["intro", "praise", "policy"].includes(sessionState.meetingStage)))
++                    ["intro", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
+                   ? "点击继续"
+                   : null),
+             },
+       actionContainer: shouldShowMeetingTasks
+         ? {
+             title: isMonkStoryStage(nextState) ? "本轮安排" : "本次寺中差事",
+             actions: reviewWorkChoices.map<HouseActionViewModel>((workChoice) => ({
+               id: `${SELECT_REVIEW_WORK_ACTION_PREFIX}${workChoice.id}`,
+               label: workChoice.label,
+               ...(workChoice.disabled == null ? {} : { disabled: workChoice.disabled }),
+               ...(workChoice.tone == null ? {} : { tone: workChoice.tone }),
+             })),
+           }
++        : shouldShowMeetingAdvice
++          ? {
++              title: "进言",
++              actions: [
++                { id: TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID, label: "发表意见" },
++                { id: TEMPLE_REVIEW_STAY_SILENT_ACTION_ID, label: "一言不发" },
++              ],
++            }
+         : shouldShowDailyActions
+           ? {
+               title:
+                 sessionState.dailyActionPanel === "rest"
+                   ? "休息"
+                   : isMonkStoryStage(nextState) && sessionState.dailyActionPanel === "work"
+                   ? "工作"
+                   : "寺庙事务",
+               actions:
+                 sessionState.dailyActionPanel === "rest"
+diff --git a/src/content/scenario-packs/zhuyuanzhang/activities.json b/src/content/scenario-packs/zhuyuanzhang/activities.json
+index 4045ea4f..00f6740b 100644
+--- a/src/content/scenario-packs/zhuyuanzhang/activities.json
++++ b/src/content/scenario-packs/zhuyuanzhang/activities.json
+@@ -29,80 +29,85 @@
+     "handlerId": "generic.qte",
+     "houseModuleId": "temple-house",
+     "taskId": "copy-scripture",
+     "missionId": "mission.temple.copy-scripture",
+     "titleTextId": "runtime.zhu_yuanzhang.temple.task.copy_scripture.title",
+     "briefingTextId": "runtime.zhu_yuanzhang.temple.task.copy_scripture.briefing",
+     "orderLineTextIds": [
+       "runtime.zhu_yuanzhang.temple.task.copy_scripture.order.001",
+       "runtime.zhu_yuanzhang.temple.task.copy_scripture.order.002"
+     ],
++    "reviewMinRankId": "temple.laborer",
+     "tags": ["scenario", "temple", "task"]
+   },
+   {
+     "id": "activity.zhu_yuanzhang.temple.sweep_courtyard",
+     "label": "Temple sweep courtyard task",
+     "handlerId": "generic.qte",
+     "houseModuleId": "temple-house",
+     "taskId": "sweep-courtyard",
+     "missionId": "mission.temple.sweep-courtyard",
+     "titleTextId": "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.title",
+     "briefingTextId": "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.briefing",
+     "orderLineTextIds": [
+       "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.order.001",
+       "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.order.002"
+     ],
++    "reviewMinRankId": "temple.laborer",
+     "tags": ["scenario", "temple", "task"]
+   },
+   {
+     "id": "activity.zhu_yuanzhang.temple.carry_water",
+     "label": "Temple carry water task",
+     "handlerId": "generic.qte",
+     "houseModuleId": "temple-house",
+     "taskId": "carry-water",
+     "missionId": "mission.temple.carry-water",
+     "titleTextId": "runtime.zhu_yuanzhang.temple.task.carry_water.title",
+     "briefingTextId": "runtime.zhu_yuanzhang.temple.task.carry_water.briefing",
+     "orderLineTextIds": [
+       "runtime.zhu_yuanzhang.temple.task.carry_water.order.001",
+       "runtime.zhu_yuanzhang.temple.task.carry_water.order.002"
+     ],
++    "reviewMinRankId": "temple.laborer",
+     "tags": ["scenario", "temple", "task"]
+   },
+   {
+     "id": "activity.zhu_yuanzhang.temple.beg_alms",
+     "label": "Temple beg alms task",
+     "handlerId": "generic.qte",
+     "houseModuleId": "temple-house",
+     "taskId": "beg-alms",
+     "missionId": "mission.temple.beg-alms",
+     "titleTextId": "runtime.zhu_yuanzhang.temple.task.beg_alms.title",
+     "briefingTextId": "runtime.zhu_yuanzhang.temple.task.beg_alms.briefing",
+     "orderLineTextIds": [
+       "runtime.zhu_yuanzhang.temple.task.beg_alms.order.001",
+       "runtime.zhu_yuanzhang.temple.task.beg_alms.order.002"
+     ],
++    "reviewMinRankId": "temple.novice",
+     "tags": ["scenario", "temple", "task"]
+   },
+   {
+     "id": "activity.zhu_yuanzhang.temple.relief_refugees",
+     "label": "Temple relief refugees task",
+     "handlerId": "generic.qte",
+     "houseModuleId": "temple-house",
+     "taskId": "relief-refugees",
+     "missionId": "mission.temple.relief-refugees",
+     "titleTextId": "runtime.zhu_yuanzhang.temple.task.relief_refugees.title",
+     "briefingTextId": "runtime.zhu_yuanzhang.temple.task.relief_refugees.briefing",
+     "orderLineTextIds": [
+       "runtime.zhu_yuanzhang.temple.task.relief_refugees.order.001",
+       "runtime.zhu_yuanzhang.temple.task.relief_refugees.order.002"
+     ],
++    "reviewMinRankId": "temple.itinerant",
+     "tags": ["scenario", "temple", "task"]
+   },
+   {
+     "id": "activity.zhu_yuanzhang.keep.grain_procurement",
+     "label": "Keep grain procurement task",
+     "handlerId": "generic.qte",
+     "houseModuleId": "keep-house",
+     "taskId": "grain-procurement",
+     "missionId": "mission.keep.grain-procurement",
+     "titleTextId": "runtime.zhu_yuanzhang.keep.task.grain_procurement.title",
+diff --git a/src/domain/house-modules/temple-house-session.ts b/src/domain/house-modules/temple-house-session.ts
+index 726ebbfc..0d762f82 100644
+--- a/src/domain/house-modules/temple-house-session.ts
++++ b/src/domain/house-modules/temple-house-session.ts
+@@ -1,11 +1,12 @@
+ import type { HouseActivityConfirmOverlayState } from "../house-activity";
++import type { ReviewAssignmentRow, ReviewPolicyPanel } from "../review";
+ export type TempleHouseAlertOverlayState = {
+   type: "alert";
+   title: string;
+   paragraphs: string[];
+   tone?: "info" | "success" | "warning";
+ };
+ 
+ export type TempleHouseDonateConfirmOverlayState = {
+   type: "donate-confirm";
+   title: string;
+@@ -38,50 +39,68 @@ export type TempleHouseQteOverlayState = {
+ };
+ 
+ export type TempleHouseResultOverlayState = {
+   type: "result";
+   title: string;
+   grade: string;
+   score: number;
+   rewardLines: string[];
+ };
+ 
++export type TempleHouseReviewAssignmentTableOverlayState = {
++  type: "review-assignment-table";
++  title: string;
++  rows: ReviewAssignmentRow[];
++  confirmActionId: string;
++  confirmLabel: string;
++};
++
++export type TempleHouseReviewPolicyPanelOverlayState = {
++  type: "review-policy-panel";
++  title: string;
++  policy: ReviewPolicyPanel;
++};
++
+ export type TempleHouseOverlayState =
+   | TempleHouseAlertOverlayState
+   | HouseActivityConfirmOverlayState
+   | TempleHouseDonateConfirmOverlayState
+   | TempleHouseQteOverlayState
+   | TempleHouseFoodSubmitOverlayState
+   | TempleHouseRestDaysOverlayState
+   | TempleHouseResultOverlayState
++  | TempleHouseReviewAssignmentTableOverlayState
++  | TempleHouseReviewPolicyPanelOverlayState
+   | null;
+ 
+ export type TempleHouseDialoguePhase = "greeting" | "open" | "idle";
+ 
+ export type TempleHouseDialogueOverrideState = {
+   speakerCharacterId: string;
+   textLines: string[];
+   advanceActionId: string;
+   advanceHintText: string;
+ } | null;
+ 
+ export type TempleHouseSessionMode = "daily" | "meeting";
+ 
+ export type TempleHouseWorkPlan = "temple-help" | "beg-alms" | null;
+ 
+ export type TempleHouseDailyActionPanel = "root" | "work" | "rest";
+ 
+ export type TempleHouseMeetingStage =
+   | "intro"
+-  | "contribution"
++  | "assignment-table"
+   | "praise"
++  | "situation"
+   | "policy"
++  | "advice"
+   | "assign-duty"
+   | "assigned"
+   | "finished";
+ 
+ export type TempleHouseSessionState = {
+   mode: TempleHouseSessionMode;
+   meetingStage: TempleHouseMeetingStage;
+   dialogueLines: string[];
+   dialogueOverride: TempleHouseDialogueOverrideState;
+   dialoguePhase: TempleHouseDialoguePhase;
+diff --git a/src/domain/temple-house.ts b/src/domain/temple-house.ts
+index f6580ae8..d66d7c9f 100644
+--- a/src/domain/temple-house.ts
++++ b/src/domain/temple-house.ts
+@@ -1,16 +1,17 @@
+ export type TempleHouseTaskDefinition = {
+   id: string;
+   activityId: string;
+   missionId: string;
+   title: string;
+   briefing: string;
+   orderLines: string[];
++  minRankId: string;
+ };
+ 
+ export const TEMPLE_HOUSE_VARIABLE_KEYS = {
+   donationTotal: "var.temple.donation_total",
+   lastAssignedTaskId: "var.temple.last_assigned_task_id",
+   currentWorkPlan: "var.temple.current_work_plan",
+   beggingSubmittedFood: "var.temple.begging_submitted_food_dou",
+   beggingLastGrade: "var.temple.begging_last_grade",
+ } as const;
+diff --git a/tests/faction-review-ui-contract.test.cjs b/tests/faction-review-ui-contract.test.cjs
+index 05504e41..35f36c6f 100644
+--- a/tests/faction-review-ui-contract.test.cjs
++++ b/tests/faction-review-ui-contract.test.cjs
+@@ -75,10 +75,28 @@ test("keep review source uses normalized Chinese review copy and advice choices"
+     "这段时间大家辛苦了",
+     "看看大家这期间的进展吧",
+     "有谁要进言吗",
+     "发表意见",
+     "一言不发",
+   ]) {
+     assert.match(source, new RegExp(text));
+   }
+   assert.doesNotMatch(source, /Contribution Report|Current Orders|Continue|Dismiss/);
+ });
++
++test("temple review source uses normalized review table, policy panel, and advice choices", () => {
++  const source = readSource(
++    "src/application/house-modules/temple-house/temple-house-house-module.ts"
++  );
++  for (const text of [
++    "\u8fd9\u6bb5\u65f6\u95f4\u5927\u5bb6\u8f9b\u82e6\u4e86",
++    "\u770b\u770b\u5927\u5bb6\u8fd9\u671f\u95f4\u7684\u8fdb\u5c55\u5427",
++    "\u6709\u8c01\u8981\u8fdb\u8a00\u5417",
++    "\u53d1\u8868\u610f\u89c1",
++    "\u4e00\u8a00\u4e0d\u53d1",
++    "review-assignment-table",
++    "review-policy-panel",
++  ]) {
++    assert.match(source, new RegExp(text));
++  }
++  assert.doesNotMatch(source, /\u4e0a\u671f\u5bfa\u4e2d\u8d21\u732e/);
++});
+diff --git a/tests/robustness.test.cjs b/tests/robustness.test.cjs
+index ab202426..cb95dfe6 100644
+--- a/tests/robustness.test.cjs
++++ b/tests/robustness.test.cjs
+@@ -5349,71 +5349,105 @@ test("global NPC interaction house action panel keeps dismiss actions below defa
+       html.indexOf('data-npc-action="profile"'),
+     "Business special actions should stay above default NPC choices."
+   );
+   assert.ok(
+     html.indexOf('data-npc-action="gift"') <
+       html.indexOf('data-house-action="dismiss-dialogue"'),
+     "Dismiss house actions should stay below default NPC choices."
+   );
+ });
+ 
+-test("global NPC interaction does not append default choices to temple review work assignment", () => {
+-  const monkCharacters = createPrototypeCharactersForStoryStage(
+-    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+-  );
+-  const entered = templeHouseHouseModule.enter({
+-    gameState: {
+-      ...createMonkStageState(),
+-      runtime: {
+-        ...createMonkStageState().runtime,
+-        variables: {
+-          ...createMonkStageState().runtime.variables,
+-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+-        },
+-      },
+-    },
+-    characterDefinitions: monkCharacters,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-  });
+-  const contribution = templeHouseHouseModule.dispatch({
+-    gameState: entered.gameState,
+-    characterDefinitions: entered.characterDefinitions,
++function advanceTempleReviewToAssignDuty(input) {
++  const assignmentTable = templeHouseHouseModule.dispatch({
++    gameState: input.enterResult.gameState,
++    characterDefinitions: input.enterResult.characterDefinitions,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+-    sessionState: entered.sessionState,
++    sessionState: input.enterResult.sessionState,
+     request: { type: "action", actionId: "advance-temple-dialogue" },
++    activityDefinitionsById: input.activityDefinitionsById,
++    textEntriesById: input.textEntriesById,
+   });
+   const praise = templeHouseHouseModule.dispatch({
+-    gameState: contribution.gameState,
+-    characterDefinitions: contribution.characterDefinitions,
++    gameState: assignmentTable.gameState,
++    characterDefinitions: assignmentTable.characterDefinitions,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+-    sessionState: contribution.sessionState,
+-    request: { type: "action", actionId: "close-temple-overlay" },
++    sessionState: assignmentTable.sessionState,
++    request: { type: "action", actionId: "close-review-assignment-table" },
++    activityDefinitionsById: input.activityDefinitionsById,
++    textEntriesById: input.textEntriesById,
+   });
+-  const policy = templeHouseHouseModule.dispatch({
++  const situation = templeHouseHouseModule.dispatch({
+     gameState: praise.gameState,
+     characterDefinitions: praise.characterDefinitions,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+     sessionState: praise.sessionState,
+     request: { type: "action", actionId: "advance-temple-dialogue" },
++    activityDefinitionsById: input.activityDefinitionsById,
++    textEntriesById: input.textEntriesById,
+   });
+-  const assignDuty = templeHouseHouseModule.dispatch({
++  const policy = templeHouseHouseModule.dispatch({
++    gameState: situation.gameState,
++    characterDefinitions: situation.characterDefinitions,
++    houseDefinition: templeHouse,
++    playerCharacterId,
++    sessionState: situation.sessionState,
++    request: { type: "action", actionId: "advance-temple-dialogue" },
++    activityDefinitionsById: input.activityDefinitionsById,
++    textEntriesById: input.textEntriesById,
++  });
++  const advice = templeHouseHouseModule.dispatch({
+     gameState: policy.gameState,
+     characterDefinitions: policy.characterDefinitions,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+     sessionState: policy.sessionState,
+     request: { type: "action", actionId: "advance-temple-dialogue" },
++    activityDefinitionsById: input.activityDefinitionsById,
++    textEntriesById: input.textEntriesById,
++  });
++  const assignDuty = templeHouseHouseModule.dispatch({
++    gameState: advice.gameState,
++    characterDefinitions: advice.characterDefinitions,
++    houseDefinition: templeHouse,
++    playerCharacterId,
++    sessionState: advice.sessionState,
++    request: { type: "action", actionId: "temple-review-stay-silent" },
++    activityDefinitionsById: input.activityDefinitionsById,
++    textEntriesById: input.textEntriesById,
++  });
++
++  return { assignmentTable, praise, situation, policy, advice, assignDuty };
++}
++
++test("global NPC interaction does not append default choices to temple review work assignment", () => {
++  const monkCharacters = createPrototypeCharactersForStoryStage(
++    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
++  );
++  const entered = templeHouseHouseModule.enter({
++    gameState: {
++      ...createMonkStageState(),
++      runtime: {
++        ...createMonkStageState().runtime,
++        variables: {
++          ...createMonkStageState().runtime.variables,
++          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
++        },
++      },
++    },
++    characterDefinitions: monkCharacters,
++    houseDefinition: templeHouse,
++    playerCharacterId,
+   });
++  const { assignDuty } = advanceTempleReviewToAssignDuty({ enterResult: entered });
+   const viewModel = templeHouseHouseModule.selectViewModel({
+     gameState: assignDuty.gameState,
+     characterDefinitions: assignDuty.characterDefinitions,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+     sessionState: assignDuty.sessionState,
+   });
+   const html = renderTempleHouseView(viewModel);
+ 
+   assert.equal(assignDuty.sessionState?.meetingStage, "assign-duty");
+@@ -6720,59 +6754,39 @@ test("temple house review only selects work direction and daily actions start te
+       },
+     },
+     characterDefinitions: monkCharacters,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+   });
+ 
+   assert.equal(enterResult.sessionState?.mode, "meeting");
+   assert.equal(enterResult.sessionState?.meetingStage, "intro");
+ 
+-  const contributionResult = templeHouseHouseModule.dispatch({
+-    gameState: enterResult.gameState,
+-    characterDefinitions: enterResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: enterResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-  });
+-  assert.equal(contributionResult.sessionState?.meetingStage, "contribution");
+-  assert.equal(contributionResult.sessionState?.overlay?.type, "alert");
++  const {
++    assignmentTable: contributionResult,
++    praise: praiseResult,
++    situation: situationResult,
++    policy: policyResult,
++    advice: adviceResult,
++    assignDuty: assignDutyResult,
++  } = advanceTempleReviewToAssignDuty({ enterResult });
++  assert.equal(contributionResult.sessionState?.meetingStage, "assignment-table");
++  assert.equal(contributionResult.sessionState?.overlay?.type, "review-assignment-table");
+ 
+-  const praiseResult = templeHouseHouseModule.dispatch({
+-    gameState: contributionResult.gameState,
+-    characterDefinitions: contributionResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: contributionResult.sessionState,
+-    request: { type: "action", actionId: "close-temple-overlay" },
+-  });
+   assert.equal(praiseResult.sessionState?.meetingStage, "praise");
++  assert.equal(situationResult.sessionState?.meetingStage, "situation");
+ 
+-  const policyResult = templeHouseHouseModule.dispatch({
+-    gameState: praiseResult.gameState,
+-    characterDefinitions: praiseResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: praiseResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-  });
+   assert.equal(policyResult.sessionState?.meetingStage, "policy");
++  assert.equal(policyResult.sessionState?.overlay?.type, "review-policy-panel");
+ 
+-  const assignDutyResult = templeHouseHouseModule.dispatch({
+-    gameState: policyResult.gameState,
+-    characterDefinitions: policyResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: policyResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-  });
++  assert.equal(adviceResult.sessionState?.meetingStage, "advice");
++  assert.equal(adviceResult.sessionState?.overlay?.type, "review-policy-panel");
+   assert.equal(assignDutyResult.sessionState?.meetingStage, "assign-duty");
+ 
+   const assignedResult = templeHouseHouseModule.dispatch({
+     gameState: assignDutyResult.gameState,
+     characterDefinitions: assignDutyResult.characterDefinitions,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+     sessionState: assignDutyResult.sessionState,
+     request: { type: "action", actionId: "select-review-work:temple-help" },
+   });
+@@ -6949,57 +6963,22 @@ test("temple house review copy resolves from text entries during work-plan assig
+     houseDefinition: templeHouse,
+     playerCharacterId,
+     activityDefinitionsById,
+     textEntriesById,
+   });
+   assert.deepEqual(enterResult.sessionState?.dialogueLines, [
+     "自定义寺评开场一。",
+     "自定义寺评开场二。",
+   ]);
+ 
+-  const contributionResult = templeHouseHouseModule.dispatch({
+-    gameState: enterResult.gameState,
+-    characterDefinitions: enterResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: enterResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-    activityDefinitionsById,
+-    textEntriesById,
+-  });
+-  const praiseResult = templeHouseHouseModule.dispatch({
+-    gameState: contributionResult.gameState,
+-    characterDefinitions: contributionResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: contributionResult.sessionState,
+-    request: { type: "action", actionId: "close-temple-overlay" },
+-    activityDefinitionsById,
+-    textEntriesById,
+-  });
+-  const policyResult = templeHouseHouseModule.dispatch({
+-    gameState: praiseResult.gameState,
+-    characterDefinitions: praiseResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: praiseResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-    activityDefinitionsById,
+-    textEntriesById,
+-  });
+-  const assignDutyResult = templeHouseHouseModule.dispatch({
+-    gameState: policyResult.gameState,
+-    characterDefinitions: policyResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: policyResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
++  const { assignDuty: assignDutyResult } = advanceTempleReviewToAssignDuty({
++    enterResult,
+     activityDefinitionsById,
+     textEntriesById,
+   });
+ 
+   const assignedResult = templeHouseHouseModule.dispatch({
+     gameState: assignDutyResult.gameState,
+     characterDefinitions: assignDutyResult.characterDefinitions,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+     sessionState: assignDutyResult.sessionState,
+@@ -7159,54 +7138,22 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
+       },
+     },
+   };
+   const reviewEnterResult = templeHouseHouseModule.enter({
+     gameState: begAlmsState,
+     characterDefinitions: monkCharacters,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+     textEntriesById: begAlmsTextEntries,
+   });
+-  const contributionResult = templeHouseHouseModule.dispatch({
+-    gameState: reviewEnterResult.gameState,
+-    characterDefinitions: reviewEnterResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: reviewEnterResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-    textEntriesById: begAlmsTextEntries,
+-  });
+-  const praiseResult = templeHouseHouseModule.dispatch({
+-    gameState: contributionResult.gameState,
+-    characterDefinitions: contributionResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: contributionResult.sessionState,
+-    request: { type: "action", actionId: "close-temple-overlay" },
+-    textEntriesById: begAlmsTextEntries,
+-  });
+-  const policyResult = templeHouseHouseModule.dispatch({
+-    gameState: praiseResult.gameState,
+-    characterDefinitions: praiseResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: praiseResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-    textEntriesById: begAlmsTextEntries,
+-  });
+-  const assignDutyResult = templeHouseHouseModule.dispatch({
+-    gameState: policyResult.gameState,
+-    characterDefinitions: policyResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: policyResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
++  const { assignDuty: assignDutyResult } = advanceTempleReviewToAssignDuty({
++    enterResult: reviewEnterResult,
+     textEntriesById: begAlmsTextEntries,
+   });
+   const assignedResult = templeHouseHouseModule.dispatch({
+     gameState: assignDutyResult.gameState,
+     characterDefinitions: assignDutyResult.characterDefinitions,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+     sessionState: assignDutyResult.sessionState,
+     request: { type: "action", actionId: "select-review-work:beg-alms" },
+     textEntriesById: begAlmsTextEntries,
+@@ -7551,54 +7498,28 @@ test("temple house unlocked begging is chosen in review and executes later witho
+           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
+           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
+         },
+       },
+     },
+     characterDefinitions: monkCharacters,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+   });
+ 
+-  const contributionResult = templeHouseHouseModule.dispatch({
+-    gameState: enterResult.gameState,
+-    characterDefinitions: enterResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: enterResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-  });
+-  assert.equal(contributionResult.sessionState?.meetingStage, "contribution");
+-  const praiseResult = templeHouseHouseModule.dispatch({
+-    gameState: contributionResult.gameState,
+-    characterDefinitions: contributionResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: contributionResult.sessionState,
+-    request: { type: "action", actionId: "close-temple-overlay" },
+-  });
++  const {
++    assignmentTable: contributionResult,
++    praise: praiseResult,
++    assignDuty: assignDutyResult,
++  } = advanceTempleReviewToAssignDuty({ enterResult });
++  assert.equal(contributionResult.sessionState?.meetingStage, "assignment-table");
++  assert.equal(contributionResult.sessionState?.overlay?.type, "review-assignment-table");
+   assert.equal(praiseResult.sessionState?.meetingStage, "praise");
+-  const policyResult = templeHouseHouseModule.dispatch({
+-    gameState: praiseResult.gameState,
+-    characterDefinitions: praiseResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: praiseResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-  });
+-  const assignDutyResult = templeHouseHouseModule.dispatch({
+-    gameState: policyResult.gameState,
+-    characterDefinitions: policyResult.characterDefinitions,
+-    houseDefinition: templeHouse,
+-    playerCharacterId,
+-    sessionState: policyResult.sessionState,
+-    request: { type: "action", actionId: "advance-temple-dialogue" },
+-  });
+   const reviewChoiceResult = templeHouseHouseModule.dispatch({
+     gameState: assignDutyResult.gameState,
+     characterDefinitions: assignDutyResult.characterDefinitions,
+     houseDefinition: templeHouse,
+     playerCharacterId,
+     sessionState: assignDutyResult.sessionState,
+     request: { type: "action", actionId: "select-review-work:beg-alms" },
+   });
+   const closeReviewResult = templeHouseHouseModule.dispatch({
+     gameState: reviewChoiceResult.gameState,

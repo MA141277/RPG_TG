@@ -23,7 +23,6 @@ const MAP_IMAGE_DATA_ATTRIBUTES = [
   "data-map-snow-texture-url",
   "data-map-water-texture-url",
   "data-map-cloud-noise-url",
-  "data-campaign-city-texture-url",
   "data-campaign-player-sprite-url",
   "data-campaign-player-texture-url",
 ] as const;
@@ -31,7 +30,6 @@ const MAP_IMAGE_DATA_ATTRIBUTES = [
 const MAP_DATA_ATTRIBUTES = [
   "data-map-hex-grid-url",
   "data-map-vegetation-rules-url",
-  "data-campaign-city-mesh-url",
   "data-campaign-player-model-url",
   "data-campaign-player-idle-animation-url",
   "data-campaign-player-walk-animation-url",

@@ -1,0 +1,157 @@
+﻿# Review package
+Base: dab5f130
+Head: 931c4e5e
+
+## Commits
+931c4e5e feat: add campaign structure visual profiles
+
+## Stat
+ src/content/campaign-structure-visual-profiles.ts | 32 +++++++++++++++++++++++
+ src/content/yuanmo-campaign-map.ts                |  1 +
+ src/domain/map.ts                                 |  1 +
+ tests/robustness.test.cjs                         | 29 ++++++++++++++++++++
+ 4 files changed, 63 insertions(+)
+
+## Diff
+diff --git a/src/content/campaign-structure-visual-profiles.ts b/src/content/campaign-structure-visual-profiles.ts
+new file mode 100644
+index 00000000..6c226d6b
+--- /dev/null
++++ b/src/content/campaign-structure-visual-profiles.ts
+@@ -0,0 +1,32 @@
++import cityDepthMeshAssetUrl from "../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
++import cityDepthTextureUrl from "../3dasset/city_hun/texture_pbr_20250901.png?url";
++import yuanmoHexBuildingUrl from "../../ui/yuansu/20260715-120754.png?url";
++
++export type CampaignStructureVisualProfile = {
++  id: string;
++  cityDepthMeshUrl: string | null;
++  cityDepthTextureUrl: string | null;
++  settlementBuildingImageUrl: string | null;
++};
++
++const campaignStructureVisualProfilesById: Record<
++  string,
++  CampaignStructureVisualProfile
++> = {
++  "yuanmo.campaign-structures": {
++    id: "yuanmo.campaign-structures",
++    cityDepthMeshUrl: cityDepthMeshAssetUrl,
++    cityDepthTextureUrl,
++    settlementBuildingImageUrl: yuanmoHexBuildingUrl,
++  },
++};
++
++export function resolveCampaignStructureVisualProfile(
++  profileId: string | undefined
++): CampaignStructureVisualProfile | null {
++  if (profileId == null) {
++    return null;
++  }
++
++  return campaignStructureVisualProfilesById[profileId] ?? null;
++}
+diff --git a/src/content/yuanmo-campaign-map.ts b/src/content/yuanmo-campaign-map.ts
+index cb2cf5b6..2bf63c79 100644
+--- a/src/content/yuanmo-campaign-map.ts
++++ b/src/content/yuanmo-campaign-map.ts
+@@ -20,20 +20,21 @@ export const yuanmoCampaignMap: MapDefinition = {
+   id: "map.yuanmo_campaign",
+   name: "Yuanmo Campaign Atlas",
+   backgroundId: "bg.map.yuanmo_campaign",
+   mode: "campaign",
+   initialPlayerCoordinate: {"x": 334, "y": 318},
+   coordinateSpace: { width: 509, height: 451 },
+   displaySize: { width: 1484, height: 1060 },
+   primaryImageUrl: map_HDUrl,
+   campaignHexGridUrl: map_hex_gridUrl,
+   campaignVegetationRulesUrl: map_vegetation_rulesUrl,
++  campaignStructureProfileId: "yuanmo.campaign-structures",
+   nodes: [
+     {"id": "settlement.newguinea_province", "label": "美拉尼西亚人聚集地（Melanesia）", "x": 472, "y": 49, "kind": "settlement", "summary": "Region: 伊里安岛 | Owner: slave | Level: town | Type: town"},
+     {"id": "settlement.ryukyu_province", "label": "首里城", "x": 416, "y": 269, "kind": "settlement", "summary": "Region: 琉球王国 | Owner: slave | Level: large_town | Type: town"},
+     {"id": "settlement.sulu_province", "label": "和乐（Jolo）", "x": 367, "y": 139, "kind": "settlement", "summary": "Region: 棉兰老岛 | Owner: slave | Level: large_town | Type: town"},
+     {"id": "settlement.pilipinas_province", "label": "马尼拉（Manila）", "x": 365, "y": 195, "kind": "settlement", "summary": "Region: 吕宋岛 | Owner: slave | Level: city | Type: castle"},
+     {"id": "settlement.cebu_province", "label": "宿务（Cebu）", "x": 383, "y": 165, "kind": "settlement", "summary": "Region: 宿务岛 | Owner: slave | Level: large_town | Type: castle"},
+     {"id": "settlement.brunei_province", "label": "斯里巴加湾（Seri-Begawan）", "x": 312, "y": 95, "kind": "settlement", "summary": "Region: 文莱王国 | Owner: slave | Level: town | Type: town"},
+     {"id": "settlement.aomen_province", "label": "忽毡", "x": 10, "y": 397, "kind": "settlement", "summary": "Region: 忽毡地区 | Owner: kazakh | Level: town | Type: town"},
+     {"id": "settlement.arakan_province", "label": "实兑（Site-tway）", "x": 169, "y": 231, "kind": "settlement", "summary": "Region: 若开地区 | Owner: slave | Level: large_town | Type: town"},
+     {"id": "settlement.sumatera_province", "label": "哥打拉贾（Kutaraja）", "x": 226, "y": 89, "kind": "settlement", "summary": "Region: 苏门答腊岛 | Owner: england | Level: large_town | Type: town"},
+diff --git a/src/domain/map.ts b/src/domain/map.ts
+index df2baabb..7dee6cad 100644
+--- a/src/domain/map.ts
++++ b/src/domain/map.ts
+@@ -232,18 +232,19 @@ export type MapDefinition = {
+     height: number;
+   };
+   displaySize?: {
+     width: number;
+     height: number;
+   };
+   primaryImageUrl?: string;
+   regionOverlayImageUrl?: string;
+   campaignHexGridUrl?: string;
+   campaignVegetationRulesUrl?: string;
++  campaignStructureProfileId?: string;
+   initialPlayerCoordinate?: {
+     x: number;
+     y: number;
+   };
+   nodes: MapNode[];
+   layers?: MapLayer[];
+   stats?: MapStats;
+ };
+diff --git a/tests/robustness.test.cjs b/tests/robustness.test.cjs
+index 98c381e7..074d18d3 100644
+--- a/tests/robustness.test.cjs
++++ b/tests/robustness.test.cjs
+@@ -3052,20 +3052,49 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
+     assert.equal(mesh.colors.length, mesh.positions.length);
+     assert.equal(mesh.normals.length, mesh.positions.length);
+     assert.equal(mesh.indices.length % 3, 0);
+     assert.equal(
+       mesh.colors.some((color, index) => index % 3 === 1 && color >= 0.58),
+       true
+     );
+   }
+ });
+ 
++test("campaign structure visual profiles are engine-owned and map-selected", async () => {
++  const fs = require("node:fs");
++  const path = require("node:path");
++  const mapDomainSource = fs.readFileSync(
++    path.join(process.cwd(), "src", "domain", "map.ts"),
++    "utf8"
++  );
++  const yuanmoMapSource = fs.readFileSync(
++    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
++    "utf8"
++  );
++  const profileSourcePath = path.join(
++    process.cwd(),
++    "src",
++    "content",
++    "campaign-structure-visual-profiles.ts"
++  );
++
++  assert.match(mapDomainSource, /campaignStructureProfileId\?: string/);
++  assert.match(yuanmoMapSource, /campaignStructureProfileId: "yuanmo\.campaign-structures"/);
++  assert.equal(fs.existsSync(profileSourcePath), true);
++
++  const profileSource = fs.readFileSync(profileSourcePath, "utf8");
++  assert.match(profileSource, /export type CampaignStructureVisualProfile/);
++  assert.match(profileSource, /resolveCampaignStructureVisualProfile/);
++  assert.match(profileSource, /"yuanmo\.campaign-structures"/);
++  assert.doesNotMatch(profileSource, /scenario-packs\/zhuyuanzhang/);
++});
++
+ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
+   const {
+     loadContentPackFromManifestText,
+   } = require("../.test-dist/application/content/content-pack-loader.js");
+   const packRoot = path.join(
+     process.cwd(),
+     "src",
+     "content",
+     "scenario-packs",
+     "zhuyuanzhang"

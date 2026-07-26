@@ -1,0 +1,318 @@
+﻿# Review package
+Base: bbbdf174
+Head: 9054e577
+
+## Commits
+9054e577 fix: add campaign structure visual kind contract
+0902d110 refactor: drive campaign structure visuals from map nodes
+
+## Stat
+ src/content/yuanmo-campaign-map.ts |  2 +-
+ src/domain/map.ts                  |  4 ++
+ src/ui/views/map/map-view.ts       | 85 +++++++++++++++++---------------------
+ tests/robustness.test.cjs          | 28 +++++++++++++
+ 4 files changed, 71 insertions(+), 48 deletions(-)
+
+## Diff
+diff --git a/src/content/yuanmo-campaign-map.ts b/src/content/yuanmo-campaign-map.ts
+index 2bf63c79..a53f6559 100644
+--- a/src/content/yuanmo-campaign-map.ts
++++ b/src/content/yuanmo-campaign-map.ts
+@@ -138,21 +138,21 @@ export const yuanmoCampaignMap: MapDefinition = {
+     {"id": "settlement.ningbo_province", "label": "庆元路※鄞县", "x": 365, "y": 290, "kind": "settlement", "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"},
+     {"id": "settlement.wenzhou_province", "label": "温州路※永嘉", "x": 351, "y": 281, "kind": "settlement", "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"},
+     {"id": "settlement.shaoxing_province", "label": "绍兴路※会稽", "x": 358, "y": 289, "kind": "settlement", "summary": "Region: 江浙行省 | Owner: venice | Level: city | Type: town"},
+     {"id": "settlement.yingtian_province", "label": "集庆路★上元", "x": 347, "y": 302, "kind": "settlement", "summary": "剧情: 集庆路，后改应天府 | 阵营: 元廷江南重镇，后属朱元璋吴军 | 所有者: 早期为元廷/地方守臣，后为朱元璋 | 相关NPC: 朱元璋、李善长、徐达、常遇春、刘基 | 注记: 朱元璋当和尚时尚未入主"},
+     {"id": "settlement.songjiang_province", "label": "松江府※华亭", "x": 364, "y": 303, "kind": "settlement", "summary": "Region: 江浙行省 | Owner: venice | Level: city | Type: town"},
+     {"id": "settlement.suzhou_province", "label": "平江路※吴县", "x": 357, "y": 304, "kind": "settlement", "summary": "Region: 江浙行省 | Owner: venice | Level: large_city | Type: town"},
+     {"id": "settlement.yangzhou_province", "label": "扬州路※江都", "x": 353, "y": 312, "kind": "settlement", "summary": "剧情: 淮东盐运重镇 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、李伯升、饶介、施耐庵 | 注记: 朱元璋早期北东侧竞争者"},
+     {"id": "settlement.huizhou_province", "label": "徽州路※歙县", "x": 337, "y": 294, "kind": "settlement", "summary": "Region: 江浙行省 | Owner: papal_states | Level: city | Type: town"},
+     {"id": "settlement.anqing_province", "label": "安庆路※怀宁", "x": 328, "y": 300, "kind": "settlement", "summary": "剧情: 江淮西线通道 | 阵营: 元末多方争夺，后属朱元璋吴军 | 所有者: 早期不稳，后为朱元璋集团 | 相关NPC: 汤和、邓愈、李文忠、丁普郎 | 注记: 可作为从濠州南下江南的过渡节点"},
+     {"id": "settlement.changzhou_province", "label": "常州路※晋陵", "x": 351, "y": 306, "kind": "settlement", "summary": "Region: 江浙行省 | Owner: papal_states | Level: city | Type: town"},
+-    {"id": "settlement.fenyang_province", "label": "濠州", "x": 334, "y": 318, "kind": "settlement", "summary": "剧情: 朱元璋和尚时期起点，钟离/皇觉寺附近 | 阵营: 红巾军/小明王宋 | 所有者: 郭子兴部，名义尊小明王韩林儿 | 相关NPC: 朱元璋、郭子兴、马氏、汤和、韩林儿 | 注记: 适合作为早年主线出生点"},
++    {"id": "settlement.fenyang_province", "label": "濠州", "x": 334, "y": 318, "kind": "settlement", "summary": "剧情: 朱元璋和尚时期起点，钟离/皇觉寺附近 | 阵营: 红巾军/小明王宋 | 所有者: 郭子兴部，名义尊小明王韩林儿 | 相关NPC: 朱元璋、郭子兴、马氏、汤和、韩林儿 | 注记: 适合作为早年主线出生点", visualKind: "structure", structureVisual: { kind: "settlement-building" }},
+     {"id": "settlement.huaian_province", "label": "高邮府※高邮军", "x": 347, "y": 322, "kind": "settlement", "summary": "剧情: 淮东门户 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、施耐庵、潘元绍 | 注记: 与濠州、扬州形成早期江淮压力线"},
+     {"id": "settlement.kaifeng_province", "label": "汴梁路★开封", "x": 318, "y": 327, "kind": "settlement", "summary": "剧情: 河南元军重镇 | 阵营: 元廷/扩廓帖木儿系 | 所有者: 元廷河南势力 | 相关NPC: 扩廓帖木儿、脱因帖木儿、阎思孝、陈秉直 | 注记: 朱元璋早期北方强敌"},
+     {"id": "settlement.henan_province", "label": "河南府路※洛阳", "x": 302, "y": 325, "kind": "settlement", "summary": "Region: 河南江北行省 | Owner: turks | Level: huge_city | Type: town"},
+     {"id": "settlement.nanyang_province", "label": "南阳府※南阳", "x": 302, "y": 316, "kind": "settlement", "summary": "Region: 河南江北行省 | Owner: turks | Level: large_town | Type: town"},
+     {"id": "settlement.runing_province", "label": "颍州", "x": 318, "y": 311, "kind": "settlement", "summary": "剧情: 红巾军活动区 | 阵营: 小明王宋 | 所有者: 刘福通/韩林儿系 | 相关NPC: 刘福通、韩童、杜遵道、白不信 | 注记: 可连接濠州早年起义线"},
+     {"id": "settlement.jinan_province", "label": "济南路※历城", "x": 334, "y": 344, "kind": "settlement", "summary": "Region: 中书省 | Owner: turks | Level: large_city | Type: town"},
+     {"id": "settlement.dengzhou_province", "label": "莱州※掖县", "x": 361, "y": 344, "kind": "settlement", "summary": "Region: 山东东西道宣慰司 | Owner: turks | Level: city | Type: town"},
+     {"id": "settlement.yanzhou_province", "label": "济宁路※巨野", "x": 334, "y": 331, "kind": "settlement", "summary": "Region: 中书省 | Owner: slave | Level: city | Type: town"},
+     {"id": "settlement.qingzhou_province", "label": "益都路※益都", "x": 348, "y": 337, "kind": "settlement", "summary": "Region: 山东东西道宣慰司 | Owner: portugal | Level: city | Type: town"},
+     {"id": "settlement.taiyuan_province", "label": "冀宁路※太原", "x": 301, "y": 352, "kind": "settlement", "summary": "Region: 河东山西道宣慰司 | Owner: turks | Level: large_city | Type: town"},
+diff --git a/src/domain/map.ts b/src/domain/map.ts
+index 7dee6cad..215e2287 100644
+--- a/src/domain/map.ts
++++ b/src/domain/map.ts
+@@ -3,20 +3,24 @@ import type { CityId } from "./city";
+ export type MapId = string;
+ 
+ export type MapNode = {
+   cityId?: CityId;
+   id?: string;
+   label?: string;
+   x: number;
+   y: number;
+   kind?: "city" | "settlement" | "fort" | "landmark";
+   summary?: string;
++  visualKind?: "structure";
++  structureVisual?: {
++    kind: "settlement-building";
++  };
+ };
+ 
+ export type MapLayer = {
+   id: string;
+   label: string;
+   width: number;
+   height: number;
+   description: string;
+   imageUrl: string;
+ };
+diff --git a/src/ui/views/map/map-view.ts b/src/ui/views/map/map-view.ts
+index 974cb90c..0e15d884 100644
+--- a/src/ui/views/map/map-view.ts
++++ b/src/ui/views/map/map-view.ts
+@@ -19,48 +19,37 @@ import type {
+ import {
+   campaignMapCoordinateToHex,
+   getCampaignHexCellKey,
+   getCampaignHexDisc,
+ } from "../../../domain/campaign-hex";
+ import {
+   resolveCampaignStructureVisualProfile,
+   type CampaignStructureVisualProfile,
+ } from "../../../content/campaign-structure-visual-profiles";
+ import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
+-import yuanmoHexBuildingUrl from "../../../../ui/yuansu/20260715-120754.png?url";
+-
+-const YUANMO_HEX_BUILDING = {
+-  mapId: "map.yuanmo_campaign",
+-  nodeId: "settlement.fenyang_province",
+-  cityId: "city.kulan",
+-  x: 336.6,
+-  y: 318.6,
+-  travelX: 334,
+-  travelY: 318,
+-  label: "濠州",
+-} as const;
+ 
+ type CityMarker = {
+   id: string;
+   name: string;
+   x: number;
+   y: number;
+ };
+ 
+ type CampaignMarker = {
+   id: string;
+   cityId: string | null;
+   name: string;
+   x: number;
+   y: number;
+   kind: NonNullable<MapNode["kind"]>;
+   summary: string;
++  structureVisual: MapNode["structureVisual"] | null;
+   isRevealed: boolean;
+   historicalCharacters: {
+     primary: string[];
+     secondary: string[];
+     background: string[];
+     notes: string;
+   } | null;
+ };
+ 
+ export type MapViewModel = {
+@@ -245,20 +234,21 @@ export function createMapViewModel(input: {
+         return {
+           id: nodeId,
+           cityId:
+             node.cityId ??
+             (node.id == null ? null : cityIdByMapNodeId[node.id] ?? null),
+           name: node.label ?? node.cityId ?? `Node ${index + 1}`,
+           x: node.x,
+           y: node.y,
+           kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
+           summary: node.summary ?? "",
++          structureVisual: node.structureVisual ?? null,
+           isRevealed: revealedHexKeySet.has(
+             getHexKey(
+               coordinateToRoundedHex(
+                 { x: node.x, y: node.y },
+                 input.mapDefinition.coordinateSpace ?? {
+                   width: input.mapDefinition.size ?? 1,
+                   height: input.mapDefinition.size ?? 1,
+                 }
+               )
+             )
+@@ -377,58 +367,59 @@ function renderHistoricalCharacters(
+     .filter((item) => item !== "")
+     .join("");
+   const notes =
+     marker.historicalCharacters.notes === ""
+       ? ""
+       : `<span><b>Notes: </b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
+ 
+   return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
+ }
+ 
+-function renderCampaignHexBuilding(model: MapViewModel): string {
+-  if (model.mapId !== YUANMO_HEX_BUILDING.mapId) {
++function renderCampaignStructureVisuals(model: MapViewModel): string {
++  const buildingImageUrl =
++    model.campaignStructureProfile?.settlementBuildingImageUrl ?? null;
++  if (buildingImageUrl == null) {
+     return "";
+   }
+ 
+-  const left = (YUANMO_HEX_BUILDING.x / model.coordinateSpace.width) * 100;
+-  const bottom = (YUANMO_HEX_BUILDING.y / model.coordinateSpace.height) * 100;
+-  const heightU = YUANMO_HEX_BUILDING.x / model.coordinateSpace.width;
+-  const heightV = 1 - YUANMO_HEX_BUILDING.y / model.coordinateSpace.height;
++  return model.campaignMarkers
++    .filter(
++      (marker) =>
++        marker.structureVisual?.kind === "settlement-building" &&
++        marker.isRevealed
++    )
++    .map((marker) => {
++      const left = (marker.x / model.coordinateSpace.width) * 100;
++      const bottom = (marker.y / model.coordinateSpace.height) * 100;
++      const heightU = marker.x / model.coordinateSpace.width;
++      const heightV = 1 - marker.y / model.coordinateSpace.height;
+ 
+-  return `
+-    <span
+-      class="c-campaign-hex-building"
+-      style="--hex-building-left:${left.toFixed(3)}%; --hex-building-bottom:${bottom.toFixed(3)}%;"
+-      data-terrain-projected-point="true"
+-      data-map-height-u="${heightU.toFixed(5)}"
+-      data-map-height-v="${heightV.toFixed(5)}"
+-      aria-label="${escapeHtml(YUANMO_HEX_BUILDING.label)}"
+-    >
+-      <img
+-        class="c-campaign-hex-building__image"
+-        src="${yuanmoHexBuildingUrl}"
+-        alt=""
+-        aria-hidden="true"
+-      >
+-      <button
+-        type="button"
+-        class="c-campaign-hex-building__hotspot"
+-        data-map-node-id="${YUANMO_HEX_BUILDING.nodeId}"
+-        data-map-node-name="${escapeHtml(YUANMO_HEX_BUILDING.label)}"
+-        data-map-x="${YUANMO_HEX_BUILDING.travelX}"
+-        data-map-y="${YUANMO_HEX_BUILDING.travelY}"
+-        data-city-id="${YUANMO_HEX_BUILDING.cityId}"
+-        title="${escapeHtml(YUANMO_HEX_BUILDING.label)} (${YUANMO_HEX_BUILDING.travelX}, ${YUANMO_HEX_BUILDING.travelY})"
+-        aria-label="进入${escapeHtml(YUANMO_HEX_BUILDING.label)}"
+-      ></button>
+-    </span>
+-  `;
++      return `
++        <span
++          class="c-campaign-hex-building"
++          style="--hex-building-left:${left.toFixed(3)}%; --hex-building-bottom:${bottom.toFixed(3)}%;"
++          data-campaign-structure-kind="${marker.structureVisual.kind}"
++          data-terrain-projected-point="true"
++          data-map-height-u="${heightU.toFixed(5)}"
++          data-map-height-v="${heightV.toFixed(5)}"
++          aria-label="${escapeHtml(marker.name)}"
++        >
++          <img
++            class="c-campaign-hex-building__image"
++            src="${buildingImageUrl}"
++            alt=""
++            aria-hidden="true"
++          >
++        </span>
++      `;
++    })
++    .join("");
+ }
+ 
+ function renderCampaignMarkers(model: MapViewModel): string {
+   return model.campaignMarkers
+     .map((marker) => {
+       const left = (marker.x / model.coordinateSpace.width) * 100;
+       const bottom = (marker.y / model.coordinateSpace.height) * 100;
+       const heightU = marker.x / model.coordinateSpace.width;
+       const heightV = 1 - marker.y / model.coordinateSpace.height;
+       const displayName = getMarkerDisplayName(marker.name);
+@@ -623,21 +614,21 @@ function renderCampaignMapVisualLayer(
+     : "c-campaign-player has-actor-model";
+ 
+   return `
+     <div class="${transformClassName}" ${transformDataAttribute}${ariaHiddenAttribute}>
+       ${terrainEnabledMarkup}
+       ${imageMarkup}
+       ${regionOverlayMarkup}
+       ${
+         options.includeInteractivePoints
+           ? `
+-            ${renderCampaignHexBuilding(model)}
++            ${renderCampaignStructureVisuals(model)}
+             ${renderCampaignMarkers(model)}
+             ${actorCanvasMarkup}
+             <span
+               class="${playerClassName}"
+               data-campaign-player="true"
+               data-campaign-player-sprite-url="${redTurbanMarkerUrl}"
+               data-campaign-player-model-url="${campaignUnitAssets.friendly.modelUrl}"
+               data-campaign-player-texture-url="${campaignUnitAssets.friendly.textureUrl}"
+               data-campaign-player-idle-animation-url="${campaignUnitAssets.friendly.idleAnimationUrl}"
+               data-campaign-player-walk-animation-url="${campaignUnitAssets.friendly.walkAnimationUrl}"
+diff --git a/tests/robustness.test.cjs b/tests/robustness.test.cjs
+index 2098e38b..30287282 100644
+--- a/tests/robustness.test.cjs
++++ b/tests/robustness.test.cjs
+@@ -3096,20 +3096,48 @@ test("campaign map view resolves structure profiles without scenario pack import
+     "utf8"
+   );
+ 
+   assert.match(mapViewSource, /resolveCampaignStructureVisualProfile/);
+   assert.match(mapViewSource, /campaignStructureProfile:/);
+   assert.match(mapViewSource, /input\.mapDefinition\.campaignStructureProfileId/);
+   assert.doesNotMatch(mapViewSource, /scenario-packs\/zhuyuanzhang/);
+   assert.doesNotMatch(mapViewSource, /content\/scenario-packs/);
+ });
+ 
++test("campaign map structures are node-driven instead of hardcoded Yuanmo building state", () => {
++  const fs = require("node:fs");
++  const path = require("node:path");
++  const mapDomainSource = fs.readFileSync(
++    path.join(process.cwd(), "src", "domain", "map.ts"),
++    "utf8"
++  );
++  const yuanmoMapSource = fs.readFileSync(
++    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
++    "utf8"
++  );
++  const mapViewSource = fs.readFileSync(
++    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
++    "utf8"
++  );
++
++  assert.match(mapDomainSource, /visualKind\?:\s*"structure"/);
++  assert.match(mapDomainSource, /structureVisual\?:/);
++  assert.match(
++    yuanmoMapSource,
++    /"id": "settlement\.fenyang_province"[\s\S]*visualKind: "structure"[\s\S]*structureVisual: \{ kind: "settlement-building" \}/
++  );
++  assert.doesNotMatch(mapViewSource, /YUANMO_HEX_BUILDING/);
++  assert.doesNotMatch(mapViewSource, /renderCampaignHexBuilding/);
++  assert.match(mapViewSource, /renderCampaignStructureVisuals/);
++  assert.match(mapViewSource, /settlementBuildingImageUrl/);
++});
++
+ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
+   const {
+     loadContentPackFromManifestText,
+   } = require("../.test-dist/application/content/content-pack-loader.js");
+   const packRoot = path.join(
+     process.cwd(),
+     "src",
+     "content",
+     "scenario-packs",
+     "zhuyuanzhang"

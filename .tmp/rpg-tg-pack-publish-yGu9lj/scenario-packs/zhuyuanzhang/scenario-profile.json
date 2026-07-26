@@ -1,0 +1,20 @@
+{
+  "id": "scenario.zhu_yuanzhang.monk_opening",
+  "title": "朱元璋：皇觉寺开局",
+  "playerCharacterId": "char.player",
+  "chapterId": "chapter.zhu-yuanzhang-rise",
+  "initialLocation": {
+    "mapId": "map.prototype_frontier",
+    "cityId": "city.kulan",
+    "houseId": "house.kulan.temple",
+    "view": "house"
+  },
+  "initialRuntime": {
+    "variables": {
+      "var.story.zhu_yuanzhang.stage": "huangjue-temple"
+    }
+  },
+  "entryEventId": "event.story.zhu_yuanzhang.ordination",
+  "openingFlowId": "flow.zhu_yuanzhang.monk_opening",
+  "tags": ["built-in", "main-story", "temple"]
+}

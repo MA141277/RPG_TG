@@ -1,0 +1,14 @@
+{
+  "scene.story.liu_bang.pei_county_opening.001": "沛县晨雾未散，县署前的木牌还沾着露水。催徭的文书压在案上，乡里豪杰的请托也已经递到了门口。",
+  "scene.story.liu_bang.pei_county_opening.002": "季兄，县中差役不能再拖。秦法催得紧，可乡里人心也不能一味逼迫。",
+  "scene.story.liu_bang.pei_county_opening.003": "法令要应，人也要留。先把最急的事办了，别让沛县今日就乱起来。",
+  "scene.story.liu_bang.pei_county_opening.prompt": "刘邦今日先处理哪一头？",
+  "scene.story.liu_bang.pei_county_opening.choice.duty": "先办县中差役",
+  "scene.story.liu_bang.pei_county_opening.choice.heroes": "先会乡里故人",
+  "scene.story.liu_bang.first_duty.001": "你翻开案上簿册，把催徭名目、乡里担保和上官限期一一重新排定。杂务虽小，却先稳住了县署今日的阵脚。",
+  "scene.story.liu_bang.first_duty.002": "先把簿册理顺，后面无论押送、催徭还是应付上官，都还有回旋余地。",
+  "scene.story.liu_bang.first_duty.003": "沛县的一日就这样压了下来。你已在县中与乡里之间立住第一步，后续流程将继续由 JSON 开局包扩展。",
+  "scene.story.liu_bang.first_heroes.001": "季哥，酒肆里都在说外头徭役越发紧了。你若要人帮忙，得先让大家知道你心里有数。",
+  "scene.story.liu_bang.first_heroes.002": "你借着乡里故人的消息，把几桩棘手杂务拆给可信的人手。县中差役未必轻松，但人情脉络已经动了起来。",
+  "scene.story.liu_bang.first_heroes.003": "卢绾带着话头离去，酒肆与里巷很快会知道你今日的安排。后续流程将继续由 JSON 开局包扩展。"
+}

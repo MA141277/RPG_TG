@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "integrationId": "playable.test-playable.scene.default",
+  "playableId": "test-playable",
+  "ownerDefaults": {
+    "ownerKind": "scene",
+    "ownerId": "scene.test-playable",
+    "sessionToken": null,
+    "returnPolicy": "resume-owner"
+  },
+  "trigger": {
+    "triggerId": "playable.test-playable.scene.default.trigger",
+    "ownerKind": "scene",
+    "trigger": "manual",
+    "when": []
+  },
+  "outcomeConfig": {
+    "successWhen": [
+      {
+        "type": "configured-by-editor",
+        "id": "playable.test-playable.scene.default.success"
+      }
+    ],
+    "failureWhen": [
+      {
+        "type": "configured-by-editor",
+        "id": "playable.test-playable.scene.default.failure"
+      }
+    ],
+    "cancelledWhen": [
+      {
+        "type": "configured-by-editor",
+        "id": "playable.test-playable.scene.default.cancelled"
+      }
+    ],
+    "rewardsByOutcome": {
+      "success": [],
+      "failure": [],
+      "cancelled": []
+    },
+    "handoffByOutcome": {
+      "success": "resume-owner",
+      "failure": "resume-owner",
+      "cancelled": "resume-owner"
+    }
+  },
+  "contentRefs": {}
+}

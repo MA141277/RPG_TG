@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "integrationId": "playable.validator-playable.scene.default",
+  "playableId": "validator-playable",
+  "ownerDefaults": {
+    "ownerKind": "scene",
+    "ownerId": "scene.validator",
+    "sessionToken": null,
+    "returnPolicy": "reenter-owner"
+  },
+  "trigger": {
+    "triggerId": "playable.validator-playable.scene.default.trigger",
+    "ownerKind": "scene",
+    "trigger": "manual",
+    "when": []
+  },
+  "outcomeConfig": {},
+  "contentRefs": {}
+}

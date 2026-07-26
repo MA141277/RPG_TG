@@ -1,0 +1,30 @@
+[
+  {
+    "id": "activity.liu_bang.pei_county.default_errand",
+    "label": "沛县杂务",
+    "handlerId": "pei-county.errand",
+    "fallbackHandlerId": "generic.qte",
+    "timeAdvanceCost": 1,
+    "qte": {
+      "totalRounds": 3,
+      "requiredSuccesses": 2
+    },
+    "outcome": {
+      "completedFlagKey": "flag.story.liu_bang.first_errand.completed",
+      "gradeVariableKey": "var.story.liu_bang.first_errand.grade",
+      "scoreVariableKey": "var.story.liu_bang.first_errand.score",
+      "effects": [
+        {
+          "type": "change-variable",
+          "key": "var.story.liu_bang.local_reputation",
+          "delta": 2
+        }
+      ]
+    },
+    "tags": [
+      "json-pack",
+      "fallback",
+      "qte"
+    ]
+  }
+]

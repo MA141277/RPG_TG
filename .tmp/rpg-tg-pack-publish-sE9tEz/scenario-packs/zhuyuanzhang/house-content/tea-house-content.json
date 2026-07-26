@@ -1,0 +1,79 @@
+{
+  "teaHouseBossDialogueTextIds": [
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.001",
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.002",
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.003",
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.004",
+    "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.005"
+  ],
+  "teaHouseBossGreetingTextIds": [
+    "runtime.zhu_yuanzhang.tea_house.greeting.fixed.001"
+  ],
+  "teaHouseBossIntelTextIds": [
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.001",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.002",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.003",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.004",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.005",
+    "runtime.zhu_yuanzhang.tea_house.intel.fixed.006"
+  ],
+  "teaHouseBossOpenTextIds": [
+    "runtime.zhu_yuanzhang.tea_house.open.fixed.001"
+  ],
+  "teaHouseBossProfile": {
+    "actorId": "char.kulan_tea_boss",
+    "name": "柳四",
+    "title": "茶馆老板",
+    "personality": "圆滑",
+    "specialty": "情报",
+    "favorability": 0
+  },
+  "teaHouseInitialSpirit": 10,
+  "teaHouseLowIntelChance": 0.25,
+  "teaHousePersonalityTopicWeights": {
+    "精明": {
+      "利": 40,
+      "义": 15,
+      "名": 15,
+      "情": 15,
+      "势": 15
+    },
+    "傲气": {
+      "利": 15,
+      "义": 15,
+      "名": 40,
+      "情": 15,
+      "势": 15
+    },
+    "豪爽": {
+      "利": 15,
+      "义": 15,
+      "名": 15,
+      "情": 40,
+      "势": 15
+    },
+    "警惕": {
+      "利": 15,
+      "义": 15,
+      "名": 15,
+      "情": 15,
+      "势": 40
+    },
+    "圆滑": {
+      "利": 20,
+      "义": 20,
+      "名": 20,
+      "情": 20,
+      "势": 20
+    }
+  },
+  "teaHouseTeaCost": 20,
+  "teaHouseTopicCounterMap": {
+    "利": "情",
+    "情": "名",
+    "名": "势",
+    "势": "义",
+    "义": "利"
+  },
+  "teaHouseTurnTimeLimitSec": 5
+}

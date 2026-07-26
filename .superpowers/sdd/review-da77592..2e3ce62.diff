@@ -1,0 +1,1367 @@
+﻿# Review package: da77592e..2e3ce62aab783139b57420bc52206831798b6866
+
+## Commits
+2e3ce62a Normalize keep review flow
+
+## Files changed
+ docs/change-log.md                                 |  10 +
+ .../plans/2026-07-24-faction-review-flow-plan.md   |  28 ++-
+ .../keep-house/keep-house-house-module.ts          | 251 +++++++++++++++++----
+ .../scenario-packs/zhuyuanzhang/activities.json    |   3 +
+ src/domain/activity.ts                             |   1 +
+ src/domain/house-modules/keep-house-session.ts     |  27 ++-
+ src/domain/keep-house.ts                           |   1 +
+ tests/faction-review-domain.test.cjs               |  15 ++
+ tests/faction-review-ui-contract.test.cjs          |  18 +-
+ tests/robustness.test.cjs                          | 107 +++++++--
+ 10 files changed, 371 insertions(+), 90 deletions(-)
+
+## Diff
+diff --git a/docs/change-log.md b/docs/change-log.md
+index 5a209a91..3e0bf878 100644
+--- a/docs/change-log.md
++++ b/docs/change-log.md
+@@ -1,14 +1,24 @@
+ ﻿# 变更记录
+ 
+ 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
+ 
++## 2026-07-24 Keep Faction Review Normalization
++
++### Changed
++- keep house 评定流程改为 normalized cadence：开场、结构化委任表、表彰、形势、方略面板、进言选择、委任选择、已委任。
++- keep house 普通委任任务改为使用 Red Turban faction merit rank 进行身份门槛判断，并在任务选择中显示最低身份要求。
++- keep house 委任提交仍在 keep module 内本地完成，继续写入下次评定日期、当前 mission、UI mission text 与 `KEEP_HOUSE_VARIABLE_KEYS.lastAssignedTaskId`。
++
++### Impact
++- keep review 不再根据玩家 fame 推导任务可接等级；后续 Red Turban 评定任务应继续通过 `reviewMinRankId` 和 shared faction review helpers 接入。
++
+ ## 2026-07-24 Faction Review Structured House Overlays
+ 
+ ### Added
+ - 为 shared `HouseOverlayViewModel` 新增 typed review assignment-table 与 policy-panel overlay variants，用于把阵营评定的委任表和方针面板从普通文本提升为结构化 house view model。
+ - 新增 shared house UI renderers，统一渲染 `委任` 表格字段 `人物 / 委任 / 完成情况`，以及方针面板字段 `总目标 / 阶段目标 / 执行计划`。
+ 
+ ### Changed
+ - keep house 与 temple house view 现已接入 shared house UI renderer，通过 UI 代码渲染上述结构化评定 overlay，而不是在各自视图内复制评定表格或方针面板拼装。
+ 
+ ### Impact
+diff --git a/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md b/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md
+index 81370b04..4fd2fd71 100644
+--- a/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md
++++ b/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md
+@@ -23,39 +23,43 @@
+ - Ordinary task choice labels must append `（最低身份：身份名）`.
+ - Temple and Red Turban faction merit are tracked separately per faction.
+ - `发表意见` remains an extension point in this slice and may route to a placeholder response before ordinary assignment selection.
+ - Special story task support is an interface only in this slice; no story-specific special task content is required.
+ - If shared review interfaces, runtime session structure, registry shape, or cross-module wiring changes, update `docs/change-log.md`.
+ 
+ ## Execution State
+ 
+ - Status: `running`
+ - Last Updated: `2026-07-24`
+-- Current Focus: `Task 2 complete; Task 3 next`
+-- Next Step: `Execute Task 3 with failing keep flow and rank-gate tests first.`
+-- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-ui-contract.test.cjs }`
++- Current Focus: `Task 3 complete; Task 4 next`
++- Next Step: `Execute Task 4 with failing temple flow tests first.`
++- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "keep house" tests/robustness.test.cjs`; `npm run typecheck`
+ - Notes: `Plan created after approval of docs/superpowers/specs/2026-07-24-faction-review-flow-design.md.`
+ 
+ ## Progress Log
+ 
+ - 2026-07-24
+   - Summary: `Created the implementation plan for normalized faction review flow after spec approval.`
+   - Verification: `npm run lint:plans`
+   - Next: `Run npm run lint:plans, then start Task 1 with TDD.`
+ - 2026-07-24
+   - Summary: `Completed Task 1 shared review domain helpers, faction merit runtime storage, and focused domain coverage.`
+   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }`; `npm run typecheck`
+   - Next: `Execute Task 2 with failing UI contract tests first.`
+ - 2026-07-24
+   - Summary: `Completed Task 2 structured review assignment table and policy panel overlay contracts with shared UI renderers.`
+   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-ui-contract.test.cjs }`
+   - Next: `Execute Task 3 with failing keep flow and rank-gate tests first.`
++- 2026-07-24
++  - Summary: `Completed Task 3 keep review normalization with structured assignment table/policy stages, Red Turban merit rank gates, and visible minimum-identity task labels while preserving keep assignment commit effects.`
++  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "keep house" tests/robustness.test.cjs`; `npm run typecheck`
++  - Next: `Execute Task 4 with failing temple flow tests first.`
+ 
+ ---
+ 
+ ## Based On Spec
+ 
+ - Primary spec:
+   - `docs/superpowers/specs/2026-07-24-faction-review-flow-design.md`
+ - Plan governance:
+   - `docs/superpowers/specs/plan-governance-spec.md`
+ - Canonical progress entry:
+@@ -579,21 +583,21 @@ Update this plan:
+ - Modify: `src/content/scenario-packs/zhuyuanzhang/activities.json`
+ - Modify: `src/content/scenario-packs/zhuyuanzhang/house-content/keep-house-content.json`
+ - Modify: `tests/faction-review-domain.test.cjs`
+ - Modify: `tests/faction-review-ui-contract.test.cjs`
+ - Modify: `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`
+ 
+ **Interfaces:**
+ - Consumes: Task 1 helpers and Task 2 overlay variants.
+ - Produces: keep review sequence `intro -> assignment-table -> praise -> situation -> policy -> advice -> assign-task -> assigned`, rank-gated ordinary tasks, Chinese labels, and no fame-based task filtering.
+ 
+-- [ ] **Step 1: Add failing keep flow and rank-gate tests**
++- [x] **Step 1: Add failing keep flow and rank-gate tests**
+ 
+ Append tests to `tests/faction-review-domain.test.cjs` that import keep module helpers only if they are exported; if no helper is practical, assert source-level removal:
+ 
+ ```js
+ test("keep review task access is not derived from player fame", () => {
+   const source = require("node:fs").readFileSync(
+     require("node:path").join(__dirname, "..", "src/application/house-modules/keep-house/keep-house-house-module.ts"),
+     "utf8"
+   );
+   assert.doesNotMatch(source, /stats\\.fame\\s*>=/);
+@@ -614,109 +618,109 @@ test("keep review source uses normalized Chinese review copy and advice choices"
+     "有谁要进言吗",
+     "发表意见",
+     "一言不发",
+   ]) {
+     assert.match(source, new RegExp(text));
+   }
+   assert.doesNotMatch(source, /Contribution Report|Current Orders|Continue|Dismiss/);
+ });
+ ```
+ 
+-- [ ] **Step 2: Run targeted tests and verify RED**
++- [x] **Step 2: Run targeted tests and verify RED**
+ 
+ Run:
+ 
+ ```powershell
+ npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }
+ ```
+ 
+ Expected:
+ 
+ - Fails because keep still uses fame-derived tiers or English review copy.
+ 
+-- [ ] **Step 3: Add rank metadata to keep activities**
++- [x] **Step 3: Add rank metadata to keep activities**
+ 
+ Modify keep task definitions in `src/content/scenario-packs/zhuyuanzhang/activities.json`:
+ 
+ - `grain-procurement`: `reviewMinRankId: "red_turban.bodyguard"`
+ - `market-inspection`: `reviewMinRankId: "red_turban.guard_captain"`
+ - `militia-drill`: `reviewMinRankId: "red_turban.zhenfu"`
+ 
+ Keep `keepMinTier` only as a backward-compatible field if removing it would affect unrelated code.
+ 
+-- [ ] **Step 4: Update keep task parsing**
++- [x] **Step 4: Update keep task parsing**
+ 
+ Modify `src/domain/activity.ts` to add optional:
+ 
+ ```ts
+ reviewMinRankId?: string;
+ ```
+ 
+ Modify keep task definition parsing so `KeepHouseTaskDefinition` includes:
+ 
+ ```ts
+ minRankId: string;
+ ```
+ 
+ Use `activityDefinition.reviewMinRankId ?? "red_turban.bodyguard"` while bridging old content.
+ 
+-- [ ] **Step 5: Replace fame gate with faction merit gate**
++- [x] **Step 5: Replace fame gate with faction merit gate**
+ 
+ Remove `getTaskTier()` from `keep-house-house-module.ts`.
+ 
+ Compute:
+ 
+ ```ts
+ const playerMerit = readFactionMerit(gameState, "red_turban", playerCharacter.id);
+ const playerRank = resolveFactionMeritRank(RED_TURBAN_FACTION_RANKS, playerMerit);
+ ```
+ 
+ Use `createReviewTaskChoiceViewModels()` to produce available actions. Keep disabled tasks visible only during task selection if the UI can show disabled buttons; otherwise filter disabled entries before rendering but keep labels in tests through view-model helper coverage.
+ 
+-- [ ] **Step 6: Normalize keep meeting stages and overlays**
++- [x] **Step 6: Normalize keep meeting stages and overlays**
+ 
+ Update keep meeting progression:
+ 
+ - intro dialogue: leader opening
+ - next advance opens `review-assignment-table` overlay titled `委任`
+ - closing table moves to praise
+ - next advance moves to situation
+ - next advance moves to policy panel with `所以接下来的计划如下`
+ - next advance keeps policy panel visible and asks `有谁要进言吗`
+ - action container shows `发表意见` and `一言不发`
+ - `发表意见` shows a short placeholder response and proceeds to assignment selection
+ - `一言不发` proceeds to assignment selection
+ - assignment choices append `（最低身份：...）`
+ 
+-- [ ] **Step 7: Keep assignment commit behavior local**
++- [x] **Step 7: Keep assignment commit behavior local**
+ 
+ Do not move `assignTaskToPlayer()` effects out of keep module. Ensure task acceptance still sets:
+ 
+ - next council date
+ - `missions.activeMissionId`
+ - `ui.activeMissionId`
+ - `ui.mainHouseMissionText`
+ - `KEEP_HOUSE_VARIABLE_KEYS.lastAssignedTaskId`
+ 
+-- [ ] **Step 8: Verify GREEN**
++- [x] **Step 8: Verify GREEN**
+ 
+ Run:
+ 
+ ```powershell
+ npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }
+ ```
+ 
+ Expected:
+ 
+ - Targeted review tests pass.
+ 
+-- [ ] **Step 9: Update plan progress**
++- [x] **Step 9: Update plan progress**
+ 
+ Update this plan:
+ 
+ - mark Task 3 steps complete
+ - set `Execution State.Current Focus` to `Task 3 complete; Task 4 next`
+ - append a `Progress Log` entry with the targeted verification command
+ 
+ ## Task 4: Temple Review Flow Normalization And Closeout Verification
+ 
+ **Files:**
+diff --git a/src/application/house-modules/keep-house/keep-house-house-module.ts b/src/application/house-modules/keep-house/keep-house-house-module.ts
+index 4f1e778b..f2724b71 100644
+--- a/src/application/house-modules/keep-house/keep-house-house-module.ts
++++ b/src/application/house-modules/keep-house/keep-house-house-module.ts
+@@ -10,31 +10,39 @@ import type { ActivityDefinition } from "../../../domain/activity";
+ import type { CharacterDefinition } from "../../../domain/character";
+ import type { CalendarDate, GameState } from "../../../domain/game-state";
+ import type {
+   HouseActionViewModel,
+   HouseModuleDefinition,
+   HouseModuleDispatchInput,
+   HouseModuleTransitionResult,
+   HouseModuleViewModel,
+   HouseOverlayViewModel,
+ } from "../../../domain/house-module";
++import type { ReviewAssignmentRow, ReviewPolicyPanel } from "../../../domain/review";
+ import type {
+   KeepHouseContributionEntry,
+   KeepHouseOverlayState,
+   KeepHouseSessionState,
+ } from "../../../domain/house-modules/keep-house-session";
+ import {
+   getKeepHouseContributionVariableKey,
+   KEEP_HOUSE_VARIABLE_KEYS,
+   type KeepHouseTaskDefinition,
+   type KeepHouseTaskTier,
+ } from "../../../domain/keep-house";
++import {
++  createReviewTaskChoiceViewModels,
++  readFactionMerit,
++  RED_TURBAN_FACTION_RANKS,
++  resolveFactionMeritRank,
++  resolveReviewCompletionGrade,
++} from "../../review/faction-review";
+ import { assertExists } from "../../../shared/assert";
+ import {
+   markLateCouncilAttendancePenaltyProcessed,
+   resolveLateCouncilAttendance,
+ } from "../../time/council-attendance";
+ import {
+   formatCouncilStatusText,
+   getCouncilStatusText,
+ } from "../../time/time-progression";
+ import {
+@@ -100,36 +108,48 @@ function getKeepActivityDefinitionsById(
+ function isKeepTaskActivityDefinition(
+   activityDefinition: ActivityDefinition
+ ): activityDefinition is ActivityDefinition & {
+   houseModuleId: "keep-house";
+   taskId: string;
+   missionId: string;
+   titleTextId: string;
+   briefingTextId: string;
+   orderLineTextIds: string[];
+   keepMinTier: KeepHouseTaskTier;
++  reviewMinRankId?: string;
+ } {
+   return (
+     activityDefinition.houseModuleId === "keep-house" &&
+     typeof activityDefinition.taskId === "string" &&
+     typeof activityDefinition.missionId === "string" &&
+     typeof activityDefinition.titleTextId === "string" &&
+     typeof activityDefinition.briefingTextId === "string" &&
+     Array.isArray(activityDefinition.orderLineTextIds) &&
+     typeof activityDefinition.keepMinTier === "string"
+   );
+ }
+ 
+ function resolveKeepDefaultStrategyTitle(textEntriesById: Record<string, string>): string {
+   return resolveKeepText(textEntriesById, keepHouseDefaultStrategy.titleTextId);
+ }
+ 
++function getFallbackKeepTaskRankId(minTier: KeepHouseTaskTier): string {
++  switch (minTier) {
++    case "commander":
++      return "red_turban.zhenfu";
++    case "officer":
++      return "red_turban.guard_captain";
++    case "runner":
++      return "red_turban.bodyguard";
++  }
++}
++
+ function resolveKeepTaskDefinition(
+   input: {
+     activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+     textEntriesById?: Record<string, string> | undefined;
+   },
+   taskId: string
+ ): KeepHouseTaskDefinition {
+   const textEntriesById = getKeepTextEntries(input);
+   const taskActivityDefinition = Object.values(getKeepActivityDefinitionsById(input))
+     .filter(
+@@ -139,20 +159,21 @@ function resolveKeepTaskDefinition(
+     )
+     .at(-1);
+   assertExists(taskActivityDefinition, `Keep house task not found for id "${taskId}".`);
+   const {
+     taskId: resolvedTaskId,
+     missionId,
+     titleTextId,
+     briefingTextId,
+     orderLineTextIds,
+     keepMinTier,
++    reviewMinRankId,
+   } = taskActivityDefinition;
+   assertExists(resolvedTaskId, `Keep house task is missing taskId for "${taskId}".`);
+   assertExists(missionId, `Keep house task is missing missionId for "${taskId}".`);
+   assertExists(titleTextId, `Keep house task is missing titleTextId for "${taskId}".`);
+   assertExists(
+     briefingTextId,
+     `Keep house task is missing briefingTextId for "${taskId}".`
+   );
+   assertExists(
+     orderLineTextIds,
+@@ -165,20 +186,21 @@ function resolveKeepTaskDefinition(
+ 
+   return {
+     id: resolvedTaskId,
+     missionId,
+     title: resolveKeepText(textEntriesById, titleTextId),
+     briefing: resolveKeepText(textEntriesById, briefingTextId),
+     orderLines: orderLineTextIds.map((textId) =>
+       resolveKeepText(textEntriesById, textId)
+     ),
+     minTier: keepMinTier,
++    minRankId: reviewMinRankId ?? getFallbackKeepTaskRankId(keepMinTier),
+   };
+ }
+ 
+ function getKeepTaskDefinitions(
+   input: {
+     activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+     textEntriesById?: Record<string, string> | undefined;
+   }
+ ): KeepHouseTaskDefinition[] {
+   const byTaskId = new Map<string, KeepHouseTaskDefinition>();
+@@ -273,31 +295,20 @@ function addDaysToDate(date: CalendarDate, days: number): CalendarDate {
+   const nextMonth = Math.floor((dayOfYear - 1) / 30) + 1;
+   const nextDay = ((dayOfYear - 1) % 30) + 1;
+ 
+   return {
+     year: nextYear,
+     month: nextMonth,
+     day: nextDay,
+   };
+ }
+ 
+-function getTaskTier(character: CharacterDefinition): KeepHouseTaskTier {
+-  const title = character.title ?? "";
+-  if (character.stats.fame >= 35) {
+-    return "commander";
+-  }
+-  if (character.stats.fame >= 18) {
+-    return "officer";
+-  }
+-  return "runner";
+-}
+-
+ function ensureKeepRuntimeState(
+   gameState: HouseModuleDispatchInput["gameState"],
+   characterDefinitions: CharacterDefinition[],
+   textEntriesById?: Record<string, string> | undefined
+ ): HouseModuleDispatchInput["gameState"] {
+   const nextVariables = { ...gameState.runtime.variables };
+   const resolvedTextEntriesById = textEntriesById ?? {};
+ 
+   if (typeof nextVariables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown] !== "number") {
+     nextVariables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown] = 0;
+@@ -350,33 +361,79 @@ function createContributionEntries(
+       ...(characterDefinition.title == null ? {} : { title: characterDefinition.title }),
+       contribution: readNumericVariable(
+         gameState,
+         getKeepHouseContributionVariableKey(characterDefinition.id),
+         0
+       ),
+     }))
+     .sort((leftEntry, rightEntry) => rightEntry.contribution - leftEntry.contribution);
+ }
+ 
++function createReviewAssignmentRows(
++  contributionEntries: KeepHouseContributionEntry[]
++): ReviewAssignmentRow[] {
++  return contributionEntries.map((entry) => ({
++    characterId: entry.characterId,
++    characterName: entry.name,
++    assignmentTitle: entry.title ?? "本期军务",
++    contribution: entry.contribution,
++    grade: resolveReviewCompletionGrade(entry.contribution),
++  }));
++}
++
++function createReviewPolicyPanel(
++  textEntriesById: Record<string, string>
++): ReviewPolicyPanel {
++  const strategyLines = getMeetingStrategyLines(textEntriesById);
++
++  return {
++    overallGoal: resolveKeepDefaultStrategyTitle(textEntriesById),
++    phaseGoal: strategyLines[1] ?? strategyLines[0] ?? "",
++    executionPlan: strategyLines[2] ?? strategyLines[1] ?? strategyLines[0] ?? "",
++  };
++}
++
+ function createAlertOverlay(
+   title: string,
+   paragraphs: string[],
+   tone?: "info" | "success" | "warning"
+ ): KeepHouseOverlayState {
+   return {
+     type: "alert",
+     title,
+     paragraphs,
+     ...(tone == null ? {} : { tone }),
+   };
+ }
+ 
++function createReviewAssignmentTableOverlay(
++  rows: ReviewAssignmentRow[]
++): KeepHouseOverlayState {
++  return {
++    type: "review-assignment-table",
++    title: "委任",
++    rows,
++    confirmActionId: "close-review-assignment-table",
++    confirmLabel: "继续",
++  };
++}
++
++function createReviewPolicyPanelOverlay(
++  policy: ReviewPolicyPanel
++): KeepHouseOverlayState {
++  return {
++    type: "review-policy-panel",
++    title: "方略",
++    policy,
++  };
++}
++
+ function createTransitionResult(
+   input: Pick<
+     HouseModuleDispatchInput<"keep-house">,
+     "gameState" | "characterDefinitions" | "sessionState"
+   >,
+   patch?: Partial<HouseModuleTransitionResult<"keep-house">>
+ ): HouseModuleTransitionResult<"keep-house"> {
+   return {
+     gameState: patch?.gameState ?? input.gameState,
+     characterDefinitions: patch?.characterDefinitions ?? input.characterDefinitions,
+@@ -415,34 +472,47 @@ function isPlayersLord(
+   playerCharacter: CharacterDefinition,
+   lordCharacter: CharacterDefinition
+ ): boolean {
+   return (
+     playerCharacter.clanId != null &&
+     lordCharacter.clanId != null &&
+     playerCharacter.clanId === lordCharacter.clanId
+   );
+ }
+ 
+-function getAvailableTasks(
++function getReviewTaskChoices(
+   input: {
+     activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+     textEntriesById?: Record<string, string> | undefined;
++    gameState: GameState;
+   },
+   playerCharacter: CharacterDefinition
+-): KeepHouseTaskDefinition[] {
+-  const tierOrder: KeepHouseTaskTier[] = ["runner", "officer", "commander"];
+-  const playerTier = getTaskTier(playerCharacter);
+-
+-  return getKeepTaskDefinitions(input).filter(
+-    (taskDefinition) =>
+-      tierOrder.indexOf(taskDefinition.minTier) <= tierOrder.indexOf(playerTier)
++): ReturnType<typeof createReviewTaskChoiceViewModels> {
++  const playerMerit = readFactionMerit(
++    input.gameState,
++    "red_turban",
++    playerCharacter.id
++  );
++  const playerRank = resolveFactionMeritRank(
++    RED_TURBAN_FACTION_RANKS,
++    playerMerit
+   );
++
++  return createReviewTaskChoiceViewModels({
++    currentRankId: playerRank.id,
++    ranks: RED_TURBAN_FACTION_RANKS,
++    tasks: getKeepTaskDefinitions(input).map((taskDefinition) => ({
++      id: taskDefinition.id,
++      label: taskDefinition.title,
++      minRankId: taskDefinition.minRankId,
++    })),
++  });
+ }
+ 
+ function getAudienceGreetingLines(textEntriesById: Record<string, string>): string[] {
+   return [
+     resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.audience.greeting.001"),
+     resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.audience.greeting.002"),
+   ];
+ }
+ 
+ function getAudienceOpenLines(textEntriesById: Record<string, string>): string[] {
+@@ -638,39 +708,39 @@ function getMeetingPraiseLines(
+ 
+ function getMeetingStrategyLines(textEntriesById: Record<string, string>): string[] {
+   return keepHouseDefaultStrategy.lineTextIds.map((textId) =>
+     resolveKeepText(textEntriesById, textId)
+   );
+ }
+ 
+ function getAssignTaskLines(
+   textEntriesById: Record<string, string>,
+   playerCharacter: CharacterDefinition,
+-  availableTasks: KeepHouseTaskDefinition[]
++  taskChoiceLabels: string[]
+ ): string[] {
+   return [
+     resolveKeepTemplateText(
+       textEntriesById,
+       "runtime.zhu_yuanzhang.keep.review.assign.001",
+       {
+         playerName: playerCharacter.name,
+       }
+     ),
+     resolveKeepTemplateText(
+       textEntriesById,
+       "runtime.zhu_yuanzhang.keep.review.assign.002",
+       {
+         playerName: playerCharacter.name,
+         availableTaskList:
+-          availableTasks.length === 0
++          taskChoiceLabels.length === 0
+             ? "none"
+-            : availableTasks.map((taskDefinition) => taskDefinition.title).join(", "),
++            : taskChoiceLabels.join(", "),
+       }
+     ),
+     resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.review.assign.003"),
+   ];
+ }
+ 
+ function parseTaskActionId(actionId: string): string | null {
+   return actionId.startsWith(ASSIGN_TASK_ACTION_PREFIX)
+     ? actionId.slice(ASSIGN_TASK_ACTION_PREFIX.length)
+     : null;
+@@ -774,120 +844,180 @@ function handleAction(
+     input.characterDefinitions,
+     input.playerCharacterId
+   );
+   const textEntriesById = getKeepTextEntries(input);
+ 
+   if (input.request.actionId === "advance-keep-dialogue") {
+     if (sessionState.mode === "meeting") {
+       switch (sessionState.meetingStage) {
+         case "intro":
+           return withSessionState(input, sessionState, {
+-            meetingStage: "contribution",
++            meetingStage: "assignment-table",
+             dialoguePhase: "open",
+-            overlay: createAlertOverlay(
+-              "Contribution Report",
+-              sessionState.contributionEntries.map(
+-                (entry) => `${entry.name}: ${entry.contribution} contribution`
+-              )
++            dialogueLines: ["看看大家这期间的进展吧。"],
++            overlay: createReviewAssignmentTableOverlay(
++              createReviewAssignmentRows(sessionState.contributionEntries)
+             ),
+           });
+         case "praise":
+           return withSessionState(input, sessionState, {
+-            meetingStage: "strategy",
++            meetingStage: "situation",
+             dialoguePhase: "open",
+-            dialogueLines: getMeetingStrategyLines(textEntriesById),
++            dialogueLines: [
++              "这段时间大家辛苦了。",
++              ...getMeetingStrategyLines(textEntriesById).slice(0, 1),
++            ],
+           });
+-        case "strategy":
++        case "situation":
+           return withSessionState(input, sessionState, {
+-            meetingStage: "assign-task",
++            meetingStage: "policy",
+             dialoguePhase: "open",
+-            dialogueLines: getAssignTaskLines(
+-              textEntriesById,
+-              playerCharacter,
+-              getAvailableTasks(input, playerCharacter)
++            dialogueLines: ["所以接下来的计划如下："],
++            overlay: createReviewPolicyPanelOverlay(
++              createReviewPolicyPanel(textEntriesById)
++            ),
++          });
++        case "policy":
++          return withSessionState(input, sessionState, {
++            meetingStage: "advice",
++            dialoguePhase: "open",
++            dialogueLines: ["有谁要进言吗？"],
++            overlay: createReviewPolicyPanelOverlay(
++              createReviewPolicyPanel(textEntriesById)
+             ),
+           });
+         default:
+           return createTransitionResult(input);
+       }
+     }
+ 
+     return withSessionState(input, sessionState, {
+       meetingStage: "finished",
+       dialoguePhase: "open",
+       dialogueLines: getAudienceOpenLines(textEntriesById),
+     });
+   }
+ 
+-  if (input.request.actionId === "close-alert") {
+-    if (sessionState.mode === "meeting" && sessionState.meetingStage === "contribution") {
++  if (input.request.actionId === "close-review-assignment-table") {
++    if (sessionState.mode === "meeting" && sessionState.meetingStage === "assignment-table") {
+       return withSessionState(input, sessionState, {
+         meetingStage: "praise",
+         overlay: null,
+         dialoguePhase: "open",
+         dialogueLines: getMeetingPraiseLines(
+           lordCharacter,
+           sessionState.contributionEntries,
+           textEntriesById
+         ),
+       });
+     }
+ 
++    return withSessionState(input, sessionState, {
++      overlay: null,
++    });
++  }
++
++  if (input.request.actionId === "close-alert") {
+     if (sessionState.mode === "meeting" && sessionState.meetingStage === "assigned") {
+       return withSessionState(input, sessionState, {
+         meetingStage: "finished",
+         overlay: null,
+         dialoguePhase: "idle",
+       });
+     }
+ 
+     return withSessionState(input, sessionState, {
+       overlay: null,
+     });
+   }
+ 
++  if (
++    input.request.actionId === "keep-review-give-advice" ||
++    input.request.actionId === "keep-review-stay-silent"
++  ) {
++    const taskChoices = getReviewTaskChoices(input, playerCharacter);
++    const adviceResponseLines =
++      input.request.actionId === "keep-review-give-advice"
++        ? ["此议暂且记下。"]
++        : [];
++
++    return withSessionState(input, sessionState, {
++      meetingStage: "assign-task",
++      dialoguePhase: "open",
++      overlay: null,
++      dialogueLines: [
++        ...adviceResponseLines,
++        ...getAssignTaskLines(
++          textEntriesById,
++          playerCharacter,
++          taskChoices.map((taskChoice) => taskChoice.label)
++        ),
++      ],
++    });
++  }
++
+   if (input.request.actionId === "dismiss-dialogue") {
+     return withSessionState(input, sessionState, {
+       dialoguePhase: "idle",
+     });
+   }
+ 
+   if (input.request.actionId === "open-lord-dialogue") {
+     return withSessionState(input, sessionState, {
+       dialoguePhase: "open",
+       dialogueLines: getAudienceOpenLines(textEntriesById),
+     });
+   }
+ 
+   const selectedTaskId = parseTaskActionId(input.request.actionId);
+   if (selectedTaskId != null) {
+     const taskDefinition = resolveKeepTaskDefinition(input, selectedTaskId);
++    const taskChoice = getReviewTaskChoices(input, playerCharacter).find(
++      (choice) => choice.id === selectedTaskId
++    );
++    if (taskChoice?.disabled === true) {
++      return withSessionState(input, sessionState, {
++        overlay: createAlertOverlay(
++          "身份不足",
++          [`此委任最低身份为${taskChoice.minRankLabel}。`],
++          "warning"
++        ),
++      });
++    }
+     return assignTaskToPlayer(input, taskDefinition);
+   }
+ 
+   return createTransitionResult(input);
+ }
+ 
+ function selectOverlayViewModel(
+   overlay: KeepHouseOverlayState
+ ): HouseOverlayViewModel | null {
+   if (overlay == null) {
+     return null;
+   }
+ 
++  if (overlay.type === "review-assignment-table") {
++    return overlay;
++  }
++
++  if (overlay.type === "review-policy-panel") {
++    return overlay;
++  }
++
+   return {
+     type: "alert",
+     title: overlay.title,
+     paragraphs: overlay.paragraphs,
+     ...(overlay.tone == null ? {} : { tone: overlay.tone }),
+     confirmActionId: "close-alert",
+-    confirmLabel: "Close",
++    confirmLabel: "关闭",
+   };
+ }
+ 
+ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
+   moduleId: "keep-house",
+   enter(input) {
+     const textEntriesById = getKeepTextEntries(input);
+     const preparedState = ensureKeepRuntimeState(
+       input.gameState,
+       input.characterDefinitions,
+@@ -997,29 +1127,39 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
+     const currentStrategy = readStringVariable(
+       nextState,
+       KEEP_HOUSE_VARIABLE_KEYS.currentStrategy,
+       resolveKeepDefaultStrategyTitle(getKeepTextEntries(input))
+     );
+     const countdown = readNumericVariable(
+       nextState,
+       KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
+       0
+     );
+-    const availableTasks = getAvailableTasks(input, playerCharacter);
++    const taskChoices = getReviewTaskChoices(
++      {
++        ...input,
++        gameState: nextState,
++      },
++      playerCharacter
++    );
+     const assignedTask =
+       sessionState.selectedTaskId == null
+         ? null
+         : resolveKeepTaskDefinition(input, sessionState.selectedTaskId);
+     const shouldShowMeetingTasks =
+       sessionState.mode === "meeting" &&
+       sessionState.meetingStage === "assign-task" &&
+       sessionState.dialoguePhase === "open";
++    const shouldShowAdviceActions =
++      sessionState.mode === "meeting" &&
++      sessionState.meetingStage === "advice" &&
++      sessionState.dialoguePhase === "open";
+     const shouldShowDialogue = sessionState.dialoguePhase !== "idle";
+     const rosterEntries =
+       sessionState.mode === "meeting"
+         ? sessionState.contributionEntries.filter(
+             (entry) => entry.characterId !== lordCharacter.id
+           )
+         : sessionState.dialoguePhase === "idle"
+           ? [
+               {
+                 characterId: lordCharacter.id,
+@@ -1061,49 +1201,62 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
+         ? null
+         : {
+             mode: "character",
+             speakerName: lordCharacter.name,
+             characterId: lordCharacter.id,
+             position: "right",
+             textLines: sessionState.dialogueLines,
+             advanceActionId:
+               sessionState.overlay == null &&
+               ((sessionState.mode === "meeting" &&
+-                ["intro", "praise", "strategy"].includes(sessionState.meetingStage)) ||
++                ["intro", "praise", "situation", "policy"].includes(
++                  sessionState.meetingStage
++                )) ||
+                 (sessionState.mode === "audience" &&
+                   sessionState.meetingStage === "finished" &&
+                   sessionState.dialoguePhase === "greeting"))
+                 ? "advance-keep-dialogue"
+                 : null,
+             advanceHintText:
+               sessionState.overlay == null &&
+               ((sessionState.mode === "meeting" &&
+-                ["intro", "praise", "strategy"].includes(sessionState.meetingStage)) ||
++                ["intro", "praise", "situation", "policy"].includes(
++                  sessionState.meetingStage
++                )) ||
+                 (sessionState.mode === "audience" &&
+                   sessionState.meetingStage === "finished" &&
+                   sessionState.dialoguePhase === "greeting"))
+-                ? "Continue"
++                ? "继续"
+                 : null,
+           },
+-      actionContainer: shouldShowMeetingTasks
++      actionContainer: shouldShowAdviceActions
++        ? {
++            title: "进言",
++            actions: [
++              { id: "keep-review-give-advice", label: "发表意见" },
++              { id: "keep-review-stay-silent", label: "一言不发" },
++            ],
++          }
++        : shouldShowMeetingTasks
+         ? {
+-            title: "Current Orders",
+-            actions: availableTasks.map<HouseActionViewModel>((taskDefinition) => ({
+-              id: `${ASSIGN_TASK_ACTION_PREFIX}${taskDefinition.id}`,
+-              label: taskDefinition.title,
++            title: "委任",
++            actions: taskChoices.map<HouseActionViewModel>((taskChoice) => ({
++              id: `${ASSIGN_TASK_ACTION_PREFIX}${taskChoice.id}`,
++              label: taskChoice.label,
++              ...(taskChoice.disabled ? { disabled: true } : {}),
+             })),
+           }
+         : sessionState.mode === "audience" && sessionState.dialoguePhase === "open"
+           ? {
+               title: "Audience Actions",
+               actions: [
+-                { id: "dismiss-dialogue", label: "Dismiss" },
++                { id: "dismiss-dialogue", label: "离开" },
+               ],
+             }
+           : null,
+       statusCard: {
+         eyebrow: "Keep",
+         title: currentStrategy,
+         subtitle: strategySubtitle,
+         metrics: [
+           { label: "Commander", value: lordCharacter.name },
+           { label: "Review Countdown", value: `${countdown} days` },
+diff --git a/src/content/scenario-packs/zhuyuanzhang/activities.json b/src/content/scenario-packs/zhuyuanzhang/activities.json
+index 2595a2bb..4045ea4f 100644
+--- a/src/content/scenario-packs/zhuyuanzhang/activities.json
++++ b/src/content/scenario-packs/zhuyuanzhang/activities.json
+@@ -105,45 +105,48 @@
+     "houseModuleId": "keep-house",
+     "taskId": "grain-procurement",
+     "missionId": "mission.keep.grain-procurement",
+     "titleTextId": "runtime.zhu_yuanzhang.keep.task.grain_procurement.title",
+     "briefingTextId": "runtime.zhu_yuanzhang.keep.task.grain_procurement.briefing",
+     "orderLineTextIds": [
+       "runtime.zhu_yuanzhang.keep.task.grain_procurement.order.001",
+       "runtime.zhu_yuanzhang.keep.task.grain_procurement.order.002"
+     ],
+     "keepMinTier": "runner",
++    "reviewMinRankId": "red_turban.bodyguard",
+     "tags": ["scenario", "keep", "task"]
+   },
+   {
+     "id": "activity.zhu_yuanzhang.keep.market_inspection",
+     "label": "Keep market inspection task",
+     "handlerId": "generic.qte",
+     "houseModuleId": "keep-house",
+     "taskId": "market-inspection",
+     "missionId": "mission.keep.market-inspection",
+     "titleTextId": "runtime.zhu_yuanzhang.keep.task.market_inspection.title",
+     "briefingTextId": "runtime.zhu_yuanzhang.keep.task.market_inspection.briefing",
+     "orderLineTextIds": [
+       "runtime.zhu_yuanzhang.keep.task.market_inspection.order.001",
+       "runtime.zhu_yuanzhang.keep.task.market_inspection.order.002"
+     ],
+     "keepMinTier": "officer",
++    "reviewMinRankId": "red_turban.guard_captain",
+     "tags": ["scenario", "keep", "task"]
+   },
+   {
+     "id": "activity.zhu_yuanzhang.keep.militia_drill",
+     "label": "Keep militia drill task",
+     "handlerId": "generic.qte",
+     "houseModuleId": "keep-house",
+     "taskId": "militia-drill",
+     "missionId": "mission.keep.militia-drill",
+     "titleTextId": "runtime.zhu_yuanzhang.keep.task.militia_drill.title",
+     "briefingTextId": "runtime.zhu_yuanzhang.keep.task.militia_drill.briefing",
+     "orderLineTextIds": [
+       "runtime.zhu_yuanzhang.keep.task.militia_drill.order.001",
+       "runtime.zhu_yuanzhang.keep.task.militia_drill.order.002"
+     ],
+     "keepMinTier": "commander",
++    "reviewMinRankId": "red_turban.zhenfu",
+     "tags": ["scenario", "keep", "task"]
+   }
+ ]
+diff --git a/src/domain/activity.ts b/src/domain/activity.ts
+index 718ed6d8..67794c34 100644
+--- a/src/domain/activity.ts
++++ b/src/domain/activity.ts
+@@ -22,20 +22,21 @@ export type ActivityDefinition = {
+   label: string;
+   handlerId: ActivityHandlerId;
+   fallbackHandlerId?: ActivityHandlerId;
+   houseModuleId?: "temple-house" | "keep-house";
+   taskId?: string;
+   missionId?: string;
+   titleTextId?: string;
+   briefingTextId?: string;
+   orderLineTextIds?: string[];
+   keepMinTier?: "runner" | "officer" | "commander";
++  reviewMinRankId?: string;
+   staminaCost?: number;
+   timeAdvanceCost?: number;
+   qte?: ActivityQteTuning;
+   outcome?: ActivityOutcomeDefinition;
+   tags?: string[];
+ };
+ 
+ export type FlowStepDefinition =
+   | {
+       type: "start-event";
+diff --git a/src/domain/house-modules/keep-house-session.ts b/src/domain/house-modules/keep-house-session.ts
+index 3b2c1a7a..5ab6b754 100644
+--- a/src/domain/house-modules/keep-house-session.ts
++++ b/src/domain/house-modules/keep-house-session.ts
+@@ -1,30 +1,51 @@
+ import type { CharacterId } from "../character";
++import type { ReviewAssignmentRow, ReviewPolicyPanel } from "../review";
+ 
+ export type KeepHouseAlertOverlayState = {
+   type: "alert";
+   title: string;
+   paragraphs: string[];
+   tone?: "info" | "success" | "warning";
+ };
+ 
+-export type KeepHouseOverlayState = KeepHouseAlertOverlayState | null;
++export type KeepHouseReviewAssignmentTableOverlayState = {
++  type: "review-assignment-table";
++  title: string;
++  rows: ReviewAssignmentRow[];
++  confirmActionId: string;
++  confirmLabel: string;
++};
++
++export type KeepHouseReviewPolicyPanelOverlayState = {
++  type: "review-policy-panel";
++  title: string;
++  policy: ReviewPolicyPanel;
++};
++
++export type KeepHouseOverlayState =
++  | KeepHouseAlertOverlayState
++  | KeepHouseReviewAssignmentTableOverlayState
++  | KeepHouseReviewPolicyPanelOverlayState
++  | null;
+ 
+ export type KeepHouseDialoguePhase = "greeting" | "open" | "idle";
+ 
+ export type KeepHouseSessionMode = "audience" | "meeting";
+ 
+ export type KeepHouseMeetingStage =
+   | "intro"
+-  | "contribution"
++  | "assignment-table"
+   | "praise"
+-  | "strategy"
++  | "situation"
++  | "policy"
++  | "advice"
+   | "assign-task"
+   | "assigned"
+   | "finished";
+ 
+ export type KeepHouseContributionEntry = {
+   characterId: CharacterId;
+   name: string;
+   title?: string;
+   contribution: number;
+ };
+diff --git a/src/domain/keep-house.ts b/src/domain/keep-house.ts
+index dc38a49f..f60baa9c 100644
+--- a/src/domain/keep-house.ts
++++ b/src/domain/keep-house.ts
+@@ -2,20 +2,21 @@ import type { CharacterId } from "./character";
+ 
+ export type KeepHouseTaskTier = "runner" | "officer" | "commander";
+ 
+ export type KeepHouseTaskDefinition = {
+   id: string;
+   missionId: string;
+   title: string;
+   briefing: string;
+   orderLines: string[];
+   minTier: KeepHouseTaskTier;
++  minRankId: string;
+ };
+ 
+ export type KeepHouseContributionDefinition = {
+   characterId: CharacterId;
+   contribution: number;
+ };
+ 
+ export const KEEP_HOUSE_VARIABLE_KEYS = {
+   reviewCountdown: "var.keep.review_countdown",
+   currentStrategy: "var.keep.current_strategy",
+diff --git a/tests/faction-review-domain.test.cjs b/tests/faction-review-domain.test.cjs
+index efc3e7a9..f6b56a72 100644
+--- a/tests/faction-review-domain.test.cjs
++++ b/tests/faction-review-domain.test.cjs
+@@ -79,10 +79,25 @@ test("review task choices include minimum identity labels and rank gating", () =
+       minRankId: "red_turban.zhenfu",
+       minRankLabel: "镇抚",
+       disabled: true,
+     },
+   ]);
+ });
+ 
+ test("default special task hook is empty and falls back to ordinary choices", () => {
+   assert.deepEqual(getDefaultReviewSpecialTaskHookResult(), { type: "none" });
+ });
++
++test("keep review task access is not derived from player fame", () => {
++  const source = require("node:fs").readFileSync(
++    require("node:path").join(
++      __dirname,
++      "..",
++      "src/application/house-modules/keep-house/keep-house-house-module.ts"
++    ),
++    "utf8"
++  );
++  assert.doesNotMatch(source, /stats\.fame\s*>=/);
++  assert.doesNotMatch(source, /function getTaskTier/);
++  assert.match(source, /readFactionMerit/);
++  assert.match(source, /createReviewTaskChoiceViewModels/);
++});
+diff --git a/tests/faction-review-ui-contract.test.cjs b/tests/faction-review-ui-contract.test.cjs
+index c0d2595c..05504e41 100644
+--- a/tests/faction-review-ui-contract.test.cjs
++++ b/tests/faction-review-ui-contract.test.cjs
+@@ -35,21 +35,21 @@ test("review assignment table renders requested title, columns, and grade labels
+     assert.match(html, new RegExp(`<th>${header}</th>`));
+   }
+   assert.match(html, />朱重八</);
+   assert.match(html, />筹粮</);
+   assert.match(html, />赫赫之功</);
+ });
+ 
+ test("review policy panel renders all policy fields and can remain visible during advice prompt", () => {
+   const html = renderHouseReviewPolicyPanelOverlay({
+     type: "review-policy-panel",
+-    title: "方针",
++    title: "方略",
+     policy: {
+       overallGoal: "保全寺众",
+       phaseGoal: "筹足粮米",
+       executionPlan: "分派众人外出化缘",
+     },
+   });
+   for (const label of ["总目标", "阶段目标", "执行计划"]) {
+     assert.match(html, new RegExp(`<dt>${label}</dt>`));
+   }
+   assert.match(html, />保全寺众</);
+@@ -59,10 +59,26 @@ test("review policy panel renders all policy fields and can remain visible durin
+ 
+ test("main entry does not gain review business imports or hardcoded review branches", () => {
+   const mainSource = readSource("src/main.ts");
+   assert.doesNotMatch(mainSource, /application\/review\/faction-review/);
+   assert.doesNotMatch(mainSource, /review-assignment-table/);
+   assert.doesNotMatch(
+     mainSource,
+     /赫赫之功|尽职尽责|差强人意|不尽人意|碌碌无为/
+   );
+ });
++
++test("keep review source uses normalized Chinese review copy and advice choices", () => {
++  const source = readSource(
++    "src/application/house-modules/keep-house/keep-house-house-module.ts"
++  );
++  for (const text of [
++    "这段时间大家辛苦了",
++    "看看大家这期间的进展吧",
++    "有谁要进言吗",
++    "发表意见",
++    "一言不发",
++  ]) {
++    assert.match(source, new RegExp(text));
++  }
++  assert.doesNotMatch(source, /Contribution Report|Current Orders|Continue|Dismiss/);
++});
+diff --git a/tests/robustness.test.cjs b/tests/robustness.test.cjs
+index c33b4b38..ab202426 100644
+--- a/tests/robustness.test.cjs
++++ b/tests/robustness.test.cjs
+@@ -6125,59 +6125,84 @@ test("keep house starts review meeting at countdown zero and resets to 60 after
+       },
+     },
+     characterDefinitions: prototypeCharacters,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+   });
+ 
+   assert.equal(enterResult.sessionState?.mode, "meeting");
+   assert.equal(enterResult.sessionState?.meetingStage, "intro");
+ 
+-  const contributionResult = keepHouseHouseModule.dispatch({
++  const assignmentTableResult = keepHouseHouseModule.dispatch({
+     gameState: enterResult.gameState,
+     characterDefinitions: enterResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+     sessionState: enterResult.sessionState,
+     request: { type: "action", actionId: "advance-keep-dialogue" },
+   });
+-  assert.equal(contributionResult.sessionState?.meetingStage, "contribution");
+-  assert.equal(contributionResult.sessionState?.overlay?.type, "alert");
++  assert.equal(assignmentTableResult.sessionState?.meetingStage, "assignment-table");
++  assert.equal(
++    assignmentTableResult.sessionState?.overlay?.type,
++    "review-assignment-table"
++  );
+ 
+   const praiseResult = keepHouseHouseModule.dispatch({
+-    gameState: contributionResult.gameState,
+-    characterDefinitions: contributionResult.characterDefinitions,
++    gameState: assignmentTableResult.gameState,
++    characterDefinitions: assignmentTableResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+-    sessionState: contributionResult.sessionState,
+-    request: { type: "action", actionId: "close-alert" },
++    sessionState: assignmentTableResult.sessionState,
++    request: { type: "action", actionId: "close-review-assignment-table" },
+   });
+   assert.equal(praiseResult.sessionState?.meetingStage, "praise");
+ 
+-  const strategyResult = keepHouseHouseModule.dispatch({
++  const situationResult = keepHouseHouseModule.dispatch({
+     gameState: praiseResult.gameState,
+     characterDefinitions: praiseResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+     sessionState: praiseResult.sessionState,
+     request: { type: "action", actionId: "advance-keep-dialogue" },
+   });
+-  assert.equal(strategyResult.sessionState?.meetingStage, "strategy");
++  assert.equal(situationResult.sessionState?.meetingStage, "situation");
+ 
+-  const assignTaskResult = keepHouseHouseModule.dispatch({
+-    gameState: strategyResult.gameState,
+-    characterDefinitions: strategyResult.characterDefinitions,
++  const policyResult = keepHouseHouseModule.dispatch({
++    gameState: situationResult.gameState,
++    characterDefinitions: situationResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+-    sessionState: strategyResult.sessionState,
++    sessionState: situationResult.sessionState,
+     request: { type: "action", actionId: "advance-keep-dialogue" },
+   });
++  assert.equal(policyResult.sessionState?.meetingStage, "policy");
++  assert.equal(policyResult.sessionState?.overlay?.type, "review-policy-panel");
++
++  const adviceResult = keepHouseHouseModule.dispatch({
++    gameState: policyResult.gameState,
++    characterDefinitions: policyResult.characterDefinitions,
++    houseDefinition: keepHouse,
++    playerCharacterId,
++    sessionState: policyResult.sessionState,
++    request: { type: "action", actionId: "advance-keep-dialogue" },
++  });
++  assert.equal(adviceResult.sessionState?.meetingStage, "advice");
++  assert.equal(adviceResult.sessionState?.overlay?.type, "review-policy-panel");
++
++  const assignTaskResult = keepHouseHouseModule.dispatch({
++    gameState: adviceResult.gameState,
++    characterDefinitions: adviceResult.characterDefinitions,
++    houseDefinition: keepHouse,
++    playerCharacterId,
++    sessionState: adviceResult.sessionState,
++    request: { type: "action", actionId: "keep-review-stay-silent" },
++  });
+   assert.equal(assignTaskResult.sessionState?.meetingStage, "assign-task");
+ 
+   const assignedResult = keepHouseHouseModule.dispatch({
+     gameState: assignTaskResult.gameState,
+     characterDefinitions: assignTaskResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+     sessionState: assignTaskResult.sessionState,
+     request: { type: "action", actionId: "assign-keep-task:grain-procurement" },
+   });
+@@ -6256,73 +6281,105 @@ test("keep house review copy resolves from text entries during strategy and assi
+     houseDefinition: keepHouse,
+     playerCharacterId,
+     activityDefinitionsById,
+     textEntriesById,
+   });
+   assert.deepEqual(enterResult.sessionState?.dialogueLines, [
+     "自定义评定开场一。",
+     "自定义评定开场二。",
+   ]);
+ 
+-  const contributionResult = keepHouseHouseModule.dispatch({
++  const assignmentTableResult = keepHouseHouseModule.dispatch({
+     gameState: enterResult.gameState,
+     characterDefinitions: enterResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+     sessionState: enterResult.sessionState,
+     request: { type: "action", actionId: "advance-keep-dialogue" },
+     activityDefinitionsById,
+     textEntriesById,
+   });
++  assert.equal(assignmentTableResult.sessionState?.meetingStage, "assignment-table");
++  assert.equal(
++    assignmentTableResult.sessionState?.overlay?.type,
++    "review-assignment-table"
++  );
++
+   const praiseResult = keepHouseHouseModule.dispatch({
+-    gameState: contributionResult.gameState,
+-    characterDefinitions: contributionResult.characterDefinitions,
++    gameState: assignmentTableResult.gameState,
++    characterDefinitions: assignmentTableResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+-    sessionState: contributionResult.sessionState,
+-    request: { type: "action", actionId: "close-alert" },
++    sessionState: assignmentTableResult.sessionState,
++    request: { type: "action", actionId: "close-review-assignment-table" },
+     activityDefinitionsById,
+     textEntriesById,
+   });
+   assert.equal(
+     praiseResult.sessionState?.dialogueLines[0],
+     "主帅先翻阅功簿。"
+   );
+ 
+-  const strategyResult = keepHouseHouseModule.dispatch({
++  const situationResult = keepHouseHouseModule.dispatch({
+     gameState: praiseResult.gameState,
+     characterDefinitions: praiseResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+     sessionState: praiseResult.sessionState,
+     request: { type: "action", actionId: "advance-keep-dialogue" },
+     activityDefinitionsById,
+     textEntriesById,
+   });
+   assert.equal(
+-    strategyResult.sessionState?.dialogueLines[0],
++    situationResult.sessionState?.dialogueLines[1],
+     "自定义军议开场。"
+   );
+ 
+-  const assignTaskResult = keepHouseHouseModule.dispatch({
+-    gameState: strategyResult.gameState,
+-    characterDefinitions: strategyResult.characterDefinitions,
++  const policyResult = keepHouseHouseModule.dispatch({
++    gameState: situationResult.gameState,
++    characterDefinitions: situationResult.characterDefinitions,
++    houseDefinition: keepHouse,
++    playerCharacterId,
++    sessionState: situationResult.sessionState,
++    request: { type: "action", actionId: "advance-keep-dialogue" },
++    activityDefinitionsById,
++    textEntriesById,
++  });
++  assert.equal(policyResult.sessionState?.meetingStage, "policy");
++  assert.equal(policyResult.sessionState?.overlay?.type, "review-policy-panel");
++
++  const adviceResult = keepHouseHouseModule.dispatch({
++    gameState: policyResult.gameState,
++    characterDefinitions: policyResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+-    sessionState: strategyResult.sessionState,
++    sessionState: policyResult.sessionState,
+     request: { type: "action", actionId: "advance-keep-dialogue" },
+     activityDefinitionsById,
+     textEntriesById,
+   });
++  assert.equal(adviceResult.sessionState?.meetingStage, "advice");
++  assert.equal(adviceResult.sessionState?.overlay?.type, "review-policy-panel");
++
++  const assignTaskResult = keepHouseHouseModule.dispatch({
++    gameState: adviceResult.gameState,
++    characterDefinitions: adviceResult.characterDefinitions,
++    houseDefinition: keepHouse,
++    playerCharacterId,
++    sessionState: adviceResult.sessionState,
++    request: { type: "action", actionId: "keep-review-stay-silent" },
++    activityDefinitionsById,
++    textEntriesById,
++  });
+   assert.deepEqual(assignTaskResult.sessionState?.dialogueLines, [
+     "朱元璋出列听令。",
+-    "当前可领差事：自定义采办军粮。",
++    "当前可领差事：自定义采办军粮（最低身份：亲兵）, 巡看市面（最低身份：亲兵队长）, 整练军伍（最低身份：镇抚）。",
+     "领命后立即出发。",
+   ]);
+ 
+   const assignedResult = keepHouseHouseModule.dispatch({
+     gameState: assignTaskResult.gameState,
+     characterDefinitions: assignTaskResult.characterDefinitions,
+     houseDefinition: keepHouse,
+     playerCharacterId,
+     sessionState: assignTaskResult.sessionState,
+     request: { type: "action", actionId: "assign-keep-task:grain-procurement" },

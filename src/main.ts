@@ -264,25 +264,21 @@ import {
 import { preloadInitialMapViewAssets } from "./ui/startup-asset-preloader";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
-  DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
   createCampaignTerrainCameraCenteredOnCoordinate,
   getCampaignTerrainCameraTiltRadiansForScale,
   getCampaignTerrainTravelGrid,
-  getCampaignTerrainRenderStats,
   isCampaignTerrainUvPassable,
   projectCampaignTerrainUvToClientPointAtHeightAnchor,
   resolveCampaignTerrainUvFromClientPosition,
   requestCampaignTerrainRender,
   setCampaignTerrainCamera,
   syncCampaignTerrainWebGl,
-  type CampaignCityDepthMeshTransform,
   type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
 import {
   beginCampaignCloudInteraction,
   endCampaignCloudInteraction,
-  getCampaignCloudRenderStats,
   requestCampaignCloudRender,
   syncCampaignCloudWebGl,
 } from "./ui/views/map/campaign-cloud-webgl";
@@ -327,7 +323,6 @@ declare global {
     onBeggingGameComplete?: (
       result: CityBeggingGameCompletionResult
     ) => void;
-    rpgMapPerf?: CampaignMapPerfConsoleCommand;
   }
 }
 
@@ -342,18 +337,6 @@ type CampaignMapZoomAnimationState = {
   target: CampaignMapDebugState;
   lastFrameMs: number | null;
 };
-
-type CampaignMapPerfSnapshot = {
-  enabled: boolean;
-  map: CampaignMapDebugState;
-  zoomActive: boolean;
-  terrain: ReturnType<typeof getCampaignTerrainRenderStats>;
-  cloud: ReturnType<typeof getCampaignCloudRenderStats>;
-};
-
-type CampaignMapPerfConsoleCommand = (
-  command?: boolean | "on" | "off" | "toggle" | "status"
-) => CampaignMapPerfSnapshot;
 
 type BackgroundMusicMode = "opening" | "in-game";
 
@@ -614,28 +597,12 @@ let campaignMapDebugHomeState: CampaignMapDebugState = {
 let campaignTerrainStyleState: CampaignTerrainStyle = {
   ...DEFAULT_CAMPAIGN_TERRAIN_STYLE,
 };
-let campaignCityDepthMeshTransformState: CampaignCityDepthMeshTransform = {
-  ...DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
-};
 let hasAppliedInitialCampaignMapDebug = false;
 let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
 let initialCampaignMapDebugAnimationStartTime: number | null = null;
 let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
 let campaignMapZoomCloudResumeTimeoutId: number | null = null;
-let campaignMapPerfPanelEnabled = false;
-window.rpgMapPerf = (command = "status") => {
-  if (command === "toggle") {
-    campaignMapPerfPanelEnabled = !campaignMapPerfPanelEnabled;
-  } else if (command === "on" || command === true) {
-    campaignMapPerfPanelEnabled = true;
-  } else if (command === "off" || command === false) {
-    campaignMapPerfPanelEnabled = false;
-  }
-
-  syncCampaignMapPerfPanel();
-  return getCampaignMapPerfSnapshot();
-};
 let activeMapIntroOverlay: HTMLElement | null = null;
 let activeBackgroundMusicMode: BackgroundMusicMode | null = null;
 let campaignMapScaleDraftValue: string | null = null;
@@ -3517,14 +3484,6 @@ appElement.addEventListener("input", (event) => {
     return;
   }
 
-  if (
-    targetElement instanceof HTMLInputElement &&
-    targetElement.dataset.campaignCityMeshField != null
-  ) {
-    handleCampaignCityDepthMeshInput(targetElement);
-    return;
-  }
-
   if (handleLayoutEditorInput(event.target)) {
     return;
   }
@@ -6059,7 +6018,6 @@ function renderAppFrame(
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
-  syncCampaignCityDepthMeshTransformView();
   restoreCampaignMapScaleInputFocus(focusedScaleInput);
   syncMapIntroOverlay();
   syncActivityQteLoop();
@@ -6238,16 +6196,6 @@ function handleCampaignMapDebugAction(action: string | undefined): void {
     return;
   }
 
-  if (action === "city-mesh-reset") {
-    setCampaignCityDepthMeshTransformState(
-      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM
-    );
-    return;
-  }
-
-  if (action === "city-mesh-copy") {
-    void copyCampaignCityDepthMeshParameters();
-  }
 }
 
 function getSteppedCampaignMapScale(direction: -1 | 1): number {
@@ -6336,189 +6284,6 @@ function setCampaignTerrainStyleState(nextState: CampaignTerrainStyle): void {
   campaignTerrainStyleState = clampedState;
   syncCampaignTerrainStyleView();
   requestCampaignTerrainRender("static");
-}
-
-function handleCampaignCityDepthMeshInput(inputElement: HTMLInputElement): void {
-  const field = inputElement.dataset.campaignCityMeshField;
-  if (!isCampaignCityDepthMeshTransformField(field)) {
-    return;
-  }
-
-  const nextValue = Number(inputElement.value);
-  if (!Number.isFinite(nextValue)) {
-    return;
-  }
-
-  setCampaignCityDepthMeshTransformState({
-    ...campaignCityDepthMeshTransformState,
-    [field]: clampCampaignCityDepthMeshTransformValue(field, nextValue),
-  });
-}
-
-function isCampaignCityDepthMeshTransformField(
-  field: string | undefined
-): field is keyof CampaignCityDepthMeshTransform {
-  return (
-    field === "rotationDegrees" ||
-    field === "pitchDegrees" ||
-    field === "scale" ||
-    field === "offsetX" ||
-    field === "offsetY" ||
-    field === "lift"
-  );
-}
-
-function clampCampaignCityDepthMeshTransformValue(
-  field: keyof CampaignCityDepthMeshTransform,
-  value: number
-): number {
-  if (field === "rotationDegrees") {
-    return clamp(value, -180, 180);
-  }
-
-  if (field === "pitchDegrees") {
-    return clamp(value, -90, 90);
-  }
-
-  if (field === "offsetX" || field === "offsetY") {
-    return clamp(value, -1, 1);
-  }
-
-  if (field === "lift") {
-    return clamp(value, -0.08, 0.16);
-  }
-
-  return clamp(value, 0.1, 6);
-}
-
-function setCampaignCityDepthMeshTransformState(
-  nextState: CampaignCityDepthMeshTransform
-): void {
-  campaignCityDepthMeshTransformState = {
-    rotationDegrees: clampCampaignCityDepthMeshTransformValue(
-      "rotationDegrees",
-      nextState.rotationDegrees
-    ),
-    pitchDegrees: clampCampaignCityDepthMeshTransformValue(
-      "pitchDegrees",
-      nextState.pitchDegrees
-    ),
-    scale: clampCampaignCityDepthMeshTransformValue("scale", nextState.scale),
-    offsetX: clampCampaignCityDepthMeshTransformValue(
-      "offsetX",
-      nextState.offsetX
-    ),
-    offsetY: clampCampaignCityDepthMeshTransformValue(
-      "offsetY",
-      nextState.offsetY
-    ),
-    lift: clampCampaignCityDepthMeshTransformValue("lift", nextState.lift),
-  };
-  syncCampaignCityDepthMeshTransformView();
-  requestCampaignTerrainRender("static");
-}
-
-function syncCampaignCityDepthMeshTransformView(): void {
-  const canvases = appRoot.querySelectorAll<HTMLCanvasElement>(
-    "[data-campaign-map-terrain]"
-  );
-  for (const canvas of canvases) {
-    canvas.dataset.campaignCityRotation =
-      campaignCityDepthMeshTransformState.rotationDegrees.toFixed(3);
-    canvas.dataset.campaignCityPitch =
-      campaignCityDepthMeshTransformState.pitchDegrees.toFixed(3);
-    canvas.dataset.campaignCityScale =
-      campaignCityDepthMeshTransformState.scale.toFixed(3);
-    canvas.dataset.campaignCityOffsetX =
-      campaignCityDepthMeshTransformState.offsetX.toFixed(3);
-    canvas.dataset.campaignCityOffsetY =
-      campaignCityDepthMeshTransformState.offsetY.toFixed(3);
-    canvas.dataset.campaignCityLift =
-      campaignCityDepthMeshTransformState.lift.toFixed(4);
-  }
-
-  syncCampaignCityDepthMeshTransformControl(
-    "rotationDegrees",
-    campaignCityDepthMeshTransformState.rotationDegrees
-  );
-  syncCampaignCityDepthMeshTransformControl(
-    "pitchDegrees",
-    campaignCityDepthMeshTransformState.pitchDegrees
-  );
-  syncCampaignCityDepthMeshTransformControl(
-    "scale",
-    campaignCityDepthMeshTransformState.scale
-  );
-  syncCampaignCityDepthMeshTransformControl(
-    "offsetX",
-    campaignCityDepthMeshTransformState.offsetX
-  );
-  syncCampaignCityDepthMeshTransformControl(
-    "offsetY",
-    campaignCityDepthMeshTransformState.offsetY
-  );
-  syncCampaignCityDepthMeshTransformControl(
-    "lift",
-    campaignCityDepthMeshTransformState.lift
-  );
-}
-
-function syncCampaignCityDepthMeshTransformControl(
-  field: keyof CampaignCityDepthMeshTransform,
-  value: number
-): void {
-  const inputElement = appRoot.querySelector<HTMLInputElement>(
-    `[data-campaign-city-mesh-field="${field}"]`
-  );
-  const valueElement = appRoot.querySelector<HTMLElement>(
-    `[data-campaign-city-mesh-value="${field}"]`
-  );
-  const formattedValue =
-    field === "rotationDegrees" || field === "pitchDegrees"
-      ? `${value.toFixed(0)}deg`
-      : field === "lift"
-        ? value.toFixed(4)
-        : field === "offsetX" || field === "offsetY"
-          ? value.toFixed(2)
-        : value.toFixed(2);
-
-  if (inputElement != null && inputElement !== document.activeElement) {
-    inputElement.value = value.toFixed(field === "lift" ? 4 : 3);
-  }
-  if (valueElement != null) {
-    valueElement.textContent = formattedValue;
-  }
-}
-
-async function copyCampaignCityDepthMeshParameters(): Promise<void> {
-  const parameters = {
-    rotationDegrees: Number(
-      campaignCityDepthMeshTransformState.rotationDegrees.toFixed(3)
-    ),
-    pitchDegrees: Number(
-      campaignCityDepthMeshTransformState.pitchDegrees.toFixed(3)
-    ),
-    scale: Number(campaignCityDepthMeshTransformState.scale.toFixed(3)),
-    offsetX: Number(campaignCityDepthMeshTransformState.offsetX.toFixed(3)),
-    offsetY: Number(campaignCityDepthMeshTransformState.offsetY.toFixed(3)),
-    lift: Number(campaignCityDepthMeshTransformState.lift.toFixed(4)),
-  };
-  const text = JSON.stringify(parameters, null, 2);
-  try {
-    await navigator.clipboard.writeText(text);
-    updateCampaignCityDepthMeshCopyStatus("Copied");
-  } catch {
-    updateCampaignCityDepthMeshCopyStatus(text);
-  }
-}
-
-function updateCampaignCityDepthMeshCopyStatus(text: string): void {
-  const statusElement = appRoot.querySelector<HTMLElement>(
-    "[data-campaign-city-mesh-copy-status]"
-  );
-  if (statusElement != null) {
-    statusElement.textContent = text;
-  }
 }
 
 function startInitialCampaignMapDebugAnimationIfNeeded(): void {
@@ -6856,52 +6621,6 @@ function syncCampaignMapDebugView(): void {
   if (offsetYElement != null) {
     offsetYElement.textContent = `${campaignMapDebugState.offsetY}px`;
   }
-  syncCampaignMapPerfPanel();
-}
-
-function getCampaignMapPerfSnapshot(): CampaignMapPerfSnapshot {
-  return {
-    enabled: campaignMapPerfPanelEnabled,
-    map: { ...campaignMapDebugState },
-    zoomActive: campaignMapZoomAnimationState != null,
-    terrain: getCampaignTerrainRenderStats(),
-    cloud: getCampaignCloudRenderStats(),
-  };
-}
-
-function syncCampaignMapPerfPanel(): void {
-  const existingPanel = appRoot.querySelector<HTMLElement>(
-    "[data-campaign-map-perf-panel]"
-  );
-  if (!campaignMapPerfPanelEnabled) {
-    existingPanel?.remove();
-    return;
-  }
-
-  const panel = existingPanel ?? document.createElement("aside");
-  if (existingPanel == null) {
-    panel.className = "c-campaign-map-perf-panel";
-    panel.dataset.campaignMapPerfPanel = "true";
-    appRoot.append(panel);
-  }
-
-  const snapshot = getCampaignMapPerfSnapshot();
-  const terrain = snapshot.terrain;
-  const cloud = snapshot.cloud;
-  panel.textContent = [
-    `Map ${snapshot.map.scale.toFixed(2)}x ${snapshot.zoomActive ? "zoom" : "idle"}`,
-    `Terrain ${formatMapPerfMs(terrain.lastRenderDurationMs)} ${terrain.lastDrawCalls} draws ${terrain.canvasWidth}x${terrain.canvasHeight} ${terrain.lastRenderReason ?? "-"}`,
-    `Cloud ${formatMapPerfMs(cloud.lastRenderDurationMs)} ${cloud.lastDrawCalls} draws ${cloud.canvasWidth}x${cloud.canvasHeight} ${cloud.interactionActive ? "frozen" : "flow"}`,
-    `Renderers T${terrain.rendererCount}/${terrain.pendingRendererCount} C${cloud.rendererCount}/${cloud.pendingRendererCount}`,
-  ].join("\n");
-}
-
-function formatMapPerfMs(value: number): string {
-  if (!Number.isFinite(value)) {
-    return "0.00ms";
-  }
-
-  return `${value.toFixed(2)}ms`;
 }
 
 function syncCampaignTerrainStyleView(): void {

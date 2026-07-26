@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "scenario-pack",
+  "id": "scenario-pack.liu_bang.pei_county_opening",
+  "title": "刘邦：沛县亭长开局",
+  "description": "一份可由运行时读取的 JSON 开局包：包含玩家人物、入口事件、剧情场景和默认活动 fallback。",
+  "files": {
+    "scenarioProfile": "scenario-profile.json",
+    "cities": "cities.json",
+    "characters": "characters.json",
+    "events": "events.json",
+    "scenes": "scenes.json",
+    "textEntries": "text-entries.json",
+    "activities": "activities.json"
+  }
+}

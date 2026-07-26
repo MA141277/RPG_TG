@@ -1,0 +1,157 @@
+[
+  {
+    "id": "activity.zhu_yuanzhang.temple.default_chore",
+    "label": "Temple chore fallback",
+    "handlerId": "temple.chore",
+    "fallbackHandlerId": "generic.qte",
+    "timeAdvanceCost": 1,
+    "qte": {
+      "totalRounds": 3,
+      "requiredSuccesses": 2
+    },
+    "outcome": {
+      "completedFlagKey": "flag.story.zhu_yuanzhang.default_chore.completed",
+      "gradeVariableKey": "var.story.zhu_yuanzhang.default_chore.grade",
+      "scoreVariableKey": "var.story.zhu_yuanzhang.default_chore.score",
+      "effects": [
+        {
+          "type": "change-variable",
+          "key": "var.story.zhu_yuanzhang.temple_contribution",
+          "delta": 3
+        }
+      ]
+    },
+    "tags": ["scenario", "fallback", "qte", "temple"]
+  },
+  {
+    "id": "activity.zhu_yuanzhang.temple.copy_scripture",
+    "label": "Temple copy scripture task",
+    "handlerId": "generic.qte",
+    "houseModuleId": "temple-house",
+    "taskId": "copy-scripture",
+    "missionId": "mission.temple.copy-scripture",
+    "titleTextId": "runtime.zhu_yuanzhang.temple.task.copy_scripture.title",
+    "briefingTextId": "runtime.zhu_yuanzhang.temple.task.copy_scripture.briefing",
+    "orderLineTextIds": [
+      "runtime.zhu_yuanzhang.temple.task.copy_scripture.order.001",
+      "runtime.zhu_yuanzhang.temple.task.copy_scripture.order.002"
+    ],
+    "reviewMinRankId": "temple.laborer",
+    "tags": ["scenario", "temple", "task"]
+  },
+  {
+    "id": "activity.zhu_yuanzhang.temple.sweep_courtyard",
+    "label": "Temple sweep courtyard task",
+    "handlerId": "generic.qte",
+    "houseModuleId": "temple-house",
+    "taskId": "sweep-courtyard",
+    "missionId": "mission.temple.sweep-courtyard",
+    "titleTextId": "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.title",
+    "briefingTextId": "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.briefing",
+    "orderLineTextIds": [
+      "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.order.001",
+      "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.order.002"
+    ],
+    "reviewMinRankId": "temple.laborer",
+    "tags": ["scenario", "temple", "task"]
+  },
+  {
+    "id": "activity.zhu_yuanzhang.temple.carry_water",
+    "label": "Temple carry water task",
+    "handlerId": "generic.qte",
+    "houseModuleId": "temple-house",
+    "taskId": "carry-water",
+    "missionId": "mission.temple.carry-water",
+    "titleTextId": "runtime.zhu_yuanzhang.temple.task.carry_water.title",
+    "briefingTextId": "runtime.zhu_yuanzhang.temple.task.carry_water.briefing",
+    "orderLineTextIds": [
+      "runtime.zhu_yuanzhang.temple.task.carry_water.order.001",
+      "runtime.zhu_yuanzhang.temple.task.carry_water.order.002"
+    ],
+    "reviewMinRankId": "temple.laborer",
+    "tags": ["scenario", "temple", "task"]
+  },
+  {
+    "id": "activity.zhu_yuanzhang.temple.beg_alms",
+    "label": "Temple beg alms task",
+    "handlerId": "generic.qte",
+    "houseModuleId": "temple-house",
+    "taskId": "beg-alms",
+    "missionId": "mission.temple.beg-alms",
+    "titleTextId": "runtime.zhu_yuanzhang.temple.task.beg_alms.title",
+    "briefingTextId": "runtime.zhu_yuanzhang.temple.task.beg_alms.briefing",
+    "orderLineTextIds": [
+      "runtime.zhu_yuanzhang.temple.task.beg_alms.order.001",
+      "runtime.zhu_yuanzhang.temple.task.beg_alms.order.002"
+    ],
+    "reviewMinRankId": "temple.novice",
+    "tags": ["scenario", "temple", "task"]
+  },
+  {
+    "id": "activity.zhu_yuanzhang.temple.relief_refugees",
+    "label": "Temple relief refugees task",
+    "handlerId": "generic.qte",
+    "houseModuleId": "temple-house",
+    "taskId": "relief-refugees",
+    "missionId": "mission.temple.relief-refugees",
+    "titleTextId": "runtime.zhu_yuanzhang.temple.task.relief_refugees.title",
+    "briefingTextId": "runtime.zhu_yuanzhang.temple.task.relief_refugees.briefing",
+    "orderLineTextIds": [
+      "runtime.zhu_yuanzhang.temple.task.relief_refugees.order.001",
+      "runtime.zhu_yuanzhang.temple.task.relief_refugees.order.002"
+    ],
+    "reviewMinRankId": "temple.itinerant",
+    "tags": ["scenario", "temple", "task"]
+  },
+  {
+    "id": "activity.zhu_yuanzhang.keep.grain_procurement",
+    "label": "Keep grain procurement task",
+    "handlerId": "generic.qte",
+    "houseModuleId": "keep-house",
+    "taskId": "grain-procurement",
+    "missionId": "mission.keep.grain-procurement",
+    "titleTextId": "runtime.zhu_yuanzhang.keep.task.grain_procurement.title",
+    "briefingTextId": "runtime.zhu_yuanzhang.keep.task.grain_procurement.briefing",
+    "orderLineTextIds": [
+      "runtime.zhu_yuanzhang.keep.task.grain_procurement.order.001",
+      "runtime.zhu_yuanzhang.keep.task.grain_procurement.order.002"
+    ],
+    "keepMinTier": "runner",
+    "reviewMinRankId": "red_turban.bodyguard",
+    "tags": ["scenario", "keep", "task"]
+  },
+  {
+    "id": "activity.zhu_yuanzhang.keep.market_inspection",
+    "label": "Keep market inspection task",
+    "handlerId": "generic.qte",
+    "houseModuleId": "keep-house",
+    "taskId": "market-inspection",
+    "missionId": "mission.keep.market-inspection",
+    "titleTextId": "runtime.zhu_yuanzhang.keep.task.market_inspection.title",
+    "briefingTextId": "runtime.zhu_yuanzhang.keep.task.market_inspection.briefing",
+    "orderLineTextIds": [
+      "runtime.zhu_yuanzhang.keep.task.market_inspection.order.001",
+      "runtime.zhu_yuanzhang.keep.task.market_inspection.order.002"
+    ],
+    "keepMinTier": "officer",
+    "reviewMinRankId": "red_turban.guard_captain",
+    "tags": ["scenario", "keep", "task"]
+  },
+  {
+    "id": "activity.zhu_yuanzhang.keep.militia_drill",
+    "label": "Keep militia drill task",
+    "handlerId": "generic.qte",
+    "houseModuleId": "keep-house",
+    "taskId": "militia-drill",
+    "missionId": "mission.keep.militia-drill",
+    "titleTextId": "runtime.zhu_yuanzhang.keep.task.militia_drill.title",
+    "briefingTextId": "runtime.zhu_yuanzhang.keep.task.militia_drill.briefing",
+    "orderLineTextIds": [
+      "runtime.zhu_yuanzhang.keep.task.militia_drill.order.001",
+      "runtime.zhu_yuanzhang.keep.task.militia_drill.order.002"
+    ],
+    "keepMinTier": "commander",
+    "reviewMinRankId": "red_turban.zhenfu",
+    "tags": ["scenario", "keep", "task"]
+  }
+]

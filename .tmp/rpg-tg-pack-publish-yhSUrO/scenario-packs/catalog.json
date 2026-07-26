@@ -1,0 +1,17 @@
+[
+  {
+    "id": "scenario-pack.zhu_yuanzhang.monk_opening",
+    "title": "朱元璋：皇觉寺开局",
+    "description": "朱元璋早期开局剧本包，包含皇觉寺阶段的基础地图、人物、事件、场景与默认活动。",
+    "manifestPath": "./zhuyuanzhang/pack.json",
+    "sort": 10,
+    "isDefault": true
+  },
+  {
+    "id": "scenario-pack.liu_bang.pei_county_opening",
+    "title": "刘邦：沛县亭长开局",
+    "description": "一份可由运行时读取的 JSON 开局包：包含玩家人物、入口事件、剧情场景和默认活动 fallback。",
+    "manifestPath": "./liu-bang-pei-county-opening/pack.json",
+    "sort": 20
+  }
+]

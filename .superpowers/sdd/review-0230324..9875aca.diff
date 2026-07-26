@@ -1,0 +1,592 @@
+﻿# Review package: 0230324f45c55e9e6bfd4a344c120a8632748ac4..9875aca3d278eb7e03b65a0c8b3cbaa941bf1c3f
+
+## Commits
+9875aca3 docs: record faction review domain changes
+be143343 feat: add faction review domain helpers
+
+## Files changed
+ .superpowers/sdd/progress.md                       |   1 +
+ docs/change-log.md                                 |   9 ++
+ .../plans/2026-07-24-faction-review-flow-plan.md   |  24 ++--
+ src/application/review/faction-review.ts           | 150 +++++++++++++++++++++
+ src/application/state/create-initial-state.ts      |   1 +
+ src/domain/game-state.ts                           |   1 +
+ src/domain/review.ts                               |  50 +++++++
+ tests/faction-review-domain.test.cjs               |  88 ++++++++++++
+ 8 files changed, 314 insertions(+), 10 deletions(-)
+
+## Diff
+diff --git a/.superpowers/sdd/progress.md b/.superpowers/sdd/progress.md
+index 5aaa470c..3ba96807 100644
+--- a/.superpowers/sdd/progress.md
++++ b/.superpowers/sdd/progress.md
+@@ -2,10 +2,11 @@
+ 
+ - 2026-07-16: Starting Global NPC Interaction Phase 1 from `docs/superpowers/plans/2026-07-16-global-npc-interaction-plan.md`.
+ - Task 1: complete (commits 0dbab8cd..bd3ad85b, review clean).
+ - Task 2: complete (commits 3ad1f1d8..387de08a, review clean; Minor noted: avoid committing SDD report artifacts in later feature commits).
+ - Task 3: complete (commits 88810ea6..e2af8ea8, review clean after escaping fix).
+ - Task 4: complete (commits 47e34913..a02bf9f1, review clean after roster context/session cleanup fix).
+ - Task 5: complete (commits 51db1a05..6dc83668, review clean).
+ - Task 6: complete (commits 75ef1ef8..022dc855, review clean).
+ - Final review: complete (commit e296cda4, review clean; local verification passed: npm run typecheck, npm test, npm run build, npm run lint:plans).
+ - Task 1: complete (commits 7205b44..c4e2945, review clean after read-only example loader fix).
++- 2026-07-24: Starting Faction Review Flow from `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`.
+diff --git a/docs/change-log.md b/docs/change-log.md
+index cc9cddf0..a077b81a 100644
+--- a/docs/change-log.md
++++ b/docs/change-log.md
+@@ -1,14 +1,23 @@
+ ﻿# 变更记录
+ 
+ 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
+ 
++## 2026-07-24 Faction Review Domain Contracts
++
++### Added
++- 新增 shared faction review domain contracts 与纯 review helpers，覆盖完成评级、阵营身份等级、阵营功绩 read/write/clear、任务身份门槛视图，以及默认 special-task hook。
++- 新增 `GameState.runtime.factionMerit`，并在 `createInitialState()` 初始化，用于按 faction 存储玩家阵营功绩。
++
++### Impact
++- 阵营评定相关的等级、功绩和任务门槛逻辑现在有共享 domain/application 契约，后续 temple、keep 或其他阵营据点应复用该契约，而不是在各自流程内复制持久状态或评级规则。
++
+ ## 2026-07-22 Player UI Cleanup
+ 
+ ### Changed
+ - 隐藏玩家界面的 `界面编辑器` 启动按钮；编辑器渲染函数在未打开时返回空内容，不再向普通界面注入开发入口。
+ - 隐藏 campaign 大地图上的 debug 参数窗口；地图仍保留主地图底部 `背包` 入口。
+ - 新增 `tests/dev-ui-visibility.test.cjs`，锁定玩家界面默认不暴露布局编辑器入口和大地图 debug 控件。
+ 
+ ## 2026-07-21 Campaign Terrain Hex-Clipped Chunk Mesh
+ 
+ ### Fixed
+diff --git a/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md b/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md
+index 3b5f60f8..313e2cc0 100644
+--- a/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md
++++ b/docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md
+@@ -23,31 +23,35 @@
+ - Ordinary task choice labels must append `（最低身份：身份名）`.
+ - Temple and Red Turban faction merit are tracked separately per faction.
+ - `发表意见` remains an extension point in this slice and may route to a placeholder response before ordinary assignment selection.
+ - Special story task support is an interface only in this slice; no story-specific special task content is required.
+ - If shared review interfaces, runtime session structure, registry shape, or cross-module wiring changes, update `docs/change-log.md`.
+ 
+ ## Execution State
+ 
+ - Status: `running`
+ - Last Updated: `2026-07-24`
+-- Current Focus: `Create shared review contracts, then wire temple and keep reviews to the normalized flow.`
+-- Next Step: `Execute Task 1 with failing review-domain tests first.`
+-- Verification: `npm run lint:plans`
++- Current Focus: `Task 1 complete; Task 2 next`
++- Next Step: `Execute Task 2 with failing UI contract tests first.`
++- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }`; `npm run typecheck`
+ - Notes: `Plan created after approval of docs/superpowers/specs/2026-07-24-faction-review-flow-design.md.`
+ 
+ ## Progress Log
+ 
+ - 2026-07-24
+   - Summary: `Created the implementation plan for normalized faction review flow after spec approval.`
+   - Verification: `npm run lint:plans`
+   - Next: `Run npm run lint:plans, then start Task 1 with TDD.`
++- 2026-07-24
++  - Summary: `Completed Task 1 shared review domain helpers, faction merit runtime storage, and focused domain coverage.`
++  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }`; `npm run typecheck`
++  - Next: `Execute Task 2 with failing UI contract tests first.`
+ 
+ ---
+ 
+ ## Based On Spec
+ 
+ - Primary spec:
+   - `docs/superpowers/specs/2026-07-24-faction-review-flow-design.md`
+ - Plan governance:
+   - `docs/superpowers/specs/plan-governance-spec.md`
+ - Canonical progress entry:
+@@ -157,21 +161,21 @@
+ - Create: `src/domain/review.ts`
+ - Create: `src/application/review/faction-review.ts`
+ - Modify: `src/domain/game-state.ts`
+ - Create: `tests/faction-review-domain.test.cjs`
+ - Modify: `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`
+ 
+ **Interfaces:**
+ - Produces: `ReviewCompletionGrade`, `ReviewAssignmentRow`, `ReviewPolicyPanel`, `FactionMeritRank`, `ReviewTaskChoice`, `ReviewSpecialTaskHookResult`, `REVIEW_COMPLETION_GRADE_LABELS`, `TEMPLE_FACTION_RANKS`, `RED_TURBAN_FACTION_RANKS`, `getReviewCompletionGradeLabel()`, `resolveReviewCompletionGrade()`, `resolveFactionMeritRank()`, `readFactionMerit()`, `writeFactionMerit()`, `clearFactionMerit()`, `createReviewTaskChoiceViewModels()`, `getDefaultReviewSpecialTaskHookResult()`.
+ - Consumes: `GameState.runtime` and existing character/task IDs.
+ 
+-- [ ] **Step 1: Write the failing domain tests**
++- [x] **Step 1: Write the failing domain tests**
+ 
+ Create `tests/faction-review-domain.test.cjs` with tests that require the not-yet-created compiled module:
+ 
+ ```js
+ const test = require("node:test");
+ const assert = require("node:assert/strict");
+ 
+ const {
+   REVIEW_COMPLETION_GRADE_LABELS,
+   TEMPLE_FACTION_RANKS,
+@@ -252,33 +256,33 @@ test("review task choices include minimum identity labels and rank gating", () =
+       disabled: true,
+     },
+   ]);
+ });
+ 
+ test("default special task hook is empty and falls back to ordinary choices", () => {
+   assert.deepEqual(getDefaultReviewSpecialTaskHookResult(), { type: "none" });
+ });
+ ```
+ 
+-- [ ] **Step 2: Run the targeted tests and verify RED**
++- [x] **Step 2: Run the targeted tests and verify RED**
+ 
+ Run:
+ 
+ ```powershell
+ npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }
+ ```
+ 
+ Expected:
+ 
+ - Fails because `../.test-dist/application/review/faction-review.js` does not exist.
+ 
+-- [ ] **Step 3: Add shared review domain types**
++- [x] **Step 3: Add shared review domain types**
+ 
+ Create `src/domain/review.ts` with exported types matching the spec:
+ 
+ ```ts
+ export type ReviewCompletionGrade =
+   | "outstanding"
+   | "fulfilled"
+   | "acceptable"
+   | "poor"
+   | "idle";
+@@ -321,31 +325,31 @@ export type ReviewTaskChoice = {
+ export type ReviewSpecialTaskHookResult =
+   | { type: "none" }
+   | {
+       type: "available";
+       descriptionLines: string[];
+       acceptActionId: string;
+       declineActionId: string;
+     };
+ ```
+ 
+-- [ ] **Step 4: Add faction merit runtime storage**
++- [x] **Step 4: Add faction merit runtime storage**
+ 
+ Modify `src/domain/game-state.ts` so `GameState.runtime` includes:
+ 
+ ```ts
+ factionMerit: Record<string, Record<CharacterId, number>>;
+ ```
+ 
+ Then update initial state creation if TypeScript reports missing `factionMerit`; initialize it as `{}`.
+ 
+-- [ ] **Step 5: Implement pure review helpers**
++- [x] **Step 5: Implement pure review helpers**
+ 
+ Create `src/application/review/faction-review.ts` exporting the functions used in Step 1. Use these exact rank ids:
+ 
+ ```ts
+ export const TEMPLE_FACTION_RANKS: FactionMeritRank[] = [
+   { id: "temple.laborer", label: "杂役", minMerit: 0, stipendLabel: "0（管饭）" },
+   { id: "temple.novice", label: "沙弥", minMerit: 80, stipendLabel: "1 斗米" },
+   { id: "temple.itinerant", label: "云游僧", minMerit: 200, stipendLabel: "化缘所得" },
+   { id: "temple.monk", label: "比丘", minMerit: 500, stipendLabel: "3 斗米" },
+   { id: "temple.guest_master", label: "知客僧", minMerit: 1000, stipendLabel: "5 斗米" },
+@@ -358,33 +362,33 @@ export const RED_TURBAN_FACTION_RANKS: FactionMeritRank[] = [
+   { id: "red_turban.zhenfu", label: "镇抚", minMerit: 600 },
+   { id: "red_turban.military_governor", label: "管军总管", minMerit: 1400 },
+   { id: "red_turban.commander_general", label: "总兵官", minMerit: 3000 },
+   { id: "red_turban.deputy_marshal", label: "（左副）元帅", minMerit: 4500 },
+   { id: "red_turban.duke_or_usurper", label: "自立·吴国公 / 下克上", minMerit: 10000 },
+ ];
+ ```
+ 
+ Use thresholds `>= 90` outstanding, `>= 60` fulfilled, `>= 25` acceptable, `> 0` poor, otherwise idle.
+ 
+-- [ ] **Step 6: Verify GREEN**
++- [x] **Step 6: Verify GREEN**
+ 
+ Run:
+ 
+ ```powershell
+ npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }
+ ```
+ 
+ Expected:
+ 
+ - `faction-review-domain.test.cjs` passes.
+ 
+-- [ ] **Step 7: Update plan progress**
++- [x] **Step 7: Update plan progress**
+ 
+ Update this plan:
+ 
+ - mark Task 1 steps complete
+ - set `Execution State.Current Focus` to `Task 1 complete; Task 2 next`
+ - append a `Progress Log` entry with the targeted verification command
+ 
+ ## Task 2: Structured Review Overlays And UI Contracts
+ 
+ **Files:**
+diff --git a/src/application/review/faction-review.ts b/src/application/review/faction-review.ts
+new file mode 100644
+index 00000000..6768580d
+--- /dev/null
++++ b/src/application/review/faction-review.ts
+@@ -0,0 +1,150 @@
++import type { CharacterId } from "../../domain/character";
++import type { GameState } from "../../domain/game-state";
++import type {
++  FactionMeritRank,
++  ReviewCompletionGrade,
++  ReviewSpecialTaskHookResult,
++  ReviewTaskChoice,
++  ReviewTaskGate,
++} from "../../domain/review";
++
++export const REVIEW_COMPLETION_GRADE_LABELS: Record<ReviewCompletionGrade, string> = {
++  outstanding: "赫赫之功",
++  fulfilled: "尽职尽责",
++  acceptable: "差强人意",
++  poor: "不尽人意",
++  idle: "碌碌无为",
++};
++
++export const TEMPLE_FACTION_RANKS: FactionMeritRank[] = [
++  { id: "temple.laborer", label: "杂役", minMerit: 0, stipendLabel: "0（管饭）" },
++  { id: "temple.novice", label: "沙弥", minMerit: 80, stipendLabel: "1 斗米" },
++  { id: "temple.itinerant", label: "云游僧", minMerit: 200, stipendLabel: "化缘所得" },
++  { id: "temple.monk", label: "比丘", minMerit: 500, stipendLabel: "3 斗米" },
++  { id: "temple.guest_master", label: "知客僧", minMerit: 1000, stipendLabel: "5 斗米" },
++  { id: "temple.prior", label: "监院", minMerit: 1800, stipendLabel: "8 斗米" },
++];
++
++export const RED_TURBAN_FACTION_RANKS: FactionMeritRank[] = [
++  { id: "red_turban.bodyguard", label: "亲兵", minMerit: 0 },
++  { id: "red_turban.guard_captain", label: "亲兵队长", minMerit: 200 },
++  { id: "red_turban.zhenfu", label: "镇抚", minMerit: 600 },
++  { id: "red_turban.military_governor", label: "管军总管", minMerit: 1400 },
++  { id: "red_turban.commander_general", label: "总兵官", minMerit: 3000 },
++  { id: "red_turban.deputy_marshal", label: "（左副）元帅", minMerit: 4500 },
++  { id: "red_turban.duke_or_usurper", label: "自立·吴国公 / 下克上", minMerit: 10000 },
++];
++
++type FactionMeritState = Pick<GameState, "runtime">;
++
++export function getReviewCompletionGradeLabel(grade: ReviewCompletionGrade): string {
++  return REVIEW_COMPLETION_GRADE_LABELS[grade];
++}
++
++export function resolveReviewCompletionGrade(contribution: number): ReviewCompletionGrade {
++  if (contribution >= 90) {
++    return "outstanding";
++  }
++  if (contribution >= 60) {
++    return "fulfilled";
++  }
++  if (contribution >= 25) {
++    return "acceptable";
++  }
++  if (contribution > 0) {
++    return "poor";
++  }
++  return "idle";
++}
++
++export function resolveFactionMeritRank(
++  ranks: FactionMeritRank[],
++  merit: number
++): FactionMeritRank {
++  if (ranks.length === 0) {
++    throw new Error("Cannot resolve faction merit rank from an empty rank table.");
++  }
++
++  return ranks.reduce((selected: FactionMeritRank, rank) => {
++    if (merit >= rank.minMerit && rank.minMerit >= selected.minMerit) {
++      return rank;
++    }
++    return selected;
++  }, ranks[0] as FactionMeritRank);
++}
++
++export function readFactionMerit(
++  state: FactionMeritState,
++  factionId: string,
++  characterId: CharacterId
++): number {
++  return state.runtime.factionMerit[factionId]?.[characterId] ?? 0;
++}
++
++export function writeFactionMerit<TState extends FactionMeritState>(
++  state: TState,
++  factionId: string,
++  characterId: CharacterId,
++  merit: number
++): TState {
++  return {
++    ...state,
++    runtime: {
++      ...state.runtime,
++      factionMerit: {
++        ...state.runtime.factionMerit,
++        [factionId]: {
++          ...(state.runtime.factionMerit[factionId] ?? {}),
++          [characterId]: merit,
++        },
++      },
++    },
++  };
++}
++
++export function clearFactionMerit<TState extends FactionMeritState>(
++  state: TState,
++  factionId: string,
++  characterId: CharacterId
++): TState {
++  const { [characterId]: _cleared, ...remainingFactionMerit } =
++    state.runtime.factionMerit[factionId] ?? {};
++
++  return {
++    ...state,
++    runtime: {
++      ...state.runtime,
++      factionMerit: {
++        ...state.runtime.factionMerit,
++        [factionId]: remainingFactionMerit,
++      },
++    },
++  };
++}
++
++export function createReviewTaskChoiceViewModels(input: {
++  currentRankId: string;
++  ranks: FactionMeritRank[];
++  tasks: ReviewTaskGate[];
++}): ReviewTaskChoice[] {
++  const currentRank = input.ranks.find((rank) => rank.id === input.currentRankId);
++  const currentMerit = currentRank?.minMerit ?? -Infinity;
++
++  return input.tasks.map((task) => {
++    const minRank = input.ranks.find((rank) => rank.id === task.minRankId);
++    const minRankLabel = minRank?.label ?? task.minRankId;
++    const minMerit = minRank?.minMerit ?? Infinity;
++
++    return {
++      id: task.id,
++      label: `${task.label}（最低身份：${minRankLabel}）`,
++      minRankId: task.minRankId,
++      minRankLabel,
++      disabled: currentMerit < minMerit,
++    };
++  });
++}
++
++export function getDefaultReviewSpecialTaskHookResult(): ReviewSpecialTaskHookResult {
++  return { type: "none" };
++}
+diff --git a/src/application/state/create-initial-state.ts b/src/application/state/create-initial-state.ts
+index bb55bf46..933b4376 100644
+--- a/src/application/state/create-initial-state.ts
++++ b/src/application/state/create-initial-state.ts
+@@ -88,20 +88,21 @@ export function createInitialState(input: InitialStateInput): GameState {
+     },
+     missions: {
+       activeMissionId: null,
+       completedMissionIds: [],
+     },
+     cards: input.cards,
+     valuables: input.valuables,
+     runtime: {
+       flags: {},
+       variables: {},
++      factionMerit: {},
+       tasks: createInitialTaskRuntimeState(),
+       playableSession: null,
+       cityNpcPools: {},
+       cityMarkets: {},
+       mapExplorationByMapId: {},
+       activitySession: null,
+       troops: createDefaultTroopRuntimeState(input.playerCharacterId),
+       mapExploration: createInitialCampaignMapExplorationState(),
+       eventHistory: {},
+     },
+diff --git a/src/domain/game-state.ts b/src/domain/game-state.ts
+index e8d1b43a..a1978e7b 100644
+--- a/src/domain/game-state.ts
++++ b/src/domain/game-state.ts
+@@ -66,20 +66,21 @@ export type GameState = {
+   };
+   missions: {
+     activeMissionId: MissionId | null;
+     completedMissionIds: MissionId[];
+   };
+   cards: CardInventory;
+   valuables: ValuableItemInventory;
+   runtime: {
+     flags: Record<string, boolean>;
+     variables: Record<string, number | string>;
++    factionMerit: Record<string, Record<CharacterId, number>>;
+     tasks: TaskRuntimeState;
+     playableSession: ActivePlayableSession | null;
+     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
+     cityMarkets: Record<CityId, CityMarketData>;
+     mapExplorationByMapId: Record<MapId, MapExplorationState>;
+     activitySession: ActiveActivitySession;
+     troops: TroopRuntimeState;
+     mapExploration: CampaignMapExplorationState;
+     eventHistory: Record<
+       EventId,
+diff --git a/src/domain/review.ts b/src/domain/review.ts
+new file mode 100644
+index 00000000..32ce895f
+--- /dev/null
++++ b/src/domain/review.ts
+@@ -0,0 +1,50 @@
++export type ReviewCompletionGrade =
++  | "outstanding"
++  | "fulfilled"
++  | "acceptable"
++  | "poor"
++  | "idle";
++
++export type ReviewAssignmentRow = {
++  characterId: string;
++  characterName: string;
++  assignmentTitle: string;
++  contribution: number;
++  grade: ReviewCompletionGrade;
++};
++
++export type ReviewPolicyPanel = {
++  overallGoal: string;
++  phaseGoal: string;
++  executionPlan: string;
++};
++
++export type FactionMeritRank = {
++  id: string;
++  label: string;
++  minMerit: number;
++  stipendLabel?: string;
++};
++
++export type ReviewTaskGate = {
++  id: string;
++  label: string;
++  minRankId: string;
++};
++
++export type ReviewTaskChoice = {
++  id: string;
++  label: string;
++  minRankId: string;
++  minRankLabel: string;
++  disabled: boolean;
++};
++
++export type ReviewSpecialTaskHookResult =
++  | { type: "none" }
++  | {
++      type: "available";
++      descriptionLines: string[];
++      acceptActionId: string;
++      declineActionId: string;
++    };
+diff --git a/tests/faction-review-domain.test.cjs b/tests/faction-review-domain.test.cjs
+new file mode 100644
+index 00000000..efc3e7a9
+--- /dev/null
++++ b/tests/faction-review-domain.test.cjs
+@@ -0,0 +1,88 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++
++const {
++  REVIEW_COMPLETION_GRADE_LABELS,
++  TEMPLE_FACTION_RANKS,
++  RED_TURBAN_FACTION_RANKS,
++  getReviewCompletionGradeLabel,
++  resolveReviewCompletionGrade,
++  resolveFactionMeritRank,
++  readFactionMerit,
++  writeFactionMerit,
++  clearFactionMerit,
++  createReviewTaskChoiceViewModels,
++  getDefaultReviewSpecialTaskHookResult,
++} = require("../.test-dist/application/review/faction-review.js");
++
++test("review completion grades use the requested five Chinese labels", () => {
++  assert.deepEqual(REVIEW_COMPLETION_GRADE_LABELS, {
++    outstanding: "赫赫之功",
++    fulfilled: "尽职尽责",
++    acceptable: "差强人意",
++    poor: "不尽人意",
++    idle: "碌碌无为",
++  });
++  assert.equal(resolveReviewCompletionGrade(100), "outstanding");
++  assert.equal(resolveReviewCompletionGrade(70), "fulfilled");
++  assert.equal(resolveReviewCompletionGrade(35), "acceptable");
++  assert.equal(resolveReviewCompletionGrade(1), "poor");
++  assert.equal(resolveReviewCompletionGrade(0), "idle");
++  assert.equal(getReviewCompletionGradeLabel("poor"), "不尽人意");
++});
++
++test("faction rank lookup resolves temple and red turban threshold boundaries", () => {
++  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 0).label, "杂役");
++  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 79).label, "杂役");
++  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 80).label, "沙弥");
++  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 1800).label, "监院");
++  assert.equal(resolveFactionMeritRank(RED_TURBAN_FACTION_RANKS, 199).label, "亲兵");
++  assert.equal(resolveFactionMeritRank(RED_TURBAN_FACTION_RANKS, 200).label, "亲兵队长");
++  assert.equal(resolveFactionMeritRank(RED_TURBAN_FACTION_RANKS, 10000).label, "自立·吴国公 / 下克上");
++});
++
++test("faction merit is stored separately and can be cleared by faction", () => {
++  const baseState = {
++    runtime: {
++      factionMerit: {},
++    },
++  };
++  const withTemple = writeFactionMerit(baseState, "temple", "char.player", 90);
++  const withKeep = writeFactionMerit(withTemple, "red_turban", "char.player", 220);
++  assert.equal(readFactionMerit(withKeep, "temple", "char.player"), 90);
++  assert.equal(readFactionMerit(withKeep, "red_turban", "char.player"), 220);
++  const clearedTemple = clearFactionMerit(withKeep, "temple", "char.player");
++  assert.equal(readFactionMerit(clearedTemple, "temple", "char.player"), 0);
++  assert.equal(readFactionMerit(clearedTemple, "red_turban", "char.player"), 220);
++});
++
++test("review task choices include minimum identity labels and rank gating", () => {
++  const choices = createReviewTaskChoiceViewModels({
++    currentRankId: "red_turban.guard_captain",
++    ranks: RED_TURBAN_FACTION_RANKS,
++    tasks: [
++      { id: "grain", label: "筹粮", minRankId: "red_turban.bodyguard" },
++      { id: "drill", label: "练兵", minRankId: "red_turban.zhenfu" },
++    ],
++  });
++  assert.deepEqual(choices, [
++    {
++      id: "grain",
++      label: "筹粮（最低身份：亲兵）",
++      minRankId: "red_turban.bodyguard",
++      minRankLabel: "亲兵",
++      disabled: false,
++    },
++    {
++      id: "drill",
++      label: "练兵（最低身份：镇抚）",
++      minRankId: "red_turban.zhenfu",
++      minRankLabel: "镇抚",
++      disabled: true,
++    },
++  ]);
++});
++
++test("default special task hook is empty and falls back to ordinary choices", () => {
++  assert.deepEqual(getDefaultReviewSpecialTaskHookResult(), { type: "none" });
++});

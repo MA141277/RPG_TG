@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "playableId": "test-playable",
+  "family": "minigame",
+  "title": "Test Playable",
+  "kind": "builtin",
+  "paths": {
+    "domainFile": "src/domain/playables/test-playable.ts",
+    "definitionFile": "src/application/playables/test-playable/test-playable-definition.ts",
+    "sessionFile": "src/application/playables/test-playable/test-playable-session.ts",
+    "presenterFile": "src/application/playables/test-playable/test-playable-presenter.ts",
+    "metricsFile": "src/application/playables/test-playable/test-playable-metrics.ts",
+    "settlementFile": "src/application/playables/test-playable/test-playable-settlement.ts",
+    "viewFile": "src/ui/views/playables/test-playable-view.ts",
+    "assetDirectory": "src/assets/playables/test-playable"
+  }
+}

@@ -1,0 +1,138 @@
+[
+  {
+    "id": "event.story.zhu_yuanzhang.ordination",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺剃度",
+    "occurrence": "once",
+    "trigger": {
+      "timing": "house-enter",
+      "scope": {
+        "houseId": "house.kulan.temple"
+      },
+      "priority": 200
+    },
+    "conditions": [
+      {
+        "type": "flag",
+        "key": "flag.story.zhu_yuanzhang.ordination.completed",
+        "expected": false
+      }
+    ],
+    "entrySceneId": "scene.story.zhu_yuanzhang.ordination",
+    "tags": ["main-story", "temple-opening", "fictionalized-bridge"]
+  },
+  {
+    "id": "event.story.zhu_yuanzhang.first_temple_review",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺首轮评定",
+    "occurrence": "once-per-chapter",
+    "trigger": {
+      "timing": "manual",
+      "priority": 190
+    },
+    "conditions": [
+      {
+        "type": "flag",
+        "key": "flag.story.zhu_yuanzhang.ordination.completed",
+        "expected": true
+      },
+      {
+        "type": "flag",
+        "key": "flag.story.zhu_yuanzhang.first_temple_review.completed",
+        "expected": false
+      }
+    ],
+    "entrySceneId": "scene.story.zhu_yuanzhang.first_temple_review",
+    "tags": ["main-story", "temple-review"]
+  },
+  {
+    "id": "event.story.zhu_yuanzhang.unlock_begging",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "住持准其外出化缘",
+    "occurrence": "once",
+    "trigger": {
+      "timing": "indoor-screen-shown",
+      "scope": {
+        "houseId": "house.kulan.temple"
+      },
+      "priority": 170
+    },
+    "conditions": [
+      {
+        "type": "flag",
+        "key": "flag.story.zhu_yuanzhang.temple_work_unlocked",
+        "expected": true
+      },
+      {
+        "type": "flag",
+        "key": "flag.story.zhu_yuanzhang.begging_unlocked",
+        "expected": false
+      },
+      {
+        "type": "variable",
+        "key": "var.story.zhu_yuanzhang.temple_contribution",
+        "operator": ">=",
+        "value": 30
+      }
+    ],
+    "entrySceneId": "scene.story.zhu_yuanzhang.unlock_begging",
+    "tags": ["main-story", "unlock", "temple-loop"]
+  },
+  {
+    "id": "event.story.zhu_yuanzhang.runing_broadcast",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "颍州街头风声",
+    "occurrence": "once",
+    "trigger": {
+      "timing": "city-enter",
+      "scope": {
+        "cityId": "city.runing"
+      },
+      "priority": 160
+    },
+    "conditions": [
+      {
+        "type": "flag",
+        "key": "flag.story.zhu_yuanzhang.begging_unlocked",
+        "expected": true
+      },
+      {
+        "type": "variable",
+        "key": "var.story.zhu_yuanzhang.stage",
+        "operator": "==",
+        "value": "huangjue-begging-journey"
+      }
+    ],
+    "entrySceneId": "scene.story.zhu_yuanzhang.runing_broadcast",
+    "tags": ["main-story", "city-enter", "foreshadowing"]
+  },
+  {
+    "id": "event.story.zhu_yuanzhang.haozhou_return_encounter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "返濠州遇盗与入郭",
+    "occurrence": "once",
+    "trigger": {
+      "timing": "city-enter",
+      "scope": {
+        "cityId": "city.kulan"
+      },
+      "priority": 155
+    },
+    "conditions": [
+      {
+        "type": "variable",
+        "key": "var.story.zhu_yuanzhang.stage",
+        "operator": "==",
+        "value": "huangjue-begging-journey"
+      },
+      {
+        "type": "variable",
+        "key": "var.story.zhu_yuanzhang.temple_week",
+        "operator": "==",
+        "value": 4
+      }
+    ],
+    "entrySceneId": "scene.story.zhu_yuanzhang.haozhou_return_encounter",
+    "tags": ["main-story", "city-enter", "battle-hook", "join-guo-zixing"]
+  }
+]

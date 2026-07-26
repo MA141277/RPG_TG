@@ -70,11 +70,6 @@ type ActorMeshData = {
   indices: Uint16Array;
 };
 
-type CityDepthMeshData = {
-  vertices: Float32Array;
-  indices: Uint32Array;
-};
-
 type FortWallMeshData = {
   vertices: Float32Array;
   indices: Uint32Array;
@@ -248,17 +243,6 @@ type CampaignFortCityAcceptedPoint = {
   radius: number;
 };
 
-type CityDepthMeshAsset = {
-  positions: Float32Array;
-  normals: Float32Array;
-  uvs: Float32Array;
-  indices: Uint32Array;
-  textureImage: HTMLImageElement;
-  u: number;
-  v: number;
-  minHeight: number;
-};
-
 type FortWallMeshAsset = {
   positions: Float32Array;
   normals: Float32Array;
@@ -309,23 +293,6 @@ type CampaignRuntimeMarker = {
     background: string[];
     notes: string;
   } | null;
-};
-
-type CityDepthMeshAssetJson = {
-  format: string;
-  positions: number[];
-  normals: number[];
-  uvs: number[];
-  indices: number[];
-};
-
-export type CampaignCityDepthMeshTransform = {
-  rotationDegrees: number;
-  pitchDegrees: number;
-  scale: number;
-  offsetX: number;
-  offsetY: number;
-  lift: number;
 };
 
 type ActorBoneAsset = {
@@ -463,6 +430,9 @@ const CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_X = 0.64;
 const CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_Y = 0.46;
 const CAMPAIGN_STRUCTURE_SHADOW_LIGHT_OFFSET_SCALE = 0.08;
 const CAMPAIGN_STRUCTURE_SHADOW_LIFT = 0.00050;
+const CAMPAIGN_STRUCTURE_MODEL_LOD_HIDE_BELOW_SCALE = 8;
+const CAMPAIGN_STRUCTURE_MODEL_LOD_REDUCED_BELOW_SCALE = 20;
+const CAMPAIGN_STRUCTURE_MODEL_LOD_REDUCED_BUDGET_RATIO = 0.35;
 const CAMPAIGN_ACTOR_SHADOW_OPACITY = 0.52;
 const CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_X = 1.18;
 const CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_Y = 0.72;
@@ -529,11 +499,6 @@ const SMOOTH_TERRAIN_KERNEL = [
 ] as const;
 const GRASS_TEXTURE_DETAIL = 1.04;
 const GRASS_AMBIENT_LIGHT = 0.53;
-const CITY_DEPTH_MESH_WORLD_SCALE = 0.035;
-const CITY_DEPTH_MESH_HEIGHT_SCALE = 0.034;
-const CITY_DEPTH_MESH_BASE_LIFT = 0.0015;
-const CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE = 2 / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE);
-const CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE = 2 / HEX_TERRAIN_SCALE;
 const WATER_ANIMATION_FRAME_INTERVAL_MS = 1000 / 24;
 const vertexShaderSource = terrainVertexShaderRaw;
 const fragmentShaderSource = terrainFragmentShaderRaw;
@@ -544,14 +509,6 @@ const vegetationFragmentShaderSource = vegetationFragmentShaderRaw;
 const vegetationShadowVertexShaderSource = vegetationShadowVertexShaderRaw;
 const vegetationShadowFragmentShaderSource = vegetationShadowFragmentShaderRaw;
 const structureShadowFragmentShaderSource = structureShadowFragmentShaderRaw;
-export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
-  rotationDegrees: 0,
-  pitchDegrees: 0,
-  scale: 1,
-  offsetX: 0,
-  offsetY: 0,
-  lift: 0,
-};
 export type CampaignTerrainStyle = {
   saturation: number;
   brightness: number;
@@ -613,17 +570,6 @@ type CampaignTerrainRenderer = {
   sampleHeightAtUv: (u: number, v: number) => number;
 };
 
-export type CampaignTerrainRenderStats = {
-  canvasWidth: number;
-  canvasHeight: number;
-  lastRenderDurationMs: number;
-  lastDrawCalls: number;
-  lastRenderReason: "static" | "dynamic" | null;
-  renderCount: number;
-  rendererCount: number;
-  pendingRendererCount: number;
-};
-
 type CampaignActorData = {
   u: number;
   v: number;
@@ -637,16 +583,6 @@ type CampaignActorData = {
 
 const activeRenderers = new Map<HTMLCanvasElement, CampaignTerrainRenderer>();
 const pendingRendererCanvases = new Set<HTMLCanvasElement>();
-let campaignTerrainRenderStats: CampaignTerrainRenderStats = {
-  canvasWidth: 0,
-  canvasHeight: 0,
-  lastRenderDurationMs: 0,
-  lastDrawCalls: 0,
-  lastRenderReason: null,
-  renderCount: 0,
-  rendererCount: 0,
-  pendingRendererCount: 0,
-};
 let terrainChunkLoadingDeferredUntilMs = 0;
 let terrainChunkLoadingHoldCount = 0;
 let terrainChunkLoadingResumeTimeoutId: number | null = null;
@@ -790,14 +726,6 @@ export function requestCampaignTerrainRender(reason: "static" | "dynamic" = "dyn
   for (const renderer of activeRenderers.values()) {
     renderer.requestRender(reason);
   }
-}
-
-export function getCampaignTerrainRenderStats(): CampaignTerrainRenderStats {
-  return {
-    ...campaignTerrainRenderStats,
-    rendererCount: activeRenderers.size,
-    pendingRendererCount: pendingRendererCanvases.size,
-  };
 }
 
 export function deferCampaignTerrainChunkLoadingUntil(timestampMs: number): void {
@@ -1302,12 +1230,6 @@ async function initCampaignTerrainWebGl(
       return null;
     })
     : Promise.resolve(null);
-  const cityDepthAssetPromise = renderTerrain
-    ? loadCampaignCityDepthMeshAsset(input.canvas).catch((error: unknown) => {
-      console.error("Failed to load campaign city depth mesh asset.", error);
-      return null;
-    })
-    : Promise.resolve(null);
   const fortWallAssetPromise =
     renderTerrain && input.campaignFortWallMeshUrl != null
       ? loadCampaignFortWallMeshAsset(input.campaignFortWallMeshUrl).catch(
@@ -1407,7 +1329,6 @@ async function initCampaignTerrainWebGl(
     rockTextureImage,
     snowTextureImage,
     actorAsset,
-    cityDepthAsset,
     fortWallAsset,
     fortCityAsset,
     campaignHexGrid,
@@ -1423,7 +1344,6 @@ async function initCampaignTerrainWebGl(
     rockTextureImagePromise,
     snowTextureImagePromise,
     actorAssetPromise,
-    cityDepthAssetPromise,
     fortWallAssetPromise,
     fortCityAssetPromise,
     campaignHexGridPromise,
@@ -1806,8 +1726,6 @@ async function initCampaignTerrainWebGl(
   );
   const actorVertexBuffer = gl.createBuffer();
   const actorIndexBuffer = gl.createBuffer();
-  const cityDepthVertexBuffer = gl.createBuffer();
-  const cityDepthIndexBuffer = gl.createBuffer();
   const fortCityVertexBuffer = gl.createBuffer();
   const fortCityIndexBuffer = gl.createBuffer();
   const settlementVillageVertexBuffer = gl.createBuffer();
@@ -1857,8 +1775,6 @@ async function initCampaignTerrainWebGl(
         wrapS: gl.REPEAT,
         wrapT: gl.REPEAT,
       });
-  const cityDepthTexture =
-    cityDepthAsset == null ? null : createTexture(gl, cityDepthAsset.textureImage);
   const fortWallTexturesByUrl = new Map<string, WebGLTexture>();
   if (fortWallAsset != null) {
     for (const [textureUrl, textureImage] of fortWallAsset.texturesByUrl.entries()) {
@@ -2037,8 +1953,6 @@ async function initCampaignTerrainWebGl(
     structureShadowOpacityLocation == null ? "structureShadow.uOpacity" : null,
     actorVertexBuffer == null ? "actor.vertexBuffer" : null,
     actorIndexBuffer == null ? "actor.indexBuffer" : null,
-    cityDepthVertexBuffer == null ? "cityDepth.vertexBuffer" : null,
-    cityDepthIndexBuffer == null ? "cityDepth.indexBuffer" : null,
     fortCityVertexBuffer == null ? "fortCity.vertexBuffer" : null,
     fortCityIndexBuffer == null ? "fortCity.indexBuffer" : null,
     settlementVillageVertexBuffer == null ? "settlementVillage.vertexBuffer" : null,
@@ -2067,7 +1981,6 @@ async function initCampaignTerrainWebGl(
       throw new Error("This browser cannot draw the campaign terrain mesh.");
     }
   }
-  let cityDepthMesh: CityDepthMeshData | null = null;
   let fortCityMesh: VegetationMeshData | null = null;
   let settlementVillageMesh: VegetationMeshData | null = null;
   let fortWallMesh: FortWallMeshData | null = null;
@@ -2079,7 +1992,6 @@ async function initCampaignTerrainWebGl(
   let hasPendingRender = false;
   let projectedPointsNeedSync = true;
   let lastActorSignature = "";
-  let lastCityDepthMeshSignature = "";
   let lastFortCityMeshSignature = "";
   let lastFortCityInstancedModelSignature = "";
   let lastFortCityShadowMeshSignature = "";
@@ -2111,7 +2023,6 @@ async function initCampaignTerrainWebGl(
   const pendingChunkKeys = new Set<string>();
   const deferredChunkUploadsByKey = new Map<string, CampaignTerrainChunkData>();
   let deferredChunkUploadTimeoutId: number | null = null;
-  let lastRequestedRenderReason: "static" | "dynamic" | null = null;
   const sampleHeightAtUv = (u: number, v: number): number =>
     sampleHeightFromCampaignTerrainChunks({
       materialSemanticModel,
@@ -2434,10 +2345,8 @@ async function initCampaignTerrainWebGl(
     if (!renderTerrain || chunkResourcesByKey.has(chunk.key)) {
       projectedPointsNeedSync = true;
       lastVegetationMeshSignature = "";
-      lastCityDepthMeshSignature = "";
       clearCampaignStructureRenderModels();
       lastFortWallMeshSignature = "";
-      cityDepthMesh = null;
       fortWallMesh = null;
       return;
     }
@@ -2471,10 +2380,8 @@ async function initCampaignTerrainWebGl(
     });
     projectedPointsNeedSync = true;
     lastVegetationMeshSignature = "";
-    lastCityDepthMeshSignature = "";
     clearCampaignStructureRenderModels();
     lastFortWallMeshSignature = "";
-    cityDepthMesh = null;
     fortWallMesh = null;
   };
   const scheduleDeferredChunkUploadFlush = (): void => {
@@ -2570,7 +2477,6 @@ async function initCampaignTerrainWebGl(
       return;
     }
 
-    const renderStartedAtMs = performance.now();
     frameId = null;
     hasPendingRender = false;
     resizeCanvasToDisplaySize(input.canvas);
@@ -2603,7 +2509,6 @@ async function initCampaignTerrainWebGl(
       lastVegetationMeshSignature = "";
       clearCampaignStructureBuildingCache();
       lastFortWallMeshSignature = "";
-      cityDepthMesh = null;
       fortWallMesh = null;
     }
 
@@ -3326,70 +3231,6 @@ async function initCampaignTerrainWebGl(
       }
     }
 
-    if (renderTerrain && cityDepthAsset != null && cityDepthTexture != null) {
-      const cityDepthMeshTransform = readCampaignCityDepthMeshTransform(input.canvas);
-      const cityDepthMeshSignature = getCampaignCityDepthMeshTransformSignature(
-        cityDepthMeshTransform
-      );
-      if (cityDepthMesh == null || cityDepthMeshSignature !== lastCityDepthMeshSignature) {
-        cityDepthMesh = createCityDepthMesh(
-          cityDepthAsset,
-          sampleHeightAtUv,
-          cityDepthMeshTransform
-        );
-        gl.bindBuffer(gl.ARRAY_BUFFER, cityDepthVertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, cityDepthMesh.vertices, gl.DYNAMIC_DRAW);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cityDepthIndexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cityDepthMesh.indices, gl.STATIC_DRAW);
-        lastCityDepthMeshSignature = cityDepthMeshSignature;
-      }
-      gl.useProgram(actorProgram);
-      gl.bindBuffer(gl.ARRAY_BUFFER, cityDepthVertexBuffer);
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cityDepthIndexBuffer);
-      const cityDepthStride = 8 * Float32Array.BYTES_PER_ELEMENT;
-      gl.enableVertexAttribArray(actorPositionLocation);
-      gl.vertexAttribPointer(
-        actorPositionLocation,
-        3,
-        gl.FLOAT,
-        false,
-        cityDepthStride,
-        0
-      );
-      gl.enableVertexAttribArray(actorNormalLocation);
-      gl.vertexAttribPointer(
-        actorNormalLocation,
-        3,
-        gl.FLOAT,
-        false,
-        cityDepthStride,
-        3 * Float32Array.BYTES_PER_ELEMENT
-      );
-      gl.enableVertexAttribArray(actorUvLocation);
-      gl.vertexAttribPointer(
-        actorUvLocation,
-        2,
-        gl.FLOAT,
-        false,
-        cityDepthStride,
-        6 * Float32Array.BYTES_PER_ELEMENT
-      );
-      gl.uniformMatrix4fv(
-        actorMatrixLocation,
-        false,
-        createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1))
-      );
-      gl.uniform3f(actorLightLocation, -0.58, 0.52, 0.62);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, cityDepthTexture);
-      gl.uniform1i(actorTextureLocation, 0);
-      gl.uniform3f(actorTintLocation, 1, 1, 1);
-      gl.uniform1f(actorForceOpaqueAlphaLocation, 0);
-      gl.disable(gl.CULL_FACE);
-      gl.depthMask(true);
-      gl.drawElements(gl.TRIANGLES, cityDepthMesh.indices.length, gl.UNSIGNED_INT, 0);
-    }
-
     if (renderTerrain && fortWallAsset != null && fortWallTexturesByUrl.size > 0) {
       const fortWallMeshSignature = getCampaignFortWallMeshSignature(
         fortInstances
@@ -3565,16 +3406,6 @@ async function initCampaignTerrainWebGl(
     if (animatesTerrainWater || animatesActorModel || animatesVegetation) {
       scheduleDynamicAnimationRender();
     }
-    campaignTerrainRenderStats = {
-      canvasWidth: input.canvas.width,
-      canvasHeight: input.canvas.height,
-      lastRenderDurationMs: performance.now() - renderStartedAtMs,
-      lastDrawCalls: 0,
-      lastRenderReason: lastRequestedRenderReason,
-      renderCount: campaignTerrainRenderStats.renderCount + 1,
-      rendererCount: activeRenderers.size,
-      pendingRendererCount: pendingRendererCanvases.size,
-    };
   };
 
   const scheduleDynamicAnimationRender = () => {
@@ -3596,7 +3427,6 @@ async function initCampaignTerrainWebGl(
     if (reason === "static") {
       projectedPointsNeedSync = true;
     }
-    lastRequestedRenderReason = reason;
     if (hasPendingRender) {
       return;
     }
@@ -3641,8 +3471,6 @@ async function initCampaignTerrainWebGl(
       chunkResourcesByKey.clear();
       gl.deleteBuffer(actorVertexBuffer);
       gl.deleteBuffer(actorIndexBuffer);
-      gl.deleteBuffer(cityDepthVertexBuffer);
-      gl.deleteBuffer(cityDepthIndexBuffer);
       gl.deleteBuffer(fortCityVertexBuffer);
       gl.deleteBuffer(fortCityIndexBuffer);
       gl.deleteBuffer(settlementVillageVertexBuffer);
@@ -3676,9 +3504,6 @@ async function initCampaignTerrainWebGl(
       }
       if (actorTexture != null) {
         gl.deleteTexture(actorTexture);
-      }
-      if (cityDepthTexture != null) {
-        gl.deleteTexture(cityDepthTexture);
       }
       for (const fortWallTexture of fortWallTexturesByUrl.values()) {
         gl.deleteTexture(fortWallTexture);
@@ -5697,55 +5522,6 @@ async function loadCampaignActorAsset(
   };
 }
 
-async function loadCampaignCityDepthMeshAsset(
-  canvas: HTMLCanvasElement
-): Promise<CityDepthMeshAsset | null> {
-  const meshUrl = canvas.dataset.campaignCityMeshUrl;
-  const textureUrl = canvas.dataset.campaignCityTextureUrl;
-  const u = Number(canvas.dataset.campaignCityU);
-  const v = Number(canvas.dataset.campaignCityV);
-  if (
-    meshUrl == null ||
-    textureUrl == null ||
-    !Number.isFinite(u) ||
-    !Number.isFinite(v)
-  ) {
-    return null;
-  }
-
-  const [asset, textureImage] = await Promise.all([
-    loadJson<CityDepthMeshAssetJson>(meshUrl),
-    loadImage(textureUrl),
-  ]);
-  if (asset.format !== "city-depth-mesh-lowpoly-v1") {
-    throw new Error(`Unsupported city depth mesh format "${asset.format}".`);
-  }
-  if (
-    asset.positions.length % 3 !== 0 ||
-    asset.normals.length !== asset.positions.length ||
-    asset.uvs.length !== (asset.positions.length / 3) * 2 ||
-    asset.indices.length % 3 !== 0
-  ) {
-    throw new Error("City depth mesh asset arrays are inconsistent.");
-  }
-
-  let minHeight = Number.POSITIVE_INFINITY;
-  for (let index = 1; index < asset.positions.length; index += 3) {
-    minHeight = Math.min(minHeight, asset.positions[index] ?? minHeight);
-  }
-
-  return {
-    positions: new Float32Array(asset.positions),
-    normals: new Float32Array(asset.normals),
-    uvs: new Float32Array(asset.uvs),
-    indices: new Uint32Array(asset.indices),
-    textureImage,
-    u: clamp(u, 0, 1),
-    v: clamp(v, 0, 1),
-    minHeight: Number.isFinite(minHeight) ? minHeight : 0,
-  };
-}
-
 async function loadCampaignFortWallMeshAsset(
   meshUrl: string
 ): Promise<FortWallMeshAsset> {
@@ -5786,79 +5562,6 @@ async function loadCampaignFortWallMeshAsset(
     drawGroups: asset.drawGroups,
     placement: asset.placement,
     texturesByUrl,
-  };
-}
-
-function createCityDepthMesh(
-  asset: CityDepthMeshAsset,
-  sampleHeightAtUv: (u: number, v: number) => number,
-  transform: CampaignCityDepthMeshTransform
-): CityDepthMeshData {
-  const snappedCenter = snapTerrainUvToHexCenter(asset.u, asset.v);
-  const terrainHeight = sampleHeightAtUv(snappedCenter.u, snappedCenter.v);
-  const center = createTerrainWorldPoint(
-    snappedCenter.u,
-    snappedCenter.v,
-    terrainHeight
-  );
-  const centerX =
-    center[0] + transform.offsetX * CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE;
-  const centerY =
-    center[1] - transform.offsetY * CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE;
-  const vertices = new Float32Array((asset.positions.length / 3) * 8);
-  const rotation = transform.rotationDegrees * Math.PI / 180;
-  const rotationCos = Math.cos(rotation);
-  const rotationSin = Math.sin(rotation);
-  const pitch = transform.pitchDegrees * Math.PI / 180;
-  const pitchCos = Math.cos(pitch);
-  const pitchSin = Math.sin(pitch);
-  const horizontalScale = CITY_DEPTH_MESH_WORLD_SCALE * transform.scale;
-  const verticalScale = CITY_DEPTH_MESH_HEIGHT_SCALE * transform.scale;
-
-  for (let vertexIndex = 0; vertexIndex < asset.positions.length / 3; vertexIndex += 1) {
-    const positionOffset = vertexIndex * 3;
-    const uvOffset = vertexIndex * 2;
-    const outputOffset = vertexIndex * 8;
-    const localX = asset.positions[positionOffset] ?? 0;
-    const localHeight = asset.positions[positionOffset + 1] ?? asset.minHeight;
-    const localY = asset.positions[positionOffset + 2] ?? 0;
-    const localZ = localHeight - asset.minHeight;
-    const pitchedY =
-      localY * horizontalScale * pitchCos - localZ * verticalScale * pitchSin;
-    const pitchedZ =
-      localY * horizontalScale * pitchSin + localZ * verticalScale * pitchCos;
-    const rotatedX = localX * horizontalScale * rotationCos - pitchedY * rotationSin;
-    const rotatedY = localX * horizontalScale * rotationSin + pitchedY * rotationCos;
-    const normalX = asset.normals[positionOffset] ?? 0;
-    const normalHeight = asset.normals[positionOffset + 1] ?? 1;
-    const normalY = asset.normals[positionOffset + 2] ?? 0;
-    const pitchedNormalY = normalY * pitchCos - normalHeight * pitchSin;
-    const pitchedNormalZ = normalY * pitchSin + normalHeight * pitchCos;
-    const rotatedNormalX = normalX * rotationCos - pitchedNormalY * rotationSin;
-    const rotatedNormalY = normalX * rotationSin + pitchedNormalY * rotationCos;
-    const worldNormal = normalizeVector3([
-      rotatedNormalX,
-      -rotatedNormalY,
-      pitchedNormalZ,
-    ]);
-
-    vertices[outputOffset] = centerX + rotatedX;
-    vertices[outputOffset + 1] = centerY - rotatedY;
-    vertices[outputOffset + 2] =
-      center[2] +
-      CITY_DEPTH_MESH_BASE_LIFT +
-      transform.lift +
-      pitchedZ;
-    vertices[outputOffset + 3] = worldNormal[0];
-    vertices[outputOffset + 4] = worldNormal[1];
-    vertices[outputOffset + 5] = worldNormal[2];
-    vertices[outputOffset + 6] = asset.uvs[uvOffset] ?? 0;
-    vertices[outputOffset + 7] = asset.uvs[uvOffset + 1] ?? 0;
-  }
-
-  return {
-    vertices,
-    indices: asset.indices,
   };
 }
 
@@ -6505,8 +6208,9 @@ function createCampaignFortCityFortAllocations(
     (sum, item) => sum + item.targetCount,
     0
   );
+  const lodBudget = getCampaignStructureModelLodBudget(rules.lod.maxVisibleInstances);
   const budget = Math.min(
-    Math.max(Math.floor(rules.lod.maxVisibleInstances), 0),
+    lodBudget,
     totalTargetCount
   );
   if (budget <= 0) {
@@ -6574,6 +6278,23 @@ function createCampaignFortCityFortAllocations(
       count: allocation.count,
       targetCount: allocation.item.targetCount,
     }));
+}
+
+function getCampaignStructureModelLodBudget(maxVisibleInstances: number): number {
+  if (currentCamera.scale < CAMPAIGN_STRUCTURE_MODEL_LOD_HIDE_BELOW_SCALE) {
+    return 0;
+  }
+
+  if (currentCamera.scale < CAMPAIGN_STRUCTURE_MODEL_LOD_REDUCED_BELOW_SCALE) {
+    return Math.max(
+      1,
+      Math.floor(
+        maxVisibleInstances * CAMPAIGN_STRUCTURE_MODEL_LOD_REDUCED_BUDGET_RATIO
+      )
+    );
+  }
+
+  return Math.max(Math.floor(maxVisibleInstances), 0);
 }
 
 function getCampaignFortCityVisibility(
@@ -9393,62 +9114,6 @@ function readCampaignTerrainStyle(canvas: HTMLCanvasElement): CampaignTerrainSty
       2
     ),
   };
-}
-
-function readCampaignCityDepthMeshTransform(
-  canvas: HTMLCanvasElement
-): CampaignCityDepthMeshTransform {
-  return {
-    rotationDegrees: readFiniteDatasetNumber(
-      canvas.dataset.campaignCityRotation,
-      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.rotationDegrees,
-      -180,
-      180
-    ),
-    pitchDegrees: readFiniteDatasetNumber(
-      canvas.dataset.campaignCityPitch,
-      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.pitchDegrees,
-      -90,
-      90
-    ),
-    scale: readFiniteDatasetNumber(
-      canvas.dataset.campaignCityScale,
-      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.scale,
-      0.1,
-      6
-    ),
-    offsetX: readFiniteDatasetNumber(
-      canvas.dataset.campaignCityOffsetX,
-      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.offsetX,
-      -1,
-      1
-    ),
-    offsetY: readFiniteDatasetNumber(
-      canvas.dataset.campaignCityOffsetY,
-      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.offsetY,
-      -1,
-      1
-    ),
-    lift: readFiniteDatasetNumber(
-      canvas.dataset.campaignCityLift,
-      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.lift,
-      -0.08,
-      0.16
-    ),
-  };
-}
-
-function getCampaignCityDepthMeshTransformSignature(
-  transform: CampaignCityDepthMeshTransform
-): string {
-  return [
-    transform.rotationDegrees.toFixed(3),
-    transform.pitchDegrees.toFixed(3),
-    transform.scale.toFixed(3),
-    transform.offsetX.toFixed(3),
-    transform.offsetY.toFixed(3),
-    transform.lift.toFixed(4),
-  ].join("|");
 }
 
 function readFiniteDatasetNumber(
