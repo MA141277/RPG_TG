@@ -121,6 +121,7 @@ import {
   createPlayableActionRequest,
   runPlayableRuntime,
 } from "./core/runtime/playable-runtime";
+import { applyEventOwnedPlayableCompletion } from "./application/events/event-playable-runtime";
 import {
   readBrowserSaveRecord,
   writeBrowserSaveRecord,
@@ -151,6 +152,11 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "./domain/scenario-pack";
+import { continueStoryFromSourceEvent } from "./application/story/story-runtime";
+import {
+  applyStoryRuntimeResultToAppState,
+  createStoryRuntimeDefinitionContext,
+} from "./application/story/story-runtime-state-bridge";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -172,6 +178,7 @@ import {
   setLoadingScreenProgress,
   type LoadingTheme,
 } from "./ui/loading-screen";
+import { syncDialogueMusicPlayer } from "./ui/dialogue-music";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
   DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
@@ -202,6 +209,10 @@ const SCENARIO_PENDING_ENTRY_EVENT_ID_VARIABLE =
   "__scenario.pendingEntryEventId";
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
+const DIALOGUE_MUSIC_SOURCE_URLS: Record<string, string> = {
+  "bgm.midsummer_duel": IN_GAME_BGM_URL,
+  "bgm.temple.night": OPENING_BGM_URL,
+};
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 15,
   offsetX: -1000,
@@ -621,6 +632,7 @@ const shellBootLifecycleCoordinator = createShellBootLifecycleCoordinator({
   showStartupError,
 });
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
+const dialogueMusicPlayer = createDialogueMusicPlayer();
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
   characters: getSelectableCharactersFromContentContext(activeContentContext),
@@ -1170,6 +1182,25 @@ function applyRuntimeReenterBuilding(
   };
 }
 
+function applyGameStateReenterBuilding(
+  state: GameState,
+  houseId: string
+): GameState {
+  return {
+    ...state,
+    world: {
+      ...state.world,
+      currentHouseId: houseId,
+    },
+    ui: {
+      ...state.ui,
+      currentView: "house",
+      overlayView: null,
+      houseSession: null,
+    },
+  };
+}
+
 function applyPostNavigationStoryTrigger(
   timing: "city-enter" | "house-enter" | null
 ): void {
@@ -1474,13 +1505,75 @@ function chooseCurrentStoryOption(choiceId: string): void {
   renderApp();
 }
 
+function applyEventOwnedPlayableCompletionFromRuntimeResult(input: {
+  previousPlayableSession: AppState["gameState"]["runtime"]["playableSession"];
+  runtimeResult: import("./core/contracts/runtime-result").RuntimeResult;
+}): boolean {
+  const storyContent = activeContentContext.storyContent;
+  const runtimeDefinitionContext = createStoryRuntimeDefinitionContext(
+    appState,
+    storyContent
+  );
+  const completion = applyEventOwnedPlayableCompletion({
+    state: appState.gameState,
+    characterDefinitions: appState.characterDefinitions,
+    previousPlayableSession: input.previousPlayableSession,
+    settlement: input.runtimeResult.settlement,
+    followUp: input.runtimeResult.followUp,
+    continueFromSourceEvent: ({
+      sourceEventId,
+      state,
+      characterDefinitions,
+    }) =>
+      continueStoryFromSourceEvent(
+        {
+          state,
+          characterDefinitions,
+          ...(runtimeDefinitionContext.cityDefinitions == null
+            ? {}
+            : { cityDefinitions: runtimeDefinitionContext.cityDefinitions }),
+          ...(runtimeDefinitionContext.houseDefinitions == null
+            ? {}
+            : { houseDefinitions: runtimeDefinitionContext.houseDefinitions }),
+        },
+        storyContent,
+        sourceEventId
+      ),
+    applyFollowUp: ({ state, followUp }) => ({
+      state:
+        followUp.type === "reenter-house"
+          ? applyGameStateReenterBuilding(state, followUp.houseId)
+          : state,
+    }),
+  });
+  if (!completion.handled) {
+    return false;
+  }
+
+  appState = applyStoryRuntimeResultToAppState(appState, storyContent, {
+    state: completion.state,
+    characterDefinitions: completion.characterDefinitions,
+    ...(completion.cityDefinitions == null
+      ? {}
+      : { cityDefinitions: completion.cityDefinitions }),
+    ...(completion.houseDefinitions == null
+      ? {}
+      : { houseDefinitions: completion.houseDefinitions }),
+  });
+  return true;
+}
+
 function dispatchCurrentStoryBattleAction(actionId: string): void {
+  const previousPlayableSession = appState.gameState.runtime.playableSession;
+  const hasEventOwnedPlayableSource =
+    typeof previousPlayableSession?.ownerContext.sessionToken === "string" &&
+    previousPlayableSession.ownerContext.sessionToken.trim().length > 0;
   const result = commitRuntimeRequest({
     state: appState,
     request: createPlayableActionRequest("story-battle", "battle-action", {
       battleActionId: actionId,
     }),
-    context: {
+    context: createRuntimeCommitContext({
       router: {
         route: ({ state, request }) =>
             runPlayableRuntime({
@@ -1494,17 +1587,25 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
               flowPlayablesById: activeContentContext.gameContent.flowPlayablesById,
             }),
       },
-      followUp: {
-        handleFollowUp: ({ state, followUp }) => ({
-          state:
-            followUp.type === "reenter-house"
-              ? applyRuntimeReenterBuilding(state, followUp.houseId)
-              : state,
-        }),
-      },
-    },
+      ...(hasEventOwnedPlayableSource
+        ? {}
+        : {
+            followUp: {
+              handleFollowUp: ({ state, followUp }) => ({
+                state:
+                  followUp.type === "reenter-house"
+                    ? applyRuntimeReenterBuilding(state, followUp.houseId)
+                    : state,
+              }),
+            },
+          }),
+    }),
   });
   appState = result.state;
+  applyEventOwnedPlayableCompletionFromRuntimeResult({
+    previousPlayableSession,
+    runtimeResult: result.runtimeResult,
+  });
   renderApp();
 }
 
@@ -1513,6 +1614,7 @@ function dispatchCurrentFlowAction(
   action: string,
   value?: string
 ): void {
+  const previousPlayableSession = appState.gameState.runtime.playableSession;
   const result = commitRuntimeRequest({
     state: appState,
     request: createPlayableActionRequest(
@@ -1540,7 +1642,12 @@ function dispatchCurrentFlowAction(
   });
 
   appState = result.state;
+  const handledEventOwnedCompletion = applyEventOwnedPlayableCompletionFromRuntimeResult({
+    previousPlayableSession,
+    runtimeResult: result.runtimeResult,
+  });
   if (
+    !handledEventOwnedCompletion &&
     result.state.gameState.ui.currentView === "minigame" &&
     result.state.gameState.runtime.playableSession == null
   ) {
@@ -2252,11 +2359,16 @@ function setGameVisibility(isVisible: boolean): void {
   appRoot.style.visibility = isVisible ? "visible" : "hidden";
   appRoot.style.pointerEvents = isVisible ? "auto" : "none";
   syncBackgroundMusic(isVisible ? "in-game" : "opening");
+  syncDialogueAudioPresentation();
 }
 
 function resetMainGameRuntime(): void {
   stopCityBeggingMiniGameLoop();
   stopActivityQteLoop();
+  dialogueMusicPlayer.pause();
+  dialogueMusicPlayer.currentTime = 0;
+  dialogueMusicPlayer.src = "";
+  dialogueMusicPlayer.load();
 
   if (loadingScreenAnimationFrameId != null) {
     window.cancelAnimationFrame(loadingScreenAnimationFrameId);
@@ -2293,6 +2405,13 @@ function createBackgroundMusicPlayer(): HTMLAudioElement {
   return audio;
 }
 
+function createDialogueMusicPlayer(): HTMLAudioElement {
+  const audio = new Audio();
+  audio.preload = "auto";
+  audio.volume = 0.45;
+  return audio;
+}
+
 function syncBackgroundMusic(mode: BackgroundMusicMode): void {
   const nextSourceUrl = mode === "opening" ? OPENING_BGM_URL : IN_GAME_BGM_URL;
   if (activeBackgroundMusicMode !== mode) {
@@ -2316,6 +2435,34 @@ async function playBackgroundMusic(): Promise<void> {
 
 function resumeBackgroundMusicIfNeeded(): void {
   if (backgroundMusicPlayer.paused) {
+    void playBackgroundMusic();
+  }
+}
+
+function resumeAudioPlaybackIfNeeded(): void {
+  syncDialogueAudioPresentation();
+  if (dialogueMusicPlayer.paused) {
+    resumeBackgroundMusicIfNeeded();
+  }
+}
+
+function resolveDialogueMusicSourceUrl(musicId: string): string | null {
+  return DIALOGUE_MUSIC_SOURCE_URLS[musicId] ?? null;
+}
+
+function syncDialogueAudioPresentation(): void {
+  const playbackState = syncDialogueMusicPlayer({
+    root: appRoot,
+    player: dialogueMusicPlayer,
+    resolveSourceUrl: resolveDialogueMusicSourceUrl,
+  });
+
+  if (playbackState === "active") {
+    backgroundMusicPlayer.pause();
+    return;
+  }
+
+  if (activeBackgroundMusicMode != null) {
     void playBackgroundMusic();
   }
 }
@@ -2386,10 +2533,10 @@ function canLeaveCurrentCity(): boolean {
   return false;
 }
 
-window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
+window.addEventListener("pointerdown", resumeAudioPlaybackIfNeeded, {
   passive: true,
 });
-window.addEventListener("keydown", resumeBackgroundMusicIfNeeded);
+window.addEventListener("keydown", resumeAudioPlaybackIfNeeded);
 window.addEventListener("message", (event) => {
   city3dHouseEntryCoordinator.handleWindowMessage(event);
 });
@@ -3516,6 +3663,7 @@ function ensureCurrentCampaignMapCoordinateRevealed(): void {
 function renderApp() {
   ensureCurrentCampaignMapCoordinateRevealed();
   appRenderCoordinator.render();
+  syncDialogueAudioPresentation();
 }
 
 function restoreCampaignMapScaleInputFocus(

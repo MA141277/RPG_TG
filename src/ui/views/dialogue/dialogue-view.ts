@@ -13,6 +13,7 @@ import {
   resolveChoiceOptionText,
 } from "../../../application/content/text-resolution";
 import { renderSharedDialog } from "../../components/dialog/shared-dialog";
+import { resolveDialogueBackgroundPreviewImageUrl } from "../../location-backgrounds";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
 type DialogueViewInput = {
@@ -61,6 +62,7 @@ function renderDialogueCard(
   paragraphs: string[],
   options: {
     advanceActionId?: string;
+    dialogueSide?: "left" | "right" | "center";
     speakerName?: string;
     narration?: boolean;
     portraitImageUrl?: string | null;
@@ -73,6 +75,12 @@ function renderDialogueCard(
     hintText: options.advanceActionId == null ? null : "点击继续",
     ariaLabel: "剧情对话",
     footerClassName: "c-grain-shop-dialogue c-dialogue-surface",
+    footerAttributes:
+      options.dialogueSide == null
+        ? undefined
+        : {
+            "data-dialogue-side": options.dialogueSide,
+          },
     action:
       options.advanceActionId == null
         ? undefined
@@ -93,7 +101,88 @@ function renderDialogueCard(
             name: options.speakerName ?? "",
             portraitImageUrl: options.portraitImageUrl,
             portraitArtClassName: options.portraitArtClassName,
-          },
+      },
+  });
+}
+
+function renderDialoguePresentationCard(
+  paragraphs: string[],
+  options: {
+    advanceActionId: string;
+    view: "background" | "music";
+    attributes: Record<string, string>;
+    underlayMarkup?: string;
+    previewMarkup?: string;
+  }
+): string {
+  return `
+    <section class="view-dialogue" data-dialogue-view="${options.view}" ${renderDataAttributes(options.attributes)}>
+      ${options.underlayMarkup ?? ""}
+      ${options.previewMarkup ?? ""}
+      ${renderDialogueCard(paragraphs, {
+        advanceActionId: options.advanceActionId,
+        narration: true,
+      })}
+    </section>
+  `;
+}
+
+function renderDataAttributes(attributes: Record<string, string>): string {
+  return Object.entries(attributes)
+    .map(([name, value]) => `${name}="${value}"`)
+    .join(" ");
+}
+
+function renderDialogueBackgroundPreview(backgroundId: string): string {
+  const previewUrl = resolveDialogueBackgroundPreviewImageUrl(backgroundId);
+  if (previewUrl == null) {
+    return "";
+  }
+
+  return `
+    <div class="view-dialogue__background-preview">
+      <img
+        class="view-dialogue__background-preview-image"
+        src="${previewUrl}"
+        alt=""
+        aria-hidden="true"
+      >
+    </div>
+  `;
+}
+
+function resolveDialoguePortraitImageUrl(
+  characterDefinition: CharacterDefinition | null,
+  portraitId: string | undefined
+): string | null {
+  if (characterDefinition == null) {
+    return null;
+  }
+
+  const requestedPortraitId =
+    typeof portraitId === "string" ? portraitId.trim() : "";
+  if (requestedPortraitId.length === 0) {
+    return resolveCharacterPortraitImageUrl(characterDefinition);
+  }
+
+  if (characterDefinition.portraitId === requestedPortraitId) {
+    return resolveCharacterPortraitImageUrl({
+      ...characterDefinition,
+      portraitVariantId: null,
+    });
+  }
+
+  const matchingVariant =
+    characterDefinition.portraitVariants?.find(
+      (variant) => variant.portraitId === requestedPortraitId
+    ) ?? null;
+  if (matchingVariant == null) {
+    return null;
+  }
+
+  return resolveCharacterPortraitImageUrl({
+    ...characterDefinition,
+    portraitVariantId: matchingVariant.id,
   });
 }
 
@@ -340,19 +429,55 @@ export function renderDialogueView(input: DialogueViewInput): string {
     `;
   }
 
+  if (action.type === "background") {
+    return `
+      ${renderDialoguePresentationCard([`场景：${action.backgroundId}`], {
+        advanceActionId: "advance",
+        view: "background",
+        attributes: {
+          "data-dialogue-background-id": action.backgroundId,
+        },
+        underlayMarkup: input.underlayMarkup,
+        previewMarkup: renderDialogueBackgroundPreview(action.backgroundId),
+      })}
+      ${activityOverlay}
+    `;
+  }
+
+  if (action.type === "music") {
+    return `
+      ${renderDialoguePresentationCard(
+        [`音乐：${action.musicId}`, action.loop === true ? "循环播放" : "播放一次"],
+        {
+          advanceActionId: "advance",
+          view: "music",
+          attributes: {
+            "data-dialogue-music-id": action.musicId,
+            "data-dialogue-music-loop": action.loop === true ? "true" : "false",
+          },
+          underlayMarkup: input.underlayMarkup,
+        }
+      )}
+      ${activityOverlay}
+    `;
+  }
+
   if (action.type === "dialogue") {
     const speaker = getCharacterDefinition(
       input.characterDefinitions,
       action.characterId
     );
-    const portraitImageUrl =
-      speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
+    const portraitImageUrl = resolveDialoguePortraitImageUrl(
+      speaker,
+      action.portraitId
+    );
 
     return `
       <section class="view-dialogue" data-dialogue-view="dialogue">
         ${input.underlayMarkup ?? ""}
         ${renderDialogueCard([action.text ?? ""], {
           advanceActionId: "advance",
+          dialogueSide: action.side,
           speakerName:
             speaker?.name ??
             getCharacterName(input.characterDefinitions, action.characterId),

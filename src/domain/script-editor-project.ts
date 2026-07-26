@@ -22,6 +22,7 @@ import type {
   MenuResourceDefinition,
   MenuTargetFamily,
 } from "./menu";
+import type { DialogueSide } from "./dialogue";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
@@ -376,6 +377,8 @@ export type ScriptEditorStoryNodeRecord = ScriptEditorEntityRecord & {
 };
 
 export type ScriptEditorDialogueNodeType =
+  | "background"
+  | "music"
   | "narration"
   | "dialogue"
   | "choice";
@@ -392,6 +395,11 @@ export type ScriptEditorDialogueNodeRecord = {
   id: string;
   nodeType: ScriptEditorDialogueNodeType;
   speakerPersonId: string;
+  backgroundId?: string;
+  musicId?: string;
+  loop?: boolean;
+  side?: DialogueSide;
+  portraitId?: string;
   textId: string;
   nextNodeId: string;
   choiceTargetNodeId: string;

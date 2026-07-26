@@ -180,7 +180,11 @@ function lowerDialogueToRuntimeDialogues(
   const runtimeDialogues: RuntimeDialogueDefinition[] = [];
 
   for (const [nodeIndex, node] of nodes.entries()) {
-    if (typeof node.textId !== "string" || node.textId.length === 0) {
+    if (
+      node.nodeType !== "background" &&
+      node.nodeType !== "music" &&
+      (typeof node.textId !== "string" || node.textId.length === 0)
+    ) {
       diagnostics.push({
         code: "missing-field",
         fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].textId`,
@@ -188,7 +192,11 @@ function lowerDialogueToRuntimeDialogues(
       });
       continue;
     }
-    if (!textEntryIds.has(node.textId)) {
+    if (
+      node.nodeType !== "background" &&
+      node.nodeType !== "music" &&
+      !textEntryIds.has(node.textId)
+    ) {
       diagnostics.push({
         code: "missing-reference",
         fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].textId`,
@@ -341,13 +349,44 @@ function lowerDialogueNodeRuntimeNodes(
 
   const runtimeNodes: RuntimeDialogueNode[] = [];
 
-  if (node.nodeType === "narration") {
+  if (node.nodeType === "background") {
+    const backgroundId =
+      typeof node.backgroundId === "string" ? node.backgroundId.trim() : "";
+    if (backgroundId.length === 0) {
+      diagnostics.push({
+        code: "missing-field",
+        fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].backgroundId`,
+        message: "Background dialogue node export requires a non-empty backgroundId.",
+      });
+      return [];
+    }
+    runtimeNodes.push({ type: "background", backgroundId });
+  } else if (node.nodeType === "music") {
+    const musicId = typeof node.musicId === "string" ? node.musicId.trim() : "";
+    if (musicId.length === 0) {
+      diagnostics.push({
+        code: "missing-field",
+        fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].musicId`,
+        message: "Music dialogue node export requires a non-empty musicId.",
+      });
+      return [];
+    }
+    runtimeNodes.push({
+      type: "music",
+      musicId,
+      ...(node.loop === true ? { loop: true } : {}),
+    });
+  } else if (node.nodeType === "narration") {
     runtimeNodes.push({ type: "narration", textId: node.textId });
   } else {
+    const side = readDialogueSide(node.side);
+    const portraitId =
+      typeof node.portraitId === "string" ? node.portraitId.trim() : "";
     runtimeNodes.push({
       type: "dialogue",
       characterId: node.speakerPersonId || "person.hero",
-      side: "center",
+      side: side ?? "center",
+      ...(portraitId.length === 0 ? {} : { portraitId }),
       textId: node.textId,
     });
   }
@@ -371,6 +410,12 @@ function lowerDialogueNodeRuntimeNodes(
   }
 
   return runtimeNodes;
+}
+
+function readDialogueSide(value: unknown): "left" | "right" | "center" | null {
+  return value === "left" || value === "right" || value === "center"
+    ? value
+    : null;
 }
 
 function resolveDialogueNodeTargetDialogueId(

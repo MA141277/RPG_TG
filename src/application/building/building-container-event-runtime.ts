@@ -92,6 +92,12 @@ export function triggerBuildingContainerItemAction(
       characterDefinitions: playableResult.characterDefinitions,
     };
   }
+  if (activeEvent == null) {
+    return {
+      state: bindingResult.state,
+      characterDefinitions: input.characterDefinitions,
+    };
+  }
   const launchFlowAction = activeEvent?.actions?.find(
     (action): action is Extract<typeof action, { type: "launchFlow" }> =>
       action.type === "launchFlow"
@@ -124,7 +130,10 @@ export function triggerBuildingContainerItemAction(
           playableSession: launchFlowPlayable({
             definition: activeFlow,
             integrationId: `playable.${activeFlow.id}`,
-            ownerContext: launchFlowAction.ownerContext,
+            ownerContext: {
+              ...launchFlowAction.ownerContext,
+              sessionToken: activeEvent.id,
+            },
           }),
         },
       },

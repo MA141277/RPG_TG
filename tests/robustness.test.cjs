@@ -32954,11 +32954,11 @@ test("fresh source audit keeps main.ts final shell residue within the pure-shell
   );
   assert.match(
     browserLifecycleRegistrationBlock,
-    /window\.addEventListener\("pointerdown", resumeBackgroundMusicIfNeeded/
+    /window\.addEventListener\("pointerdown", resumeAudioPlaybackIfNeeded/
   );
   assert.match(
     browserLifecycleRegistrationBlock,
-    /window\.addEventListener\("keydown", resumeBackgroundMusicIfNeeded\);/
+    /window\.addEventListener\("keydown", resumeAudioPlaybackIfNeeded\);/
   );
   assert.match(
     browserLifecycleRegistrationBlock,

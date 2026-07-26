@@ -1,7 +1,14 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
+import type { CityDefinition } from "../../domain/city";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { HouseDefinition } from "../../domain/house";
+import type {
+  ActivePlayableSession,
+  PlayableResult,
+} from "../../core/contracts/playable-runtime";
+import type { RuntimeFollowUp } from "../../core/contracts/runtime-result";
 import { createLaunchPlayableRequest, runPlayableRuntime } from "../../core/runtime/playable-runtime";
 import { stateSyncCoreSeam } from "../../core/runtime/state-sync-core-seam";
 
@@ -19,14 +26,27 @@ export type EventPlayableRuntimeResult = {
   handled: boolean;
 };
 
+export type EventOwnedPlayableContinuationResult = {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  cityDefinitions?: CityDefinition[] | undefined;
+  houseDefinitions?: HouseDefinition[] | undefined;
+};
+
+export type EventOwnedPlayableCompletionResult =
+  EventOwnedPlayableContinuationResult & {
+    handled: boolean;
+  };
+
 export function runEventPlayableRuntime(
   input: EventPlayableRuntimeInput
 ): EventPlayableRuntimeResult | null {
-  const launchPlayableAction = input.eventDefinition?.actions?.find(
+  const activeEventDefinition = input.eventDefinition;
+  const launchPlayableAction = activeEventDefinition?.actions?.find(
     (action): action is Extract<NonNullable<EventDefinition["actions"]>[number], { type: "launchPlayable" }> =>
       action.type === "launchPlayable"
   );
-  if (launchPlayableAction == null) {
+  if (launchPlayableAction == null || activeEventDefinition == null) {
     return null;
   }
 
@@ -43,7 +63,10 @@ export function runEventPlayableRuntime(
     }),
     request: createLaunchPlayableRequest(launchPlayableAction.playableId, {
       integrationId: launchPlayableAction.integrationId,
-      ownerContext: launchPlayableAction.ownerContext,
+      ownerContext: {
+        ...launchPlayableAction.ownerContext,
+        sessionToken: activeEventDefinition.id,
+      },
       ...(launchPlayableAction.payload == null
         ? {}
         : { payload: launchPlayableAction.payload }),
@@ -78,9 +101,103 @@ export function runEventPlayableRuntime(
         ...playableResult.state.core.ui,
         currentView: "minigame",
       },
+      runtime: {
+        ...playableResult.state.core.runtime,
+        playableSession:
+          playableResult.state.core.runtime.playableSession == null
+            ? null
+            : {
+                ...playableResult.state.core.runtime.playableSession,
+                ownerContext: {
+                  ...playableResult.state.core.runtime.playableSession.ownerContext,
+                  sessionToken: activeEventDefinition.id,
+                },
+              },
+      },
     },
     characterDefinitions:
       playableResult.characterDefinitions ?? input.characterDefinitions,
     handled: true,
   };
+}
+
+export function applyEventOwnedPlayableCompletion(input: {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  previousPlayableSession: ActivePlayableSession | null | undefined;
+  settlement?: PlayableResult | null | undefined;
+  followUp?: RuntimeFollowUp | null | undefined;
+  continueFromSourceEvent?:
+    | ((
+        input: EventOwnedPlayableContinuationResult & {
+          sourceEventId: string;
+        }
+      ) => EventOwnedPlayableContinuationResult | null)
+    | undefined;
+  applyFollowUp?:
+    | ((
+        input: EventOwnedPlayableContinuationResult & {
+          followUp: Exclude<NonNullable<RuntimeFollowUp>, { type: "none" }>;
+        }
+      ) => {
+        state: GameState;
+        characterDefinitions?: CharacterDefinition[] | undefined;
+      })
+    | undefined;
+}): EventOwnedPlayableCompletionResult {
+  const sourceEventId = readEventOwnedSourceEventId(input.previousPlayableSession);
+  const followUp =
+    input.followUp == null || input.followUp.type === "none"
+      ? null
+      : input.followUp;
+  if (sourceEventId == null || (input.settlement == null && followUp == null)) {
+    return {
+      state: input.state,
+      characterDefinitions: input.characterDefinitions,
+      handled: false,
+    };
+  }
+
+  const continuationInput: EventOwnedPlayableContinuationResult & {
+    sourceEventId: string;
+  } = {
+    sourceEventId,
+    state: input.state,
+    characterDefinitions: input.characterDefinitions,
+  };
+  const continued = input.continueFromSourceEvent?.(continuationInput) ?? null;
+  if (continued != null) {
+    return {
+      ...continued,
+      handled: true,
+    };
+  }
+
+  if (followUp != null && input.applyFollowUp != null) {
+    const appliedFollowUp = input.applyFollowUp({
+      ...continuationInput,
+      followUp,
+    });
+    return {
+      state: appliedFollowUp.state,
+      characterDefinitions:
+        appliedFollowUp.characterDefinitions ?? input.characterDefinitions,
+      handled: true,
+    };
+  }
+
+  return {
+    state: input.state,
+    characterDefinitions: input.characterDefinitions,
+    handled: false,
+  };
+}
+
+function readEventOwnedSourceEventId(
+  session: ActivePlayableSession | null | undefined
+): string | null {
+  const sourceEventId = session?.ownerContext.sessionToken;
+  return typeof sourceEventId === "string" && sourceEventId.trim().length > 0
+    ? sourceEventId.trim()
+    : null;
 }

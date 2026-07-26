@@ -9,6 +9,7 @@ import type { RuntimeResult } from "../contracts/runtime-result";
 import type { TaskDefinition } from "../contracts/task-runtime";
 import type { RuntimeFollowUpContext, RuntimeRouter } from "./runtime-router";
 import { dispatchRuntimeRequest } from "./runtime-dispatch";
+import { settleRuntimeEffects } from "./runtime-settlement";
 import {
   stateSyncCoreSeam,
   type RuntimeAppStateInput,
@@ -34,11 +35,12 @@ export type RuntimeCommitResult<TAppState extends RuntimeAppStateInput> = {
 export function commitRuntimeRequest<
   TAppState extends RuntimeAppStateInput,
 >(input: RuntimeCommitInput<TAppState>): RuntimeCommitResult<TAppState> {
-  const runtimeResult = dispatchRuntimeRequest({
+  const routedRuntimeResult = dispatchRuntimeRequest({
     state: stateSyncCoreSeam.createRuntimeStateFromAppState(input.state),
     request: input.request,
     context: input.context,
   });
+  const runtimeResult = settlePlayableSettlementEffects(routedRuntimeResult);
 
   return {
     state: stateSyncCoreSeam.applyRuntimeStateToAppState(
@@ -50,6 +52,47 @@ export function commitRuntimeRequest<
       runtimeResult.buildingStatusById
     ),
     runtimeResult,
+  };
+}
+
+function settlePlayableSettlementEffects(
+  runtimeResult: RuntimeResult
+): RuntimeResult {
+  const settlementEffects = runtimeResult.settlement?.effects ?? [];
+  if (settlementEffects.length === 0) {
+    return runtimeResult;
+  }
+
+  const settled = settleRuntimeEffects({
+    state: runtimeResult.state,
+    effects: settlementEffects,
+    emittedBy: "event-runtime",
+    appliedBy: "runtime-settlement",
+    ...(runtimeResult.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: runtimeResult.characterDefinitions }),
+    ...(runtimeResult.characterStatusById == null
+      ? {}
+      : { characterStatusById: runtimeResult.characterStatusById }),
+  });
+
+  return {
+    ...runtimeResult,
+    state: settled.state,
+    ...(settled.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: settled.characterDefinitions }),
+    ...(settled.characterStatusById == null
+      ? {}
+      : { characterStatusById: settled.characterStatusById }),
+    ...(runtimeResult.settlement == null
+      ? {}
+      : {
+          settlement: {
+            ...runtimeResult.settlement,
+            effects: settled.settledEffects,
+          },
+        }),
   };
 }
 

@@ -8,6 +8,7 @@ import type { CharacterStatusById } from "../../domain/character-status";
 import type { BuildingStatusById } from "../../domain/building-status";
 import type { CityStatusById } from "../../domain/city-status";
 import type { LocationAccessResult } from "../../domain/location-access";
+import type { PlayableResult } from "./playable-runtime";
 
 export type RuntimeTaskSignal =
   | TaskSignal
@@ -42,5 +43,6 @@ export type RuntimeResult = {
   navigation?: NavigationTarget | null;
   taskInputs?: RuntimeTaskInput[];
   settlementInstances?: ProgressionSettlementInstance[];
+  settlement?: PlayableResult | null;
   followUp?: RuntimeFollowUp | null;
 };

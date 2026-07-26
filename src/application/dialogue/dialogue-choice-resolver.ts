@@ -5,7 +5,10 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import { applyEffects } from "../effects/effect-applier";
-import { startEvent } from "../events/event-runner";
+import {
+  continueToEvent,
+  createEventContinuationTracker,
+} from "../events/event-continuation";
 
 export type DialogueChoiceResolutionContext = {
   eventDefinitionsById: Record<string, EventDefinition>;
@@ -35,10 +38,17 @@ export function resolveDialogueChoiceOption(
   }
 
   if (selectedOption.nextEventId != null) {
-    const targetEvent = context.eventDefinitionsById[selectedOption.nextEventId];
-    if (targetEvent != null) {
-      nextState = startEvent(nextState, targetEvent);
-    }
+    const continuation = continueToEvent({
+      state: nextState,
+      eventDefinitionsById: context.eventDefinitionsById,
+      sourceEventId: nextState.dialogue.activeEventId,
+      targetEventId: selectedOption.nextEventId,
+      visitedEventIds: createEventContinuationTracker([
+        nextState.dialogue.activeEventId,
+      ]),
+    });
+    nextState =
+      continuation == null ? closeDialogue(nextState) : continuation.state;
   } else if (selectedOption.nextDialogueId != null) {
     nextState = {
       ...nextState,
@@ -63,5 +73,22 @@ export function resolveDialogueChoiceOption(
   return {
     state: nextState,
     characterDefinitions: nextCharacterDefinitions,
+  };
+}
+
+function closeDialogue(state: GameState): GameState {
+  return {
+    ...state,
+    dialogue: {
+      ...state.dialogue,
+      activeEventId: null,
+      activeDialogueId: null,
+      cursor: 0,
+      status: "idle",
+    },
+    ui: {
+      ...state.ui,
+      currentView: state.world.currentHouseId == null ? "city" : "house",
+    },
   };
 }

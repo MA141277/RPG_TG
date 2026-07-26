@@ -10,6 +10,7 @@ import buildingBackgroundHanlinyuanUrl from "../../ui/background/hanlinyuan.png?
 import buildingBackgroundHomeUrl from "../../ui/background/home.png?url";
 import buildingBackgroundHome1Url from "../../ui/background/home1.png?url";
 import buildingBackgroundHuichuntangUrl from "../../ui/background/huichuntang.png?url";
+import buildingBackgroundJiangshuaizhaidiUrl from "../../ui/background/jiangshuaizhaidi.png?url";
 import buildingBackgroundJiusiUrl from "../../ui/background/jiusi.png?url";
 import buildingBackgroundJunyingUrl from "../../ui/background/junying.png?url";
 import buildingBackgroundLianghangUrl from "../../ui/background/lianghang.png?url";
@@ -81,6 +82,12 @@ const LOCATION_BACKGROUND_IMAGE_URLS: Record<string, string> = {
   zizhai: buildingBackgroundZizhaiUrl,
 };
 
+const DIALOGUE_BACKGROUND_PREVIEW_IMAGE_URLS: Record<string, string> = {
+  "bg.temple.courtyard": buildingBackgroundTempleUrl,
+  "bg.temple.hall": buildingBackgroundTempleUrl,
+  "bg.pei_county.office": buildingBackgroundJiangshuaizhaidiUrl,
+};
+
 export function resolveLocationBackgroundImageUrl(
   backgroundId: string | null | undefined
 ): string | null {
@@ -89,4 +96,17 @@ export function resolveLocationBackgroundImageUrl(
   }
 
   return LOCATION_BACKGROUND_IMAGE_URLS[backgroundId] ?? null;
+}
+
+export function resolveDialogueBackgroundPreviewImageUrl(
+  backgroundId: string | null | undefined
+): string | null {
+  if (backgroundId == null || backgroundId.length === 0) {
+    return null;
+  }
+
+  return (
+    DIALOGUE_BACKGROUND_PREVIEW_IMAGE_URLS[backgroundId] ??
+    resolveLocationBackgroundImageUrl(backgroundId)
+  );
 }

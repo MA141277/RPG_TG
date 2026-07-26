@@ -19,6 +19,10 @@ import {
   type ExportedSettlement,
 } from "../../core/runtime/runtime-settlement";
 import { runProgressionRuntime } from "../../core/runtime/progression-runtime";
+import {
+  continueToEvent,
+  createEventContinuationTracker,
+} from "../events/event-continuation";
 import { startEvent } from "../events/event-runner";
 import { runEventPlayableRuntime } from "../events/event-playable-runtime";
 import { resolveDialogueChoiceOption } from "../dialogue/dialogue-choice-resolver";
@@ -112,6 +116,37 @@ export function startStoryEventById(
   return syncStoryDialogue(startStoryEvent(runtime, content, eventDefinition), content);
 }
 
+export function continueStoryFromSourceEvent(
+  runtime: StoryRuntimeContext,
+  content: StoryContent,
+  sourceEventId: string
+): StoryRuntimeResult | null {
+  const sourceEventDefinition = content.eventDefinitionsById[sourceEventId];
+  const continuation = continueToEvent({
+    state: runtime.state,
+    eventDefinitionsById: content.eventDefinitionsById,
+    sourceEventId,
+    targetEventId: sourceEventDefinition?.nextEventId,
+    visitedEventIds: [sourceEventId],
+  });
+  if (continuation == null) {
+    return null;
+  }
+
+  return syncStoryDialogue(
+    startStoryEvent(
+      {
+        ...runtime,
+        state: continuation.state,
+      },
+      content,
+      continuation.eventDefinition,
+      { eventAlreadyStarted: true }
+    ),
+    content
+  );
+}
+
 export function triggerStoryEvents(
   runtime: StoryRuntimeContext,
   content: StoryContent,
@@ -186,89 +221,111 @@ function startStoryEvent(
   eventDefinition: EventDefinition,
   options: { eventAlreadyStarted?: boolean } = {}
 ): StoryRuntimeResult {
-  const startedRuntime = options.eventAlreadyStarted === true
-    ? runtime
-    : {
-        ...runtime,
-        state: startEvent(runtime.state, eventDefinition),
-      };
-  if (eventDefinition.type !== "settlement") {
-    return startedRuntime;
-  }
+  let activeRuntime =
+    options.eventAlreadyStarted === true
+      ? runtime
+      : {
+          ...runtime,
+          state: startEvent(runtime.state, eventDefinition),
+        };
+  let activeEventDefinition = eventDefinition;
+  let continuationVisitedEventIds = createEventContinuationTracker([
+    eventDefinition.id,
+  ]);
 
+  while (true) {
+    if (activeEventDefinition.type !== "settlement") {
+      return activeRuntime;
+    }
+
+    const settlement = readStorySettlement(content, activeEventDefinition);
+    if (settlement == null) {
+      return activeRuntime;
+    }
+
+    const settlementState = applySettlementContents(
+      {
+        people: Object.fromEntries(
+          activeRuntime.characterDefinitions.map((character) => [
+            character.id,
+            character as unknown as Record<string, unknown>,
+          ])
+        ),
+        cities: Object.fromEntries(
+          (activeRuntime.cityDefinitions ?? Object.values(content.cityDefinitionsById ?? {})).map(
+            (city) => [city.id, city as unknown as Record<string, unknown>]
+          )
+        ),
+        buildings: Object.fromEntries(
+          (
+            activeRuntime.houseDefinitions ??
+            Object.values(content.houseDefinitionsById ?? {})
+          ).map((house) => [house.id, house as unknown as Record<string, unknown>])
+        ),
+      },
+      settlement
+    );
+    const nextRuntime: StoryRuntimeContext = {
+      state: activeRuntime.state,
+      characterDefinitions: activeRuntime.characterDefinitions.map(
+        (character) =>
+          (settlementState.people?.[character.id] as CharacterDefinition | undefined) ??
+          character
+      ),
+      ...(activeRuntime.cityDefinitions == null
+        ? {}
+        : {
+            cityDefinitions: activeRuntime.cityDefinitions.map(
+              (city) =>
+                (settlementState.cities?.[city.id] as CityDefinition | undefined) ??
+                city
+            ),
+          }),
+      ...(activeRuntime.houseDefinitions == null
+        ? {}
+        : {
+            houseDefinitions: activeRuntime.houseDefinitions.map(
+              (house) =>
+                (settlementState.buildings?.[house.id] as HouseDefinition | undefined) ??
+                house
+            ),
+          }),
+    };
+    const progressedRuntime = applyStoryProgressionAfterSettlement(
+      nextRuntime,
+      content
+    );
+    const continuation = continueToEvent({
+      state: progressedRuntime.state,
+      eventDefinitionsById: content.eventDefinitionsById,
+      sourceEventId: activeEventDefinition.id,
+      targetEventId: settlement.nextEventId,
+      visitedEventIds: continuationVisitedEventIds,
+    });
+    if (continuation == null) {
+      return progressedRuntime;
+    }
+
+    activeRuntime = {
+      ...progressedRuntime,
+      state: continuation.state,
+    };
+    activeEventDefinition = continuation.eventDefinition;
+    continuationVisitedEventIds = continuation.visitedEventIds;
+  }
+}
+
+function readStorySettlement(
+  content: StoryContent,
+  eventDefinition: EventDefinition
+): StorySettlementDefinition | undefined {
   const settlementId =
     typeof eventDefinition.settlementId === "string"
       ? eventDefinition.settlementId.trim()
       : "";
-  const settlement =
-    settlementId.length === 0
-      ? undefined
-      : content.settlementDefinitionsById?.[settlementId];
-  if (settlement == null) {
-    return startedRuntime;
-  }
-
-  const settlementState = applySettlementContents(
-    {
-      people: Object.fromEntries(
-        startedRuntime.characterDefinitions.map((character) => [
-          character.id,
-          character as unknown as Record<string, unknown>,
-        ])
-      ),
-      cities: Object.fromEntries(
-        (startedRuntime.cityDefinitions ?? Object.values(content.cityDefinitionsById ?? {})).map(
-          (city) => [city.id, city as unknown as Record<string, unknown>]
-        )
-      ),
-      buildings: Object.fromEntries(
-        (
-          startedRuntime.houseDefinitions ??
-          Object.values(content.houseDefinitionsById ?? {})
-        ).map((house) => [house.id, house as unknown as Record<string, unknown>])
-      ),
-    },
-    settlement
-  );
-  const nextRuntime: StoryRuntimeContext = {
-    state: startedRuntime.state,
-    characterDefinitions: startedRuntime.characterDefinitions.map(
-      (character) =>
-        (settlementState.people?.[character.id] as CharacterDefinition | undefined) ??
-        character
-    ),
-    ...(startedRuntime.cityDefinitions == null
-      ? {}
-      : {
-          cityDefinitions: startedRuntime.cityDefinitions.map(
-            (city) =>
-              (settlementState.cities?.[city.id] as CityDefinition | undefined) ?? city
-          ),
-        }),
-    ...(startedRuntime.houseDefinitions == null
-      ? {}
-      : {
-          houseDefinitions: startedRuntime.houseDefinitions.map(
-            (house) =>
-              (settlementState.buildings?.[house.id] as HouseDefinition | undefined) ??
-              house
-          ),
-        }),
-  };
-  const progressedRuntime = applyStoryProgressionAfterSettlement(
-    nextRuntime,
-    content
-  );
-  const nextEventId =
-    typeof settlement.nextEventId === "string" ? settlement.nextEventId.trim() : "";
-  if (nextEventId.length === 0 || nextEventId === eventDefinition.id) {
-    return progressedRuntime;
-  }
-
-  const nextEvent = content.eventDefinitionsById[nextEventId];
-  return nextEvent == null
-    ? progressedRuntime
-    : startStoryEvent(progressedRuntime, content, nextEvent);
+  return settlementId.length === 0
+    ? undefined
+    : content.settlementDefinitionsById?.[settlementId];
 }
 
 function applyStoryProgressionAfterSettlement(

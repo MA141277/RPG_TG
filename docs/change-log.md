@@ -7,6 +7,14 @@
 
 ## 2026-07-26 Script Editor Canonical Draft Id And Authoring Copy Convergence
 
+## 2026-07-27 Event-Owned Playable Completion Follow-Up Type Guard
+
+### Changed
+- Updated [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:1) so the event-owned playable completion fallback applies `reenter-house` through a `GameState`-shaped helper instead of calling the RuntimeState-only reentry bridge, while leaving the shared runtime follow-up path unchanged.
+
+### Impact
+- The ACC-FORMAT-004 fallback seam in `main.ts` is now type-correct: event-owned playable completion still lets event remain the sole routing owner, and the direct house reentry fallback stays limited to the no-authored-follow-up path without widening runtime ownership.
+
 ## 2026-07-26 Stage Host Reference Contract Slice
 
 ## 2026-07-27 Runtime Menu Resource Consumption Cutover
@@ -3945,3 +3953,72 @@
 - Script Editor can now author generic progression tracks and bindings end to end, export them into runtime packs, import them back, and validate them through the same bounded resource chain.
 - Progression itself no longer performs final writes: every resulting attribute or state change now passes through authored settlement instances and the shared settlement runtime, which keeps the existing Event-routing ownership intact.
 - Missing settlement targets, unsupported binding owners, and stray `ownerTag` authoring now fail closed before runtime instead of creating hidden fallback behavior.
+
+## 2026-07-27 Event-Owned Continuation Fail-Closed Guard
+
+### Changed
+- Added [src/application/events/event-continuation.ts](/D:/workspace/project/RPG_TG/src/application/events/event-continuation.ts) as a shared continuation seam so automatic event follow-up now resolves through one guarded path instead of private per-runtime recursion.
+- Updated [src/application/dialogue/dialogue-runner.ts](/D:/workspace/project/RPG_TG/src/application/dialogue/dialogue-runner.ts) so dialogue completion advances automatic `nextEventId` follow-up through the shared continuation tracker and fails closed when a continuation chain revisits an already-started event.
+- Updated [src/application/dialogue/dialogue-choice-resolver.ts](/D:/workspace/project/RPG_TG/src/application/dialogue/dialogue-choice-resolver.ts) so dialogue-choice `nextEventId` handoff now also resolves through the shared event continuation seam and closes the current dialogue state safely when that follow-up would immediately loop back to the active event.
+- Updated [src/application/story/story-runtime.ts](/D:/workspace/project/RPG_TG/src/application/story/story-runtime.ts) so settlement-triggered `nextEventId` follow-up now iterates through the same guarded continuation seam instead of recursively re-entering `startStoryEvent`.
+- Added [tests/event-continuation-runtime.test.cjs](/D:/workspace/project/RPG_TG/tests/event-continuation-runtime.test.cjs) and targeted regression coverage proving dialogue follow-up chains, dialogue-choice follow-up chains, and settlement follow-up chains all stop safely on continuation loops while preserving normal authored follow-up behavior.
+
+### Impact
+- ACC-FORMAT-004 first slice removes the most obvious private continuation owners from dialogue runtime and settlement runtime without widening into broader routing refactors.
+- Cyclic automatic or choice-driven follow-up content now fails closed at runtime instead of overflowing the call stack or re-triggering the same active event indefinitely, while authored non-cyclic follow-up chains keep their existing event-owned behavior.
+
+## 2026-07-27 Runtime Dialogue Portrait Side Consumption
+
+### Changed
+- Updated [src/application/script-editor/runtime-pack-import.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts), [src/application/script-editor/dialogue-story-runtime-materializer.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/dialogue-story-runtime-materializer.ts), and [src/domain/script-editor-project.ts](/D:/workspace/project/RPG_TG/src/domain/script-editor-project.ts) so imported and authored dialogue nodes now preserve `side` and `portraitId` into runtime dialogue nodes instead of silently collapsing back to center/default portrait behavior.
+- Updated [src/ui/views/dialogue/dialogue-view.ts](/D:/workspace/project/RPG_TG/src/ui/views/dialogue/dialogue-view.ts) so runtime dialogue rendering consumes node-level portrait overrides and emits the authored dialogue-side marker instead of always using the speaker's currently active portrait selection.
+- Added targeted regression coverage in [tests/dialogue-runtime-presentation.test.cjs](/D:/workspace/project/RPG_TG/tests/dialogue-runtime-presentation.test.cjs) for runtime-pack import, story-runtime materialization, and rendered dialogue markup.
+
+### Impact
+- ACC-FORMAT-004 now covers the smallest bounded runtime dialogue-presentation slice: authored/runtime-defined portrait overrides and side metadata survive import, materialization, and dialogue view rendering.
+- Playable settlement routing, runtime-layout persistence, and broader background/music presentation parity remain outside this landed slice.
+
+## 2026-07-27 Runtime Dialogue Background And Music Presentation
+
+### Changed
+- Updated [src/domain/script-editor-project.ts](/D:/workspace/project/RPG_TG/src/domain/script-editor-project.ts), [src/application/script-editor/runtime-pack-import.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts), and [src/application/script-editor/dialogue-story-runtime-materializer.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/dialogue-story-runtime-materializer.ts) so Script Editor dialogue nodes can preserve runtime `background` and `music` presentation truth, lower those nodes without fake `textId` requirements, and fail closed when a required `backgroundId` or `musicId` is missing.
+- Updated [src/ui/views/dialogue/dialogue-view.ts](/D:/workspace/project/RPG_TG/src/ui/views/dialogue/dialogue-view.ts) so runtime dialogue no longer renders background/music nodes through the generic transition placeholder; those nodes now emit explicit background/music presentation cards, keep the existing scene underlay, and show a background preview only when a resolvable image URL exists.
+- Expanded [tests/dialogue-runtime-presentation.test.cjs](/D:/workspace/project/RPG_TG/tests/dialogue-runtime-presentation.test.cjs) with focused regression coverage for background/music import, runtime materialization, and rendered dialogue markup.
+
+### Impact
+- ACC-FORMAT-004 runtime dialogue presentation no longer drops background/music truth into the generic fallback card on the converged path.
+- This slice stays intentionally narrow: it preserves and renders runtime-defined background/music metadata, but it does not introduce a new music playback runtime or widen into runtime-layout/UI-layering work.
+
+## 2026-07-27 Runtime Dialogue Music Playback
+
+### Changed
+- Added [src/ui/dialogue-music.ts](/D:/workspace/project/RPG_TG/src/ui/dialogue-music.ts) as a bounded fail-closed playback seam that reads rendered dialogue music cues, resolves them through a registry, and starts or clears a dedicated dialogue-music audio player without introducing any new routing owner.
+- Updated [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts) so the runtime now syncs dialogue-music playback after render and visibility changes using the existing audio-player pattern, while pausing the ambient background BGM only when a resolvable dialogue music cue is actually active.
+- Added [tests/dialogue-music-runtime.test.cjs](/D:/workspace/project/RPG_TG/tests/dialogue-music-runtime.test.cjs) to cover resolved playback and fail-closed unresolved/inactive cue handling.
+
+### Impact
+- ACC-FORMAT-004 now has a dedicated dialogue-music playback consumer on the converged runtime path instead of rendering music nodes as metadata-only cards.
+- The remaining dialogue presentation gap is narrower: background preview ids still depend on the current location-background resolver, and dialogue-music asset coverage is still limited to the bounded registry rather than a broader music resource system.
+
+## 2026-07-27 Authored Dialogue Background Preview Alias Coverage
+
+### Changed
+- Updated [src/ui/location-backgrounds.ts](/D:/workspace/project/RPG_TG/src/ui/location-backgrounds.ts) with a bounded fail-closed dialogue-preview alias registry for the currently shipped authored story/dialogue ids `bg.temple.courtyard`, `bg.temple.hall`, and `bg.pei_county.office`, while leaving the generic location background resolver unchanged.
+- Updated [src/ui/views/dialogue/dialogue-view.ts](/D:/workspace/project/RPG_TG/src/ui/views/dialogue/dialogue-view.ts) so dialogue background presentation cards resolve preview images through the explicit dialogue-preview seam instead of depending only on location background ids.
+- Expanded [tests/dialogue-runtime-presentation.test.cjs](/D:/workspace/project/RPG_TG/tests/dialogue-runtime-presentation.test.cjs) with targeted regression coverage for the shipped authored ids and fail-closed handling of unmapped ids.
+
+### Impact
+- Current shipped story/dialogue background ids now render preview images on the converged dialogue presentation path instead of dropping the preview when the authored id is not also a location background id.
+- This slice stays bounded to preview resolution only. It does not introduce a broader background asset system, and any unmapped authored `bg.*` id still fails closed without a preview image until it is added explicitly.
+
+## 2026-07-27 Event-Owned Playable Completion Parity
+
+### Changed
+- Updated [src/application/events/event-playable-runtime.ts](/D:/workspace/project/RPG_TG/src/application/events/event-playable-runtime.ts) so event-owned playable launches stamp the source event id into the shared playable session and the runtime now exposes a bounded completion consumer for event-owned settlement/follow-up outputs.
+- Updated [src/application/story/story-runtime.ts](/D:/workspace/project/RPG_TG/src/application/story/story-runtime.ts), [src/application/building/building-container-event-runtime.ts](/D:/workspace/project/RPG_TG/src/application/building/building-container-event-runtime.ts), and [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts) so story-triggered and building-triggered event-owned playable completions resume through the authored source-event `nextEventId` seam, while story-battle reentry follow-up is only consumed directly when no authored event follow-up exists.
+- Updated [src/core/contracts/runtime-result.ts](/D:/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts) and [src/core/runtime/state-sync-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/state-sync-runtime.ts) so playable settlement outputs stay visible through runtime commit and settlement effects remain mutation-only write-back through the shared settlement applier instead of becoming a second router.
+- Added [tests/event-owned-playable-completion-parity.test.cjs](/D:/workspace/project/RPG_TG/tests/event-owned-playable-completion-parity.test.cjs) to prove event-owned completion parity on the covered story-triggered follow-up and building-triggered settlement entrypoints.
+
+### Impact
+- ACC-FORMAT-004 no longer stops at event-owned playable launch for the covered entrypoints: flow settlement completion and story-battle follow-up completion now converge through the event-owned continuation seam instead of being dropped after session closeout.
+- Settlement output remains write-back only, while event keeps sole ownership of authored follow-up routing and direct owner reentry is used only when no event follow-up exists to consume the completion.

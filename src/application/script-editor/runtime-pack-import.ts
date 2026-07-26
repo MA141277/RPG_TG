@@ -608,12 +608,47 @@ function mapImportedRuntimeDialogueNode(
   const type = readString(node.type);
   const baseId = readString(node.id) || `imported-node-${nodeIndex + 1}`;
 
+  if (type === "background") {
+    const backgroundId = readString(node.backgroundId);
+    return [
+      {
+        id: baseId,
+        nodeType: "background",
+        speakerPersonId: "",
+        ...(backgroundId.length === 0 ? {} : { backgroundId }),
+        textId: "",
+        nextNodeId: "",
+        choiceTargetNodeId: "",
+      },
+    ];
+  }
+
+  if (type === "music") {
+    const musicId = readString(node.musicId);
+    return [
+      {
+        id: baseId,
+        nodeType: "music",
+        speakerPersonId: "",
+        ...(musicId.length === 0 ? {} : { musicId }),
+        ...(node.loop === true ? { loop: true } : {}),
+        textId: "",
+        nextNodeId: "",
+        choiceTargetNodeId: "",
+      },
+    ];
+  }
+
   if (type === "dialogue") {
+    const side = readDialogueSide(node.side);
+    const portraitId = readString(node.portraitId);
     return [
       {
         id: baseId,
         nodeType: "dialogue",
         speakerPersonId: readString(node.characterId),
+        ...(side == null ? {} : { side }),
+        ...(portraitId.length === 0 ? {} : { portraitId }),
         textId: readString(node.textId),
         nextNodeId: "",
         choiceTargetNodeId: "",
@@ -655,6 +690,12 @@ function mapImportedRuntimeDialogueNode(
   }
 
   return [];
+}
+
+function readDialogueSide(value: unknown): "left" | "right" | "center" | undefined {
+  return value === "left" || value === "right" || value === "center"
+    ? value
+    : undefined;
 }
 
 function mapTextEntries(

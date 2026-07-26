@@ -10,6 +10,10 @@ import { runActivity } from "../activity/activity-runner";
 import { applyEffects } from "../effects/effect-applier";
 import { syncActiveEventPresentation } from "./dialogue-presentation";
 import { runEventPlayableRuntime } from "../events/event-playable-runtime";
+import {
+  continueToEvent,
+  createEventContinuationTracker,
+} from "../events/event-continuation";
 import { startEvent } from "../events/event-runner";
 import { runStoryCallback } from "../story/story-callbacks";
 
@@ -33,6 +37,9 @@ export function runDialogueUntilPause(
 ): DialogueStepResult {
   let nextState = state;
   let nextCharacterDefinitions = context.characterDefinitions;
+  let continuationVisitedEventIds = createEventContinuationTracker([
+    state.dialogue.activeEventId,
+  ]);
 
   while (true) {
     const activeEvent =
@@ -60,18 +67,48 @@ export function runDialogueUntilPause(
     );
 
     if (nextState.dialogue.activeDialogueId == null) {
-      break;
+      const continuedState = continueDialogueEvent(
+        nextState,
+        context,
+        continuationVisitedEventIds
+      );
+      if (continuedState != null) {
+        nextState = continuedState.state;
+        continuationVisitedEventIds = continuedState.visitedEventIds;
+        continue;
+      }
+      return finishDialogue(nextState, nextCharacterDefinitions);
     }
 
     const activeDialogue =
       context.dialogueDefinitionsById[nextState.dialogue.activeDialogueId];
     if (activeDialogue == null) {
-      return finishDialogue(nextState, nextCharacterDefinitions, context);
+      const continuedState = continueDialogueEvent(
+        nextState,
+        context,
+        continuationVisitedEventIds
+      );
+      if (continuedState != null) {
+        nextState = continuedState.state;
+        continuationVisitedEventIds = continuedState.visitedEventIds;
+        continue;
+      }
+      return finishDialogue(nextState, nextCharacterDefinitions);
     }
 
     const currentNode = activeDialogue.nodes[nextState.dialogue.cursor] ?? null;
     if (currentNode == null) {
-      return finishDialogue(nextState, nextCharacterDefinitions, context);
+      const continuedState = continueDialogueEvent(
+        nextState,
+        context,
+        continuationVisitedEventIds
+      );
+      if (continuedState != null) {
+        nextState = continuedState.state;
+        continuationVisitedEventIds = continuedState.visitedEventIds;
+        continue;
+      }
+      return finishDialogue(nextState, nextCharacterDefinitions);
     }
 
     if (
@@ -136,6 +173,9 @@ export function runDialogueUntilPause(
         targetEvent == null
           ? incrementDialogueCursor(nextState)
           : startEvent(nextState, targetEvent);
+      continuationVisitedEventIds = createEventContinuationTracker([
+        targetEvent?.id,
+      ]);
       continue;
     }
 
@@ -173,7 +213,7 @@ export function runDialogueUntilPause(
     nextState = incrementDialogueCursor(nextState);
   }
 
-  return finishDialogue(nextState, nextCharacterDefinitions, context);
+  return finishDialogue(nextState, nextCharacterDefinitions);
 }
 
 export function advanceDialogue(
@@ -195,19 +235,8 @@ function incrementDialogueCursor(state: GameState): GameState {
 
 function finishDialogue(
   state: GameState,
-  characterDefinitions: CharacterDefinition[],
-  context: DialogueRunnerContext
+  characterDefinitions: CharacterDefinition[]
 ): DialogueStepResult {
-  const nextEventId =
-    state.dialogue.activeEventId == null
-      ? undefined
-      : context.eventDefinitionsById[state.dialogue.activeEventId]?.nextEventId;
-  const nextEvent =
-    nextEventId == null ? undefined : context.eventDefinitionsById[nextEventId];
-  if (nextEvent != null) {
-    return runDialogueUntilPause(startEvent(state, nextEvent), context);
-  }
-
   return {
     state: {
       ...state,
@@ -226,4 +255,23 @@ function finishDialogue(
     characterDefinitions,
     currentNode: null,
   };
+}
+
+function continueDialogueEvent(
+  state: GameState,
+  context: DialogueRunnerContext,
+  visitedEventIds: Iterable<string>
+) {
+  const activeEventId = state.dialogue.activeEventId;
+  const nextEventId =
+    activeEventId == null
+      ? undefined
+      : context.eventDefinitionsById[activeEventId]?.nextEventId;
+  return continueToEvent({
+    state,
+    eventDefinitionsById: context.eventDefinitionsById,
+    sourceEventId: activeEventId,
+    targetEventId: nextEventId,
+    visitedEventIds,
+  });
 }
