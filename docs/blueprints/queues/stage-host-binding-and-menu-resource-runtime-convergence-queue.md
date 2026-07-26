@@ -26,7 +26,7 @@
 - queue_close_handoff: `version-plan-routing`
 - sync_status: `success`
 - sync_scope: `remote-sync`
-- sync_summary: `A repository-sync attempt already succeeded for the landed stage-host plus city-menu batch (commits 3b78445d and 3dc6dabd on mod-first-dev), but the queue remains open because closeout review found a same-family building-menu runtime-consumption gap.`
+- sync_summary: `Repository-sync now succeeded for both the earlier stage-host plus city-menu batch and the resumed building-formal-menu runtime batch. The latest resumed-batch commit is on origin/mod-first-dev, but the queue remains open because closeout review still has to decide ACC-FORMAT-003 topic closure honestly rather than auto-closing after sync success.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -526,3 +526,4 @@
 - `2026-07-27`: `Closeout review then found a same-family gap that keeps ACC-FORMAT-003 open: building runtime still renders arrangement action-menu containers as the primary menu production truth, while building menuInstanceIds only survive through authoring/export/import/runtime loading. The queue therefore returns from closeout review to task.stage-host-binding-and-menu-resource-runtime-convergence.stage-host-and-menu-chain-implementation.`
 - `2026-07-27`: `The returned implementation slice is now landed and re-verified. Building runtime action menus consume formal menuResources/menuInstances, Script Editor building arrangements no longer expose inline action-item authoring as the active path, the built-in zhuyuanzhang pack migrated building menu truth into houses/menu-resources/menu-instances, and node --test tests/robustness.test.cjs plus node --test tests/city-building-mount-authoring.test.cjs are green on the converged path.`
 - `2026-07-27`: `With the same-family runtime gap covered, the queue now resumes task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate. ACC-FORMAT-003 is still not declared closed here; closeout review must now judge the remaining compatibility-only inline action-menu residue and repository-sync truth honestly.`
+- `2026-07-27`: `The resumed batch has now passed its repository-sync attempt too: the building formal-menu runtime cutover and closeout-review doc sync committed cleanly on mod-first-dev and pushed to origin/mod-first-dev. Queue closure is still not auto-approved by that success; closeout review must still decide the final ACC-FORMAT-003 topic-closure truth.`
