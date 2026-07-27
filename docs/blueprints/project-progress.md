@@ -6,7 +6,7 @@
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-content-format-runtime-layout-and-module-capability-convergence`
 - has_active_queue: `true`
-- next_file: `docs/blueprints/queues/runtime-layout-registry-and-ui-layering-convergence-queue.md`
+- next_file: `docs/blueprints/queues/preview-runtime-loading-full-chain-consistency-and-final-acceptance-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,15 +29,15 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-26-script-editor-content-format-runtime-layout-and-module-capability-convergence-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/runtime-layout-registry-and-ui-layering-convergence-queue.md`
+  - `docs/blueprints/queues/preview-runtime-loading-full-chain-consistency-and-final-acceptance-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `A new open successor version now exists and is the only lawful active Blueprint version.`
 - `The current active version was created on 2026-07-26 from the operator-approved unified requirement sheet covering Script Editor content format, runtime layout, runtime UI layering, covered-module capability completion, event-only routing, and no-compatibility full-chain convergence.`
-- `The current active version now executes through queue.runtime-layout-registry-and-ui-layering-convergence after queue.event-owned-routing-dialogue-playable-settlement-convergence closed honestly with accepted fail-closed residue recorded and repository-sync success through commit 0daa903a on origin/mod-first-dev.`
-- `Resume from the active queue doc and its live registry-owned-layout-contract-cutover task rather than re-running admission or reopening the closed earlier queues from project entry.`
+- `The current active version now executes through queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance after queue.runtime-layout-registry-and-ui-layering-convergence closed honestly with repository-sync success through commit 242272c4 on origin/mod-first-dev.`
+- `Resume from the active queue doc and its live evidence-anchor-reconcile task rather than re-running admission or reopening the closed earlier queues from project entry.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `Closed versions remain historical evidence only and must not be resumed implicitly while this open successor version owns current execution truth.`
 

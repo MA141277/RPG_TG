@@ -7,26 +7,26 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-27`
 - governance_sync_source: `docs/blueprints/plans/2026-07-26-script-editor-content-format-runtime-layout-and-module-capability-convergence-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate`
-- next_task: `task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate`
-- closeout_status: `in-progress`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
 - execution_closeout_status: `done`
 - topic_closure_status: `closed`
-- closure_basis: `The bounded ACC-FORMAT-005 implementation slice is now verified locally. Project parsing/loading, top-level menu formalization, runtime materialization, arrangement-layout persistence, and building runtime layering all consume the converged registry-owned layout path without preserving legacy arrangement action-menu items as production truth, so the queue now advances to closeout review and repository-sync gating rather than more implementation.`
+- closure_basis: `Queue closeout proof and repository-sync gate are complete. ACC-FORMAT-005 is covered for the queue-owned boundary, commit 242272c4 landed the bounded fail-closed cutover batch, and push to origin/mod-first-dev succeeded before required-final queue admission.`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
-- next_family_candidate: `none`
+- next_family_candidate: `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance`
 - auto_continue_eligible: `false`
-- next_effect: `continue-current-queue`
+- next_effect: `return-to-version-review`
 - auto_continue_policy: `required`
 - idle_after_task_completion: `forbidden`
 - queue_close_handoff: `version-plan-routing`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `The predecessor queue already recorded remote-sync success before this queue was admitted. No ACC-FORMAT-005 repository-sync attempt has been recorded yet.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository-sync gate satisfied: closeout truth was synchronized, commit 242272c4 landed on mod-first-dev, and push to origin/mod-first-dev succeeded before queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance admission.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -232,9 +232,9 @@
 
 - queue_goal: `Execute the fourth version slice so runtime layout persistence and runtime UI layering converge onto one registry-owned contract.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `The bounded ACC-FORMAT-005 implementation slice is now fully verified, so the queue has promoted into closeout review and repository-sync gating rather than continuing implementation.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Completed. ACC-FORMAT-005 is locally covered, repository-sync succeeded, and execution has already handed off to the required-final queue.`
 - task_briefs:
   - `task.runtime-layout-registry-and-ui-layering-convergence.evidence-anchor-reconcile: freeze the concrete layout-registry, materialization, and UI-layering seams that still keep ACC-FORMAT-005 open.`
   - `task.runtime-layout-registry-and-ui-layering-convergence.registry-owned-layout-contract-cutover: land the bounded registry-owned runtime layout and UI-layering convergence without preserving mixed ownership.`
@@ -253,7 +253,7 @@
 
 ### Completion Completeness Review
 
-- review_status: `ready-for-closeout-review`
+- review_status: `complete`
 - can_claim_coverage:
   - `Yes for bounded implementation coverage. Admission evidence is locked, the registry-owned layout contract cutover is verified locally, and the remaining queue work is closeout review plus repository-sync gating rather than more ACC-FORMAT-005 implementation.`
 - parent_spec_preservation:
@@ -273,8 +273,7 @@
 - placeholder_or_legacy_fallback_audit:
   - `Mixed arrangement/container-derived menu truth is no longer accepted on the covered path: the retired action-menu items are either rejected or stripped, and no queue-owned compatibility fallback keeps them as production behavior.`
 - remaining_gaps:
-  - `Repository-sync gate has not yet been attempted for ACC-FORMAT-005.`
-  - `Final export/import/loading/preview/runtime chain acceptance remains routed to queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance and is not claimable from this queue.`
+  - `No further queue-local implementation or governance gap remains.`
 
 ### Admission Preconditions
 
@@ -313,7 +312,7 @@
 | --- | --- | --- | --- | --- |
 | `task.runtime-layout-registry-and-ui-layering-convergence.evidence-anchor-reconcile` | `done` | `Freeze the concrete layout-registry, materialization, and UI-layering seams that still keep ACC-FORMAT-005 open.` | `queue.event-owned-routing-dialogue-playable-settlement-convergence closed` | `Done during admission from the audited runtime-layout rationale already established in-thread: layout ownership still leaks through project contracts, formalization, loader validation, runtime materialization, UI-shell layering, and workspace issue routing.` |
 | `task.runtime-layout-registry-and-ui-layering-convergence.registry-owned-layout-contract-cutover` | `done` | `Land the bounded registry-owned runtime layout and UI-layering convergence without preserving mixed ownership.` | `task.runtime-layout-registry-and-ui-layering-convergence.evidence-anchor-reconcile` | `Done. Loader/project-parser rejection, top-level menu-authoring fail-closed behavior, runtime materializer cleanup, arrangement-layout persistence, and building runtime layout consumption are locally verified on the converged path.` |
-| `task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate` | `active` | `Verify ACC-FORMAT-005 coverage, classify residue honestly, and run the repository-sync gate before handoff to the final acceptance queue.` | `task.runtime-layout-registry-and-ui-layering-convergence.registry-owned-layout-contract-cutover` | `Active. Implementation proof is now green, so the lawful next step is honest closeout review plus repository-sync gating.` |
+| `task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate` | `done` | `Verify ACC-FORMAT-005 coverage, classify residue honestly, and run the repository-sync gate before handoff to the final acceptance queue.` | `task.runtime-layout-registry-and-ui-layering-convergence.registry-owned-layout-contract-cutover` | `Done. Queue closeout truth was synchronized, commit 242272c4 landed on mod-first-dev, push to origin/mod-first-dev succeeded, and same-version execution moved directly to queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance.` |
 
 ### Task Definitions
 
@@ -437,7 +436,7 @@
 ##### Control Block
 
 - task_id: `task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate`
-- state: `active`
+- state: `done`
 - task_kind: `queue-closeout`
 - scope:
   - `docs/blueprints/queues/runtime-layout-registry-and-ui-layering-convergence-queue.md`
@@ -484,7 +483,7 @@
 - task_brief:
   - `Close out the runtime-layout queue after verified implementation and route the final acceptance queue.`
 - task_outcome_summary:
-  - `Active. Bounded ACC-FORMAT-005 implementation proof is now recorded locally, no same-family implementation blocker remains inside the covered runtime-layout surface, and the remaining queue work is honest closeout review plus repository-sync gating before final-acceptance admission.`
+  - `Done. Bounded ACC-FORMAT-005 implementation proof was recorded locally, no same-family implementation blocker remained inside the covered runtime-layout surface, commit 242272c4 landed on mod-first-dev, push to origin/mod-first-dev succeeded, and same-version execution moved directly to the required-final queue.`
 
 ### Progress Log
 
@@ -494,3 +493,4 @@
 - `2026-07-27`: `Slice B is now landed on the same active task. Top-level menu-authoring now fails closed on legacy building-arrangement action-menu items, runtime materialization no longer carries container.items into runtime arrangement shells, and the narrow proof is green via npm run build:test plus the targeted robustness and city-building-mount-authoring subsets. The active task remains unchanged because the next lawful step is fresh queue-level verification and review for possible promotion to task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate.`
 - `2026-07-27`: `Fresh ACC-FORMAT-005 verification is now fully green: cmd /c npm run build:test, node --test tests/robustness.test.cjs, cmd /c npm run lint:blueprints, cmd /c npm run lint:blueprint-skill, and cmd /c npm run blueprint:governance:check all passed on the converged path. Existing coverage plus the landed slice-A/B tests now prove arrangement-layout persistence, building runtime layout rendering without house fallback, and fail-closed retirement of legacy arrangement action-menu items as runtime truth.`
 - `2026-07-27`: `The queue therefore promotes from task.runtime-layout-registry-and-ui-layering-convergence.registry-owned-layout-contract-cutover into task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate. No same-family implementation blocker remains inside ACC-FORMAT-005; the lawful next work is honest closeout review and repository-sync gating before final-acceptance admission.`
+- `2026-07-27`: `Repository-sync gate for queue.runtime-layout-registry-and-ui-layering-convergence is now satisfied. Commit 242272c4 landed on mod-first-dev, push to origin/mod-first-dev succeeded, and same-version execution moved directly to queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance under the approved phase order.`
