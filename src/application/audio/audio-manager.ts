@@ -94,6 +94,8 @@ export const BUILTIN_AUDIO_CUE_IDS = {
   bgmBattle: "bgm.battle.default",
   bgmMidsummerDuel: "bgm.midsummer_duel",
   uiClick: "ui.click",
+  uiButtonLight: "ui.button.light",
+  uiButtonHeavy: "ui.button.heavy",
   battleCommand: "battle.command",
   battleImpact: "battle.impact",
   battleVictory: "battle.victory",
@@ -157,6 +159,30 @@ const BUILTIN_AUDIO_CUE_DEFINITIONS: readonly AudioCueDefinition[] = [
     source: {
       kind: "generated",
       generatorId: "ui.click.basic",
+    },
+  },
+  {
+    id: BUILTIN_AUDIO_CUE_IDS.uiButtonLight,
+    bus: "ui",
+    loop: false,
+    defaultVolume: 0.22,
+    cooldownMs: 40,
+    maxInstances: 2,
+    source: {
+      kind: "asset-path",
+      assetPath: "audio/ui/button-light.mp3",
+    },
+  },
+  {
+    id: BUILTIN_AUDIO_CUE_IDS.uiButtonHeavy,
+    bus: "ui",
+    loop: false,
+    defaultVolume: 0.24,
+    cooldownMs: 40,
+    maxInstances: 2,
+    source: {
+      kind: "asset-path",
+      assetPath: "audio/ui/button-heavy.mp3",
     },
   },
   {

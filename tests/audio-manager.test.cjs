@@ -348,6 +348,30 @@ test("audio controller throttles repeated oneshot playback inside the cue cooldo
   assert.equal(playedSources.length, 2);
 });
 
+test("audio controller plays asset-backed light and heavy button cues through the shared ui bus", () => {
+  const playedSources = [];
+  const controller = createAppAudioController({
+    resolveAssetPath: (assetPath) => `asset://${assetPath}`,
+    createAudioElement: () =>
+      createFakeAudioElement((audio) => {
+        playedSources.push(audio.src);
+      }),
+  });
+
+  controller.sync({
+    bgmCueId: null,
+    commands: [
+      { commandId: "cmd-light", cueId: BUILTIN_AUDIO_CUE_IDS.uiButtonLight },
+      { commandId: "cmd-heavy", cueId: BUILTIN_AUDIO_CUE_IDS.uiButtonHeavy },
+    ],
+  });
+
+  assert.deepEqual(playedSources, [
+    "asset://audio/ui/button-light.mp3",
+    "asset://audio/ui/button-heavy.mp3",
+  ]);
+});
+
 test("audio controller keeps one looping BGM player and switches its source when the cue changes", () => {
   const players = [];
   const controller = createAppAudioController({
