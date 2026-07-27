@@ -127,6 +127,23 @@ test("backpack shell uses stable grid rows so empty filters do not shift the ove
   );
 });
 
+test("backpack overlay overrides generic beige library surfaces", () => {
+  const prototypeCss = readSource("src/styles/prototype.css");
+
+  assert.match(
+    prototypeCss,
+    /\.view-backpack-overlay\s+\.c-backpack-table-wrap,\s*[\s\S]*?\.view-backpack-overlay\s+\.c-backpack-detail\s*\{[\s\S]*?background:\s*rgb\(0 0 0 \/ 46%\);/
+  );
+  assert.match(
+    prototypeCss,
+    /\.view-backpack-overlay\s+\.c-library-table\s+th,\s*[\s\S]*?\.view-backpack-overlay\s+\.c-library-table\s+td\s*\{[\s\S]*?color:\s*#f2dfb7;/
+  );
+  assert.match(
+    prototypeCss,
+    /\.view-backpack-overlay\s+\.c-library-detail__title\s*\{[\s\S]*?color:\s*#f8e7bd;/
+  );
+});
+
 test("main shell exposes backpack entry points and dispatches item actions before row selection", () => {
   const mainSource = readSource("src/main.ts");
   const appRenderSource = readSource("src/ui/app-render.ts");
