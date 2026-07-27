@@ -23,11 +23,11 @@
 ## Execution State
 
 - Status: `completed-but-open`
-- Last Updated: `2026-07-24`
-- Current Focus: `Implementation complete; closeout waits on a decision around an unrelated robustness blocker plus repository sync/push.`
-- Next Step: `Review diff, decide whether to investigate or waive the existing robustness blocker, then sync/push before marking the child closed.`
+- Last Updated: `2026-07-27`
+- Current Focus: `Implementation complete; repository merge/push remains blocked until the owner either investigates the unrelated robustness blocker or records an explicit waiver decision.`
+- Next Step: `Owner must decide whether to investigate or waive the existing robustness blocker, then sync/push before marking the child closed.`
 - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tools/lint-superpowers-plans.mjs'` passed; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json` passed; `@' {"type":"commonjs"} '@ | Set-Content '.test-dist\package.json'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/button-sound.test.cjs tests/audio-manager.test.cjs tests/audio-seam.test.cjs` passed (13/13); `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' --noEmit -p tsconfig.json` passed; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\vite\bin\vite.js' build` passed under escalated execution; full `npm.cmd test` equivalent (`build:test` + CommonJS marker + `node --test --test-isolation=none tests/robustness.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs`) exits 1 because `tests/robustness.test.cjs` hits the known unrelated `vite scenario-pack publisher stages zhuyuanzhang manifest content to the browser route` blocker; `tests/hardcoded-scenario-pack-boundary.test.cjs` passes when run.
-- Notes: `The button sound batch itself is green: shared cue contract, real mp3 asset wiring, targeted tests, typecheck, and build all pass. The remaining repo-wide blocker is unrelated to this batch and reproduces through the existing scenario-pack publisher copy path in vite.config.ts.`
+- Notes: `The button sound batch itself is green: shared cue contract, real mp3 asset wiring, targeted tests, typecheck, and build all pass. The remaining repo-wide blocker is unrelated to this batch and reproduces through the existing scenario-pack publisher copy path in vite.config.ts; merge/push should not proceed silently while that full-gate failure remains uninvestigated and unwaived.`
 
 ## Progress Log
 
@@ -46,7 +46,7 @@
 - 2026-07-24
   - Summary: `Recorded the reusable button sound batch in docs/change-log.md, finalized the plan state as completed-but-open, and documented the unrelated robustness blocker in the existing scenario-pack publisher copy path.`
   - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tools/lint-superpowers-plans.mjs'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `@' {"type":"commonjs"} '@ | Set-Content '.test-dist\package.json'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/button-sound.test.cjs tests/audio-manager.test.cjs tests/audio-seam.test.cjs` (pass 13/13); `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' --noEmit -p tsconfig.json`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\vite\bin\vite.js' build` (pass under escalated execution); full `npm.cmd test` equivalent (`build:test` + CommonJS marker + `node --test --test-isolation=none tests/robustness.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs`) exits 1 because `tests/robustness.test.cjs` hits the known unrelated `vite scenario-pack publisher stages zhuyuanzhang manifest content to the browser route` blocker; `tests/hardcoded-scenario-pack-boundary.test.cjs` passes when run.`
-  - Next: `Decide whether to investigate or waive the unrelated robustness blocker, then sync/push before closing this child.`
+  - Next: `Owner decision required: investigate the unrelated robustness blocker or record an explicit waiver before sync/push and child closeout.`
 
 ---
 
@@ -581,9 +581,9 @@ git commit -m "docs: record button sound abstraction batch"
 - Project Progress Synced: `no`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `decide-robustness-blocker-follow-up-then-push`
+- Next Required Action: `owner-decide-investigate-or-waive-robustness-blocker-before-push`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-24-button-sound-cue-abstraction-plan.md`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue from this plan to investigate or waive the unrelated robustness blocker before repository sync.`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue from this plan only after an owner decision to investigate or explicitly waive the unrelated robustness blocker before repository sync.`

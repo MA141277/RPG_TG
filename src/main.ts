@@ -783,7 +783,7 @@ const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
   }),
 });
 let appAudioSession = createAppAudioSession();
-const STATIC_AUDIO_ASSET_URLS: Readonly<Record<string, string>> = {
+const STATIC_AUDIO_ASSET_URLS: Readonly<Partial<Record<string, string>>> = {
   "audio/ui/button-light.mp3": buttonLightAudioUrl,
   "audio/ui/button-heavy.mp3": buttonHeavyAudioUrl,
 };
