@@ -3,7 +3,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { renderBackpackView } = require("../.test-dist/ui/views/inventory/backpack-view.js");
+const {
+  renderBackpackView,
+} = require("../.test-dist/ui/views/inventory/backpack-view.js");
 
 const repoRoot = path.resolve(__dirname, "..");
 
@@ -43,8 +45,23 @@ test("backpack view renders filters, table columns, detail, and item action butt
     assert.match(html, new RegExp(`>\\s*${label}\\s*<`));
   }
 
-  for (const column of ["icon", "名字", "价值", "类型", "持有数"]) {
+  assert.match(html, /<th aria-label="图标"><\/th>/);
+  for (const column of ["名字", "价值", "类型", "持有数"]) {
     assert.match(html, new RegExp(`<th>${column}</th>`));
+  }
+  for (const brokenFragment of [
+    "鍏ㄩ儴",
+    "浠峰",
+    "鎸佹湁",
+    "鐗?/span",
+    "€?/th",
+    "銆?/p",
+  ]) {
+    assert.equal(
+      html.includes(brokenFragment),
+      false,
+      `backpack html must not contain mojibake fragment ${brokenFragment}`
+    );
   }
 
   assert.match(html, /data-backpack-filter="equipment"/);
@@ -62,7 +79,7 @@ test("backpack icon column only renders image icons and hides plain icon ids", (
     items: [
       {
         id: "item.icon-id",
-        name: "旧刀",
+        name: "锈刀",
         icon: "icon-sword",
         value: 8,
         types: ["equipment", "weapon"],
@@ -83,8 +100,14 @@ test("backpack icon column only renders image icons and hides plain icon ids", (
     ],
   });
 
-  assert.doesNotMatch(html, /<span class="c-backpack-table__icon">icon-sword<\/span>/);
-  assert.match(html, /<img class="c-backpack-table__icon-image" src="\/ui\/items\/rice-ball\.png" alt="">/);
+  assert.doesNotMatch(
+    html,
+    /<span class="c-backpack-table__icon">icon-sword<\/span>/
+  );
+  assert.match(
+    html,
+    /<img class="c-backpack-table__icon-image" src="\/ui\/items\/rice-ball\.png" alt="">/
+  );
 });
 
 test("backpack shell uses stable grid rows so empty filters do not shift the overlay", () => {
@@ -107,7 +130,9 @@ test("backpack shell uses stable grid rows so empty filters do not shift the ove
 test("main shell exposes backpack entry points and dispatches item actions before row selection", () => {
   const mainSource = readSource("src/main.ts");
   const appRenderSource = readSource("src/ui/app-render.ts");
-  const characterDetailSource = readSource("src/ui/views/character/character-detail-view.ts");
+  const characterDetailSource = readSource(
+    "src/ui/views/character/character-detail-view.ts"
+  );
   const mapViewSource = readSource("src/ui/views/map/map-view.ts");
 
   assert.match(appRenderSource, /data-action="open-backpack"/);
