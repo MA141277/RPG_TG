@@ -2,6 +2,7 @@
     const pageSearchParams = new URLSearchParams(location.search);
     const isEmbeddedEngine = pageSearchParams.get("embed") === "1";
     const requestedSceneIdRaw = pageSearchParams.get("scene") || "";
+    const cityAmbientNpcApi = window.PixelWorkflowCityAmbientNpc || null;
     const elModel = document.getElementById("model");
     const elPrompt = document.getElementById("prompt");
     const elBtn = document.getElementById("btnGen");
@@ -539,6 +540,8 @@
       activeSceneKind: "world",
       activeSceneBounds: null,
       activeSceneMeta: null,
+      _cityAmbientNpcRuntime: null,
+      _cityAmbientNpcSceneIndex: null,
       interiorState: {
         active: false,
         hostObjectId: 0,
@@ -6961,6 +6964,11 @@
         animator.worldX = Number.isFinite(Number(scene.spawn.x)) ? Number(scene.spawn.x) : animator.worldX;
         animator.worldY = Number.isFinite(Number(scene.spawn.y)) ? Number(scene.spawn.y) : animator.worldY;
       }
+      resetCityAmbientNpcScene(id, {
+        id,
+        bounds: scene && scene.bounds ? scene.bounds : null,
+        objects: animator._sceneObjects || [],
+      });
       cacheScenePayloadInStore(id, scene);
       animator._sceneStore.activeId = id;
       try {
@@ -6992,6 +7000,7 @@
       animator.activeSceneKind = "world";
       animator.activeSceneBounds = null;
       animator.activeSceneMeta = null;
+      resetCityAmbientNpcScene(id, { id, bounds: null, objects: [] });
       clearActiveInteriorState();
       captureTilemapBaseLayer();
       rebuildVillageRoadTilemap();
@@ -7384,6 +7393,122 @@
       const scale = s; // 对 sprite 来说，直接用同一个 s 就够“近大远小”
       const depthKey = z;
       return { sx, sy, scale, depthKey };
+    }
+
+    function shouldEnableCityAmbientNpcForScene(sceneId) {
+      const normalizedSceneId = String(sceneId || "");
+      return (
+        !!isEmbeddedEngine &&
+        animator.activeSceneKind !== "interior" &&
+        (
+          normalizedSceneId === "zyz_haozhou" ||
+          /^zyz_[a-z0-9_]+_city$/i.test(normalizedSceneId)
+        )
+      );
+    }
+
+    function ensureCityAmbientNpcRuntime() {
+      if (animator._cityAmbientNpcRuntime) return animator._cityAmbientNpcRuntime;
+      if (!cityAmbientNpcApi || typeof cityAmbientNpcApi.createAmbientNpcRuntime !== "function") return null;
+      animator._cityAmbientNpcRuntime = cityAmbientNpcApi.createAmbientNpcRuntime({});
+      return animator._cityAmbientNpcRuntime;
+    }
+
+    function buildCityAmbientNpcSceneIndex(scene) {
+      if (!cityAmbientNpcApi || typeof cityAmbientNpcApi.buildSceneIndex !== "function") return null;
+      return cityAmbientNpcApi.buildSceneIndex(scene, {
+        buildingFootprintWorld,
+      });
+    }
+
+    function resetCityAmbientNpcScene(sceneId, scene) {
+      const runtime = ensureCityAmbientNpcRuntime();
+      if (!runtime) return;
+      if (!shouldEnableCityAmbientNpcForScene(sceneId)) {
+        animator._cityAmbientNpcSceneIndex = null;
+        runtime.resetForScene("", null);
+        return;
+      }
+      const sceneIndex = buildCityAmbientNpcSceneIndex(scene);
+      animator._cityAmbientNpcSceneIndex = sceneIndex;
+      runtime.resetForScene(sceneId, sceneIndex);
+    }
+
+    function updateCityAmbientNpcRuntimeStep(ts, dtMs) {
+      const runtime = animator._cityAmbientNpcRuntime;
+      if (!runtime) return;
+      if (!shouldEnableCityAmbientNpcForScene(animator._sceneStore?.activeId || requestedSceneIdRaw)) {
+        animator._cityAmbientNpcSceneIndex = null;
+        runtime.resetForScene("", null);
+        return;
+      }
+      if (animator.screenFade?.active) return;
+      runtime.tick(Math.max(0, Number(dtMs) || 0));
+    }
+
+    function drawCityAmbientNpcRenderable(ctx, canvas, renderable) {
+      const p = projectWorldToScreen(Number(renderable.wx) || 0, Number(renderable.wy) || 0, canvas);
+      if (!p || !(p.scale > 0)) return;
+      const bobPx = (Number(renderable.bobOffset) || 0) * p.scale * 8;
+      const scale = Math.max(0.7, Number(renderable.scale) || 1);
+      const bodyH = Math.max(16, p.scale * 3.2 * scale);
+      const bodyW = Math.max(8, bodyH * 0.44);
+      const headR = Math.max(4, bodyW * 0.42);
+      const bodyTopY = p.sy - bobPx - bodyH - headR * 2.05;
+      const bodyX = p.sx - bodyW * 0.5;
+      const palette = String(renderable.palette || "neutral");
+      const fill =
+        palette === "warm"
+          ? "rgba(196, 162, 92, 0.92)"
+          : palette === "cool"
+            ? "rgba(116, 146, 170, 0.92)"
+            : "rgba(168, 170, 150, 0.92)";
+
+      ctx.save();
+      ctx.fillStyle = "rgba(20, 14, 10, 0.24)";
+      ctx.beginPath();
+      ctx.ellipse(p.sx, p.sy - 1, bodyW * 1.3, Math.max(4, bodyW * 0.34), 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.lineWidth = Math.max(1, Math.round(p.scale * 0.14));
+      ctx.strokeStyle = "rgba(42, 28, 14, 0.78)";
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      if (typeof ctx.roundRect === "function") {
+        ctx.roundRect(bodyX, bodyTopY + headR * 1.15, bodyW, bodyH, Math.max(3, bodyW * 0.32));
+      } else {
+        ctx.rect(bodyX, bodyTopY + headR * 1.15, bodyW, bodyH);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(p.sx, bodyTopY + headR, headR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function getCityAmbientNpcRenderablesForCanvas(canvas) {
+      const runtime = animator._cityAmbientNpcRuntime;
+      if (!runtime || !shouldEnableCityAmbientNpcForScene(animator._sceneStore?.activeId || requestedSceneIdRaw)) {
+        return [];
+      }
+      const rawRenderables = runtime.getRenderables();
+      const out = [];
+      for (const renderable of rawRenderables) {
+        const p = projectWorldToScreen(Number(renderable.wx) || 0, Number(renderable.wy) || 0, canvas);
+        if (!p || !(p.scale > 0)) continue;
+        out.push({
+          depthKey: p.depthKey,
+          isInteractive: false,
+          draw: () => {
+            const ctx = canvas === animator.stageCanvas ? animator.stageCtx : animator.ctx;
+            drawCityAmbientNpcRenderable(ctx, canvas, renderable);
+          },
+        });
+      }
+      return out;
     }
 
     function getGroundDepthFrame(canvas) {
@@ -15502,6 +15627,7 @@ void main() {
       }
       refreshNearbyInteractions(getLogicCanvas());
       updateNpcRuntimeStep(ts, dt);
+      updateCityAmbientNpcRuntimeStep(ts, dt);
 
       const idleFrame = !state.moving ? getIdlePoseFrame(ts, state.row, state.flip) : null;
       const activeFrameWidth = idleFrame ? idleFrame.frameWidth : animator.frameWidth;
@@ -15602,6 +15728,7 @@ void main() {
         const stageProj = projectWorldToScreen(animator.worldX, animator.worldY, animator.stageCanvas);
         const orbitBullet = getPlayerOrbitBulletState(animator.stageCanvas, ts);
         const npcRenderables = animator._npcRuntimeEnabled ? getNpcRenderablesForCanvas(animator.stageCanvas, ts) : [];
+        const cityAmbientNpcRenderables = getCityAmbientNpcRenderablesForCanvas(animator.stageCanvas);
         const debugQinRenderable = getDebugQinRenderableForCanvas(animator.stageCanvas, ts);
         const isInteriorScene = animator.activeSceneKind === "interior";
         if (!isInteriorScene) updateOrbitBulletCombat(ts, animator.stageCanvas, orbitBullet);
@@ -15639,7 +15766,7 @@ void main() {
         drawSceneObjects(stageCtx, animator.stageCanvas, true, {
           depthKey: stageProj.depthKey,
           draw: drawPlayerOnStage,
-          extraRenderables: npcRenderables.concat(debugQinRenderable).concat(
+          extraRenderables: npcRenderables.concat(cityAmbientNpcRenderables).concat(debugQinRenderable).concat(
             !isInteriorScene && orbitBullet
               ? [{
                   depthKey: orbitBullet.depthKey,

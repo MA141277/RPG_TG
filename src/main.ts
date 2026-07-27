@@ -55,6 +55,7 @@ import {
   updateOverlayView,
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
+import { applyCoinReward } from "./application/rewards/coin-reward";
 import { normalizeTroopRuntimeStateUnitDefinitions } from "./domain/troop-editor";
 import {
   CITY_BEGGING_DURATION_DAYS,
@@ -273,6 +274,7 @@ import {
 } from "./ui/loading-screen";
 import { preloadInitialMapViewAssets } from "./ui/startup-asset-preloader";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
+import { createCoinRewardAnimator } from "./ui/animations/coin-reward-animation";
 import {
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
   createCampaignTerrainCameraCenteredOnCoordinate,
@@ -297,6 +299,7 @@ import {
   setCampaignCloudTextureScaleBoost,
   syncCampaignCloudWebGl,
 } from "./ui/views/map/campaign-cloud-webgl";
+import { mountCityStageDomRuntime } from "./ui/views/city/city-stage-dom-runtime";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
 import { syncTroopEditorInteractions } from "./ui/views/troop-editor/troop-editor-interactions";
 import { syncTroopManagementBattlePreview } from "./ui/views/troop-editor/troop-management-battle-preview";
@@ -636,6 +639,21 @@ function createRuntimeCommitContext(input: {
 let appState: AppState = applyPersistedBattleUiEditorValues(
   createPrototypeAppState(currentPlayerCharacterId)
 );
+let coinRewardDisplayValue: number | null = null;
+let coinRewardAnchorEditorState = {
+  isOpen: false,
+  actualOffsetX: -151,
+  actualOffsetY: 25,
+  draftOffsetX: -151,
+  draftOffsetY: 25,
+};
+let coinRewardAnimatorInstance: ReturnType<typeof createCoinRewardAnimator> | null =
+  null;
+const coinRewardAnimator = {
+  play(input: Parameters<ReturnType<typeof createCoinRewardAnimator>["play"]>[0]) {
+    getCoinRewardAnimator().play(input);
+  },
+};
 let campaignMapDebugState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
@@ -654,6 +672,11 @@ let initialCampaignMapDebugAnimationStartTime: number | null = null;
 let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
 let campaignMapZoomCloudResumeTimeoutId: number | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
+let cityStageDomRuntimeHandle: {
+  cityId: string;
+  attach(root: HTMLElement): void;
+  destroy(): void;
+} | null = null;
 let campaignMapScaleDraftValue: string | null = null;
 let campaignMapDragState:
   | {
@@ -717,6 +740,132 @@ let loadingScreenRequestId = 0;
 let activeLoadingScreenElement: HTMLElement | null = null;
 let activeLoadingTheme: LoadingTheme | null = null;
 const mapAutoAdvanceHandles: Record<string, number> = {};
+
+function getPlayerCharacter(
+  state: AppState,
+  playerCharacterId: string
+): CharacterDefinition {
+  const playerCharacter = state.characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === playerCharacterId
+  );
+  assertExists(
+    playerCharacter,
+    `Player character not found for id "${playerCharacterId}".`
+  );
+  return playerCharacter;
+}
+
+function getCoinRewardAnimator(): ReturnType<typeof createCoinRewardAnimator> {
+  if (coinRewardAnimatorInstance == null) {
+    const coinRewardLayer = document.querySelector<HTMLElement>(
+      "[data-ui-coin-reward-layer]"
+    );
+    assertExists(coinRewardLayer, "Missing coin reward animation layer.");
+    coinRewardAnimatorInstance = createCoinRewardAnimator({
+      layer: coinRewardLayer,
+      onDisplayValueChange(value) {
+        coinRewardDisplayValue = value;
+        syncCoinRewardGoldDisplay();
+      },
+    });
+  }
+
+  coinRewardAnimatorInstance.setGoldTargetElement(
+    document.querySelector<HTMLElement>("[data-ui-gold-target]")
+  );
+
+  return coinRewardAnimatorInstance;
+}
+
+function syncCoinRewardAnimatorTarget(): void {
+  coinRewardAnimatorInstance?.setGoldTargetElement(
+    document.querySelector<HTMLElement>("[data-ui-gold-target]")
+  );
+}
+
+function syncCoinRewardGoldDisplay(): void {
+  const goldValueElement = document.querySelector<HTMLElement>("[data-ui-gold-value]");
+  if (goldValueElement == null) {
+    return;
+  }
+
+  const resolvedGoldValue =
+    coinRewardDisplayValue ??
+    getPlayerCharacter(appState, currentPlayerCharacterId).stats.gold;
+  goldValueElement.textContent = `银两 ${resolvedGoldValue}`;
+}
+
+function isCoinRewardAnchorEditorDirty(): boolean {
+  return (
+    coinRewardAnchorEditorState.actualOffsetX !== coinRewardAnchorEditorState.draftOffsetX ||
+    coinRewardAnchorEditorState.actualOffsetY !== coinRewardAnchorEditorState.draftOffsetY
+  );
+}
+
+function syncCoinRewardAnchorEditor(): void {
+  const animator = getCoinRewardAnimator();
+  animator.setTargetOffset(
+    coinRewardAnchorEditorState.actualOffsetX,
+    coinRewardAnchorEditorState.actualOffsetY
+  );
+  animator.setPreviewTargetOffset(
+    coinRewardAnchorEditorState.isOpen
+      ? coinRewardAnchorEditorState.draftOffsetX
+      : coinRewardAnchorEditorState.actualOffsetX,
+    coinRewardAnchorEditorState.isOpen
+      ? coinRewardAnchorEditorState.draftOffsetY
+      : coinRewardAnchorEditorState.actualOffsetY
+  );
+}
+
+function syncCoinRewardAnchorEditorView(): void {
+  const editorElement = document.querySelector<HTMLElement>("[data-ui-coin-anchor-editor]");
+  if (editorElement == null) {
+    return;
+  }
+
+  const isDirty = isCoinRewardAnchorEditorDirty();
+  editorElement.classList.toggle("is-open", coinRewardAnchorEditorState.isOpen);
+  editorElement.dataset.uiCoinAnchorEditorOpen = coinRewardAnchorEditorState.isOpen
+    ? "true"
+    : "false";
+  editorElement.dataset.uiCoinAnchorEditorDirty = isDirty ? "true" : "false";
+
+  const xInput = editorElement.querySelector<HTMLInputElement>(
+    "[data-ui-coin-anchor-input='x']"
+  );
+  const yInput = editorElement.querySelector<HTMLInputElement>(
+    "[data-ui-coin-anchor-input='y']"
+  );
+  if (xInput != null && document.activeElement !== xInput) {
+    xInput.value = String(coinRewardAnchorEditorState.draftOffsetX);
+  }
+  if (yInput != null && document.activeElement !== yInput) {
+    yInput.value = String(coinRewardAnchorEditorState.draftOffsetY);
+  }
+
+  editorElement
+    .querySelectorAll<HTMLButtonElement>(
+      "[data-action='confirm-coin-anchor-editor'], [data-action='revert-coin-anchor-editor']"
+    )
+    .forEach((button) => {
+      button.disabled = !isDirty;
+      button.classList.toggle(
+        "p-global-coin-anchor-editor__action--active",
+        isDirty
+      );
+    });
+
+  const toggleButton = document.querySelector<HTMLElement>(
+    "[data-action='toggle-coin-anchor-editor']"
+  );
+  if (toggleButton != null) {
+    toggleButton.setAttribute(
+      "aria-expanded",
+      coinRewardAnchorEditorState.isOpen ? "true" : "false"
+    );
+  }
+}
 
 let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
 const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
@@ -3498,6 +3647,32 @@ appElement.addEventListener("input", (event) => {
   const targetElement = event.target;
   if (
     targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.uiCoinAnchorInput != null
+  ) {
+    const nextValue = Number(targetElement.value);
+    if (!Number.isFinite(nextValue)) {
+      return;
+    }
+
+    if (targetElement.dataset.uiCoinAnchorInput === "x") {
+      coinRewardAnchorEditorState = {
+        ...coinRewardAnchorEditorState,
+        draftOffsetX: Math.round(nextValue),
+      };
+    } else if (targetElement.dataset.uiCoinAnchorInput === "y") {
+      coinRewardAnchorEditorState = {
+        ...coinRewardAnchorEditorState,
+        draftOffsetY: Math.round(nextValue),
+      };
+    }
+
+    syncCoinRewardAnchorEditor();
+    syncCoinRewardAnchorEditorView();
+    return;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
     targetElement.hasAttribute("data-campaign-map-scale-input")
   ) {
     campaignMapScaleDraftValue = targetElement.value;
@@ -3874,6 +4049,10 @@ appElement.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  if (targetElement.closest("[data-ui-coin-anchor-editor]") != null) {
+    return;
+  }
+
    // City markers are clickable buttons; do not turn their press into a drag capture.
   if (targetElement.closest("[data-map-node-id]") != null) {
     return;
@@ -4216,7 +4395,6 @@ appElement.addEventListener("click", (event) => {
   if (!(targetElement instanceof HTMLElement)) {
     return;
   }
-
   if (handleLayoutEditorClick(targetElement)) {
     return;
   }
@@ -4238,6 +4416,73 @@ appElement.addEventListener("click", (event) => {
     if (targetElement.closest(".c-begging-game") != null) {
       return;
     }
+  }
+
+  const toggleCoinAnchorEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='toggle-coin-anchor-editor']"
+  );
+  if (toggleCoinAnchorEditorButton != null) {
+    const nextIsOpen = !coinRewardAnchorEditorState.isOpen;
+    coinRewardAnchorEditorState = {
+      ...coinRewardAnchorEditorState,
+      isOpen: nextIsOpen,
+      draftOffsetX: nextIsOpen
+        ? coinRewardAnchorEditorState.actualOffsetX
+        : coinRewardAnchorEditorState.actualOffsetX,
+      draftOffsetY: nextIsOpen
+        ? coinRewardAnchorEditorState.actualOffsetY
+        : coinRewardAnchorEditorState.actualOffsetY,
+    };
+    renderApp();
+    return;
+  }
+
+  const confirmCoinAnchorEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='confirm-coin-anchor-editor']"
+  );
+  if (confirmCoinAnchorEditorButton != null) {
+    coinRewardAnchorEditorState = {
+      ...coinRewardAnchorEditorState,
+      actualOffsetX: coinRewardAnchorEditorState.draftOffsetX,
+      actualOffsetY: coinRewardAnchorEditorState.draftOffsetY,
+    };
+    syncCoinRewardAnchorEditor();
+    syncCoinRewardAnchorEditorView();
+    return;
+  }
+
+  const revertCoinAnchorEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='revert-coin-anchor-editor']"
+  );
+  if (revertCoinAnchorEditorButton != null) {
+    coinRewardAnchorEditorState = {
+      ...coinRewardAnchorEditorState,
+      draftOffsetX: coinRewardAnchorEditorState.actualOffsetX,
+      draftOffsetY: coinRewardAnchorEditorState.actualOffsetY,
+    };
+    syncCoinRewardAnchorEditor();
+    syncCoinRewardAnchorEditorView();
+    return;
+  }
+
+  const grantHaozhouTestCoinButton = targetElement.closest<HTMLElement>(
+    "[data-action='grant-haozhou-test-coin']"
+  );
+  if (grantHaozhouTestCoinButton != null) {
+    const playerCharacterBefore = getPlayerCharacter(
+      appState,
+      currentPlayerCharacterId
+    );
+    appState = applyCoinReward(appState, currentPlayerCharacterId, 10);
+    coinRewardAnimator.play({
+      sourceElement: grantHaozhouTestCoinButton,
+      sourceClientX: event.clientX,
+      sourceClientY: event.clientY,
+      startValue: playerCharacterBefore.stats.gold,
+      targetValue: playerCharacterBefore.stats.gold + 10,
+      amount: 10,
+    });
+    return;
   }
 
   const modalAction = targetElement.closest<HTMLElement>("[data-modal-action]");
@@ -5951,6 +6196,16 @@ function captureCampaignMarkerElements(
   return preservedElements.size === 0 ? null : preservedElements;
 }
 
+function captureCoinRewardLayer(root: ParentNode): HTMLElement | null {
+  const layer = root.querySelector<HTMLElement>("[data-ui-coin-reward-layer]");
+  if (layer == null) {
+    return null;
+  }
+
+  layer.remove();
+  return layer;
+}
+
 function syncPreservedCampaignMarkerAttributes(
   preservedElement: HTMLElement,
   replacementElement: HTMLElement
@@ -6002,6 +6257,24 @@ function restoreCampaignMarkerElements(
     syncPreservedCampaignMarkerAttributes(preservedElement, replacementElement);
     replacementElement.replaceWith(preservedElement);
   }
+}
+
+function restoreCoinRewardLayer(
+  root: ParentNode,
+  preservedLayer: HTMLElement | null
+): void {
+  if (preservedLayer == null) {
+    return;
+  }
+
+  const replacementLayer = root.querySelector<HTMLElement>(
+    "[data-ui-coin-reward-layer]"
+  );
+  if (replacementLayer == null) {
+    return;
+  }
+
+  replacementLayer.replaceWith(preservedLayer);
 }
 
 function renderApp() {
@@ -6063,6 +6336,7 @@ function renderAppFrame(
     appState.gameState.ui.currentView === "map"
       ? captureCampaignMarkerElements(appRoot)
       : null;
+  const preservedCoinRewardLayer = captureCoinRewardLayer(appRoot);
   const presenterOutput = createAppPresenterOutput({
     appState,
     playerCharacterId: currentPlayerCharacterId,
@@ -6081,6 +6355,13 @@ function renderAppFrame(
   appRoot.innerHTML = renderAppMarkup({
     appState,
     playerCharacterId: currentPlayerCharacterId,
+    coinRewardDisplayValue,
+    coinRewardAnchorEditor: {
+      isOpen: coinRewardAnchorEditorState.isOpen,
+      draftX: coinRewardAnchorEditorState.draftOffsetX,
+      draftY: coinRewardAnchorEditorState.draftOffsetY,
+      isDirty: isCoinRewardAnchorEditorDirty(),
+    },
     mapDefinition: currentMapDefinition,
     cityDefinition: currentCityDefinition,
     cityDefinitions: activeContentContext.cities,
@@ -6101,6 +6382,7 @@ function renderAppFrame(
   });
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   restoreCampaignMarkerElements(appRoot, preservedCampaignMarkers);
+  restoreCoinRewardLayer(appRoot, preservedCoinRewardLayer);
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
@@ -6111,6 +6393,11 @@ function renderAppFrame(
   syncCampaignCloudWebGl(appRoot);
   syncCampaignCloudTextureScaleControl();
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
+  syncCityStageDomRuntime();
+  syncCoinRewardAnimatorTarget();
+  syncCoinRewardAnchorEditor();
+  syncCoinRewardAnchorEditorView();
+  syncCoinRewardGoldDisplay();
   syncTroopEditorInteractions(appRoot, {
     onOpenTroopManagement: (input) => {
       appState = openTroopManagement(appState, input);
@@ -6162,6 +6449,30 @@ function renderAppFrame(
     },
   });
   syncEmbeddedBattleUiEditor();
+}
+
+function syncCityStageDomRuntime(): void {
+  if (appState.gameState.ui.currentView !== "city") {
+    cityStageDomRuntimeHandle?.destroy();
+    cityStageDomRuntimeHandle = null;
+    return;
+  }
+
+  const stageRoot = appRoot.querySelector<HTMLElement>("[data-city-stage-root]");
+  const cityId = appState.gameState.world.currentCityId;
+  if (stageRoot == null || cityId == null) {
+    cityStageDomRuntimeHandle?.destroy();
+    cityStageDomRuntimeHandle = null;
+    return;
+  }
+
+  if (cityStageDomRuntimeHandle?.cityId === cityId) {
+    cityStageDomRuntimeHandle.attach(stageRoot);
+    return;
+  }
+
+  cityStageDomRuntimeHandle?.destroy();
+  cityStageDomRuntimeHandle = mountCityStageDomRuntime(stageRoot, { cityId });
 }
 
 function restoreCampaignMapScaleInputFocus(

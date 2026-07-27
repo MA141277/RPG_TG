@@ -1,140 +1,83 @@
-﻿## Task 1: Shared Primary Actor Roster Helper
+## Task 1: Add The Pure Coin Reward State Mutation
 
 **Files:**
-- Create: `src/application/house/house-primary-actor-roster.ts`
-- Modify: `tests/robustness.test.cjs`
+- Create: `src/application/rewards/coin-reward.ts`
+- Test: `tests/coin-reward-state.test.cjs`
 
 **Interfaces:**
-- Consumes: `HouseStandbyActorViewModel` from `src/domain/house-module.ts`.
-- Produces: `orderHouseStandbyRoster(input: { primaryCharacterId: string | null; actors: HouseStandbyActorViewModel[] }): HouseStandbyActorViewModel[]`.
+- Consumes:
+  - `AppState` from `src/application/app-shell`
+  - `CharacterDefinition` shape with `stats.gold`
+- Produces:
+  - `applyCoinReward(state: AppState, playerCharacterId: string, delta: number): AppState`
 
-- [ ] **Step 1: Write the failing helper tests**
-
-Add this import near the other `.test-dist` imports in `tests/robustness.test.cjs`:
-
-```js
-const {
-  orderHouseStandbyRoster,
-} = require("../.test-dist/application/house/house-primary-actor-roster.js");
-```
-
-Add these tests near other house tests in `tests/robustness.test.cjs`:
+- [ ] **Step 1: Write the failing test**
 
 ```js
-test("primary house actor roster helper places the default actor first", () => {
-  const roster = orderHouseStandbyRoster({
-    primaryCharacterId: "char.owner",
-    actors: [
-      { characterId: "char.guest", name: "Guest" },
-      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
-      { characterId: "char.extra", name: "Extra" },
+const test = require("node:test");
+const assert = require("node:assert/strict");
+
+test("applyCoinReward adds gold only to the targeted player character", async () => {
+  const { applyCoinReward } = await import("../src/application/rewards/coin-reward.ts");
+
+  const state = {
+    characterDefinitions: [
+      { id: "char.player", stats: { gold: 10, fame: 0 } },
+      { id: "char.other", stats: { gold: 99, fame: 0 } },
     ],
-  });
+  };
 
-  assert.deepEqual(
-    roster.map((actor) => actor.characterId),
-    ["char.owner", "char.guest", "char.extra"]
-  );
-  assert.equal(roster[0].actionId, "open-owner-dialogue");
-});
+  const nextState = applyCoinReward(state, "char.player", 10);
 
-test("primary house actor roster helper deduplicates actors without losing the first primary model", () => {
-  const roster = orderHouseStandbyRoster({
-    primaryCharacterId: "char.owner",
-    actors: [
-      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
-      { characterId: "char.guest", name: "Guest" },
-      { characterId: "char.owner", name: "Owner Duplicate" },
-      { characterId: "char.guest", name: "Guest Duplicate" },
-    ],
-  });
-
-  assert.deepEqual(
-    roster.map((actor) => actor.name),
-    ["Owner", "Guest"]
-  );
+  assert.equal(nextState.characterDefinitions[0].stats.gold, 20);
+  assert.equal(nextState.characterDefinitions[1].stats.gold, 99);
+  assert.notEqual(nextState, state);
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [ ] **Step 2: Run test to verify it fails**
 
-Run:
+Run: `node --test tests/coin-reward-state.test.cjs`
 
-```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor roster helper"
-```
+Expected: FAIL with module-not-found or `applyCoinReward is not a function`.
 
-Expected:
-
-- `npm run build:test` fails because `src/application/house/house-primary-actor-roster.ts` does not exist, or the focused node test fails because `orderHouseStandbyRoster` is not exported.
-
-- [ ] **Step 3: Implement the helper**
-
-Create `src/application/house/house-primary-actor-roster.ts`:
+- [ ] **Step 3: Write minimal implementation**
 
 ```ts
-import type { HouseStandbyActorViewModel } from "../../domain/house-module";
+import type { AppState } from "../app-shell";
 
-export function orderHouseStandbyRoster(input: {
-  primaryCharacterId: string | null;
-  actors: HouseStandbyActorViewModel[];
-}): HouseStandbyActorViewModel[] {
-  const seenCharacterIds = new Set<string>();
-  const dedupedActors: HouseStandbyActorViewModel[] = [];
-
-  for (const actor of input.actors) {
-    if (seenCharacterIds.has(actor.characterId)) {
-      continue;
-    }
-    seenCharacterIds.add(actor.characterId);
-    dedupedActors.push(actor);
-  }
-
-  if (input.primaryCharacterId == null) {
-    return dedupedActors;
-  }
-
-  const primaryActor = dedupedActors.find(
-    (actor) => actor.characterId === input.primaryCharacterId
-  );
-  if (primaryActor == null) {
-    return dedupedActors;
-  }
-
-  return [
-    primaryActor,
-    ...dedupedActors.filter(
-      (actor) => actor.characterId !== input.primaryCharacterId
+export function applyCoinReward(
+  state: AppState,
+  playerCharacterId: string,
+  delta: number
+): AppState {
+  return {
+    ...state,
+    characterDefinitions: state.characterDefinitions.map((characterDefinition) =>
+      characterDefinition.id !== playerCharacterId
+        ? characterDefinition
+        : {
+            ...characterDefinition,
+            stats: {
+              ...characterDefinition.stats,
+              gold: characterDefinition.stats.gold + delta,
+            },
+          }
     ),
-  ];
+  };
 }
 ```
 
-- [ ] **Step 4: Run the focused helper tests**
+- [ ] **Step 4: Run test to verify it passes**
 
-Run:
+Run: `node --test tests/coin-reward-state.test.cjs`
 
-```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor roster helper"
-```
+Expected: PASS with 1 passing test.
 
-Expected:
-
-- `npm run build:test` exits with code 0.
-- Both focused helper tests pass.
-
-- [ ] **Step 5: Commit Task 1**
-
-Run:
+- [ ] **Step 5: Commit**
 
 ```bash
-git add src/application/house/house-primary-actor-roster.ts tests/robustness.test.cjs
-git commit -m "test: add house primary actor roster helper"
+git add tests/coin-reward-state.test.cjs src/application/rewards/coin-reward.ts
+git commit -m "feat: add pure coin reward state mutation"
 ```
-
-Expected:
-
-- Commit succeeds and contains only Task 1 files.
 

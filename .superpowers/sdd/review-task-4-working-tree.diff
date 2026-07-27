@@ -1,0 +1,357 @@
+# Review package: working-tree task 4
+
+## Commits
+(no task commit created; review uncommitted working tree diff)
+
+## Files changed
+ src/main.ts | 71 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 71 insertions(+)
+ src/ui/app-render.ts | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+ tests/robustness.test.cjs | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+## Diff
+diff --git a/src/main.ts b/src/main.ts
+index 9090e88c..8bb44f13 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -46,20 +46,21 @@ import {
+   selectBackpackItem,
+   selectValuable,
+   setBackpackFilter,
+   setCardFilter,
+   setValuableFilter,
+   setValuableSort,
+   moveTroopManagementUnit,
+   updateOverlayView,
+ } from "./application/app-actions";
+ import type { AppState } from "./application/app-shell";
++import { applyCoinReward } from "./application/rewards/coin-reward";
+ import { normalizeTroopRuntimeStateUnitDefinitions } from "./domain/troop-editor";
+ import {
+   CITY_BEGGING_DURATION_DAYS,
+   getCityBeggingMiniGameCompletionResult,
+   getCityBeggingMiniGameStatus,
+   isCityBeggingMiniGamePlaying,
+ } from "./application/minigames/city-begging-minigame";
+ import {
+   createCityMenuState,
+   isPlayerMonkIdentity,
+@@ -255,20 +256,21 @@ import {
+ import { assertExists } from "./shared/assert";
+ import { renderApp as renderAppMarkup } from "./ui/app-render";
+ import {
+   renderLoadingScreen,
+   selectRandomLoadingTheme,
+   setLoadingScreenProgress,
+   type LoadingTheme,
+ } from "./ui/loading-screen";
+ import { preloadInitialMapViewAssets } from "./ui/startup-asset-preloader";
+ import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
++import { createCoinRewardAnimator } from "./ui/animations/coin-reward-animation";
+ import {
+   DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
+   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
+   createCampaignTerrainCameraCenteredOnCoordinate,
+   getCampaignTerrainCameraTiltRadiansForScale,
+   getCampaignTerrainTravelGrid,
+   getCampaignTerrainRenderStats,
+   isCampaignTerrainUvPassable,
+   projectCampaignTerrainUvToClientPointAtHeightAnchor,
+   resolveCampaignTerrainUvFromClientPosition,
+@@ -597,20 +599,28 @@ function createRuntimeCommitContext(input: {
+   return {
+     router: input.router,
+     ...(input.followUp == null ? {} : { followUp: input.followUp }),
+     taskDefinitionsById: activeContentContext.taskDefinitionsById,
+   };
+ }
+ 
+ let appState: AppState = applyPersistedBattleUiEditorValues(
+   createPrototypeAppState(currentPlayerCharacterId)
+ );
++let coinRewardDisplayValue: number | null = null;
++let coinRewardAnimatorInstance: ReturnType<typeof createCoinRewardAnimator> | null =
++  null;
++const coinRewardAnimator = {
++  play(input: Parameters<ReturnType<typeof createCoinRewardAnimator>["play"]>[0]) {
++    getCoinRewardAnimator().play(input);
++  },
++};
+ let campaignMapDebugState: CampaignMapDebugState = {
+   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
+ };
+ let campaignMapDebugHomeState: CampaignMapDebugState = {
+   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
+ };
+ let campaignTerrainStyleState: CampaignTerrainStyle = {
+   ...DEFAULT_CAMPAIGN_TERRAIN_STYLE,
+ };
+ let campaignCityDepthMeshTransformState: CampaignCityDepthMeshTransform = {
+@@ -694,20 +704,58 @@ let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
+ let cityBeggingMiniGameFrameId: number | null = null;
+ let activityQteIntervalHandle: number | null = null;
+ let activityQteIntervalMs: number | null = null;
+ let campaignTravelRequestId = 0;
+ let loadingScreenAnimationFrameId: number | null = null;
+ let loadingScreenRequestId = 0;
+ let activeLoadingScreenElement: HTMLElement | null = null;
+ let activeLoadingTheme: LoadingTheme | null = null;
+ const mapAutoAdvanceHandles: Record<string, number> = {};
+ 
++function getPlayerCharacter(
++  state: AppState,
++  playerCharacterId: string
++): CharacterDefinition {
++  const playerCharacter = state.characterDefinitions.find(
++    (characterDefinition) => characterDefinition.id === playerCharacterId
++  );
++  assertExists(
++    playerCharacter,
++    `Player character not found for id "${playerCharacterId}".`
++  );
++  return playerCharacter;
++}
++
++function getCoinRewardAnimator(): ReturnType<typeof createCoinRewardAnimator> {
++  if (coinRewardAnimatorInstance == null) {
++    const coinRewardLayer = document.querySelector<HTMLElement>(
++      "[data-ui-coin-reward-layer]"
++    );
++    assertExists(coinRewardLayer, "Missing coin reward animation layer.");
++    coinRewardAnimatorInstance = createCoinRewardAnimator({
++      layer: coinRewardLayer,
++      onDisplayValueChange(value) {
++        coinRewardDisplayValue = value;
++        renderApp();
++      },
++    });
++  }
++
++  return coinRewardAnimatorInstance;
++}
++
++function syncCoinRewardAnimatorTarget(): void {
++  coinRewardAnimatorInstance?.setGoldTargetElement(
++    document.querySelector<HTMLElement>("[data-ui-gold-target]")
++  );
++}
++
+ let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
+ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
+   getAppState: () => appState,
+   setAppState: (nextAppState) => {
+     appState = nextAppState;
+   },
+   setPlayerCharacterId: (playerCharacterId) => {
+     currentPlayerCharacterId = playerCharacterId;
+   },
+   getStoryContent: () => ({
+@@ -4228,20 +4276,41 @@ appElement.addEventListener("click", (event) => {
+ 
+   const targetElement = event.target;
+   if (!(targetElement instanceof HTMLElement)) {
+     return;
+   }
+ 
+   if (handleLayoutEditorClick(targetElement)) {
+     return;
+   }
+ 
++  const grantHaozhouTestCoinButton = targetElement.closest<HTMLElement>(
++    "[data-action='grant-haozhou-test-coin']"
++  );
++  if (grantHaozhouTestCoinButton != null) {
++    const playerCharacterBefore = getPlayerCharacter(
++      appState,
++      currentPlayerCharacterId
++    );
++    appState = applyCoinReward(appState, currentPlayerCharacterId, 10);
++    coinRewardAnimator.play({
++      sourceElement: grantHaozhouTestCoinButton,
++      sourceClientX: event.clientX,
++      sourceClientY: event.clientY,
++      startValue: playerCharacterBefore.stats.gold,
++      targetValue: playerCharacterBefore.stats.gold + 10,
++      amount: 10,
++    });
++    renderApp();
++    return;
++  }
++
+   const confirmBeggingResultButton = targetElement.closest<HTMLElement>(
+     "[data-action='confirm-begging-game-result']"
+   );
+   if (confirmBeggingResultButton != null) {
+     confirmBeggingMiniGameResult();
+     return;
+   }
+ 
+   if (appState.beggingMiniGameState != null) {
+     if (targetElement.closest(".c-begging-game") != null) {
+@@ -6064,20 +6133,21 @@ function renderAppFrame(
+     cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
+     cityNameById: activeContentContext.cityNameById,
+     textEntriesById: activeContentContext.textEntriesById,
+     citySceneMappingsByCityId: getZhuYuanzhangCitySceneMappingByCityId(),
+     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+   });
+ 
+   appRoot.innerHTML = renderAppMarkup({
+     appState,
+     playerCharacterId: currentPlayerCharacterId,
++    coinRewardDisplayValue,
+     mapDefinition: currentMapDefinition,
+     cityDefinition: currentCityDefinition,
+     cityDefinitions: activeContentContext.cities,
+     houseDefinitions: activeContentContext.houses,
+     cityEntries: activeContentContext.cityEntries,
+     cardDefinitions: activeContentContext.cards,
+     cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
+     cityCoordinatesById: activeContentContext.cityCoordinatesById,
+     cityNameById: activeContentContext.cityNameById,
+     houseNameById: activeContentContext.houseNameById,
+@@ -6094,20 +6164,21 @@ function renderAppFrame(
+   startInitialCampaignMapDebugAnimationIfNeeded();
+   syncCampaignMapDebugView();
+   syncCampaignTerrainStyleView();
+   syncCampaignCityDepthMeshTransformView();
+   restoreCampaignMapScaleInputFocus(focusedScaleInput);
+   syncMapIntroOverlay();
+   syncActivityQteLoop();
+   syncCampaignTerrainWebGl(appRoot);
+   syncCampaignCloudWebGl(appRoot);
+   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
++  syncCoinRewardAnimatorTarget();
+   syncTroopEditorInteractions(appRoot, {
+     onOpenTroopManagement: (input) => {
+       appState = openTroopManagement(appState, input);
+       renderApp();
+     },
+     onDisbandTroop: (input) => {
+       appState = disbandTroopManagementUnit(appState, input);
+       renderApp();
+     },
+     onCreateTeam: (input) => {
+
+diff --git a/src/ui/app-render.ts b/src/ui/app-render.ts
+index 1a280fac..4e58a683 100644
+--- a/src/ui/app-render.ts
++++ b/src/ui/app-render.ts
+@@ -62,20 +62,21 @@ import { renderTroopEditorView } from "./views/troop-editor/troop-editor-view";
+ import { renderTroopManagementView } from "./views/troop-editor/troop-management-view";
+ import { renderSceneView } from "./views/scene/scene-view";
+ import { renderStoryBattleView } from "./views/battle/story-battle-view";
+ import { renderLayoutEditor } from "./tools/layout-editor-view";
+ 
+ type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
+ 
+ export type AppRenderInput = {
+   appState: AppState;
+   playerCharacterId: string;
++  coinRewardDisplayValue?: number | null;
+   mapDefinition: MapDefinition;
+   cityDefinition: CityDefinition;
+   cityDefinitions?: CityDefinition[];
+   houseDefinitions: HouseDefinition[];
+   cityEntries: CityEntryDefinition[];
+   cardDefinitions: CardDefinition[];
+   cityNpcPoolDefinitions: CityNpcPoolDefinition[];
+   cityCoordinatesById: Record<string, GridCoordinate>;
+   cityNameById: Record<string, string>;
+   houseNameById: Record<string, string>;
+@@ -648,26 +649,37 @@ function renderStage(
+   }
+ 
+   return "";
+ }
+ 
+ export function renderApp(input: AppRenderInput): string {
+   const playerCharacter = getPlayerCharacter(
+     input.appState,
+     input.playerCharacterId
+   );
+-  const playerPanelModel = createGlobalPlayerPanelModel(
++  const basePlayerPanelModel = createGlobalPlayerPanelModel(
+     playerCharacter,
+     input.appState.gameState,
+     null,
+     input.presenterOutput.overlay.locationText
+   );
++  const goldTextOverride =
++    input.coinRewardDisplayValue == null
++      ? null
++      : basePlayerPanelModel.goldText.replace(
++          /^\d+/,
++          String(input.coinRewardDisplayValue)
++        );
++  const playerPanelModel = {
++    ...basePlayerPanelModel,
++    goldTextOverride,
++  };
+   const stageMarkup = renderStage(input, playerCharacter);
+ 
+   return `
+     <div class="l-viewport">
+       <div class="l-game-frame">
+         <div class="l-game-screen">
+           <div class="l-shell l-shell--prototype">
+             <main class="l-stage">
+               ${stageMarkup}
+               <div class="l-overlay-ui">
+@@ -688,18 +700,19 @@ export function renderApp(input: AppRenderInput): string {
+               input.appState.characterDefinitions
+             )}
+             ${renderModal(
+               input.presenterOutput.overlay.modalState,
+               input.cityPortraits,
+               input.mapDefinition,
+               input.cityDefinitions ?? []
+             )}
+             ${renderNpcInteractionOverlay(input)}
+             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
++            <div class="p-ui-coin-reward-layer" data-ui-coin-reward-layer aria-hidden="true"></div>
+             ${renderOverlay(input, playerCharacter)}
+             ${renderLayoutEditor(input.appState)}
+           </div>
+         </div>
+       </div>
+     </div>
+   `;
+ }
+
+diff --git a/tests/robustness.test.cjs b/tests/robustness.test.cjs
+index c33b4b38..bf87354e 100644
+--- a/tests/robustness.test.cjs
++++ b/tests/robustness.test.cjs
+@@ -15640,20 +15640,28 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
+ 
+   assert.doesNotMatch(
+     interactiveRuntimeSource,
+     /export function createLaunchInteractiveRequest/
+   );
+   assert.match(mainSource, /interactive\.city-begging\.complete/);
+   assert.match(mainSource, /interactive\.activity-qte\.tick/);
+   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
+ });
+ 
++test("haozhou test button grants 10 gold and starts reward animation", () => {
++  const mainSource = fs.readFileSync("src/main.ts", "utf8");
++
++  assert.match(mainSource, /\[data-action='grant-haozhou-test-coin'\]/);
++  assert.match(mainSource, /applyCoinReward\(appState,\s*currentPlayerCharacterId,\s*10\)/);
++  assert.match(mainSource, /coinRewardAnimator\.play\(/);
++});
++
+ test("global NPC interaction does not add concrete house business branches to main", () => {
+   const mainSource = fs.readFileSync(
+     path.join(process.cwd(), "src", "main.ts"),
+     "utf8"
+   );
+ 
+   assert.doesNotMatch(
+     mainSource,
+     /isTeaHouse|isMarketHouse|isMedicineHouse|isTavern|isLeaderResidence/
+   );
+

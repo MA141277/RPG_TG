@@ -24,3 +24,9 @@
 - 2026-07-26: Campaign Map-Space Volumetric Cloud Task 1 complete (commits 9d77a247..c2f42734, review clean; targeted cloud boundary/lifecycle tests passed 5/5).
 - 2026-07-26: Campaign Map-Space Volumetric Cloud Task 2 complete (commits 9b1cac02..9098ec02, review clean after governance log fix; targeted cloud slab tests and typecheck passed).
 - 2026-07-26: Campaign Map-Space Volumetric Cloud Task 3 complete (commits 9098ec02..7127db96, review clean; lint:plans, targeted cloud tests, typecheck, build, and Edge browser QA passed).
+- Task 1: complete (working tree only, review clean; git commit blocked by index.lock permissions).
+- Task 2: complete (working tree only, review clean; git commit blocked by index.lock permissions).
+- Task 3: complete (working tree only, review clean; git commit blocked by index.lock permissions).
+- Task 4: complete (working tree only, review clean after target-binding and layer-preservation fixes; git commit blocked by index.lock permissions).
+- Task 5: complete (working tree only, review findings resolved locally; focused animation timing/randomness verification passed; git commit blocked by index.lock permissions).
+- Task 6: complete (working tree only; focused verification passed for coin reward state/source/animation tests plus tsc --noEmit; robustness suite remains noisy in this environment; git commit blocked by index.lock permissions).

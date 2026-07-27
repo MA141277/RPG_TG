@@ -1,18 +1,15 @@
 import type { CityDefinition } from "../../../domain/city";
 import type { CityEntryDefinition } from "../../../domain/city-entry";
 import type { HouseDefinition } from "../../../domain/house";
-import * as haozhouCityLayoutModule from "../../../../tools/city-map-building-editor/examples/haozhou-city-layout.example.json";
-import * as haozhouCityPrefabModule from "../../../../tools/city-map-building-editor/examples/haozhou-city-prefabs.example.json";
 import {
   composeCityStageLayout,
   type CityStageAsset,
   type CityStageGrid,
   type CityStageLayout,
-  type CityStageLayoutSource,
   type CityStageLot,
-  type CityStagePrefabLibrary,
   type ComposedCityStageEntity,
 } from "./city-stage-layout-data";
+import { getCityStageBundleForCity } from "./city-stage-registry";
 
 type CityStageRenderMetrics = {
   entity: ComposedCityStageEntity;
@@ -21,11 +18,18 @@ type CityStageRenderMetrics = {
   baseY: number;
   baseXPercent: string;
   baseYPercent: string;
-  zIndex: number;
+  backZIndex: number;
+  frontZIndex: number;
   boxLeftPercent: string;
   boxTopPercent: string;
   boxWidthPercent: string;
   boxHeightPercent: string;
+  occluderMidXPercent: string;
+  occluderLeftXPercent: string;
+  occluderRightXPercent: string;
+  occluderPeakYPercent: string;
+  occluderSideYPercent: string;
+  occluderBottomYPercent: string;
   ringCenterXPercent: string;
   ringCenterYPercent: string;
   ringWidthPercent: string;
@@ -33,35 +37,6 @@ type CityStageRenderMetrics = {
   labelXPercent: string;
   labelYPercent: string;
   labelZIndex: number;
-};
-
-function unwrapJsonModule<T>(moduleValue: unknown): T {
-  if (
-    moduleValue != null &&
-    typeof moduleValue === "object" &&
-    "default" in moduleValue
-  ) {
-    return (moduleValue as { default: T }).default;
-  }
-
-  return moduleValue as T;
-}
-
-const haozhouCityStagePrefabs = unwrapJsonModule<CityStagePrefabLibrary>(
-  haozhouCityPrefabModule
-);
-const haozhouCityStageLayoutSource = unwrapJsonModule<CityStageLayoutSource>(
-  haozhouCityLayoutModule
-);
-const haozhouCityStageLayout: CityStageLayout = {
-  version: haozhouCityStageLayoutSource.version,
-  map: haozhouCityStageLayoutSource.map,
-  grid: haozhouCityStageLayoutSource.grid,
-  // Instance prefabId values are resolved against the prefab library here.
-  entities: composeCityStageLayout(
-    haozhouCityStageLayoutSource,
-    haozhouCityStagePrefabs
-  ),
 };
 
 const cityStageAssetModules = import.meta.glob("../../../../ui/**/*.{png,jpg,jpeg,webp}", {
@@ -95,6 +70,11 @@ function resolveAssetUrl(assetPath: string): string {
 
 function formatStagePercent(value: number): string {
   return `${value.toFixed(6).replace(/\.?0+$/, "")}%`;
+}
+
+function clampPercent(value: number): string {
+  const normalized = Math.max(0, Math.min(100, value));
+  return `${normalized.toFixed(6).replace(/\.?0+$/, "")}%`;
 }
 
 function gridToPixel(
@@ -224,6 +204,7 @@ function createRenderMetrics(
   layout: CityStageLayout
 ): CityStageRenderMetrics {
   const { baseSpace } = layout.map;
+  const lotBounds = getFootprintBounds(entity.lot, layout.grid);
   const lotAnchor = getLotAnchor(entity.lot, layout.grid);
   const box = getAssetBox({
     anchorX: lotAnchor.x,
@@ -234,10 +215,34 @@ function createRenderMetrics(
   const ringCenterY = lotAnchor.y + entity.interaction.hitArea.offsetY;
   const labelX = lotAnchor.x + entity.interaction.label.offsetX;
   const labelY = lotAnchor.y + entity.interaction.label.offsetY;
-  const zIndex =
+  const lotSideY = (lotBounds.top + lotBounds.bottom) / 2;
+  const backZIndex =
     entity.render?.zIndexMode === "manual" && entity.render.zIndex != null
       ? entity.render.zIndex
-      : Math.round(lotAnchor.y);
+      : Math.max(0, Math.floor(lotSideY) - 1);
+  const frontZIndex =
+    entity.render?.zIndexMode === "manual" && entity.render.zIndex != null
+      ? entity.render.zIndex
+      : Math.floor(lotSideY);
+  const lotCenterX = (lotBounds.left + lotBounds.right) / 2;
+  const occluderMidXPercent = clampPercent(
+    ((lotCenterX - box.left) / box.width) * 100
+  );
+  const occluderLeftXPercent = clampPercent(
+    ((lotBounds.left - box.left) / box.width) * 100
+  );
+  const occluderRightXPercent = clampPercent(
+    ((lotBounds.right - box.left) / box.width) * 100
+  );
+  const occluderPeakYPercent = clampPercent(
+    ((lotBounds.top - box.top) / box.height) * 100
+  );
+  const occluderSideYPercent = clampPercent(
+    ((lotSideY - box.top) / box.height) * 100
+  );
+  const occluderBottomYPercent = clampPercent(
+    ((lotBounds.bottom - box.top) / box.height) * 100
+  );
 
   return {
     entity,
@@ -246,11 +251,18 @@ function createRenderMetrics(
     baseY: lotAnchor.y,
     baseXPercent: formatStagePercent((lotAnchor.x / baseSpace.width) * 100),
     baseYPercent: formatStagePercent((lotAnchor.y / baseSpace.height) * 100),
-    zIndex,
+    backZIndex,
+    frontZIndex,
     boxLeftPercent: formatStagePercent((box.left / baseSpace.width) * 100),
     boxTopPercent: formatStagePercent((box.top / baseSpace.height) * 100),
     boxWidthPercent: formatStagePercent((box.width / baseSpace.width) * 100),
     boxHeightPercent: formatStagePercent((box.height / baseSpace.height) * 100),
+    occluderMidXPercent,
+    occluderLeftXPercent,
+    occluderRightXPercent,
+    occluderPeakYPercent,
+    occluderSideYPercent,
+    occluderBottomYPercent,
     ringCenterXPercent: formatStagePercent((ringCenterX / baseSpace.width) * 100),
     ringCenterYPercent: formatStagePercent((ringCenterY / baseSpace.height) * 100),
     ringWidthPercent: formatStagePercent(
@@ -261,7 +273,7 @@ function createRenderMetrics(
     ),
     labelXPercent: formatStagePercent((labelX / baseSpace.width) * 100),
     labelYPercent: formatStagePercent((labelY / baseSpace.height) * 100),
-    labelZIndex: zIndex,
+    labelZIndex: frontZIndex,
   };
 }
 
@@ -294,12 +306,24 @@ function renderStaticEntity(metrics: CityStageRenderMetrics): string {
   return `
     <span
       class="c-city-map-stage__entity"
-      style="--entity-z-index:${metrics.zIndex};"
+      style="--entity-z-index:${metrics.backZIndex};"
       aria-hidden="true"
     >
       <span
-        class="c-city-map-stage__entity-static"
-        style="--entity-box-left:${metrics.boxLeftPercent}; --entity-box-top:${metrics.boxTopPercent}; --entity-box-width:${metrics.boxWidthPercent}; --entity-box-height:${metrics.boxHeightPercent};"
+      class="c-city-map-stage__entity-static"
+      style="--entity-box-left:${metrics.boxLeftPercent}; --entity-box-top:${metrics.boxTopPercent}; --entity-box-width:${metrics.boxWidthPercent}; --entity-box-height:${metrics.boxHeightPercent}; --entity-image-opacity:0;"
+      >
+        ${renderEntityImage(metrics)}
+      </span>
+    </span>
+    <span
+      class="c-city-map-stage__entity-occluder"
+      style="--entity-occluder-z-index:${metrics.frontZIndex};"
+      aria-hidden="true"
+    >
+      <span
+        class="c-city-map-stage__entity-static c-city-map-stage__entity-static--occluder"
+        style="--entity-box-left:${metrics.boxLeftPercent}; --entity-box-top:${metrics.boxTopPercent}; --entity-box-width:${metrics.boxWidthPercent}; --entity-box-height:${metrics.boxHeightPercent}; --entity-occluder-mid-x:${metrics.occluderMidXPercent}; --entity-occluder-left-x:${metrics.occluderLeftXPercent}; --entity-occluder-right-x:${metrics.occluderRightXPercent}; --entity-occluder-peak-y:${metrics.occluderPeakYPercent}; --entity-occluder-side-y:${metrics.occluderSideYPercent}; --entity-occluder-bottom-y:${metrics.occluderBottomYPercent};"
       >
         ${renderEntityImage(metrics)}
       </span>
@@ -318,7 +342,7 @@ function renderInteractiveEntity(metrics: CityStageRenderMetrics): string {
     <span
       class="c-city-map-stage__entity"
       data-city-map-building-group-id="${metrics.entity.id}"
-      style="--entity-z-index:${metrics.zIndex};"
+      style="--entity-z-index:${metrics.backZIndex};"
     >
       <span
         class="c-city-map-stage__entity-ring"
@@ -333,10 +357,22 @@ function renderInteractiveEntity(metrics: CityStageRenderMetrics): string {
         ${entryAttribute}
         aria-label="${ariaLabel}"
         aria-pressed="false"
-        style="--entity-box-left:${metrics.boxLeftPercent}; --entity-box-top:${metrics.boxTopPercent}; --entity-box-width:${metrics.boxWidthPercent}; --entity-box-height:${metrics.boxHeightPercent};"
+        style="--entity-box-left:${metrics.boxLeftPercent}; --entity-box-top:${metrics.boxTopPercent}; --entity-box-width:${metrics.boxWidthPercent}; --entity-box-height:${metrics.boxHeightPercent}; --entity-image-opacity:0;"
       >
         ${renderEntityImage(metrics)}
       </button>
+    </span>
+    <span
+      class="c-city-map-stage__entity-occluder"
+      style="--entity-occluder-z-index:${metrics.frontZIndex};"
+      aria-hidden="true"
+    >
+      <span
+        class="c-city-map-stage__entity-static c-city-map-stage__entity-static--occluder"
+        style="--entity-box-left:${metrics.boxLeftPercent}; --entity-box-top:${metrics.boxTopPercent}; --entity-box-width:${metrics.boxWidthPercent}; --entity-box-height:${metrics.boxHeightPercent}; --entity-occluder-mid-x:${metrics.occluderMidXPercent}; --entity-occluder-left-x:${metrics.occluderLeftXPercent}; --entity-occluder-right-x:${metrics.occluderRightXPercent}; --entity-occluder-peak-y:${metrics.occluderPeakYPercent}; --entity-occluder-side-y:${metrics.occluderSideYPercent}; --entity-occluder-bottom-y:${metrics.occluderBottomYPercent};"
+      >
+        ${renderEntityImage(metrics)}
+      </span>
     </span>
   `;
 }
@@ -375,12 +411,33 @@ function renderEntityLabel(metrics: CityStageRenderMetrics): string {
   `;
 }
 
+function composeLayoutForCity(cityDefinition: CityDefinition): CityStageLayout | null {
+  const bundle = getCityStageBundleForCity(cityDefinition.id);
+  if (bundle == null) {
+    return null;
+  }
+
+  return {
+    version: bundle.layoutSource.version,
+    map: bundle.layoutSource.map,
+    grid: bundle.layoutSource.grid,
+    entities: composeCityStageLayout(bundle.layoutSource, bundle.prefabLibrary),
+  };
+}
+
 export function renderCityStageScene(input: {
   cityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];
   cityEntries: CityEntryDefinition[];
 }): string {
-  const layout = haozhouCityStageLayout;
+  const layout = composeLayoutForCity(input.cityDefinition);
+  if (layout == null) {
+    return `
+      <div class="c-city-map-scene" aria-label="${input.cityDefinition.name}城市场景">
+        <div class="c-city-map-scene__ambient" aria-hidden="true"></div>
+      </div>
+    `;
+  }
   const visibleHouseIds = new Set(
     input.houseDefinitions.map((houseDefinition) => houseDefinition.id)
   );
@@ -416,9 +473,10 @@ export function renderCityStageScene(input: {
   return `
     <div class="c-city-map-scene" aria-label="${input.cityDefinition.name}等距城镇地图">
       <div class="c-city-map-scene__ambient" aria-hidden="true"></div>
-      <div class="c-city-map-stage">
+      <div class="c-city-map-stage" data-city-stage-root>
         <div
           class="c-city-map-stage__base-space"
+          data-city-stage-base-space
           style="--base-space-top:${baseTopPercent}; --base-space-left:${baseLeftPercent}; --base-space-width:${baseWidthPercent}; --base-space-height:${baseHeightPercent};"
         >
           <img

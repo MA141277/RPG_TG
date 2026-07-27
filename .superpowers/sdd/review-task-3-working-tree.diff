@@ -1,0 +1,82 @@
+# Review package: working-tree task 3
+
+## Commits
+(no task commit created; review uncommitted working tree diff)
+
+## Files changed
+src/ui/animations/coin-reward-animation.ts | 795 bytes | untracked/new
+tests/coin-reward-animation.test.cjs | 890 bytes | untracked/new
+
+## Diff
+diff --git "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt" "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\src\\ui\\animations\\coin-reward-animation.ts"
+index e69de29b..c9b5a823 100644
+--- "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt"
++++ "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\src\\ui\\animations\\coin-reward-animation.ts"
+@@ -0,0 +1,30 @@
++type CoinRewardAnimator = {
++  setGoldTargetElement(element: HTMLElement | null): void;
++  play(input: {
++    sourceElement: HTMLElement;
++    sourceClientX?: number;
++    sourceClientY?: number;
++    startValue: number;
++    targetValue: number;
++    amount: number;
++  }): void;
++};
++
++export function createCoinRewardAnimator(input: {
++  layer: HTMLElement;
++  onDisplayValueChange: (displayValue: number | null) => void;
++}): CoinRewardAnimator {
++  let goldTargetElement: HTMLElement | null = null;
++
++  return {
++    setGoldTargetElement(element) {
++      goldTargetElement = element;
++    },
++    play({ startValue, targetValue }) {
++      input.onDisplayValueChange(startValue);
++      input.onDisplayValueChange(targetValue);
++      input.onDisplayValueChange(null);
++      void goldTargetElement;
++    },
++  };
++}
+
+diff --git "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt" "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\tests\\coin-reward-animation.test.cjs"
+index e69de29b..7d9bfb03 100644
+--- "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt"
++++ "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\tests\\coin-reward-animation.test.cjs"
+@@ -0,0 +1,30 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++
++test("coin reward animator starts rolling on first hit and finalizes on last hit", async () => {
++  const { createCoinRewardAnimator } = await import("../src/ui/animations/coin-reward-animation.ts");
++
++  const layer = {
++    appendChild() {},
++    removeChild() {},
++    ownerDocument: { createElement() { return { style: {}, className: "", dataset: {}, remove() {} }; } },
++  };
++
++  const seenValues = [];
++  const animator = createCoinRewardAnimator({
++    layer,
++    onDisplayValueChange(value) {
++      seenValues.push(value);
++    },
++  });
++
++  animator.setGoldTargetElement(null);
++  animator.play({
++    sourceElement: { getBoundingClientRect: () => ({ left: 10, top: 10, width: 20, height: 20 }) },
++    startValue: 10,
++    targetValue: 20,
++    amount: 10,
++  });
++
++  assert.deepEqual(seenValues, [10, 20, null]);
++});
+

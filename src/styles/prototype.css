@@ -295,6 +295,109 @@
   width: calc(var(--game-width) * 82 / 2048);
 }
 
+.p-global-status-compact__coin-anchor-toggle {
+  display: none;
+  all: unset;
+  position: absolute;
+  top: calc(var(--game-height) * 56 / 1152);
+  left: calc(var(--game-width) * 440 / 2048);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(var(--game-width) * 92 / 2048);
+  height: calc(var(--game-height) * 30 / 1152);
+  padding: 0 calc(var(--game-width) * 10 / 2048);
+  border: 1px solid rgb(122 79 34 / 88%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(82 50 22 / 96%), rgb(45 26 12 / 96%));
+  color: #f4dfae;
+  font-family: var(--font-title);
+  font-size: clamp(10px, 1.42cqw, 13px);
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 18%);
+}
+
+.p-global-status-compact__coin-anchor-toggle:focus-visible {
+  outline: 2px solid #f7df94;
+  outline-offset: 2px;
+}
+
+.p-global-coin-anchor-editor {
+  display: none;
+  position: absolute;
+  top: calc(var(--game-height) * 94 / 1152);
+  left: calc(var(--game-width) * 438 / 2048);
+  z-index: 21;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--game-height) * 8 / 1152);
+  width: calc(var(--game-width) * 238 / 2048);
+  padding: calc(var(--game-height) * 10 / 1152) calc(var(--game-width) * 12 / 2048);
+  border: 1px solid rgb(116 75 30 / 88%);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(54 33 16 / 96%), rgb(31 19 10 / 96%));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
+  pointer-events: auto;
+}
+
+.p-global-coin-anchor-editor.is-open {
+  display: grid;
+}
+
+.p-global-coin-anchor-editor__field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: #f4dfae;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.p-global-coin-anchor-editor__field input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid rgb(145 103 54 / 88%);
+  border-radius: 8px;
+  background: rgb(248 237 212 / 96%);
+  color: #45270f;
+  font: inherit;
+}
+
+.p-global-coin-anchor-editor__field input:focus {
+  outline: 2px solid rgb(247 223 148 / 82%);
+  outline-offset: 1px;
+}
+
+.p-global-coin-anchor-editor__actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--game-width) * 8 / 2048);
+}
+
+.p-global-coin-anchor-editor__action {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid rgb(103 71 37 / 72%);
+  border-radius: 8px;
+  background: rgb(81 57 35 / 72%);
+  color: rgb(232 212 176 / 72%);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: default;
+}
+
+.p-global-coin-anchor-editor__action--active {
+  border-color: rgb(189 137 57 / 92%);
+  background: linear-gradient(180deg, rgb(164 111 38 / 96%), rgb(116 75 22 / 96%));
+  color: #fff0c4;
+  cursor: pointer;
+}
+
 .p-layout-component {
   position: absolute;
   overflow: visible;
@@ -1925,6 +2028,32 @@
   min-height: 0;
 }
 
+.c-kulan-city__coin-test-action {
+  position: absolute;
+  right: 164px;
+  bottom: 68px;
+  z-index: 4;
+  min-height: 44px;
+  min-width: 112px;
+  padding: 0 14px;
+  border: 1px solid rgb(233 202 127 / 70%);
+  border-radius: 6px;
+  background: rgb(20 18 14 / 82%);
+  color: #f6ddb0;
+  font: 700 14px/1 var(--font-ui);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+}
+
+.c-kulan-city__coin-test-action:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  border-color: rgb(246 220 148 / 90%);
+}
+
 
 .c-kulan-city__leave-action {
   position: absolute;
@@ -1994,6 +2123,18 @@
   pointer-events: none;
 }
 
+.c-city-map-scene__ambient {
+  display: none;
+}
+
+.c-city-map-scene .c-city-isometric-map {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+
 .c-city-map-stage {
   position: absolute;
   top: 52%;
@@ -2038,36 +2179,17 @@
   z-index: 2;
 }
 
-.c-city-map-stage__ground-decor {
-  position: absolute;
-  top: var(--ground-decor-y);
-  left: var(--ground-decor-x);
-  z-index: var(--ground-decor-z-index);
-  display: block;
-  width: var(--ground-decor-width);
-  opacity: var(--ground-decor-opacity, 1);
-  transform: translate(-50%, -100%);
-  transform-origin: 50% 100%;
-  pointer-events: none;
-}
-
-.c-city-map-stage__ground-decor-image {
-  display: block;
-  width: 100%;
-  height: auto;
-  pointer-events: none;
-  user-select: none;
-}
-
-.c-city-map-stage__visual-items {
-  inset: 0;
-  z-index: 3;
-}
-
 .c-city-map-stage__entity {
   position: absolute;
   inset: 0;
   z-index: var(--entity-z-index);
+  pointer-events: none;
+}
+
+.c-city-map-stage__entity-occluder {
+  position: absolute;
+  inset: 0;
+  z-index: var(--entity-occluder-z-index);
   pointer-events: none;
 }
 
@@ -2083,6 +2205,19 @@
 
 .c-city-map-stage__entity-static {
   pointer-events: none;
+}
+
+.c-city-map-stage__entity-image {
+  opacity: var(--entity-image-opacity, 1);
+}
+
+.c-city-map-stage__entity-static--occluder {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%
+  );
 }
 
 .c-city-map-stage__entity-hotspot {
@@ -2135,6 +2270,7 @@
 .c-city-map-stage__entity:focus-within .c-city-map-stage__entity-image,
 .c-city-map-stage__entity.is-hovered .c-city-map-stage__entity-image,
 .c-city-map-stage__entity.is-selected .c-city-map-stage__entity-image {
+  opacity: 1;
   animation: city-building-image-glow-pulse 1.45s ease-in-out infinite;
 }
 
@@ -2150,19 +2286,20 @@
   outline: none;
 }
 
-.c-city-map-stage__decor-house {
+.c-city-map-stage__ground-decor {
   position: absolute;
-  top: var(--decor-y);
-  left: var(--decor-x);
-  z-index: var(--decor-z-index);
+  top: var(--ground-decor-y);
+  left: var(--ground-decor-x);
+  z-index: var(--ground-decor-z-index);
   display: block;
-  width: var(--decor-width);
+  width: var(--ground-decor-width);
+  opacity: var(--ground-decor-opacity, 1);
   transform: translate(-50%, -100%);
   transform-origin: 50% 100%;
   pointer-events: none;
 }
 
-.c-city-map-stage__decor-house-image {
+.c-city-map-stage__ground-decor-image {
   display: block;
   width: 100%;
   height: auto;
@@ -2170,120 +2307,8 @@
   user-select: none;
 }
 
-.c-city-map-stage__building {
-  position: absolute;
-  top: var(--building-y);
-  left: var(--building-x);
-  z-index: var(--building-z-index);
-  display: block;
-  width: var(--building-width);
-  transform: translate(-50%, -100%);
-  transform-origin: 50% 100%;
-  pointer-events: none;
-}
-
-.c-city-map-stage__building-hotspot {
-  appearance: none;
-  position: relative;
-  z-index: 2;
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.c-city-map-stage__building-image {
-  position: relative;
-  z-index: 2;
-  display: block;
-  width: 100%;
-  height: auto;
-  pointer-events: none;
-  user-select: none;
-  transition:
-    filter var(--duration-fast) ease,
-    transform var(--duration-fast) ease;
-}
-
-.c-city-map-stage__building-ring {
-  position: absolute;
-  bottom: var(--building-ring-offset-y);
-  left: 50%;
-  z-index: 1;
-  display: none;
-  width: var(--building-ring-width);
-  height: var(--building-ring-height);
-  border: 2px solid rgb(255 214 86 / 0%);
-  border-radius: 50%;
-  background:
-    radial-gradient(
-      ellipse,
-      rgb(255 222 92 / 28%) 0%,
-      rgb(255 199 50 / 16%) 42%,
-      rgb(255 199 50 / 0%) 72%
-    );
-  box-shadow:
-    0 0 18px rgb(255 208 64 / 0%),
-    inset 0 0 12px rgb(255 238 150 / 0%);
-  opacity: 0;
-  transform: translate(-50%, 50%) scale(0.86);
-  pointer-events: none;
-}
-
-.c-city-map-stage__building:hover .c-city-map-stage__building-image,
-.c-city-map-stage__building:focus-within .c-city-map-stage__building-image,
-.c-city-map-stage__building.is-hovered .c-city-map-stage__building-image,
-.c-city-map-stage__building.is-selected .c-city-map-stage__building-image {
-  animation: city-building-image-glow-pulse 1.45s ease-in-out infinite;
-}
-
-.c-city-map-stage__building:hover .c-city-map-stage__building-ring,
-.c-city-map-stage__building:focus-within .c-city-map-stage__building-ring,
-.c-city-map-stage__building.is-hovered .c-city-map-stage__building-ring,
-.c-city-map-stage__building.is-selected .c-city-map-stage__building-ring {
-  opacity: 0;
-  animation: none;
-}
-
-.c-city-map-stage__building-hotspot:focus-visible {
-  outline: none;
-}
-
-@keyframes city-building-ring-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 10px rgb(255 208 64 / 34%),
-      inset 0 0 8px rgb(255 238 150 / 22%);
-    transform: translate(-50%, 50%) scale(0.88);
-  }
-
-  50% {
-    box-shadow:
-      0 0 24px rgb(255 208 64 / 72%),
-      inset 0 0 16px rgb(255 238 150 / 44%);
-    transform: translate(-50%, 50%) scale(1.08);
-  }
-}
-
-@keyframes city-building-image-glow-pulse {
-  0%,
-  100% {
-    filter:
-      brightness(1.08)
-      saturate(1.03)
-      drop-shadow(0 0 8px rgb(255 213 88 / 38%));
-  }
-
-  50% {
-    filter:
-      brightness(1.18)
-      saturate(1.1)
-      drop-shadow(0 0 18px rgb(255 213 88 / 78%));
-  }
+.c-city-map-stage__visual-items {
+  inset: 0;
 }
 
 .c-city-map-stage__foreground-wall {
@@ -2318,7 +2343,9 @@
   min-height: 78px;
   padding: 8px 5px;
   border: 0;
-  background: url("../../ui/yuansu/菱形格子/img_v3_0213q_d39adb77-f101-4f6f-98b9-899e55f79ddg.png") center / 100% 100% no-repeat;
+  background:
+    url("../../ui/yuansu/菱形格子/img_v3_0213q_d39adb77-f101-4f6f-98b9-899e55f79ddg.png")
+    center / 100% 100% no-repeat;
   box-shadow: 0 4px 10px rgb(0 0 0 / 18%);
   color: #f9e4a8;
   font-family: var(--font-title);
@@ -2348,16 +2375,83 @@
   outline: none;
 }
 
-.c-city-map-scene__ambient {
-  display: none;
-}
-
-.c-city-map-scene .c-city-isometric-map {
+.c-city-stage-ambient-npc-layer {
   position: absolute;
   inset: 0;
-  overflow: visible;
-  border: 0;
-  background: transparent;
+  pointer-events: none;
+}
+
+.c-city-stage-ambient-npc {
+  position: absolute;
+  left: var(--npc-x);
+  top: var(--npc-y);
+  z-index: var(--npc-z-index);
+  width: 18px;
+  height: 30px;
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+.c-city-stage-ambient-npc__sprite {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  display: block;
+  width: auto;
+  height: 26px;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 2px 5px rgb(0 0 0 / 18%));
+}
+
+.c-city-stage-ambient-npc__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 10px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgb(18 12 8 / 22%);
+  transform: translateX(-50%);
+  filter: blur(1.5px);
+}
+
+@keyframes city-building-image-glow-pulse {
+  0%,
+  100% {
+    filter:
+      brightness(1.08)
+      saturate(1.03)
+      drop-shadow(0 0 8px rgb(255 213 88 / 38%));
+  }
+
+  50% {
+    filter:
+      brightness(1.18)
+      saturate(1.1)
+      drop-shadow(0 0 18px rgb(255 213 88 / 78%));
+  }
+}
+
+@keyframes map-intro-backdrop-fade {
+  0% {
+    opacity: 0;
+  }
+
+  9% {
+    opacity: 1;
+  }
+
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 .c-kulan-city__house-deck {
@@ -3140,7 +3234,6 @@
 .c-library-shell {
   display: grid;
   gap: 16px;
-  grid-template-rows: auto auto minmax(0, 1fr);
   width: min(1180px, 100%);
   height: 100%;
   min-height: 0;
@@ -3343,90 +3436,6 @@
   border: 2px solid rgb(77 64 48 / 34%);
   border-radius: 10px;
   background: linear-gradient(180deg, rgb(243 238 224 / 96%), rgb(226 219 202 / 96%));
-}
-
-.c-backpack-shortcut {
-  position: absolute;
-  right: 28px;
-  bottom: 24px;
-  z-index: 8;
-  min-width: 108px;
-  min-height: 42px;
-  padding: 0 18px;
-  color: #f7e5b7;
-  border: 0;
-  background: transparent;
-  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-anti-seam.png");
-  border-image-slice: 10 18 fill;
-  border-image-width: 10px 18px;
-  border-image-repeat: stretch;
-  font-family: var(--font-title);
-  font-size: 1.08rem;
-  text-shadow: 0 1px 2px rgb(55 28 10 / 74%);
-  cursor: pointer;
-}
-
-.c-backpack-shell__body {
-  grid-template-columns: minmax(560px, 1.45fr) minmax(280px, 0.8fr);
-  min-height: 0;
-  overflow: hidden;
-}
-
-.c-backpack-table-wrap {
-  min-width: 0;
-  min-height: 0;
-  overflow: auto;
-}
-
-.c-backpack-table th,
-.c-backpack-table td {
-  vertical-align: middle;
-}
-
-.c-backpack-table th:first-child,
-.c-backpack-table td:first-child {
-  width: 54px;
-  text-align: center;
-}
-
-.c-backpack-table__select {
-  position: relative;
-  display: inline-grid;
-  min-width: 132px;
-  min-height: 30px;
-  place-items: center;
-  padding: 0 14px;
-  color: #24180e;
-  overflow: visible;
-}
-
-.c-backpack-table__select > span:not(.c-city-choice-skin) {
-  position: relative;
-  z-index: 1;
-}
-
-.c-backpack-table__icon {
-  display: inline-grid;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  border: 1px solid rgb(82 65 43 / 40%);
-  background: rgb(235 228 209 / 84%);
-  font-size: 0.75rem;
-}
-
-.c-backpack-table__icon-image,
-.c-backpack-detail__icon-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.c-backpack-detail .c-library-detail__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 
 .c-library-detail__hero {
@@ -4444,11 +4453,6 @@
   overflow: visible;
 }
 
-.c-city-menu__item {
-  display: grid;
-  gap: 0;
-}
-
 .c-city-menu__button {
   position: relative;
   display: grid;
@@ -4473,6 +4477,11 @@
     filter var(--duration-fast) ease;
 }
 
+.c-city-menu__button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
 .c-city-menu__button::before {
   content: "";
   position: absolute;
@@ -4491,11 +4500,6 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--duration-fast) ease;
-}
-
-.c-city-menu__button:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.05);
 }
 
 .c-city-menu__button:hover::before,
@@ -4520,6 +4524,11 @@
 .c-city-menu__button-label {
   position: relative;
   z-index: 1;
+}
+
+.c-city-menu__item {
+  display: grid;
+  gap: 0;
 }
 
 .c-city-menu__subnav {
