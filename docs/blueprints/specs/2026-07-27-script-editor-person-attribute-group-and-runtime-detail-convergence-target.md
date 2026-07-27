@@ -239,6 +239,201 @@ Rationale:
 - `presentation` preserves the current runtime visual families without leaving them hardcoded as the only source of truth.
 - `items[].fieldKey` references either fixed first-level fields or creator-visible custom attributes, including `stats.*` and `skills.*`.
 
+## Concrete Person Record Field Design
+
+### First-Level Person Fields
+
+The durable `ScriptEditorPersonRecord` contract should be treated as four top-level buckets:
+
+1. fixed identity and placement fields
+2. fixed profile fields
+3. creator-visible custom attributes
+4. creator-authored attribute groups
+
+The first-level record shape should converge on:
+
+```ts
+type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
+  id: string;
+  name: string;
+  personType?: "角色" | "NPC";
+  role?: string;
+  birthYear?: number;
+  deathYear?: number | null;
+  age?: number;
+  clanId?: string;
+  title?: string;
+  occupation?: string;
+  affiliationLabel?: string;
+  biography?: string;
+  cityId?: string;
+  houseId?: string;
+  portraitId?: string;
+  portraitVariantId?: string | null;
+  stamina?: number;
+  availableFunctions?: CharacterFunction[];
+  extendedAttributes?: ScriptEditorTypedAttributeRecord[];
+  attributeGroups?: ScriptEditorPersonAttributeGroup[];
+  dialogueIds?: string[];
+  eventIds?: string[];
+  tradeBinding?: ScriptEditorPersonTradeBinding;
+};
+```
+
+Rules:
+
+- fixed first-level fields must remain explicit first-level keys and must not be mirrored into `extendedAttributes`
+- `availableFunctions`, `dialogueIds`, `eventIds`, and `tradeBinding` remain existing dedicated contracts rather than being folded into custom attributes
+- `attributeGroups` becomes a first-level durable field alongside `extendedAttributes`, not a derived runtime-only projection
+
+### Fixed First-Level Field Set
+
+The builtin zhuyuanzhang inventory must classify these as fixed first-level fields:
+
+| Field | Creator Bucket | Notes |
+| --- | --- | --- |
+| `id` | fixed | Stable person record identity |
+| `name` | fixed | Person display name |
+| `personType` | fixed | `角色` / `NPC` |
+| `role` | fixed | Runtime role compatibility |
+| `birthYear` | fixed | Basic profile |
+| `deathYear` | fixed | Basic profile |
+| `age` | fixed | Basic profile |
+| `clanId` | fixed | Basic profile |
+| `title` | fixed | Basic profile |
+| `occupation` | fixed | Basic profile |
+| `affiliationLabel` | fixed | Basic profile |
+| `biography` | fixed | Basic profile |
+| `cityId` | fixed | Placement |
+| `houseId` | fixed | Placement |
+| `portraitId` | fixed | Portrait binding |
+| `portraitVariantId` | fixed | Portrait compatibility |
+| `stamina` | fixed | Runtime-compatible fixed field |
+
+### Custom Attribute Field Set
+
+The following zhuyuanzhang fields should be normalized into creator-visible `extendedAttributes` entries instead of bespoke profile controls:
+
+| Source Field | Stored key | Expected type |
+| --- | --- | --- |
+| `stats.leadership` | `stats.leadership` | `number` |
+| `stats.martial` | `stats.martial` | `number` |
+| `stats.intelligence` | `stats.intelligence` | `number` |
+| `stats.politics` | `stats.politics` | `number` |
+| `stats.charm` | `stats.charm` | `number` |
+| `stats.fame` | `stats.fame` | `number` |
+| `stats.gold` | `stats.gold` | `number` |
+| `skills.ashigaru` | `skills.ashigaru` | `number` |
+| `skills.horse` | `skills.horse` | `number` |
+| `skills.teppo` | `skills.teppo` | `number` |
+| `skills.navy` | `skills.navy` | `number` |
+| `skills.archery` | `skills.archery` | `number` |
+| `skills.martial` | `skills.martial` | `number` |
+| `skills.military` | `skills.military` | `number` |
+| `skills.ninjutsu` | `skills.ninjutsu` | `number` |
+| `skills.construction` | `skills.construction` | `number` |
+| `skills.development` | `skills.development` | `number` |
+| `skills.mining` | `skills.mining` | `number` |
+| `skills.arithmetic` | `skills.arithmetic` | `number` |
+| `skills.etiquette` | `skills.etiquette` | `number` |
+| `skills.rhetoric` | `skills.rhetoric` | `number` |
+| `skills.tea` | `skills.tea` | `number` |
+| `skills.medicine` | `skills.medicine` | `number` |
+| `flags` | `flags` | `string` with JSON array payload under existing typed-attribute rules |
+| `isHistoricalFigure` | `isHistoricalFigure` | `boolean` |
+| `leaderResidenceEligible` | `leaderResidenceEligible` | `boolean` |
+| `leaderResidenceStatus` | `leaderResidenceStatus` | `string` or `enum` |
+| `teachableSkillKeys` | `teachableSkillKeys` | `string` with JSON array payload under existing typed-attribute rules |
+
+Rules:
+
+- the person profile tab must show these only through custom-attribute cards or future group-driven pickers
+- no dedicated `能力属性` or `技能属性` sections may remain in the profile tab
+- the stored `key` remains the durable authoring/runtime bridge, even when creator-facing labels are localized
+
+### Attribute Group Contract
+
+The formal first-level `attributeGroups` field should use:
+
+```ts
+type ScriptEditorPersonAttributeGroup = {
+  id: string;
+  title: string;
+  presentation: "basic-info" | "ability-info" | "skill-info" | "list";
+  items: ScriptEditorPersonAttributeGroupItem[];
+};
+
+type ScriptEditorPersonAttributeGroupItem = {
+  fieldKey: string;
+  labelOverride?: string;
+};
+```
+
+Rules:
+
+- `id` must be unique within one person record
+- `title` is creator-authored visible text
+- `presentation` selects the runtime rendering family
+- `fieldKey` must reference either:
+  - a fixed first-level field such as `title`, `occupation`, `age`, `clanId`
+  - a typed custom-attribute key such as `stats.leadership`, `skills.archery`, `flags`
+- attribute-group items do not store duplicated values; they reference existing person data
+- deleting a group removes only the container, not the underlying field values
+- deleting a custom attribute invalidates any group item that references that attribute and must be caught fail-closed by authoring validation
+
+### Default Builtin Group Recommendation
+
+Builtin zhuyuanzhang imported people should receive these default groups when no explicit `attributeGroups` field exists yet:
+
+```json
+[
+  {
+    "id": "group.basic-info",
+    "title": "基础情报",
+    "presentation": "basic-info",
+    "items": [
+      { "fieldKey": "clanId", "labelOverride": "所属" },
+      { "fieldKey": "cityId", "labelOverride": "据点" },
+      { "fieldKey": "title", "labelOverride": "身份" },
+      { "fieldKey": "occupation", "labelOverride": "职业" },
+      { "fieldKey": "age", "labelOverride": "年龄" }
+    ]
+  },
+  {
+    "id": "group.ability-info",
+    "title": "能力情报",
+    "presentation": "ability-info",
+    "items": [
+      { "fieldKey": "stats.leadership", "labelOverride": "统帅" },
+      { "fieldKey": "stats.martial", "labelOverride": "武勇" },
+      { "fieldKey": "stats.intelligence", "labelOverride": "智谋" },
+      { "fieldKey": "stats.politics", "labelOverride": "政务" },
+      { "fieldKey": "stats.charm", "labelOverride": "魅力" },
+      { "fieldKey": "stats.fame", "labelOverride": "声望" }
+    ]
+  },
+  {
+    "id": "group.skill-info",
+    "title": "技能情报",
+    "presentation": "skill-info",
+    "items": [
+      { "fieldKey": "skills.ashigaru", "labelOverride": "足轻" },
+      { "fieldKey": "skills.horse", "labelOverride": "骑术" },
+      { "fieldKey": "skills.archery", "labelOverride": "弓术" },
+      { "fieldKey": "skills.military", "labelOverride": "军略" },
+      { "fieldKey": "skills.ninjutsu", "labelOverride": "忍术" },
+      { "fieldKey": "skills.rhetoric", "labelOverride": "口才" }
+    ]
+  }
+]
+```
+
+This default is only a migration seed:
+
+- creators may later add or remove groups
+- creators may add or remove items within a group
+- runtime presentation must consume the actual persisted groups, not re-synthesize these defaults after migration
+
 ## Runtime Read Model
 
 ### Runtime Compatibility Rule
@@ -316,4 +511,3 @@ Why second:
 Why third:
 
 - runtime detail migration should consume already-stable grouped truth rather than define the contract itself
-
