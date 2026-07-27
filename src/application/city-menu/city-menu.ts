@@ -50,7 +50,7 @@ export type CityMenuState = {
 export type CityCultureViewModel = {
   cityName: string;
   description: string;
-  economyLevel: "富饶" | "繁荣" | "普通" | "萧条" | "民不聊生";
+  economyLevel: "富庶" | "繁荣" | "平稳" | "萧条" | "民不聊生";
   economyValue: number;
   population: number | null;
   security: number | null;
@@ -65,19 +65,19 @@ export type CityManagementViewModel = {
 
 const CITY_DESCRIPTION_BY_ID: Record<string, string> = {
   "city.kulan":
-    "濠州地处江淮之间，商旅往来频繁，寺院、街市与军府交错成局。乱世之中，此地既是流民暂栖之所，也是豪杰与商贾汇聚之处，城中见闻往往比城门更早传开。",
+    "苦兰地处江淮往来之间，商旅与流民混杂，寺院、街市与军府彼此相望。乱世未歇，这里既是暂栖之所，也是消息最先汇聚的地方。",
 };
 
 const HOUSE_INTEL_BY_MODULE_ID: Partial<Record<string, string>> = {
   "leader-residence": "府邸之中似乎正在筛选可用之人。",
   "temple-house": "寺院近日香火未断，僧众似乎仍在筹措米粮。",
   "home-house": "自宅一带近来少见外人走动，倒适合静心歇脚。",
-  "keep-house": "帅府似乎正在整理军务，或许正缺能办事的人。",
+  "keep-house": "军府似乎正在整理军务，或许正缺能办事的人。",
   "tea-house": "茶馆里似乎有人正在议论时局。",
   "market-house": "城中商铺正在张罗一批新货。",
   "grain-shop": "粮铺掌柜最近正盯着米价起落。",
   "medicine-house": "药铺郎中正在留心懂药理的帮手。",
-  tavern: "酒肆中似乎有人正在进行舌战。",
+  tavern: "酒肆中似乎有人正在借酒试探消息。",
 };
 
 function hashString(value: string): number {
@@ -122,7 +122,7 @@ function buildDefaultCityDescription(cityDefinition: CityDefinition): string {
     ? "商旅来往密集"
     : cityDefinition.tags.includes("market")
       ? "市井交易颇为活跃"
-      : "市井买卖维持着城中生计";
+      : "市井买卖维持着城中的生计";
   const securityText =
     cityDefinition.danger >= 50
       ? "只是世道未宁，街头巷尾始终带着几分戒备。"
@@ -131,7 +131,9 @@ function buildDefaultCityDescription(cityDefinition: CityDefinition): string {
   return `${cityDefinition.name}位于${regionText}之地，${tradeText}。此地风土杂糅，行旅、军士与本地居民各有来路，${securityText}`;
 }
 
-export function isPlayerMonkIdentity(playerCharacter: CharacterDefinition): boolean {
+export function isPlayerMonkIdentity(
+  playerCharacter: CharacterDefinition
+): boolean {
   const identityText = [
     playerCharacter.title ?? "",
     playerCharacter.occupation ?? "",
@@ -150,7 +152,7 @@ export function getCityEconomyLevel(
   prosperity: number
 ): CityCultureViewModel["economyLevel"] {
   if (prosperity >= 90) {
-    return "富饶";
+    return "富庶";
   }
 
   if (prosperity >= 80) {
@@ -158,7 +160,7 @@ export function getCityEconomyLevel(
   }
 
   if (prosperity >= 60) {
-    return "普通";
+    return "平稳";
   }
 
   if (prosperity >= 40) {
@@ -186,7 +188,7 @@ export function createCityCultureViewModel(
 function createMockEventIntel(cityDefinition: CityDefinition): string[] {
   const items = [
     cityDefinition.prosperity >= 80
-      ? `城中商队近日活络，${cityDefinition.name}的买卖声势似乎比往常更盛。`
+      ? `城中商队近日活络，${cityDefinition.name}的买卖声势似乎比往常更旺。`
       : `${cityDefinition.name}的街市近来显得谨慎，买卖双方都在观望风向。`,
     cityDefinition.danger >= 45
       ? "近来有陌生武人在城中走动，几处热闹地带都在议论他们的来历。"
@@ -271,18 +273,25 @@ export function resolveCityMenuEntries(input: {
             return [];
           }
 
-          const action = resolveCityMenuEntryAction(entry.menuFamily, entry.targetFamily, entry.targetId);
+          const action = resolveCityMenuEntryAction(
+            entry.menuFamily,
+            entry.targetFamily,
+            entry.targetId
+          );
           const isUnsupported = action.type === "unsupported";
 
           return [
             {
               id: entry.id,
-              label: entry.label.trim().length > 0 ? entry.label : entry.menuFamily,
+              label:
+                entry.label.trim().length > 0
+                  ? entry.label
+                  : resolveCityMenuEntryLabel(entry.menuFamily, action),
               menuFamily: entry.menuFamily,
               disabledHint: isUnsupported
                 ? entry.disabledHint.trim().length > 0
                   ? entry.disabledHint
-                  : `Unsupported city menu target: ${entry.targetFamily}`
+                  : `未支持的城市菜单目标：${entry.targetFamily}`
                 : entry.disabledHint,
               isEnabled: entry.isEnabled !== false && !isUnsupported,
               isSpecial: isBeggingMenuFamily(entry.menuFamily),
@@ -338,7 +347,9 @@ export function createCityMenuState(
   };
 }
 
-function normalizeLegacyCityMenuPanelId(value: string | undefined): CityMenuPanelId {
+function normalizeLegacyCityMenuPanelId(
+  value: string | undefined
+): CityMenuPanelId {
   switch (normalizeMenuKey(value ?? "")) {
     case "intel":
       return "intel";
@@ -369,7 +380,8 @@ function resolveCityMenuEntryAction(
 
   if (
     targetFamily === "minigame" &&
-    (normalizeMenuKey(targetId) === "city-begging" || isBeggingMenuFamily(menuFamily))
+    (normalizeMenuKey(targetId) === "city-begging" ||
+      isBeggingMenuFamily(menuFamily))
   ) {
     return {
       type: "minigame",
@@ -382,6 +394,40 @@ function resolveCityMenuEntryAction(
     targetFamily,
     targetId,
   };
+}
+
+function resolveCityMenuEntryLabel(
+  menuFamily: string,
+  action: CityMenuEntryAction
+): string {
+  if (action.type === "panel") {
+    switch (action.panelId) {
+      case "overview":
+        return "概况";
+      case "intel":
+        return "情报";
+      case "locations":
+        return "地点";
+      case "management":
+        return "管理";
+    }
+  }
+
+  switch (normalizeMenuKey(menuFamily)) {
+    case "overview":
+    case "culture":
+      return "概况";
+    case "intel":
+      return "情报";
+    case "locations":
+      return "地点";
+    case "management":
+      return "管理";
+    case "begging":
+      return "化缘";
+    default:
+      return menuFamily;
+  }
 }
 
 function resolveCityMenuPanelId(

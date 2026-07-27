@@ -3333,3 +3333,70 @@ Current evidence draft:
   - adding unrestricted attribute mutation
   - creating a parallel settlement runtime beside current seams
   - reintroducing private reward containers under dialogue/task/playable
+
+### MEMO-031: 蓝图agent版改造
+
+- status: `open`
+- severity: `high`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- related_design_doc: `docs/blueprints/蓝图agent版改造.md`
+- affected_families:
+  - `Blueprint governance`
+  - `agent workflow control`
+  - `queue execution orchestration`
+  - `human-interruption policy`
+  - `fallback routing`
+
+#### Problem Summary
+
+- Blueprint-governed work can still degrade into unlawful pause behavior when a single agent retains implementation context, flow control, stop judgment, and user-visible output power at the same time.
+- The concrete failure mode is not only stopping too early; it is stopping after the system already knows lawful continuation still exists.
+- Typical invalid behavior includes:
+  - emitting progress summaries while `active_task` and `lawful_next_step` still exist;
+  - converting recoverable tool or worker failure into a user question;
+  - letting the same controller both judge and deliver a stop-like message.
+
+#### Primary Direction
+
+- Split responsibility into:
+  - `总控代理`
+  - `执行代理`
+  - `验证代理`
+  - `审查代理`
+  - `裁决代理`
+  - `守门器`
+- Remove ordinary stop power from all working agents.
+- Require structured adjudication before any interruption candidate can be considered.
+- Require gatekeeper allow/deny evaluation before any interruption candidate reaches the user.
+- Force non-whitelist failures into continue-or-fallback routing rather than question-first routing.
+
+#### Recorded Design Coverage
+
+- The related design document records:
+  - total-controller state machine
+  - adjudication input/output schema
+  - gatekeeper deny/allow rules
+  - dispatch-order constraints and receipt schema
+  - closed human-interruption whitelist
+  - exception grading and automatic fallback mapping
+- The design intentionally excludes the temporary main-thread execution-order prompt and keeps only the lasting governance architecture.
+
+#### Design Constraints
+
+1. No ordinary agent may directly ask the user to unblock recoverable work.
+2. Stage summaries, progress sync, and “stop here for now” output are not lawful stop causes.
+3. If `active_task` and `lawful_next_step` both remain true, the lawful default is continue or fallback.
+4. Recoverable tool, execution, verification, and review failures must not be escalated to the user by default.
+5. Human-interruption permission must stay a closed whitelist rather than an open “special cases” category.
+6. Prompt-only adoption is not enough for absolute enforcement; externalized delivery gating is the stronger target.
+
+#### Promotion Guard
+
+- Recorded only.
+- This memo does not admit a queue.
+- This memo does not change the active version, active queue, or active task.
+- This memo does not by itself authorize injecting the design into the current governed execution path without an explicit operator instruction or later bounded promotion review.

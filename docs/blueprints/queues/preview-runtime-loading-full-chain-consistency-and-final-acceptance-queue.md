@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/plans/2026-07-26-script-editor-content-format-runtime-layout-and-module-capability-convergence-target-plan.md`
 - queue_status: `active`
 - queue_class: `required-final`
-- active_task: `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile`
-- next_task: `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof`
+- active_task: `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof`
+- next_task: `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.queue-closeout-review-and-version-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -27,7 +27,8 @@
 - sync_status: `pending`
 - sync_scope: `local-record`
 - sync_summary: `No ACC-FORMAT-006 repository-sync attempt has been recorded yet.`
-- blocked_by: []
+- blocked_by:
+  - `User manual Script Editor inspection reported multiple still-unfixed creator-visible content gaps, so ACC-FORMAT-006 cannot currently pass closeout review on the claimed full-chain surface.`
 - allowed_item_classifications:
   - `current-target-item`
 - reject_item_classifications:
@@ -74,8 +75,8 @@
 
 ### Evidence Lock
 
-- evidence_lock_status: `pending`
-- implementation_anchor_status: `pending`
+- evidence_lock_status: `locked`
+- implementation_anchor_status: `confirmed`
 - prerequisite_status: `ready`
 - acceptance_claim_scope:
   - `ACC-FORMAT-006`
@@ -159,9 +160,9 @@
 
 - queue_goal: `Close the remaining ACC-FORMAT-006 full-chain consistency and final-acceptance gap across authoring, export/import, loading, preview, and runtime execution.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Required-final queue admission is complete. The lawful next step is freezing the exact ACC-FORMAT-006 acceptance matrix and remaining parity surface before implementation or closeout claims.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Closeout review did not pass. The live task returns to bounded final proof and repair because manual Script Editor inspection contradicted the current acceptance claim on the creator-visible surface.`
 - task_briefs:
   - `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile: lock the current full-chain acceptance inventory, remaining parity gaps, and fail-closed surfaces for ACC-FORMAT-006.`
   - `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof: land the bounded proof and any remaining in-queue fixes needed to satisfy ACC-FORMAT-006 honestly.`
@@ -171,31 +172,32 @@
 
 - review_status: `in-progress`
 - can_claim_coverage:
-  - `Not yet. The queue has only been admitted; ACC-FORMAT-006 evidence still needs to be locked and proved.`
+  - `No. Queue closeout review cannot pass because manual Script Editor inspection found multiple still-unfixed creator-visible content gaps inside the claimed ACC-FORMAT-006 surface.`
 - parent_spec_preservation:
   - `Preserved so far. Earlier implementation-bearing acceptance ids remain closed and version closeout remains deferred.`
 - capability_floor_verification:
-  - `Pending full-chain parity and fail-closed acceptance proof.`
+  - `Contradicted by manual Script Editor inspection. Local automated proof stayed green, but the queue cannot currently claim the creator-visible full-chain capability floor.`
 - user_path_matrix_verification:
-  - `Pending. The queue has not yet frozen or proved the exact built-in/imported/preview/startup/runtime parity surface.`
+  - `Not yet sufficient. Manual Script Editor inspection found unresolved creator-visible gaps, so the current matrix must return to proof-and-repair rather than closeout.`
 - functional_loss_audit:
   - `No loss is accepted by default. Any discovered cross-surface regression must be repaired or routed explicitly inside this queue.`
 - replacement_proof_summary:
-  - `Pending. Final acceptance cannot yet claim old compatibility or drift paths are fully retired across every covered surface until the evidence lock and bounded proof pass.`
+  - `Not yet sufficient. Automated proof did not expose a contradiction, but manual Script Editor inspection did; the queue must now reconcile that contradiction before replacement proof can be accepted honestly.`
 - placeholder_or_legacy_fallback_audit:
-  - `Pending. The queue still needs one explicit audit of whether any preview/startup/runtime path silently reconstructs retired truth instead of failing closed.`
+  - `Open again. Existing automated proof is not enough because manual Script Editor inspection found unresolved content gaps on the claimed creator-visible surface.`
 - verification_sufficiency:
-  - `Not yet sufficient for closeout. Earlier queue verification is green, but ACC-FORMAT-006 still needs queue-local proof.`
+  - `Not sufficient for closeout. Manual Script Editor inspection contradicts the current acceptance claim, so repository-sync and version closeout routing are not yet lawful.`
 - remaining_gaps:
-  - `The exact remaining full-chain parity and final-acceptance surface still needs evidence lock.`
+  - `The exact unresolved Script Editor content gaps now need to be inventoried and repaired or explicitly routed before ACC-FORMAT-006 can re-enter closeout review.`
+  - `This inventory now explicitly includes the operator-requested temporary rollback of runtime layout consumption back to the old unified shell UI across normal startup, JSON import startup, built-in startup, and Script Editor runtime preview while preserving authored layout data.`
 
 ### Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile` | `active` | `Lock the current full-chain acceptance inventory, remaining parity gaps, and fail-closed surfaces for ACC-FORMAT-006.` | `queue.runtime-layout-registry-and-ui-layering-convergence closed` | `Active. Admission is complete and the queue now needs one explicit evidence lock before implementation or closeout claims.` |
-| `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof` | `pending` | `Land the bounded proof and any remaining in-queue fixes needed to satisfy ACC-FORMAT-006 honestly.` | `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile` | `Pending until the queue freezes its exact parity inventory.` |
-| `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.queue-closeout-review-and-version-handoff` | `pending` | `Verify queue closeout proof, record repository-sync truth, and route the version into closeout review or blocker handling.` | `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof` | `Pending until bounded final-acceptance proof is complete.` |
+| `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile` | `done` | `Lock the current full-chain acceptance inventory, remaining parity gaps, and fail-closed surfaces for ACC-FORMAT-006.` | `queue.runtime-layout-registry-and-ui-layering-convergence closed` | `Done. The queue now has an explicit evidence lock on the current authoring/export/import/preview/startup/runtime parity surface, the fail-closed rejection anchors, and the bounded proof slice that still remains.` |
+| `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof` | `active` | `Land the bounded proof and any remaining in-queue fixes needed to satisfy ACC-FORMAT-006 honestly.` | `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile` | `Reopened. Manual Script Editor inspection reported multiple still-unfixed creator-visible content gaps, so the queue returns to proof-and-repair instead of closeout.` |
+| `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.queue-closeout-review-and-version-handoff` | `pending` | `Verify queue closeout proof, record repository-sync truth, and route the version into closeout review or blocker handling.` | `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof` | `Deferred. Closeout is not lawful again until the newly reported Script Editor contradictions are reconciled.` |
 
 ### Task Definitions
 
@@ -236,20 +238,21 @@
 - human_input_required: `false`
 - next_lawful_action_if_done: `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof`
 - next_lawful_action_if_blocked: `write-version-stop-truth-and-record-blocker`
+- auto_promote_if_done: `true`
 
 ##### Human Context
 
 - task_brief:
   - `Freeze the ACC-FORMAT-006 parity and final-acceptance boundary before further implementation or closeout claims.`
 - task_outcome_summary:
-  - `Active. The required-final queue has just been admitted, so the next lawful step is locking the exact full-chain parity inventory and remaining fail-closed surface rather than skipping straight to implementation or closeout.`
+  - `Done. The queue has now frozen the exact ACC-FORMAT-006 acceptance inventory on concrete proof anchors: in-memory runtime preview uses export -> import -> startup -> runtime, formal menu/event/layout/flow families round-trip on the converged chain, built-in pack building flows route through explicit arrangement plus event/menu truth, and covered legacy residues fail closed rather than re-entering production behavior.`
 
 #### `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof`
 
 ##### Control Block
 
 - task_id: `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `src/application/**`
@@ -281,7 +284,7 @@
 - task_brief:
   - `Land the bounded final parity proof and any remaining in-queue fixes for ACC-FORMAT-006.`
 - task_outcome_summary:
-  - `Pending until the queue freezes its exact parity inventory.`
+  - `Reopened. Automated bounded verification stayed green, but manual Script Editor inspection contradicted the current acceptance claim by surfacing multiple still-unfixed creator-visible content gaps. The queue therefore returns to proof-and-repair rather than claiming closeout readiness.`
 
 #### `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.queue-closeout-review-and-version-handoff`
 
@@ -325,9 +328,16 @@
 - task_brief:
   - `Close out the required-final queue honestly and hand the version into closeout review or blocker handling.`
 - task_outcome_summary:
-  - `Pending until bounded final-acceptance proof is complete.`
+  - `Pending again. Queue closeout review is not lawful until the manually reported Script Editor contradictions are inventoried and reconciled inside ACC-FORMAT-006.`
 
 ### Progress Log
 
 - `2026-07-27`: `queue.runtime-layout-registry-and-ui-layering-convergence closed with ACC-FORMAT-005 covered and repository-sync satisfied through commit 242272c4 on origin/mod-first-dev, so queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance becomes the uniquely lawful required-final admission under the approved phase order.`
 - `2026-07-27`: `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile is now the live active task. The next lawful step is freezing the exact ACC-FORMAT-006 parity and fail-closed acceptance surface before implementation or version closeout claims.`
+- `2026-07-27`: `Evidence lock is now complete for ACC-FORMAT-006. The frozen proof surface is the converged authoring/export/import/preview/startup/runtime chain already covered by current tests: in-memory runtime preview exports the current Script Editor project and starts runtime from the loaded pack, formal menu resources/instances plus arrangement layout and flow playables round-trip through the canonical families, built-in zhuyuanzhang building actions route through explicit arrangement plus event-owned bindings, and covered retired scene/menu/layout residues fail closed in loader/parser/export paths rather than being reconstructed as production truth.`
+- `2026-07-27`: `The queue therefore promotes from task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile into task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof. The bounded remaining work is queue-local proof and verification on that frozen surface, plus only those repairs required if fresh contradictory drift is discovered there.`
+- `2026-07-27`: `Fresh queue-local proof is now green on the frozen ACC-FORMAT-006 surface: cmd /c npm run build:test and node --test tests/robustness.test.cjs both passed, and no fresh contradictory gap was found that would reopen same-family implementation on the covered authoring/export/import/preview/startup/runtime chain.`
+- `2026-07-27`: `The queue therefore promotes from task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof into task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.queue-closeout-review-and-version-handoff. The lawful next work is honest closeout judgement plus repository-sync and version-handoff routing.`
+- `2026-07-27`: `Queue closeout review does not pass. Manual Script Editor inspection reported multiple still-unfixed creator-visible content gaps, so ACC-FORMAT-006 cannot currently be accepted on the claimed surface despite the bounded automated proof staying green.`
+- `2026-07-27`: `The required-final queue therefore returns from task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.queue-closeout-review-and-version-handoff to task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof. The next lawful work is inventorying the reported Script Editor contradictions and repairing or explicitly routing them before any renewed closeout attempt.`
+- `2026-07-27`: `The contradiction inventory is now concrete on one rollback path too: the operator requested temporarily disabling runtime layout consumption and building layout consumption across normal startup, JSON import startup, built-in startup, and Script Editor runtime preview while keeping layout data intact. ACC-FORMAT-006 absorbs this as same-queue contradiction repair, with the boundary locked in docs/superpowers/specs/2026-07-27-runtime-layout-runtime-consumption-disable-design.md and the execution steps written in docs/superpowers/plans/2026-07-27-runtime-layout-runtime-consumption-disable-implementation.md.`

@@ -93,6 +93,7 @@ import {
   type StartupStoryBootstrap,
 } from "./application/startup/startup-story-bootstrap";
 import { createPrototypeStartupAppStateBuilder } from "./application/startup/prototype-startup-app-state";
+import { sanitizeScenarioPackForRuntimePreview } from "./application/startup/scenario-preview-sanitizer";
 import { resolveScenarioStartupTarget } from "./application/startup/scenario-startup-target";
 import {
   createEnterCityRequest,
@@ -2065,18 +2066,19 @@ async function startScenarioPackFilesWithLoading(
 async function startLoadedScenarioPackWithLoading(
   scenarioPack: ScenarioPackDefinition
 ): Promise<"started" | "deferred" | "failed"> {
+  const previewScenarioPack = sanitizeScenarioPackForRuntimePreview(scenarioPack);
   const source = {
     kind: "file" as const,
-    name: scenarioPack.title,
-    filePath: `preview:${scenarioPack.id}`,
+    name: previewScenarioPack.title,
+    filePath: `preview:${previewScenarioPack.id}`,
   };
 
   const shouldDefer = await prepareScenarioPackCharacterSelection(
-    scenarioPack,
+    previewScenarioPack,
     source,
     {
       type: "scenario-pack",
-      scenarioPack,
+      scenarioPack: previewScenarioPack,
       source,
       previewSession: true,
     }
@@ -2087,7 +2089,7 @@ async function startLoadedScenarioPackWithLoading(
 
   const didStart = await runScenarioPackStartupRequestWithLoading({
     type: "scenario-pack",
-    scenarioPack,
+    scenarioPack: previewScenarioPack,
     source,
   });
   if (!didStart) {

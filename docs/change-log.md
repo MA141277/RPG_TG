@@ -9,6 +9,38 @@
 
 ## 2026-07-27 Event-Owned Playable Completion Follow-Up Type Guard
 
+## 2026-07-27 Script Editor Runtime Preview City Hall Copy And Deferred Entry Cleanup
+
+## 2026-07-27 Script Editor Menu Tab Creator-Facing Copy Cleanup
+
+### Changed
+- Updated [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) so the Script Editor `菜单` tab now hides runtime-facing menu ids, switches menu用途/跳转类型 to Chinese creator-facing selects, and resolves target option labels through creator-facing record labels instead of `(...id)` runtime references.
+- Updated [src/application/script-editor/menu-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/menu-authoring.ts:1) so generated menu titles, default menu item labels, and newly appended menu entries all use Chinese creator-facing copy while preserving the existing runtime `menuResources/menuInstances` contracts internally.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) with regressions that guard against visible menu-id leakage in the menu tab and verify Chinese default menu authoring copy.
+
+### Impact
+- Script Editor creators no longer need to reason about runtime `instanceId/resourceId/entry.id` or raw English `menuFamily/targetFamily` values while editing city/building menus.
+- Existing projects with internal runtime menu structures keep the same storage contract, but the authoring surface now presents those structures as stable Chinese creative fields.
+
+### Changed
+- Updated [src/application/script-editor/city-building-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts:1), [src/application/city-menu/city-menu.ts](/D:/workspace/project/RPG_TG/src/application/city-menu/city-menu.ts:1), and [src/ui/views/city/city-view.ts](/D:/workspace/project/RPG_TG/src/ui/views/city/city-view.ts:1) so new Script Editor cities default to Chinese naming, empty city menu entries fall back to Chinese panel labels, city hall buttons render clean Chinese copy, and the city hall no longer exposes the temporary `3D` entry button.
+- Added [src/application/startup/scenario-preview-sanitizer.ts](/D:/workspace/project/RPG_TG/src/application/startup/scenario-preview-sanitizer.ts:1) and updated [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:1) so runtime preview strips deferred `after-map-entry` scenario entry events before launching the preview session.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) and [tests/city-building-mount-authoring.test.cjs](/D:/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs:1) with regressions for Chinese default city naming, localized default city hall labels, hidden city-hall `3D` button rendering, and preview-time deferred entry-event cleanup.
+
+### Impact
+- Newly created empty cities in Script Editor preview now stay on the city surface on first entry instead of consuming a deferred opening event and dropping into the wrong dialogue/building flow.
+- City hall preview now matches the Chinese-first editor/runtime UX baseline and no longer leaks English placeholders or mojibake in the visible hall controls.
+
+## 2026-07-27 Script Editor Event Binding Owner Id Fail-Closed
+
+### Changed
+- Updated [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts:1) so runtime event-binding export now rejects empty `owner.id` values instead of omitting them and letting runtime treat the binding as a wildcard owner match.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) with a regression that proves `city-enter` bindings without a concrete city owner id fail closed during Script Editor runtime export.
+
+### Impact
+- Script Editor can no longer export a blank-city `city-enter` binding that would otherwise fire for every newly added city.
+- Newly added cities without mounted buildings now stay on the city surface unless authored content explicitly binds a concrete city/building follow-up; an empty location list remains the valid no-building state.
+
 ### Changed
 - Updated [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:1) so the event-owned playable completion fallback applies `reenter-house` through a `GameState`-shaped helper instead of calling the RuntimeState-only reentry bridge, while leaving the shared runtime follow-up path unchanged.
 

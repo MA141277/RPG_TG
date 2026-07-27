@@ -33,6 +33,20 @@ type ScriptEditorMenuEntryEditableField =
 
 const DEFAULT_CITY_MENU_FAMILIES = ["overview", "intel", "locations", "management"];
 const DEFAULT_BUILDING_MENU_FAMILIES = ["dialogue", "trade", "work", "rest"];
+const MENU_FAMILY_LABELS: Record<string, string> = {
+  overview: "概况",
+  culture: "概况",
+  intel: "情报",
+  locations: "地点",
+  management: "管理",
+  dialogue: "对话",
+  trade: "交易",
+  work: "工作",
+  rest: "休息",
+  minigame: "小游戏",
+  leave: "离开",
+  begging: "化缘",
+};
 
 export function formalizeScriptEditorProjectMenus(
   project: ScriptEditorProjectDefinition
@@ -152,12 +166,13 @@ export function listScriptEditorLocationMenuBundles(
     if (resource == null) {
       return [];
     }
+    const fallbackTitle = createGeneratedMenuTitle(location, family);
     return [
       {
         instanceId: instance.id,
-        instanceTitle: normalizeString(instance.title, instance.id),
+        instanceTitle: normalizeString(instance.title, fallbackTitle),
         resourceId: resource.id,
-        resourceTitle: normalizeString(resource.title, resource.id),
+        resourceTitle: normalizeString(resource.title, fallbackTitle),
         entries: normalizeMenuEntries(resource.entries, `${resource.id}.entry`),
       },
     ];
@@ -230,11 +245,12 @@ export function appendScriptEditorLocationMenuEntry(
         return resource;
       }
       const nextIndex = normalizeMenuEntries(resource.entries, `${resource.id}.entry`).length + 1;
+      const nextMenuFamily = suggestLocationMenuFamily(family, nextIndex - 1);
       return {
         ...resource,
         entries: [
           ...normalizeMenuEntries(resource.entries, `${resource.id}.entry`),
-          createDefaultMenuEntry(`${resource.id}.entry`, `entry-${nextIndex}`),
+          createDefaultMenuEntry(`${resource.id}.entry`, nextMenuFamily),
         ],
       };
     }),
@@ -616,7 +632,7 @@ function createGeneratedMenuTitle(
   location: ScriptEditorLocationRecord,
   family: ScriptEditorLocationFamily
 ): string {
-  const fallbackLabel = family === "cities" ? "City Menu" : "Building Menu";
+  const fallbackLabel = family === "cities" ? "城市菜单" : "建筑菜单";
   return `${normalizeString((location as { name?: string }).name, location.id)} ${fallbackLabel}`;
 }
 
@@ -626,12 +642,19 @@ function normalizeMenuEntries(
 ): MenuEntryDefinition[] {
   return (entries ?? []).map((entry, index) => ({
     id: normalizeString(entry.id, `${idBase}.${index + 1}`),
-    label: normalizeString(entry.label, `Entry ${index + 1}`),
+    label: normalizeString(
+      entry.label,
+      resolveMenuFamilyLabel(
+        normalizeString(
+          entry.menuFamily,
+          suggestMenuFamilyByIndex(index)
+        ),
+        index
+      )
+    ),
     menuFamily: normalizeString(
       entry.menuFamily,
-      DEFAULT_BUILDING_MENU_FAMILIES[index] ??
-        DEFAULT_CITY_MENU_FAMILIES[index] ??
-        "management"
+      suggestMenuFamilyByIndex(index)
     ),
     targetFamily: normalizeMenuTargetFamily(entry.targetFamily),
     targetId: normalizeOptionalString(entry.targetId),
@@ -644,7 +667,7 @@ function normalizeMenuEntries(
 function createDefaultMenuEntry(idBase: string, menuFamily: string): MenuEntryDefinition {
   return {
     id: `${idBase}.${slugifyMenuFamily(menuFamily)}`,
-    label: menuFamily,
+    label: resolveMenuFamilyLabel(menuFamily),
     menuFamily,
     targetFamily: "info",
     targetId: "",
@@ -664,6 +687,34 @@ function createDefaultLocationMenuEntries(
       : DEFAULT_BUILDING_MENU_FAMILIES;
   return defaultFamilies.map((menuFamily) =>
     createDefaultMenuEntry(`${locationId}.menu`, menuFamily)
+  );
+}
+
+function suggestLocationMenuFamily(
+  family: ScriptEditorLocationFamily,
+  index: number
+): string {
+  const defaults =
+    family === "cities"
+      ? DEFAULT_CITY_MENU_FAMILIES
+      : DEFAULT_BUILDING_MENU_FAMILIES;
+  const resolvedIndex = Math.max(0, Math.min(index, defaults.length - 1));
+  return defaults[resolvedIndex] ?? defaults[0] ?? "management";
+}
+
+function suggestMenuFamilyByIndex(index: number): string {
+  return (
+    DEFAULT_BUILDING_MENU_FAMILIES[index] ??
+    DEFAULT_CITY_MENU_FAMILIES[index] ??
+    "management"
+  );
+}
+
+function resolveMenuFamilyLabel(menuFamily: string, index?: number): string {
+  const normalizedMenuFamily = normalizeOptionalString(menuFamily);
+  return (
+    MENU_FAMILY_LABELS[normalizedMenuFamily] ??
+    (typeof index === "number" ? `菜单项 ${index + 1}` : "菜单项")
   );
 }
 

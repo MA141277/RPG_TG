@@ -37,7 +37,7 @@
 - `A new open successor version now exists and is the only lawful active Blueprint version.`
 - `The current active version was created on 2026-07-26 from the operator-approved unified requirement sheet covering Script Editor content format, runtime layout, runtime UI layering, covered-module capability completion, event-only routing, and no-compatibility full-chain convergence.`
 - `The current active version now executes through queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance after queue.runtime-layout-registry-and-ui-layering-convergence closed honestly with repository-sync success through commit 242272c4 on origin/mod-first-dev.`
-- `Resume from the active queue doc and its live evidence-anchor-reconcile task rather than re-running admission or reopening the closed earlier queues from project entry.`
+- `Resume from the active queue doc and its live full-chain-consistency-and-acceptance-proof task rather than re-running admission or reopening the closed earlier queues from project entry.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `Closed versions remain historical evidence only and must not be resumed implicitly while this open successor version owns current execution truth.`
 

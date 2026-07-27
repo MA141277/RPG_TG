@@ -75,7 +75,7 @@
   - `queue.stage-host-binding-and-menu-resource-runtime-convergence is now closed honestly with accepted compatibility residue recorded after ACC-FORMAT-003 closeout and remote-sync success.`
   - `queue.event-owned-routing-dialogue-playable-settlement-convergence is now closed honestly after ACC-FORMAT-004 closeout plus repository-sync success through commit 0daa903a on origin/mod-first-dev.`
   - `queue.runtime-layout-registry-and-ui-layering-convergence is now closed honestly after ACC-FORMAT-005 closeout plus repository-sync success through commit 242272c4 on origin/mod-first-dev.`
-  - `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance is now the admitted active queue, and task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile is now the live active task for ACC-FORMAT-006.`
+  - `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance is now the admitted active queue, and task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof is now again the live active task for ACC-FORMAT-006 after closeout review failed on manual Script Editor inspection.`
 
 ### Admission Review Record
 
@@ -157,11 +157,11 @@
 - receipt_reason_basis:
   - `The approved phase order and the completed closeout-plus-sync truth for queue.runtime-layout-registry-and-ui-layering-convergence make queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance the uniquely lawful next admission.`
 - receipt_active_queue: `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance`
-- receipt_active_task: `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile`
+- receipt_active_task: `task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof`
 - receipt_queue_goal:
   - `Prove full-chain authoring/export/import/loading/preview/runtime consistency, fail-closed rejection, and final acceptance on top of the closed earlier queues.`
 - receipt_next_step:
-  - `Continue from queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance on its evidence-anchor-reconcile task. Earlier implementation-bearing queues are now closed and synced, so the lawful next work is freezing the remaining ACC-FORMAT-006 chain-consistency and acceptance boundary before final implementation proof and version closeout review.`
+  - `Continue from queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance on its full-chain-consistency-and-acceptance-proof task. Earlier implementation-bearing queues remain closed, but closeout review did not pass because manual Script Editor inspection found unresolved creator-visible gaps inside ACC-FORMAT-006. The lawful next work is inventorying and repairing or explicitly routing those contradictions before another closeout attempt.`
 - receipt_human_action: `none-required`
 - receipt_internal_analysis_exposed: `false`
 
@@ -255,7 +255,7 @@
 - verification_adequacy_check:
   - `Governed-doc verification must pass before this successor version shell is considered synchronized.`
 - next_lawful_action_check:
-  - `Resume task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile.`
+  - `Resume task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof.`
 
 ### Progress Log
 
@@ -292,4 +292,10 @@
 - `2026-07-27`: `ACC-FORMAT-005 progress is now reconciled with the landed slice-A and slice-B cutover work. The active queue still remains on task.runtime-layout-registry-and-ui-layering-convergence.registry-owned-layout-contract-cutover, but loader/project-parser rejection, top-level menu-authoring fail-closed behavior, and runtime-materializer removal of legacy arrangement action-menu items are now recorded as landed proof while the next lawful step becomes fresh verification and review toward possible queue-closeout-gate promotion.`
 - `2026-07-27`: `Fresh ACC-FORMAT-005 verification is now fully green on the converged path: cmd /c npm run build:test, node --test tests/robustness.test.cjs, cmd /c npm run lint:blueprints, cmd /c npm run lint:blueprint-skill, and cmd /c npm run blueprint:governance:check all passed. Existing layout persistence/rendering coverage plus the new parser/authoring/materializer fail-closed guards now justify promoting the active queue from implementation into task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate rather than continuing more same-family implementation.`
 - `2026-07-27`: `queue.runtime-layout-registry-and-ui-layering-convergence closeout is now complete. ACC-FORMAT-005 remains execution-closed with no same-family residue, repository-sync succeeded through commit 242272c4 on origin/mod-first-dev, and no active task remains in that queue.`
-- `2026-07-27`: `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance is now admitted as the uniquely lawful next queue under the approved phase order. task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile is now the live active task for ACC-FORMAT-006.`
+- `2026-07-27`: `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance is now admitted as the uniquely lawful next queue under the approved phase order. task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.evidence-anchor-reconcile initially became the live active task for ACC-FORMAT-006.`
+- `2026-07-27`: `ACC-FORMAT-006 evidence lock is now complete. The required-final queue has frozen its exact proof surface on the current authoring/export/import/preview/startup/runtime chain, fail-closed rejection anchors, and bounded same-queue repair scope, so task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof is now the live active task.`
+- `2026-07-27`: `Fresh ACC-FORMAT-006 bounded proof is now green locally: cmd /c npm run build:test and node --test tests/robustness.test.cjs both passed on the frozen full-chain surface, and no fresh contradictory same-family gap was found that required reopening implementation.`
+- `2026-07-27`: `The required-final queue therefore promotes from task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof into task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.queue-closeout-review-and-version-handoff. The live work is now honest closeout judgement, repository-sync truth, and lawful version handoff routing.`
+- `2026-07-27`: `Current queue closeout review does not pass. Manual Script Editor inspection reported multiple still-unfixed creator-visible content gaps, so ACC-FORMAT-006 cannot currently be accepted on the claimed surface despite the bounded automated proof staying green.`
+- `2026-07-27`: `The required-final queue therefore returns from task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.queue-closeout-review-and-version-handoff to task.preview-runtime-loading-full-chain-consistency-and-final-acceptance.full-chain-consistency-and-acceptance-proof. The version remains on the same active queue, and the lawful next work is explicit contradiction inventory plus repair or routing before another closeout attempt.`
+- `2026-07-27`: `One concrete ACC-FORMAT-006 contradiction is now explicitly routed: the operator-requested temporary rollback of runtime layout consumption across normal startup, JSON import startup, built-in startup, and Script Editor runtime preview while preserving authored layout data. The version absorbs this as same-queue contradiction repair inside ACC-FORMAT-006 instead of reopening ACC-FORMAT-005 by default, with boundary lock in docs/superpowers/specs/2026-07-27-runtime-layout-runtime-consumption-disable-design.md and execution plan in docs/superpowers/plans/2026-07-27-runtime-layout-runtime-consumption-disable-implementation.md.`

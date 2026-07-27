@@ -160,6 +160,7 @@ test(
 
     const city = createDefaultScriptEditorCityRecord(0);
 
+    assert.equal(city.name, "新城市 1");
     assert.equal(city.mapPlacement?.placementMode, "coordinate");
     assert.equal(city.mapPlacement?.x, 0);
     assert.equal(city.mapPlacement?.y, 0);

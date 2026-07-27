@@ -4452,7 +4452,8 @@ test("script editor runtime preview launches from current in-memory project data
   assert.doesNotMatch(previewMethod, /persistScriptEditorProjectDraftBeforeExport/);
   assert.match(mainSource, /onStartLoadedScenarioPack:\s*startLoadedScenarioPackWithLoading/);
   assert.match(mainSource, /async function startLoadedScenarioPackWithLoading\(\s*scenarioPack:\s*ScenarioPackDefinition\s*\)/);
-  assert.match(mainSource, /filePath:\s*`preview:\$\{scenarioPack\.id\}`/);
+  assert.match(mainSource, /sanitizeScenarioPackForRuntimePreview\(scenarioPack\)/);
+  assert.match(mainSource, /filePath:\s*`preview:\$\{previewScenarioPack\.id\}`/);
   const loadedPreviewHelper = mainSource.slice(
     mainSource.indexOf("async function startLoadedScenarioPackWithLoading("),
     mainSource.indexOf("async function prepareScenarioPackCharacterSelection(")
@@ -4509,6 +4510,41 @@ test("script editor runtime preview keeps failures in the editor and exposes exi
   assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-session-banner\s*{[\s\S]*?top:\s*16px;[\s\S]*?right:\s*16px;/);
   assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-session-banner\s*{[\s\S]*?z-index:\s*2001;/);
   assert.match(mainUiStyles, /pointer-events:\s*auto/);
+});
+
+test("runtime preview strips deferred city-entry story bootstrap from scenario packs", () => {
+  const {
+    sanitizeScenarioPackForRuntimePreview,
+  } = require("../.test-dist/application/startup/scenario-preview-sanitizer.js");
+
+  const scenarioPack = {
+    id: "pack.preview",
+    title: "Preview Pack",
+    scenarioProfile: {
+      id: "scenario.preview",
+      title: "Preview",
+      playerCharacterId: "person.hero",
+      chapterId: "chapter.preview",
+      initialLocation: {
+        mapId: "map.demo",
+        cityId: "city.preview",
+        houseId: null,
+        view: "city",
+      },
+      launchPolicy: {
+        characterSelection: "shell",
+        entryEventTiming: "after-map-entry",
+      },
+      entryEventId: "event.preview.opening",
+    },
+  };
+
+  const sanitized = sanitizeScenarioPackForRuntimePreview(scenarioPack);
+
+  assert.equal(sanitized.scenarioProfile.entryEventId, undefined);
+  assert.deepEqual(sanitized.scenarioProfile.launchPolicy, {
+    characterSelection: "shell",
+  });
 });
 
 test("script editor settlement authoring syncs creator inputs before preview export", () => {
@@ -10774,6 +10810,72 @@ test(
   }
 );
 
+test("script editor menu authoring defaults use Chinese creator-facing copy", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const {
+    listScriptEditorLocationMenuBundles,
+  } = require("../.test-dist/application/script-editor/menu-authoring.js");
+
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "menu-copy",
+    title: "Menu Copy",
+  });
+
+  const cityMenuBundle = listScriptEditorLocationMenuBundles(
+    project,
+    "cities",
+    project.cities[0].id
+  )[0];
+  const buildingMenuBundle = listScriptEditorLocationMenuBundles(
+    project,
+    "buildings",
+    project.buildings[0].id
+  )[0];
+
+  assert.equal(cityMenuBundle.instanceTitle.includes("菜单"), true);
+  assert.equal(cityMenuBundle.resourceTitle.includes("菜单"), true);
+  assert.deepEqual(
+    cityMenuBundle.entries.slice(0, 4).map((entry) => entry.label),
+    ["概况", "情报", "地点", "管理"]
+  );
+  assert.deepEqual(
+    buildingMenuBundle.entries.slice(0, 4).map((entry) => entry.label),
+    ["对话", "交易", "工作", "休息"]
+  );
+});
+
+test("default scenario city menu resources keep Chinese menu copy", () => {
+  const menuResources = JSON.parse(
+    fs.readFileSync(
+      path.join(process.cwd(), "src/content/scenario-packs/zhuyuanzhang/menu-resources.json"),
+      "utf8"
+    )
+  );
+  const menuInstances = JSON.parse(
+    fs.readFileSync(
+      path.join(process.cwd(), "src/content/scenario-packs/zhuyuanzhang/menu-instances.json"),
+      "utf8"
+    )
+  );
+  const cityMenuResource = menuResources.find(
+    (resource) => resource.id === "menu-resource.city.default"
+  );
+  const cityMenuInstance = menuInstances.find(
+    (instance) => instance.id === "menu-instance.city.default"
+  );
+
+  assert.ok(cityMenuResource);
+  assert.ok(cityMenuInstance);
+  assert.equal(cityMenuResource.title, "城市菜单");
+  assert.equal(cityMenuInstance.title, "城市菜单");
+  assert.deepEqual(
+    cityMenuResource.entries.slice(0, 5).map((entry) => entry.label),
+    ["概况", "情报", "地点", "管理", "化缘"]
+  );
+});
+
 test(
   "script editor project parser rejects legacy building arrangement action-menu items",
   () => {
@@ -12251,6 +12353,24 @@ test("script editor selector UX queue replaces project-backed location id text f
     mainUiSource,
     /<select[^>]+data-script-editor-building-entry-field="onEnterEventId"/
   );
+});
+
+test("script editor menu tab hides runtime ids and english protocol fields from creators", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    mainUiSource,
+    /data-script-editor-location-menu-field="id"/
+  );
+  assert.doesNotMatch(mainUiSource, /bundle\.instanceId\)\}" readonly/);
+  assert.doesNotMatch(mainUiSource, /bundle\.resourceId\)\}" readonly/);
+  assert.doesNotMatch(mainUiSource, />dialogue<\/option>/);
+  assert.doesNotMatch(mainUiSource, />event<\/option>/);
+  assert.doesNotMatch(mainUiSource, />trade<\/option>/);
+  assert.doesNotMatch(mainUiSource, />minigame<\/option>/);
 });
 
 test("script editor visual alignment queue separates sidebar secondary list and editor stage with borders", () => {
@@ -17468,6 +17588,74 @@ test("city menu runtime resolves formal menu resource and instance chains into r
   );
 });
 
+test("city menu runtime localizes default panel labels when menu entries omit custom copy", () => {
+  const {
+    resolveCityMenuEntries,
+  } = require("../.test-dist/application/city-menu/city-menu.js");
+
+  const entries = resolveCityMenuEntries({
+    cityDefinition: {
+      id: "city.start",
+      name: "Start City",
+      regionId: "region.default",
+      mapNodeId: "city.start",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 10,
+      specialDemand: [],
+      menuInstanceIds: ["menu-instance.city.start"],
+    },
+    playerCharacter: {
+      id: "person.player",
+      name: "Player Monk",
+      title: "Monk",
+    },
+    menuResourcesById: {
+      "menu-resource.city.start": {
+        id: "menu-resource.city.start",
+        title: "City Menu",
+        entries: [
+          {
+            id: "menu-entry.city.start.overview",
+            label: "",
+            menuFamily: "overview",
+            targetFamily: "info",
+            targetId: "city-panel.overview",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
+          {
+            id: "menu-entry.city.start.locations",
+            label: "",
+            menuFamily: "locations",
+            targetFamily: "info",
+            targetId: "city-panel.locations",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
+        ],
+      },
+    },
+    menuInstancesById: {
+      "menu-instance.city.start": {
+        id: "menu-instance.city.start",
+        title: "Start City Menu",
+        resourceId: "menu-resource.city.start",
+      },
+    },
+  });
+
+  assert.deepEqual(
+    entries.map((entry) => entry.label),
+    ["概况", "地点"]
+  );
+});
+
 test("city entry artwork class comes from city entry artwork id", () => {
   const cityViewSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/views/city/city-view.ts"),
@@ -17478,6 +17666,8 @@ test("city entry artwork class comes from city entry artwork id", () => {
   assert.match(cityViewSource, /cityEntry\.artworkId/);
   assert.match(cityViewSource, /c-kulan-house-card--tea-house/);
   assert.match(cityViewSource, /c-kulan-house-card--temple-house/);
+  assert.match(cityViewSource, /返回地图/);
+  assert.doesNotMatch(cityViewSource, /data-action="enter-city-3d"/);
 });
 
 test("city click handling no longer exposes direct house-id entry protocol", () => {

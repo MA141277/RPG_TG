@@ -181,7 +181,7 @@ export function createDefaultScriptEditorCityRecord(
     typeof indexOrId === "string"
       ? indexOrId
       : createDefaultScriptEditorCanonicalId("cities", indexOrId);
-  const name = `New City ${suffix}`;
+  const name = `新城市 ${suffix}`;
   return {
     id,
     name,

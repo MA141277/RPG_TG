@@ -1,11 +1,11 @@
 [
   {
     "id": "menu-resource.city.default",
-    "title": "City Menu",
+    "title": "城市菜单",
     "entries": [
       {
         "id": "menu-entry.city.default.overview",
-        "label": "椋庡湡浜烘儏",
+        "label": "概况",
         "menuFamily": "overview",
         "targetFamily": "info",
         "targetId": "city-panel.overview",
@@ -15,7 +15,7 @@
       },
       {
         "id": "menu-entry.city.default.intel",
-        "label": "鎯呮姤",
+        "label": "情报",
         "menuFamily": "intel",
         "targetFamily": "info",
         "targetId": "city-panel.intel",
@@ -25,7 +25,7 @@
       },
       {
         "id": "menu-entry.city.default.locations",
-        "label": "鍦扮偣",
+        "label": "地点",
         "menuFamily": "locations",
         "targetFamily": "info",
         "targetId": "city-panel.locations",
@@ -35,7 +35,7 @@
       },
       {
         "id": "menu-entry.city.default.management",
-        "label": "绠＄悊",
+        "label": "管理",
         "menuFamily": "management",
         "targetFamily": "info",
         "targetId": "city-panel.management",
@@ -45,7 +45,7 @@
       },
       {
         "id": "menu-entry.city.default.begging",
-        "label": "鍖栫紭",
+        "label": "化缘",
         "menuFamily": "begging",
         "targetFamily": "minigame",
         "targetId": "city-begging",
@@ -57,7 +57,7 @@
   },
   {
     "id": "menu-resource.house.kulan.temple.primary",
-    "title": "皇觉寺 Building Menu",
+    "title": "皇觉寺菜单",
     "entries": [
       {
         "id": "review",
@@ -123,7 +123,7 @@
   },
   {
     "id": "menu-resource.home.template.primary",
-    "title": "自宅 Building Menu",
+    "title": "自宅菜单",
     "entries": [
       {
         "id": "rest",
@@ -149,7 +149,7 @@
   },
   {
     "id": "menu-resource.house.template.leader_residence.primary",
-    "title": "将领府邸 Building Menu",
+    "title": "将领府邸菜单",
     "entries": [
       {
         "id": "review",
@@ -175,7 +175,7 @@
   },
   {
     "id": "menu-resource.house.template.keep.primary",
-    "title": "帅府 Building Menu",
+    "title": "帅府菜单",
     "entries": [
       {
         "id": "review",
@@ -211,7 +211,7 @@
   },
   {
     "id": "menu-resource.house.template.tea_house.primary",
-    "title": "茶馆 Building Menu",
+    "title": "茶馆菜单",
     "entries": [
       {
         "id": "talk",
@@ -257,7 +257,7 @@
   },
   {
     "id": "menu-resource.house.template.market.primary",
-    "title": "货栈 Building Menu",
+    "title": "货栈菜单",
     "entries": [
       {
         "id": "talk",
@@ -303,7 +303,7 @@
   },
   {
     "id": "menu-resource.house.template.grain_shop.primary",
-    "title": "粮铺 Building Menu",
+    "title": "粮铺菜单",
     "entries": [
       {
         "id": "trade",
@@ -339,7 +339,7 @@
   },
   {
     "id": "menu-resource.house.template.medicine_house.primary",
-    "title": "药铺 Building Menu",
+    "title": "药铺菜单",
     "entries": [
       {
         "id": "treatment",
@@ -375,7 +375,7 @@
   },
   {
     "id": "menu-resource.house.template.inn.primary",
-    "title": "客栈 Building Menu",
+    "title": "客栈菜单",
     "entries": [
       {
         "id": "talk",
@@ -431,7 +431,7 @@
   },
   {
     "id": "menu-resource.house.template.temple.primary",
-    "title": "寺庙 Building Menu",
+    "title": "寺庙菜单",
     "entries": [
       {
         "id": "review",

@@ -2087,14 +2087,85 @@ export class MainUiFlow {
       : SCRIPT_EDITOR_SETTLEMENT_SET_ONLY_OPERATION_OPTIONS;
   }
 
-  getScriptEditorLocationMenuTargetOptions(targetFamily) {
+  getScriptEditorLocationMenuTargetOptions(targetFamily, selectedValue = "") {
     const familyByTargetFamily = {
       dialogue: "dialogues",
       event: "events",
       minigame: "minigames",
     };
     const family = familyByTargetFamily[targetFamily] ?? "";
-    return family.length === 0 ? [] : this.getScriptEditorProjectRecordOptions(family);
+    const baseOptions =
+      family.length === 0 ? [] : this.getScriptEditorCreatorRecordOptions(family);
+    return this.getScriptEditorLocationMenuOptionsWithFallback(
+      baseOptions,
+      selectedValue,
+      "当前目标引用已失效"
+    );
+  }
+
+  getScriptEditorLocationMenuPurposeOptions(locationFamily, selectedValue = "") {
+    const baseOptions =
+      locationFamily === "cities"
+        ? [
+            { value: "overview", label: "概况" },
+            { value: "intel", label: "情报" },
+            { value: "locations", label: "地点" },
+            { value: "management", label: "管理" },
+            { value: "begging", label: "化缘" },
+          ]
+        : [
+            { value: "dialogue", label: "对话" },
+            { value: "trade", label: "交易" },
+            { value: "work", label: "工作" },
+            { value: "rest", label: "休息" },
+            { value: "intel", label: "情报" },
+            { value: "minigame", label: "小游戏" },
+            { value: "management", label: "管理" },
+            { value: "leave", label: "离开" },
+          ];
+    return this.getScriptEditorLocationMenuOptionsWithFallback(
+      baseOptions,
+      selectedValue,
+      "当前用途待整理"
+    );
+  }
+
+  getScriptEditorLocationMenuTargetFamilyOptions(selectedValue = "") {
+    return this.getScriptEditorLocationMenuOptionsWithFallback(
+      [
+        { value: "dialogue", label: "对话" },
+        { value: "event", label: "事件" },
+        { value: "trade", label: "交易" },
+        { value: "minigame", label: "小游戏" },
+        { value: "info", label: "信息面板" },
+      ],
+      selectedValue,
+      "当前类型待整理"
+    );
+  }
+
+  getScriptEditorLocationMenuOptionsWithFallback(
+    options,
+    selectedValue,
+    missingLabel
+  ) {
+    const normalizedSelectedValue =
+      typeof selectedValue === "string" ? selectedValue.trim() : "";
+    const normalizedOptions = Array.isArray(options) ? options : [];
+    if (
+      normalizedSelectedValue.length === 0 ||
+      normalizedOptions.some((option) => option?.value === normalizedSelectedValue)
+    ) {
+      return normalizedOptions;
+    }
+
+    return [
+      {
+        value: normalizedSelectedValue,
+        label: missingLabel,
+      },
+      ...normalizedOptions,
+    ];
   }
 
   getScriptEditorPersonCityOptions() {
@@ -4010,14 +4081,14 @@ export class MainUiFlow {
         <div class="c-script-editor-location-menu__header">
           <div>
             <p class="c-script-editor-editor-card__eyebrow">${isCityFamily ? "城市菜单" : "建筑菜单"}</p>
-            <h3 class="c-script-editor-editor-card__title">${isCityFamily ? "位置挂载的菜单实例" : "入口挂载的菜单实例"}</h3>
+            <h3 class="c-script-editor-editor-card__title">${isCityFamily ? "当前城市挂载的菜单内容" : "当前建筑挂载的菜单内容"}</h3>
           </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-location-menu-entry">
             新增菜单项
           </button>
         </div>
         <p class="c-script-editor-editor-card__hint">
-          菜单入口现在归属于项目级 menu resource，并通过 location.menuInstanceIds 挂到城市或建筑；这里编辑的是当前挂载实例下的正式资源内容。
+          这里编辑作者视角下的菜单名称、用途和跳转对象。运行时资源与实例仍会在内部维护，但不会直接暴露为创作字段。
         </p>
         <div class="c-script-editor-location-menu__list">
           ${
@@ -4025,7 +4096,7 @@ export class MainUiFlow {
               ? `
                 <article class="c-script-editor-location-menu__item">
                   <p class="c-script-editor-editor-card__hint">
-                    当前地点还没有挂载 menu instance。点击“新增菜单项”会自动创建主实例与资源。
+                    当前地点还没有菜单内容。点击“新增菜单项”后会自动建立内部菜单资源，并直接进入可编辑状态。
                   </p>
                 </article>
               `
@@ -4036,7 +4107,7 @@ export class MainUiFlow {
               ? `
                 <article class="c-script-editor-location-menu__item">
                   <p class="c-script-editor-editor-card__hint">
-                    检测到无法解析的 menu instance 引用：${escapeHtml(unresolvedInstanceIds.join(", "))}。请先修复辅助面板中的菜单引用问题。
+                    检测到当前地点存在无法解析的菜单挂载引用，请先修复菜单资源或实例关联，再继续编辑。
                   </p>
                 </article>
               `
@@ -4048,20 +4119,12 @@ export class MainUiFlow {
                 <article class="c-script-editor-location-menu__item" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
                   <div class="c-script-editor-form-grid">
                     <label class="c-script-editor-form-field">
-                      <span>实例标题</span>
+                      <span>菜单分组标题</span>
                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.instanceTitle)}" data-script-editor-location-menu-instance-field="title" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
                     </label>
                     <label class="c-script-editor-form-field">
-                      <span>资源标题</span>
+                      <span>菜单内容标题</span>
                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.resourceTitle)}" data-script-editor-location-menu-resource-field="title" data-script-editor-location-menu-resource-id="${escapeHtml(bundle.resourceId)}" />
-                    </label>
-                    <label class="c-script-editor-form-field">
-                      <span>实例 ID</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.instanceId)}" readonly />
-                    </label>
-                    <label class="c-script-editor-form-field">
-                      <span>资源 ID</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.resourceId)}" readonly />
                     </label>
                   </div>
                   <div class="c-script-editor-location-menu__list">
@@ -4071,36 +4134,39 @@ export class MainUiFlow {
                           <article class="c-script-editor-location-menu__item">
                   <div class="c-script-editor-form-grid">
                     <label class="c-script-editor-form-field">
-                      <span>菜单 ID</span>
-                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.id)}" data-script-editor-location-menu-field="id" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
-                    </label>
-                    <label class="c-script-editor-form-field">
-                      <span>中文名称</span>
+                      <span>菜单名称</span>
                             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.label)}" data-script-editor-location-menu-field="label" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
                     </label>
                     <label class="c-script-editor-form-field">
-                      <span>所属功能族</span>
-                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.menuFamily)}" data-script-editor-location-menu-field="menuFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
-                    </label>
-                    <label class="c-script-editor-form-field">
-                      <span>绑定目标类型</span>
-                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
-                        ${["dialogue", "event", "trade", "minigame", "info"]
-                          .map(
-                            (targetFamily) => `
-                              <option value="${targetFamily}" ${entry.targetFamily === targetFamily ? "selected" : ""}>${targetFamily}</option>
-                            `
-                          )
-                          .join("")}
+                      <span>菜单用途</span>
+                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="menuFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
+                        ${this.renderScriptEditorSelectOptions(
+                          this.getScriptEditorLocationMenuPurposeOptions(family, entry.menuFamily),
+                          entry.menuFamily,
+                          "未设置菜单用途"
+                        )}
                       </select>
                     </label>
                     <label class="c-script-editor-form-field">
-                      <span>绑定目标</span>
+                      <span>跳转类型</span>
+                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
+                        ${this.renderScriptEditorSelectOptions(
+                          this.getScriptEditorLocationMenuTargetFamilyOptions(entry.targetFamily),
+                          entry.targetFamily,
+                          "未设置跳转类型"
+                        )}
+                      </select>
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>跳转对象</span>
                             <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetId" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
                         ${this.renderScriptEditorSelectOptions(
-                          this.getScriptEditorLocationMenuTargetOptions(entry.targetFamily),
+                          this.getScriptEditorLocationMenuTargetOptions(
+                            entry.targetFamily,
+                            entry.targetId
+                          ),
                           entry.targetId,
-                          "未选择绑定目标"
+                          "未选择跳转对象"
                         )}
                       </select>
                     </label>

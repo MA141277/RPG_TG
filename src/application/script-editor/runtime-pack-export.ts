@@ -2429,6 +2429,18 @@ function lowerRuntimeEventBinding(
     return null;
   }
 
+  const ownerId =
+    typeof binding.owner.id === "string" ? binding.owner.id.trim() : "";
+  if (ownerId.length === 0) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `${fieldPath}.owner.id`,
+      message:
+        "Event binding runtime export requires a concrete owner id and does not allow empty wildcard owners.",
+    });
+    return null;
+  }
+
   if (!isSupportedEventBindingTrigger(binding.trigger)) {
     diagnostics.push({
       code: "unsupported-lowering",
@@ -2463,9 +2475,7 @@ function lowerRuntimeEventBinding(
     eventId: binding.eventId,
     owner: {
       family: binding.owner.family,
-      ...(binding.owner.id == null || binding.owner.id.length === 0
-        ? {}
-        : { id: binding.owner.id }),
+      id: ownerId,
     },
     trigger: {
       timing: binding.trigger.timing,
