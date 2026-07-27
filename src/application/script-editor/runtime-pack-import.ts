@@ -247,8 +247,6 @@ export function importScenarioPackToScriptEditorProject(
   const importedLocationAccess = readLocationAccessFamily(rawPack);
   const cityNpcPools = readArrayFamily(rawPack, "cityNpcPools");
   const importedPeople = collectImportedPeople(pack.characters ?? [], cityNpcPools);
-  const importedPortraits = readPortraitFamily(rawPack);
-  const importedPortraitVariants = readPortraitVariantFamily(rawPack);
   const importedMapNodeById = indexImportedMapNodes(pack.maps ?? []);
   const importedCities = (pack.cities ?? []).map((city) =>
     applyImportedCityMapPlacement(
@@ -267,9 +265,7 @@ export function importScenarioPackToScriptEditorProject(
     storyPack: createStoryPackRecord(pack, rawPack),
     maps: readEntityArrayFamily(rawPack, "maps"),
     people: importedPeople.map((character) =>
-      normalizeScriptEditorPersonRecord(character as Record<string, unknown>, {
-        portraitVariants: importedPortraitVariants,
-      })
+      normalizeScriptEditorPersonRecord(character as Record<string, unknown>)
     ),
     cities: importedCities.map((city) =>
       normalizeScriptEditorCityRecord(
@@ -297,8 +293,8 @@ export function importScenarioPackToScriptEditorProject(
     valuables: pack.valuables ?? [],
     cityNpcPools,
     houseModuleDefaults: cloneObjectRecord(pack.houseModuleDefaults),
-    portraits: importedPortraits,
-    portraitVariants: importedPortraitVariants,
+    portraits: readPortraitFamily(rawPack),
+    portraitVariants: readPortraitVariantFamily(rawPack),
     cityPortraits: cloneStringRecord(pack.cityPortraits),
     historicalCharacters: pack.historicalCharacters ?? [],
     historicalCityRosters: readArrayFamily(rawPack, "historicalCityRosters"),

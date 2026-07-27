@@ -23,7 +23,6 @@ import type {
   MenuTargetFamily,
 } from "./menu";
 import type { DialogueSide } from "./dialogue";
-import type { CharacterFunction } from "./character";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
@@ -124,7 +123,6 @@ export type ScriptEditorTypedAttributeType =
   | "number"
   | "boolean"
   | "enum"
-  | "json"
   | "string";
 
 export type ScriptEditorTypedAttributeRecord = {
@@ -179,24 +177,6 @@ export type ScriptEditorBuildingEntryBinding = {
   returnTarget: string;
 };
 
-export type ScriptEditorPersonAttributeGroupPresentation =
-  | "basic-info"
-  | "ability-info"
-  | "skill-info"
-  | "list";
-
-export type ScriptEditorPersonAttributeGroupItem = {
-  fieldKey: string;
-  labelOverride?: string | undefined;
-};
-
-export type ScriptEditorPersonAttributeGroup = {
-  id: string;
-  title: string;
-  presentation: ScriptEditorPersonAttributeGroupPresentation;
-  items: ScriptEditorPersonAttributeGroupItem[];
-};
-
 export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
   name: string;
   personType?: "NPC" | "角色";
@@ -208,7 +188,6 @@ export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
   houseId?: string;
   portraitId?: string;
   portraitVariantId?: string | null | undefined;
-  attributeGroups?: ScriptEditorPersonAttributeGroup[];
   extendedAttributes?: ScriptEditorTypedAttributeRecord[];
   dialogueIds?: string[];
   eventIds?: string[];

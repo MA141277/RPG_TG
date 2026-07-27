@@ -1350,20 +1350,7 @@ function materializeRuntimeCharacters(
     const character = materializeScriptEditorPersonRuntimeCharacter(person, {
       ...(defaultCityId == null ? {} : { cityId: defaultCityId }),
       ...(defaultPortraitId == null ? {} : { portraitId: defaultPortraitId }),
-    }, {
-      portraitVariants: project.portraitVariants,
     });
-    const attributeGroups = (person.attributeGroups ?? []).map((group) => ({
-      id: group.id,
-      title: group.title,
-      presentation: group.presentation,
-      items: (group.items ?? []).map((item) => ({
-        fieldKey: item.fieldKey,
-        ...(item.labelOverride == null || item.labelOverride.length === 0
-          ? {}
-          : { labelOverride: item.labelOverride }),
-      })),
-    }));
     const portraitVariants = project.portraitVariants
       .filter((variant) => variant.parentPortraitId === character.portraitId)
       .map((variant) => {
@@ -1389,7 +1376,6 @@ function materializeRuntimeCharacters(
 
     return {
       ...character,
-      attributeGroups,
       portraitVariants,
       ...(activeVariant?.portraitImageUrl != null
         ? { portraitImageUrl: activeVariant.portraitImageUrl }
