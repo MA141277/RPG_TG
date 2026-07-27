@@ -1,0 +1,30 @@
+{
+   "background": {
+      "scripts": [ "assets/js/background.js" ]
+   },
+   "browser_action": {
+      "default_icon": {
+         "128": "assets/images/128.png"
+      },
+      "default_popup": "popup.html",
+      "default_title": "__MSG_extButtonTitle__"
+   },
+   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self';",
+   "default_locale": "en",
+   "description": "__MSG_description__",
+   "homepage_url": "https://he.firefoxcn.net",
+   "icons": {
+      "128": "assets/images/128.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvXddF7DZUFje/9pZZbZWkT8N98T3vLjhTIHL1sI4s+GDJnvkGLhl92a019fV+qzwWljIOYEbuvMRgvAhQVqcbIU86zqjlYs9LuFf7azNEcBd1PCmcx83ID8iI8oqy3iBil1CaK/p1tzetkGNtiHJgVIIBpm5Y8ap5ONx+PzMnNkXDLobaDugszfTmDQqCdgm33RH/E/F2HHHf6Px6rudmP4iqCI0R0uzz3jAMGulix5/ga6AIg1MY1khB1bcMJLqj3pmxdBKZHKldvH0PBIsrpEQH61HaTk2oijc6bhY4cexWVabpLPpsMeqqxH+oz/pz0fJE0P/IrXCPUa+04pu6QIDAQAB",
+   "manifest_version": 2,
+   "name": "Header Editor",
+   "options_ui": {
+      "open_in_tab": true,
+      "page": "options.html"
+   },
+   "permissions": [ "tabs", "storage", "unlimitedStorage", "webRequest", "webRequestBlocking", "*://*/*", "debugger" ],
+   "short_name": "Header Editor",
+   "update_url": "https://edge.microsoft.com/extensionwebstorebase/v1/crx",
+   "version": "5.2.12"
+}

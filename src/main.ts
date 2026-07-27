@@ -277,9 +277,14 @@ import {
   type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
 import {
+  DEFAULT_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST,
+  MAX_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST,
+  MIN_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST,
   beginCampaignCloudInteraction,
   endCampaignCloudInteraction,
+  getCampaignCloudTextureScaleBoost,
   requestCampaignCloudRender,
+  setCampaignCloudTextureScaleBoost,
   syncCampaignCloudWebGl,
 } from "./ui/views/map/campaign-cloud-webgl";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
@@ -597,6 +602,7 @@ let campaignMapDebugHomeState: CampaignMapDebugState = {
 let campaignTerrainStyleState: CampaignTerrainStyle = {
   ...DEFAULT_CAMPAIGN_TERRAIN_STYLE,
 };
+let campaignCloudTextureScaleBoostState = DEFAULT_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST;
 let hasAppliedInitialCampaignMapDebug = false;
 let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
@@ -3484,6 +3490,14 @@ appElement.addEventListener("input", (event) => {
     return;
   }
 
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-campaign-cloud-texture-scale-input")
+  ) {
+    handleCampaignCloudTextureScaleInput(targetElement);
+    return;
+  }
+
   if (handleLayoutEditorInput(event.target)) {
     return;
   }
@@ -6023,6 +6037,7 @@ function renderAppFrame(
   syncActivityQteLoop();
   syncCampaignTerrainWebGl(appRoot);
   syncCampaignCloudWebGl(appRoot);
+  syncCampaignCloudTextureScaleControl();
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
   syncTroopEditorInteractions(appRoot, {
     onOpenTroopManagement: (input) => {
@@ -6242,6 +6257,27 @@ function handleCampaignTerrainStyleInput(inputElement: HTMLInputElement): void {
   });
 }
 
+function handleCampaignCloudTextureScaleInput(inputElement: HTMLInputElement): void {
+  const nextValue = Number(inputElement.value);
+  if (!Number.isFinite(nextValue)) {
+    return;
+  }
+
+  campaignCloudTextureScaleBoostState = setCampaignCloudTextureScaleBoost(
+    clampCampaignCloudTextureScaleBoost(nextValue)
+  );
+  syncCampaignCloudTextureScaleControl();
+  requestCampaignCloudRender();
+}
+
+function clampCampaignCloudTextureScaleBoost(value: number): number {
+  return clamp(
+    value,
+    MIN_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST,
+    MAX_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST
+  );
+}
+
 function isCampaignTerrainStyleField(
   field: string | undefined
 ): field is keyof CampaignTerrainStyle {
@@ -6427,22 +6463,14 @@ function createCampaignMapZoomTargetState(nextScale: number): CampaignMapDebugSt
   );
   const currentScale = Math.max(campaignMapDebugState.scale, 0.0001);
   const scaleRatio = clampedScale / currentScale;
-  const currentTiltCos = Math.cos(
-    getCampaignTerrainCameraTiltRadiansForScale(currentScale)
-  );
-  const nextTiltCos = Math.cos(
-    getCampaignTerrainCameraTiltRadiansForScale(clampedScale)
-  );
-  const safeCurrentTiltCos =
-    Math.abs(currentTiltCos) < 0.0001 ? 1 : currentTiltCos;
+  const tiltScaleRatio =
+    getCampaignMapTiltConstrainedScaleFactor(clampedScale) /
+    getCampaignMapTiltConstrainedScaleFactor(currentScale);
 
   return {
     scale: clampedScale,
     offsetX: campaignMapDebugState.offsetX * scaleRatio,
-    offsetY:
-      campaignMapDebugState.offsetY *
-      scaleRatio *
-      (nextTiltCos / safeCurrentTiltCos),
+    offsetY: campaignMapDebugState.offsetY * tiltScaleRatio,
   };
 }
 
@@ -6546,11 +6574,34 @@ function interpolateCampaignMapState(
   to: CampaignMapDebugState,
   progress: number
 ): CampaignMapDebugState {
+  const interpolatedScale = from.scale + (to.scale - from.scale) * progress;
+  const fromScale = Math.max(from.scale, 0.0001);
+  const toScale = Math.max(to.scale, 0.0001);
+  const interpolatedTiltScaleFactor =
+    getCampaignMapTiltConstrainedScaleFactor(interpolatedScale);
+  const fromTiltScaleFactor = getCampaignMapTiltConstrainedScaleFactor(fromScale);
+  const toTiltScaleFactor = getCampaignMapTiltConstrainedScaleFactor(toScale);
+  const normalizedOffsetX =
+    from.offsetX / fromScale +
+    (to.offsetX / toScale - from.offsetX / fromScale) * progress;
+  const normalizedOffsetY =
+    from.offsetY / fromTiltScaleFactor +
+    (to.offsetY / toTiltScaleFactor - from.offsetY / fromTiltScaleFactor) *
+      progress;
+
   return {
-    scale: from.scale + (to.scale - from.scale) * progress,
-    offsetX: from.offsetX + (to.offsetX - from.offsetX) * progress,
-    offsetY: from.offsetY + (to.offsetY - from.offsetY) * progress,
+    scale: interpolatedScale,
+    offsetX: normalizedOffsetX * interpolatedScale,
+    offsetY: normalizedOffsetY * interpolatedTiltScaleFactor,
   };
+}
+
+function getCampaignMapTiltConstrainedScaleFactor(scale: number): number {
+  const safeScale = Math.max(scale, 0.0001);
+  const tiltCos = Math.cos(getCampaignTerrainCameraTiltRadiansForScale(safeScale));
+  const safeTiltCos = Math.abs(tiltCos) < 0.0001 ? 1 : tiltCos;
+
+  return safeScale * safeTiltCos;
 }
 
 function setCampaignMapDebugState(nextState: CampaignMapDebugState): void {
@@ -6673,6 +6724,24 @@ function syncCampaignTerrainStyleControl(
   }
   if (valueElement != null) {
     valueElement.textContent = formattedValue;
+  }
+}
+
+function syncCampaignCloudTextureScaleControl(): void {
+  campaignCloudTextureScaleBoostState = getCampaignCloudTextureScaleBoost();
+  const inputElement = appRoot.querySelector<HTMLInputElement>(
+    "[data-campaign-cloud-texture-scale-input]"
+  );
+  const valueElement = appRoot.querySelector<HTMLElement>(
+    "[data-campaign-cloud-texture-scale-value]"
+  );
+  const formattedValue = campaignCloudTextureScaleBoostState.toFixed(2);
+
+  if (inputElement != null && inputElement !== document.activeElement) {
+    inputElement.value = formattedValue;
+  }
+  if (valueElement != null) {
+    valueElement.textContent = `${formattedValue}x`;
   }
 }
 

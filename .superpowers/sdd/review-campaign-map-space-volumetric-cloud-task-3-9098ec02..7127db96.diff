@@ -1,0 +1,343 @@
+﻿# Review package
+
+## Commits
+7127db96 docs: record campaign map-space cloud verification
+
+## Stat
+ .tmp/campaign-map-space-volumetric-cloud.png       | Bin 0 -> 605330 bytes
+ docs/change-log.md                                 |   6 +++
+ ...-26-campaign-map-space-volumetric-cloud-plan.md |  60 +++++++++++----------
+ docs/superpowers/project-progress.md               |  12 +++--
+ 4 files changed, 46 insertions(+), 32 deletions(-)
+
+## Diff
+diff --git a/.tmp/campaign-map-space-volumetric-cloud.png b/.tmp/campaign-map-space-volumetric-cloud.png
+new file mode 100644
+index 00000000..456be61f
+Binary files /dev/null and b/.tmp/campaign-map-space-volumetric-cloud.png differ
+diff --git a/docs/change-log.md b/docs/change-log.md
+index 4da60b4e..af647511 100644
+--- a/docs/change-log.md
++++ b/docs/change-log.md
+@@ -1,14 +1,20 @@
+ ﻿# 变更记录
+ 
+ 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
+ 
++## 2026-07-26 Campaign Map-Space Volumetric Cloud Slab
++
++- `campaign-cloud-webgl.ts` now uploads terrain-owned cloud projection uniforms so the cloud shader can render the campaign cloud body in terrain/map space while preserving the existing reveal texture lifecycle.
++- `campaign-cloud.frag.glsl` replaces the primary screen-space cloud sea with a conservative fixed-budget map-space cloud slab raymarch using procedural density, wind drift, lightweight top/bottom lighting, and early alpha termination.
++- The change keeps explored Hex reveal masks, drag/zoom animation freeze, terrain chunk reveal holds, and `window.rpgCloud` behavior within the existing cloud overlay boundary; it does not modify exploration state, terrain height, navigation, map nodes, save data, or `src/main.ts`.
++
+ ## 2026-07-24 Faction Review Flow
+ 
+ - Normalized temple and keep review cadence into shared review semantics for assignment tables, contribution grades, praise, policy panels, advice prompt, and rank-gated task choices.
+ - Added faction-internal merit rank tables for temple and Red Turban identities, with task choices displaying minimum identity requirements.
+ - Added structured review assignment and policy panel view models so application modules no longer pass table-like HTML or paragraph-only reports.
+ 
+ ## 2026-07-24 Keep Faction Review Normalization
+ 
+ ### Changed
+ - keep house 评定流程改为 normalized cadence：开场、结构化委任表、表彰、形势、方略面板、进言选择、委任选择、已委任。
+diff --git a/docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md b/docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md
+index 7b460823..7fc35d4c 100644
+--- a/docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md
++++ b/docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md
+@@ -3,41 +3,45 @@
+ > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+ 
+ **Goal:** Replace the campaign map's primarily screen-space cloud body with a conservative map-space volumetric cloud slab that stays visually aligned with the 3D Hex terrain.
+ 
+ **Architecture:** Keep clouds as a UI overlay owned by `campaign-cloud-webgl.ts`. Add a read-only terrain projection uniform helper in `campaign-terrain-webgl.ts`, pass those uniforms to `campaign-cloud.frag.glsl`, and raymarch a small fixed-budget cloud slab in terrain/map space while preserving the existing Hex reveal mask and dissolve lifecycle.
+ 
+ **Tech Stack:** TypeScript, raw GLSL imports through Vite, WebGL 1 uniforms, Node test runner, `tests/robustness.test.cjs`, browser runtime verification, `npm run build:test`, `npm run typecheck`, `npm run build`, `npm run lint:plans`.
+ 
+ ## Execution State
+ 
+-- Status: `running`
++- Status: `completed-but-open`
+ - Last Updated: `2026-07-26`
+-- Current Focus: `Task 3: verification and visual QA`
+-- Next Step: `Dispatch Task 3 implementer subagent.`
+-- Verification: `Task 2 targeted cloud shader/lifecycle tests passed and npm run typecheck passed; final Task 2 commit hash is recorded in the Task 2 report.`
++- Current Focus: `Implementation and verification complete locally; review/push remain before closeout.`
++- Next Step: `Review final diff and push when requested; do not mark closed while remote push is absent and known child 27 baseline remains unresolved.`
++- Verification: `npm run lint:plans passed for 69 files; npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs } passed 5/5 tests with 0 failures; npm run typecheck passed via tsc --noEmit -p tsconfig.json; npm run build passed with exit code 0 and existing Vite asset/chunk warnings; browser visual QA on http://127.0.0.1:5173/ reached ready terrain/cloud canvases, panned/zoomed the map, confirmed screenshot composition with terrain visible below cloud and UI above, and captured D:\RPG_TG\.tmp\campaign-map-space-volumetric-cloud.png.`
+ - Notes: `The prior campaign fort/city renderer child remains completed-but-open because remote push is absent and the known child 27 baseline issue is unresolved. This child is user-promoted as new active work and must not mark the prior child closed.`
+ 
+ ## Progress Log
+ 
+ - 2026-07-26
+   - Summary: `Opened the campaign map-space volumetric cloud child after user selected the conservative map-space slab option and requested subagent-driven execution.`
+   - Verification: `npm run lint:plans passed for 69 files.`
+   - Next: `Execute Task 1 with a fresh subagent.`
+ - 2026-07-26
+   - Summary: `Completed Task 1 terrain cloud projection uniform boundary in commit c2f42734aac9040ca58bd18d3a4168086dd85cdc: terrain now exposes a read-only cloud projection payload, cloud WebGL uploads uCloudCamera/uCloudProjection, and the shader declares MAX_MAP_SPACE_CLOUD_STEPS without replacing visible cloud rendering.`
+   - Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab uses terrain projection uniforms" tests/robustness.test.cjs } failed as expected on missing CampaignTerrainCloudProjectionUniforms. GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs } passed 5/5 tests.`
+   - Next: `Dispatch Task 2 implementer subagent.`
+ - 2026-07-26
+   - Summary: `Completed Task 2 conservative map-space cloud slab shader path in commit 5d8e051e: the shader now reconstructs a terrain-owned map-space ray, intersects a finite cloud slab, samples procedural map-space density, raymarches with the fixed 12-step budget, and routes the primary cloud body through that volume while preserving the reveal/dissolve mask composition.`
+   - Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab uses terrain projection uniforms" tests/robustness.test.cjs } failed as expected on missing buildMapSpaceCloudRay. GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs } passed 5/5 tests with 0 failures; npm run typecheck passed via tsc --noEmit -p tsconfig.json.`
+   - Next: `Dispatch Task 3 implementer subagent.`
++- 2026-07-26
++  - Summary: `Completed Task 3 final verification, Edge/Playwright visual QA, changelog update, project-progress sync, and completed-but-open governance state for the campaign map-space volumetric cloud child.`
++  - Verification: `npm run lint:plans` passed for 69 files; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs }` passed 5/5 tests with 0 failures; `npm run typecheck` passed; `npm run build` passed with exit code 0 and existing Vite asset/chunk warnings; browser visual QA used Edge through Playwright on `http://127.0.0.1:5173/`, reached `[data-campaign-map-terrain]` and `[data-campaign-map-cloud]` with `is-ready` classes/nonzero dimensions, panned and zoomed the map, confirmed the captured PNG shows nonblank cloud body, terrain visible below cloud, revealed Hex holes aligned around explored terrain, and HUD/task UI above the cloud layer; screenshot: `D:\RPG_TG\.tmp\campaign-map-space-volumetric-cloud.png`.
++  - Next: `Review final diff and push when requested; do not mark closed while remote push is absent and known child 27 baseline remains unresolved.`
+ 
+ ---
+ 
+ ## Based On Spec
+ 
+ - Primary spec:
+   - `docs/superpowers/specs/2026-07-26-campaign-map-space-volumetric-cloud-design.md`
+ - Plan governance:
+   - `docs/superpowers/specs/plan-governance-spec.md`
+ - Canonical progress entry:
+@@ -563,103 +567,103 @@ Update this plan:
+ - Modify: `docs/superpowers/project-progress.md`
+ - Modify: `docs/change-log.md`
+ - Read: `package.json`
+ - Read: `tests/robustness.test.cjs`
+ 
+ **Interfaces:**
+ - Consumes: completed Task 1 and Task 2 commits
+ - Produces: screenshot `.tmp/campaign-map-space-volumetric-cloud.png`
+ - Produces: plan `Execution State.Status = completed-but-open` unless push and closeout are explicitly completed
+ 
+-- [ ] **Step 1: Run plan lint**
++- [x] **Step 1: Run plan lint**
+ 
+ Run:
+ 
+ ```powershell
+ npm run lint:plans
+ ```
+ 
+ Expected:
+ 
+ - `PASS`.
+ 
+-- [ ] **Step 2: Run targeted cloud tests**
++- [x] **Step 2: Run targeted cloud tests**
+ 
+ Run:
+ 
+ ```powershell
+ npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs }
+ ```
+ 
+ Expected:
+ 
+ - `PASS`.
+ 
+-- [ ] **Step 3: Run typecheck and production build**
++- [x] **Step 3: Run typecheck and production build**
+ 
+ Run:
+ 
+ ```powershell
+ npm run typecheck
+ npm run build
+ ```
+ 
+ Expected:
+ 
+ - `PASS`.
+ - Existing Vite warnings are acceptable only if the build exits with code `0`.
+ 
+-- [ ] **Step 4: Start or reuse the dev server**
++- [x] **Step 4: Start or reuse the dev server**
+ 
+ Run:
+ 
+ ```powershell
+ npm run dev -- --host 127.0.0.1
+ ```
+ 
+ Expected:
+ 
+ - Vite serves the app on a local port, usually `http://127.0.0.1:5173/`.
+ - If that port is occupied, use the printed Vite URL.
+ 
+-- [ ] **Step 5: Browser visual verification**
++- [x] **Step 5: Browser visual verification**
+ 
+ Use Playwright or the available browser tooling to:
+ 
+ 1. Open the Vite URL.
+ 2. Start or load the default campaign flow.
+ 3. Wait for `[data-campaign-map-terrain]` and `[data-campaign-map-cloud]`.
+ 4. Confirm both canvases have ready classes or nonzero dimensions.
+ 5. Pan and zoom the map.
+ 6. Capture `.tmp/campaign-map-space-volumetric-cloud.png`.
+ 
+ Expected:
+ 
+ - Cloud canvas is nonblank.
+ - Terrain remains visible below cloud.
+ - Cloud holes remain aligned to explored Hexes.
+ - Cloud body does not visually behave like a purely fixed screen texture during pan/zoom.
+ - Markers, hover overlays, and debug/global UI remain above the cloud layer.
+ 
+-- [ ] **Step 6: Update change log**
++- [x] **Step 6: Update change log**
+ 
+ Append a dated entry near the top of `docs/change-log.md`:
+ 
+ ```md
+ ## 2026-07-26 Campaign Map-Space Volumetric Cloud Slab
+ 
+ - `campaign-cloud-webgl.ts` now uploads terrain-owned cloud projection uniforms so the cloud shader can render the campaign cloud body in terrain/map space while preserving the existing reveal texture lifecycle.
+ - `campaign-cloud.frag.glsl` replaces the primary screen-space cloud sea with a conservative fixed-budget map-space cloud slab raymarch using procedural density, wind drift, lightweight top/bottom lighting, and early alpha termination.
+ - The change keeps explored Hex reveal masks, drag/zoom animation freeze, terrain chunk reveal holds, and `window.rpgCloud` behavior within the existing cloud overlay boundary; it does not modify exploration state, terrain height, navigation, map nodes, save data, or `src/main.ts`.
+ ```
+ 
+-- [ ] **Step 7: Update project progress and plan state**
++- [x] **Step 7: Update project progress and plan state**
+ 
+ Update `docs/superpowers/project-progress.md`:
+ 
+ - `Current Task`: `Campaign Map-Space Volumetric Cloud`
+ - `Current Task Status`: `completed-but-open`
+ - `Current Child`: `Campaign Map-Space Volumetric Cloud`
+ - `Current Child Status`: `completed-but-open`
+ - `Next Required Action`: `review-and-push-campaign-map-space-volumetric-cloud`
+ - `Next Owner Document`: `docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md`
+ - `Push Status`: `not-pushed`
+@@ -668,61 +672,61 @@ Update `docs/superpowers/project-progress.md`:
+ 
+ Update this plan:
+ 
+ - Mark Task 3 checkboxes complete except closeout-only items.
+ - Set `Execution State.Status` to `completed-but-open`.
+ - Set `Execution State.Current Focus` to `Implementation and verification complete locally; review/push remain before closeout.`
+ - Set `Execution State.Next Step` to `Review final diff and push when requested; do not mark closed while remote push is absent and known child 27 baseline remains unresolved.`
+ - Set `Execution State.Verification` to the exact command results from Steps 1-5.
+ - Append a `Progress Log` entry with verification and screenshot path.
+ 
+-- [ ] **Step 8: Commit Task 3**
++- [x] **Step 8: Commit Task 3**
+ 
+ Run:
+ 
+ ```powershell
+ git add docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md docs/superpowers/project-progress.md docs/change-log.md .tmp/campaign-map-space-volumetric-cloud.png
+ git commit -m "docs: record campaign map-space cloud verification"
+ ```
+ 
+ Expected:
+ 
+ - Commit succeeds.
+ - If `.tmp/` is ignored, do not force-add the screenshot; record its path in the plan progress log and commit the docs only.
+ 
+ ## Exit Check
+ 
+-- [ ] `campaign-cloud-webgl.ts` consumes terrain-owned cloud projection uniforms.
+-- [ ] `campaign-cloud.frag.glsl` uses a bounded map-space cloud slab path for the primary cloud body.
+-- [ ] Existing reveal mask projection, dissolve, interaction freeze, terrain chunk hold, and `window.rpgCloud` behavior are preserved.
+-- [ ] Cloud renderer does not sample terrain height data or mutate exploration/navigation/gameplay state.
+-- [ ] `src/main.ts` has no new cloud projection or cloud behavior branch.
+-- [ ] Targeted cloud tests pass.
+-- [ ] `npm run lint:plans` passes.
+-- [ ] `npm run typecheck` passes.
+-- [ ] `npm run build` passes.
+-- [ ] Browser visual verification is recorded.
+-- [ ] Project progress sync is updated if the child state changed.
++- [x] `campaign-cloud-webgl.ts` consumes terrain-owned cloud projection uniforms.
++- [x] `campaign-cloud.frag.glsl` uses a bounded map-space cloud slab path for the primary cloud body.
++- [x] Existing reveal mask projection, dissolve, interaction freeze, terrain chunk hold, and `window.rpgCloud` behavior are preserved.
++- [x] Cloud renderer does not sample terrain height data or mutate exploration/navigation/gameplay state.
++- [x] `src/main.ts` has no new cloud projection or cloud behavior branch.
++- [x] Targeted cloud tests pass.
++- [x] `npm run lint:plans` passes.
++- [x] `npm run typecheck` passes.
++- [x] `npm run build` passes.
++- [x] Browser visual verification is recorded.
++- [x] Project progress sync is updated if the child state changed.
+ - [ ] Closeout block is added before the child is marked `closed`.
+ 
+ ## Completion Checklist
+ 
+-- [ ] Plan checkboxes updated
+-- [ ] `Execution State` updated
+-- [ ] `Progress Log` updated
+-- [ ] Verification recorded
++- [x] Plan checkboxes updated
++- [x] `Execution State` updated
++- [x] `Progress Log` updated
++- [x] Verification recorded
+ 
+ ## Child Closeout
+ 
+ - Closed Child: `Campaign Map-Space Volumetric Cloud`
+ - Parent Task: `Campaign Map-Space Volumetric Cloud`
+ - Parent Stage: `Map Renderer Architecture`
+ - Closeout Status: `completed-but-open`
+-- Project Progress Synced: `no`
++- Project Progress Synced: `yes`
+ - Next Child: `none`
+ - Next Child Status: `none`
+ - Next Required Action: `review-and-push-campaign-map-space-volumetric-cloud`
+ - Next Entry Document: `docs/superpowers/project-progress.md`
+ - Next Owner Document: `docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md`
+ - Push Status: `not-pushed`
+ - Push Commit: `none`
+ - Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md; do not close until push succeeds and the known child 27 baseline is accepted or resolved.`
+diff --git a/docs/superpowers/project-progress.md b/docs/superpowers/project-progress.md
+index 123b02dc..ff65300d 100644
+--- a/docs/superpowers/project-progress.md
++++ b/docs/superpowers/project-progress.md
+@@ -1,29 +1,29 @@
+ # Project Progress
+ 
+ ## Current State
+ 
+ - Current Stage: `Map Renderer Architecture`
+ - Current Stage Status: `running`
+ - Current Task: `Campaign Map-Space Volumetric Cloud`
+-- Current Task Status: `running`
++- Current Task Status: `completed-but-open`
+ - Current Child: `Campaign Map-Space Volumetric Cloud`
+-- Current Child Status: `running`
++- Current Child Status: `completed-but-open`
+ - Next Child: `none`
+ - Next Child Status: `none`
+-- Next Required Action: `execute-campaign-map-space-volumetric-cloud`
++- Next Required Action: `review-and-push-campaign-map-space-volumetric-cloud`
+ - Next Entry Document: `docs/superpowers/project-progress.md`
+ - Next Owner Document: `docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md`
+ - Last Closed Item: `none`
+ - Push Status: `not-pushed`
+ - Push Commit: `none`
+-- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md from Task 1 using subagent-driven development; do not close until push succeeds and the known child 27 baseline is accepted or resolved.`
++- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md; do not close until push succeeds and the known child 27 baseline is accepted or resolved.`
+ 
+ ## Progress Log
+ 
+ - 2026-07-06
+   - Summary: `Created the first fail-closed progress-driven governance spec and started replacing the old weekly-governance entry surfaces.`
+   - Verification: `Not run as part of this doc-only change`
+   - Next: `Finish central governance docs, templates, and lint alignment, then re-audit repository references.`
+ - 2026-07-21
+   - Summary: `Opened the user-requested unified backpack inventory child to replace the visible valuables workflow with a shared item system.`
+   - Verification: `Not run`
+@@ -85,14 +85,18 @@
+   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign map removes render stats performance debug panel path" tests/robustness.test.cjs }`; `node --test --test-name-pattern "campaign map removes render stats performance debug panel path|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom instead of using a css proxy|campaign cloud stays frozen briefly after repeated zoom input stops|campaign map zoom uses a persistent target-chasing controller|campaign map uses shoreamend visual renderer" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `rg -n "rpgMapPerf|CampaignMapPerf|getCampaignTerrainRenderStats|getCampaignCloudRenderStats|CampaignTerrainRenderStats|CampaignCloudRenderStats|campaignTerrainRenderStats|campaignCloudRenderStats|c-campaign-map-perf-panel|data-campaign-map-perf-panel|lastRenderDurationMs|lastDrawCalls" src tests` reports only negative assertions in tests/robustness.test.cjs.`
+   - Next: `Review final diff and push when requested; do not close while remote push is absent or the child 27 baseline remains unresolved/unaccepted.`
+ - 2026-07-25
+   - Summary: `Added camera-scale LOD for the campaign structure model renderer so far zoom levels skip or reduce fort/city and village building allocations before expensive placement, shadow, instanced-buffer, and draw work.`
+   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign fort city model renderer applies camera-scale LOD before building placement" tests/robustness.test.cjs }`; `node --test --test-name-pattern "campaign fort city model renderer ports cyh instanced draw path|campaign fort city model renderer applies camera-scale LOD before building placement|campaign fort city model assets are engine-owned and not imported by map UI|campaign terrain canvas receives fort city model profile attributes|campaign map removes legacy city depth mesh model and texture assets|campaign map uses shoreamend visual renderer" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check` passed with only existing LF-to-CRLF working-copy warnings.`
+   - Next: `Review final diff and push when requested; do not close while remote push is absent or the child 27 baseline remains unresolved/unaccepted.`
+ - 2026-07-26
+   - Summary: `Opened the campaign map-space volumetric cloud child after user selected the conservative terrain-aligned slab option and requested subagent-driven execution.`
+   - Verification: `npm run lint:plans passed for 69 files.`
+   - Next: `Execute docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md from Task 1 using subagent-driven development.`
++- 2026-07-26
++  - Summary: `Completed local Task 3 verification and governance sync for the campaign map-space volumetric cloud child; child remains completed-but-open pending review, push, and known child 27 baseline resolution.`
++  - Verification: `npm run lint:plans` passed for 69 files; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs }` passed 5/5 tests; `npm run typecheck` passed; `npm run build` passed with existing Vite asset/chunk warnings; Edge/Playwright visual QA on `http://127.0.0.1:5173/` reached ready terrain/cloud canvases, panned/zoomed the map, and captured `D:\RPG_TG\.tmp\campaign-map-space-volumetric-cloud.png`.
++  - Next: `Review final diff and push when requested; do not close while remote push is absent and the known child 27 baseline remains unresolved.`
+ 
+ ## Latest Closeout
+ 
+ No structured child closeout has been recorded for this governance migration batch yet.

@@ -3,10 +3,6 @@ import {
   type CoordinateSpace,
   type HexCoordinate,
 } from "../../../application/navigation/travel-to-coordinate";
-import {
-  getCampaignTerrainProjectionSignature,
-  projectCampaignTerrainUvToClientPointAtCloudRevealHeight,
-} from "./campaign-terrain-webgl";
 
 const CLOUD_REVEAL_MASK_MAX_TEXTURE_SIZE = 1024;
 
@@ -14,9 +10,9 @@ const CLOUD_REVEAL_MASK_MAX_TEXTURE_SIZE = 1024;
 // final visible edge. The shader erodes this field with cloud noise.
 const CLOUD_REVEAL_FIELD_HEX_RADIUS_SCALE = 1.04;
 const CLOUD_REVEAL_FIELD_CLEAR_INNER_RATIO = 0.10;
-const CLOUD_REVEAL_FIELD_CLEAR_OUTER_RATIO = 0.34;
+const CLOUD_REVEAL_FIELD_CLEAR_OUTER_RATIO = 0.22;
 const CLOUD_REVEAL_FIELD_SHALLOW_INNER_RATIO = 0.10;
-const CLOUD_REVEAL_FIELD_SHALLOW_OUTER_RATIO = 1.45;
+const CLOUD_REVEAL_FIELD_SHALLOW_OUTER_RATIO = 0.52;
 const CLOUD_REVEAL_FIELD_MAX_DISTANCE_PX = 512;
 
 export type CloudRevealMaskDescriptor = {
@@ -40,7 +36,7 @@ type RevealMaskPolygon = {
 
 export function readCloudRevealMaskDescriptor(
   canvas: HTMLCanvasElement,
-  projectionRoot: ParentNode
+  _projectionRoot: ParentNode
 ): CloudRevealMaskDescriptor {
   const coordinateWidth = Number.parseFloat(canvas.dataset.mapCoordinateWidth ?? "");
   const coordinateHeight = Number.parseFloat(canvas.dataset.mapCoordinateHeight ?? "");
@@ -55,7 +51,7 @@ export function readCloudRevealMaskDescriptor(
     .split(/\s+/)
     .map(parseHexKey)
     .filter((hex): hex is HexCoordinate => hex != null);
-  const maskSize = resolveRevealMaskTextureSize(canvas);
+  const maskSize = resolveRevealMaskTextureSize(coordinateSpace);
   const revealedHexSignature = revealedHexes
     .map((hex) => `${hex.x},${hex.y}`)
     .join("|");
@@ -64,7 +60,6 @@ export function readCloudRevealMaskDescriptor(
     coordinateSpace.height.toFixed(3),
     maskSize.width,
     maskSize.height,
-    getCampaignTerrainProjectionSignature(projectionRoot),
     revealedHexSignature,
   ].join("|");
 
@@ -80,7 +75,7 @@ export function readCloudRevealMaskDescriptor(
 
 export function createCloudRevealMaskCanvas(
   canvas: HTMLCanvasElement,
-  projectionRoot: ParentNode,
+  _projectionRoot: ParentNode,
   descriptor: CloudRevealMaskDescriptor
 ): HTMLCanvasElement {
   const maskCanvas = document.createElement("canvas");
@@ -96,7 +91,6 @@ export function createCloudRevealMaskCanvas(
 
   const polygons = buildRevealMaskPolygons({
     canvas,
-    projectionRoot,
     descriptor,
     radiusScale: CLOUD_REVEAL_FIELD_HEX_RADIUS_SCALE,
   });
@@ -116,12 +110,12 @@ export function createCloudRevealMaskCanvas(
   return maskCanvas;
 }
 
-function resolveRevealMaskTextureSize(canvas: HTMLCanvasElement): {
+function resolveRevealMaskTextureSize(coordinateSpace: CoordinateSpace): {
   width: number;
   height: number;
 } {
-  const sourceWidth = Math.max(canvas.width, 1);
-  const sourceHeight = Math.max(canvas.height, 1);
+  const sourceWidth = Math.max(coordinateSpace.width, 1);
+  const sourceHeight = Math.max(coordinateSpace.height, 1);
   const scale = Math.min(
     1,
     CLOUD_REVEAL_MASK_MAX_TEXTURE_SIZE / Math.max(sourceWidth, sourceHeight)
@@ -164,8 +158,8 @@ function writeRevealDistanceTexture(input: {
   );
   const clearOuterPx = clampNumber(
     input.referenceHexRadiusPx * CLOUD_REVEAL_FIELD_CLEAR_OUTER_RATIO,
-    8,
-    42
+    6,
+    30
   );
   const shallowInnerPx = clampNumber(
     input.referenceHexRadiusPx * CLOUD_REVEAL_FIELD_SHALLOW_INNER_RATIO,
@@ -174,8 +168,8 @@ function writeRevealDistanceTexture(input: {
   );
   const shallowOuterPx = clampNumber(
     input.referenceHexRadiusPx * CLOUD_REVEAL_FIELD_SHALLOW_OUTER_RATIO,
-    38,
-    CLOUD_REVEAL_FIELD_MAX_DISTANCE_PX
+    14,
+    118
   );
   const outputImage = outputContext.createImageData(width, height);
   for (let pixelIndex = 0; pixelIndex < insideMask.length; pixelIndex += 1) {
@@ -199,7 +193,6 @@ function writeRevealDistanceTexture(input: {
 
 function buildRevealMaskPolygons(input: {
   canvas: HTMLCanvasElement;
-  projectionRoot: ParentNode;
   descriptor: CloudRevealMaskDescriptor;
   radiusScale: number;
 }): RevealMaskPolygon[] {
@@ -214,7 +207,6 @@ function buildRevealMaskPolygons(input: {
       .map((point) =>
         projectCoordinateToRevealMaskPoint({
           canvas: input.canvas,
-          projectionRoot: input.projectionRoot,
           descriptor: input.descriptor,
           coordinate: point,
         })
@@ -374,7 +366,6 @@ function drawRevealMaskPolygon(
 
 function projectCoordinateToRevealMaskPoint(input: {
   canvas: HTMLCanvasElement;
-  projectionRoot: ParentNode;
   descriptor: CloudRevealMaskDescriptor;
   coordinate: { x: number; y: number };
 }): { x: number; y: number } | null {
@@ -382,27 +373,13 @@ function projectCoordinateToRevealMaskPoint(input: {
     input.coordinate.x / Math.max(input.descriptor.coordinateSpace.width, 1);
   const v =
     1 - input.coordinate.y / Math.max(input.descriptor.coordinateSpace.height, 1);
-  const projectedPoint = projectCampaignTerrainUvToClientPointAtCloudRevealHeight(
-    input.projectionRoot,
-    u,
-    v
-  );
-  if (projectedPoint == null || !Number.isFinite(projectedPoint.clientX)) {
-    return null;
-  }
-
-  const canvasRect = input.canvas.getBoundingClientRect();
-  if (canvasRect.width <= 0 || canvasRect.height <= 0) {
+  if (!Number.isFinite(u) || !Number.isFinite(v)) {
     return null;
   }
 
   return {
-    x:
-      ((projectedPoint.clientX - canvasRect.left) / canvasRect.width) *
-      input.descriptor.maskWidth,
-    y:
-      ((projectedPoint.clientY - canvasRect.top) / canvasRect.height) *
-      input.descriptor.maskHeight,
+    x: u * input.descriptor.maskWidth,
+    y: v * input.descriptor.maskHeight,
   };
 }
 

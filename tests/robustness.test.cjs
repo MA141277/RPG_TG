@@ -4096,7 +4096,8 @@ test("campaign map render keeps a unified low-resolution budget during zoom", ()
   );
   assert.match(
     cloudRendererSource,
-    /const CLOUD_RENDER_MAX_LONG_EDGE_PX = 1280;/
+    /const CLOUD_RENDER_MAX_LONG_EDGE_PX = 960;/,
+    "Expected the procedural volumetric cloud pass to render below the terrain canvas budget."
   );
   assert.match(
     cloudRendererSource,
@@ -4191,8 +4192,13 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
   );
   assert.match(
     cloudSource,
-    /uCloudCamera/,
-    "Expected cloud renderer to upload camera-specific map-space cloud uniforms."
+    /uCloudInverseTerrainMatrix/,
+    "Expected cloud renderer to upload the terrain-owned inverse projection matrix for cloud ray reconstruction."
+  );
+  assert.doesNotMatch(
+    cloudSource,
+    /uMapCamera|uCloudCamera|uCloudView/,
+    "Cloud renderer must not keep legacy map/cloud camera uniforms once the shader uses the terrain inverse matrix."
   );
   assert.match(
     cloudSource,
@@ -4204,10 +4210,10 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
     /sampleHeightAtUv|mapHeightUrl|data-map-height|map_heights/,
     "Cloud renderer must not sample terrain height data."
   );
-  assert.match(
+  assert.doesNotMatch(
     revealMaskSource,
-    /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/,
-    "Reveal mask must keep using the fixed cloud reveal height projection helper."
+    /getCampaignTerrainProjectionSignature|projectCampaignTerrainUvToClientPointAtCloudRevealHeight/,
+    "Reveal mask must be a stable map-space field, not a camera/projection-dependent screen texture."
   );
   assert.doesNotMatch(
     mainSource,
@@ -4216,28 +4222,48 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
   );
   assert.match(
     shaderSource,
-    /MAX_MAP_SPACE_CLOUD_STEPS/,
-    "Expected shader to declare an explicit bounded map-space cloud raymarch step budget."
+    /const int MAX_MAP_SPACE_CLOUD_STEPS = 8;/,
+    "Expected shader to keep a bounded low step budget for the procedural map-space cloud pass."
   );
   assert.match(
     terrainSource,
-    /cameraOffsetUnit: CAMERA_OFFSET_UNIT/,
-    "Expected the terrain-owned cloud projection payload to expose the terrain camera offset unit."
-  );
-  assert.match(
-    terrainSource,
-    /fovRadians: FOV_RADIANS/,
-    "Expected the terrain-owned cloud projection payload to expose the terrain projection FOV."
+    /inverseTerrainMatrix: invertMatrix4\(terrainMatrix\)/,
+    "Expected the terrain-owned cloud projection payload to expose the inverse of the exact terrain matrix."
   );
   assert.match(
     cloudSource,
-    /uCloudView/,
-    "Expected cloud renderer to upload projection view constants instead of hardcoding shader ray values."
+    /gl\.uniformMatrix4fv\(\s*cloudInverseTerrainMatrixLocation,\s*false,\s*cloudProjection\.inverseTerrainMatrix\s*\);/s,
+    "Expected cloud renderer to upload the terrain inverse matrix directly instead of recomputing camera math."
+  );
+  assert.match(
+    shaderSource,
+    /uniform mat4 uCloudInverseTerrainMatrix;/,
+    "Expected shader to consume the terrain inverse matrix."
   );
   assert.match(
     shaderSource,
     /buildMapSpaceCloudRay/,
     "Expected shader to reconstruct a map-space cloud ray."
+  );
+  assert.match(
+    shaderSource,
+    /unprojectMapSpaceCloudPoint/,
+    "Expected shader ray reconstruction to unproject clip/NDC coordinates through the terrain inverse matrix."
+  );
+  assert.match(
+    shaderSource,
+    /vec2 ndc = vec2\(uv\.x \* 2\.0 - 1\.0, uv\.y \* 2\.0 - 1\.0\);/,
+    "Cloud ray reconstruction must keep WebGL clip-space Y orientation; flipping it reverses the terrain perspective."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /rotateCloudRayAroundX|screenScale|terrainPan|cameraBaseDistance|cameraOffsetUnit|uCloudCamera|uCloudView|1\.0 - uv\.y \* 2\.0/,
+    "Cloud shader must not maintain a second hand-written copy of terrain scale/pan/tilt camera math."
+  );
+  assert.match(
+    terrainSource,
+    /cameraScaleRatio: currentCamera\.scale \/ CAMERA_REFERENCE_SCALE/,
+    "Expected terrain-owned cloud projection payload to expose normalized camera scale for cloud parallax strength."
   );
   assert.match(
     shaderSource,
@@ -4251,6 +4277,71 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
   );
   assert.match(
     shaderSource,
+    /uniform float uCloudTextureScaleBoost;/,
+    "Expected map-space cloud density texture scale boost to be adjustable at runtime."
+  );
+  assert.match(
+    shaderSource,
+    /const float MAP_SPACE_CLOUD_TEXTURE_SCALE_MAX = 50\.0;/,
+    "Expected shader-side cloud texture scale clamp to match the 50x slider range."
+  );
+  assert.match(
+    shaderSource,
+    /float worldTextureScale = clamp\(\s*uCloudTextureScaleBoost,\s*0\.50,\s*MAP_SPACE_CLOUD_TEXTURE_SCALE_MAX\s*\);/,
+    "Expected map-space cloud density texture scale to stay in world/map space instead of cancelling terrain camera zoom."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /safeScale \/ cameraReferenceScale \* uCloudTextureScaleBoost/,
+    "Cloud texture scale must not multiply by camera scale because that makes clouds stop following map zoom."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /uCloudTextureScaleBoost,\s*0\.90,\s*6\.4/,
+    "Expected the 50x cloud texture slider not to be capped by the old shader-side 6.4 clamp."
+  );
+  assert.match(
+    cloudSource,
+    /setCampaignCloudTextureScaleBoost/,
+    "Expected cloud renderer to expose a runtime setter for the cloud texture scale boost."
+  );
+  assert.match(
+    cloudSource,
+    /uCloudTextureScaleBoost/,
+    "Expected cloud renderer to upload the cloud texture scale boost uniform."
+  );
+  assert.match(
+    shaderSource,
+    /vec3 noisePoint = vec3\(columnTexturePoint\.xy \* \(2\.35 \* worldTextureScale\) \+ wind, columnTexturePoint\.z \* 3\.0\);/,
+    "Expected map-space cloud density noise to stay isotropic, column-stable, and controlled by the texture frequency slider."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /getMapSpaceCloudCameraAnchoredTexturePoint|getMapSpaceCloudCameraGroundAnchor|cameraAnchor/,
+    "Cloud texture coordinates must not be camera-anchored because that makes clouds drift independently at large zoom."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /\(texturePoint\.xy - ray\.origin\.xy\) \* cameraTextureScale \+ ray\.origin\.xy/,
+    "Cloud texture scale must not zoom around the elevated ray origin because terrain tilt makes it drift vertically."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /vec3 noisePoint = vec3\(texturePoint\.xy \* 2\.35 \* cameraTextureScale/,
+    "Cloud texture scale must not zoom around the map center because it drifts while the camera is offset."
+  );
+  assert.match(
+    shaderSource,
+    /getMapSpaceCloudTexturePoint/,
+    "Expected map-space cloud noise to anchor texture coordinates to the terrain plane before sampling."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /vec3 noisePoint = vec3\(point\.xy \* 2\.35 \* cameraTextureScale/,
+    "Cloud texture noise must not sample directly from the raised slab point because that adds extra tilt parallax."
+  );
+  assert.match(
+    shaderSource,
     /sampleMapSpaceVolumetricCloud/,
     "Expected shader to render the cloud body through the map-space slab path."
   );
@@ -4261,18 +4352,13 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
   );
   assert.match(
     shaderSource,
-    /uCloudCamera\.y \* cameraOffsetUnit \/ safeScale/,
-    "Expected shader pan reconstruction to use terrain camera offset unit divided by camera scale."
-  );
-  assert.match(
-    shaderSource,
-    /uCloudProjection\.y/,
-    "Expected shader ray reconstruction to use terrainScale from the projection payload."
-  );
-  assert.match(
-    shaderSource,
     /uCloudProjection\.z/,
     "Expected shader slab reconstruction to use heightScale from the projection payload."
+  );
+  assert.match(
+    shaderSource,
+    /getMapSpaceCloudParallaxStrength/,
+    "Expected shader to scale cloud height parallax from the terrain-owned camera scale ratio."
   );
   assert.doesNotMatch(
     shaderSource,
@@ -4283,6 +4369,78 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
     shaderSource,
     /#define MAXIMUM_CLOUDS_STEPS 300|CLOUDS_MAX_VIEWING_DISTANCE 250000/,
     "Expected this project not to copy the Cesium-scale high-step sphere-shell cloud budget."
+  );
+});
+
+test("campaign cloud texture scale has a dedicated runtime slider", () => {
+  const mapViewSource = readSource("src/ui/views/map/map-view.ts");
+  const mainSource = readSource("src/main.ts");
+
+  assert.match(
+    mapViewSource,
+    /data-campaign-cloud-texture-scale-input/,
+    "Expected campaign map view to expose a cloud texture scale slider."
+  );
+  assert.match(
+    mapViewSource,
+    /type="range"[\s\S]*data-campaign-cloud-texture-scale-input/,
+    "Expected cloud texture scale control to be a slider."
+  );
+  assert.match(
+    mapViewSource,
+    /max="50"/,
+    "Expected cloud texture scale slider to support up to 50x."
+  );
+  assert.match(
+    mainSource,
+    /setCampaignCloudTextureScaleBoost/,
+    "Expected main input handling to call the cloud texture scale setter."
+  );
+  const cloudSource = readSource("src/ui/views/map/campaign-cloud-webgl.ts");
+  assert.match(
+    cloudSource,
+    /export const DEFAULT_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST = 2\.72;/,
+    "Expected the default cloud texture scale boost to start at 2.72x."
+  );
+  assert.match(
+    cloudSource,
+    /export const MAX_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST = 50;/,
+    "Expected cloud texture scale runtime clamp to support up to 50x."
+  );
+  assert.match(
+    mapViewSource,
+    /value="2\.72"[\s\S]*data-campaign-cloud-texture-scale-input="true"/,
+    "Expected the cloud texture scale slider initial value to match the 2.72x runtime default."
+  );
+  assert.match(
+    mapViewSource,
+    /data-campaign-cloud-texture-scale-value="true">2\.72x<\/strong>/,
+    "Expected the cloud texture scale label to match the 2.72x runtime default."
+  );
+  assert.match(
+    mainSource,
+    /data-campaign-cloud-texture-scale-input/,
+    "Expected main input handling to listen for the cloud texture scale slider."
+  );
+  assert.match(
+    mainSource,
+    /requestCampaignCloudRender\(\)/,
+    "Expected cloud texture scale changes to request a cloud re-render."
+  );
+});
+
+test("campaign cloud shader hot reload rebuilds active WebGL programs", () => {
+  const cloudSource = readSource("src/ui/views/map/campaign-cloud-webgl.ts");
+
+  assert.match(
+    cloudSource,
+    /import\.meta\.hot/,
+    "Expected campaign cloud renderer to participate in Vite hot reload."
+  );
+  assert.match(
+    cloudSource,
+    /import\.meta\.hot\.accept\(\(updatedModule\) => \{\s*disposeCampaignCloudRenderers\(\);\s*updatedModule\?\.syncCampaignCloudWebGl\(document\);/s,
+    "Expected cloud shader/module hot reload to dispose active WebGL programs so the raw GLSL import is recompiled."
   );
 });
 
@@ -4315,6 +4473,415 @@ test("campaign cloud map-space volumetric slab pan basis matches terrain camera 
   assert.ok(
     resolveOldRawShaderPan() > resolveTerrainAlignedPan(farScale) * 10,
     "Raw shader offset math should be rejected because it ignores scale and terrainScale."
+  );
+});
+
+test("campaign cloud reveal cutouts align without screen-space cloud resampling", () => {
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+  const articleCloudSeaStart = shaderSource.indexOf(
+    "vec4 sampleArticleCloudSea(vec2 uv, float time)"
+  );
+  const mainStart = shaderSource.indexOf("void main()", articleCloudSeaStart);
+
+  assert.ok(
+    articleCloudSeaStart >= 0 && mainStart > articleCloudSeaStart,
+    "Expected campaign cloud shader to expose sampleArticleCloudSea before main."
+  );
+  const articleCloudSeaBody = shaderSource.slice(articleCloudSeaStart, mainStart);
+
+  assert.match(
+    articleCloudSeaBody,
+    /sampleMapSpaceVolumetricCloud\(ray, time, mapSpaceTexture\)/,
+    "The cloud body should still come from the map-space volumetric slab."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /sampleRevealFields\(revealUv\)/,
+    "Reveal cutouts should be sampled from map-space reveal UVs, not from screen UVs."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /vec2 revealUv = getMapSpaceCloudRevealUv\(ray\);/,
+    "The main cloud composition must derive reveal UVs from the cloud ray's map-space ground point."
+  );
+  assert.doesNotMatch(
+    articleCloudSeaBody,
+    /computeArticleMaskOffsetAndErosion|computeRevealDissolveProgress|sampleDissolvedRevealFields|distortedUv|sampleOuterCloudBankField|sampleOuterPuffCloudLayer|sampleRevealFields\(uv\)|samplePreviousRevealFields\(uv\)/,
+    "The main cloud composition should not re-sample reveal cutouts or outer clouds in screen space."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /float cloudPresence = smoothstep\([^;]*mapSpaceCloud\.a[^;]*\);/s,
+    "Reveal edge mist should be gated by the map-space cloud body's presence."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /float rimAlpha =[^;]*cloudPresence[^;]*;/s,
+    "Reveal rim alpha should not appear when the map-space cloud body is absent."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /float alignedEdgeMistAlpha =[\s\S]*?cloudPresence[\s\S]*?;/,
+    "Aligned reveal-edge mist should not appear when the map-space cloud body is absent."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /float mapSpaceTexture = 0\.0;[\s\S]*?sampleMapSpaceVolumetricCloud\(ray, time, mapSpaceTexture\)/,
+    "The visible cloud texture should be accumulated by the map-space raymarch so it follows terrain tilt without a second noise pass."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /float bodyTexture = mix\([^;]*mapSpaceTexture[^;]*\);/s,
+    "The map-space cloud body should keep soft texture without hard-gating alpha."
+  );
+  assert.doesNotMatch(
+    articleCloudSeaBody,
+    /float bodyTexture = mix\([^;]*cloudLobe[^;]*\);/s,
+    "The visible body texture must not come from post-composed lobe values that can read as screen-aligned."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /float bodyAlphaTexture = mix\(0\.46, 1\.34, smoothstep\(0\.14, 0\.88, mapSpaceTexture\)\);[\s\S]*?float bodyAlpha = ARTICLE_BODY_ALPHA \* mapSpaceCloud\.a \* deepZone \* bodyAlphaTexture;/,
+    "The map-space cloud body must stay visible while preserving texture breakup in dense alpha."
+  );
+  assert.doesNotMatch(
+    articleCloudSeaBody,
+    /float bodyAlpha =[^;]*cloudLobe[^;]*;/,
+    "Cloud lobe shaping should not hard-gate the only remaining cloud body alpha."
+  );
+});
+
+test("campaign cloud shader reuses one map-space ray per fragment", () => {
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+  const articleCloudSeaStart = shaderSource.indexOf(
+    "vec4 sampleArticleCloudSea(vec2 uv, float time)"
+  );
+  const mainStart = shaderSource.indexOf("void main()", articleCloudSeaStart);
+
+  assert.ok(
+    articleCloudSeaStart >= 0 && mainStart > articleCloudSeaStart,
+    "Expected campaign cloud shader to expose sampleArticleCloudSea before main."
+  );
+  const articleCloudSeaBody = shaderSource.slice(articleCloudSeaStart, mainStart);
+  const rayBuildCount = (
+    articleCloudSeaBody.match(/buildMapSpaceCloudRay\(uv\)/g) ?? []
+  ).length;
+
+  assert.equal(
+    rayBuildCount,
+    1,
+    "Cloud composition should build the terrain-projected ray once per fragment."
+  );
+  assert.doesNotMatch(
+    articleCloudSeaBody,
+    /sampleMapSpaceCloudVisibleTexture\(uv, time\)/,
+    "Cloud texture contrast must be accumulated by the main raymarch, not by a second procedural-noise pass."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /sampleMapSpaceVolumetricCloud\(ray, time, mapSpaceTexture\)/,
+    "The main raymarch should return reusable texture contrast for composition."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /getMapSpaceCloudRevealUv\(ray\)/,
+    "Reveal sampling should reuse the same terrain-projected ray as the cloud body."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /if \(cloudPresence <= 0\.001\) \{\s*return vec4\(mapSpaceCloud\.rgb, 0\.0\);\s*\}/,
+    "Fragments without cloud body should return before reveal blur sampling."
+  );
+  assert.match(
+    articleCloudSeaBody,
+    /if \(uRevealTransition < 0\.999\) \{[\s\S]*?samplePreviousRevealFields\(revealUv\)[\s\S]*?revealFields = mix\(/,
+    "Steady-state reveal rendering should not sample the previous reveal texture."
+  );
+});
+
+test("campaign cloud density tuning keeps clouds visibly substantial", () => {
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+
+  assert.match(
+    shaderSource,
+    /const float MAP_SPACE_CLOUD_DENSITY_SCALE = 1\.74;/,
+    "Expected the reduced-step cloud pass to compensate with stronger density."
+  );
+  assert.match(
+    shaderSource,
+    /const float ARTICLE_BODY_ALPHA = 1\.78;/,
+    "Expected final cloud composition to be less transparent."
+  );
+  assert.match(
+    shaderSource,
+    /float stepAlpha = clamp\(density \* 0\.38 \* \(1\.0 - accumulatedAlpha\), 0\.0, 1\.0\);/,
+    "Expected each raymarch step to contribute enough opacity after the 8-step budget cut."
+  );
+  assert.match(
+    shaderSource,
+    /float contrastTexture = clamp\(\(detail \* 0\.68 \+ billowed \* 0\.32 - 0\.24\) \* 3\.05, 0\.0, 1\.0\);/,
+    "Expected visible cloud texture to use a high-contrast detail signal instead of the mostly saturated density field."
+  );
+  assert.match(
+    shaderSource,
+    /textureValue = mix\(\s*contrastTexture,\s*clamp\(\(contrastTexture - 0\.10\) \* 1\.72, 0\.0, 1\.0\),\s*visibleTextureLayer\s*\);/s,
+    "Expected the visible texture to keep dark troughs and bright ridges in dense clouds."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /textureValue = clamp\(\s*mix\(0\.58, midDensity, visibleTextureLayer\),/,
+    "The old 0.58 texture floor flattened dense cloud regions into solid color."
+  );
+  assert.match(
+    shaderSource,
+    /float bodyTexture = mix\(0\.58, 1\.92, mapSpaceTexture\);/,
+    "Expected cloud color contrast to use a wider visible texture range."
+  );
+  assert.match(
+    shaderSource,
+    /float bodyAlphaTexture = mix\(0\.46, 1\.34, smoothstep\(0\.14, 0\.88, mapSpaceTexture\)\);/,
+    "Expected dense cloud alpha to keep some texture breakup instead of saturating to one flat opacity."
+  );
+  assert.match(
+    shaderSource,
+    /float cloudTexturePresence = smoothstep\(0\.12, 0\.72, cloudDensity\);/,
+    "Expected texture contrast to start in medium-density clouds, not only the densest cores."
+  );
+  assert.match(
+    shaderSource,
+    /float denseCloudTexture = smoothstep\(\s*0\.16,\s*0\.74,\s*mapSpaceTexture\s*\) \* cloudTexturePresence;/s,
+    "Expected medium and dense cloud regions to retain a dedicated texture highlight term."
+  );
+  assert.match(
+    shaderSource,
+    /float denseCloudCrease = smoothstep\(\s*0\.08,\s*0\.56,\s*\(1\.0 - mapSpaceTexture\) \* \(0\.44 \+ cloudDensity \* 0\.72\)\s*\);/s,
+    "Expected darker cloud regions to keep internal creases even when density is only medium."
+  );
+  assert.match(
+    shaderSource,
+    /float internalShadow = smoothstep\(\s*0\.30,\s*0\.82,\s*density \* \(1\.0 - abs\(heightRatio - 0\.38\) \* 1\.55\)\s*\) \*\s*\(1\.0 - smoothstep\(0\.68, 0\.96, heightRatio\)\);/s,
+    "Expected a simple internal shadow term so dense cloud cores read with more volume."
+  );
+  assert.match(
+    shaderSource,
+    /stepColor = mix\(stepColor, vec3\(0\.52, 0\.61, 0\.62\), internalShadow \* 0\.18\);/,
+    "Expected internal shadows to darken dense middle cloud cores without making the whole body muddy."
+  );
+  assert.match(
+    shaderSource,
+    /float cloudTopHighlight = smoothstep\(\s*0\.34,\s*0\.86,\s*textureValue \* density \+ heightRatio \* 0\.32\s*\) \*\s*smoothstep\(0\.24, 0\.92, heightRatio\);/s,
+    "Expected cloud tops to get a restrained height-aware highlight."
+  );
+  assert.match(
+    shaderSource,
+    /float stepTextureRidge = smoothstep\(\s*0\.42,\s*0\.88,\s*textureValue\s*\) \* smoothstep\(0\.18, 0\.74, density\);/s,
+    "Expected per-step raymarch color to preserve bright dense texture ridges before accumulated color is averaged."
+  );
+  assert.match(
+    shaderSource,
+    /float stepTextureCrease = smoothstep\(\s*0\.16,\s*0\.70,\s*\(1\.0 - textureValue\) \* density\s*\);/s,
+    "Expected per-step raymarch color to preserve darker dense texture creases before accumulated color is averaged."
+  );
+  assert.match(
+    shaderSource,
+    /stepColor = mix\(stepColor, vec3\(0\.43, 0\.53, 0\.56\), stepTextureCrease \* 0\.38\);/,
+    "Expected dense texture troughs to be visible inside the volumetric raymarch itself."
+  );
+  assert.match(
+    shaderSource,
+    /stepColor = mix\(stepColor, vec3\(1\.0, 0\.99, 0\.92\), cloudTopHighlight \* 0\.22 \+ stepTextureRidge \* 0\.36\);/,
+    "Expected cloud highlights to restore visible contrast against the internal shadow."
+  );
+  assert.match(
+    shaderSource,
+    /\(0\.20 \+ cloudDensity \* 0\.26 \+ cloudDetail \* 0\.10\);/,
+    "Expected the shallow reveal mist layer to be denser and less transparent."
+  );
+  assert.match(
+    shaderSource,
+    /cloudColor = mix\(mapSpaceCloud\.rgb, shadowColor, selfShadow \* \(0\.30 \+ deepZone \* 0\.10\)\);/,
+    "Expected final composition not to over-darken the cloud body after adding internal shadows."
+  );
+  assert.match(
+    shaderSource,
+    /cloudColor = mix\(cloudColor, midColor, 0\.14\);/,
+    "Expected the neutral mid-color wash to be reduced so dense texture contrast remains visible."
+  );
+  assert.match(
+    shaderSource,
+    /float denseTextureContrast = \(mapSpaceTexture - 0\.50\) \* cloudTexturePresence \* deepZone;/,
+    "Expected final cloud color to keep a signed texture contrast term after all color washes."
+  );
+  assert.match(
+    shaderSource,
+    /float shadowTextureSplit = \(0\.54 - mapSpaceTexture\) \* selfShadow \* \(0\.42 \+ cloudTexturePresence \* 0\.86\) \* deepZone;/,
+    "Expected dark cloud regions to be split by texture instead of collapsing into one flat shadow mass."
+  );
+  assert.match(
+    shaderSource,
+    /float shadowOcclusion = clamp\(denseCloudCrease \* \(0\.26 \+ selfShadow \* 0\.74\) \* deepZone, 0\.0, 0\.72\);/,
+    "Expected dark troughs to apply a clear local occlusion before highlight mixing."
+  );
+  assert.match(
+    shaderSource,
+    /cloudColor = clamp\(cloudColor \+ vec3\(denseTextureContrast \* 0\.34 - shadowTextureSplit \* 0\.42, denseTextureContrast \* 0\.30 - shadowTextureSplit \* 0\.30, denseTextureContrast \* 0\.24 - shadowTextureSplit \* 0\.20\), vec3\(0\.0\), vec3\(1\.0\)\);/,
+    "Expected signed texture contrast to visibly separate dense cloud peaks and troughs."
+  );
+  assert.match(
+    shaderSource,
+    /cloudColor = mix\(cloudColor, vec3\(0\.34, 0\.45, 0\.50\), shadowOcclusion\);/,
+    "Expected dark troughs to use a distinct deeper shadow color instead of a shallow crease tint."
+  );
+  assert.match(
+    shaderSource,
+    /cloudColor = mix\(cloudColor, vec3\(0\.45, 0\.55, 0\.58\), denseCloudCrease \* \(0\.20 \+ cloudTexturePresence \* 0\.28\) \* deepZone\);/,
+    "Expected dense cloud texture troughs to remain visible as soft internal creases."
+  );
+  assert.match(
+    shaderSource,
+    /cloudColor = mix\(cloudColor, lightColor, \(cloudLight \* 0\.12 \+ denseCloudTexture \* 0\.68 \+ mapSpaceTexture \* 0\.04\) \* \(1\.0 - shadowOcclusion \* 0\.82\)\);/,
+    "Expected dense cloud texture peaks to create visible highlights instead of a flat body color."
+  );
+  assert.match(
+    shaderSource,
+    /return clamp\(\(density - 0\.39\) \* MAP_SPACE_CLOUD_DENSITY_SCALE \* heightEnvelope, 0\.0, 1\.0\);/,
+    "Expected cloud coverage to be denser without increasing raymarch resolution."
+  );
+  assert.match(
+    shaderSource,
+    /const int MAX_MAP_SPACE_CLOUD_STEPS = 8;/,
+    "Density tuning must not raise the raymarch step budget again."
+  );
+}
+);
+
+test("campaign cloud density uses height layers without directional texture shear", () => {
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+
+  assert.doesNotMatch(
+    shaderSource,
+    /MAP_SPACE_CLOUD_HEIGHT_SHEAR|layerShear/,
+    "Height layering must not use a fixed directional shear because it creates diagonal repeated cloud patterns."
+  );
+  assert.match(
+    shaderSource,
+    /float sampleMapSpaceCloudDensity\(\s*MapSpaceCloudRay ray,\s*vec3 point,\s*vec3 columnPoint,\s*float time,\s*out float textureValue\s*\)/,
+    "Density sampling should receive one stable cloud-column point for the whole ray instead of resampling a new texture slice at every height step."
+  );
+  assert.match(
+    shaderSource,
+    /vec3 columnPoint = ray\.origin \+ ray\.direction \* mix\(segment\.x, segment\.y, 0\.46\);/,
+    "The raymarch should choose one representative middle cloud column per fragment."
+  );
+  assert.match(
+    shaderSource,
+    /float density = sampleMapSpaceCloudDensity\(ray, point, columnPoint, time, textureValue\);/,
+    "Every raymarch step should reuse the same column texture field while varying only height envelopes."
+  );
+  assert.match(
+    shaderSource,
+    /vec3 columnTexturePoint = getMapSpaceCloudTexturePoint\(ray, columnPoint\);/,
+    "Base cloud texture coordinates should come from the stable column point."
+  );
+  assert.match(
+    shaderSource,
+    /vec3 noisePoint = vec3\(columnTexturePoint\.xy \* \(2\.35 \* worldTextureScale\) \+ wind, columnTexturePoint\.z \* 3\.0\);/,
+    "Base cloud texture coordinates should stay isotropic and stable across height steps instead of skewing every layer in one direction."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /vec3 noisePoint = vec3\(texturePoint\.xy \* \(2\.35 \* worldTextureScale\) \+ wind, texturePoint\.z \* 3\.0\);/,
+    "Density must not sample a different texture z slice for every raymarch step because that creates repeated stacked patterns."
+  );
+  assert.match(
+    shaderSource,
+    /float lowLayer = smoothstep\(0\.00, 0\.34, heightRatio\) \* \(1\.0 - smoothstep\(0\.42, 0\.72, heightRatio\)\);/,
+    "Expected a dedicated lower cloud layer for heavier cloud bases."
+  );
+  assert.match(
+    shaderSource,
+    /float midLayer = smoothstep\(0\.18, 0\.50, heightRatio\) \* \(1\.0 - smoothstep\(0\.62, 0\.92, heightRatio\)\);/,
+    "Expected a middle cloud body layer."
+  );
+  assert.match(
+    shaderSource,
+    /float highLayer = smoothstep\(0\.48, 0\.88, heightRatio\);/,
+    "Expected a thinner upper cloud layer for highlights and wisps."
+  );
+  assert.match(
+    shaderSource,
+    /float density = lowDensity \* 0\.38 \+ midDensity \* 0\.44 \+ highDensity \* 0\.18;/,
+    "Expected final density to blend separate low, middle, and high layer responses."
+  );
+  assert.match(
+    shaderSource,
+    /float visibleTextureLayer = smoothstep\(0\.24, 0\.56, heightRatio\) \* \(1\.0 - smoothstep\(0\.62, 0\.90, heightRatio\)\);/,
+    "Expected visible cloud texture to be concentrated in one middle layer instead of repeated through every height slice."
+  );
+  assert.match(
+    shaderSource,
+    /float contrastTexture = clamp\(\(detail \* 0\.68 \+ billowed \* 0\.32 - 0\.24\) \* 3\.05, 0\.0, 1\.0\);[\s\S]*?textureValue = mix\(\s*contrastTexture,\s*clamp\(\(contrastTexture - 0\.10\) \* 1\.72, 0\.0, 1\.0\),\s*visibleTextureLayer\s*\);/s,
+    "Expected visible texture to use a high-contrast detail signal while low and high cloud layers affect density only."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /textureValue = clamp\(\s*mix\(0\.58, midDensity, visibleTextureLayer\),/,
+    "Visible texture must not restore the old 0.58 floor because it flattens dense cloud regions."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /textureValue = clamp\(\s*lowDensity \* 0\.22 \+ midDensity \* 0\.40 \+ highDensity \* 0\.38,/,
+    "Visible texture should not blend all height layers because that reads as stacked repeated patterns."
+  );
+  assert.match(
+    shaderSource,
+    /const int MAX_MAP_SPACE_CLOUD_STEPS = 8;/,
+    "Layering must not raise the raymarch step budget."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /sampleMapSpaceCloudVisibleTexture|MAX_MAP_SPACE_CLOUD_STEPS = 12/,
+    "Layering must not restore the removed second texture pass or higher step budget."
+  );
+});
+
+test("campaign cloud texture keeps limited height parallax for tilt changes", () => {
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+
+  assert.match(
+    shaderSource,
+    /const float MAP_SPACE_CLOUD_PARALLAX_MIN_STRENGTH = 0\.18;/,
+    "Expected cloud texture sampling to keep base height parallax so map tilt changes remain visible."
+  );
+  assert.match(
+    shaderSource,
+    /const float MAP_SPACE_CLOUD_PARALLAX_MAX_STRENGTH = 0\.36;/,
+    "Expected cloud texture sampling to cap zoom-strengthened parallax before it drifts."
+  );
+  assert.match(
+    shaderSource,
+    /float getMapSpaceCloudParallaxStrength\(\) \{[\s\S]*?return mix\(\s*MAP_SPACE_CLOUD_PARALLAX_MIN_STRENGTH,\s*MAP_SPACE_CLOUD_PARALLAX_MAX_STRENGTH,\s*smoothstep\(1\.0, 2\.4, uCloudProjection\.w\)\s*\);[\s\S]*?\}/,
+    "Expected zoomed-in cloud rendering to restore visible tilt parallax from the terrain camera scale ratio."
+  );
+  assert.match(
+    shaderSource,
+    /vec2 parallaxPoint = mix\(getMapSpaceCloudRayGroundPoint\(ray\), point\.xy, getMapSpaceCloudParallaxStrength\(\)\);/,
+    "Cloud texture coordinates should blend mostly-ground-anchored coordinates with the slab sample point using zoom-aware strength."
+  );
+  assert.match(
+    shaderSource,
+    /return vec3\(parallaxPoint, point\.z\);/,
+    "Cloud texture sampling should use the limited-parallax xy coordinate."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /return vec3\(getMapSpaceCloudRayGroundPoint\(ray\), point\.z\);/,
+    "Fully ground-anchored cloud texture removes visible tilt-angle variation."
+  );
+  assert.doesNotMatch(
+    shaderSource,
+    /return vec3\(point\.xy, point\.z\);/,
+    "Full slab-point texture sampling can drift independently during pan and zoom."
   );
 });
 
@@ -4402,6 +4969,96 @@ test("campaign cloud freezes animation during map drag and zoom instead of using
   );
 });
 
+test("campaign cloud reveal mask is stable map-space data during map interaction", () => {
+  const cloudRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    cloudRendererSource,
+    /hasDeferredRevealMaskSync/,
+    "Map-space reveal should not need a deferred projection catch-up path."
+  );
+  assert.match(
+    cloudRendererSource,
+    /let isRendering = false;/,
+    "Expected cloud renderer to know when syncRevealMask is running inside the draw frame."
+  );
+  const revealMaskSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-reveal-mask.ts"
+    ),
+    "utf8"
+  );
+  const descriptorBodyMatch = revealMaskSource.match(
+    /export function readCloudRevealMaskDescriptor\([\s\S]*?\n\}/
+  );
+  assert.ok(descriptorBodyMatch, "Expected readCloudRevealMaskDescriptor to exist.");
+  assert.doesNotMatch(
+    descriptorBodyMatch[0],
+    /getCampaignTerrainProjectionSignature/,
+    "Reveal mask descriptor signatures must not include current camera/projection state."
+  );
+  assert.match(
+    revealMaskSource,
+    /function projectCoordinateToRevealMaskPoint[\s\S]*?x: u \* input\.descriptor\.maskWidth,[\s\S]*?y: v \* input\.descriptor\.maskHeight,/s,
+    "Reveal polygons should be rasterized directly in map coordinate/terrain UV space."
+  );
+  assert.match(
+    cloudRendererSource,
+    /if \(!isRendering\) \{\s*requestRender\(\);\s*\}/,
+    "Expected reveal texture updates inside render not to schedule an immediate redundant render frame."
+  );
+});
+
+test("campaign cloud reveal edge fade stays close to revealed hexes", () => {
+  const revealMaskSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-reveal-mask.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    revealMaskSource,
+    /const CLOUD_REVEAL_FIELD_CLEAR_OUTER_RATIO = 0\.22;/,
+    "Cloud reveal clear field should not fade unrevealed clouds far outside the revealed hex."
+  );
+  assert.match(
+    revealMaskSource,
+    /const CLOUD_REVEAL_FIELD_SHALLOW_OUTER_RATIO = 0\.52;/,
+    "Cloud reveal shallow mist field should stay close to the revealed hex edge."
+  );
+  assert.match(
+    revealMaskSource,
+    /input\.referenceHexRadiusPx \* CLOUD_REVEAL_FIELD_CLEAR_OUTER_RATIO,\s*6,\s*30/s,
+    "Clear field pixel clamp should match the narrower reveal edge range."
+  );
+  assert.match(
+    revealMaskSource,
+    /input\.referenceHexRadiusPx \* CLOUD_REVEAL_FIELD_SHALLOW_OUTER_RATIO,\s*14,\s*118/s,
+    "Shallow field pixel clamp should prevent a broad player-centered fade halo."
+  );
+});
+
 test("campaign cloud stays frozen briefly after repeated zoom input stops", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src", "main.ts"),
@@ -4472,6 +5129,64 @@ test("campaign map zoom uses a persistent target-chasing controller", () => {
     mainSource,
     /function isCampaignMapZoomStateSettled\([\s\S]*?scaleDelta[\s\S]*?offsetDelta/s,
     "Expected zoom completion to be based on settling near the latest target."
+  );
+});
+
+test("campaign map zoom interpolation preserves terrain tilt constrained pan scale", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    mainSource,
+    /function getCampaignMapTiltConstrainedScaleFactor\(scale: number\): number/,
+    "Expected map zoom to expose a shared scale*cos(tilt(scale)) pan constraint."
+  );
+  assert.match(
+    mainSource,
+    /function createCampaignMapZoomTargetState[\s\S]*?getCampaignMapTiltConstrainedScaleFactor\(clampedScale\) \/[\s\S]*?getCampaignMapTiltConstrainedScaleFactor\(currentScale\)/s,
+    "Expected zoom targets to use the same tilt-constrained scale factor as interpolation."
+  );
+  assert.match(
+    mainSource,
+    /function interpolateCampaignMapState[\s\S]*?interpolatedScale[\s\S]*?interpolatedTiltScaleFactor[\s\S]*?fromTiltScaleFactor[\s\S]*?toTiltScaleFactor/s,
+    "Expected zoom interpolation to normalize Y pan by the terrain tilt factor on every frame."
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /offsetY:\s*from\.offsetY \+ \(to\.offsetY - from\.offsetY\) \* progress/,
+    "Cloud and terrain projection drift when zoom uses raw linear Y pan interpolation across nonlinear tilt segments."
+  );
+});
+
+test("campaign actor model scale follows terrain zoom instead of cancelling it", () => {
+  const terrainSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    terrainSource,
+    /gl\.uniformMatrix4fv\(\s*actorMatrixLocation,\s*false,\s*terrainMatrix\s*\)/,
+    "Expected the campaign actor model to be projected by the same terrain matrix as the map."
+  );
+  assert.match(
+    terrainSource,
+    /function getCampaignActorModelWorldScale\(model: ActorModelAsset\): number \{[\s\S]*?return ACTOR_MODEL_BASE_SCALE \* model\.scale;[\s\S]*?\}/,
+    "Expected actor model world scale to remain in terrain units so map zoom changes its on-screen size."
+  );
+  assert.doesNotMatch(
+    terrainSource,
+    /function getCampaignActorModelWorldScale[\s\S]*?ACTOR_REFERENCE_CAMERA_SCALE \/ Math\.max\(currentCamera\.scale/s,
+    "Actor model scale must not cancel terrain zoom with referenceScale/currentScale compensation."
   );
 });
 
@@ -4667,9 +5382,10 @@ test("campaign fog exploration stays active without the removed shader renderer"
     terrainRendererSource,
     /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/
   );
-  assert.match(
+  assert.doesNotMatch(
     cloudRevealMaskSource,
-    /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/
+    /projectCampaignTerrainUvToClientPointAtCloudRevealHeight|getCampaignTerrainProjectionSignature/,
+    "Cloud reveal mask must not rebuild from the current screen projection."
   );
   assert.match(terrainRendererSource, /CLOUD_REVEAL_REFERENCE_HEIGHT/);
   assert.doesNotMatch(

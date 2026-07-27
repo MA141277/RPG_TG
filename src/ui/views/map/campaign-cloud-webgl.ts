@@ -2,7 +2,6 @@ import fallbackCloudNoiseTextureUrl from "../../../assets/yuanmo-map/yuanmo-fog-
 import type { HexCoordinate } from "../../../application/navigation/travel-to-coordinate";
 import {
   getCampaignTerrainCloudProjectionUniforms,
-  getCampaignTerrainMapCoupledCamera,
   getCampaignTerrainProjectionSignature,
   holdCampaignTerrainChunkLoading,
 } from "./campaign-terrain-webgl";
@@ -14,13 +13,16 @@ import cloudFragmentShaderRaw from "./shaders/campaign-cloud.frag.glsl?raw";
 import cloudVertexShaderRaw from "./shaders/campaign-cloud.vert.glsl?raw";
 
 const CLOUD_RENDER_MAX_DEVICE_PIXEL_RATIO = 1;
-const CLOUD_RENDER_MAX_LONG_EDGE_PX = 1280;
+const CLOUD_RENDER_MAX_LONG_EDGE_PX = 960;
 const CLOUD_REVEAL_DISSOLVE_DURATION_MS = 1400;
 const CLOUD_REVEAL_TERRAIN_LOAD_BUFFER_MS = 700;
 const CLOUD_ANIMATION_FRAME_INTERVAL_MS = 1000 / 12;
 const CLOUD_IDLE_TIME_SCALE = 0.35;
 const CLOUD_PROJECTION_READY_RETRY_INTERVAL_MS = 120;
 const CLOUD_PROJECTION_READY_MAX_RETRIES = 50;
+export const DEFAULT_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST = 2.72;
+export const MIN_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST = 0.5;
+export const MAX_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST = 50;
 
 type CampaignCloudRenderer = {
   canvas: HTMLCanvasElement;
@@ -41,6 +43,7 @@ const activeCloudRenderers = new Map<HTMLCanvasElement, CampaignCloudRenderer>()
 const pendingCloudRendererCanvases = new Set<HTMLCanvasElement>();
 const activeCloudInteractionReasons = new Set<string>();
 let campaignCloudShaderEnabled = true;
+let campaignCloudTextureScaleBoost = DEFAULT_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST;
 
 declare global {
   interface Window {
@@ -116,6 +119,23 @@ export function requestCampaignCloudRender(): void {
   }
 }
 
+export function getCampaignCloudTextureScaleBoost(): number {
+  return campaignCloudTextureScaleBoost;
+}
+
+export function setCampaignCloudTextureScaleBoost(value: number): number {
+  if (!Number.isFinite(value)) {
+    return campaignCloudTextureScaleBoost;
+  }
+
+  campaignCloudTextureScaleBoost = Math.min(
+    Math.max(value, MIN_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST),
+    MAX_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST
+  );
+  requestCampaignCloudRender();
+  return campaignCloudTextureScaleBoost;
+}
+
 export function beginCampaignCloudInteraction(reason: string): void {
   const wasInactive = activeCloudInteractionReasons.size <= 0;
   activeCloudInteractionReasons.add(reason);
@@ -186,6 +206,16 @@ window.rpgCloud = (command = "status") => {
   return { enabled: campaignCloudShaderEnabled };
 };
 
+if (import.meta.hot) {
+  import.meta.hot.accept((updatedModule) => {
+    disposeCampaignCloudRenderers();
+    updatedModule?.syncCampaignCloudWebGl(document);
+  });
+  import.meta.hot.dispose(() => {
+    disposeCampaignCloudRenderers();
+  });
+}
+
 function initCampaignCloudWebGl(
   canvas: HTMLCanvasElement
 ): CampaignCloudRenderer {
@@ -204,10 +234,11 @@ function initCampaignCloudWebGl(
   const positionLocation = gl.getAttribLocation(program, "aPosition");
   const resolutionLocation = gl.getUniformLocation(program, "uResolution");
   const timeSecondsLocation = gl.getUniformLocation(program, "uTimeSeconds");
-  const mapCameraLocation = gl.getUniformLocation(program, "uMapCamera");
-  const cloudCameraLocation = gl.getUniformLocation(program, "uCloudCamera");
   const cloudProjectionLocation = gl.getUniformLocation(program, "uCloudProjection");
-  const cloudViewLocation = gl.getUniformLocation(program, "uCloudView");
+  const cloudInverseTerrainMatrixLocation = gl.getUniformLocation(
+    program,
+    "uCloudInverseTerrainMatrix"
+  );
   const noiseTextureLocation = gl.getUniformLocation(program, "uNoiseTexture");
   const revealTextureLocation = gl.getUniformLocation(program, "uRevealTexture");
   const previousRevealTextureLocation = gl.getUniformLocation(
@@ -215,6 +246,10 @@ function initCampaignCloudWebGl(
     "uPreviousRevealTexture"
   );
   const revealTransitionLocation = gl.getUniformLocation(program, "uRevealTransition");
+  const cloudTextureScaleBoostLocation = gl.getUniformLocation(
+    program,
+    "uCloudTextureScaleBoost"
+  );
   const vertexBuffer = gl.createBuffer();
   const noiseTexture = createPlaceholderTexture(gl);
   const revealTexture = createPlaceholderTexture(gl, new Uint8Array([0, 0, 0, 0]));
@@ -226,14 +261,13 @@ function initCampaignCloudWebGl(
     positionLocation < 0 ? "aPosition" : null,
     resolutionLocation == null ? "uResolution" : null,
     timeSecondsLocation == null ? "uTimeSeconds" : null,
-    mapCameraLocation == null ? "uMapCamera" : null,
-    cloudCameraLocation == null ? "uCloudCamera" : null,
     cloudProjectionLocation == null ? "uCloudProjection" : null,
-    cloudViewLocation == null ? "uCloudView" : null,
+    cloudInverseTerrainMatrixLocation == null ? "uCloudInverseTerrainMatrix" : null,
     noiseTextureLocation == null ? "uNoiseTexture" : null,
     revealTextureLocation == null ? "uRevealTexture" : null,
     previousRevealTextureLocation == null ? "uPreviousRevealTexture" : null,
     revealTransitionLocation == null ? "uRevealTransition" : null,
+    cloudTextureScaleBoostLocation == null ? "uCloudTextureScaleBoost" : null,
     vertexBuffer == null ? "vertexBuffer" : null,
   ].filter((resource): resource is string => resource != null);
   if (missingResources.length > 0) {
@@ -276,6 +310,7 @@ function initCampaignCloudWebGl(
   let idleCloudResumeMs = performance.now();
   let frozenCloudTimeSeconds = 0;
   let isCloudTimeFrozen = false;
+  let isRendering = false;
 
   function resolveProjectionRoot(): ParentNode {
     return (
@@ -410,7 +445,9 @@ function initCampaignCloudWebGl(
     revealHexSignature = descriptor.revealedHexSignature;
     previousRevealHexes = descriptor.revealedHexes;
     updateTexture(gl, revealTexture, currentMaskCanvas);
-    requestRender();
+    if (!isRendering) {
+      requestRender();
+    }
   }
 
   loadImage(cloudNoiseTextureUrl)
@@ -432,62 +469,52 @@ function initCampaignCloudWebGl(
     }
 
     frameId = null;
-    resizeCanvasToDisplaySize(canvas);
-    syncRevealMask();
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.useProgram(program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.enableVertexAttribArray(positionLocation);
-    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-    gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-    gl.uniform1f(
-      timeSecondsLocation,
-      resolveCloudTimeSeconds()
-    );
-    const mapCamera = getCampaignTerrainMapCoupledCamera();
-    gl.uniform3f(
-      mapCameraLocation,
-      mapCamera.scale,
-      mapCamera.offsetX,
-      mapCamera.offsetY
-    );
-    const cloudProjection = getCampaignTerrainCloudProjectionUniforms(resolveProjectionRoot());
-    gl.uniform4f(
-      cloudCameraLocation,
-      cloudProjection.cameraScale,
-      cloudProjection.cameraOffsetX,
-      cloudProjection.cameraOffsetY,
-      cloudProjection.tiltRadians
-    );
-    gl.uniform4f(
-      cloudProjectionLocation,
-      cloudProjection.viewportAspectRatio,
-      cloudProjection.terrainScale,
-      cloudProjection.heightScale,
-      cloudProjection.cameraOffsetUnit
-    );
-    gl.uniform4f(
-      cloudViewLocation,
-      cloudProjection.cameraReferenceScale,
-      cloudProjection.cameraBaseDistance,
-      cloudProjection.fovRadians,
-      0
-    );
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, noiseTexture);
-    gl.uniform1i(noiseTextureLocation, 0);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, revealTexture);
-    gl.uniform1i(revealTextureLocation, 1);
-    gl.activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, previousRevealTexture);
-    gl.uniform1i(previousRevealTextureLocation, 2);
-    gl.uniform1f(revealTransitionLocation, resolveRevealTransition());
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    scheduleAnimationRender();
-    scheduleProjectionReadyRetry();
+    isRendering = true;
+    try {
+      resizeCanvasToDisplaySize(canvas);
+      syncRevealMask();
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+      gl.enableVertexAttribArray(positionLocation);
+      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+      gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+      gl.uniform1f(
+        timeSecondsLocation,
+        resolveCloudTimeSeconds()
+      );
+      const cloudProjection = getCampaignTerrainCloudProjectionUniforms(resolveProjectionRoot());
+      gl.uniform4f(
+        cloudProjectionLocation,
+        cloudProjection.viewportAspectRatio,
+        cloudProjection.terrainScale,
+        cloudProjection.heightScale,
+        cloudProjection.cameraScaleRatio
+      );
+      gl.uniformMatrix4fv(
+        cloudInverseTerrainMatrixLocation,
+        false,
+        cloudProjection.inverseTerrainMatrix
+      );
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, noiseTexture);
+      gl.uniform1i(noiseTextureLocation, 0);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, revealTexture);
+      gl.uniform1i(revealTextureLocation, 1);
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, previousRevealTexture);
+      gl.uniform1i(previousRevealTextureLocation, 2);
+      gl.uniform1f(revealTransitionLocation, resolveRevealTransition());
+      gl.uniform1f(cloudTextureScaleBoostLocation, campaignCloudTextureScaleBoost);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      scheduleAnimationRender();
+      scheduleProjectionReadyRetry();
+    } finally {
+      isRendering = false;
+    }
   }
 
   function resolveRevealTransition(): number {

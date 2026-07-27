@@ -1,0 +1,368 @@
+﻿# Review package
+
+## Commits
+c2f42734 feat: expose campaign cloud projection uniforms
+
+## Stat
+ src/ui/views/map/campaign-cloud-webgl.ts          | 21 ++++++++
+ src/ui/views/map/campaign-terrain-webgl.ts        | 35 ++++++++++++++
+ src/ui/views/map/shaders/campaign-cloud.frag.glsl | 18 ++++++-
+ tests/robustness.test.cjs                         | 58 +++++++++++++++++++++++
+ 4 files changed, 131 insertions(+), 1 deletion(-)
+
+## Diff
+diff --git a/src/ui/views/map/campaign-cloud-webgl.ts b/src/ui/views/map/campaign-cloud-webgl.ts
+index 9435521a..f85abae6 100644
+--- a/src/ui/views/map/campaign-cloud-webgl.ts
++++ b/src/ui/views/map/campaign-cloud-webgl.ts
+@@ -1,13 +1,14 @@
+ import fallbackCloudNoiseTextureUrl from "../../../assets/yuanmo-map/yuanmo-fog-noise.png?url";
+ import type { HexCoordinate } from "../../../application/navigation/travel-to-coordinate";
+ import {
++  getCampaignTerrainCloudProjectionUniforms,
+   getCampaignTerrainMapCoupledCamera,
+   getCampaignTerrainProjectionSignature,
+   holdCampaignTerrainChunkLoading,
+ } from "./campaign-terrain-webgl";
+ import {
+   createCloudRevealMaskCanvas,
+   readCloudRevealMaskDescriptor,
+ } from "./campaign-cloud-reveal-mask";
+ import cloudFragmentShaderRaw from "./shaders/campaign-cloud.frag.glsl?raw";
+ import cloudVertexShaderRaw from "./shaders/campaign-cloud.vert.glsl?raw";
+@@ -197,39 +198,43 @@ function initCampaignCloudWebGl(
+   if (maybeGl == null) {
+     throw new Error("This browser does not support WebGL.");
+   }
+ 
+   const gl: WebGLRenderingContext = maybeGl;
+   const program = createProgram(gl, cloudVertexShaderRaw, cloudFragmentShaderRaw);
+   const positionLocation = gl.getAttribLocation(program, "aPosition");
+   const resolutionLocation = gl.getUniformLocation(program, "uResolution");
+   const timeSecondsLocation = gl.getUniformLocation(program, "uTimeSeconds");
+   const mapCameraLocation = gl.getUniformLocation(program, "uMapCamera");
++  const cloudCameraLocation = gl.getUniformLocation(program, "uCloudCamera");
++  const cloudProjectionLocation = gl.getUniformLocation(program, "uCloudProjection");
+   const noiseTextureLocation = gl.getUniformLocation(program, "uNoiseTexture");
+   const revealTextureLocation = gl.getUniformLocation(program, "uRevealTexture");
+   const previousRevealTextureLocation = gl.getUniformLocation(
+     program,
+     "uPreviousRevealTexture"
+   );
+   const revealTransitionLocation = gl.getUniformLocation(program, "uRevealTransition");
+   const vertexBuffer = gl.createBuffer();
+   const noiseTexture = createPlaceholderTexture(gl);
+   const revealTexture = createPlaceholderTexture(gl, new Uint8Array([0, 0, 0, 0]));
+   const previousRevealTexture = createPlaceholderTexture(
+     gl,
+     new Uint8Array([0, 0, 0, 0])
+   );
+   const missingResources = [
+     positionLocation < 0 ? "aPosition" : null,
+     resolutionLocation == null ? "uResolution" : null,
+     timeSecondsLocation == null ? "uTimeSeconds" : null,
+     mapCameraLocation == null ? "uMapCamera" : null,
++    cloudCameraLocation == null ? "uCloudCamera" : null,
++    cloudProjectionLocation == null ? "uCloudProjection" : null,
+     noiseTextureLocation == null ? "uNoiseTexture" : null,
+     revealTextureLocation == null ? "uRevealTexture" : null,
+     previousRevealTextureLocation == null ? "uPreviousRevealTexture" : null,
+     revealTransitionLocation == null ? "uRevealTransition" : null,
+     vertexBuffer == null ? "vertexBuffer" : null,
+   ].filter((resource): resource is string => resource != null);
+   if (missingResources.length > 0) {
+     throw new Error(
+       `Failed to initialize campaign cloud WebGL resources: ${missingResources.join(", ")}.`
+     );
+@@ -439,20 +444,36 @@ function initCampaignCloudWebGl(
+       timeSecondsLocation,
+       resolveCloudTimeSeconds()
+     );
+     const mapCamera = getCampaignTerrainMapCoupledCamera();
+     gl.uniform3f(
+       mapCameraLocation,
+       mapCamera.scale,
+       mapCamera.offsetX,
+       mapCamera.offsetY
+     );
++    const cloudProjection = getCampaignTerrainCloudProjectionUniforms(resolveProjectionRoot());
++    gl.uniform4f(
++      cloudCameraLocation,
++      cloudProjection.cameraScale,
++      cloudProjection.cameraOffsetX,
++      cloudProjection.cameraOffsetY,
++      cloudProjection.tiltRadians
++    );
++    gl.uniform4f(
++      cloudProjectionLocation,
++      cloudProjection.viewportAspectRatio,
++      cloudProjection.terrainScale,
++      cloudProjection.heightScale,
++      cloudProjection.cameraBaseDistance /
++        Math.max(cloudProjection.cameraReferenceScale, 0.0001)
++    );
+     gl.activeTexture(gl.TEXTURE0);
+     gl.bindTexture(gl.TEXTURE_2D, noiseTexture);
+     gl.uniform1i(noiseTextureLocation, 0);
+     gl.activeTexture(gl.TEXTURE1);
+     gl.bindTexture(gl.TEXTURE_2D, revealTexture);
+     gl.uniform1i(revealTextureLocation, 1);
+     gl.activeTexture(gl.TEXTURE2);
+     gl.bindTexture(gl.TEXTURE_2D, previousRevealTexture);
+     gl.uniform1i(previousRevealTextureLocation, 2);
+     gl.uniform1f(revealTransitionLocation, resolveRevealTransition());
+diff --git a/src/ui/views/map/campaign-terrain-webgl.ts b/src/ui/views/map/campaign-terrain-webgl.ts
+index cdf33fae..e073f062 100644
+--- a/src/ui/views/map/campaign-terrain-webgl.ts
++++ b/src/ui/views/map/campaign-terrain-webgl.ts
+@@ -525,20 +525,32 @@ export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
+   shadeMax: 1.0,
+ };
+ const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
+ 
+ export type CampaignTerrainCamera = {
+   scale: number;
+   offsetX: number;
+   offsetY: number;
+ };
+ 
++export type CampaignTerrainCloudProjectionUniforms = {
++  cameraScale: number;
++  cameraOffsetX: number;
++  cameraOffsetY: number;
++  tiltRadians: number;
++  viewportAspectRatio: number;
++  terrainScale: number;
++  heightScale: number;
++  cameraReferenceScale: number;
++  cameraBaseDistance: number;
++};
++
+ export function createCampaignTerrainCameraCenteredOnCoordinate(input: {
+   coordinate: GridCoordinate;
+   coordinateSpace: CoordinateSpace;
+   scale: number;
+ }): CampaignTerrainCamera {
+   const safeScale = Math.max(input.scale, 0.1);
+   const u = input.coordinate.x / Math.max(input.coordinateSpace.width, 1);
+   const v = 1 - input.coordinate.y / Math.max(input.coordinateSpace.height, 1);
+   const worldPoint = createTerrainWorldPoint(u, v, 0);
+   const scaledX = worldPoint[0] * TERRAIN_SCALE;
+@@ -864,20 +876,43 @@ export function getCampaignTerrainMapCoupledCamera(): CampaignTerrainCamera {
+   const tiltCos = Math.cos(getCampaignTerrainCameraTiltRadians(currentCamera));
+   const safeTiltCos = Math.abs(tiltCos) < 0.0001 ? 1 : tiltCos;
+ 
+   return {
+     scale: currentCamera.scale,
+     offsetX: currentCamera.offsetX,
+     offsetY: currentCamera.offsetY / safeTiltCos,
+   };
+ }
+ 
++export function getCampaignTerrainCloudProjectionUniforms(
++  root: ParentNode
++): CampaignTerrainCloudProjectionUniforms {
++  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
++  const mapCoupledCamera = getCampaignTerrainMapCoupledCamera();
++  const viewportAspectRatio =
++    terrainCanvas == null
++      ? 1
++      : terrainCanvas.width / Math.max(terrainCanvas.height, 1);
++
++  return {
++    cameraScale: currentCamera.scale,
++    cameraOffsetX: mapCoupledCamera.offsetX,
++    cameraOffsetY: mapCoupledCamera.offsetY,
++    tiltRadians: getCampaignTerrainCameraTiltRadians(currentCamera),
++    viewportAspectRatio,
++    terrainScale: TERRAIN_SCALE,
++    heightScale: HEIGHT_SCALE,
++    cameraReferenceScale: CAMERA_REFERENCE_SCALE,
++    cameraBaseDistance: CAMERA_BASE_DISTANCE,
++  };
++}
++
+ function getCampaignTerrainCameraTiltRadians(
+   camera: CampaignTerrainCamera
+ ): number {
+   return getCampaignTerrainCameraTiltRadiansForScale(camera.scale);
+ }
+ 
+ export function getCampaignTerrainCameraTiltRadiansForScale(scale: number): number {
+   const normalizedScale = clamp(
+     (scale - CAMERA_TILT_TOP_DOWN_SCALE) /
+       Math.max(CAMERA_TILT_CLOSE_SCALE - CAMERA_TILT_TOP_DOWN_SCALE, 0.0001),
+diff --git a/src/ui/views/map/shaders/campaign-cloud.frag.glsl b/src/ui/views/map/shaders/campaign-cloud.frag.glsl
+index 1867a342..ff74d6e4 100644
+--- a/src/ui/views/map/shaders/campaign-cloud.frag.glsl
++++ b/src/ui/views/map/shaders/campaign-cloud.frag.glsl
+@@ -1,35 +1,38 @@
+ precision mediump float;
+ 
+ varying vec2 vUv;
+ 
+ uniform vec2 uResolution;
+ uniform float uTimeSeconds;
+ uniform vec3 uMapCamera;
++uniform vec4 uCloudCamera;
++uniform vec4 uCloudProjection;
+ uniform sampler2D uNoiseTexture;
+ uniform sampler2D uRevealTexture;
+ uniform sampler2D uPreviousRevealTexture;
+ uniform float uRevealTransition;
+ 
+ // Campaign cloud tuning table.
+ // Increase CLOUD_SAMPLE_SCALE to show more, smaller cloud groups on screen.
+ const float CLOUD_SAMPLE_SCALE = 1.5;
+ const float CLOUD_FLOW_SPEED = 0.3;
+ const vec2 CLOUD_PRIMARY_FLOW = vec2(0.92, -0.39);
+ const vec2 CLOUD_UPPER_FLOW = vec2(-0.48, 0.88);
+ const float CLOUD_FLOW_COORDINATE_SPEED = 0.026;
+ const float CLOUD_FLOW_WARP_STRENGTH = 0.18;
+ const float CLOUD_FLOW_WARP_SCALE = 0.72;
+ const float CLOUD_FLOW_SWIRL_STRENGTH = 0.035;
+ const float CLOUD_MAP_CAMERA_TRANSLATE_STRENGTH = 0.0010;
+ const float CLOUD_MAP_CAMERA_SCALE_STRENGTH = 0.8;
+ const float CLOUD_MAP_CAMERA_REFERENCE_SCALE = 15.0;
++const int MAX_MAP_SPACE_CLOUD_STEPS = 12;
+ 
+ const float CLOUD_TEXTURE_SAMPLE_SCALE = 1.08;
+ 
+ const float REVEAL_FIELD_PIXEL_SMOOTHING = 1.35;
+ const float REVEAL_EDGE_CAMERA_SCALE_STRENGTH = 0.42;
+ 
+ const float OUTER_CLOUD_BANK_SAMPLE_SCALE = 1.12;
+ const float OUTER_CLOUD_BANK_COVERAGE_LOW = 0.38;
+ const float OUTER_CLOUD_BANK_COVERAGE_HIGH = 0.63;
+ const float OUTER_CLOUD_BANK_ALPHA_FLOOR = 0.16;
+@@ -627,12 +630,25 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
+   vec3 baseColor = cloudColor;
+   float finalAlpha = clamp(baseAlpha + outerPuff.a * (1.0 - baseAlpha), 0.0, 1.0);
+   vec3 finalColor =
+     (baseColor * baseAlpha + outerPuff.rgb * outerPuff.a * (1.0 - baseAlpha)) /
+     max(finalAlpha, 0.001);
+ 
+   return vec4(finalColor, finalAlpha);
+ }
+ 
+ void main() {
+-  gl_FragColor = sampleArticleCloudSea(vUv, uTimeSeconds);
++  vec4 cloudColor = sampleArticleCloudSea(vUv, uTimeSeconds);
++  float cloudProjectionNoop = mod(
++    abs(uCloudCamera.x) +
++      abs(uCloudCamera.y) +
++      abs(uCloudCamera.z) +
++      abs(uCloudCamera.w) +
++      abs(uCloudProjection.x) +
++      abs(uCloudProjection.y) +
++      abs(uCloudProjection.z) +
++      abs(uCloudProjection.w),
++    0.000001
++  );
++  cloudColor.a = clamp(cloudColor.a + cloudProjectionNoop * 0.000001, 0.0, 1.0);
++  gl_FragColor = cloudColor;
+ }
+diff --git a/tests/robustness.test.cjs b/tests/robustness.test.cjs
+index 6bed0089..c19471c4 100644
+--- a/tests/robustness.test.cjs
++++ b/tests/robustness.test.cjs
+@@ -430,20 +430,24 @@ function findForbiddenProductionSourceReferences(forbiddenPatterns) {
+ 
+     return [
+       {
+         filePath: path.relative(process.cwd(), filePath),
+         matchedPatterns,
+       },
+     ];
+   });
+ }
+ 
++function readSource(relativeFilePath) {
++  return fs.readFileSync(path.join(process.cwd(), relativeFilePath), "utf8");
++}
++
+ function collectFilePaths(rootPath) {
+   const entries = fs.readdirSync(rootPath, { withFileTypes: true });
+ 
+   return entries.flatMap((entry) => {
+     const entryPath = path.join(rootPath, entry.name);
+ 
+     if (entry.isDirectory()) {
+       return collectFilePaths(entryPath);
+     }
+ 
+@@ -4156,20 +4160,74 @@ test("campaign cloud render keeps flowing cloud animation timing", () => {
+   assert.match(
+     cloudRendererSource,
+     /function scheduleAnimationRender\(\): void \{[\s\S]*?CLOUD_ANIMATION_FRAME_INTERVAL_MS/s
+   );
+   assert.match(
+     cloudRendererSource,
+     /scheduleAnimationRender\(\);/
+   );
+ });
+ 
++test("campaign cloud map-space volumetric slab uses terrain projection uniforms without gameplay coupling", () => {
++  const terrainSource = readSource("src/ui/views/map/campaign-terrain-webgl.ts");
++  const cloudSource = readSource("src/ui/views/map/campaign-cloud-webgl.ts");
++  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
++  const revealMaskSource = readSource("src/ui/views/map/campaign-cloud-reveal-mask.ts");
++  const mainSource = readSource("src/main.ts");
++
++  assert.match(
++    terrainSource,
++    /export type CampaignTerrainCloudProjectionUniforms/,
++    "Expected terrain renderer to expose a typed, read-only cloud projection payload."
++  );
++  assert.match(
++    terrainSource,
++    /export function getCampaignTerrainCloudProjectionUniforms/,
++    "Expected cloud projection data to be read from terrain renderer instead of recomputed in cloud renderer."
++  );
++  assert.match(
++    cloudSource,
++    /getCampaignTerrainCloudProjectionUniforms/,
++    "Expected cloud renderer to consume terrain-owned projection uniforms."
++  );
++  assert.match(
++    cloudSource,
++    /uCloudCamera/,
++    "Expected cloud renderer to upload camera-specific map-space cloud uniforms."
++  );
++  assert.match(
++    cloudSource,
++    /uCloudProjection/,
++    "Expected cloud renderer to upload projection-specific map-space cloud uniforms."
++  );
++  assert.doesNotMatch(
++    cloudSource,
++    /sampleHeightAtUv|mapHeightUrl|data-map-height|map_heights/,
++    "Cloud renderer must not sample terrain height data."
++  );
++  assert.match(
++    revealMaskSource,
++    /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/,
++    "Reveal mask must keep using the fixed cloud reveal height projection helper."
++  );
++  assert.doesNotMatch(
++    mainSource,
++    /getCampaignTerrainCloudProjectionUniforms|uCloudCamera|uCloudProjection|CampaignTerrainCloudProjectionUniforms/,
++    "main.ts must not participate in cloud projection wiring."
++  );
++  assert.match(
++    shaderSource,
++    /MAX_MAP_SPACE_CLOUD_STEPS/,
++    "Expected shader to declare an explicit bounded map-space cloud raymarch step budget."
++  );
++});
++
+ test("campaign cloud freezes animation during map drag and zoom instead of using a css proxy", () => {
+   const cloudRendererSource = fs.readFileSync(
+     path.join(
+       process.cwd(),
+       "src",
+       "ui",
+       "views",
+       "map",
+       "campaign-cloud-webgl.ts"
+     ),

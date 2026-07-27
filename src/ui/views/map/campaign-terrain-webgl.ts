@@ -368,7 +368,6 @@ const CAMERA_BASE_DISTANCE = 20;
 const CAMERA_OFFSET_UNIT = 0.0032;
 const CAMERA_REFERENCE_SCALE = 15;
 const FOV_RADIANS = 24 * Math.PI / 180;
-const ACTOR_REFERENCE_CAMERA_SCALE = 40;
 const ACTOR_MODEL_BASE_SCALE = 0.011;
 const ACTOR_MODEL_FACING_OFFSET_RADIANS = Math.PI / 2;
 const ACTOR_ANIMATION_BLEND_DURATION_MS = 180;
@@ -533,14 +532,11 @@ export type CampaignTerrainCamera = {
 };
 
 export type CampaignTerrainCloudProjectionUniforms = {
-  cameraScale: number;
-  cameraOffsetX: number;
-  cameraOffsetY: number;
-  tiltRadians: number;
+  inverseTerrainMatrix: Mat4;
   viewportAspectRatio: number;
   terrainScale: number;
   heightScale: number;
-  cameraOffsetUnit: number;
+  cameraScaleRatio: number;
   cameraReferenceScale: number;
   cameraBaseDistance: number;
   fovRadians: number;
@@ -889,21 +885,18 @@ export function getCampaignTerrainCloudProjectionUniforms(
   root: ParentNode
 ): CampaignTerrainCloudProjectionUniforms {
   const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
-  const mapCoupledCamera = getCampaignTerrainMapCoupledCamera();
   const viewportAspectRatio =
     terrainCanvas == null
       ? 1
       : terrainCanvas.width / Math.max(terrainCanvas.height, 1);
+  const terrainMatrix = createTerrainMatrix(viewportAspectRatio);
 
   return {
-    cameraScale: currentCamera.scale,
-    cameraOffsetX: mapCoupledCamera.offsetX,
-    cameraOffsetY: mapCoupledCamera.offsetY,
-    tiltRadians: getCampaignTerrainCameraTiltRadians(currentCamera),
+    inverseTerrainMatrix: invertMatrix4(terrainMatrix),
     viewportAspectRatio,
     terrainScale: TERRAIN_SCALE,
     heightScale: HEIGHT_SCALE,
-    cameraOffsetUnit: CAMERA_OFFSET_UNIT,
+    cameraScaleRatio: currentCamera.scale / CAMERA_REFERENCE_SCALE,
     cameraReferenceScale: CAMERA_REFERENCE_SCALE,
     cameraBaseDistance: CAMERA_BASE_DISTANCE,
     fovRadians: FOV_RADIANS,
@@ -9277,13 +9270,7 @@ function createActorMesh(
 }
 
 function getCampaignActorModelWorldScale(model: ActorModelAsset): number {
-  const scaleCompensation = clamp(
-    ACTOR_REFERENCE_CAMERA_SCALE / Math.max(currentCamera.scale, 0.0001),
-    0.18,
-    1.6
-  );
-
-  return ACTOR_MODEL_BASE_SCALE * model.scale * scaleCompensation;
+  return ACTOR_MODEL_BASE_SCALE * model.scale;
 }
 
 function createSingleInfluenceIndices(vertexBoneIndices: Uint16Array): Uint16Array {
