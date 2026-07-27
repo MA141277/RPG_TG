@@ -2,6 +2,12 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-24 Button Sound Cue Abstraction
+
+- 新增 `src/application/audio/button-sound.ts`，提供 `LIGHT_BUTTON_SOUND` 与 `HEAVY_BUTTON_SOUND` 两个可复用按钮音效对象，后续按钮逻辑可按对象分配音效而不是直接绑定 mp3。
+- `src/application/audio/audio-manager.ts` 新增 `ui.button.light` 与 `ui.button.heavy` 两个真实 mp3-backed UI cue，保留原有 `ui.click` 作为兼容路径。
+- `src/main.ts` 为这两个按钮音效增加静态 `mp3?url` 资源映射，避免新增按钮音频继续依赖动态字符串路径解析。
+
 ## 2026-07-22 Player UI Cleanup
 
 ### Changed

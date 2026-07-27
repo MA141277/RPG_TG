@@ -22,12 +22,12 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-24`
-- Current Focus: `Record docs and finish the verification sweep.`
-- Next Step: `Start Task 2 from the shell seam test.`
-- Verification: `npm.cmd run lint:plans`
-- Notes: `This plan is intentionally separate from the still-open unified backpack governance line in docs/superpowers/project-progress.md. Task 1 is complete; this batch intentionally leaves src/main.ts and real mp3 asset wiring to Task 2.`
+- Current Focus: `Implementation complete; closeout waits on a decision around an unrelated robustness blocker plus repository sync/push.`
+- Next Step: `Review diff, decide whether to investigate or waive the existing robustness blocker, then sync/push before marking the child closed.`
+- Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tools/lint-superpowers-plans.mjs'` passed; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json` passed; `@' {"type":"commonjs"} '@ | Set-Content '.test-dist\package.json'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/button-sound.test.cjs tests/audio-manager.test.cjs tests/audio-seam.test.cjs` passed (13/13); `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' --noEmit -p tsconfig.json` passed; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\vite\bin\vite.js' build` passed under escalated execution; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/hardcoded-scenario-pack-boundary.test.cjs` passed; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/robustness.test.cjs` still exits 1 on the existing `vite scenario-pack publisher stages zhuyuanzhang manifest content to the browser route` path.`
+- Notes: `The button sound batch itself is green: shared cue contract, real mp3 asset wiring, targeted tests, typecheck, and build all pass. The remaining repo-wide blocker is unrelated to this batch and reproduces through the existing scenario-pack publisher copy path in vite.config.ts.`
 
 ## Progress Log
 
@@ -43,6 +43,10 @@
   - Summary: `Copied the real light/heavy button mp3 assets into src/assets/audio/ui, added *.mp3?url typing, and wired src/main.ts through a narrow STATIC_AUDIO_ASSET_URLS map before the legacy asset fallback.`
   - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `@' {"type":"commonjs"} '@ | Set-Content '.test-dist\package.json'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/audio-seam.test.cjs`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' --noEmit -p tsconfig.json`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\vite\bin\vite.js' build`
   - Next: `Record docs and finish the verification sweep.`
+- 2026-07-24
+  - Summary: `Recorded the reusable button sound batch in docs/change-log.md, finalized the plan state as completed-but-open, and documented the unrelated robustness blocker in the existing scenario-pack publisher copy path.`
+  - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tools/lint-superpowers-plans.mjs'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `@' {"type":"commonjs"} '@ | Set-Content '.test-dist\package.json'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/button-sound.test.cjs tests/audio-manager.test.cjs tests/audio-seam.test.cjs`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' --noEmit -p tsconfig.json`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\vite\bin\vite.js' build` (pass under escalated execution); `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/hardcoded-scenario-pack-boundary.test.cjs` (pass); `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/robustness.test.cjs` (existing unrelated blocker: exit 1 on scenario-pack publisher path).`
+  - Next: `Decide whether to investigate or waive the unrelated robustness blocker, then sync/push before closing this child.`
 
 ---
 
@@ -455,7 +459,7 @@ Update this plan in the same commit batch:
 - set `Execution State.Current Focus` to `Record docs and finish the verification sweep.`
 - append a `Progress Log` entry summarizing the copied mp3 assets, `*.mp3?url` typing, and `main.ts` static asset map
 
-- [ ] **Step 7: Commit the asset wiring batch**
+- [x] **Step 7: Commit the asset wiring batch**
 
 Run:
 
@@ -482,7 +486,7 @@ git commit -m "feat: wire button sound audio assets"
   - changelog entry describing the reusable button sound abstraction batch
   - final `Execution State`, `Progress Log`, `Completion Checklist`, and `Child Closeout` updates for a `completed-but-open` plan
 
-- [ ] **Step 1: Add the changelog entry for the batch**
+- [x] **Step 1: Add the changelog entry for the batch**
 
 Insert a new dated section near the top of `docs/change-log.md` using this exact level of detail:
 
@@ -494,7 +498,7 @@ Insert a new dated section near the top of `docs/change-log.md` using this exact
 - `src/main.ts` 为这两个按钮音效增加静态 `mp3?url` 资源映射，避免新增按钮音频继续依赖动态字符串路径解析。
 ```
 
-- [ ] **Step 2: Run the full verification sweep**
+- [x] **Step 2: Run the full verification sweep**
 
 Run:
 
@@ -510,7 +514,7 @@ Expected:
 
 - `PASS`, or record the exact unrelated blocker before changing this plan's status.
 
-- [ ] **Step 3: Finalize this plan's governance state**
+- [x] **Step 3: Finalize this plan's governance state**
 
 Update `docs/superpowers/plans/2026-07-24-button-sound-cue-abstraction-plan.md` with these exact end-state values if all verification passes:
 
@@ -554,19 +558,19 @@ git commit -m "docs: record button sound abstraction batch"
 
 ## Exit Check
 
-- [ ] `BUILTIN_AUDIO_CUE_IDS` exports `uiButtonLight` and `uiButtonHeavy`.
-- [ ] `ButtonSoundEffect`, `LIGHT_BUTTON_SOUND`, and `HEAVY_BUTTON_SOUND` exist in `src/application/audio/button-sound.ts`.
-- [ ] The provided light and heavy button mp3 files are copied into `src/assets/audio/ui/` under ASCII filenames.
-- [ ] `src/main.ts` resolves `audio/ui/button-light.mp3` and `audio/ui/button-heavy.mp3` through static `?url` imports before the legacy fallback.
-- [ ] `src/vite-env.d.ts` supports `*.mp3?url`.
-- [ ] Targeted tests, typecheck, build, and `npm.cmd test` all pass or any unrelated blocker is explicitly recorded.
+- [x] `BUILTIN_AUDIO_CUE_IDS` exports `uiButtonLight` and `uiButtonHeavy`.
+- [x] `ButtonSoundEffect`, `LIGHT_BUTTON_SOUND`, and `HEAVY_BUTTON_SOUND` exist in `src/application/audio/button-sound.ts`.
+- [x] The provided light and heavy button mp3 files are copied into `src/assets/audio/ui/` under ASCII filenames.
+- [x] `src/main.ts` resolves `audio/ui/button-light.mp3` and `audio/ui/button-heavy.mp3` through static `?url` imports before the legacy fallback.
+- [x] `src/vite-env.d.ts` supports `*.mp3?url`.
+- [x] Targeted tests, typecheck, build, and `npm.cmd test` all pass or any unrelated blocker is explicitly recorded.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
@@ -577,9 +581,9 @@ git commit -m "docs: record button sound abstraction batch"
 - Project Progress Synced: `no`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `choose-execution-mode`
+- Next Required Action: `decide-robustness-blocker-follow-up-then-push`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-24-button-sound-cue-abstraction-plan.md`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then execute this plan after the user chooses an execution approach.`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue from this plan to investigate or waive the unrelated robustness blocker before repository sync.`
