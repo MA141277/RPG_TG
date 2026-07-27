@@ -71,6 +71,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       visiblePanels: ["player-card", "main-mission", "notifications"],
       pinnedCharacterId: input.pinnedCharacterId,
       detailCharacterId: null,
+      isCharacterAbilityDetailOpen: false,
       selectedTroopId: null,
       activeMissionId: null,
       reviewDateText: input.reviewDateText,

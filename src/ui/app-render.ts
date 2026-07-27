@@ -158,6 +158,7 @@ function buildCharacterDetailOptions(
   const options: CharacterDetailViewOptions = {
     layout: input.appState.uiLayouts["character-detail-screen"],
     layoutEditor: input.appState.layoutEditor,
+    abilityDetailOpen: input.appState.gameState.ui.isCharacterAbilityDetailOpen,
     notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
     stipendText: `${playerCharacter.stats.gold} 文`,
     schoolName: "无",

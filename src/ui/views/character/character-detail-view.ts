@@ -1,4 +1,9 @@
-import type { CharacterDefinition, SkillKey } from "../../../domain/character";
+import type { CharacterDefinition } from "../../../domain/character";
+import {
+  formatPlayableSkillLevel,
+  getPlayableSkillLevel,
+  PLAYABLE_SKILL_DEFINITIONS,
+} from "../../../domain/playable-skill";
 import type {
   CharacterDetailScreenLayout,
   LayoutEditorState,
@@ -8,41 +13,71 @@ import type {
 } from "../../../domain/ui-layout";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
-const skillIconModules = import.meta.glob<string>(
-  "../../../../ui/yuansu/具体面板ui/skill font/*.png",
-  { eager: true, query: "?url", import: "default" }
-);
+type CharacterDetailAbilityKey =
+  | "martial"
+  | "strength"
+  | "physique"
+  | "agility"
+  | "intelligence"
+  | "adaptability"
+  | "judgment"
+  | "awareness"
+  | "politics"
+  | "governance"
+  | "livelihood"
+  | "finance"
+  | "charm"
+  | "presence"
+  | "learning"
+  | "eloquence";
 
-type CharacterDetailSkill = {
-  key: SkillKey;
+type CharacterDetailAbilityGroup = {
   label: string;
-  assetName: string;
+  key: CharacterDetailAbilityKey;
+  substats: Array<{
+    label: string;
+    key: CharacterDetailAbilityKey;
+  }>;
 };
 
-const DETAIL_SKILLS: CharacterDetailSkill[] = [
-  { key: "ashigaru", label: "步战", assetName: "buzhan" },
-  { key: "horse", label: "骑战", assetName: "qizhan" },
-  { key: "navy", label: "水战", assetName: "shuizhan" },
-  { key: "teppo", label: "火器", assetName: "huoqi" },
-  { key: "military", label: "兵法", assetName: "bingfa" },
-  { key: "construction", label: "营造", assetName: "yingzao" },
-  { key: "development", label: "屯田", assetName: "tuntian" },
-  { key: "arithmetic", label: "算术", assetName: "suanshu" },
-  { key: "rhetoric", label: "辩才", assetName: "biancai" },
-  { key: "ninjutsu", label: "情报", assetName: "qingbao" },
-  { key: "etiquette", label: "礼制", assetName: "lizhi" },
-  { key: "tea", label: "文采", assetName: "wencai" },
-  { key: "martial", label: "招募", assetName: "zhaomu" },
-  { key: "medicine", label: "医术", assetName: "yishu" },
+const ABILITY_GROUPS: CharacterDetailAbilityGroup[] = [
+  {
+    label: "武力",
+    key: "martial",
+    substats: [
+      { label: "力量", key: "strength" },
+      { label: "体魄", key: "physique" },
+      { label: "身法", key: "agility" },
+    ],
+  },
+  {
+    label: "智谋",
+    key: "intelligence",
+    substats: [
+      { label: "机变", key: "adaptability" },
+      { label: "谋断", key: "judgment" },
+      { label: "察势", key: "awareness" },
+    ],
+  },
+  {
+    label: "政务",
+    key: "politics",
+    substats: [
+      { label: "吏治", key: "governance" },
+      { label: "民生", key: "livelihood" },
+      { label: "度支", key: "finance" },
+    ],
+  },
+  {
+    label: "魅力",
+    key: "charm",
+    substats: [
+      { label: "气象", key: "presence" },
+      { label: "学问", key: "learning" },
+      { label: "辩才", key: "eloquence" },
+    ],
+  },
 ];
-
-const STAT_LABELS = {
-  leadership: "统率",
-  martial: "武力",
-  politics: "政务",
-  intelligence: "智谋",
-  charm: "魅力",
-} as const;
 
 type CharacterDetailViewOptions = {
   cityName?: string;
@@ -55,6 +90,9 @@ type CharacterDetailViewOptions = {
   weaponName?: string;
   armorName?: string;
   notoriety?: number;
+  heroicFame?: number;
+  abilityDetailOpen?: boolean;
+  abilityValues?: Partial<Record<CharacterDetailAbilityKey, number>>;
   layout?: CharacterDetailScreenLayout;
   layoutEditor?: LayoutEditorState;
 };
@@ -301,49 +339,148 @@ function renderMeter(value: number, modifierClassName = ""): string {
   `;
 }
 
-function getSkillIconUrl(assetName: string, level: number): string {
-  const fileNameCandidates =
-    level <= 1
-      ? [`${assetName}.png`]
-      : [`${assetName} (${level}).png`, `${assetName}（${level}）.png`];
-  const matchedEntry = Object.entries(skillIconModules).find(([path]) =>
-    fileNameCandidates.some((fileName) => path.endsWith(`/${fileName}`))
-  );
+function getAbilityValue(
+  character: CharacterDefinition,
+  options: CharacterDetailViewOptions,
+  abilityKey: CharacterDetailAbilityKey
+): number {
+  const overrideValue = options.abilityValues?.[abilityKey];
+  if (typeof overrideValue === "number") {
+    return overrideValue;
+  }
 
-  return (
-    matchedEntry?.[1] ??
-    Object.entries(skillIconModules).find(([path]) =>
-      path.endsWith(`/${assetName}.png`)
-    )?.[1] ??
-    ""
-  );
+  switch (abilityKey) {
+    case "martial":
+    case "strength":
+    case "physique":
+    case "agility":
+      return character.stats.martial;
+    case "intelligence":
+    case "adaptability":
+    case "judgment":
+    case "awareness":
+      return character.stats.intelligence;
+    case "politics":
+    case "governance":
+    case "livelihood":
+    case "finance":
+      return character.stats.politics;
+    case "charm":
+    case "presence":
+    case "learning":
+    case "eloquence":
+      return character.stats.charm;
+  }
 }
 
-function renderSkillIconRow(
-  skill: CharacterDetailSkill,
-  skills: Record<SkillKey, number>
+function renderAbilitySummaryGroup(
+  character: CharacterDefinition,
+  options: CharacterDetailViewOptions,
+  group: CharacterDetailAbilityGroup
 ): string {
-  const filledCount = Math.min(Math.max(Math.floor(skills[skill.key] ?? 0), 0), 4);
-  const icons = Array.from({ length: 4 }, (_, index) => {
-    const slotLevel = index + 2;
-    const iconLevel = index < filledCount ? slotLevel : 1;
-    const iconUrl = getSkillIconUrl(skill.assetName, iconLevel);
-
-    return `
-      <img
-        class="c-character-detail__skill-icon"
-        src="${iconUrl}"
-        alt="${skill.label}${index + 1}"
-        title="${skill.label} ${index < filledCount ? `${slotLevel}级` : "未点亮"}"
-      >
-    `;
-  }).join("");
+  const groupValue = getAbilityValue(character, options, group.key);
 
   return `
-    <li class="c-character-detail__skill-item">
-      <span class="c-character-detail__skill-name">${skill.label}</span>
-      <span class="c-character-detail__skill-icons">${icons}</span>
-    </li>
+    <section class="c-character-detail__ability-group">
+      <div class="c-character-detail__stat-row c-character-detail__stat-row--primary">
+        <span class="c-character-detail__label">${group.label}</span>
+        ${renderMeter(groupValue)}
+        <strong>${groupValue}</strong>
+      </div>
+    </section>
+  `;
+}
+
+function renderAbilityDetailGroup(
+  character: CharacterDefinition,
+  options: CharacterDetailViewOptions,
+  group: CharacterDetailAbilityGroup
+): string {
+  const groupValue = getAbilityValue(character, options, group.key);
+
+  return `
+    <section class="c-character-detail__ability-detail-group">
+      <div class="c-character-detail__stat-row c-character-detail__stat-row--primary">
+        <span class="c-character-detail__label">${group.label}</span>
+        ${renderMeter(groupValue)}
+        <strong>${groupValue}</strong>
+      </div>
+      <div class="c-character-detail__ability-detail-list">
+        ${group.substats
+          .map((substat) => {
+            const value = getAbilityValue(character, options, substat.key);
+            return `
+              <div class="c-character-detail__stat-row">
+                <span class="c-character-detail__label">${substat.label}</span>
+                ${renderMeter(value, "c-character-detail__meter-fill--dark")}
+                <strong>${value}</strong>
+              </div>
+            `;
+          })
+          .join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderAbilityDetailPopup(
+  character: CharacterDefinition,
+  options: CharacterDetailViewOptions,
+  goodwill: number,
+  notoriety: number,
+  heroicFame: number
+): string {
+  if (options.abilityDetailOpen !== true) {
+    return "";
+  }
+
+  return `
+    <div class="c-character-detail__ability-detail-backdrop">
+      <article class="c-character-detail__ability-detail-popup">
+        <header class="c-character-detail__ability-detail-header">
+          <h3 class="c-character-detail__ability-detail-title">能力详情</h3>
+          <button
+            class="c-character-detail__ability-detail-close"
+            type="button"
+            data-action="close-character-ability-detail"
+          >
+            关闭
+          </button>
+        </header>
+        <div class="c-character-detail__ability-detail-grid">
+          ${ABILITY_GROUPS.map((group) =>
+            renderAbilityDetailGroup(character, options, group)
+          ).join("")}
+          <section class="c-character-detail__ability-detail-group c-character-detail__ability-detail-group--reputation">
+            <div class="c-character-detail__stat-row c-character-detail__stat-row--primary">
+              <span class="c-character-detail__label">名声</span>
+              ${renderMeter(goodwill)}
+              <strong>${goodwill}</strong>
+            </div>
+            <div class="c-character-detail__ability-detail-list">
+              <div class="c-character-detail__stat-row">
+                <span class="c-character-detail__label">善名</span>
+                ${renderMeter(goodwill)}
+                <strong>${goodwill}</strong>
+              </div>
+              <div class="c-character-detail__stat-row">
+                <span class="c-character-detail__label">恶名</span>
+                ${renderMeter(notoriety, "c-character-detail__meter-fill--dark")}
+                <strong>${notoriety}</strong>
+              </div>
+              <div class="c-character-detail__stat-row">
+                <span class="c-character-detail__label">侠名</span>
+                ${renderMeter(heroicFame)}
+                <strong>${heroicFame}</strong>
+              </div>
+            </div>
+            <p class="c-character-detail__substat-line">
+              善名 ${goodwill} / 恶名 ${notoriety} / 侠名 ${heroicFame}
+            </p>
+          </section>
+        </div>
+      </article>
+    </div>
   `;
 }
 
@@ -351,30 +488,13 @@ export function renderCharacterDetailView(
   character: CharacterDefinition,
   options: CharacterDetailViewOptions = {}
 ): string {
-  const skills = character.skills ?? {
-    ashigaru: 0,
-    horse: 0,
-    teppo: 0,
-    navy: 0,
-    archery: 0,
-    martial: 0,
-    military: 0,
-    ninjutsu: 0,
-    construction: 0,
-    development: 0,
-    mining: 0,
-    arithmetic: 0,
-    etiquette: 0,
-    rhetoric: 0,
-    tea: 0,
-    medicine: 0,
-  };
-  const leadership = character.stats.leadership;
-  const martial = character.stats.martial;
-  const politics = character.stats.politics;
-  const intelligence = character.stats.intelligence;
-  const charm = character.stats.charm;
+  const goodwill = character.stats.fame;
   const notoriety = options.notoriety ?? 0;
+  const heroicFame = options.heroicFame ?? 0;
+  const learnedPlayableSkills = PLAYABLE_SKILL_DEFINITIONS.map((definition) => ({
+    ...definition,
+    level: getPlayableSkillLevel(character, definition.id),
+  })).filter((definition) => definition.level > 0);
   const portraitImageUrl = resolveCharacterPortraitImageUrl(character);
 
   return `
@@ -418,7 +538,7 @@ export function renderCharacterDetailView(
               ...characterDetailLiveBindings.lifespan,
               className: "c-character-detail__lifespan",
             })}>
-              ${character.birthYear}～${character.deathYear ?? "在世"}
+              ${character.birthYear}~${character.deathYear ?? "在世"}
               ${renderElementResizeHandle(options, "character-detail-biography", "lifespan")}
             </div>
             <p ${renderElementLayoutAttributes(options, {
@@ -492,47 +612,36 @@ export function renderCharacterDetailView(
               能力情报
               ${renderElementResizeHandle(options, "character-detail-ability-info", "title")}
             </h2>
+            <button
+              class="c-character-detail__detail-toggle"
+              type="button"
+              data-action="${options.abilityDetailOpen === true ? "close-character-ability-detail" : "open-character-ability-detail"}"
+            >
+              详情
+            </button>
             <div ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.abilityInfoContent,
               className: "c-character-detail__ability-grid",
             })}>
               ${renderElementResizeHandle(options, "character-detail-ability-info", "content")}
-              <div class="c-character-detail__stat-row">
-                <span class="c-character-detail__label">${STAT_LABELS.leadership}</span>
-                ${renderMeter(leadership)}
-                <strong>${leadership}</strong>
-              </div>
-              <div class="c-character-detail__stat-row">
-                <span class="c-character-detail__label">${STAT_LABELS.martial}</span>
-                ${renderMeter(martial)}
-                <strong>${martial}</strong>
-              </div>
-              <div class="c-character-detail__stat-row">
-                <span class="c-character-detail__label">${STAT_LABELS.politics}</span>
-                ${renderMeter(politics)}
-                <strong>${politics}</strong>
-              </div>
-              <div class="c-character-detail__stat-row">
-                <span class="c-character-detail__label">${STAT_LABELS.intelligence}</span>
-                ${renderMeter(intelligence)}
-                <strong>${intelligence}</strong>
-              </div>
-              <div class="c-character-detail__stat-row">
-                <span class="c-character-detail__label">${STAT_LABELS.charm}</span>
-                ${renderMeter(charm)}
-                <strong>${charm}</strong>
-              </div>
-              <div class="c-character-detail__stat-row">
-                <span class="c-character-detail__label">名声</span>
-                ${renderMeter(character.stats.fame)}
-                <strong>${character.stats.fame}</strong>
-              </div>
-              <div class="c-character-detail__stat-row">
-                <span class="c-character-detail__label">恶名</span>
-                ${renderMeter(notoriety, "c-character-detail__meter-fill--dark")}
-                <strong>${notoriety}</strong>
-              </div>
+              ${ABILITY_GROUPS.map((group) =>
+                renderAbilitySummaryGroup(character, options, group)
+              ).join("")}
+              <section class="c-character-detail__ability-group c-character-detail__ability-group--reputation">
+                <div class="c-character-detail__stat-row c-character-detail__stat-row--primary">
+                  <span class="c-character-detail__label">名声</span>
+                  ${renderMeter(goodwill)}
+                  <strong>${goodwill}</strong>
+                </div>
+              </section>
             </div>
+            ${renderAbilityDetailPopup(
+              character,
+              options,
+              goodwill,
+              notoriety,
+              heroicFame
+            )}
           </div>
 
           <div ${renderComponentLayoutAttributes(options, {
@@ -552,7 +661,16 @@ export function renderCharacterDetailView(
               className: "c-character-detail__skills-grid",
             })}>
               ${renderElementResizeHandle(options, "character-detail-skill-info", "content")}
-              ${DETAIL_SKILLS.map((skill) => renderSkillIconRow(skill, skills)).join("")}
+              ${learnedPlayableSkills
+                .map(
+                  (skill) => `
+                    <li class="c-character-detail__skill-item">
+                      <span class="c-character-detail__skill-name">${skill.label}</span>
+                      <span class="c-character-detail__skill-level">${formatPlayableSkillLevel(skill.level)}</span>
+                    </li>
+                  `
+                )
+                .join("")}
             </ul>
           </div>
 

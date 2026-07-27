@@ -38,7 +38,7 @@ function getPlayerArithmeticSkill(
     playerCharacter,
     `Player character not found for id "${playerCharacterId}" in grain accounting playable.`
   );
-  return Math.max(1, playerCharacter.skills?.arithmetic ?? 1);
+  return Math.max(0, playerCharacter.skills?.arithmetic ?? 0);
 }
 
 function withSessionState(

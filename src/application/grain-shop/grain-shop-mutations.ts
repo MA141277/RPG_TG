@@ -71,7 +71,7 @@ export function mutatePlayerGold(
   };
 }
 
-export function mutatePlayerArithmetic(
+export function mutatePlayerAccountingLevel(
   state: GameState,
   characterDefinitions: CharacterDefinition[],
   playerCharacterId: string,
@@ -93,7 +93,7 @@ export function mutatePlayerArithmetic(
         ...characterDefinition,
         skills: {
           ...baseSkills,
-          arithmetic: Math.max(0, baseSkills.arithmetic + delta),
+          accounting: Math.max(0, (baseSkills.accounting ?? 0) + delta),
         },
       };
     }),

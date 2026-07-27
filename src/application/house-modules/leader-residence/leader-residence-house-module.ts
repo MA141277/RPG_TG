@@ -39,6 +39,9 @@ const EMPTY_SKILLS: Record<SkillKey, number> = {
   rhetoric: 0,
   tea: 0,
   medicine: 0,
+  accounting: 0,
+  debate: 0,
+  compounding: 0,
 };
 
 function getPlayerCharacter(

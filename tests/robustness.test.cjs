@@ -127,6 +127,8 @@ const {
 } = require("../.test-dist/application/npc-interaction/npc-interaction.js");
 const {
   closeGlobalOverlay,
+  closeCharacterAbilityDetail,
+  openCharacterAbilityDetail,
   openCharacterDetail,
   openPlayerDetail,
 } = require("../.test-dist/application/app-actions.js");
@@ -1664,6 +1666,15 @@ function withPlayerStamina(characterDefinitions, stamina) {
         }
       : characterDefinition
   );
+}
+
+function cloneCharacterDefinitions(characterDefinitions) {
+  return characterDefinitions.map((characterDefinition) => ({
+    ...characterDefinition,
+    ...(characterDefinition.skills == null
+      ? {}
+      : { skills: { ...characterDefinition.skills } }),
+  }));
 }
 
 test("active game content indexes pack text entries by id", () => {
@@ -7375,6 +7386,174 @@ test("primary house actor appears first in medicine house roster during greeting
   assert.equal(viewModel.standbyRoster[0]?.characterId, medicineHouse.defaultCharacterId);
 });
 
+test("character detail source declares the new ability and reputation field labels and no longer hardcodes old skill icon rows", () => {
+  const characterDetailSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "character", "character-detail-view.ts"),
+    "utf8"
+  );
+
+  for (const label of [
+    "武力",
+    "力量",
+    "体魄",
+    "身法",
+    "智谋",
+    "机变",
+    "谋断",
+    "察势",
+    "政务",
+    "吏治",
+    "民生",
+    "度支",
+    "魅力",
+    "气象",
+    "学问",
+    "辩才",
+    "善名",
+    "恶名",
+    "侠名",
+    "详情",
+  ]) {
+    assert.match(characterDetailSource, new RegExp(label));
+  }
+
+  assert.doesNotMatch(characterDetailSource, /DETAIL_SKILLS/);
+  assert.doesNotMatch(characterDetailSource, /renderSkillIconRow/);
+});
+
+test("character detail source keeps a toggle button and detail popup for substats", () => {
+  const characterDetailSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "character", "character-detail-view.ts"),
+    "utf8"
+  );
+
+  assert.match(characterDetailSource, /abilityDetailOpen/);
+  assert.match(characterDetailSource, /open-character-ability-detail/);
+  assert.match(characterDetailSource, /close-character-ability-detail/);
+  assert.match(characterDetailSource, /renderAbilityDetailPopup/);
+  assert.match(characterDetailSource, /renderAbilitySummaryGroup/);
+  assert.match(characterDetailSource, /力量/);
+  assert.match(characterDetailSource, /机变/);
+  assert.match(characterDetailSource, /善名/);
+});
+
+test("opening and closing character detail resets the ability detail popup state", () => {
+  const baseAppState = {
+    ...createRuntimeState(createBaseState()).app,
+    gameState: createBaseState(),
+  };
+  const openedDetail = openPlayerDetail(baseAppState);
+
+  assert.equal(openedDetail.gameState.ui.isCharacterAbilityDetailOpen, false);
+
+  const expanded = openCharacterAbilityDetail(openedDetail);
+  assert.equal(expanded.gameState.ui.isCharacterAbilityDetailOpen, true);
+
+  const collapsed = closeCharacterAbilityDetail(expanded);
+  assert.equal(collapsed.gameState.ui.isCharacterAbilityDetailOpen, false);
+
+  const npcDetail = openCharacterDetail(expanded, "char.market_merchant");
+  assert.equal(npcDetail.gameState.ui.isCharacterAbilityDetailOpen, false);
+
+  const closed = closeGlobalOverlay(expanded);
+  assert.equal(closed.gameState.ui.isCharacterAbilityDetailOpen, false);
+});
+
+test("house gameplay actions append Lv0 labels for untrained playable skills", () => {
+  const characterDefinitions = cloneCharacterDefinitions(prototypeCharacters);
+  const state = {
+    ...createBaseState(),
+    currentHouseId: grainShopHouse.id,
+  };
+
+  const grainEntered = grainShopHouseModule.enter({
+    gameState: state,
+    characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+  });
+  const grainOpen = grainShopHouseModule.dispatch({
+    gameState: grainEntered.gameState,
+    characterDefinitions: grainEntered.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: grainEntered.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+  const grainView = grainShopHouseModule.selectViewModel({
+    gameState: grainOpen.gameState,
+    characterDefinitions: grainOpen.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: grainOpen.sessionState,
+  });
+
+  assert.equal(
+    grainView.actionContainer?.actions.find((action) => action.id === "accounting")?.label,
+    "算账 Lv0"
+  );
+
+  const teaEntered = teaHouseHouseModule.enter({
+    gameState: {
+      ...state,
+      currentHouseId: teaHouse.id,
+    },
+    characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const teaOpen = teaHouseHouseModule.dispatch({
+    gameState: teaEntered.gameState,
+    characterDefinitions: teaEntered.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: teaEntered.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+  const teaView = teaHouseHouseModule.selectViewModel({
+    gameState: teaOpen.gameState,
+    characterDefinitions: teaOpen.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: teaOpen.sessionState,
+  });
+
+  assert.equal(
+    teaView.actionContainer?.actions.find((action) => action.id === "start-debate")?.label,
+    "舌战 Lv0"
+  );
+
+  const medicineEntered = medicineHouseHouseModule.enter({
+    gameState: {
+      ...state,
+      currentHouseId: medicineHouse.id,
+    },
+    characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+  const medicineOpen = medicineHouseHouseModule.dispatch({
+    gameState: medicineEntered.gameState,
+    characterDefinitions: medicineEntered.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: medicineEntered.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+  const medicineView = medicineHouseHouseModule.selectViewModel({
+    gameState: medicineOpen.gameState,
+    characterDefinitions: medicineOpen.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: medicineOpen.sessionState,
+  });
+
+  assert.equal(
+    medicineView.actionContainer?.actions.find((action) => action.id === "start-compounding")?.label,
+    "配药 Lv0"
+  );
+});
+
 test("primary house actor dialogue renders speaker portrait on the dialogue box", () => {
   const state = createInitialState({
     cards: prototypeCards,
@@ -10011,7 +10190,8 @@ test("market house can open trade overlay and execute buy flow", () => {
 
 test("minigame tick settles into result overlay and applies grade reward", () => {
   const state = createStateWithGrainVariables();
-  const startingStamina = getPlayerCharacter(prototypeCharacters).stamina;
+  const characterDefinitions = cloneCharacterDefinitions(prototypeCharacters);
+  const startingStamina = getPlayerCharacter(characterDefinitions).stamina;
   const sessionState = {
     ...createInitialGrainShopSessionState("greeting", "default"),
     overlay: {
@@ -10030,7 +10210,7 @@ test("minigame tick settles into result overlay and applies grade reward", () =>
 
   const result = grainShopHouseModule.dispatch({
     gameState: state,
-    characterDefinitions: prototypeCharacters,
+    characterDefinitions,
     houseDefinition: grainShopHouse,
     playerCharacterId,
     sessionState,
@@ -10053,7 +10233,8 @@ test("minigame tick settles into result overlay and applies grade reward", () =>
     playerCharacter.stamina,
     startingStamina - ACTIVITY_COMPLETION_STAMINA_COST
   );
-  assert.equal(playerCharacter.skills.arithmetic, 1 + reward.math);
+  assert.equal(playerCharacter.skills.accounting, reward.math);
+  assert.equal(playerCharacter.skills.arithmetic, 1);
   assert.equal(
     result.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.relationship],
     reward.relationship

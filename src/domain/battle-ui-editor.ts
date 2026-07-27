@@ -299,14 +299,14 @@ export const battleUiEditorVariableDefinitions: BattleUiEditorVariableDefinition
     label: "\u884c\u52a8\u83dc\u5355 width",
     description: "\u884c\u52a8\u83dc\u5355\u5f39\u51fa\u5c42\u7684\u5bbd\u5ea6",
     section: "\u5e95\u90e8\u90e8\u7f72",
-    defaultValue: "29.75%",
+    defaultValue: "6.75%",
   },
   {
     name: "--battle-action-menu-height",
     label: "\u884c\u52a8\u83dc\u5355 height",
     description: "\u884c\u52a8\u83dc\u5355\u5f39\u51fa\u5c42\u7684\u9ad8\u5ea6",
     section: "\u5e95\u90e8\u90e8\u7f72",
-    defaultValue: "26.85%",
+    defaultValue: "17.7%",
   },
 ];
 

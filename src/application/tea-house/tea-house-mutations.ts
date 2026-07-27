@@ -96,7 +96,7 @@ export function mutatePlayerGold(
   };
 }
 
-export function mutatePlayerRhetoric(
+export function mutatePlayerDebateLevel(
   state: GameState,
   characterDefinitions: CharacterDefinition[],
   playerCharacterId: string,
@@ -113,7 +113,7 @@ export function mutatePlayerRhetoric(
         ...characterDefinition,
         skills: {
           ...characterDefinition.skills,
-          rhetoric: Math.max(0, characterDefinition.skills.rhetoric + delta),
+          debate: Math.max(0, (characterDefinition.skills.debate ?? 0) + delta),
         },
       };
     }),

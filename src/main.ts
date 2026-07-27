@@ -20,6 +20,7 @@ import {
 import {
   closeCityMenu,
   closeCityDirectory,
+  closeCharacterAbilityDetail,
   closeGlobalOverlay,
   closeNpcInteraction,
   closeTroopEditor,
@@ -31,6 +32,7 @@ import {
   purchaseTroopEditorShopOffer,
   swapTroopEditorTeams,
   chooseNpcDefaultTalk,
+  openCharacterAbilityDetail,
   openCharacterDetail,
   openBackpack,
   openCityMenu,
@@ -65,6 +67,14 @@ import {
   isPlayerMonkIdentity,
   type CityMenuPanelId,
 } from "./application/city-menu/city-menu";
+import {
+  BUILTIN_AUDIO_CUE_IDS,
+  createAppAudioController,
+  createAppAudioOutput,
+  createAppAudioSession,
+  queueAppAudioCue,
+  resolveStoryBattleActionCueId,
+} from "./application/audio/audio-manager";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
 import {
@@ -310,8 +320,6 @@ const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MAX_DURATION_MS = 18000 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
 const ACTIVITY_QTE_INTERVAL_MS = 90;
-const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
-const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 40,
   offsetX: 0,
@@ -342,8 +350,6 @@ type CampaignMapZoomAnimationState = {
   target: CampaignMapDebugState;
   lastFrameMs: number | null;
 };
-
-type BackgroundMusicMode = "opening" | "in-game";
 
 type CampaignMoveAnimationState = {
   frameId: number | null;
@@ -529,6 +535,36 @@ const selectableCharacters = selectableCharacterIds.map((characterId) => {
 let currentPlayerCharacterId = defaultPlayerCharacterId;
 
 const BATTLE_UI_EDITOR_STORAGE_KEY = "rpg_tg_battle_ui_values_v1";
+const LEGACY_BATTLE_UI_EDITOR_VALUE_FIXES: Partial<
+  Record<
+    BattleUiEditorVariableName,
+    {
+      oldValue: string;
+      newValue: string;
+    }
+  >
+> = {
+  "--battle-action-menu-width": {
+    oldValue: "29.75%",
+    newValue: "6.75%",
+  },
+  "--battle-action-menu-height": {
+    oldValue: "26.85%",
+    newValue: "17.7%",
+  },
+};
+
+function normalizePersistedBattleUiEditorValue(
+  name: BattleUiEditorVariableName,
+  value: string
+): string {
+  const legacyFix = LEGACY_BATTLE_UI_EDITOR_VALUE_FIXES[name];
+  if (legacyFix == null) {
+    return value;
+  }
+
+  return value === legacyFix.oldValue ? legacyFix.newValue : value;
+}
 
 function loadPersistedBattleUiEditorValues(): Partial<BattleUiEditorValues> {
   try {
@@ -539,7 +575,14 @@ function loadPersistedBattleUiEditorValues(): Partial<BattleUiEditorValues> {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     const entries = battleUiEditorVariableDefinitions.flatMap((definition) => {
       const value = parsed[definition.name];
-      return typeof value === "string" ? [[definition.name, value] as const] : [];
+      return typeof value === "string"
+        ? [
+            [
+              definition.name,
+              normalizePersistedBattleUiEditorValue(definition.name, value),
+            ] as const,
+          ]
+        : [];
     });
     return Object.fromEntries(entries) as Partial<BattleUiEditorValues>;
   } catch {
@@ -603,6 +646,7 @@ let campaignTerrainStyleState: CampaignTerrainStyle = {
   ...DEFAULT_CAMPAIGN_TERRAIN_STYLE,
 };
 let campaignCloudTextureScaleBoostState = DEFAULT_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST;
+let isGameVisible = false;
 let hasAppliedInitialCampaignMapDebug = false;
 let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
@@ -610,7 +654,6 @@ let initialCampaignMapDebugAnimationStartTime: number | null = null;
 let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
 let campaignMapZoomCloudResumeTimeoutId: number | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
-let activeBackgroundMusicMode: BackgroundMusicMode | null = null;
 let campaignMapScaleDraftValue: string | null = null;
 let campaignMapDragState:
   | {
@@ -712,8 +755,10 @@ const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
     textEntriesById: activeContentContext.storyContent.textEntriesById,
   }),
 });
-
-const backgroundMusicPlayer = createBackgroundMusicPlayer();
+let appAudioSession = createAppAudioSession();
+const appAudioController = createAppAudioController({
+  resolveAssetPath: (assetPath) => new URL(`../${assetPath}`, import.meta.url).href,
+});
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
   characters: selectableCharacters,
@@ -2099,6 +2144,12 @@ function chooseCurrentStoryOption(choiceId: string): void {
 }
 
 function dispatchCurrentStoryBattleAction(actionId: string): void {
+  const audioCueId = resolveStoryBattleActionCueId(actionId);
+  if (audioCueId != null) {
+    queueAppAudioCueById(audioCueId);
+    syncAppAudio();
+  }
+
   const result = commitRuntimeRequest({
     state: appState,
     request: createPlayableActionRequest("story-battle", "battle-action", {
@@ -2782,9 +2833,10 @@ function simulateLoadingProgress(
 }
 
 function setGameVisibility(isVisible: boolean): void {
+  isGameVisible = isVisible;
   appRoot.style.visibility = isVisible ? "visible" : "hidden";
   appRoot.style.pointerEvents = isVisible ? "auto" : "none";
-  syncBackgroundMusic(isVisible ? "in-game" : "opening");
+  syncAppAudio();
 }
 
 function resetMainGameRuntime(): void {
@@ -2821,39 +2873,35 @@ function resetMainGameRuntime(): void {
   hideMapIntroOverlay();
 }
 
-function createBackgroundMusicPlayer(): HTMLAudioElement {
-  const audio = new Audio();
-  audio.loop = true;
-  audio.preload = "auto";
-  audio.volume = 0.35;
-  return audio;
+function queueAppAudioCueById(cueId: string): void {
+  appAudioSession = queueAppAudioCue(appAudioSession, cueId);
 }
 
-function syncBackgroundMusic(mode: BackgroundMusicMode): void {
-  const nextSourceUrl = mode === "opening" ? OPENING_BGM_URL : IN_GAME_BGM_URL;
-  if (activeBackgroundMusicMode !== mode) {
-    activeBackgroundMusicMode = mode;
-    backgroundMusicPlayer.pause();
-    backgroundMusicPlayer.src = nextSourceUrl;
-    backgroundMusicPlayer.currentTime = 0;
-    backgroundMusicPlayer.load();
-  }
-
-  void playBackgroundMusic();
+function syncAppAudio(): void {
+  const result = createAppAudioOutput({
+    appState,
+    isGameVisible,
+    sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+    session: appAudioSession,
+  });
+  appAudioSession = result.session;
+  appAudioController.sync(result.output);
 }
 
-async function playBackgroundMusic(): Promise<void> {
-  try {
-    await backgroundMusicPlayer.play();
-  } catch {
-    // Browser autoplay policy may defer playback until the next user gesture.
+function shouldQueueUiClickCue(targetElement: HTMLElement): boolean {
+  if (
+    targetElement.closest(
+      "button, [role='button'], [data-action], [data-modal-action], [data-scene-action], [data-house-action], [data-activity-action], [data-city-action], [data-npc-target]"
+    ) != null
+  ) {
+    return true;
   }
+
+  return false;
 }
 
-function resumeBackgroundMusicIfNeeded(): void {
-  if (backgroundMusicPlayer.paused) {
-    void playBackgroundMusic();
-  }
+function unlockAppAudioIfNeeded(): void {
+  appAudioController.unlock();
 }
 
 function canOpenHouseFromCity(houseDefinition: HouseDefinition): boolean {
@@ -2923,10 +2971,10 @@ function enterMappedCity3dHouseBySceneObjectId(
   enterHouseThroughRuntime(houseRuntime, mappedHouse.houseId);
 }
 
-window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
+window.addEventListener("pointerdown", unlockAppAudioIfNeeded, {
   passive: true,
 });
-window.addEventListener("keydown", resumeBackgroundMusicIfNeeded);
+window.addEventListener("keydown", unlockAppAudioIfNeeded);
 window.addEventListener("message", (event) => {
   if (event.origin !== window.location.origin) {
     return;
@@ -4173,6 +4221,11 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  if (shouldQueueUiClickCue(targetElement)) {
+    queueAppAudioCueById(BUILTIN_AUDIO_CUE_IDS.uiClick);
+    syncAppAudio();
+  }
+
   const confirmBeggingResultButton = targetElement.closest<HTMLElement>(
     "[data-action='confirm-begging-game-result']"
   );
@@ -4362,6 +4415,24 @@ appElement.addEventListener("click", (event) => {
   );
   if (openBackpackButton != null) {
     appState = openBackpack(appState);
+    renderApp();
+    return;
+  }
+
+  const openCharacterAbilityDetailButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-character-ability-detail']"
+  );
+  if (openCharacterAbilityDetailButton != null) {
+    appState = openCharacterAbilityDetail(appState);
+    renderApp();
+    return;
+  }
+
+  const closeCharacterAbilityDetailButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-character-ability-detail']"
+  );
+  if (closeCharacterAbilityDetailButton != null) {
+    appState = closeCharacterAbilityDetail(appState);
     renderApp();
     return;
   }
@@ -6005,6 +6076,7 @@ function renderAppFrame(
     citySceneMappingsByCityId: getZhuYuanzhangCitySceneMappingByCityId(),
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
   });
+  syncAppAudio();
 
   appRoot.innerHTML = renderAppMarkup({
     appState,

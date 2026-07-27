@@ -91,7 +91,7 @@ export function applyMedicineHouseOutcome(
 
   for (const attributeChange of outcome.attributeChange) {
     if (attributeChange.key === "medicine" && attributeChange.delta !== 0) {
-      const skillMutation = mutatePlayerMedicineSkill(
+      const skillMutation = mutatePlayerCompoundingLevel(
         nextState,
         nextCharacterDefinitions,
         playerCharacterId,
@@ -152,7 +152,7 @@ export function mutatePlayerGold(
   };
 }
 
-export function mutatePlayerMedicineSkill(
+export function mutatePlayerCompoundingLevel(
   state: GameState,
   characterDefinitions: CharacterDefinition[],
   playerCharacterId: string,
@@ -169,7 +169,10 @@ export function mutatePlayerMedicineSkill(
         ...characterDefinition,
         skills: {
           ...characterDefinition.skills,
-          medicine: Math.max(0, characterDefinition.skills.medicine + delta),
+          compounding: Math.max(
+            0,
+            (characterDefinition.skills.compounding ?? 0) + delta
+          ),
         },
       };
     }),

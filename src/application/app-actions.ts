@@ -104,6 +104,7 @@ export function openPlayerDetail(appState: AppState): AppState {
         ...appState.gameState.ui,
         overlayView: "detail",
         detailCharacterId: null,
+        isCharacterAbilityDetailOpen: false,
       },
     },
   };
@@ -121,6 +122,33 @@ export function openCharacterDetail(
         ...appState.gameState.ui,
         overlayView: "detail",
         detailCharacterId: characterId,
+        isCharacterAbilityDetailOpen: false,
+      },
+    },
+  };
+}
+
+export function openCharacterAbilityDetail(appState: AppState): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        isCharacterAbilityDetailOpen: true,
+      },
+    },
+  };
+}
+
+export function closeCharacterAbilityDetail(appState: AppState): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        isCharacterAbilityDetailOpen: false,
       },
     },
   };
@@ -135,6 +163,7 @@ export function closeGlobalOverlay(appState: AppState): AppState {
         ...appState.gameState.ui,
         overlayView: null,
         detailCharacterId: null,
+        isCharacterAbilityDetailOpen: false,
       },
     },
   };
