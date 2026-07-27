@@ -4,6 +4,8 @@ import type {
   SkillKey,
 } from "../../domain/character";
 import type {
+  ScriptEditorPersonAttributeGroup,
+  ScriptEditorPersonAttributeGroupItem,
   ScriptEditorPersonRecord,
   ScriptEditorTypedAttributeRecord,
   ScriptEditorTypedAttributeType,
@@ -13,6 +15,7 @@ import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocat
 export const SCRIPT_EDITOR_PERSON_TAB_KEYS = [
   "profile",
   "dialogues",
+  "stage",
   "trade",
   "events",
 ] as const;
@@ -25,13 +28,23 @@ const SCRIPT_EDITOR_PERSON_ATTRIBUTE_EXCLUDED_ROOT_KEYS = new Set([
   "name",
   "personType",
   "role",
+  "title",
+  "birthYear",
+  "deathYear",
+  "age",
+  "occupation",
+  "clanId",
+  "affiliationLabel",
   "biography",
+  "stamina",
+  "availableFunctions",
   "cityId",
   "houseId",
   "portraitId",
   "portraitVariantId",
   "portraitVariants",
   "extendedAttributes",
+  "attributeGroups",
   "dialogueIds",
   "eventIds",
   "tradeBinding",
@@ -44,20 +57,104 @@ const SCRIPT_EDITOR_PERSON_FIXED_ATTRIBUTE_KEYS = new Set([
   "portraitVariantId",
 ]);
 
+const SCRIPT_EDITOR_PERSON_MANAGED_ATTRIBUTE_KEYS = new Set([
+  "title",
+  "occupation",
+  "age",
+  "birthYear",
+  "deathYear",
+  "clanId",
+  "affiliationLabel",
+  "stamina",
+]);
+
+const SCRIPT_EDITOR_PERSON_DEFAULT_ATTRIBUTE_GROUPS = [
+  {
+    id: "group.basic-info",
+    title: "\u57fa\u672c\u60c5\u62a5",
+    presentation: "basic-info",
+    items: [
+      { fieldKey: "clanId", labelOverride: "\u6240\u5c5e\u52bf\u529b" },
+      { fieldKey: "cityId", labelOverride: "\u6240\u5c5e\u57ce\u5e02" },
+      { fieldKey: "title", labelOverride: "\u8eab\u4efd" },
+      { fieldKey: "occupation", labelOverride: "\u804c\u4e1a" },
+      { fieldKey: "age", labelOverride: "\u5e74\u9f84" },
+    ],
+  },
+  {
+    id: "group.ability-info",
+    title: "\u80fd\u529b\u60c5\u62a5",
+    presentation: "ability-info",
+    items: [
+      { fieldKey: "stats.leadership", labelOverride: "\u7edf\u7387" },
+      { fieldKey: "stats.martial", labelOverride: "\u6b66\u52c7" },
+      { fieldKey: "stats.intelligence", labelOverride: "\u667a\u7565" },
+      { fieldKey: "stats.politics", labelOverride: "\u653f\u52a1" },
+      { fieldKey: "stats.charm", labelOverride: "\u9b45\u529b" },
+      { fieldKey: "stats.fame", labelOverride: "\u540d\u671b" },
+    ],
+  },
+  {
+    id: "group.skill-info",
+    title: "\u6280\u80fd\u60c5\u62a5",
+    presentation: "skill-info",
+    items: [
+      { fieldKey: "skills.ashigaru", labelOverride: "\u8db3\u8f7b" },
+      { fieldKey: "skills.horse", labelOverride: "\u9a91\u672f" },
+      { fieldKey: "skills.archery", labelOverride: "\u5f13\u672f" },
+      { fieldKey: "skills.military", labelOverride: "\u519b\u7565" },
+      { fieldKey: "skills.ninjutsu", labelOverride: "\u5fcd\u672f" },
+      { fieldKey: "skills.rhetoric", labelOverride: "\u53e3\u624d" },
+    ],
+  },
+] as const satisfies readonly {
+  id: string;
+  title: string;
+  presentation: ScriptEditorPersonAttributeGroup["presentation"];
+  items: readonly ScriptEditorPersonAttributeGroupItem[];
+}[];
+
+const SCRIPT_EDITOR_PERSON_JSON_ATTRIBUTE_KEYS = new Set([
+  "flags",
+  "teachableSkillKeys",
+]);
+
 const SCRIPT_EDITOR_PERSON_ATTRIBUTE_LABELS: Record<string, string> = {
-  title: "正式身份",
-  occupation: "职业/定位",
-  age: "年龄",
-  birthYear: "出生年",
-  deathYear: "去世年",
-  clanId: "所属",
-  stamina: "体力",
-  "stats.leadership": "统率",
-  "stats.martial": "武勇",
-  "stats.intelligence": "智略",
-  "stats.politics": "政务",
-  "stats.charm": "魅力",
-  "stats.fame": "名声",
+  title: "\u6b63\u5f0f\u8eab\u4efd",
+  occupation: "\u804c\u4e1a/\u5b9a\u4f4d",
+  age: "\u5e74\u9f84",
+  birthYear: "\u51fa\u751f\u5e74\u4efd",
+  deathYear: "\u53bb\u4e16\u5e74\u4efd",
+  clanId: "\u6240\u5c5e\u52bf\u529b",
+  stamina: "\u4f53\u529b",
+  isHistoricalFigure: "\u5386\u53f2\u4eba\u7269",
+  flags: "\u4eba\u7269\u6807\u7b7e",
+  leaderResidenceEligible: "\u53ef\u5165\u4e3b\u5b85\u90b8",
+  leaderResidenceStatus: "\u5b85\u90b8\u72b6\u6001",
+  teachableSkillKeys: "\u53ef\u4f20\u6388\u6280\u80fd",
+  "stats.leadership": "\u7edf\u7387",
+  "stats.martial": "\u6b66\u52c7",
+  "stats.intelligence": "\u667a\u7565",
+  "stats.politics": "\u653f\u52a1",
+  "stats.charm": "\u9b45\u529b",
+  "stats.fame": "\u540d\u671b",
+  "stats.gold": "\u91d1\u94b1",
+  "skills.ashigaru": "\u8db3\u8f7b",
+  "skills.horse": "\u9a91\u672f",
+  "skills.teppo": "\u94c1\u70ae",
+  "skills.navy": "\u6c34\u6218",
+  "skills.archery": "\u5f13\u672f",
+  "skills.martial": "\u5175\u6cd5",
+  "skills.military": "\u519b\u7565",
+  "skills.ninjutsu": "\u5fcd\u672f",
+  "skills.construction": "\u5efa\u7b51",
+  "skills.development": "\u5f00\u53d1",
+  "skills.mining": "\u77ff\u5c71",
+  "skills.arithmetic": "\u7b97\u672f",
+  "skills.etiquette": "\u793c\u6cd5",
+  "skills.rhetoric": "\u53e3\u624d",
+  "skills.tea": "\u8336\u9053",
+  "skills.medicine": "\u533b\u672f",
 };
 
 const DEFAULT_CHARACTER_STATS: CharacterStats = {
@@ -93,12 +190,18 @@ export type ScriptEditorPersonRuntimeDefaults = {
   cityId?: string;
   portraitId?: string;
 };
+export type ScriptEditorPersonNormalizeOptions = {
+  portraitVariants?: readonly Record<string, unknown>[];
+};
 
 export function normalizeScriptEditorPersonRecord(
-  value: Record<string, unknown>
+  value: Record<string, unknown>,
+  options: ScriptEditorPersonNormalizeOptions = {}
 ): ScriptEditorPersonRecord {
   const { portraitVariants: _portraitVariants, ...valueWithoutPortraitVariants } =
     value as Record<string, unknown>;
+  const { portraitId, portraitVariantId } =
+    resolveScriptEditorPersonPortraitSelection(value, options);
   const personType = value.personType === "角色" ? "角色" : "NPC";
   const role =
     typeof value.role === "string" && value.role.length > 0
@@ -115,11 +218,23 @@ export function normalizeScriptEditorPersonRecord(
     role,
     title: readString(value.title, ""),
     occupation: readString(value.occupation, ""),
+    birthYear: readFiniteNumber(value.birthYear, 0),
+    deathYear:
+      value.deathYear == null ? null : readFiniteNumber(value.deathYear, 0),
+    age: readFiniteNumber(value.age, 0),
+    clanId: readString(value.clanId, ""),
+    affiliationLabel: readString(value.affiliationLabel, ""),
     biography: readString(value.biography, ""),
     cityId: readString(value.cityId, ""),
     houseId: readString(value.houseId, ""),
-    portraitId: readString(value.portraitId, ""),
-    portraitVariantId: readString(value.portraitVariantId, ""),
+    portraitId,
+    portraitVariantId,
+    stats: normalizeCharacterStats(value.stats),
+    stamina: readFiniteNumber(value.stamina, 100),
+    skills: normalizeCharacterSkills(value.skills),
+    attributeGroups: normalizeScriptEditorPersonAttributeGroups(
+      value.attributeGroups
+    ),
     extendedAttributes: mergeScriptEditorPersonExtendedAttributes(
       normalizeKeyValueEntries(value.extendedAttributes),
       collectScriptEditorPersonImportedAttributes(valueWithoutPortraitVariants)
@@ -150,6 +265,7 @@ export function createDefaultScriptEditorPersonRecord(
     houseId: "",
     portraitId: "",
     portraitVariantId: "",
+    attributeGroups: createDefaultScriptEditorPersonAttributeGroups(),
     extendedAttributes: [],
     dialogueIds: [],
     eventIds: [],
@@ -162,10 +278,12 @@ export function createDefaultScriptEditorPersonRecord(
 
 export function materializeScriptEditorPersonRuntimeCharacter(
   person: ScriptEditorPersonRecord,
-  defaults: ScriptEditorPersonRuntimeDefaults = {}
+  defaults: ScriptEditorPersonRuntimeDefaults = {},
+  options: ScriptEditorPersonNormalizeOptions = {}
 ): CharacterDefinition {
   const normalizedPerson = normalizeScriptEditorPersonRecord(
-    person as Record<string, unknown>
+    person as Record<string, unknown>,
+    options
   ) as ScriptEditorPersonRecord & Partial<CharacterDefinition>;
   const stats = normalizeCharacterStats(normalizedPerson.stats);
   const skills = normalizeCharacterSkills(normalizedPerson.skills);
@@ -203,7 +321,11 @@ export function materializeScriptEditorPersonRuntimeCharacter(
     ...(normalizedPerson.houseId == null
       ? {}
       : { houseId: normalizedPerson.houseId }),
-    portraitVariantId: normalizedPerson.portraitVariantId ?? null,
+    portraitVariantId:
+      typeof normalizedPerson.portraitVariantId === "string" &&
+      normalizedPerson.portraitVariantId.trim().length > 0
+        ? normalizedPerson.portraitVariantId
+        : null,
   };
 }
 
@@ -232,24 +354,24 @@ export function updateScriptEditorPersonField(
         role: normalizedValue === "角色" ? "playable" : "support",
       });
     case "title":
-      return updateScriptEditorPersonMappedAttribute(person, "title", value);
+      return updateScriptEditorPersonDirectField(person, "title", value);
     case "role":
       return materializeScriptEditorPersonExtendedAttributes({
         ...person,
         role: value,
       });
     case "birthYear":
-      return updateScriptEditorPersonMappedAttribute(person, "birthYear", normalizedValue);
+      return updateScriptEditorPersonDirectField(person, "birthYear", normalizedValue);
     case "deathYear":
-      return updateScriptEditorPersonMappedAttribute(person, "deathYear", normalizedValue);
+      return updateScriptEditorPersonDirectField(person, "deathYear", normalizedValue);
     case "age":
-      return updateScriptEditorPersonMappedAttribute(person, "age", normalizedValue);
+      return updateScriptEditorPersonDirectField(person, "age", normalizedValue);
     case "clanId":
-      return updateScriptEditorPersonMappedAttribute(person, "clanId", value);
+      return updateScriptEditorPersonDirectField(person, "clanId", value);
     case "occupation":
-      return updateScriptEditorPersonMappedAttribute(person, "occupation", value);
+      return updateScriptEditorPersonDirectField(person, "occupation", value);
     case "affiliationLabel":
-      return updateScriptEditorPersonMappedAttribute(
+      return updateScriptEditorPersonDirectField(
         person,
         "affiliationLabel",
         value
@@ -282,13 +404,13 @@ export function updateScriptEditorPersonField(
         portraitVariantId: normalizedValue,
       });
     case "isHistoricalFigure":
-      return updateScriptEditorPersonMappedAttribute(
+      return updateScriptEditorPersonDirectField(
         person,
         "isHistoricalFigure",
         normalizedValue
       );
     case "stamina":
-      return updateScriptEditorPersonMappedAttribute(person, "stamina", normalizedValue);
+      return updateScriptEditorPersonDirectField(person, "stamina", normalizedValue);
     case "stats.leadership":
     case "stats.martial":
     case "stats.intelligence":
@@ -312,7 +434,7 @@ export function updateScriptEditorPersonField(
     case "skills.rhetoric":
     case "skills.tea":
     case "skills.medicine":
-      return updateScriptEditorPersonMappedAttribute(person, field, normalizedValue);
+      return updateScriptEditorPersonDirectField(person, field, normalizedValue);
     case "tradeBinding.entryId":
       return materializeScriptEditorPersonExtendedAttributes({
         ...person,
@@ -343,11 +465,17 @@ export function appendScriptEditorPersonAttribute(
   person: ScriptEditorPersonRecord,
   type: ScriptEditorTypedAttributeType = "string"
 ): ScriptEditorPersonRecord {
+  const existingEntries = normalizeKeyValueEntries(person.extendedAttributes);
   return materializeScriptEditorPersonExtendedAttributes({
     ...person,
     extendedAttributes: [
-      ...normalizeKeyValueEntries(person.extendedAttributes),
-      { key: "", label: "", type: normalizeTypedAttributeType(type), value: "" },
+      ...existingEntries,
+      {
+        key: createScriptEditorPersonCustomAttributeKey(existingEntries),
+        label: "",
+        type: normalizeTypedAttributeType(type),
+        value: "",
+      },
     ],
   });
 }
@@ -370,13 +498,20 @@ export function updateScriptEditorPersonAttribute(
   field: keyof ScriptEditorTypedAttributeRecord | "key",
   value: string
 ): ScriptEditorPersonRecord {
+  const existingEntries = normalizeKeyValueEntries(person.extendedAttributes);
   return materializeScriptEditorPersonExtendedAttributes({
     ...person,
-    extendedAttributes: normalizeKeyValueEntries(person.extendedAttributes).map(
+    extendedAttributes: existingEntries.map(
       (entry, entryIndex) =>
         entryIndex === index
           ? normalizeScriptEditorPersonAttributeEntry({
               ...entry,
+              key:
+                field === "key"
+                  ? value
+                  : entry.key.trim().length > 0
+                    ? entry.key
+                    : createScriptEditorPersonCustomAttributeKey(existingEntries, index),
               [field]: field === "type" ? normalizeTypedAttributeType(value) : value,
             })
           : entry
@@ -421,7 +556,7 @@ export function updateScriptEditorPersonRelation(
   };
 }
 
-function updateScriptEditorPersonMappedAttribute(
+function updateScriptEditorPersonDirectField(
   person: ScriptEditorPersonRecord,
   keyPath: string,
   value: string
@@ -430,34 +565,83 @@ function updateScriptEditorPersonMappedAttribute(
   if (normalizedKey.length === 0) {
     return person;
   }
+  const nextPerson = materializeScriptEditorPersonExtendedAttributes({
+    ...person,
+    extendedAttributes: normalizeKeyValueEntries(person.extendedAttributes),
+  }) as ScriptEditorPersonRecord & Record<string, unknown>;
+  const previousValue = readScriptEditorPersonValueAtPath(
+    nextPerson,
+    normalizedKey
+  );
 
-  const entries = normalizeKeyValueEntries(person.extendedAttributes);
-  const existingIndex = entries.findIndex(
+  deleteScriptEditorPersonValueAtPath(nextPerson, normalizedKey);
+  const parsedValue = parseScriptEditorPersonAttributeValue(
+    normalizedKey,
+    value,
+    previousValue
+  );
+  if (parsedValue !== undefined) {
+    writeScriptEditorPersonValueAtPath(nextPerson, normalizedKey, parsedValue);
+    nextPerson.extendedAttributes = syncScriptEditorPersonExtendedAttributeValue(
+      normalizeKeyValueEntries(nextPerson.extendedAttributes),
+      normalizedKey,
+      parsedValue
+    );
+  }
+
+  return materializeScriptEditorPersonExtendedAttributes(nextPerson);
+}
+
+function syncScriptEditorPersonExtendedAttributeValue(
+  entries: ScriptEditorTypedAttributeRecord[],
+  keyPath: string,
+  value: unknown
+): ScriptEditorTypedAttributeRecord[] {
+  const normalizedKey = keyPath.trim();
+  if (normalizedKey.length === 0) {
+    return entries;
+  }
+  if (isScriptEditorPersonManagedAttributeKey(normalizedKey)) {
+    return entries;
+  }
+
+  const nextEntries = [...entries];
+  const existingIndex = nextEntries.findIndex(
     (entry) => entry.key.trim() === normalizedKey
   );
-  const nextEntry = {
+  const normalizedValue =
+    typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+      ? value
+      : JSON.stringify(value);
+
+  if (existingIndex >= 0) {
+    const existingEntry = nextEntries[existingIndex];
+    if (existingEntry == null) {
+      return nextEntries;
+    }
+    nextEntries[existingIndex] = {
+      key: existingEntry.key,
+      label: existingEntry.label,
+      type: existingEntry.type,
+      ...(existingEntry.options == null ? {} : { options: existingEntry.options }),
+      value: normalizeTypedAttributeValue(existingEntry.type, normalizedValue),
+    };
+    return nextEntries;
+  }
+
+  const rootKey = normalizedKey.split(".")[0] ?? normalizedKey;
+  if (SCRIPT_EDITOR_PERSON_ATTRIBUTE_EXCLUDED_ROOT_KEYS.has(rootKey)) {
+    return nextEntries;
+  }
+
+  const inferredType = inferScriptEditorPersonAttributeType(normalizedKey, value);
+  nextEntries.push({
     key: normalizedKey,
     label: getScriptEditorPersonAttributeLabel(normalizedKey),
-    type: inferScriptEditorPersonAttributeType(normalizedKey, value),
-    value,
-  };
-  const nextEntries =
-    existingIndex >= 0
-      ? entries.map((entry, index) =>
-          index === existingIndex
-            ? {
-                ...entry,
-                key: normalizedKey,
-                value,
-              }
-            : entry
-        )
-      : [...entries, nextEntry];
-
-  return materializeScriptEditorPersonExtendedAttributes({
-    ...person,
-    extendedAttributes: nextEntries,
+    type: inferredType,
+    value: normalizeTypedAttributeValue(inferredType, normalizedValue),
   });
+  return nextEntries;
 }
 
 function normalizeTradeBinding(value: unknown) {
@@ -493,7 +677,17 @@ function appendScriptEditorPersonImportedAttribute(
   keyPath: string,
   value: unknown
 ): void {
-  if (value == null || Array.isArray(value)) {
+  if (value == null) {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    entries.push({
+      key: keyPath,
+      label: getScriptEditorPersonAttributeLabel(keyPath),
+      type: "json",
+      value: JSON.stringify(value),
+    });
     return;
   }
 
@@ -573,8 +767,12 @@ function materializeScriptEditorPersonExtendedAttributes(
   person: ScriptEditorPersonRecord
 ): ScriptEditorPersonRecord {
   const extendedAttributes = normalizeKeyValueEntries(person.extendedAttributes);
+  const attributeGroups = normalizeScriptEditorPersonAttributeGroups(
+    person.attributeGroups
+  );
   const nextPerson = {
     ...person,
+    attributeGroups,
     extendedAttributes,
   } as ScriptEditorPersonRecord;
   const existingLeafEntries = collectScriptEditorPersonImportedAttributes(
@@ -626,8 +824,22 @@ function parseScriptEditorPersonAttributeValue(
   keyPath: string,
   value: string | number | boolean | undefined,
   previousValue: unknown
-): string | number | boolean | null | undefined {
+): string | number | boolean | Record<string, unknown> | unknown[] | null | undefined {
   const normalizedValue = String(value ?? "").trim();
+
+  if (Array.isArray(previousValue)) {
+    return parseScriptEditorPersonStructuredAttributeValue(
+      normalizedValue,
+      Array.isArray
+    );
+  }
+
+  if (isScriptEditorPersonStructuredRecord(previousValue)) {
+    return parseScriptEditorPersonStructuredAttributeValue(
+      normalizedValue,
+      isScriptEditorPersonStructuredRecord
+    );
+  }
 
   if (
     typeof previousValue === "number" ||
@@ -658,6 +870,22 @@ function parseScriptEditorPersonAttributeValue(
   }
 
   return value;
+}
+
+function parseScriptEditorPersonStructuredAttributeValue<T>(
+  normalizedValue: string,
+  validator: (value: unknown) => value is T
+): T | undefined | string {
+  if (normalizedValue.length === 0) {
+    return undefined;
+  }
+
+  try {
+    const parsed = JSON.parse(normalizedValue) as unknown;
+    return validator(parsed) ? parsed : normalizedValue;
+  } catch {
+    return normalizedValue;
+  }
 }
 
 function isScriptEditorPersonNumericAttribute(keyPath: string): boolean {
@@ -803,8 +1031,46 @@ function normalizeKeyValueEntries(value: unknown): ScriptEditorTypedAttributeRec
       normalizeScriptEditorPersonAttributeEntry(entry as Record<string, unknown>)
     )
     .filter(
-      (entry) => !SCRIPT_EDITOR_PERSON_FIXED_ATTRIBUTE_KEYS.has(entry.key.trim())
+      (entry) => !isScriptEditorPersonManagedAttributeKey(entry.key.trim())
     );
+}
+
+function isScriptEditorPersonManagedAttributeKey(keyPath: string): boolean {
+  const normalizedKey = keyPath.trim();
+  if (normalizedKey.length === 0) {
+    return false;
+  }
+
+  if (SCRIPT_EDITOR_PERSON_FIXED_ATTRIBUTE_KEYS.has(normalizedKey)) {
+    return true;
+  }
+
+  if (SCRIPT_EDITOR_PERSON_MANAGED_ATTRIBUTE_KEYS.has(normalizedKey)) {
+    return true;
+  }
+
+  return false;
+}
+
+function createScriptEditorPersonCustomAttributeKey(
+  entries: ScriptEditorTypedAttributeRecord[],
+  preserveIndex?: number
+): string {
+  const existingKeys = new Set(
+    entries
+      .filter((_, index) => index !== preserveIndex)
+      .map((entry) => entry.key.trim())
+      .filter((key) => key.length > 0)
+  );
+  let suffix = entries.length + 1;
+  let candidate = `customAttribute${suffix}`;
+
+  while (existingKeys.has(candidate)) {
+    suffix += 1;
+    candidate = `customAttribute${suffix}`;
+  }
+
+  return candidate;
 }
 
 function normalizeScriptEditorPersonAttributeEntry(
@@ -833,6 +1099,7 @@ function normalizeTypedAttributeType(value: unknown): ScriptEditorTypedAttribute
   return value === "number" ||
     value === "boolean" ||
     value === "enum" ||
+    value === "json" ||
     value === "string"
     ? value
     : "string";
@@ -849,6 +1116,9 @@ function normalizeTypedAttributeValue(
   if (type === "boolean") {
     return value === true || String(value).trim() === "true";
   }
+  if (type === "json") {
+    return readString(value, "");
+  }
   return readString(value, "");
 }
 
@@ -856,6 +1126,12 @@ function inferScriptEditorPersonAttributeType(
   keyPath: string,
   value: unknown
 ): ScriptEditorTypedAttributeType {
+  if (SCRIPT_EDITOR_PERSON_JSON_ATTRIBUTE_KEYS.has(keyPath)) {
+    return "json";
+  }
+  if (Array.isArray(value) || isScriptEditorPersonStructuredRecord(value)) {
+    return "json";
+  }
   if (typeof value === "number" || isScriptEditorPersonNumericAttribute(keyPath)) {
     return "number";
   }
@@ -893,6 +1169,126 @@ function normalizeStringArray(value: unknown): string[] {
   return value
     .filter((entry) => typeof entry === "string")
     .map((entry) => entry.trim());
+}
+
+function normalizeScriptEditorPersonAttributeGroups(
+  value: unknown
+): ScriptEditorPersonAttributeGroup[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    return createDefaultScriptEditorPersonAttributeGroups();
+  }
+
+  const groups = value
+    .filter(
+      (entry): entry is Record<string, unknown> =>
+        entry != null && typeof entry === "object" && !Array.isArray(entry)
+    )
+    .map((entry, index) => normalizeScriptEditorPersonAttributeGroup(entry, index))
+    .filter((entry) => entry.items.length > 0);
+
+  return groups.length > 0 ? groups : createDefaultScriptEditorPersonAttributeGroups();
+}
+
+function normalizeScriptEditorPersonAttributeGroup(
+  value: Record<string, unknown>,
+  index: number
+): ScriptEditorPersonAttributeGroup {
+  const presentation = normalizeScriptEditorPersonAttributeGroupPresentation(
+    value.presentation
+  );
+  const fallbackGroup = SCRIPT_EDITOR_PERSON_DEFAULT_ATTRIBUTE_GROUPS[index] ??
+    SCRIPT_EDITOR_PERSON_DEFAULT_ATTRIBUTE_GROUPS[0];
+  const items = Array.isArray(value.items)
+    ? value.items
+        .filter(
+          (entry): entry is Record<string, unknown> =>
+            entry != null && typeof entry === "object" && !Array.isArray(entry)
+        )
+        .map((entry) => normalizeScriptEditorPersonAttributeGroupItem(entry))
+        .filter((entry) => entry.fieldKey.length > 0)
+    : [];
+
+  return {
+    id: readString(value.id, fallbackGroup.id),
+    title: readString(value.title, fallbackGroup.title),
+    presentation,
+    items:
+      items.length > 0
+        ? items
+        : fallbackGroup.items.map((entry) => ({ ...entry })),
+  };
+}
+
+function normalizeScriptEditorPersonAttributeGroupPresentation(
+  value: unknown
+): ScriptEditorPersonAttributeGroup["presentation"] {
+  return value === "basic-info" ||
+    value === "ability-info" ||
+    value === "skill-info" ||
+    value === "list"
+    ? value
+    : "list";
+}
+
+function normalizeScriptEditorPersonAttributeGroupItem(
+  value: Record<string, unknown>
+): ScriptEditorPersonAttributeGroupItem {
+  const labelOverride = readString(value.labelOverride, "");
+  return {
+    fieldKey: readString(value.fieldKey, ""),
+    ...(labelOverride.length === 0 ? {} : { labelOverride }),
+  };
+}
+
+function createDefaultScriptEditorPersonAttributeGroups(): ScriptEditorPersonAttributeGroup[] {
+  return SCRIPT_EDITOR_PERSON_DEFAULT_ATTRIBUTE_GROUPS.map((group) => ({
+    id: group.id,
+    title: group.title,
+    presentation: group.presentation,
+    items: group.items.map((item) => ({ ...item })),
+  }));
+}
+
+function resolveScriptEditorPersonPortraitSelection(
+  value: Record<string, unknown>,
+  options: ScriptEditorPersonNormalizeOptions
+): {
+  portraitId: string;
+  portraitVariantId: string;
+} {
+  const portraitId = readString(value.portraitId, "");
+  const portraitVariantId = readString(value.portraitVariantId, "");
+  if (portraitVariantId.length === 0) {
+    return {
+      portraitId,
+      portraitVariantId: "",
+    };
+  }
+
+  const inlineVariants = Array.isArray(value.portraitVariants)
+    ? value.portraitVariants.filter(
+        (entry): entry is Record<string, unknown> =>
+          entry != null && typeof entry === "object" && !Array.isArray(entry)
+      )
+    : [];
+  const availableVariants =
+    inlineVariants.length > 0 ? inlineVariants : (options.portraitVariants ?? []);
+  const matchedVariant = availableVariants.find(
+    (entry) => readString(entry.id, "") === portraitVariantId
+  );
+  const resolvedPortraitId =
+    matchedVariant == null ? "" : readString(matchedVariant.portraitId, "");
+
+  return {
+    portraitId: resolvedPortraitId.length > 0 ? resolvedPortraitId : portraitId,
+    portraitVariantId: resolvedPortraitId.length > 0 ? "" : portraitVariantId,
+  };
+}
+
+function isScriptEditorPersonStructuredRecord(
+  value: unknown
+): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
 }
 
 function readString(value: unknown, fallback: string): string {
