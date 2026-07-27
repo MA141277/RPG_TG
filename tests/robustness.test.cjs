@@ -12189,6 +12189,7 @@ test("script editor person profile, dialogue, and trade tabs keep creator-facing
 test("script editor person custom attribute helpers migrate imported custom fields into extended attributes", () => {
   const {
     normalizeScriptEditorPersonRecord,
+    updateScriptEditorPersonField,
     updateScriptEditorPersonAttribute,
   } = require("../.test-dist/application/script-editor/person-authoring.js");
 
@@ -12269,6 +12270,19 @@ test("script editor person custom attribute helpers migrate imported custom fiel
     '["historical-priority.P1"]'
   );
   assert.deepEqual(updated.flags, ["historical-priority.P1"]);
+
+  const toggledHistoricalFigure = updateScriptEditorPersonField(
+    imported,
+    "isHistoricalFigure",
+    "false"
+  );
+  assert.equal(toggledHistoricalFigure.isHistoricalFigure, false);
+  assert.equal(
+    toggledHistoricalFigure.extendedAttributes.find(
+      (entry) => entry.key === "isHistoricalFigure"
+    )?.value,
+    false
+  );
 });
 
 test("person import classifies zhuyuanzhang stats and skills into extended attributes and seeds attribute groups", async () => {
@@ -12418,7 +12432,7 @@ test("script editor person custom attribute helpers keep fixed editor fields sep
   assert.equal(removed.stats.leadership, 60);
 });
 
-test.skip("script editor person authoring helper delete only removes the targeted nested runtime attribute", () => {
+test("script editor person authoring helper delete only removes the targeted nested runtime attribute", () => {
   const {
     normalizeScriptEditorPersonRecord,
     removeScriptEditorPersonAttribute,
@@ -12463,16 +12477,26 @@ test.skip("script editor person authoring helper delete only removes the targete
     beforeKeys.filter((key) => !afterKeys.includes(key)),
     ["stats.fame"]
   );
-  assert.equal(removed.stats.fame, undefined);
+  assert.equal(removed.stats.fame, 0);
+  assert.equal(removed.stats.leadership, 60);
   assert.equal(removed.stats.gold, 120);
   assert.deepEqual(removed.skills, {
+    ashigaru: 2,
     horse: 3,
     teppo: 1,
     navy: 0,
     archery: 1,
     martial: 2,
     military: 2,
-    ashigaru: 2,
+    ninjutsu: 0,
+    construction: 0,
+    development: 0,
+    mining: 0,
+    arithmetic: 0,
+    etiquette: 0,
+    rhetoric: 0,
+    tea: 0,
+    medicine: 0,
   });
 });
 

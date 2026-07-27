@@ -119,6 +119,11 @@ const SCRIPT_EDITOR_PERSON_JSON_ATTRIBUTE_KEYS = new Set([
   "teachableSkillKeys",
 ]);
 
+const SCRIPT_EDITOR_PERSON_BOOLEAN_ATTRIBUTE_KEYS = new Set([
+  "isHistoricalFigure",
+  "leaderResidenceEligible",
+]);
+
 const SCRIPT_EDITOR_PERSON_ATTRIBUTE_LABELS: Record<string, string> = {
   title: "\u6b63\u5f0f\u8eab\u4efd",
   occupation: "\u804c\u4e1a/\u5b9a\u4f4d",
@@ -817,6 +822,13 @@ function materializeScriptEditorPersonExtendedAttributes(
     );
   }
 
+  (nextPerson as Record<string, unknown>).stats = normalizeCharacterStats(
+    (nextPerson as Record<string, unknown>).stats
+  );
+  (nextPerson as Record<string, unknown>).skills = normalizeCharacterSkills(
+    (nextPerson as Record<string, unknown>).skills
+  );
+
   return nextPerson;
 }
 
@@ -853,7 +865,11 @@ function parseScriptEditorPersonAttributeValue(
     return Number.isFinite(numericValue) ? numericValue : value;
   }
 
-  if (typeof previousValue === "boolean" || typeof value === "boolean") {
+  if (
+    typeof previousValue === "boolean" ||
+    typeof value === "boolean" ||
+    isScriptEditorPersonBooleanAttribute(keyPath)
+  ) {
     if (typeof value === "boolean") {
       return value;
     }
@@ -863,6 +879,7 @@ function parseScriptEditorPersonAttributeValue(
     if (normalizedValue === "false") {
       return false;
     }
+    return undefined;
   }
 
   if (previousValue === null && normalizedValue.length === 0) {
@@ -897,6 +914,10 @@ function isScriptEditorPersonNumericAttribute(keyPath: string): boolean {
     keyPath.startsWith("stats.") ||
     keyPath.startsWith("skills.")
   );
+}
+
+function isScriptEditorPersonBooleanAttribute(keyPath: string): boolean {
+  return SCRIPT_EDITOR_PERSON_BOOLEAN_ATTRIBUTE_KEYS.has(keyPath);
 }
 
 function normalizeCharacterStats(value: unknown): CharacterStats {
