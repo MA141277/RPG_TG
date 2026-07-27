@@ -73,6 +73,10 @@ export type BuildingContainerDefinition = {
   type: BuildingContainerType;
   title?: string | undefined;
   source?: BuildingContainerSource | undefined;
+  /**
+   * Legacy compatibility residue only. Project loading rejects action-menu items
+   * and requires registry-owned menu resources/instances instead.
+   */
   items?: BuildingContainerActionItem[] | undefined;
 };
 

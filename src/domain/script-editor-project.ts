@@ -312,6 +312,10 @@ export type ScriptEditorBuildingContainerRecord = {
   type: ScriptEditorBuildingContainerType;
   title?: string | undefined;
   source?: ScriptEditorBuildingContainerSource | undefined;
+  /**
+   * Legacy compatibility residue only. Project loading rejects action-menu items
+   * and requires registry-owned menu resources/instances instead.
+   */
   items?: ScriptEditorBuildingContainerActionItem[] | undefined;
 };
 

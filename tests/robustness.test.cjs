@@ -10775,7 +10775,7 @@ test(
 );
 
 test(
-  "script editor project parser formalizes building arrangement action-menu items into building menu instances",
+  "script editor project parser rejects legacy building arrangement action-menu items",
   () => {
     const {
       createDefaultScriptEditorProjectDefinition,
@@ -10829,55 +10829,64 @@ test(
       },
     ];
 
-    const parsedProject = parseScriptEditorProject(legacyProject);
+    assert.throws(
+      () => parseScriptEditorProject(legacyProject),
+      /script editor project buildingArrangements\[0\]\.containers\[0\]\.items must move into menuResources\/menuInstances/
+    );
+  }
+);
 
-    assert.deepEqual(parsedProject.buildings[0].menuInstanceIds, [
-      "menu-instance.building.home.primary",
-    ]);
-    assert.equal(
-      parsedProject.buildingArrangements[0].containers[0].items,
-      undefined
-    );
-    assert.deepEqual(
-      parsedProject.menuInstances.find(
-        (instance) => instance.id === "menu-instance.building.home.primary"
-      ),
+test(
+  "script editor menu authoring fails closed on legacy building arrangement action-menu items",
+  () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      listScriptEditorLocationMenuBundles,
+    } = require("../.test-dist/application/script-editor/menu-authoring.js");
+    const legacyProject = createDefaultScriptEditorProjectDefinition({
+      idBase: "legacy-building-action-menu-authoring",
+      title: "Legacy Building Action Menu Authoring",
+    });
+
+    legacyProject.menuResources = [];
+    legacyProject.menuInstances = [];
+    legacyProject.buildings = legacyProject.buildings.map((building) => ({
+      ...building,
+      menuEntries: [],
+      menuInstanceIds: [],
+    }));
+    legacyProject.buildingArrangements = [
       {
-        id: "menu-instance.building.home.primary",
-        title: "Home Building Menu",
-        resourceId: "menu-resource.building.home.primary",
-      }
-    );
-    assert.deepEqual(
-      parsedProject.menuResources.find(
-        (resource) => resource.id === "menu-resource.building.home.primary"
-      ),
-      {
-        id: "menu-resource.building.home.primary",
-        title: "Home Building Menu",
-        entries: [
+        id: "building-arrangement.city.start.home",
+        cityId: "city.start",
+        buildingId: "building.home",
+        displayName: "Home Shell",
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [
           {
-            id: "rest",
-            label: "Rest",
-            menuFamily: "rest",
-            targetFamily: "event",
-            targetId: "event.building.home.rest",
-            isVisible: true,
-            isEnabled: true,
-            disabledHint: "",
-          },
-          {
-            id: "leave",
-            label: "Leave",
-            menuFamily: "leave",
-            targetFamily: "event",
-            targetId: "event.building.home.leave",
-            isVisible: true,
-            isEnabled: true,
-            disabledHint: "",
+            id: "container.home.actions",
+            type: "action-menu",
+            title: "Actions",
+            items: [
+              {
+                id: "rest",
+                label: "Rest",
+                eventId: "event.building.home.rest",
+                isVisible: true,
+                isEnabled: true,
+              },
+            ],
           },
         ],
-      }
+      },
+    ];
+
+    assert.throws(
+      () => listScriptEditorLocationMenuBundles(legacyProject, "buildings", "building.home"),
+      /script editor project buildingArrangements\[0\]\.containers\[0\]\.items must move into menuResources\/menuInstances/
     );
   }
 );
@@ -15348,7 +15357,7 @@ test("script editor default project initializes empty building arrangements", ()
   assert.deepEqual(project.buildingArrangements, []);
 });
 
-test("script editor project loader validates explicit building arrangements", () => {
+test("script editor project loader rejects legacy action-menu items in building arrangements", () => {
   const {
     validateScriptEditorProjectDefinition,
   } = require("../.test-dist/application/script-editor/editor-project-loader.js");
@@ -15397,55 +15406,10 @@ test("script editor project loader validates explicit building arrangements", ()
     ],
   };
 
-  const validated = validateScriptEditorProjectDefinition(project);
-
-  assert.deepEqual(validated.buildings[0].menuInstanceIds, [
-    "menu-instance.building.home.primary",
-  ]);
-  assert.deepEqual(
-    validated.menuResources.find(
-      (resource) => resource.id === "menu-resource.building.home.primary"
-    ),
-    {
-      id: "menu-resource.building.home.primary",
-      title: "Home Building Menu",
-      entries: [
-        {
-          id: "action.home.leave",
-          label: "Leave",
-          menuFamily: "action.home.leave",
-          targetFamily: "event",
-          targetId: "event.opening",
-          isVisible: true,
-          isEnabled: true,
-          disabledHint: "",
-        },
-      ],
-    }
+  assert.throws(
+    () => validateScriptEditorProjectDefinition(project),
+    /script editor project buildingArrangements\[0\]\.containers\[1\]\.items must move into menuResources\/menuInstances/
   );
-  assert.deepEqual(
-    validated.menuInstances.find(
-      (instance) => instance.id === "menu-instance.building.home.primary"
-    ),
-    {
-      id: "menu-instance.building.home.primary",
-      title: "Home Building Menu",
-      resourceId: "menu-resource.building.home.primary",
-    }
-  );
-  assert.deepEqual(validated.buildingArrangements, [
-    {
-      ...project.buildingArrangements[0],
-      containers: [
-        project.buildingArrangements[0].containers[0],
-        {
-          id: "container.home.menu",
-          type: "action-menu",
-          title: "Menu",
-        },
-      ],
-    },
-  ]);
 });
 
 test("script editor project loader fails closed on invalid building arrangement shape", () => {
@@ -15542,13 +15506,10 @@ test("script editor runtime-pack import initializes empty building arrangements 
   assert.deepEqual(importedProject.cities[0].mountedBuildings, []);
 });
 
-test("script editor runtime export and scenario loader carry explicit building arrangements", async () => {
+test("script editor runtime export fails closed on legacy building arrangement action-menu items", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
-  const {
-    loadScenarioPackFromFiles,
-  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
   project.events = [
@@ -15598,63 +15559,10 @@ test("script editor runtime export and scenario loader carry explicit building a
     },
   ];
 
-  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
-  const manifest = JSON.parse(serializedFiles["pack.json"]);
-  const arrangements = JSON.parse(serializedFiles["building-arrangements.json"]);
-  const houses = JSON.parse(serializedFiles["houses.json"]);
-  const menuResources = JSON.parse(serializedFiles["menu-resources.json"]);
-  const menuInstances = JSON.parse(serializedFiles["menu-instances.json"]);
-  const loadedPack = await loadScenarioPackFromFiles(
-    createImportedFilesFromSerializedJsonRecord(serializedFiles, "runtime-pack")
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /script editor project buildingArrangements\[0\]\.containers\[1\]\.items must move into menuResources\/menuInstances/
   );
-
-  assert.equal(manifest.files.buildingArrangements, "./building-arrangements.json");
-  assert.deepEqual(arrangements, [
-    {
-      ...project.buildingArrangements[0],
-      containers: [
-        project.buildingArrangements[0].containers[0],
-        {
-          id: "container.home.menu",
-          type: "action-menu",
-          title: "Menu",
-        },
-      ],
-    },
-  ]);
-  assert.deepEqual(houses[0].menuInstanceIds, ["menu-instance.building.home.primary"]);
-  assert.deepEqual(
-    menuResources.find(
-      (resource) => resource.id === "menu-resource.building.home.primary"
-    ),
-    {
-      id: "menu-resource.building.home.primary",
-      title: "Home Building Menu",
-      entries: [
-        {
-          id: "action.home.rest",
-          label: "Rest",
-          menuFamily: "action.home.rest",
-          targetFamily: "event",
-          targetId: exportedEventId,
-          isVisible: true,
-          isEnabled: true,
-          disabledHint: "",
-        },
-      ],
-    }
-  );
-  assert.deepEqual(
-    menuInstances.find(
-      (instance) => instance.id === "menu-instance.building.home.primary"
-    ),
-    {
-      id: "menu-instance.building.home.primary",
-      title: "Home Building Menu",
-      resourceId: "menu-resource.building.home.primary",
-    }
-  );
-  assert.deepEqual(loadedPack.buildingArrangements, arrangements);
 });
 
 test("progression resources round-trip through runtime-pack export import and loader", async () => {

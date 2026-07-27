@@ -534,6 +534,84 @@ test("script editor runtime families source arrangement npc ownership from city 
   ]);
 });
 
+test("script editor runtime families drop legacy action-menu items from arrangement containers", () => {
+  const {
+    materializeScriptEditorCityBuildingRuntimeFamilies,
+  } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
+
+  const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
+    schemaVersion: 1,
+    id: "project.runtime",
+    title: "Runtime Project",
+    scenarioProfile: {},
+    maps: [],
+    cities: [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.temple",
+            npcIds: ["person.host"],
+            primaryNpcId: "person.host",
+          },
+        ],
+      },
+    ],
+    buildings: [{ id: "building.temple", cityId: "city.start", name: "Temple" }],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple",
+        mountedNpcIds: ["person.host"],
+        primaryNpcId: "person.host",
+        containers: [
+          {
+            id: "container.temple.actions",
+            type: "action-menu",
+            title: "Actions",
+            items: [
+              {
+                id: "action.temple.pray",
+                label: "Pray",
+                eventId: "event.temple.pray",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    people: [{ id: "person.host", name: "Host", personType: "NPC" }],
+    factions: [],
+    chapters: [],
+    storyNodes: [],
+    dialogues: [],
+    events: [],
+    eventBindings: [],
+    activities: [],
+    items: [],
+    skills: [],
+    relationships: [],
+    endingRules: [],
+    minigames: [],
+    cityEntries: [],
+    cityNpcPools: [],
+    locationAccess: [],
+    playableIntegrations: [],
+    workflow: { currentStepId: "draft", completedSteps: [], records: {} },
+  });
+
+  assert.deepEqual(runtimeFamilies.buildingArrangements[0].containers, [
+    {
+      id: "container.temple.actions",
+      type: "action-menu",
+      title: "Actions",
+    },
+  ]);
+});
+
 test("script editor runtime families keep mounted npc ownership distinct when repeated cities share one canonical building id", () => {
   const {
     materializeScriptEditorCityBuildingRuntimeFamilies,

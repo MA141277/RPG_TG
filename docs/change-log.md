@@ -15,6 +15,16 @@
 ### Impact
 - The ACC-FORMAT-004 fallback seam in `main.ts` is now type-correct: event-owned playable completion still lets event remain the sole routing owner, and the direct house reentry fallback stays limited to the no-authored-follow-up path without widening runtime ownership.
 
+## 2026-07-27 Runtime Layout Registry Fail-Closed Cutover Verification
+
+### Changed
+- Updated [src/application/script-editor/editor-project-loader.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts:1), [src/application/script-editor/menu-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/menu-authoring.ts:1), [src/application/script-editor/city-building-runtime-materializer.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts:1), [src/domain/script-editor-project.ts](/D:/workspace/project/RPG_TG/src/domain/script-editor-project.ts:1), and [src/domain/building-arrangement.ts](/D:/workspace/project/RPG_TG/src/domain/building-arrangement.ts:1) so legacy building-arrangement `action-menu.items` now fail closed at project parse/authoring time and are stripped from runtime arrangement materialization instead of surviving as parallel production menu truth beside the formal `menuResources` / `menuInstances` chain.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) and [tests/city-building-mount-authoring.test.cjs](/D:/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs:1) with guards for parser rejection, top-level menu-authoring rejection, runtime-export rejection, loader rejection, and runtime materializer cleanup on legacy arrangement action-menu items, while preserving explicit arrangement-layout persistence and runtime rendering coverage on the converged building layout path.
+
+### Impact
+- ACC-FORMAT-005 no longer tolerates mixed old/new ownership for the covered building runtime-layout surface: arrangement layout remains the shell/layering owner, building runtime actions resolve through house `menuInstanceIds -> menuInstances -> menuResources`, and retired arrangement action-menu items are no longer accepted as runtime truth.
+- This records verified bounded cutover proof for the runtime-layout queue; repository-sync gating and the later full-chain final-acceptance queue remain separate governance steps.
+
 ## 2026-07-26 Stage Host Reference Contract Slice
 
 ## 2026-07-27 Runtime Menu Resource Consumption Cutover

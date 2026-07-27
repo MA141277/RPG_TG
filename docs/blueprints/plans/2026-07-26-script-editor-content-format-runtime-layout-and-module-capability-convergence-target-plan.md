@@ -6,7 +6,7 @@
 - version_id: `target.script-editor-content-format-runtime-layout-and-module-capability-convergence`
 - version_status: `open`
 - active_phase: `phase.promotion-review`
-- active_queue: `queue.stage-host-binding-and-menu-resource-runtime-convergence`
+- active_queue: `queue.runtime-layout-registry-and-ui-layering-convergence`
 - decision_state: `active-execution`
 - next_decision: `queue-closeout-or-return-to-version-review`
 - next_action: `resume-active-queue`
@@ -44,9 +44,9 @@
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
   - `queue.script-editor-content-format-and-authoring-surface-unification: closed after canonical draft-id baseline convergence, creator-facing copy cleanup, browser acceptance, and repository sync through commit f4ec1e20 on origin/mod-first-dev.`
-  - `queue.stage-host-binding-and-menu-resource-runtime-convergence: admitted and active; it now owns the live evidence-anchor task for ACC-FORMAT-003 stage-host reference and menu formalization work.`
-  - `queue.event-owned-routing-dialogue-playable-settlement-convergence: not yet admitted; follows menu/stage reference stabilization and owns the event-only routing conversion chain.`
-  - `queue.runtime-layout-registry-and-ui-layering-convergence: not yet admitted; follows routing freeze and owns persisted runtime layout plus runtime UI layering.`
+  - `queue.stage-host-binding-and-menu-resource-runtime-convergence: closed with accepted compatibility residue after ACC-FORMAT-003 queue closeout and recorded remote-sync success.`
+  - `queue.event-owned-routing-dialogue-playable-settlement-convergence: closed after ACC-FORMAT-004 closeout, accepted fail-closed residue classification for sample-scenario bg.council_room, and repository-sync success through commit 0daa903a on origin/mod-first-dev.`
+  - `queue.runtime-layout-registry-and-ui-layering-convergence: admitted and active; the audited runtime-layout rationale is now locked and the lawful next step is the registry-owned runtime-layout contract cutover for ACC-FORMAT-005.`
   - `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance: not yet admitted; required-final queue for chain consistency, fail-closed rejection, acceptance proof, and closeout.`
 - candidate_backlog_scan_sources:
   - `project-progress`
@@ -72,7 +72,9 @@
 - Activation conclusion:
   - `Formal target docs now exist for target.script-editor-content-format-runtime-layout-and-module-capability-convergence.`
   - `queue.script-editor-content-format-and-authoring-surface-unification is now closed after successful repository sync through commit f4ec1e20 on origin/mod-first-dev.`
-  - `queue.stage-host-binding-and-menu-resource-runtime-convergence is now the admitted active queue, and task.stage-host-binding-and-menu-resource-runtime-convergence.stage-host-and-menu-chain-implementation is the live active task after evidence reconciliation locked the real stage/menu ownership gaps.`
+  - `queue.stage-host-binding-and-menu-resource-runtime-convergence is now closed honestly with accepted compatibility residue recorded after ACC-FORMAT-003 closeout and remote-sync success.`
+  - `queue.event-owned-routing-dialogue-playable-settlement-convergence is now closed honestly after ACC-FORMAT-004 closeout plus repository-sync success through commit 0daa903a on origin/mod-first-dev.`
+  - `queue.runtime-layout-registry-and-ui-layering-convergence is now the admitted active queue, and task.runtime-layout-registry-and-ui-layering-convergence.registry-owned-layout-contract-cutover is now the live active task for ACC-FORMAT-005.`
 
 ### Admission Review Record
 
@@ -89,7 +91,7 @@
 
 ### Version Lifecycle Rules
 
-- `This version remains open and the lawful execution truth now runs through queue.stage-host-binding-and-menu-resource-runtime-convergence.`
+- `This version remains open and the lawful execution truth now runs through queue.runtime-layout-registry-and-ui-layering-convergence.`
 - `If active_queue = none in the future, that does not close the version; it means the version has returned to lawful queue admission or closeout review.`
 - `Implementation may proceed only through the admitted child queue doc and its live active task.`
 - `Do not split content-format unification, event-owned routing convergence, runtime-layout persistence, and covered-module capability completion into separate parent targets while this version remains open.`
@@ -149,16 +151,16 @@
 
 - receipt_join_status: `success`
 - receipt_join_type: `execution-queue`
-- receipt_join_queue_id: `queue.stage-host-binding-and-menu-resource-runtime-convergence`
+- receipt_join_queue_id: `queue.runtime-layout-registry-and-ui-layering-convergence`
 - receipt_reason_code: `phase-order-auto-admission`
 - receipt_reason_basis:
-  - `The approved phase order and the completed repository-sync gate for queue.script-editor-content-format-and-authoring-surface-unification make queue.stage-host-binding-and-menu-resource-runtime-convergence the uniquely lawful next admission.`
-- receipt_active_queue: `queue.stage-host-binding-and-menu-resource-runtime-convergence`
-- receipt_active_task: `task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate`
+  - `The approved phase order and the completed closeout-plus-sync truth for queue.event-owned-routing-dialogue-playable-settlement-convergence make queue.runtime-layout-registry-and-ui-layering-convergence the uniquely lawful next admission.`
+- receipt_active_queue: `queue.runtime-layout-registry-and-ui-layering-convergence`
+- receipt_active_task: `task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate`
 - receipt_queue_goal:
-  - `Converge stage host references and formal menu resource/runtime ownership on top of the settled first-queue authoring baseline.`
+  - `Converge runtime-layout registry persistence, live save-back, auto-load resolution, and runtime UI layering on top of the settled stage/menu and event-owned routing baselines.`
 - receipt_next_step:
-  - `Continue from queue.stage-host-binding-and-menu-resource-runtime-convergence on its resumed closeout-review task rather than treating the verified building-runtime cutover as a lawful stop.` 
+  - `Continue from queue.runtime-layout-registry-and-ui-layering-convergence on its live registry-owned-layout-contract-cutover task. Admission evidence is already locked from the audited runtime-layout rationale, so the lawful next work is replacing mixed arrangement/container-derived runtime layout ownership with one registry-owned contract before queue closeout proof and repository sync.`
 - receipt_human_action: `none-required`
 - receipt_internal_analysis_exposed: `false`
 
@@ -167,9 +169,9 @@
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger Type | Recheck Trigger Basis | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `item.script-editor-content-format-and-authoring-surface-unification` | `queue-candidate` | `queue.script-editor-content-format-and-authoring-surface-unification` | `closed` | `queue-closeout-complete` | `The first queue is now closed after repository sync through commit f4ec1e20 on origin/mod-first-dev.` | `ACC-FORMAT-001; ACC-FORMAT-002` | `src/application/script-editor/**; src/domain/script-editor-project.ts; src/ui/main-ui/**; tests/**` | `authoring-format convergence, id-rule convergence, creator-surface cleanup, event authoring structure normalization` | `stage/menu runtime completion, event-only routing retirement, runtime-layout persistence, final full-chain acceptance` | `This prerequisite baseline is now closed and may not be bypassed retroactively.` |
-| `item.stage-host-binding-and-menu-resource-runtime-convergence` | `queue-candidate` | `queue.stage-host-binding-and-menu-resource-runtime-convergence` | `admitted` | `queue-closeout` | `The first queue closed and repository sync succeeded, so stage/menu became the uniquely lawful next admission.` | `ACC-FORMAT-003` | `src/application/script-editor/**; src/application/runtime/**; src/content/**; tests/**` | `stage host-reference completion and menu formalization` | `event-owned routing conversion, runtime-layout persistence, final chain acceptance` | `Must preserve extensible host-family structure and runtime-consumed menu instances.` |
-| `item.event-owned-routing-dialogue-playable-settlement-convergence` | `queue-candidate` | `queue.event-owned-routing-dialogue-playable-settlement-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after stage/menu reference semantics are stable.` | `ACC-FORMAT-004` | `src/application/runtime/**; src/application/dialogue/**; src/application/playable/**; src/application/settlement/**; tests/**` | `event-only routing convergence plus dialogue/playable/settlement runtime completion` | `runtime-layout persistence or final acceptance ownership` | `Must not introduce a second router or preserve private continuation truth.` |
-| `item.runtime-layout-registry-and-ui-layering-convergence` | `queue-candidate` | `queue.runtime-layout-registry-and-ui-layering-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after routing boundary is frozen.` | `ACC-FORMAT-005` | `src/application/runtime/**; src/ui/**; preview/runtime save paths; tests/**` | `runtime-layout registry persistence, save-back, auto-load, and UI layering convergence` | `editor-page-layout governance or event-routing ownership` | `Must stay runtime/preview-scoped and must not expand into Script Editor page-layout redesign.` |
+| `item.stage-host-binding-and-menu-resource-runtime-convergence` | `queue-candidate` | `queue.stage-host-binding-and-menu-resource-runtime-convergence` | `closed` | `queue-closeout-complete` | `ACC-FORMAT-003 closeout is complete: remote-sync succeeded and the remaining inline menu references are recorded as accepted compatibility-only residue rather than active production truth.` | `ACC-FORMAT-003` | `src/application/script-editor/**; src/application/runtime/**; src/content/**; tests/**` | `stage host-reference completion and menu formalization` | `event-owned routing conversion, runtime-layout persistence, final chain acceptance` | `Must preserve extensible host-family structure and runtime-consumed menu instances.` |
+| `item.event-owned-routing-dialogue-playable-settlement-convergence` | `queue-candidate` | `queue.event-owned-routing-dialogue-playable-settlement-convergence` | `closed` | `queue-closeout-complete` | `ACC-FORMAT-004 closeout is complete: accepted fail-closed residue is recorded for sample-scenario bg.council_room and repository sync succeeded through commit 0daa903a on origin/mod-first-dev.` | `ACC-FORMAT-004` | `src/application/runtime/**; src/application/dialogue/**; src/application/playable/**; src/application/settlement/**; tests/**` | `event-only routing convergence plus dialogue/playable/settlement runtime completion` | `runtime-layout persistence or final acceptance ownership` | `The covered ACC-FORMAT-004 routing slices are now closed historical evidence and may not be reopened implicitly while ACC-FORMAT-005 is active.` |
+| `item.runtime-layout-registry-and-ui-layering-convergence` | `queue-candidate` | `queue.runtime-layout-registry-and-ui-layering-convergence` | `admitted` | `active-queue` | `ACC-FORMAT-004 closeout and repository-sync are complete, so runtime-layout registry persistence plus runtime UI layering convergence becomes the uniquely lawful active queue under the approved phase order.` | `ACC-FORMAT-005` | `src/domain/**; src/application/script-editor/**; src/ui/**; preview/runtime save paths; tests/**` | `runtime-layout registry persistence, save-back, auto-load, and UI layering convergence` | `editor-page-layout governance or event-routing ownership` | `Admission is locked against the audited runtime-layout rationale: layout ownership still leaks through project contracts, formalization, loader validation, runtime materialization, UI-shell layering, and workspace issue routing, so the live task is the registry-owned layout contract cutover rather than another routing review.` |
 | `item.preview-runtime-loading-full-chain-consistency-and-final-acceptance` | `queue-candidate` | `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance` | `candidate-recorded` | `queue-closeout` | `Recheck only after the implementation-bearing queues close.` | `ACC-FORMAT-006` | `export/import/loader/preview/runtime/startup paths; browser acceptance; tests/**` | `full-chain consistency, fail-closed rejection, final acceptance, residue guard` | `primary ownership of earlier implementation-bearing queues` | `Required-final queue only; it must not be used to hide unfinished earlier work.` |
 
 ### Queue Promotion Ledger
@@ -177,9 +179,9 @@
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
 | `queue.script-editor-content-format-and-authoring-surface-unification` | `closed` | `already closed` | `Repository sync succeeded through commit f4ec1e20 on origin/mod-first-dev.` |
-| `queue.stage-host-binding-and-menu-resource-runtime-convergence` | `admitted` | `now active` | `It inherits the settled id-rule and authoring-structure baseline from the closed first queue.` |
-| `queue.event-owned-routing-dialogue-playable-settlement-convergence` | `candidate-ready` | `only after queue.stage-host-binding-and-menu-resource-runtime-convergence closes` | `Must not admit before stage/menu reference semantics are stable.` |
-| `queue.runtime-layout-registry-and-ui-layering-convergence` | `candidate-ready` | `only after queue.event-owned-routing-dialogue-playable-settlement-convergence closes` | `Must stay distinct from business-routing work.` |
+| `queue.stage-host-binding-and-menu-resource-runtime-convergence` | `closed` | `already closed` | `ACC-FORMAT-003 queue closeout is complete with accepted compatibility residue recorded and remote-sync already succeeded.` |
+| `queue.event-owned-routing-dialogue-playable-settlement-convergence` | `closed` | `already closed` | `ACC-FORMAT-004 queue closeout is complete with accepted fail-closed residue recorded and remote-sync already succeeded through commit 0daa903a on origin/mod-first-dev.` |
+| `queue.runtime-layout-registry-and-ui-layering-convergence` | `admitted` | `now active` | `It inherits the settled authoring-format, stage/menu, and event-owned routing baselines from the closed earlier queues.` |
 | `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance` | `candidate-ready` | `only after all implementation-bearing queues close` | `Required-final queue.` |
 
 ### Candidate Backlog Refresh Rule
@@ -244,15 +246,15 @@
 - parent_spec_alignment:
   - `The created target preserves the operator-approved requirement sheet without dropping content-format, event-owned routing, runtime-layout persistence, or full-chain consistency boundaries.`
 - queue_claim_alignment:
-  - `The closed first queue now owns completed ACC-FORMAT-001 / 002 coverage only, and the newly admitted active queue owns ACC-FORMAT-003 only.`
+  - `The closed first three queues now own completed ACC-FORMAT-001 through ACC-FORMAT-004 coverage historically, and the active queue now owns ACC-FORMAT-005 only.`
 - over_narrowing_check:
   - `The first queue remains authoring-format plus id-rule convergence rather than a thinner runtime-layout or menu-only slice, so the version does not skip the approved prerequisite batch.`
 - residue_or_blocker_routing_check:
-  - `No blocker is recorded. The first queue is closed and synced, stage/menu is now the active queue, and later acceptances remain routed to their recorded follow-up queues.`
+  - `No blocker is recorded. The first three queues are closed and synced, runtime-layout registry persistence plus runtime UI layering convergence is now the active queue, and final acceptance remains routed to its recorded follow-up queue.`
 - verification_adequacy_check:
   - `Governed-doc verification must pass before this successor version shell is considered synchronized.`
 - next_lawful_action_check:
-  - `Resume task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate.`
+  - `Resume task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate.`
 
 ### Progress Log
 
@@ -276,3 +278,15 @@
 - `2026-07-27`: `The returned implementation slice is now landed and re-verified. Building runtime action menus consume formal menuResources/menuInstances, built-in zhuyuanzhang building menu truth now lives in houses/menu-resources/menu-instances rather than arrangement action items, and the Script Editor building arrangement surface now treats inline action items as retired authoring residue instead of the active path.`
 - `2026-07-27`: `The version therefore remains on the same active queue but resumes queue-closeout review rather than implementation. ACC-FORMAT-003 is still not declared closed; Blueprint must now re-judge accepted residue and repository-sync truth on the updated building-formal-menu path before any next-queue admission decision.`
 - `2026-07-27`: `Repository-sync also succeeded for the resumed building-formal-menu batch on origin/mod-first-dev. The version still does not auto-promote the next queue from that fact alone; queue.stage-host-binding-and-menu-resource-runtime-convergence must first finish honest closeout review for ACC-FORMAT-003.`
+- `2026-07-27`: `queue.stage-host-binding-and-menu-resource-runtime-convergence closeout is now complete. ACC-FORMAT-003 remains execution-closed with accepted compatibility residue recorded for the remaining inline menu references, no active task remains in that queue, and the queue's remote-sync result is already recorded as successful.`
+- `2026-07-27`: `queue.event-owned-routing-dialogue-playable-settlement-convergence is now admitted as the uniquely lawful next queue under the approved phase order. Evidence reconciliation completed during admission, and task.event-owned-routing-dialogue-playable-settlement-convergence.event-owned-routing-and-runtime-chain-implementation is now the live active task for ACC-FORMAT-004.`
+- `2026-07-27`: `The first ACC-FORMAT-004 implementation slice landed and was verified under the same live active task. At that point, dialogue-runner and story-runtime direct nextEvent recursion had converged through the shared fail-closed event-continuation seam, while dialogue-choice-resolver had not yet been moved and runtime dialogue presentation consumption still remained open inside the active queue.`
+- `2026-07-27`: `Governance truth is now reconciled with the already-landed second ACC-FORMAT-004 routing slice. dialogue-choice-resolver option nextEvent continuation now also converges through the shared fail-closed event-continuation seam, while runtime dialogue presentation consumption remains incomplete and playable-to-settlement/event-owned follow-up parity still stays unresolved until full queue proof exists.`
+- `2026-07-27`: `Governance truth is now reconciled with the newly landed dialogue presentation slice. Runtime dialogue presentation now consumes dialogue-node portrait and side placement truth on the converged path, so portrait/side is no longer an open ACC-FORMAT-004 gap. The remaining queue-owned dialogue presentation gap is narrowed to background/music rendering, while playable-to-settlement/event-owned follow-up parity and queue closeout/sync still remain open.`
+- `2026-07-27`: `Governance truth is now reconciled with the landed event-owned playable completion parity fix. Covered event-owned entrypoints now preserve playable-to-settlement handoff plus event-owned follow-up parity on the formal converged path, so that parity gap is no longer an open ACC-FORMAT-004 implementation item. The queue stays active on the same implementation task because runtime dialogue background/music presentation remains incomplete, and queue closeout, residue classification, and repository-sync are still pending.`
+- `2026-07-27`: `Governance truth is now reconciled with the latest background/music presentation slice and the already-landed playable completion parity fix. Background/music dialogue nodes no longer fall through the generic transition placeholder and now render explicit authored presentation truth, while covered event-owned entrypoints still preserve formal playable-to-settlement handoff plus event-owned follow-up parity. The version nevertheless stays on the same ACC-FORMAT-004 implementation task because authored story background ids still depend on unmapped preview resolution in the current location-background seam and dialogue music still lacks a dedicated playback consumer, so queue closeout review is not yet lawful.`
+- `2026-07-27`: `Governance truth is now reconciled with the later ACC-FORMAT-004 presentation follow-up slice. Dedicated dialogue-music playback is now wired through src/ui/dialogue-music.ts and main.ts, current shipped story background ids used by the zhuyuanzhang and liu-bang packs resolve preview images, and the version therefore remains on the same active queue but resumes queue-closeout review rather than more implementation. The remaining honest gap is partial preview coverage for other authored background ids such as sample-scenario bg.council_room, which currently fail closed without a preview image and must be classified during closeout review before repository-sync can begin.`
+- `2026-07-27`: `queue.event-owned-routing-dialogue-playable-settlement-convergence closeout is now complete. ACC-FORMAT-004 remains execution-closed with accepted fail-closed residue recorded for sample-scenario bg.council_room, repository-sync succeeded through commit 0daa903a on origin/mod-first-dev, and no active task remains in that queue.`
+- `2026-07-27`: `queue.runtime-layout-registry-and-ui-layering-convergence is now admitted as the uniquely lawful next queue under the approved phase order. Admission evidence is already locked from the audited runtime-layout rationale, and task.runtime-layout-registry-and-ui-layering-convergence.registry-owned-layout-contract-cutover is now the live active task for ACC-FORMAT-005.`
+- `2026-07-27`: `ACC-FORMAT-005 progress is now reconciled with the landed slice-A and slice-B cutover work. The active queue still remains on task.runtime-layout-registry-and-ui-layering-convergence.registry-owned-layout-contract-cutover, but loader/project-parser rejection, top-level menu-authoring fail-closed behavior, and runtime-materializer removal of legacy arrangement action-menu items are now recorded as landed proof while the next lawful step becomes fresh verification and review toward possible queue-closeout-gate promotion.`
+- `2026-07-27`: `Fresh ACC-FORMAT-005 verification is now fully green on the converged path: cmd /c npm run build:test, node --test tests/robustness.test.cjs, cmd /c npm run lint:blueprints, cmd /c npm run lint:blueprint-skill, and cmd /c npm run blueprint:governance:check all passed. Existing layout persistence/rendering coverage plus the new parser/authoring/materializer fail-closed guards now justify promoting the active queue from implementation into task.runtime-layout-registry-and-ui-layering-convergence.queue-closeout-review-and-sync-gate rather than continuing more same-family implementation.`

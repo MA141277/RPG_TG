@@ -24,9 +24,9 @@
 - auto_continue_policy: `required`
 - idle_after_task_completion: `forbidden`
 - queue_close_handoff: `version-plan-routing`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Queue closeout proof is now recorded locally. The minimum repository-sync gate for the completed ACC-FORMAT-004 batch is the next lawful action before later-queue admission can be written.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository-sync gate satisfied: closeout truth was synchronized, commit 0daa903a landed on mod-first-dev, and push to origin/mod-first-dev succeeded before runtime-layout queue admission began.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -290,7 +290,7 @@
   - `none`
 - remaining_gaps:
   - `none inside queue-owned implementation scope; sample-scenario bg.council_room remains accepted fail-closed preview residue outside the current shipped authored background-preview map.`
-  - `Repository-sync gate result is still pending.`
+  - `Repository-sync gate is complete; later-queue admission still requires version-plan routing truth to be synchronized.`
 
 ### Admission Preconditions
 
@@ -513,4 +513,5 @@
 - `2026-07-27`: `Governance truth is now reconciled with the landed event-owned playable completion parity fix. Covered event-owned entrypoints now preserve formal playable-to-settlement handoff plus event-owned follow-up parity on the converged path, so that parity gap is no longer an open ACC-FORMAT-004 implementation item. The queue stays on the same live implementation task because runtime dialogue background/music presentation remains incomplete, and queue closeout, residue classification, and repository-sync are still pending.`
 - `2026-07-27`: `Governance truth is now reconciled with the latest background/music presentation slice on top of the already-landed playable completion parity fix. Background/music dialogue nodes no longer fall through the generic transition placeholder and now render explicit authored presentation truth, while covered event-owned entrypoints still preserve formal playable-to-settlement handoff plus event-owned follow-up parity. ACC-FORMAT-004 nevertheless remains open on bounded same-task residue because authored story background ids still depend on unmapped preview resolution in the current location-background seam and dialogue music still lacks a dedicated playback consumer, so queue closeout, residue classification, and repository-sync remain out of scope.`
 - `2026-07-27`: `Governance truth is now reconciled with the later ACC-FORMAT-004 presentation follow-up slice too. Dedicated dialogue-music playback is now wired through src/ui/dialogue-music.ts and main.ts, current shipped story background ids used by the zhuyuanzhang and liu-bang packs resolve preview images, and the queue therefore resumes task.event-owned-routing-dialogue-playable-settlement-convergence.queue-closeout-review-and-sync-gate rather than staying on implementation. The remaining honest gap is partial preview coverage for other authored background ids such as sample-scenario bg.council_room, which currently fail closed without a preview image and must be classified during closeout review before repository-sync.`
-- `2026-07-27`: `Closeout review is now complete locally. The bounded ACC-FORMAT-004 verification set is green, sample-scenario bg.council_room is recorded as accepted fail-closed residue outside the current shipped preview map, no active implementation task remains in this queue, and the next lawful action is the version-level repository-sync gate before runtime-layout queue admission.`
+- `2026-07-27`: `Closeout review is now complete locally. The bounded ACC-FORMAT-004 verification set is green, sample-scenario bg.council_room is recorded as accepted fail-closed residue outside the current shipped preview map, and no active implementation task remains in this queue.`
+- `2026-07-27`: `Repository-sync gate is now satisfied for ACC-FORMAT-004. Commit 0daa903a landed on mod-first-dev, push to origin/mod-first-dev succeeded, and control returns to version-plan routing for queue.runtime-layout-registry-and-ui-layering-convergence admission.`

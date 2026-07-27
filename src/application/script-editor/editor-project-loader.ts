@@ -404,6 +404,11 @@ function assertBuildingContainerRecordArray(
       }
     }
     if (entry.items != null) {
+      if (entry.type === "action-menu") {
+        throw new Error(
+          `${entryLabel}.items must move into menuResources/menuInstances.`
+        );
+      }
       assertBuildingContainerActionItemArray(entry.items, `${entryLabel}.items`);
     }
   });

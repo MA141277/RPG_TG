@@ -7,26 +7,26 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-27`
 - governance_sync_source: `docs/blueprints/plans/2026-07-26-script-editor-content-format-runtime-layout-and-module-capability-convergence-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate`
-- next_task: `task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate`
-- closeout_status: `in-progress`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
 - execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `The previously open same-family implementation gap is now covered: runtime building action menus consume formal menuResources/menuInstances, built-in pack data has migrated off inline arrangement action items, and the remaining queue work is honest closeout review for ACC-FORMAT-003 rather than more runtime implementation.`
+- closure_basis: `Queue execution and closeout review are complete. ACC-FORMAT-003 implementation is covered across stage host references plus city/building formal menu consumption, and the remaining inline menu residue is explicitly recorded as accepted compatibility-only residue rather than active queue-owned production truth.`
 - residue_remaining: `yes`
 - residue_family: `accepted-residue`
-- residue_routing_status: `auto-routable`
-- next_family_candidate: `item.stage-host-binding-and-menu-resource-runtime-convergence`
-- auto_continue_eligible: `true`
-- next_effect: `none`
+- residue_routing_status: `needs-version-review`
+- next_family_candidate: `none`
+- auto_continue_eligible: `false`
+- next_effect: `return-to-version-review`
 - auto_continue_policy: `required`
 - idle_after_task_completion: `forbidden`
 - queue_close_handoff: `version-plan-routing`
 - sync_status: `success`
 - sync_scope: `remote-sync`
-- sync_summary: `Repository-sync now succeeded for both the earlier stage-host plus city-menu batch and the resumed building-formal-menu runtime batch. The latest resumed-batch commit is on origin/mod-first-dev, but the queue remains open because closeout review still has to decide ACC-FORMAT-003 topic closure honestly rather than auto-closing after sync success.`
+- sync_summary: `Repository-sync succeeded for both the earlier stage-host plus city-menu batch and the resumed building-formal-menu runtime batch. Closeout review is now also complete, so the queue returns control to version-plan routing rather than remaining active after sync success.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -236,9 +236,9 @@
 
 - queue_goal: `Execute the second version slice so stage configuration and menu ownership converge onto one formal reference/runtime chain.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `The live implementation slice is now re-verified end to end, including the building-side formal menu cutover. The lawful next step is closeout review and sync-gate truth, not more ACC-FORMAT-003 implementation.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Completed. ACC-FORMAT-003 now closes its bounded execution slice with repository-sync recorded and only accepted compatibility residue remaining.`
 - task_briefs:
   - `task.stage-host-binding-and-menu-resource-runtime-convergence.evidence-anchor-reconcile: freeze the real stage/menu ownership gaps, source anchors, and no-over-narrowing boundary for ACC-FORMAT-003.`
   - `task.stage-host-binding-and-menu-resource-runtime-convergence.stage-host-and-menu-chain-implementation: land host-reference stage configuration plus formal menu resource/instance/runtime consumption completion.`
@@ -257,7 +257,7 @@
 
 ### Completion Completeness Review
 
-- review_status: `ready-to-resume-closeout-review`
+- review_status: `accepted-residue`
 - can_claim_coverage:
   - `Implementation coverage is now complete for ACC-FORMAT-003's code/runtime surface: stage host references, formal menu authoring/export/import, city runtime menu consumption, and building runtime menu consumption all use the same formal menu-instance route.`
 - parent_spec_preservation:
@@ -271,7 +271,7 @@
 - user_path_matrix_verification:
   - `Covered paths now include stage host references, city formal menu consumption, building formal menu consumption, imported pack migration proof, and the retired inline arrangement action-item authoring path.`
 - functional_loss_audit:
-  - `No creator-visible loss is currently known on the covered queue surface; closeout review must still record the final audit.`
+  - `No creator-visible loss is currently known on the covered queue surface, and closeout review did not find any additional queue-owned loss beyond the accepted compatibility-only residue already recorded.`
 - replacement_proof_summary:
   - `Production city and building runtime now both consume menuResources/menuInstances, built-in scenario-pack data ships formal city/building menu files and menuInstanceIds, and active Script Editor records no longer expose inline location/arrangement menu arrays as authoring truth.`
 - placeholder_or_legacy_fallback_audit:
@@ -281,26 +281,25 @@
 - gap_fill_scope:
   - `none`
 - remaining_gaps:
-  - `Closeout review must still decide whether the remaining compatibility-only location menuEntries and arrangement action-menu item seams count as accepted residue or require additional retirement inside this queue.`
-  - `Queue handoff remains illegal until closeout review records that judgement honestly and the repository-sync gate for the resumed batch is attempted or explicitly judged unnecessary.`
+  - `none inside queue-owned implementation scope; the remaining location menuEntries and arrangement action-menu item seams are now explicitly recorded as accepted compatibility-only residue rather than active production truth.`
 
 ### Execution Self-Review Gate
 
-- review_scope: `closeout-review-found-same-family-gap`
+- review_scope: `closeout-complete`
 - version_acceptance_alignment:
   - `This queue is admitted only for ACC-FORMAT-003, which the version spec assigns to the required stage/menu ownership slice.`
 - parent_spec_alignment:
   - `The queue boundary preserves the parent requirement sheet without absorbing event-only routing, runtime-layout, or final acceptance work.`
 - queue_claim_alignment:
-  - `The queue still correctly owns stage host-reference convergence and formal menu resource/runtime consumption; the discovered building-menu runtime gap remains inside this same queue rather than later queues.`
+  - `The queue correctly owned ACC-FORMAT-003 through closeout: stage host-reference convergence and formal menu resource/runtime consumption are covered, and the earlier building-menu runtime gap was repaired inside this queue rather than deferred into later queues.`
 - over_narrowing_check:
   - `The queue cannot pass by only editing stage labels or menu wording; runtime consumption and city/building ownership retirement also belong to ACC-FORMAT-003.`
 - residue_or_blocker_routing_check:
   - `No blocker is recorded. Later acceptances remain routed to the already-recorded follow-up queues in the version plan.`
 - verification_adequacy_check:
-  - `Authoring/export/runtime proof is now adequate to resume closeout review: the previously open building runtime menu-consumption gap is covered, but ACC-FORMAT-003 still needs honest residue classification and closeout-sync truth before closure can be judged.`
+  - `Authoring/export/runtime proof is adequate and closeout review is complete: ACC-FORMAT-003 is covered, the remaining inline menu residue is accepted compatibility-only residue, and queue-local sync truth is already recorded successfully.`
 - next_lawful_action_check:
-  - `Resume task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate and re-judge ACC-FORMAT-003 closeout on the updated building-formal-menu truth.`
+  - `Return control to version-plan routing so queue.event-owned-routing-dialogue-playable-settlement-convergence can be admitted as the next lawful queue.`
 
 ### Runtime/Browser Acceptance Gate
 
@@ -328,7 +327,7 @@
 | --- | --- | --- | --- | --- |
 | `task.stage-host-binding-and-menu-resource-runtime-convergence.evidence-anchor-reconcile` | `done` | `Freeze the stage/menu ownership acceptance scope, implementation anchors, and no-over-narrowing boundary for ACC-FORMAT-003.` | `none` | `Completed from source audit: the current stage surface is still a progress-track binding editor, and menu truth still lives inline on city/building records.` |
 | `task.stage-host-binding-and-menu-resource-runtime-convergence.stage-host-and-menu-chain-implementation` | `done` | `Land host-reference stage configuration plus formal menu resource/instance/runtime consumption completion.` | `task.stage-host-binding-and-menu-resource-runtime-convergence.evidence-anchor-reconcile` | `Completed after the building-side runtime cutover moved action-menu consumption onto formal menuResources/menuInstances and removed the remaining production dependence on inline arrangement action items.` |
-| `task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate` | `active` | `Verify ACC-FORMAT-003 coverage, classify residue honestly, and run the repository-sync gate.` | `task.stage-host-binding-and-menu-resource-runtime-convergence.stage-host-and-menu-chain-implementation` | `Repository sync already exists for the earlier partial batch; this resumed closeout review must now decide whether the remaining inline menu residue is compatibility-only and whether another sync attempt is required after the building runtime cutover.` |
+| `task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate` | `done` | `Verify ACC-FORMAT-003 coverage, classify residue honestly, and run the repository-sync gate.` | `task.stage-host-binding-and-menu-resource-runtime-convergence.stage-host-and-menu-chain-implementation` | `Done. Closeout review records the remaining inline menu references as accepted compatibility-only residue, preserves later queues honestly, and returns control to version-plan routing after the resumed batch sync is already recorded as successful.` |
 
 ### Task Definitions
 
@@ -456,7 +455,7 @@
 ##### Control Block
 
 - task_id: `task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate`
-- state: `active`
+- state: `done`
 - task_kind: `queue-closeout`
 - scope:
   - `docs/blueprints/queues/stage-host-binding-and-menu-resource-runtime-convergence-queue.md`
@@ -504,7 +503,7 @@
 - task_brief:
   - `Close out the stage/menu ownership queue after verified implementation and route the next lawful queue.`
 - task_outcome_summary:
-  - `Active again. The previously open building runtime divergence is now covered and verified, so closeout review must re-check whether any same-family residue still remains inside ACC-FORMAT-003, reconcile docs/project pointers honestly, and decide whether a fresh repository-sync attempt is required for this resumed batch.`
+  - `Done. The previously open building runtime divergence is now covered and verified, closeout review records the remaining location menuEntries and arrangement action-menu item seams as accepted compatibility-only residue rather than active production truth, and the queue returns control to version-plan routing after the resumed batch sync succeeded.`
 
 ### Progress Log
 
@@ -527,3 +526,4 @@
 - `2026-07-27`: `The returned implementation slice is now landed and re-verified. Building runtime action menus consume formal menuResources/menuInstances, Script Editor building arrangements no longer expose inline action-item authoring as the active path, the built-in zhuyuanzhang pack migrated building menu truth into houses/menu-resources/menu-instances, and node --test tests/robustness.test.cjs plus node --test tests/city-building-mount-authoring.test.cjs are green on the converged path.`
 - `2026-07-27`: `With the same-family runtime gap covered, the queue now resumes task.stage-host-binding-and-menu-resource-runtime-convergence.queue-closeout-review-and-sync-gate. ACC-FORMAT-003 is still not declared closed here; closeout review must now judge the remaining compatibility-only inline action-menu residue and repository-sync truth honestly.`
 - `2026-07-27`: `The resumed batch has now passed its repository-sync attempt too: the building formal-menu runtime cutover and closeout-review doc sync committed cleanly on mod-first-dev and pushed to origin/mod-first-dev. Queue closure is still not auto-approved by that success; closeout review must still decide the final ACC-FORMAT-003 topic-closure truth.`
+- `2026-07-27`: `Closeout review is now complete. ACC-FORMAT-003 remains execution-closed with topic_closure_status=open-residue because the remaining location menuEntries and arrangement action-menu item references are accepted compatibility-only residue rather than active queue-owned production truth, so control returns to version-plan routing for the next lawful queue admission.`

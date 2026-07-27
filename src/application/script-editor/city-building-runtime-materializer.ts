@@ -102,9 +102,6 @@ function materializeBuildingArrangements(
                 container.source
               ) as BuildingArrangementDefinition["containers"][number]["source"],
             }),
-        ...(container.items == null
-          ? {}
-          : { items: container.items.map((item) => ({ ...item })) }),
       })),
       ...(arrangement.visibleRule == null
         ? {}
