@@ -12,6 +12,7 @@ import {
   type ScriptEditorStoryPackRecord,
 } from "../../domain/script-editor-project";
 import { formalizeScriptEditorProjectMenus } from "./menu-authoring";
+import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
 
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
@@ -177,14 +178,19 @@ export function parseScriptEditorProject(
     "script editor project effectBundles"
   );
 
+  const portraitVariants =
+    (value.portraitVariants ?? []) as ScriptEditorProjectDefinition["portraitVariants"];
+
   return formalizeScriptEditorProjectMenus({
     ...(value as ScriptEditorProjectDefinition),
     completionState: normalizeScriptEditorProjectCompletionState(
       value.completionState
     ),
+    people: (value.people as Record<string, unknown>[]).map((person) =>
+      normalizeScriptEditorPersonRecord(person, { portraitVariants })
+    ),
     portraits: (value.portraits ?? []) as ScriptEditorProjectDefinition["portraits"],
-    portraitVariants:
-      (value.portraitVariants ?? []) as ScriptEditorProjectDefinition["portraitVariants"],
+    portraitVariants,
     buildingArrangements:
       (value.buildingArrangements ?? []) as ScriptEditorProjectDefinition["buildingArrangements"],
     settlements: (value.settlements ?? []) as ScriptEditorProjectDefinition["settlements"],

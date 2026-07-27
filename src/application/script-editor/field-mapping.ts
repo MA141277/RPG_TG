@@ -59,7 +59,7 @@ const CHARACTER_STAT_LABELS: Record<CharacterStatKey, string> = {
   intelligence: "智略",
   politics: "政务",
   charm: "魅力",
-  fame: "名声",
+  fame: "名望",
   gold: "金钱",
 };
 
@@ -73,7 +73,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {
     id: "person.name",
     canonicalKey: "name",
-    label: "姓名",
+    label: "人物名称",
     group: "base",
     valueType: "string",
     order: 10,
@@ -103,7 +103,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {
     id: "person.biography",
     canonicalKey: "biography",
-    label: "人物传记",
+    label: "人物简介",
     group: "profile",
     valueType: "text",
     order: 100,
@@ -111,7 +111,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {
     id: "person.birthYear",
     canonicalKey: "birthYear",
-    label: "出生年",
+    label: "出生年份",
     group: "profile",
     valueType: "number",
     order: 110,
@@ -119,7 +119,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {
     id: "person.deathYear",
     canonicalKey: "deathYear",
-    label: "去世年",
+    label: "去世年份",
     group: "profile",
     valueType: "number",
     order: 120,
@@ -167,7 +167,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {
     id: "person.cityId",
     canonicalKey: "cityId",
-    label: "所在城市",
+    label: "所属城市",
     group: "profile",
     valueType: "reference",
     order: 180,
@@ -176,7 +176,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {
     id: "person.houseId",
     canonicalKey: "houseId",
-    label: "所在建筑",
+    label: "所属建筑",
     group: "profile",
     valueType: "reference",
     order: 190,
@@ -185,20 +185,11 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {
     id: "person.portraitId",
     canonicalKey: "portraitId",
-    label: "立绘 ID",
+    label: "人物立绘",
     group: "profile",
     valueType: "reference",
     order: 200,
     referenceFamily: "portraits",
-  },
-  {
-    id: "person.portraitVariantId",
-    canonicalKey: "portraitVariantId",
-    label: "立绘变体",
-    group: "profile",
-    valueType: "reference",
-    order: 210,
-    referenceFamily: "portraitVariants",
   },
   {
     id: "person.isHistoricalFigure",
@@ -206,7 +197,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
     label: "历史人物",
     group: "profile",
     valueType: "boolean",
-    order: 220,
+    order: 210,
     defaultValue: false,
   },
   ...CHARACTER_STAT_KEYS.map<ScriptEditorFieldDefinition>((key, index) => ({
@@ -242,7 +233,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {
     id: "person.tradeBinding.enabled",
     canonicalKey: "tradeBinding.enabled",
-    label: "启用交易",
+    label: "启用交易入口",
     group: "trade",
     valueType: "boolean",
     order: 600,

@@ -8,6 +8,22 @@
 
 **Tech Stack:** JavaScript, TypeScript, Node test runner
 
+## Execution State
+
+- Status: `closed`
+- Last Updated: `2026-07-27`
+- Current Focus: `Closed after the creator-facing menu tab cleanup landed.`
+- Next Step: `No further action in this plan; historical record only.`
+- Verification: `npm.cmd run build:test; node --test tests/robustness.test.cjs --test-name-pattern "script editor menu authoring defaults use Chinese creator-facing copy|script editor menu tab hides runtime ids and english protocol fields from creators|default scenario city menu resources keep Chinese menu copy"`
+- Notes: `Backfilled governance sections so the historical plan remains lint-valid after implementation completion.`
+
+## Progress Log
+
+- 2026-07-27
+  - Summary: `Completed the Script Editor menu-tab creator-facing copy cleanup, removed visible runtime ids from the authoring tab, and restored Chinese default menu copy for authoring and runtime resources.`
+  - Verification: `npm.cmd run build:test; node --test tests/robustness.test.cjs --test-name-pattern "script editor menu authoring defaults use Chinese creator-facing copy|script editor menu tab hides runtime ids and english protocol fields from creators|default scenario city menu resources keep Chinese menu copy"`
+  - Next: `None. Historical plan only.`
+
 ## Global Constraints
 
 - 不改动运行时菜单数据结构。
@@ -57,3 +73,19 @@
 - [ ] **Step 1: Update change log**
 - [ ] **Step 2: Run `npm.cmd run build:test`**
 - [ ] **Step 3: Run targeted node tests**
+
+## Child Closeout
+
+- Closed Child: `docs/superpowers/plans/2026-07-27-script-editor-menu-authoring-copy.md`
+- Parent Task: `ACC-FORMAT-006 creator-facing contradiction repair`
+- Parent Stage: `queue.preview-runtime-loading-full-chain-consistency-and-final-acceptance`
+- Closeout Status: `closed`
+- Project Progress Synced: `no`
+- Next Child: `none`
+- Next Child Status: `none`
+- Next Required Action: `none`
+- Next Entry Document: `docs/superpowers/project-progress.md`
+- Next Owner Document: `none`
+- Push Status: `success`
+- Push Commit: `c72f4f6e`
+- Resume From: `historical record only`

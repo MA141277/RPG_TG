@@ -8,7 +8,7 @@
     "characterIds": [],
     "defaultCharacterId": null,
     "backAction": {
-      "label": "??",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
@@ -29,7 +29,7 @@
     ],
     "defaultCharacterId": "char.kulan_temple_abbot",
     "backAction": {
-      "label": "杩斿洖婵犲窞",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
@@ -45,7 +45,7 @@
     "characterIds": [],
     "defaultCharacterId": null,
     "backAction": {
-      "label": "??",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
@@ -62,7 +62,7 @@
     "activityLocationId": "tea-house",
     "moduleId": "tea-house",
     "backAction": {
-      "label": "??",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
@@ -79,7 +79,7 @@
     "activityLocationId": "market",
     "moduleId": "market-house",
     "backAction": {
-      "label": "??",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
@@ -95,7 +95,7 @@
     "characterIds": [],
     "defaultCharacterId": null,
     "backAction": {
-      "label": "??",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
@@ -111,7 +111,7 @@
     "characterIds": [],
     "defaultCharacterId": null,
     "backAction": {
-      "label": "??",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
@@ -128,7 +128,7 @@
     "defaultCharacterId": null,
     "activityLocationId": "tavern",
     "backAction": {
-      "label": "??",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
@@ -144,7 +144,7 @@
     "characterIds": [],
     "defaultCharacterId": null,
     "backAction": {
-      "label": "??",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
@@ -169,7 +169,7 @@
     ],
     "defaultCharacterId": "char.player",
     "backAction": {
-      "label": "??",
+      "label": "返回城市",
       "targetView": "city"
     },
     "menuInstanceIds": [
