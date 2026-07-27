@@ -99,6 +99,25 @@ function renderHouseActionButton(action: HouseActionViewModel): string {
   `;
 }
 
+function renderHouseReviewOverlayButton(input: {
+  actionId: string;
+  label: string;
+  tone?: "paper" | "gold";
+}): string {
+  const buttonTone =
+    input.tone === "paper" ? "c-grain-shop-button--paper" : "c-grain-shop-button--gold";
+
+  return `
+    <button
+      type="button"
+      class="c-button c-grain-shop-button ${buttonTone} c-house-review-button"
+      data-house-action="${escapeHtml(input.actionId)}"
+    >
+      ${escapeHtml(input.label)}
+    </button>
+  `;
+}
+
 function shouldAppendDefaultNpcActions(
   actions: HouseActionViewModel[],
   targetActor: HouseStandbyActorViewModel | null
@@ -272,7 +291,7 @@ export function renderHouseReviewAssignmentTableOverlay(
 
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="review-assignment-table" data-house-overlay-variant="review-assignment-table">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-assessment-popup c-assessment-popup--wide" role="dialog" aria-modal="true">
+      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-assessment-popup c-house-review-popup c-house-review-popup--table c-assessment-popup--wide" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${escapeHtml(overlay.title)}</h3>
         <div class="c-grain-shop-modal__body">
           <table class="c-house-review-table">
@@ -280,14 +299,11 @@ export function renderHouseReviewAssignmentTableOverlay(
             <tbody>${rows}</tbody>
           </table>
         </div>
-        <div class="c-grain-shop-modal__actions">
-          <button
-            type="button"
-            class="c-button c-grain-shop-button c-grain-shop-button--gold"
-            data-house-action="${escapeHtml(overlay.confirmActionId)}"
-          >
-            ${escapeHtml(overlay.confirmLabel)}
-          </button>
+        <div class="c-grain-shop-modal__actions c-house-review-actions">
+          ${renderHouseReviewOverlayButton({
+            actionId: overlay.confirmActionId,
+            label: overlay.confirmLabel,
+          })}
         </div>
       </div>
     </div>
@@ -297,9 +313,22 @@ export function renderHouseReviewAssignmentTableOverlay(
 export function renderHouseReviewPolicyPanelOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "review-policy-panel" }>
 ): string {
+  const closeAction =
+    overlay.closeActionId == null
+      ? ""
+      : `
+        <div class="c-grain-shop-modal__actions c-house-review-actions">
+          ${renderHouseReviewOverlayButton({
+            actionId: overlay.closeActionId,
+            label: overlay.closeLabel ?? "关闭",
+            tone: "paper",
+          })}
+        </div>
+      `;
+
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="review-policy-panel" data-house-overlay-variant="review-policy-panel">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-assessment-popup" role="dialog" aria-modal="true">
+      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-assessment-popup c-house-review-popup c-house-review-popup--policy" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${escapeHtml(overlay.title)}</h3>
         <div class="c-grain-shop-modal__body">
           <dl class="c-house-review-policy">
@@ -311,6 +340,7 @@ export function renderHouseReviewPolicyPanelOverlay(
             <dd>${escapeHtml(overlay.policy.executionPlan)}</dd>
           </dl>
         </div>
+        ${closeAction}
       </div>
     </div>
   `;

@@ -108,6 +108,7 @@ const {
 } = require("../.test-dist/application/navigation/travel-to-coordinate.js");
 const {
   getCampaignMapFogViewState,
+  isCampaignMapCoordinateClickable,
   isCampaignMapCoordinateRevealed,
   revealCampaignMapAroundCoordinate,
 } = require("../.test-dist/application/navigation/campaign-map-exploration.js");
@@ -5383,7 +5384,7 @@ test("campaign fog exploration stays active without the removed shader renderer"
   assert.doesNotMatch(mainSource, /campaign-fog-webgl/);
   assert.doesNotMatch(mainSource, /syncCampaignMapFogWebGl/);
   assert.doesNotMatch(mainSource, /setCampaignMapFogCamera/);
-  assert.match(mainSource, /isCampaignMapCoordinateRevealed/);
+  assert.match(mainSource, /isCampaignMapCoordinateClickable/);
   assert.match(mainSource, /revealCampaignMapAroundCoordinate/);
   assert.match(
     terrainRendererSource,
@@ -5446,6 +5447,57 @@ test("campaign map exploration reveals current hex and one neighbor ring", () =>
       state: revealedState,
       mapId: "map.yuanmo_campaign",
       coordinate: { x: 5, y: 5 },
+      coordinateSpace,
+    }),
+    false
+  );
+});
+
+test("campaign map clicks are allowed two hexes beyond revealed cells", () => {
+  const coordinateSpace = { width: 509, height: 451 };
+  const startCoordinate = { x: 334, y: 318 };
+  const state = createBaseState();
+  const revealedState = revealCampaignMapAroundCoordinate({
+    state,
+    mapId: "map.yuanmo_campaign",
+    coordinate: startCoordinate,
+    coordinateSpace,
+    revealedAtMs: 1000,
+    animateNewHexes: false,
+  });
+  const startHex = coordinateToRoundedHex(startCoordinate, coordinateSpace);
+  const twoBeyondRevealedEdge = {
+    x: startHex.x + 3,
+    y: startHex.y,
+  };
+  const threeBeyondRevealedEdge = {
+    x: startHex.x + 4,
+    y: startHex.y,
+  };
+
+  assert.equal(
+    isCampaignMapCoordinateRevealed({
+      state: revealedState,
+      mapId: "map.yuanmo_campaign",
+      coordinate: hexToCoordinate(twoBeyondRevealedEdge, coordinateSpace),
+      coordinateSpace,
+    }),
+    false
+  );
+  assert.equal(
+    isCampaignMapCoordinateClickable({
+      state: revealedState,
+      mapId: "map.yuanmo_campaign",
+      coordinate: hexToCoordinate(twoBeyondRevealedEdge, coordinateSpace),
+      coordinateSpace,
+    }),
+    true
+  );
+  assert.equal(
+    isCampaignMapCoordinateClickable({
+      state: revealedState,
+      mapId: "map.yuanmo_campaign",
+      coordinate: hexToCoordinate(threeBeyondRevealedEdge, coordinateSpace),
       coordinateSpace,
     }),
     false
@@ -8347,6 +8399,30 @@ test("temple house review only selects work direction and daily actions start te
       (actor) => actor.characterId === "char.kulan_temple_abbot"
     )?.actionId,
     "open-abbot-dialogue"
+  );
+  const npcWorkMenuResult = templeHouseHouseModule.dispatch({
+    gameState: closeReviewResult.gameState,
+    characterDefinitions: closeReviewResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: closeReviewResult.sessionState,
+    request: { type: "action", actionId: "open-temple-work-menu" },
+  });
+  const npcWorkMenuViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: npcWorkMenuResult.gameState,
+    characterDefinitions: npcWorkMenuResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: npcWorkMenuResult.sessionState,
+  });
+  assert.deepEqual(
+    npcWorkMenuViewModel.actionContainer?.actions.map((action) => action.id),
+    [
+      "assign-temple-task:copy-scripture",
+      "assign-temple-task:sweep-courtyard",
+      "assign-temple-task:carry-water",
+      "close-temple-work-menu",
+    ]
   );
   const reopenResult = templeHouseHouseModule.dispatch({
     gameState: closeReviewResult.gameState,

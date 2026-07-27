@@ -58,6 +58,8 @@ export type TempleHouseReviewPolicyPanelOverlayState = {
   type: "review-policy-panel";
   title: string;
   policy: ReviewPolicyPanel;
+  closeActionId?: string;
+  closeLabel?: string;
 };
 
 export type TempleHouseOverlayState =

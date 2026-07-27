@@ -424,6 +424,8 @@ function createReviewPolicyPanelOverlay(
     type: "review-policy-panel",
     title: "方略",
     policy,
+    closeActionId: "close-review-policy-panel",
+    closeLabel: "关闭",
   };
 }
 
@@ -911,6 +913,12 @@ function handleAction(
       });
     }
 
+    return withSessionState(input, sessionState, {
+      overlay: null,
+    });
+  }
+
+  if (input.request.actionId === "close-review-policy-panel") {
     return withSessionState(input, sessionState, {
       overlay: null,
     });

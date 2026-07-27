@@ -3271,10 +3271,22 @@
 }
 
 .view-backpack-overlay {
-  background: url("../../ui/background/beibao.png") center / cover no-repeat #101720;
+  isolation: isolate;
+  background: #101720;
+}
+
+.view-backpack-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url("../../ui/background/beibao.png") center / cover no-repeat;
+  pointer-events: none;
 }
 
 .view-backpack-overlay .c-backpack-shell {
+  position: relative;
+  z-index: 1;
   border: 1px solid rgb(255 244 196 / 18%);
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 6%),
@@ -3441,8 +3453,16 @@
 }
 
 .view-backpack-overlay .c-backpack-table__select {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   color: #f8e7bd;
   text-shadow: 0 1px 2px rgb(0 0 0 / 58%);
+}
+
+.view-backpack-overlay .c-backpack-table__select > :not(.c-city-choice-skin) {
+  position: relative;
+  z-index: 1;
 }
 
 .view-backpack-overlay .c-library-detail__eyebrow,

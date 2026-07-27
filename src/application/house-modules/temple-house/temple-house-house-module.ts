@@ -1739,6 +1739,8 @@ function createTempleReviewPolicyPanelOverlay(
     type: "review-policy-panel",
     title: "方略",
     policy,
+    closeActionId: "close-review-policy-panel",
+    closeLabel: "关闭",
   };
 }
 
@@ -3343,6 +3345,8 @@ function handleAction(
       },
       sessionState,
       {
+        dialoguePhase: "open",
+        dialogueLines: getTempleOpenLines(input.textEntriesById),
         dailyActionPanel: "work",
       }
     );
@@ -3785,6 +3789,19 @@ function handleAction(
           input.playerCharacterId,
           input.textEntriesById
         ),
+        overlay: null,
+      }
+    );
+  }
+
+  if (input.request.actionId === "close-review-policy-panel") {
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
         overlay: null,
       }
     );

@@ -114,7 +114,7 @@ import {
   revealCampaignMapHexesForCoordinate,
 } from "./application/map/campaign-map-exploration";
 import {
-  isCampaignMapCoordinateRevealed,
+  isCampaignMapCoordinateClickable,
   revealCampaignMapAroundCoordinate,
 } from "./application/navigation/campaign-map-exploration";
 import { createInitialState } from "./application/state/create-initial-state";
@@ -323,6 +323,11 @@ const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MAX_DURATION_MS = 18000 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
 const ACTIVITY_QTE_INTERVAL_MS = 90;
+const BUILTIN_AUDIO_ASSET_URLS: Readonly<Record<string, string>> = {
+  "BGM/开局.mp3": new URL("../BGM/开局.mp3", import.meta.url).href,
+  "BGM/游戏内.mp3": new URL("../BGM/游戏内.mp3", import.meta.url).href,
+  "BGM/战斗背景音乐.mp3": new URL("../BGM/战斗背景音乐.mp3", import.meta.url).href,
+};
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
   scale: 40,
   offsetX: 0,
@@ -467,7 +472,7 @@ function revealCampaignMapAroundAppCoordinate(
   };
 }
 
-function isCurrentCampaignCoordinateRevealed(coordinate: GridCoordinate): boolean {
+function isCurrentCampaignCoordinateClickable(coordinate: GridCoordinate): boolean {
   const mapDefinition = getCurrentMapDefinition();
   if (
     mapDefinition?.mode !== "campaign" ||
@@ -476,7 +481,7 @@ function isCurrentCampaignCoordinateRevealed(coordinate: GridCoordinate): boolea
     return true;
   }
 
-  return isCampaignMapCoordinateRevealed({
+  return isCampaignMapCoordinateClickable({
     state: appState.gameState,
     mapId: mapDefinition.id,
     coordinate,
@@ -906,7 +911,7 @@ const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
 });
 let appAudioSession = createAppAudioSession();
 const appAudioController = createAppAudioController({
-  resolveAssetPath: (assetPath) => new URL(`../${assetPath}`, import.meta.url).href,
+  resolveAssetPath: (assetPath) => BUILTIN_AUDIO_ASSET_URLS[assetPath] ?? assetPath,
 });
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
@@ -2983,6 +2988,7 @@ function simulateLoadingProgress(
 
 function setGameVisibility(isVisible: boolean): void {
   isGameVisible = isVisible;
+  document.body.classList.toggle("is-game-visible", isVisible);
   appRoot.style.visibility = isVisible ? "visible" : "hidden";
   appRoot.style.pointerEvents = isVisible ? "auto" : "none";
   syncAppAudio();
@@ -5248,7 +5254,7 @@ appElement.addEventListener("click", (event) => {
       nodeId: mapCell.dataset.mapNodeId || null,
       revealedAttribute: mapCell.dataset.mapNodeRevealed ?? null,
     });
-    if (!isCurrentCampaignCoordinateRevealed({ x: xValue, y: yValue })) {
+    if (!isCurrentCampaignCoordinateClickable({ x: xValue, y: yValue })) {
       debugCampaignMapClick("map-cell:blocked-unrevealed", {
         x: xValue,
         y: yValue,
@@ -5294,7 +5300,7 @@ appElement.addEventListener("click", (event) => {
       x: clickTarget.u * coordinateSpace.width,
       y: (1 - clickTarget.v) * coordinateSpace.height,
     };
-    if (!isCurrentCampaignCoordinateRevealed(targetCoordinate)) {
+    if (!isCurrentCampaignCoordinateClickable(targetCoordinate)) {
       debugCampaignMapClick("viewport:blocked-unrevealed", {
         clickTarget,
         targetCoordinate,
@@ -5758,7 +5764,7 @@ function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordin
   ) {
     return [appState.playerCoordinate, nextCoordinate];
   }
-  if (!isCurrentCampaignCoordinateRevealed(nextCoordinate)) {
+  if (!isCurrentCampaignCoordinateClickable(nextCoordinate)) {
     return null;
   }
 
@@ -5852,7 +5858,7 @@ function updateCampaignHoverHexOutline(event: PointerEvent): void {
   );
   const hoverCenterU = hoverCenterCoordinate.x / coordinateSpace.width;
   const hoverCenterV = 1 - hoverCenterCoordinate.y / coordinateSpace.height;
-  if (!isCurrentCampaignCoordinateRevealed(hoverCenterCoordinate)) {
+  if (!isCurrentCampaignCoordinateClickable(hoverCenterCoordinate)) {
     hideCampaignHoverHexOutline();
     return;
   }

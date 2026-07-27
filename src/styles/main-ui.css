@@ -17,6 +17,13 @@
   pointer-events: none;
 }
 
+body.is-game-visible .c-main-ui-overlay {
+  display: none !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .c-main-ui-screen {
   position: relative;
   width: 100%;

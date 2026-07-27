@@ -144,7 +144,7 @@ const BUILTIN_AUDIO_CUE_DEFINITIONS: readonly AudioCueDefinition[] = [
     defaultVolume: 0.35,
     source: {
       kind: "asset-path",
-      assetPath: "BGM/娓告垙鍐?mp3",
+      assetPath: "BGM/战斗背景音乐.mp3",
     },
   },
   {

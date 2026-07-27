@@ -185,6 +185,8 @@ export type HouseOverlayViewModel =
       type: "review-policy-panel";
       title: string;
       policy: ReviewPolicyPanel;
+      closeActionId?: string;
+      closeLabel?: string;
     }
   | {
       type: "confirm";

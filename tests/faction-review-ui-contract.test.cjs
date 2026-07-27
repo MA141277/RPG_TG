@@ -100,3 +100,37 @@ test("temple review source uses normalized review table, policy panel, and advic
   }
   assert.doesNotMatch(source, /\u4e0a\u671f\u5bfa\u4e2d\u8d21\u732e/);
 });
+
+test("review assignment table uses compact review popup and nine-slice action button", () => {
+  const html = renderHouseReviewAssignmentTableOverlay({
+    type: "review-assignment-table",
+    title: "委任",
+    rows: [],
+    confirmActionId: "close-review-assignment-table",
+    confirmLabel: "继续",
+  });
+
+  assert.match(html, /c-house-review-popup c-house-review-popup--table/);
+  assert.match(html, /c-house-review-actions/);
+  assert.match(html, /c-house-review-button/);
+  assert.match(html, /c-grain-shop-button--gold/);
+});
+
+test("review policy panel uses review popup formatting and provides a close action", () => {
+  const html = renderHouseReviewPolicyPanelOverlay({
+    type: "review-policy-panel",
+    title: "方略",
+    policy: {
+      overallGoal: "保全寺众",
+      phaseGoal: "筹足粮米",
+      executionPlan: "分派僧人外出化缘",
+    },
+    closeActionId: "close-review-policy-panel",
+    closeLabel: "关闭",
+  });
+
+  assert.match(html, /c-house-review-popup c-house-review-popup--policy/);
+  assert.match(html, /c-house-review-actions/);
+  assert.match(html, /data-house-action="close-review-policy-panel"/);
+  assert.match(html, />\s*关闭\s*</);
+});

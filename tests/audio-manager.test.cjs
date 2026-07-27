@@ -375,4 +375,12 @@ test("audio controller keeps one looping BGM player and switches its source when
 
   assert.equal(players.length, 1);
   assert.equal(players[0].src, "asset://BGM/游戏内.mp3");
+
+  controller.sync({
+    bgmCueId: BUILTIN_AUDIO_CUE_IDS.bgmBattle,
+    commands: [],
+  });
+
+  assert.equal(players.length, 1);
+  assert.equal(players[0].src, "asset://BGM/战斗背景音乐.mp3");
 });

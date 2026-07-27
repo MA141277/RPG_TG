@@ -29,3 +29,18 @@ test("application audio manager owns cue registry session output and controller 
   assert.match(source, /export function createAppAudioController/);
   assert.match(source, /export function resolveStoryBattleActionCueId/);
 });
+
+test("main audio asset resolver statically references bundled BGM files", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /new URL\("\.\.\/BGM\/开局\.mp3", import\.meta\.url\)\.href/);
+  assert.match(source, /new URL\("\.\.\/BGM\/游戏内\.mp3", import\.meta\.url\)\.href/);
+  assert.match(
+    source,
+    /new URL\("\.\.\/BGM\/战斗背景音乐\.mp3", import\.meta\.url\)\.href/
+  );
+  assert.doesNotMatch(source, /new URL\(`\.\.\/\$\{assetPath\}`, import\.meta\.url\)\.href/);
+});

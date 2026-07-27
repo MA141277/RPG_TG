@@ -16,6 +16,7 @@ export type CampaignMapFogViewState = {
 };
 
 export const CAMPAIGN_MAP_FOG_REVEAL_DURATION_MS = 1400;
+export const CAMPAIGN_MAP_CLICKABLE_REVEALED_HEX_RADIUS = 2;
 
 function createEmptyMapExplorationState(): MapExplorationState {
   return {
@@ -41,6 +42,29 @@ function normalizeMapExplorationState(
 
 function getHexRevealNeighborhood(hex: HexCoordinate): HexCoordinate[] {
   return [hex, ...getHexNeighbors(hex)];
+}
+
+function parseHexKey(hexKey: string): HexCoordinate | null {
+  const match = /^(-?\d+),(-?\d+)$/.exec(hexKey.trim());
+  if (match == null) {
+    return null;
+  }
+
+  const x = Number(match[1]);
+  const y = Number(match[2]);
+  if (!Number.isInteger(x) || !Number.isInteger(y)) {
+    return null;
+  }
+
+  return { x, y };
+}
+
+function getHexDistance(left: HexCoordinate, right: HexCoordinate): number {
+  return Math.max(
+    Math.abs(left.x - right.x),
+    Math.abs(left.y - right.y),
+    Math.abs(-left.x - left.y + right.x + right.y)
+  );
 }
 
 function pruneExpiredRevealAnimations(
@@ -141,4 +165,33 @@ export function isCampaignMapCoordinateRevealed(input: {
 
   const hex = coordinateToRoundedHex(input.coordinate, input.coordinateSpace);
   return new Set(explorationState.revealedHexKeys).has(getHexKey(hex));
+}
+
+export function isCampaignMapCoordinateClickable(input: {
+  state: GameState;
+  mapId: MapId;
+  coordinate: GridCoordinate;
+  coordinateSpace: CoordinateSpace;
+}): boolean {
+  const explorationState = input.state.runtime.mapExplorationByMapId?.[input.mapId];
+  if (explorationState == null) {
+    return false;
+  }
+
+  const targetHex = coordinateToRoundedHex(input.coordinate, input.coordinateSpace);
+  for (const revealedHexKey of explorationState.revealedHexKeys) {
+    const revealedHex = parseHexKey(revealedHexKey);
+    if (revealedHex == null) {
+      continue;
+    }
+
+    if (
+      getHexDistance(revealedHex, targetHex) <=
+      CAMPAIGN_MAP_CLICKABLE_REVEALED_HEX_RADIUS
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }

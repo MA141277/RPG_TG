@@ -20,6 +20,8 @@ export type KeepHouseReviewPolicyPanelOverlayState = {
   type: "review-policy-panel";
   title: string;
   policy: ReviewPolicyPanel;
+  closeActionId?: string;
+  closeLabel?: string;
 };
 
 export type KeepHouseOverlayState =

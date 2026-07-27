@@ -132,6 +132,26 @@ test("backpack overlay overrides generic beige library surfaces", () => {
 
   assert.match(
     prototypeCss,
+    /\.view-backpack-overlay\s*\{[\s\S]*?isolation:\s*isolate;[\s\S]*?background:\s*#101720;/
+  );
+  assert.match(
+    prototypeCss,
+    /\.view-backpack-overlay::before\s*\{[\s\S]*?z-index:\s*0;[\s\S]*?background:\s*url\("\.\.\/\.\.\/ui\/background\/beibao\.png"\)\s+center \/ cover no-repeat;[\s\S]*?pointer-events:\s*none;/
+  );
+  assert.match(
+    prototypeCss,
+    /\.view-backpack-overlay\s+\.c-backpack-shell\s*\{[\s\S]*?position:\s*relative;[\s\S]*?z-index:\s*1;/
+  );
+  assert.match(
+    prototypeCss,
+    /\.view-backpack-overlay\s+\.c-backpack-table__select\s*\{[\s\S]*?position:\s*relative;[\s\S]*?isolation:\s*isolate;[\s\S]*?overflow:\s*hidden;/
+  );
+  assert.match(
+    prototypeCss,
+    /\.view-backpack-overlay\s+\.c-backpack-table__select\s*>\s*:not\(\.c-city-choice-skin\)\s*\{[\s\S]*?z-index:\s*1;/
+  );
+  assert.match(
+    prototypeCss,
     /\.view-backpack-overlay\s+\.c-backpack-table-wrap,\s*[\s\S]*?\.view-backpack-overlay\s+\.c-backpack-detail\s*\{[\s\S]*?background:\s*rgb\(0 0 0 \/ 46%\);/
   );
   assert.match(
@@ -141,6 +161,20 @@ test("backpack overlay overrides generic beige library surfaces", () => {
   assert.match(
     prototypeCss,
     /\.view-backpack-overlay\s+\.c-library-detail__title\s*\{[\s\S]*?color:\s*#f8e7bd;/
+  );
+});
+
+test("game-visible app state suppresses the full-screen main menu layer", () => {
+  const mainSource = readSource("src/main.ts");
+  const mainUiCss = readSource("src/styles/main-ui.css");
+
+  assert.match(
+    mainSource,
+    /document\.body\.classList\.toggle\("is-game-visible",\s*isVisible\);/
+  );
+  assert.match(
+    mainUiCss,
+    /body\.is-game-visible\s+\.c-main-ui-overlay\s*\{[\s\S]*?display:\s*none !important;[\s\S]*?visibility:\s*hidden;[\s\S]*?pointer-events:\s*none;/
   );
 });
 
