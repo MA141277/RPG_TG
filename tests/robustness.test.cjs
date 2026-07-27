@@ -12134,10 +12134,10 @@ test("script editor person authoring queue hides mapping controls, runtime ids, 
   assert.match(mainUiSource, /data-script-editor-action="select-person-tab"/);
   assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("profile"/);
   assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("dialogues"/);
-  assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("stage"/);
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorPersonTabButton\("stage"/);
   assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("trade"/);
   assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("events"/);
-  assert.match(mainUiSource, /renderScriptEditorPersonStageBindingsPanel/);
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorPersonStageBindingsPanel/);
   assert.match(mainUiSource, /renderScriptEditorOwnerLocalEventBindingsPanel/);
   assert.match(mainUiSource, /"add-person-dialogue-link"/);
   assert.doesNotMatch(mainUiSource, /listScriptEditorPersonFieldDefinitions/);
@@ -12163,7 +12163,7 @@ test("script editor person authoring queue keeps custom attributes creator-facin
   assert.match(mainUiSource, /data-script-editor-person-attribute-field="value"/);
   assert.match(mainUiSource, /data-script-editor-action="add-person-attribute"/);
   assert.match(mainUiSource, /data-script-editor-action="remove-person-attribute"/);
-  assert.doesNotMatch(mainUiSource, /data-script-editor-person-attribute-field="key"/);
+  assert.match(mainUiSource, /data-script-editor-person-attribute-field="key"/);
   assert.doesNotMatch(mainUiSource, /placeholder="灞炴€ч敭"/);
   assert.doesNotMatch(mainUiSource, /鏂囨湰/);
 });
@@ -12397,6 +12397,53 @@ test("person authoring surface ui does not render hardcoded ability or skill inp
   assert.doesNotMatch(mainUiSource, /data-script-editor-person-field="stats\./);
   assert.doesNotMatch(mainUiSource, /data-script-editor-person-field="skills\./);
   assert.match(mainUiSource, /buildPersonAttributeEditorSections/);
+});
+
+test("person authoring surface keeps editable custom keys and removes out-of-scope stage flows", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /data-script-editor-person-attribute-field="key"/);
+  assert.match(
+    mainUiSource,
+    /\(field === "key" \|\| field === "label" \|\| field === "type" \|\| field === "value"\)/
+  );
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorPersonTabButton\("stage"/);
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorPersonStageBindingsPanel/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-person-stage-binding-field/);
+  assert.doesNotMatch(mainUiSource, /addScriptEditorPersonStageBinding/);
+  assert.doesNotMatch(mainUiSource, /applyScriptEditorPersonStageBindingField/);
+});
+
+test("person authoring surface restores creator-facing family labels", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /case "storyPack":[\s\S]*return "项目";/);
+  assert.match(mainUiSource, /case "people":[\s\S]*return "人物";/);
+  assert.match(mainUiSource, /case "portraits":[\s\S]*return "立绘资源";/);
+  assert.match(mainUiSource, /case "portraitVariants":[\s\S]*return "立绘变体";/);
+  assert.match(mainUiSource, /case "cities":[\s\S]*return "城市";/);
+  assert.match(mainUiSource, /case "buildings":[\s\S]*return "建筑";/);
+  assert.match(mainUiSource, /case "settlements":[\s\S]*return "结算";/);
+  assert.match(mainUiSource, /case "quests":[\s\S]*return "任务";/);
+  assert.match(mainUiSource, /case "dialogues":[\s\S]*return "对话";/);
+  assert.match(mainUiSource, /case "textEntries":[\s\S]*return "文本";/);
+  assert.match(mainUiSource, /case "storyNodes":[\s\S]*return "剧情节点";/);
+  assert.match(mainUiSource, /case "events":[\s\S]*return "事件";/);
+  assert.match(mainUiSource, /case "minigames":[\s\S]*return "玩法";/);
+  assert.match(
+    mainUiSource,
+    /case SCRIPT_EDITOR_STAGE_CONFIGURATION_FAMILY:[\s\S]*return "阶段配置";/
+  );
+  assert.match(mainUiSource, /case "progressTracks":[\s\S]*return "阶段轨道";/);
+  assert.match(mainUiSource, /case "progressTrackBindings":[\s\S]*return "轨道绑定";/);
+  assert.doesNotMatch(mainUiSource, /return "\?\?";/);
+  assert.doesNotMatch(mainUiSource, /return "\?\?\?\?";/);
 });
 
 test("script editor person custom attribute helpers keep fixed editor fields separate while surfacing runtime-compatible attribute groups", () => {

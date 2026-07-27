@@ -36,3 +36,19 @@
 
 - The workspace was already dirty before Task 2 started. This task layered its person authoring changes onto the existing workspace state without reverting unrelated edits.
 - Task 3 runtime character detail consumption was intentionally left untouched.
+
+## Fix Wave
+
+- Restored editable custom-attribute keys in the person editor UI by reintroducing the `key` input and wiring the input handler back to `updateScriptEditorPersonAttribute(...)`.
+- Repaired `getScriptEditorFamilyLabel()` so creator-facing headings, pagination labels, and notices use the proper Chinese labels instead of `??` / `????` placeholders.
+- Removed the out-of-scope person `stage` tab and the Task-2-local person stage/progress-track binding panel, actions, and handlers from `main-ui-flow.js`.
+- Kept Task 2 bounded to the authoring surface; `person-authoring.ts` already supported custom-key renames and did not need a model change for this fix wave.
+
+## Fix Wave Verification
+
+- `npm.cmd run build:test`
+  - Result: pass
+- `node --test tests/robustness.test.cjs --test-name-pattern "person authoring surface"`
+  - Result: pass
+- `node --test tests/robustness.test.cjs`
+  - Result: pass

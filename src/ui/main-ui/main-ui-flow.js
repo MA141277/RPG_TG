@@ -1709,7 +1709,6 @@ export class MainUiFlow {
       <div class="c-script-editor-person-editor__tabs" role="tablist" aria-label="人物详情分栏">
         ${this.renderScriptEditorPersonTabButton("profile", "属性")}
         ${this.renderScriptEditorPersonTabButton("dialogues", "对话")}
-        ${this.renderScriptEditorPersonTabButton("stage", "阶段")}
         ${this.renderScriptEditorPersonTabButton("trade", "交易")}
         ${this.renderScriptEditorPersonTabButton("events", "事件")}
       </div>
@@ -1829,6 +1828,14 @@ export class MainUiFlow {
                   >
                     <span aria-hidden="true">\u00d7</span>
                   </button>
+                  <input
+                    class="c-script-editor-form-field__input"
+                    type="text"
+                    value="${escapeHtml(entry.key ?? "")}"
+                    placeholder="\u5c5e\u6027 ID"
+                    data-script-editor-person-attribute-field="key"
+                    data-script-editor-person-attribute-index="${index}"
+                  />
                   <input
                     class="c-script-editor-form-field__input"
                     type="text"
@@ -2366,10 +2373,6 @@ export class MainUiFlow {
       );
     }
 
-    if (this.scriptEditorPersonTab === "stage") {
-      return this.renderScriptEditorPersonStageBindingsPanel(person);
-    }
-
     if (this.scriptEditorPersonTab === "trade") {
       return `
         <section class="c-script-editor-person-panel" aria-label="交易分栏">
@@ -2479,96 +2482,6 @@ export class MainUiFlow {
         </div>
       </section>
       ${this.renderScriptEditorPersonSummaryAttributes(person)}
-    `;
-  }
-
-  renderScriptEditorPersonStageBindingsPanel(person) {
-    const bindings = (this.scriptEditorProject?.progressTrackBindings ?? [])
-      .map((binding) => normalizeScriptEditorProgressTrackBindingRecord(binding))
-      .filter(
-        (binding) => binding.host?.family === "person" && binding.host?.id === person.id
-      );
-    const binding = bindings[0] ?? null;
-    const trackOptions = this.getScriptEditorCreatorRecordOptions("progressTracks");
-    const track = (this.scriptEditorProject?.progressTracks ?? []).find(
-      (record) => record.id === binding?.trackId
-    );
-
-    return `
-      <section class="c-script-editor-person-panel" aria-label="\u9636\u6bb5\u5206\u680f">
-        <div class="c-script-editor-person-attributes__header">
-          <div>
-            <p class="c-script-editor-editor-card__eyebrow">\u9636\u6bb5\u5206\u680f</p>
-            <h3 class="c-script-editor-editor-card__title">${escapeHtml(person.name || "\u4eba\u7269\u9636\u6bb5")}</h3>
-          </div>
-          <div class="c-script-editor-editor-card__actions">
-            <button
-              type="button"
-              class="c-main-ui-json-text-button"
-              data-script-editor-action="add-person-stage-binding"
-              ${binding != null ? "disabled" : ""}
-            >
-              \u65b0\u589e\u7ed1\u5b9a
-            </button>
-            <button
-              type="button"
-              class="c-main-ui-json-text-button"
-              data-script-editor-action="add-person-stage-track"
-              ${binding == null ? "disabled" : ""}
-            >
-              \u65b0\u5efa\u89c4\u5219
-            </button>
-          </div>
-        </div>
-        ${
-          binding == null
-            ? `
-              <p class="c-script-editor-editor-card__hint">
-                \u5f53\u524d\u4eba\u7269\u8fd8\u6ca1\u6709\u7ed1\u5b9a\u9636\u6bb5\u89c4\u5219\u3002
-              </p>
-            `
-            : `
-              <div class="c-script-editor-form-grid">
-                <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-                  <span>\u9636\u6bb5\u89c4\u5219</span>
-                  <select
-                    class="c-script-editor-form-field__input"
-                    data-script-editor-person-stage-binding-id="${escapeHtml(binding.id)}"
-                    data-script-editor-person-stage-binding-field="trackId"
-                  >
-                    ${this.renderScriptEditorSelectOptions(
-                      trackOptions,
-                      binding.trackId ?? "",
-                      "\u672a\u9009\u62e9\u9636\u6bb5\u89c4\u5219"
-                    )}
-                  </select>
-                </label>
-                <label class="c-script-editor-person-editor__toggle">
-                  <input
-                    type="checkbox"
-                    data-script-editor-person-stage-binding-id="${escapeHtml(binding.id)}"
-                    data-script-editor-person-stage-binding-field="enabled"
-                    ${binding.enabled !== false ? "checked" : ""}
-                  />
-                  <span>\u542f\u7528\u8fd9\u4e2a\u9636\u6bb5\u7ed1\u5b9a</span>
-                </label>
-              </div>
-              <p class="c-script-editor-editor-card__hint">
-                ${escapeHtml(track?.title ?? "\u672a\u7ed1\u5b9a\u89c4\u5219")}
-              </p>
-              <div class="c-script-editor-narrative-inline">
-                <button
-                  type="button"
-                  class="c-script-editor-record-editor__action"
-                  data-script-editor-action="remove-person-stage-binding"
-                  data-script-editor-person-stage-binding-id="${escapeHtml(binding.id)}"
-                >
-                  \u79fb\u9664\u7ed1\u5b9a
-                </button>
-              </div>
-            `
-        }
-      </section>
     `;
   }
 
@@ -7601,24 +7514,11 @@ export class MainUiFlow {
         10
       );
       if (
-        (field === "label" || field === "type" || field === "value") &&
+        (field === "key" || field === "label" || field === "type" || field === "value") &&
         Number.isInteger(index) &&
         index >= 0
       ) {
         this.applyScriptEditorPersonAttributeField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-person-stage-binding-field]")) {
-      const bindingId = target.dataset.scriptEditorPersonStageBindingId;
-      const field = target.dataset.scriptEditorPersonStageBindingField;
-      if (bindingId != null && (field === "trackId" || field === "enabled")) {
-        const nextValue =
-          field === "enabled" && target instanceof globalThis.HTMLInputElement
-            ? target.checked
-            : target.value;
-        this.applyScriptEditorPersonStageBindingField(bindingId, field, nextValue);
       }
       return;
     }
@@ -8859,26 +8759,8 @@ export class MainUiFlow {
       return;
     }
 
-    if (action === "add-person-stage-binding") {
-      this.addScriptEditorPersonStageBinding();
-      return;
-    }
-
-    if (action === "add-person-stage-track") {
-      this.addScriptEditorPersonStageTrack();
-      return;
-    }
-
     if (action === "remove-stage-configuration-binding") {
       this.removeScriptEditorStageConfigurationBinding();
-      return;
-    }
-
-    if (action === "remove-person-stage-binding") {
-      const progressBindingId = actionElement?.dataset.scriptEditorPersonStageBindingId ?? null;
-      if (progressBindingId != null) {
-        this.removeScriptEditorProgressTrackBindingById(progressBindingId);
-      }
       return;
     }
 
@@ -11801,37 +11683,37 @@ export class MainUiFlow {
   getScriptEditorFamilyLabel(family) {
     switch (family) {
       case "storyPack":
-        return "??";
+        return "项目";
       case "people":
-        return "??";
+        return "人物";
       case "portraits":
-        return "????";
+        return "立绘资源";
       case "portraitVariants":
-        return "????";
+        return "立绘变体";
       case "cities":
-        return "??";
+        return "城市";
       case "buildings":
-        return "??";
+        return "建筑";
       case "settlements":
-        return "??";
+        return "结算";
       case "quests":
-        return "??";
+        return "任务";
       case "dialogues":
-        return "??";
+        return "对话";
       case "textEntries":
-        return "??";
+        return "文本";
       case "storyNodes":
-        return "????";
+        return "剧情节点";
       case "events":
-        return "??";
+        return "事件";
       case "minigames":
-        return "??";
+        return "玩法";
       case SCRIPT_EDITOR_STAGE_CONFIGURATION_FAMILY:
-        return "????";
+        return "阶段配置";
       case "progressTracks":
-        return "????";
+        return "阶段轨道";
       case "progressTrackBindings":
-        return "????";
+        return "轨道绑定";
       default:
         return family;
     }
@@ -12452,126 +12334,6 @@ export class MainUiFlow {
     this.replaceSelectedScriptEditorProgressTrackBinding(
       updateScriptEditorProgressTrackBindingField(binding, field, value)
     );
-  }
-
-  replaceScriptEditorProgressTrackBindingById(bindingId, nextBinding) {
-    if (this.scriptEditorProject == null) {
-      return;
-    }
-
-    this.commitScriptEditorProject({
-      ...this.scriptEditorProject,
-      progressTrackBindings: (this.scriptEditorProject.progressTrackBindings ?? []).map(
-        (bindingRecord) => (bindingRecord.id === bindingId ? nextBinding : bindingRecord)
-      ),
-    });
-    this.scriptEditorNotice = null;
-    this.render();
-  }
-
-  removeScriptEditorProgressTrackBindingById(bindingId) {
-    if (this.scriptEditorProject == null) {
-      return;
-    }
-
-    this.commitScriptEditorProject({
-      ...this.scriptEditorProject,
-      progressTrackBindings: (this.scriptEditorProject.progressTrackBindings ?? []).filter(
-        (bindingRecord) => bindingRecord.id !== bindingId
-      ),
-    });
-    this.scriptEditorNotice = null;
-    this.render();
-  }
-
-  addScriptEditorPersonStageBinding() {
-    const person = this.getSelectedScriptEditorPerson();
-    if (this.scriptEditorProject == null || person == null) {
-      return;
-    }
-
-    const existingBinding = (this.scriptEditorProject.progressTrackBindings ?? [])
-      .map((bindingRecord) => normalizeScriptEditorProgressTrackBindingRecord(bindingRecord))
-      .find(
-        (bindingRecord) =>
-          bindingRecord.host?.family === "person" && bindingRecord.host?.id === person.id
-      );
-    if (existingBinding != null) {
-      return;
-    }
-
-    const nextBinding = {
-      ...createDefaultScriptEditorProgressTrackBindingRecord(
-        (this.scriptEditorProject.progressTrackBindings ?? []).length
-      ),
-      host: {
-        family: "person",
-        id: person.id,
-      },
-    };
-    this.commitScriptEditorProject({
-      ...this.scriptEditorProject,
-      progressTrackBindings: [...(this.scriptEditorProject.progressTrackBindings ?? []), nextBinding],
-    });
-    this.scriptEditorNotice = null;
-    this.render();
-  }
-
-  addScriptEditorPersonStageTrack() {
-    const person = this.getSelectedScriptEditorPerson();
-    if (this.scriptEditorProject == null || person == null) {
-      return;
-    }
-
-    const binding = (this.scriptEditorProject.progressTrackBindings ?? [])
-      .map((bindingRecord) => normalizeScriptEditorProgressTrackBindingRecord(bindingRecord))
-      .find(
-        (bindingRecord) =>
-          bindingRecord.host?.family === "person" && bindingRecord.host?.id === person.id
-      );
-    if (binding == null) {
-      return;
-    }
-
-    const nextTrack = {
-      ...createDefaultScriptEditorProgressTrackRecord(
-        (this.scriptEditorProject.progressTracks ?? []).length
-      ),
-      hostFamily: "person",
-    };
-    const nextBinding = {
-      ...binding,
-      trackId: nextTrack.id,
-    };
-    this.commitScriptEditorProject({
-      ...this.scriptEditorProject,
-      progressTracks: [...(this.scriptEditorProject.progressTracks ?? []), nextTrack],
-      progressTrackBindings: (this.scriptEditorProject.progressTrackBindings ?? []).map(
-        (bindingRecord) => (bindingRecord.id === binding.id ? nextBinding : bindingRecord)
-      ),
-    });
-    this.scriptEditorNotice = null;
-    this.render();
-  }
-
-  applyScriptEditorPersonStageBindingField(bindingId, field, value) {
-    if (this.scriptEditorProject == null) {
-      return;
-    }
-
-    const bindingRecord = (this.scriptEditorProject.progressTrackBindings ?? []).find(
-      (record) => record.id === bindingId
-    );
-    if (bindingRecord == null) {
-      return;
-    }
-
-    const nextBinding = updateScriptEditorProgressTrackBindingField(
-      normalizeScriptEditorProgressTrackBindingRecord(bindingRecord),
-      field,
-      value
-    );
-    this.replaceScriptEditorProgressTrackBindingById(bindingId, nextBinding);
   }
 
   getSelectedScriptEditorEvent() {
