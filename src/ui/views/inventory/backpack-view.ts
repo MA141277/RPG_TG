@@ -79,7 +79,7 @@ export function renderBackpackView(input: {
             <p class="c-library-shell__eyebrow">道具</p>
             <h1 class="c-library-shell__title">背包</h1>
           </div>
-          <button class="c-button c-button--ghost" type="button" data-action="close-overlay">返回</button>
+          <button class="c-button c-button--ghost" type="button" data-action="close-overlay" data-button-sound="light">返回</button>
         </header>
         <div class="c-library-shell__toolbar c-library-shell__toolbar--between">
           <div class="c-filter-row">
@@ -90,6 +90,7 @@ export function renderBackpackView(input: {
                     class="c-filter-chip ${input.filter === filterKey ? "is-active" : ""}"
                     type="button"
                     data-backpack-filter="${filterKey}"
+                    data-button-sound="light"
                   >
                     ${BACKPACK_FILTER_LABELS[filterKey]}
                   </button>
@@ -118,7 +119,7 @@ export function renderBackpackView(input: {
                       <tr class="c-backpack-table__row ${isSelected ? "is-selected" : ""}" data-backpack-item-id="${item.id}">
                         <td>${renderItemIcon(item)}</td>
                         <td>
-                          <button class="c-library-table__select c-backpack-table__select" type="button" data-backpack-item-id="${item.id}">
+                          <button class="c-library-table__select c-backpack-table__select" type="button" data-backpack-item-id="${item.id}" data-button-sound="light">
                             ${renderCityChoiceSkin()}
                             <span>${item.name}</span>
                           </button>
@@ -180,6 +181,7 @@ export function renderBackpackView(input: {
                             data-action="run-backpack-item-action"
                             data-backpack-item-id="${selectedItem.id}"
                             data-item-action-id="${action.id}"
+                            data-button-sound="light"
                             ${action.disabled === true ? "disabled" : ""}
                           >
                             ${action.label}

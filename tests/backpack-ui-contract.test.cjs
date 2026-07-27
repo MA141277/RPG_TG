@@ -104,6 +104,42 @@ test("backpack shell uses stable grid rows so empty filters do not shift the ove
   );
 });
 
+test("backpack view marks every interactive button as light", () => {
+  const html = renderBackpackView({
+    filter: "all",
+    selectedItemId: "item.weapon",
+    items: [
+      {
+        id: "item.weapon",
+        name: "Weapon",
+        icon: "/ui/items/sword.png",
+        value: 8,
+        types: ["equipment", "weapon"],
+        count: 1,
+        description: "test",
+        actions: [{ id: "equip.weapon", label: "Equip" }],
+      },
+    ],
+  });
+
+  assert.match(
+    html,
+    /<button[^>]*data-backpack-filter="equipment"[^>]*data-button-sound="light"[^>]*>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-backpack-item-id="item\.weapon"[^>]*data-button-sound="light"[^>]*>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-action="run-backpack-item-action"[^>]*data-button-sound="light"[^>]*>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-action="close-overlay"[^>]*data-button-sound="light"[^>]*>/
+  );
+});
+
 test("main shell exposes backpack entry points and dispatches item actions before row selection", () => {
   const mainSource = readSource("src/main.ts");
   const appRenderSource = readSource("src/ui/app-render.ts");

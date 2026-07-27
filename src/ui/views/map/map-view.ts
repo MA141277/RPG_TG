@@ -520,6 +520,7 @@ function renderMapStageActions(): string {
         type="button"
         class="c-map-troop-editor-entry c-button c-grain-shop-button c-grain-shop-button--gold"
         data-action="open-troop-editor"
+        data-button-sound="heavy"
       >
         部队
       </button>
@@ -707,6 +708,7 @@ function renderCampaignMap(model: MapViewModel): string {
           class="c-campaign-map-actions__button"
           type="button"
           data-action="open-backpack"
+          data-button-sound="heavy"
         >
           背包
         </button>
