@@ -12325,6 +12325,80 @@ test("person import classifies zhuyuanzhang stats and skills into extended attri
   assert.equal(groups[1].items[0].fieldKey, "stats.leadership");
 });
 
+test("person authoring surface model does not expose hardcoded ability or skill sections", () => {
+  const {
+    buildPersonAttributeEditorSections,
+    normalizeScriptEditorPersonRecord,
+  } = require("../.test-dist/application/script-editor/person-authoring.js");
+
+  const person = normalizeScriptEditorPersonRecord({
+    id: "char.test",
+    name: "娴嬭瘯浜虹墿",
+    title: "瀹堝啗",
+    occupation: "姝﹀皢",
+    age: 27,
+    clanId: "clan.guo",
+    cityId: "city.test",
+    houseId: "house.test",
+    portraitId: "portrait.test",
+    biography: "娴嬭瘯浜虹墿绠€浠嬨€?",
+    stats: {
+      leadership: 60,
+      martial: 55,
+    },
+    skills: {
+      archery: 2,
+      military: 3,
+    },
+    flags: ["historical-priority.P0"],
+    extendedAttributes: [
+      {
+        key: "loyalty",
+        label: "蹇犺瘹",
+        type: "number",
+        value: 80,
+      },
+    ],
+  });
+
+  const sections = buildPersonAttributeEditorSections(person);
+
+  assert.deepEqual(
+    sections.map((section) => section.id),
+    ["basic-profile", "custom-attributes"]
+  );
+  assert.equal(
+    sections.some((section) => section.presentation === "ability-info"),
+    false
+  );
+  assert.equal(
+    sections.some((section) => section.presentation === "skill-info"),
+    false
+  );
+
+  const customAttributeSection = sections.find(
+    (section) => section.id === "custom-attributes"
+  );
+  assert.ok(customAttributeSection);
+  assert.deepEqual(
+    customAttributeSection.fields.map((field) => field.key),
+    ["loyalty"]
+  );
+  assert.equal(customAttributeSection.fields[0].label, "蹇犺瘹");
+  assert.equal(customAttributeSection.fields[0].value, 80);
+});
+
+test("person authoring surface ui does not render hardcoded ability or skill inputs", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainUiSource, /data-script-editor-person-field="stats\./);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-person-field="skills\./);
+  assert.match(mainUiSource, /buildPersonAttributeEditorSections/);
+});
+
 test("script editor person custom attribute helpers keep fixed editor fields separate while surfacing runtime-compatible attribute groups", () => {
   const {
     appendScriptEditorPersonAttribute,

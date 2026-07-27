@@ -100,6 +100,7 @@ import {
 import {
   appendScriptEditorPersonAttribute,
   appendScriptEditorPersonRelation,
+  buildPersonAttributeEditorSections,
   normalizeScriptEditorPersonRecord,
   removeScriptEditorPersonAttribute,
   removeScriptEditorPersonRelation,
@@ -116,7 +117,6 @@ import {
   updateScriptEditorPortraitField,
   updateScriptEditorPortraitVariantField,
 } from "../../application/script-editor/portrait-authoring";
-import { listScriptEditorPersonFieldDefinitions } from "../../application/script-editor/field-mapping";
 import {
   appendScriptEditorMinigameLaunchPayloadEntry,
   appendScriptEditorMinigameOutcomeRoute,
@@ -309,10 +309,10 @@ const SCRIPT_EDITOR_EVENT_BINDING_TRIGGER_OPTIONS_BY_OWNER = {
 };
 
 const SCRIPT_EDITOR_PERSON_ATTRIBUTE_TYPE_OPTIONS = [
-  { value: "number", label: "数值" },
-  { value: "boolean", label: "开关" },
-  { value: "enum", label: "选项" },
-  { value: "string", label: "文本" },
+  { value: "number", label: "\u6570\u503c" },
+  { value: "boolean", label: "\u5f00\u5173" },
+  { value: "enum", label: "\u679a\u4e3e" },
+  { value: "string", label: "\u6587\u672c" },
 ];
 
 const SCRIPT_EDITOR_SETTLEMENT_TARGET_FAMILY_OPTIONS = [
@@ -1355,7 +1355,7 @@ export class MainUiFlow {
   getFilteredScriptEditorCityMountedBuildingNpcEntries(entry, searchValue) {
     const npcOptionsById = new Map(
       (this.scriptEditorProject?.people ?? [])
-        .map((person) => normalizeScriptEditorPersonRecord(person))
+        .map((person) => this.normalizeScriptEditorProjectPersonRecord(person))
         .map((person) => [person.id, person])
     );
     const query = searchValue.trim().toLowerCase();
@@ -1487,7 +1487,7 @@ export class MainUiFlow {
 
     if (family === "people") {
       return records.filter((record) => {
-        const person = normalizeScriptEditorPersonRecord(record);
+        const person = this.normalizeScriptEditorProjectPersonRecord(record);
         return [
           person.name,
           person.id,
@@ -1622,7 +1622,10 @@ export class MainUiFlow {
   }
 
   renderScriptEditorPeopleEditor(records, selectedRecord) {
-    const person = selectedRecord == null ? null : normalizeScriptEditorPersonRecord(selectedRecord);
+    const person =
+      selectedRecord == null
+        ? null
+        : this.normalizeScriptEditorProjectPersonRecord(selectedRecord);
     const filteredRecords = this.filterScriptEditorRecords("people", records);
 
     return `
@@ -1650,7 +1653,7 @@ export class MainUiFlow {
               </div>
             `,
             renderRecord: (record) => {
-              const normalizedPerson = normalizeScriptEditorPersonRecord(record);
+              const normalizedPerson = this.normalizeScriptEditorProjectPersonRecord(record);
               return `
                 <button
                   type="button"
@@ -1706,29 +1709,109 @@ export class MainUiFlow {
       <div class="c-script-editor-person-editor__tabs" role="tablist" aria-label="人物详情分栏">
         ${this.renderScriptEditorPersonTabButton("profile", "属性")}
         ${this.renderScriptEditorPersonTabButton("dialogues", "对话")}
+        ${this.renderScriptEditorPersonTabButton("stage", "阶段")}
         ${this.renderScriptEditorPersonTabButton("trade", "交易")}
         ${this.renderScriptEditorPersonTabButton("events", "事件")}
       </div>
     `;
   }
 
-  renderScriptEditorPersonSummaryAttributes(person) {
+  renderScriptEditorPersonProfilePanel({
+    person,
+    cityOptions,
+    houseOptions,
+    portraitOptions,
+  }) {
+    return `
+      <section class="c-script-editor-person-panel" aria-label="\u4eba\u7269\u5c5e\u6027">
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>\u4eba\u7269\u540d\u79f0</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.name)}" data-script-editor-person-field="name" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>\u4eba\u7269\u7c7b\u578b</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="personType">
+              <option value="\u89d2\u8272" ${person.personType === "\u89d2\u8272" ? "selected" : ""}>\u89d2\u8272</option>
+              <option value="NPC" ${person.personType !== "\u89d2\u8272" ? "selected" : ""}>NPC</option>
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>\u8eab\u4efd</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.title ?? "")}" data-script-editor-person-field="title" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>\u804c\u4e1a</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.occupation ?? "")}" data-script-editor-person-field="occupation" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>\u5e74\u9f84</span>
+            <input class="c-script-editor-form-field__input" type="number" step="1" value="${escapeHtml(String(person.age ?? ""))}" data-script-editor-person-field="age" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>\u6240\u5c5e</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.clanId ?? "")}" data-script-editor-person-field="clanId" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>\u6240\u5c5e\u57ce\u5e02</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="cityId">
+              ${this.renderScriptEditorSelectOptions(
+                cityOptions,
+                person.cityId ?? "",
+                "\u672a\u8bbe\u7f6e\u6240\u5c5e\u57ce\u5e02"
+              )}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>\u6240\u5c5e\u5efa\u7b51</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="houseId">
+              ${this.renderScriptEditorSelectOptions(
+                houseOptions,
+                person.houseId ?? "",
+                "\u672a\u8bbe\u7f6e\u6240\u5c5e\u5efa\u7b51"
+              )}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>\u7acb\u7ed8</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="portraitId">
+              ${this.renderScriptEditorSelectOptions(
+                portraitOptions,
+                person.portraitId ?? "",
+                "\u672a\u8bbe\u7f6e\u7acb\u7ed8"
+              )}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>\u4eba\u7269\u7b80\u4ecb</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-person-field="biography" spellcheck="false">${escapeHtml(person.biography ?? "")}</textarea>
+          </label>
+        </div>
+      </section>
+      ${this.renderScriptEditorPersonSummaryAttributes(
+        person,
+        this.getScriptEditorPersonAuthoringCustomAttributes(person)
+      )}
+    `;
+  }
+
+  renderScriptEditorPersonSummaryAttributes(person, entries) {
     const {
       currentPage,
       totalPages,
       visibleEntries,
     } = this.getScriptEditorPersonAttributePaginationState(
-      person.extendedAttributes ?? []
+      entries
     );
 
     return `
-      <section class="c-script-editor-person-summary" aria-label="已有属性">
+      <section class="c-script-editor-person-summary" aria-label="\u81ea\u5b9a\u4e49\u5c5e\u6027">
         <header class="c-script-editor-person-summary__header">
           <div>
-            <h3 class="c-script-editor-editor-card__title">自定义属性</h3>
+            <h3 class="c-script-editor-editor-card__title">\u81ea\u5b9a\u4e49\u5c5e\u6027</h3>
           </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-person-attribute">
-            新增属性
+            \u65b0\u589e\u5c5e\u6027
           </button>
         </header>
         <div class="c-script-editor-person-summary__list">
@@ -1741,23 +1824,16 @@ export class MainUiFlow {
                     class="c-script-editor-person-summary__remove"
                     data-script-editor-action="remove-person-attribute"
                     data-script-editor-person-attribute-index="${index}"
-                    aria-label="删除属性"
+                    aria-label="\u5220\u9664\u5c5e\u6027"
+                    title="\u5220\u9664\u5c5e\u6027"
                   >
-                    <span aria-hidden="true">×</span>
+                    <span aria-hidden="true">\u00d7</span>
                   </button>
                   <input
                     class="c-script-editor-form-field__input"
                     type="text"
-                    value="${escapeHtml(entry.key)}"
-                    placeholder="属性键"
-                    data-script-editor-person-attribute-field="key"
-                    data-script-editor-person-attribute-index="${index}"
-                  />
-                  <input
-                    class="c-script-editor-form-field__input"
-                    type="text"
                     value="${escapeHtml(entry.label ?? "")}"
-                    placeholder="属性名"
+                    placeholder="\u5c5e\u6027\u540d"
                     data-script-editor-person-attribute-field="label"
                     data-script-editor-person-attribute-index="${index}"
                   />
@@ -1769,14 +1845,14 @@ export class MainUiFlow {
                     ${this.renderScriptEditorSelectOptions(
                       SCRIPT_EDITOR_PERSON_ATTRIBUTE_TYPE_OPTIONS,
                       entry.type ?? "string",
-                      "鏂囨湰"
+                      "\u6587\u672c"
                     )}
                   </select>
                   <input
                     class="c-script-editor-form-field__input"
                     type="text"
                     value="${escapeHtml(entry.value)}"
-                    placeholder="属性值"
+                    placeholder="\u5c5e\u6027\u503c"
                     data-script-editor-person-attribute-field="value"
                     data-script-editor-person-attribute-index="${index}"
                   />
@@ -1788,6 +1864,14 @@ export class MainUiFlow {
         ${this.renderScriptEditorPersonAttributePagination(currentPage, totalPages)}
       </section>
     `;
+  }
+
+  getScriptEditorPersonAuthoringCustomAttributes(person) {
+    return (
+      buildPersonAttributeEditorSections(person).find(
+        (section) => section.id === "custom-attributes"
+      )?.fields ?? []
+    );
   }
 
   getScriptEditorPersonAttributePaginationState(entries) {
@@ -1909,6 +1993,12 @@ export class MainUiFlow {
         `
       ),
     ].join("");
+  }
+
+  normalizeScriptEditorProjectPersonRecord(person) {
+    return normalizeScriptEditorPersonRecord(person, {
+      portraitVariants: this.scriptEditorProject?.portraitVariants ?? [],
+    });
   }
 
   getScriptEditorProjectRecordOptions(family) {
@@ -2173,12 +2263,13 @@ export class MainUiFlow {
       return [];
     }
 
-    return this.scriptEditorProject.cities
-      .map((city) => normalizeScriptEditorCityRecord(city))
-      .map((city) => ({
-        value: city.id,
-        label: `${city.name} (${city.id})`,
-      }));
+    return this.scriptEditorProject.cities.map((city) => {
+      const normalizedCity = normalizeScriptEditorCityRecord(city);
+      return {
+        value: normalizedCity.id,
+        label: normalizedCity.name,
+      };
+    });
   }
 
   getScriptEditorPersonHouseOptions(cityId) {
@@ -2191,7 +2282,7 @@ export class MainUiFlow {
       .filter((building) => cityId.trim().length === 0 || building.cityId === cityId)
       .map((building) => ({
         value: building.id,
-        label: `${building.name} (${building.id})`,
+        label: building.name,
       }));
   }
 
@@ -2200,43 +2291,63 @@ export class MainUiFlow {
       return [];
     }
 
-    return this.scriptEditorProject.portraits
-      .map((record) => normalizeScriptEditorPortraitRecord(record))
-      .map((record) => ({
+    const portraits = this.scriptEditorProject.portraits.map((record) =>
+      normalizeScriptEditorPortraitRecord(record)
+    );
+    const portraitById = new Map(
+      portraits.map((record) => [record.id, record])
+    );
+    const optionsByValue = new Map();
+
+    portraits.forEach((record) => {
+      const resourcePath =
+        typeof record.portraitImage === "string" ? record.portraitImage.trim() : "";
+      const displayLabel =
+        typeof record.label === "string" && record.label.trim().length > 0
+          ? record.label.trim()
+          : resourcePath || record.id;
+      optionsByValue.set(record.id, {
         value: record.id,
         label:
-          typeof record.label === "string" && record.label.trim().length > 0
-            ? `${record.label.trim()} (${record.id})`
-            : record.id,
-      }));
-  }
+          resourcePath.length > 0
+            ? `${displayLabel} · ${resourcePath}`
+            : displayLabel,
+      });
+    });
 
-  getScriptEditorPersonPortraitVariantOptions(person) {
-    const optionsByValue = new Map();
-    const normalizedPortraitId =
-      typeof person?.portraitId === "string" ? person.portraitId.trim() : "";
-
-    (this.scriptEditorProject?.portraitVariants ?? [])
+    this.scriptEditorProject.portraitVariants
       .map((record) => normalizeScriptEditorPortraitVariantRecord(record))
       .forEach((variant) => {
-        if (
-          normalizedPortraitId.length > 0 &&
-          variant.parentPortraitId !== normalizedPortraitId
-        ) {
+        if (variant.portraitId.length === 0 || optionsByValue.has(variant.portraitId)) {
           return;
         }
 
-        if (variant.id.length === 0 || optionsByValue.has(variant.id)) {
-          return;
-        }
+        const targetPortrait = portraitById.get(variant.portraitId) ?? null;
+        const parentPortrait = portraitById.get(variant.parentPortraitId) ?? null;
+        const parentLabel =
+          typeof parentPortrait?.label === "string" ? parentPortrait.label.trim() : "";
+        const variantLabel =
+          typeof variant.label === "string" ? variant.label.trim() : "";
+        const resourcePath =
+          typeof targetPortrait?.portraitImage === "string"
+            ? targetPortrait.portraitImage.trim()
+            : "";
+        const labelParts = [parentLabel, variantLabel].filter(
+          (entry, index, items) => entry.length > 0 && items.indexOf(entry) === index
+        );
+        const fallbackLabel =
+          typeof targetPortrait?.label === "string" && targetPortrait.label.trim().length > 0
+            ? targetPortrait.label.trim()
+            : resourcePath || variant.portraitId;
+        const displayLabel =
+          labelParts.length > 0 ? labelParts.join(" / ") : fallbackLabel;
 
-        const label =
-          typeof variant.label === "string" && variant.label.trim().length > 0
-            ? variant.label.trim()
-            : variant.id;
-        optionsByValue.set(variant.id, {
-          value: variant.id,
-          label: `${label} (${variant.portraitId})`,
+        optionsByValue.set(variant.portraitId, {
+          value: variant.portraitId,
+          label:
+            resourcePath.length > 0
+              ? `${displayLabel} · ${resourcePath}`
+              : displayLabel,
         });
       });
 
@@ -2255,6 +2366,10 @@ export class MainUiFlow {
       );
     }
 
+    if (this.scriptEditorPersonTab === "stage") {
+      return this.renderScriptEditorPersonStageBindingsPanel(person);
+    }
+
     if (this.scriptEditorPersonTab === "trade") {
       return `
         <section class="c-script-editor-person-panel" aria-label="交易分栏">
@@ -2270,7 +2385,7 @@ export class MainUiFlow {
             <span>启用交易入口</span>
           </label>
           <label class="c-script-editor-form-field">
-            <span>交易入口 ID</span>
+            <span>交易入口</span>
             <select
               class="c-script-editor-form-field__input"
               data-script-editor-person-field="tradeBinding.entryId"
@@ -2287,24 +2402,23 @@ export class MainUiFlow {
     }
 
     if (this.scriptEditorPersonTab === "events") {
-      return `
-        ${this.renderScriptEditorPersonRelationPanel(
-          "事件分栏",
-          "该分栏保留人物相关事件引用；真实触发配置请使用下方事件绑定。",
-          "eventIds",
-          person.eventIds ?? [],
-          "add-person-event-link",
-          "remove-person-event-link"
-        )}
-        ${this.renderScriptEditorOwnerLocalEventBindingsPanel({ ownerFamily: "person", ownerId: person.id })}
-      `;
+      return this.renderScriptEditorOwnerLocalEventBindingsPanel({
+        ownerFamily: "person",
+        ownerId: person.id,
+        title: person.name?.trim() || "人物事件",
+      });
     }
 
     const cityOptions = this.getScriptEditorPersonCityOptions();
     const houseOptions = this.getScriptEditorPersonHouseOptions(person.cityId ?? "");
     const portraitOptions = this.getScriptEditorPersonPortraitOptions();
-    const portraitVariantOptions =
-      this.getScriptEditorPersonPortraitVariantOptions(person);
+
+    return this.renderScriptEditorPersonProfilePanel({
+      person,
+      cityOptions,
+      houseOptions,
+      portraitOptions,
+    });
 
     return `
       <section class="c-script-editor-person-panel" aria-label="属性分栏">
@@ -2316,8 +2430,8 @@ export class MainUiFlow {
           <label class="c-script-editor-form-field">
             <span>人物类型</span>
             <select class="c-script-editor-form-field__input" data-script-editor-person-field="personType">
-              <option value="角色" ${person.personType === "角色" ? "selected" : ""}>角色</option>
-              <option value="NPC" ${person.personType !== "角色" ? "selected" : ""}>NPC</option>
+              <option value="瑙掕壊" ${person.personType === "瑙掕壊" ? "selected" : ""}>角色</option>
+              <option value="NPC" ${person.personType !== "瑙掕壊" ? "selected" : ""}>NPC</option>
             </select>
           </label>
           <label class="c-script-editor-form-field">
@@ -2325,31 +2439,37 @@ export class MainUiFlow {
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.title ?? "")}" data-script-editor-person-field="title" />
           </label>
           <label class="c-script-editor-form-field">
-            <span>职业/定位</span>
+            <span>职业 / 定位</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.occupation ?? "")}" data-script-editor-person-field="occupation" />
           </label>
           <label class="c-script-editor-form-field">
             <span>所属城市</span>
             <select class="c-script-editor-form-field__input" data-script-editor-person-field="cityId">
-              ${this.renderScriptEditorSelectOptions(cityOptions, person.cityId ?? "", "未设置所属城市")}
+              ${this.renderScriptEditorSelectOptions(
+                cityOptions,
+                person.cityId ?? "",
+                "未设置所属城市"
+              )}
             </select>
           </label>
           <label class="c-script-editor-form-field">
             <span>所属建筑</span>
             <select class="c-script-editor-form-field__input" data-script-editor-person-field="houseId">
-              ${this.renderScriptEditorSelectOptions(houseOptions, person.houseId ?? "", "未设置所属建筑")}
+              ${this.renderScriptEditorSelectOptions(
+                houseOptions,
+                person.houseId ?? "",
+                "未设置所属建筑"
+              )}
             </select>
           </label>
           <label class="c-script-editor-form-field">
-            <span>立绘 ID</span>
+            <span>立绘</span>
             <select class="c-script-editor-form-field__input" data-script-editor-person-field="portraitId">
-              ${this.renderScriptEditorSelectOptions(portraitOptions, person.portraitId ?? "", "未设置立绘")}
-            </select>
-          </label>
-          <label class="c-script-editor-form-field">
-            <span>立绘变体</span>
-            <select class="c-script-editor-form-field__input" data-script-editor-person-field="portraitVariantId">
-              ${this.renderScriptEditorSelectOptions(portraitVariantOptions, person.portraitVariantId ?? "", "未设置立绘变体")}
+              ${this.renderScriptEditorSelectOptions(
+                portraitOptions,
+                person.portraitId ?? "",
+                "未设置立绘"
+              )}
             </select>
           </label>
           <label class="c-script-editor-form-field c-script-editor-form-field--wide">
@@ -2358,148 +2478,98 @@ export class MainUiFlow {
           </label>
         </div>
       </section>
-      ${this.renderScriptEditorPersonMappedFieldGroups(person)}
       ${this.renderScriptEditorPersonSummaryAttributes(person)}
     `;
   }
 
-  renderScriptEditorPersonMappedFieldGroups(person) {
-    const groupLabels = {
-      base: "基础",
-      profile: "履历",
-      stat: "能力",
-      skill: "技能",
-    };
-    const definitions = listScriptEditorPersonFieldDefinitions().filter(
-      (definition) => Object.hasOwn(groupLabels, definition.group)
+  renderScriptEditorPersonStageBindingsPanel(person) {
+    const bindings = (this.scriptEditorProject?.progressTrackBindings ?? [])
+      .map((binding) => normalizeScriptEditorProgressTrackBindingRecord(binding))
+      .filter(
+        (binding) => binding.host?.family === "person" && binding.host?.id === person.id
+      );
+    const binding = bindings[0] ?? null;
+    const trackOptions = this.getScriptEditorCreatorRecordOptions("progressTracks");
+    const track = (this.scriptEditorProject?.progressTracks ?? []).find(
+      (record) => record.id === binding?.trackId
     );
 
     return `
-      <section class="c-script-editor-person-panel" aria-label="人物映射字段">
+      <section class="c-script-editor-person-panel" aria-label="\u9636\u6bb5\u5206\u680f">
         <div class="c-script-editor-person-attributes__header">
           <div>
-            <p class="c-script-editor-editor-card__eyebrow">映射字段</p>
-            <h3 class="c-script-editor-editor-card__title">角色资料字段</h3>
+            <p class="c-script-editor-editor-card__eyebrow">\u9636\u6bb5\u5206\u680f</p>
+            <h3 class="c-script-editor-editor-card__title">${escapeHtml(person.name || "\u4eba\u7269\u9636\u6bb5")}</h3>
+          </div>
+          <div class="c-script-editor-editor-card__actions">
+            <button
+              type="button"
+              class="c-main-ui-json-text-button"
+              data-script-editor-action="add-person-stage-binding"
+              ${binding != null ? "disabled" : ""}
+            >
+              \u65b0\u589e\u7ed1\u5b9a
+            </button>
+            <button
+              type="button"
+              class="c-main-ui-json-text-button"
+              data-script-editor-action="add-person-stage-track"
+              ${binding == null ? "disabled" : ""}
+            >
+              \u65b0\u5efa\u89c4\u5219
+            </button>
           </div>
         </div>
-        <div class="c-script-editor-person-mapped-fields">
-          ${Object.entries(groupLabels)
-            .map(([group, label]) => {
-              const groupDefinitions = definitions.filter(
-                (definition) => definition.group === group
-              );
-              return `
-                <section class="c-script-editor-person-mapped-fields__group">
-                  <h4>${escapeHtml(label)}</h4>
-                  <div class="c-script-editor-form-grid">
-                    ${groupDefinitions
-                      .map((definition) =>
-                        this.renderScriptEditorPersonMappedFieldControl(person, definition)
-                      )
-                      .join("")}
-                  </div>
-                </section>
-              `;
-            })
-            .join("")}
-        </div>
+        ${
+          binding == null
+            ? `
+              <p class="c-script-editor-editor-card__hint">
+                \u5f53\u524d\u4eba\u7269\u8fd8\u6ca1\u6709\u7ed1\u5b9a\u9636\u6bb5\u89c4\u5219\u3002
+              </p>
+            `
+            : `
+              <div class="c-script-editor-form-grid">
+                <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+                  <span>\u9636\u6bb5\u89c4\u5219</span>
+                  <select
+                    class="c-script-editor-form-field__input"
+                    data-script-editor-person-stage-binding-id="${escapeHtml(binding.id)}"
+                    data-script-editor-person-stage-binding-field="trackId"
+                  >
+                    ${this.renderScriptEditorSelectOptions(
+                      trackOptions,
+                      binding.trackId ?? "",
+                      "\u672a\u9009\u62e9\u9636\u6bb5\u89c4\u5219"
+                    )}
+                  </select>
+                </label>
+                <label class="c-script-editor-person-editor__toggle">
+                  <input
+                    type="checkbox"
+                    data-script-editor-person-stage-binding-id="${escapeHtml(binding.id)}"
+                    data-script-editor-person-stage-binding-field="enabled"
+                    ${binding.enabled !== false ? "checked" : ""}
+                  />
+                  <span>\u542f\u7528\u8fd9\u4e2a\u9636\u6bb5\u7ed1\u5b9a</span>
+                </label>
+              </div>
+              <p class="c-script-editor-editor-card__hint">
+                ${escapeHtml(track?.title ?? "\u672a\u7ed1\u5b9a\u89c4\u5219")}
+              </p>
+              <div class="c-script-editor-narrative-inline">
+                <button
+                  type="button"
+                  class="c-script-editor-record-editor__action"
+                  data-script-editor-action="remove-person-stage-binding"
+                  data-script-editor-person-stage-binding-id="${escapeHtml(binding.id)}"
+                >
+                  \u79fb\u9664\u7ed1\u5b9a
+                </button>
+              </div>
+            `
+        }
       </section>
     `;
-  }
-
-  renderScriptEditorPersonMappedFieldControl(person, definition) {
-    const value = this.getScriptEditorPersonMappedFieldValue(person, definition.canonicalKey);
-    const dataAttribute = `data-script-editor-person-mapped-field="${escapeHtml(definition.canonicalKey)}"`;
-
-    if (definition.valueType === "enum") {
-      return `
-        <label class="c-script-editor-form-field">
-          <span>${escapeHtml(definition.label)}</span>
-          <select class="c-script-editor-form-field__input" ${dataAttribute}>
-            ${this.renderScriptEditorSelectOptions(
-              definition.enumOptions ?? [],
-              value,
-              `未设置${definition.label}`
-            )}
-          </select>
-        </label>
-      `;
-    }
-
-    if (definition.valueType === "reference") {
-      const options =
-        definition.referenceFamily === "cities"
-          ? this.getScriptEditorPersonCityOptions()
-          : definition.referenceFamily === "buildings"
-            ? this.getScriptEditorPersonHouseOptions(person.cityId ?? "")
-            : definition.referenceFamily === "portraits"
-              ? this.getScriptEditorPersonPortraitOptions()
-              : definition.referenceFamily === "portraitVariants"
-                ? this.getScriptEditorPersonPortraitVariantOptions(person)
-                : [];
-      return `
-        <label class="c-script-editor-form-field">
-          <span>${escapeHtml(definition.label)}</span>
-          <select class="c-script-editor-form-field__input" ${dataAttribute}>
-            ${this.renderScriptEditorSelectOptions(options, value, `未设置${definition.label}`)}
-          </select>
-        </label>
-      `;
-    }
-
-    if (definition.valueType === "boolean") {
-      return `
-        <label class="c-script-editor-person-editor__toggle">
-          <input
-            type="checkbox"
-            ${value === "true" ? "checked" : ""}
-            ${dataAttribute}
-          />
-          <span>${escapeHtml(definition.label)}</span>
-        </label>
-      `;
-    }
-
-    if (definition.valueType === "text") {
-      return `
-        <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-          <span>${escapeHtml(definition.label)}</span>
-          <textarea
-            class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact"
-            spellcheck="false"
-            ${dataAttribute}
-          >${escapeHtml(value)}</textarea>
-        </label>
-      `;
-    }
-
-    return `
-      <label class="c-script-editor-form-field">
-        <span>${escapeHtml(definition.label)}</span>
-        <input
-          class="c-script-editor-form-field__input"
-          type="${definition.valueType === "number" ? "number" : "text"}"
-          value="${escapeHtml(value)}"
-          ${dataAttribute}
-        />
-      </label>
-    `;
-  }
-
-  getScriptEditorPersonMappedFieldValue(person, canonicalKey) {
-    return String(
-      canonicalKey.split(".").reduce((currentValue, segment) => {
-        if (
-          currentValue == null ||
-          typeof currentValue !== "object" ||
-          Array.isArray(currentValue)
-        ) {
-          return undefined;
-        }
-
-        return currentValue[segment];
-      }, person) ?? ""
-    );
   }
 
   renderScriptEditorPersonRelationPanel(title, hint, family, entries, addAction, removeAction) {
@@ -2998,7 +3068,7 @@ export class MainUiFlow {
       normalizeScriptEditorBuildingRecord(building)
     );
     const npcOptions = (project.people ?? [])
-      .map((person) => normalizeScriptEditorPersonRecord(person))
+      .map((person) => this.normalizeScriptEditorProjectPersonRecord(person))
       .filter((person) => person.personType !== "瑙掕壊");
     const renderBuildingOptions = (selectedBuildingId) => `
       <option value="">未选择建筑</option>
@@ -3632,7 +3702,7 @@ export class MainUiFlow {
       normalizeScriptEditorBuildingRecord(building)
     );
     const npcOptions = (this.scriptEditorProject?.people ?? [])
-      .map((person) => normalizeScriptEditorPersonRecord(person))
+      .map((person) => this.normalizeScriptEditorProjectPersonRecord(person))
       .filter((person) => person.personType !== "角色");
     const renderBuildingOptions = (selectedBuildingId) => `
       <option value="">未选择建筑</option>
@@ -3769,7 +3839,7 @@ export class MainUiFlow {
       normalizeScriptEditorBuildingRecord(building)
     );
     const npcOptions = (this.scriptEditorProject?.people ?? [])
-      .map((person) => normalizeScriptEditorPersonRecord(person))
+      .map((person) => this.normalizeScriptEditorProjectPersonRecord(person))
       .filter((person) => person.personType !== "瑙掕壊");
     const npcOptionsById = new Map(npcOptions.map((person) => [person.id, person]));
     const renderBuildingOptions = (selectedBuildingId) => `
@@ -4036,7 +4106,7 @@ export class MainUiFlow {
                         ${this.renderScriptEditorSelectOptions(
                           SCRIPT_EDITOR_PERSON_ATTRIBUTE_TYPE_OPTIONS,
                           entry.type ?? "string",
-                          "鏂囨湰"
+                          "\u6587\u672c"
                         )}
                       </select>
                     </label>
@@ -5738,14 +5808,14 @@ export class MainUiFlow {
   createScriptEditorDialogueReferenceOptions() {
     return (this.scriptEditorProject?.dialogues ?? []).map((dialogue) => ({
       value: dialogue.id,
-      label: `${dialogue.title ?? dialogue.name ?? dialogue.id} (${dialogue.id})`,
+      label: dialogue.title ?? dialogue.name ?? dialogue.id,
     }));
   }
 
   createScriptEditorEventReferenceOptions() {
     return (this.scriptEditorProject?.events ?? []).map((eventRecord) => ({
       value: eventRecord.id,
-      label: `${eventRecord.title ?? eventRecord.name ?? eventRecord.id} (${eventRecord.id})`,
+      label: eventRecord.title ?? eventRecord.name ?? eventRecord.id,
     }));
   }
 
@@ -5759,7 +5829,7 @@ export class MainUiFlow {
   createScriptEditorTradeBindingReferenceOptions() {
     return (this.scriptEditorProject?.buildings ?? []).map((building) => ({
       value: building.id,
-      label: `${building.name ?? building.id} (${building.id})`,
+      label: building.name ?? building.id,
     }));
   }
 
@@ -6453,17 +6523,34 @@ export class MainUiFlow {
   }
 
   renderScriptEditorOwnerLocalEventBindingsPanel({ ownerFamily, ownerId }) {
+    const title = arguments[0]?.title ?? "";
     const bindings = (this.scriptEditorProject?.eventBindings ?? []).filter((binding) => {
       const normalizedBinding = normalizeScriptEditorEventBindingRecord(binding);
       return normalizedBinding.owner.family === ownerFamily && normalizedBinding.owner.id === ownerId;
     });
+    const creatorFamilyByOwnerFamily = {
+      person: "people",
+      city: "cities",
+      building: "buildings",
+      dialogue: "dialogues",
+      minigame: "minigames",
+      story: "storyNodes",
+    };
+    const ownerDisplay =
+      title.trim().length > 0
+        ? title
+        : creatorFamilyByOwnerFamily[ownerFamily] == null
+          ? ownerId
+          : this.getScriptEditorCreatorRecordOptions(
+              creatorFamilyByOwnerFamily[ownerFamily]
+            ).find((option) => option.value === ownerId)?.label ?? ownerId;
 
     return `
       <section class="c-script-editor-narrative-panel" aria-label="事件绑定" data-script-editor-owner-local-event-bindings data-script-editor-owner-family="${escapeHtml(ownerFamily)}">
         <div class="c-script-editor-narrative-panel__header">
           <div>
             <p class="c-script-editor-editor-card__eyebrow">事件绑定</p>
-            <h3 class="c-script-editor-editor-card__title">${escapeHtml(ownerFamily)}:${escapeHtml(ownerId)}</h3>
+            <h3 class="c-script-editor-editor-card__title">${escapeHtml(ownerDisplay)}</h3>
           </div>
           <button
             type="button"
@@ -6589,7 +6676,7 @@ export class MainUiFlow {
       .map((eventRecord) => normalizeScriptEditorEventRecord(eventRecord))
       .map((eventRecord) => ({
         value: eventRecord.id,
-        label: `${eventRecord.title} (${eventRecord.id})`,
+        label: eventRecord.title,
       }));
   }
 
@@ -7514,11 +7601,24 @@ export class MainUiFlow {
         10
       );
       if (
-        (field === "key" || field === "label" || field === "type" || field === "value") &&
+        (field === "label" || field === "type" || field === "value") &&
         Number.isInteger(index) &&
         index >= 0
       ) {
         this.applyScriptEditorPersonAttributeField(index, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-person-stage-binding-field]")) {
+      const bindingId = target.dataset.scriptEditorPersonStageBindingId;
+      const field = target.dataset.scriptEditorPersonStageBindingField;
+      if (bindingId != null && (field === "trackId" || field === "enabled")) {
+        const nextValue =
+          field === "enabled" && target instanceof globalThis.HTMLInputElement
+            ? target.checked
+            : target.value;
+        this.applyScriptEditorPersonStageBindingField(bindingId, field, nextValue);
       }
       return;
     }
@@ -8759,8 +8859,26 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "add-person-stage-binding") {
+      this.addScriptEditorPersonStageBinding();
+      return;
+    }
+
+    if (action === "add-person-stage-track") {
+      this.addScriptEditorPersonStageTrack();
+      return;
+    }
+
     if (action === "remove-stage-configuration-binding") {
       this.removeScriptEditorStageConfigurationBinding();
+      return;
+    }
+
+    if (action === "remove-person-stage-binding") {
+      const progressBindingId = actionElement?.dataset.scriptEditorPersonStageBindingId ?? null;
+      if (progressBindingId != null) {
+        this.removeScriptEditorProgressTrackBindingById(progressBindingId);
+      }
       return;
     }
 
@@ -10050,11 +10168,12 @@ export class MainUiFlow {
     }
 
     const nextPerson = appendScriptEditorPersonAttribute(person);
+    const nextAttributeCount =
+      this.getScriptEditorPersonAuthoringCustomAttributes(nextPerson).length;
     this.scriptEditorPersonAttributePage = Math.max(
       1,
       Math.ceil(
-        (nextPerson.extendedAttributes?.length ?? 0) /
-          SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE
+        nextAttributeCount / SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE
       )
     );
     this.scriptEditorPersonAttributeVisibleIndices = null;
@@ -10068,8 +10187,16 @@ export class MainUiFlow {
       return;
     }
 
-    const nextPerson = removeScriptEditorPersonAttribute(person, index);
-    const nextAttributeCount = nextPerson.extendedAttributes?.length ?? 0;
+    const sourceIndex =
+      this.getScriptEditorPersonAuthoringCustomAttributes(person)[index]
+        ?.sourceIndex;
+    if (!Number.isInteger(sourceIndex) || sourceIndex < 0) {
+      return;
+    }
+
+    const nextPerson = removeScriptEditorPersonAttribute(person, sourceIndex);
+    const nextAttributeCount =
+      this.getScriptEditorPersonAuthoringCustomAttributes(nextPerson).length;
     const nextTotalPages = Math.max(
       1,
       Math.ceil(nextAttributeCount / SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE)
@@ -10103,8 +10230,15 @@ export class MainUiFlow {
       return;
     }
 
+    const sourceIndex =
+      this.getScriptEditorPersonAuthoringCustomAttributes(person)[index]
+        ?.sourceIndex;
+    if (!Number.isInteger(sourceIndex) || sourceIndex < 0) {
+      return;
+    }
+
     this.replaceSelectedScriptEditorPerson(
-      updateScriptEditorPersonAttribute(person, index, field, value)
+      updateScriptEditorPersonAttribute(person, sourceIndex, field, value)
     );
   }
 
@@ -10935,7 +11069,7 @@ export class MainUiFlow {
     const selectedNpcIds = new Set(mountedBuilding?.npcIds ?? []);
     return (
       (this.scriptEditorProject?.people ?? [])
-        .map((person) => normalizeScriptEditorPersonRecord(person))
+        .map((person) => this.normalizeScriptEditorProjectPersonRecord(person))
         .find((person) => person.personType !== "角色" && !selectedNpcIds.has(person.id))
         ?.id ?? ""
     );
@@ -11064,7 +11198,7 @@ export class MainUiFlow {
     const selectedNpcIds = new Set(arrangement?.mountedNpcIds ?? []);
     return (
       (this.scriptEditorProject?.people ?? [])
-        .map((person) => normalizeScriptEditorPersonRecord(person))
+        .map((person) => this.normalizeScriptEditorProjectPersonRecord(person))
         .find((person) => person.personType !== "瑙掕壊" && !selectedNpcIds.has(person.id))
         ?.id ?? ""
     );
@@ -11667,37 +11801,37 @@ export class MainUiFlow {
   getScriptEditorFamilyLabel(family) {
     switch (family) {
       case "storyPack":
-        return "项目";
+        return "??";
       case "people":
-        return "人物";
+        return "??";
       case "portraits":
-        return "立绘资源";
+        return "????";
       case "portraitVariants":
-        return "立绘变体";
+        return "????";
       case "cities":
-        return "城市";
+        return "??";
       case "buildings":
-        return "建筑";
+        return "??";
       case "settlements":
-        return "结算";
+        return "??";
       case "quests":
-        return "任务";
+        return "??";
       case "dialogues":
-        return "对话";
+        return "??";
       case "textEntries":
-        return "文本";
+        return "??";
       case "storyNodes":
-        return "剧情节点";
+        return "????";
       case "events":
-        return "事件";
+        return "??";
       case "minigames":
-        return "玩法";
+        return "??";
       case SCRIPT_EDITOR_STAGE_CONFIGURATION_FAMILY:
-        return "阶段配置";
+        return "????";
       case "progressTracks":
-        return "阶段轨道";
+        return "????";
       case "progressTrackBindings":
-        return "轨道绑定";
+        return "????";
       default:
         return family;
     }
@@ -11889,7 +12023,7 @@ export class MainUiFlow {
       return null;
     }
 
-    return normalizeScriptEditorPersonRecord(selectedPerson);
+    return this.normalizeScriptEditorProjectPersonRecord(selectedPerson);
   }
 
   replaceSelectedScriptEditorPerson(nextPerson) {
@@ -12318,6 +12452,126 @@ export class MainUiFlow {
     this.replaceSelectedScriptEditorProgressTrackBinding(
       updateScriptEditorProgressTrackBindingField(binding, field, value)
     );
+  }
+
+  replaceScriptEditorProgressTrackBindingById(bindingId, nextBinding) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      progressTrackBindings: (this.scriptEditorProject.progressTrackBindings ?? []).map(
+        (bindingRecord) => (bindingRecord.id === bindingId ? nextBinding : bindingRecord)
+      ),
+    });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  removeScriptEditorProgressTrackBindingById(bindingId) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      progressTrackBindings: (this.scriptEditorProject.progressTrackBindings ?? []).filter(
+        (bindingRecord) => bindingRecord.id !== bindingId
+      ),
+    });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  addScriptEditorPersonStageBinding() {
+    const person = this.getSelectedScriptEditorPerson();
+    if (this.scriptEditorProject == null || person == null) {
+      return;
+    }
+
+    const existingBinding = (this.scriptEditorProject.progressTrackBindings ?? [])
+      .map((bindingRecord) => normalizeScriptEditorProgressTrackBindingRecord(bindingRecord))
+      .find(
+        (bindingRecord) =>
+          bindingRecord.host?.family === "person" && bindingRecord.host?.id === person.id
+      );
+    if (existingBinding != null) {
+      return;
+    }
+
+    const nextBinding = {
+      ...createDefaultScriptEditorProgressTrackBindingRecord(
+        (this.scriptEditorProject.progressTrackBindings ?? []).length
+      ),
+      host: {
+        family: "person",
+        id: person.id,
+      },
+    };
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      progressTrackBindings: [...(this.scriptEditorProject.progressTrackBindings ?? []), nextBinding],
+    });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  addScriptEditorPersonStageTrack() {
+    const person = this.getSelectedScriptEditorPerson();
+    if (this.scriptEditorProject == null || person == null) {
+      return;
+    }
+
+    const binding = (this.scriptEditorProject.progressTrackBindings ?? [])
+      .map((bindingRecord) => normalizeScriptEditorProgressTrackBindingRecord(bindingRecord))
+      .find(
+        (bindingRecord) =>
+          bindingRecord.host?.family === "person" && bindingRecord.host?.id === person.id
+      );
+    if (binding == null) {
+      return;
+    }
+
+    const nextTrack = {
+      ...createDefaultScriptEditorProgressTrackRecord(
+        (this.scriptEditorProject.progressTracks ?? []).length
+      ),
+      hostFamily: "person",
+    };
+    const nextBinding = {
+      ...binding,
+      trackId: nextTrack.id,
+    };
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      progressTracks: [...(this.scriptEditorProject.progressTracks ?? []), nextTrack],
+      progressTrackBindings: (this.scriptEditorProject.progressTrackBindings ?? []).map(
+        (bindingRecord) => (bindingRecord.id === binding.id ? nextBinding : bindingRecord)
+      ),
+    });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorPersonStageBindingField(bindingId, field, value) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    const bindingRecord = (this.scriptEditorProject.progressTrackBindings ?? []).find(
+      (record) => record.id === bindingId
+    );
+    if (bindingRecord == null) {
+      return;
+    }
+
+    const nextBinding = updateScriptEditorProgressTrackBindingField(
+      normalizeScriptEditorProgressTrackBindingRecord(bindingRecord),
+      field,
+      value
+    );
+    this.replaceScriptEditorProgressTrackBindingById(bindingId, nextBinding);
   }
 
   getSelectedScriptEditorEvent() {
@@ -13577,3 +13831,6 @@ function escapeHtml(value) {
 function formatStatValue(value) {
   return typeof value === "number" ? String(value) : "0";
 }
+
+
+

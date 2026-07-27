@@ -199,6 +199,121 @@ export type ScriptEditorPersonNormalizeOptions = {
   portraitVariants?: readonly Record<string, unknown>[];
 };
 
+export type ScriptEditorPersonAttributeEditorField = {
+  key: string;
+  label: string;
+  value: string | number | boolean;
+  type?: ScriptEditorTypedAttributeType;
+  sourceIndex?: number;
+};
+
+export type ScriptEditorPersonAttributeEditorSection = {
+  id: string;
+  title: string;
+  presentation: "basic-info" | "list";
+  fields: ScriptEditorPersonAttributeEditorField[];
+};
+
+const SCRIPT_EDITOR_PERSON_AUTHORING_HIDDEN_ATTRIBUTE_KEYS = new Set([
+  "isHistoricalFigure",
+  "leaderResidenceEligible",
+  "leaderResidenceStatus",
+  "flags",
+  "teachableSkillKeys",
+]);
+
+export function ensurePersonAttributeGroups(
+  person: ScriptEditorPersonRecord
+): ScriptEditorPersonAttributeGroup[] {
+  return normalizeScriptEditorPersonAttributeGroups(person.attributeGroups);
+}
+
+export function buildPersonAttributeEditorSections(
+  person: ScriptEditorPersonRecord
+): ScriptEditorPersonAttributeEditorSection[] {
+  const normalizedPerson = materializeScriptEditorPersonExtendedAttributes(person);
+
+  // Keep the normalized group contract alive for later runtime-detail consumers
+  // without surfacing its ability/skill group semantics in the creator profile UI.
+  ensurePersonAttributeGroups(normalizedPerson);
+
+  return [
+    {
+      id: "basic-profile",
+      title: "\u57fa\u7840\u8d44\u6599",
+      presentation: "basic-info",
+      fields: [
+        { key: "name", label: "\u4eba\u7269\u540d\u79f0", value: normalizedPerson.name },
+        {
+          key: "personType",
+          label: "\u4eba\u7269\u7c7b\u578b",
+          value: readString(normalizedPerson.personType, "NPC"),
+        },
+        {
+          key: "title",
+          label: "\u8eab\u4efd",
+          value: readString(normalizedPerson.title, ""),
+        },
+        {
+          key: "occupation",
+          label: "\u804c\u4e1a",
+          value: readString(normalizedPerson.occupation, ""),
+        },
+        {
+          key: "age",
+          label: "\u5e74\u9f84",
+          value: readFiniteNumber(normalizedPerson.age, 0),
+        },
+        {
+          key: "clanId",
+          label: "\u6240\u5c5e",
+          value: readString(normalizedPerson.clanId, ""),
+        },
+        {
+          key: "cityId",
+          label: "\u6240\u5c5e\u57ce\u5e02",
+          value: readString(normalizedPerson.cityId, ""),
+        },
+        {
+          key: "houseId",
+          label: "\u6240\u5c5e\u5efa\u7b51",
+          value: readString(normalizedPerson.houseId, ""),
+        },
+        {
+          key: "portraitId",
+          label: "\u7acb\u7ed8",
+          value: readString(normalizedPerson.portraitId, ""),
+        },
+        {
+          key: "biography",
+          label: "\u4eba\u7269\u7b80\u4ecb",
+          value: readString(normalizedPerson.biography, ""),
+        },
+      ],
+    },
+    {
+      id: "custom-attributes",
+      title: "\u81ea\u5b9a\u4e49\u5c5e\u6027",
+      presentation: "list",
+      fields: normalizeKeyValueEntries(normalizedPerson.extendedAttributes)
+        .map((entry, sourceIndex) => ({ entry, sourceIndex }))
+        .filter(({ entry }) =>
+          isScriptEditorPersonVisibleCreatorAttributeKey(entry.key)
+        )
+        .map(({ entry, sourceIndex }) => ({
+          key: entry.key,
+          label:
+            readString(entry.label, "").trim().length > 0
+              ? readString(entry.label, "")
+              : getScriptEditorPersonAttributeLabel(entry.key),
+          type: entry.type,
+          value: normalizeTypedAttributeValue(entry.type, entry.value),
+          sourceIndex,
+        })),
+    },
+  ];
+}
+
 export function normalizeScriptEditorPersonRecord(
   value: Record<string, unknown>,
   options: ScriptEditorPersonNormalizeOptions = {}
@@ -1071,6 +1186,28 @@ function isScriptEditorPersonManagedAttributeKey(keyPath: string): boolean {
   }
 
   return false;
+}
+
+function isScriptEditorPersonVisibleCreatorAttributeKey(keyPath: string): boolean {
+  const normalizedKey = keyPath.trim();
+  if (normalizedKey.length === 0) {
+    return false;
+  }
+
+  if (isScriptEditorPersonManagedAttributeKey(normalizedKey)) {
+    return false;
+  }
+
+  if (
+    normalizedKey.startsWith("stats.") ||
+    normalizedKey.startsWith("skills.")
+  ) {
+    return false;
+  }
+
+  return !SCRIPT_EDITOR_PERSON_AUTHORING_HIDDEN_ATTRIBUTE_KEYS.has(
+    normalizedKey
+  );
 }
 
 function createScriptEditorPersonCustomAttributeKey(

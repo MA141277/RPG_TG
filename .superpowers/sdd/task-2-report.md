@@ -1,24 +1,38 @@
-Status: DONE
+# Task 2 Report: Clean The Person Authoring Surface To Show Only Stable Creator Data
 
-Summary:
-- Replaced creator-visible settlement ID, description, and legacy result-row authoring with title, settlement-level follow-up, and typed settlement content rows.
-- Added settlement content controls for target family, target record, calculable attribute, operation, and value, wired directly to Task 1 settlement content helpers.
-- Added person custom-attribute type controls using the required creator-facing labels: 鏁板€? / 寮€鍏? / 閫夐」 / 鏂囨湰.
+## Scope
 
-TDD:
-- RED: `node --test tests/robustness.test.cjs --test-name-pattern "settlement authoring|person attribute"` failed on legacy settlement description/result fields.
-- GREEN: `node --test tests/robustness.test.cjs --test-name-pattern "settlement authoring|person attribute"` passed with `fail 0`.
+- `src/ui/main-ui/main-ui-flow.js`
+- `src/application/script-editor/person-authoring.ts`
+- `tests/robustness.test.cjs`
 
-Verification:
-- `npm.cmd run build` passed.
-- `npm.cmd test` failed in `tests/city-building-mount-authoring.test.cjs` on a city mounted-building UI source assertion outside this settlement/person UI slice.
+## What Changed
 
-Concerns:
-- `npm run build` is blocked by the local PowerShell execution policy for `npm.ps1`; `npm.cmd run build` was used instead.
-- Vite build emitted existing bundle-size/static-asset warnings.
-- Full repository test verification currently has an unrelated city/building authoring source assertion failure; focused Task 2 regression remains green.
+- Added a person authoring-surface section model in `person-authoring.ts` with:
+  - `ensurePersonAttributeGroups(...)`
+  - `buildPersonAttributeEditorSections(...)`
+- Kept the fixed person profile fields in the authoring surface, but filtered custom-attribute cards down to creator-authored extensions only.
+- Removed the hardcoded person ability and skill editing blocks from the profile panel in `main-ui-flow.js`.
+- Switched the person custom-attribute card list to read from the filtered authoring-surface model so runtime-derived `stats.*`, `skills.*`, and other hidden compatibility keys no longer surface as creator cards.
+- Added regressions for both:
+  - the authoring-surface model contract
+  - the UI source contract that forbids hardcoded `stats.*` / `skills.*` profile inputs
 
-Fix Wave:
-- Commit: `f9496f0 fix: correct script editor creator labels`
-- RED: `node --test tests/robustness.test.cjs --test-name-pattern "settlement authoring|person attribute"` failed after changing assertions to exact `数值` / `开关` / `选项` / `文本` and `结算内容` labels.
-- GREEN: `node --test tests/robustness.test.cjs --test-name-pattern "settlement authoring|person attribute"` passed with `fail 0`.
+## Verification
+
+- RED:
+  - `npm.cmd run build:test`
+  - `node --test tests/robustness.test.cjs --test-name-pattern "person authoring surface"`
+  - Failure reason: `buildPersonAttributeEditorSections is not a function`
+- GREEN:
+  - `npm.cmd run build:test`
+  - `node --test tests/robustness.test.cjs --test-name-pattern "person authoring surface"`
+  - Result: pass
+- Final gate:
+  - `node --test tests/robustness.test.cjs`
+  - Result: pass
+
+## Notes
+
+- The workspace was already dirty before Task 2 started. This task layered its person authoring changes onto the existing workspace state without reverting unrelated edits.
+- Task 3 runtime character detail consumption was intentionally left untouched.
