@@ -24,7 +24,7 @@
 
 - Status: `running`
 - Last Updated: `2026-07-24`
-- Current Focus: `Wire the real mp3 assets and static shell resolution.`
+- Current Focus: `Record docs and finish the verification sweep.`
 - Next Step: `Start Task 2 from the shell seam test.`
 - Verification: `npm.cmd run lint:plans`
 - Notes: `This plan is intentionally separate from the still-open unified backpack governance line in docs/superpowers/project-progress.md. Task 1 is complete; this batch intentionally leaves src/main.ts and real mp3 asset wiring to Task 2.`
@@ -39,6 +39,10 @@
   - Summary: `Added shared button cue ids ui.button.light and ui.button.heavy, created the ButtonSoundEffect wrapper module, and kept playback owned by the app-audio controller.`
   - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `@' {"type":"commonjs"} '@ | Set-Content '.test-dist\package.json'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/button-sound.test.cjs tests/audio-manager.test.cjs`
   - Next: `Wire the real mp3 assets and static shell resolution.`
+- 2026-07-24
+  - Summary: `Copied the real light/heavy button mp3 assets into src/assets/audio/ui, added *.mp3?url typing, and wired src/main.ts through a narrow STATIC_AUDIO_ASSET_URLS map before the legacy asset fallback.`
+  - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `@' {"type":"commonjs"} '@ | Set-Content '.test-dist\package.json'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests/audio-seam.test.cjs`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' --noEmit -p tsconfig.json`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\vite\bin\vite.js' build`
+  - Next: `Record docs and finish the verification sweep.`
 
 ---
 
@@ -335,7 +339,7 @@ git commit -m "feat: add button sound cue contract"
   - `STATIC_AUDIO_ASSET_URLS["audio/ui/button-light.mp3"]`
   - `STATIC_AUDIO_ASSET_URLS["audio/ui/button-heavy.mp3"]`
 
-- [ ] **Step 1: Write the failing shell seam test**
+- [x] **Step 1: Write the failing shell seam test**
 
 Extend `tests/audio-seam.test.cjs` with source-level assertions for `src/main.ts` and `src/vite-env.d.ts`:
 
@@ -374,7 +378,7 @@ test("vite env types include mp3 url modules", () => {
 });
 ```
 
-- [ ] **Step 2: Run the seam test and typecheck to verify they fail**
+- [x] **Step 2: Run the seam test and typecheck to verify they fail**
 
 Run:
 
@@ -388,7 +392,7 @@ Expected:
 - `FAIL` because `src/main.ts` has no static mp3 imports or asset map for the new button sounds.
 - `FAIL` or `PASS` on `typecheck` depending on whether the imports were added before the type declaration; keep the failure output in the task notes if it appears.
 
-- [ ] **Step 3: Copy the provided mp3 files into the repository and add mp3 typing**
+- [x] **Step 3: Copy the provided mp3 files into the repository and add mp3 typing**
 
 Run these exact commands and stop if either source file is missing; do not substitute a different audio file:
 
@@ -407,7 +411,7 @@ declare module "*.mp3?url" {
 }
 ```
 
-- [ ] **Step 4: Wire the static mp3 URLs in `src/main.ts`**
+- [x] **Step 4: Wire the static mp3 URLs in `src/main.ts`**
 
 Add the imports and asset map exactly in the app-audio wiring area:
 
@@ -429,7 +433,7 @@ const appAudioController = createAppAudioController({
 
 Do not add button-name-specific branching here; this map is only for the two new logical asset keys.
 
-- [ ] **Step 5: Run the seam test, typecheck, and build to verify they pass**
+- [x] **Step 5: Run the seam test, typecheck, and build to verify they pass**
 
 Run:
 
@@ -443,7 +447,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 6: Sync this plan after the asset seam lands**
+- [x] **Step 6: Sync this plan after the asset seam lands**
 
 Update this plan in the same commit batch:
 

@@ -1,4 +1,6 @@
 import "./styles/app.css";
+import buttonLightAudioUrl from "./assets/audio/ui/button-light.mp3?url";
+import buttonHeavyAudioUrl from "./assets/audio/ui/button-heavy.mp3?url";
 import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
 import {
   selectLayoutEditorComponent,
@@ -781,8 +783,14 @@ const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
   }),
 });
 let appAudioSession = createAppAudioSession();
+const STATIC_AUDIO_ASSET_URLS: Readonly<Record<string, string>> = {
+  "audio/ui/button-light.mp3": buttonLightAudioUrl,
+  "audio/ui/button-heavy.mp3": buttonHeavyAudioUrl,
+};
 const appAudioController = createAppAudioController({
-  resolveAssetPath: (assetPath) => new URL(`../${assetPath}`, import.meta.url).href,
+  resolveAssetPath: (assetPath) =>
+    STATIC_AUDIO_ASSET_URLS[assetPath] ??
+    new URL(`../${assetPath}`, import.meta.url).href,
 });
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,

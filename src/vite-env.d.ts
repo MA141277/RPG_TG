@@ -10,6 +10,11 @@ declare module "*.mp4?url" {
   export default assetUrl;
 }
 
+declare module "*.mp3?url" {
+  const assetUrl: string;
+  export default assetUrl;
+}
+
 declare module "*.json?url" {
   const assetUrl: string;
   export default assetUrl;

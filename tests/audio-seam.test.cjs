@@ -29,3 +29,36 @@ test("application audio manager owns cue registry session output and controller 
   assert.match(source, /export function createAppAudioController/);
   assert.match(source, /export function resolveStoryBattleActionCueId/);
 });
+
+test("main resolves button audio assets through static mp3 URLs before legacy fallback", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    source,
+    /import buttonLightAudioUrl from "\.\/assets\/audio\/ui\/button-light\.mp3\?url";/
+  );
+  assert.match(
+    source,
+    /import buttonHeavyAudioUrl from "\.\/assets\/audio\/ui\/button-heavy\.mp3\?url";/
+  );
+  assert.match(
+    source,
+    /"audio\/ui\/button-light\.mp3": buttonLightAudioUrl/
+  );
+  assert.match(
+    source,
+    /"audio\/ui\/button-heavy\.mp3": buttonHeavyAudioUrl/
+  );
+});
+
+test("vite env types include mp3 url modules", () => {
+  const viteEnv = fs.readFileSync(
+    path.join(process.cwd(), "src/vite-env.d.ts"),
+    "utf8"
+  );
+
+  assert.match(viteEnv, /declare module "\*\.mp3\?url"/);
+});
