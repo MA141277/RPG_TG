@@ -4465,17 +4465,17 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const grantHaozhouTestCoinButton = targetElement.closest<HTMLElement>(
+  const haozhouCoinRewardButton = targetElement.closest<HTMLElement>(
     "[data-action='grant-haozhou-test-coin']"
   );
-  if (grantHaozhouTestCoinButton != null) {
+  if (haozhouCoinRewardButton != null) {
     const playerCharacterBefore = getPlayerCharacter(
       appState,
       currentPlayerCharacterId
     );
     appState = applyCoinReward(appState, currentPlayerCharacterId, 10);
     coinRewardAnimator.play({
-      sourceElement: grantHaozhouTestCoinButton,
+      sourceElement: haozhouCoinRewardButton,
       sourceClientX: event.clientX,
       sourceClientY: event.clientY,
       startValue: playerCharacterBefore.stats.gold,

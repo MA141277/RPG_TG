@@ -80,6 +80,11 @@
   --troop-detail-resource-bar: url("../../ui/yuansu/编队详细/generated/resource-bar.png");
   --troop-detail-resource-divider: url("../../ui/yuansu/编队详细/下载 (2).png");
   --troop-detail-slot: url("../../ui/yuansu/编队详细/20260702-195813(1).png");
+  --troop-role-archer: url("../../ui/yuansu/编队详细/兵种/upload_1784703908844967445.png");
+  --troop-role-cavalry: url("../../ui/yuansu/编队详细/兵种/upload_1784704055671156096.png");
+  --troop-role-infantry: url("../../ui/yuansu/编队详细/兵种/upload_1784703206372190622.png");
+  --troop-role-musketeer: url("../../ui/yuansu/编队详细/兵种/upload_1784704603380697329.png");
+  --troop-role-spearman: url("../../ui/yuansu/编队详细/兵种/upload_1784703445542997355.png");
   --troop-detail-button: url("../../ui/yuansu/编队详细/20260722-203253.png");
   --troop-detail-button-active: url("../../ui/yuansu/编队详细/20260722-203218.png");
 
@@ -113,6 +118,11 @@
   --troop-detail-resource-divider: url("../../ui/yuansu/编队详细/下载 (2).png");
   --troop-detail-heading-divider: url("../../ui/yuansu/编队详细/下载 (22).png");
   --troop-detail-slot: url("../../ui/yuansu/编队详细/20260702-195813(1).png");
+  --troop-role-archer: url("../../ui/yuansu/编队详细/兵种/upload_1784703908844967445.png");
+  --troop-role-cavalry: url("../../ui/yuansu/编队详细/兵种/upload_1784704055671156096.png");
+  --troop-role-infantry: url("../../ui/yuansu/编队详细/兵种/upload_1784703206372190622.png");
+  --troop-role-musketeer: url("../../ui/yuansu/编队详细/兵种/upload_1784704603380697329.png");
+  --troop-role-spearman: url("../../ui/yuansu/编队详细/兵种/upload_1784703445542997355.png");
   --troop-detail-button: url("../../ui/yuansu/编队详细/20260722-203253.png");
   --troop-detail-button-active: url("../../ui/yuansu/编队详细/20260722-203218.png");
   --troop-detail-return-button: url("../../ui/yuansu/编队详细/20260713-203034.png");
@@ -1151,6 +1161,7 @@
 }
 
 .c-troop-preview-grid__slot {
+  position: relative;
   display: grid;
   width: 100%;
   gap: 3px;
@@ -1165,6 +1176,7 @@
   border-image-repeat: stretch;
   background: rgb(255 247 230 / 76%);
   color: rgb(104 77 52 / 82%);
+  overflow: hidden;
 }
 
 .c-troop-preview-grid__slot.is-occupied {
@@ -1183,6 +1195,7 @@
   position: absolute;
   top: 4px;
   right: 5px;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1199,7 +1212,39 @@
     0 4px 10px rgb(88 58 12 / 20%);
 }
 
+.c-troop-preview-grid__unit-thumbnail {
+  position: absolute;
+  inset: 10px 8px 18px;
+  z-index: 1;
+  background: var(--troop-role-thumbnail) center center / contain no-repeat;
+  filter: drop-shadow(0 3px 4px rgb(70 38 15 / 22%));
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.c-troop-preview-grid__slot[data-troop-asset-tag="archer"] {
+  --troop-role-thumbnail: var(--troop-role-archer);
+}
+
+.c-troop-preview-grid__slot[data-troop-asset-tag="cavalry"] {
+  --troop-role-thumbnail: var(--troop-role-cavalry);
+}
+
+.c-troop-preview-grid__slot[data-troop-asset-tag="infantry"] {
+  --troop-role-thumbnail: var(--troop-role-infantry);
+}
+
+.c-troop-preview-grid__slot[data-troop-asset-tag="musketeer"] {
+  --troop-role-thumbnail: var(--troop-role-musketeer);
+}
+
+.c-troop-preview-grid__slot[data-troop-asset-tag="spearman"] {
+  --troop-role-thumbnail: var(--troop-role-spearman);
+}
+
 .c-troop-preview-grid__slot-key {
+  position: relative;
+  z-index: 2;
   color: rgb(131 93 64 / 72%);
   font-size: 0.5rem;
   letter-spacing: 0.06em;
@@ -1207,6 +1252,8 @@
 }
 
 .c-troop-preview-grid__slot-role {
+  position: relative;
+  z-index: 2;
   align-self: end;
   margin-bottom: 2px;
   color: rgb(92 63 38 / 92%);
@@ -1216,13 +1263,21 @@
   line-height: 1;
   text-align: center;
   white-space: nowrap;
+  text-shadow:
+    0 1px 0 rgb(255 243 205 / 72%),
+    0 0 4px rgb(255 243 205 / 42%);
   transform: translate(-19px, 16px);
 }
 
 .c-troop-preview-grid__slot-label {
+  position: relative;
+  z-index: 2;
   align-self: end;
   font-size: 1.056rem;
   line-height: 1.05;
+  text-shadow:
+    0 1px 0 rgb(255 243 205 / 72%),
+    0 0 4px rgb(255 243 205 / 42%);
 }
 
 .c-troop-editor__menu-list {
