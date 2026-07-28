@@ -635,7 +635,7 @@ export function createDefaultCharacterDetailScreenLayout(): CharacterDetailScree
         background: createBackground(characterDetailAbilityInfoPanelAsset, "contain"),
         elements: [
           createElement("title", "能力情报标题", createRect(62, 13, 180, 40)),
-          createElement("content", "能力列表", createRect(41, 46, 777, 56)),
+          createElement("content", "能力列表", createRect(41, 58, 777, 82)),
         ],
       }),
       createComponent({

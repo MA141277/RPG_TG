@@ -203,6 +203,7 @@ const {
 } = require("../.test-dist/domain/zhu-yuanzhang-story.js");
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 
 const playerCharacterId = "char.player";
 const keepHouse = prototypeHouses.find(
@@ -3689,6 +3690,54 @@ test("built-in yuanmo campaign map declares shared snow texture layer", () => {
   assert.match(source, /campaign-snow-texture\.png/);
   assert.match(source, /"id": "map_snow_texture"/);
   assert.equal(fs.existsSync(assetPath), true);
+});
+
+test("yuanmo campaign grass test texture uses the previous grass diffuse asset instead of gassuv normal map", () => {
+  const hashFile = (relativePath) =>
+    crypto
+      .createHash("sha256")
+      .update(fs.readFileSync(path.join(process.cwd(), relativePath)))
+      .digest("hex");
+  const grassDiffuseHash = hashFile("tietu.png");
+  const grassNormalHash = hashFile("gassuv.png");
+
+  for (const texturePath of [
+    "src/assets/yuanmo-map/campaign-grass-texture.png",
+    "src/content/scenario-packs/zhuyuanzhang/assets/maps/campaign-grass-texture.png",
+  ]) {
+    const grassTextureHash = hashFile(texturePath);
+
+    assert.equal(grassTextureHash, grassDiffuseHash);
+    assert.notEqual(grassTextureHash, grassNormalHash);
+  }
+});
+
+test("campaign terrain shader keeps the grass diffuse texture scaled smaller than the shared land tiling", () => {
+  const terrainFragmentSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "shaders",
+      "campaign-terrain.frag.glsl"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    terrainFragmentSource,
+    /const float GRASS_TEXTURE_TILING_SCALE = 1\.35;/
+  );
+  assert.match(
+    terrainFragmentSource,
+    /texture2D\(\s*uGrassTexture,\s*fract\(uv \* \(uLandTextureTiling \* GRASS_TEXTURE_TILING_SCALE\)\)\s*\)\.rgb/
+  );
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /vec3 sampleGrassMaterial\(vec2 uv\) \{\s*return texture2D\(uGrassTexture,\s*fract\(uv \* uLandTextureTiling\)\)\.rgb;\s*\}/
+  );
 });
 
 test("campaign terrain WebGL shader uses separate shared animated water texture files", () => {
@@ -7465,6 +7514,7 @@ test("character detail source declares the new ability and reputation field labe
     "恶名",
     "侠名",
     "详情",
+    "统率",
   ]) {
     assert.match(characterDetailSource, new RegExp(label));
   }
@@ -7483,10 +7533,102 @@ test("character detail source keeps a toggle button and detail popup for substat
   assert.match(characterDetailSource, /open-character-ability-detail/);
   assert.match(characterDetailSource, /close-character-ability-detail/);
   assert.match(characterDetailSource, /renderAbilityDetailPopup/);
-  assert.match(characterDetailSource, /renderAbilitySummaryGroup/);
+  assert.match(characterDetailSource, /renderAbilitySummaryRow/);
   assert.match(characterDetailSource, /力量/);
   assert.match(characterDetailSource, /机变/);
   assert.match(characterDetailSource, /善名/);
+});
+
+test("character detail ability panel keeps the old compact five-stat order", () => {
+  const characterDetailSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "character", "character-detail-view.ts"),
+    "utf8"
+  );
+  const summaryRowsMatch = characterDetailSource.match(
+    /const ABILITY_SUMMARY_ROWS[\s\S]*?\] as const;/
+  );
+
+  assert.ok(summaryRowsMatch, "ability summary rows must be explicitly defined");
+  const summaryRowsSource = summaryRowsMatch[0];
+  const labels = ["统率", "武力", "政务", "智谋", "魅力"];
+  const labelIndexes = labels.map((label) => summaryRowsSource.indexOf(label));
+
+  for (const [index, label] of labels.entries()) {
+    assert.ok(labelIndexes[index] >= 0, `missing ability label ${label}`);
+    if (index > 0) {
+      assert.ok(
+        labelIndexes[index - 1] < labelIndexes[index],
+        `ability label ${label} is out of order`
+      );
+    }
+  }
+
+  assert.match(characterDetailSource, /ABILITY_SUMMARY_ROWS\.map\(\(row\) =>\s*renderAbilitySummaryRow/);
+  assert.doesNotMatch(characterDetailSource, /ABILITY_GROUPS\.map\(\(group\) =>\s*renderAbilitySummaryGroup/);
+});
+
+test("character detail ability panel keeps compact two-column meter layout", () => {
+  const prototypeCss = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "prototype.css"),
+    "utf8"
+  );
+  const abilityPanelBlock = prototypeCss.match(
+    /\.c-character-detail__ability-panel\s*\{[\s\S]*?\n\}/
+  );
+  const abilityGridBlock = prototypeCss.match(
+    /\.c-character-detail__ability-grid\s*\{[\s\S]*?\n\}/
+  );
+  const abilityStatRowBlock = prototypeCss.match(
+    /\.c-character-detail__ability-grid\s+\.c-character-detail__stat-row\s*\{[\s\S]*?\n\}/
+  );
+
+  assert.ok(abilityPanelBlock, "ability panel css block must exist");
+  assert.match(abilityPanelBlock[0], /position:\s*absolute;/);
+  assert.match(abilityPanelBlock[0], /padding:[^;]*2\.4%[^;]*;/);
+
+  assert.ok(abilityGridBlock, "ability grid css block must exist");
+  assert.match(abilityGridBlock[0], /position:\s*absolute;/);
+  assert.match(abilityGridBlock[0], /top:\s*clamp\([^;]+?\);/);
+  assert.match(abilityGridBlock[0], /left:\s*4\.4%;/);
+  assert.match(abilityGridBlock[0], /right:\s*4\.4%;/);
+  assert.match(abilityGridBlock[0], /bottom:\s*clamp\([^;]+?\);/);
+  assert.match(abilityGridBlock[0], /display:\s*grid;/);
+  assert.match(abilityGridBlock[0], /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/);
+  assert.doesNotMatch(abilityGridBlock[0], /flex-direction:\s*column/);
+  assert.doesNotMatch(abilityGridBlock[0], /height:\s*100%/);
+
+  assert.ok(abilityStatRowBlock, "ability grid stat row override must exist");
+  assert.match(abilityStatRowBlock[0], /grid-template-columns:\s*clamp\([^;]+?\)\s+minmax\([^;]+?\)\s+clamp\([^;]+?\);/);
+  assert.match(abilityStatRowBlock[0], /min-height:\s*0;/);
+});
+
+test("character detail ability layout preset leaves room below the title", () => {
+  const layoutPresetSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "layout-editor-presets.ts"),
+    "utf8"
+  );
+  const abilityComponentMatch = layoutPresetSource.match(
+    /id:\s*"character-detail-ability-info"[\s\S]*?id:\s*"character-detail-skill-info"/
+  );
+
+  assert.ok(abilityComponentMatch, "ability layout preset component must exist");
+  const abilityComponentSource = abilityComponentMatch[0];
+  const titleRectMatch = abilityComponentSource.match(
+    /createElement\("title"[\s\S]*?createRect\((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)/
+  );
+  const contentRectMatch = abilityComponentSource.match(
+    /createElement\("content"[\s\S]*?createRect\((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)/
+  );
+
+  assert.ok(titleRectMatch, "ability title rect must exist");
+  assert.ok(contentRectMatch, "ability content rect must exist");
+
+  const titleBottom = Number(titleRectMatch[2]) + Number(titleRectMatch[4]);
+  const contentTop = Number(contentRectMatch[2]);
+  const contentHeight = Number(contentRectMatch[4]);
+
+  assert.ok(contentTop >= titleBottom + 4, "ability content must start below the title");
+  assert.ok(contentHeight >= 80, "ability content must fit three compact grid rows");
 });
 
 test("opening and closing character detail resets the ability detail popup state", () => {

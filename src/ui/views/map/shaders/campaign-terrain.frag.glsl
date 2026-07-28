@@ -53,6 +53,8 @@ varying vec3 vNormal;
 varying vec3 vCameraNormal;
 varying vec2 vTerrainPosition;
 
+const float GRASS_TEXTURE_TILING_SCALE = 1.35;
+
 float colorDistance(vec3 left, vec3 right) {
   return distance(left, right);
 }
@@ -532,7 +534,10 @@ vec3 applyCampaignHistoricTone(vec3 color) {
 }
 
 vec3 sampleGrassMaterial(vec2 uv) {
-  return texture2D(uGrassTexture, fract(uv * uLandTextureTiling)).rgb;
+  return texture2D(
+    uGrassTexture,
+    fract(uv * (uLandTextureTiling * GRASS_TEXTURE_TILING_SCALE))
+  ).rgb;
 }
 
 vec3 sampleSandMaterial(vec2 uv) {

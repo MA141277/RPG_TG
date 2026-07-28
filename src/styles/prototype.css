@@ -2929,8 +2929,8 @@
   top: 40.7%;
   width: 54.9%;
   height: 18%;
-  position: relative;
-  padding: 3.2% 4.4% 1.6%;
+  position: absolute;
+  padding: 2.4% 4.4% 1.8%;
   background: url("../../ui/yuansu/具体面板ui/006_panel_ability_info_with_tab_1.0.png") center / contain no-repeat;
 }
 
@@ -2991,13 +2991,27 @@
 }
 
 .c-character-detail__ability-grid {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 6px;
-  height: 100%;
-  padding-top: 1.2%;
+  position: absolute;
+  top: clamp(2rem, 4.2vw, 3.35rem);
+  right: 4.4%;
+  bottom: clamp(0.65rem, 1.6vw, 1.25rem);
+  left: 4.4%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: center;
+  gap: clamp(4px, 1.2vw, 10px) clamp(10px, 2.4vw, 22px);
   overflow: hidden;
+}
+
+.c-character-detail__ability-grid .c-character-detail__stat-row {
+  grid-template-columns: clamp(2.1rem, 3.2vw, 3.4rem) minmax(2.8rem, 1fr) clamp(1.3rem, 2vw, 2rem);
+  gap: clamp(4px, 0.7vw, 8px);
+  min-height: 0;
+  line-height: 1.08;
+}
+
+.c-character-detail__ability-grid .c-character-detail__meter {
+  height: clamp(8px, 0.75vw, 11px);
 }
 
 .c-character-detail__ability-group {

@@ -14,6 +14,7 @@ import type {
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
 type CharacterDetailAbilityKey =
+  | "leadership"
   | "martial"
   | "strength"
   | "physique"
@@ -39,6 +40,14 @@ type CharacterDetailAbilityGroup = {
     key: CharacterDetailAbilityKey;
   }>;
 };
+
+const ABILITY_SUMMARY_ROWS = [
+  { label: "统率", key: "leadership" },
+  { label: "武力", key: "martial" },
+  { label: "政务", key: "politics" },
+  { label: "智谋", key: "intelligence" },
+  { label: "魅力", key: "charm" },
+] as const;
 
 const ABILITY_GROUPS: CharacterDetailAbilityGroup[] = [
   {
@@ -350,6 +359,8 @@ function getAbilityValue(
   }
 
   switch (abilityKey) {
+    case "leadership":
+      return character.stats.leadership;
     case "martial":
     case "strength":
     case "physique":
@@ -373,21 +384,19 @@ function getAbilityValue(
   }
 }
 
-function renderAbilitySummaryGroup(
+function renderAbilitySummaryRow(
   character: CharacterDefinition,
   options: CharacterDetailViewOptions,
-  group: CharacterDetailAbilityGroup
+  row: (typeof ABILITY_SUMMARY_ROWS)[number]
 ): string {
-  const groupValue = getAbilityValue(character, options, group.key);
+  const value = getAbilityValue(character, options, row.key);
 
   return `
-    <section class="c-character-detail__ability-group">
-      <div class="c-character-detail__stat-row c-character-detail__stat-row--primary">
-        <span class="c-character-detail__label">${group.label}</span>
-        ${renderMeter(groupValue)}
-        <strong>${groupValue}</strong>
-      </div>
-    </section>
+    <div class="c-character-detail__stat-row c-character-detail__stat-row--primary">
+      <span class="c-character-detail__label">${row.label}</span>
+      ${renderMeter(value)}
+      <strong>${value}</strong>
+    </div>
   `;
 }
 
@@ -624,16 +633,9 @@ export function renderCharacterDetailView(
               className: "c-character-detail__ability-grid",
             })}>
               ${renderElementResizeHandle(options, "character-detail-ability-info", "content")}
-              ${ABILITY_GROUPS.map((group) =>
-                renderAbilitySummaryGroup(character, options, group)
+              ${ABILITY_SUMMARY_ROWS.map((row) =>
+                renderAbilitySummaryRow(character, options, row)
               ).join("")}
-              <section class="c-character-detail__ability-group c-character-detail__ability-group--reputation">
-                <div class="c-character-detail__stat-row c-character-detail__stat-row--primary">
-                  <span class="c-character-detail__label">名声</span>
-                  ${renderMeter(goodwill)}
-                  <strong>${goodwill}</strong>
-                </div>
-              </section>
             </div>
             ${renderAbilityDetailPopup(
               character,
