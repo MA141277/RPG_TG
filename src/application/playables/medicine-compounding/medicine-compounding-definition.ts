@@ -13,6 +13,7 @@ import {
   convertHouseActivityDaysToSegments,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import { readNumericPersonAttributeBySemanticKey } from "../../character/person-attribute-runtime";
 import { getMedicineHouseContentDefaults } from "../../medicine-house/medicine-house-content-defaults";
 import {
   addHerbSelection,
@@ -109,7 +110,7 @@ function getPlayerMedicineSkill(
     playerCharacter,
     `Player character not found for id "${playerCharacterId}" in medicine compounding playable.`
   );
-  return playerCharacter.skills?.medicine ?? 0;
+  return readNumericPersonAttributeBySemanticKey(playerCharacter, "medicine", 0);
 }
 
 function formatOutcomeSummary(outcome: MedicineHouseActionOutcome): string[] {

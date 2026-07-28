@@ -5,6 +5,7 @@ import type {
 } from "../../domain/character";
 import type {
   ScriptEditorPersonRecord,
+  ScriptEditorPersonLegacyFieldSet,
   ScriptEditorTypedAttributeRecord,
   ScriptEditorTypedAttributeType,
 } from "../../domain/script-editor-project";
@@ -12,6 +13,7 @@ import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocat
 
 export const SCRIPT_EDITOR_PERSON_TAB_KEYS = [
   "profile",
+  "attribute-group",
   "dialogues",
   "trade",
   "events",
@@ -31,6 +33,10 @@ const SCRIPT_EDITOR_PERSON_ATTRIBUTE_EXCLUDED_ROOT_KEYS = new Set([
   "portraitId",
   "portraitVariantId",
   "portraitVariants",
+  "attributeGroup",
+  "attributeGroups",
+  "attributeMappings",
+  "attributeValues",
   "extendedAttributes",
   "dialogueIds",
   "eventIds",
@@ -94,8 +100,13 @@ export type ScriptEditorPersonRuntimeDefaults = {
   portraitId?: string;
 };
 
+export type NormalizeScriptEditorPersonRecordOptions = {
+  portraitVariants?: CharacterDefinition["portraitVariants"];
+};
+
 export function normalizeScriptEditorPersonRecord(
-  value: Record<string, unknown>
+  value: Record<string, unknown>,
+  _options: NormalizeScriptEditorPersonRecordOptions = {}
 ): ScriptEditorPersonRecord {
   const { portraitVariants: _portraitVariants, ...valueWithoutPortraitVariants } =
     value as Record<string, unknown>;
@@ -112,6 +123,24 @@ export function normalizeScriptEditorPersonRecord(
     id: readString(value.id, "person.unknown"),
     name: readString(value.name, "未命名人物"),
     personType,
+    attributeGroup: normalizePersonAttributeGroupRecord(
+      value.attributeGroup,
+      value.attributeGroups
+    ),
+    attributeMappings: mergePersonAttributeMappings(
+      normalizePersonAttributeMappings(value.attributeMappings),
+      mergeScriptEditorPersonExtendedAttributes(
+        normalizeKeyValueEntries(value.extendedAttributes),
+        collectScriptEditorPersonImportedAttributes(valueWithoutPortraitVariants)
+      )
+    ),
+    attributeValues: mergePersonAttributeValues(
+      normalizePersonAttributeValues(value.attributeValues),
+      mergeScriptEditorPersonExtendedAttributes(
+        normalizeKeyValueEntries(value.extendedAttributes),
+        collectScriptEditorPersonImportedAttributes(valueWithoutPortraitVariants)
+      )
+    ),
     role,
     title: readString(value.title, ""),
     occupation: readString(value.occupation, ""),
@@ -120,14 +149,32 @@ export function normalizeScriptEditorPersonRecord(
     houseId: readString(value.houseId, ""),
     portraitId: readString(value.portraitId, ""),
     portraitVariantId: readString(value.portraitVariantId, ""),
-    extendedAttributes: mergeScriptEditorPersonExtendedAttributes(
-      normalizeKeyValueEntries(value.extendedAttributes),
-      collectScriptEditorPersonImportedAttributes(valueWithoutPortraitVariants)
-    ),
     dialogueIds: normalizeStringArray(value.dialogueIds),
     eventIds: normalizeStringArray(value.eventIds),
     tradeBinding: normalizeTradeBinding(value.tradeBinding),
   });
+}
+
+export function readScriptEditorPersonStringField(
+  person: ScriptEditorPersonRecord,
+  field: string,
+  fallback = ""
+): string {
+  const value = person[field];
+  return typeof value === "string" ? value : fallback;
+}
+
+export function readScriptEditorPersonStringArrayField(
+  person: ScriptEditorPersonRecord,
+  field: string
+): string[] {
+  return normalizeStringArray(person[field]);
+}
+
+export function readScriptEditorPersonTypedAttributes(
+  person: ScriptEditorPersonRecord
+): ScriptEditorTypedAttributeRecord[] {
+  return readScriptEditorPersonAuthoringAttributes(person);
 }
 
 export function createDefaultScriptEditorPersonRecord(
@@ -140,6 +187,9 @@ export function createDefaultScriptEditorPersonRecord(
       typeof indexOrId === "string"
         ? indexOrId
         : createDefaultScriptEditorCanonicalId("people", indexOrId),
+    attributeGroup: {},
+    attributeMappings: [],
+    attributeValues: [],
     name: `人物 ${suffix}`,
     personType: suffix === 1 ? "角色" : "NPC",
     role: suffix === 1 ? "playable" : "support",
@@ -150,7 +200,6 @@ export function createDefaultScriptEditorPersonRecord(
     houseId: "",
     portraitId: "",
     portraitVariantId: "",
-    extendedAttributes: [],
     dialogueIds: [],
     eventIds: [],
     tradeBinding: {
@@ -167,11 +216,20 @@ export function materializeScriptEditorPersonRuntimeCharacter(
   const normalizedPerson = normalizeScriptEditorPersonRecord(
     person as Record<string, unknown>
   ) as ScriptEditorPersonRecord & Partial<CharacterDefinition>;
+  const {
+    attributeGroup: authoringAttributeGroup,
+    attributeGroups: _legacyAttributeGroups,
+    ...runtimeCompatiblePerson
+  } = normalizedPerson as ScriptEditorPersonRecord &
+    Partial<CharacterDefinition> & { attributeGroups?: CharacterDefinition["attributeGroups"] };
   const stats = normalizeCharacterStats(normalizedPerson.stats);
   const skills = normalizeCharacterSkills(normalizedPerson.skills);
+  const runtimeAttributeGroups = convertAuthoringAttributeGroupToRuntimeGroups(
+    authoringAttributeGroup ?? {}
+  );
 
   return {
-    ...normalizedPerson,
+    ...runtimeCompatiblePerson,
     id: normalizedPerson.id,
     name: normalizedPerson.name,
     birthYear: readFiniteNumber(normalizedPerson.birthYear, 0),
@@ -195,6 +253,11 @@ export function materializeScriptEditorPersonRuntimeCharacter(
     availableFunctions: Array.isArray(normalizedPerson.availableFunctions)
       ? normalizedPerson.availableFunctions
       : [],
+    ...(runtimeAttributeGroups.length > 0
+      ? {
+          attributeGroups: runtimeAttributeGroups,
+        }
+      : {}),
     skills,
     ...(normalizedPerson.personType == null
       ? {}
@@ -204,7 +267,7 @@ export function materializeScriptEditorPersonRuntimeCharacter(
       ? {}
       : { houseId: normalizedPerson.houseId }),
     portraitVariantId: normalizedPerson.portraitVariantId ?? null,
-  };
+  } as CharacterDefinition;
 }
 
 export function updateScriptEditorPersonField(
@@ -233,11 +296,6 @@ export function updateScriptEditorPersonField(
       });
     case "title":
       return updateScriptEditorPersonMappedAttribute(person, "title", value);
-    case "role":
-      return materializeScriptEditorPersonExtendedAttributes({
-        ...person,
-        role: value,
-      });
     case "birthYear":
       return updateScriptEditorPersonMappedAttribute(person, "birthYear", normalizedValue);
     case "deathYear":
@@ -295,7 +353,6 @@ export function updateScriptEditorPersonField(
     case "stats.politics":
     case "stats.charm":
     case "stats.fame":
-    case "stats.gold":
     case "skills.ashigaru":
     case "skills.horse":
     case "skills.teppo":
@@ -307,11 +364,8 @@ export function updateScriptEditorPersonField(
     case "skills.construction":
     case "skills.development":
     case "skills.mining":
-    case "skills.arithmetic":
     case "skills.etiquette":
-    case "skills.rhetoric":
     case "skills.tea":
-    case "skills.medicine":
       return updateScriptEditorPersonMappedAttribute(person, field, normalizedValue);
     case "tradeBinding.entryId":
       return materializeScriptEditorPersonExtendedAttributes({
@@ -343,11 +397,22 @@ export function appendScriptEditorPersonAttribute(
   person: ScriptEditorPersonRecord,
   type: ScriptEditorTypedAttributeType = "string"
 ): ScriptEditorPersonRecord {
+  const nextKey = allocateNextScriptEditorPersonAttributeKey(person);
+  const nextValue =
+    type === "number" ? 0 : type === "boolean" ? false : "";
   return materializeScriptEditorPersonExtendedAttributes({
     ...person,
-    extendedAttributes: [
-      ...normalizeKeyValueEntries(person.extendedAttributes),
-      { key: "", label: "", type: normalizeTypedAttributeType(type), value: "" },
+    attributeMappings: [
+      ...normalizePersonAttributeMappings(person.attributeMappings),
+      {
+        key: nextKey,
+        keyName: "",
+        type: normalizeTypedAttributeType(type),
+      },
+    ],
+    attributeValues: [
+      ...normalizePersonAttributeValues(person.attributeValues),
+      { key: nextKey, value: nextValue },
     ],
   });
 }
@@ -356,10 +421,19 @@ export function removeScriptEditorPersonAttribute(
   person: ScriptEditorPersonRecord,
   index: number
 ): ScriptEditorPersonRecord {
+  const mappings = normalizePersonAttributeMappings(person.attributeMappings);
+  const removedKey = mappings[index]?.key ?? "";
+  const nextAttributeGroup = removeScriptEditorPersonAttributeGroupKey(
+    normalizePersonAttributeGroupRecord(person.attributeGroup),
+    removedKey
+  );
+
   return materializeScriptEditorPersonExtendedAttributes({
     ...person,
-    extendedAttributes: normalizeKeyValueEntries(person.extendedAttributes).filter(
-      (_, entryIndex) => entryIndex !== index
+    attributeGroup: nextAttributeGroup,
+    attributeMappings: mappings.filter((_, entryIndex) => entryIndex !== index),
+    attributeValues: normalizePersonAttributeValues(person.attributeValues).filter(
+      (entry) => entry.key !== removedKey
     ),
   });
 }
@@ -367,20 +441,143 @@ export function removeScriptEditorPersonAttribute(
 export function updateScriptEditorPersonAttribute(
   person: ScriptEditorPersonRecord,
   index: number,
-  field: keyof ScriptEditorTypedAttributeRecord | "key",
+  field: keyof ScriptEditorTypedAttributeRecord | "key" | "key-name",
   value: string
 ): ScriptEditorPersonRecord {
+  const mappings = normalizePersonAttributeMappings(person.attributeMappings);
+  const mapping = mappings[index];
+  if (mapping == null) {
+    return person;
+  }
+  const normalizedField = field === "label" ? "key-name" : field;
+  const normalizedType =
+    normalizedField === "type"
+      ? normalizeTypedAttributeType(value)
+      : mapping.type;
+  const nextMappings = mappings.map((entry, entryIndex) =>
+    entryIndex === index
+      ? {
+          ...entry,
+          ...(normalizedField === "key"
+            ? { key: value.trim() }
+            : normalizedField === "key-name"
+              ? { keyName: value }
+              : normalizedField === "type"
+                ? { type: normalizedType }
+                : {}),
+        }
+      : entry
+  );
+  const currentKey = mapping.key;
+  const nextKey = nextMappings[index]?.key ?? currentKey;
+  const existingValues = normalizePersonAttributeValues(person.attributeValues).filter(
+    (entry) => entry.key !== currentKey
+  );
+  const currentValue =
+    normalizePersonAttributeValues(person.attributeValues).find(
+      (entry) => entry.key === currentKey
+    )?.value ?? "";
+  const nextRawValue =
+    normalizedField === "value"
+      ? normalizeTypedAttributeValue(normalizedType, value)
+      : normalizedField === "type"
+        ? normalizeTypedAttributeValue(normalizedType, currentValue)
+        : currentValue;
+
   return materializeScriptEditorPersonExtendedAttributes({
     ...person,
-    extendedAttributes: normalizeKeyValueEntries(person.extendedAttributes).map(
-      (entry, entryIndex) =>
-        entryIndex === index
-          ? normalizeScriptEditorPersonAttributeEntry({
-              ...entry,
-              [field]: field === "type" ? normalizeTypedAttributeType(value) : value,
-            })
-          : entry
+    attributeMappings: nextMappings,
+    attributeValues: [...existingValues, { key: nextKey, value: nextRawValue }],
+    attributeGroup: renameScriptEditorPersonAttributeGroupKey(
+      normalizePersonAttributeGroupRecord(person.attributeGroup),
+      currentKey,
+      nextKey
     ),
+  });
+}
+
+export function appendScriptEditorPersonAttributeGroup(
+  person: ScriptEditorPersonRecord
+): ScriptEditorPersonRecord {
+  const attributeGroup = normalizePersonAttributeGroupRecord(person.attributeGroup);
+  const numericKeys = Object.keys(attributeGroup)
+    .map((entry) => Number.parseInt(entry, 10))
+    .filter((entry) => Number.isInteger(entry) && entry >= 0);
+  const nextGroupId = String((numericKeys.length === 0 ? 1000 : Math.max(...numericKeys)) + 1);
+
+  return materializeScriptEditorPersonExtendedAttributes({
+    ...person,
+    attributeGroup: {
+      ...attributeGroup,
+      [nextGroupId]: {
+        title: "",
+        order: Object.keys(attributeGroup).length,
+        attributeKeys: [],
+      },
+    },
+  });
+}
+
+export function removeScriptEditorPersonAttributeGroup(
+  person: ScriptEditorPersonRecord,
+  groupId: string
+): ScriptEditorPersonRecord {
+  const attributeGroup = { ...normalizePersonAttributeGroupRecord(person.attributeGroup) };
+  delete attributeGroup[groupId];
+  return materializeScriptEditorPersonExtendedAttributes({
+    ...person,
+    attributeGroup,
+  });
+}
+
+export function updateScriptEditorPersonAttributeGroupField(
+  person: ScriptEditorPersonRecord,
+  groupId: string,
+  field: "title",
+  value: string
+): ScriptEditorPersonRecord {
+  const currentGroup = normalizePersonAttributeGroupRecord(person.attributeGroup)[groupId];
+  if (currentGroup == null) {
+    return person;
+  }
+
+  return materializeScriptEditorPersonExtendedAttributes({
+    ...person,
+    attributeGroup: {
+      ...normalizePersonAttributeGroupRecord(person.attributeGroup),
+      [groupId]: {
+        ...currentGroup,
+        [field]: value,
+      },
+    },
+  });
+}
+
+export function toggleScriptEditorPersonAttributeGroupItem(
+  person: ScriptEditorPersonRecord,
+  groupId: string,
+  attributeKey: string,
+  enabled: boolean
+): ScriptEditorPersonRecord {
+  const attributeGroup = normalizePersonAttributeGroupRecord(person.attributeGroup);
+  const currentGroup = attributeGroup[groupId];
+  if (currentGroup == null || attributeKey.trim().length === 0) {
+    return person;
+  }
+
+  const nextKeys = enabled
+    ? Array.from(new Set([...currentGroup.attributeKeys, attributeKey]))
+    : currentGroup.attributeKeys.filter((key) => key !== attributeKey);
+
+  return materializeScriptEditorPersonExtendedAttributes({
+    ...person,
+    attributeGroup: {
+      ...attributeGroup,
+      [groupId]: {
+        ...currentGroup,
+        attributeKeys: nextKeys,
+      },
+    },
   });
 }
 
@@ -431,32 +628,38 @@ function updateScriptEditorPersonMappedAttribute(
     return person;
   }
 
-  const entries = normalizeKeyValueEntries(person.extendedAttributes);
-  const existingIndex = entries.findIndex(
+  const mappings = normalizePersonAttributeMappings(person.attributeMappings);
+  const existingIndex = mappings.findIndex(
     (entry) => entry.key.trim() === normalizedKey
   );
-  const nextEntry = {
+  const nextMapping = {
     key: normalizedKey,
-    label: getScriptEditorPersonAttributeLabel(normalizedKey),
+    keyName: getScriptEditorPersonAttributeLabel(normalizedKey),
     type: inferScriptEditorPersonAttributeType(normalizedKey, value),
-    value,
   };
-  const nextEntries =
+  const nextMappings =
     existingIndex >= 0
-      ? entries.map((entry, index) =>
+      ? mappings.map((entry, index) =>
           index === existingIndex
             ? {
                 ...entry,
                 key: normalizedKey,
-                value,
               }
             : entry
         )
-      : [...entries, nextEntry];
+      : [...mappings, nextMapping];
+  const nextValues = normalizePersonAttributeValues(person.attributeValues).filter(
+    (entry) => entry.key !== normalizedKey
+  );
+  nextValues.push({
+    key: normalizedKey,
+    value: normalizeTypedAttributeValue(nextMapping.type, value),
+  });
 
   return materializeScriptEditorPersonExtendedAttributes({
     ...person,
-    extendedAttributes: nextEntries,
+    attributeMappings: nextMappings,
+    attributeValues: nextValues,
   });
 }
 
@@ -569,12 +772,93 @@ function mergeScriptEditorPersonExtendedAttributes(
   return merged;
 }
 
+function readScriptEditorPersonAuthoringAttributes(
+  person: Pick<
+    ScriptEditorPersonRecord,
+    "attributeMappings" | "attributeValues"
+  >
+): ScriptEditorTypedAttributeRecord[] {
+  const valuesByKey = new Map(
+    normalizePersonAttributeValues(person.attributeValues).map((entry) => [
+      entry.key,
+      entry.value,
+    ])
+  );
+
+  return normalizePersonAttributeMappings(person.attributeMappings).map((entry) => ({
+    key: entry.key,
+    label: entry.keyName,
+    type: entry.type,
+    value: normalizeTypedAttributeValue(entry.type, valuesByKey.get(entry.key)),
+    ...(entry.type === "enum" && entry.options != null
+      ? { options: [...entry.options] }
+      : {}),
+  }));
+}
+
+function mergePersonAttributeMappings(
+  existing: ScriptEditorPersonRecord["attributeMappings"],
+  imported: ScriptEditorTypedAttributeRecord[]
+): ScriptEditorPersonRecord["attributeMappings"] {
+  const normalizedExisting = normalizePersonAttributeMappings(existing);
+  const existingKeys = new Set(normalizedExisting.map((entry) => entry.key.trim()));
+  const merged = [...normalizedExisting];
+
+  for (const entry of imported) {
+    const key = entry.key.trim();
+    if (key.length === 0 || existingKeys.has(key)) {
+      continue;
+    }
+    merged.push({
+      key,
+      keyName: entry.label ?? getScriptEditorPersonAttributeLabel(key),
+      type: entry.type,
+      ...(entry.type === "enum" && entry.options != null
+        ? { options: [...entry.options] }
+        : {}),
+    });
+    existingKeys.add(key);
+  }
+
+  return merged;
+}
+
+function mergePersonAttributeValues(
+  existing: ScriptEditorPersonRecord["attributeValues"],
+  imported: ScriptEditorTypedAttributeRecord[]
+): ScriptEditorPersonRecord["attributeValues"] {
+  const valuesByKey = new Map(
+    normalizePersonAttributeValues(existing).map((entry) => [entry.key.trim(), entry.value])
+  );
+
+  for (const entry of imported) {
+    const key = entry.key.trim();
+    if (key.length === 0 || valuesByKey.has(key)) {
+      continue;
+    }
+    valuesByKey.set(key, normalizeTypedAttributeValue(entry.type, entry.value));
+  }
+
+  return Array.from(valuesByKey.entries()).map(([key, value]) => ({ key, value }));
+}
+
 function materializeScriptEditorPersonExtendedAttributes(
-  person: ScriptEditorPersonRecord
+  person: ScriptEditorPersonRecord & ScriptEditorPersonLegacyFieldSet
 ): ScriptEditorPersonRecord {
-  const extendedAttributes = normalizeKeyValueEntries(person.extendedAttributes);
+  const attributeMappings = normalizePersonAttributeMappings(person.attributeMappings);
+  const attributeValues = normalizePersonAttributeValues(person.attributeValues);
+  const attributeGroup = normalizePersonAttributeGroupRecord(person.attributeGroup);
+  const extendedAttributes = readScriptEditorPersonAuthoringAttributes({
+    ...person,
+    attributeMappings,
+    attributeValues,
+    attributeGroup,
+  } as ScriptEditorPersonRecord);
   const nextPerson = {
     ...person,
+    attributeGroup,
+    attributeMappings,
+    attributeValues,
     extendedAttributes,
   } as ScriptEditorPersonRecord;
   const existingLeafEntries = collectScriptEditorPersonImportedAttributes(
@@ -599,7 +883,7 @@ function materializeScriptEditorPersonExtendedAttributes(
 
   for (const entry of extendedAttributes) {
     const normalizedKey = entry.key.trim();
-    if (normalizedKey.length === 0) {
+    if (normalizedKey.length === 0 || /^\d+$/.test(normalizedKey)) {
       continue;
     }
 
@@ -893,6 +1177,180 @@ function normalizeStringArray(value: unknown): string[] {
   return value
     .filter((entry) => typeof entry === "string")
     .map((entry) => entry.trim());
+}
+
+function normalizePersonAttributeGroupRecord(
+  value: unknown,
+  legacyValue?: unknown
+): ScriptEditorPersonRecord["attributeGroup"] {
+  if (value != null && typeof value === "object" && !Array.isArray(value)) {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([key]) => key.trim().length > 0)
+        .map(([key, entry]) => {
+          const record =
+            entry != null && typeof entry === "object" && !Array.isArray(entry)
+              ? (entry as Record<string, unknown>)
+              : {};
+          return [
+            key,
+            {
+              title: readString(record.title, ""),
+              order:
+                typeof record.order === "number" && Number.isFinite(record.order)
+                  ? record.order
+                  : 0,
+              attributeKeys: normalizeStringArray(record.attributeKeys),
+            },
+          ];
+        })
+    );
+  }
+
+  if (!Array.isArray(legacyValue)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    legacyValue
+      .filter(
+        (entry) => entry != null && typeof entry === "object" && !Array.isArray(entry)
+      )
+      .flatMap((entry) => {
+        const record = entry as Record<string, unknown>;
+        const key = readString(record.key, "").trim();
+        if (key.length === 0) {
+          return [];
+        }
+        return [
+          [
+            key,
+            {
+              title: readString(record.keyName, ""),
+              order:
+                typeof record.order === "number" && Number.isFinite(record.order)
+                  ? record.order
+                  : 0,
+              attributeKeys: normalizeStringArray(record.itemKeys),
+            },
+          ],
+        ];
+      })
+  );
+}
+
+function normalizePersonAttributeMappings(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter(
+      (entry) => entry != null && typeof entry === "object" && !Array.isArray(entry)
+    )
+    .map((entry) => {
+      const record = entry as Record<string, unknown>;
+      const type = normalizeTypedAttributeType(record.type);
+      return {
+        key: readString(record.key, ""),
+        keyName: readString(record.keyName, ""),
+        ...(readString(record.semanticKey, "").length > 0
+          ? { semanticKey: readString(record.semanticKey, "") }
+          : {}),
+        type,
+        ...(type === "enum" ? { options: normalizeStringArray(record.options) } : {}),
+      };
+    });
+}
+
+function normalizePersonAttributeValues(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter(
+      (entry) => entry != null && typeof entry === "object" && !Array.isArray(entry)
+    )
+    .flatMap((entry) => {
+      const record = entry as Record<string, unknown>;
+      const key = readString(record.key, "");
+      const rawValue = record.value;
+      if (key.length === 0) {
+        return [];
+      }
+      if (
+        typeof rawValue !== "string" &&
+        typeof rawValue !== "number" &&
+        typeof rawValue !== "boolean"
+      ) {
+        return [];
+      }
+      return [{ key, value: rawValue }];
+    });
+}
+
+function allocateNextScriptEditorPersonAttributeKey(
+  person: ScriptEditorPersonRecord
+): string {
+  const numericKeys = normalizePersonAttributeMappings(person.attributeMappings)
+    .map((entry) => Number.parseInt(entry.key, 10))
+    .filter((value) => Number.isInteger(value) && value >= 0);
+  return String((numericKeys.length === 0 ? 0 : Math.max(...numericKeys)) + 1);
+}
+
+function removeScriptEditorPersonAttributeGroupKey(
+  attributeGroup: ScriptEditorPersonRecord["attributeGroup"],
+  removedKey: string
+): ScriptEditorPersonRecord["attributeGroup"] {
+  if (removedKey.trim().length === 0) {
+    return attributeGroup;
+  }
+
+  return Object.fromEntries(
+    Object.entries(attributeGroup).map(([groupId, entry]) => [
+      groupId,
+      {
+        ...entry,
+        attributeKeys: entry.attributeKeys.filter((key) => key !== removedKey),
+      },
+    ])
+  );
+}
+
+function renameScriptEditorPersonAttributeGroupKey(
+  attributeGroup: ScriptEditorPersonRecord["attributeGroup"],
+  previousKey: string,
+  nextKey: string
+): ScriptEditorPersonRecord["attributeGroup"] {
+  if (previousKey === nextKey || previousKey.trim().length === 0 || nextKey.trim().length === 0) {
+    return attributeGroup;
+  }
+
+  return Object.fromEntries(
+    Object.entries(attributeGroup).map(([groupId, entry]) => [
+      groupId,
+      {
+        ...entry,
+        attributeKeys: entry.attributeKeys.map((key) =>
+          key === previousKey ? nextKey : key
+        ),
+      },
+    ])
+  );
+}
+
+function convertAuthoringAttributeGroupToRuntimeGroups(
+  attributeGroup: ScriptEditorPersonRecord["attributeGroup"] | undefined
+): NonNullable<CharacterDefinition["attributeGroups"]> {
+  return Object.entries(normalizePersonAttributeGroupRecord(attributeGroup))
+    .sort(([, left], [, right]) => left.order - right.order)
+    .map(([key, entry]) => ({
+      key,
+      keyName: entry.title,
+      order: entry.order,
+      itemKeys: [...entry.attributeKeys],
+    }));
 }
 
 function readString(value: unknown, fallback: string): string {

@@ -1,5 +1,6 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
+import type { CharacterStatusById } from "../../domain/character-status";
 import {
   getMedicineHouseFavorabilityVariableKey,
   getMedicineHouseTimeVariableKey,
@@ -10,10 +11,12 @@ import {
   getPlayerPoisonVariableKey,
   type MedicineHouseActionOutcome,
 } from "../../domain/medicine-house";
+import { mutateCharacterNumericAttributeBySemanticKey } from "../character/runtime-property-mutation";
 
 export type MedicineHouseMutationResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 };
 
 function withVariable(
@@ -134,21 +137,18 @@ export function mutatePlayerGold(
   playerCharacterId: string,
   delta: number
 ): MedicineHouseMutationResult {
-  return {
+  const result = mutateCharacterNumericAttributeBySemanticKey({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId) {
-        return characterDefinition;
-      }
-
-      return {
-        ...characterDefinition,
-        stats: {
-          ...characterDefinition.stats,
-          gold: characterDefinition.stats.gold + delta,
-        },
-      };
-    }),
+    characterDefinitions,
+    characterId: playerCharacterId,
+    semanticKey: "gold",
+    operation: delta >= 0 ? "add" : "subtract",
+    value: Math.abs(delta),
+  });
+  return {
+    state: result.state,
+    characterDefinitions: result.characterDefinitions,
+    characterStatusById: result.characterStatusById,
   };
 }
 
@@ -158,21 +158,18 @@ export function mutatePlayerMedicineSkill(
   playerCharacterId: string,
   delta: number
 ): MedicineHouseMutationResult {
-  return {
+  const result = mutateCharacterNumericAttributeBySemanticKey({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId || characterDefinition.skills == null) {
-        return characterDefinition;
-      }
-
-      return {
-        ...characterDefinition,
-        skills: {
-          ...characterDefinition.skills,
-          medicine: Math.max(0, characterDefinition.skills.medicine + delta),
-        },
-      };
-    }),
+    characterDefinitions,
+    characterId: playerCharacterId,
+    semanticKey: "medicine",
+    operation: delta >= 0 ? "add" : "subtract",
+    value: Math.abs(delta),
+  });
+  return {
+    state: result.state,
+    characterDefinitions: result.characterDefinitions,
+    characterStatusById: result.characterStatusById,
   };
 }
 

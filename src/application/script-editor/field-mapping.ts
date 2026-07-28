@@ -53,6 +53,12 @@ export type ScriptEditorFieldDefinitionDiagnostic = {
 
 const FIELD_VALUE_TYPE_SET = new Set<string>(SCRIPT_EDITOR_FIELD_VALUE_TYPES);
 
+type EditableCharacterStatKey = Exclude<CharacterStatKey, "gold">;
+type EditableSkillKey = Exclude<
+  SkillKey,
+  "arithmetic" | "rhetoric" | "medicine"
+>;
+
 const CHARACTER_STAT_LABELS: Record<CharacterStatKey, string> = {
   leadership: "统率",
   martial: "武勇",
@@ -63,11 +69,16 @@ const CHARACTER_STAT_LABELS: Record<CharacterStatKey, string> = {
   gold: "金钱",
 };
 
-const CHARACTER_STAT_KEYS = Object.keys(
-  CHARACTER_STAT_LABELS
-) as CharacterStatKey[];
+const CHARACTER_STAT_KEYS = (
+  Object.keys(CHARACTER_STAT_LABELS) as CharacterStatKey[]
+).filter((key): key is EditableCharacterStatKey => key !== "gold");
 
-const CHARACTER_SKILL_KEYS = Object.keys(SKILL_LABELS) as SkillKey[];
+const CHARACTER_SKILL_KEYS = (
+  Object.keys(SKILL_LABELS) as SkillKey[]
+).filter(
+  (key): key is EditableSkillKey =>
+    key !== "arithmetic" && key !== "rhetoric" && key !== "medicine"
+);
 
 const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {

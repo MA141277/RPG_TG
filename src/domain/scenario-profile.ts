@@ -12,7 +12,7 @@ export type ScenarioRuntimeBootstrap = {
 };
 
 export type ScenarioLaunchPolicy = {
-  characterSelection?: "shell" | "fixed";
+  characterSelection?: "fixed" | "select" | "first-playable";
   initialView?: ViewName;
   entryEventTiming?: "immediate" | "after-map-entry";
 };

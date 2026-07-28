@@ -27,7 +27,10 @@ import {
   createDefaultScriptEditorBuildingRecord,
   createDefaultScriptEditorCityRecord,
 } from "./city-building-authoring";
-import { createDefaultScriptEditorPersonRecord } from "./person-authoring";
+import {
+  createDefaultScriptEditorPersonRecord,
+  readScriptEditorPersonStringArrayField,
+} from "./person-authoring";
 import { createDefaultScriptEditorMinigameRecord } from "./minigame-binding-authoring";
 import { createDefaultScriptEditorFlowRecord } from "./flow-authoring";
 import {
@@ -112,6 +115,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
       title,
       description:
         "Minimal workflow project root. Later queues may widen authoring semantics, but this queue only proves the first visible loop.",
+      personAttributeSemantics: [],
       basePackId: "content-pack.base-game.zhuyuanzhang",
       scenarioProfile: {
         id: `scenario.${idBase}`,
@@ -130,6 +134,9 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
     people: [
       {
         id: "person.hero",
+        attributeGroup: {},
+        attributeMappings: [],
+        attributeValues: [],
         name: "Hero",
         personType: "角色",
         role: "playable",
@@ -137,7 +144,6 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         occupation: "待定",
         biography: "默认主角，用于最小工作流的导出与作者面首切。",
         portraitId: defaultPortrait.id,
-        extendedAttributes: [],
         dialogueIds: [],
         eventIds: [],
         tradeBinding: {
@@ -574,7 +580,10 @@ function removeEventReferencesFromScriptEditorProject(
     ...project,
     storyPack: nextStoryPack,
     people: project.people.map((person) => {
-      const currentEventIds = person.eventIds ?? [];
+      const currentEventIds = readScriptEditorPersonStringArrayField(
+        person,
+        "eventIds"
+      );
       const nextEventIds = currentEventIds.filter((eventId) => eventId !== removedEventId);
       return nextEventIds.length === currentEventIds.length
         ? person

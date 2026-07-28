@@ -18,6 +18,9 @@ import {
   formalizeScriptEditorProjectMenus,
   listScriptEditorLocationMenuBundles,
 } from "./menu-authoring";
+import {
+  readScriptEditorPersonStringArrayField,
+} from "./person-authoring";
 
 export type ScriptEditorWorkspaceFamily =
   | ScriptEditorProjectFileKey
@@ -756,7 +759,15 @@ function describeSelectionLinkPreview(
 
   if (family === "people") {
     const person = project.people.find((record) => record.id === entityId);
-    return `人物关联对话 ${(person?.dialogueIds ?? []).length} 条、事件 ${(person?.eventIds ?? []).length} 条。`;
+    const linkedDialogueCount =
+      person == null
+        ? 0
+        : readScriptEditorPersonStringArrayField(person, "dialogueIds").length;
+    const linkedEventCount =
+      person == null
+        ? 0
+        : readScriptEditorPersonStringArrayField(person, "eventIds").length;
+    return `人物关联对话 ${linkedDialogueCount} 条、事件 ${linkedEventCount} 条。`;
   }
 
   if (family === "cities" || family === "buildings") {
@@ -935,7 +946,7 @@ function collectLinkedValidationIssues(
   }
 
   for (const person of project.people) {
-    for (const dialogueId of person.dialogueIds ?? []) {
+    for (const dialogueId of readScriptEditorPersonStringArrayField(person, "dialogueIds")) {
       if (!hasRecord(project, "dialogues", dialogueId)) {
         addMissingReferenceIssue({
           id: `linked.people.dialogue.${person.id}.${dialogueId}`,
@@ -949,7 +960,7 @@ function collectLinkedValidationIssues(
       }
     }
 
-    for (const eventId of person.eventIds ?? []) {
+    for (const eventId of readScriptEditorPersonStringArrayField(person, "eventIds")) {
       if (!hasRecord(project, "events", eventId)) {
         addMissingReferenceIssue({
           id: `linked.people.event.${person.id}.${eventId}`,

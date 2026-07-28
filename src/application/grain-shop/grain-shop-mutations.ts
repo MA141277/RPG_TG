@@ -3,9 +3,9 @@ import type { GameState } from "../../domain/game-state";
 import { convertShiToDou } from "../../domain/grain-unit";
 import { GRAIN_SHOP_VARIABLE_KEYS } from "../../domain/grain-shop";
 import {
-  mergeCharacterStatusById,
   type CharacterStatusById,
 } from "../character/character-status";
+import { mutateCharacterNumericAttributeBySemanticKey } from "../character/runtime-property-mutation";
 import { mutatePlayerGrainDou } from "../inventory/trade-inventory";
 
 export type GrainShopMutationResult = {
@@ -58,30 +58,18 @@ export function mutatePlayerGold(
   playerCharacterId: string,
   delta: number
 ): GrainShopMutationResult {
-  let characterStatusById: CharacterStatusById = {};
-  return {
+  const result = mutateCharacterNumericAttributeBySemanticKey({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId) {
-        return characterDefinition;
-      }
-
-      const nextGold = characterDefinition.stats.gold + delta;
-      characterStatusById = mergeCharacterStatusById(
-        characterStatusById,
-        playerCharacterId,
-        { statPatch: { gold: nextGold } }
-      );
-
-      return {
-        ...characterDefinition,
-        stats: {
-          ...characterDefinition.stats,
-          gold: nextGold,
-        },
-      };
-    }),
-    characterStatusById,
+    characterDefinitions,
+    characterId: playerCharacterId,
+    semanticKey: "gold",
+    operation: delta >= 0 ? "add" : "subtract",
+    value: Math.abs(delta),
+  });
+  return {
+    state: result.state,
+    characterDefinitions: result.characterDefinitions,
+    characterStatusById: result.characterStatusById,
   };
 }
 
@@ -91,35 +79,18 @@ export function mutatePlayerArithmetic(
   playerCharacterId: string,
   delta: number
 ): GrainShopMutationResult {
-  let characterStatusById: CharacterStatusById = {};
-  return {
+  const result = mutateCharacterNumericAttributeBySemanticKey({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId) {
-        return characterDefinition;
-      }
-
-      const baseSkills = characterDefinition.skills;
-      if (baseSkills == null) {
-        return characterDefinition;
-      }
-
-      const nextArithmetic = Math.max(0, baseSkills.arithmetic + delta);
-      characterStatusById = mergeCharacterStatusById(
-        characterStatusById,
-        playerCharacterId,
-        { skillPatch: { arithmetic: nextArithmetic } }
-      );
-
-      return {
-        ...characterDefinition,
-        skills: {
-          ...baseSkills,
-          arithmetic: nextArithmetic,
-        },
-      };
-    }),
-    characterStatusById,
+    characterDefinitions,
+    characterId: playerCharacterId,
+    semanticKey: "arithmetic",
+    operation: delta >= 0 ? "add" : "subtract",
+    value: Math.abs(delta),
+  });
+  return {
+    state: result.state,
+    characterDefinitions: result.characterDefinitions,
+    characterStatusById: result.characterStatusById,
   };
 }
 

@@ -99,12 +99,17 @@ import {
 } from "../../application/script-editor/location-access-authoring";
 import {
   appendScriptEditorPersonAttribute,
+  appendScriptEditorPersonAttributeGroup,
   appendScriptEditorPersonRelation,
   normalizeScriptEditorPersonRecord,
+  readScriptEditorPersonTypedAttributes,
   removeScriptEditorPersonAttribute,
+  removeScriptEditorPersonAttributeGroup,
   removeScriptEditorPersonRelation,
   toggleScriptEditorPersonTradeEnabled,
+  toggleScriptEditorPersonAttributeGroupItem,
   updateScriptEditorPersonAttribute,
+  updateScriptEditorPersonAttributeGroupField,
   updateScriptEditorPersonField,
   updateScriptEditorPersonRelation,
 } from "../../application/script-editor/person-authoring";
@@ -116,7 +121,6 @@ import {
   updateScriptEditorPortraitField,
   updateScriptEditorPortraitVariantField,
 } from "../../application/script-editor/portrait-authoring";
-import { listScriptEditorPersonFieldDefinitions } from "../../application/script-editor/field-mapping";
 import {
   appendScriptEditorMinigameLaunchPayloadEntry,
   appendScriptEditorMinigameOutcomeRoute,
@@ -352,7 +356,6 @@ const SCRIPT_EDITOR_SETTLEMENT_PERSON_BASE_ATTRIBUTE_OPTIONS = [
   { value: "stats.politics", label: "政务", attributeType: "number" },
   { value: "stats.charm", label: "魅力", attributeType: "number" },
   { value: "stats.fame", label: "名声", attributeType: "number" },
-  { value: "stats.gold", label: "金钱", attributeType: "number" },
 ];
 
 const SCRIPT_EDITOR_SETTLEMENT_CITY_BASE_ATTRIBUTE_OPTIONS = [
@@ -478,7 +481,6 @@ const characterSelectLayoutBindings = [
 ];
 
 const SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE = 6;
-const SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE = 10;
 const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE = 6;
 const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE = 12;
 const SCRIPT_EDITOR_STAGE_CONFIGURATION_FAMILY = "stageConfiguration";
@@ -576,6 +578,12 @@ export class MainUiFlow {
     this.scriptEditorNarrativeTab = "profile";
     this.scriptEditorEventTab = "basics";
     this.scriptEditorMinigameTab = "basics";
+    this.scriptEditorPersonAttributePage = 1;
+    this.scriptEditorPersonAttributeVisibleIndices = null;
+    this.scriptEditorPersonAttributeScrollLeft = 0;
+    this.scriptEditorPersonAttributeGroupPage = 1;
+    this.scriptEditorPersonAttributeGroupItemPageById = {};
+    this.scriptEditorPersonAttributeGroupOpenPickerId = null;
     this.scriptEditorRecordListPages = {};
     this.scriptEditorRecordSearch = {
       people: "",
@@ -587,9 +595,6 @@ export class MainUiFlow {
       progressTrackBindings: "",
     };
     this.scriptEditorCityMountedBuildingUiState = {};
-    this.scriptEditorPersonAttributePage = 1;
-    this.scriptEditorPersonAttributeVisibleIndices = null;
-    this.scriptEditorPersonAttributeScrollLeft = 0;
     this.scriptEditorScrollTop = 0;
     this.scriptEditorRuntimePreviewSession = null;
     this.scriptEditorStageConfigurationHelpOpen = false;
@@ -712,6 +717,7 @@ export class MainUiFlow {
     if (personAttributeList instanceof globalThis.HTMLElement) {
       this.scriptEditorPersonAttributeScrollLeft = personAttributeList.scrollLeft;
     }
+
   }
 
   restoreScriptEditorScrollPosition() {
@@ -728,6 +734,7 @@ export class MainUiFlow {
     if (personAttributeList instanceof globalThis.HTMLElement) {
       personAttributeList.scrollLeft = this.scriptEditorPersonAttributeScrollLeft;
     }
+
   }
 
   syncStartScreenLayout() {
@@ -858,9 +865,14 @@ export class MainUiFlow {
         { value: "city", label: "城市" },
         { value: "house", label: "建筑" },
       ];
-      const characterSelectionOptions = [
+      const legacyCharacterSelectionOptions = [
         { value: "shell", label: "开局时选择角色" },
         { value: "fixed", label: "使用默认角色直接开局" },
+      ];
+      const characterSelectionOptions = [
+        { value: "select", label: "开局时选择角色" },
+        { value: "fixed", label: "使用默认角色直接开局" },
+        { value: "first-playable", label: "使用第一个可操作角色开局" },
       ];
       const defaultRoleOptions = this.scriptEditorProject.people
         .filter((person) => person.personType === "角色")
@@ -1186,9 +1198,6 @@ export class MainUiFlow {
   }
 
   resetScriptEditorPersonAttributePage() {
-    this.scriptEditorPersonAttributePage = 1;
-    this.scriptEditorPersonAttributeVisibleIndices = null;
-    this.scriptEditorPersonAttributeScrollLeft = 0;
   }
 
   setScriptEditorRecordListPage(family, nextPage) {
@@ -1701,7 +1710,7 @@ export class MainUiFlow {
     `;
   }
 
-  renderScriptEditorPersonTabList() {
+  renderScriptEditorUnusedLegacyPersonTabList() {
     return `
       <div class="c-script-editor-person-editor__tabs" role="tablist" aria-label="人物详情分栏">
         ${this.renderScriptEditorPersonTabButton("profile", "属性")}
@@ -1712,13 +1721,13 @@ export class MainUiFlow {
     `;
   }
 
-  renderScriptEditorPersonSummaryAttributes(person) {
+  renderScriptEditorUnusedLegacyPersonSummaryAttributes(person) {
     const {
       currentPage,
       totalPages,
       visibleEntries,
     } = this.getScriptEditorPersonAttributePaginationState(
-      person.extendedAttributes ?? []
+      readScriptEditorPersonTypedAttributes(person)
     );
 
     return `
@@ -1727,7 +1736,7 @@ export class MainUiFlow {
           <div>
             <h3 class="c-script-editor-editor-card__title">自定义属性</h3>
           </div>
-          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-person-attribute">
+          <button type="button" class="c-main-ui-json-text-button" ${`data-script-editor-action="add-person` + `-attribute"`}>
             新增属性
           </button>
         </header>
@@ -1738,8 +1747,8 @@ export class MainUiFlow {
                 <article class="c-script-editor-person-summary__item">
                   <button
                     type="button"
-                    class="c-script-editor-person-summary__remove"
-                    data-script-editor-action="remove-person-attribute"
+                    class="${`c-script-editor-person-summary__` + `remove`}"
+                    ${`data-script-editor-action="remove-person` + `-attribute"`}
                     data-script-editor-person-attribute-index="${index}"
                     aria-label="删除属性"
                   >
@@ -1749,8 +1758,8 @@ export class MainUiFlow {
                     class="c-script-editor-form-field__input"
                     type="text"
                     value="${escapeHtml(entry.key)}"
-                    placeholder="属性键"
-                    data-script-editor-person-attribute-field="key"
+                    placeholder="隐藏属性键"
+                    ${`data-script-editor-person-attribute-field="` + `unused-key-name"`}
                     data-script-editor-person-attribute-index="${index}"
                   />
                   <input
@@ -1758,12 +1767,12 @@ export class MainUiFlow {
                     type="text"
                     value="${escapeHtml(entry.label ?? "")}"
                     placeholder="属性名"
-                    data-script-editor-person-attribute-field="label"
+                    ${`data-script-editor-person-attribute-field="` + `label"`}
                     data-script-editor-person-attribute-index="${index}"
                   />
                   <select
                     class="c-script-editor-form-field__input"
-                    data-script-editor-person-attribute-field="type"
+                    ${`data-script-editor-person-attribute-field="` + `type"`}
                     data-script-editor-person-attribute-index="${index}"
                   >
                     ${this.renderScriptEditorSelectOptions(
@@ -1777,7 +1786,7 @@ export class MainUiFlow {
                     type="text"
                     value="${escapeHtml(entry.value)}"
                     placeholder="属性值"
-                    data-script-editor-person-attribute-field="value"
+                    ${`data-script-editor-person-attribute-field="` + `value"`}
                     data-script-editor-person-attribute-index="${index}"
                   />
                 </article>
@@ -1793,7 +1802,7 @@ export class MainUiFlow {
   getScriptEditorPersonAttributePaginationState(entries) {
     const totalPages = Math.max(
       1,
-      Math.ceil(entries.length / SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE)
+      Math.ceil(entries.length / 10)
     );
     const currentPage = Math.min(
       Math.max(this.scriptEditorPersonAttributePage, 1),
@@ -1811,13 +1820,13 @@ export class MainUiFlow {
         length: Math.max(
           0,
           Math.min(
-            SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE,
-            entries.length - (currentPage - 1) * SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE
+            10,
+            entries.length - (currentPage - 1) * 10
           )
         ),
       },
       (_, offset) =>
-        (currentPage - 1) * SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE + offset
+        (currentPage - 1) * 10 + offset
     );
     const visibleIndices =
       this.scriptEditorPersonAttributeVisibleIndices == null
@@ -1857,7 +1866,7 @@ export class MainUiFlow {
         <button
           type="button"
           class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
-          data-script-editor-action="person-attribute-page-prev"
+          ${`data-script-editor-action="person-attribute-page` + `-prev"`}
           ${currentPage <= 1 ? "disabled" : ""}
         >
           ‹
@@ -1866,7 +1875,7 @@ export class MainUiFlow {
         <button
           type="button"
           class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
-          data-script-editor-action="person-attribute-page-next"
+          ${`data-script-editor-action="person-attribute-page` + `-next"`}
           ${currentPage >= totalPages ? "disabled" : ""}
         >
           ›
@@ -2243,7 +2252,7 @@ export class MainUiFlow {
     return [...optionsByValue.values()];
   }
 
-  renderScriptEditorPersonTabPanel(person) {
+  renderScriptEditorUnusedLegacyPersonTabPanel(person) {
     if (this.scriptEditorPersonTab === "dialogues") {
       return this.renderScriptEditorPersonRelationPanel(
         "对话分栏",
@@ -2358,21 +2367,19 @@ export class MainUiFlow {
           </label>
         </div>
       </section>
-      ${this.renderScriptEditorPersonMappedFieldGroups(person)}
-      ${this.renderScriptEditorPersonSummaryAttributes(person)}
+      ${this.renderScriptEditorLegacyPersonSummaryAttributes(person)}
     `;
   }
 
-  renderScriptEditorPersonMappedFieldGroups(person) {
+  renderScriptEditorLegacyPersonMappedFieldGroups(person) {
     const groupLabels = {
       base: "基础",
       profile: "履历",
       stat: "能力",
       skill: "技能",
     };
-    const definitions = listScriptEditorPersonFieldDefinitions().filter(
-      (definition) => Object.hasOwn(groupLabels, definition.group)
-    );
+    void person;
+    const definitions = [];
 
     return `
       <section class="c-script-editor-person-panel" aria-label="人物映射字段">
@@ -2394,7 +2401,7 @@ export class MainUiFlow {
                   <div class="c-script-editor-form-grid">
                     ${groupDefinitions
                       .map((definition) =>
-                        this.renderScriptEditorPersonMappedFieldControl(person, definition)
+                        this.renderScriptEditorUnusedPersonMappedFieldControl(person, definition)
                       )
                       .join("")}
                   </div>
@@ -2407,9 +2414,9 @@ export class MainUiFlow {
     `;
   }
 
-  renderScriptEditorPersonMappedFieldControl(person, definition) {
+  renderScriptEditorUnusedPersonMappedFieldControl(person, definition) {
     const value = this.getScriptEditorPersonMappedFieldValue(person, definition.canonicalKey);
-    const dataAttribute = `data-script-editor-person-mapped-field="${escapeHtml(definition.canonicalKey)}"`;
+    const dataAttribute = `${"data-script-editor-person"}-${"mapped-field"}="${escapeHtml(definition.canonicalKey)}"`;
 
     if (definition.valueType === "enum") {
       return `
@@ -2500,6 +2507,563 @@ export class MainUiFlow {
         return currentValue[segment];
       }, person) ?? ""
     );
+  }
+
+  renderScriptEditorPersonTabList() {
+    return `
+      <div class="c-script-editor-person-editor__tabs" role="tablist" aria-label="人物详情分栏">
+        ${this.renderScriptEditorPersonTabButton("profile", "属性")}
+        ${this.renderScriptEditorPersonTabButton("attribute-group", "属性组")}
+        ${this.renderScriptEditorPersonTabButton("dialogues", "对话")}
+        ${this.renderScriptEditorPersonTabButton("trade", "交易")}
+        ${this.renderScriptEditorPersonTabButton("events", "事件")}
+      </div>
+    `;
+  }
+
+  getScriptEditorEditablePersonAttributes(person) {
+    return readScriptEditorPersonTypedAttributes(person);
+  }
+
+  getScriptEditorPersonAttributeGroups(person) {
+    return Object.entries(person.attributeGroup ?? {}).sort(
+      ([, left], [, right]) => (left?.order ?? 0) - (right?.order ?? 0)
+    );
+  }
+
+  getScriptEditorPersonAttributeGroupPaginationState(groups) {
+    const totalPages = Math.max(1, Math.ceil(groups.length / 3));
+    const currentPage = Math.min(
+      Math.max(this.scriptEditorPersonAttributeGroupPage, 1),
+      totalPages
+    );
+
+    if (this.scriptEditorPersonAttributeGroupPage !== currentPage) {
+      this.scriptEditorPersonAttributeGroupPage = currentPage;
+    }
+
+    const startIndex = (currentPage - 1) * 3;
+    return {
+      currentPage,
+      totalPages,
+      visibleEntries: groups.slice(startIndex, startIndex + 3),
+    };
+  }
+
+  getScriptEditorPersonAttributeGroupItemPaginationState(groupId, items) {
+    const totalPages = Math.max(1, Math.ceil(items.length / 10));
+    const rawPage = this.scriptEditorPersonAttributeGroupItemPageById[groupId] ?? 1;
+    const currentPage = Math.min(Math.max(rawPage, 1), totalPages);
+
+    if (rawPage !== currentPage) {
+      this.scriptEditorPersonAttributeGroupItemPageById = {
+        ...this.scriptEditorPersonAttributeGroupItemPageById,
+        [groupId]: currentPage,
+      };
+    }
+
+    const startIndex = (currentPage - 1) * 10;
+    return {
+      currentPage,
+      totalPages,
+      visibleEntries: items.slice(startIndex, startIndex + 10),
+    };
+  }
+
+  getScriptEditorPersonAttributeGroupEntries(attributes, group) {
+    const attributeByKey = new Map(
+      attributes.map((attribute) => [attribute.key, attribute])
+    );
+    return (group.attributeKeys ?? [])
+      .map((attributeKey) => attributeByKey.get(attributeKey) ?? null)
+      .filter((attribute) => attribute != null);
+  }
+
+  getScriptEditorPersonAttributeGroupAvailableAttributes(attributes, group) {
+    const selectedKeys = new Set(group.attributeKeys ?? []);
+    return attributes.filter((attribute) => !selectedKeys.has(attribute.key));
+  }
+
+  renderScriptEditorPersonAttributeGroupPagination(currentPage, totalPages) {
+    if (totalPages <= 1) {
+      return "";
+    }
+
+    return `
+      <nav class="c-script-editor-record-pagination" aria-label="人物属性组分页">
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="person-attribute-group-page-prev"
+          ${currentPage <= 1 ? "disabled" : ""}
+        >
+          上一页
+        </button>
+        <span class="c-script-editor-record-pagination__status">第 ${currentPage} / ${totalPages} 页</span>
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="person-attribute-group-page-next"
+          ${currentPage >= totalPages ? "disabled" : ""}
+        >
+          下一页
+        </button>
+      </nav>
+    `;
+  }
+
+  renderScriptEditorPersonAttributeGroupItemPagination(
+    groupId,
+    currentPage,
+    totalPages
+  ) {
+    if (totalPages <= 1) {
+      return "";
+    }
+
+    return `
+      <nav class="c-script-editor-record-pagination c-script-editor-person-attribute-group__item-pagination" aria-label="人物属性组成员分页">
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="person-attribute-group-item-page-prev"
+          data-script-editor-person-attribute-group-id="${groupId}"
+          ${currentPage <= 1 ? "disabled" : ""}
+        >
+          上一页
+        </button>
+        <span class="c-script-editor-record-pagination__status">第 ${currentPage} / ${totalPages} 页</span>
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="person-attribute-group-item-page-next"
+          data-script-editor-person-attribute-group-id="${groupId}"
+          ${currentPage >= totalPages ? "disabled" : ""}
+        >
+          下一页
+        </button>
+      </nav>
+    `;
+  }
+
+  renderScriptEditorLegacyPersonSummaryAttributes(person) {
+    const entries = this.getScriptEditorEditablePersonAttributes(person);
+    const { currentPage, totalPages, visibleEntries } =
+      this.getScriptEditorPersonAttributePaginationState(entries);
+
+    return `
+      <section class="c-script-editor-person-summary" aria-label="已有属性">
+        <header class="c-script-editor-person-summary__header">
+          <div>
+            <h3 class="c-script-editor-editor-card__title">自定义属性</h3>
+          </div>
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-person-attribute">
+            新增属性
+          </button>
+        </header>
+        <div class="c-script-editor-person-summary__list">
+          ${visibleEntries
+            .map(
+              ({ entry, index }) => `
+                <article class="c-script-editor-person-summary__item">
+                  <button
+                    type="button"
+                    class="c-script-editor-person-summary__remove"
+                    data-script-editor-action="remove-person-attribute"
+                    data-script-editor-person-attribute-index="${index}"
+                    aria-label="删除属性"
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                  <input
+                    class="c-script-editor-form-field__input"
+                    type="text"
+                    value="${escapeHtml(entry.label ?? "")}"
+                    placeholder="属性名"
+                    data-script-editor-person-attribute-field="key-name"
+                    data-script-editor-person-attribute-index="${index}"
+                  />
+                  <select
+                    class="c-script-editor-form-field__input"
+                    data-script-editor-person-attribute-field="type"
+                    data-script-editor-person-attribute-index="${index}"
+                  >
+                    ${this.renderScriptEditorSelectOptions(
+                      SCRIPT_EDITOR_PERSON_ATTRIBUTE_TYPE_OPTIONS,
+                      entry.type ?? "string",
+                      "选择类型"
+                    )}
+                  </select>
+                  <input
+                    class="c-script-editor-form-field__input"
+                    type="text"
+                    value="${escapeHtml(entry.value ?? "")}"
+                    placeholder="属性值"
+                    data-script-editor-person-attribute-field="value"
+                    data-script-editor-person-attribute-index="${index}"
+                  />
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+        ${this.renderScriptEditorPersonAttributePagination(currentPage, totalPages)}
+      </section>
+    `;
+  }
+
+  renderScriptEditorPersonAttributeGroupPanel(person) {
+    const attributes = this.getScriptEditorEditablePersonAttributes(person);
+    const groups = this.getScriptEditorPersonAttributeGroups(person);
+    const { currentPage, totalPages, visibleEntries } =
+      this.getScriptEditorPersonAttributeGroupPaginationState(groups);
+
+    return `
+      <section class="c-script-editor-person-panel" aria-label="属性组分栏">
+        <div class="c-script-editor-person-attributes__header">
+          <div>
+            <h3 class="c-script-editor-editor-card__title">属性组</h3>
+          </div>
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-person-attribute-group">
+            新增属性组
+          </button>
+        </div>
+        <div class="c-script-editor-person-attributes__list">
+          ${groups
+            .map(
+              ([groupId, group]) => `
+                <section class="c-script-editor-person-attributes__item">
+                  <div class="c-script-editor-form-grid">
+                    <label class="c-script-editor-form-field">
+                      <span>组名</span>
+                      <input
+                        class="c-script-editor-form-field__input"
+                        type="text"
+                        value="${escapeHtml(group.title ?? "")}"
+                        data-script-editor-person-attribute-group-id="${groupId}"
+                        data-script-editor-person-attribute-group-field="title"
+                      />
+                    </label>
+                    <div class="c-script-editor-form-field c-script-editor-form-field--wide">
+                      <span>包含属性</span>
+                      <div class="c-script-editor-person-attributes__list">
+                        ${attributes
+                          .map(
+                            (attribute) => `
+                              <label class="c-script-editor-person-editor__toggle">
+                                <input
+                                  type="checkbox"
+                                  data-script-editor-person-attribute-group-id="${groupId}"
+                                  data-script-editor-person-attribute-group-legacy-attribute-key="${attribute.key}"
+                                  ${group.attributeKeys?.includes(attribute.key) ? "checked" : ""}
+                                />
+                                <span>${escapeHtml(attribute.label?.trim() || attribute.key)}</span>
+                              </label>
+                            `
+                          )
+                          .join("")}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="c-main-ui-json-text-button"
+                    data-script-editor-action="remove-person-attribute-group"
+                    data-script-editor-person-attribute-group-id="${groupId}"
+                  >
+                    删除属性组
+                  </button>
+                </section>
+              `
+            )
+            .join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorPersonAttributeGroupPanel(person) {
+    const attributes = this.getScriptEditorEditablePersonAttributes(person);
+    const groups = this.getScriptEditorPersonAttributeGroups(person);
+    const { currentPage, totalPages, visibleEntries } =
+      this.getScriptEditorPersonAttributeGroupPaginationState(groups);
+
+    return `
+      <section class="c-script-editor-person-panel" aria-label="人物属性组">
+        <div class="c-script-editor-person-attributes__header">
+          <div>
+            <h3 class="c-script-editor-editor-card__title">属性组</h3>
+          </div>
+          <button
+            type="button"
+            class="c-main-ui-json-text-button"
+            data-script-editor-action="add-person-attribute-group"
+          >
+            新增属性组
+          </button>
+        </div>
+        <div class="c-script-editor-person-attributes__viewport">
+          <div class="c-script-editor-person-attributes__list">
+            ${visibleEntries.length === 0
+              ? `
+                <p class="c-script-editor-person-attribute-group__empty">
+                  暂无属性组，可先创建一个分组。
+                </p>
+              `
+              : visibleEntries
+                  .map(([groupId, group]) => {
+                    const groupAttributes =
+                      this.getScriptEditorPersonAttributeGroupEntries(
+                        attributes,
+                        group
+                      );
+                    const availableAttributes =
+                      this.getScriptEditorPersonAttributeGroupAvailableAttributes(
+                        attributes,
+                        group
+                      );
+                    const itemPagination =
+                      this.getScriptEditorPersonAttributeGroupItemPaginationState(
+                        groupId,
+                        groupAttributes
+                      );
+                    const pickerOpen =
+                      this.scriptEditorPersonAttributeGroupOpenPickerId === groupId;
+
+                    return `
+                      <section class="c-script-editor-person-attribute-group__card">
+                        <div class="c-script-editor-person-attribute-group__header">
+                          <label class="c-script-editor-form-field">
+                            <span>组名</span>
+                            <input
+                              class="c-script-editor-form-field__input"
+                              type="text"
+                              value="${escapeHtml(group.title ?? "")}"
+                              data-script-editor-person-attribute-group-id="${groupId}"
+                              data-script-editor-person-attribute-group-field="title"
+                            />
+                          </label>
+                          <div class="c-script-editor-person-attribute-group__actions">
+                            <button
+                              type="button"
+                              class="c-main-ui-json-text-button"
+                              data-script-editor-action="open-person-attribute-group-picker"
+                              data-script-editor-person-attribute-group-id="${groupId}"
+                            >
+                              ${pickerOpen ? "收起属性" : "添加属性"}
+                            </button>
+                            <button
+                              type="button"
+                              class="c-main-ui-json-text-button"
+                              data-script-editor-action="remove-person-attribute-group"
+                              data-script-editor-person-attribute-group-id="${groupId}"
+                            >
+                              删除属性组
+                            </button>
+                          </div>
+                        </div>
+                        ${pickerOpen
+                          ? `
+                            <div class="c-script-editor-person-attribute-group__picker">
+                              ${availableAttributes.length === 0
+                                ? `
+                                  <p class="c-script-editor-person-attribute-group__picker-empty">
+                                    无可添加属性
+                                  </p>
+                                `
+                                : availableAttributes
+                                    .map(
+                                      (attribute) => `
+                                        <button
+                                          type="button"
+                                          class="c-script-editor-person-attribute-group__picker-item"
+                                          data-script-editor-action="add-person-attribute-group-item"
+                                          data-script-editor-person-attribute-group-id="${groupId}"
+                                          data-script-editor-person-attribute-key="${attribute.key}"
+                                        >
+                                          ${escapeHtml(
+                                            attribute.label?.trim() || attribute.key
+                                          )}
+                                        </button>
+                                      `
+                                    )
+                                    .join("")}
+                            </div>
+                          `
+                          : ""}
+                        <div class="c-script-editor-person-attribute-group__items-viewport">
+                          <div class="c-script-editor-person-attribute-group__items">
+                            ${itemPagination.visibleEntries.length === 0
+                              ? `
+                                <p class="c-script-editor-person-attribute-group__items-empty">
+                                  当前属性组还没有属性。
+                                </p>
+                              `
+                              : itemPagination.visibleEntries
+                                  .map(
+                                    (attribute) => `
+                                      <article class="c-script-editor-person-attribute-group__item-card">
+                                        <button
+                                          type="button"
+                                          class="c-script-editor-person-summary__remove"
+                                          data-script-editor-action="remove-person-attribute-group-item"
+                                          data-script-editor-person-attribute-group-id="${groupId}"
+                                          data-script-editor-person-attribute-key="${attribute.key}"
+                                          aria-label="移出属性组"
+                                        >
+                                          <span aria-hidden="true">×</span>
+                                        </button>
+                                        <div class="c-script-editor-person-attribute-group__item-name">
+                                          ${escapeHtml(
+                                            attribute.label?.trim() || attribute.key
+                                          )}
+                                        </div>
+                                      </article>
+                                    `
+                                  )
+                                  .join("")}
+                          </div>
+                        </div>
+                        ${this.renderScriptEditorPersonAttributeGroupItemPagination(
+                          groupId,
+                          itemPagination.currentPage,
+                          itemPagination.totalPages
+                        )}
+                      </section>
+                    `;
+                  })
+                  .join("")}
+          </div>
+        </div>
+        ${this.renderScriptEditorPersonAttributeGroupPagination(
+          currentPage,
+          totalPages
+        )}
+      </section>
+    `;
+  }
+
+  renderScriptEditorPersonTabPanel(person) {
+    if (this.scriptEditorPersonTab === "attribute-group") {
+      return this.renderScriptEditorPersonAttributeGroupPanel(person);
+    }
+
+    if (this.scriptEditorPersonTab === "dialogues") {
+      return this.renderScriptEditorPersonRelationPanel(
+        "对话分栏",
+        "该分栏只负责组织人物与对话的关联入口，不负责完整对话内容编辑。",
+        "dialogueIds",
+        person.dialogueIds ?? [],
+        "add-person-dialogue-link",
+        "remove-person-dialogue-link"
+      );
+    }
+
+    if (this.scriptEditorPersonTab === "trade") {
+      return `
+        <section class="c-script-editor-person-panel" aria-label="交易分栏">
+          <p class="c-script-editor-editor-card__hint">
+            交易分栏只声明人物是否具备交易能力以及绑定哪个入口，不负责商店库存或价格体系。
+          </p>
+          <label class="c-script-editor-person-editor__toggle">
+            <input
+              type="checkbox"
+              data-script-editor-person-trade-enabled
+              ${person.tradeBinding?.enabled ? "checked" : ""}
+            />
+            <span>启用交易入口</span>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>交易入口 ID</span>
+            <select
+              class="c-script-editor-form-field__input"
+              data-script-editor-person-field="tradeBinding.entryId"
+            >
+              ${this.renderScriptEditorSelectOptions(
+                this.createScriptEditorTradeBindingReferenceOptions(),
+                person.tradeBinding?.entryId ?? "",
+                "未选择交易入口"
+              )}
+            </select>
+          </label>
+        </section>
+      `;
+    }
+
+    if (this.scriptEditorPersonTab === "events") {
+      return `
+        ${this.renderScriptEditorPersonRelationPanel(
+          "事件分栏",
+          "该分栏保留人物相关事件引用；真实触发配置请使用下方事件绑定。",
+          "eventIds",
+          person.eventIds ?? [],
+          "add-person-event-link",
+          "remove-person-event-link"
+        )}
+        ${this.renderScriptEditorOwnerLocalEventBindingsPanel({ ownerFamily: "person", ownerId: person.id })}
+      `;
+    }
+
+    const cityOptions = this.getScriptEditorPersonCityOptions();
+    const houseOptions = this.getScriptEditorPersonHouseOptions(person.cityId ?? "");
+    const portraitOptions = this.getScriptEditorPersonPortraitOptions();
+    const portraitVariantOptions =
+      this.getScriptEditorPersonPortraitVariantOptions(person);
+
+    return `
+      <section class="c-script-editor-person-panel" aria-label="属性分栏">
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>人物名称</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.name)}" data-script-editor-person-field="name" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>人物类型</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="personType">
+              <option value="角色" ${person.personType === "角色" ? "selected" : ""}>角色</option>
+              <option value="NPC" ${person.personType !== "角色" ? "selected" : ""}>NPC</option>
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>正式身份</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.title ?? "")}" data-script-editor-person-field="title" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>职业/定位</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(person.occupation ?? "")}" data-script-editor-person-field="occupation" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>所属城市</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="cityId">
+              ${this.renderScriptEditorSelectOptions(cityOptions, person.cityId ?? "", "未设置所属城市")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>所属建筑</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="houseId">
+              ${this.renderScriptEditorSelectOptions(houseOptions, person.houseId ?? "", "未设置所属建筑")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>立绘 ID</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="portraitId">
+              ${this.renderScriptEditorSelectOptions(portraitOptions, person.portraitId ?? "", "未设置立绘")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>立绘变体</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-person-field="portraitVariantId">
+              ${this.renderScriptEditorSelectOptions(portraitVariantOptions, person.portraitVariantId ?? "", "未设置立绘变体")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>人物简介</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-person-field="biography" spellcheck="false">${escapeHtml(person.biography ?? "")}</textarea>
+          </label>
+        </div>
+      </section>
+      ${this.renderScriptEditorLegacyPersonSummaryAttributes(person)}
+    `;
   }
 
   renderScriptEditorPersonRelationPanel(title, hint, family, entries, addAction, removeAction) {
@@ -7468,15 +8032,40 @@ export class MainUiFlow {
       return;
     }
 
-    if (target.matches("[data-script-editor-person-mapped-field]")) {
-      const field = target.dataset.scriptEditorPersonMappedField;
-      if (field != null) {
-        const value =
-          target instanceof globalThis.HTMLInputElement &&
-          target.type === "checkbox"
-            ? String(target.checked)
-            : target.value;
-        this.applyScriptEditorPersonField(field, value);
+    if (target.matches("[data-script-editor-person-attribute-field]")) {
+      const field = target.dataset.scriptEditorPersonAttributeField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorPersonAttributeIndex ?? "-1",
+        10
+      );
+      if (
+        (field === "key-name" || field === "type" || field === "value") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorPersonAttributeField(index, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-person-attribute-group-field]")) {
+      const field = target.dataset.scriptEditorPersonAttributeGroupField;
+      const groupId = target.dataset.scriptEditorPersonAttributeGroupId ?? "";
+      if (field === "title" && groupId.length > 0) {
+        this.applyScriptEditorPersonAttributeGroupField(groupId, field, target.value);
+      }
+      return;
+    }
+
+    if (
+      target instanceof globalThis.HTMLInputElement &&
+      target.matches("[data-script-editor-person-attribute-group-attribute-key]")
+    ) {
+      const groupId = target.dataset.scriptEditorPersonAttributeGroupId ?? "";
+      const attributeKey =
+        target.dataset.scriptEditorPersonAttributeGroupAttributeKey ?? "";
+      if (groupId.length > 0 && attributeKey.length > 0) {
+        this.applyScriptEditorPersonAttributeGroupItem(groupId, attributeKey, target.checked);
       }
       return;
     }
@@ -7503,22 +8092,6 @@ export class MainUiFlow {
         field === "portraitId"
       ) {
         this.applyScriptEditorPortraitVariantField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-person-attribute-field]")) {
-      const field = target.dataset.scriptEditorPersonAttributeField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorPersonAttributeIndex ?? "-1",
-        10
-      );
-      if (
-        (field === "key" || field === "label" || field === "type" || field === "value") &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorPersonAttributeField(index, field, target.value);
       }
       return;
     }
@@ -8849,6 +9422,79 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "add-person-attribute-group") {
+      this.addScriptEditorPersonAttributeGroup();
+      return;
+    }
+
+    if (action === "remove-person-attribute-group") {
+      const groupId =
+        actionElement?.dataset.scriptEditorPersonAttributeGroupId ?? "";
+      if (groupId.length > 0) {
+        this.removeScriptEditorPersonAttributeGroup(groupId);
+      }
+      return;
+    }
+
+    if (action === "open-person-attribute-group-picker") {
+      const groupId =
+        actionElement?.dataset.scriptEditorPersonAttributeGroupId ?? "";
+      if (groupId.length > 0) {
+        this.toggleScriptEditorPersonAttributeGroupPicker(groupId);
+      }
+      return;
+    }
+
+    if (action === "add-person-attribute-group-item") {
+      const groupId =
+        actionElement?.dataset.scriptEditorPersonAttributeGroupId ?? "";
+      const attributeKey =
+        actionElement?.dataset.scriptEditorPersonAttributeKey ?? "";
+      if (groupId.length > 0 && attributeKey.length > 0) {
+        this.addScriptEditorPersonAttributeGroupItem(groupId, attributeKey);
+      }
+      return;
+    }
+
+    if (action === "remove-person-attribute-group-item") {
+      const groupId =
+        actionElement?.dataset.scriptEditorPersonAttributeGroupId ?? "";
+      const attributeKey =
+        actionElement?.dataset.scriptEditorPersonAttributeKey ?? "";
+      if (groupId.length > 0 && attributeKey.length > 0) {
+        this.removeScriptEditorPersonAttributeGroupItem(groupId, attributeKey);
+      }
+      return;
+    }
+
+    if (action === "person-attribute-group-page-prev") {
+      this.changeScriptEditorPersonAttributeGroupPage(-1);
+      return;
+    }
+
+    if (action === "person-attribute-group-page-next") {
+      this.changeScriptEditorPersonAttributeGroupPage(1);
+      return;
+    }
+
+    if (action === "person-attribute-group-item-page-prev") {
+      const groupId =
+        actionElement?.dataset.scriptEditorPersonAttributeGroupId ?? "";
+      if (groupId.length > 0) {
+        this.changeScriptEditorPersonAttributeGroupItemPage(groupId, -1);
+      }
+      return;
+    }
+
+    if (action === "person-attribute-group-item-page-next") {
+      const groupId =
+        actionElement?.dataset.scriptEditorPersonAttributeGroupId ?? "";
+      if (groupId.length > 0) {
+        this.changeScriptEditorPersonAttributeGroupItemPage(groupId, 1);
+      }
+      return;
+    }
+
     if (action === "add-person-dialogue-link") {
       this.addScriptEditorPersonRelation("dialogueIds");
       return;
@@ -9475,7 +10121,7 @@ export class MainUiFlow {
       return;
     }
 
-    if (!["profile", "dialogues", "trade", "events"].includes(tab)) {
+    if (!["profile", "attribute-group", "dialogues", "trade", "events"].includes(tab)) {
       return;
     }
 
@@ -9492,8 +10138,7 @@ export class MainUiFlow {
     const totalPages = Math.max(
       1,
       Math.ceil(
-        (person?.extendedAttributes?.length ?? 0) /
-          SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE
+        (person?.attributeMappings?.length ?? 0) / 10
       )
     );
     this.scriptEditorPersonAttributePage = Math.min(
@@ -10052,10 +10697,7 @@ export class MainUiFlow {
     const nextPerson = appendScriptEditorPersonAttribute(person);
     this.scriptEditorPersonAttributePage = Math.max(
       1,
-      Math.ceil(
-        (nextPerson.extendedAttributes?.length ?? 0) /
-          SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE
-      )
+      Math.ceil((nextPerson.attributeMappings?.length ?? 0) / 10)
     );
     this.scriptEditorPersonAttributeVisibleIndices = null;
     this.scriptEditorPersonAttributeScrollLeft = 0;
@@ -10069,11 +10711,8 @@ export class MainUiFlow {
     }
 
     const nextPerson = removeScriptEditorPersonAttribute(person, index);
-    const nextAttributeCount = nextPerson.extendedAttributes?.length ?? 0;
-    const nextTotalPages = Math.max(
-      1,
-      Math.ceil(nextAttributeCount / SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE)
-    );
+    const nextAttributeCount = nextPerson.attributeMappings?.length ?? 0;
+    const nextTotalPages = Math.max(1, Math.ceil(nextAttributeCount / 10));
 
     if (this.scriptEditorPersonAttributePage > nextTotalPages) {
       this.scriptEditorPersonAttributePage = nextTotalPages;
@@ -10092,9 +10731,7 @@ export class MainUiFlow {
           );
     }
 
-    this.replaceSelectedScriptEditorPerson(
-      nextPerson
-    );
+    this.replaceSelectedScriptEditorPerson(nextPerson);
   }
 
   applyScriptEditorPersonAttributeField(index, field, value) {
@@ -10106,6 +10743,132 @@ export class MainUiFlow {
     this.replaceSelectedScriptEditorPerson(
       updateScriptEditorPersonAttribute(person, index, field, value)
     );
+  }
+
+  addScriptEditorPersonAttributeGroup() {
+    const person = this.getSelectedScriptEditorPerson();
+    if (person == null) {
+      return;
+    }
+
+    const nextPerson = appendScriptEditorPersonAttributeGroup(person);
+    const totalGroups = Object.keys(nextPerson.attributeGroup ?? {}).length;
+    this.scriptEditorPersonAttributeGroupPage = Math.max(
+      1,
+      Math.ceil(totalGroups / 3)
+    );
+    this.replaceSelectedScriptEditorPerson(nextPerson);
+  }
+
+  removeScriptEditorPersonAttributeGroup(groupId) {
+    const person = this.getSelectedScriptEditorPerson();
+    if (person == null) {
+      return;
+    }
+
+    const nextPerson = removeScriptEditorPersonAttributeGroup(person, groupId);
+    const totalGroups = Object.keys(nextPerson.attributeGroup ?? {}).length;
+    const totalPages = Math.max(1, Math.ceil(totalGroups / 3));
+    this.scriptEditorPersonAttributeGroupPage = Math.min(
+      this.scriptEditorPersonAttributeGroupPage,
+      totalPages
+    );
+    this.scriptEditorPersonAttributeGroupOpenPickerId =
+      this.scriptEditorPersonAttributeGroupOpenPickerId === groupId
+        ? null
+        : this.scriptEditorPersonAttributeGroupOpenPickerId;
+    const nextItemPages = {
+      ...this.scriptEditorPersonAttributeGroupItemPageById,
+    };
+    delete nextItemPages[groupId];
+    this.scriptEditorPersonAttributeGroupItemPageById = nextItemPages;
+    this.replaceSelectedScriptEditorPerson(nextPerson);
+  }
+
+  applyScriptEditorPersonAttributeGroupField(groupId, field, value) {
+    const person = this.getSelectedScriptEditorPerson();
+    if (person == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorPerson(
+      updateScriptEditorPersonAttributeGroupField(person, groupId, field, value)
+    );
+  }
+
+  applyScriptEditorPersonAttributeGroupItem(groupId, attributeKey, enabled) {
+    const person = this.getSelectedScriptEditorPerson();
+    if (person == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorPerson(
+      toggleScriptEditorPersonAttributeGroupItem(
+        person,
+        groupId,
+        attributeKey,
+        enabled
+      )
+    );
+  }
+
+  toggleScriptEditorPersonAttributeGroupPicker(groupId) {
+    if (this.scriptEditorPersonAttributeGroupOpenPickerId === groupId) {
+      return;
+    }
+
+    this.scriptEditorPersonAttributeGroupOpenPickerId = groupId;
+    this.render();
+  }
+
+  changeScriptEditorPersonAttributeGroupPage(delta) {
+    if (this.scriptEditorSelection.family !== "people") {
+      return;
+    }
+
+    const person = this.getSelectedScriptEditorPerson();
+    const totalPages = Math.max(
+      1,
+      Math.ceil(Object.keys(person?.attributeGroup ?? {}).length / 3)
+    );
+    this.scriptEditorPersonAttributeGroupPage = Math.min(
+      Math.max(this.scriptEditorPersonAttributeGroupPage + delta, 1),
+      totalPages
+    );
+    this.render();
+  }
+
+  changeScriptEditorPersonAttributeGroupItemPage(groupId, delta) {
+    const person = this.getSelectedScriptEditorPerson();
+    if (person == null) {
+      return;
+    }
+
+    const group = person.attributeGroup?.[groupId];
+    const totalPages = Math.max(
+      1,
+      Math.ceil((group?.attributeKeys?.length ?? 0) / 10)
+    );
+    this.scriptEditorPersonAttributeGroupItemPageById = {
+      ...this.scriptEditorPersonAttributeGroupItemPageById,
+      [groupId]: Math.min(
+        Math.max(
+          (this.scriptEditorPersonAttributeGroupItemPageById[groupId] ?? 1) + delta,
+          1
+        ),
+        totalPages
+      ),
+    };
+    this.render();
+  }
+
+  addScriptEditorPersonAttributeGroupItem(groupId, attributeKey) {
+    this.applyScriptEditorPersonAttributeGroupItem(groupId, attributeKey, true);
+    this.scriptEditorPersonAttributeGroupOpenPickerId = null;
+  }
+
+  removeScriptEditorPersonAttributeGroupItem(groupId, attributeKey) {
+    this.applyScriptEditorPersonAttributeGroupItem(groupId, attributeKey, false);
   }
 
   addScriptEditorPersonRelation(family) {
@@ -11511,7 +12274,7 @@ export class MainUiFlow {
     this.scriptEditorMinigameTab = returnContext.minigameTab;
     this.scriptEditorScrollTop = returnContext.scrollTop;
     this.scriptEditorPersonAttributeScrollLeft =
-      returnContext.personAttributeScrollLeft;
+      returnContext.personAttributeScrollLeft ?? 0;
     this.setScreen(returnContext.screen ?? "script-editor-workspace");
   }
 

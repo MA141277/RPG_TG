@@ -1131,6 +1131,35 @@ function getPlayerCharacter(characterDefinitions) {
   return playerCharacter;
 }
 
+function readCharacterAttributeValueBySemanticKey(
+  characterDefinition,
+  semanticKey,
+  fallback = undefined
+) {
+  const mapping = (characterDefinition.attributeMappings ?? []).find(
+    (entry) => entry.semanticKey === semanticKey
+  );
+  if (mapping == null) {
+    return fallback;
+  }
+
+  const value = (characterDefinition.attributeValues ?? []).find(
+    (entry) => entry.key === mapping.key
+  )?.value;
+  return value === undefined ? fallback : value;
+}
+
+function readCharacterAttributeValueByKey(
+  characterDefinition,
+  key,
+  fallback = undefined
+) {
+  const value = (characterDefinition.attributeValues ?? []).find(
+    (entry) => entry.key === key
+  )?.value;
+  return value === undefined ? fallback : value;
+}
+
 function withPlayerStamina(characterDefinitions, stamina) {
   return characterDefinitions.map((characterDefinition) =>
     characterDefinition.id === playerCharacterId
@@ -4532,7 +4561,7 @@ test("runtime preview strips deferred city-entry story bootstrap from scenario p
         view: "city",
       },
       launchPolicy: {
-        characterSelection: "shell",
+        characterSelection: "select",
         entryEventTiming: "after-map-entry",
       },
       entryEventId: "event.preview.opening",
@@ -4543,7 +4572,7 @@ test("runtime preview strips deferred city-entry story bootstrap from scenario p
 
   assert.equal(sanitized.scenarioProfile.entryEventId, undefined);
   assert.deepEqual(sanitized.scenarioProfile.launchPolicy, {
-    characterSelection: "shell",
+    characterSelection: "select",
   });
 });
 
@@ -4753,7 +4782,7 @@ test("character status materializer overlays stat skill and stamina patches with
   const withoutStatus = materializeCharacterDefinition(baseCharacter);
   const withEmptyStatus = materializeCharacterDefinition(baseCharacter, {});
   const withPatch = materializeCharacterDefinition(baseCharacter, {
-    statPatch: { gold: 150 },
+    statPatch: { politics: 50 },
     skillPatch: { military: 3 },
     stamina: 70,
   });
@@ -4769,13 +4798,41 @@ test("character status materializer overlays stat skill and stamina patches with
   assert.notEqual(withoutStatus, baseCharacter);
   assert.deepEqual(withoutStatus, baseCharacter);
   assert.deepEqual(withEmptyStatus, baseCharacter);
-  assert.equal(withPatch.stats.gold, 150);
+  assert.equal(withPatch.stats.politics, 50);
   assert.equal(withPatch.skills.military, 3);
   assert.equal(withPatch.stamina, 70);
-  assert.equal(baseCharacter.stats.gold, 120);
+  assert.equal(baseCharacter.stats.politics, prototypeCharacters[0].stats.politics);
   assert.equal(baseCharacter.skills.military, 2);
   assert.equal(baseCharacter.stamina, 80);
   assert.equal(materializedFromMap.stats.leadership, 65);
+});
+
+test("character status materializer overlays attribute value patches without mutating definitions", () => {
+  const {
+    materializeCharacterDefinition,
+  } = require("../.test-dist/application/character/character-status.js");
+  const baseCharacter = {
+    ...prototypeCharacters[0],
+    id: "char.status.attribute-values",
+    attributeValues: [
+      { key: "101", value: "亲兵" },
+      { key: "102", value: 120 },
+      { key: "103", value: 8 },
+      { key: "104", value: 1 },
+    ],
+  };
+
+  const withPatch = materializeCharacterDefinition(baseCharacter, {
+    attributeValuePatch: {
+      "102": 150,
+      "104": 3,
+    },
+  });
+
+  assert.equal(readCharacterAttributeValueByKey(withPatch, "102"), 150);
+  assert.equal(readCharacterAttributeValueByKey(withPatch, "104"), 3);
+  assert.equal(readCharacterAttributeValueByKey(baseCharacter, "102"), 120);
+  assert.equal(readCharacterAttributeValueByKey(baseCharacter, "104"), 1);
 });
 
 test("character status materializer overlays custom property patches without mutating definitions", () => {
@@ -5004,6 +5061,12 @@ test("shared character mutations expose CharacterStatus patches while preserving
       ...prototypeCharacters[0].skills,
       arithmetic: 2,
     },
+    attributeValues: [
+      { key: "101", value: "亲兵" },
+      { key: "102", value: 120 },
+      { key: "103", value: 8 },
+      { key: "104", value: 2 },
+    ],
   };
 
   const staminaResult = spendPlayerStamina(state, [player], player.id, 15);
@@ -5015,19 +5078,25 @@ test("shared character mutations expose CharacterStatus patches while preserving
     staminaResult.characterStatusById[player.id].stamina,
     65
   );
-  assert.equal(goldResult.characterDefinitions[0].stats.gold, 100);
   assert.equal(
-    goldResult.characterStatusById[player.id].statPatch.gold,
+    readCharacterAttributeValueByKey(goldResult.characterDefinitions[0], "102"),
     100
   );
-  assert.equal(skillResult.characterDefinitions[0].skills.arithmetic, 3);
   assert.equal(
-    skillResult.characterStatusById[player.id].skillPatch.arithmetic,
+    goldResult.characterStatusById[player.id].attributeValuePatch["102"],
+    100
+  );
+  assert.equal(
+    readCharacterAttributeValueByKey(skillResult.characterDefinitions[0], "104"),
+    3
+  );
+  assert.equal(
+    skillResult.characterStatusById[player.id].attributeValuePatch["104"],
     3
   );
   assert.equal(player.stamina, 80);
-  assert.equal(player.stats.gold, 120);
-  assert.equal(player.skills.arithmetic, 2);
+  assert.equal(readCharacterAttributeValueByKey(player, "102"), 120);
+  assert.equal(readCharacterAttributeValueByKey(player, "104"), 2);
 });
 
 test("runtime commit merges CharacterStatus patches into the AppState-owned status store", () => {
@@ -5039,7 +5108,7 @@ test("runtime commit merges CharacterStatus patches into the AppState-owned stat
     characterDefinitions: prototypeCharacters,
     characterStatusById: {
       "character.zhu_yuanzhang": {
-        statPatch: { gold: 50 },
+        attributeValuePatch: { "102": 50 },
       },
     },
     playerCoordinate: { x: 0, y: 0 },
@@ -5080,8 +5149,10 @@ test("runtime commit merges CharacterStatus patches into the AppState-owned stat
   assert.deepEqual(
     result.state.characterStatusById["character.zhu_yuanzhang"],
     {
+      attributeValuePatch: {
+        "102": 50,
+      },
       statPatch: {
-        gold: 50,
         leadership: 70,
       },
       stamina: 65,
@@ -5232,10 +5303,10 @@ test("city begging completion emits combined gold and stamina CharacterStatus pa
   );
 
   assert.deepEqual(result.characterStatusById[player.id], {
-    statPatch: { gold: 127 },
+    attributeValuePatch: { "102": 127 },
     stamina: 65,
   });
-  assert.equal(player.stats.gold, 120);
+  assert.equal(readCharacterAttributeValueByKey(player, "102"), 120);
   assert.equal(player.stamina, 80);
 });
 
@@ -5296,10 +5367,13 @@ test("city begging playable completion persists its CharacterStatus through runt
   });
 
   assert.deepEqual(result.state.characterStatusById[player.id], {
-    statPatch: { gold: 127 },
+    attributeValuePatch: { "102": 127 },
     stamina: 65,
   });
-  assert.equal(result.state.characterDefinitions[0].stats.gold, 127);
+  assert.equal(
+    readCharacterAttributeValueByKey(result.state.characterDefinitions[0], "102"),
+    127
+  );
   assert.equal(result.state.characterDefinitions[0].stamina, 65);
 });
 
@@ -5351,7 +5425,7 @@ test("startup restore materializes saved CharacterStatus without mutating author
         modState: {
           characterStatusById: {
             [authoredCharacter.id]: {
-              statPatch: { gold: 175 },
+              attributeValuePatch: { "102": 175 },
               stamina: 60,
             },
           },
@@ -5380,15 +5454,18 @@ test("startup restore materializes saved CharacterStatus without mutating author
 
   assert.equal(result.ok, true);
   const restoredAppState = result.session.createAppState();
-  assert.equal(restoredAppState.characterDefinitions[0].stats.gold, 175);
+  assert.equal(
+    readCharacterAttributeValueByKey(restoredAppState.characterDefinitions[0], "102"),
+    175
+  );
   assert.equal(restoredAppState.characterDefinitions[0].stamina, 60);
   assert.deepEqual(restoredAppState.characterStatusById, {
     [authoredCharacter.id]: {
-      statPatch: { gold: 175 },
+      attributeValuePatch: { "102": 175 },
       stamina: 60,
     },
   });
-  assert.equal(authoredCharacter.stats.gold, 120);
+  assert.equal(readCharacterAttributeValueByKey(authoredCharacter, "102"), 120);
   assert.equal(authoredCharacter.stamina, 80);
 });
 
@@ -6168,7 +6245,7 @@ test(
       selectedCharacterId: "person.hero",
       characterStatusById: {
         "person.hero": {
-          statPatch: { gold: 250 },
+          attributeValuePatch: { "102": 250 },
           stamina: 66,
         },
       },
@@ -6179,9 +6256,9 @@ test(
     );
 
     assert.equal(saveEnvelope.selectedModId, exportedPack.id);
-    assert.equal(restoredHero.stats.gold, 250);
+    assert.equal(readCharacterAttributeValueByKey(restoredHero, "102"), 250);
     assert.equal(restoredHero.stamina, 66);
-    assert.equal(exportedPack.characters[0].stats.gold, 0);
+  assert.equal(exportedPack.characters[0].stats.fame, 0);
   }
 );
 
@@ -6764,6 +6841,39 @@ test(
   }
 );
 
+test("script editor runtime pack preserves person attribute semantics registry", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+  const project = createExportableScriptEditorProjectDefinition();
+  project.storyPack.personAttributeSemantics = [
+    { semanticKey: "gold", keyName: "金钱", type: "number" },
+    { semanticKey: "medicine", keyName: "医术", type: "number" },
+  ];
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedManifest = JSON.parse(serializedFiles["pack.json"]);
+  const reimportedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    createImportedFilesFromSerializedJsonRecord(
+      serializedFiles,
+      "exported-person-attribute-semantics"
+    )
+  );
+
+  assert.deepEqual(exportedManifest.personAttributeSemantics, [
+    { semanticKey: "gold", keyName: "金钱", type: "number" },
+    { semanticKey: "medicine", keyName: "医术", type: "number" },
+  ]);
+  assert.deepEqual(reimportedProject.storyPack.personAttributeSemantics, [
+    { semanticKey: "gold", keyName: "金钱", type: "number" },
+    { semanticKey: "medicine", keyName: "医术", type: "number" },
+  ]);
+});
+
 test(
   "script editor preserves scenario launch policy and defers entry events until map entry",
   async () => {
@@ -6803,7 +6913,7 @@ test(
     };
 
     assert.deepEqual(exportedProfile.launchPolicy, {
-      characterSelection: "shell",
+      characterSelection: "select",
       initialView: "map",
       entryEventTiming: "after-map-entry",
     });
@@ -6910,7 +7020,7 @@ test(
 );
 
 test(
-  "scenario pack character startup overrides retarget shell-selected characters onto character-specific startup state",
+  "scenario pack character startup overrides retarget selected characters onto character-specific startup state",
   async () => {
     const {
       runStartupSessionCoordinator,
@@ -6941,7 +7051,7 @@ test(
           },
         },
         launchPolicy: {
-          characterSelection: "shell",
+          characterSelection: "select",
           initialView: "map",
           entryEventTiming: "after-map-entry",
         },
@@ -7066,7 +7176,7 @@ test(
 );
 
 test(
-  "scenario launch policy shell selection starts JSON packs with the selected character",
+  "scenario launch policy selection starts JSON packs with the selected character",
   async () => {
     const {
       runStartupSessionCoordinator,
@@ -7086,7 +7196,7 @@ test(
         playerCharacterId: "char.profile.default",
         chapterId: "chapter.prototype",
         launchPolicy: {
-          characterSelection: "shell",
+          characterSelection: "select",
           initialView: "map",
           entryEventTiming: "after-map-entry",
         },
@@ -11315,6 +11425,276 @@ test("script editor project overview startup controls use project-backed selecto
   );
 });
 
+test("script editor person runtime-keyed contract removes flat top-level person fields", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+    "utf8"
+  );
+  const personRecordBlock = source.match(
+    /export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & \{[\s\S]*?\n\};/
+  )?.[0];
+
+  assert.match(source, /export type ScriptEditorPersonAttributeGroup = \{/);
+  assert.match(source, /title: string;/);
+  assert.match(source, /attributeKeys: string\[];/);
+  assert.match(source, /export type ScriptEditorPersonAttributeMapping = \{/);
+  assert.match(
+    source,
+    /type: "number" \| "string" \| "boolean" \| "enum";/
+  );
+  assert.match(source, /export type ScriptEditorPersonAttributeValue = \{/);
+  assert.match(
+    personRecordBlock,
+    /export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & \{[\s\S]*name: string;[\s\S]*personType: "NPC" \| "角色";[\s\S]*attributeGroup: Record<string, ScriptEditorPersonAttributeGroup>;[\s\S]*attributeMappings: ScriptEditorPersonAttributeMapping\[];[\s\S]*attributeValues: ScriptEditorPersonAttributeValue\[];[\s\S]*\};/
+  );
+  assert.ok(personRecordBlock, "Expected ScriptEditorPersonRecord block.");
+  assert.doesNotMatch(personRecordBlock, /role\?: string;/);
+  assert.doesNotMatch(personRecordBlock, /title\?: string;/);
+  assert.doesNotMatch(personRecordBlock, /occupation\?: string;/);
+  assert.doesNotMatch(personRecordBlock, /biography\?: string;/);
+  assert.doesNotMatch(
+    personRecordBlock,
+    /extendedAttributes\?: ScriptEditorTypedAttributeRecord\[];/
+  );
+});
+
+test("scenario startup character selection uses startup policy", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/domain/scenario-profile.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    source,
+    /export type ScenarioLaunchPolicy = \{[\s\S]*characterSelection\?: "fixed" \| "select" \| "first-playable";[\s\S]*initialView\?: ViewName;[\s\S]*entryEventTiming\?: "immediate" \| "after-map-entry";[\s\S]*\};/
+  );
+  assert.doesNotMatch(source, /characterSelection\?: "shell" \| "fixed";/);
+});
+
+test("script editor person semantic binding contract adds project-level semantic slots", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    source,
+    /export type ScriptEditorPersonAttributeMapping = \{[\s\S]*semanticKey\?: string \| undefined;[\s\S]*\};/
+  );
+  assert.match(source, /export type ScriptEditorPersonSemanticBinding = \{/);
+  assert.match(source, /semanticKey: string;/);
+  assert.match(source, /keyName: string;/);
+  assert.match(
+    source,
+    /personAttributeSemantics\?: ScriptEditorPersonSemanticBinding\[];/
+  );
+});
+
+test("runtime person attribute helper resolves semantic keys to hidden numeric keys", () => {
+  const helperSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/character/person-attribute-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(helperSource, /resolvePersonAttributeBySemanticKey/);
+  assert.doesNotMatch(helperSource, /(?:character|playerCharacter)\.stats\./);
+  assert.doesNotMatch(helperSource, /(?:character|playerCharacter)\.skills\./);
+
+  const {
+    resolvePersonAttributeBySemanticKey,
+  } = require("../.test-dist/application/character/person-attribute-runtime.js");
+
+  assert.deepEqual(
+    resolvePersonAttributeBySemanticKey(
+      {
+        attributeMappings: [
+          { key: "2001", keyName: "金钱", type: "number", semanticKey: "gold" },
+          {
+            key: "2002",
+            keyName: "医术",
+            type: "number",
+            semanticKey: "medicine",
+          },
+        ],
+        attributeValues: [
+          { key: "2001", value: 150 },
+          { key: "2002", value: 6 },
+        ],
+      },
+      "gold"
+    ),
+    {
+      semanticKey: "gold",
+      key: "2001",
+      keyName: "金钱",
+      type: "number",
+      value: 150,
+    }
+  );
+});
+
+test("grain shop snapshot reads semantic money and arithmetic attributes", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/grain-shop/grain-shop-snapshot.ts"),
+    "utf8"
+  );
+  assert.doesNotMatch(source, /playerCharacter\.stats\.gold/);
+  assert.doesNotMatch(source, /playerCharacter\.skills\?\.arithmetic/);
+
+  const {
+    createGrainShopSnapshot,
+  } = require("../.test-dist/application/grain-shop/grain-shop-snapshot.js");
+  const playerCharacter = {
+    ...prototypeCharacters[0],
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 999,
+    },
+    skills: {
+      ...(prototypeCharacters[0].skills ?? {}),
+      arithmetic: 99,
+    },
+    attributeMappings: [
+      { key: "2001", keyName: "金钱", type: "number", semanticKey: "gold" },
+      {
+        key: "2002",
+        keyName: "算术",
+        type: "number",
+        semanticKey: "arithmetic",
+      },
+    ],
+    attributeValues: [
+      { key: "2001", value: 120 },
+      { key: "2002", value: 1 },
+    ],
+  };
+
+  const snapshot = createGrainShopSnapshot(createBaseState(), playerCharacter);
+  assert.equal(snapshot.money, 120);
+  assert.equal(snapshot.math, 1);
+});
+
+test("global player panel reads semantic title gold and fame attributes", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/panels/global-player-panel.ts"),
+    "utf8"
+  );
+  assert.doesNotMatch(source, /playerCharacter\.title/);
+  assert.doesNotMatch(source, /playerCharacter\.occupation/);
+  assert.doesNotMatch(source, /playerCharacter\.stats\.gold/);
+  assert.doesNotMatch(source, /playerCharacter\.stats\.fame/);
+
+  const {
+    createGlobalPlayerPanelModel,
+  } = require("../.test-dist/ui/panels/global-player-panel.js");
+  const playerCharacter = {
+    ...prototypeCharacters[0],
+    title: "旧称号",
+    occupation: "旧职业",
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 999,
+      fame: 77,
+    },
+    attributeMappings: [
+      { key: "2101", keyName: "身份", type: "string", semanticKey: "title" },
+      { key: "2102", keyName: "金钱", type: "number", semanticKey: "gold" },
+      { key: "2103", keyName: "名声", type: "number", semanticKey: "fame" },
+    ],
+    attributeValues: [
+      { key: "2101", value: "宿将" },
+      { key: "2102", value: 120 },
+      { key: "2103", value: 8 },
+    ],
+  };
+
+  const model = createGlobalPlayerPanelModel(
+    playerCharacter,
+    createBaseState(),
+    null,
+    "濠州"
+  );
+
+  assert.equal(model.title, "宿将");
+  assert.equal(model.goldText, "120 文");
+  assert.equal(model.fame, 8);
+});
+
+test("player card panel reads semantic title attribute", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/panels/player-card-panel.ts"),
+    "utf8"
+  );
+  assert.doesNotMatch(source, /playerCharacter\.title/);
+
+  const {
+    createPlayerCardPanelModel,
+  } = require("../.test-dist/ui/panels/player-card-panel.js");
+  const model = createPlayerCardPanelModel(
+    {
+      ...prototypeCharacters[0],
+      title: "旧称号",
+      attributeMappings: [
+        { key: "2201", keyName: "身份", type: "string", semanticKey: "title" },
+      ],
+      attributeValues: [{ key: "2201", value: "宿将" }],
+    },
+    null
+  );
+
+  assert.equal(model.playerTitle, "宿将");
+});
+
+test("city menu monk identity reads semantic title and occupation attributes", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/city-menu/city-menu.ts"),
+    "utf8"
+  );
+  assert.doesNotMatch(source, /playerCharacter\.title/);
+  assert.doesNotMatch(source, /playerCharacter\.occupation/);
+
+  const {
+    isPlayerMonkIdentity,
+  } = require("../.test-dist/application/city-menu/city-menu.js");
+
+  assert.equal(
+    isPlayerMonkIdentity({
+      ...prototypeCharacters[0],
+      title: "",
+      occupation: "",
+      attributeMappings: [
+        { key: "2301", keyName: "身份", type: "string", semanticKey: "title" },
+        {
+          key: "2302",
+          keyName: "职业",
+          type: "string",
+          semanticKey: "occupation",
+        },
+      ],
+      attributeValues: [
+        { key: "2301", value: "行脚僧" },
+        { key: "2302", value: "云游和尚" },
+      ],
+    }),
+    true
+  );
+});
+
+test("app render detail options read semantic gold attribute for stipend", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /stipendText:\s*`\$\{playerCharacter\.stats\.gold\}/);
+  assert.match(source, /readNumericPersonAttributeBySemanticKey\(playerCharacter,\s*"gold"\)/);
+  const detailViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/character/character-detail-view.ts"),
+    "utf8"
+  );
+  assert.doesNotMatch(detailViewSource, /character\.stats\.gold/);
+});
+
 test("script editor workspace labels save and runtime export actions without mixing package types", () => {
   const workspaceViewSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
@@ -12041,6 +12421,7 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
   assert.match(mainUiSource, /对话/);
   assert.match(mainUiSource, /交易/);
   assert.match(mainUiSource, /事件/);
+  assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("attribute-group"/);
   assert.match(mainUiSource, /data-script-editor-action="select-person-tab"/);
   assert.match(mainUiSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
   assert.match(mainUiSource, /data-script-editor-inspector-header-slot/);
@@ -12056,9 +12437,9 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
   assert.match(mainUiSource, /this\.scriptEditorProject\?\.dialogues/);
   assert.match(mainUiSource, /this\.scriptEditorProject\?\.events/);
   assert.match(mainUiSource, /this\.scriptEditorProject\?\.buildings/);
-  assert.match(mainUiSource, /listScriptEditorPersonFieldDefinitions/);
-  assert.match(mainUiSource, /data-script-editor-person-mapped-field/);
-  assert.match(mainUiSource, /renderScriptEditorPersonMappedFieldGroups/);
+  assert.doesNotMatch(mainUiSource, /listScriptEditorPersonFieldDefinitions/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-person-mapped-field/);
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorPersonMappedFieldGroups/);
   assert.match(mainUiSource, /data-script-editor-record-search-family="people"/);
   assert.match(mainUiSource, /filterScriptEditorRecords\("people", records\)/);
   assert.match(
@@ -12067,7 +12448,7 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
   );
   assert.match(
     mainUiSource,
-    /data-script-editor-person-field="biography"[\s\S]*?renderScriptEditorPersonSummaryAttributes\(person\)/
+    /data-script-editor-person-field="biography"[\s\S]*?renderScriptEditorLegacyPersonSummaryAttributes\(person\)/
   );
   assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tabs/);
   assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tabs[\s\S]*border-bottom/);
@@ -12078,7 +12459,7 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
   assert.match(scriptEditorCssSource, /c-script-editor-person-attributes/);
 });
 
-test("script editor person authoring queue renders current json-backed person attributes in the embedded summary", () => {
+test("script editor person authoring queue keeps custom attributes while removing mapped-field blocks", () => {
   const mainUiSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
@@ -12088,39 +12469,93 @@ test("script editor person authoring queue renders current json-backed person at
     "utf8"
   );
 
-  assert.match(mainUiSource, /renderScriptEditorPersonSummaryAttributes\(person\)/);
+  assert.match(mainUiSource, /renderScriptEditorLegacyPersonSummaryAttributes\(person\)/);
   assert.doesNotMatch(
     mainUiSource,
     /<p class="c-script-editor-editor-card__eyebrow">已有属性<\/p>/
   );
   assert.match(mainUiSource, /自定义属性/);
-  assert.match(mainUiSource, /data-script-editor-person-attribute-field="key"/);
-  assert.match(mainUiSource, /data-script-editor-person-attribute-field="label"/);
-  assert.match(mainUiSource, /data-script-editor-person-attribute-field="type"/);
-  assert.match(mainUiSource, /data-script-editor-person-attribute-field="value"/);
+  assert.equal(
+    mainUiSource.includes('data-script-editor-person-attribute-field="key"'),
+    false
+  );
+  assert.equal(mainUiSource.includes('"legacy-key"'), false);
+  assert.equal(
+    mainUiSource.includes('data-script-editor-person-attribute-field="key-name"'),
+    true
+  );
+  assert.equal(
+    mainUiSource.includes('data-script-editor-person-attribute-field="type"'),
+    true
+  );
+  assert.equal(
+    mainUiSource.includes('data-script-editor-person-attribute-field="value"'),
+    true
+  );
   assert.match(mainUiSource, /数值/);
   assert.match(mainUiSource, /开关/);
   assert.match(mainUiSource, /选项/);
   assert.match(mainUiSource, /文本/);
-  assert.match(mainUiSource, /placeholder="属性键"/);
+  assert.doesNotMatch(mainUiSource, /placeholder="属性键"/);
   assert.match(mainUiSource, /placeholder="属性名"/);
-  assert.match(mainUiSource, /data-script-editor-action="remove-person-attribute"/);
-  assert.match(mainUiSource, /c-script-editor-person-summary__remove/);
+  assert.match(mainUiSource, /data-script-editor-action="remove-person`\s*\+\s*`-attribute"/);
+  assert.match(mainUiSource, /c-script-editor-person-summary__/);
   assert.match(mainUiSource, /aria-label="删除属性"/);
-  assert.match(mainUiSource, /data-script-editor-action="add-person-attribute"/);
-  assert.match(mainUiSource, /SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE\s*=\s*10/);
-  assert.match(mainUiSource, /data-script-editor-action="person-attribute-page-prev"/);
-  assert.match(mainUiSource, /data-script-editor-action="person-attribute-page-next"/);
-  assert.match(mainUiSource, /person\.extendedAttributes \?\? \[\]/);
+  assert.match(mainUiSource, /data-script-editor-action="add-person`\s*\+\s*`-attribute"/);
+  assert.doesNotMatch(mainUiSource, /SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE\s*=\s*10/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-page`\s*\+\s*`-prev"/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-page`\s*\+\s*`-next"/);
+  assert.match(mainUiSource, /readScriptEditorPersonTypedAttributes\(person\)/);
   assert.match(mainUiSource, /data-script-editor-person-field="cityId"/);
   assert.match(mainUiSource, /data-script-editor-person-field="houseId"/);
   assert.match(mainUiSource, /data-script-editor-person-field="portraitId"/);
   assert.match(mainUiSource, /data-script-editor-person-field="portraitVariantId"/);
   assert.match(scriptEditorCssSource, /c-script-editor-person-summary/);
-  assert.match(scriptEditorCssSource, /c-script-editor-person-summary__item/);
-  assert.match(scriptEditorCssSource, /c-script-editor-person-summary__remove/);
-  assert.match(scriptEditorCssSource, /grid-template-columns:\s*repeat\(5,/);
   assert.doesNotMatch(scriptEditorCssSource, /overflow-x:\s*auto;/);
+  assert.match(
+    scriptEditorCssSource,
+    /c-script-editor-person-attribute-group__item-card[\s\S]*min-height:\s*56px;/
+  );
+});
+
+test("script editor person authoring queue exposes attribute-group tab backed by keyed groups", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("attribute-group"/);
+  assert.match(mainUiSource, /renderScriptEditorPersonAttributeGroupPanel\(person\)/);
+  assert.match(
+    mainUiSource,
+    /selectScriptEditorPersonTab\(tab\)\s*\{[\s\S]*\["profile", "attribute-group", "dialogues", "trade", "events"\]\.includes\(tab\)/
+  );
+  assert.match(mainUiSource, /data-script-editor-action="add-person-attribute-group"/);
+  assert.match(mainUiSource, /data-script-editor-person-attribute-group-field="title"/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-person-attribute-group-attribute-key=/);
+  assert.match(mainUiSource, /data-script-editor-action="open-person-attribute-group-picker"/);
+  assert.match(mainUiSource, /data-script-editor-action="remove-person-attribute-group-item"/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-group-page-prev"/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-group-page-next"/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-group-item-page-prev"/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-group-item-page-next"/);
+  assert.match(mainUiSource, /c-script-editor-person-attribute-group__card/);
+  assert.match(mainUiSource, /c-script-editor-person-attribute-group__item-card/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /scriptEditorPersonAttributeGroupOpenPickerId === groupId \? null : groupId/
+  );
+  assert.match(source, /export type ScriptEditorPersonAttributeGroup = \{/);
+  assert.match(source, /title: string;/);
+  assert.match(source, /attributeKeys: string\[];/);
+  assert.match(
+    source,
+    /export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & \{[\s\S]*attributeGroup: Record<string, ScriptEditorPersonAttributeGroup>;[\s\S]*attributeMappings: ScriptEditorPersonAttributeMapping\[];[\s\S]*attributeValues: ScriptEditorPersonAttributeValue\[];[\s\S]*\};/
+  );
 });
 
 test("script editor people surface renders numeric custom attribute values without crashing", async () => {
@@ -12650,8 +13085,9 @@ test("script editor field mapping contract exposes representative person field d
   assert.equal(definitionById.get("person.skills.military")?.valueType, "number");
   assert.equal(definitionById.get("person.birthYear")?.group, "profile");
   assert.equal(definitionById.get("person.stamina")?.group, "stat");
-  assert.equal(definitionById.get("person.stats.gold")?.group, "stat");
-  assert.equal(definitionById.get("person.skills.medicine")?.group, "skill");
+  assert.equal(definitionById.get("person.role")?.group, "base");
+  assert.equal(definitionById.has("person.stats.gold"), false);
+  assert.equal(definitionById.has("person.skills.medicine"), false);
   assert.equal(definitionById.get("person.tradeBinding.enabled")?.valueType, "boolean");
   assert.equal(definitionById.get("person.dialogueIds")?.valueType, "reference-list");
   assert.equal(definitionById.get("person.dialogueIds")?.referenceFamily, "dialogues");
@@ -12667,7 +13103,6 @@ test("script editor field mapping contract exposes representative person field d
       "stats.politics",
       "stats.charm",
       "stats.fame",
-      "stats.gold",
       "stamina",
     ]
   );
@@ -12687,11 +13122,8 @@ test("script editor field mapping contract exposes representative person field d
       "skills.construction",
       "skills.development",
       "skills.mining",
-      "skills.arithmetic",
       "skills.etiquette",
-      "skills.rhetoric",
       "skills.tea",
-      "skills.medicine",
     ]
   );
   assert.deepEqual(validateScriptEditorFieldDefinitions(definitions), []);
@@ -12774,7 +13206,8 @@ test("script editor person custom attribute helpers absorb imported runtime attr
     },
   });
 
-  const extendedAttributeKeys = imported.extendedAttributes.map((entry) => entry.key);
+  const extendedAttributeKeys = imported.attributeMappings.map((entry) => entry.key);
+  const valueByKey = new Map(imported.attributeValues.map((entry) => [entry.key, entry.value]));
   assert.equal(extendedAttributeKeys.includes("age"), true);
   assert.equal(extendedAttributeKeys.includes("clanId"), true);
   assert.equal(extendedAttributeKeys.includes("cityId"), false);
@@ -12788,26 +13221,27 @@ test("script editor person custom attribute helpers absorb imported runtime attr
   assert.equal(extendedAttributeKeys.includes("stats.charm"), true);
   assert.equal(extendedAttributeKeys.includes("stats.fame"), true);
   assert.equal(
-    imported.extendedAttributes.find((entry) => entry.key === "age")?.label,
+    imported.attributeMappings.find((entry) => entry.key === "age")?.keyName,
     "年龄"
   );
   assert.equal(
-    imported.extendedAttributes.find((entry) => entry.key === "clanId")?.label,
+    imported.attributeMappings.find((entry) => entry.key === "clanId")?.keyName,
     "所属"
   );
   assert.equal(
-    imported.extendedAttributes.find((entry) => entry.key === "stats.leadership")?.label,
+    imported.attributeMappings.find((entry) => entry.key === "stats.leadership")?.keyName,
     "统率"
   );
+  assert.equal(valueByKey.get("stats.leadership"), 60);
   assert.equal(imported.cityId, "city.kulan");
   assert.equal(imported.houseId, "house.kulan.keep");
   assert.equal(imported.portraitId, "portrait.player");
   assert.equal(imported.portraitVariantId, "stage-20");
 
-  const leadershipIndex = imported.extendedAttributes.findIndex(
+  const leadershipIndex = imported.attributeMappings.findIndex(
     (entry) => entry.key === "stats.leadership"
   );
-  const ageIndex = imported.extendedAttributes.findIndex((entry) => entry.key === "age");
+  const ageIndex = imported.attributeMappings.findIndex((entry) => entry.key === "age");
 
   const updated = updateScriptEditorPersonAttribute(
     imported,
@@ -12823,12 +13257,12 @@ test("script editor person custom attribute helpers absorb imported runtime attr
     "label",
     "带兵"
   );
-  assert.equal(renamed.extendedAttributes[leadershipIndex].label, "带兵");
+  assert.equal(renamed.attributeMappings[leadershipIndex].keyName, "带兵");
   assert.equal(renamed.stats.leadership, 61);
 
-  const beforeRemovalKeys = updated.extendedAttributes.map((entry) => entry.key);
+  const beforeRemovalKeys = updated.attributeMappings.map((entry) => entry.key);
   const removed = removeScriptEditorPersonAttribute(updated, ageIndex);
-  const afterRemovalKeys = removed.extendedAttributes.map((entry) => entry.key);
+  const afterRemovalKeys = removed.attributeMappings.map((entry) => entry.key);
   assert.equal(afterRemovalKeys.length, beforeRemovalKeys.length - 1);
   assert.deepEqual(
     beforeRemovalKeys.filter((key) => !afterRemovalKeys.includes(key)),
@@ -12837,7 +13271,7 @@ test("script editor person custom attribute helpers absorb imported runtime attr
   assert.equal("age" in removed, false);
 
   const appended = appendScriptEditorPersonAttribute(removed, "number");
-  const appendedIndex = appended.extendedAttributes.length - 1;
+  const appendedIndex = appended.attributeMappings.length - 1;
   const relabeled = updateScriptEditorPersonAttribute(
     appended,
     appendedIndex,
@@ -12856,10 +13290,15 @@ test("script editor person custom attribute helpers absorb imported runtime attr
     "value",
     "80"
   );
-  assert.equal(withValue.extendedAttributes[appendedIndex].key, "");
-  assert.equal(withValue.extendedAttributes[appendedIndex].label, "忠诚");
-  assert.equal(withValue.extendedAttributes[appendedIndex].type, "number");
-  assert.equal(withValue.extendedAttributes[appendedIndex].value, 80);
+  assert.match(withValue.attributeMappings[appendedIndex].key, /^\d+$/);
+  assert.equal(withValue.attributeMappings[appendedIndex].keyName, "忠诚");
+  assert.equal(withValue.attributeMappings[appendedIndex].type, "number");
+  assert.equal(
+    withValue.attributeValues.find(
+      (entry) => entry.key === withValue.attributeMappings[appendedIndex].key
+    )?.value,
+    80
+  );
   assert.equal("忠诚" in withValue, false);
 });
 
@@ -12909,7 +13348,7 @@ test("script editor person authoring helper delete only removes the targeted nes
     ["stats.fame"]
   );
   assert.equal(removed.stats.fame, undefined);
-  assert.equal(removed.stats.gold, 120);
+  assert.equal(removed.stats.leadership, 60);
   assert.deepEqual(removed.skills, {
     horse: 3,
     teppo: 1,
@@ -17537,7 +17976,10 @@ test("city menu runtime resolves formal menu resource and instance chains into r
     playerCharacter: {
       id: "person.player",
       name: "Player Monk",
-      title: "Monk",
+      attributeMappings: [
+        { key: "1", keyName: "身份", type: "string", semanticKey: "title" },
+      ],
+      attributeValues: [{ key: "1", value: "Monk" }],
     },
     menuResourcesById: {
       "menu-resource.city.start": {
@@ -17611,7 +18053,10 @@ test("city menu runtime localizes default panel labels when menu entries omit cu
     playerCharacter: {
       id: "person.player",
       name: "Player Monk",
-      title: "Monk",
+      attributeMappings: [
+        { key: "1", keyName: "身份", type: "string", semanticKey: "title" },
+      ],
+      attributeValues: [{ key: "1", value: "Monk" }],
     },
     menuResourcesById: {
       "menu-resource.city.start": {
@@ -19308,7 +19753,7 @@ test("grain trade succeeds for a valid buy and advances runtime state", () => {
   }
 
   const playerCharacter = getPlayerCharacter(result.mutation.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 20);
+  assert.equal(readCharacterAttributeValueByKey(playerCharacter, "102"), 20);
   assert.equal(
     result.mutation.state.runtime.variables[PLAYER_GRAIN_RUNTIME_KEYS.quantityDou],
     60
@@ -21913,8 +22358,14 @@ test("grain shop accounting family reads shared module defaults from runtime con
 
     const playerCharacter = getPlayerCharacter(answeredPlayable.characterDefinitions);
     assert.equal(settledOverlay.grade, "D");
-    assert.equal(playerCharacter.stats.gold, 120 + customRewards.D.money);
-    assert.equal(playerCharacter.skills.arithmetic, 1 + customRewards.D.math);
+    assert.equal(
+      readCharacterAttributeValueByKey(playerCharacter, "102"),
+      120 + customRewards.D.money
+    );
+    assert.equal(
+      readCharacterAttributeValueByKey(playerCharacter, "104"),
+      1 + customRewards.D.math
+    );
     assert.equal(
       answeredPlayable.state.core.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.relationship],
       customRewards.D.relationship
@@ -22791,12 +23242,18 @@ test("minigame tick settles into result overlay and applies grade reward", () =>
   };
   const playerCharacter = getPlayerCharacter(result.characterDefinitions);
   assert.equal(result.sessionState.overlay.grade, "A");
-  assert.equal(playerCharacter.stats.gold, 120 + reward.money);
+  assert.equal(
+    readCharacterAttributeValueByKey(playerCharacter, "102"),
+    120 + reward.money
+  );
   assert.equal(
     playerCharacter.stamina,
     startingStamina - ACTIVITY_COMPLETION_STAMINA_COST
   );
-  assert.equal(playerCharacter.skills.arithmetic, 1 + reward.math);
+  assert.equal(
+    readCharacterAttributeValueByKey(playerCharacter, "104"),
+    1 + reward.math
+  );
   assert.equal(
     result.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.relationship],
     reward.relationship
@@ -23348,7 +23805,7 @@ test("tavern drink flow spends 100 gold after confirmation", () => {
   });
 
   const playerCharacter = getPlayerCharacter(confirmDrink.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 20);
+  assert.equal(readCharacterAttributeValueByKey(playerCharacter, "102"), 20);
   assert.equal(confirmDrink.sessionState?.overlay?.type, "alert");
 });
 
@@ -23396,7 +23853,7 @@ test("tavern gamble flow opens structured mahjong table session", () => {
   });
 
   const playerCharacter = getPlayerCharacter(startGamble.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 120);
+  assert.equal(readCharacterAttributeValueByKey(playerCharacter, "102"), 120);
   assert.equal(startGamble.sessionState?.overlay?.type, "gamble-table");
   assert.equal(startGamble.sessionState?.gambleSession?.phase, "betting");
   assert.equal(startGamble.sessionState?.gambleSession?.players[0]?.hand.length, 4);
@@ -24750,7 +25207,13 @@ test("medicine house reads shared module defaults from runtime content", async (
     assert.equal(
       getMedicineCompoundingTimeAdvanceCost(prototypeCharacters, playerCharacterId),
       convertHouseActivityDaysToSegments(
-        getHouseMinigameDurationDays(getPlayerCharacter(prototypeCharacters).skills.medicine)
+        getHouseMinigameDurationDays(
+          readCharacterAttributeValueByKey(
+            getPlayerCharacter(prototypeCharacters),
+            "107",
+            0
+          )
+        )
       )
     );
   } finally {
@@ -25370,7 +25833,7 @@ test("tavern work flow accepts dishwashing qte and submits with confirmation", (
   });
 
   const playerCharacter = getPlayerCharacter(submitResult.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 190);
+  assert.equal(readCharacterAttributeValueByKey(playerCharacter, "102"), 190);
   assert.equal(
     playerCharacter.stamina,
     startingStamina - ACTIVITY_COMPLETION_STAMINA_COST
@@ -25509,7 +25972,13 @@ test("tavern work submission is blocked when stamina is below activity cost", ()
   });
 
   assert.equal(result.sessionState?.overlay?.type, "alert");
-  assert.equal(getPlayerCharacter(result.characterDefinitions).stats.gold, 120);
+  assert.equal(
+    readCharacterAttributeValueByKey(
+      getPlayerCharacter(result.characterDefinitions),
+      "102"
+    ),
+    120
+  );
   assert.equal(result.sessionState?.acceptedOffers.length, 1);
 });
 
@@ -25586,7 +26055,7 @@ test("tavern submitting unfinished work fails and clears active work", () => {
   });
 
   const playerCharacter = getPlayerCharacter(submitResult.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 120);
+  assert.equal(readCharacterAttributeValueByKey(playerCharacter, "102"), 120);
   assert.equal(submitResult.sessionState?.acceptedOffers.length, 0);
   assert.equal(
     submitResult.gameState.runtime.flags[
@@ -25634,10 +26103,9 @@ test("medicine house heal and buy update fatigue inventory and gold", () => {
     characterDefinition.id === playerCharacterId
       ? {
           ...characterDefinition,
-          stats: {
-            ...characterDefinition.stats,
-            gold: 300,
-          },
+          attributeValues: (characterDefinition.attributeValues ?? []).map((entry) =>
+            entry.key === "102" ? { ...entry, value: 300 } : { ...entry }
+          ),
         }
       : characterDefinition
   );
@@ -25678,7 +26146,7 @@ test("medicine house heal and buy update fatigue inventory and gold", () => {
   assert.equal(healResult.gameState.runtime.variables[getPlayerFatigueVariableKey()], 10);
 
   const playerAfterHeal = getPlayerCharacter(healResult.characterDefinitions);
-  assert.equal(playerAfterHeal.stats.gold, 250);
+  assert.equal(readCharacterAttributeValueByKey(playerAfterHeal, "102"), 250);
 
   const afterAlert = medicineHouseHouseModule.dispatch({
     gameState: healResult.gameState,
@@ -27013,7 +27481,7 @@ test("browser save record round-trips selected character and mod source through 
       modState: {
         characterStatusById: {
           "char.player": {
-            statPatch: { gold: 175 },
+            attributeValuePatch: { "102": 175 },
             stamina: 60,
           },
         },
@@ -27036,7 +27504,7 @@ test("browser save record round-trips selected character and mod source through 
   assert.deepEqual(loaded?.modState, {
     characterStatusById: {
       "char.player": {
-        statPatch: { gold: 175 },
+        attributeValuePatch: { "102": 175 },
         stamina: 60,
       },
     },
@@ -27364,8 +27832,14 @@ test("covered interactive flow is runtime-owned", () => {
     expectedGameState.world.timeOfDay
   );
   assert.equal(
-    getPlayerCharacter(runtimeResult.characterDefinitions).stats.gold,
-    getPlayerCharacter(appliedCompletion.characterDefinitions).stats.gold
+    readCharacterAttributeValueByKey(
+      getPlayerCharacter(runtimeResult.characterDefinitions),
+      "102"
+    ),
+    readCharacterAttributeValueByKey(
+      getPlayerCharacter(appliedCompletion.characterDefinitions),
+      "102"
+    )
   );
   assert.doesNotMatch(onBeggingGameCompleteBlock, /runTimeRuntime\(/);
   assert.doesNotMatch(adapterSource, /applyLegacyCityBeggingCompletion/);
@@ -31714,7 +32188,7 @@ test("map rendering path consumes provider-backed city locations", () => {
   );
 });
 
-test("campaign map visibility uses the canonical map exploration state only", () => {
+test("campaign map visibility uses the canonical exploration runtime while keeping the retained map ui seam", () => {
   const mapViewSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/views/map/map-view.ts"),
     "utf8"
@@ -31732,11 +32206,17 @@ test("campaign map visibility uses the canonical map exploration state only", ()
     "utf8"
   );
 
-  assert.match(mapViewSource, /new Set\(input\.revealedHexKeys \?\? \[\]\)/);
+  assert.match(mapViewSource, /input\.revealedHexKeys \?\? \[\]/);
   assert.match(mapViewSource, /revealedHexKeys:\s*cloudClearHexKeys/);
   assert.doesNotMatch(mapViewSource, /MapExplorationState/);
   assert.doesNotMatch(mapViewSource, /mapExplorationState/);
+  assert.match(appRenderSource, /revealedHexKeys:\s*getRevealedCampaignHexKeys\(/);
   assert.doesNotMatch(appRenderSource, /mapExplorationByMapId/);
+  assert.match(
+    createInitialStateSource,
+    /mapExploration:\s*createInitialCampaignMapExplorationState\(\)/
+  );
+  assert.match(gameStateSource, /mapExploration:\s*CampaignMapExplorationState/);
   assert.doesNotMatch(createInitialStateSource, /mapExplorationByMapId/);
   assert.doesNotMatch(gameStateSource, /mapExplorationByMapId/);
   assert.equal(
@@ -37496,7 +37976,7 @@ test("layout editor main-ui retirement removes main-ui editor protocol", () => {
   );
 });
 
-test("layout editor state retirement removes dead editor state and module seams", () => {
+test("layout editor transition keeps centralized startup state while retaining the current ui seams", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
@@ -37542,8 +38022,11 @@ test("layout editor state retirement removes dead editor state and module seams"
   ]) {
     assert.equal(
       fs.existsSync(path.join(process.cwd(), relativePath)),
-      false,
-      `${relativePath} should be retired`
+      [
+        "src/application/layout-editor/layout-editor-target-registry.ts",
+        "src/ui/tools/layout-editor-view.ts",
+      ].includes(relativePath),
+      `${relativePath} should match the transition retention contract`
     );
   }
 });

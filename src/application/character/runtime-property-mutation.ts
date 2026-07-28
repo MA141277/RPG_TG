@@ -6,6 +6,11 @@ import {
   type CharacterStatus,
   type CharacterStatusById,
 } from "../../domain/character-status";
+import {
+  createPersonAttributeValuePatchBySemanticKey,
+  readNumericPersonAttributeBySemanticKey,
+  resolvePersonAttributeBySemanticKey,
+} from "./person-attribute-runtime";
 
 export type RuntimePropertyMutationOperation = "set" | "add" | "subtract";
 
@@ -185,6 +190,74 @@ export function mutateCharacterNumericProperty(
     input.characterStatusById ?? {},
     input.characterId,
     patch
+  );
+  const nextCharacterDefinition = materializeCharacterDefinition(
+    characterDefinition,
+    characterStatusById[input.characterId]
+  );
+
+  return {
+    state: input.state,
+    characterDefinitions: input.characterDefinitions.map((candidateCharacter) =>
+      candidateCharacter.id === input.characterId
+        ? nextCharacterDefinition
+        : candidateCharacter
+    ),
+    characterStatusById,
+  };
+}
+
+export function mutateCharacterNumericAttributeBySemanticKey(input: {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  characterId: string;
+  semanticKey: string;
+  operation: RuntimePropertyMutationOperation;
+  value: number;
+  characterStatusById?: CharacterStatusById;
+}): RuntimePropertyMutationResult {
+  const characterDefinition = input.characterDefinitions.find(
+    (candidateCharacter) => candidateCharacter.id === input.characterId
+  );
+  if (characterDefinition == null) {
+    throw new Error(`Character "${input.characterId}" does not exist.`);
+  }
+
+  const resolvedAttribute = resolvePersonAttributeBySemanticKey(
+    characterDefinition,
+    input.semanticKey
+  );
+  if (resolvedAttribute == null) {
+    throw new Error(
+      `Character "${input.characterId}" does not define semantic attribute "${input.semanticKey}".`
+    );
+  }
+  if (resolvedAttribute.type !== "number") {
+    throw new Error(
+      `Character semantic attribute "${input.semanticKey}" must be a number attribute.`
+    );
+  }
+
+  const nextValue = applyNumericOperation(
+    readNumericPersonAttributeBySemanticKey(characterDefinition, input.semanticKey),
+    input.operation,
+    input.value
+  );
+  const attributeValuePatch = createPersonAttributeValuePatchBySemanticKey(
+    characterDefinition,
+    input.semanticKey,
+    nextValue
+  );
+  if (attributeValuePatch == null) {
+    throw new Error(
+      `Character "${input.characterId}" does not define semantic attribute "${input.semanticKey}".`
+    );
+  }
+
+  const characterStatusById = mergeCharacterStatusById(
+    input.characterStatusById ?? {},
+    input.characterId,
+    { attributeValuePatch }
   );
   const nextCharacterDefinition = materializeCharacterDefinition(
     characterDefinition,

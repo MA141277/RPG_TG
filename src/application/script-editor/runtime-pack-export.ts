@@ -8,11 +8,15 @@ import {
 } from "./shared-rule-compiler";
 import { materializeScriptEditorCityBuildingRuntimeFamilies } from "./city-building-runtime-materializer";
 import { materializeScriptEditorDialogueStoryRuntime } from "./dialogue-story-runtime-materializer";
-import { materializeScriptEditorPersonRuntimeCharacter } from "./person-authoring";
+import {
+  materializeScriptEditorPersonRuntimeCharacter,
+  readScriptEditorPersonTypedAttributes,
+} from "./person-authoring";
 import type {
   ScriptEditorEventBindingRecord,
   ScriptEditorEventRecord,
   ScriptEditorFlowRecord,
+  ScriptEditorPersonSemanticBinding,
   ScriptEditorProjectDefinition,
   ScriptEditorProgressTrackRecord,
   ScriptEditorRuntimePackSchemaVersion,
@@ -107,7 +111,6 @@ const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetad
   "stats.politics": { attributeType: "number" },
   "stats.charm": { attributeType: "number" },
   "stats.fame": { attributeType: "number" },
-  "stats.gold": { attributeType: "number" },
 };
 
 const CITY_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
@@ -132,6 +135,7 @@ type RuntimePackManifest = {
   author?: string;
   version?: string;
   tags?: string[];
+  personAttributeSemantics?: ScriptEditorPersonSemanticBinding[];
   files: RuntimePackManifestFiles;
 };
 
@@ -477,7 +481,10 @@ function resolveScriptEditorSettlementAttributeMetadata(
     }
     return (
       PERSON_SETTLEMENT_BASE_ATTRIBUTES[attributeKey] ??
-      resolveTypedSettlementAttributeMetadata(person.extendedAttributes, attributeKey) ??
+      resolveTypedSettlementAttributeMetadata(
+        readScriptEditorPersonTypedAttributes(person),
+        attributeKey
+      ) ??
       pushIneligibleSettlementAttributeDiagnostic(
         attributeKey,
         `${contentFieldPath}.attributeKey`,
@@ -932,6 +939,12 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ...(project.storyPack.description == null
       ? {}
       : { description: project.storyPack.description }),
+    ...(Array.isArray(project.storyPack.personAttributeSemantics)
+      ? {
+          personAttributeSemantics:
+            project.storyPack.personAttributeSemantics as ScriptEditorPersonSemanticBinding[],
+        }
+      : {}),
     ...pickOptionalPackMetadata(project.storyPack),
     files: RUNTIME_PACK_CANONICAL_FILES,
   };
@@ -1635,13 +1648,14 @@ function appendScenarioLaunchPolicyDiagnostics(
   const record = value as Record<string, unknown>;
   if (
     record.characterSelection != null &&
-    record.characterSelection !== "shell" &&
-    record.characterSelection !== "fixed"
+    record.characterSelection !== "fixed" &&
+    record.characterSelection !== "select" &&
+    record.characterSelection !== "first-playable"
   ) {
     diagnostics.push({
       code: "invalid-field",
       fieldPath: `${fieldPath}.characterSelection`,
-      message: `${fieldPath}.characterSelection must be "shell" or "fixed".`,
+      message: `${fieldPath}.characterSelection must be "fixed", "select", or "first-playable".`,
     });
   }
   if (record.initialView != null && !isViewName(record.initialView)) {
@@ -2962,8 +2976,9 @@ function isLaunchPolicy(
   const record = value as Record<string, unknown>;
   return (
     (record.characterSelection == null ||
-      record.characterSelection === "shell" ||
-      record.characterSelection === "fixed") &&
+      record.characterSelection === "fixed" ||
+      record.characterSelection === "select" ||
+      record.characterSelection === "first-playable") &&
     (record.initialView == null || isViewName(record.initialView)) &&
     (record.entryEventTiming == null ||
       record.entryEventTiming === "immediate" ||

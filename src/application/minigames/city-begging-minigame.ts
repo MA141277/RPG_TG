@@ -7,10 +7,10 @@ import { CITY_BEGGING_RUNTIME_KEYS } from "../../domain/city-begging-minigame";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import {
-  mergeCharacterStatusById,
   mergeCharacterStatusMaps,
   type CharacterStatusById,
 } from "../../domain/character-status";
+import { mutateCharacterNumericAttributeBySemanticKey } from "../character/runtime-property-mutation";
 import {
   ensurePlayerGrainInventory,
   mutatePlayerGrainDou,
@@ -168,26 +168,20 @@ export function applyCityBeggingMiniGameCompletion(
   let characterStatusById: CharacterStatusById = {};
 
   if (result.goldGain > 0) {
-    nextCharacters = nextCharacters.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId) {
-        return characterDefinition;
-      }
-
-      const nextGold = characterDefinition.stats.gold + result.goldGain;
-      characterStatusById = mergeCharacterStatusById(
-        characterStatusById,
-        playerCharacterId,
-        { statPatch: { gold: nextGold } }
-      );
-
-      return {
-        ...characterDefinition,
-        stats: {
-          ...characterDefinition.stats,
-          gold: nextGold,
-        },
-      };
+    const goldMutation = mutateCharacterNumericAttributeBySemanticKey({
+      state: nextState,
+      characterDefinitions: nextCharacters,
+      characterId: playerCharacterId,
+      semanticKey: "gold",
+      operation: "add",
+      value: result.goldGain,
     });
+    nextState = goldMutation.state;
+    nextCharacters = goldMutation.characterDefinitions;
+    characterStatusById = mergeCharacterStatusMaps(
+      characterStatusById,
+      goldMutation.characterStatusById
+    );
   }
 
   const staminaMutation = spendPlayerStamina(

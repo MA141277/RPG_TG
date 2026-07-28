@@ -1,8 +1,11 @@
-import { resolveCharacterPortraitImageUrl } from "../portrait-assets";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import type { MissionDefinition } from "../../domain/mission";
 import type { GlobalHudLayout, UiLayoutComponent } from "../../domain/ui-layout";
+import {
+  readNumericPersonAttributeBySemanticKey,
+  readStringPersonAttributeBySemanticKey,
+} from "../../application/character/person-attribute-runtime";
 import { getCouncilStatusText } from "../../application/time/time-progression";
 
 const compactHudAssets = {
@@ -50,6 +53,14 @@ function getComponent(
   return layout.components.find((component) => component.id === componentId) ?? null;
 }
 
+function resolvePanelPortraitImageUrl(character: CharacterDefinition): string | null {
+  const activeVariant =
+    character.portraitVariants?.find(
+      (variant) => variant.id === character.portraitVariantId
+    ) ?? null;
+  return activeVariant?.portraitImageUrl ?? character.portraitImageUrl ?? null;
+}
+
 export function createGlobalPlayerPanelModel(
   playerCharacter: CharacterDefinition,
   state: GameState,
@@ -61,16 +72,20 @@ export function createGlobalPlayerPanelModel(
       playerCharacter.portraitVariants?.find(
         (variant) => variant.id === playerCharacter.portraitVariantId
       )?.label ?? "通常",
-    portraitImageUrl: resolveCharacterPortraitImageUrl(playerCharacter),
+    portraitImageUrl: resolvePanelPortraitImageUrl(playerCharacter),
     name: playerCharacter.name,
-    title: playerCharacter.title ?? playerCharacter.occupation ?? "无官职",
+    title: readStringPersonAttributeBySemanticKey(
+      playerCharacter,
+      "title",
+      "无官职"
+    ),
     currentDateText:
       `${state.calendar.year}年${state.calendar.month}月${state.calendar.day}日` +
       `・${formatTimeOfDayLabel(state.world.timeOfDay)}`,
     locationText,
-    goldText: `${playerCharacter.stats.gold} 文`,
+    goldText: `${readNumericPersonAttributeBySemanticKey(playerCharacter, "gold")} 文`,
     stamina: playerCharacter.stamina,
-    fame: playerCharacter.stats.fame,
+    fame: readNumericPersonAttributeBySemanticKey(playerCharacter, "fame"),
     reviewDateText: getCouncilStatusText(state),
     mainHouseMissionText:
       activeMission?.title ?? state.ui.mainHouseMissionText ?? "暂无任务",

@@ -19,6 +19,7 @@ export type CharacterStatus = {
   >;
   statPatch?: Partial<Record<CharacterStatKey, number>>;
   skillPatch?: Partial<Record<SkillKey, number>>;
+  attributeValuePatch?: Record<string, string | number | boolean>;
   customPropertyPatch?: CharacterCustomProperties;
   stamina?: number;
 };
@@ -29,10 +30,34 @@ export function materializeCharacterDefinition(
   definition: CharacterDefinition,
   status?: CharacterStatus | null
 ): CharacterDefinition {
+  const nextAttributeValues = (definition.attributeValues ?? []).map((entry) => ({
+    ...entry,
+  }));
   const nextDefinition: CharacterDefinition = {
     ...definition,
     stats: { ...definition.stats },
     ...(definition.skills == null ? {} : { skills: { ...definition.skills } }),
+    ...(definition.attributeGroups == null
+      ? {}
+      : {
+          attributeGroups: definition.attributeGroups.map((group) => ({
+            ...group,
+            itemKeys: [...group.itemKeys],
+          })),
+        }),
+    ...(definition.attributeMappings == null
+      ? {}
+      : {
+          attributeMappings: definition.attributeMappings.map((mapping) => ({
+            ...mapping,
+            ...(mapping.options == null ? {} : { options: [...mapping.options] }),
+          })),
+        }),
+    ...(definition.attributeValues == null
+      ? {}
+      : {
+          attributeValues: nextAttributeValues,
+        }),
     availableFunctions: definition.availableFunctions.map((entry) => ({
       ...entry,
       ...(entry.effects == null
@@ -76,6 +101,16 @@ export function materializeCharacterDefinition(
       ...status.skillPatch,
     } as Record<SkillKey, number>;
     nextDefinition.skills = nextSkills;
+  }
+
+  if (status.attributeValuePatch != null) {
+    const attributeValuesByKey = new Map(
+      (nextDefinition.attributeValues ?? []).map((entry) => [entry.key, { ...entry }])
+    );
+    for (const [key, value] of Object.entries(status.attributeValuePatch)) {
+      attributeValuesByKey.set(key, { key, value });
+    }
+    nextDefinition.attributeValues = Array.from(attributeValuesByKey.values());
   }
 
   if (status.customPropertyPatch != null) {
@@ -133,6 +168,14 @@ export function mergeCharacterStatusById(
             skillPatch: {
               ...(currentStatus.skillPatch ?? {}),
               ...patch.skillPatch,
+            },
+          }),
+      ...(patch.attributeValuePatch == null
+        ? {}
+        : {
+            attributeValuePatch: {
+              ...(currentStatus.attributeValuePatch ?? {}),
+              ...patch.attributeValuePatch,
             },
           }),
       ...(patch.customPropertyPatch == null

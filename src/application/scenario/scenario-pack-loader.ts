@@ -20,7 +20,6 @@ const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetad
   "stats.politics": { attributeType: "number" },
   "stats.charm": { attributeType: "number" },
   "stats.fame": { attributeType: "number" },
-  "stats.gold": { attributeType: "number" },
 };
 
 const CITY_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
@@ -148,7 +147,7 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     assertOptionalEnum(
       value.scenarioProfile.launchPolicy.characterSelection,
       "scenario launchPolicy.characterSelection",
-      ["shell", "fixed"]
+      ["fixed", "select", "first-playable"]
     );
     assertOptionalEnum(
       value.scenarioProfile.launchPolicy.initialView,

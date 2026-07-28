@@ -23,7 +23,11 @@ import type {
 } from "../../domain/script-editor-project";
 import { normalizeScriptEditorBuildingRecord } from "./city-building-authoring";
 import { normalizeScriptEditorCityRecord } from "./city-building-authoring";
-import { normalizeScriptEditorPersonRecord } from "./person-authoring";
+import {
+  normalizeScriptEditorPersonRecord,
+  readScriptEditorPersonStringArrayField,
+  readScriptEditorPersonStringField,
+} from "./person-authoring";
 
 export type ScriptEditorCityBuildingRuntimeFamilies = {
   cities: CityDefinition[];
@@ -311,14 +315,15 @@ function materializeCityNpcPools(
   })) as CityNpcPoolDefinition[];
 
   for (const person of people) {
-    if (person.personType !== "NPC" || person.cityId == null || person.cityId.length === 0) {
+    const cityId = readScriptEditorPersonStringField(person, "cityId");
+    if (person.personType !== "NPC" || cityId.length === 0) {
       continue;
     }
 
-    let pool = pools.find((candidate) => candidate.cityId === person.cityId);
+    let pool = pools.find((candidate) => candidate.cityId === cityId);
     if (pool == null) {
       pool = {
-        cityId: person.cityId,
+        cityId,
         residents: [],
       };
       pools.push(pool);
@@ -339,14 +344,14 @@ function materializeCityNpcResident(
 ): CityNpcDefinition {
   return {
     id: person.id,
-    cityId: person.cityId ?? "",
+    cityId: readScriptEditorPersonStringField(person, "cityId"),
     name: person.name,
-    title: readString(person.title),
+    title: readScriptEditorPersonStringField(person, "title"),
     personality: "",
     specialty: "",
     favorability: 0,
     activityWeight: { custom: 1 },
-    dialoguePool: readStringArray(person.dialogueIds),
+    dialoguePool: readScriptEditorPersonStringArrayField(person, "dialogueIds"),
     intelPool: [],
   };
 }

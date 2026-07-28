@@ -2104,14 +2104,14 @@ async function prepareScenarioPackCharacterSelection(
   source: ModSourceDescriptor,
   pendingRequest: PendingScenarioStartupRequest
 ): Promise<boolean> {
-  if (scenarioPack.scenarioProfile.launchPolicy?.characterSelection !== "shell") {
+  if (scenarioPack.scenarioProfile.launchPolicy?.characterSelection !== "select") {
     return false;
   }
 
   const activationResult = await entryShellBootstrapState.activateScenarioPackMod(
     scenarioPack,
     source,
-    `startup:shell-select:${source.kind}:${scenarioPack.id}`
+    `startup:select-character:${source.kind}:${scenarioPack.id}`
   );
   if (!activationResult.ok) {
     throw new Error(activationResult.failure.message);

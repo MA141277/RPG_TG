@@ -10,6 +10,7 @@ import {
   ensurePlayerGrainInventory,
   readPlayerGrainDou,
 } from "../inventory/trade-inventory";
+import { readNumericPersonAttributeBySemanticKey } from "../character/person-attribute-runtime";
 
 function readNumericVariable(
   state: GameState,
@@ -30,11 +31,11 @@ export function createGrainShopSnapshot(
   const sellableFoodShi = convertDouToWholeShi(foodDou);
 
   return {
-    money: playerCharacter.stats.gold,
+    money: readNumericPersonAttributeBySemanticKey(playerCharacter, "gold"),
     food: sellableFoodShi,
     foodDou,
     sellableFoodShi,
-    math: playerCharacter.skills?.arithmetic ?? 0,
+    math: readNumericPersonAttributeBySemanticKey(playerCharacter, "arithmetic"),
     relationship: readNumericVariable(
       syncedState,
       GRAIN_SHOP_VARIABLE_KEYS.relationship,

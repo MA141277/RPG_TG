@@ -29,6 +29,7 @@ import {
   type ScriptEditorMinigameOwnerKind,
   type ScriptEditorMinigameReturnPolicy,
   type ScriptEditorProjectDefinition,
+  type ScriptEditorPersonSemanticBinding,
   type ScriptEditorRuntimePackSchemaVersion,
   type ScriptEditorRuntimeRecord,
   type ScriptEditorSettlementContentRecord,
@@ -107,7 +108,6 @@ const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetad
   "stats.politics": { attributeType: "number" },
   "stats.charm": { attributeType: "number" },
   "stats.fame": { attributeType: "number" },
-  "stats.gold": { attributeType: "number" },
 };
 
 const CITY_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
@@ -132,6 +132,7 @@ type RuntimePackManifest = {
   author?: string;
   version?: string;
   tags?: string[];
+  personAttributeSemantics?: ScriptEditorPersonSemanticBinding[];
   files: RuntimePackManifestFiles;
 };
 
@@ -411,6 +412,13 @@ function createStoryPackRecord(
     ...(Array.isArray(rawPack.tags) &&
     rawPack.tags.every((tag) => typeof tag === "string")
       ? { tags: [...rawPack.tags] as string[] }
+      : {}),
+    ...(Array.isArray(rawPack.personAttributeSemantics)
+      ? {
+          personAttributeSemantics: cloneJsonCompatibleValue(
+            rawPack.personAttributeSemantics
+          ) as ScriptEditorPersonSemanticBinding[],
+        }
       : {}),
   };
 }
@@ -1437,6 +1445,13 @@ async function hydrateScenarioPackManifestFromFiles(
     ...(manifest.author == null ? {} : { author: manifest.author }),
     ...(manifest.version == null ? {} : { version: manifest.version }),
     ...(manifest.tags == null ? {} : { tags: [...manifest.tags] }),
+    ...(manifest.personAttributeSemantics == null
+      ? {}
+      : {
+          personAttributeSemantics: cloneJsonCompatibleValue(
+            manifest.personAttributeSemantics
+          ) as ScriptEditorPersonSemanticBinding[],
+        }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
   };

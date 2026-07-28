@@ -85,6 +85,24 @@ export type CharacterFunction = {
 
 export type CharacterStats = Record<CharacterStatKey, number>;
 export type CharacterCustomProperties = Record<string, string | number | boolean>;
+export type RuntimePersonAttributeType = "number" | "string" | "boolean" | "enum";
+export type RuntimePersonAttributeGroup = {
+  key: string;
+  keyName: string;
+  order: number;
+  itemKeys: string[];
+};
+export type RuntimePersonAttributeMapping = {
+  key: string;
+  keyName: string;
+  semanticKey?: string;
+  type: RuntimePersonAttributeType;
+  options?: string[];
+};
+export type RuntimePersonAttributeValue = {
+  key: string;
+  value: string | number | boolean;
+};
 
 export type CharacterDefinition = {
   id: CharacterId;
@@ -119,4 +137,7 @@ export type CharacterDefinition = {
   onTalkDialogueId?: DialogueId;
   skills?: Record<SkillKey, number>;
   teachableSkillKeys?: SkillKey[];
+  attributeGroups?: RuntimePersonAttributeGroup[];
+  attributeMappings?: RuntimePersonAttributeMapping[];
+  attributeValues?: RuntimePersonAttributeValue[];
 };

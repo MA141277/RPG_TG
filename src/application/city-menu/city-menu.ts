@@ -8,6 +8,7 @@ import type {
   MenuResourceDefinition,
   MenuTargetFamily,
 } from "../../domain/menu";
+import { readStringPersonAttributeBySemanticKey } from "../character/person-attribute-runtime";
 
 export type CityMenuPanelId =
   | "overview"
@@ -135,8 +136,8 @@ export function isPlayerMonkIdentity(
   playerCharacter: CharacterDefinition
 ): boolean {
   const identityText = [
-    playerCharacter.title ?? "",
-    playerCharacter.occupation ?? "",
+    readStringPersonAttributeBySemanticKey(playerCharacter, "title"),
+    readStringPersonAttributeBySemanticKey(playerCharacter, "occupation"),
   ]
     .join(" ")
     .toLowerCase();

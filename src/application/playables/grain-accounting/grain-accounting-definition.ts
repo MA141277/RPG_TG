@@ -12,6 +12,7 @@ import {
   convertHouseActivityDaysToSegments,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import { readNumericPersonAttributeBySemanticKey } from "../../character/person-attribute-runtime";
 import { applyAccountingReward } from "../../grain-shop/apply-accounting-reward";
 import {
   generateLedgerQuestion,
@@ -79,7 +80,10 @@ function getPlayerArithmeticSkill(
     playerCharacter,
     `Player character not found for id "${playerCharacterId}" in grain accounting playable.`
   );
-  return Math.max(1, playerCharacter.skills?.arithmetic ?? 1);
+  return Math.max(
+    1,
+    readNumericPersonAttributeBySemanticKey(playerCharacter, "arithmetic", 1)
+  );
 }
 
 function withSessionState(

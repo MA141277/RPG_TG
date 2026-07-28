@@ -6,6 +6,7 @@ import {
   type ScriptEditorBuildingArrangementRecord,
   type ScriptEditorBuildingContainerRecord,
   type ScriptEditorEntityRecord,
+  type ScriptEditorPersonSemanticBinding,
   type ScriptEditorProjectDefinition,
   type ScriptEditorProjectFileKey,
   type ScriptEditorProjectManifest,
@@ -461,6 +462,37 @@ function assertStoryPackRecord(
   assertObject(value, "script editor project storyPack");
   assertString(value.id, "script editor project storyPack.id");
   assertString(value.title, "script editor project storyPack.title");
+  if (value.personAttributeSemantics != null) {
+    assertPersonSemanticBindingArray(
+      value.personAttributeSemantics,
+      "script editor project storyPack.personAttributeSemantics"
+    );
+  }
+}
+
+function assertPersonSemanticBindingArray(
+  value: unknown,
+  label: string
+): asserts value is ScriptEditorPersonSemanticBinding[] {
+  assertArray(value, label);
+  value.forEach((entry, index) => {
+    assertObject(entry, `${label}[${index}]`);
+    assertString(entry.semanticKey, `${label}[${index}].semanticKey`);
+    assertString(entry.keyName, `${label}[${index}].keyName`);
+    if (
+      entry.type !== "number" &&
+      entry.type !== "string" &&
+      entry.type !== "boolean" &&
+      entry.type !== "enum"
+    ) {
+      throw new Error(
+        `${label}[${index}].type must be one of: number, string, boolean, enum.`
+      );
+    }
+    if (entry.options != null) {
+      assertStringArray(entry.options, `${label}[${index}].options`);
+    }
+  });
 }
 
 function assertObject(

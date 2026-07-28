@@ -7,6 +7,10 @@
     "moduleResolution": "Node",
     "verbatimModuleSyntax": false
   },
+  "files": [
+    "src/ui/panels/global-player-panel.ts",
+    "src/ui/panels/player-card-panel.ts"
+  ],
   "include": [
     "src/core/**/*.ts",
     "src/application/character/**/*.ts",

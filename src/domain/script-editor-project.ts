@@ -144,6 +144,32 @@ export type ScriptEditorPersonTradeBinding = {
   entryId: string;
 };
 
+export type ScriptEditorPersonAttributeGroup = {
+  title: string;
+  order: number;
+  attributeKeys: string[];
+};
+
+export type ScriptEditorPersonAttributeMapping = {
+  key: string;
+  keyName: string;
+  semanticKey?: string | undefined;
+  type: "number" | "string" | "boolean" | "enum";
+  options?: string[] | undefined;
+};
+
+export type ScriptEditorPersonAttributeValue = {
+  key: string;
+  value: string | number | boolean;
+};
+
+export type ScriptEditorPersonSemanticBinding = {
+  semanticKey: string;
+  keyName: string;
+  type: "number" | "string" | "boolean" | "enum";
+  options?: string[] | undefined;
+};
+
 export type ScriptEditorPortraitResourceRecord = PortraitResourceDefinition;
 export type ScriptEditorPortraitVariantRecord = PortraitVariantDefinition;
 export type ScriptEditorProgressTrackTierRecord = ProgressTierDefinition;
@@ -177,9 +203,12 @@ export type ScriptEditorBuildingEntryBinding = {
   returnTarget: string;
 };
 
-export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
+export type ScriptEditorLegacyPersonRecord = ScriptEditorEntityRecord & {
   name: string;
   personType?: "NPC" | "角色";
+};
+
+export type ScriptEditorPersonLegacyFieldSet = {
   role?: string;
   title?: string;
   occupation?: string;
@@ -192,6 +221,30 @@ export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
   dialogueIds?: string[];
   eventIds?: string[];
   tradeBinding?: ScriptEditorPersonTradeBinding;
+  birthYear?: number;
+  deathYear?: number | null;
+  age?: number;
+  clanId?: string;
+  affiliationLabel?: string;
+  stamina?: number;
+  stats?: Record<string, unknown>;
+  skills?: Record<string, unknown>;
+  availableFunctions?: unknown[];
+  customProperties?: Record<string, string | number | boolean>;
+  onTalkDialogueId?: string;
+  teachableSkillKeys?: string[];
+  flags?: string[];
+  isHistoricalFigure?: boolean;
+  leaderResidenceEligible?: boolean;
+  leaderResidenceStatus?: string;
+};
+
+export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
+  name: string;
+  personType: "NPC" | "角色";
+  attributeGroup: Record<string, ScriptEditorPersonAttributeGroup>;
+  attributeMappings: ScriptEditorPersonAttributeMapping[];
+  attributeValues: ScriptEditorPersonAttributeValue[];
 };
 
 export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
@@ -664,6 +717,7 @@ export type ScriptEditorStoryPackRecord = {
   id: string;
   title: string;
   description?: string;
+  personAttributeSemantics?: ScriptEditorPersonSemanticBinding[];
   [key: string]: unknown;
 };
 

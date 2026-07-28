@@ -27,6 +27,7 @@ import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
 } from "./portrait-resource";
+import type { ScriptEditorPersonSemanticBinding } from "./script-editor-project";
 import type { TaskDefinition } from "../core/contracts/task-runtime";
 import type {
   PlayableDefinition,
@@ -86,6 +87,7 @@ export type ContentPackDefinition = {
   houseModuleDefaults?: Record<string, Record<string, unknown>>;
   portraits?: PortraitResourceDefinition[];
   portraitVariants?: PortraitVariantDefinition[];
+  personAttributeSemantics?: ScriptEditorPersonSemanticBinding[];
   cityPortraits?: Record<string, string>;
   historicalCharacterIdByCharacterId?: Record<string, string>;
   historicalCharacters?: HistoricalCharacterRecord[];

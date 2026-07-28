@@ -1,5 +1,6 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
+import type { CharacterStatusById } from "../../domain/character-status";
 import {
   getTavernAcceptedWorkKey,
   getTavernActiveWorkIdsVariableKey,
@@ -9,10 +10,12 @@ import {
   getTavernTimeVariableKey,
   getTavernWorkProgressVariableKey,
 } from "../../domain/tavern";
+import { mutateCharacterNumericAttributeBySemanticKey } from "../character/runtime-property-mutation";
 
 export type TavernMutationResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 };
 
 function withVariable(state: GameState, key: string, value: number | string): GameState {
@@ -181,20 +184,17 @@ export function mutatePlayerGold(
   playerCharacterId: string,
   delta: number
 ): TavernMutationResult {
-  return {
+  const result = mutateCharacterNumericAttributeBySemanticKey({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId) {
-        return characterDefinition;
-      }
-
-      return {
-        ...characterDefinition,
-        stats: {
-          ...characterDefinition.stats,
-          gold: characterDefinition.stats.gold + delta,
-        },
-      };
-    }),
+    characterDefinitions,
+    characterId: playerCharacterId,
+    semanticKey: "gold",
+    operation: delta >= 0 ? "add" : "subtract",
+    value: Math.abs(delta),
+  });
+  return {
+    state: result.state,
+    characterDefinitions: result.characterDefinitions,
+    characterStatusById: result.characterStatusById,
   };
 }

@@ -215,8 +215,10 @@ async function createRestoreStartupSession(
   if (isScenarioPackSource(activatedContentSource)) {
     const playerCharacterId =
       saveData?.selectedCharacterId ??
-      activatedContentSource.scenarioProfile.playerCharacterId ??
-      selectedCharacter.id;
+      resolveScenarioPackPlayerCharacterId(
+        activatedContentSource,
+        selectedCharacter
+      );
     const effectiveScenarioPack = {
       ...activatedContentSource,
       scenarioProfile: resolveScenarioProfileForCharacter(
@@ -318,8 +320,10 @@ async function createLoadedScenarioPackStartupSession(
     source,
     `startup:${source.kind}:${scenarioPack.id}`
   );
-  const playerCharacterId =
-    selectedCharacter?.id ?? scenarioPack.scenarioProfile.playerCharacterId;
+  const playerCharacterId = resolveScenarioPackPlayerCharacterId(
+    scenarioPack,
+    selectedCharacter
+  );
   const effectiveScenarioPack = {
     ...scenarioPack,
     scenarioProfile: resolveScenarioProfileForCharacter(
@@ -337,6 +341,29 @@ async function createLoadedScenarioPackStartupSession(
       deps
     ),
   });
+}
+
+function resolveScenarioPackPlayerCharacterId(
+  scenarioPack: ScenarioPackDefinition,
+  selectedCharacter?: CharacterDefinition
+): string {
+  if (selectedCharacter != null) {
+    return selectedCharacter.id;
+  }
+
+  if (
+    scenarioPack.scenarioProfile.launchPolicy?.characterSelection ===
+    "first-playable"
+  ) {
+    const firstPlayableCharacter = (scenarioPack.characters ?? []).find(
+      (characterDefinition) => characterDefinition.personType === "角色"
+    );
+    if (firstPlayableCharacter != null) {
+      return firstPlayableCharacter.id;
+    }
+  }
+
+  return scenarioPack.scenarioProfile.playerCharacterId;
 }
 
 function createStartupAppStateBuilder(

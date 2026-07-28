@@ -1,15 +1,18 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
+import type { CharacterStatusById } from "../../domain/character-status";
 import {
   getTeaHouseFixedNpcFavorabilityVariableKey,
   getTeaHouseIntelVariableKey,
   getTeaHouseTimeVariableKey,
 } from "../../domain/tea-house";
+import { mutateCharacterNumericAttributeBySemanticKey } from "../character/runtime-property-mutation";
 import { mutateCityNpcFavorability } from "../city-npcs/city-npc-pool-state";
 
 export type TeaHouseMutationResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 };
 
 function withVariable(
@@ -78,21 +81,18 @@ export function mutatePlayerGold(
   playerCharacterId: string,
   delta: number
 ): TeaHouseMutationResult {
-  return {
+  const result = mutateCharacterNumericAttributeBySemanticKey({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId) {
-        return characterDefinition;
-      }
-
-      return {
-        ...characterDefinition,
-        stats: {
-          ...characterDefinition.stats,
-          gold: characterDefinition.stats.gold + delta,
-        },
-      };
-    }),
+    characterDefinitions,
+    characterId: playerCharacterId,
+    semanticKey: "gold",
+    operation: delta >= 0 ? "add" : "subtract",
+    value: Math.abs(delta),
+  });
+  return {
+    state: result.state,
+    characterDefinitions: result.characterDefinitions,
+    characterStatusById: result.characterStatusById,
   };
 }
 
@@ -102,20 +102,17 @@ export function mutatePlayerRhetoric(
   playerCharacterId: string,
   delta: number
 ): TeaHouseMutationResult {
-  return {
+  const result = mutateCharacterNumericAttributeBySemanticKey({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId || characterDefinition.skills == null) {
-        return characterDefinition;
-      }
-
-      return {
-        ...characterDefinition,
-        skills: {
-          ...characterDefinition.skills,
-          rhetoric: Math.max(0, characterDefinition.skills.rhetoric + delta),
-        },
-      };
-    }),
+    characterDefinitions,
+    characterId: playerCharacterId,
+    semanticKey: "rhetoric",
+    operation: delta >= 0 ? "add" : "subtract",
+    value: Math.abs(delta),
+  });
+  return {
+    state: result.state,
+    characterDefinitions: result.characterDefinitions,
+    characterStatusById: result.characterStatusById,
   };
 }

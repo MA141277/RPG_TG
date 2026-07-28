@@ -3,20 +3,20 @@
 ## Current State
 
 - Current Stage: `Historical Governance Migration`
-- Current Stage Status: `closed`
-- Current Task: `Blueprint supersession recorded`
-- Current Task Status: `closed`
-- Current Child: `none`
-- Current Child Status: `none`
-- Next Child: `none`
-- Next Child Status: `none`
-- Next Required Action: `For current repository work, resume from docs/blueprints/project-progress.md. Reopen docs/superpowers/** only for explicitly legacy-governed work.`
-- Next Entry Document: `docs/blueprints/project-progress.md`
-- Next Owner Document: `docs/blueprints/blueprint.md`
+- Current Stage Status: `running`
+- Current Task: `Explicit legacy person attribute-group tab layout slice`
+- Current Task Status: `running`
+- Current Child: `Person attribute-group tab layout`
+- Current Child Status: `running`
+- Next Child: `Person attribute-group tab layout`
+- Next Child Status: `running`
+- Next Required Action: `Resume the explicit legacy child plan for the person attribute-group tab layout slice and continue from its first unchecked step.`
+- Next Entry Document: `docs/superpowers/project-progress.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-28-person-attribute-group-tab-layout-implementation.md`
 - Last Closed Item: `Authoring runtime legacy cutover implementation`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/blueprints/project-progress.md unless the user explicitly asks to resume a legacy superpowers-governed artifact.`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-28-person-attribute-group-tab-layout-implementation.md.`
 
 ## Progress Log
 
@@ -32,7 +32,11 @@
   - Summary: `Explicitly resumed the historical plan docs/superpowers/plans/2026-07-25-authoring-runtime-legacy-cutover-implementation.md, landed the remaining canonical cutover commits, and closed the legacy child after final verification.`
   - Verification: `cmd /c npm run build:test; node --test tests/robustness.test.cjs; cmd /c npm run lint:plans`
   - Next: `Return all live repository execution to docs/blueprints/project-progress.md unless another specific legacy superpowers artifact is explicitly resumed.`
+- 2026-07-28
+  - Summary: `Explicitly resumed a new legacy child for the person attribute-group tab layout implementation after the 2026-07-28 layout spec was approved.`
+  - Verification: `Plan admission only; implementation verification not run yet`
+  - Next: `Drive the approved authoring layout through failing robustness tests, UI changes, and fresh verification recorded in the child plan.`
 
 ## Latest Closeout
 
-Legacy superpowers progress is now historical by default. The explicitly resumed legacy cutover child was closed on 2026-07-25, and live repository-wide execution truth remains owned under `docs/blueprints/**`.
+Legacy superpowers progress is historical by default, but it is explicitly resumed again for the active `Person attribute-group tab layout` child recorded above.

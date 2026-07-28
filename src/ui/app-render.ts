@@ -27,6 +27,7 @@ import { assertExists } from "../shared/assert";
 import { renderSharedDialog } from "./components/dialog/shared-dialog";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
 import type { CharacterManager } from "../application/character/character-manager";
+import { readNumericPersonAttributeBySemanticKey } from "../application/character/person-attribute-runtime";
 import { renderBuildingModuleView } from "./views/building/building-module-view";
 import {
   createGlobalPlayerPanelModel,
@@ -129,7 +130,7 @@ function buildCharacterDetailOptions(
   const options: CharacterDetailViewOptions = {
     layout: input.appState.uiLayouts["character-detail-screen"],
     notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
-    stipendText: `${playerCharacter.stats.gold} 文`,
+    stipendText: `${readNumericPersonAttributeBySemanticKey(playerCharacter, "gold")} 文`,
     schoolName: "无",
     masterName: "无",
     weaponName: equippedWeapon ?? "无",

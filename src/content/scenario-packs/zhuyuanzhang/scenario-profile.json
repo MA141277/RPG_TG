@@ -47,7 +47,7 @@
     }
   ],
   "launchPolicy": {
-    "characterSelection": "shell",
+    "characterSelection": "select",
     "initialView": "map",
     "entryEventTiming": "after-map-entry"
   },

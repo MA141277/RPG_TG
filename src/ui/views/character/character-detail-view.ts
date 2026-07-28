@@ -382,7 +382,7 @@ export function renderCharacterDetailView(
                 <span class="c-character-detail__label">上司</span>
                 <strong>${options.lordName ?? options.houseName ?? "无"}</strong>
                 <span class="c-character-detail__label">俸禄</span>
-                <strong>${options.stipendText ?? `${character.stats.gold}贯`}</strong>
+                <strong>${options.stipendText ?? "无"}</strong>
               </div>
               <div class="c-character-detail__info-row">
                 <span class="c-character-detail__label">所属流派</span>

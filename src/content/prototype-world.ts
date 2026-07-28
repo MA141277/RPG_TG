@@ -639,6 +639,67 @@ export const prototypeCharacters: CharacterDefinition[] = [
     stamina: 100,
     biography: "郭子兴帐下的新近亲兵，资历尚浅，先从跑腿与粮道杂务做起。",
     availableFunctions: [],
+    attributeGroups: [
+      {
+        key: "1",
+        keyName: "人物属性",
+        order: 0,
+        itemKeys: ["101", "102", "103", "104", "105", "106", "107"],
+      },
+    ],
+    attributeMappings: [
+      {
+        key: "101",
+        keyName: "身份",
+        type: "string",
+        semanticKey: "title",
+      },
+      {
+        key: "102",
+        keyName: "金钱",
+        type: "number",
+        semanticKey: "gold",
+      },
+      {
+        key: "103",
+        keyName: "名声",
+        type: "number",
+        semanticKey: "fame",
+      },
+      {
+        key: "104",
+        keyName: "算术",
+        type: "number",
+        semanticKey: "arithmetic",
+      },
+      {
+        key: "105",
+        keyName: "occupation",
+        type: "string",
+        semanticKey: "occupation",
+      },
+      {
+        key: "106",
+        keyName: "rhetoric",
+        type: "number",
+        semanticKey: "rhetoric",
+      },
+      {
+        key: "107",
+        keyName: "medicine",
+        type: "number",
+        semanticKey: "medicine",
+      },
+    ],
+    attributeValues: [
+      { key: "101", value: "浜插叺" },
+      { key: "102", value: 120 },
+      { key: "103", value: 8 },
+      { key: "104", value: 1 },
+      { key: "105", value: "鍐涗腑璺戣吙" },
+      { key: "106", value: 1 },
+      { key: "107", value: 0 },
+    ],
     skills: {
       ashigaru: 2,
       horse: 3,
@@ -1565,6 +1626,29 @@ function cloneCharacterDefinition(
     ...(characterDefinition.teachableSkillKeys == null
       ? {}
       : { teachableSkillKeys: [...characterDefinition.teachableSkillKeys] }),
+    ...(characterDefinition.attributeGroups == null
+      ? {}
+      : {
+          attributeGroups: characterDefinition.attributeGroups.map((group) => ({
+            ...group,
+            itemKeys: [...group.itemKeys],
+          })),
+        }),
+    ...(characterDefinition.attributeMappings == null
+      ? {}
+      : {
+          attributeMappings: characterDefinition.attributeMappings.map((mapping) => ({
+            ...mapping,
+            ...(mapping.options == null ? {} : { options: [...mapping.options] }),
+          })),
+        }),
+    ...(characterDefinition.attributeValues == null
+      ? {}
+      : {
+          attributeValues: characterDefinition.attributeValues.map((entry) => ({
+            ...entry,
+          })),
+        }),
   };
 }
 
