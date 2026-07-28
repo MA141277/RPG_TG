@@ -1,4 +1,4 @@
-const test = require("node:test");
+﻿const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -114,7 +114,7 @@ function createBackgroundAssetOverrides() {
 test("runtime-pack import preserves dialogue node portrait side and portrait id", () => {
   const {
     importScenarioPackToScriptEditorProject,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
   const project = importScenarioPackToScriptEditorProject({
     schemaVersion: 1,
@@ -171,7 +171,7 @@ test("runtime-pack import preserves dialogue node portrait side and portrait id"
 test("runtime-pack import preserves dialogue background and music nodes", () => {
   const {
     importScenarioPackToScriptEditorProject,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
   const project = importScenarioPackToScriptEditorProject({
     schemaVersion: 1,
@@ -238,7 +238,7 @@ test("runtime-pack import preserves dialogue background and music nodes", () => 
 test("dialogue story materializer lowers authored portrait side and portrait id", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
-  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+  } = require("../.test-dist/modules/script-editor/application/dialogue-story-runtime-materializer.js");
 
   const result = materializeScriptEditorDialogueStoryRuntime({
     dialogues: [
@@ -278,7 +278,7 @@ test("dialogue story materializer lowers authored portrait side and portrait id"
 test("dialogue story materializer lowers authored background and music nodes", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
-  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+  } = require("../.test-dist/modules/script-editor/application/dialogue-story-runtime-materializer.js");
 
   const result = materializeScriptEditorDialogueStoryRuntime({
     dialogues: [

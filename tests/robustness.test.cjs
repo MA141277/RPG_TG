@@ -1,4 +1,4 @@
-const nodeTest = require("node:test");
+﻿const nodeTest = require("node:test");
 const assert = require("node:assert/strict");
 const { fileURLToPath, pathToFileURL } = require("node:url");
 const ts = require("typescript");
@@ -2299,16 +2299,23 @@ test("vite scenario-pack publisher stages zhuyuanzhang manifest content to the b
   const {
     publishScenarioPacksToDir,
     SCENARIO_PACK_PUBLIC_ROOT,
+    publishScriptEditorTemplatesToDir,
+    SCRIPT_EDITOR_TEMPLATE_PUBLIC_ROOT,
   } = loadCurrentViteConfigModule();
   const outputRoot = fs.mkdtempSync(
     path.join(require("node:os").tmpdir(), "rpg-tg-pack-publish-")
   );
 
   publishScenarioPacksToDir(process.cwd(), outputRoot);
+  publishScriptEditorTemplatesToDir(process.cwd(), outputRoot);
 
   const publishedPackRoot = path.join(
     outputRoot,
     SCENARIO_PACK_PUBLIC_ROOT.replace(/^\//, "")
+  );
+  const publishedTemplateRoot = path.join(
+    outputRoot,
+    SCRIPT_EDITOR_TEMPLATE_PUBLIC_ROOT.replace(/^\//, "")
   );
 
   assert.equal(
@@ -2321,6 +2328,18 @@ test("vite scenario-pack publisher stages zhuyuanzhang manifest content to the b
   );
   assert.equal(
     fs.existsSync(path.join(publishedPackRoot, "zhuyuanzhang", "assets", "maps", "HD.png")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(publishedTemplateRoot, "zhuyuanzhang", "pack.json")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(publishedTemplateRoot, "zhuyuanzhang", "cities.json")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(publishedTemplateRoot, "zhuyuanzhang", "assets", "maps", "HD.png")),
     true
   );
 });
@@ -3680,7 +3699,7 @@ test("scenario pack loader rejects retired startup scene views", async () => {
 test("scenario pack loader rejects missing nextEventId targets", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -3734,7 +3753,7 @@ test("scenario pack loader rejects missing nextEventId targets", async () => {
 test("scenario pack loader rejects settlement events without settlementId", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -3768,7 +3787,7 @@ test("scenario pack loader rejects settlement events without settlementId", asyn
 test("scenario pack loader rejects malformed settlement content rows", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -3806,7 +3825,7 @@ test("scenario pack loader rejects malformed settlement content rows", async () 
 test("scenario pack loader rejects settlement contents with invalid typed values and targets", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -3895,7 +3914,7 @@ test("scenario pack loader rejects settlement contents with invalid typed values
 test("scenario pack loader rejects unsupported city population settlement content", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -3983,7 +4002,7 @@ test("scenario pack loader reports script editor project packages with a creator
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
   const {
     serializeScriptEditorProjectToFiles,
-  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  } = require("../.test-dist/modules/script-editor/application/editor-project-save.js");
   const project = createExportableScriptEditorProjectDefinition();
   const projectFiles = serializeScriptEditorProjectToFiles(project);
 
@@ -4045,7 +4064,7 @@ test(
   async () => {
     const {
       loadScriptEditorProjectFromFiles,
-    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
     const os = require("node:os");
     const outputRoot = fs.mkdtempSync(
       path.join(os.tmpdir(), "rpg-tg-script-editor-project-")
@@ -4068,10 +4087,10 @@ test(
 test("script editor project save emits canonical split files", async () => {
   const {
     loadScriptEditorProjectFromFiles,
-  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+  } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
   const {
     serializeScriptEditorProjectToFiles,
-  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  } = require("../.test-dist/modules/script-editor/application/editor-project-save.js");
   const project = {
     ...createSampleScriptEditorProjectDefinition(),
     eventBindings: [
@@ -4127,13 +4146,13 @@ test("script editor schema reference drives project save and runtime export vers
   const {
     SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
     SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
-  } = require("../.test-dist/domain/script-editor-project.js");
+  } = require("../.test-dist/modules/script-editor/domain/script-editor-project.js");
   const {
     serializeScriptEditorProjectToFiles,
-  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  } = require("../.test-dist/modules/script-editor/application/editor-project-save.js");
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
 
   const projectManifest = JSON.parse(
@@ -4143,7 +4162,7 @@ test("script editor schema reference drives project save and runtime export vers
     exportScriptEditorProjectToScenarioPackFiles(project)["pack.json"]
   );
   const runtimePackImportSource = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/runtime-pack-import.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/runtime-pack-import.ts"),
     "utf8"
   );
 
@@ -4158,7 +4177,7 @@ test("script editor schema reference drives project save and runtime export vers
 
 test("script editor default project creation consumes schema reference constants", () => {
   const minimalWorkflowSource = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/minimal-workflow.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/minimal-workflow.ts"),
     "utf8"
   );
 
@@ -4171,13 +4190,13 @@ test("script editor default project creation consumes schema reference constants
 test("script editor project completion state persists through project save and load", async () => {
   const {
     loadScriptEditorProjectFromFiles,
-  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+  } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
   const {
     markScriptEditorProjectCompleteForExport,
-  } = require("../.test-dist/application/script-editor/project-completion-state.js");
+  } = require("../.test-dist/modules/script-editor/application/project-completion-state.js");
   const {
     serializeScriptEditorProjectToFiles,
-  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  } = require("../.test-dist/modules/script-editor/application/editor-project-save.js");
   const project = createSampleScriptEditorProjectDefinition();
 
   assert.equal(project.completionState.state, "draft");
@@ -4201,33 +4220,32 @@ test("script editor project completion state persists through project save and l
 });
 
 test("script editor runtime export marks completion without forcing a project package save", () => {
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+  const workflowControllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
     "utf8"
   );
 
-  assert.match(mainUiSource, /markScriptEditorProjectCompleteForExport/);
+  assert.match(workflowControllerSource, /markScriptEditorProjectCompleteForExport/);
   assert.match(
-    mainUiSource,
-    /const completedProject = markScriptEditorProjectCompleteForExport\(this\.scriptEditorProject/
+    workflowControllerSource,
+    /this\.environment\.commitProject\(markScriptEditorProjectCompleteForExport\(project\)\)/
   );
-  assert.match(
-    mainUiSource,
-    /this\.commitScriptEditorProject\(completedProject\)/
-  );
-  const exportMethod = mainUiSource.slice(
-    mainUiSource.indexOf("async exportScriptEditorProject()"),
-    mainUiSource.indexOf("captureScriptEditorRuntimePreviewReturnContext()")
+  const exportMethod = workflowControllerSource.slice(
+    workflowControllerSource.indexOf("async exportProject()"),
+    workflowControllerSource.indexOf("async previewProjectRuntime()")
   );
   assert.doesNotMatch(exportMethod, /persistScriptEditorProjectDraft/);
   assert.doesNotMatch(exportMethod, /serializeScriptEditorProjectToFiles/);
-  const saveMethod = mainUiSource.slice(
-    mainUiSource.indexOf("async saveScriptEditorProject()"),
-    mainUiSource.indexOf("async createScriptEditorProjectAtSavePath()")
+  const saveMethod = workflowControllerSource.slice(
+    workflowControllerSource.indexOf("async saveProject()"),
+    workflowControllerSource.indexOf("async createProjectAtSavePath()")
   );
-  const previewMethod = mainUiSource.slice(
-    mainUiSource.indexOf("async previewScriptEditorProjectRuntime()"),
-    mainUiSource.indexOf("async openScriptEditorProjectFromDirectory()")
+  const previewMethod = workflowControllerSource.slice(
+    workflowControllerSource.indexOf("async previewProjectRuntime()"),
+    workflowControllerSource.indexOf("async openProjectFromDirectory()")
   );
 
   assert.doesNotMatch(saveMethod, /markScriptEditorProjectCompleteForExport/);
@@ -4240,7 +4258,7 @@ test("script editor project library helpers support upsert find and remove", () 
     findScriptEditorProjectLibraryEntry,
     removeScriptEditorProjectLibraryEntry,
     upsertScriptEditorProjectLibraryEntry,
-  } = require("../.test-dist/application/script-editor/project-workspace-library.js");
+  } = require("../.test-dist/modules/script-editor/application/project-workspace-library.js");
   const firstProject = createExportableScriptEditorProjectDefinition();
   const secondProject = createExportableScriptEditorProjectDefinition();
   secondProject.id = "project.second";
@@ -4283,7 +4301,7 @@ test("script editor project library records durable package location and stale v
     canContinueScriptEditorProjectEntry,
     createScriptEditorProjectLibraryEntry,
     markScriptEditorProjectLibraryEntryStale,
-  } = require("../.test-dist/application/script-editor/project-workspace-library.js");
+  } = require("../.test-dist/modules/script-editor/application/project-workspace-library.js");
   const project = createExportableScriptEditorProjectDefinition();
 
   const entry = createScriptEditorProjectLibraryEntry(project, "opened", {
@@ -4308,31 +4326,34 @@ test("script editor project library records durable package location and stale v
 });
 
 test("script editor runtime export does not write project package files before exporting", () => {
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+  const workflowControllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
     "utf8"
   );
   const workspaceShellSource = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/workspace-shell.ts"),
     "utf8"
   );
-  const saveMethod = mainUiSource.slice(
-    mainUiSource.indexOf("async saveScriptEditorProject()"),
-    mainUiSource.indexOf("async createScriptEditorProjectAtSavePath()")
+  const saveMethod = workflowControllerSource.slice(
+    workflowControllerSource.indexOf("async saveProject()"),
+    workflowControllerSource.indexOf("async createProjectAtSavePath()")
   );
-  const exportMethod = mainUiSource.slice(
-    mainUiSource.indexOf("async exportScriptEditorProject()"),
-    mainUiSource.indexOf("captureScriptEditorRuntimePreviewReturnContext()")
+  const exportMethod = workflowControllerSource.slice(
+    workflowControllerSource.indexOf("async exportProject()"),
+    workflowControllerSource.indexOf("async previewProjectRuntime()")
   );
 
   assert.doesNotMatch(exportMethod, /persistScriptEditorProjectDraftBeforeExport/);
   assert.doesNotMatch(exportMethod, /persistScriptEditorProjectDraft\(/);
   assert.match(
     exportMethod,
-    /exportScriptEditorProjectToScenarioPackFiles\(this\.scriptEditorProject\)/
+    /exportScriptEditorProjectToScenarioPackFiles\(project\)/
   );
   assert.doesNotMatch(exportMethod, /serializeScriptEditorProjectToFiles/);
-  assert.match(saveMethod, /serializeScriptEditorProjectToFiles\(this\.scriptEditorProject\)/);
+  assert.match(saveMethod, /serializeScriptEditorProjectToFiles\(project\)/);
   assert.doesNotMatch(saveMethod, /exportScriptEditorProjectToScenarioPackFiles/);
   assert.match(workspaceShellSource, /label:\s*"剧本导出"/);
   assert.doesNotMatch(workspaceShellSource, /label:\s*"导入导出"/);
@@ -4342,7 +4363,7 @@ test("script editor workspace renders the runtime export toolbar action", () => 
   const workspaceViewSource = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/ui/views/script-editor/script-editor-workspace-view.ts"
+      "src/modules/script-editor/ui/views/script-editor-workspace-view.ts"
     ),
     "utf8"
   );
@@ -4362,81 +4383,111 @@ test("script editor save records durable directory location and blocks stale con
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
   );
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
 
   assert.match(
-    mainUiSource,
+    moduleSource,
     /canContinueScriptEditorProjectEntry/
   );
   assert.match(
     mainUiSource,
     /this\.rememberScriptEditorProjectPackageLocation\(result\)/
   );
+  assert.match(mainUiSource, /installMainUiFlowScriptEditorModule\(this,\s*options\)/);
   assert.match(
-    mainUiSource,
+    moduleSource,
     /if \(!canContinueScriptEditorProjectEntry\(projectEntry\)\)/
   );
 });
 
 test("script editor new project creates a package skeleton before opening the workspace", () => {
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+  const workflowControllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
     "utf8"
   );
 
   assert.match(
-    mainUiSource,
+    moduleSource,
     /await this\.createScriptEditorProjectAtSavePath\(\)/
   );
   assert.match(
-    mainUiSource,
-    /async createScriptEditorProjectAtSavePath\(\)/
+    moduleSource,
+    /async createScriptEditorProjectAtSavePath\(\)\s*{\s*return this\.scriptEditorWorkflowController\.createProjectAtSavePath\(\);\s*}/
   );
+  assert.match(workflowControllerSource, /async createProjectAtSavePath\(\)/);
+  assert.match(workflowControllerSource, /serializeScriptEditorProjectToFiles\(project\)/);
   assert.match(
-    mainUiSource,
-    /serializeScriptEditorProjectToFiles\(project\)/
-  );
-  assert.match(
-    mainUiSource,
-    /this\.rememberScriptEditorProjectPackageLocation\(result\)/
+    workflowControllerSource,
+    /this\.environment\.rememberProjectPackageLocation\(result\)/
   );
 });
 
 test("script editor opens project drafts through a writable directory handle", () => {
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+  const workflowControllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
     "utf8"
   );
 
   assert.match(
-    mainUiSource,
+    moduleSource,
     /await this\.openScriptEditorProjectFromDirectory\(\)/
   );
   assert.match(
-    mainUiSource,
-    /async openScriptEditorProjectFromDirectory\(\)/
+    moduleSource,
+    /async openScriptEditorProjectFromDirectory\(\)\s*{\s*return this\.scriptEditorWorkflowController\.openProjectFromDirectory\(\);\s*}/
   );
+  assert.match(workflowControllerSource, /async openProjectFromDirectory\(\)/);
   assert.match(
-    mainUiSource,
+    workflowControllerSource,
     /readFilesFromDirectoryHandle\(directoryHandle\)/
   );
   assert.match(
-    mainUiSource,
-    /this\.scriptEditorProjectDirectoryHandle = directoryHandle/
+    workflowControllerSource,
+    /this\.environment\.setProjectDirectoryHandle\(directoryHandle\)/
   );
   assert.match(
-    mainUiSource,
-    /this\.rememberScriptEditorProjectPackageLocation\(\{\s*mode: "directory",\s*directoryHandle,\s*\}\)/
+    workflowControllerSource,
+    /this\.environment\.rememberProjectPackageLocation\(\{\s*mode: "directory",\s*directoryHandle,\s*\}\)/
   );
 });
 
 test("script editor runtime preview launches from current in-memory project data", () => {
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
   const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const workspaceShellSource = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/workspace-shell.ts"),
     "utf8"
   );
 
@@ -4445,40 +4496,47 @@ test("script editor runtime preview launches from current in-memory project data
   assert.doesNotMatch(workspaceShellSource, /保存当前草稿后/);
   assert.doesNotMatch(workspaceShellSource, /项目目录重新读取/);
   assert.match(
-    mainUiSource,
+    moduleSource,
     /if \(action === "preview-runtime"\) \{\s*if \(this\.handleScriptEditorBlockedRuntimeAction\(\)\) \{\s*return;\s*\}\s*await this\.previewScriptEditorProjectRuntime\(\);/
   );
   assert.match(
-    mainUiSource,
-    /async previewScriptEditorProjectRuntime\(\)/
+    moduleSource,
+    /async previewScriptEditorProjectRuntime\(\)\s*{\s*return this\.scriptEditorWorkflowController\.previewProjectRuntime\(\);\s*}/
   );
-  const previewMethod = mainUiSource.slice(
-    mainUiSource.indexOf("async previewScriptEditorProjectRuntime()"),
-    mainUiSource.indexOf("async openScriptEditorProjectFromDirectory()")
+  const previewMethod = moduleSource.slice(
+    moduleSource.indexOf("async previewScriptEditorProjectRuntime()"),
+    moduleSource.indexOf("async openScriptEditorProjectFromDirectory()")
   );
-  assert.match(previewMethod, /exportScriptEditorProjectToScenarioPackFiles\(this\.scriptEditorProject\)/);
+  assert.doesNotMatch(previewMethod, /exportScriptEditorProjectToScenarioPackFiles/);
+  const workflowControllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
+    "utf8"
+  );
+  assert.match(workflowControllerSource, /async previewProjectRuntime\(\)/);
   assert.match(
-    previewMethod,
+    workflowControllerSource,
+    /exportScriptEditorProjectToScenarioPackFiles\(project\)/
+  );
+  assert.match(
+    workflowControllerSource,
     /loadScenarioPackFromFiles\(\s*createTextImportFilesFromRecord\(serializedPackFiles\)/
   );
   assert.match(
-    previewMethod,
-    /const startResult = await this\.onStartLoadedScenarioPack\(scenarioPack\);/
+    workflowControllerSource,
+    /const startResult = await this\.environment\.startLoadedScenarioPack\(scenarioPack\);/
   );
-  assert.match(previewMethod, /if \(startResult === "started"\)/);
-  assert.match(previewMethod, /this\.setScreen\("runtime-preview"\)/);
-  assert.doesNotMatch(
-    previewMethod,
-    /await this\.onStartLoadedScenarioPack\(scenarioPack\);\s*this\.setScreen\("runtime-preview"\);/
+  assert.match(workflowControllerSource, /if \(startResult === "started"\)/);
+  assert.match(
+    workflowControllerSource,
+    /this\.environment\.setRuntimePreviewSession\(\{/
   );
-  assert.doesNotMatch(previewMethod, /onStartScenarioPack/);
-  assert.match(previewMethod, /this\.scriptEditorRuntimePreviewSession/);
-  assert.match(previewMethod, /captureScriptEditorRuntimePreviewReturnContext\(\)/);
-  assert.doesNotMatch(previewMethod, /scriptEditorProjectDirectoryHandle/);
-  assert.doesNotMatch(previewMethod, /readFilesFromDirectoryHandle/);
-  assert.doesNotMatch(previewMethod, /loadScriptEditorProjectFromFiles/);
-  assert.doesNotMatch(previewMethod, /markScriptEditorProjectCompleteForExport/);
-  assert.doesNotMatch(previewMethod, /persistScriptEditorProjectDraftBeforeExport/);
+  assert.match(
+    workflowControllerSource,
+    /const returnContext = this\.environment\.captureRuntimePreviewReturnContext\(\);/
+  );
   assert.match(mainSource, /onStartLoadedScenarioPack:\s*startLoadedScenarioPackWithLoading/);
   assert.match(mainSource, /async function startLoadedScenarioPackWithLoading\(\s*scenarioPack:\s*ScenarioPackDefinition\s*\)/);
   assert.match(mainSource, /sanitizeScenarioPackForRuntimePreview\(scenarioPack\)/);
@@ -4495,39 +4553,53 @@ test("script editor runtime preview launches from current in-memory project data
 });
 
 test("script editor runtime preview keeps failures in the editor and exposes exit preview return context", () => {
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+  const workflowControllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
     "utf8"
   );
   const mainUiStyles = fs.readFileSync(
     path.join(process.cwd(), "src/styles/main-ui.css"),
     "utf8"
   );
-  const previewMethod = mainUiSource.slice(
-    mainUiSource.indexOf("async previewScriptEditorProjectRuntime()"),
-    mainUiSource.indexOf("async openScriptEditorProjectFromDirectory()")
+  const previewMethod = workflowControllerSource.slice(
+    workflowControllerSource.indexOf("async previewProjectRuntime()"),
+    workflowControllerSource.indexOf("async openProjectFromDirectory()")
   );
 
   assert.match(previewMethod, /catch \(error\)/);
-  assert.match(previewMethod, /recordScriptEditorNotice\(\{\s*tone: "warning"/);
-  assert.match(previewMethod, /this\.setScreen\("script-editor-workspace"\)/);
-  assert.match(mainUiSource, /renderRuntimePreviewOverlay\(\)/);
-  assert.match(mainUiSource, /data-script-editor-action="exit-runtime-preview"/);
-  assert.doesNotMatch(mainUiSource, /data-action="exit-runtime-preview"/);
-  assert.match(mainUiSource, />\s*退出预览\s*</);
-  assert.doesNotMatch(mainUiSource, /c-main-ui-runtime-preview-frame/);
-  assert.doesNotMatch(mainUiSource, /class="c-runtime-preview-exit"/);
-  assert.match(mainUiSource, /c-main-ui-runtime-preview-session-banner/);
-  assert.match(mainUiSource, /c-runtime-preview-exit--session/);
-  assert.match(mainUiSource, /exitScriptEditorRuntimePreview\(\)/);
-  assert.match(mainUiSource, /this\.onExitRuntimePreview\?\.\(\)/);
-  assert.match(mainUiSource, /enterScriptEditorRuntimePreviewSession\(\)/);
-  assert.match(mainUiSource, /this\.currentScreen === "runtime-preview"/);
-  assert.match(mainUiSource, /运行预览已进入游戏，会话仍由编辑器托管/);
-  assert.match(mainUiSource, /restoreScriptEditorRuntimePreviewReturnContext/);
-  assert.match(mainUiSource, /scriptEditorSelection/);
-  assert.match(mainUiSource, /scriptEditorEventTab/);
-  assert.match(mainUiSource, /scriptEditorScrollTop/);
+  assert.match(previewMethod, /this\.environment\.recordNotice\(\{\s*tone: "warning"/);
+  assert.match(previewMethod, /this\.environment\.setScreen\("script-editor-workspace"\)/);
+  assert.match(moduleSource, /renderRuntimePreviewOverlay\(\)/);
+  assert.match(moduleSource, /data-script-editor-action="exit-runtime-preview"/);
+  assert.doesNotMatch(moduleSource, /data-action="exit-runtime-preview"/);
+  assert.match(moduleSource, />\s*退出预览\s*</);
+  assert.doesNotMatch(moduleSource, /c-main-ui-runtime-preview-frame/);
+  assert.doesNotMatch(moduleSource, /class="c-runtime-preview-exit"/);
+  assert.match(moduleSource, /c-main-ui-runtime-preview-session-banner/);
+  assert.match(moduleSource, /c-runtime-preview-exit--session/);
+  assert.match(moduleSource, /exitScriptEditorRuntimePreview\(\)/);
+  assert.match(moduleSource, /this\.scriptEditorWorkflowController\.exitRuntimePreviewSession\(\)/);
+  assert.match(moduleSource, /enterScriptEditorRuntimePreviewSession\(\)/);
+  assert.match(moduleSource, /this\.currentScreen === "runtime-preview"/);
+  assert.match(moduleSource, /运行预览已进入游戏，会话仍由编辑器托管/);
+  assert.match(moduleSource, /restoreScriptEditorRuntimePreviewReturnContext/);
+  assert.match(moduleSource, /scriptEditorSelection/);
+  assert.match(moduleSource, /scriptEditorEventTab/);
+  assert.match(moduleSource, /scriptEditorScrollTop/);
+  assert.match(
+    workflowControllerSource,
+    /this\.environment\.restoreRuntimePreviewReturnContext\(returnContext\)/
+  );
   assert.match(
     mainUiStyles,
     /\.c-main-ui-overlay:has\(\.c-main-ui-screen--runtime-preview\)\s*{[^}]*pointer-events:\s*none/s
@@ -4636,37 +4708,40 @@ test("main startup and preview wiring keeps settlement-aware startup bootstrap a
 test(
   "script editor city/building access panel uses readable refusal labels and condition labels",
   () => {
-    const mainUiSource = fs.readFileSync(
-      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    const moduleSource = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      ),
       "utf8"
     );
-    const locationAccessPanelSource = mainUiSource.slice(
-      mainUiSource.indexOf("renderScriptEditorLocationAccessPanel(location) {"),
-      mainUiSource.indexOf(
+    const locationAccessPanelSource = moduleSource.slice(
+      moduleSource.indexOf("renderScriptEditorLocationAccessPanel(location) {"),
+      moduleSource.indexOf(
         'renderScriptEditorLocationAccessConditionEditor(conditionExpression, conditionField = "conditionExpression") {'
       )
     );
-    const conditionEditorSource = mainUiSource.slice(
-      mainUiSource.indexOf(
+    const conditionEditorSource = moduleSource.slice(
+      moduleSource.indexOf(
         'renderScriptEditorLocationAccessConditionEditor(conditionExpression, conditionField = "conditionExpression") {'
       ),
-      mainUiSource.indexOf(
+      moduleSource.indexOf(
         'renderScriptEditorLocationAccessConditionRow(condition, index, conditionField = "conditionExpression") {'
       )
     );
-    const conditionRowSource = mainUiSource.slice(
-      mainUiSource.indexOf(
+    const conditionRowSource = moduleSource.slice(
+      moduleSource.indexOf(
         'renderScriptEditorLocationAccessConditionRow(condition, index, conditionField = "conditionExpression") {'
       ),
-      mainUiSource.indexOf("renderScriptEditorLocationAccessEventConditionControls(condition, index) {")
+      moduleSource.indexOf("renderScriptEditorLocationAccessEventConditionControls(condition, index) {")
     );
-    const personConditionSource = mainUiSource.slice(
-      mainUiSource.indexOf("renderScriptEditorLocationAccessPersonConditionControls(condition, index, literalValue) {"),
-      mainUiSource.indexOf("renderScriptEditorLocationAccessTimeConditionControls(condition, index, literalValue) {")
+    const personConditionSource = moduleSource.slice(
+      moduleSource.indexOf("renderScriptEditorLocationAccessPersonConditionControls(condition, index, literalValue) {"),
+      moduleSource.indexOf("renderScriptEditorLocationAccessTimeConditionControls(condition, index, literalValue) {")
     );
-    const personFieldSource = mainUiSource.slice(
-      mainUiSource.indexOf("getScriptEditorLocationAccessPersonFieldOptions(personId) {"),
-      mainUiSource.indexOf("renderScriptEditorBuildingEntryPanel(location) {")
+    const personFieldSource = moduleSource.slice(
+      moduleSource.indexOf("getScriptEditorLocationAccessPersonFieldOptions(personId) {"),
+      moduleSource.indexOf("renderScriptEditorBuildingEntryPanel(location) {")
     );
 
     assert.match(locationAccessPanelSource, /拒绝提示/);
@@ -4695,7 +4770,10 @@ test(
   "script editor runtime preview rendering is driven by preview session state",
   () => {
     const mainUiSource = fs.readFileSync(
-      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      ),
       "utf8"
     );
 
@@ -4709,7 +4787,7 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScenarioPackFromFiles,
     } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -5574,10 +5652,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       loadScenarioPackFromFiles,
     } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -5610,13 +5688,13 @@ test("script editor runtime export ignores unreferenced newly added draft events
   const {
     exportScriptEditorProjectToScenarioPackFiles,
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     createDefaultScriptEditorProjectDefinition,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   const {
     createDefaultScriptEditorEventRecord,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   const project = createDefaultScriptEditorProjectDefinition({
     idBase: "draft-event-export",
@@ -5643,13 +5721,13 @@ test("script editor runtime export ignores unreferenced newly added draft events
 test("script editor runtime export still rejects referenced draft events", () => {
   const {
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     createDefaultScriptEditorProjectDefinition,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   const {
     createDefaultScriptEditorEventRecord,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   const project = createDefaultScriptEditorProjectDefinition({
     idBase: "referenced-draft-event-export",
@@ -5684,7 +5762,7 @@ test("script editor runtime export still rejects referenced draft events", () =>
 test("script editor dialogue story materializer exposes runtime dialogues and text entries", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
-  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+  } = require("../.test-dist/modules/script-editor/application/dialogue-story-runtime-materializer.js");
   const result = materializeScriptEditorDialogueStoryRuntime({
     dialogues: [
       {
@@ -5719,7 +5797,7 @@ test("script editor dialogue story materializer exposes runtime dialogues and te
 test("script editor dialogue story materializer lowers node progression targets into runtime dialogues", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
-  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+  } = require("../.test-dist/modules/script-editor/application/dialogue-story-runtime-materializer.js");
 
   const result = materializeScriptEditorDialogueStoryRuntime({
     dialogues: [
@@ -5799,7 +5877,7 @@ test("script editor dialogue story materializer lowers node progression targets 
 test("script editor dialogue story materializer rejects missing node progression targets", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
-  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+  } = require("../.test-dist/modules/script-editor/application/dialogue-story-runtime-materializer.js");
 
   const result = materializeScriptEditorDialogueStoryRuntime({
     dialogues: [
@@ -5838,10 +5916,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
     const project = {
       ...createExportableScriptEditorProjectDefinition(),
@@ -5905,10 +5983,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     const {
       loadScenarioPackFromFiles,
     } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -6011,7 +6089,7 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScenarioPackFromFiles,
     } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -6267,7 +6345,7 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScenarioPackFromFiles,
     } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -6376,7 +6454,7 @@ test(
 test("script editor runtime export ignores obsolete storyPack.runtimeEvents bridge", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
@@ -6433,7 +6511,7 @@ test("script editor runtime export ignores obsolete storyPack.runtimeEvents brid
 test("script editor runtime-pack import does not persist storyPack.runtimeEvents side channel", () => {
   const {
     importScenarioPackToScriptEditorProject,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const importedProject = importScenarioPackToScriptEditorProject({
     schemaVersion: 1,
     id: "scenario.no-runtime-events-bridge",
@@ -6487,10 +6565,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     const {
       loadScenarioPackFromFiles,
     } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -6658,10 +6736,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
     const packRoot = path.join(
       process.cwd(),
@@ -6699,10 +6777,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     const {
       loadScenarioPackFromFiles,
     } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -6844,10 +6922,10 @@ test(
 test("script editor runtime pack preserves person attribute semantics registry", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
   const project = createExportableScriptEditorProjectDefinition();
   project.storyPack.personAttributeSemantics = [
@@ -6879,10 +6957,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     const {
       loadScenarioPackFromFiles,
     } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -7297,10 +7375,10 @@ test(
 test("scenario profile export and loader preserve concrete dialogue startup targets", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -7344,7 +7422,7 @@ test("scenario profile export and loader preserve concrete dialogue startup targ
 test("script editor runtime export rejects retired startup scene views", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
 
   const project = createExportableScriptEditorProjectDefinition();
   project.storyPack.scenarioProfile.launchPolicy = {
@@ -7361,7 +7439,7 @@ test("script editor runtime export rejects retired startup scene views", () => {
 test("loaded scenario-pack mod startup metadata resolves dialogue startup through the shared target contract", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -7554,8 +7632,11 @@ test("scenario startup target resolves direct map city house and dialogue starts
 });
 
 test("script editor project form exposes scenario launch policy fields", () => {
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
 
@@ -7563,59 +7644,62 @@ test("script editor project form exposes scenario launch policy fields", () => {
     "scenarioProfile.entryEventId",
     "scenarioProfile.launchPolicy.entryEventTiming",
   ]) {
-    assert.match(mainUiSource, new RegExp(`renderScriptEditorField\\("${field}"`));
-    assert.match(mainUiSource, new RegExp(`case "${field}"`));
+    assert.match(moduleSource, new RegExp(`renderScriptEditorField\\("${field}"`));
+    assert.match(moduleSource, new RegExp(`case "${field}"`));
   }
-  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("characterSelection"/);
-  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("initialView"/);
-  assert.match(mainUiSource, /characterSelection:\s*normalizedValue/);
-  assert.match(mainUiSource, /initialView:\s*normalizedValue/);
+  assert.match(moduleSource, /renderScriptEditorStartupSelect\("characterSelection"/);
+  assert.match(moduleSource, /renderScriptEditorStartupSelect\("initialView"/);
+  assert.match(moduleSource, /characterSelection:\s*normalizedValue/);
+  assert.match(moduleSource, /initialView:\s*normalizedValue/);
 });
 
 test("script editor event destination authoring uses localized content-entry family and target selectors", () => {
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
-  const destinationPanelStart = mainUiSource.indexOf(
+  const destinationPanelStart = moduleSource.indexOf(
     'if (this.scriptEditorEventTab === "destination")'
   );
-  const destinationPanelEnd = mainUiSource.indexOf(
+  const destinationPanelEnd = moduleSource.indexOf(
     'if (this.scriptEditorEventTab === "relations")',
     destinationPanelStart
   );
-  const destinationPanelSource = mainUiSource.slice(
+  const destinationPanelSource = moduleSource.slice(
     destinationPanelStart,
     destinationPanelEnd
   );
-  const destinationFamilyOptionsStart = mainUiSource.indexOf(
+  const destinationFamilyOptionsStart = moduleSource.indexOf(
     "createScriptEditorEventDestinationFamilyOptions()"
   );
-  const destinationFamilyOptionsEnd = mainUiSource.indexOf(
+  const destinationFamilyOptionsEnd = moduleSource.indexOf(
     "createScriptEditorEventDestinationTargetOptions",
     destinationFamilyOptionsStart
   );
-  const destinationFamilyOptionsSource = mainUiSource.slice(
+  const destinationFamilyOptionsSource = moduleSource.slice(
     destinationFamilyOptionsStart,
     destinationFamilyOptionsEnd
   );
-  const destinationTargetOptionsEnd = mainUiSource.indexOf(
+  const destinationTargetOptionsEnd = moduleSource.indexOf(
     "renderScriptEditorEventTabPanel",
     destinationFamilyOptionsEnd
   );
-  const destinationTargetOptionsSource = mainUiSource.slice(
+  const destinationTargetOptionsSource = moduleSource.slice(
     destinationFamilyOptionsEnd,
     destinationTargetOptionsEnd
   );
-  const relationsPanelStart = mainUiSource.indexOf(
+  const relationsPanelStart = moduleSource.indexOf(
     'if (this.scriptEditorEventTab === "relations")',
     destinationPanelEnd
   );
-  const relationsPanelEnd = mainUiSource.indexOf(
+  const relationsPanelEnd = moduleSource.indexOf(
     'if (this.scriptEditorEventTab === "preview")',
     relationsPanelStart
   );
-  const relationsPanelSource = mainUiSource.slice(
+  const relationsPanelSource = moduleSource.slice(
     relationsPanelStart,
     relationsPanelEnd
   );
@@ -7660,7 +7744,7 @@ test("script editor event destination authoring uses localized content-entry fam
 test("script editor event destination helper stores selected target ids and clears stale targets on family change", () => {
   const {
     updateScriptEditorEventDestinationField,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   let eventRecord = {
     id: "event.opening",
@@ -7693,10 +7777,10 @@ test("script editor event destination helper stores selected target ids and clea
 test("script editor event destination export lowers minigame targets into runnable playable actions", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [
@@ -7795,10 +7879,10 @@ test("script editor event destination export lowers minigame targets into runnab
 test("script editor settlement event export preserves formal settlement event type and reference", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -7832,7 +7916,7 @@ test("script editor settlement event export preserves formal settlement event ty
 test("script editor runtime export rejects duplicate settlement title", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -7854,7 +7938,7 @@ test("script editor runtime export rejects duplicate settlement title", () => {
 test("script editor runtime export rejects invalid settlement content operation", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -7882,7 +7966,7 @@ test("script editor runtime export rejects invalid settlement content operation"
 test("script editor runtime export rejects invalid settlement content target family", () => {
   const {
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -7916,7 +8000,7 @@ test("script editor runtime export rejects invalid settlement content target fam
 test("script editor runtime export rejects settlement content target value and eligibility gaps", () => {
   const {
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.people = [
     {
@@ -8046,7 +8130,7 @@ test("script editor runtime export rejects settlement content target value and e
 test("script editor runtime export rejects ambiguous legacy settlement result routing", () => {
   const {
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.events = [
     {
@@ -8094,7 +8178,7 @@ test("script editor runtime export rejects ambiguous legacy settlement result ro
 test("script editor runtime export rejects unsupported city population settlement content", () => {
   const {
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -8130,7 +8214,7 @@ test("script editor runtime export rejects unsupported city population settlemen
 test("script editor runtime export rejects conflicting legacy and settlement nextEventId routing", () => {
   const {
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.events = [
     {
@@ -8175,10 +8259,10 @@ test("script editor runtime export rejects conflicting legacy and settlement nex
 test("script editor runtime import fails closed on ambiguous legacy settlement result routing", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -8245,7 +8329,7 @@ test("script editor runtime import fails closed on ambiguous legacy settlement r
 test("script editor runtime import fails closed on mixed empty legacy settlement result routing", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -8283,7 +8367,7 @@ test("script editor runtime import fails closed on mixed empty legacy settlement
     "../.test-dist/application/scenario/scenario-pack-loader.js"
   );
   const importerPath = require.resolve(
-    "../.test-dist/application/script-editor/runtime-pack-import.js"
+    "../.test-dist/modules/script-editor/application/runtime-pack-import.js"
   );
   const loaderModule = require(loaderPath);
   const originalParseScenarioPack = loaderModule.parseScenarioPack;
@@ -8292,7 +8376,7 @@ test("script editor runtime import fails closed on mixed empty legacy settlement
   try {
     const {
       importScenarioPackToScriptEditorProject,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     assert.throws(
       () => importScenarioPackToScriptEditorProject(pack),
       /results|retired routing field|nextEventId/i
@@ -8306,10 +8390,10 @@ test("script editor runtime import fails closed on mixed empty legacy settlement
 test("script editor runtime import rejects settlement content instead of normalizing invalid values", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -8355,10 +8439,10 @@ test("script editor runtime import rejects settlement content instead of normali
 test("script editor runtime import rejects conflicting legacy and settlement nextEventId routing", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -8405,7 +8489,7 @@ test("script editor runtime import rejects conflicting legacy and settlement nex
 
 test("runtime import and scenario loader reject compatibility paths after cutover", () => {
   const importSource = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/runtime-pack-import.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/runtime-pack-import.ts"),
     "utf8"
   );
   const loaderSource = fs.readFileSync(
@@ -8421,10 +8505,10 @@ test("runtime import and scenario loader reject compatibility paths after cutove
 test("script editor runtime import rejects legacy settlement result routing even when unambiguous", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -8496,10 +8580,10 @@ test("script editor runtime import rejects legacy settlement result routing even
 test("script editor runtime import rejects empty legacy settlement result routing residue", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -8541,7 +8625,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.dialogues = [{ id: "dialogue.unsupported" }];
     project.minigames = [{ id: "minigame.unsupported" }];
@@ -8557,7 +8641,7 @@ test(
 test("script editor runtime export fails closed on editor event authoring records", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.events = [
     {
@@ -8578,7 +8662,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.quests = [
       {
@@ -8634,7 +8718,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.quests = [
       {
@@ -8679,7 +8763,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.quests = [
       {
@@ -8710,7 +8794,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [{ id: "text.opening", text: "Opening line." }];
     project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
@@ -8748,7 +8832,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [{ id: "text.opening", text: "Opening line." }];
     project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
@@ -8816,7 +8900,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       runEventBindingRuntime,
     } = require("../.test-dist/core/runtime/event-binding-runtime.js");
@@ -8893,7 +8977,7 @@ test(
 test("script editor runtime export omits empty event binding condition groups", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
@@ -8930,7 +9014,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [{ id: "text.opening", text: "Opening line." }];
     project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
@@ -8962,7 +9046,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const unsupportedRuntimeEntrypoints = [
       ["dialogue-finished", "dialogue", "dialogue.opening"],
       ["menu-select", "menu", "menu.opening"],
@@ -9004,7 +9088,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const unsupportedRuntimeOwners = [
       ["dialogue", "dialogue.opening"],
       ["menu", "menu.opening"],
@@ -9046,7 +9130,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [{ id: "text.opening", text: "Opening line." }];
     project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
@@ -9082,7 +9166,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [{ id: "text.opening", text: "Opening line." }];
     project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
@@ -9838,7 +9922,7 @@ test("story trigger runtime launches event-owned playable destinations without d
 test("script editor runtime export preserves building container action trigger extras", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
@@ -9999,7 +10083,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       getCurrentSceneAction,
     } = require("../.test-dist/application/story/story-runtime.js");
@@ -10049,7 +10133,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [
       { id: "text.opening", text: "Opening line." },
@@ -10125,7 +10209,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.events = [
       {
@@ -10163,7 +10247,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       dispatchRuntimeRequest,
     } = require("../.test-dist/core/runtime/runtime-dispatch.js");
@@ -10254,7 +10338,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [{ id: "text.opening", text: "Opening line." }];
     project.dialogues = [
@@ -10316,7 +10400,7 @@ test(
 test("script editor runtime export rejects missing event taskInput task targets", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [
@@ -10358,7 +10442,7 @@ test("script editor runtime export rejects missing event taskInput task targets"
 test("script editor runtime export rejects missing nextEventId targets", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [
@@ -10393,7 +10477,7 @@ test("script editor runtime export rejects missing nextEventId targets", () => {
 test("script editor runtime export rejects self-referential nextEventId targets", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [
@@ -10428,7 +10512,7 @@ test("script editor runtime export rejects self-referential nextEventId targets"
 test("script editor runtime export rejects settlement events without settlementId", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.events = [
     {
@@ -10448,7 +10532,7 @@ test("script editor runtime export rejects settlement events without settlementI
 test("script editor runtime export rejects settlement events with missing settlement records", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.events = [
     {
@@ -10469,7 +10553,7 @@ test("script editor runtime export rejects settlement events with missing settle
 test("scenario pack loader rejects progression tiers that reference missing settlements", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -10518,7 +10602,7 @@ test("scenario pack loader rejects progression tiers that reference missing sett
 test("scenario pack loader rejects invalid progression bindings and unsupported host tags", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -10580,7 +10664,7 @@ test("scenario pack loader rejects invalid progression bindings and unsupported 
 test("script editor runtime export rejects invalid progression binding references and host tags", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.progressTracks = [
     {
@@ -10660,7 +10744,7 @@ test("scenario pack loader rejects missing menu resource and menu instance refer
 test("script editor runtime export rejects settlements with missing nextEventId references", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -10688,7 +10772,7 @@ test("script editor runtime export rejects settlements with missing nextEventId 
 test("script editor runtime export rejects legacy flow eventStartTarget routing residue", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.flows = [
     {
@@ -10715,7 +10799,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     delete project.storyPack.scenarioProfile.initialLocation.view;
 
@@ -10731,10 +10815,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     const project = createExportableScriptEditorProjectDefinition();
 
     const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
@@ -10783,10 +10867,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     const project = createExportableScriptEditorProjectDefinition();
 
     project.menuResources = [
@@ -10885,10 +10969,10 @@ test(
   () => {
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       parseScriptEditorProject,
-    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
     const legacyProject = createDefaultScriptEditorProjectDefinition({
       idBase: "legacy-menu-formalization",
       title: "Legacy Menu Formalization",
@@ -10923,10 +11007,10 @@ test(
 test("script editor menu authoring defaults use Chinese creator-facing copy", () => {
   const {
     createDefaultScriptEditorProjectDefinition,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   const {
     listScriptEditorLocationMenuBundles,
-  } = require("../.test-dist/application/script-editor/menu-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/menu-authoring.js");
 
   const project = createDefaultScriptEditorProjectDefinition({
     idBase: "menu-copy",
@@ -10991,10 +11075,10 @@ test(
   () => {
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       parseScriptEditorProject,
-    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
     const legacyProject = createDefaultScriptEditorProjectDefinition({
       idBase: "legacy-building-action-menu-formalization",
       title: "Legacy Building Action Menu Formalization",
@@ -11053,10 +11137,10 @@ test(
   () => {
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       listScriptEditorLocationMenuBundles,
-    } = require("../.test-dist/application/script-editor/menu-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/menu-authoring.js");
     const legacyProject = createDefaultScriptEditorProjectDefinition({
       idBase: "legacy-building-action-menu-authoring",
       title: "Legacy Building Action Menu Authoring",
@@ -11108,11 +11192,11 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
       validateScenarioPackForScriptEditorImport,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     const {
       loadScenarioPackFromFiles,
     } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
@@ -11161,10 +11245,10 @@ test(
   async () => {
     const {
       serializeScriptEditorProjectToFiles,
-    } = require("../.test-dist/application/script-editor/editor-project-save.js");
+    } = require("../.test-dist/modules/script-editor/application/editor-project-save.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     const project = createExportableScriptEditorProjectDefinition();
 
     await assert.rejects(
@@ -11183,7 +11267,7 @@ test(
 test("script editor workspace shell builds a reusable object-tree scaffold", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
 
   const workspace = createScriptEditorWorkspaceShellViewModel({
@@ -11210,7 +11294,7 @@ test("script editor workspace shell builds a reusable object-tree scaffold", () 
 test("script editor workspace shell exposes progression authoring families in gameplay navigation", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.progressTracks = [
     {
@@ -11247,7 +11331,7 @@ test("script editor workspace shell exposes stage configuration creator module",
   const fs = require("node:fs");
   const path = require("node:path");
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/workspace-shell.ts"),
     "utf8"
   );
 
@@ -11258,7 +11342,7 @@ test("script editor no longer exposes progression tracks and bindings as paralle
   const fs = require("node:fs");
   const path = require("node:path");
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/workspace-shell.ts"),
     "utf8"
   );
 
@@ -11271,7 +11355,7 @@ test("script editor no longer exposes progression tracks and bindings as paralle
 test.skip("script editor workspace groups creator navigation by project top bar, world, narrative, gameplay, and asset library", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createSampleScriptEditorProjectDefinition();
 
   const workspace = createScriptEditorWorkspaceShellViewModel({ project });
@@ -11316,10 +11400,10 @@ test.skip("script editor workspace groups creator navigation by project top bar,
 test("script editor workspace shell exposes portrait families in the asset library group for new projects", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const {
     createDefaultScriptEditorProjectDefinition,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   const project = createDefaultScriptEditorProjectDefinition();
 
   const workspace = createScriptEditorWorkspaceShellViewModel({ project });
@@ -11338,7 +11422,7 @@ test("script editor workspace shell exposes portrait families in the asset libra
 test("script editor PRD workspace shell exposes a Chinese-first project overview", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
 
   const workspace = createScriptEditorWorkspaceShellViewModel({
@@ -11360,7 +11444,7 @@ test("script editor PRD workspace shell exposes a Chinese-first project overview
 test("script editor workspace toolbar exposes project info as the overview entry", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
 
   const workspace = createScriptEditorWorkspaceShellViewModel({
@@ -11427,7 +11511,7 @@ test("script editor project overview startup controls use project-backed selecto
 
 test("script editor person runtime-keyed contract removes flat top-level person fields", () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/domain/script-editor-project.ts"),
     "utf8"
   );
   const personRecordBlock = source.match(
@@ -11473,7 +11557,7 @@ test("scenario startup character selection uses startup policy", () => {
 
 test("script editor person semantic binding contract adds project-level semantic slots", () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/domain/script-editor-project.ts"),
     "utf8"
   );
 
@@ -11697,7 +11781,7 @@ test("app render detail options read semantic gold attribute for stipend", () =>
 
 test("script editor workspace labels save and runtime export actions without mixing package types", () => {
   const workspaceViewSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/ui/views/script-editor-workspace-view.ts"),
     "utf8"
   );
   const mainUiSource = fs.readFileSync(
@@ -11801,18 +11885,124 @@ test("script editor landing labels opening an existing project as opening a draf
   assert.doesNotMatch(mainUiSource, />\s*返回主菜单\s*<\/button>/);
 });
 
-test("script editor template action directly loads the built-in zhuyuanzhang pack", () => {
+test("script editor package public barrel exposes package-style entrypoints and host adapters", () => {
+  const scriptEditorModule = require("../.test-dist/modules/script-editor/index.js");
+
+  assert.equal(typeof scriptEditorModule.openScriptEditor, "function");
+  assert.equal(typeof scriptEditorModule.mountScriptEditor, "function");
+  assert.equal(typeof scriptEditorModule.createBrowserScriptEditorHost, "function");
+  assert.equal(
+    typeof scriptEditorModule.installMainUiFlowScriptEditorModule,
+    "function"
+  );
+  assert.equal(
+    typeof scriptEditorModule.createScriptEditorWorkflowController,
+    "function"
+  );
+  assert.equal(typeof scriptEditorModule.scriptEditorMainUiBridge, "object");
+  assert.equal(
+    scriptEditorModule.DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL,
+    "/script-editor-templates/zhuyuanzhang/pack.json"
+  );
+
+  const projectStorage = {
+    createProject: async () => null,
+    openProject: async () => null,
+  };
+  const previewRuntime = {
+    startPreview: async () => ({ exit: async () => {} }),
+  };
+  const notify = () => {};
+  const confirm = async () => true;
+  const host = scriptEditorModule.createBrowserScriptEditorHost({
+    projectStorage,
+    previewRuntime,
+    notify,
+    confirm,
+  });
+
+  assert.equal(host.projectStorage, projectStorage);
+  assert.equal(host.previewRuntime, previewRuntime);
+  assert.equal(host.notify, notify);
+  assert.equal(host.confirm, confirm);
+});
+
+test("main ui flow consumes script editor only through the module public barrel", () => {
   const mainUiSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
   );
 
+  assert.match(mainUiSource, /from "\.\.\/\.\.\/modules\/script-editor"/);
+  assert.doesNotMatch(mainUiSource, /from "\.\.\/\.\.\/modules\/script-editor\/application\//);
+  assert.doesNotMatch(mainUiSource, /from "\.\.\/\.\.\/modules\/script-editor\/ui\/views\//);
   assert.match(
     mainUiSource,
-    /DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL\s*=\s*"\/scenario-packs\/zhuyuanzhang\/pack\.json"/
+    /createScriptEditorWorkflowController,\s*[\r\n]+\s*installMainUiFlowScriptEditorModule,/
   );
   assert.match(
     mainUiSource,
+    /installMainUiFlowScriptEditorModule\(this,\s*options\)/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /\n\s{2}(?:async\s+)?[A-Za-z0-9_]*ScriptEditor[A-Za-z0-9_]*\([^)]*\)\s*\{/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorWorkflowController = createScriptEditorWorkflowController\(/
+  );
+});
+
+test("script editor main ui module owns render action and local ui state methods outside MainUiFlow", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    moduleSource,
+    /export function installMainUiFlowScriptEditorModule\(host,\s*options\)/
+  );
+  assert.match(moduleSource, /class MainUiFlowScriptEditorModule/);
+  assert.match(moduleSource, /\n  renderScriptEditorWorkspace\(/);
+  assert.match(moduleSource, /\n  runScriptEditorValidation\(/);
+  assert.match(moduleSource, /\n  continueScriptEditorProject\(/);
+  assert.match(moduleSource, /\n  deleteScriptEditorProject\(/);
+  assert.match(moduleSource, /\n  applyScriptEditorProjectField\(/);
+  assert.match(moduleSource, /\n  selectScriptEditorFamily\(/);
+});
+
+test("script editor template action directly loads the built-in zhuyuanzhang pack", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const moduleSource = fs.readFileSync(
+    path.join(process.cwd(), "src/modules/script-editor/config.ts"),
+    "utf8"
+  );
+  const workflowControllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    moduleSource,
+    /DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL\s*=\s*"\/script-editor-templates\/zhuyuanzhang\/pack\.json"/
+  );
+  assert.match(
+    mainUiSource,
+    /DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL/
+  );
+  assert.match(
+    workflowControllerSource,
     /loadScriptEditorProjectFromScenarioPackUrl\(\s*DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL\s*\)/
   );
   assert.doesNotMatch(
@@ -11824,11 +12014,11 @@ test("script editor template action directly loads the built-in zhuyuanzhang pac
 test("script editor imports built-in zhuyuanzhang template from the published manifest url", async () => {
   const {
     loadScriptEditorProjectFromScenarioPackUrl,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
   const packRoot = path.join(
     process.cwd(),
-    "src/content/scenario-packs/zhuyuanzhang"
+    "src/modules/script-editor/builtin-templates/zhuyuanzhang"
   );
   const previousFetch = global.fetch;
   const previousWindow = global.window;
@@ -11836,7 +12026,7 @@ test("script editor imports built-in zhuyuanzhang template from the published ma
   global.fetch = async (url) => {
     const parsed = new URL(String(url), "https://example.test");
     const relativePath = parsed.pathname.replace(
-      /^\/scenario-packs\/zhuyuanzhang\/?/,
+      /^\/script-editor-templates\/zhuyuanzhang\/?/,
       ""
     );
     const filePath = path.join(packRoot, relativePath || "pack.json");
@@ -11848,7 +12038,7 @@ test("script editor imports built-in zhuyuanzhang template from the published ma
 
   try {
     const project = await loadScriptEditorProjectFromScenarioPackUrl(
-      "/scenario-packs/zhuyuanzhang/pack.json"
+      "/script-editor-templates/zhuyuanzhang/pack.json"
     );
 
     assert.equal(project.id, "scenario-pack.zhu_yuanzhang.monk_opening");
@@ -11959,10 +12149,10 @@ test("script editor landing help action is styled as a circular question button"
 test("script editor workspace shell treats compatibilityImport as a retired export blocker", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const {
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.quests = [
     {
@@ -12023,7 +12213,7 @@ test("script editor workspace shell treats compatibilityImport as a retired expo
 test("script editor workspace shell surfaces self-referential nextEventId blockers", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [
@@ -12060,7 +12250,7 @@ test("script editor workspace shell surfaces self-referential nextEventId blocke
 test("script editor workspace shell surfaces settlement events missing settlementId blockers", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.events = [
     {
@@ -12085,7 +12275,7 @@ test("script editor workspace shell surfaces settlement events missing settlemen
 test("script editor workspace shell surfaces settlement events missing settlement records blockers", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.events = [
     {
@@ -12111,13 +12301,13 @@ test("script editor workspace shell surfaces settlement events missing settlemen
 test("script editor workspace shell surfaces creator-facing minigame owner hints for blocked preview and export", () => {
   const {
     createDefaultScriptEditorMinigameRecord,
-  } = require("../.test-dist/application/script-editor/minigame-binding-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
   const {
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.minigames = [createDefaultScriptEditorMinigameRecord(0)];
 
@@ -12139,7 +12329,7 @@ test("script editor workspace shell surfaces creator-facing minigame owner hints
 test("script editor workspace shell accepts settlement events with existing settlement records", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -12168,7 +12358,7 @@ test("script editor workspace shell accepts settlement events with existing sett
 test("script editor workspace shell surfaces progression tier settlement blockers", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.progressTracks = [
     {
@@ -12203,7 +12393,7 @@ test("script editor workspace shell surfaces progression tier settlement blocker
 test("script editor workspace shell surfaces settlement nextEventId blockers", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -12236,7 +12426,7 @@ test("script editor workspace shell surfaces settlement nextEventId blockers", (
 test("script editor workspace shell surfaces legacy flow eventStartTarget blockers", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.flows = [
     {
@@ -12262,7 +12452,7 @@ test("script editor workspace shell surfaces legacy flow eventStartTarget blocke
 
 test("script editor workspace view omits the top project pill text block", () => {
   const workspaceViewSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/ui/views/script-editor-workspace-view.ts"),
     "utf8"
   );
   const workspaceStyleSource = fs.readFileSync(
@@ -12280,7 +12470,7 @@ test("script editor workspace view omits the top project pill text block", () =>
 test("script editor preview queue exposes a unified auxiliary panel with linked issue routing", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.events = [
     {
@@ -12322,7 +12512,7 @@ test("script editor PRD workspace view retires English shell chrome copy", () =>
   const workspaceViewSource = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/ui/views/script-editor/script-editor-workspace-view.ts"
+      "src/modules/script-editor/ui/views/script-editor-workspace-view.ts"
     ),
     "utf8"
   );
@@ -12401,7 +12591,7 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
     "utf8"
   );
   const workspaceViewSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/ui/views/script-editor-workspace-view.ts"),
     "utf8"
   );
   const scriptEditorCssSource = fs.readFileSync(
@@ -12524,7 +12714,7 @@ test("script editor person authoring queue exposes attribute-group tab backed by
     "utf8"
   );
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/domain/script-editor-project.ts"),
     "utf8"
   );
 
@@ -12826,13 +13016,13 @@ test(
     const {
       createDefaultScriptEditorProjectDefinition,
       getScriptEditorWorkflowVisibleFamilies,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       validateScriptEditorProjectForRuntimeExport,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       createScriptEditorWorkspaceShellViewModel,
-    } = require("../.test-dist/application/script-editor/workspace-shell.js");
+    } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
     const project = createDefaultScriptEditorProjectDefinition({
       idBase: "queue-minimal",
       title: "Queue Minimal",
@@ -12871,10 +13061,10 @@ test.skip("script editor scenes family stays visible and editable through the co
     getScriptEditorWorkflowVisibleFamilies,
     removeScriptEditorWorkflowRecord,
     upsertScriptEditorWorkflowRecord,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const mainUiSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
@@ -12934,7 +13124,7 @@ test("script editor minimal workflow record helpers support draft upsert and rem
     createScriptEditorWorkflowRecordDraft,
     removeScriptEditorWorkflowRecord,
     upsertScriptEditorWorkflowRecord,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   let project = createDefaultScriptEditorProjectDefinition();
   const draft = createScriptEditorWorkflowRecordDraft("people", project);
 
@@ -12961,7 +13151,7 @@ test("script editor settlement workflow helpers support draft upsert and remove"
     createScriptEditorWorkflowRecordDraft,
     removeScriptEditorWorkflowRecord,
     upsertScriptEditorWorkflowRecord,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   let project = createDefaultScriptEditorProjectDefinition();
   const draft = createScriptEditorWorkflowRecordDraft("settlements", project);
 
@@ -12989,7 +13179,7 @@ test("script editor draft creation allocates canonical numeric ids by family max
   const {
     createDefaultScriptEditorProjectDefinition,
     createScriptEditorWorkflowRecordDraft,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   const project = createDefaultScriptEditorProjectDefinition();
 
   project.people = [{ id: "110001" }, { id: "110003" }];
@@ -13011,7 +13201,7 @@ test("script editor draft creation allocates canonical numeric ids by family max
 test("script editor numeric-index workflow draft fallback uses canonical numeric ids", () => {
   const {
     createScriptEditorWorkflowRecordDraft,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 
   assert.equal(createScriptEditorWorkflowRecordDraft("quests", 0).id, "310001");
   assert.equal(createScriptEditorWorkflowRecordDraft("textEntries", 0).id, "440001");
@@ -13028,7 +13218,7 @@ test("script editor person authoring helpers normalize trade and relation entry 
     toggleScriptEditorPersonTradeEnabled,
     appendScriptEditorPersonRelation,
     updateScriptEditorPersonRelation,
-  } = require("../.test-dist/application/script-editor/person-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/person-authoring.js");
 
   let person = createDefaultScriptEditorPersonRecord(0);
   person = updateScriptEditorPersonField(person, "personType", "角色");
@@ -13066,7 +13256,7 @@ test("script editor field mapping contract exposes representative person field d
   const {
     listScriptEditorPersonFieldDefinitions,
     validateScriptEditorFieldDefinitions,
-  } = require("../.test-dist/application/script-editor/field-mapping.js");
+  } = require("../.test-dist/modules/script-editor/application/field-mapping.js");
 
   const definitions = listScriptEditorPersonFieldDefinitions();
   const definitionById = new Map(
@@ -13132,7 +13322,7 @@ test("script editor field mapping contract exposes representative person field d
 test("script editor field mapping validation rejects duplicate ids and invalid metadata", () => {
   const {
     validateScriptEditorFieldDefinitions,
-  } = require("../.test-dist/application/script-editor/field-mapping.js");
+  } = require("../.test-dist/modules/script-editor/application/field-mapping.js");
 
   const diagnostics = validateScriptEditorFieldDefinitions([
     {
@@ -13179,7 +13369,7 @@ test("script editor person custom attribute helpers absorb imported runtime attr
     normalizeScriptEditorPersonRecord,
     updateScriptEditorPersonAttribute,
     removeScriptEditorPersonAttribute,
-  } = require("../.test-dist/application/script-editor/person-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/person-authoring.js");
 
   const imported = normalizeScriptEditorPersonRecord({
     id: "char.player",
@@ -13306,7 +13496,7 @@ test("script editor person authoring helper delete only removes the targeted nes
   const {
     normalizeScriptEditorPersonRecord,
     removeScriptEditorPersonAttribute,
-  } = require("../.test-dist/application/script-editor/person-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/person-authoring.js");
 
   const person = normalizeScriptEditorPersonRecord({
     id: "char.player",
@@ -13635,7 +13825,7 @@ test(
     const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
     const {
       listScriptEditorLocationAccessConditionFieldOptions,
-    } = require("../.test-dist/application/script-editor/location-access-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/location-access-authoring.js");
 
     assert.match(
       source,
@@ -13861,10 +14051,10 @@ test(
   () => {
     const {
       normalizeScriptEditorCityRecord,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
 
     const normalizedCity = normalizeScriptEditorCityRecord({
@@ -13945,16 +14135,16 @@ test(
       updateScriptEditorBuildingEntryBindingField,
       updateScriptEditorBuildingField,
       updateScriptEditorCityField,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
     const {
       appendScriptEditorLocationMenuEntry,
       listScriptEditorLocationMenuBundles,
       toggleScriptEditorLocationMenuEntryFlag,
       updateScriptEditorLocationMenuEntryField,
-    } = require("../.test-dist/application/script-editor/menu-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/menu-authoring.js");
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 
     let city = createDefaultScriptEditorCityRecord(0);
     city = updateScriptEditorCityField(city, "name", "苦兰城");
@@ -14058,7 +14248,7 @@ test(
       createDefaultScriptEditorCityRecord,
       appendScriptEditorAccessCondition,
       updateScriptEditorAccessConditionField,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     let city = createDefaultScriptEditorCityRecord(0);
     city = appendScriptEditorAccessCondition(city, "conditionExpression");
@@ -14108,13 +14298,13 @@ test(
   async () => {
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
     const project = createDefaultScriptEditorProjectDefinition();
     project.cities[0] = {
@@ -14145,13 +14335,13 @@ test(
   async () => {
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
     const project = createDefaultScriptEditorProjectDefinition();
     project.cities[0] = {
@@ -14218,7 +14408,7 @@ test(
   "city and building authoring use typed attributes and remove retired population residue",
   () => {
     const source = fs.readFileSync(
-      path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+      path.join(process.cwd(), "src/modules/script-editor/domain/script-editor-project.ts"),
       "utf8"
     );
 
@@ -14243,7 +14433,7 @@ test(
       createDefaultScriptEditorCityRecord,
       removeScriptEditorLocationAttribute,
       updateScriptEditorLocationAttribute,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     let city = createDefaultScriptEditorCityRecord(0);
     city = appendScriptEditorLocationAttribute(city);
@@ -14273,7 +14463,10 @@ test(
   "script editor city/building profile UI exposes custom attribute controls and routes edits",
   () => {
     const mainUiSource = fs.readFileSync(
-      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      ),
       "utf8"
     );
 
@@ -14286,7 +14479,7 @@ test(
     assert.match(mainUiSource, /location\.extendedAttributes \?\? \[\]/);
     assert.match(mainUiSource, /addScriptEditorLocationAttribute\(\)/);
     assert.match(mainUiSource, /removeScriptEditorLocationAttribute\(locationAttributeIndex\)/);
-    assert.match(mainUiSource, /applyScriptEditorLocationAttributeField\(index, field, target\.value\)/);
+    assert.match(mainUiSource, /applyScriptEditorLocationAttributeField\(index, field,/);
   }
 );
 
@@ -14295,13 +14488,13 @@ test(
   async () => {
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       serializeScriptEditorProjectToFiles,
-    } = require("../.test-dist/application/script-editor/editor-project-save.js");
+    } = require("../.test-dist/modules/script-editor/application/editor-project-save.js");
     const {
       loadScriptEditorProjectFromFiles,
-    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
 
     const project = createDefaultScriptEditorProjectDefinition({
       idBase: "city-building-custom-attributes",
@@ -14337,7 +14530,7 @@ test(
     const {
       createDefaultScriptEditorBuildingRecord,
       normalizeScriptEditorBuildingRecord,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const defaultBuilding = createDefaultScriptEditorBuildingRecord(0, "city.kulan");
     assert.equal(defaultBuilding.baseAttributes.houseType, "custom");
@@ -14385,7 +14578,7 @@ test(
     const {
       normalizeScriptEditorBuildingRecord,
       normalizeScriptEditorCityRecord,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const city = normalizeScriptEditorCityRecord({
       id: "city.start",
@@ -14480,7 +14673,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.cities = [
       {
@@ -14600,7 +14793,7 @@ test(
     const {
       exportScriptEditorProjectToScenarioPackFiles,
       validateScriptEditorProjectForRuntimeExport,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.cities = [
       {
@@ -14668,7 +14861,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.cities = [
       {
@@ -14748,7 +14941,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [
       {
@@ -15352,7 +15545,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.people = [
       {
@@ -15439,7 +15632,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.cities = [
       {
@@ -15551,7 +15744,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.cities = [
       {
@@ -15604,7 +15797,7 @@ test(
 test("script editor runtime export fails closed for missing mounted npc references", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.cities = [
     {
@@ -15637,7 +15830,7 @@ test("script editor runtime export fails closed for missing mounted npc referenc
 test("city entry export preserves mounted building type and artwork instead of leader residence defaults", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.cities = [
     {
@@ -15702,7 +15895,7 @@ test("city entry export preserves mounted building type and artwork instead of l
 test("city entry export rewrites stale imported leader residence metadata for mounted buildings", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.cities = [
     {
@@ -15788,7 +15981,7 @@ test("city entry export rewrites stale imported leader residence metadata for mo
 test("script editor runtime export does not invent city entries for unmounted buildings", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.cities = [{ id: "city.empty", name: "Empty City" }];
   project.buildings = [
@@ -15812,7 +16005,7 @@ test("script editor runtime export does not invent city entries for unmounted bu
 test("script editor runtime pack import preserves runtime families without inferring mounted authoring rows", () => {
   const {
     importScenarioPackToScriptEditorProject,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const importedProject = importScenarioPackToScriptEditorProject({
     schemaVersion: 1,
     id: "scenario.imported",
@@ -15909,7 +16102,7 @@ test("script editor runtime pack import preserves runtime families without infer
 test("script editor default project initializes empty building arrangements", () => {
   const {
     createDefaultScriptEditorProjectDefinition,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 
   const project = createDefaultScriptEditorProjectDefinition();
 
@@ -15919,7 +16112,7 @@ test("script editor default project initializes empty building arrangements", ()
 test("script editor project loader rejects legacy action-menu items in building arrangements", () => {
   const {
     validateScriptEditorProjectDefinition,
-  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+  } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
 
   const project = {
     ...createSampleScriptEditorProjectDefinition(),
@@ -15974,7 +16167,7 @@ test("script editor project loader rejects legacy action-menu items in building 
 test("script editor project loader fails closed on invalid building arrangement shape", () => {
   const {
     validateScriptEditorProjectDefinition,
-  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+  } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
 
   assert.throws(
     () =>
@@ -15998,7 +16191,7 @@ test("script editor project loader fails closed on invalid building arrangement 
 test("script editor runtime-pack import initializes empty building arrangements without old-data inference", () => {
   const {
     importScenarioPackToScriptEditorProject,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
   const importedProject = importScenarioPackToScriptEditorProject({
     schemaVersion: 1,
@@ -16068,7 +16261,7 @@ test("script editor runtime-pack import initializes empty building arrangements 
 test("script editor runtime export fails closed on legacy building arrangement action-menu items", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
   project.events = [
@@ -16127,13 +16320,13 @@ test("script editor runtime export fails closed on legacy building arrangement a
 test("progression resources round-trip through runtime-pack export import and loader", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScenarioPackFromFiles,
   } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.settlements = [
     {
@@ -16215,10 +16408,10 @@ test("progression resources round-trip through runtime-pack export import and lo
 test("script editor runtime-pack import preserves explicit building arrangements", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const {
     loadScriptEditorProjectFromScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.buildingArrangements = [
     {
@@ -17093,10 +17286,10 @@ test("generic building shell renderer has an explicit empty-data branch", () => 
 test("script editor runtime-pack import projects eventBindings into editable script-editor surface", () => {
   const {
     importScenarioPackToScriptEditorProject,
-  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
   const {
     serializeScriptEditorProjectToFiles,
-  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  } = require("../.test-dist/modules/script-editor/application/editor-project-save.js");
   const importedProject = importScenarioPackToScriptEditorProject({
     schemaVersion: 1,
     id: "scenario.imported-bindings",
@@ -17163,7 +17356,7 @@ test(
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.people = [
       {
@@ -17430,7 +17623,7 @@ test(
     const {
       normalizeScriptEditorBuildingRecord,
       normalizeScriptEditorCityRecord,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const city = normalizeScriptEditorCityRecord({
       id: "city.start",
@@ -17462,7 +17655,7 @@ test(
   () => {
     const {
       materializeScriptEditorCityBuildingRuntimeFamilies,
-    } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-runtime-materializer.js");
 
     const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
       ...createExportableScriptEditorProjectDefinition(),
@@ -17679,7 +17872,7 @@ test("city building placement resolver applies location access before house entr
 test("script editor export writes building access rules only as runtime location access", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const { evaluateLocationAccess } = require("../.test-dist/application/location-access/location-access-runtime.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.buildings = [
@@ -17807,7 +18000,10 @@ test("script editor export writes building access rules only as runtime location
 });
 
 test("script editor building event bindings remove trigger action and limit timing to enter after and leave before", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
   const editorSource =
     source.match(/renderScriptEditorEventBindingEditor\(binding[\s\S]*?\n  renderScriptEditorEventBindingConditionItem/)?.[0] ?? "";
   const buildingEventsPanelSource =
@@ -18174,7 +18370,10 @@ test("non directory city entries enter the target building directly", () => {
 test(
   "script editor story/dialogue/event queue exposes dedicated narrative tabs and bounded relation entrypoints",
   () => {
-    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const source = fs.readFileSync(
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+      "utf8"
+    );
     const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
 
     assert.doesNotMatch(source, /剧情作者面|对话作者面|事件作者面/);
@@ -18225,7 +18424,10 @@ test.skip("script editor event editor exposes event binding navigation", () => {
 });
 
 test("script editor event binding authoring UI exposes editable controls on the dedicated eventBindings surface", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
   const fallbackEditorSource =
     source.match(/return `\s*<div class="c-script-editor-editor-card">[\s\S]*?\n    `;\s*\n  }\s*\n\s*renderScriptEditorPaginatedRecordList/)?.[0] ?? "";
 
@@ -18256,7 +18458,10 @@ test("script editor event binding authoring UI exposes editable controls on the 
 });
 
 test("script editor owner-local event binding surfaces expose hooks that write project eventBindings", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
   const ownerFamilies = ["person", "city", "building", "dialogue", "minigame", "story"];
 
   assert.match(source, /renderScriptEditorOwnerLocalEventBindingsPanel/);
@@ -18274,7 +18479,10 @@ test("script editor owner-local event binding surfaces expose hooks that write p
 });
 
 test("script editor owner-local event binding authoring is routed through event tabs", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
   const ownerFamilies = ["person", "city", "building", "dialogue", "minigame", "story"];
 
   assert.match(source, /renderScriptEditorOwnerLocalEventBindingsPanel/);
@@ -18298,10 +18506,13 @@ test("script editor owner-local event binding authoring is routed through event 
 });
 
 test("script editor owner-local event binding trigger edits keep the binding anchored", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
   const {
     updateScriptEditorEventBindingTriggerField,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
   const ownerLocalPanelSource =
     source.match(/renderScriptEditorOwnerLocalEventBindingsPanel\(\{ ownerFamily, ownerId \}\) \{[\s\S]*?\n  renderScriptEditorEventBindingEditor/)?.[0] ?? "";
   const editorSource =
@@ -18398,7 +18609,10 @@ test("script editor minigame copy avoids binding-runtime jargon in empty and ref
 });
 
 test("script editor tab selectors allow owner-local event tabs and reject event-body conditions tab", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
   const locationSelectorSource =
     source.match(/selectScriptEditorLocationTab\(tab\) \{[\s\S]*?\n  selectScriptEditorNarrativeTab/)?.[0] ?? "";
   const narrativeSelectorSource =
@@ -18420,9 +18634,12 @@ test("script editor tab selectors allow owner-local event tabs and reject event-
 });
 
 test("script editor settlement authoring exposes settlement module and event settlement routing controls", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
   const workspaceSource = fs.readFileSync(
-    "src/application/script-editor/workspace-shell.ts",
+    "src/modules/script-editor/application/workspace-shell.ts",
     "utf8"
   );
 
@@ -18464,7 +18681,10 @@ test("script editor settlement authoring exposes settlement module and event set
 });
 
 test("script editor event binding editor uses event and trigger selectors", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
   const editorSource =
     source.match(/renderScriptEditorEventBindingEditor\(binding[\s\S]*?\n  renderScriptEditorEventBindingConditionItem/)?.[0] ?? "";
 
@@ -18478,11 +18698,14 @@ test("script editor event binding editor uses event and trigger selectors", () =
 });
 
 test("script editor event body retires triggerTiming while preserving binding trigger selectors", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
   const {
     createDefaultScriptEditorEventRecord,
     updateScriptEditorEventField,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
   const eventPanelSource =
     source.match(/renderScriptEditorEventTabPanel\(eventRecord\) \{[\s\S]*?\n  renderScriptEditorEventBindingSummary/)?.[0] ?? "";
   const eventFieldHandlerSource =
@@ -18504,14 +18727,17 @@ test("script editor event body retires triggerTiming while preserving binding tr
 });
 
 test("script editor event body conditionGroups residue is removed while preserving binding conditions", () => {
-  const uiSource = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
-  const domainSource = fs.readFileSync("src/domain/script-editor-project.ts", "utf8");
+  const uiSource = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
+  const domainSource = fs.readFileSync("src/modules/script-editor/domain/script-editor-project.ts", "utf8");
   const authoringSource = fs.readFileSync(
-    "src/application/script-editor/story-dialogue-event-authoring.ts",
+    "src/modules/script-editor/application/story-dialogue-event-authoring.ts",
     "utf8"
   );
   const minimalWorkflowSource = fs.readFileSync(
-    "src/application/script-editor/minimal-workflow.ts",
+    "src/modules/script-editor/application/minimal-workflow.ts",
     "utf8"
   );
 
@@ -18534,7 +18760,7 @@ test("script editor event body conditionGroups residue is removed while preservi
 test("script editor event binding condition field registry covers owner attributes and custom fields", () => {
   const {
     listScriptEditorEventBindingConditionFieldOptions,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   const fieldOptions = listScriptEditorEventBindingConditionFieldOptions();
   const paths = new Set(fieldOptions.map((option) => option.path));
@@ -18575,7 +18801,7 @@ test("script editor event binding condition field registry covers owner attribut
 });
 
 test("script editor story/dialogue/event authoring helpers normalize bounded narrative fields", () => {
-  const authoringHelpers = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  const authoringHelpers = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
   const {
     createDefaultScriptEditorDialogueRecord,
     createDefaultScriptEditorEventBindingRecord,
@@ -18765,21 +18991,21 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
 test("script editor direct first-phase default creators use canonical numeric ids", () => {
   const {
     createDefaultScriptEditorFlowRecord,
-  } = require("../.test-dist/application/script-editor/flow-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/flow-authoring.js");
   const {
     createDefaultScriptEditorMinigameRecord,
-  } = require("../.test-dist/application/script-editor/minigame-binding-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
   const {
     createDefaultScriptEditorPersonRecord,
-  } = require("../.test-dist/application/script-editor/person-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/person-authoring.js");
   const {
     createDefaultScriptEditorPortraitRecord,
     createDefaultScriptEditorPortraitVariantRecord,
-  } = require("../.test-dist/application/script-editor/portrait-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/portrait-authoring.js");
   const {
     createDefaultScriptEditorCityRecord,
     createDefaultScriptEditorBuildingRecord,
-  } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
   const {
     createDefaultScriptEditorDialogueRecord,
     createDefaultScriptEditorEventBindingRecord,
@@ -18788,7 +19014,7 @@ test("script editor direct first-phase default creators use canonical numeric id
     createDefaultScriptEditorProgressTrackRecord,
     createDefaultScriptEditorSettlementRecord,
     createDefaultScriptEditorStoryNodeRecord,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   assert.equal(createDefaultScriptEditorFlowRecord(0).id, "430001");
   assert.equal(createDefaultScriptEditorMinigameRecord(0).id, "420001");
@@ -18807,7 +19033,7 @@ test("script editor direct first-phase default creators use canonical numeric id
 });
 
 test("script editor authoring normalization preserves blank draft relation rows for editing", () => {
-  const authoringHelpers = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  const authoringHelpers = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
   const {
     appendScriptEditorDialogueParticipant,
     appendScriptEditorEventRelationEntry,
@@ -18846,14 +19072,14 @@ test("script editor event binding authoring helpers edit records and workflow me
     updateScriptEditorEventBindingField,
     updateScriptEditorEventBindingOwnerField,
     updateScriptEditorEventBindingTriggerField,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
   const {
     createDefaultScriptEditorProjectDefinition,
     createScriptEditorWorkflowRecordDraft,
     listScriptEditorWorkflowFamilyRecords,
     removeScriptEditorWorkflowRecord,
     upsertScriptEditorWorkflowRecord,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 
   let binding = createDefaultScriptEditorEventBindingRecord(0);
   binding = updateScriptEditorEventBindingField(binding, "eventId", " event.opening ");
@@ -18919,7 +19145,10 @@ test("script editor event binding authoring helpers edit records and workflow me
 
 test("script editor visual alignment queue keeps story/dialogue/minigame system ids behind shared advanced-details foldouts while event routing stays selector-first", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
   const scriptEditorCssSource = fs.readFileSync(
@@ -18940,7 +19169,10 @@ test("script editor visual alignment queue keeps story/dialogue/minigame system 
 });
 
 test("script editor event editor shows binding summaries without exposing owner-local binding editing controls", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
 
   assert.match(source, /renderScriptEditorEventBindingSummary/);
   assert.match(source, /scriptEditorProject\?\.eventBindings/);
@@ -18958,10 +19190,10 @@ test("script editor event editor shows binding summaries without exposing owner-
 test("script editor workspace groups creator navigation using current world, narrative, gameplay, and asset-library boundaries", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const {
     createDefaultScriptEditorProjectDefinition,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   const project = createDefaultScriptEditorProjectDefinition();
 
   const workspace = createScriptEditorWorkspaceShellViewModel({ project });
@@ -18987,10 +19219,10 @@ test("script editor workspace groups creator navigation using current world, nar
 test("script editor workspace shell surfaces missing formal menu instance and resource references", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
-  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
   const {
     createDefaultScriptEditorProjectDefinition,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   const project = createDefaultScriptEditorProjectDefinition();
 
   project.menuResources = [];
@@ -19029,7 +19261,7 @@ test("script editor event binding conditions authoring preserves flag and variab
     normalizeScriptEditorEventBindingRecord,
     updateScriptEditorEventBindingConditionItemField,
     updateScriptEditorEventBindingConditionOperator,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   let binding = createDefaultScriptEditorEventBindingRecord(0);
   binding = updateScriptEditorEventBindingConditionOperator(binding, "all");
@@ -19062,7 +19294,7 @@ test("script editor event binding condition removal clears empty condition group
     removeScriptEditorEventBindingConditionItem,
     updateScriptEditorEventBindingConditionItemField,
     updateScriptEditorEventBindingConditionOperator,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   let binding = createDefaultScriptEditorEventBindingRecord(0);
   binding = updateScriptEditorEventBindingConditionOperator(binding, "all");
@@ -19075,7 +19307,10 @@ test("script editor event binding condition removal clears empty condition group
 });
 
 test("script editor event binding condition editor exposes localized cascading registry controls", () => {
-  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
 
   assert.match(source, /listScriptEditorEventBindingConditionFieldOptions/);
   assert.match(source, /data-script-editor-event-binding-condition-field-registry/);
@@ -19135,7 +19370,7 @@ test("script editor event binding condition authoring registry preserves advance
     normalizeScriptEditorEventBindingRecord,
     updateScriptEditorEventBindingConditionItemField,
     updateScriptEditorEventBindingConditionOperator,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   const fieldOptions = listScriptEditorEventBindingConditionFieldOptions();
   assert.ok(
@@ -19207,7 +19442,7 @@ test("script editor event deletion removes all cross-record event references", (
   const {
     createDefaultScriptEditorProjectDefinition,
     removeScriptEditorWorkflowRecord,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 
   const project = createDefaultScriptEditorProjectDefinition({
     idBase: "event-delete-cascade",
@@ -19326,7 +19561,7 @@ test("script editor event deletion removes all cross-record event references", (
 
   const {
     exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
   const exportedEvents = JSON.parse(
     exportScriptEditorProjectToScenarioPackFiles(nextProject)["events.json"]
   );
@@ -19348,10 +19583,13 @@ test("script editor event deletion removes all cross-record event references", (
 test(
   "script editor minigame binding queue exposes a dedicated binding editor with launch settlement and reference tabs",
   () => {
-    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const source = fs.readFileSync(
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+      "utf8"
+    );
     const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
     const workspaceShellSource = fs.readFileSync(
-      "src/application/script-editor/workspace-shell.ts",
+      "src/modules/script-editor/application/workspace-shell.ts",
       "utf8"
     );
 
@@ -19385,7 +19623,7 @@ test(
       updateScriptEditorMinigameIntegration,
       updateScriptEditorMinigameLaunchPayloadField,
       updateScriptEditorMinigameOutcomeRouteField,
-    } = require("../.test-dist/application/script-editor/minigame-binding-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
 
     let record = createDefaultScriptEditorMinigameRecord(0);
     record = updateScriptEditorMinigameField(record, "title", "市集算盘");
@@ -19450,10 +19688,10 @@ test(
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
     const project = createExportableScriptEditorProjectDefinition();
     const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
     const manifest = JSON.parse(serializedFiles["pack.json"]);
@@ -19484,7 +19722,7 @@ test(
   async () => {
     const {
       loadScriptEditorProjectFromFiles,
-    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
     const os = require("node:os");
     const outputRoot = fs.mkdtempSync(
       path.join(os.tmpdir(), "rpg-tg-script-editor-project-missing-key-")
@@ -28350,19 +28588,29 @@ test("settlement contract rejects alias keys and accepts canonical runtime keys"
     "utf8"
   );
   const runtimePackExportSource = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/runtime-pack-export.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/runtime-pack-export.ts"),
     "utf8"
   );
   const runtimePackImportSource = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/runtime-pack-import.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/runtime-pack-import.ts"),
     "utf8"
   );
   const scenarioPackLoaderSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/scenario/scenario-pack-loader.ts"),
     "utf8"
   );
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    const mainUiSource = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      ),
+      "utf8"
+    );
+  const scriptEditorModuleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
 
@@ -28384,7 +28632,7 @@ test("settlement contract rejects alias keys and accepts canonical runtime keys"
     runtimePackExportSource,
     runtimePackImportSource,
     scenarioPackLoaderSource,
-    mainUiSource,
+    scriptEditorModuleSource,
   ]) {
     assert.match(source, /\bdanger\b/);
     assert.match(source, /\blevel\b/);
@@ -28395,19 +28643,19 @@ test("settlement contract rejects alias keys and accepts canonical runtime keys"
 
 test("legacy cutover inventory separates canonical keep fields from residue candidates", () => {
     const schemaSource = fs.readFileSync(
-      path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+      path.join(process.cwd(), "src/modules/script-editor/domain/script-editor-project.ts"),
       "utf8"
     );
     const cityBuildingAuthoringSource = fs.readFileSync(
-      path.join(process.cwd(), "src/application/script-editor/city-building-authoring.ts"),
+      path.join(process.cwd(), "src/modules/script-editor/application/city-building-authoring.ts"),
       "utf8"
     );
     const runtimePackExportSource = fs.readFileSync(
-      path.join(process.cwd(), "src/application/script-editor/runtime-pack-export.ts"),
+      path.join(process.cwd(), "src/modules/script-editor/application/runtime-pack-export.ts"),
       "utf8"
     );
     const runtimePackImportSource = fs.readFileSync(
-      path.join(process.cwd(), "src/application/script-editor/runtime-pack-import.ts"),
+      path.join(process.cwd(), "src/modules/script-editor/application/runtime-pack-import.ts"),
       "utf8"
     );
     const scenarioPackLoaderSource = fs.readFileSync(
@@ -30251,7 +30499,7 @@ test("event-routing call chain immediately hands progression settlement instance
 
 test("script editor project definition declares progression track and binding files", () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/domain/script-editor-project.ts"),
     "utf8"
   );
 
@@ -30266,7 +30514,10 @@ test("script editor project definition declares progression track and binding fi
 
 test("script editor progression authoring exposes Chinese track and host binding controls", () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
 
@@ -30285,7 +30536,10 @@ test("script editor progression authoring exposes Chinese track and host binding
 
 test("script editor stage configuration creator module merges object binding rule editing and help into one surface", () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
 
@@ -30305,17 +30559,17 @@ test("script editor stage configuration creator module merges object binding rul
 test("script editor stage configuration authoring can produce a creator-authored rule that validates and exports", () => {
   const {
     upsertScriptEditorWorkflowRecord,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   const {
     createDefaultScriptEditorProgressTrackBindingRecord,
     createDefaultScriptEditorProgressTrackRecord,
     updateScriptEditorProgressTrackBindingField,
     updateScriptEditorProgressTrackField,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
   const {
     exportScriptEditorProjectToScenarioPackFiles,
     validateScriptEditorProjectForRuntimeExport,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
 
   let project = createExportableScriptEditorProjectDefinition();
 
@@ -30373,7 +30627,7 @@ test("script editor stage configuration authoring can produce a creator-authored
 /* test.skip("script editor stage configuration clears stale applied object when creator changes object type", () => {
   const {
     updateScriptEditorProgressTrackBindingField,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   let binding = {
   project.progressTracks = [
@@ -30416,7 +30670,7 @@ test("script editor stage configuration authoring can produce a creator-authored
 test("script editor stage configuration binding helper clears stale applied host when creator changes host family", () => {
   const {
     updateScriptEditorProgressTrackBindingField,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 
   let binding = {
     id: "binding.progress.hero",
@@ -30440,7 +30694,7 @@ test("script editor workflow helpers support progression draft upsert and remove
     createScriptEditorWorkflowRecordDraft,
     upsertScriptEditorWorkflowRecord,
     removeScriptEditorWorkflowRecord,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   let project = createDefaultScriptEditorProjectDefinition();
 
   const trackDraft = createScriptEditorWorkflowRecordDraft("progressTracks", project);
@@ -30486,7 +30740,7 @@ test("script editor workflow progression drafts avoid id reuse after non-tail de
     createScriptEditorWorkflowRecordDraft,
     upsertScriptEditorWorkflowRecord,
     removeScriptEditorWorkflowRecord,
-  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
   let project = createDefaultScriptEditorProjectDefinition();
 
   const trackDrafts = [];
@@ -32293,15 +32547,25 @@ test("map review provider acceptance keeps normal json and preview entrypoints o
   );
   assert.match(mainSource, /function createScenarioPackAppState\(/);
   assert.match(mainSource, /mapLocationProvider\.getCityLocation/);
-  assert.match(
-    mainUiSource,
-    /exportScriptEditorProjectToScenarioPackFiles\(this\.scriptEditorProject\)/
+  const workflowControllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
+    "utf8"
   );
   assert.match(
-    mainUiSource,
+    workflowControllerSource,
+    /exportScriptEditorProjectToScenarioPackFiles\(project\)/
+  );
+  assert.match(
+    workflowControllerSource,
     /loadScenarioPackFromFiles\(\s*createTextImportFilesFromRecord\(serializedPackFiles\)/
   );
-  assert.match(mainUiSource, /onStartLoadedScenarioPack\(scenarioPack\)/);
+  assert.match(
+    workflowControllerSource,
+    /startLoadedScenarioPack\(scenarioPack\)/
+  );
   assert.match(inventorySource, /residue-removal-completed/);
   assert.match(inventorySource, /defaultReviewCyclePolicy/);
   assert.match(inventorySource, /mapLocationProvider\.getCityLocation/);
@@ -32844,11 +33108,11 @@ test("location access retirement removes legacy house access refusal rule runtim
     "src/application/content/active-game-content.ts",
     "src/application/content/content-pack-loader.ts",
     "src/application/scenario/scenario-pack-loader.ts",
-    "src/application/script-editor/runtime-pack-export.ts",
-    "src/application/script-editor/runtime-pack-import.ts",
-    "src/application/script-editor/city-building-runtime-materializer.ts",
+    "src/modules/script-editor/application/runtime-pack-export.ts",
+    "src/modules/script-editor/application/runtime-pack-import.ts",
+    "src/modules/script-editor/application/city-building-runtime-materializer.ts",
     "src/domain/content-pack.ts",
-    "src/domain/script-editor-project.ts",
+    "src/modules/script-editor/domain/script-editor-project.ts",
     "src/domain/house.ts",
   ];
 
@@ -34307,8 +34571,12 @@ test("entry shell ui extraction delegates pre-game rendering out of MainUiFlow",
 
   assert.match(mainUiFlowSource, /renderEntryShellMainMenu\(/);
   assert.match(mainUiFlowSource, /renderEntryShellScenarioSelect\(/);
-  assert.match(mainUiFlowSource, /renderEntryShellScriptEditorLanding\(/);
   assert.match(mainUiFlowSource, /renderEntryShellCharacterSelect\(/);
+  const scriptEditorModuleSource = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
+  assert.match(scriptEditorModuleSource, /renderEntryShellScriptEditorLanding\(/);
   assert.doesNotMatch(
     mainUiFlowSource,
     /<section class="c-main-ui-screen c-main-ui-screen--main-menu"/
@@ -38030,3 +38298,5 @@ test("layout editor transition keeps centralized startup state while retaining t
     );
   }
 });
+
+

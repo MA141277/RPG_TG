@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
-import { extname, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { extname, relative, resolve } from "node:path";
 
 const defaultChecks = [
   {
-    file: "src/ui/main-ui/main-ui-flow.js",
+    file: "src/modules/script-editor/ui/main-ui-script-editor-module.js",
     requiredText: [
       "项目总览",
       "新增人物",
@@ -31,7 +31,7 @@ const defaultChecks = [
     ],
   },
   {
-    file: "src/ui/views/script-editor/script-editor-workspace-view.ts",
+    file: "src/modules/script-editor/ui/views/script-editor-workspace-view.ts",
     requiredText: ["script-editor"],
   },
   {
@@ -39,12 +39,13 @@ const defaultChecks = [
     requiredText: ["建筑", "返回", "在场人物"],
   },
   {
-    file: "src/application/script-editor/workspace-shell.ts",
+    file: "src/modules/script-editor/application/workspace-shell.ts",
     requiredText: ["项目信息", "运行预览", "保存项目", "剧本导出"],
   },
 ];
 
-const mojibakePattern = /[\uFFFD]|(?:[ÃÂåæçèéêëìíîïðñòóôõöøùúûüýþÿ][\u0080-\uFFFF]?){2,}/u;
+const mojibakePattern =
+  /[\uFFFD]|(?:[ÃÂÐÊËÌÎÏÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ][\u0080-\uFFFF]?){2,}/u;
 
 function parseArgs(argv) {
   const checks = [];

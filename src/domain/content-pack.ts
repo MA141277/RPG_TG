@@ -27,7 +27,7 @@ import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
 } from "./portrait-resource";
-import type { ScriptEditorPersonSemanticBinding } from "./script-editor-project";
+import type { ScriptEditorPersonSemanticBinding } from "../modules/script-editor";
 import type { TaskDefinition } from "../core/contracts/task-runtime";
 import type {
   PlayableDefinition,

@@ -1,4 +1,4 @@
-const assert = require("assert");
+﻿const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const { test } = require("node:test");
@@ -8,7 +8,7 @@ test(
   () => {
     const {
       normalizeScriptEditorCityRecord,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const city = normalizeScriptEditorCityRecord({
       id: "city.start",
@@ -37,7 +37,7 @@ test(
   () => {
     const {
       appendScriptEditorCityMountedBuildingNpc,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const city = appendScriptEditorCityMountedBuildingNpc(
       {
@@ -63,7 +63,7 @@ test(
   () => {
     const {
       updateScriptEditorCityField,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const city = updateScriptEditorCityField(
       {
@@ -91,7 +91,7 @@ test(
   () => {
     const {
       updateScriptEditorCityField,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const city = updateScriptEditorCityField(
       {
@@ -119,7 +119,7 @@ test(
   () => {
     const {
       updateScriptEditorCityMapPlacementField,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     let city = {
       id: "city.start",
@@ -156,7 +156,7 @@ test(
   () => {
     const {
       createDefaultScriptEditorCityRecord,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const city = createDefaultScriptEditorCityRecord(0);
 
@@ -173,7 +173,7 @@ test(
     const {
       appendScriptEditorCityMountedBuildingNpc,
       normalizeScriptEditorCityRecord,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const city = normalizeScriptEditorCityRecord(
       appendScriptEditorCityMountedBuildingNpc(
@@ -202,7 +202,7 @@ test(
   () => {
     const {
       removeScriptEditorCityMountedBuilding,
-    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
     const city = removeScriptEditorCityMountedBuilding(
       {
@@ -295,7 +295,7 @@ test("script editor building arrangement authoring updates project-level arrange
     updateScriptEditorBuildingArrangementLayoutNodeFlag,
     updateScriptEditorBuildingArrangementNpc,
     updateScriptEditorBuildingArrangementPrimaryNpc,
-  } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
   const baseProject = {
     schemaVersion: 1,
@@ -413,7 +413,7 @@ test("script editor building arrangement authoring updates project-level arrange
 test("script editor building arrangement authoring avoids duplicate arrangement rows for the same mounted building", () => {
   const {
     appendScriptEditorBuildingArrangement,
-  } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
   const baseProject = {
     schemaVersion: 1,
@@ -466,7 +466,7 @@ test("script editor building arrangement authoring avoids duplicate arrangement 
 test("script editor runtime families source arrangement npc ownership from city mounted buildings", () => {
   const {
     materializeScriptEditorCityBuildingRuntimeFamilies,
-  } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
+  } = require("../.test-dist/modules/script-editor/application/city-building-runtime-materializer.js");
 
   const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
     schemaVersion: 1,
@@ -538,7 +538,7 @@ test("script editor runtime families source arrangement npc ownership from city 
 test("script editor runtime families drop legacy action-menu items from arrangement containers", () => {
   const {
     materializeScriptEditorCityBuildingRuntimeFamilies,
-  } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
+  } = require("../.test-dist/modules/script-editor/application/city-building-runtime-materializer.js");
 
   const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
     schemaVersion: 1,
@@ -616,7 +616,7 @@ test("script editor runtime families drop legacy action-menu items from arrangem
 test("script editor runtime families keep mounted npc ownership distinct when repeated cities share one canonical building id", () => {
   const {
     materializeScriptEditorCityBuildingRuntimeFamilies,
-  } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
+  } = require("../.test-dist/modules/script-editor/application/city-building-runtime-materializer.js");
 
   const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
     schemaVersion: 1,
@@ -748,7 +748,7 @@ test("script editor city profile UI exposes building arrangement and generic con
   );
   const normalizedMainUiSource = mainUiSource.replace(/\r\n/g, "\n");
   const authoringSource = fs.readFileSync(
-    path.join(process.cwd(), "src/application/script-editor/city-building-authoring.ts"),
+    path.join(process.cwd(), "src/modules/script-editor/application/city-building-authoring.ts"),
     "utf8"
   );
   const plannerBlock =
@@ -795,7 +795,7 @@ test("script editor building layout helpers resolve template defaults without in
   const {
     createDefaultScriptEditorBuildingLayoutRecord,
     readScriptEditorBuildingLayoutRecord,
-  } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+  } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 
   const defaultLayout = createDefaultScriptEditorBuildingLayoutRecord();
   const meetingLayout = readScriptEditorBuildingLayoutRecord({
@@ -813,7 +813,7 @@ test(
   () => {
     const {
       importScenarioPackToScriptEditorProject,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
     const importedProject = importScenarioPackToScriptEditorProject({
       schemaVersion: 1,
@@ -892,16 +892,16 @@ test(
   async () => {
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       parseScriptEditorProject,
-    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
     const {
       loadScriptEditorProjectFromScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 
     const emptyProject = createDefaultScriptEditorProjectDefinition();
     assert.deepEqual(emptyProject.flows, []);
@@ -968,20 +968,20 @@ test(
     const {
       createDefaultScriptEditorProjectDefinition,
       getScriptEditorWorkflowVisibleFamilies,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       createScriptEditorWorkspaceShellViewModel,
-    } = require("../.test-dist/application/script-editor/workspace-shell.js");
+    } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
     const mainUiSource = fs.readFileSync(
       path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
       "utf8"
     );
     const workflowSource = fs.readFileSync(
-      path.join(process.cwd(), "src/application/script-editor/minimal-workflow.ts"),
+      path.join(process.cwd(), "src/modules/script-editor/application/minimal-workflow.ts"),
       "utf8"
     );
     const workspaceShellSource = fs.readFileSync(
-      path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+      path.join(process.cwd(), "src/modules/script-editor/application/workspace-shell.ts"),
       "utf8"
     );
     const project = createDefaultScriptEditorProjectDefinition();
@@ -1023,13 +1023,13 @@ test(
   () => {
     const {
       createDefaultScriptEditorProjectDefinition,
-    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
     const {
       createActiveGameContent,
     } = require("../.test-dist/application/content/active-game-content.js");
     const {
       exportScriptEditorProjectToScenarioPackFiles,
-    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
 
     const project = createDefaultScriptEditorProjectDefinition();
     project.flows = [
