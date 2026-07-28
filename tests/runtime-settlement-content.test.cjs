@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   applySettlementContents,
+  applySettlementInstances,
 } = require("../.test-dist/core/runtime/runtime-settlement.js");
 
 test("applySettlementContents applies numeric, boolean, and enum changes", () => {
@@ -83,4 +84,56 @@ test("applySettlementContents ignores unsupported or missing targets", () => {
   });
 
   assert.deepEqual(nextState, state);
+});
+
+test("applySettlementInstances applies referenced settlement definitions", () => {
+  const result = applySettlementInstances(
+    {
+      buildings: {
+        temple: {
+          level: 1,
+        },
+      },
+    },
+    {
+      settlementInstances: [{ settlementId: "upgrade-temple" }],
+      settlementDefinitionsById: {
+        "upgrade-temple": {
+          contents: [
+            {
+              targetFamily: "building",
+              targetId: "temple",
+              attributeKey: "level",
+              attributeType: "number",
+              operation: "add",
+              value: 1,
+            },
+          ],
+        },
+      },
+    }
+  );
+
+  assert.equal(result.state.buildings.temple.level, 2);
+  assert.deepEqual(result.warnings, []);
+});
+
+test("applySettlementInstances reports missing settlement definitions", () => {
+  const state = {
+    people: {
+      hero: {
+        merit: 1,
+      },
+    },
+  };
+
+  const result = applySettlementInstances(state, {
+    settlementInstances: [{ settlementId: "missing-settlement" }],
+    settlementDefinitionsById: {},
+  });
+
+  assert.equal(result.state, state);
+  assert.deepEqual(result.warnings, [
+    "missing-progression-settlement:missing-settlement",
+  ]);
 });

@@ -4,6 +4,7 @@ import type {
   EffectSettlementResult,
 } from "../contracts/effect-settlement";
 import type { RuntimeState } from "../contracts/runtime-state";
+import type { ModFirstProgressionSettlementInstance } from "./mod-first-compatibility";
 import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
 import { advanceGameStateTimeSegments } from "../../application/time/time-progression";
 
@@ -69,6 +70,41 @@ export function applySettlementContents<
   }
 
   return nextState as TState;
+}
+
+export function applySettlementInstances<
+  TState extends SettlementRuntimeTargetState,
+>(
+  gameState: TState,
+  input: {
+    settlementInstances: readonly ModFirstProgressionSettlementInstance[];
+    settlementDefinitionsById?: Record<string, ExportedSettlement | undefined>;
+    context?: SettlementRuntimeContext;
+  }
+): {
+  state: TState;
+  warnings: string[];
+} {
+  let nextState = gameState;
+  const warnings: string[] = [];
+
+  for (const settlementInstance of input.settlementInstances) {
+    const settlement =
+      input.settlementDefinitionsById?.[settlementInstance.settlementId];
+    if (settlement == null) {
+      warnings.push(
+        `missing-progression-settlement:${settlementInstance.settlementId}`
+      );
+      continue;
+    }
+
+    nextState = applySettlementContents(nextState, settlement, input.context);
+  }
+
+  return {
+    state: nextState,
+    warnings,
+  };
 }
 
 function applySettlementContent(

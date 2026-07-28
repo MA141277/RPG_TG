@@ -102,6 +102,13 @@ export type ModFirstEventDefinitionOverlay = {
   tags?: string[];
 };
 
+export type ModFirstProgressionSettlementInstance = {
+  settlementId: string;
+  sourceEventId?: string;
+  targetId?: string;
+  metadata?: Record<string, unknown>;
+};
+
 export type ModFirstEventDefinition = EventDefinition &
   ModFirstEventDefinitionOverlay;
 
