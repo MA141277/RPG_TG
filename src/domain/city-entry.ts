@@ -2,19 +2,8 @@ import type { CharacterId } from "./character";
 import type { HouseId } from "./house";
 
 export type CityEntryId = string;
-export type CityEntryDirectoryType = "leader-residence" | "building";
-export type CityEntryArtworkId =
-  | "leader-residence"
-  | "grain-shop"
-  | "market-house"
-  | "tavern"
-  | "tea-house"
-  | "temple-house"
-  | "medicine-house"
-  | "home-house"
-  | "keep-house"
-  | "dojo"
-  | "building";
+export type CityEntryDirectoryType = "leader-residence";
+export type CityEntryArtworkId = "leader-residence";
 
 export type CityEntryDefinition = {
   id: CityEntryId;

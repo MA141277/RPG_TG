@@ -24,19 +24,6 @@ body.is-game-visible .c-main-ui-overlay {
   pointer-events: none;
 }
 
-body.is-game-visible .c-main-ui-overlay.is-runtime-preview-active {
-  display: block !important;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: none;
-}
-
-body.is-game-visible
-  .c-main-ui-overlay.is-runtime-preview-active
-  .c-main-ui-runtime-preview-session-banner {
-  pointer-events: auto;
-}
-
 .c-main-ui-screen {
   position: relative;
   width: 100%;
@@ -952,61 +939,4 @@ body.is-game-visible
 .c-main-ui-page-turn-button.c-main-ui-layout-component,
 .c-main-ui-image-button--choose.c-main-ui-layout-component {
   justify-self: auto;
-}
-
-.c-main-ui-runtime-preview-session-banner {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 2200;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  max-width: min(520px, calc(100vw - 32px));
-  padding: 12px 14px;
-  border: 1px solid rgb(126 92 48 / 35%);
-  border-radius: 14px;
-  background: rgb(22 18 14 / 92%);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 28%);
-  color: rgb(246 235 214);
-}
-
-.c-main-ui-runtime-preview-session-banner__text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.c-main-ui-runtime-preview-session-banner__title {
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.c-main-ui-runtime-preview-session-banner__hint {
-  font-size: 12px;
-  line-height: 1.5;
-  color: rgb(220 204 178);
-}
-
-.c-runtime-preview-exit {
-  flex: 0 0 auto;
-  border: 1px solid rgb(181 134 74 / 55%);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgb(176 128 70), rgb(131 88 38));
-  color: rgb(255 246 231);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 10px 14px;
-  cursor: pointer;
-}
-
-.c-runtime-preview-exit:hover {
-  filter: brightness(1.06);
-}
-
-.c-runtime-preview-exit:active {
-  transform: translateY(1px);
 }

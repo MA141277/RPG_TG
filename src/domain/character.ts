@@ -104,11 +104,6 @@ export type CharacterDefinition = {
   portraitId: string;
   portraitVariants?: PortraitVariant[];
   portraitVariantId?: string | null;
-  attributeGroup?: Record<string, unknown>;
-  attributeGroups?: Record<string, unknown>[];
-  attributeMappings?: Record<string, unknown>[];
-  attributeValues?: Record<string, unknown>[];
-  extendedAttributes?: Record<string, unknown>[];
   spriteId?: string;
   defaultSide?: "left" | "right";
   stats: CharacterStats;
@@ -120,9 +115,6 @@ export type CharacterDefinition = {
   leaderResidenceStatus?: LeaderResidenceStatus;
   availableFunctions: CharacterFunction[];
   onTalkSceneId?: SceneId;
-  dialogueIds?: string[];
-  eventIds?: string[];
-  tradeBinding?: Record<string, unknown>;
   skills?: Partial<Record<SkillKey, number>>;
   teachableSkillKeys?: SkillKey[];
 };
