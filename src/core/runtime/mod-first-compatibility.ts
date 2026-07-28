@@ -9,6 +9,7 @@ import type {
   RuntimeTaskAction,
   RuntimeTaskSignal,
 } from "../contracts/runtime-result";
+import { matchesCanonicalBuildingOwnerId } from "./building-owner-canonicalization";
 
 export type ModFirstRuntimeTaskInput =
   | RuntimeTaskAction
@@ -454,42 +455,4 @@ function compareValue(
     default:
       return false;
   }
-}
-
-function matchesCanonicalBuildingOwnerId(
-  leftOwnerId: string | undefined,
-  rightOwnerId: string | undefined
-): boolean {
-  if (leftOwnerId == null || rightOwnerId == null) {
-    return leftOwnerId === rightOwnerId;
-  }
-
-  if (leftOwnerId === rightOwnerId) {
-    return true;
-  }
-
-  if (
-    (leftOwnerId === "home.template" &&
-      /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(rightOwnerId)) ||
-    (rightOwnerId === "home.template" &&
-      /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(leftOwnerId))
-  ) {
-    return true;
-  }
-
-  const leftHouseTemplateFamily =
-    /^house\.template\.([a-z0-9_]+)$/.exec(leftOwnerId)?.[1] ?? null;
-  const rightHouseTemplateFamily =
-    /^house\.template\.([a-z0-9_]+)$/.exec(rightOwnerId)?.[1] ?? null;
-  const leftHouseSourceFamily =
-    /^house\.([^.]+)\.([a-z0-9_]+)$/.exec(leftOwnerId)?.[2] ?? null;
-  const rightHouseSourceFamily =
-    /^house\.([^.]+)\.([a-z0-9_]+)$/.exec(rightOwnerId)?.[2] ?? null;
-
-  return (
-    (leftHouseTemplateFamily != null &&
-      leftHouseTemplateFamily === rightHouseSourceFamily) ||
-    (rightHouseTemplateFamily != null &&
-      rightHouseTemplateFamily === leftHouseSourceFamily)
-  );
 }
