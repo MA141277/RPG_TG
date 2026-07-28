@@ -333,6 +333,7 @@ runtime inventory key instead of keeping one copy per house.
 Current shared keys:
 
 - `var.player_inventory.grain_dou`: player grain measured in dou
+- `var.player_inventory.item.<itemId>`: generic runtime item quantities for non-equipment gameplay rewards
 
 Rules:
 
@@ -340,9 +341,37 @@ Rules:
   existing player-owned resources
 - grain shop, market inventory, city begging rewards, and temple work submission must read and
   mutate the shared grain key
+- review/council rewards must use shared inventory keys or typed inventory helpers instead of
+  storing one-off reward counts inside a house session
 - unit conversion belongs in shared domain helpers, not in one concrete house renderer
 - house-local variables may store derived progress such as submitted amount or last grade, but
   not an independent copy of the player inventory
+
+### Shared Review Settlement
+
+Periodic review/council flows may award items, update faction merit, and announce personnel
+changes after the assignment-completion table.
+
+Rules:
+
+- reward eligibility, reward item definitions, and personnel-change queues belong in shared
+  review domain/application helpers
+- concrete house modules may select faction-specific reward tables or rank labels, but must not
+  hardcode settlement branches in `src/main.ts`
+- item rewards must mutate unified runtime inventory before the overlay is shown
+- faction entry and office/rank progression must be settled through
+  `GameState.runtime.factionMemberships`, keyed by faction id and character id. Do not infer the
+  previous faction identity from a character's visible `title`; that title may describe the
+  character's pre-faction social state, such as refugee.
+- review task rank gates must flow through shared review task helpers such as
+  `ReviewTaskGate` / `createReviewTaskChoiceViewModels()`. Content may provide
+  `reviewMinRankId`, and modules may pass additional lock flags into the shared gate, but they must
+  not bypass the minimum-rank result with faction-specific story branches.
+- personnel changes that affect a character's visible identity or office must update
+  `characterDefinitions` or another explicit unified character runtime structure, not a
+  house-local session-only label
+- reward and personnel announcements must be typed overlays or dialogue view models; application
+  modules must not return HTML strings
 
 ## Mutation Rules
 
@@ -618,6 +647,12 @@ The view should not:
 - random pools
 - min/max tuning values
 - house art ids
+- unified character records where playable roles and NPCs both use
+  `CharacterDefinition`; use `personType: "角色"` / `role: "playable"` for
+  selectable player candidates and `personType: "NPC"` for house residents
+- `buildingArrangements` records that bind a concrete `cityId + buildingId`
+  pair to mounted NPC ids, a primary NPC id, layout metadata, and generic
+  containers
 
 `content` may not define:
 
@@ -625,6 +660,12 @@ The view should not:
 - mutation logic
 - HTML markup
 - entrypoint routing
+
+When a house needs fixed NPC ownership, prefer the mod-first compatible
+`CharacterDefinition.houseId` and `buildingArrangements[].mountedNpcIds`
+storage shape. `HouseDefinition.characterIds` remains a legacy fallback and
+presentation/compatibility field, not the primary authoring surface for new
+NPC placement work.
 
 ## Acceptance Checklist
 

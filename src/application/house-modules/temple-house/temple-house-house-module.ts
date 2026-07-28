@@ -15,9 +15,11 @@ import {
 } from "../../../domain/activity-session";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
+import type { HouseDefinition } from "../../../domain/house";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
   ReviewAssignmentRow,
+  ReviewPersonnelChange,
   ReviewPolicyPanel,
 } from "../../../domain/review";
 import type {
@@ -96,12 +98,19 @@ import {
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
 import {
+  applyReviewItemReward,
   createReviewTaskChoiceViewModels,
+  formatReviewPersonnelChangeLines,
+  getFactionRankPersonnelTitle,
   getDefaultReviewSpecialTaskHookResult,
+  isReviewTopRankRewardEligible,
   readFactionMerit,
   resolveFactionMeritRank,
   resolveReviewCompletionGrade,
+  settleFactionReviewPersonnel,
+  TEMPLE_TOP_RANK_REWARD,
   TEMPLE_FACTION_RANKS,
+  writeFactionMerit,
 } from "../../review/faction-review";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
 
@@ -1744,6 +1753,212 @@ function createTempleReviewPolicyPanelOverlay(
   };
 }
 
+function createTempleReviewRewardOverlay(): TempleHouseOverlayState {
+  return createAlertOverlay(
+    "获得物品",
+    [`${TEMPLE_TOP_RANK_REWARD.label} x${TEMPLE_TOP_RANK_REWARD.quantity}`],
+    "success"
+  );
+}
+
+function applyTemplePersonnelChanges(
+  characterDefinitions: CharacterDefinition[],
+  changes: ReviewPersonnelChange[]
+): CharacterDefinition[] {
+  return changes.reduce((nextDefinitions, change) => {
+    if (change.type !== "rank-changed") {
+      return nextDefinitions;
+    }
+
+    const targetCharacter = nextDefinitions.find(
+      (characterDefinition) => characterDefinition.id === change.characterId
+    );
+    if (targetCharacter == null) {
+      return nextDefinitions;
+    }
+
+    return replaceCharacter(nextDefinitions, {
+      ...targetCharacter,
+      title: change.nextTitle,
+    });
+  }, characterDefinitions);
+}
+
+function getTempleReviewId(gameState: GameState): string {
+  return `temple:${gameState.calendar.year}-${gameState.calendar.month}-${gameState.calendar.day}`;
+}
+
+function settleTemplePersonnelChanges(input: {
+  gameState: GameState;
+  factionLabel: string;
+  playerCharacter: CharacterDefinition;
+  playerCharacterId: string;
+}): { gameState: GameState; changes: ReviewPersonnelChange[] } {
+  const playerMerit = readFactionMerit(
+    input.gameState,
+    "temple",
+    input.playerCharacterId
+  );
+  const playerContribution = getTempleContribution(input.gameState);
+  const settlement = settleFactionReviewPersonnel({
+    state: input.gameState,
+    factionId: "temple",
+    factionLabel: input.factionLabel,
+    characterId: input.playerCharacterId,
+    characterName: input.playerCharacter.name,
+    reviewId: getTempleReviewId(input.gameState),
+    entryRankId: "temple.laborer",
+    previousMerit: Math.max(0, playerMerit - playerContribution),
+    nextMerit: playerMerit,
+    ranks: TEMPLE_FACTION_RANKS,
+    formatRankLabel: (rank) => getFactionRankPersonnelTitle("temple", rank),
+  });
+
+  return {
+    gameState: settlement.state,
+    changes: settlement.changes,
+  };
+}
+
+function createTemplePraiseTransition(input: {
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+  sessionState: TempleHouseSessionState;
+  playerCharacter: CharacterDefinition;
+  seniorMonkCharacter: CharacterDefinition;
+  playerCharacterId: string;
+  textEntriesById: Record<string, string> | undefined;
+}): HouseModuleTransitionResult<"temple-house"> {
+  const contributionEntries = getTempleContributionEntries(
+    input.gameState,
+    input.playerCharacter,
+    input.seniorMonkCharacter
+  );
+
+  return withSessionState(
+    {
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+    },
+    input.sessionState,
+    {
+      meetingStage: "praise",
+      dialoguePhase: "open",
+      dialogueLines: getTempleMeetingPraiseLines(
+        contributionEntries,
+        input.playerCharacterId,
+        input.textEntriesById
+      ),
+      overlay: null,
+    }
+  );
+}
+
+function createTemplePersonnelOrPraiseTransition(input: {
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+  houseDefinition: HouseDefinition;
+  sessionState: TempleHouseSessionState;
+  playerCharacter: CharacterDefinition;
+  seniorMonkCharacter: CharacterDefinition;
+  playerCharacterId: string;
+  textEntriesById: Record<string, string> | undefined;
+}): HouseModuleTransitionResult<"temple-house"> {
+  const personnelSettlement = settleTemplePersonnelChanges({
+    ...input,
+    factionLabel: input.houseDefinition.name,
+  });
+  const changes = personnelSettlement.changes;
+
+  const nextCharacterDefinitions = applyTemplePersonnelChanges(
+    input.characterDefinitions,
+    changes
+  );
+
+  return withSessionState(
+    {
+      gameState: personnelSettlement.gameState,
+      characterDefinitions: nextCharacterDefinitions,
+    },
+    input.sessionState,
+    {
+      meetingStage: "personnel",
+      dialoguePhase: "open",
+      dialogueLines:
+        changes.length === 0
+          ? formatReviewPersonnelChangeLines(changes)
+          : ["首领会讲人事变动。"],
+      overlay:
+        changes.length === 0
+          ? null
+          : createAlertOverlay(
+              "人事变动",
+              formatReviewPersonnelChangeLines(changes),
+              "success"
+            ),
+    }
+  );
+}
+
+function settleTempleReviewAssignmentTable(input: {
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+  houseDefinition: HouseDefinition;
+  sessionState: TempleHouseSessionState;
+  playerCharacter: CharacterDefinition;
+  seniorMonkCharacter: CharacterDefinition;
+  playerCharacterId: string;
+  textEntriesById: Record<string, string> | undefined;
+}): HouseModuleTransitionResult<"temple-house"> {
+  const contributionEntries = getTempleContributionEntries(
+    input.gameState,
+    input.playerCharacter,
+    input.seniorMonkCharacter
+  );
+  const rows = createTempleReviewAssignmentRows(
+    input.gameState,
+    contributionEntries,
+    input.textEntriesById
+  );
+  const playerContribution =
+    contributionEntries.find(
+      (entry) => entry.characterId === input.playerCharacterId
+    )?.contribution ?? 0;
+  const previousMerit = readFactionMerit(
+    input.gameState,
+    "temple",
+    input.playerCharacterId
+  );
+  let nextState = writeFactionMerit(
+    input.gameState,
+    "temple",
+    input.playerCharacterId,
+    previousMerit + playerContribution
+  );
+
+  if (isReviewTopRankRewardEligible(rows, input.playerCharacterId)) {
+    nextState = applyReviewItemReward(nextState, TEMPLE_TOP_RANK_REWARD);
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      input.sessionState,
+      {
+        meetingStage: "reward",
+        dialoguePhase: "open",
+        dialogueLines: ["本轮委任已经核定。"],
+        overlay: createTempleReviewRewardOverlay(),
+      }
+    );
+  }
+
+  return createTemplePersonnelOrPraiseTransition({
+    ...input,
+    gameState: nextState,
+  });
+}
+
 function getTempleMeetingPraiseLines(
   contributionEntries: Array<{
     characterId: string;
@@ -2011,21 +2226,17 @@ function getReviewWorkChoices(
       label: choice.label,
       minRankId:
         choice.id === "beg-alms" ? begAlmsRankId : templeHelpRankId,
+      disabled: choice.id === "beg-alms" && !isBeggingUnlocked(gameState),
     })),
   });
 
   return choiceViewModels.map((choiceViewModel) => {
     const baseChoice = choices.find((choice) => choice.id === choiceViewModel.id);
-    const hasStoryBeggingPermission =
-      choiceViewModel.id === "beg-alms" &&
-      (isBeggingUnlocked(gameState) || getTempleContribution(gameState) >= 30);
 
     return {
       id: choiceViewModel.id as "temple-help" | "beg-alms",
       label: choiceViewModel.label,
-      disabled:
-        (choiceViewModel.disabled && !hasStoryBeggingPermission) ||
-        (choiceViewModel.id === "beg-alms" && !hasStoryBeggingPermission),
+      disabled: choiceViewModel.disabled,
       ...(baseChoice?.tone == null ? {} : { tone: baseChoice.tone }),
     };
   });
@@ -3234,11 +3445,19 @@ function handleAction(
               meetingStage: "advice",
               dialoguePhase: "open",
               dialogueLines: ["有谁要进言吗？"],
-              overlay: createTempleReviewPolicyPanelOverlay(
-                createTempleReviewPolicyPanel(nextState, input.textEntriesById)
-              ),
+              overlay: null,
             }
           );
+        case "personnel":
+          return createTemplePraiseTransition({
+            gameState: nextState,
+            characterDefinitions: input.characterDefinitions,
+            sessionState,
+            playerCharacter,
+            seniorMonkCharacter,
+            playerCharacterId: input.playerCharacterId,
+            textEntriesById: input.textEntriesById,
+          });
         default:
           return createTransitionResult(input, {
             gameState: nextState,
@@ -3769,11 +3988,34 @@ function handleAction(
     input.request.actionId === "close-review-assignment-table" &&
     sessionState.meetingStage === "assignment-table"
   ) {
-    const contributionEntries = getTempleContributionEntries(
-      nextState,
+    return settleTempleReviewAssignmentTable({
+      gameState: nextState,
+      characterDefinitions: input.characterDefinitions,
+      houseDefinition: input.houseDefinition,
+      sessionState,
       playerCharacter,
-      seniorMonkCharacter
-    );
+      seniorMonkCharacter,
+      playerCharacterId: input.playerCharacterId,
+      textEntriesById: input.textEntriesById,
+    });
+  }
+
+  if (input.request.actionId === "close-review-policy-panel") {
+    if (sessionState.mode === "meeting" && sessionState.meetingStage === "policy") {
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          meetingStage: "advice",
+          dialoguePhase: "open",
+          dialogueLines: ["有谁要进言吗？"],
+          overlay: null,
+        }
+      );
+    }
 
     return withSessionState(
       {
@@ -3782,29 +4024,40 @@ function handleAction(
       },
       sessionState,
       {
-        meetingStage: "praise",
-        dialoguePhase: "open",
-        dialogueLines: getTempleMeetingPraiseLines(
-          contributionEntries,
-          input.playerCharacterId,
-          input.textEntriesById
-        ),
         overlay: null,
       }
     );
   }
 
-  if (input.request.actionId === "close-review-policy-panel") {
-    return withSessionState(
-      {
-        gameState: nextState,
-        characterDefinitions: input.characterDefinitions,
-      },
+  if (
+    input.request.actionId === "close-temple-overlay" &&
+    sessionState.meetingStage === "reward"
+  ) {
+    return createTemplePersonnelOrPraiseTransition({
+      gameState: nextState,
+      characterDefinitions: input.characterDefinitions,
+      houseDefinition: input.houseDefinition,
       sessionState,
-      {
-        overlay: null,
-      }
-    );
+      playerCharacter,
+      seniorMonkCharacter,
+      playerCharacterId: input.playerCharacterId,
+      textEntriesById: input.textEntriesById,
+    });
+  }
+
+  if (
+    input.request.actionId === "close-temple-overlay" &&
+    sessionState.meetingStage === "personnel"
+  ) {
+    return createTemplePraiseTransition({
+      gameState: nextState,
+      characterDefinitions: input.characterDefinitions,
+      sessionState,
+      playerCharacter,
+      seniorMonkCharacter,
+      playerCharacterId: input.playerCharacterId,
+      textEntriesById: input.textEntriesById,
+    });
   }
 
   if (
@@ -4752,7 +5005,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
                 ((sessionState.mode === "daily" &&
                   sessionState.dialoguePhase === "greeting") ||
                   (sessionState.mode === "meeting" &&
-                    ["intro", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
+                    ["intro", "personnel", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
                   ? "advance-temple-dialogue"
                   : null),
               advanceHintText:
@@ -4761,7 +5014,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
                 ((sessionState.mode === "daily" &&
                   sessionState.dialoguePhase === "greeting") ||
                   (sessionState.mode === "meeting" &&
-                    ["intro", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
+                    ["intro", "personnel", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
                   ? "点击继续"
                   : null),
             },

@@ -1,0 +1,183 @@
+{
+  "medicineHouseAilmentTargets": [
+    {
+      "ailmentId": "wind_cold",
+      "ailmentName": "风寒",
+      "coldRequired": 2,
+      "healRequired": 5,
+      "maxPoison": 1
+    },
+    {
+      "ailmentId": "inner_heat",
+      "ailmentName": "内热",
+      "coldRequired": -2,
+      "healRequired": 4,
+      "maxPoison": 1
+    },
+    {
+      "ailmentId": "trauma",
+      "ailmentName": "外伤",
+      "coldRequired": 0,
+      "healRequired": 6,
+      "maxPoison": 0
+    },
+    {
+      "ailmentId": "damp_toxin",
+      "ailmentName": "湿毒",
+      "coldRequired": 1,
+      "healRequired": 5,
+      "maxPoison": 2
+    },
+    {
+      "ailmentId": "miasma",
+      "ailmentName": "瘴气",
+      "coldRequired": 2,
+      "healRequired": 7,
+      "maxPoison": 1
+    }
+  ],
+  "medicineHouseCompoundingBaseDurationSec": 45,
+  "medicineHouseCompoundingBaseTurns": 5,
+  "medicineHouseCompoundingGradeRewards": {
+    "S": {
+      "medicine": 3,
+      "relationship": 3
+    },
+    "A": {
+      "medicine": 2,
+      "relationship": 2
+    },
+    "B": {
+      "medicine": 1,
+      "relationship": 1
+    },
+    "C": {
+      "medicine": 0,
+      "relationship": 1
+    },
+    "D": {
+      "medicine": 0,
+      "relationship": -1
+    }
+  },
+  "medicineHouseDialogueTextIds": [
+    "runtime.zhu_yuanzhang.medicine_house.dialogue.001",
+    "runtime.zhu_yuanzhang.medicine_house.dialogue.002",
+    "runtime.zhu_yuanzhang.medicine_house.dialogue.003",
+    "runtime.zhu_yuanzhang.medicine_house.dialogue.004"
+  ],
+  "medicineHouseDoctorProfile": {
+    "actorId": "char.kulan_medicine_doctor",
+    "name": "陈郎中",
+    "title": "坐堂医师",
+    "personality": "沉稳",
+    "specialty": "医术",
+    "favorability": 0
+  },
+  "medicineHouseGreetingTextIds": [
+    "runtime.zhu_yuanzhang.medicine_house.greeting.001",
+    "runtime.zhu_yuanzhang.medicine_house.greeting.002"
+  ],
+  "medicineHouseHealService": {
+    "cost": 50,
+    "fatigueRecovery": 30
+  },
+  "medicineHouseHerbCatalog": [
+    {
+      "id": "herb_ai_cao",
+      "name": "艾草",
+      "cold": 0,
+      "heat": 2,
+      "poison": 0,
+      "heal": 1
+    },
+    {
+      "id": "herb_huang_lian",
+      "name": "黄连",
+      "cold": 3,
+      "heat": 0,
+      "poison": 1,
+      "heal": 2
+    },
+    {
+      "id": "herb_sheng_jiang",
+      "name": "生姜",
+      "cold": 0,
+      "heat": 2,
+      "poison": 0,
+      "heal": 1
+    },
+    {
+      "id": "herb_bo_he",
+      "name": "薄荷",
+      "cold": 2,
+      "heat": 0,
+      "poison": 0,
+      "heal": 1
+    },
+    {
+      "id": "herb_dang_gui",
+      "name": "当归",
+      "cold": 0,
+      "heat": 1,
+      "poison": 0,
+      "heal": 3
+    },
+    {
+      "id": "herb_xing_ren",
+      "name": "杏仁",
+      "cold": 1,
+      "heat": 0,
+      "poison": 0,
+      "heal": 2
+    },
+    {
+      "id": "herb_gan_cao",
+      "name": "甘草",
+      "cold": 0,
+      "heat": 0,
+      "poison": -1,
+      "heal": 2
+    },
+    {
+      "id": "herb_wu_tou",
+      "name": "乌头",
+      "cold": 0,
+      "heat": 1,
+      "poison": 3,
+      "heal": 4
+    }
+  ],
+  "medicineHouseOpenTextIds": [
+    "runtime.zhu_yuanzhang.medicine_house.open.001"
+  ],
+  "medicineHousePreparedMedicines": [
+    {
+      "id": "medicine_heal_001",
+      "name": "金创药",
+      "type": "heal",
+      "price": 80,
+      "effect": {
+        "hp": 30
+      }
+    },
+    {
+      "id": "medicine_fatigue_001",
+      "name": "安神汤",
+      "type": "fatigue",
+      "price": 60,
+      "effect": {
+        "fatigue": 20
+      }
+    },
+    {
+      "id": "medicine_poison_001",
+      "name": "解毒丸",
+      "type": "detox",
+      "price": 120,
+      "effect": {
+        "poison": -25
+      }
+    }
+  ]
+}

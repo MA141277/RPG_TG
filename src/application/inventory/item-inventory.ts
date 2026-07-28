@@ -9,6 +9,10 @@ import type {
   ValuableItemDefinition,
   ValuableItemInventory,
 } from "../../domain/valuable-item";
+import {
+  TEMPLE_TOP_RANK_REWARD,
+  readRuntimeItemQuantity,
+} from "../review/faction-review";
 import { equipValuableItem } from "./inventory-selection";
 import { readPlayerGrainDou } from "./trade-inventory";
 
@@ -81,6 +85,31 @@ function projectGrainItem(gameState: Pick<GameState, "runtime">): BackpackItemDe
   };
 }
 
+function projectReviewRuntimeItems(
+  gameState: Pick<GameState, "runtime">
+): BackpackItemDefinition[] {
+  const scriptureCopyCount = readRuntimeItemQuantity(
+    gameState,
+    TEMPLE_TOP_RANK_REWARD.itemId
+  );
+  if (scriptureCopyCount <= 0) {
+    return [];
+  }
+
+  return [
+    {
+      id: TEMPLE_TOP_RANK_REWARD.itemId,
+      name: TEMPLE_TOP_RANK_REWARD.label,
+      icon: null,
+      value: 0,
+      types: ["other", "quest"],
+      count: scriptureCopyCount,
+      description: "寺中评定赐下的经书抄本。",
+      actions: [],
+    },
+  ];
+}
+
 export function projectBackpackItems(
   input: ProjectBackpackItemsInput
 ): BackpackItemDefinition[] {
@@ -88,6 +117,7 @@ export function projectBackpackItems(
   return [
     ...input.valuableInventory.items.map(projectValuableItem),
     ...(grainItem == null ? [] : [grainItem]),
+    ...projectReviewRuntimeItems(input.gameState),
   ];
 }
 
@@ -139,4 +169,3 @@ export function applyBackpackItemAction(
     status: "unsupported",
   };
 }
-

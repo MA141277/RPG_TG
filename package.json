@@ -23,7 +23,7 @@
     "spine:externalize-custom-images": "node scripts/externalize-spine-custom-images.mjs",
     "serve:prod": "node scripts/serve-static.mjs",
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
-    "test": "npm run build:test && node --test tests/robustness.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs",
+    "test": "npm run build:test && node --test tests/robustness.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs tests/character-runtime-authoring-compat.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint:plans": "node tools/lint-superpowers-plans.mjs",
     "lint:ts": "eslint .",

@@ -1,5 +1,6 @@
 import type { SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CardDefinition } from "../../domain/card";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityDefinition } from "../../domain/city";
@@ -33,6 +34,8 @@ export type ActiveGameContent = {
   cityDefinitionById: Record<string, CityDefinition>;
   houses: HouseDefinition[];
   houseDefinitionById: Record<string, HouseDefinition>;
+  buildingArrangements: BuildingArrangementDefinition[];
+  buildingArrangementById: Record<string, BuildingArrangementDefinition>;
   cityEntries: CityEntryDefinition[];
   characters: CharacterDefinition[];
   characterDefinitionById: Record<string, CharacterDefinition>;
@@ -64,6 +67,8 @@ export type ActiveGameContentContext = {
   cityDefinitionById: Record<string, CityDefinition>;
   houses: HouseDefinition[];
   houseDefinitionById: Record<string, HouseDefinition>;
+  buildingArrangements: BuildingArrangementDefinition[];
+  buildingArrangementById: Record<string, BuildingArrangementDefinition>;
   cityEntries: CityEntryDefinition[];
   cards: CardDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
@@ -97,6 +102,7 @@ export function createActiveGameContent(
   const maps = resolvedPack.maps ?? [];
   const cities = resolvedPack.cities ?? [];
   const houses = resolvedPack.houses ?? [];
+  const buildingArrangements = resolvedPack.buildingArrangements ?? [];
   const cityEntries = resolvedPack.cityEntries ?? [];
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
@@ -133,6 +139,10 @@ export function createActiveGameContent(
     houses,
     houseDefinitionById: Object.fromEntries(
       houses.map((houseDefinition) => [houseDefinition.id, houseDefinition])
+    ),
+    buildingArrangements,
+    buildingArrangementById: Object.fromEntries(
+      buildingArrangements.map((arrangement) => [arrangement.id, arrangement])
     ),
     cityEntries,
     characters,
@@ -186,6 +196,8 @@ export function createActiveGameContentContext(
     cityDefinitionById: gameContent.cityDefinitionById,
     houses: gameContent.houses,
     houseDefinitionById: gameContent.houseDefinitionById,
+    buildingArrangements: gameContent.buildingArrangements,
+    buildingArrangementById: gameContent.buildingArrangementById,
     cityEntries: gameContent.cityEntries,
     cards: gameContent.cards,
     cityNpcPools: gameContent.cityNpcPools,
@@ -239,6 +251,10 @@ export function mergeContentPacks(
     maps: mergeById(basePack.maps ?? [], overridePack.maps ?? []),
     cities: mergeById(basePack.cities ?? [], overridePack.cities ?? []),
     houses: mergeById(basePack.houses ?? [], overridePack.houses ?? []),
+    buildingArrangements: mergeById(
+      basePack.buildingArrangements ?? [],
+      overridePack.buildingArrangements ?? []
+    ),
     cityEntries: mergeById(basePack.cityEntries ?? [], overridePack.cityEntries ?? []),
     characters: mergeById(basePack.characters ?? [], overridePack.characters ?? []),
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
@@ -279,6 +295,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     maps: pack.maps ?? [],
     cities: pack.cities ?? [],
     houses: pack.houses ?? [],
+    buildingArrangements: pack.buildingArrangements ?? [],
     cityEntries: pack.cityEntries ?? [],
     characters: pack.characters ?? [],
     events: pack.events ?? [],

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "playableId": "validator-playable",
+  "family": "battle",
+  "title": "Validator Playable",
+  "kind": "builtin",
+  "paths": {
+    "domainFile": "src/domain/playables/validator-playable.ts",
+    "definitionFile": "src/application/playables/validator-playable/validator-playable-definition.ts",
+    "sessionFile": "src/application/playables/validator-playable/validator-playable-session.ts",
+    "presenterFile": "src/application/playables/validator-playable/validator-playable-presenter.ts",
+    "metricsFile": "src/application/playables/validator-playable/validator-playable-metrics.ts",
+    "settlementFile": "src/application/playables/validator-playable/validator-playable-settlement.ts",
+    "viewFile": "src/ui/views/playables/validator-playable-view.ts",
+    "assetDirectory": "src/assets/playables/validator-playable"
+  }
+}

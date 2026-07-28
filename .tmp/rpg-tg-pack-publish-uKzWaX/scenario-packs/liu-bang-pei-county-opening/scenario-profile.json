@@ -1,0 +1,41 @@
+{
+  "id": "scenario.liu_bang.pei_county_opening",
+  "title": "刘邦沛县开局",
+  "playerCharacterId": "char.liu_bang",
+  "chapterId": "chapter.chu_han_rising",
+  "initialCalendar": {
+    "year": 1,
+    "month": 9,
+    "day": 1
+  },
+  "initialLocation": {
+    "mapId": "map.yuanmo_campaign",
+    "cityId": "city.pei_county",
+    "houseId": null,
+    "view": "scene"
+  },
+  "initialPlayerCoordinate": {
+    "x": 334,
+    "y": 318
+  },
+  "initialUi": {
+    "reviewDateText": "暂无评定",
+    "mainHouseMissionText": "在沛县站稳脚跟"
+  },
+  "initialRuntime": {
+    "flags": {
+      "flag.story.liu_bang.opening.started": true
+    },
+    "variables": {
+      "var.story.liu_bang.stage": "pei-county-constable",
+      "var.story.liu_bang.local_reputation": 0
+    }
+  },
+  "entryEventId": "event.story.liu_bang.pei_county_opening",
+  "openingFlowId": "flow.liu_bang.pei_county_opening",
+  "tags": [
+    "json-pack",
+    "chu-han",
+    "opening"
+  ]
+}

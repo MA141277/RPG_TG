@@ -1534,10 +1534,6 @@ async function initCampaignTerrainWebGl(
     program,
     "uTerrainCameraLightHorizontalPull"
   );
-  const terrainLightDirectionLocation = gl.getUniformLocation(
-    program,
-    "uTerrainLightDirection"
-  );
   const landTextureColorAdjustLocation = gl.getUniformLocation(
     program,
     "uLandTextureColorAdjust"
@@ -1876,7 +1872,6 @@ async function initCampaignTerrainWebGl(
     terrainCameraLightHorizontalPullLocation == null
       ? "uTerrainCameraLightHorizontalPull"
       : null,
-    terrainLightDirectionLocation == null ? "uTerrainLightDirection" : null,
     landTextureColorAdjustLocation == null ? "uLandTextureColorAdjust" : null,
     landTextureShadeRangeLocation == null ? "uLandTextureShadeRange" : null,
     landTextureTilingLocation == null ? "uLandTextureTiling" : null,
@@ -2738,12 +2733,6 @@ async function initCampaignTerrainWebGl(
         terrainCameraLightHorizontalPullLocation,
         TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL
       );
-      const terrainLightDirection = getCampaignTerrainLightWorldDirection(
-        currentTerrainMatrix,
-        input.canvas.width / Math.max(input.canvas.height, 1),
-        sampleHeightAtUv
-      );
-      gl.uniform2f(terrainLightDirectionLocation, terrainLightDirection[0], terrainLightDirection[1]);
       const terrainStyle = readCampaignTerrainStyle(input.canvas);
       gl.uniform3f(
         landTextureColorAdjustLocation,
@@ -8307,33 +8296,6 @@ function getCampaignVegetationTerrainShadowScreenDirection(
   ];
 
   return verticallyFlippedShadowDirection;
-}
-
-function getCampaignTerrainLightWorldDirection(
-  matrix: Mat4,
-  viewportAspectRatio: number,
-  sampleHeightAtUv: (u: number, v: number) => number
-): [number, number] {
-  const centerUv =
-    findNearestTerrainUvForScreenPoint(matrix, 0, 0, sampleHeightAtUv) ??
-    { u: 0.5, v: 0.5 };
-  const center = createTerrainWorldPoint(
-    centerUv.u,
-    centerUv.v,
-    sampleHeightAtUv(centerUv.u, centerUv.v)
-  );
-  const shadowScreenDirection = getCampaignVegetationTerrainShadowScreenDirection(
-    center,
-    matrix,
-    viewportAspectRatio
-  );
-  const shadowDirection = getCampaignVegetationShadowWorldDirection(
-    center,
-    matrix,
-    shadowScreenDirection
-  );
-
-  return [-shadowDirection[0], -shadowDirection[1]];
 }
 
 function getCampaignVegetationShadowWorldDirection(

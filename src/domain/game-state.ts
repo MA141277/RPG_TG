@@ -7,6 +7,7 @@ import type { HouseId } from "./house";
 import type { CityMarketData } from "./market";
 import type { MapExplorationState, MapId } from "./map";
 import type { MissionId } from "./mission";
+import type { FactionMembershipsState } from "./review";
 import type { ActiveStoryBattleSession } from "./story-battle";
 import type { ActiveActivitySession } from "./activity-session";
 import type { GlobalUIState } from "./global-ui";
@@ -74,6 +75,7 @@ export type GameState = {
     flags: Record<string, boolean>;
     variables: Record<string, number | string>;
     factionMerit: Record<string, Record<CharacterId, number>>;
+    factionMemberships: FactionMembershipsState;
     tasks: TaskRuntimeState;
     playableSession: ActivePlayableSession | null;
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;

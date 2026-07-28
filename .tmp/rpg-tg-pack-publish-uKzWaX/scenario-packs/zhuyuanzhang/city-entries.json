@@ -1,0 +1,170 @@
+[
+  {
+    "id": "city-entry.kulan.leader-residence",
+    "cityId": "city.kulan",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.kulan.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.yingtian.leader-residence",
+    "cityId": "city.yingtian",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.yingtian.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.luzhou.leader-residence",
+    "cityId": "city.luzhou",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.luzhou.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.anqing.leader-residence",
+    "cityId": "city.anqing",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.anqing.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.taiping.leader-residence",
+    "cityId": "city.taiping",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.taiping.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.anfeng.leader-residence",
+    "cityId": "city.anfeng",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.anfeng.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.runing.leader-residence",
+    "cityId": "city.runing",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.runing.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.huaian.leader-residence",
+    "cityId": "city.huaian",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.huaian.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.yangzhou.leader-residence",
+    "cityId": "city.yangzhou",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.yangzhou.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.suzhou.leader-residence",
+    "cityId": "city.suzhou",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.suzhou.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.wuchang.leader-residence",
+    "cityId": "city.wuchang",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.wuchang.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.nanchang.leader-residence",
+    "cityId": "city.nanchang",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.nanchang.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.chongqing.leader-residence",
+    "cityId": "city.chongqing",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.chongqing.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.chengdu.leader-residence",
+    "cityId": "city.chengdu",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.chengdu.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.ningbo.leader-residence",
+    "cityId": "city.ningbo",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.ningbo.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.wenzhou.leader-residence",
+    "cityId": "city.wenzhou",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.wenzhou.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.fuzhou.leader-residence",
+    "cityId": "city.fuzhou",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.fuzhou.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.dadu.leader-residence",
+    "cityId": "city.dadu",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.dadu.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.kaifeng.leader-residence",
+    "cityId": "city.kaifeng",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.kaifeng.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.gongchang.leader-residence",
+    "cityId": "city.gongchang",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.gongchang.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
+    "id": "city-entry.fengyuan.leader-residence",
+    "cityId": "city.fengyuan",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.fengyuan.leader_residence",
+    "artworkId": "leader-residence"
+  }
+]

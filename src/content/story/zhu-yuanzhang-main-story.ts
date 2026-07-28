@@ -277,7 +277,6 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
             type: "patch-character",
             characterId: "char.player",
             changes: {
-              title: "挂单僧",
               occupation: "皇觉寺僧人",
               biography:
                 "寺中饥荒未歇，你暂在皇觉寺挂单度日，一边听候住持训示，一边思量乱世中的出路。",

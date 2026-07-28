@@ -30,7 +30,6 @@ uniform float uTerrainWaterShadowStrength;
 uniform vec2 uTerrainViewportSize;
 uniform float uTerrainCameraLightHeight;
 uniform float uTerrainCameraLightHorizontalPull;
-uniform vec2 uTerrainLightDirection;
 uniform vec3 uLandTextureColorAdjust;
 uniform vec2 uLandTextureShadeRange;
 uniform float uLandTextureTiling;
@@ -554,13 +553,8 @@ vec3 sampleGrassNormal(vec2 uv) {
   ));
 }
 
-float getGrassNormalLight(vec2 uv) {
-  vec2 lightDirection2d = normalize(uTerrainLightDirection);
-  vec3 grassLight = normalize(vec3(
-    lightDirection2d * uTerrainCameraLightHorizontalPull,
-    uTerrainCameraLightHeight
-  ));
-  float normalLight = clamp(dot(sampleGrassNormal(uv), grassLight), 0.0, 1.0);
+float getGrassNormalLight(vec2 uv, vec3 terrainLight) {
+  float normalLight = clamp(dot(sampleGrassNormal(uv), terrainLight), 0.0, 1.0);
 
   return clamp(0.92 + (normalLight - 0.5) * 0.32, 0.82, 1.08);
 }
@@ -1020,7 +1014,7 @@ void main() {
     1.0
   );
   landTexture = mix(landTexture, snowLandTexture, snowAmount);
-  float grassNormalLight = getGrassNormalLight(vUv);
+  float grassNormalLight = getGrassNormalLight(vUv, terrainLight);
   float grassNormalLightExclusion = clamp(
     sandMaterialMask + mountainAmount + structureGroundAmount + snowAmount,
     0.0,

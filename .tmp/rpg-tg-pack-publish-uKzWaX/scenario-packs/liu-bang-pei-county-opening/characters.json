@@ -1,0 +1,80 @@
+[
+  {
+    "id": "char.liu_bang",
+    "name": "刘邦",
+    "birthYear": -256,
+    "deathYear": -195,
+    "age": 47,
+    "title": "泗水亭长",
+    "occupation": "沛县亭长",
+    "affiliationLabel": "沛县",
+    "cityId": "city.pei_county",
+    "portraitId": "portrait.liu_bang",
+    "defaultSide": "right",
+    "stats": {
+      "leadership": 74,
+      "martial": 58,
+      "intelligence": 67,
+      "politics": 71,
+      "charm": 91,
+      "fame": 12,
+      "gold": 300
+    },
+    "stamina": 100,
+    "biography": "沛县亭长，出身微末而善结豪杰。此时天下未定，县中差役、乡里人情与秦法压力交织在一起。",
+    "isHistoricalFigure": true,
+    "availableFunctions": []
+  },
+  {
+    "id": "char.xiao_he",
+    "name": "萧何",
+    "birthYear": -257,
+    "deathYear": -193,
+    "age": 48,
+    "title": "县吏",
+    "occupation": "沛县主吏",
+    "affiliationLabel": "沛县",
+    "cityId": "city.pei_county",
+    "portraitId": "portrait.xiao_he",
+    "defaultSide": "left",
+    "stats": {
+      "leadership": 42,
+      "martial": 28,
+      "intelligence": 88,
+      "politics": 93,
+      "charm": 72,
+      "fame": 16,
+      "gold": 260
+    },
+    "stamina": 100,
+    "biography": "沛县县吏，熟悉法令簿册，长于筹划人事，是刘邦早期最可靠的行政支点。",
+    "isHistoricalFigure": true,
+    "availableFunctions": []
+  },
+  {
+    "id": "char.lu_wan",
+    "name": "卢绾",
+    "birthYear": -256,
+    "deathYear": -194,
+    "age": 47,
+    "title": "乡里故人",
+    "occupation": "沛县豪侠",
+    "affiliationLabel": "沛县",
+    "cityId": "city.pei_county",
+    "portraitId": "portrait.lu_wan",
+    "defaultSide": "left",
+    "stats": {
+      "leadership": 54,
+      "martial": 63,
+      "intelligence": 48,
+      "politics": 39,
+      "charm": 70,
+      "fame": 10,
+      "gold": 180
+    },
+    "stamina": 100,
+    "biography": "刘邦同里故旧，熟悉乡中豪杰往来，常在酒肆与里巷间替刘邦探听风声。",
+    "isHistoricalFigure": true,
+    "availableFunctions": []
+  }
+]

@@ -88,6 +88,9 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.houses != null) {
     assertArray(value.houses, "scenario houses");
   }
+  if (value.buildingArrangements != null) {
+    assertArray(value.buildingArrangements, "scenario building arrangements");
+  }
   if (value.maps != null) {
     assertArray(value.maps, "scenario maps");
   }
@@ -145,6 +148,7 @@ type ScenarioPackManifestFiles = {
   tasks?: string;
   cities?: string;
   houses?: string;
+  buildingArrangements?: string;
   maps?: string;
   cityEntries?: string;
   textEntries?: string;

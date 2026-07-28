@@ -3797,7 +3797,7 @@ test("campaign map view passes grass normal texture urls to the terrain canvas",
   );
 });
 
-test("campaign terrain WebGL binds grass normal texture and exposes shadow-aligned light direction", () => {
+test("campaign terrain WebGL binds grass normal texture", () => {
   const rendererSource = fs.readFileSync(
     path.join(
       process.cwd(),
@@ -3818,13 +3818,9 @@ test("campaign terrain WebGL binds grass normal texture and exposes shadow-align
     /createTexture\(\s*gl,\s*grassNormalTextureImage \?\? grassTextureImage \?\? textureImage\s*\)/
   );
   assert.match(rendererSource, /gl\.activeTexture\(gl\.TEXTURE9\);[\s\S]*?gl\.bindTexture\(gl\.TEXTURE_2D, grassNormalTexture\);[\s\S]*?gl\.uniform1i\(grassNormalTextureLocation, 9\);/);
-  assert.match(rendererSource, /const terrainLightDirection = getCampaignTerrainLightWorldDirection\(/);
-  assert.match(rendererSource, /gl\.uniform2f\(terrainLightDirectionLocation, terrainLightDirection\[0\], terrainLightDirection\[1\]\)/);
-  assert.match(rendererSource, /function getCampaignTerrainLightWorldDirection/);
-  assert.match(rendererSource, /return \[-shadowDirection\[0\], -shadowDirection\[1\]\];/);
 });
 
-test("campaign terrain shader samples grass diffuse and normal from the same atlas slice", () => {
+test("campaign terrain shader shades grass normals with the camera-space terrain light", () => {
   const terrainFragmentSource = fs.readFileSync(
     path.join(
       process.cwd(),
@@ -3839,7 +3835,7 @@ test("campaign terrain shader samples grass diffuse and normal from the same atl
   );
 
   assert.match(terrainFragmentSource, /uniform sampler2D uGrassNormalTexture;/);
-  assert.match(terrainFragmentSource, /uniform vec2 uTerrainLightDirection;/);
+  assert.doesNotMatch(terrainFragmentSource, /uniform vec2 uTerrainLightDirection;/);
   assert.match(
     terrainFragmentSource,
     /vec2 getGrassMaterialUv\(vec2 uv\) \{[\s\S]*?return fract\(uv \* \(uLandTextureTiling \* GRASS_TEXTURE_TILING_SCALE\)\);[\s\S]*?\}/
@@ -3852,7 +3848,11 @@ test("campaign terrain shader samples grass diffuse and normal from the same atl
     terrainFragmentSource,
     /vec3 sampleGrassNormal\(vec2 uv\) \{[\s\S]*?texture2D\(uGrassNormalTexture, getGrassMaterialUv\(uv\)\)[\s\S]*?\* 2\.0 - 1\.0/
   );
-  assert.match(terrainFragmentSource, /float grassNormalLight = getGrassNormalLight\(vUv\);/);
+  assert.match(
+    terrainFragmentSource,
+    /float getGrassNormalLight\(vec2 uv, vec3 terrainLight\) \{[\s\S]*?float normalLight = clamp\(dot\(sampleGrassNormal\(uv\), terrainLight\), 0\.0, 1\.0\);/
+  );
+  assert.match(terrainFragmentSource, /float grassNormalLight = getGrassNormalLight\(vUv, terrainLight\);/);
   assert.match(
     terrainFragmentSource,
     /float grassNormalLightExclusion = clamp\([\s\S]*?sandMaterialMask \+ mountainAmount \+ structureGroundAmount \+ snowAmount/
@@ -6937,7 +6937,9 @@ function advanceTempleReviewToAssignDuty(input) {
     activityDefinitionsById: input.activityDefinitionsById,
     textEntriesById: input.textEntriesById,
   });
-  const praise = templeHouseHouseModule.dispatch({
+  let reward = null;
+  let personnel = null;
+  let praise = templeHouseHouseModule.dispatch({
     gameState: assignmentTable.gameState,
     characterDefinitions: assignmentTable.characterDefinitions,
     houseDefinition: templeHouse,
@@ -6947,6 +6949,38 @@ function advanceTempleReviewToAssignDuty(input) {
     activityDefinitionsById: input.activityDefinitionsById,
     textEntriesById: input.textEntriesById,
   });
+  if (praise.sessionState?.meetingStage === "reward") {
+    reward = praise;
+    praise = templeHouseHouseModule.dispatch({
+      gameState: reward.gameState,
+      characterDefinitions: reward.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: reward.sessionState,
+      request: { type: "action", actionId: "close-temple-overlay" },
+      activityDefinitionsById: input.activityDefinitionsById,
+      textEntriesById: input.textEntriesById,
+    });
+  }
+  if (praise.sessionState?.meetingStage === "personnel") {
+    personnel = praise;
+    praise = templeHouseHouseModule.dispatch({
+      gameState: personnel.gameState,
+      characterDefinitions: personnel.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: personnel.sessionState,
+      request: {
+        type: "action",
+        actionId:
+          personnel.sessionState.overlay == null
+            ? "advance-temple-dialogue"
+            : "close-temple-overlay",
+      },
+      activityDefinitionsById: input.activityDefinitionsById,
+      textEntriesById: input.textEntriesById,
+    });
+  }
   const situation = templeHouseHouseModule.dispatch({
     gameState: praise.gameState,
     characterDefinitions: praise.characterDefinitions,
@@ -6988,7 +7022,7 @@ function advanceTempleReviewToAssignDuty(input) {
     textEntriesById: input.textEntriesById,
   });
 
-  return { assignmentTable, praise, situation, policy, advice, assignDuty };
+  return { assignmentTable, reward, personnel, praise, situation, policy, advice, assignDuty };
 }
 
 test("global NPC interaction does not append default choices to temple review work assignment", () => {
@@ -8610,7 +8644,7 @@ test("temple house review only selects work direction and daily actions start te
   assert.equal(policyResult.sessionState?.overlay?.type, "review-policy-panel");
 
   assert.equal(adviceResult.sessionState?.meetingStage, "advice");
-  assert.equal(adviceResult.sessionState?.overlay?.type, "review-policy-panel");
+  assert.equal(adviceResult.sessionState?.overlay, null);
   assert.equal(assignDutyResult.sessionState?.meetingStage, "assign-duty");
 
   const assignedResult = templeHouseHouseModule.dispatch({
@@ -8736,6 +8770,238 @@ test("temple house review only selects work direction and daily actions start te
       "assign-temple-task:carry-water",
       "close-temple-work-menu",
     ]
+  );
+});
+
+test("temple review policy plan popup closes into advice without opening a second plan popup", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...createMonkStageState(),
+      runtime: {
+        ...createMonkStageState().runtime,
+        variables: {
+          ...createMonkStageState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const assignmentTable = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  let praise = templeHouseHouseModule.dispatch({
+    gameState: assignmentTable.gameState,
+    characterDefinitions: assignmentTable.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignmentTable.sessionState,
+    request: { type: "action", actionId: "close-review-assignment-table" },
+  });
+  if (praise.sessionState?.meetingStage === "personnel") {
+    praise = templeHouseHouseModule.dispatch({
+      gameState: praise.gameState,
+      characterDefinitions: praise.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: praise.sessionState,
+      request: {
+        type: "action",
+        actionId:
+          praise.sessionState.overlay == null
+            ? "advance-temple-dialogue"
+            : "close-temple-overlay",
+      },
+    });
+  }
+  const situation = templeHouseHouseModule.dispatch({
+    gameState: praise.gameState,
+    characterDefinitions: praise.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: praise.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  const policy = templeHouseHouseModule.dispatch({
+    gameState: situation.gameState,
+    characterDefinitions: situation.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: situation.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  assert.equal(policy.sessionState?.meetingStage, "policy");
+  assert.equal(policy.sessionState?.overlay?.type, "review-policy-panel");
+
+  const advice = templeHouseHouseModule.dispatch({
+    gameState: policy.gameState,
+    characterDefinitions: policy.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: policy.sessionState,
+    request: { type: "action", actionId: "close-review-policy-panel" },
+  });
+  const adviceViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: advice.gameState,
+    characterDefinitions: advice.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: advice.sessionState,
+  });
+
+  assert.equal(advice.sessionState?.meetingStage, "advice");
+  assert.equal(advice.sessionState?.overlay, null);
+  assert.equal(adviceViewModel.overlay, null);
+  assert.deepEqual(
+    adviceViewModel.actionContainer?.actions.map((action) => action.id),
+    ["temple-review-give-advice", "temple-review-stay-silent"]
+  );
+});
+
+test("zhu yuanzhang starts as refugee before faction entry", () => {
+  const player = prototypeCharacters.find(
+    (character) => character.id === playerCharacterId
+  );
+  const scenarioCharacters = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/content/scenario-packs/zhuyuanzhang/characters.json"
+      ),
+      "utf8"
+    )
+  );
+  const scenarioPlayer = scenarioCharacters.find(
+    (character) => character.id === playerCharacterId
+  );
+
+  assert.equal(player?.title, "流民");
+  assert.equal(scenarioPlayer?.title, "流民");
+});
+
+test("ordination scene does not overwrite faction rank title with monk story title", () => {
+  const scenarioScenes = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/content/scenario-packs/zhuyuanzhang/scenes.json"
+      ),
+      "utf8"
+    )
+  );
+  const ordinationScene = scenarioScenes.find(
+    (scene) => scene.id === "scene.story.zhu_yuanzhang.ordination"
+  );
+  const playerPatch = ordinationScene?.actions
+    .flatMap((action) => (Array.isArray(action.effects) ? action.effects : []))
+    .find(
+      (effect) =>
+        effect.type === "patch-character" && effect.characterId === playerCharacterId
+    );
+  const storySource = fs.readFileSync(
+    path.join(process.cwd(), "src/content/story/zhu-yuanzhang-main-story.ts"),
+    "utf8"
+  );
+
+  assert.equal(Object.hasOwn(playerPatch?.changes ?? {}, "title"), false);
+  assert.doesNotMatch(storySource, /title:\s*"挂单僧"/);
+});
+
+test("temple review top-two player receives scripture reward and rank personnel notice", () => {
+  const {
+    TEMPLE_TOP_RANK_REWARD,
+    getRuntimeItemQuantityKey,
+  } = require("../.test-dist/application/review/faction-review.js");
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...createMonkStageState(),
+      runtime: {
+        ...createMonkStageState().runtime,
+        variables: {
+          ...createMonkStageState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 90,
+        },
+        factionMerit: {
+          ...createMonkStageState().runtime.factionMerit,
+          temple: {
+            [playerCharacterId]: 0,
+          },
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const assignmentTable = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  const reward = templeHouseHouseModule.dispatch({
+    gameState: assignmentTable.gameState,
+    characterDefinitions: assignmentTable.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignmentTable.sessionState,
+    request: { type: "action", actionId: "close-review-assignment-table" },
+  });
+
+  assert.equal(reward.sessionState?.meetingStage, "reward");
+  assert.equal(reward.sessionState?.overlay?.title, "获得物品");
+  assert.deepEqual(reward.sessionState?.overlay?.paragraphs, ["经书抄本 x1"]);
+  assert.equal(
+    reward.gameState.runtime.variables[
+      getRuntimeItemQuantityKey(TEMPLE_TOP_RANK_REWARD.itemId)
+    ],
+    1
+  );
+
+  const personnel = templeHouseHouseModule.dispatch({
+    gameState: reward.gameState,
+    characterDefinitions: reward.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: reward.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+  });
+
+  assert.equal(personnel.sessionState?.meetingStage, "personnel");
+  assert.equal(personnel.sessionState?.overlay?.title, "人事变动");
+  assert.deepEqual(personnel.sessionState?.overlay?.paragraphs, [
+    "朱元璋初次加入皇觉寺，列为杂役。",
+    "朱元璋由杂役晋为沙弥。",
+  ]);
+  assert.deepEqual(
+    personnel.gameState.runtime.factionMemberships.temple?.[playerCharacterId],
+    {
+      status: "active",
+      rankId: "temple.novice",
+      joinedReviewId: "temple:1567-1-1",
+      lastReviewId: "temple:1567-1-1",
+    }
+  );
+  assert.equal(
+    personnel.characterDefinitions.find((character) => character.id === playerCharacterId)
+      ?.title,
+    "沙弥"
   );
 });
 
@@ -8990,6 +9256,12 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
         [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
         [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
         [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
+      },
+      factionMerit: {
+        ...createMonkStageState().runtime.factionMerit,
+        temple: {
+          [playerCharacterId]: 80,
+        },
       },
     },
   };
@@ -9353,6 +9625,12 @@ test("temple house unlocked begging is chosen in review and executes later witho
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
         },
+        factionMerit: {
+          ...baseState.runtime.factionMerit,
+          temple: {
+            [playerCharacterId]: 80,
+          },
+        },
       },
     },
     characterDefinitions: monkCharacters,
@@ -9440,7 +9718,7 @@ test("temple house unlocked begging is chosen in review and executes later witho
   assert.equal(confirmBegAlmsResult.sessionState?.overlay?.type, "activity-confirm");
 });
 
-test("temple review disabled work choice cannot be forced through dispatch", () => {
+test("temple review unlocked work choice still requires minimum rank and cannot be forced", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
   );
@@ -9453,11 +9731,12 @@ test("temple review disabled work choice cannot be forced through dispatch", () 
         flags: {
           ...baseState.runtime.flags,
           [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
         },
         variables: {
           ...baseState.runtime.variables,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
         },
       },
