@@ -10,13 +10,13 @@
 - Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-tavern-short-gamble-task-2`
+- Next Required Action: `execute-tavern-short-gamble-task-3`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 2.`
+- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 3.`
 
 ## Progress Log
 
@@ -104,6 +104,10 @@
   - Summary: `Promoted the tavern short gamble child and completed Task 1 with the short deck contract, card labels, 7-choose-5 showdown evaluator, and side-pot split helpers.`
   - Verification: `RED bundled node + tsc + node --test --test-isolation=none failed with MODULE_NOT_FOUND after removing stale .test-dist tavern-short outputs; GREEN the same command passed 3/3 tests in tests/tavern-short-gamble-domain.test.cjs.`
   - Next: `Execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 2 and build the short hand runtime.`
+- 2026-07-28
+  - Summary: `Completed Task 2 for the tavern short gamble child by adding the short hand runtime, claim-chain flow, auto-bet consumption, and showdown helpers.`
+  - Verification: `RED bundled node + tsc + node --test --test-isolation=none failed because createTavernShortHand is not a function; GREEN the same command passed 6/6 tests in tests/tavern-short-gamble-domain.test.cjs.`
+  - Next: `Execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 3 and wire the tavern short table session into the house module.`
 
 ## Latest Closeout
 

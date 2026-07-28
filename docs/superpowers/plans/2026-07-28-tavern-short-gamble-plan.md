@@ -26,9 +26,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-28`
-- Current Focus: `Task 1 complete; Task 2 runtime transitions next.`
-- Next Step: `Write Task 2 failing runtime tests.`
-- Verification: `RED: bundled node + tsc + node --test --test-isolation=none failed with MODULE_NOT_FOUND after removing stale .test-dist tavern-short outputs. GREEN: the same command passed 3/3 tests in tests/tavern-short-gamble-domain.test.cjs.`
+- Current Focus: `Task 2 complete; Task 3 tavern house session wiring next.`
+- Next Step: `Write Task 3 short-table house tests.`
+- Verification: `Task 2 RED: bundled node + tsc + node --test --test-isolation=none failed because createTavernShortHand is not a function. Task 2 GREEN: the same command passed 6/6 tests in tests/tavern-short-gamble-domain.test.cjs.`
 - Notes: `This child is now the active governance target in docs/superpowers/project-progress.md. Stale .test-dist tavern-short outputs had to be removed before RED so the new tests exercised real missing-module behavior instead of cached build artifacts.`
 
 ## Progress Log
@@ -41,6 +41,10 @@
   - Summary: `Promoted the tavern short gamble child into project-progress and completed Task 1 with the short deck contract, card labels, 7-choose-5 showdown evaluator, and side-pot split helpers.`
   - Verification: `RED bundled node + tsc + node --test --test-isolation=none failed with MODULE_NOT_FOUND after removing stale .test-dist tavern-short outputs; GREEN the same command passed 3/3 tests in tests/tavern-short-gamble-domain.test.cjs.`
   - Next: `Write Task 2 failing runtime tests for draw-discard, claim-chain, and betting progression behavior.`
+- 2026-07-28
+  - Summary: `Completed Task 2 by adding the short hand runtime, claim-chain state, auto-bet consumption, showdown settlement, and deterministic NPC progression helpers.`
+  - Verification: `RED bundled node + tsc + node --test --test-isolation=none failed because createTavernShortHand is not a function; GREEN the same command passed 6/6 tests in tests/tavern-short-gamble-domain.test.cjs.`
+  - Next: `Write Task 3 short-table house tests and wire the tavern short table session into the house module.`
 
 ---
 
@@ -394,7 +398,7 @@ Update this plan:
 
 Update `docs/superpowers/project-progress.md` so `Next Required Action` points at `execute-tavern-short-gamble-task-2`.
 
-- [ ] **Step 7: Commit Task 1**
+- [x] **Step 7: Commit Task 1**
 
 Run:
 
@@ -429,7 +433,7 @@ git commit -m "feat: add tavern short evaluator foundations"
 - Produces: `advanceTavernShortNpcAction(hand: TavernShortHandState): TavernShortHandState`
 - Produces: `settleTavernShortShowdown(hand: TavernShortHandState): TavernShortHandState`
 
-- [ ] **Step 1: Extend the domain test file with failing runtime invariants**
+- [x] **Step 1: Extend the domain test file with failing runtime invariants**
 
 Append these tests to `tests/tavern-short-gamble-domain.test.cjs`:
 
@@ -514,7 +518,7 @@ test("tavern short auto-bet is consumed once and a short all-in kong penalty reb
 });
 ```
 
-- [ ] **Step 2: Run the focused domain test and confirm the runtime cases fail**
+- [x] **Step 2: Run the focused domain test and confirm the runtime cases fail**
 
 Run:
 
@@ -526,7 +530,7 @@ Expected:
 
 - `FAIL` because the runtime transitions and state types are not implemented yet.
 
-- [ ] **Step 3: Implement the short hand runtime**
+- [x] **Step 3: Implement the short hand runtime**
 
 Create `src/domain/tavern-short-gambling-runtime.ts` and re-export its public API from `src/domain/tavern-short-gambling.ts`. Use these structural rules:
 
@@ -586,7 +590,7 @@ Required runtime rules:
 - all-in seats stay eligible for draw-discard and claims but cannot raise
 - any chip-affecting transition rebuilds `pots` from total hand contributions
 
-- [ ] **Step 4: Re-run the focused domain test and confirm the runtime cases pass**
+- [x] **Step 4: Re-run the focused domain test and confirm the runtime cases pass**
 
 Run:
 
@@ -598,7 +602,7 @@ Expected:
 
 - `PASS` for the evaluator tests plus the new runtime invariant tests.
 
-- [ ] **Step 5: Sync plan and governance state**
+- [x] **Step 5: Sync plan and governance state**
 
 Update this plan:
 
