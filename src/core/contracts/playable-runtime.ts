@@ -1,12 +1,17 @@
 import type { Effect } from "./effect";
 
-export type PlayableFamily = "minigame" | "battle";
+export type PlayableFamily = "minigame" | "battle" | "flow";
 
 export type PlayableId = string & {};
 
 export type PlayableIntegrationId = string & {};
 
-export type PlayableOwnerKind = "house" | "scene" | "task" | "external";
+export type PlayableOwnerKind =
+  | "house"
+  | "scene"
+  | "dialogue"
+  | "task"
+  | "external";
 
 export type PlayableReturnPolicy =
   | "resume-owner"

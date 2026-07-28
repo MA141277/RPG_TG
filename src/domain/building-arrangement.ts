@@ -9,7 +9,7 @@ export type BuildingContainerType =
 export type BuildingContainerSource =
   | {
       type: "arrangement-mounted-npcs";
-      includeNpcIds?: string[];
+      includeNpcIds?: string[] | undefined;
     }
   | {
       type: "static-records";
@@ -20,12 +20,14 @@ export type BuildingContainerActionItem = {
   id: string;
   label: string;
   eventId: string;
-  isVisible?: boolean;
-  isEnabled?: boolean;
-  disabledHint?: string;
+  isVisible?: boolean | undefined;
+  isEnabled?: boolean | undefined;
+  disabledHint?: string | undefined;
 };
 
-export type BuildingLayoutTemplateId = "default-shell" | "meeting-stage";
+export type BuildingLayoutTemplateId =
+  | "default-shell"
+  | "meeting-stage";
 
 export type BuildingLayoutNodeKind =
   | "header"
@@ -35,50 +37,57 @@ export type BuildingLayoutNodeKind =
   | "leave-action"
   | "fallback-panels";
 
-export type BuildingLayoutCharacterFilter = "all" | "primary" | "secondary";
-export type BuildingLayoutActionFilter = "all" | "non-leave" | "leave-only";
+export type BuildingLayoutCharacterFilter =
+  | "all"
+  | "primary"
+  | "secondary";
+
+export type BuildingLayoutActionFilter =
+  | "all"
+  | "non-leave"
+  | "leave-only";
 
 export type BuildingLayoutNodeDefinition = {
   id: string;
   kind: BuildingLayoutNodeKind;
   regionId: string;
-  sourceContainerId?: string;
-  sourceContainerType?: BuildingContainerType;
-  presentation?: string;
-  characterFilter?: BuildingLayoutCharacterFilter;
-  actionFilter?: BuildingLayoutActionFilter;
-  previewSelectable?: boolean;
-  previewDraggable?: boolean;
-  previewDropTarget?: boolean;
-  clickActionId?: string;
+  sourceContainerId?: string | undefined;
+  sourceContainerType?: BuildingContainerType | undefined;
+  presentation?: string | undefined;
+  characterFilter?: BuildingLayoutCharacterFilter | undefined;
+  actionFilter?: BuildingLayoutActionFilter | undefined;
+  previewSelectable?: boolean | undefined;
+  previewDraggable?: boolean | undefined;
+  previewDropTarget?: boolean | undefined;
+  clickActionId?: string | undefined;
 };
 
 export type BuildingLayoutDefinition = {
   templateId: BuildingLayoutTemplateId;
-  shellClassNames?: string[];
-  nodes?: BuildingLayoutNodeDefinition[];
+  shellClassNames?: string[] | undefined;
+  nodes?: BuildingLayoutNodeDefinition[] | undefined;
 };
 
 export type BuildingContainerDefinition = {
   id: string;
   type: BuildingContainerType;
-  title?: string;
-  source?: BuildingContainerSource;
+  title?: string | undefined;
+  source?: BuildingContainerSource | undefined;
   /**
-   * Compatibility only. New runtime actions should come from menu resources or
-   * event bindings instead of embedding behavior directly in the container.
+   * Legacy compatibility residue only. Project loading rejects action-menu items
+   * and requires registry-owned menu resources/instances instead.
    */
-  items?: BuildingContainerActionItem[];
+  items?: BuildingContainerActionItem[] | undefined;
 };
 
 export type BuildingArrangementDefinition = {
   id: string;
   cityId: string;
   buildingId: string;
-  displayName?: string;
-  description?: string;
-  backgroundId?: string;
-  layout?: BuildingLayoutDefinition;
+  displayName?: string | undefined;
+  description?: string | undefined;
+  backgroundId?: string | undefined;
+  layout?: BuildingLayoutDefinition | undefined;
   mountedNpcIds: string[];
   primaryNpcId: string | null;
   containers: BuildingContainerDefinition[];

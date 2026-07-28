@@ -1,6 +1,9 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { AppState } from "../../application/app-shell";
-import type { ScenarioPackSummary } from "../../domain/scenario-pack";
+import type {
+  ScenarioPackDefinition,
+  ScenarioPackSummary,
+} from "../../domain/scenario-pack";
 
 type SaveDataResult = {
   selectedCharacterId?: string | null;
@@ -16,7 +19,11 @@ type MainUiFlowOptions = {
     saveData: SaveDataResult
   ): void;
   onStartScenarioPack?(scenarioPack: ScenarioPackSummary): void | Promise<void>;
+  onStartLoadedScenarioPack?(
+    scenarioPack: ScenarioPackDefinition
+  ): Promise<"started" | "deferred" | "failed"> | Promise<"started" | "failed">;
   onImportScenarioPackFiles?(files: File[]): void | Promise<void>;
+  onExitRuntimePreview?(): void;
   loadSaveData(): Promise<SaveDataResult> | SaveDataResult;
   getAppState(): AppState;
 };
@@ -28,4 +35,6 @@ export class MainUiFlow {
   render(): void;
   showMainMenu(): void;
   hide(): void;
+  showCharacterSelect(): void;
+  setCharacters(characters: CharacterDefinition[]): void;
 }
