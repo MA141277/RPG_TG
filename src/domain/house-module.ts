@@ -116,6 +116,7 @@ export type HouseActionViewModel = {
   label: string;
   disabled?: boolean;
   tone?: "default" | "accent";
+  buttonSound?: "light" | "heavy";
 };
 
 export type HouseActionContainerViewModel = {
@@ -172,6 +173,7 @@ export type HouseOverlayViewModel =
       tone?: "info" | "success" | "warning";
       confirmActionId: string;
       confirmLabel: string;
+      confirmButtonSound?: "light" | "heavy";
     }
   | {
       type: "confirm";
@@ -184,11 +186,14 @@ export type HouseOverlayViewModel =
       quickCompleteScore?: number;
       quickCompleteActionId?: string;
       quickCompleteLabel?: string;
+      quickCompleteButtonSound?: "light" | "heavy";
       confirmActionId: string;
       confirmLabel: string;
       cancelActionId: string;
       cancelLabel: string;
       tone?: "info" | "success" | "warning";
+      confirmButtonSound?: "light" | "heavy";
+      cancelButtonSound?: "light" | "heavy";
     }
   | {
       type: "rest-days";
@@ -200,6 +205,8 @@ export type HouseOverlayViewModel =
       confirmLabel: string;
       cancelActionId: string;
       cancelLabel: string;
+      confirmButtonSound?: "light" | "heavy";
+      cancelButtonSound?: "light" | "heavy";
     }
   | {
       type: "quantity-confirm";
@@ -215,6 +222,10 @@ export type HouseOverlayViewModel =
       confirmLabel: string;
       cancelActionId: string;
       cancelLabel: string;
+      confirmButtonSound?: "light" | "heavy";
+      cancelButtonSound?: "light" | "heavy";
+      decrementButtonSound?: "light" | "heavy";
+      incrementButtonSound?: "light" | "heavy";
     }
   | {
       type: "trade";
@@ -230,6 +241,10 @@ export type HouseOverlayViewModel =
       confirmLabel: string;
       cancelActionId: string;
       cancelLabel: string;
+      confirmButtonSound?: "light" | "heavy";
+      cancelButtonSound?: "light" | "heavy";
+      decrementButtonSound?: "light" | "heavy";
+      incrementButtonSound?: "light" | "heavy";
     }
   | {
       type: "market-trade";
@@ -267,6 +282,10 @@ export type HouseOverlayViewModel =
         priceTone: "low" | "high" | "neutral";
       } | null;
       helperLines: string[];
+      confirmButtonSound?: "light" | "heavy";
+      cancelButtonSound?: "light" | "heavy";
+      decrementButtonSound?: "light" | "heavy";
+      incrementButtonSound?: "light" | "heavy";
     }
   | {
       type: "minigame";
@@ -286,6 +305,7 @@ export type HouseOverlayViewModel =
       rewardLines: string[];
       confirmActionId: string;
       confirmLabel: string;
+      confirmButtonSound?: "light" | "heavy";
     }
   | {
       type: "debate";
@@ -316,6 +336,8 @@ export type HouseOverlayViewModel =
       }>;
       cancelActionId: string;
       cancelLabel: string;
+      optionButtonSound?: "light" | "heavy";
+      cancelButtonSound?: "light" | "heavy";
     }
   | {
       type: "gamble";
@@ -329,6 +351,10 @@ export type HouseOverlayViewModel =
       confirmLabel: string;
       cancelActionId: string;
       cancelLabel: string;
+      confirmButtonSound?: "light" | "heavy";
+      cancelButtonSound?: "light" | "heavy";
+      decrementButtonSound?: "light" | "heavy";
+      incrementButtonSound?: "light" | "heavy";
     }
   | {
       type: "gamble-table";
@@ -447,6 +473,8 @@ export type HouseOverlayViewModel =
       confirmLabel: string;
       cancelActionId: string;
       cancelLabel: string;
+      confirmButtonSound?: "light" | "heavy";
+      cancelButtonSound?: "light" | "heavy";
     }
   | {
       type: "medicine-compounding";

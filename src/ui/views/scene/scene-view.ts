@@ -73,7 +73,7 @@ function renderSceneDialogueCard(
     <footer class="c-grain-shop-dialogue c-scene-dialogue" aria-label="剧情对话">
       <div
         class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
-        ${clickable ? `data-scene-action="${options.advanceActionId}" role="button" tabindex="0"` : ""}
+        ${clickable ? `data-scene-action="${options.advanceActionId}" role="button" tabindex="0" data-ui-click-sound="none"` : ""}
       >
         ${typewriterLines.markup}
         ${
@@ -237,6 +237,10 @@ function renderPachinkoBoard(input: {
       : input.phase === "dropping"
         ? "弹珠中"
         : "游玩";
+  const playButtonSoundAttribute =
+    input.phase === "settling"
+      ? 'data-button-sound="heavy"'
+      : 'data-pachinko-sound="launch"';
   return `
     <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-temple-house-modal c-pachinko-board" role="dialog" aria-modal="true">
       <div class="c-temple-house-qte__header">
@@ -305,7 +309,7 @@ function renderPachinkoBoard(input: {
         <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 转盘</span>
       </div>
       <div class="c-grain-shop-modal__actions c-pachinko-board__actions">
-        <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" ${input.playButtonAttributes} ${input.phase === "dropping" ? "disabled" : ""}>
+        <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" ${input.playButtonAttributes} ${playButtonSoundAttribute} ${input.phase === "dropping" ? "disabled" : ""}>
           ${playButtonLabel}
         </button>
       </div>

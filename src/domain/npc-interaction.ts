@@ -36,6 +36,7 @@ export type NpcInteractionOptionViewModel = {
   kind: NpcInteractionOptionKind;
   disabled?: boolean;
   tone?: "default" | "accent";
+  buttonSound?: "light" | "heavy";
 };
 
 export const NPC_INTERACTION_DEFAULT_OPTION_IDS = {
@@ -49,16 +50,19 @@ export const NPC_INTERACTION_DEFAULT_OPTIONS: readonly NpcInteractionOptionViewM
     id: NPC_INTERACTION_DEFAULT_OPTION_IDS.profile,
     label: "角色情报",
     kind: "profile",
+    buttonSound: "light",
   },
   {
     id: NPC_INTERACTION_DEFAULT_OPTION_IDS.talk,
     label: "谈话",
     kind: "talk",
+    buttonSound: "light",
   },
   {
     id: NPC_INTERACTION_DEFAULT_OPTION_IDS.gift,
     label: "送礼",
     kind: "gift",
+    buttonSound: "light",
   },
 ] as const;
 

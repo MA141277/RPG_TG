@@ -1,6 +1,29 @@
 import "./styles/app.css";
 import buttonLightAudioUrl from "./assets/audio/ui/button-light.mp3?url";
 import buttonHeavyAudioUrl from "./assets/audio/ui/button-heavy.mp3?url";
+import enterAudioUrl from "./assets/audio/ui/enter.mp3?url";
+import troopSelectionAudioUrl from "./assets/audio/ui/troop-selection.mp3?url";
+import troopMutationAudioUrl from "./assets/audio/ui/troop-mutation.mp3?url";
+import pachinkoLaunchAudioUrl from "./assets/audio/activity/pachinko-launch.mp3?url";
+import pachinkoBounce1AudioUrl from "./assets/audio/activity/pachinko-bounce-1.mp3?url";
+import pachinkoBounce2AudioUrl from "./assets/audio/activity/pachinko-bounce-2.mp3?url";
+import gameMoneyAudioUrl from "./assets/audio/game-events/money.mp3?url";
+import taskVictoryAudioUrl from "./assets/audio/game-events/task-victory.mp3?url";
+import taskFailureAudioUrl from "./assets/audio/game-events/task-failure.mp3?url";
+import battleSlashHit1AudioUrl from "./assets/audio/battle/slash-hit-1.mp3?url";
+import battleSlashHit2AudioUrl from "./assets/audio/battle/slash-hit-2.mp3?url";
+import battleSlashHit3AudioUrl from "./assets/audio/battle/slash-hit-3.mp3?url";
+import battleSlashMissAudioUrl from "./assets/audio/battle/slash-miss.mp3?url";
+import battleBowDrawAudioUrl from "./assets/audio/battle/bow-draw.mp3?url";
+import battleArrowReleaseAudioUrl from "./assets/audio/battle/arrow-release.mp3?url";
+import battleJumpAudioUrl from "./assets/audio/battle/jump.mp3?url";
+import battleLandingAudioUrl from "./assets/audio/battle/landing.mp3?url";
+import battleHorseRunAudioUrl from "./assets/audio/battle/horse-run.mp3?url";
+import battleMusketeerReloadAudioUrl from "./assets/audio/battle/musketeer-reload.mp3?url";
+import battleMusketeerFireAudioUrl from "./assets/audio/battle/musketeer-fire.mp3?url";
+import battleImpactAudioUrl from "./assets/audio/battle/impact.mp3?url";
+import battleBgmAudioUrl from "./assets/audio/battle/battle-bgm.mp3?url";
+import battleVictoryAudioUrl from "./assets/audio/battle/battle-victory.mp3?url";
 import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
 import {
   selectLayoutEditorComponent,
@@ -77,6 +100,29 @@ import {
   queueAppAudioCue,
   resolveStoryBattleActionCueId,
 } from "./application/audio/audio-manager";
+import {
+  ENTER_SOUND,
+  type EnterSoundEffect,
+} from "./application/audio/enter-sound";
+import {
+  TROOP_SELECTION_SOUND,
+  type TroopSelectionSoundEffect,
+} from "./application/audio/troop-selection-sound";
+import {
+  TROOP_MUTATION_SOUND,
+  type TroopMutationSoundEffect,
+} from "./application/audio/troop-mutation-sound";
+import { PACHINKO_COLLISION_SOUND } from "./application/audio/pachinko-collision-sound";
+import { consumePachinkoCollisionAudioPulse } from "./application/audio/pachinko-collision-playback";
+import {
+  resolveButtonHoverSoundEffectFromTarget,
+  resolveUiClickCueIdFromTarget,
+  type ButtonSoundEffect,
+} from "./application/audio/button-sound";
+import {
+  resolveBattleDemoCueId,
+  resolveBattleDemoMusicCommand,
+} from "./application/audio/battle-sound";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
 import {
@@ -783,9 +829,33 @@ const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
   }),
 });
 let appAudioSession = createAppAudioSession();
+let lastPachinkoCollisionAudioToken: number | null = null;
 const STATIC_AUDIO_ASSET_URLS: Readonly<Partial<Record<string, string>>> = {
   "audio/ui/button-light.mp3": buttonLightAudioUrl,
   "audio/ui/button-heavy.mp3": buttonHeavyAudioUrl,
+  "audio/ui/enter.mp3": enterAudioUrl,
+  "audio/ui/troop-selection.mp3": troopSelectionAudioUrl,
+  "audio/ui/troop-mutation.mp3": troopMutationAudioUrl,
+  "audio/activity/pachinko-launch.mp3": pachinkoLaunchAudioUrl,
+  "audio/activity/pachinko-bounce-1.mp3": pachinkoBounce1AudioUrl,
+  "audio/activity/pachinko-bounce-2.mp3": pachinkoBounce2AudioUrl,
+  "audio/game-events/money.mp3": gameMoneyAudioUrl,
+  "audio/game-events/task-victory.mp3": taskVictoryAudioUrl,
+  "audio/game-events/task-failure.mp3": taskFailureAudioUrl,
+  "audio/battle/slash-hit-1.mp3": battleSlashHit1AudioUrl,
+  "audio/battle/slash-hit-2.mp3": battleSlashHit2AudioUrl,
+  "audio/battle/slash-hit-3.mp3": battleSlashHit3AudioUrl,
+  "audio/battle/slash-miss.mp3": battleSlashMissAudioUrl,
+  "audio/battle/bow-draw.mp3": battleBowDrawAudioUrl,
+  "audio/battle/arrow-release.mp3": battleArrowReleaseAudioUrl,
+  "audio/battle/jump.mp3": battleJumpAudioUrl,
+  "audio/battle/landing.mp3": battleLandingAudioUrl,
+  "audio/battle/horse-run.mp3": battleHorseRunAudioUrl,
+  "audio/battle/musketeer-reload.mp3": battleMusketeerReloadAudioUrl,
+  "audio/battle/musketeer-fire.mp3": battleMusketeerFireAudioUrl,
+  "audio/battle/impact.mp3": battleImpactAudioUrl,
+  "audio/battle/battle-bgm.mp3": battleBgmAudioUrl,
+  "audio/battle/battle-victory.mp3": battleVictoryAudioUrl,
 };
 const appAudioController = createAppAudioController({
   resolveAssetPath: (assetPath) =>
@@ -800,6 +870,7 @@ const mainUiFlow = new MainUiFlow({
   onContinueGame: startContinueGameWithLoading,
   onStartScenarioPack: startScenarioPackWithLoading,
   onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
+  onQueueButtonSound: queueButtonSoundEffect,
   loadSaveData,
   getAppState: () => appState,
 });
@@ -1838,6 +1909,18 @@ function syncActivityQteLoop(): void {
         },
       },
     }).state;
+    const activePachinkoSession =
+      appState.gameState.runtime.activitySession?.type === "pachinko-board"
+        ? appState.gameState.runtime.activitySession
+        : null;
+    lastPachinkoCollisionAudioToken = consumePachinkoCollisionAudioPulse({
+      session: activePachinkoSession,
+      lastConsumedToken: lastPachinkoCollisionAudioToken,
+      sound: PACHINKO_COLLISION_SOUND,
+      target: appAudioController,
+      scheduleTask: (callback, delayMs) =>
+        window.setTimeout(callback, delayMs),
+    });
 
     if (!syncRenderedActivityQteMarker() && !syncRenderedFortuneBoardOverlay()) {
       renderApp();
@@ -2176,9 +2259,14 @@ function chooseCurrentStoryOption(choiceId: string): void {
   renderApp();
 }
 
-function dispatchCurrentStoryBattleAction(actionId: string): void {
+function dispatchCurrentStoryBattleAction(
+  actionId: string,
+  options: {
+    queueAudio?: boolean;
+  } = {}
+): void {
   const audioCueId = resolveStoryBattleActionCueId(actionId);
-  if (audioCueId != null) {
+  if (audioCueId != null && options.queueAudio !== false) {
     queueAppAudioCueById(audioCueId);
     syncAppAudio();
   }
@@ -2217,6 +2305,19 @@ type BattleDemoResultMessage = {
   result?: "victory" | "defeat";
 };
 
+type BattleDemoAudioMessage = {
+  type: "rpg-tg:battle-demo-audio";
+  scenarioId?: string;
+  cueId?: string;
+  chainId?: string;
+  phase?: "draw" | "release" | "reload" | "fire" | "impact" | "horse-run";
+  mode?: "play" | "transition" | "stop";
+  currentActionFrame?: number;
+  frameDurationMs?: number;
+  fadeFrames?: number;
+  nextStartFrame?: number;
+};
+
 function handleBattleDemoResultMessage(message: unknown): void {
   if (message == null || typeof message !== "object") {
     return;
@@ -2233,7 +2334,83 @@ function handleBattleDemoResultMessage(message: unknown): void {
     return;
   }
 
-  dispatchCurrentStoryBattleAction("embedded-victory");
+  dispatchCurrentStoryBattleAction("embedded-victory", { queueAudio: false });
+}
+
+function handleBattleDemoAudioMessage(message: unknown): void {
+  if (message == null || typeof message !== "object") {
+    return;
+  }
+
+  const audioMessage = message as BattleDemoAudioMessage;
+  const activeBattle = appState.gameState.storyBattle;
+  if (
+    audioMessage.type !== "rpg-tg:battle-demo-audio" ||
+    activeBattle?.demoScenarioId == null ||
+    audioMessage.scenarioId !== activeBattle.demoScenarioId
+  ) {
+    return;
+  }
+
+  const resolvedBattleDemoMusicCommand = resolveBattleDemoMusicCommand(
+    audioMessage.cueId
+  );
+  if (resolvedBattleDemoMusicCommand?.kind === "start-bgm") {
+    appAudioController.setBgmOverrideCue(resolvedBattleDemoMusicCommand.cueId);
+    return;
+  }
+  if (resolvedBattleDemoMusicCommand?.kind === "play-victory") {
+    appAudioController.playCueWithBgmSuppressed(
+      resolvedBattleDemoMusicCommand.cueId,
+      {
+        fadeOutMs: resolvedBattleDemoMusicCommand.fadeOutMs,
+      }
+    );
+    return;
+  }
+
+  const resolvedBattleDemoCueId = resolveBattleDemoCueId(audioMessage.cueId);
+  if (resolvedBattleDemoCueId != null) {
+    appAudioController.playCue(resolvedBattleDemoCueId);
+    return;
+  }
+
+  const normalizedChainId =
+    typeof audioMessage.chainId === "string" ? audioMessage.chainId.trim() : "";
+  if (
+    normalizedChainId.length === 0 ||
+    (audioMessage.phase !== "draw" &&
+      audioMessage.phase !== "release" &&
+      audioMessage.phase !== "reload" &&
+      audioMessage.phase !== "fire" &&
+      audioMessage.phase !== "impact" &&
+      audioMessage.phase !== "horse-run") ||
+    (audioMessage.mode !== "play" &&
+      audioMessage.mode !== "transition" &&
+      audioMessage.mode !== "stop") ||
+    typeof audioMessage.currentActionFrame !== "number" ||
+    !Number.isFinite(audioMessage.currentActionFrame) ||
+    typeof audioMessage.frameDurationMs !== "number" ||
+    !Number.isFinite(audioMessage.frameDurationMs)
+  ) {
+    return;
+  }
+
+  appAudioController.playBattleDemoBridgeMessage({
+    chainId: normalizedChainId,
+    phase: audioMessage.phase,
+    mode: audioMessage.mode,
+    currentActionFrame: audioMessage.currentActionFrame,
+    frameDurationMs: audioMessage.frameDurationMs,
+    ...(typeof audioMessage.fadeFrames === "number" &&
+    Number.isFinite(audioMessage.fadeFrames)
+      ? { fadeFrames: audioMessage.fadeFrames }
+      : {}),
+    ...(typeof audioMessage.nextStartFrame === "number" &&
+    Number.isFinite(audioMessage.nextStartFrame)
+      ? { nextStartFrame: audioMessage.nextStartFrame }
+      : {}),
+  });
 }
 
 async function activateLoadedModForStartup(
@@ -2946,6 +3123,81 @@ function queueAppAudioCueById(cueId: string): void {
   appAudioSession = queueAppAudioCue(appAudioSession, cueId);
 }
 
+function queuePointerDispatchedUiClickCue(targetElement: HTMLElement): void {
+  const clickSoundCueId = resolveUiClickCueIdFromTarget({
+    target: targetElement,
+    allowFallbackUiClick: shouldQueueUiClickCue(targetElement),
+  });
+  if (clickSoundCueId == null) {
+    return;
+  }
+
+  queueAppAudioCueById(clickSoundCueId);
+  syncAppAudio();
+}
+
+function queueButtonSoundEffect(effect: ButtonSoundEffect): void {
+  appAudioSession = effect.queue(appAudioSession);
+  syncAppAudio();
+}
+
+function queueEnterSoundEffect(effect: EnterSoundEffect): void {
+  appAudioSession = effect.queue(appAudioSession);
+  syncAppAudio();
+}
+
+function queueTroopSelectionSoundEffect(effect: TroopSelectionSoundEffect): void {
+  appAudioSession = effect.queue(appAudioSession);
+  syncAppAudio();
+}
+
+function queueTroopMutationSoundEffect(effect: TroopMutationSoundEffect): void {
+  appAudioSession = effect.queue(appAudioSession);
+  syncAppAudio();
+}
+
+function playTroopMutationSoundBurst(
+  effect: TroopMutationSoundEffect,
+  options: {
+    repeatCount?: number | undefined;
+    repeatDelayMs?: number | undefined;
+  } = {}
+): void {
+  const repeatCount = Math.max(1, Math.trunc(options.repeatCount ?? 1));
+  const repeatDelayMs = Math.max(0, options.repeatDelayMs ?? 0);
+
+  queueTroopMutationSoundEffect(effect);
+
+  for (let index = 1; index < repeatCount; index += 1) {
+    window.setTimeout(() => {
+      appAudioController.playCue(effect.cueId);
+    }, repeatDelayMs * index);
+  }
+}
+
+function commitTroopRuntimeMutation(
+  nextAppState: AppState,
+  options: {
+    closeTroopManagementAfter?: boolean;
+    mutationSoundRepeatCount?: number;
+    mutationSoundRepeatDelayMs?: number;
+  } = {}
+): void {
+  const didMutateTroops =
+    nextAppState.gameState.runtime.troops !== appState.gameState.runtime.troops;
+  appState = nextAppState;
+  if (options.closeTroopManagementAfter === true) {
+    appState = closeTroopManagement(appState);
+  }
+  if (didMutateTroops) {
+    playTroopMutationSoundBurst(TROOP_MUTATION_SOUND, {
+      repeatCount: options.mutationSoundRepeatCount,
+      repeatDelayMs: options.mutationSoundRepeatDelayMs,
+    });
+  }
+  renderApp();
+}
+
 function syncAppAudio(): void {
   const result = createAppAudioOutput({
     appState,
@@ -2962,6 +3214,62 @@ function shouldQueueUiClickCue(targetElement: HTMLElement): boolean {
     targetElement.closest(
       "button, [role='button'], [data-action], [data-modal-action], [data-scene-action], [data-house-action], [data-activity-action], [data-city-action], [data-npc-target]"
     ) != null
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function hasRecentPointerDispatchedActivityAction(action: string): boolean {
+  if (recentPointerDispatchedActivityAction == null) {
+    return false;
+  }
+
+  const elapsedMs =
+    window.performance.now() - recentPointerDispatchedActivityAction.timestamp;
+  if (elapsedMs >= 500) {
+    recentPointerDispatchedActivityAction = null;
+    return false;
+  }
+
+  return recentPointerDispatchedActivityAction.action === action;
+}
+
+function hasRecentPointerDispatchedHouseAction(actionId: string): boolean {
+  if (recentPointerDispatchedHouseAction == null) {
+    return false;
+  }
+
+  const elapsedMs =
+    window.performance.now() - recentPointerDispatchedHouseAction.timestamp;
+  if (elapsedMs >= 500) {
+    recentPointerDispatchedHouseAction = null;
+    return false;
+  }
+
+  return recentPointerDispatchedHouseAction.actionId === actionId;
+}
+
+function shouldSkipPointerDispatchedClickAudio(targetElement: HTMLElement): boolean {
+  const activityActionButton = targetElement.closest<HTMLElement>(
+    "[data-activity-action]"
+  );
+  const activityAction = activityActionButton?.dataset.activityAction;
+  if (
+    activityAction != null &&
+    shouldDispatchActivityActionOnPointerDown(activityAction) &&
+    hasRecentPointerDispatchedActivityAction(activityAction)
+  ) {
+    return true;
+  }
+
+  const houseActionButton = targetElement.closest<HTMLElement>("[data-house-action]");
+  const houseActionId = houseActionButton?.dataset.houseAction;
+  if (
+    houseActionId != null &&
+    shouldDispatchHouseActionOnPointerDown(houseActionId) &&
+    hasRecentPointerDispatchedHouseAction(houseActionId)
   ) {
     return true;
   }
@@ -3033,7 +3341,12 @@ function enterMappedCity3dHouseBySceneObjectId(
   const houseDefinition = activeContentContext.houses.find(
     (candidateHouse) => candidateHouse.id === mappedHouse.houseId
   );
-  if (houseDefinition == null || !canOpenHouseFromCity(houseDefinition)) {
+  if (houseDefinition == null) {
+    return;
+  }
+
+  queueEnterSoundEffect(ENTER_SOUND);
+  if (!canOpenHouseFromCity(houseDefinition)) {
     return;
   }
 
@@ -3849,6 +4162,7 @@ appElement.addEventListener("pointerdown", (event) => {
       action: pointerActivityAction,
       timestamp: window.performance.now(),
     };
+    queuePointerDispatchedUiClickCue(pointerActivityActionButton);
     dispatchActivityActionButton(pointerActivityActionButton);
     return;
   }
@@ -3858,15 +4172,18 @@ appElement.addEventListener("pointerdown", (event) => {
   );
   const pointerHouseActionId = pointerHouseActionButton?.dataset.houseAction;
   if (
+    pointerHouseActionButton != null &&
     pointerHouseActionId != null &&
     shouldDispatchHouseActionOnPointerDown(pointerHouseActionId)
   ) {
+    const houseActionButton = pointerHouseActionButton;
     event.preventDefault();
     event.stopPropagation();
     recentPointerDispatchedHouseAction = {
       actionId: pointerHouseActionId,
       timestamp: window.performance.now(),
     };
+    queuePointerDispatchedUiClickCue(houseActionButton);
     dispatchHouseRuntimeRequest(houseRuntime, {
       type: "action",
       actionId: pointerHouseActionId,
@@ -4237,6 +4554,7 @@ appElement.addEventListener("dragend", () => {
 
 window.addEventListener("message", (event) => {
   handleBattleDemoResultMessage(event.data);
+  handleBattleDemoAudioMessage(event.data);
 });
 
 function parseNpcInteractionContext(
@@ -4273,6 +4591,36 @@ function parseNpcInteractionContext(
   return null;
 }
 
+appElement.addEventListener(
+  "click",
+  (event) => {
+    if (shouldSuppressNextClickAfterMapDrag) {
+      return;
+    }
+
+    const targetElement = event.target;
+    if (!(targetElement instanceof HTMLElement)) {
+      return;
+    }
+
+    if (shouldSkipPointerDispatchedClickAudio(targetElement)) {
+      return;
+    }
+
+    const clickSoundCueId = resolveUiClickCueIdFromTarget({
+      target: targetElement,
+      allowFallbackUiClick: shouldQueueUiClickCue(targetElement),
+    });
+    if (clickSoundCueId == null) {
+      return;
+    }
+
+    queueAppAudioCueById(clickSoundCueId);
+    syncAppAudio();
+  },
+  true
+);
+
 appElement.addEventListener("click", (event) => {
   if (shouldSuppressNextClickAfterMapDrag) {
     shouldSuppressNextClickAfterMapDrag = false;
@@ -4288,11 +4636,6 @@ appElement.addEventListener("click", (event) => {
 
   if (handleLayoutEditorClick(targetElement)) {
     return;
-  }
-
-  if (shouldQueueUiClickCue(targetElement)) {
-    queueAppAudioCueById(BUILTIN_AUDIO_CUE_IDS.uiClick);
-    syncAppAudio();
   }
 
   const confirmBeggingResultButton = targetElement.closest<HTMLElement>(
@@ -5153,6 +5496,22 @@ appElement.addEventListener("mouseover", (event) => {
     return;
   }
 
+  const configuredButtonHoverSoundEffect =
+    resolveButtonHoverSoundEffectFromTarget(targetElement);
+  const hoverSoundButton = targetElement.closest<HTMLElement>(
+    "[data-button-hover-sound]"
+  );
+  if (
+    configuredButtonHoverSoundEffect != null &&
+    hoverSoundButton != null &&
+    !(
+      event.relatedTarget instanceof Node &&
+      hoverSoundButton.contains(event.relatedTarget)
+    )
+  ) {
+    queueButtonSoundEffect(configuredButtonHoverSoundEffect);
+  }
+
   const cityMapBuildingLabel = targetElement.closest<HTMLElement>(
     "[data-city-map-building-label-id]"
   );
@@ -5479,6 +5838,7 @@ function startCampaignTravel(
     });
     return;
   }
+  queueTroopSelectionSoundEffect(TROOP_SELECTION_SOUND);
   const nextCoordinate = getLastTravelPathCoordinate(travelPath);
   debugCampaignMapClick("startCampaignTravel:path-created", {
     targetCoordinate,
@@ -6186,48 +6546,45 @@ function renderAppFrame(
       renderApp();
     },
     onDisbandTroop: (input) => {
-      appState = disbandTroopManagementUnit(appState, input);
-      renderApp();
+      commitTroopRuntimeMutation(disbandTroopManagementUnit(appState, input));
     },
     onCreateTeam: (input) => {
-      appState = createTroopEditorTeam(appState, input);
-      renderApp();
+      commitTroopRuntimeMutation(createTroopEditorTeam(appState, input));
     },
     onSwapTeams: (input) => {
-      appState = swapTroopEditorTeams(appState, input);
-      renderApp();
+      commitTroopRuntimeMutation(swapTroopEditorTeams(appState, input));
     },
     onDismissReserveUnit: (input) => {
-      appState = dismissTroopEditorReserveUnit(appState, input);
-      renderApp();
+      commitTroopRuntimeMutation(dismissTroopEditorReserveUnit(appState, input));
     },
     onPurchaseShopOffer: (input) => {
-      appState = purchaseTroopEditorShopOffer(appState, input);
-      renderApp();
+      commitTroopRuntimeMutation(purchaseTroopEditorShopOffer(appState, input));
     },
   });
   syncTroopManagementBattlePreview(appRoot);
   syncTroopManagementMoveInteractions(appRoot, {
+    onSelectUnit: () => {
+      queueTroopSelectionSoundEffect(TROOP_SELECTION_SOUND);
+    },
     onMoveUnit: (input) => {
-      appState = moveTroopManagementUnit(appState, input);
-      renderApp();
+      commitTroopRuntimeMutation(moveTroopManagementUnit(appState, input));
     },
     onAddUnit: (input) => {
-      appState = addTroopManagementUnitFromReserve(appState, input);
-      renderApp();
+      commitTroopRuntimeMutation(addTroopManagementUnitFromReserve(appState, input));
     },
     onRemoveUnit: (input) => {
-      appState = removeTroopManagementUnit(appState, input);
-      renderApp();
+      commitTroopRuntimeMutation(removeTroopManagementUnit(appState, input));
     },
     onClearTroop: (input) => {
-      appState = clearTroopManagementUnit(appState, input);
-      renderApp();
+      commitTroopRuntimeMutation(clearTroopManagementUnit(appState, input), {
+        mutationSoundRepeatCount: 4,
+        mutationSoundRepeatDelayMs: 100,
+      });
     },
     onDisbandTroop: (input) => {
-      appState = disbandTroopManagementUnit(appState, input);
-      appState = closeTroopManagement(appState);
-      renderApp();
+      commitTroopRuntimeMutation(disbandTroopManagementUnit(appState, input), {
+        closeTroopManagementAfter: true,
+      });
     },
   });
   syncEmbeddedBattleUiEditor();

@@ -6,6 +6,7 @@ import {
   filterBackpackItems,
   resolveSelectedBackpackItemId,
 } from "../../../application/inventory/item-inventory";
+import { getBackpackActionButtonSound } from "./backpack-button-sound-policy";
 
 const BACKPACK_FILTER_LABELS: Record<BackpackItemCategoryFilter, string> = {
   all: "全部",
@@ -181,7 +182,7 @@ export function renderBackpackView(input: {
                             data-action="run-backpack-item-action"
                             data-backpack-item-id="${selectedItem.id}"
                             data-item-action-id="${action.id}"
-                            data-button-sound="light"
+                            data-button-sound="${getBackpackActionButtonSound(action.id)}"
                             ${action.disabled === true ? "disabled" : ""}
                           >
                             ${action.label}

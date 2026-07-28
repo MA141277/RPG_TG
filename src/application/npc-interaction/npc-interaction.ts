@@ -88,8 +88,12 @@ export function selectHouseNpcSpecialActions(input: {
   }
 
   return (
-    input.actors.find((actor) => actor.characterId === input.targetCharacterId)
-      ?.interactionActions ?? []
+    input.actors
+      .find((actor) => actor.characterId === input.targetCharacterId)
+      ?.interactionActions?.map((action) => ({
+        ...action,
+        buttonSound: action.buttonSound ?? "light",
+      })) ?? []
   );
 }
 

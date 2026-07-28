@@ -11,8 +11,8 @@ Requested behavior:
 - start bow-draw audio on frame `18`
 - if bow-draw is still active during frames `37-40`, fade it out across that window
 - start arrow-release audio on frame `41`
-- if the strike hits and arrow-release is still active during frames `45-48`, fade it out across that window
-- if the strike hits, play the impact cue on frame `49`
+- if the strike hits, start the release-to-impact handoff on frame `41`
+- if the strike hits, play the impact cue on frame `42`
 - if the strike misses, do not play the impact cue
 
 This batch only covers `prototypes/battle-demo/index.html`.
@@ -69,26 +69,26 @@ The implementation must follow these rules:
 
 ## 5. Confirmed Frame Contract
 
-The current battle-demo runtime already resolves archer damage timing to frame `49`.
+The current battle-demo runtime now resolves archer damage timing to frame `42`.
 
 This comes from the existing `playBattleSpineStrike(...)` flow:
 
 - archer uses the stationary attack path
-- `impactFrame` falls back to `49` for archer strikes
+- `impactFrame` falls back to `42` for archer strikes
 - `animateBattleSpineProxy(...)` fires `onImpact` once `actionFrame >= impactFrame`
 
 The archer visual-effect plan already aligns with that cadence:
 
 - arrow launch begins on frame `41`
-- impact-side visual staging begins on frame `49`
+- impact-side visual staging begins on frame `42`
 
 Therefore the archer audio contract for this batch is:
 
 - frame `18`: start `battle.bow.draw`
 - frames `37-40`: if the same attack chain still has an active draw player, fade it out
 - frame `41`: start `battle.arrow.release`
-- frames `45-48`: if `hit === true` and the same attack chain still has an active release player, fade it out
-- frame `49`: if `hit === true`, start `battle.impact.hit`
+- frame `41`: if `hit === true`, begin the compressed release-to-impact handoff
+- frame `42`: if `hit === true`, start `battle.impact.hit`
 - miss: do not start any impact cue
 
 All frame thresholds must use `actionFrame >= targetFrame` plus one-shot guards so dropped render frames cannot skip audio events.
@@ -167,9 +167,9 @@ Inside `playBattleSpineStrike(...)`, archer strikes should resolve one local tim
 - `drawFadeStartFrame = 37`
 - `drawEndFrame = 41`
 - `releaseStartFrame = 41`
-- `releaseFadeStartFrame = 45`
-- `releaseEndFrame = 49`
-- `impactFrame = 49`
+- `releaseFadeStartFrame = 41`
+- `releaseEndFrame = 42`
+- `impactFrame = 42`
 - `hit = step.hit`
 
 This plan is consumed only by the current strike animation.
@@ -180,7 +180,7 @@ The archer `onFrame` callback should emit:
 
 1. one `play(draw)` message once `actionFrame >= 18`
 2. one `transition(release)` message once `actionFrame >= 37`
-3. if `step.hit === true`, one `transition(impact)` message once `actionFrame >= 45`
+3. if `step.hit === true`, one `transition(impact)` message once `actionFrame >= 41`
 
 The transition payload must include:
 
@@ -190,7 +190,7 @@ The transition payload must include:
 
 The parent uses those values to fade the current phase during the remaining frame window and to start the next phase at the authored target frame.
 
-This means the iframe does not need to post a separate frame-`41` play message for release or a separate frame-`49` play message for impact if the parent bridge treats transition messages as:
+This means the iframe does not need to post a separate frame-`41` play message for release or a separate frame-`42` play message for impact if the parent bridge treats transition messages as:
 
 - fade current phase now
 - schedule next phase at `nextStartFrame`
@@ -294,9 +294,9 @@ This exactly matches the user-approved example:
 
 For hit-only handoff:
 
-- fade window begins at frame `45`
-- fade duration spans `4` frames
-- impact starts on frame `49`
+- fade window begins at frame `41`
+- fade duration spans the `41 -> 42` boundary
+- impact starts on frame `42`
 
 On miss:
 
@@ -319,7 +319,7 @@ Implementation must add regression coverage for:
 
 1. `battle-demo` archer strikes emit exactly one draw start at frame `18`
 2. `battle-demo` archer strikes emit exactly one draw-to-release transition once frame `37` is reached
-3. hit archer strikes emit exactly one release-to-impact transition once frame `45` is reached
+3. hit archer strikes emit exactly one release-to-impact transition once frame `41` is reached
 4. miss archer strikes do not emit any impact transition or impact play message
 5. the parent ignores malformed or scenario-mismatched battle-demo audio messages
 6. chain-local fade scheduling only affects the active player for the same `chainId`
@@ -373,7 +373,7 @@ Implement battle-demo archer attack audio as a semantic iframe-to-parent bridge.
 
 The correct first version is:
 
-- battle-demo frame detection at `18`, `37`, `45`, and existing impact timing at `49`
+- battle-demo frame detection at `18`, `37`, and hit-only `41`, with impact timing at `42`
 - centralized parent-side playback through the shared battle cues
 - chain-local fade handoff between draw and release, and between release and impact on hit only
 - no local mp3 playback inside the iframe

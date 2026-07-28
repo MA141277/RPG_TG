@@ -2,6 +2,7 @@ import type { BattleFormationSlotKey } from "../../../domain/battle-formation";
 import { PLAYER_MAIN_TROOP_ID } from "../../../domain/troop-editor";
 
 type SyncTroopManagementMoveInteractionsInput = {
+  onSelectUnit: () => void;
   onMoveUnit: (input: {
     troopId: string;
     fromSlotKey: BattleFormationSlotKey;
@@ -286,6 +287,22 @@ function setElementHidden(element: HTMLElement | null, isHidden: boolean): void 
   element.hidden = isHidden;
 }
 
+function syncConfirmButtonSound(
+  button: HTMLButtonElement | null,
+  confirmKind: ConfirmKind
+): void {
+  if (button == null) {
+    return;
+  }
+
+  if (confirmKind === "disband") {
+    button.dataset.buttonSound = "heavy";
+    return;
+  }
+
+  delete button.dataset.buttonSound;
+}
+
 function readReserveCapacity(root: HTMLElement): number {
   const parsed = Number(root.dataset.reserveCapacity ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -533,6 +550,7 @@ function attachTroopManagementMoveHandlers(
     }
 
     syncConfirmCopy(confirmTitle, confirmText, state.confirmKind);
+    syncConfirmButtonSound(confirmButton, state.confirmKind);
 
     reserveMemberButtons.forEach((button) => {
       button.classList.toggle(
@@ -860,6 +878,7 @@ function attachTroopManagementMoveHandlers(
 
       if (state.mode === "move-select") {
         if (slotKey != null && !isEmptySlot) {
+          input.onSelectUnit();
           selectMoveSourceSlot(slotKey);
           return;
         }
@@ -890,6 +909,7 @@ function attachTroopManagementMoveHandlers(
             return;
           }
 
+          input.onSelectUnit();
           openConfirm({ kind: "remove", slotKey });
           return;
         }

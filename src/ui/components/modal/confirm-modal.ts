@@ -1,8 +1,12 @@
+type ConfirmModalButtonSound = "light" | "heavy";
+
 export type ConfirmModalConfig = {
   title: string;
   body: string;
   confirmLabel: string;
   cancelLabel?: string;
+  confirmButtonSound?: ConfirmModalButtonSound;
+  cancelButtonSound?: ConfirmModalButtonSound;
   eyebrow?: string;
   className?: string;
   portraitLabel?: string;
@@ -10,6 +14,15 @@ export type ConfirmModalConfig = {
 };
 
 export function renderConfirmModal(config: ConfirmModalConfig): string {
+  const confirmButtonSoundAttribute =
+    config.confirmButtonSound == null
+      ? ""
+      : ` data-button-sound="${config.confirmButtonSound}"`;
+  const cancelButtonSoundAttribute =
+    config.cancelButtonSound == null
+      ? ""
+      : ` data-button-sound="${config.cancelButtonSound}"`;
+
   return `
     <div class="c-modal-overlay">
       <div class="c-confirm-modal c-panel${config.className == null ? "" : ` ${config.className}`}">
@@ -33,11 +46,11 @@ export function renderConfirmModal(config: ConfirmModalConfig): string {
           }
         </div>
         <div class="c-confirm-modal__actions">
-          <button class="c-button" data-modal-action="confirm">${config.confirmLabel}</button>
+          <button class="c-button" data-modal-action="confirm"${confirmButtonSoundAttribute}>${config.confirmLabel}</button>
           ${
             config.cancelLabel == null
               ? ""
-              : `<button class="c-button c-button--ghost" data-modal-action="cancel">${config.cancelLabel}</button>`
+              : `<button class="c-button c-button--ghost" data-modal-action="cancel"${cancelButtonSoundAttribute}>${config.cancelLabel}</button>`
           }
         </div>
       </div>

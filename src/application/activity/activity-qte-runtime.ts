@@ -184,6 +184,8 @@ function createActivityPachinkoBoardSession(
     totalBalls: PACHINKO_STARTING_BALLS,
     activeBall: null,
     activeBalls: [],
+    audioPulseCounter: 0,
+    audioPulse: null,
     pins: createPachinkoPins(),
     movingGatePins: createPachinkoMovingGatePins(movingGateX),
     gatePassCount: 0,
@@ -1146,6 +1148,7 @@ function advancePachinkoBoardMechanisms(
   );
   return {
     ...session,
+    audioPulse: null,
     flipperAngle: boundedFlipperAngle,
     flipperDirection: flipperHitMax ? -1 : flipperHitMin ? 1 : session.flipperDirection,
     movingGateX: boundedMovingGateX,
@@ -1169,10 +1172,14 @@ function stepPachinkoBall(
     activeBalls: [],
   };
   const nextActiveBalls: ActivityPachinkoBoardBall[] = [];
+  let tickCollisionCount = 0;
+  let tickSettleCount = 0;
 
   activeBalls.forEach((activeBall) => {
     const result = stepSinglePachinkoBall(nextSession, activeBall);
     nextSession = result.session;
+    tickCollisionCount += result.collisionCount;
+    tickSettleCount += result.settleCount;
     if (result.ball != null) {
       nextActiveBalls.push(result.ball);
     }
@@ -1186,19 +1193,36 @@ function stepPachinkoBall(
         : nextSession.remainingBalls > 0
           ? "ready"
           : "settling";
+  const hasAudioPulse = tickCollisionCount > 0 || tickSettleCount > 0;
+  const nextAudioPulseToken = hasAudioPulse
+    ? nextSession.audioPulseCounter + 1
+    : nextSession.audioPulseCounter;
 
   return {
     ...nextSession,
     phase,
     activeBall: nextActiveBalls[nextActiveBalls.length - 1] ?? null,
     activeBalls: nextActiveBalls,
+    audioPulseCounter: nextAudioPulseToken,
+    audioPulse: hasAudioPulse
+      ? {
+          token: nextAudioPulseToken,
+          collisionCount: tickCollisionCount,
+          settleCount: tickSettleCount,
+        }
+      : null,
   };
 }
 
 function stepSinglePachinkoBall(
   session: ActivityPachinkoBoardSession,
   activeBall: ActivityPachinkoBoardBall
-): { session: ActivityPachinkoBoardSession; ball: ActivityPachinkoBoardBall | null } {
+): {
+  session: ActivityPachinkoBoardSession;
+  ball: ActivityPachinkoBoardBall | null;
+  collisionCount: number;
+  settleCount: number;
+} {
   let ball: ActivityPachinkoBoardBall = {
     ...activeBall,
     previousX: activeBall.x,
@@ -1212,6 +1236,7 @@ function stepSinglePachinkoBall(
   const bottomWallXs = createPachinkoRowWithEqualWallGaps(6);
   const tickPreviousX = ball.previousX;
   const tickPreviousY = ball.previousY;
+  let collisionCount = 0;
 
   for (let substep = 0; substep < PACHINKO_PHYSICS_SUBSTEPS; substep += 1) {
     const substepVx = ball.vx / PACHINKO_PHYSICS_SUBSTEPS;
@@ -1224,15 +1249,36 @@ function stepSinglePachinkoBall(
       y: ball.y + substepVy,
     };
 
-    ball = collidePachinkoBallWithSideWalls(ball, session.boardWidth);
+    const sideWallCollision = countPachinkoCollision(
+      ball,
+      collisionCount,
+      (candidate) => collidePachinkoBallWithSideWalls(candidate, session.boardWidth)
+    );
+    collisionCount = sideWallCollision.collisionCount;
+    ball = sideWallCollision.ball;
     flipperSegments.forEach((flipper) => {
-      ball = collidePachinkoBallWithFlipper(ball, flipper, session.flipperDirection);
+      const collisionResult = countPachinkoCollision(
+        ball,
+        collisionCount,
+        (candidate) =>
+          collidePachinkoBallWithFlipper(candidate, flipper, session.flipperDirection)
+      );
+      collisionCount = collisionResult.collisionCount;
+      ball = collisionResult.ball;
     });
     collisionPins.forEach((pin) => {
-      ball = collidePachinkoBallWithPin(ball, pin);
+      const collisionResult = countPachinkoCollision(ball, collisionCount, (candidate) =>
+        collidePachinkoBallWithPin(candidate, pin)
+      );
+      collisionCount = collisionResult.collisionCount;
+      ball = collisionResult.ball;
     });
     bottomWallXs.forEach((wallX) => {
-      ball = collidePachinkoBallWithBottomWall(ball, wallX);
+      const collisionResult = countPachinkoCollision(ball, collisionCount, (candidate) =>
+        collidePachinkoBallWithBottomWall(candidate, wallX)
+      );
+      collisionCount = collisionResult.collisionCount;
+      ball = collisionResult.ball;
     });
   }
 
@@ -1249,13 +1295,43 @@ function stepSinglePachinkoBall(
     return {
       session: settlePachinkoBall(scoredSession, ball),
       ball: null,
+      collisionCount,
+      settleCount: 1,
     };
   }
 
   return {
     session: scoredSession,
     ball,
+    collisionCount,
+    settleCount: 0,
   };
+}
+
+function countPachinkoCollision(
+  ball: ActivityPachinkoBoardBall,
+  collisionCount: number,
+  applyCollision: (ball: ActivityPachinkoBoardBall) => ActivityPachinkoBoardBall
+): {
+  ball: ActivityPachinkoBoardBall;
+  collisionCount: number;
+} {
+  const nextBall = applyCollision(ball);
+  return {
+    ball: nextBall,
+    collisionCount:
+      collisionCount + (didPachinkoCollisionChangeVelocity(ball, nextBall) ? 1 : 0),
+  };
+}
+
+function didPachinkoCollisionChangeVelocity(
+  previousBall: ActivityPachinkoBoardBall,
+  nextBall: ActivityPachinkoBoardBall
+): boolean {
+  return (
+    Math.abs(previousBall.vx - nextBall.vx) > 0.001 ||
+    Math.abs(previousBall.vy - nextBall.vy) > 0.001
+  );
 }
 
 function collidePachinkoBallWithSideWalls(

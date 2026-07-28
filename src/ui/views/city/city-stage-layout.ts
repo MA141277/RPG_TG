@@ -330,6 +330,7 @@ function renderInteractiveEntity(metrics: CityStageRenderMetrics): string {
         class="c-city-map-stage__entity-hotspot"
         data-city-map-building-id="${metrics.entity.id}"
         data-city-map-building-label-id="${metrics.entity.id}"
+        ${entryAttribute.length > 0 ? 'data-enter-sound="enter"' : 'data-button-sound="heavy"'}
         ${entryAttribute}
         aria-label="${ariaLabel}"
         aria-pressed="false"
@@ -366,6 +367,7 @@ function renderEntityLabel(metrics: CityStageRenderMetrics): string {
       type="button"
       class="c-city-map-stage__building-label"
       data-city-map-building-label-id="${metrics.entity.id}"
+      data-enter-sound="enter"
       ${entryAttribute}
       aria-label="进入${metrics.entity.name}"
       style="--building-label-x:${metrics.labelXPercent}; --building-label-y:${metrics.labelYPercent}; --building-label-z-index:${metrics.labelZIndex};"

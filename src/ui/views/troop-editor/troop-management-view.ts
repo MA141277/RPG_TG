@@ -1,5 +1,6 @@
 import type { TroopManagementStageViewModel } from "../../../application/troop-editor/troop-management-stage-view-model";
 import { renderTroopPreviewGrid } from "./troop-preview-grid";
+import { getTroopManagementButtonSound } from "./troop-button-sound-policy";
 
 function encodePreviewConfig(model: TroopManagementStageViewModel): string {
   return encodeURIComponent(JSON.stringify(model.battlePreview));
@@ -44,6 +45,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                     class="c-troop-editor__troop-card${troop.id === model.selectedTroopId ? " is-selected" : ""}"
                     data-action="open-troop-management"
                     data-troop-id="${troop.id}"
+                    data-button-sound="${getTroopManagementButtonSound({ kind: "troop-card" })}"
                     role="button"
                     tabindex="0"
                   >
@@ -87,7 +89,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                 class="c-troop-management__cycle-button c-troop-management__cycle-button--left"
                 ${
                   model.canCycleTroops && model.previousTroopId != null
-                    ? `data-action="open-troop-management" data-troop-id="${model.previousTroopId}"`
+                    ? `data-action="open-troop-management" data-troop-id="${model.previousTroopId}" data-button-sound="${getTroopManagementButtonSound({ kind: "cycle" })}"`
                     : "disabled"
                 }
                 aria-label="切换到上一支队伍"
@@ -97,7 +99,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                 class="c-troop-management__cycle-button c-troop-management__cycle-button--right"
                 ${
                   model.canCycleTroops && model.nextTroopId != null
-                    ? `data-action="open-troop-management" data-troop-id="${model.nextTroopId}"`
+                    ? `data-action="open-troop-management" data-troop-id="${model.nextTroopId}" data-button-sound="${getTroopManagementButtonSound({ kind: "cycle" })}"`
                     : "disabled"
                 }
                 aria-label="切换到下一支队伍"
@@ -121,6 +123,11 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                             type="button"
                             class="c-button c-troop-editor__menu-button c-troop-management__action-button"
                             data-troop-management-action="${action.id}"
+                            data-button-sound="${getTroopManagementButtonSound({
+                              kind: "action",
+                              actionId: action.id,
+                              dataAction: action.actionId,
+                            })}"
                             aria-pressed="false"
                           >
                             ${action.label}
@@ -134,6 +141,11 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                           class="c-button c-troop-editor__menu-button c-troop-management__action-button"
                           ${action.actionId == null ? "disabled" : ""}
                           ${action.actionId == null ? "" : `data-action="${action.actionId}"`}
+                          data-button-sound="${getTroopManagementButtonSound({
+                            kind: "action",
+                            actionId: action.id,
+                            dataAction: action.actionId,
+                          })}"
                         >
                           ${action.label}
                         </button>
@@ -165,6 +177,9 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                                   type="button"
                                   class="c-button c-troop-management__reserve-member"
                                   data-troop-management-reserve-member="${member.id}"
+                                  data-button-sound="${getTroopManagementButtonSound({
+                                    kind: "reserve-member",
+                                  })}"
                                 >
                                   <strong class="c-troop-management__reserve-member-name">${member.name}</strong>
                                   <span class="c-troop-management__reserve-member-role">${member.roleLabel}</span>
@@ -180,6 +195,10 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                       type="button"
                       class="c-button c-troop-editor__menu-button c-troop-management__reserve-prompt-button"
                       data-troop-management-reserve-prompt-action="assign"
+                      data-button-sound="${getTroopManagementButtonSound({
+                        kind: "reserve-prompt",
+                        action: "assign",
+                      })}"
                     >
                       编入队伍
                     </button>
@@ -187,6 +206,10 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                       type="button"
                       class="c-button c-troop-editor__menu-button c-troop-management__reserve-prompt-button"
                       data-troop-management-reserve-prompt-action="back"
+                      data-button-sound="${getTroopManagementButtonSound({
+                        kind: "reserve-prompt",
+                        action: "back",
+                      })}"
                     >
                       返回
                     </button>
@@ -196,6 +219,9 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                     type="button"
                     class="c-button c-troop-editor__menu-button c-troop-management__reserve-return"
                     data-troop-management-reserve-close
+                    data-button-sound="${getTroopManagementButtonSound({
+                      kind: "reserve-close",
+                    })}"
                   >
                     返回编辑
                   </button>
@@ -255,6 +281,10 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-management-remove-confirm-choice="cancel"
+              data-button-sound="${getTroopManagementButtonSound({
+                kind: "remove-confirm",
+                choice: "cancel",
+              })}"
             >
               否
             </button>
@@ -282,6 +312,9 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-management-alert-close
+              data-button-sound="${getTroopManagementButtonSound({
+                kind: "alert-close",
+              })}"
             >
               知道了
             </button>

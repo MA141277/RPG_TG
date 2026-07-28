@@ -187,6 +187,12 @@ export type ActivityPachinkoBoardRewardQueueItem = {
   type: "wheel";
 };
 
+export type ActivityPachinkoBoardAudioPulse = {
+  token: number;
+  collisionCount: number;
+  settleCount: number;
+};
+
 export type ActivityPachinkoBoardWheelState = {
   phase: "idle" | "spinning" | "slowing" | "flashing" | "holding" | "settled";
   elapsedMs: number;
@@ -211,6 +217,8 @@ export type ActivityPachinkoBoardSession = {
   totalBalls: number;
   activeBall: ActivityPachinkoBoardBall | null;
   activeBalls: ActivityPachinkoBoardBall[];
+  audioPulseCounter: number;
+  audioPulse: ActivityPachinkoBoardAudioPulse | null;
   pins: ActivityPachinkoBoardPin[];
   movingGatePins: [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin];
   gatePassCount: number;

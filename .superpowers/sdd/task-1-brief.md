@@ -1,140 +1,145 @@
-﻿## Task 1: Shared Primary Actor Roster Helper
+## Task 1: Register Shared Bounce Cues And The Collision Sound Class
 
 **Files:**
-- Create: `src/application/house/house-primary-actor-roster.ts`
-- Modify: `tests/robustness.test.cjs`
+- Create: `src/application/audio/pachinko-collision-sound.ts`
+- Create: `src/assets/audio/activity/pachinko-bounce-1.mp3`
+- Create: `src/assets/audio/activity/pachinko-bounce-2.mp3`
+- Create: `tests/pachinko-collision-sound.test.cjs`
+- Modify: `src/application/audio/audio-manager.ts`
+- Modify: `src/main.ts`
+- Modify: `tests/audio-seam.test.cjs`
 
 **Interfaces:**
-- Consumes: `HouseStandbyActorViewModel` from `src/domain/house-module.ts`.
-- Produces: `orderHouseStandbyRoster(input: { primaryCharacterId: string | null; actors: HouseStandbyActorViewModel[] }): HouseStandbyActorViewModel[]`.
+- Consumes:
+  - `queueAppAudioCue(session: AppAudioSession, cueId: string): AppAudioSession` from `src/application/audio/audio-manager.ts`
+  - `playCue(cueId: string): void` from the centralized app audio controller
+- Produces:
+  - `BUILTIN_AUDIO_CUE_IDS.activityPachinkoBounce1: "activity.pachinko.bounce.1"`
+  - `BUILTIN_AUDIO_CUE_IDS.activityPachinkoBounce2: "activity.pachinko.bounce.2"`
+  - `export class PachinkoCollisionSoundEffect { readonly cueIds: readonly string[]; pickCueId(random?: () => number): string; play(target: { playCue(cueId: string): void }, random?: () => number): string; }`
+  - `export const PACHINKO_COLLISION_SOUND: PachinkoCollisionSoundEffect`
+  - `const PACHINKO_BOUNCE_PLAYBACK_VARIATION: AudioCuePlaybackVariation`
 
-- [ ] **Step 1: Write the failing helper tests**
+- [ ] **Step 1: Write the failing sound-class and asset-seam tests**
 
-Add this import near the other `.test-dist` imports in `tests/robustness.test.cjs`:
+Create `tests/pachinko-collision-sound.test.cjs` with the dedicated wrapper contract:
 
 ```js
-const {
-  orderHouseStandbyRoster,
-} = require("../.test-dist/application/house/house-primary-actor-roster.js");
-```
+test("pachinko collision sound chooses only from the two registered bounce cues", () => {
+  const played = [];
+  const target = {
+    playCue(cueId) {
+      played.push(cueId);
+    },
+  };
 
-Add these tests near other house tests in `tests/robustness.test.cjs`:
+  const firstCueId = PACHINKO_COLLISION_SOUND.play(target, () => 0);
+  const secondCueId = PACHINKO_COLLISION_SOUND.play(target, () => 0.999);
 
-```js
-test("primary house actor roster helper places the default actor first", () => {
-  const roster = orderHouseStandbyRoster({
-    primaryCharacterId: "char.owner",
-    actors: [
-      { characterId: "char.guest", name: "Guest" },
-      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
-      { characterId: "char.extra", name: "Extra" },
-    ],
-  });
-
-  assert.deepEqual(
-    roster.map((actor) => actor.characterId),
-    ["char.owner", "char.guest", "char.extra"]
-  );
-  assert.equal(roster[0].actionId, "open-owner-dialogue");
-});
-
-test("primary house actor roster helper deduplicates actors without losing the first primary model", () => {
-  const roster = orderHouseStandbyRoster({
-    primaryCharacterId: "char.owner",
-    actors: [
-      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
-      { characterId: "char.guest", name: "Guest" },
-      { characterId: "char.owner", name: "Owner Duplicate" },
-      { characterId: "char.guest", name: "Guest Duplicate" },
-    ],
-  });
-
-  assert.deepEqual(
-    roster.map((actor) => actor.name),
-    ["Owner", "Guest"]
-  );
+  assert.equal(firstCueId, BUILTIN_AUDIO_CUE_IDS.activityPachinkoBounce1);
+  assert.equal(secondCueId, BUILTIN_AUDIO_CUE_IDS.activityPachinkoBounce2);
+  assert.deepEqual(played, [firstCueId, secondCueId]);
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+Extend `tests/audio-seam.test.cjs` so it asserts:
+
+```js
+assert.match(audioManagerSource, /activityPachinkoBounce1: "activity\.pachinko\.bounce\.1"/);
+assert.match(audioManagerSource, /activityPachinkoBounce2: "activity\.pachinko\.bounce\.2"/);
+assert.match(audioManagerSource, /assetPath: "audio\/activity\/pachinko-bounce-1\.mp3"/);
+assert.match(audioManagerSource, /assetPath: "audio\/activity\/pachinko-bounce-2\.mp3"/);
+assert.match(audioManagerSource, /const PACHINKO_BOUNCE_PLAYBACK_VARIATION: AudioCuePlaybackVariation = \{/);
+assert.match(mainSource, /import pachinkoBounce1AudioUrl from "\.\/assets\/audio\/activity\/pachinko-bounce-1\.mp3\?url";/);
+assert.match(mainSource, /import pachinkoBounce2AudioUrl from "\.\/assets\/audio\/activity\/pachinko-bounce-2\.mp3\?url";/);
+assert.match(mainSource, /"audio\/activity\/pachinko-bounce-1\.mp3": pachinkoBounce1AudioUrl/);
+assert.match(mainSource, /"audio\/activity\/pachinko-bounce-2\.mp3": pachinkoBounce2AudioUrl/);
+```
+
+- [ ] **Step 2: Run the red test cycle and confirm the shared bounce seam is missing**
 
 Run:
 
-```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor roster helper"
+```powershell
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' .\node_modules\typescript\bin\tsc -p tsconfig.test.json
+Set-Content -Path .test-dist\package.json -Value '{"type":"commonjs"}'
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' .\tests\pachinko-collision-sound.test.cjs
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' .\tests\audio-seam.test.cjs
 ```
 
 Expected:
 
-- `npm run build:test` fails because `src/application/house/house-primary-actor-roster.ts` does not exist, or the focused node test fails because `orderHouseStandbyRoster` is not exported.
+- `FAIL`
+- first failures mention the missing `pachinko-collision-sound` module, missing `activityPachinkoBounce*` cue ids, or missing static asset imports
 
-- [ ] **Step 3: Implement the helper**
+- [ ] **Step 3: Implement the minimal centralized bounce registry and sound class**
 
-Create `src/application/house/house-primary-actor-roster.ts`:
+Copy the provided files into ASCII asset paths:
+
+```powershell
+Copy-Item -LiteralPath "C:\Users\29636\Desktop\工作用文件\2026.7\音频和音效\弹珠弹墙1.mp3" -Destination "src\assets\audio\activity\pachinko-bounce-1.mp3"
+Copy-Item -LiteralPath "C:\Users\29636\Desktop\工作用文件\2026.7\音频和音效\弹珠弹墙2.mp3" -Destination "src\assets\audio\activity\pachinko-bounce-2.mp3"
+```
+
+Create `src/application/audio/pachinko-collision-sound.ts` with the dedicated class:
 
 ```ts
-import type { HouseStandbyActorViewModel } from "../../domain/house-module";
+import { BUILTIN_AUDIO_CUE_IDS } from "./audio-manager";
 
-export function orderHouseStandbyRoster(input: {
-  primaryCharacterId: string | null;
-  actors: HouseStandbyActorViewModel[];
-}): HouseStandbyActorViewModel[] {
-  const seenCharacterIds = new Set<string>();
-  const dedupedActors: HouseStandbyActorViewModel[] = [];
+export class PachinkoCollisionSoundEffect {
+  readonly cueIds: readonly string[];
 
-  for (const actor of input.actors) {
-    if (seenCharacterIds.has(actor.characterId)) {
-      continue;
-    }
-    seenCharacterIds.add(actor.characterId);
-    dedupedActors.push(actor);
+  constructor(cueIds: readonly string[]) {
+    this.cueIds = cueIds;
   }
 
-  if (input.primaryCharacterId == null) {
-    return dedupedActors;
+  pickCueId(random: () => number = Math.random): string {
+    const index = Math.min(
+      this.cueIds.length - 1,
+      Math.floor(random() * this.cueIds.length)
+    );
+    return this.cueIds[Math.max(0, index)];
   }
 
-  const primaryActor = dedupedActors.find(
-    (actor) => actor.characterId === input.primaryCharacterId
-  );
-  if (primaryActor == null) {
-    return dedupedActors;
+  play(
+    target: { playCue(cueId: string): void },
+    random: () => number = Math.random
+  ): string {
+    const cueId = this.pickCueId(random);
+    target.playCue(cueId);
+    return cueId;
   }
-
-  return [
-    primaryActor,
-    ...dedupedActors.filter(
-      (actor) => actor.characterId !== input.primaryCharacterId
-    ),
-  ];
 }
+
+export const PACHINKO_COLLISION_SOUND = new PachinkoCollisionSoundEffect([
+  BUILTIN_AUDIO_CUE_IDS.activityPachinkoBounce1,
+  BUILTIN_AUDIO_CUE_IDS.activityPachinkoBounce2,
+]);
 ```
 
-- [ ] **Step 4: Run the focused helper tests**
+Extend `src/application/audio/audio-manager.ts` and `src/main.ts` so the centralized registry and static asset map include:
+
+```ts
+activityPachinkoBounce1: "activity.pachinko.bounce.1",
+activityPachinkoBounce2: "activity.pachinko.bounce.2",
+assetPath: "audio/activity/pachinko-bounce-1.mp3",
+assetPath: "audio/activity/pachinko-bounce-2.mp3",
+import pachinkoBounce1AudioUrl from "./assets/audio/activity/pachinko-bounce-1.mp3?url";
+import pachinkoBounce2AudioUrl from "./assets/audio/activity/pachinko-bounce-2.mp3?url";
+```
+
+- [ ] **Step 4: Re-run the shared bounce tests until they pass**
 
 Run:
 
-```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor roster helper"
+```powershell
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' .\node_modules\typescript\bin\tsc -p tsconfig.test.json
+Set-Content -Path .test-dist\package.json -Value '{"type":"commonjs"}'
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' .\tests\pachinko-collision-sound.test.cjs
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' .\tests\audio-seam.test.cjs
 ```
 
 Expected:
 
-- `npm run build:test` exits with code 0.
-- Both focused helper tests pass.
-
-- [ ] **Step 5: Commit Task 1**
-
-Run:
-
-```bash
-git add src/application/house/house-primary-actor-roster.ts tests/robustness.test.cjs
-git commit -m "test: add house primary actor roster helper"
-```
-
-Expected:
-
-- Commit succeeds and contains only Task 1 files.
+- `PASS`
 

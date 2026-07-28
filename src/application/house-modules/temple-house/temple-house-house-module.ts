@@ -1936,11 +1936,26 @@ function getTempleRootActions(
 ): HouseActionViewModel[] {
   if (!isMonkStoryStage(gameState)) {
     return [
-      { id: OPEN_TEMPLE_REST_MENU_ACTION_ID, label: "休息", tone: "accent" },
-      { id: "open-donate", label: "捐香火" },
+      {
+        id: OPEN_TEMPLE_REST_MENU_ACTION_ID,
+        label: "休息",
+        tone: "accent",
+        buttonSound: "light",
+      },
+      {
+        id: "open-donate",
+        label: "捐香火",
+        buttonSound: "light",
+      } satisfies HouseActionViewModel,
       ...(dialoguePhase === "idle"
         ? []
-        : [{ id: "dismiss-dialogue", label: "先退下" }]),
+        : [
+            {
+              id: "dismiss-dialogue",
+              label: "先退下",
+              buttonSound: "light",
+            } satisfies HouseActionViewModel,
+          ]),
     ];
   }
 
@@ -1951,6 +1966,7 @@ function getTempleRootActions(
             id: SUBMIT_TEMPLE_BEGGING_FOOD_ACTION_ID,
             label: `提交粮食：${formatTempleGrainAmount(readTempleAvailableFood(gameState))}`,
             tone: "accent",
+            buttonSound: "light",
           } satisfies HouseActionViewModel,
         ]
       : []),
@@ -1959,22 +1975,54 @@ function getTempleRootActions(
       label: currentWorkPlan == null ? "工作（待评定）" : "工作",
       tone: "accent",
       disabled: currentWorkPlan == null,
+      buttonSound: "light",
     },
-    { id: OPEN_TEMPLE_REST_MENU_ACTION_ID, label: "休息" },
-    { id: "open-donate", label: "捐香火" },
+    {
+      id: OPEN_TEMPLE_REST_MENU_ACTION_ID,
+      label: "休息",
+      buttonSound: "light",
+    },
+    {
+      id: "open-donate",
+      label: "捐香火",
+      buttonSound: "light",
+    } satisfies HouseActionViewModel,
     ...(dialoguePhase === "idle"
       ? []
-      : [{ id: "dismiss-dialogue", label: "先退下" }]),
+      : [
+          {
+            id: "dismiss-dialogue",
+            label: "先退下",
+            buttonSound: "light",
+          } satisfies HouseActionViewModel,
+        ]),
   ];
 }
 
 function getTempleRestMenuActions(): HouseActionViewModel[] {
   return [
-    { id: TEMPLE_REST_ONE_DAY_ACTION_ID, label: "休息一日", tone: "accent" },
-    { id: OPEN_TEMPLE_REST_DAYS_ACTION_ID, label: "指定天数" },
-    { id: TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID, label: "休至评定日" },
-    { id: TEMPLE_REST_UNTIL_RECOVERED_ACTION_ID, label: "休至体力恢复" },
-    { id: CLOSE_TEMPLE_REST_MENU_ACTION_ID, label: "返回" },
+    {
+      id: TEMPLE_REST_ONE_DAY_ACTION_ID,
+      label: "休息一日",
+      tone: "accent",
+      buttonSound: "light",
+    },
+    {
+      id: OPEN_TEMPLE_REST_DAYS_ACTION_ID,
+      label: "指定天数",
+      buttonSound: "light",
+    },
+    {
+      id: TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID,
+      label: "休至评定日",
+      buttonSound: "light",
+    },
+    {
+      id: TEMPLE_REST_UNTIL_RECOVERED_ACTION_ID,
+      label: "休至体力恢复",
+      buttonSound: "light",
+    },
+    { id: CLOSE_TEMPLE_REST_MENU_ACTION_ID, label: "返回", buttonSound: "light" },
   ];
 }
 
@@ -1988,6 +2036,7 @@ function getTempleWorkMenuActions(
       id: `${ASSIGN_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
       label: taskDefinition.title,
       tone: "default",
+      buttonSound: "light",
     })),
     ...(dailyTasks.length === 0
       ? [
@@ -2009,6 +2058,7 @@ function getTempleWorkMenuActions(
     {
       id: CLOSE_TEMPLE_WORK_MENU_ACTION_ID,
       label: "返回",
+      buttonSound: "light",
     },
   ];
 }
@@ -4108,6 +4158,7 @@ function selectOverlayViewModel(
       ...(overlay.tone == null ? {} : { tone: overlay.tone }),
       confirmActionId: "close-temple-overlay",
       confirmLabel: "收下",
+      confirmButtonSound: "light",
     };
   }
 
@@ -4133,11 +4184,16 @@ function selectOverlayViewModel(
       ...(overlay.quickCompleteLabel == null
         ? {}
         : { quickCompleteLabel: overlay.quickCompleteLabel }),
+      ...(overlay.quickCompleteActionId == null
+        ? {}
+        : { quickCompleteButtonSound: "heavy" }),
       confirmActionId: overlay.confirmActionId,
       confirmLabel: overlay.confirmLabel,
       cancelActionId: overlay.cancelActionId,
       cancelLabel: overlay.cancelLabel,
       ...(overlay.tone == null ? {} : { tone: overlay.tone }),
+      confirmButtonSound: "heavy",
+      cancelButtonSound: "light",
     };
   }
 
@@ -4151,6 +4207,8 @@ function selectOverlayViewModel(
       cancelActionId: "close-temple-overlay",
       cancelLabel: "暂缓",
       tone: "info",
+      confirmButtonSound: "light",
+      cancelButtonSound: "light",
     };
   }
 
@@ -4181,6 +4239,10 @@ function selectOverlayViewModel(
       confirmLabel: "交给寺里",
       cancelActionId: CANCEL_TEMPLE_BEGGING_FOOD_ACTION_ID,
       cancelLabel: "暂缓",
+      confirmButtonSound: "light",
+      cancelButtonSound: "light",
+      decrementButtonSound: "light",
+      incrementButtonSound: "light",
     };
   }
 
@@ -4195,6 +4257,8 @@ function selectOverlayViewModel(
       confirmLabel: "开始休息",
       cancelActionId: "close-temple-overlay",
       cancelLabel: "返回",
+      confirmButtonSound: "light",
+      cancelButtonSound: "light",
     };
   }
 
@@ -4225,6 +4289,7 @@ function selectOverlayViewModel(
     rewardLines: overlay.rewardLines,
     confirmActionId: "close-temple-result",
     confirmLabel: "收工",
+    confirmButtonSound: "light",
   };
 }
 
@@ -4534,6 +4599,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
               label: workChoice.label,
               ...(workChoice.disabled == null ? {} : { disabled: workChoice.disabled }),
               ...(workChoice.tone == null ? {} : { tone: workChoice.tone }),
+              buttonSound: "light",
             })),
           }
         : shouldShowDailyActions
@@ -4656,6 +4722,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
         id: "leave-house",
         label: "离开寺庙",
         tone: "accent",
+        buttonSound: "light",
       },
     };
   },

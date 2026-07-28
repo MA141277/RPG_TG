@@ -129,6 +129,7 @@ export function renderGlobalPlayerPanel(
           <button
             class="u-click-layer p-global-status-compact__attribute"
             data-action="open-player-detail"
+            data-button-sound="heavy"
             aria-label="打开人物详细属性"
           ></button>
         </div>

@@ -290,6 +290,7 @@ function renderGridMap(model: MapViewModel): string {
           data-map-x="${x}"
           data-map-y="${y}"
           data-city-id="${cityMarker?.id ?? ""}"
+          data-ui-click-sound="none"
         >
           <span class="c-grid-cell__coord">(${x}, ${y})</span>
           ${
@@ -410,6 +411,7 @@ function renderCampaignHexBuilding(model: MapViewModel): string {
         data-map-x="${YUANMO_HEX_BUILDING.travelX}"
         data-map-y="${YUANMO_HEX_BUILDING.travelY}"
         data-city-id="${YUANMO_HEX_BUILDING.cityId}"
+        data-ui-click-sound="none"
         title="${escapeHtml(YUANMO_HEX_BUILDING.label)} (${YUANMO_HEX_BUILDING.travelX}, ${YUANMO_HEX_BUILDING.travelY})"
         aria-label="进入${escapeHtml(YUANMO_HEX_BUILDING.label)}"
       ></button>
@@ -455,6 +457,7 @@ function renderCampaignMarkers(model: MapViewModel): string {
           data-map-x="${marker.x}"
           data-map-y="${marker.y}"
           data-city-id="${marker.cityId ?? ""}"
+          data-ui-click-sound="none"
           ${markerInteractionAttributes}
         >
           <span class="c-campaign-marker__dot"></span>

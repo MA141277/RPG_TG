@@ -42,7 +42,7 @@ export function renderCardLibraryView(input: {
             <p class="c-library-shell__eyebrow">卡列表</p>
             <h1 class="c-library-shell__title">持有卡库</h1>
           </div>
-          <button class="c-button c-button--ghost" type="button" data-action="close-overlay">返回</button>
+          <button class="c-button c-button--ghost" type="button" data-action="close-overlay" data-button-sound="light">返回</button>
         </header>
         <div class="c-library-shell__toolbar">
           ${(["all", "secret-technique", "battle"] as const)

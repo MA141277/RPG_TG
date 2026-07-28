@@ -86,11 +86,17 @@ function isDismissHouseAction(action: HouseActionViewModel): boolean {
 }
 
 function renderHouseActionButton(action: HouseActionViewModel): string {
+  const buttonSoundAttribute =
+    action.buttonSound == null
+      ? ""
+      : ` data-button-sound="${action.buttonSound}"`;
+
   return `
     <button
       type="button"
       class="c-button c-grain-shop-button ${action.tone === "accent" ? "c-grain-shop-button--gold" : "c-grain-shop-button--paper"}"
       data-house-action="${escapeHtml(action.id)}"
+      ${buttonSoundAttribute}
       ${action.disabled ? "disabled" : ""}
     >
       ${escapeHtml(action.label)}
@@ -153,6 +159,10 @@ export function renderHouseAlertOverlay(
     overlay.title === "本轮差事已定" || overlay.title === "寺务已定";
   const overlayVariantAttribute =
     options.overlayAttribute ?? ' data-house-alert-variant="assessment-popup"';
+  const confirmButtonSoundAttribute =
+    overlay.confirmButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.confirmButtonSound}"`;
   const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${
     getAssessmentPopupClassName(overlay.paragraphs.length, options.modalClassName)
   }${isContributionSettlement ? " c-house-contribution-popup" : ""}${
@@ -171,6 +181,7 @@ export function renderHouseAlertOverlay(
             type="button"
             class="c-button c-grain-shop-button c-grain-shop-button--gold"
             data-house-action="${overlay.confirmActionId}"
+            ${confirmButtonSoundAttribute}
           >
             ${overlay.confirmLabel}
           </button>
@@ -186,6 +197,14 @@ export function renderHouseConfirmOverlay(
   const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${getAssessmentPopupClassName(
     overlay.paragraphs.length
   )}`;
+  const confirmButtonSoundAttribute =
+    overlay.confirmButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.confirmButtonSound}"`;
+  const cancelButtonSoundAttribute =
+    overlay.cancelButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.cancelButtonSound}"`;
 
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="confirm" data-house-overlay-variant="assessment-popup">
@@ -195,10 +214,10 @@ export function renderHouseConfirmOverlay(
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
         </div>
         <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}"${cancelButtonSoundAttribute}>
             ${overlay.cancelLabel}
           </button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}"${confirmButtonSoundAttribute}>
             ${overlay.confirmLabel}
           </button>
         </div>
@@ -217,6 +236,22 @@ export function renderHouseQuantityConfirmOverlay(
   )}`;
   const overlayVariantAttribute =
     options.overlayAttribute ?? ' data-house-overlay-variant="assessment-popup"';
+  const confirmButtonSoundAttribute =
+    overlay.confirmButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.confirmButtonSound}"`;
+  const cancelButtonSoundAttribute =
+    overlay.cancelButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.cancelButtonSound}"`;
+  const decrementButtonSoundAttribute =
+    overlay.decrementButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.decrementButtonSound}"`;
+  const incrementButtonSoundAttribute =
+    overlay.incrementButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.incrementButtonSound}"`;
 
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="quantity-confirm"${overlayVariantAttribute}>
@@ -236,16 +271,16 @@ export function renderHouseQuantityConfirmOverlay(
           </label>
         </div>
         <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}"${cancelButtonSoundAttribute}>
             ${overlay.cancelLabel}
           </button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.decrementActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.decrementActionId}"${decrementButtonSoundAttribute}>
             -1
           </button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.incrementActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.incrementActionId}"${incrementButtonSoundAttribute}>
             +1
           </button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}"${confirmButtonSoundAttribute}>
             ${overlay.confirmLabel}
           </button>
         </div>
@@ -286,6 +321,10 @@ export function renderHouseActionContainer(
               ? "c-grain-shop-button--gold"
               : "c-grain-shop-button--paper";
           const disabled = option.kind === "gift" || option.disabled === true;
+          const buttonSoundAttribute =
+            option.buttonSound == null
+              ? ""
+              : ` data-button-sound="${option.buttonSound}"`;
 
           return `
             <button
@@ -293,6 +332,7 @@ export function renderHouseActionContainer(
               class="c-button c-grain-shop-button ${buttonTone}"
               data-npc-action="${escapeHtml(option.kind)}"
               data-character-id="${targetCharacterId}"
+              ${buttonSoundAttribute}
               ${disabled ? "disabled" : ""}
             >
               ${escapeHtml(option.label)}
@@ -399,7 +439,7 @@ export function renderHouseDialogue(
     <footer class="${footerClassName}" aria-label="${ariaLabel}">
       <div
         class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
-        ${clickable ? `data-house-action="${viewModel.dialogue.advanceActionId}" role="button" tabindex="0"` : ""}
+        ${clickable ? `data-house-action="${viewModel.dialogue.advanceActionId}" role="button" tabindex="0" data-ui-click-sound="none"` : ""}
       >
         ${
           viewModel.dialogue.mode === "character" &&
@@ -484,12 +524,17 @@ export function renderHouseLeaveButton(
   const className =
     options.className ??
     "c-button c-grain-shop-button c-grain-shop-button--gold c-grain-shop-leave";
+  const buttonSoundAttribute =
+    viewModel.leaveAction.buttonSound == null
+      ? ""
+      : ` data-button-sound="${viewModel.leaveAction.buttonSound}"`;
 
   return `
     <button
       type="button"
       class="${className}"
       data-action="${viewModel.leaveAction.id}"
+      ${buttonSoundAttribute}
     >
       ${viewModel.leaveAction.label}
     </button>

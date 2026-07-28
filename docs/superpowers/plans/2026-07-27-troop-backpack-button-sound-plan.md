@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Apply the approved heavy/light button sound policy to troop entry, backpack entry, backpack internals, troop-editor controls, and troop-management confirmation flows using the existing shared button-sound system.
+**Goal:** Apply the approved heavy/light button sound policy to troop entry, backpack entry, backpack internals, troop-editor controls, and troop-management confirmation flows using the existing shared button-sound system, including heavy backpack equip actions and reliable playback for declarative buttons that stop click bubbling.
 
-**Architecture:** Keep sound routing declarative at render time through `data-button-sound` and avoid adding any troop-specific or backpack-specific sound branches to `src/main.ts`. Add one troop-view-local sound policy helper for troop-editor and troop-management templates, and extend the existing property/backpack/party-editor contract tests so the new button sound polarity is locked by rendered markup.
+**Architecture:** Keep sound routing declarative at render time through `data-button-sound` and avoid adding any troop-specific or backpack-specific sound branches to `src/main.ts`. Add one troop-view-local sound policy helper for troop-editor and troop-management templates, one backpack-local action sound policy helper for equip-vs-non-equip behavior, and keep the event layer generic by resolving declarative click cues centrally before bubbling can be stopped.
 
 **Tech Stack:** TypeScript, Vite, Node test runner, CommonJS compiled test output under `.test-dist`, existing rendered-view helpers, `npm run lint:plans`, `npm run build:test`, `node --test`, `npm run typecheck`, and `npm run build`.
 
@@ -23,10 +23,11 @@
 
 - Status: `running`
 - Last Updated: `2026-07-27`
-- Current Focus: `Implement the troop-editor sound policy helper and rendered markup.`
-- Next Step: `Start Task 2 with the troop-editor rendered-html tests.`
-- Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tools/lint-superpowers-plans.mjs'` passed.
-- Notes: `Task 1 governance is synced in this plan, and docs/superpowers/project-progress.md still points to the older unified-backpack owner document until the owner decides whether to resynchronize progress tracking.`
+- Current Focus: `Record the backpack-equip and stopPropagation click-routing follow-up while the elevated Vite build exit code remains unresolved for final closeout.`
+- Next Step: `Review or replay the broader verification sweep if the owner wants to close this child after the new backpack equip and troop-management click-routing follow-up.`
+- Follow-up Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test tests/backpack-ui-contract.test.cjs tests/party-editor-ui-source.test.cjs tests/button-sound.test.cjs tests/city-button-sound-contract.test.cjs` passed with 21 tests, 21 pass, 0 fail.
+- Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tools/lint-superpowers-plans.mjs'` passed; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `Set-Content -Path '.test-dist\package.json' -Value '{"type":"commonjs"}'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test tests/property-panel-button-sound-contract.test.cjs tests/backpack-ui-contract.test.cjs tests/party-editor-ui-source.test.cjs` passed with 16 tests, 16 pass, 0 fail; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' --noEmit -p tsconfig.json` passed; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\vite\bin\vite.js' build` printed `✓ built in 4.48s` but exited with `-1073740791` under the elevated shell.
+- Notes: `This follow-up keeps cue ids and overlap rules unchanged, but adds a backpack-local equip sound policy helper and moves declarative click-sound routing onto a generic capture-phase resolver so buttons that stop bubbling still play their assigned sounds.`
 
 ## Progress Log
 
@@ -38,6 +39,22 @@
   - Summary: `Wired heavy sound declarations for map troop/backpack entry and character-detail backpack entry, and wired light sound declarations for backpack filter, item, action, and close buttons.`
   - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `Set-Content -Path '.test-dist\package.json' -Value '{"type":"commonjs"}'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test tests/property-panel-button-sound-contract.test.cjs tests/backpack-ui-contract.test.cjs` passed with 9 tests, 9 pass, 0 fail.
   - Next: `Start Task 2 with the troop-editor rendered-html tests.`
+- 2026-07-27
+  - Summary: `Added a shared troop button-sound policy helper, wired troop-editor menu, shop, card, dismiss, confirm, and alert buttons to declarative light/heavy polarity, and stabilized the party-editor source test harness around the current template structure.`
+  - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `Set-Content -Path '.test-dist\package.json' -Value '{"type":"commonjs"}'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test tests/party-editor-ui-source.test.cjs` passed with 7 tests, 7 pass, 0 fail.
+  - Next: `Finish the troop-management sound policy markup on the same shared helper and rerun the party-editor suite.`
+- 2026-07-27
+  - Summary: `Extended the shared troop button-sound policy into troop-management, keeping browsing actions light while marking reserve assignment and confirm-side actions heavy.`
+  - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `Set-Content -Path '.test-dist\package.json' -Value '{"type":"commonjs"}'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test tests/party-editor-ui-source.test.cjs` passed with 7 tests, 7 pass, 0 fail.
+  - Next: `Run the final verification sweep for property, backpack, and party-editor button-sound coverage.`
+- 2026-07-27
+  - Summary: `Final verification passed for plan lint, the targeted property/backpack/party-editor test suite, and TypeScript typecheck, while the elevated Vite build printed a successful build but still exited with Windows code -1073740791.`
+  - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tools/lint-superpowers-plans.mjs'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' -p tsconfig.test.json`; `Set-Content -Path '.test-dist\package.json' -Value '{"type":"commonjs"}'`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test tests/property-panel-button-sound-contract.test.cjs tests/backpack-ui-contract.test.cjs tests/party-editor-ui-source.test.cjs`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\typescript\bin\tsc' --noEmit -p tsconfig.json`; `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.\node_modules\vite\bin\vite.js' build`
+  - Next: `Resolve or waive the abnormal elevated Vite build exit before closing out this child plan.`
+- 2026-07-27
+  - Summary: `Promoted backpack equip actions to heavy via a backpack-local sound policy helper, expanded troop-management markup assertions to cover the full action list, and moved declarative click-sound routing to a generic capture-phase resolver so stopPropagation-backed troop-management buttons still play their configured sounds.`
+  - Verification: `& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test tests/backpack-ui-contract.test.cjs tests/party-editor-ui-source.test.cjs tests/button-sound.test.cjs tests/city-button-sound-contract.test.cjs`
+  - Next: `Replay the broader typecheck/build closeout sweep if the owner wants to close this child instead of leaving the Vite exit anomaly as the remaining open verifier.`
 
 ---
 
@@ -67,14 +84,14 @@
 
 - Mark the map `部队` and `背包` entry buttons as `heavy`.
 - Change the character-detail `背包` button from `light` to `heavy`.
-- Mark all interactive buttons rendered by `src/ui/views/inventory/backpack-view.ts` as `light`.
+- Keep backpack browsing controls and non-equip actions `light`, but promote equip actions to `heavy` through a backpack-local sound policy helper.
 - Add a local troop button sound policy helper and use it from `troop-editor-view.ts` and `troop-management-view.ts`.
 - Lock the above behavior with the existing property/backpack/party-editor test files.
 
 ### Still Out Of Scope
 
 - Any new audio cue id, playback overlap rule, or audio-controller change.
-- Any event-layer fallback that decides sound from `data-action` globally.
+- Any troop-specific or backpack-specific event-layer sound branch in `src/main.ts`; the click router must stay generic and declarative.
 - Reclassifying unrelated city, house, dialogue, or card-library buttons outside the approved scope.
 - Cleaning up the stale project-progress child unless execution of this plan is explicitly started.
 
@@ -87,7 +104,13 @@
 - `src/ui/views/character/character-detail-view.ts`
   - Change the character-detail `背包` button from light to heavy while leaving card/return buttons unchanged.
 - `src/ui/views/inventory/backpack-view.ts`
-  - Add light button-sound markup to filter chips, item selectors, item action buttons, and keep the overlay return button light.
+  - Add light button-sound markup to filter chips, item selectors, and non-equip item actions, while deferring equip action polarity to a backpack-local policy helper and keeping the overlay return button light.
+- `src/ui/views/inventory/backpack-button-sound-policy.ts`
+  - Export the local backpack action sound policy so equip actions stay centralized and reusable.
+- `src/application/audio/button-sound.ts`
+  - Add a shared declarative click-cue resolver that prioritizes enter sound, then button tone, then generic UI click fallback.
+- `src/main.ts`
+  - Use the shared declarative click-cue resolver from a capture-phase click listener so configured sounds still play even when later handlers stop bubbling.
 - `src/ui/views/troop-editor/troop-editor-view.ts`
   - Call the troop-editor sound policy helper when rendering menu buttons, troop cards, shop buttons, prompts, confirms, and alert close.
 - `src/ui/views/troop-editor/troop-management-view.ts`
@@ -95,9 +118,13 @@
 - `tests/property-panel-button-sound-contract.test.cjs`
   - Assert heavy entry sounds for map troop/backpack entry and character-detail backpack.
 - `tests/backpack-ui-contract.test.cjs`
-  - Assert backpack filter, item, action, and close buttons are light.
+  - Assert backpack filter, item, non-equip action, and close buttons are light while equip actions are heavy.
 - `tests/party-editor-ui-source.test.cjs`
-  - Render troop-editor and troop-management HTML and assert the approved heavy/light polarity.
+  - Render troop-editor and troop-management HTML and assert the approved heavy/light polarity across the full troop-management action list.
+- `tests/button-sound.test.cjs`
+  - Lock the shared click-cue resolver priority between enter, button, and fallback UI click.
+- `tests/city-button-sound-contract.test.cjs`
+  - Lock the main click wiring onto the shared capture-phase click-cue resolver.
 - `docs/superpowers/plans/2026-07-27-troop-backpack-button-sound-plan.md`
   - Track execution state, progress log, and verification results during implementation.
 
@@ -109,6 +136,8 @@
 
 - `src/ui/views/troop-editor/troop-button-sound-policy.ts`
   - Export troop-editor and troop-management sound policy helpers so both views share one local, declarative rule set.
+- `src/ui/views/inventory/backpack-button-sound-policy.ts`
+  - Export the backpack action sound policy helper so equip and non-equip actions stay centralized.
 
 ## Verification Plan
 
@@ -317,7 +346,7 @@ git commit -m "feat: wire troop and backpack entry sounds"
   - `getTroopEditorButtonSound(input: TroopEditorButtonSoundInput): "light" | "heavy"`
   - troop-editor rendered buttons with approved `data-button-sound` polarity
 
-- [ ] **Step 1: Write the failing troop-editor rendered-html tests**
+- [x] **Step 1: Write the failing troop-editor rendered-html tests**
 
 Extend `tests/party-editor-ui-source.test.cjs` with a rendered troop-editor fixture and assertions like these:
 
@@ -397,7 +426,7 @@ test("troop-editor applies heavy only to the manage entry and confirm-side actio
 });
 ```
 
-- [ ] **Step 2: Run the troop-editor tests to verify they fail**
+- [x] **Step 2: Run the troop-editor tests to verify they fail**
 
 Run:
 
@@ -410,7 +439,7 @@ Expected:
 
 - `FAIL` because troop-editor buttons, prompts, and confirms do not yet emit the requested `data-button-sound` values.
 
-- [ ] **Step 3: Implement the troop-editor sound policy helper and markup**
+- [x] **Step 3: Implement the troop-editor sound policy helper and markup**
 
 Create `src/ui/views/troop-editor/troop-button-sound-policy.ts` with this exact first-pass API:
 
@@ -482,7 +511,7 @@ import { getTroopEditorButtonSound } from "./troop-button-sound-policy";
 
 Apply the same helper to the shop offer buttons, shop prompt buttons, create dialog buttons, dismiss member/prompt/confirm buttons, generic confirm buttons, and alert close button.
 
-- [ ] **Step 4: Run the troop-editor tests to verify they pass**
+- [x] **Step 4: Run the troop-editor tests to verify they pass**
 
 Run:
 
@@ -495,7 +524,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Sync this plan after the troop-editor batch lands**
+- [x] **Step 5: Sync this plan after the troop-editor batch lands**
 
 Update this plan in the same change set:
 
@@ -533,7 +562,7 @@ git commit -m "feat: add troop editor button sounds"
   - `getTroopManagementButtonSound(input: TroopManagementButtonSoundInput): "light" | "heavy"`
   - troop-management rendered buttons with approved `data-button-sound` polarity
 
-- [ ] **Step 1: Write the failing troop-management rendered-html tests**
+- [x] **Step 1: Write the failing troop-management rendered-html tests**
 
 Extend `tests/party-editor-ui-source.test.cjs` with a rendered troop-management fixture and assertions like these:
 
@@ -627,7 +656,7 @@ Expected:
 
 - `FAIL` because troop-management buttons still render without the required sound polarity.
 
-- [ ] **Step 3: Implement the troop-management sound policy helper and markup**
+- [x] **Step 3: Implement the troop-management sound policy helper and markup**
 
 Extend `src/ui/views/troop-editor/troop-button-sound-policy.ts` with this exact second export:
 
@@ -692,7 +721,7 @@ import { getTroopManagementButtonSound } from "./troop-button-sound-policy";
 
 Apply the same helper to the management action list, reserve-member buttons, reserve close button, remove-confirm buttons, and alert close button.
 
-- [ ] **Step 4: Run the troop-management tests to verify they pass**
+- [x] **Step 4: Run the troop-management tests to verify they pass**
 
 Run:
 
@@ -705,7 +734,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Sync this plan after the troop-management batch lands**
+- [x] **Step 5: Sync this plan after the troop-management batch lands**
 
 Update this plan in the same change set:
 
@@ -800,21 +829,21 @@ git commit -m "docs: record troop backpack button sound verification"
 
 ## Exit Check
 
-- [ ] Map `open-troop-editor` and map `open-backpack` are explicitly `heavy`.
-- [ ] Character-detail `open-backpack` is explicitly `heavy`.
-- [ ] Backpack filter, item, action, and close buttons are explicitly `light`.
-- [ ] Troop-editor `队伍管理` is `heavy` and all other browsing buttons remain `light`.
-- [ ] Troop-editor confirm-side actions are `heavy` and cancel/back/alert-close remain `light`.
-- [ ] Troop-management browsing buttons remain `light`.
-- [ ] Troop-management reserve assign and remove-confirm actions are `heavy`; cancel/back/close remain `light`.
+- [x] Map `open-troop-editor` and map `open-backpack` are explicitly `heavy`.
+- [x] Character-detail `open-backpack` is explicitly `heavy`.
+- [x] Backpack filter, item, non-equip action, and close buttons are explicitly `light`, and equip actions are explicitly `heavy`.
+- [x] Troop-editor `队伍管理` is `heavy` and all other browsing buttons remain `light`.
+- [x] Troop-editor confirm-side actions are `heavy` and cancel/back/alert-close remain `light`.
+- [x] Troop-management browsing buttons remain `light`.
+- [x] Troop-management reserve assign and remove-confirm actions are `heavy`; cancel/back/close remain `light`.
 - [ ] `npm run lint:plans`, the targeted test suite, `npm run typecheck`, and `npm run build` all pass.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
@@ -825,9 +854,9 @@ git commit -m "docs: record troop backpack button sound verification"
 - Project Progress Synced: `no`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `choose-execution-approach`
-- Next Entry Document: `docs/superpowers/project-progress.md`
+- Next Required Action: `resolve-final-build-verification`
+- Next Entry Document: `docs/superpowers/plans/2026-07-27-troop-backpack-button-sound-plan.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-27-troop-backpack-button-sound-plan.md`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue from this plan after choosing subagent-driven or inline execution.`
+- Resume From: `Resume from Task 4 Step 1 after deciding whether to debug or waive the elevated Vite build exit code -1073740791.`

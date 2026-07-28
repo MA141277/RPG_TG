@@ -261,6 +261,8 @@ function renderModal(
     body: "人物与城市坐标已经重合，确认后展开城市结构。",
     confirmLabel: "进入城市",
     cancelLabel: "稍后",
+    confirmButtonSound: "heavy",
+    cancelButtonSound: "light",
     className: `c-confirm-modal--map-entry c-confirm-modal--map-entry-${mapEntryVisualKind}`,
     portraitLabel: cityPortraits[modalState.cityId] ?? modalState.cityName,
     portraitImageUrl: null,
@@ -399,6 +401,7 @@ function renderLocationDialogue(
         data-action="close-location-dialogue"
         role="button"
         tabindex="0"
+        data-ui-click-sound="none"
       >
         ${typewriterLines.markup}
         ${renderDialogueTypewriterHint(

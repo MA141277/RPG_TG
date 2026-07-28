@@ -104,7 +104,7 @@ test("backpack shell uses stable grid rows so empty filters do not shift the ove
   );
 });
 
-test("backpack view marks every interactive button as light", () => {
+test("backpack view keeps browsing light and promotes equip actions to heavy", () => {
   const html = renderBackpackView({
     filter: "all",
     selectedItemId: "item.weapon",
@@ -117,7 +117,10 @@ test("backpack view marks every interactive button as light", () => {
         types: ["equipment", "weapon"],
         count: 1,
         description: "test",
-        actions: [{ id: "equip.weapon", label: "Equip" }],
+        actions: [
+          { id: "equip.weapon", label: "Equip" },
+          { id: "submit.quest", label: "Submit" },
+        ],
       },
     ],
   });
@@ -132,7 +135,11 @@ test("backpack view marks every interactive button as light", () => {
   );
   assert.match(
     html,
-    /<button[^>]*data-action="run-backpack-item-action"[^>]*data-button-sound="light"[^>]*>/
+    /<button[^>]*data-action="run-backpack-item-action"[^>]*data-item-action-id="equip\.weapon"[^>]*data-button-sound="heavy"[^>]*>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-action="run-backpack-item-action"[^>]*data-item-action-id="submit\.quest"[^>]*data-button-sound="light"[^>]*>/
   );
   assert.match(
     html,

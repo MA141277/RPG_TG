@@ -415,6 +415,7 @@ function renderCityDirectoryOption(option: CityEntryOption): string {
       type="button"
       class="c-city-directory__option"
       data-city-directory-character-id="${option.characterId}"
+      data-button-sound="light"
       ${option.disabled ? "disabled" : ""}
     >
       ${renderCityChoiceSkin()}
@@ -456,7 +457,7 @@ function renderCityDirectory(
             <p class="c-city-directory__eyebrow">本城人物</p>
             <h2 class="c-city-directory__title">${cityDirectoryState.title}</h2>
           </div>
-          <button type="button" class="c-city-directory__close" data-action="close-city-directory">
+          <button type="button" class="c-city-directory__close" data-action="close-city-directory" data-button-sound="light">
             关闭
           </button>
         </div>
@@ -479,6 +480,8 @@ function renderCityLocationSubnav(input: {
         class="c-city-menu__subnav-button"
         data-city-entry-id="${cityEntry.id}"
         data-city-location-entry-ref="${cityEntry.id}"
+        data-enter-sound="enter"
+        data-button-hover-sound="light"
       >
         <span class="c-city-menu__subnav-button-label">${cityEntry.name}</span>
       </button>
@@ -491,6 +494,8 @@ function renderCityLocationSubnav(input: {
         class="c-city-menu__subnav-button"
         data-house-id="${houseDefinition.id}"
         data-city-location-house-ref="${houseDefinition.id}"
+        data-enter-sound="enter"
+        data-button-hover-sound="light"
       >
         <span class="c-city-menu__subnav-button-label">${houseDefinition.name}</span>
       </button>
@@ -536,6 +541,7 @@ function renderCityMenuButtons(input: {
                     ? 'aria-haspopup="true"'
                     : `data-city-menu-open="${button.id}"`
                 }
+                data-button-sound="light"
               >
                 ${renderCityMenuButtonSkin()}
                 <span class="c-city-menu__button-label">${button.label}</span>
@@ -1292,7 +1298,7 @@ function renderCityMenuPanel(input: {
             ${renderCityChoiceSkin()}
             <strong class="c-city-menu-panel__lock-title">开始一次化缘</strong>
             <p class="c-city-menu-panel__hint">在城中接取粮食与钱物，小游戏结束后结算收益。</p>
-            <button type="button" class="c-city-menu-panel__primary-action" data-action="start-begging-minigame">
+            <button type="button" class="c-city-menu-panel__primary-action" data-action="start-begging-minigame" data-button-sound="light">
               开始化缘
             </button>
           </div>
@@ -1315,7 +1321,7 @@ function renderCityMenuPanel(input: {
           ${bodyMarkup}
         </div>
         <div class="c-city-menu-panel__actions">
-          <button type="button" class="c-city-directory__close c-city-menu-panel__close" data-action="close-city-menu">
+          <button type="button" class="c-city-directory__close c-city-menu-panel__close" data-action="close-city-menu" data-button-sound="light">
             关闭
           </button>
         </div>
@@ -1346,6 +1352,7 @@ export function renderCityView(
           type="button"
           class="c-kulan-city__three-d-action"
           data-action="enter-city-3d"
+          data-button-sound="light"
           aria-label="进入 3D 城市场景"
         >
           3D
@@ -1363,7 +1370,7 @@ export function renderCityView(
               houseDefinitions,
               cityEntries,
             })}
-            <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">
+            <button type="button" class="c-kulan-city__leave-action" data-action="leave-city" data-button-sound="light">
               返回地图
             </button>
             ${city3dButton}
