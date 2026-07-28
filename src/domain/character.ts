@@ -88,6 +88,12 @@ export type CharacterFunction = {
 };
 
 export type CharacterStats = Record<CharacterStatKey, number>;
+export type CharacterAttributeGroup = {
+  key: string;
+  keyName: string;
+  order: number;
+  itemKeys: string[];
+};
 export type CharacterPersonType = "角色" | "NPC";
 
 export type CharacterDefinition = {
@@ -120,4 +126,5 @@ export type CharacterDefinition = {
   onTalkSceneId?: SceneId;
   skills?: Partial<Record<SkillKey, number>>;
   teachableSkillKeys?: SkillKey[];
+  attributeGroups?: CharacterAttributeGroup[];
 };

@@ -1,9 +1,76 @@
+import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
+
 export type EventId = string;
 export type ChapterId = string;
 type SceneId = string;
 type CharacterId = string;
 type CityId = string;
 type HouseId = string;
+
+export type EventRuntimeAction =
+  | {
+      type: "closeBuilding";
+    }
+  | {
+      type: "launchPlayable";
+      playableId: string;
+      integrationId: string;
+      ownerContext: {
+        ownerKind: "house" | "scene" | "dialogue" | "task" | "external";
+        ownerId: string | null;
+        returnPolicy: "resume-owner" | "reenter-owner" | "close-only";
+      };
+      payload?: Record<string, unknown>;
+    }
+  | {
+      type: "launchFlow";
+      flowId: string;
+      ownerContext: {
+        ownerKind: "house" | "scene" | "dialogue" | "task" | "external";
+        ownerId: string | null;
+        returnPolicy: "resume-owner" | "reenter-owner" | "close-only";
+      };
+    };
+
+export type EventBindingOwner = {
+  family: string;
+  id?: string;
+  extra?: Record<string, unknown>;
+};
+
+export type EventBindingTrigger = {
+  timing: string;
+  action: string;
+  payloadSchemaId?: string;
+  extra?: Record<string, unknown>;
+};
+
+export type EventBindingConditionGroup = {
+  operator: "all" | "any" | "not";
+  conditions: EventBindingConditionNode[];
+};
+
+export type EventBindingConditionNode =
+  | EventBindingConditionGroup
+  | {
+      type: string;
+      field?: string;
+      operator?: string;
+      value?: unknown;
+      resolverId?: string;
+      extra?: Record<string, unknown>;
+    };
+
+export type EventBinding = {
+  id: string;
+  eventId: EventId;
+  owner: EventBindingOwner;
+  trigger: EventBindingTrigger;
+  conditions?: EventBindingConditionGroup;
+  priority?: number;
+  enabled?: boolean;
+  meta?: Record<string, unknown>;
+};
 
 export type EventOccurrence = "once" | "repeatable" | "once-per-chapter";
 
@@ -148,6 +215,11 @@ export type EventDefinition = {
   conditions: EventConditionNode[];
   participants?: EventParticipant[];
   entrySceneId: SceneId;
+  type?: "settlement";
+  dialogueId?: string;
+  actions?: EventRuntimeAction[];
+  settlementId?: string;
+  taskInputs?: RuntimeTaskInput[];
   nextEventId?: EventId;
   tags?: string[];
 };

@@ -340,6 +340,9 @@ function createActivatedMod(loadedMod: LoadedMod): ActivatedMod {
       ...(loadedMod.manifest.defaultStart?.houseId == null
         ? {}
         : { houseId: loadedMod.manifest.defaultStart.houseId }),
+      ...(loadedMod.manifest.defaultStart?.dialogueId == null
+        ? {}
+        : { dialogueId: loadedMod.manifest.defaultStart.dialogueId }),
       ...(loadedMod.manifest.defaultStart?.view == null
         ? {}
         : { view: loadedMod.manifest.defaultStart.view }),
@@ -353,9 +356,12 @@ type ContributionSource = {
   cities?: unknown;
   cityEntries?: unknown;
   events?: unknown;
+  dialogues?: unknown;
   scenes?: unknown;
   tasks?: unknown;
   houses?: unknown;
+  playables?: unknown;
+  playableIntegrations?: unknown;
 };
 
 function installGameplayContributions(input: {
@@ -372,13 +378,30 @@ function installGameplayContributions(input: {
     ...collectRecordIds(sources, "cityEntries"),
   ]);
   const availableEvents = uniqueStrings(collectRecordIds(sources, "events"));
+  const availableDialogues = uniqueStrings(
+    collectRecordIds(sources, "dialogues")
+  );
   const availableScenes = uniqueStrings(collectRecordIds(sources, "scenes"));
   const availableTasks = uniqueStrings(collectRecordIds(sources, "tasks"));
   const availableHouses = uniqueStrings(collectRecordIds(sources, "houses"));
+  const availablePlayables = uniqueStrings(collectRecordIds(sources, "playables"));
+  const availablePlayableIntegrations = uniqueStrings(
+    collectRecordIds(sources, "playableIntegrations", "integrationId")
+  );
   const resolvedHouses = resolveContributionIds({
     family: "houses",
     declaredIds: input.manifest.gameplayContributions?.houses,
     availableIds: availableHouses,
+  });
+  const resolvedPlayables = resolveContributionIds({
+    family: "playables",
+    declaredIds: input.manifest.gameplayContributions?.playables,
+    availableIds: availablePlayables,
+  });
+  const resolvedPlayableIntegrations = resolveContributionIds({
+    family: "playableIntegrations",
+    declaredIds: input.manifest.gameplayContributions?.playableIntegrations,
+    availableIds: availablePlayableIntegrations,
   });
 
   return {
@@ -401,6 +424,11 @@ function installGameplayContributions(input: {
       declaredIds: input.manifest.gameplayContributions?.events,
       availableIds: availableEvents,
     }),
+    dialogues: resolveContributionIds({
+      family: "dialogues",
+      declaredIds: input.manifest.gameplayContributions?.dialogues,
+      availableIds: availableDialogues,
+    }),
     scenes: resolveContributionIds({
       family: "scenes",
       declaredIds: input.manifest.gameplayContributions?.scenes,
@@ -413,12 +441,15 @@ function installGameplayContributions(input: {
     }),
     houses: resolvedHouses,
     houseModules: collectHouseModuleIds(sources, resolvedHouses),
+    playables: resolvedPlayables,
+    playableIntegrations: resolvedPlayableIntegrations,
   };
 }
 
 function collectRecordIds(
   sources: readonly ContributionSource[],
-  key: keyof ContributionSource
+  key: keyof ContributionSource,
+  idField = "id"
 ): string[] {
   return sources.flatMap((source) => {
     const value = source[key];
@@ -431,7 +462,7 @@ function collectRecordIds(
         return [];
       }
 
-      const id = (entry as { id?: unknown }).id;
+      const id = (entry as Record<string, unknown>)[idField];
       return typeof id === "string" && id.trim().length > 0 ? [id] : [];
     });
   });
