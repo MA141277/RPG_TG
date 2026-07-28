@@ -1,0 +1,24 @@
+[
+  {
+    "id": "city.pei_county",
+    "name": "沛县",
+    "regionId": "region.chu_han",
+    "mapNodeId": "settlement.fenyang_province",
+    "houseIds": [],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "county",
+      "qin",
+      "chu-han",
+      "opening"
+    ],
+    "prosperity": 54,
+    "danger": 32,
+    "specialDemand": [
+      "grain",
+      "labor",
+      "cloth"
+    ]
+  }
+]

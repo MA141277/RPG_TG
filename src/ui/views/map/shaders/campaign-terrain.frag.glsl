@@ -8,6 +8,7 @@ uniform sampler2D uMaterialSemanticTexture;
 uniform sampler2D uShorelineDistanceTexture;
 uniform sampler2D uWaterTexture;
 uniform sampler2D uGrassTexture;
+uniform sampler2D uGrassNormalTexture;
 uniform sampler2D uSandTexture;
 uniform sampler2D uStructureGroundTexture;
 uniform sampler2D uRockTexture;
@@ -54,6 +55,7 @@ varying vec3 vCameraNormal;
 varying vec2 vTerrainPosition;
 
 const float GRASS_TEXTURE_TILING_SCALE = 1.35;
+const float GRASS_NORMAL_LIGHT_STRENGTH = 0.30;
 
 float colorDistance(vec3 left, vec3 right) {
   return distance(left, right);
@@ -533,11 +535,28 @@ vec3 applyCampaignHistoricTone(vec3 color) {
   return clamp(mix(toned * 0.99, toned * 0.88, highlightGuard), 0.0, 1.0);
 }
 
+vec2 getGrassMaterialUv(vec2 uv) {
+  return fract(uv * (uLandTextureTiling * GRASS_TEXTURE_TILING_SCALE));
+}
+
 vec3 sampleGrassMaterial(vec2 uv) {
-  return texture2D(
-    uGrassTexture,
-    fract(uv * (uLandTextureTiling * GRASS_TEXTURE_TILING_SCALE))
-  ).rgb;
+  return texture2D(uGrassTexture, getGrassMaterialUv(uv)).rgb;
+}
+
+vec3 sampleGrassNormal(vec2 uv) {
+  vec3 normalSample =
+    texture2D(uGrassNormalTexture, getGrassMaterialUv(uv)).rgb * 2.0 - 1.0;
+
+  return normalize(vec3(
+    normalSample.xy * GRASS_NORMAL_LIGHT_STRENGTH,
+    max(normalSample.z, 0.08)
+  ));
+}
+
+float getGrassNormalLight(vec2 uv, vec3 terrainLight) {
+  float normalLight = clamp(dot(sampleGrassNormal(uv), terrainLight), 0.0, 1.0);
+
+  return clamp(0.92 + (normalLight - 0.5) * 0.32, 0.82, 1.08);
 }
 
 vec3 sampleSandMaterial(vec2 uv) {
@@ -995,6 +1014,17 @@ void main() {
     1.0
   );
   landTexture = mix(landTexture, snowLandTexture, snowAmount);
+  float grassNormalLight = getGrassNormalLight(vUv, terrainLight);
+  float grassNormalLightExclusion = clamp(
+    sandMaterialMask + mountainAmount + structureGroundAmount + snowAmount,
+    0.0,
+    1.0
+  );
+  landTexture = mix(
+    landTexture * grassNormalLight,
+    landTexture,
+    grassNormalLightExclusion
+  );
   float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, baseShade);
   vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
   vec3 waterColor = getAnimatedWaterColor(

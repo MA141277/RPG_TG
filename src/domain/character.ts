@@ -88,10 +88,13 @@ export type CharacterFunction = {
 };
 
 export type CharacterStats = Record<CharacterStatKey, number>;
+export type CharacterPersonType = "角色" | "NPC";
 
 export type CharacterDefinition = {
   id: CharacterId;
   name: string;
+  personType?: CharacterPersonType;
+  role?: string;
   birthYear: number;
   deathYear?: number | null;
   age: number;

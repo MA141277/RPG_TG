@@ -1,0 +1,30 @@
+[
+  {
+    "id": "event.story.liu_bang.pei_county_opening",
+    "chapterId": "chapter.chu_han_rising",
+    "name": "沛县亭长开局",
+    "occurrence": "once",
+    "trigger": {
+      "timing": "manual",
+      "priority": 200
+    },
+    "conditions": [],
+    "participants": [
+      {
+        "role": "player",
+        "characterId": "char.liu_bang",
+        "required": true
+      },
+      {
+        "role": "primary",
+        "characterId": "char.xiao_he",
+        "required": true
+      }
+    ],
+    "entrySceneId": "scene.story.liu_bang.pei_county_opening",
+    "tags": [
+      "json-pack",
+      "opening"
+    ]
+  }
+]

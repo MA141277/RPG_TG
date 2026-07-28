@@ -51,6 +51,7 @@ type CampaignTerrainInput = {
   campaignFortCityRulesUrl: string | null;
   campaignFortWallMeshUrl: string | null;
   grassTextureUrl: string | null;
+  grassNormalTextureUrl: string | null;
   sandTextureUrl: string | null;
   villageGroundTextureUrl: string | null;
   cityGroundTextureUrl: string | null;
@@ -1141,6 +1142,8 @@ function readCampaignTerrainInput(canvas: HTMLCanvasElement): CampaignTerrainInp
       renderMode === "terrain" ? canvas.dataset.campaignFortWallMeshUrl ?? null : null,
     grassTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapGrassTextureUrl ?? null : null,
+    grassNormalTextureUrl:
+      renderMode === "terrain" ? canvas.dataset.mapGrassNormalTextureUrl ?? null : null,
     sandTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapSandTextureUrl ?? null : null,
     villageGroundTextureUrl:
@@ -1169,6 +1172,7 @@ function getCampaignTerrainInputSignature(input: CampaignTerrainInput): string {
     input.campaignFortCityRulesUrl ?? "",
     input.campaignFortWallMeshUrl ?? "",
     input.grassTextureUrl ?? "",
+    input.grassNormalTextureUrl ?? "",
     input.sandTextureUrl ?? "",
     input.villageGroundTextureUrl ?? "",
     input.cityGroundTextureUrl ?? "",
@@ -1315,6 +1319,13 @@ async function initCampaignTerrainWebGl(
         return null;
       })
       : Promise.resolve(null);
+  const grassNormalTextureImagePromise =
+    renderTerrain && input.grassNormalTextureUrl != null
+      ? loadImage(input.grassNormalTextureUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign grass normal texture.", error);
+        return null;
+      })
+      : Promise.resolve(null);
   const sandTextureImagePromise =
     renderTerrain && input.sandTextureUrl != null
       ? loadImage(input.sandTextureUrl).catch((error: unknown) => {
@@ -1355,6 +1366,7 @@ async function initCampaignTerrainWebGl(
     materialImage,
     waterTextureImage,
     grassTextureImage,
+    grassNormalTextureImage,
     sandTextureImage,
     villageGroundTextureImage,
     cityGroundTextureImage,
@@ -1370,6 +1382,7 @@ async function initCampaignTerrainWebGl(
     loadImage(input.materialUrl),
     waterTextureImagePromise,
     grassTextureImagePromise,
+    grassNormalTextureImagePromise,
     sandTextureImagePromise,
     villageGroundTextureImagePromise,
     cityGroundTextureImagePromise,
@@ -1463,6 +1476,7 @@ async function initCampaignTerrainWebGl(
   );
   const waterTextureLocation = gl.getUniformLocation(program, "uWaterTexture");
   const grassTextureLocation = gl.getUniformLocation(program, "uGrassTexture");
+  const grassNormalTextureLocation = gl.getUniformLocation(program, "uGrassNormalTexture");
   const sandTextureLocation = gl.getUniformLocation(program, "uSandTexture");
   const structureGroundTextureLocation = gl.getUniformLocation(
     program,
@@ -1783,6 +1797,10 @@ async function initCampaignTerrainWebGl(
     }
   );
   const grassTexture = createTexture(gl, grassTextureImage ?? textureImage);
+  const grassNormalTexture = createTexture(
+    gl,
+    grassNormalTextureImage ?? grassTextureImage ?? textureImage
+  );
   const sandTexture = createTexture(gl, sandTextureImage ?? textureImage);
   const structureGroundTexture = createTexture(
     gl,
@@ -1830,6 +1848,7 @@ async function initCampaignTerrainWebGl(
     shorelineDistanceBoundsLocation == null ? "uShorelineDistanceBounds" : null,
     waterTextureLocation == null ? "uWaterTexture" : null,
     grassTextureLocation == null ? "uGrassTexture" : null,
+    grassNormalTextureLocation == null ? "uGrassNormalTexture" : null,
     sandTextureLocation == null ? "uSandTexture" : null,
     structureGroundTextureLocation == null ? "uStructureGroundTexture" : null,
     rockTextureLocation == null ? "uRockTexture" : null,
@@ -2524,6 +2543,9 @@ async function initCampaignTerrainWebGl(
     gl.clearColor(renderTerrain ? 0.02 : 0, renderTerrain ? 0.04 : 0, renderTerrain ? 0.04 : 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     const terrainCameraTilt = getCampaignTerrainCameraTiltRadians(currentCamera);
+    const currentTerrainMatrix = createTerrainMatrix(
+      input.canvas.width / Math.max(input.canvas.height, 1)
+    );
     ensureCampaignTerrainChunks(CAMPAIGN_TERRAIN_INITIAL_RADIUS_HEX);
     if (renderTerrain) {
       ensureCampaignTerrainChunks(CAMPAIGN_TERRAIN_PREFETCH_RADIUS_HEX);
@@ -2640,6 +2662,9 @@ async function initCampaignTerrainWebGl(
       gl.activeTexture(gl.TEXTURE3);
       gl.bindTexture(gl.TEXTURE_2D, grassTexture);
       gl.uniform1i(grassTextureLocation, 3);
+      gl.activeTexture(gl.TEXTURE9);
+      gl.bindTexture(gl.TEXTURE_2D, grassNormalTexture);
+      gl.uniform1i(grassNormalTextureLocation, 9);
       gl.activeTexture(gl.TEXTURE4);
       gl.bindTexture(gl.TEXTURE_2D, sandTexture);
       gl.uniform1i(sandTextureLocation, 4);

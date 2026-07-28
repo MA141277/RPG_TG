@@ -2,6 +2,40 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-28 Faction Review Reward And Personnel Settlement
+
+### Added
+- 评定结算新增共享奖励 helper：玩家位列完成情况前二且本轮有贡献时，可通过统一 runtime 库存获得奖励；默认奖励为 `斗米 x2`，寺庙覆盖为 `经书抄本 x1`。
+- 新增评定人事变动 helper，支持由阵营功绩身份推导 `rank-changed` 队列，并格式化为结构化弹窗文案；寺庙玩家可由 `杂役` 晋为 `沙弥`。
+- 新增 `GameState.runtime.factionMemberships` 与共享 `settleFactionReviewPersonnel()`，用于记录角色在阵营内的首次加入、当前身份、加入评定编号和最近评定编号；首轮评定可以先生成 `初次加入`，再在同一队列中生成晋升。
+- 背包投影现在读取评定 runtime 道具 `item.temple.scripture_copy`，让 `经书抄本` 进入玩家物品栏。
+
+### Changed
+- 寺庙评定关闭委任完成情况后，先执行奖励与人事结算，再进入原有表彰、形势、方略、进言和委任选择流程。
+- 寺庙方略/总计划弹窗关闭后直接进入进言选择，不再重新创建同一总计划弹窗。
+- 开局朱元璋的可见身份从 `亲兵` 改为 `流民`；寺庙评定人事结算不再从角色 title 推断前一阵营身份，因此首轮会表现为 `流民` 入寺、初列 `杂役`，再按贡献晋为 `沙弥`。
+- 剃度剧情不再通过 `patch-character` 覆盖玩家 `title` 为 `挂单僧`；寺中叙事身份保留在 occupation/biography，阵营身份由评定人事机制接管。
+- 评定委托的最低身份判定统一由 shared review task gate 合并 `reviewMinRankId` 与额外锁定条件；剧情解锁不能绕过最低身份要求。
+
+### Impact
+- 后续 keep 或其他阵营据点接入评定奖励、人事与委托门槛时，应复用 shared review reward/personnel/task-gate helpers，并继续通过统一 runtime 库存、`GameState.runtime.factionMerit`、`GameState.runtime.factionMemberships` 写入持久变化，避免在 `main.ts` 或 house view 中补业务分支。
+
+## 2026-07-28 Mod-First-Compatible Character And Building Data
+
+### Added
+- 新增统一角色/NPC 查询器 `src/application/character/character-manager.ts`，通过 `personType` / `role` 区分可选角色与 NPC，并支持按 house 查询 NPC。
+- 新增 `src/domain/building-arrangement.ts`，让 content pack 可以承载 mod-first 风格的 `cityId + buildingId -> mountedNpcIds / primaryNpcId / containers` 数据。
+- 新增 `tests/character-runtime-authoring-compat.test.cjs`，锁定统一人物结构、house NPC 查询优先级和 `buildingArrangements` 合并行为。
+
+### Changed
+- `CharacterDefinition` 新增可选 `personType` 与 `role` 字段；`ContentPackDefinition`、scenario/content pack loader、active/default runtime content 现在保留并合并 `buildingArrangements`。
+- 启动角色选择列表现在优先使用 `personType: "角色"` 或 `role: "playable"` 的字段驱动结果；旧内置内容未标字段时继续回退到原固定角色列表。
+- `docs/special-house-interface.md` 记录新 NPC 存储建议：新 house NPC 归属优先使用 `CharacterDefinition.houseId` 与 `buildingArrangements[].mountedNpcIds`，`HouseDefinition.characterIds` 只作为兼容 fallback。
+
+### Impact
+- NPC 与主角候选现在可以共用同一份 character 数据结构，后续新增玩法字段可继续挂在 `CharacterDefinition` 或专门 runtime 状态上，而不需要维护第二套 NPC 存储。
+- 后续合并 `mod-first-dev` 的 building shell 时，数据侧已经有同名契约和合并路径，可以先迁移内容，再逐步替换 house runtime。
+
 ## 2026-07-26 Campaign Map-Space Volumetric Cloud Slab
 
 - `campaign-cloud-webgl.ts` now uploads terrain-owned cloud projection uniforms so the cloud shader can render the campaign cloud body in terrain/map space while preserving the existing reveal texture lifecycle.
@@ -923,7 +957,7 @@
 - 皇觉寺日常事务新增休息面板和本轮化缘交粮流程：可提交随身粮食、结算寺中贡献、记录本轮交粮评价并扣除活动体力。
 
 ### Changed
-- 城市“化缘”按钮继续只在玩家 `title` / `occupation` 具备僧人/和尚身份时显示；皇觉寺开局不再提前赋予和尚身份，改由剃度剧情通过结构化 `patch-character` 效果写入 `挂单僧 / 皇觉寺僧人`。
+- 城市“化缘”按钮继续只在玩家 `title` / `occupation` 具备僧人/和尚身份时显示；皇觉寺开局不再提前赋予和尚身份，剃度剧情通过结构化 `patch-character` 效果写入寺中 occupation/biography，不覆盖评定身份 title。
 - 粮店买卖粮食改为读写共享玩家粮食库存，并在进入粮店时迁移旧的粮店/市场米粮变量。
 - 城市化缘小游戏完成后会将获得粮食写入共享库存，记录最近一次化缘结果，并消耗一次活动体力。
 - 粮行算账、药铺配药、茶馆舌战、酒馆交活、酒馆赌局结算、寺庙寺务和化缘交粮统一接入活动体力消耗；体力不足时会在对应 house 或城市化缘入口提示先休息。

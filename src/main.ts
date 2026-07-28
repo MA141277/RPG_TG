@@ -1,5 +1,6 @@
 import "./styles/app.css";
 import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
+import { selectPlayableCharacters } from "./application/character/character-manager";
 import {
   selectLayoutEditorComponent,
   selectLayoutEditorElement,
@@ -529,16 +530,16 @@ function setActiveContentContext(
   activeContentContext = nextContentContext;
 }
 
-const selectableCharacters = selectableCharacterIds.map((characterId) => {
-  const characterDefinition = activeContentContext.gameContent.characters.find(
-    (candidateCharacter) => candidateCharacter.id === characterId
-  );
+const selectableCharacters = selectPlayableCharacters(
+  activeContentContext.gameContent.characters,
+  selectableCharacterIds
+);
+for (const characterId of selectableCharacterIds) {
   assertExists(
-    characterDefinition,
+    activeContentContext.gameContent.characterDefinitionById[characterId],
     `Selectable character not found for id "${characterId}".`
   );
-  return characterDefinition;
-});
+}
 
 let currentPlayerCharacterId = defaultPlayerCharacterId;
 

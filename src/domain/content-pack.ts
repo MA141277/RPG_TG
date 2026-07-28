@@ -1,5 +1,6 @@
 import type { SceneDefinition } from "./action";
 import type { ActivityDefinition } from "./activity";
+import type { BuildingArrangementDefinition } from "./building-arrangement";
 import type { CardDefinition } from "./card";
 import type { CharacterDefinition } from "./character";
 import type { CityDefinition } from "./city";
@@ -28,6 +29,7 @@ export type ContentPackDefinition = {
   maps?: MapDefinition[];
   cities?: CityDefinition[];
   houses?: HouseDefinition[];
+  buildingArrangements?: BuildingArrangementDefinition[];
   cityEntries?: CityEntryDefinition[];
   characters?: CharacterDefinition[];
   events?: EventDefinition[];

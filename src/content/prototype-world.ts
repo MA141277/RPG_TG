@@ -593,7 +593,7 @@ export const prototypeCharacters: CharacterDefinition[] = [
     deathYear: null,
     age: 32,
     clanId: "clan.guo",
-    title: "亲兵",
+    title: "流民",
     occupation: "军中跑腿",
     cityId: "city.kulan",
     houseId: "home_001",

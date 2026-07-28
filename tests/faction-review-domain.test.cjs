@@ -12,6 +12,16 @@ const {
   writeFactionMerit,
   clearFactionMerit,
   createReviewTaskChoiceViewModels,
+  REVIEW_DEFAULT_TOP_RANK_REWARD,
+  TEMPLE_TOP_RANK_REWARD,
+  getRuntimeItemQuantityKey,
+  readRuntimeItemQuantity,
+  applyReviewItemReward,
+  isReviewTopRankRewardEligible,
+  createFactionRankPersonnelChanges,
+  readFactionMembership,
+  settleFactionReviewPersonnel,
+  formatReviewPersonnelChangeLines,
   getDefaultReviewSpecialTaskHookResult,
 } = require("../.test-dist/application/review/faction-review.js");
 
@@ -63,6 +73,12 @@ test("review task choices include minimum identity labels and rank gating", () =
     tasks: [
       { id: "grain", label: "筹粮", minRankId: "red_turban.bodyguard" },
       { id: "drill", label: "练兵", minRankId: "red_turban.zhenfu" },
+      {
+        id: "secret",
+        label: "密令",
+        minRankId: "red_turban.bodyguard",
+        disabled: true,
+      },
     ],
   });
   assert.deepEqual(choices, [
@@ -80,11 +96,170 @@ test("review task choices include minimum identity labels and rank gating", () =
       minRankLabel: "镇抚",
       disabled: true,
     },
+    {
+      id: "secret",
+      label: "密令（最低身份：亲兵）",
+      minRankId: "red_turban.bodyguard",
+      minRankLabel: "亲兵",
+      disabled: true,
+    },
   ]);
 });
 
 test("default special task hook is empty and falls back to ordinary choices", () => {
   assert.deepEqual(getDefaultReviewSpecialTaskHookResult(), { type: "none" });
+});
+
+test("top two review ranking rewards default to two dou grain and temple overrides to scripture copy", () => {
+  assert.deepEqual(REVIEW_DEFAULT_TOP_RANK_REWARD, {
+    itemId: "item.grain",
+    label: "斗米",
+    quantity: 2,
+  });
+  assert.deepEqual(TEMPLE_TOP_RANK_REWARD, {
+    itemId: "item.temple.scripture_copy",
+    label: "经书抄本",
+    quantity: 1,
+  });
+
+  const rows = [
+    {
+      characterId: "char.senior",
+      characterName: "师兄",
+      assignmentTitle: "寺中执事",
+      contribution: 25,
+      grade: "acceptable",
+    },
+    {
+      characterId: "char.player",
+      characterName: "朱元璋",
+      assignmentTitle: "寺中执事",
+      contribution: 90,
+      grade: "outstanding",
+    },
+    {
+      characterId: "char.idle",
+      characterName: "闲僧",
+      assignmentTitle: "寺中执事",
+      contribution: 1,
+      grade: "poor",
+    },
+  ];
+
+  assert.equal(isReviewTopRankRewardEligible(rows, "char.player"), true);
+  assert.equal(isReviewTopRankRewardEligible(rows, "char.idle"), false);
+  assert.equal(
+    isReviewTopRankRewardEligible(
+      [{ ...rows[0], characterId: "char.player", contribution: 0, grade: "idle" }],
+      "char.player"
+    ),
+    false
+  );
+});
+
+test("review item rewards enter unified runtime inventory", () => {
+  const baseState = {
+    runtime: {
+      variables: {
+        "var.player_inventory.grain_dou": 3,
+      },
+    },
+  };
+
+  const withGrain = applyReviewItemReward(baseState, REVIEW_DEFAULT_TOP_RANK_REWARD);
+  assert.equal(withGrain.runtime.variables["var.player_inventory.grain_dou"], 5);
+
+  const withScripture = applyReviewItemReward(withGrain, TEMPLE_TOP_RANK_REWARD);
+  assert.equal(
+    readRuntimeItemQuantity(withScripture, TEMPLE_TOP_RANK_REWARD.itemId),
+    1
+  );
+  assert.equal(
+    getRuntimeItemQuantityKey(TEMPLE_TOP_RANK_REWARD.itemId),
+    "var.player_inventory.item.item.temple.scripture_copy"
+  );
+});
+
+test("faction rank personnel changes promote player identity from current title", () => {
+  const changes = createFactionRankPersonnelChanges({
+    characterDefinitions: [
+      { id: "char.player", name: "朱元璋", title: "杂役" },
+      { id: "char.senior", name: "师兄", title: "知客僧" },
+    ],
+    playerCharacterId: "char.player",
+    previousRankLabel: "杂役",
+    nextRankLabel: "沙弥",
+  });
+
+  assert.deepEqual(changes, [
+    {
+      type: "rank-changed",
+      characterId: "char.player",
+      characterName: "朱元璋",
+      previousTitle: "杂役",
+      nextTitle: "沙弥",
+    },
+  ]);
+  assert.deepEqual(formatReviewPersonnelChangeLines(changes), [
+    "朱元璋由杂役晋为沙弥。",
+  ]);
+  assert.deepEqual(formatReviewPersonnelChangeLines([]), [
+    "本轮我方没有人事变化。",
+  ]);
+});
+
+test("faction review personnel settlement records first entry before promotion", () => {
+  const baseState = {
+    runtime: {
+      factionMemberships: {},
+    },
+  };
+
+  const result = settleFactionReviewPersonnel({
+    state: baseState,
+    factionId: "temple",
+    factionLabel: "皇觉寺",
+    characterId: "char.player",
+    characterName: "朱元璋",
+    reviewId: "temple:1352-1-1",
+    entryRankId: "temple.laborer",
+    previousMerit: 0,
+    nextMerit: 90,
+    ranks: TEMPLE_FACTION_RANKS,
+    formatRankLabel: (rank) =>
+      rank.id === "temple.laborer"
+        ? "杂役"
+        : rank.id === "temple.novice"
+          ? "沙弥"
+          : rank.label,
+  });
+
+  assert.deepEqual(result.changes, [
+    {
+      type: "joined",
+      characterId: "char.player",
+      characterName: "朱元璋",
+      factionLabel: "皇觉寺",
+      nextTitle: "杂役",
+    },
+    {
+      type: "rank-changed",
+      characterId: "char.player",
+      characterName: "朱元璋",
+      previousTitle: "杂役",
+      nextTitle: "沙弥",
+    },
+  ]);
+  assert.deepEqual(formatReviewPersonnelChangeLines(result.changes), [
+    "朱元璋初次加入皇觉寺，列为杂役。",
+    "朱元璋由杂役晋为沙弥。",
+  ]);
+  assert.deepEqual(readFactionMembership(result.state, "temple", "char.player"), {
+    status: "active",
+    rankId: "temple.novice",
+    joinedReviewId: "temple:1352-1-1",
+    lastReviewId: "temple:1352-1-1",
+  });
 });
 
 test("keep review task access is not derived from player fame", () => {

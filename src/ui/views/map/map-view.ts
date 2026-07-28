@@ -76,6 +76,7 @@ export type MapViewModel = {
   hexTextureAtlasImageUrl: string | null;
   materialTextureImageUrl: string | null;
   grassTextureImageUrl: string | null;
+  grassNormalTextureImageUrl: string | null;
   sandTextureImageUrl: string | null;
   villageGroundTextureImageUrl: string | null;
   cityGroundTextureImageUrl: string | null;
@@ -192,6 +193,9 @@ export function createMapViewModel(input: {
       null,
     grassTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_grass_texture")
+        ?.imageUrl ?? null,
+    grassNormalTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_grass_normal_texture")
         ?.imageUrl ?? null,
     sandTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_sand_texture")
@@ -426,6 +430,7 @@ function renderCampaignMapVisualLayer(
           ${model.campaignHexGridUrl == null ? "" : `data-map-hex-grid-url="${model.campaignHexGridUrl}"`}
           ${model.campaignVegetationRulesUrl == null ? "" : `data-map-vegetation-rules-url="${model.campaignVegetationRulesUrl}"`}
           ${model.grassTextureImageUrl == null ? "" : `data-map-grass-texture-url="${model.grassTextureImageUrl}"`}
+          ${model.grassNormalTextureImageUrl == null ? "" : `data-map-grass-normal-texture-url="${model.grassNormalTextureImageUrl}"`}
           ${model.sandTextureImageUrl == null ? "" : `data-map-sand-texture-url="${model.sandTextureImageUrl}"`}
           ${model.villageGroundTextureImageUrl == null ? "" : `data-map-village-ground-texture-url="${model.villageGroundTextureImageUrl}"`}
           ${model.cityGroundTextureImageUrl == null ? "" : `data-map-city-ground-texture-url="${model.cityGroundTextureImageUrl}"`}

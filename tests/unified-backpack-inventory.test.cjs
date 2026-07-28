@@ -8,6 +8,10 @@ const {
   resolveSelectedBackpackItemId,
 } = require("../.test-dist/application/inventory/item-inventory.js");
 const {
+  TEMPLE_TOP_RANK_REWARD,
+  getRuntimeItemQuantityKey,
+} = require("../.test-dist/application/review/faction-review.js");
+const {
   PLAYER_GRAIN_RUNTIME_KEYS,
 } = require("../.test-dist/application/inventory/trade-inventory.js");
 
@@ -99,6 +103,36 @@ test("projects legacy valuables and shared grain into unified backpack rows", ()
       },
     ]
   );
+});
+
+test("projects review runtime items into unified backpack rows", () => {
+  const items = projectBackpackItems({
+    valuableInventory: {
+      items: [],
+      selectedItemId: null,
+      equippedWeaponSet: { swordId: null, armorId: null },
+    },
+    gameState: {
+      runtime: {
+        variables: {
+          [getRuntimeItemQuantityKey(TEMPLE_TOP_RANK_REWARD.itemId)]: 1,
+        },
+      },
+    },
+  });
+
+  assert.deepEqual(items, [
+    {
+      id: "item.temple.scripture_copy",
+      name: "经书抄本",
+      icon: null,
+      value: 0,
+      types: ["other", "quest"],
+      count: 1,
+      description: "寺中评定赐下的经书抄本。",
+      actions: [],
+    },
+  ]);
 });
 
 test("filters backpack rows by top-level category", () => {

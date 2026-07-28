@@ -9,6 +9,7 @@ import map_climatesUrl from "../assets/yuanmo-map/yuanmo-map-climates.png";
 import map_water_noiseUrl from "../assets/yuanmo-map/yuanmo-water-noise.png";
 import map_fog_noiseUrl from "../assets/yuanmo-map/yuanmo-fog-noise.png";
 import map_grass_textureUrl from "../assets/yuanmo-map/campaign-grass-texture.png";
+import map_grass_normal_textureUrl from "../assets/yuanmo-map/campaign-grass-normal-texture.png";
 import map_sand_textureUrl from "../assets/yuanmo-map/campaign-sand-texture.png";
 import map_village_ground_textureUrl from "../assets/yuanmo-map/campaign-village-ground-texture.png";
 import map_city_ground_textureUrl from "../assets/yuanmo-map/campaign-city-ground-texture.png";
@@ -990,6 +991,7 @@ export const yuanmoCampaignMap: MapDefinition = {
     {"id": "map_heights", "label": "Height map", "width": 1019, "height": 903, "description": "map_heights.tga", "imageUrl": map_heightsUrl},
     {"id": "map_ground_types", "label": "Ground types", "width": 1019, "height": 903, "description": "map_ground_types.tga", "imageUrl": map_ground_typesUrl},
     {"id": "map_grass_texture", "label": "Campaign grass texture", "width": 1254, "height": 1254, "description": "grass.png", "imageUrl": map_grass_textureUrl},
+    {"id": "map_grass_normal_texture", "label": "Campaign grass normal texture", "width": 1254, "height": 1254, "description": "gassuv.png", "imageUrl": map_grass_normal_textureUrl},
     {"id": "map_sand_texture", "label": "Campaign sand texture", "width": 1254, "height": 1254, "description": "sand.png", "imageUrl": map_sand_textureUrl},
     {"id": "map_village_ground_texture", "label": "Campaign village ground texture", "width": 1024, "height": 1024, "description": "field.png", "imageUrl": map_village_ground_textureUrl},
     {"id": "map_city_ground_texture", "label": "Campaign city ground texture", "width": 1024, "height": 1024, "description": "land.png", "imageUrl": map_city_ground_textureUrl},

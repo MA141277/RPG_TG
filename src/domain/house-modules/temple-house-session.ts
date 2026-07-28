@@ -92,6 +92,8 @@ export type TempleHouseDailyActionPanel = "root" | "work" | "rest";
 export type TempleHouseMeetingStage =
   | "intro"
   | "assignment-table"
+  | "reward"
+  | "personnel"
   | "praise"
   | "situation"
   | "policy"

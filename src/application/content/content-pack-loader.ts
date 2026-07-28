@@ -5,6 +5,7 @@ const CONTENT_PACK_FILE_KEYS = [
   "maps",
   "cities",
   "houses",
+  "buildingArrangements",
   "cityEntries",
   "characters",
   "events",

@@ -1,0 +1,655 @@
+[
+  {
+    "id": "city.kulan",
+    "name": "濠州",
+    "regionId": "region.frontier",
+    "mapNodeId": "settlement.fenyang_province",
+    "houseIds": [
+      "house.kulan.leader_residence",
+      "house.kulan.temple",
+      "home_001",
+      "house.kulan.keep",
+      "house.kulan.tea_house",
+      "house.kulan.market",
+      "house.kulan.grain_shop",
+      "house.kulan.medicine_house",
+      "house.kulan.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "castle-town",
+      "market",
+      "commercial",
+      "jiangnan",
+      "large-city"
+    ],
+    "prosperity": 90,
+    "danger": 20,
+    "specialDemand": [
+      "silk",
+      "tea",
+      "luxury"
+    ]
+  },
+  {
+    "id": "city.yingtian",
+    "name": "集庆路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.yingtian_province",
+    "houseIds": [
+      "house.yingtian.leader_residence",
+      "house.yingtian.temple",
+      "home.yingtian",
+      "house.yingtian.keep",
+      "house.yingtian.tea_house",
+      "house.yingtian.market",
+      "house.yingtian.grain_shop",
+      "house.yingtian.medicine_house",
+      "house.yingtian.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jiangnan",
+      "large-city",
+      "former-yuan-garrison"
+    ],
+    "prosperity": 92,
+    "danger": 35,
+    "specialDemand": [
+      "silk",
+      "tea",
+      "luxury"
+    ]
+  },
+  {
+    "id": "city.luzhou",
+    "name": "庐州路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.luzhou_province",
+    "houseIds": [
+      "house.luzhou.leader_residence",
+      "house.luzhou.temple",
+      "home.luzhou",
+      "house.luzhou.keep",
+      "house.luzhou.tea_house",
+      "house.luzhou.market",
+      "house.luzhou.grain_shop",
+      "house.luzhou.medicine_house",
+      "house.luzhou.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jianghuai",
+      "market",
+      "military"
+    ],
+    "prosperity": 76,
+    "danger": 32,
+    "specialDemand": [
+      "grain",
+      "iron",
+      "medicine"
+    ]
+  },
+  {
+    "id": "city.anqing",
+    "name": "安庆路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.anqing_province",
+    "houseIds": [
+      "house.anqing.leader_residence",
+      "house.anqing.temple",
+      "home.anqing",
+      "house.anqing.keep",
+      "house.anqing.tea_house",
+      "house.anqing.market",
+      "house.anqing.grain_shop",
+      "house.anqing.medicine_house",
+      "house.anqing.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jianghuai",
+      "river-port",
+      "frontier"
+    ],
+    "prosperity": 72,
+    "danger": 42,
+    "specialDemand": [
+      "grain",
+      "timber",
+      "iron"
+    ]
+  },
+  {
+    "id": "city.taiping",
+    "name": "太平路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.taiping_province",
+    "houseIds": [
+      "house.taiping.leader_residence",
+      "house.taiping.temple",
+      "home.taiping",
+      "house.taiping.keep",
+      "house.taiping.tea_house",
+      "house.taiping.market",
+      "house.taiping.grain_shop",
+      "house.taiping.medicine_house",
+      "house.taiping.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "river-port",
+      "military",
+      "frontier"
+    ],
+    "prosperity": 74,
+    "danger": 48,
+    "specialDemand": [
+      "fish",
+      "timber",
+      "iron"
+    ]
+  },
+  {
+    "id": "city.anfeng",
+    "name": "安丰路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.tieling_province",
+    "houseIds": [
+      "house.anfeng.leader_residence",
+      "house.anfeng.temple",
+      "home.anfeng",
+      "house.anfeng.keep",
+      "house.anfeng.tea_house",
+      "house.anfeng.market",
+      "house.anfeng.grain_shop",
+      "house.anfeng.medicine_house",
+      "house.anfeng.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "hongjin",
+      "military",
+      "plain"
+    ],
+    "prosperity": 68,
+    "danger": 50,
+    "specialDemand": [
+      "grain",
+      "horses",
+      "cloth"
+    ]
+  },
+  {
+    "id": "city.runing",
+    "name": "颍州",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.runing_province",
+    "houseIds": [
+      "house.runing.leader_residence",
+      "house.runing.temple",
+      "home.runing",
+      "house.runing.keep",
+      "house.runing.tea_house",
+      "house.runing.market",
+      "house.runing.grain_shop",
+      "house.runing.medicine_house",
+      "house.runing.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "hongjin",
+      "plain",
+      "military"
+    ],
+    "prosperity": 70,
+    "danger": 52,
+    "specialDemand": [
+      "grain",
+      "salt",
+      "cloth"
+    ]
+  },
+  {
+    "id": "city.huaian",
+    "name": "高邮府",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.huaian_province",
+    "houseIds": [
+      "house.huaian.leader_residence",
+      "house.huaian.temple",
+      "home.huaian",
+      "house.huaian.keep",
+      "house.huaian.tea_house",
+      "house.huaian.market",
+      "house.huaian.grain_shop",
+      "house.huaian.medicine_house",
+      "house.huaian.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "canal",
+      "salt",
+      "zhang-shicheng"
+    ],
+    "prosperity": 84,
+    "danger": 40,
+    "specialDemand": [
+      "salt",
+      "grain",
+      "silk"
+    ]
+  },
+  {
+    "id": "city.yangzhou",
+    "name": "扬州路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.yangzhou_province",
+    "houseIds": [
+      "house.yangzhou.leader_residence",
+      "house.yangzhou.temple",
+      "home.yangzhou",
+      "house.yangzhou.keep",
+      "house.yangzhou.tea_house",
+      "house.yangzhou.market",
+      "house.yangzhou.grain_shop",
+      "house.yangzhou.medicine_house",
+      "house.yangzhou.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "canal",
+      "commercial",
+      "zhang-shicheng"
+    ],
+    "prosperity": 88,
+    "danger": 38,
+    "specialDemand": [
+      "salt",
+      "silk",
+      "luxury"
+    ]
+  },
+  {
+    "id": "city.suzhou",
+    "name": "平江路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.suzhou_province",
+    "houseIds": [
+      "house.suzhou.leader_residence",
+      "house.suzhou.temple",
+      "home.suzhou",
+      "house.suzhou.keep",
+      "house.suzhou.tea_house",
+      "house.suzhou.market",
+      "house.suzhou.grain_shop",
+      "house.suzhou.medicine_house",
+      "house.suzhou.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jiangnan",
+      "commercial",
+      "large-city"
+    ],
+    "prosperity": 96,
+    "danger": 28,
+    "specialDemand": [
+      "silk",
+      "tea",
+      "luxury"
+    ]
+  },
+  {
+    "id": "city.wuchang",
+    "name": "武昌路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.wuchang_province",
+    "houseIds": [
+      "house.wuchang.leader_residence",
+      "house.wuchang.temple",
+      "home.wuchang",
+      "house.wuchang.keep",
+      "house.wuchang.tea_house",
+      "house.wuchang.market",
+      "house.wuchang.grain_shop",
+      "house.wuchang.medicine_house",
+      "house.wuchang.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "chen-han",
+      "river-port",
+      "large-city"
+    ],
+    "prosperity": 86,
+    "danger": 46,
+    "specialDemand": [
+      "fish",
+      "iron",
+      "grain"
+    ]
+  },
+  {
+    "id": "city.nanchang",
+    "name": "龙兴路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.nanchang_province",
+    "houseIds": [
+      "house.nanchang.leader_residence",
+      "house.nanchang.temple",
+      "home.nanchang",
+      "house.nanchang.keep",
+      "house.nanchang.tea_house",
+      "house.nanchang.market",
+      "house.nanchang.grain_shop",
+      "house.nanchang.medicine_house",
+      "house.nanchang.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jiangxi",
+      "frontier",
+      "military"
+    ],
+    "prosperity": 80,
+    "danger": 44,
+    "specialDemand": [
+      "grain",
+      "timber",
+      "medicine"
+    ]
+  },
+  {
+    "id": "city.chongqing",
+    "name": "重庆路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.chongqing_province",
+    "houseIds": [
+      "house.chongqing.leader_residence",
+      "house.chongqing.temple",
+      "home.chongqing",
+      "house.chongqing.keep",
+      "house.chongqing.tea_house",
+      "house.chongqing.market",
+      "house.chongqing.grain_shop",
+      "house.chongqing.medicine_house",
+      "house.chongqing.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "sichuan",
+      "mountain",
+      "river-port"
+    ],
+    "prosperity": 78,
+    "danger": 34,
+    "specialDemand": [
+      "medicine",
+      "timber",
+      "salt"
+    ]
+  },
+  {
+    "id": "city.chengdu",
+    "name": "成都路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.chendu_province",
+    "houseIds": [
+      "house.chengdu.leader_residence",
+      "house.chengdu.temple",
+      "home.chengdu",
+      "house.chengdu.keep",
+      "house.chengdu.tea_house",
+      "house.chengdu.market",
+      "house.chengdu.grain_shop",
+      "house.chengdu.medicine_house",
+      "house.chengdu.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "sichuan",
+      "large-city",
+      "commercial"
+    ],
+    "prosperity": 90,
+    "danger": 24,
+    "specialDemand": [
+      "silk",
+      "medicine",
+      "grain"
+    ]
+  },
+  {
+    "id": "city.ningbo",
+    "name": "庆元路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.ningbo_province",
+    "houseIds": [
+      "house.ningbo.leader_residence",
+      "house.ningbo.temple",
+      "home.ningbo",
+      "house.ningbo.keep",
+      "house.ningbo.tea_house",
+      "house.ningbo.market",
+      "house.ningbo.grain_shop",
+      "house.ningbo.medicine_house",
+      "house.ningbo.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "coastal",
+      "fang-guozhen",
+      "trade"
+    ],
+    "prosperity": 82,
+    "danger": 36,
+    "specialDemand": [
+      "fish",
+      "silk",
+      "salt"
+    ]
+  },
+  {
+    "id": "city.wenzhou",
+    "name": "温州路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.wenzhou_province",
+    "houseIds": [
+      "house.wenzhou.leader_residence",
+      "house.wenzhou.temple",
+      "home.wenzhou",
+      "house.wenzhou.keep",
+      "house.wenzhou.tea_house",
+      "house.wenzhou.market",
+      "house.wenzhou.grain_shop",
+      "house.wenzhou.medicine_house",
+      "house.wenzhou.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "coastal",
+      "fang-guozhen",
+      "trade"
+    ],
+    "prosperity": 76,
+    "danger": 34,
+    "specialDemand": [
+      "fish",
+      "timber",
+      "salt"
+    ]
+  },
+  {
+    "id": "city.fuzhou",
+    "name": "福州路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.fuzhou_province",
+    "houseIds": [
+      "house.fuzhou.leader_residence",
+      "house.fuzhou.temple",
+      "home.fuzhou",
+      "house.fuzhou.keep",
+      "house.fuzhou.tea_house",
+      "house.fuzhou.market",
+      "house.fuzhou.grain_shop",
+      "house.fuzhou.medicine_house",
+      "house.fuzhou.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "coastal",
+      "yuan-loyalist",
+      "trade"
+    ],
+    "prosperity": 80,
+    "danger": 36,
+    "specialDemand": [
+      "fish",
+      "tea",
+      "timber"
+    ]
+  },
+  {
+    "id": "city.dadu",
+    "name": "大都路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.shuntian_province",
+    "houseIds": [
+      "house.dadu.leader_residence",
+      "house.dadu.temple",
+      "home.dadu",
+      "house.dadu.keep",
+      "house.dadu.tea_house",
+      "house.dadu.market",
+      "house.dadu.grain_shop",
+      "house.dadu.medicine_house",
+      "house.dadu.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "yuan-court",
+      "capital",
+      "large-city"
+    ],
+    "prosperity": 98,
+    "danger": 18,
+    "specialDemand": [
+      "luxury",
+      "horses",
+      "silk"
+    ]
+  },
+  {
+    "id": "city.kaifeng",
+    "name": "汴梁路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.kaifeng_province",
+    "houseIds": [
+      "house.kaifeng.leader_residence",
+      "house.kaifeng.temple",
+      "home.kaifeng",
+      "house.kaifeng.keep",
+      "house.kaifeng.tea_house",
+      "house.kaifeng.market",
+      "house.kaifeng.grain_shop",
+      "house.kaifeng.medicine_house",
+      "house.kaifeng.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "henan",
+      "yuan-garrison",
+      "large-city"
+    ],
+    "prosperity": 86,
+    "danger": 44,
+    "specialDemand": [
+      "grain",
+      "horses",
+      "iron"
+    ]
+  },
+  {
+    "id": "city.gongchang",
+    "name": "巩昌路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.gongchang_province",
+    "houseIds": [
+      "house.gongchang.leader_residence",
+      "house.gongchang.temple",
+      "home.gongchang",
+      "house.gongchang.keep",
+      "house.gongchang.tea_house",
+      "house.gongchang.market",
+      "house.gongchang.grain_shop",
+      "house.gongchang.medicine_house",
+      "house.gongchang.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "northwest",
+      "yuan-garrison",
+      "frontier"
+    ],
+    "prosperity": 66,
+    "danger": 42,
+    "specialDemand": [
+      "horses",
+      "iron",
+      "grain"
+    ]
+  },
+  {
+    "id": "city.fengyuan",
+    "name": "奉元路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.xian_province",
+    "houseIds": [
+      "house.fengyuan.leader_residence",
+      "house.fengyuan.temple",
+      "home.fengyuan",
+      "house.fengyuan.keep",
+      "house.fengyuan.tea_house",
+      "house.fengyuan.market",
+      "house.fengyuan.grain_shop",
+      "house.fengyuan.medicine_house",
+      "house.fengyuan.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "shaanxi",
+      "large-city",
+      "yuan-garrison"
+    ],
+    "prosperity": 84,
+    "danger": 36,
+    "specialDemand": [
+      "horses",
+      "grain",
+      "iron"
+    ]
+  }
+]
