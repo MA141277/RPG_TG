@@ -55,16 +55,22 @@ function normalizeGameplayContributions(
   const candidate = value as Record<string, unknown>;
   const navigation = readStringArray(candidate.navigation);
   const events = readStringArray(candidate.events);
+  const dialogues = readStringArray(candidate.dialogues);
   const scenes = readStringArray(candidate.scenes);
   const tasks = readStringArray(candidate.tasks);
   const houses = readStringArray(candidate.houses);
+  const playables = readStringArray(candidate.playables);
+  const playableIntegrations = readStringArray(candidate.playableIntegrations);
 
   return {
     ...(navigation == null ? {} : { navigation }),
     ...(events == null ? {} : { events }),
+    ...(dialogues == null ? {} : { dialogues }),
     ...(scenes == null ? {} : { scenes }),
     ...(tasks == null ? {} : { tasks }),
     ...(houses == null ? {} : { houses }),
+    ...(playables == null ? {} : { playables }),
+    ...(playableIntegrations == null ? {} : { playableIntegrations }),
   };
 }
 
@@ -85,6 +91,7 @@ function normalizeDefaultStart(
   const houseId =
     candidate.houseId === null ? null : readOptionalString(candidate.houseId);
   const sceneId = readOptionalString(candidate.sceneId);
+  const dialogueId = readOptionalString(candidate.dialogueId);
   const view = readOptionalString(candidate.view);
 
   return {
@@ -93,6 +100,7 @@ function normalizeDefaultStart(
     ...(cityId == null ? {} : { cityId }),
     ...(houseId == null ? {} : { houseId }),
     ...(sceneId == null ? {} : { sceneId }),
+    ...(dialogueId == null ? {} : { dialogueId }),
     ...(view == null ? {} : { view }),
   };
 }

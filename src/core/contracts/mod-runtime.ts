@@ -25,6 +25,7 @@ export type ActivatedMod = {
     mapId?: string;
     cityId?: string;
     houseId?: string | null;
+    dialogueId?: string | null;
     view?: string;
   };
 };
