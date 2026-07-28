@@ -2,6 +2,7 @@ import type { SceneId } from "./action";
 import type { CharacterId } from "./character";
 import type { CityId } from "./city";
 import type { CityNpcPoolRuntimeState } from "./city-npc";
+import type { DialogueId } from "./dialogue";
 import type { EventId } from "./event";
 import type { HouseId } from "./house";
 import type { CityMarketData } from "./market";
@@ -16,6 +17,7 @@ import type { TroopRuntimeState } from "./troop-editor";
 import type { TaskRuntimeState } from "../core/contracts/task-runtime";
 import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
 import type { CampaignMapExplorationState } from "./map-exploration";
+import type { RuntimeProgressState } from "../core/contracts/progression-runtime";
 
 export type ViewName =
   | "map"
@@ -24,9 +26,29 @@ export type ViewName =
   | "city"
   | "city-3d"
   | "house"
+  | "dialogue"
   | "scene"
   | "battle"
   | "minigame";
+export const GAME_VIEW_NAMES = [
+  "map",
+  "troop-editor",
+  "troop-management",
+  "city",
+  "city-3d",
+  "house",
+  "dialogue",
+  "scene",
+  "battle",
+  "minigame",
+] as const satisfies readonly ViewName[];
+
+export function isViewName(value: unknown): value is ViewName {
+  return (
+    typeof value === "string" &&
+    (GAME_VIEW_NAMES as readonly string[]).includes(value)
+  );
+}
 export type SceneStatus = "idle" | "playing" | "waiting-choice";
 export type TimeOfDay = "morning" | "afternoon" | "night";
 export type CalendarDate = {
@@ -60,6 +82,12 @@ export type GameState = {
     cursor: number;
     status: SceneStatus;
   };
+  dialogue?: {
+    activeEventId: EventId | null;
+    activeDialogueId: DialogueId | null;
+    cursor: number;
+    status: "idle" | "playing" | "waiting-choice";
+  };
   storyBattle: ActiveStoryBattleSession;
   ui: GlobalUIState & {
     currentView: ViewName;
@@ -82,6 +110,7 @@ export type GameState = {
     activitySession: ActiveActivitySession;
     troops: TroopRuntimeState;
     mapExploration: CampaignMapExplorationState;
+    progression?: RuntimeProgressState;
     eventHistory: Record<
       EventId,
       {

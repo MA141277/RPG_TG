@@ -4,22 +4,32 @@ import { defineConfig } from "vite";
 
 export const SCENARIO_PACK_SOURCE_ROOT = "src/content/scenario-packs";
 export const SCENARIO_PACK_PUBLIC_ROOT = "/scenario-packs";
+export const SCRIPT_EDITOR_TEMPLATE_SOURCE_ROOT =
+  "src/modules/script-editor/builtin-templates";
+export const SCRIPT_EDITOR_TEMPLATE_PUBLIC_ROOT = "/script-editor-templates";
 
 export function publishScenarioPacksToDir(
   workspaceRoot: string,
   outputRoot: string
 ): void {
-  const sourceRoot = resolve(workspaceRoot, SCENARIO_PACK_SOURCE_ROOT);
-  const publishedRoot = resolve(
+  publishStaticContentTree(
+    workspaceRoot,
     outputRoot,
-    SCENARIO_PACK_PUBLIC_ROOT.replace(/^\//, "")
+    SCENARIO_PACK_SOURCE_ROOT,
+    SCENARIO_PACK_PUBLIC_ROOT
   );
+}
 
-  mkdirSync(outputRoot, { recursive: true });
-  cpSync(sourceRoot, publishedRoot, {
-    recursive: true,
-    force: true,
-  });
+export function publishScriptEditorTemplatesToDir(
+  workspaceRoot: string,
+  outputRoot: string
+): void {
+  publishStaticContentTree(
+    workspaceRoot,
+    outputRoot,
+    SCRIPT_EDITOR_TEMPLATE_SOURCE_ROOT,
+    SCRIPT_EDITOR_TEMPLATE_PUBLIC_ROOT
+  );
 }
 
 export function createScenarioPackPublishPlugin(workspaceRoot = __dirname) {
@@ -42,10 +52,19 @@ export function createScenarioPackPublishPlugin(workspaceRoot = __dirname) {
     }) {
       server.middlewares.use((req, res, next) => {
         const pathname = req.url?.split("?")[0] ?? "";
-        const sourcePath = resolvePublishedScenarioPackSourcePath(
-          workspaceRoot,
-          pathname
-        );
+        const sourcePath =
+          resolvePublishedStaticContentSourcePath(
+            workspaceRoot,
+            pathname,
+            SCENARIO_PACK_SOURCE_ROOT,
+            SCENARIO_PACK_PUBLIC_ROOT
+          ) ??
+          resolvePublishedStaticContentSourcePath(
+            workspaceRoot,
+            pathname,
+            SCRIPT_EDITOR_TEMPLATE_SOURCE_ROOT,
+            SCRIPT_EDITOR_TEMPLATE_PUBLIC_ROOT
+          );
 
         if (sourcePath == null) {
           next();
@@ -67,22 +86,41 @@ export function createScenarioPackPublishPlugin(workspaceRoot = __dirname) {
     },
     closeBundle() {
       publishScenarioPacksToDir(workspaceRoot, resolve(workspaceRoot, "dist"));
+      publishScriptEditorTemplatesToDir(workspaceRoot, resolve(workspaceRoot, "dist"));
     },
   };
 }
 
-function resolvePublishedScenarioPackSourcePath(
+function publishStaticContentTree(
   workspaceRoot: string,
-  pathname: string
+  outputRoot: string,
+  sourceRootPath: string,
+  publicRootPath: string
+): void {
+  const sourceRoot = resolve(workspaceRoot, sourceRootPath);
+  const publishedRoot = resolve(outputRoot, publicRootPath.replace(/^\//, ""));
+
+  mkdirSync(outputRoot, { recursive: true });
+  cpSync(sourceRoot, publishedRoot, {
+    recursive: true,
+    force: true,
+  });
+}
+
+function resolvePublishedStaticContentSourcePath(
+  workspaceRoot: string,
+  pathname: string,
+  sourceRootPath: string,
+  publicRootPath: string
 ): string | null {
-  if (!pathname.startsWith(SCENARIO_PACK_PUBLIC_ROOT)) {
+  if (!pathname.startsWith(publicRootPath)) {
     return null;
   }
 
   const relativePublishedPath = pathname
-    .slice(SCENARIO_PACK_PUBLIC_ROOT.length)
+    .slice(publicRootPath.length)
     .replace(/^\/+/, "");
-  const sourceRoot = resolve(workspaceRoot, SCENARIO_PACK_SOURCE_ROOT);
+  const sourceRoot = resolve(workspaceRoot, sourceRootPath);
   const absolutePath = resolve(sourceRoot, relativePublishedPath);
   const relativePath = relative(sourceRoot, absolutePath);
 

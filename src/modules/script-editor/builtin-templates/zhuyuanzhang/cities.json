@@ -1,0 +1,2029 @@
+[
+  {
+    "id": "city.kulan",
+    "name": "濠州",
+    "regionId": "region.frontier",
+    "mapNodeId": "settlement.fenyang_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.kulan.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "castle-town",
+      "market",
+      "commercial",
+      "jiangnan",
+      "large-city"
+    ],
+    "prosperity": 90,
+    "danger": 20,
+    "specialDemand": [
+      "silk",
+      "tea",
+      "luxury"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.kulan_liu_bowen",
+          "char.kulan_li_shanchang",
+          "char.yuanmo.guo_xing",
+          "char.yuanmo.peng_da",
+          "char.yuanmo.zhao_junyong",
+          "char.yuanmo.cheli_buhua",
+          "char.yuanmo.jia_lu",
+          "char.yuanmo.fei_ju",
+          "char.yuanmo.zhang_zhiyuan"
+        ],
+        "primaryNpcId": "char.kulan_liu_bowen"
+      },
+      {
+        "buildingId": "house.kulan.temple",
+        "npcIds": [
+          "char.kulan_temple_abbot",
+          "char.kulan_temple_senior_monk",
+          "char.yuanmo.huangjue_abbot",
+          "char.yuanmo.temple_senior_monk"
+        ],
+        "primaryNpcId": "char.kulan_temple_abbot"
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [
+          "char.player"
+        ],
+        "primaryNpcId": "char.player"
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [
+          "char.kulan_lord",
+          "char.kulan_xu_da",
+          "char.kulan_tang_he",
+          "char.kulan_chang_yuchun",
+          "char.kulan_guard",
+          "char.kulan_soldier"
+        ],
+        "primaryNpcId": "char.kulan_lord"
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [
+          "char.kulan_tea_boss",
+          "char.yuanmo.zhongli_elder",
+          "char.yuanmo.haozhou_red_turban_scout",
+          "char.yuanmo.liu_jizu"
+        ],
+        "primaryNpcId": "char.kulan_tea_boss"
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [
+          "char.kulan_merchant",
+          "char.yuanmo.haozhou_salt_runner"
+        ],
+        "primaryNpcId": "char.kulan_merchant"
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [
+          "char.kulan_grain_shopkeeper"
+        ],
+        "primaryNpcId": "char.kulan_grain_shopkeeper"
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [
+          "char.kulan_medicine_doctor"
+        ],
+        "primaryNpcId": "char.kulan_medicine_doctor"
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.kulan_innkeeper",
+          "char.yuanmo.ma_shi",
+          "char.yuanmo.guo_tianxu",
+          "char.yuanmo.zhang_tianyou",
+          "char.yuanmo.sun_deya",
+          "char.yuanmo.zhou_dexing",
+          "char.yuanmo.guo_ying",
+          "char.yuanmo.li_er"
+        ],
+        "primaryNpcId": "char.kulan_innkeeper"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.fenyang_province",
+      "x": 334,
+      "y": 318,
+      "kind": "settlement",
+      "label": "濠州",
+      "summary": "剧情: 朱元璋和尚时期起点，钟离/皇觉寺附近 | 阵营: 红巾军/小明王宋 | 所有者: 郭子兴部，名义尊小明王韩林儿 | 相关NPC: 朱元璋、郭子兴、马氏、汤和、韩林儿 | 注记: 适合作为早年主线出生点"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.yingtian",
+    "name": "集庆路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.yingtian_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jiangnan",
+      "large-city",
+      "former-yuan-garrison"
+    ],
+    "prosperity": 92,
+    "danger": 35,
+    "specialDemand": [
+      "silk",
+      "tea",
+      "luxury"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.song_lian",
+          "char.yuanmo.zhu_sheng",
+          "char.yuanmo.mu_ying",
+          "char.yuanmo.fu_youdej",
+          "char.yuanmo.hu_weiyong",
+          "char.yuanmo.lan_yu",
+          "char.yuanmo.kang_maocai",
+          "char.yuanmo.wu_liang",
+          "char.yuanmo.wu_zhen",
+          "char.yuanmo.xie_zaixing",
+          "char.yuanmo.shao_rong"
+        ],
+        "primaryNpcId": "char.yuanmo.song_lian"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [],
+        "primaryNpcId": null
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.yingtian_province",
+      "x": 347,
+      "y": 302,
+      "kind": "settlement",
+      "label": "集庆路★上元",
+      "summary": "剧情: 集庆路，后改应天府 | 阵营: 元廷江南重镇，后属朱元璋吴军 | 所有者: 早期为元廷/地方守臣，后为朱元璋 | 相关NPC: 朱元璋、李善长、徐达、常遇春、刘基 | 注记: 朱元璋当和尚时尚未入主"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.luzhou",
+    "name": "庐州路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.luzhou_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jianghuai",
+      "market",
+      "military"
+    ],
+    "prosperity": 76,
+    "danger": 32,
+    "specialDemand": [
+      "grain",
+      "iron",
+      "medicine"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.miao_daheng",
+          "char.yuanmo.ding_pulang",
+          "char.yuanmo.geng_zaicheng"
+        ],
+        "primaryNpcId": "char.yuanmo.miao_daheng"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.feng_guoyong",
+          "char.yuanmo.geng_bingwen",
+          "char.yuanmo.li_wenzhong"
+        ],
+        "primaryNpcId": "char.yuanmo.feng_guoyong"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.luzhou_province",
+      "x": 336,
+      "y": 307,
+      "kind": "settlement",
+      "label": "庐州路※合肥",
+      "summary": "剧情: 江淮枢纽 | 阵营: 朱元璋吴军后期控制区 | 所有者: 早期多方争夺，后为朱元璋集团 | 相关NPC: 蓝玉、傅友德、耿炳文、徐达 | 注记: 适合放置从濠州转入军事集团的过渡事件"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.anqing",
+    "name": "安庆路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.anqing_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jianghuai",
+      "river-port",
+      "frontier"
+    ],
+    "prosperity": 72,
+    "danger": 42,
+    "specialDemand": [
+      "grain",
+      "timber",
+      "iron"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.deng_yu"
+        ],
+        "primaryNpcId": "char.yuanmo.deng_yu"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.anqing_province",
+      "x": 328,
+      "y": 300,
+      "kind": "settlement",
+      "label": "安庆路※怀宁",
+      "summary": "剧情: 江淮西线通道 | 阵营: 元末多方争夺，后属朱元璋吴军 | 所有者: 早期不稳，后为朱元璋集团 | 相关NPC: 汤和、邓愈、李文忠、丁普郎 | 注记: 可作为从濠州南下江南的过渡节点"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.taiping",
+    "name": "太平路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.taiping_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "river-port",
+      "military",
+      "frontier"
+    ],
+    "prosperity": 74,
+    "danger": 48,
+    "specialDemand": [
+      "fish",
+      "timber",
+      "iron"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.yu_tonghai",
+          "char.yuanmo.liao_yongan",
+          "char.yuanmo.liao_yongzhong",
+          "char.yuanmo.chen_yexian"
+        ],
+        "primaryNpcId": "char.yuanmo.yu_tonghai"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.hu_dahai",
+          "char.yuanmo.hua_yun"
+        ],
+        "primaryNpcId": "char.yuanmo.hu_dahai"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.taiping_province",
+      "x": 341,
+      "y": 301,
+      "kind": "settlement",
+      "label": "太平路※当涂",
+      "summary": "剧情: 南下江南跳板 | 阵营: 朱元璋吴军后期据点 | 所有者: 朱元璋集团 | 相关NPC: 徐达、常遇春、李善长、胡惟庸 | 注记: 和尚时期未控制，起兵后逐步纳入"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.anfeng",
+    "name": "安丰路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.tieling_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "hongjin",
+      "military",
+      "plain"
+    ],
+    "prosperity": 68,
+    "danger": 50,
+    "specialDemand": [
+      "grain",
+      "horses",
+      "cloth"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.han_liner",
+          "char.yuanmo.liu_futong",
+          "char.yuanmo.sheng_wenyu",
+          "char.yuanmo.han_tong"
+        ],
+        "primaryNpcId": "char.yuanmo.han_liner"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.tieling_province",
+      "x": 325,
+      "y": 313,
+      "kind": "settlement",
+      "label": "安丰路※安丰",
+      "summary": "剧情: 小明王宋政权据点 | 阵营: 红巾军/小明王宋 | 所有者: 韩林儿、刘福通 | 相关NPC: 刘福通、韩林儿、盛文郁、白不信 | 注记: 朱元璋早年名义上的上级势力"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.runing",
+    "name": "颍州",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.runing_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "hongjin",
+      "plain",
+      "military"
+    ],
+    "prosperity": 70,
+    "danger": 52,
+    "specialDemand": [
+      "grain",
+      "salt",
+      "cloth"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.han_shantong",
+          "char.yuanmo.du_zundao",
+          "char.yuanmo.bai_buxin"
+        ],
+        "primaryNpcId": "char.yuanmo.han_shantong"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.runing_province",
+      "x": 318,
+      "y": 311,
+      "kind": "settlement",
+      "label": "颍州",
+      "summary": "剧情: 红巾军活动区 | 阵营: 小明王宋 | 所有者: 刘福通/韩林儿系 | 相关NPC: 刘福通、韩童、杜遵道、白不信 | 注记: 可连接濠州早年起义线"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.huaian",
+    "name": "高邮府",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.huaian_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "canal",
+      "salt",
+      "zhang-shicheng"
+    ],
+    "prosperity": 84,
+    "danger": 40,
+    "specialDemand": [
+      "salt",
+      "grain",
+      "silk"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.lv_zhen",
+          "char.yuanmo.panyuan_shao"
+        ],
+        "primaryNpcId": "char.yuanmo.lv_zhen"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.huaian_province",
+      "x": 347,
+      "y": 322,
+      "kind": "settlement",
+      "label": "高邮府※高邮军",
+      "summary": "剧情: 淮东门户 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、施耐庵、潘元绍 | 注记: 与濠州、扬州形成早期江淮压力线"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.yangzhou",
+    "name": "扬州路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.yangzhou_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "canal",
+      "commercial",
+      "zhang-shicheng"
+    ],
+    "prosperity": 88,
+    "danger": 38,
+    "specialDemand": [
+      "salt",
+      "silk",
+      "luxury"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.zhang_tianyou_zhou",
+          "char.yuanmo.zhang_shiyi"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_tianyou_zhou"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.zhang_shicheng",
+          "char.yuanmo.zhang_shide",
+          "char.yuanmo.li_bosheng",
+          "char.yuanmo.rao_jie"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_shicheng"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.yangzhou_province",
+      "x": 353,
+      "y": 312,
+      "kind": "settlement",
+      "label": "扬州路※江都",
+      "summary": "剧情: 淮东盐运重镇 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、李伯升、饶介、施耐庵 | 注记: 朱元璋早期北东侧竞争者"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.suzhou",
+    "name": "平江路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.suzhou_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jiangnan",
+      "commercial",
+      "large-city"
+    ],
+    "prosperity": 96,
+    "danger": 28,
+    "specialDemand": [
+      "silk",
+      "tea",
+      "luxury"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.ye_dexin",
+          "char.yuanmo.chen_ji"
+        ],
+        "primaryNpcId": "char.yuanmo.ye_dexin"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [
+          "char.yuanmo.shi_naian"
+        ],
+        "primaryNpcId": "char.yuanmo.shi_naian"
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.zhang_shixin"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_shixin"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.suzhou_province",
+      "x": 357,
+      "y": 304,
+      "kind": "settlement",
+      "label": "平江路※吴县",
+      "summary": "Region: 江浙行省 | Owner: venice | Level: large_city | Type: town"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.wuchang",
+    "name": "武昌路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.wuchang_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "chen-han",
+      "river-port",
+      "large-city"
+    ],
+    "prosperity": 86,
+    "danger": 46,
+    "specialDemand": [
+      "fish",
+      "iron",
+      "grain"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.zhang_bixian",
+          "char.yuanmo.luo_furen",
+          "char.yuanmo.zhao_pusheng"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_bixian"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.chen_youliang",
+          "char.yuanmo.zhang_dingbian",
+          "char.yuanmo.xu_shouhui",
+          "char.yuanmo.zou_pusheng",
+          "char.yuanmo.chen_li"
+        ],
+        "primaryNpcId": "char.yuanmo.chen_youliang"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.wuchang_province",
+      "x": 313,
+      "y": 301,
+      "kind": "settlement",
+      "label": "武昌路★江夏",
+      "summary": "剧情: 陈汉核心城 | 阵营: 陈汉 | 所有者: 陈友谅集团 | 相关NPC: 张定边、陈理、罗复仁、陈友直 | 注记: 朱元璋早年尚未控制此地"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.nanchang",
+    "name": "龙兴路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.nanchang_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "jiangxi",
+      "frontier",
+      "military"
+    ],
+    "prosperity": 80,
+    "danger": 44,
+    "specialDemand": [
+      "grain",
+      "timber",
+      "medicine"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.hu_mei"
+        ],
+        "primaryNpcId": "char.yuanmo.hu_mei"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.feng_sheng",
+          "char.yuanmo.zhu_wenzheng"
+        ],
+        "primaryNpcId": "char.yuanmo.feng_sheng"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.nanchang_province",
+      "x": 326,
+      "y": 286,
+      "kind": "settlement",
+      "label": "龙兴路★南昌",
+      "summary": "剧情: 洪都前线 | 阵营: 吴军后期据点 | 所有者: 朱元璋集团 | 相关NPC: 朱文正、花云、沐英、冯胜 | 注记: 和尚时期暂不归朱元璋，后续成为对陈汉前线"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.chongqing",
+    "name": "重庆路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.chongqing_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "sichuan",
+      "mountain",
+      "river-port"
+    ],
+    "prosperity": 78,
+    "danger": 34,
+    "specialDemand": [
+      "medicine",
+      "timber",
+      "salt"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.wan_sheng"
+        ],
+        "primaryNpcId": "char.yuanmo.wan_sheng"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.chongqing_province",
+      "x": 260,
+      "y": 291,
+      "kind": "settlement",
+      "label": "重庆路※巴县",
+      "summary": "Region: 四川行省 | Owner: sicily | Level: large_town | Type: town"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.chengdu",
+    "name": "成都路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.chendu_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "sichuan",
+      "large-city",
+      "commercial"
+    ],
+    "prosperity": 90,
+    "danger": 24,
+    "specialDemand": [
+      "silk",
+      "medicine",
+      "grain"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.dai_shou"
+        ],
+        "primaryNpcId": "char.yuanmo.dai_shou"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.ming_yuzhen",
+          "char.yuanmo.ming_sheng"
+        ],
+        "primaryNpcId": "char.yuanmo.ming_yuzhen"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.chendu_province",
+      "x": 242,
+      "y": 297,
+      "kind": "settlement",
+      "label": "成都路★成都",
+      "summary": "Region: 四川行省 | Owner: sicily | Level: large_city | Type: town"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.ningbo",
+    "name": "庆元路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.ningbo_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "coastal",
+      "fang-guozhen",
+      "trade"
+    ],
+    "prosperity": 82,
+    "danger": 36,
+    "specialDemand": [
+      "fish",
+      "silk",
+      "salt"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.fang_guoying",
+          "char.yuanmo.ni_keren"
+        ],
+        "primaryNpcId": "char.yuanmo.fang_guoying"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.fang_guozhen"
+        ],
+        "primaryNpcId": "char.yuanmo.fang_guozhen"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.ningbo_province",
+      "x": 365,
+      "y": 290,
+      "kind": "settlement",
+      "label": "庆元路※鄞县",
+      "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.wenzhou",
+    "name": "温州路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.wenzhou_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "coastal",
+      "fang-guozhen",
+      "trade"
+    ],
+    "prosperity": 76,
+    "danger": 34,
+    "specialDemand": [
+      "fish",
+      "timber",
+      "salt"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.fang_li"
+        ],
+        "primaryNpcId": "char.yuanmo.fang_li"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.wenzhou_province",
+      "x": 351,
+      "y": 281,
+      "kind": "settlement",
+      "label": "温州路※永嘉",
+      "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.fuzhou",
+    "name": "福州路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.fuzhou_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "coastal",
+      "yuan-loyalist",
+      "trade"
+    ],
+    "prosperity": 80,
+    "danger": 36,
+    "specialDemand": [
+      "fish",
+      "tea",
+      "timber"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.chen_zonghai",
+          "char.yuanmo.zheng_ding"
+        ],
+        "primaryNpcId": "char.yuanmo.chen_zonghai"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.chen_youding"
+        ],
+        "primaryNpcId": "char.yuanmo.chen_youding"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.fuzhou_province",
+      "x": 349,
+      "y": 269,
+      "kind": "settlement",
+      "label": "福州路※闽县",
+      "summary": "Region: 江浙行省 | Owner: spain | Level: large_town | Type: town"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.dadu",
+    "name": "大都路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.shuntian_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "yuan-court",
+      "capital",
+      "large-city"
+    ],
+    "prosperity": 98,
+    "danger": 18,
+    "specialDemand": [
+      "luxury",
+      "horses",
+      "silk"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.hama",
+          "char.yuanmo.tuotuo"
+        ],
+        "primaryNpcId": "char.yuanmo.hama"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.toghon_temur",
+          "char.yuanmo.ayushiridara"
+        ],
+        "primaryNpcId": "char.yuanmo.toghon_temur"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.shuntian_province",
+      "x": 339,
+      "y": 362,
+      "kind": "settlement",
+      "label": "大都路★大都",
+      "summary": "Region: 中书省 | Owner: byzantium | Level: huge_city | Type: town"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.kaifeng",
+    "name": "汴梁路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.kaifeng_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "henan",
+      "yuan-garrison",
+      "large-city"
+    ],
+    "prosperity": 86,
+    "danger": 44,
+    "specialDemand": [
+      "grain",
+      "horses",
+      "iron"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.guan_bao"
+        ],
+        "primaryNpcId": "char.yuanmo.guan_bao"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.chaghan_temur",
+          "char.yuanmo.koketumur",
+          "char.yuanmo.tian_feng",
+          "char.yuanmo.wang_shicheng_song"
+        ],
+        "primaryNpcId": "char.yuanmo.chaghan_temur"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.kaifeng_province",
+      "x": 318,
+      "y": 327,
+      "kind": "settlement",
+      "label": "汴梁路★开封",
+      "summary": "剧情: 河南元军重镇 | 阵营: 元廷/扩廓帖木儿系 | 所有者: 元廷河南势力 | 相关NPC: 扩廓帖木儿、脱因帖木儿、阎思孝、陈秉直 | 注记: 朱元璋早期北方强敌"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.gongchang",
+    "name": "巩昌路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.gongchang_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "northwest",
+      "yuan-garrison",
+      "frontier"
+    ],
+    "prosperity": 66,
+    "danger": 42,
+    "specialDemand": [
+      "horses",
+      "iron",
+      "grain"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [
+          "char.yuanmo.li_shichang",
+          "char.yuanmo.baitemur"
+        ],
+        "primaryNpcId": "char.yuanmo.li_shichang"
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.li_siqi"
+        ],
+        "primaryNpcId": "char.yuanmo.li_siqi"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.gongchang_province",
+      "x": 246,
+      "y": 325,
+      "kind": "settlement",
+      "label": "巩昌路※陇西",
+      "summary": "Region: 陕西行省 | Owner: hre | Level: large_town | Type: town"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
+    "id": "city.fengyuan",
+    "name": "奉元路",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.xian_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "shaanxi",
+      "large-city",
+      "yuan-garrison"
+    ],
+    "prosperity": 84,
+    "danger": 36,
+    "specialDemand": [
+      "horses",
+      "grain",
+      "iron"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [
+          "char.yuanmo.zhang_liangbi"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_liangbi"
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.xian_province",
+      "x": 281,
+      "y": 325,
+      "kind": "settlement",
+      "label": "奉元路★咸宁",
+      "summary": "Region: 陕西行省 | Owner: france | Level: large_city | Type: town"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  }
+]

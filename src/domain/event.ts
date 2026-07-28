@@ -1,3 +1,6 @@
+import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
+import type { PlayableReturnPolicy } from "../core/contracts/playable-runtime";
+
 export type EventId = string;
 export type ChapterId = string;
 type SceneId = string;
@@ -139,15 +142,98 @@ export type EventParticipant = {
   required?: boolean;
 };
 
+export type EventBindingOwner = {
+  family: string;
+  id?: string;
+  extra?: Record<string, unknown>;
+};
+
+export type EventBindingTrigger = {
+  timing: string;
+  action: string;
+  payloadSchemaId?: string;
+  extra?: Record<string, unknown>;
+};
+
+export type EventBindingConditionGroup = {
+  operator: "all" | "any" | "not";
+  conditions: EventBindingConditionNode[];
+};
+
+export type EventBindingConditionNode =
+  | EventBindingConditionGroup
+  | {
+      type: string;
+      field?: string;
+      operator?: string;
+      value?: unknown;
+      resolverId?: string;
+      extra?: Record<string, unknown>;
+    };
+
+export type EventBinding = {
+  id: string;
+  eventId: EventId;
+  owner: EventBindingOwner;
+  trigger: EventBindingTrigger;
+  conditions?: EventBindingConditionGroup;
+  priority?: number;
+  enabled?: boolean;
+  meta?: Record<string, unknown>;
+};
+
+export type TriggerContext = {
+  timing: string;
+  action: string;
+  owner: {
+    family: string;
+    id?: string;
+  };
+  actorCharacterId?: string;
+  currentCityId?: string;
+  currentHouseId?: string;
+  payload?: Record<string, unknown>;
+};
+
+export type EventRuntimeAction =
+  | {
+      type: "closeBuilding";
+    }
+  | {
+      type: "launchPlayable";
+      playableId: string;
+      integrationId: string;
+      ownerContext: {
+        ownerKind: "house" | "scene" | "dialogue" | "task" | "external";
+        ownerId: string | null;
+        returnPolicy: PlayableReturnPolicy;
+      };
+      payload?: Record<string, unknown>;
+    }
+  | {
+      type: "launchFlow";
+      flowId: string;
+      ownerContext: {
+        ownerKind: "house" | "scene" | "dialogue" | "task" | "external";
+        ownerId: string | null;
+        returnPolicy: PlayableReturnPolicy;
+      };
+    };
+
 export type EventDefinition = {
   id: EventId;
   chapterId: ChapterId;
   name: string;
   occurrence: EventOccurrence;
+  type?: "settlement";
   trigger: EventTrigger;
   conditions: EventConditionNode[];
   participants?: EventParticipant[];
   entrySceneId: SceneId;
+  dialogueId?: string;
+  actions?: EventRuntimeAction[];
+  settlementId?: string;
   nextEventId?: EventId;
+  taskInputs?: RuntimeTaskInput[];
   tags?: string[];
 };

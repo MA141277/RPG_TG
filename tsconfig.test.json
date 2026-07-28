@@ -10,6 +10,7 @@
   "include": [
     "src/core/**/*.ts",
     "src/application/**/*.ts",
+    "src/modules/script-editor/**/*.ts",
     "src/domain/**/*.ts",
     "src/shared/**/*.ts",
     "src/types/**/*.d.ts",
