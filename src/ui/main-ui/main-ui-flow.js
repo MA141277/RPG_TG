@@ -1,16 +1,7 @@
 import { applyLiveLayoutBindings } from "../tools/live-layout-bindings";
 import { mountOpeningBackgroundAnimation } from "./opening-background-animation";
-import {
-  renderEntryShellCharacterSelect,
-  renderEntryShellMainMenu,
-  renderEntryShellScenarioPackCard,
-  renderEntryShellScenarioSelect,
-} from "../entry-shell/entry-shell-view";
-import {
-  createScriptEditorWorkflowController,
-  installMainUiFlowScriptEditorModule,
-} from "../../modules/script-editor";
-
+import { resolveCharacterAvatarImageUrl } from "../portrait-assets";
+import { renderLayoutEditor } from "../tools/layout-editor-view";
 
 const startScreenLayoutBindings = [
   { componentId: "main-menu-content", selector: ".c-main-ui-main-menu__content" },
@@ -57,7 +48,6 @@ const characterCardLayoutBindings = Array.from({ length: 8 }, (_, index) => ({
 }));
 
 const characterSelectLayoutBindings = [
-
   { componentId: "character-layout", selector: ".c-main-ui-character-layout" },
   {
     componentId: "character-hero",
@@ -168,7 +158,6 @@ const characterSelectLayoutBindings = [
 ];
 
 export class MainUiFlow {
-
   constructor(options) {
     this.overlayRoot = options.overlayRoot;
     this.characters = [...options.characters];
@@ -176,9 +165,7 @@ export class MainUiFlow {
     this.onStartGame = options.onStartGame;
     this.onContinueGame = options.onContinueGame;
     this.onStartScenarioPack = options.onStartScenarioPack;
-    this.onStartLoadedScenarioPack = options.onStartLoadedScenarioPack;
     this.onImportScenarioPackFiles = options.onImportScenarioPackFiles;
-    this.onExitRuntimePreview = options.onExitRuntimePreview;
     this.loadSaveData = options.loadSaveData;
     this.getAppState = options.getAppState;
     this.selectedCharacterId = this.characters[0]?.id ?? null;
@@ -195,82 +182,12 @@ export class MainUiFlow {
     this.handleChange = (event) => {
       void this.onChange(event);
     };
-    this.handleInput = (event) => {
-      this.onInput(event);
-    };
-    this.handleCompositionEnd = (event) => {
-      this.onCompositionEnd(event);
-    };
     this.inkParticleSystem = null;
     this.pendingSelectedInkBurstCharacterId = null;
     this.previousCharacterDetail = null;
     this.characterDetailTransitionToken = 0;
     this.characterDetailTransitionTimer = 0;
     this.destroyOpeningBackgroundAnimation = null;
-    installMainUiFlowScriptEditorModule(this, options);
-    this.scriptEditorWorkflowController = createScriptEditorWorkflowController({
-      getProject: () => this.scriptEditorProject,
-      getProjectSource: () => this.scriptEditorProjectSource,
-      setProjectSource: (source) => {
-        this.scriptEditorProjectSource = source;
-      },
-      commitProject: (project) => {
-        this.commitScriptEditorProject(project);
-      },
-      getProjectDirectoryHandle: () => this.scriptEditorProjectDirectoryHandle,
-      setProjectDirectoryHandle: (handle) => {
-        this.scriptEditorProjectDirectoryHandle = handle;
-      },
-      getExportDirectoryHandle: () => this.scriptEditorExportDirectoryHandle,
-      setExportDirectoryHandle: (handle) => {
-        this.scriptEditorExportDirectoryHandle = handle;
-      },
-      rememberProjectPackageLocation: (result) => {
-        this.rememberScriptEditorProjectPackageLocation(result);
-      },
-      resetRecordListPages: () => {
-        this.resetScriptEditorRecordListPages();
-      },
-      resetRecordSearch: () => {
-        this.resetScriptEditorRecordSearch();
-      },
-      setSelection: (selection) => {
-        this.scriptEditorSelection = selection;
-      },
-      setAuxiliaryPanelOpen: (isOpen) => {
-        this.scriptEditorAuxiliaryPanelOpen = isOpen;
-      },
-      setPendingDeleteProjectId: (projectId) => {
-        this.scriptEditorPendingDeleteProjectId = projectId;
-      },
-      resetNoticeTimeline: () => {
-        this.resetScriptEditorNoticeTimeline();
-      },
-      recordNotice: (notice) => {
-        this.recordScriptEditorNotice(notice);
-      },
-      setScreen: (screen) => {
-        this.setScreen(screen);
-      },
-      captureRuntimePreviewReturnContext: () =>
-        this.captureScriptEditorRuntimePreviewReturnContext(),
-      restoreRuntimePreviewReturnContext: (returnContext) => {
-        this.restoreScriptEditorRuntimePreviewReturnContext(returnContext);
-      },
-      getRuntimePreviewSession: () => this.scriptEditorRuntimePreviewSession,
-      setRuntimePreviewSession: (session) => {
-        this.scriptEditorRuntimePreviewSession = session;
-      },
-      startLoadedScenarioPack: (scenarioPack) => {
-        if (this.onStartLoadedScenarioPack == null) {
-          throw new Error("Runtime preview startup is unavailable.");
-        }
-        return this.onStartLoadedScenarioPack(scenarioPack);
-      },
-      exitRuntimePreview: () => {
-        this.onExitRuntimePreview?.();
-      },
-    });
   }
 
   mount() {
@@ -279,8 +196,6 @@ export class MainUiFlow {
     this.overlayRoot.addEventListener("mouseover", this.handleHover);
     this.overlayRoot.addEventListener("focusin", this.handleFocus);
     this.overlayRoot.addEventListener("change", this.handleChange);
-    this.overlayRoot.addEventListener("input", this.handleInput);
-    this.overlayRoot.addEventListener("compositionend", this.handleCompositionEnd);
     this.render();
   }
 
@@ -289,8 +204,6 @@ export class MainUiFlow {
     this.overlayRoot.removeEventListener("mouseover", this.handleHover);
     this.overlayRoot.removeEventListener("focusin", this.handleFocus);
     this.overlayRoot.removeEventListener("change", this.handleChange);
-    this.overlayRoot.removeEventListener("input", this.handleInput);
-    this.overlayRoot.removeEventListener("compositionend", this.handleCompositionEnd);
     this.destroyInkParticleSystem();
     this.destroyOpeningBackgroundAnimation?.();
     this.destroyOpeningBackgroundAnimation = null;
@@ -311,21 +224,6 @@ export class MainUiFlow {
     this.setScreen("character-select");
   }
 
-  setCharacters(characters) {
-    this.characters = [...characters];
-    if (this.characters.some((character) => character.id === this.selectedCharacterId)) {
-      if (this.currentScreen === "character-select") {
-        this.render();
-      }
-      return;
-    }
-
-    this.selectedCharacterId = this.characters[0]?.id ?? null;
-    if (this.currentScreen === "character-select") {
-      this.render();
-    }
-  }
-
   setScreen(screen) {
     this.currentScreen = screen;
     this.overlayRoot.classList.toggle("is-hidden", screen === "hidden");
@@ -333,16 +231,10 @@ export class MainUiFlow {
   }
 
   render() {
-    this.captureScriptEditorScrollPosition();
     this.destroyInkParticleSystem();
     this.destroyOpeningBackgroundAnimation?.();
     this.destroyOpeningBackgroundAnimation = null;
     this.clearCharacterDetailTransitionTimer();
-    const hasRuntimePreviewSession = this.scriptEditorRuntimePreviewSession != null;
-    this.overlayRoot.classList.toggle(
-      "is-runtime-preview-active",
-      hasRuntimePreviewSession
-    );
 
     if (this.currentScreen === "hidden") {
       this.overlayRoot.innerHTML = "";
@@ -354,18 +246,9 @@ export class MainUiFlow {
         ? this.renderMainMenu()
         : this.currentScreen === "scenario-select"
           ? this.renderScenarioSelect()
-          : this.currentScreen === "script-editor-landing"
-            ? this.renderScriptEditorLanding()
-            : this.currentScreen === "script-editor-workspace"
-              ? this.renderScriptEditorWorkspace()
-              : this.currentScreen === "runtime-preview"
-                ? this.renderRuntimePreviewOverlay()
-                : this.renderCharacterSelect();
-    const runtimePreviewSessionMarkup = hasRuntimePreviewSession
-      ? this.renderRuntimePreviewSessionBanner()
-      : "";
-    this.overlayRoot.innerHTML = `${screenMarkup}${runtimePreviewSessionMarkup}`;
-    this.restoreScriptEditorScrollPosition();
+          : this.renderCharacterSelect();
+    this.overlayRoot.innerHTML =
+      screenMarkup + renderLayoutEditor(this.getAppState());
     if (this.currentScreen === "main-menu") {
       this.destroyOpeningBackgroundAnimation = mountOpeningBackgroundAnimation(this.overlayRoot);
       this.syncStartScreenLayout();
@@ -397,28 +280,159 @@ export class MainUiFlow {
   }
 
   renderMainMenu() {
-    return renderEntryShellMainMenu();
+    return `
+      <section class="c-main-ui-screen c-main-ui-screen--main-menu" aria-label="主菜单">
+        <canvas class="c-main-ui-opening-background-canvas" aria-hidden="true"></canvas>
+        <div class="c-main-ui-main-menu">
+          <div class="c-main-ui-main-menu__content">
+            <p class="c-main-ui-main-menu__subtitle">洪武前夜 · 群雄并起</p>
+            <div class="c-main-ui-main-menu__actions">
+          <button
+            type="button"
+                class="c-main-ui-image-button c-main-ui-image-button--start"
+            data-main-ui-action="open-character-select"
+                aria-label="开始游戏"
+          >
+                <span class="c-main-ui-sr-only">开始游戏</span>
+          </button>
+          <button
+            type="button"
+                class="c-main-ui-image-button c-main-ui-image-button--continue"
+            data-main-ui-action="continue-game"
+                aria-label="继续游戏"
+          >
+                <span class="c-main-ui-sr-only">继续游戏</span>
+          </button>
+          <button
+            type="button"
+            class="c-main-ui-json-button"
+            data-main-ui-action="open-json-scenario-select"
+          >
+            JSON 开局
+          </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    `;
   }
 
   renderScenarioSelect() {
-    return renderEntryShellScenarioSelect({
-      scenarioPacks: this.scenarioPacks,
-    });
+    return `
+      <section class="c-main-ui-screen c-main-ui-screen--scenario-select" aria-label="JSON 开局选择">
+        <div class="c-main-ui-scenario-panel">
+          <header class="c-main-ui-scenario-panel__header">
+            <p class="c-main-ui-character-detail__eyebrow">模组开局</p>
+            <h2 class="c-main-ui-scenario-panel__title">读取 JSON 开局</h2>
+          </header>
+
+          <div class="c-main-ui-scenario-list">
+            ${this.scenarioPacks.map((scenarioPack) => this.renderScenarioPackCard(scenarioPack)).join("")}
+          </div>
+
+          <div class="c-main-ui-scenario-panel__footer">
+            <button type="button" class="c-main-ui-page-button" data-main-ui-action="back-to-menu" aria-label="返回主菜单"></button>
+            <button type="button" class="c-main-ui-json-text-button" data-main-ui-action="import-scenario-file">
+              导入 JSON
+            </button>
+            <input class="c-main-ui-scenario-file-input" type="file" accept="application/json,.json" data-main-ui-scenario-file webkitdirectory directory multiple hidden>
+          </div>
+        </div>
+      </section>
+    `;
   }
 
   renderScenarioPackCard(scenarioPack) {
-    return renderEntryShellScenarioPackCard(scenarioPack);
+    return `
+      <article class="c-main-ui-scenario-card">
+        <div>
+          <h3 class="c-main-ui-scenario-card__title">${escapeHtml(scenarioPack.title)}</h3>
+          <p class="c-main-ui-scenario-card__description">${escapeHtml(scenarioPack.description ?? "")}</p>
+        </div>
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+          data-main-ui-action="start-scenario-pack"
+          data-scenario-pack-id="${escapeHtml(scenarioPack.id)}"
+        >
+          读取
+        </button>
+      </article>
+    `;
   }
 
   renderCharacterSelect() {
     const selectedCharacter = this.getSelectedCharacter();
 
-    return renderEntryShellCharacterSelect({
-      characters: this.characters,
-      selectedCharacter,
-      selectedCharacterId: this.selectedCharacterId,
-      previousCharacter: this.previousCharacterDetail,
-    });
+    return `
+      <section class="c-main-ui-screen c-main-ui-screen--character-select" aria-label="角色选择">
+        <canvas class="c-main-ui-ink-particle-canvas" aria-hidden="true"></canvas>
+        <div class="c-main-ui-character-layout">
+          <aside class="c-main-ui-character-layout__hero">
+            <div class="c-main-ui-character-layout__hero-inner">
+              <div class="c-main-ui-character-layout__era" aria-hidden="true"></div>
+              <p class="c-main-ui-character-layout__poem">
+                大明开国人物传。<br />
+                选定出战人物后，<br />
+                便从这卷风云中启程。
+              </p>
+            </div>
+          </aside>
+
+          <div class="c-main-ui-character-book">
+            <div class="c-main-ui-character-book__tabs" aria-hidden="true">
+              <span class="c-main-ui-book-tab c-main-ui-book-tab--characters is-active">人物传</span>
+              <span class="c-main-ui-book-tab c-main-ui-book-tab--roster">群雄录</span>
+              <span class="c-main-ui-book-tab c-main-ui-book-tab--ministers">名臣卷</span>
+            </div>
+
+            <div class="c-main-ui-character-book__content">
+              <div class="c-main-ui-character-grid" role="list">
+                ${this.renderCharacterShelf()}
+              </div>
+              ${this.renderCharacterDetail(selectedCharacter, this.previousCharacterDetail)}
+            </div>
+
+            <div class="c-main-ui-character-book__footer">
+              <button
+                type="button"
+                class="c-main-ui-page-button"
+                data-main-ui-action="back-to-menu"
+                aria-label="返回主菜单"
+              ></button>
+
+              <div class="c-main-ui-book-pagination" aria-hidden="true">
+                <span class="c-main-ui-book-pagination__ornament"></span>
+                <span>第 1 页 / 共 1 页</span>
+                <span class="c-main-ui-book-pagination__ornament"></span>
+              </div>
+
+              <button
+                type="button"
+                class="c-main-ui-page-turn-button c-main-ui-page-turn-button--previous"
+                aria-label="上一页"
+              ></button>
+
+              <button
+                type="button"
+                class="c-main-ui-image-button c-main-ui-image-button--choose"
+                data-main-ui-action="start-adventure"
+                aria-label="开始冒险"
+                ${selectedCharacter == null ? "disabled" : ""}
+              >
+                <span class="c-main-ui-sr-only">开始冒险</span>
+              </button>
+
+              <button
+                type="button"
+                class="c-main-ui-page-turn-button c-main-ui-page-turn-button--next"
+                aria-label="下一页"
+              ></button>
+            </div>
+          </div>
+        </div>
+      </section>
+    `;
   }
 
   renderCharacterShelf() {
@@ -427,8 +441,8 @@ export class MainUiFlow {
     const placeholders = Array.from({ length: placeholderCount }, (_, index) => `
       <div class="c-main-ui-character-card c-main-ui-character-card--placeholder" aria-hidden="true">
         <div class="c-main-ui-character-card__portrait"></div>
-        <div class="c-main-ui-character-card__placeholder-label">鍚嶅唽寰呰ˉ</div>
-        <div class="c-main-ui-character-card__placeholder-index">? ${index + 5}</div>
+        <div class="c-main-ui-character-card__placeholder-label">名册待补</div>
+        <div class="c-main-ui-character-card__placeholder-index">卷 ${index + 5}</div>
       </div>
     `);
 
@@ -439,7 +453,7 @@ export class MainUiFlow {
     const isSelected = character.id === this.selectedCharacterId;
     const titleParts = [character.title, character.occupation].filter(Boolean);
     const subtitle =
-      titleParts.length === 0 ? "角色资料待补齐" : titleParts.join(" / ");
+      titleParts.length === 0 ? "角色资料待补充" : titleParts.join(" / ");
     const avatarImageUrl = resolveCharacterAvatarImageUrl(character);
     const avatarMarkup =
       avatarImageUrl == null
@@ -465,7 +479,7 @@ export class MainUiFlow {
           <p class="c-main-ui-character-card__meta">${escapeHtml(subtitle)}</p>
           <h2 class="c-main-ui-character-card__name">${escapeHtml(character.name)}</h2>
           <p class="c-main-ui-character-card__bio">
-            ${escapeHtml(character.biography ?? "绠€浠嬪緟琛ュ厖")}
+            ${escapeHtml(character.biography ?? "简介待补充。")}
           </p>
         </div>
       </button>
@@ -477,7 +491,7 @@ export class MainUiFlow {
       return `
         <aside class="c-main-ui-character-detail">
           <div class="c-main-ui-character-detail__paper">
-            <p class="c-main-ui-character-detail__empty">璇峰厛閫夋嫨涓€鍚嶈鑹层€?/p>
+            <p class="c-main-ui-character-detail__empty">请先选择一名角色。</p>
           </div>
         </aside>
       `;
@@ -494,7 +508,7 @@ export class MainUiFlow {
         <div class="c-main-ui-character-detail__paper">
           <div class="c-main-ui-character-detail__header">
             <div>
-              <p class="c-main-ui-character-detail__eyebrow">浜虹墿璇︽儏 / 褰撳墠宸查€?/p>
+              <p class="c-main-ui-character-detail__eyebrow">人物详情 · 当前已选</p>
               <h2 class="c-main-ui-character-detail__name">${renderCharacterDetailTransitionText(
                 character.name,
                 previousCharacter?.name
@@ -523,7 +537,7 @@ export class MainUiFlow {
             <h3 class="c-main-ui-character-detail__section-title">人物简介</h3>
             <p class="c-main-ui-character-detail__bio">
               ${renderCharacterDetailTransitionText(
-                character.biography ?? "人物介绍待补充",
+                character.biography ?? "人物介绍待补充。",
                 previousCharacter?.biography ?? "",
                 { block: true }
               )}
@@ -541,1084 +555,111 @@ export class MainUiFlow {
     }
 
     const actionElement = target.closest("[data-main-ui-action]");
-    if (actionElement != null) {
-      const action = actionElement.dataset.mainUiAction;
-      if (action === "open-character-select") {
-        this.showCharacterSelect();
-        return;
-      }
+    if (actionElement == null) {
+      return;
+    }
 
-      if (action === "open-json-scenario-select") {
-        this.setScreen("scenario-select");
-        return;
-      }
+    if (
+      this.getAppState().layoutEditor.isOpen &&
+      target.closest("[data-layout-component-handle]") != null
+    ) {
+      return;
+    }
 
-      if (action === "open-script-editor") {
-        this.showScriptEditorLanding();
-        return;
-      }
+    const action = actionElement.dataset.mainUiAction;
+    if (action === "open-character-select") {
+      this.showCharacterSelect();
+      return;
+    }
 
-      if (action === "back-to-menu") {
-        this.showMainMenu();
-        return;
-      }
+    if (action === "open-json-scenario-select") {
+      this.setScreen("scenario-select");
+      return;
+    }
 
-      if (action === "select-character") {
-        const characterId = actionElement.dataset.characterId;
-        if (characterId != null) {
-          if (characterId === this.selectedCharacterId) {
-            return;
-          }
-          this.previousCharacterDetail = this.getSelectedCharacter();
-          this.characterDetailTransitionToken += 1;
-          this.clearCharacterDetailTransitionTimer();
-          this.inkParticleSystem?.stopLoop("selected-character");
-          this.pendingSelectedInkBurstCharacterId = characterId;
-          this.selectedCharacterId = characterId;
-          this.render();
+    if (action === "back-to-menu") {
+      this.showMainMenu();
+      return;
+    }
+
+    if (action === "select-character") {
+      const characterId = actionElement.dataset.characterId;
+      if (characterId != null) {
+        if (characterId === this.selectedCharacterId) {
           return;
         }
-        return;
+        this.previousCharacterDetail = this.getSelectedCharacter();
+        this.characterDetailTransitionToken += 1;
+        this.clearCharacterDetailTransitionTimer();
+        this.inkParticleSystem?.stopLoop("selected-character");
+        this.pendingSelectedInkBurstCharacterId = characterId;
+        this.selectedCharacterId = characterId;
+        this.render();
       }
+      return;
+    }
 
-      if (action === "start-adventure") {
-        const selectedCharacter = this.getSelectedCharacter();
-        if (selectedCharacter != null) {
+    if (action === "start-adventure") {
+      const selectedCharacter = this.getSelectedCharacter();
+      if (selectedCharacter != null) {
+        this.onStartGame(selectedCharacter);
+      }
+      return;
+    }
+
+    if (action === "start-scenario-pack") {
+      const scenarioPackId = actionElement.dataset.scenarioPackId;
+      const scenarioPack = this.scenarioPacks.find(
+        (candidatePack) => candidatePack.id === scenarioPackId
+      );
+      if (scenarioPack != null) {
+        await this.onStartScenarioPack?.(scenarioPack);
+      }
+      return;
+    }
+
+    if (action === "import-scenario-file") {
+      this.overlayRoot
+        .querySelector("[data-main-ui-scenario-file]")
+        ?.click();
+      return;
+    }
+
+    if (action === "continue-game") {
+      const saveData = await this.loadSaveData();
+      const selectedCharacter =
+        this.getCharacterById(saveData?.selectedCharacterId ?? null) ??
+        this.characters[0] ??
+        null;
+
+      if (selectedCharacter != null) {
+        this.selectedCharacterId = selectedCharacter.id;
+        if (this.onContinueGame != null) {
+          this.onContinueGame(selectedCharacter, saveData ?? null);
+        } else {
           this.onStartGame(selectedCharacter);
         }
-        return;
-      }
-
-      if (action === "start-scenario-pack") {
-        const scenarioPackId = actionElement.dataset.scenarioPackId;
-        const scenarioPack = this.scenarioPacks.find(
-          (candidatePack) => candidatePack.id === scenarioPackId
-        );
-        if (scenarioPack != null) {
-          await this.onStartScenarioPack?.(scenarioPack);
-        }
-        return;
-      }
-
-      if (action === "import-scenario-file") {
-        this.overlayRoot
-          .querySelector("[data-main-ui-scenario-file]")
-          ?.click();
-        return;
-      }
-
-      if (action === "continue-game") {
-        const saveData = await this.loadSaveData();
-        const selectedCharacter =
-          this.getCharacterById(saveData?.selectedCharacterId ?? null) ??
-          this.characters[0] ??
-          null;
-
-        if (selectedCharacter != null) {
-          this.selectedCharacterId = selectedCharacter.id;
-          if (this.onContinueGame != null) {
-            this.onContinueGame(selectedCharacter, saveData ?? null);
-          } else {
-            this.onStartGame(selectedCharacter);
-          }
-        }
-        return;
-      }
-    }
-
-    const scriptEditorActionElement = target.closest("[data-script-editor-action]");
-    if (scriptEditorActionElement != null) {
-      const action = scriptEditorActionElement.dataset.scriptEditorAction;
-      if (action != null) {
-        await this.handleScriptEditorAction(action, scriptEditorActionElement);
-      }
-      return;
-    }
-
-    const scriptEditorFamilyElement = target.closest("[data-script-editor-family]");
-    if (scriptEditorFamilyElement != null) {
-      const family = scriptEditorFamilyElement.dataset.scriptEditorFamily;
-      const entityId = scriptEditorFamilyElement.dataset.scriptEditorEntityId ?? null;
-      if (family != null) {
-        this.selectScriptEditorFamily(family, entityId);
-      }
-      return;
-    }
-
-    const scriptEditorRecordElement = target.closest("[data-script-editor-record-id]");
-    if (scriptEditorRecordElement != null) {
-      const recordId = scriptEditorRecordElement.dataset.scriptEditorRecordId;
-      if (recordId != null) {
-        this.selectScriptEditorRecord(recordId);
       }
     }
   }
 
   async onChange(event) {
     const target = event.target;
-    if (
-      !(
-        target instanceof globalThis.HTMLInputElement ||
-        target instanceof globalThis.HTMLSelectElement ||
-        target instanceof globalThis.HTMLTextAreaElement
-      )
-    ) {
-      return;
-    }
-
-    if (target.matches("[data-main-ui-scenario-file]")) {
-      const files = Array.from(target.files ?? []);
-      target.value = "";
-      if (files.length === 0) {
-        return;
-      }
-
-      await this.onImportScenarioPackFiles?.(files);
-      return;
-    }
-
-    if (target.matches("[data-script-editor-project-file]")) {
-      const files = Array.from(target.files ?? []);
-      target.value = "";
-      if (files.length === 0) {
-        return;
-      }
-
-      await this.handleScriptEditorProjectFileImport(files);
-      return;
-    }
-
-    if (target.matches("[data-script-editor-project-field]")) {
-      const field = target.dataset.scriptEditorProjectField;
-      if (field != null) {
-        this.applyScriptEditorProjectField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-startup-field]")) {
-      const startupField = target.dataset.scriptEditorStartupField;
-      const startupFieldToProjectField = {
-        initialView: [
-          "scenarioProfile.launchPolicy.initialView",
-          "scenarioProfile.initialLocation.view",
-        ],
-        characterSelection: "scenarioProfile.launchPolicy.characterSelection",
-        playerCharacterId: "scenarioProfile.playerCharacterId",
-        cityId: "scenarioProfile.initialLocation.cityId",
-        houseId: "scenarioProfile.initialLocation.houseId",
-      };
-      const fields = startupFieldToProjectField[startupField];
-      for (const field of Array.isArray(fields) ? fields : [fields]) {
-        if (field == null) {
-          continue;
-        }
-        this.applyScriptEditorProjectField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-person-field]")) {
-      const field = target.dataset.scriptEditorPersonField;
-      if (field != null) {
-        this.applyScriptEditorPersonField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-person-attribute-field]")) {
-      const field = target.dataset.scriptEditorPersonAttributeField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorPersonAttributeIndex ?? "-1",
-        10
-      );
-      if (
-        (field === "key-name" || field === "type" || field === "value") &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorPersonAttributeField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-person-attribute-group-field]")) {
-      const field = target.dataset.scriptEditorPersonAttributeGroupField;
-      const groupId = target.dataset.scriptEditorPersonAttributeGroupId ?? "";
-      if (field === "title" && groupId.length > 0) {
-        this.applyScriptEditorPersonAttributeGroupField(groupId, field, target.value);
-      }
-      return;
-    }
-
-    if (
-      target instanceof globalThis.HTMLInputElement &&
-      target.matches("[data-script-editor-person-attribute-group-attribute-key]")
-    ) {
-      const groupId = target.dataset.scriptEditorPersonAttributeGroupId ?? "";
-      const attributeKey =
-        target.dataset.scriptEditorPersonAttributeGroupAttributeKey ?? "";
-      if (groupId.length > 0 && attributeKey.length > 0) {
-        this.applyScriptEditorPersonAttributeGroupItem(groupId, attributeKey, target.checked);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-portrait-field]")) {
-      const field = target.dataset.scriptEditorPortraitField;
-      if (
-        field === "id" ||
-        field === "label" ||
-        field === "portraitImage" ||
-        field === "avatarImage"
-      ) {
-        this.applyScriptEditorPortraitField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-portrait-variant-field]")) {
-      const field = target.dataset.scriptEditorPortraitVariantField;
-      if (
-        field === "id" ||
-        field === "label" ||
-        field === "parentPortraitId" ||
-        field === "portraitId"
-      ) {
-        this.applyScriptEditorPortraitVariantField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-person-relation-family]")) {
-      const family = target.dataset.scriptEditorPersonRelationFamily;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorPersonRelationIndex ?? "-1",
-        10
-      );
-      if (
-        (family === "dialogueIds" || family === "eventIds") &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorPersonRelationField(index, family, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-story-field]")) {
-      const field = target.dataset.scriptEditorStoryField;
-      if (
-        field === "id" ||
-        field === "title" ||
-        field === "chapterId" ||
-        field === "summary" ||
-        field === "progressMode"
-      ) {
-        this.applyScriptEditorStoryField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-dialogue-field]")) {
-      const field = target.dataset.scriptEditorDialogueField;
-      if (field === "id" || field === "title" || field === "storyNodeId") {
-        this.applyScriptEditorDialogueField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-dialogue-node-field]")) {
-      const field = target.dataset.scriptEditorDialogueNodeField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorDialogueNodeIndex ?? "-1",
-        10
-      );
-      if (
-        ["id", "nodeType", "speakerPersonId", "textId", "nextNodeId", "choiceTargetNodeId"].includes(
-          field ?? ""
-        ) &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorDialogueNodeField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches('[data-script-editor-relation-kind="dialogue-participants"]')) {
-      const index = Number.parseInt(target.dataset.scriptEditorRelationIndex ?? "-1", 10);
-      if (Number.isInteger(index) && index >= 0) {
-        this.applyScriptEditorDialogueParticipantField(index, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-settlement-field]")) {
-      const field = target.dataset.scriptEditorSettlementField;
-      if (field === "title" || field === "nextEventId") {
-        this.applyScriptEditorSettlementField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-settlement-content-field]")) {
-      const field = target.dataset.scriptEditorSettlementContentField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorSettlementContentIndex ?? "-1",
-        10
-      );
-      if (
-        (
-          field === "targetFamily" ||
-          field === "targetId" ||
-          field === "attributeKey" ||
-          field === "operation" ||
-          field === "value"
-        ) &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorSettlementContentField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-progress-track-field]")) {
-      const field = target.dataset.scriptEditorProgressTrackField;
-      if (
-        field === "title" ||
-        field === "metricKey" ||
-        field === "metricLabel" ||
-        field === "hostFamily" ||
-        field === "allowDemotion"
-      ) {
-        const nextValue =
-          field === "allowDemotion" && target instanceof globalThis.HTMLInputElement
-            ? target.checked
-            : target.value;
-        this.applyScriptEditorProgressTrackField(field, nextValue);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-progress-track-tier-field]")) {
-      const field = target.dataset.scriptEditorProgressTrackTierField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorProgressTrackTierIndex ?? "-1",
-        10
-      );
-      if (
-        ["title", "threshold", "onEnterRepeatPolicy", "targetTierSettlementId"].includes(
-          field ?? ""
-        ) &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorProgressTrackTierField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-progress-binding-field]")) {
-      const field = target.dataset.scriptEditorProgressBindingField;
-      if (
-        ["trackId", "hostFamily", "hostId", "enabled"].includes(field ?? "")
-      ) {
-        const nextValue =
-          field === "enabled" && target instanceof globalThis.HTMLInputElement
-            ? target.checked
-            : target.value;
-        this.applyScriptEditorProgressTrackBindingField(field, nextValue);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-field]")) {
-      const field = target.dataset.scriptEditorEventField;
-      if (
-        field === "id" ||
-        field === "title" ||
-        field === "description" ||
-        field === "type" ||
-        field === "settlementId" ||
-        field === "nextEventId"
-      ) {
-        this.applyScriptEditorEventField(field, target.value);
-      }
-      return;
-    }
-
-    if (
-      target instanceof globalThis.HTMLInputElement &&
-      target.matches("[data-script-editor-event-repeatable]")
-    ) {
-      this.applyScriptEditorEventRepeatable(target.checked);
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-destination-field]")) {
-      const field = target.dataset.scriptEditorEventDestinationField;
-      if (field === "family" || field === "targetId") {
-        this.applyScriptEditorEventDestinationField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-story-node-id]")) {
-      this.applyScriptEditorEventStoryNodeId(target.value);
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-preview-field]")) {
-      const field = target.dataset.scriptEditorEventPreviewField;
-      if (field === "previewNotes" || field === "validationNotes") {
-        this.applyScriptEditorEventPreviewField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-binding-field]")) {
-      const bindingId = target.dataset.scriptEditorEventBindingId;
-      const field = target.dataset.scriptEditorEventBindingField;
-      if (bindingId != null && (field === "eventId" || field === "priority")) {
-        this.applyScriptEditorEventBindingField(bindingId, field, target.value);
-      }
-      return;
-    }
-
-    if (
-      target instanceof globalThis.HTMLInputElement &&
-      target.matches("[data-script-editor-event-binding-enabled]")
-    ) {
-      const bindingId = target.dataset.scriptEditorEventBindingId;
-      if (bindingId != null) {
-        this.applyScriptEditorEventBindingField(bindingId, "enabled", target.checked);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-binding-owner-field]")) {
-      const bindingId = target.dataset.scriptEditorEventBindingId;
-      const field = target.dataset.scriptEditorEventBindingOwnerField;
-      if (bindingId != null && (field === "family" || field === "id")) {
-        this.applyScriptEditorEventBindingOwnerField(bindingId, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-binding-trigger-field]")) {
-      const bindingId = target.dataset.scriptEditorEventBindingId;
-      const field = target.dataset.scriptEditorEventBindingTriggerField;
-      if (bindingId != null && (field === "timing" || field === "action")) {
-        this.applyScriptEditorEventBindingTriggerField(bindingId, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-binding-condition-operator]")) {
-      const bindingId = target.dataset.scriptEditorEventBindingId;
-      if (bindingId != null) {
-        this.applyScriptEditorEventBindingConditionOperator(bindingId, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-binding-condition-item-field]")) {
-      const bindingId = target.dataset.scriptEditorEventBindingId;
-      const field = target.dataset.scriptEditorEventBindingConditionItemField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorEventBindingConditionItemIndex ?? "-1",
-        10
-      );
-      if (
-        bindingId != null &&
-        [
-          "type",
-          "sourceFamily",
-          "field",
-          "operator",
-          "value",
-          "valueType",
-          "resolverId",
-          "handlerId",
-          "payload",
-        ].includes(field ?? "") &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorEventBindingConditionItemField(
-          bindingId,
-          index,
-          field,
-          target.value
-        );
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-minigame-field]")) {
-      const field = target.dataset.scriptEditorMinigameField;
-      if (
-        [
-          "id",
-          "title",
-          "description",
-          "playableId",
-          "integrationId",
-          "ownerKind",
-          "ownerId",
-          "returnPolicy",
-          "triggerId",
-          "triggerSource",
-          "triggerEvent",
-          "notes",
-        ].includes(field ?? "")
-      ) {
-        this.applyScriptEditorMinigameField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-minigame-integration]")) {
-      this.applyScriptEditorMinigameIntegration(target.value);
-      return;
-    }
-
-    if (target.matches("[data-script-editor-minigame-launch-field]")) {
-      const field = target.dataset.scriptEditorMinigameLaunchField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorMinigameLaunchIndex ?? "-1",
-        10
-      );
-      if ((field === "key" || field === "value") && Number.isInteger(index) && index >= 0) {
-        this.applyScriptEditorMinigameLaunchField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-minigame-outcome-field]")) {
-      const field = target.dataset.scriptEditorMinigameOutcomeField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorMinigameOutcomeIndex ?? "-1",
-        10
-      );
-      if (
-        ["id", "outcome", "handoffPolicy", "summary", "effectHint"].includes(
-          field ?? ""
-        ) &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorMinigameOutcomeField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-settlement-field]")) {
-      const field = target.dataset.scriptEditorSettlementField;
-      if (field === "title" || field === "nextEventId") {
-        this.applyScriptEditorSettlementField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-settlement-content-field]")) {
-      const field = target.dataset.scriptEditorSettlementContentField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorSettlementContentIndex ?? "-1",
-        10
-      );
-      if (
-        (
-          field === "targetFamily" ||
-          field === "targetId" ||
-          field === "attributeKey" ||
-          field === "operation" ||
-          field === "value"
-        ) &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorSettlementContentField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches('[data-script-editor-relation-kind^="story-related-"]')) {
-      const relationKind = target.dataset.scriptEditorRelationKind;
-      const index = Number.parseInt(target.dataset.scriptEditorRelationIndex ?? "-1", 10);
-      if (Number.isInteger(index) && index >= 0 && relationKind != null) {
-        this.applyScriptEditorStoryRelationField(relationKind, index, target.value);
-      }
-      return;
-    }
-
-    if (target.matches('[data-script-editor-relation-kind^="event-related-"]')) {
-      const relationKind = target.dataset.scriptEditorRelationKind;
-      const index = Number.parseInt(target.dataset.scriptEditorRelationIndex ?? "-1", 10);
-      if (Number.isInteger(index) && index >= 0 && relationKind != null) {
-        this.applyScriptEditorEventRelationField(relationKind, index, target.value);
-      }
-      return;
-    }
-
-    if (
-      target instanceof globalThis.HTMLInputElement &&
-      target.matches("[data-script-editor-person-trade-enabled]")
-    ) {
-      this.applyScriptEditorPersonTradeEnabled(target.checked);
-      return;
-    }
-
-    if (target.matches("[data-script-editor-location-field]")) {
-      const field = target.dataset.scriptEditorLocationField;
-      if (typeof field === "string" && field.length > 0) {
-        this.applyScriptEditorLocationField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-city-mounted-building]")) {
-      const index = Number.parseInt(
-        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
-        10
-      );
-      if (Number.isInteger(index) && index >= 0) {
-        this.applyScriptEditorCityMountedBuilding(index, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-building-arrangement-field]")) {
-      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
-      const field = target.dataset.scriptEditorBuildingArrangementField;
-      if (
-        arrangementId.length > 0 &&
-        ["id", "cityId", "buildingId", "displayName", "description", "backgroundId"].includes(field ?? "")
-      ) {
-        this.applyScriptEditorBuildingArrangementField(arrangementId, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-building-arrangement-npc]")) {
-      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
-      const npcIndex = Number.parseInt(
-        target.dataset.scriptEditorBuildingArrangementNpcIndex ?? "-1",
-        10
-      );
-      if (arrangementId.length > 0 && Number.isInteger(npcIndex) && npcIndex >= 0) {
-        this.applyScriptEditorBuildingArrangementNpc(arrangementId, npcIndex, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-building-arrangement-primary-npc]")) {
-      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
-      if (arrangementId.length > 0) {
-        this.applyScriptEditorBuildingArrangementPrimaryNpc(arrangementId, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-building-layout-field]")) {
-      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
-      const field = target.dataset.scriptEditorBuildingLayoutField;
-      if (
-        arrangementId.length > 0 &&
-        ["templateId", "shellClassNames"].includes(field ?? "")
-      ) {
-        this.applyScriptEditorBuildingLayoutField(arrangementId, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-building-layout-node-field]")) {
-      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
-      const nodeIndex = Number.parseInt(
-        target.dataset.scriptEditorBuildingLayoutNodeIndex ?? "-1",
-        10
-      );
-      const field = target.dataset.scriptEditorBuildingLayoutNodeField;
-      if (
-        arrangementId.length > 0 &&
-        Number.isInteger(nodeIndex) &&
-        nodeIndex >= 0 &&
-        [
-          "id",
-          "kind",
-          "regionId",
-          "sourceContainerId",
-          "sourceContainerType",
-          "presentation",
-          "characterFilter",
-          "actionFilter",
-          "clickActionId",
-        ].includes(field ?? "")
-      ) {
-        this.applyScriptEditorBuildingLayoutNodeField(
-          arrangementId,
-          nodeIndex,
-          field,
-          target.value
-        );
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-building-container-field]")) {
-      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
-      const containerIndex = Number.parseInt(
-        target.dataset.scriptEditorBuildingContainerIndex ?? "-1",
-        10
-      );
-      const field = target.dataset.scriptEditorBuildingContainerField;
-      if (
-        arrangementId.length > 0 &&
-        Number.isInteger(containerIndex) &&
-        containerIndex >= 0 &&
-        ["id", "type", "title"].includes(field ?? "")
-      ) {
-        this.applyScriptEditorBuildingContainerField(
-          arrangementId,
-          containerIndex,
-          field,
-          target.value
-        );
-      }
-      return;
-    }
-
-    if (
-      target instanceof globalThis.HTMLInputElement &&
-      target.matches("[data-script-editor-building-layout-node-flag]")
-    ) {
-      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
-      const nodeIndex = Number.parseInt(
-        target.dataset.scriptEditorBuildingLayoutNodeIndex ?? "-1",
-        10
-      );
-      const field = target.dataset.scriptEditorBuildingLayoutNodeFlag;
-      if (
-        arrangementId.length > 0 &&
-        Number.isInteger(nodeIndex) &&
-        nodeIndex >= 0 &&
-        ["previewSelectable", "previewDraggable", "previewDropTarget"].includes(
-          field ?? ""
-        )
-      ) {
-        this.applyScriptEditorBuildingLayoutNodeFlag(
-          arrangementId,
-          nodeIndex,
-          field,
-          target.checked
-        );
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-city-mounted-building-npc]")) {
-      const buildingIndex = Number.parseInt(
-        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
-        10
-      );
-      const npcIndex = Number.parseInt(
-        target.dataset.scriptEditorCityMountedBuildingNpcIndex ?? "-1",
-        10
-      );
-      if (
-        Number.isInteger(buildingIndex) &&
-        buildingIndex >= 0 &&
-        Number.isInteger(npcIndex) &&
-        npcIndex >= 0
-      ) {
-        this.applyScriptEditorCityMountedBuildingNpc(
-          buildingIndex,
-          npcIndex,
-          target.value
-        );
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-city-primary-npc]")) {
-      const buildingIndex = Number.parseInt(
-        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
-        10
-      );
-      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
-        this.applyScriptEditorCityMountedBuildingPrimaryNpc(
-          buildingIndex,
-          target.value
-        );
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-location-menu-field]")) {
-      const field = target.dataset.scriptEditorLocationMenuField;
-      const instanceId = target.dataset.scriptEditorLocationMenuInstanceId ?? "";
-      const index = Number.parseInt(
-        target.dataset.scriptEditorLocationMenuIndex ?? "-1",
-        10
-      );
-      if (
-        ["id", "label", "menuFamily", "targetFamily", "targetId", "disabledHint"].includes(
-          field ?? ""
-        ) &&
-        instanceId.length > 0 &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorLocationMenuField(instanceId, index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-location-menu-instance-field]")) {
-      const field = target.dataset.scriptEditorLocationMenuInstanceField;
-      const instanceId = target.dataset.scriptEditorLocationMenuInstanceId ?? "";
-      if (field === "title" && instanceId.length > 0) {
-        this.applyScriptEditorLocationMenuInstanceField(instanceId, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-location-menu-resource-field]")) {
-      const field = target.dataset.scriptEditorLocationMenuResourceField;
-      const resourceId = target.dataset.scriptEditorLocationMenuResourceId ?? "";
-      if (field === "title" && resourceId.length > 0) {
-        this.applyScriptEditorLocationMenuResourceField(resourceId, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-location-attribute-field]")) {
-      const field = target.dataset.scriptEditorLocationAttributeField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorLocationAttributeIndex ?? "-1",
-        10
-      );
-      if (
-        (
-          field === "key" ||
-          field === "label" ||
-          field === "type" ||
-          field === "value" ||
-          field === "options"
-        ) &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorLocationAttributeField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (
-      target instanceof globalThis.HTMLInputElement &&
-      target.matches("[data-script-editor-location-menu-flag]")
-    ) {
-      const field = target.dataset.scriptEditorLocationMenuFlag;
-      const instanceId = target.dataset.scriptEditorLocationMenuInstanceId ?? "";
-      const index = Number.parseInt(
-        target.dataset.scriptEditorLocationMenuIndex ?? "-1",
-        10
-      );
-      if (
-        (field === "isVisible" || field === "isEnabled") &&
-        instanceId.length > 0 &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorLocationMenuFlag(instanceId, index, field, target.checked);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-location-access-field]")) {
-      const field = target.dataset.scriptEditorLocationAccessField;
-      if (
-        field === "blockedDialogueId" ||
-        field === "conditionExpression" ||
-        field === "leaveConditionExpression"
-      ) {
-        this.applyScriptEditorLocationAccessField(field, target.value);
-      }
-      return;
-    }
-    if (target.matches("[data-script-editor-location-access-condition-field]")) {
-      const index = Number.parseInt(
-        target.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
-        10
-      );
-      const field = target.dataset.scriptEditorLocationAccessConditionField;
-      if (
-        Number.isInteger(index) &&
-        index >= 0 &&
-        (field === "factor" ||
-          field === "eventId" ||
-          field === "eventState" ||
-          field === "personId" ||
-          field === "personField" ||
-          field === "timeField" ||
-          field === "sourceField" ||
-          field === "operator" ||
-          field === "literalValue")
-      ) {
-        const conditionField =
-          target
-            .closest("[data-script-editor-location-access-condition-scope]")
-            ?.dataset.scriptEditorLocationAccessConditionScope ??
-          "conditionExpression";
-        this.applyScriptEditorLocationAccessConditionField(
-          index,
-          field,
-          target.value,
-          conditionField
-        );
-      }
-      return;
-    }
-    if (target.matches("[data-script-editor-building-entry-field]")) {
-      const field = target.dataset.scriptEditorBuildingEntryField;
-      if (field === "defaultPersonId" || field === "returnTarget") {
-        this.applyScriptEditorBuildingEntryField(field, target.value);
-      }
-    }
-  }
-
-  onInput(event) {
-    const target = event.target;
     if (!(target instanceof globalThis.HTMLInputElement)) {
       return;
     }
 
-    if (target.matches("[data-script-editor-record-search-family]")) {
-      if (event.isComposing === true) {
-        return;
-      }
-      const family = target.dataset.scriptEditorRecordSearchFamily;
-      if (family != null) {
-        this.setScriptEditorRecordSearchValue(family, target.value);
-      }
-    }
-
-    if (target.matches("[data-script-editor-city-mounted-building-search]")) {
-      if (event.isComposing === true) {
-        return;
-      }
-      const buildingIndex = Number.parseInt(
-        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
-        10
-      );
-      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
-        this.setScriptEditorCityMountedBuildingSearchValue(buildingIndex, target.value);
-      }
+    if (!target.matches("[data-main-ui-scenario-file]")) {
       return;
     }
 
-    if (target.matches("[data-script-editor-location-access-condition-field]")) {
-      const index = Number.parseInt(
-        target.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
-        10
-      );
-      const field = target.dataset.scriptEditorLocationAccessConditionField;
-      const conditionField =
-        target
-          .closest("[data-script-editor-location-access-condition-scope]")
-          ?.dataset.scriptEditorLocationAccessConditionScope ??
-        "conditionExpression";
-      if (
-        Number.isInteger(index) &&
-        index >= 0 &&
-        (field === "literalValue" ||
-          field === "personField" ||
-          field === "timeField")
-      ) {
-        this.applyScriptEditorLocationAccessConditionField(
-          index,
-          field,
-          target.value,
-          conditionField
-        );
-      }
-    }
-
-    if (target.matches("[data-script-editor-settlement-field]")) {
-      const field = target.dataset.scriptEditorSettlementField;
-      if (field === "title" || field === "nextEventId") {
-        this.applyScriptEditorSettlementField(field, target.value);
-      }
+    const files = Array.from(target.files ?? []);
+    target.value = "";
+    if (files.length === 0) {
       return;
     }
 
-    if (target.matches("[data-script-editor-settlement-content-field]")) {
-      const field = target.dataset.scriptEditorSettlementContentField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorSettlementContentIndex ?? "-1",
-        10
-      );
-      if (
-        (
-          field === "targetFamily" ||
-          field === "targetId" ||
-          field === "attributeKey" ||
-          field === "operation" ||
-          field === "value"
-        ) &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorSettlementContentField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-progress-track-field]")) {
-      const field = target.dataset.scriptEditorProgressTrackField;
-      if (field === "title" || field === "metricKey" || field === "metricLabel") {
-        this.applyScriptEditorProgressTrackField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-progress-track-tier-field]")) {
-      const field = target.dataset.scriptEditorProgressTrackTierField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorProgressTrackTierIndex ?? "-1",
-        10
-      );
-      if (field === "threshold" && Number.isInteger(index) && index >= 0) {
-        this.applyScriptEditorProgressTrackTierField(index, field, target.value);
-      }
-      return;
-    }
-  }
-
-  onCompositionEnd(event) {
-    const target = event.target;
-    if (!(target instanceof globalThis.HTMLInputElement)) {
-      return;
-    }
-
-    if (target.matches("[data-script-editor-record-search-family]")) {
-      const family = target.dataset.scriptEditorRecordSearchFamily;
-      if (family != null) {
-        this.setScriptEditorRecordSearchValue(family, target.value);
-      }
-    }
-
-    if (target.matches("[data-script-editor-city-mounted-building-search]")) {
-      const buildingIndex = Number.parseInt(
-        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
-        10
-      );
-      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
-        this.setScriptEditorCityMountedBuildingSearchValue(buildingIndex, target.value);
-      }
-    }
+    await this.onImportScenarioPackFiles?.(files);
   }
 
   scheduleCharacterDetailTransitionCleanup() {
@@ -1812,8 +853,6 @@ export class MainUiFlow {
 
     return this.characters.find((character) => character.id === characterId) ?? null;
   }
-
-
 }
 
 const INK_PARTICLE_COLORS = [
@@ -2638,7 +1677,7 @@ function getCharacterStatItems(character) {
 
   return [
     ["身份", character.title ?? "无名之士"],
-    ["职业", character.occupation ?? "未定"],
+    ["职业", character.occupation ?? "待定"],
     ["年龄", `${character.age} 岁`],
     ["所属", character.affiliationLabel ?? character.clanId ?? "暂无"],
     ["统率", formatStatValue(character.stats.leadership)],
@@ -2651,7 +1690,7 @@ function getCharacterStatItems(character) {
 }
 
 function getCharacterSubtitle(character) {
-  return [character?.title, character?.occupation].filter(Boolean).join(" / ") || "浜虹墿璧勬枡";
+  return [character?.title, character?.occupation].filter(Boolean).join(" / ") || "人物资料";
 }
 
 function renderCharacterDetailTransitionText(currentText, previousText, options = {}) {
@@ -2679,7 +1718,7 @@ function renderCharacterDetailTransitionText(currentText, previousText, options 
 }
 
 function escapeHtml(value) {
-  return String(value ?? "")
+  return value
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -2690,4 +1729,3 @@ function escapeHtml(value) {
 function formatStatValue(value) {
   return typeof value === "number" ? String(value) : "0";
 }
-

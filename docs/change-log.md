@@ -9,20 +9,6 @@
 - The change keeps explored Hex reveal masks, drag/zoom animation freeze, terrain chunk reveal holds, and `window.rpgCloud` behavior within the existing cloud overlay boundary; it does not modify exploration state, terrain height, navigation, map nodes, save data, or `src/main.ts`.
 - Final review fix: cloud ray reconstruction now uses terrain-owned `CAMERA_OFFSET_UNIT`, `TERRAIN_SCALE`, `HEIGHT_SCALE`, camera reference/base distance, and FOV uniforms instead of the previous raw shader offset approximation, and the no-op projection-uniform retention block was removed.
 
-## 2026-07-28 Script Editor Module Extraction And Main UI Bridge
-
-### Changed
-- Moved the Script Editor authoring application/domain/view implementation from the legacy `src/application/script-editor/*`, `src/domain/script-editor-project.ts`, and `src/ui/views/script-editor/*` locations into the dedicated [src/modules/script-editor](/D:/workspace/project/RPG_TG/src/modules/script-editor:1) package surface, including new package entrypoints, host adapters, kernel exports, builtin templates, and the extracted main-ui workspace module.
-- Updated [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) to keep the existing external menu entry while delegating Script Editor workspace rendering/interaction to the new [src/modules/script-editor/ui/main-ui-script-editor-module.js](/D:/workspace/project/RPG_TG/src/modules/script-editor/ui/main-ui-script-editor-module.js:1) install seam and [src/modules/script-editor/main-ui-bridge.ts](/D:/workspace/project/RPG_TG/src/modules/script-editor/main-ui-bridge.ts:1).
-- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1), [tests/city-building-mount-authoring.test.cjs](/D:/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs:1), [tests/dialogue-runtime-presentation.test.cjs](/D:/workspace/project/RPG_TG/tests/dialogue-runtime-presentation.test.cjs:1), and [tools/check-ui-encoding-integrity.mjs](/D:/workspace/project/RPG_TG/tools/check-ui-encoding-integrity.mjs:1) so repository checks target the extracted module locations instead of assuming all Script Editor UI logic still lives in `main-ui-flow.js`.
-- Fixed the extracted workspace module bootstrap to resolve its new relative imports correctly, consume the bridge as a module namespace, and carry forward the character-selection layout bindings required for runtime preview startup.
-
-### Impact
-- Script Editor authoring is now exposed through a package-style seam that can be moved across branches with a much smaller integration surface while preserving the existing main-menu entry and workspace UX in this branch.
-- Main UI refresh, Script Editor entry, and runtime preview no longer fail during module evaluation after the extraction; the editor can be opened from the main menu, load the built-in template project, and enter/exit runtime preview successfully.
-
-## 2026-07-27 Event-Owned Playable Completion Follow-Up Type Guard
-
 ## 2026-07-24 Faction Review Flow
 
 - Normalized temple and keep review cadence into shared review semantics for assignment tables, contribution grades, praise, policy panels, advice prompt, and rank-gated task choices.

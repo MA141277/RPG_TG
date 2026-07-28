@@ -141,7 +141,6 @@ import {
   applyStartupStoryBootstrap,
   type StartupStoryBootstrap,
 } from "./application/startup/startup-story-bootstrap";
-import { sanitizeScenarioPackForRuntimePreview } from "./application/startup/scenario-preview-sanitizer";
 import { createHaozhouReturnEncounterBattleState } from "./application/startup/haozhou-return-battle-state";
 import {
   createEnterCityRequest,
@@ -921,9 +920,7 @@ const mainUiFlow = new MainUiFlow({
   onStartGame: startMainGameWithLoading,
   onContinueGame: startContinueGameWithLoading,
   onStartScenarioPack: startScenarioPackWithLoading,
-  onStartLoadedScenarioPack: startLoadedScenarioPackWithLoading,
   onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
-  onExitRuntimePreview: exitScriptEditorRuntimePreviewSession,
   loadSaveData,
   getAppState: () => appState,
 });
@@ -933,23 +930,6 @@ window.addEventListener("resize", syncGameViewport);
 setGameVisibility(false);
 mainUiFlow.mount();
 mainUiFlow.showMainMenu();
-
-function exitScriptEditorRuntimePreviewSession(): void {
-  currentPlayerCharacterId = defaultPlayerCharacterId;
-  resetMainGameRuntime();
-  setActiveContentContext(
-    createActiveGameContentContextFromModActivation({
-      basePack: baseGameContentPack,
-      activationResult: builtinStartupActivation,
-    })
-  );
-  appState = applyPersistedBattleUiEditorValues(
-    createPrototypeAppState(currentPlayerCharacterId)
-  );
-  setGameVisibility(false);
-  mainUiFlow.showMainMenu();
-  renderApp();
-}
 
 function createPrototypeAppState(playerCharacterId: string): AppState {
   const defaultMapDefinition =
@@ -2654,11 +2634,6 @@ function runScenarioPackStartupRequestWithLoading(
   request:
     | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
     | { type: "scenario-files"; files: File[] }
-    | {
-        type: "scenario-pack";
-        scenarioPack: ScenarioPackDefinition;
-        source: ModSourceDescriptor;
-      }
 ): Promise<void> {
   const requestId = beginLoadingScreen();
 
@@ -2728,26 +2703,6 @@ async function startScenarioPackFilesWithLoading(
         ? `JSON 开局读取失败（${importLabel}）：${error.message}`
         : `JSON 开局读取失败（${importLabel}）。`
     );
-  }
-}
-
-async function startLoadedScenarioPackWithLoading(
-  scenarioPack: ScenarioPackDefinition
-): Promise<"started" | "failed"> {
-  try {
-    const previewScenarioPack = sanitizeScenarioPackForRuntimePreview(scenarioPack);
-    await runScenarioPackStartupRequestWithLoading({
-      type: "scenario-pack",
-      scenarioPack: previewScenarioPack,
-      source: {
-        kind: "file",
-        name: previewScenarioPack.title,
-        filePath: `preview:${previewScenarioPack.id}`,
-      },
-    });
-    return "started";
-  } catch {
-    return "failed";
   }
 }
 
