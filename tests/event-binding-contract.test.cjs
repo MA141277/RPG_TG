@@ -5,6 +5,7 @@ const {
   createRuntimeTriggerContext,
   isSupportedEventBindingOwnerFamily,
   isSupportedEventBindingTrigger,
+  runModFirstEventBindingRuntime,
   selectModFirstEventBindingCandidate,
 } = require("../.test-dist/core/runtime/event-binding-contract.js");
 
@@ -139,6 +140,92 @@ test("selectModFirstEventBindingCandidate filters and sorts bindings", () => {
     priority: 10,
     taskInputs: [{ type: "custom-task", taskId: "task-1" }],
   });
+});
+
+test("runModFirstEventBindingRuntime activates candidate without mutating state", () => {
+  const state = {
+    calendar: {
+      chapterId: "chapter-1",
+    },
+    runtime: {
+      flags: {},
+      variables: {},
+      eventHistory: {},
+    },
+  };
+  const eventDefinitionsById = {
+    eventA: createEventDefinition("eventA", "repeatable", {
+      taskInputs: [{ type: "custom-task", taskId: "task-1" }],
+    }),
+  };
+
+  const result = runModFirstEventBindingRuntime({
+    state,
+    eventDefinitionsById,
+    triggerContext: {
+      timing: "after",
+      action: "city-enter",
+      owner: {
+        family: "city",
+        id: "haozhou",
+      },
+    },
+    eventBindings: [
+      {
+        id: "binding-a",
+        eventId: "eventA",
+        owner: { family: "city", id: "haozhou" },
+        trigger: { timing: "after", action: "city-enter" },
+      },
+    ],
+  });
+
+  assert.equal(result.state, state);
+  assert.deepEqual(result.activation, {
+    activeEventId: "eventA",
+    taskInputs: [{ type: "custom-task", taskId: "task-1" }],
+  });
+  assert.equal(result.candidate.bindingId, "binding-a");
+});
+
+test("runModFirstEventBindingRuntime returns empty activation when no binding matches", () => {
+  const state = {
+    calendar: {
+      chapterId: "chapter-1",
+    },
+    runtime: {
+      flags: {},
+      variables: {},
+      eventHistory: {},
+    },
+  };
+
+  const result = runModFirstEventBindingRuntime({
+    state,
+    eventDefinitionsById: {
+      eventA: createEventDefinition("eventA", "repeatable"),
+    },
+    triggerContext: {
+      timing: "after",
+      action: "city-enter",
+      owner: {
+        family: "city",
+        id: "haozhou",
+      },
+    },
+    eventBindings: [
+      {
+        id: "binding-a",
+        eventId: "eventA",
+        owner: { family: "city", id: "other-city" },
+        trigger: { timing: "after", action: "city-enter" },
+      },
+    ],
+  });
+
+  assert.equal(result.state, state);
+  assert.equal(result.activation, null);
+  assert.equal(result.candidate, null);
 });
 
 function createEventDefinition(id, occurrence, extra = {}) {

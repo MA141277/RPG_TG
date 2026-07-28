@@ -112,11 +112,22 @@ export type ModFirstEventBindingRuntimeCandidate = {
   taskInputs: ModFirstRuntimeTaskInput[];
 };
 
+export type ModFirstActivatedEvent = {
+  activeEventId: string;
+  taskInputs: ModFirstRuntimeTaskInput[];
+};
+
 export type ModFirstEventBindingRuntimeInput = {
   state: GameState;
   eventDefinitionsById: Record<string, ModFirstEventDefinition>;
   eventBindings: ModFirstEventBinding[];
   triggerContext: ModFirstTriggerContext;
+};
+
+export type ModFirstEventBindingRuntimeResult = {
+  state: GameState;
+  activation: ModFirstActivatedEvent | null;
+  candidate: ModFirstEventBindingRuntimeCandidate | null;
 };
 
 const SUPPORTED_EVENT_BINDING_OWNER_FAMILIES = new Set([
@@ -200,6 +211,28 @@ export function selectModFirstEventBindingCandidate(
       })
       .sort(compareModFirstCandidates)[0] ?? null
   );
+}
+
+export function runModFirstEventBindingRuntime(
+  input: ModFirstEventBindingRuntimeInput
+): ModFirstEventBindingRuntimeResult {
+  const candidate = selectModFirstEventBindingCandidate(input);
+  if (candidate == null) {
+    return {
+      state: input.state,
+      activation: null,
+      candidate: null,
+    };
+  }
+
+  return {
+    state: input.state,
+    activation: {
+      activeEventId: candidate.eventId,
+      taskInputs: candidate.taskInputs,
+    },
+    candidate,
+  };
 }
 
 function matchesModFirstTriggerContext(
