@@ -2,21 +2,21 @@
 
 ## Current State
 
-- Current Stage: `Map Renderer Architecture`
+- Current Stage: `House Local Gameplay`
 - Current Stage Status: `running`
-- Current Task: `Campaign Map-Space Volumetric Cloud`
-- Current Task Status: `completed-but-open`
-- Current Child: `Campaign Map-Space Volumetric Cloud`
-- Current Child Status: `completed-but-open`
+- Current Task: `Tavern Short Gamble`
+- Current Task Status: `running`
+- Current Child: `Tavern Short Gamble`
+- Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-and-push-campaign-map-space-volumetric-cloud`
+- Next Required Action: `execute-tavern-short-gamble-task-2`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md; do not close until push succeeds and the known child 27 baseline is accepted or resolved.`
+- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 2.`
 
 ## Progress Log
 
@@ -100,6 +100,10 @@
   - Summary: `Fixed final-review issues for campaign map-space volumetric cloud alignment: shader ray reconstruction now follows terrain camera offset-unit, terrain-scale, height-scale, screen-scale, perspective, and tilt conventions; raw 0.0025 offset math and the no-op projection uniform retention were removed.`
   - Verification: `RED npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud pan basis" tests/robustness.test.cjs }` failed on missing cameraOffsetUnit as expected; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs }` passed 6/6; `npm run typecheck` passed; `npm run build` passed with existing Vite asset/chunk warnings.
   - Next: `Commit final-review fix and report; keep child completed-but-open until remote push/review and known child 27 baseline resolution.`
+- 2026-07-28
+  - Summary: `Promoted the tavern short gamble child and completed Task 1 with the short deck contract, card labels, 7-choose-5 showdown evaluator, and side-pot split helpers.`
+  - Verification: `RED bundled node + tsc + node --test --test-isolation=none failed with MODULE_NOT_FOUND after removing stale .test-dist tavern-short outputs; GREEN the same command passed 3/3 tests in tests/tavern-short-gamble-domain.test.cjs.`
+  - Next: `Execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 2 and build the short hand runtime.`
 
 ## Latest Closeout
 
