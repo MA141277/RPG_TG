@@ -3732,11 +3732,134 @@ test("campaign terrain shader keeps the grass diffuse texture scaled smaller tha
   );
   assert.match(
     terrainFragmentSource,
-    /texture2D\(\s*uGrassTexture,\s*fract\(uv \* \(uLandTextureTiling \* GRASS_TEXTURE_TILING_SCALE\)\)\s*\)\.rgb/
+    /vec2 getGrassMaterialUv\(vec2 uv\) \{[\s\S]*?return fract\(uv \* \(uLandTextureTiling \* GRASS_TEXTURE_TILING_SCALE\)\);[\s\S]*?\}/
+  );
+  assert.match(
+    terrainFragmentSource,
+    /texture2D\(uGrassTexture, getGrassMaterialUv\(uv\)\)\.rgb/
   );
   assert.doesNotMatch(
     terrainFragmentSource,
     /vec3 sampleGrassMaterial\(vec2 uv\) \{\s*return texture2D\(uGrassTexture,\s*fract\(uv \* uLandTextureTiling\)\)\.rgb;\s*\}/
+  );
+});
+
+test("yuanmo campaign grass normal texture uses the previous grass normal map", () => {
+  const hashFile = (relativePath) =>
+    crypto
+      .createHash("sha256")
+      .update(fs.readFileSync(path.join(process.cwd(), relativePath)))
+      .digest("hex");
+  const grassDiffuseHash = hashFile("tietu.png");
+  const grassNormalHash = hashFile("gassuv.png");
+
+  for (const texturePath of [
+    "src/assets/yuanmo-map/campaign-grass-normal-texture.png",
+    "src/content/scenario-packs/zhuyuanzhang/assets/maps/campaign-grass-normal-texture.png",
+  ]) {
+    const grassTextureHash = hashFile(texturePath);
+
+    assert.equal(grassTextureHash, grassNormalHash);
+    assert.notEqual(grassTextureHash, grassDiffuseHash);
+  }
+});
+
+test("campaign map view passes grass normal texture urls to the terrain canvas", () => {
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+  const yuanmoMapSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const zhuyuanzhangMapsSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang",
+      "maps.json"
+    ),
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /grassNormalTextureImageUrl: string \| null/);
+  assert.match(mapViewSource, /data-map-grass-normal-texture-url=/);
+  assert.match(mapViewSource, /layer\.id === "map_grass_normal_texture"/);
+  assert.match(yuanmoMapSource, /campaign-grass-normal-texture\.png/);
+  assert.match(yuanmoMapSource, /"id": "map_grass_normal_texture"/);
+  assert.match(zhuyuanzhangMapsSource, /"id": "map_grass_normal_texture"/);
+  assert.match(
+    zhuyuanzhangMapsSource,
+    /"imageUrl": "\.\/assets\/maps\/campaign-grass-normal-texture\.png"/
+  );
+});
+
+test("campaign terrain WebGL binds grass normal texture and exposes shadow-aligned light direction", () => {
+  const rendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(rendererSource, /grassNormalTextureUrl: string \| null/);
+  assert.match(rendererSource, /canvas\.dataset\.mapGrassNormalTextureUrl/);
+  assert.match(rendererSource, /const grassNormalTextureLocation = gl\.getUniformLocation\(program, "uGrassNormalTexture"\)/);
+  assert.match(
+    rendererSource,
+    /createTexture\(\s*gl,\s*grassNormalTextureImage \?\? grassTextureImage \?\? textureImage\s*\)/
+  );
+  assert.match(rendererSource, /gl\.activeTexture\(gl\.TEXTURE9\);[\s\S]*?gl\.bindTexture\(gl\.TEXTURE_2D, grassNormalTexture\);[\s\S]*?gl\.uniform1i\(grassNormalTextureLocation, 9\);/);
+  assert.match(rendererSource, /const terrainLightDirection = getCampaignTerrainLightWorldDirection\(/);
+  assert.match(rendererSource, /gl\.uniform2f\(terrainLightDirectionLocation, terrainLightDirection\[0\], terrainLightDirection\[1\]\)/);
+  assert.match(rendererSource, /function getCampaignTerrainLightWorldDirection/);
+  assert.match(rendererSource, /return \[-shadowDirection\[0\], -shadowDirection\[1\]\];/);
+});
+
+test("campaign terrain shader samples grass diffuse and normal from the same atlas slice", () => {
+  const terrainFragmentSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "shaders",
+      "campaign-terrain.frag.glsl"
+    ),
+    "utf8"
+  );
+
+  assert.match(terrainFragmentSource, /uniform sampler2D uGrassNormalTexture;/);
+  assert.match(terrainFragmentSource, /uniform vec2 uTerrainLightDirection;/);
+  assert.match(
+    terrainFragmentSource,
+    /vec2 getGrassMaterialUv\(vec2 uv\) \{[\s\S]*?return fract\(uv \* \(uLandTextureTiling \* GRASS_TEXTURE_TILING_SCALE\)\);[\s\S]*?\}/
+  );
+  assert.match(
+    terrainFragmentSource,
+    /vec3 sampleGrassMaterial\(vec2 uv\) \{[\s\S]*?return texture2D\(uGrassTexture, getGrassMaterialUv\(uv\)\)\.rgb;[\s\S]*?\}/
+  );
+  assert.match(
+    terrainFragmentSource,
+    /vec3 sampleGrassNormal\(vec2 uv\) \{[\s\S]*?texture2D\(uGrassNormalTexture, getGrassMaterialUv\(uv\)\)[\s\S]*?\* 2\.0 - 1\.0/
+  );
+  assert.match(terrainFragmentSource, /float grassNormalLight = getGrassNormalLight\(vUv\);/);
+  assert.match(
+    terrainFragmentSource,
+    /float grassNormalLightExclusion = clamp\([\s\S]*?sandMaterialMask \+ mountainAmount \+ structureGroundAmount \+ snowAmount/
+  );
+  assert.match(
+    terrainFragmentSource,
+    /landTexture = mix\([\s\S]*?landTexture \* grassNormalLight,[\s\S]*?landTexture,[\s\S]*?grassNormalLightExclusion[\s\S]*?\);/
   );
 });
 

@@ -7692,6 +7692,14 @@
         "imageUrl": "./assets/maps/campaign-grass-texture.png"
       },
       {
+        "id": "map_grass_normal_texture",
+        "label": "Campaign grass normal texture",
+        "width": 1254,
+        "height": 1254,
+        "description": "gassuv.png",
+        "imageUrl": "./assets/maps/campaign-grass-normal-texture.png"
+      },
+      {
         "id": "map_sand_texture",
         "label": "Campaign sand texture",
         "width": 1254,
