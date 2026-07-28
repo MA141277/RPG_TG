@@ -4,6 +4,7 @@ dist/
 .runtime/
 .codex-runtime/
 .worktrees/
+tmp/
 
 # Local build/package outputs
 release/
