@@ -301,6 +301,7 @@ import {
 } from "./ui/views/map/campaign-cloud-webgl";
 import { mountCityStageDomRuntime } from "./ui/views/city/city-stage-dom-runtime";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
+import { syncDialogueTypewriterRuntime } from "./ui/components/dialogue/dialogue-typewriter-runtime";
 import { syncTroopEditorInteractions } from "./ui/views/troop-editor/troop-editor-interactions";
 import { syncTroopManagementBattlePreview } from "./ui/views/troop-editor/troop-management-battle-preview";
 import { syncTroopManagementMoveInteractions } from "./ui/views/troop-editor/troop-management-move-interactions";
@@ -680,6 +681,9 @@ let activeMapIntroOverlay: HTMLElement | null = null;
 let cityStageDomRuntimeHandle: {
   cityId: string;
   attach(root: HTMLElement): void;
+  destroy(): void;
+} | null = null;
+let dialogueTypewriterRuntimeHandle: {
   destroy(): void;
 } | null = null;
 let campaignMapScaleDraftValue: string | null = null;
@@ -6409,6 +6413,8 @@ function renderAppFrame(
   });
   syncAppAudio();
 
+  dialogueTypewriterRuntimeHandle?.destroy();
+  dialogueTypewriterRuntimeHandle = null;
   appRoot.innerHTML = renderAppMarkup({
     appState,
     playerCharacterId: currentPlayerCharacterId,
@@ -6506,6 +6512,7 @@ function renderAppFrame(
     },
   });
   syncEmbeddedBattleUiEditor();
+  dialogueTypewriterRuntimeHandle = syncDialogueTypewriterRuntime(appRoot);
 }
 
 function syncCityStageDomRuntime(): void {

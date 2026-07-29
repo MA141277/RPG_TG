@@ -1,6 +1,8 @@
 const TYPEWRITER_CHAR_MS = 32;
 const TYPEWRITER_LINE_GAP_MS = 120;
 const TYPEWRITER_HINT_GAP_MS = 160;
+export const DIALOGUE_TYPEWRITER_DELAY_DATA_ATTRIBUTE =
+  "data-dialogue-typewriter-delay-ms";
 
 type DialogueInlineSegment = {
   text: string;
@@ -52,7 +54,7 @@ function renderTypewriterCharacters(text: string, startDelayMs: number): string 
     .map((character, index) => {
       const delayMs = startDelayMs + index * TYPEWRITER_CHAR_MS;
 
-      return `<span class="c-dialogue-typewriter__char" style="animation-delay:${delayMs}ms">${escapeHtml(character)}</span>`;
+      return `<span class="c-dialogue-typewriter__char" ${DIALOGUE_TYPEWRITER_DELAY_DATA_ATTRIBUTE}="${delayMs}">${escapeHtml(character)}</span>`;
     })
     .join("");
 }
@@ -112,5 +114,5 @@ export function renderDialogueTypewriterHint(
   textDurationMs: number,
   hintClassName = "c-grain-shop-dialogue__hint"
 ): string {
-  return `<p class="${hintClassName} c-dialogue-typewriter-hint" style="animation-delay:${textDurationMs + TYPEWRITER_HINT_GAP_MS}ms">${escapeHtml(hintText)}</p>`;
+  return `<p class="${hintClassName} c-dialogue-typewriter-hint" ${DIALOGUE_TYPEWRITER_DELAY_DATA_ATTRIBUTE}="${textDurationMs + TYPEWRITER_HINT_GAP_MS}">${escapeHtml(hintText)}</p>`;
 }
