@@ -38,7 +38,9 @@ const {
   appendScriptEditorEventBindingConditionItem,
   appendScriptEditorEventRelationEntry,
   appendScriptEditorLocationAttribute,
-  appendScriptEditorLocationMenuEntry,
+  appendScriptEditorMenuModuleEntry,
+  appendScriptEditorMenuModuleRecord,
+  appendScriptEditorOwnerMenuMount,
   appendScriptEditorMinigameLaunchPayloadEntry,
   appendScriptEditorMinigameOutcomeRoute,
   appendScriptEditorPersonAttribute,
@@ -70,6 +72,8 @@ const {
   listScriptEditorEventBindingConditionFieldOptions,
   listScriptEditorLocationAccessConditionFieldOptions,
   listScriptEditorLocationMenuBundles,
+  listScriptEditorMenuModuleRecords,
+  listScriptEditorMountedMenus,
   listScriptEditorWorkflowFamilyRecords,
   loadScriptEditorProjectFromFiles,
   loadScriptEditorProjectFromScenarioPackUrl,
@@ -106,6 +110,8 @@ const {
   findScriptEditorProjectLibraryEntry,
   removeScriptEditorLocationAttribute,
   removeScriptEditorLocationMenuEntry,
+  removeScriptEditorMenuModuleRecord,
+  removeScriptEditorOwnerMenuMount,
   removeScriptEditorMinigameLaunchPayloadEntry,
   removeScriptEditorMinigameOutcomeRoute,
   removeScriptEditorPersonAttribute,
@@ -444,6 +450,7 @@ const characterSelectLayoutBindings = [
 ];
 
 const SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE = 6;
+const SCRIPT_EDITOR_MENU_MODULE_ENTRY_PAGE_SIZE = 3;
 const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE = 6;
 const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE = 12;
 const SCRIPT_EDITOR_STAGE_CONFIGURATION_FAMILY = "stageConfiguration";
@@ -460,6 +467,7 @@ const SCRIPT_EDITOR_RECORD_SEARCH_FAMILY_ATTRIBUTES = {
   storyNodes: 'data-script-editor-record-search-family="storyNodes"',
   dialogues: 'data-script-editor-record-search-family="dialogues"',
   settlements: 'data-script-editor-record-search-family="settlements"',
+  menuResources: 'data-script-editor-record-search-family="menuResources"',
   stageConfiguration: 'data-script-editor-record-search-family="stageConfiguration"',
   progressTracks: 'data-script-editor-record-search-family="progressTracks"',
   progressTrackBindings: 'data-script-editor-record-search-family="progressTrackBindings"',
@@ -511,6 +519,8 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "setScriptEditorCityMountedBuildingUiState",
   "setScriptEditorCityMountedBuildingExpanded",
   "setScriptEditorCityMountedBuildingSearchValue",
+  "getScriptEditorMenuModuleItemPageState",
+  "changeScriptEditorMenuModuleItemPage",
   "getFilteredScriptEditorCityMountedBuildingNpcEntries",
   "getScriptEditorCityMountedBuildingNpcPageState",
   "getScriptEditorCityMountedBuildingListPageState",
@@ -530,6 +540,7 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "renderScriptEditorSelectOptions",
   "getScriptEditorProjectRecordOptions",
   "getScriptEditorCreatorRecordOptions",
+  "getScriptEditorMenuInstanceOptions",
   "getScriptEditorSettlementTargetOptions",
   "getScriptEditorProgressOwnerKindLabel",
   "getScriptEditorProgressBindingLabel",
@@ -544,6 +555,7 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "getScriptEditorLocationMenuTargetOptions",
   "getScriptEditorLocationMenuPurposeOptions",
   "getScriptEditorLocationMenuTargetFamilyOptions",
+  "getScriptEditorMenuAuthoringTargetFamily",
   "getScriptEditorLocationMenuOptionsWithFallback",
   "getScriptEditorPersonCityOptions",
   "getScriptEditorPersonHouseOptions",
@@ -568,6 +580,7 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "renderScriptEditorPersonTabPanel",
   "renderScriptEditorPersonRelationPanel",
   "renderScriptEditorPersonRelationSelect",
+  "renderScriptEditorOwnerMenuMountPanel",
   "renderScriptEditorPortraitEditor",
   "renderScriptEditorPortraitVariantEditor",
   "renderScriptEditorLocationEditor",
@@ -579,6 +592,7 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "renderScriptEditorCityMountedBuildingsPanel",
   "renderScriptEditorLocationMountedContent",
   "renderScriptEditorLocationCustomAttributes",
+  "renderScriptEditorMenuModuleEditor",
   "renderScriptEditorLocationMenuPanel",
   "renderScriptEditorLocationAccessPanel",
   "renderScriptEditorLocationAccessConditionEditor",
@@ -740,6 +754,8 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "applyScriptEditorLocationMenuInstanceField",
   "applyScriptEditorLocationMenuResourceField",
   "applyScriptEditorLocationMenuFlag",
+  "addScriptEditorOwnerMenuMount",
+  "removeScriptEditorOwnerMenuMount",
   "addScriptEditorLocationAttribute",
   "removeScriptEditorLocationAttribute",
   "applyScriptEditorLocationAttributeField",
@@ -863,6 +879,7 @@ export function installMainUiFlowScriptEditorModule(host, options) {
     host.scriptEditorPersonAttributeGroupPage = 1;
     host.scriptEditorPersonAttributeGroupItemPageById = {};
     host.scriptEditorPersonAttributeGroupOpenPickerId = null;
+    host.scriptEditorMenuModuleItemPageById = {};
     host.scriptEditorRecordListPages = {};
     host.scriptEditorRecordSearch = {
       people: "",
@@ -1153,6 +1170,10 @@ class MainUiFlowScriptEditorModule {
       return this.renderScriptEditorSettlementEditor(records, selectedRecord);
     }
 
+    if (family === "menuResources") {
+      return this.renderScriptEditorMenuModuleEditor(records, selectedRecord);
+    }
+
     if (family === "progressTracks") {
       return this.renderScriptEditorProgressTrackEditor(records, selectedRecord);
     }
@@ -1342,6 +1363,7 @@ class MainUiFlowScriptEditorModule {
       storyNodes: "",
       dialogues: "",
       settlements: "",
+      menuResources: "",
       stageConfiguration: "",
       progressTracks: "",
       progressTrackBindings: "",
@@ -1512,6 +1534,57 @@ class MainUiFlowScriptEditorModule {
       search: value,
       page: 1,
     });
+    this.render();
+  }
+
+  getScriptEditorMenuModuleItemPageState(instanceId, entries) {
+    const normalizedInstanceId = String(instanceId ?? "").trim();
+    const normalizedEntries = Array.isArray(entries) ? entries : [];
+    const totalPages = Math.max(
+      1,
+      Math.ceil(normalizedEntries.length / SCRIPT_EDITOR_MENU_MODULE_ENTRY_PAGE_SIZE)
+    );
+    const rawPage =
+      this.scriptEditorMenuModuleItemPageById?.[normalizedInstanceId] ?? 1;
+    const currentPage = Math.min(Math.max(rawPage, 1), totalPages);
+    if (rawPage !== currentPage) {
+      this.scriptEditorMenuModuleItemPageById = {
+        ...this.scriptEditorMenuModuleItemPageById,
+        [normalizedInstanceId]: currentPage,
+      };
+    }
+    const startIndex =
+      (currentPage - 1) * SCRIPT_EDITOR_MENU_MODULE_ENTRY_PAGE_SIZE;
+    return {
+      currentPage,
+      totalPages,
+      visibleEntries: normalizedEntries.slice(
+        startIndex,
+        startIndex + SCRIPT_EDITOR_MENU_MODULE_ENTRY_PAGE_SIZE
+      ),
+      startIndex,
+    };
+  }
+
+  changeScriptEditorMenuModuleItemPage(instanceId, delta) {
+    const normalizedInstanceId = String(instanceId ?? "").trim();
+    if (normalizedInstanceId.length === 0 || this.scriptEditorProject == null) {
+      return;
+    }
+    const menuRecord = listScriptEditorMenuModuleRecords(this.scriptEditorProject).find(
+      (record) => record.id === normalizedInstanceId
+    );
+    if (menuRecord == null) {
+      return;
+    }
+    const { currentPage, totalPages } = this.getScriptEditorMenuModuleItemPageState(
+      normalizedInstanceId,
+      menuRecord.entries
+    );
+    this.scriptEditorMenuModuleItemPageById = {
+      ...this.scriptEditorMenuModuleItemPageById,
+      [normalizedInstanceId]: Math.min(Math.max(currentPage + delta, 1), totalPages),
+    };
     this.render();
   }
 
@@ -2079,6 +2152,13 @@ class MainUiFlowScriptEditorModule {
       return [];
     }
 
+    if (family === "menuResources") {
+      return listScriptEditorMenuModuleRecords(this.scriptEditorProject).map((record) => ({
+        value: record.id,
+        label: record.title,
+      }));
+    }
+
     const records = listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family);
     return records.map((record) => ({
       value: record.id,
@@ -2091,11 +2171,35 @@ class MainUiFlowScriptEditorModule {
       return [];
     }
 
+    if (family === "menuResources") {
+      return listScriptEditorMenuModuleRecords(this.scriptEditorProject).map((record) => ({
+        value: record.id,
+        label: record.title,
+      }));
+    }
+
     const records = listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family);
     return records.map((record) => ({
       value: record.id,
       label: this.getScriptEditorRecordLabel(record),
     }));
+  }
+
+  getScriptEditorMenuInstanceOptions(selectedValue = "", excludedInstanceIds = []) {
+    if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    return this.getScriptEditorLocationMenuOptionsWithFallback(
+      listScriptEditorMenuModuleRecords(this.scriptEditorProject)
+        .filter((record) => !excludedInstanceIds.includes(record.id))
+        .map((record) => ({
+          value: record.id,
+          label: record.title,
+        })),
+      selectedValue,
+      "当前菜单引用已失效"
+    );
   }
 
   getScriptEditorSettlementTargetOptions(targetFamily) {
@@ -2250,15 +2354,23 @@ class MainUiFlowScriptEditorModule {
       : SCRIPT_EDITOR_SETTLEMENT_SET_ONLY_OPERATION_OPTIONS;
   }
 
-  getScriptEditorLocationMenuTargetOptions(targetFamily, selectedValue = "") {
+  getScriptEditorLocationMenuTargetOptions(
+    targetFamily,
+    selectedValue = "",
+    currentInstanceId = ""
+  ) {
     const familyByTargetFamily = {
-      dialogue: "dialogues",
       event: "events",
-      minigame: "minigames",
+      menu: "menuResources",
+      menuInstance: "menuResources",
     };
     const family = familyByTargetFamily[targetFamily] ?? "";
     const baseOptions =
-      family.length === 0 ? [] : this.getScriptEditorCreatorRecordOptions(family);
+      family.length === 0
+        ? []
+        : family === "menuResources"
+          ? this.getScriptEditorMenuInstanceOptions(selectedValue, [currentInstanceId])
+          : this.getScriptEditorCreatorRecordOptions(family);
     return this.getScriptEditorLocationMenuOptionsWithFallback(
       baseOptions,
       selectedValue,
@@ -2296,15 +2408,16 @@ class MainUiFlowScriptEditorModule {
   getScriptEditorLocationMenuTargetFamilyOptions(selectedValue = "") {
     return this.getScriptEditorLocationMenuOptionsWithFallback(
       [
-        { value: "dialogue", label: "对话" },
         { value: "event", label: "事件" },
-        { value: "trade", label: "交易" },
-        { value: "minigame", label: "小游戏" },
-        { value: "info", label: "信息面板" },
+        { value: "menu", label: "菜单" },
       ],
       selectedValue,
       "当前类型待整理"
     );
+  }
+
+  getScriptEditorMenuAuthoringTargetFamily(entry) {
+    return entry?.authoringTarget?.kind === "menu" ? "menu" : "event";
   }
 
   getScriptEditorLocationMenuOptionsWithFallback(
@@ -2669,6 +2782,7 @@ class MainUiFlowScriptEditorModule {
         ${this.renderScriptEditorPersonTabButton("profile", "属性")}
         ${this.renderScriptEditorPersonTabButton("attribute-group", "属性组")}
         ${this.renderScriptEditorPersonTabButton("dialogues", "对话")}
+        ${this.renderScriptEditorPersonTabButton("menus", "菜单组")}
         ${this.renderScriptEditorPersonTabButton("trade", "交易")}
         ${this.renderScriptEditorPersonTabButton("events", "事件")}
       </div>
@@ -3113,6 +3227,15 @@ class MainUiFlowScriptEditorModule {
       );
     }
 
+    if (this.scriptEditorPersonTab === "menus") {
+      return this.renderScriptEditorOwnerMenuMountPanel(
+        "people",
+        person.id,
+        "人物菜单组",
+        "这里只挂接人物可用的菜单项；具体功能绑定与下级菜单跳转统一在“菜单”模块维护。"
+      );
+    }
+
     if (this.scriptEditorPersonTab === "trade") {
       return `
         <section class="c-script-editor-person-panel" aria-label="交易分栏">
@@ -3537,7 +3660,7 @@ class MainUiFlowScriptEditorModule {
                           ? ""
                           : this.renderScriptEditorLocationTabButton("arrangements", "建筑编排")
                       }
-                      ${this.renderScriptEditorLocationTabButton("menus", "菜单")}
+                      ${this.renderScriptEditorLocationTabButton("menus", "菜单组")}
                       ${this.renderScriptEditorLocationTabButton("access", "进入条件")}
                       ${this.renderScriptEditorLocationTabButton("events", "事件")}
                       ${
@@ -4786,139 +4909,277 @@ class MainUiFlowScriptEditorModule {
     `;
   }
 
-  renderScriptEditorLocationMenuPanel(family, location) {
-    const isCityFamily = family === "cities";
-    const menuBundles = this.getScriptEditorLocationMenuBundles(family, location.id);
-    const attachedInstanceIds = (location.menuInstanceIds ?? [])
-      .map((value) => String(value ?? "").trim())
-      .filter(Boolean);
-    const unresolvedInstanceIds = attachedInstanceIds.filter(
-      (instanceId) => !menuBundles.some((bundle) => bundle.instanceId === instanceId)
-    );
+  renderScriptEditorMenuModuleEditor(records, selectedRecord) {
+    const menuRecord =
+      selectedRecord == null
+        ? null
+        : listScriptEditorMenuModuleRecords(this.scriptEditorProject ?? {}).find(
+            (record) => record.id === selectedRecord.id
+          ) ?? null;
+    const filteredRecords = this.filterScriptEditorRecords("menuResources", records);
+    const menuEntry = menuRecord?.entries?.[0] ?? null;
+    const targetFamily =
+      menuEntry == null
+        ? "event"
+        : this.getScriptEditorMenuAuthoringTargetFamily(menuEntry);
+
     return `
-      <section class="c-script-editor-location-panel" aria-label="${isCityFamily ? "城市菜单分栏" : "建筑菜单分栏"}">
+      <div class="c-script-editor-editor-card">
+        <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+        <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
+        <div class="c-script-editor-record-layout">
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "menuResources",
+            records: filteredRecords,
+            ariaLabel: "菜单项列表",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("menuResources", "搜索菜单项", "按菜单项名称搜索")}
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增菜单项
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${menuRecord == null ? "disabled" : ""}
+                >
+                  删除菜单项
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedRecord =
+                listScriptEditorMenuModuleRecords(this.scriptEditorProject ?? {}).find(
+                  (entry) => entry.id === record.id
+                ) ?? record;
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(normalizedRecord.title ?? "未命名菜单项")}</strong>
+                  <span>单条菜单项</span>
+                </button>
+              `;
+            },
+          })}
+          <div class="c-script-editor-location-editor">
+            ${
+              menuRecord == null
+                ? `
+                  <p class="c-script-editor-editor-card__hint">
+                    请选择一个菜单项后继续编辑。这里只维护菜单项名称和功能绑定，不展示内部标识。
+                  </p>
+                `
+                : `
+                  <section class="c-script-editor-location-panel" aria-label="菜单项">
+                    <div class="c-script-editor-location-menu__header">
+                      <div>
+                        <h3 class="c-script-editor-editor-card__title">菜单项</h3>
+                      </div>
+                    </div>
+                    <p class="c-script-editor-editor-card__hint">
+                      菜单项本身不是事件。这里定义它跳转到事件还是下一级菜单；人物、城市、建筑里的“菜单组”只负责组合菜单项。
+                    </p>
+                    <article class="c-script-editor-location-menu__item">
+                      <div class="c-script-editor-form-grid">
+                        <label class="c-script-editor-form-field">
+                          <span>菜单项名称</span>
+                          <input
+                            class="c-script-editor-form-field__input"
+                            type="text"
+                            value="${escapeHtml(menuRecord.title ?? "")}"
+                            data-script-editor-location-menu-instance-field="title"
+                            data-script-editor-location-menu-instance-id="${escapeHtml(menuRecord.id)}"
+                          />
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>功能绑定</span>
+                          <select
+                            class="c-script-editor-form-field__input"
+                            data-script-editor-location-menu-field="targetFamily"
+                            data-script-editor-location-menu-index="0"
+                            data-script-editor-location-menu-instance-id="${escapeHtml(menuRecord.id)}"
+                          >
+                            ${this.renderScriptEditorSelectOptions(
+                              this.getScriptEditorLocationMenuTargetFamilyOptions(
+                                targetFamily
+                              ),
+                              targetFamily,
+                              "未设置功能绑定"
+                            )}
+                          </select>
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>目标</span>
+                          <select
+                            class="c-script-editor-form-field__input"
+                            data-script-editor-location-menu-field="targetId"
+                            data-script-editor-location-menu-index="0"
+                            data-script-editor-location-menu-instance-id="${escapeHtml(menuRecord.id)}"
+                          >
+                            ${this.renderScriptEditorSelectOptions(
+                              this.getScriptEditorLocationMenuTargetOptions(
+                                targetFamily,
+                                menuEntry?.targetId ?? "",
+                                menuRecord.id
+                              ),
+                              menuEntry?.targetId ?? "",
+                              "未选择目标"
+                            )}
+                          </select>
+                        </label>
+                        <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+                          <span>不可用提示</span>
+                          <input
+                            class="c-script-editor-form-field__input"
+                            type="text"
+                            value="${escapeHtml(menuEntry?.disabledHint ?? "")}"
+                            data-script-editor-location-menu-field="disabledHint"
+                            data-script-editor-location-menu-index="0"
+                            data-script-editor-location-menu-instance-id="${escapeHtml(menuRecord.id)}"
+                          />
+                        </label>
+                      </div>
+                      <div class="c-script-editor-location-menu__toggles">
+                        <label class="c-script-editor-person-editor__toggle">
+                          <input
+                            type="checkbox"
+                            data-script-editor-location-menu-flag="isVisible"
+                            data-script-editor-location-menu-index="0"
+                            data-script-editor-location-menu-instance-id="${escapeHtml(menuRecord.id)}"
+                            ${menuEntry?.isVisible !== false ? "checked" : ""}
+                          />
+                          <span>显示</span>
+                        </label>
+                        <label class="c-script-editor-person-editor__toggle">
+                          <input
+                            type="checkbox"
+                            data-script-editor-location-menu-flag="isEnabled"
+                            data-script-editor-location-menu-index="0"
+                            data-script-editor-location-menu-instance-id="${escapeHtml(menuRecord.id)}"
+                            ${menuEntry?.isEnabled !== false ? "checked" : ""}
+                          />
+                          <span>可用</span>
+                        </label>
+                      </div>
+                    </article>
+                  </section>
+                `
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderScriptEditorOwnerMenuMountPanel(ownerFamily, ownerId, title, hint) {
+    if (this.scriptEditorProject == null) {
+      return "";
+    }
+
+    const mountedMenus = listScriptEditorMountedMenus(
+      this.scriptEditorProject,
+      ownerFamily,
+      ownerId
+    );
+    const mountOptions = this.getScriptEditorMenuInstanceOptions(
+      "",
+      mountedMenus.map((entry) => entry.instanceId)
+    );
+
+    return `
+      <section
+        class="c-script-editor-location-panel"
+        aria-label="${escapeHtml(title)}"
+        data-script-editor-owner-menu-panel
+        data-script-editor-owner-family="${escapeHtml(ownerFamily)}"
+        data-script-editor-owner-id="${escapeHtml(ownerId)}"
+      >
         <div class="c-script-editor-location-menu__header">
           <div>
-            <p class="c-script-editor-editor-card__eyebrow">${isCityFamily ? "城市菜单" : "建筑菜单"}</p>
-            <h3 class="c-script-editor-editor-card__title">${isCityFamily ? "当前城市挂载的菜单内容" : "当前建筑挂载的菜单内容"}</h3>
+            <p class="c-script-editor-editor-card__eyebrow">${escapeHtml(title)}</p>
+            <h3 class="c-script-editor-editor-card__title">${escapeHtml(title)}</h3>
           </div>
-          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-location-menu-entry">
-            新增菜单项
+        </div>
+        <p class="c-script-editor-editor-card__hint">${escapeHtml(hint)}</p>
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>挂载菜单项</span>
+            <select
+              class="c-script-editor-form-field__input"
+              data-script-editor-owner-menu-picker
+            >
+              ${this.renderScriptEditorSelectOptions(
+                mountOptions,
+                "",
+                "选择一个菜单项"
+              )}
+            </select>
+          </label>
+        </div>
+        <div class="c-script-editor-location-menu__toggles">
+          <button
+            type="button"
+            class="c-main-ui-json-text-button"
+            data-script-editor-action="add-owner-menu-mount"
+            data-script-editor-owner-family="${escapeHtml(ownerFamily)}"
+            data-script-editor-owner-id="${escapeHtml(ownerId)}"
+          >
+            添加菜单项
           </button>
         </div>
-        <p class="c-script-editor-editor-card__hint">
-          这里编辑作者视角下的菜单名称、用途和跳转对象。运行时资源与实例仍会在内部维护，但不会直接暴露为创作字段。
-        </p>
         <div class="c-script-editor-location-menu__list">
           ${
-            menuBundles.length === 0 && unresolvedInstanceIds.length === 0
+            mountedMenus.length === 0
               ? `
                 <article class="c-script-editor-location-menu__item">
                   <p class="c-script-editor-editor-card__hint">
-                    当前地点还没有菜单内容。点击“新增菜单项”后会自动建立内部菜单资源，并直接进入可编辑状态。
+                    当前菜单组还没有挂载菜单项。
                   </p>
                 </article>
               `
-              : ""
+              : mountedMenus
+                  .map(
+                    (entry, index) => `
+                      <article class="c-script-editor-location-menu__item">
+                        <div class="c-script-editor-location-menu__header">
+                          <div>
+                            <h4 class="c-script-editor-editor-card__title">${escapeHtml(entry.title)}</h4>
+                          </div>
+                          <button
+                            type="button"
+                            class="c-main-ui-json-text-button"
+                            data-script-editor-action="remove-owner-menu-mount"
+                            data-script-editor-owner-family="${escapeHtml(ownerFamily)}"
+                            data-script-editor-owner-id="${escapeHtml(ownerId)}"
+                            data-script-editor-owner-menu-mount-index="${index}"
+                          >
+                            移除
+                          </button>
+                        </div>
+                      </article>
+                    `
+                  )
+                  .join("")
           }
-          ${
-            unresolvedInstanceIds.length > 0
-              ? `
-                <article class="c-script-editor-location-menu__item">
-                  <p class="c-script-editor-editor-card__hint">
-                    检测到当前地点存在无法解析的菜单挂载引用，请先修复菜单资源或实例关联，再继续编辑。
-                  </p>
-                </article>
-              `
-              : ""
-          }
-          ${menuBundles
-            .map(
-              (bundle) => `
-                <article class="c-script-editor-location-menu__item" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
-                  <div class="c-script-editor-form-grid">
-                    <label class="c-script-editor-form-field">
-                      <span>菜单分组标题</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.instanceTitle)}" data-script-editor-location-menu-instance-field="title" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
-                    </label>
-                    <label class="c-script-editor-form-field">
-                      <span>菜单内容标题</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.resourceTitle)}" data-script-editor-location-menu-resource-field="title" data-script-editor-location-menu-resource-id="${escapeHtml(bundle.resourceId)}" />
-                    </label>
-                  </div>
-                  <div class="c-script-editor-location-menu__list">
-                    ${bundle.entries
-                      .map(
-                        (entry, index) => `
-                          <article class="c-script-editor-location-menu__item">
-                  <div class="c-script-editor-form-grid">
-                    <label class="c-script-editor-form-field">
-                      <span>菜单名称</span>
-                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.label)}" data-script-editor-location-menu-field="label" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
-                    </label>
-                    <label class="c-script-editor-form-field">
-                      <span>菜单用途</span>
-                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="menuFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
-                        ${this.renderScriptEditorSelectOptions(
-                          this.getScriptEditorLocationMenuPurposeOptions(family, entry.menuFamily),
-                          entry.menuFamily,
-                          "未设置菜单用途"
-                        )}
-                      </select>
-                    </label>
-                    <label class="c-script-editor-form-field">
-                      <span>跳转类型</span>
-                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
-                        ${this.renderScriptEditorSelectOptions(
-                          this.getScriptEditorLocationMenuTargetFamilyOptions(entry.targetFamily),
-                          entry.targetFamily,
-                          "未设置跳转类型"
-                        )}
-                      </select>
-                    </label>
-                    <label class="c-script-editor-form-field">
-                      <span>跳转对象</span>
-                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetId" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
-                        ${this.renderScriptEditorSelectOptions(
-                          this.getScriptEditorLocationMenuTargetOptions(
-                            entry.targetFamily,
-                            entry.targetId
-                          ),
-                          entry.targetId,
-                          "未选择跳转对象"
-                        )}
-                      </select>
-                    </label>
-                    <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-                      <span>不可用提示</span>
-                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.disabledHint)}" data-script-editor-location-menu-field="disabledHint" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
-                    </label>
-                  </div>
-                  <div class="c-script-editor-location-menu__toggles">
-                    <label class="c-script-editor-person-editor__toggle">
-                            <input type="checkbox" data-script-editor-location-menu-flag="isVisible" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" ${entry.isVisible ? "checked" : ""} />
-                      <span>显示</span>
-                    </label>
-                    <label class="c-script-editor-person-editor__toggle">
-                            <input type="checkbox" data-script-editor-location-menu-flag="isEnabled" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" ${entry.isEnabled ? "checked" : ""} />
-                      <span>可用</span>
-                    </label>
-                            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-location-menu-entry" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
-                      删除菜单项
-                    </button>
-                  </div>
-                </article>
-                        `
-                      )
-                      .join("")}
-                  </div>
-                </article>
-              `
-            )
-            .join("")}
         </div>
       </section>
     `;
+  }
+
+  renderScriptEditorLocationMenuPanel(family, location) {
+    const isCityFamily = family === "cities";
+    return this.renderScriptEditorOwnerMenuMountPanel(
+      family === "cities" ? "cities" : "buildings",
+      location.id,
+      isCityFamily ? "城市菜单组" : "建筑菜单组",
+      isCityFamily
+        ? "这里只组合城市可见的菜单项；具体功能绑定与下级菜单跳转统一在“菜单”模块维护。"
+        : "这里只组合建筑可见的菜单项；具体功能绑定与下级菜单跳转统一在“菜单”模块维护。"
+    );
   }
 
   renderScriptEditorLocationAccessPanel(location) {
@@ -6493,6 +6754,7 @@ class MainUiFlowScriptEditorModule {
     const labelsByFamily = {
       dialogue: "对话",
       event: "事件",
+      menuInstance: "菜单",
       minigame: "小游戏",
       task: "任务",
     };
@@ -6512,6 +6774,7 @@ class MainUiFlowScriptEditorModule {
       quests: [],
       dialogues: [],
       minigames: [],
+      menuInstances: [],
     };
 
     if (family === "event") {
@@ -6532,6 +6795,13 @@ class MainUiFlowScriptEditorModule {
       return project.minigames.map((minigame) => ({
         value: minigame.id,
         label: minigame.title ?? minigame.name ?? minigame.id,
+      }));
+    }
+
+    if (family === "menuInstance") {
+      return listScriptEditorMenuModuleRecords(project).map((record) => ({
+        value: record.id,
+        label: record.title,
       }));
     }
 
@@ -8146,6 +8416,20 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
+    if (action === "menu-module-item-page-prev") {
+      const instanceId =
+        actionElement?.dataset.scriptEditorLocationMenuInstanceId ?? "";
+      this.changeScriptEditorMenuModuleItemPage(instanceId, -1);
+      return;
+    }
+
+    if (action === "menu-module-item-page-next") {
+      const instanceId =
+        actionElement?.dataset.scriptEditorLocationMenuInstanceId ?? "";
+      this.changeScriptEditorMenuModuleItemPage(instanceId, 1);
+      return;
+    }
+
     if (action === "select-person-tab") {
       if (personTab != null) {
         this.selectScriptEditorPersonTab(personTab);
@@ -8268,6 +8552,29 @@ class MainUiFlowScriptEditorModule {
     if (action === "remove-person-event-link") {
       if (Number.isInteger(personRelationIndex) && personRelationIndex >= 0) {
         this.removeScriptEditorPersonRelation("eventIds", personRelationIndex);
+      }
+      return;
+    }
+
+    if (action === "add-owner-menu-mount") {
+      if (ownerFamily != null && ownerId != null) {
+        this.addScriptEditorOwnerMenuMount(ownerFamily, ownerId, actionElement);
+      }
+      return;
+    }
+
+    if (action === "remove-owner-menu-mount") {
+      const mountIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorOwnerMenuMountIndex ?? "-1",
+        10
+      );
+      if (
+        ownerFamily != null &&
+        ownerId != null &&
+        Number.isInteger(mountIndex) &&
+        mountIndex >= 0
+      ) {
+        this.removeScriptEditorOwnerMenuMount(ownerFamily, ownerId, mountIndex);
       }
       return;
     }
@@ -8874,7 +9181,11 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    if (!["profile", "attribute-group", "dialogues", "trade", "events"].includes(tab)) {
+    if (
+      !["profile", "attribute-group", "dialogues", "menus", "trade", "events"].includes(
+        tab
+      )
+    ) {
       return;
     }
 
@@ -9022,6 +9333,35 @@ class MainUiFlowScriptEditorModule {
       this.addScriptEditorStageConfigurationBinding();
       return;
     }
+
+    if (family === "menuResources") {
+      const result = appendScriptEditorMenuModuleRecord(this.scriptEditorProject);
+      this.scriptEditorRecordSearch = {
+        ...this.scriptEditorRecordSearch,
+        [family]: "",
+      };
+      this.commitScriptEditorMenuProject(result.project);
+      const nextRecords = listScriptEditorWorkflowFamilyRecords(
+        this.scriptEditorProject,
+        family
+      );
+      this.scriptEditorSelection = {
+        family,
+        entityId: result.instanceId,
+      };
+      this.syncScriptEditorRecordListPageToRecord(
+        family,
+        result.instanceId,
+        nextRecords
+      );
+      this.recordScriptEditorNotice({
+        tone: "success",
+        message: "已新增一条菜单项草稿。",
+      });
+      this.render();
+      return;
+    }
+
     this.scriptEditorRecordSearch = {
       ...this.scriptEditorRecordSearch,
       [family]: "",
@@ -9079,6 +9419,37 @@ class MainUiFlowScriptEditorModule {
       this.removeScriptEditorStageConfigurationBinding();
       return;
     }
+
+    if (family === "menuResources") {
+      const removedId = this.scriptEditorSelection.entityId;
+      this.commitScriptEditorMenuProject(
+        removeScriptEditorMenuModuleRecord(this.scriptEditorProject, removedId)
+      );
+      const nextRecords = listScriptEditorWorkflowFamilyRecords(
+        this.scriptEditorProject,
+        family
+      );
+      this.scriptEditorSelection = {
+        family,
+        entityId: nextRecords[0]?.id ?? null,
+      };
+      if (this.scriptEditorSelection.entityId != null) {
+        this.syncScriptEditorRecordListPageToRecord(
+          family,
+          this.scriptEditorSelection.entityId,
+          nextRecords
+        );
+      } else {
+        this.setScriptEditorRecordListPage(family, 1);
+      }
+      this.recordScriptEditorNotice({
+        tone: "success",
+        message: "已删除当前菜单项。",
+      });
+      this.render();
+      return;
+    }
+
     this.commitScriptEditorProject(
       removeScriptEditorWorkflowRecord(
         this.scriptEditorProject,
@@ -10233,14 +10604,18 @@ class MainUiFlowScriptEditorModule {
         field,
         value
       );
-      const nextBundle = nextProject == null
-        ? null
-        : listScriptEditorLocationMenuBundles(
-            nextProject,
-            this.scriptEditorSelection.family,
-            this.scriptEditorSelection.entityId
-          ).find((bundle) => bundle.instanceId === instanceId) ?? null;
-      const nextEntry = nextBundle?.entries?.[index] ?? null;
+      const nextEntry =
+        nextProject == null
+          ? null
+          : this.scriptEditorSelection.family === "menuResources"
+            ? listScriptEditorMenuModuleRecords(nextProject).find(
+                (record) => record.id === instanceId
+              )?.entries?.[index] ?? null
+            : listScriptEditorLocationMenuBundles(
+                nextProject,
+                this.scriptEditorSelection.family,
+                this.scriptEditorSelection.entityId
+              ).find((bundle) => bundle.instanceId === instanceId)?.entries?.[index] ?? null;
       const targetOptions = this.getScriptEditorLocationMenuTargetOptions(value);
       if (
         nextEntry != null &&
@@ -10314,6 +10689,44 @@ class MainUiFlowScriptEditorModule {
         index,
         field,
         checked
+      )
+    );
+  }
+
+  addScriptEditorOwnerMenuMount(ownerFamily, ownerId, actionElement = null) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    const selectedMenuInstanceId =
+      actionElement
+        ?.closest("[data-script-editor-owner-menu-panel]")
+        ?.querySelector("[data-script-editor-owner-menu-picker]")?.value ?? "";
+    if (selectedMenuInstanceId.trim().length === 0) {
+      return;
+    }
+
+    this.commitScriptEditorMenuProject(
+      appendScriptEditorOwnerMenuMount(
+        this.scriptEditorProject,
+        ownerFamily,
+        ownerId,
+        selectedMenuInstanceId
+      )
+    );
+  }
+
+  removeScriptEditorOwnerMenuMount(ownerFamily, ownerId, index) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    this.commitScriptEditorMenuProject(
+      removeScriptEditorOwnerMenuMount(
+        this.scriptEditorProject,
+        ownerFamily,
+        ownerId,
+        index
       )
     );
   }
@@ -10844,20 +11257,29 @@ class MainUiFlowScriptEditorModule {
   addScriptEditorLocationMenuEntry() {
     if (
       this.scriptEditorProject == null ||
-      (this.scriptEditorSelection.family !== "cities" &&
-        this.scriptEditorSelection.family !== "buildings") ||
+      this.scriptEditorSelection.family !== "menuResources" ||
       this.scriptEditorSelection.entityId == null
     ) {
       return;
     }
 
-    this.commitScriptEditorMenuProject(
-      appendScriptEditorLocationMenuEntry(
-        this.scriptEditorProject,
-        this.scriptEditorSelection.family,
-        this.scriptEditorSelection.entityId
-      )
+    const instanceId = this.scriptEditorSelection.entityId;
+    const nextProject = appendScriptEditorMenuModuleEntry(
+      this.scriptEditorProject,
+      instanceId
     );
+    const nextEntryCount =
+      listScriptEditorMenuModuleRecords(nextProject).find(
+        (record) => record.id === instanceId
+      )?.entries.length ?? 0;
+    this.scriptEditorMenuModuleItemPageById = {
+      ...this.scriptEditorMenuModuleItemPageById,
+      [instanceId]: Math.max(
+        1,
+        Math.ceil(nextEntryCount / SCRIPT_EDITOR_MENU_MODULE_ENTRY_PAGE_SIZE)
+      ),
+    };
+    this.commitScriptEditorMenuProject(nextProject);
   }
 
   removeScriptEditorLocationMenuEntry(instanceId, index) {
@@ -10865,13 +11287,26 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    this.commitScriptEditorMenuProject(
-      removeScriptEditorLocationMenuEntry(
-        this.scriptEditorProject,
-        instanceId,
-        index
-      )
+    const nextProject = removeScriptEditorLocationMenuEntry(
+      this.scriptEditorProject,
+      instanceId,
+      index
     );
+    const nextEntryCount =
+      listScriptEditorMenuModuleRecords(nextProject).find(
+        (record) => record.id === instanceId
+      )?.entries.length ?? 0;
+    const totalPages = Math.max(
+      1,
+      Math.ceil(nextEntryCount / SCRIPT_EDITOR_MENU_MODULE_ENTRY_PAGE_SIZE)
+    );
+    const currentPage =
+      this.scriptEditorMenuModuleItemPageById?.[instanceId] ?? 1;
+    this.scriptEditorMenuModuleItemPageById = {
+      ...this.scriptEditorMenuModuleItemPageById,
+      [instanceId]: Math.min(currentPage, totalPages),
+    };
+    this.commitScriptEditorMenuProject(nextProject);
   }
 
   runScriptEditorValidation() {
@@ -10997,6 +11432,8 @@ class MainUiFlowScriptEditorModule {
         return "建筑";
       case "settlements":
         return "结算";
+      case "menuResources":
+        return "菜单";
       case "quests":
         return "任务";
       case "dialogues":

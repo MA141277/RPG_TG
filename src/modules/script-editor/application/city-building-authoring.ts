@@ -33,6 +33,7 @@ import {
   removeScriptEditorLocationAccessCondition,
   updateScriptEditorLocationAccessConditionField,
 } from "./location-access-authoring";
+import { normalizeScriptEditorMounts } from "./menu-authoring";
 import {
   allocateNextScriptEditorProjectCanonicalId,
   createDefaultScriptEditorCanonicalId,
@@ -199,6 +200,7 @@ export function createDefaultScriptEditorCityRecord(
     mountedBuildings: [],
     description: "",
     access: createDefaultAccessRule(),
+    mounts: [],
   };
 }
 
@@ -228,6 +230,7 @@ export function createDefaultScriptEditorBuildingRecord(
     description: "",
     access: createDefaultAccessRule(),
     entryBinding: createDefaultBuildingEntryBinding(),
+    mounts: [],
   };
 }
 
@@ -265,6 +268,7 @@ export function normalizeScriptEditorCityRecord(
     description: normalizeOptionalString(city.description),
     ...(normalizedMenuEntries.length > 0 ? { menuEntries: normalizedMenuEntries } : {}),
     menuInstanceIds: normalizeStringArray(rawCity.menuInstanceIds),
+    mounts: normalizeScriptEditorMounts(rawCity.mounts),
     access: normalizeAccessRule(city.access),
   };
 }
@@ -286,6 +290,7 @@ export function normalizeScriptEditorBuildingRecord(
     description: normalizeOptionalString(building.description),
     ...(normalizedMenuEntries.length > 0 ? { menuEntries: normalizedMenuEntries } : {}),
     menuInstanceIds: normalizeStringArray(rawBuilding.menuInstanceIds),
+    mounts: normalizeScriptEditorMounts(rawBuilding.mounts),
     access: normalizeAccessRule(building.access),
     entryBinding: normalizeBuildingEntryBinding(building.entryBinding),
     backAction: normalizeBackAction(building.backAction),

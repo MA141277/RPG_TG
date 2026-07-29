@@ -9,6 +9,7 @@ import type {
   ScriptEditorTypedAttributeRecord,
   ScriptEditorTypedAttributeType,
 } from "../domain/script-editor-project";
+import { normalizeScriptEditorMounts } from "./menu-authoring";
 import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_PERSON_TAB_KEYS = [
@@ -155,6 +156,7 @@ export function normalizeScriptEditorPersonRecord(
     dialogueIds: normalizeStringArray(value.dialogueIds),
     eventIds: normalizeStringArray(value.eventIds),
     tradeBinding: normalizeTradeBinding(value.tradeBinding),
+    mounts: normalizeScriptEditorMounts(value.mounts),
   });
 }
 
@@ -209,6 +211,7 @@ export function createDefaultScriptEditorPersonRecord(
       enabled: false,
       entryId: "",
     },
+    mounts: [],
   };
 }
 

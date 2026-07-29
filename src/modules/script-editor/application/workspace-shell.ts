@@ -1,9 +1,7 @@
 ﻿import type {
   ScriptEditorActivityRecord,
-  ScriptEditorDialogueRecord,
   ScriptEditorEntityRecord,
   ScriptEditorEventRecord,
-  ScriptEditorMinigameRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorProjectFileKey,
   ScriptEditorTextEntryRecord,
@@ -16,6 +14,8 @@ import {
 import {
   countScriptEditorLocationMenuEntries,
   formalizeScriptEditorProjectMenus,
+  listScriptEditorMenuModuleRecords,
+  listScriptEditorMountedMenus,
   listScriptEditorLocationMenuBundles,
 } from "./menu-authoring";
 import {
@@ -153,6 +153,7 @@ const FAMILY_LABELS: Record<string, string> = {
   progressTracks: "阶段轨道",
   progressTrackBindings: "轨道绑定",
   settlements: "结算",
+  menuResources: "菜单",
   storyPack: "剧本导出",
   people: "人物",
   portraits: "立绘资源",
@@ -187,8 +188,15 @@ const TREE_GROUPS: Array<{
   },
   {
     id: "narrative",
-    label: "剧情与文本",
-    families: ["storyNodes", "dialogues", "minigames", "settlements"],
+    label: "剧本与文本",
+    families: [
+      "storyNodes",
+      "dialogues",
+      "textEntries",
+      "menuResources",
+      "minigames",
+      "settlements",
+    ],
   },
   {
     id: "gameplay",
@@ -198,7 +206,7 @@ const TREE_GROUPS: Array<{
   {
     id: "library",
     label: "资产库",
-    families: ["portraits", "portraitVariants", "textEntries"],
+    families: ["portraits", "portraitVariants"],
   },
 ];
 
@@ -384,7 +392,9 @@ function createTreeNode(
     description:
       previewRecord == null
         ? createEmptyWorkspaceFamilyDescription(family)
-        : describeRecord(previewRecord),
+        : family === "menuResources"
+          ? describeMenuRecordSummary(project, previewRecord)
+          : describeRecord(previewRecord),
     itemCount: count,
     isSelected: selection.family === family,
     tone: hasAttention ? "warning" : "neutral",
@@ -437,7 +447,12 @@ function createInspector(
       },
       {
         label: "当前对象",
-        value: selectedRecord?.id ?? "none",
+        value:
+          selection.family === "menuResources"
+            ? selectedRecord == null
+              ? "未选择"
+              : readPrimaryLabel(selectedRecord)
+            : selectedRecord?.id ?? "none",
       },
       {
         label: "当前阶段",
@@ -460,7 +475,10 @@ function createInspector(
             {
               id: `record.${selectedRecord.id}`,
               title: "记录摘要",
-              body: createRecordPreview(selectedRecord),
+              body:
+                selection.family === "menuResources"
+                  ? createMenuRecordPreview(project, selectedRecord)
+                  : createRecordPreview(selectedRecord),
               tone: "neutral",
             },
             {
@@ -711,7 +729,13 @@ function createPreviewCards(
       body:
         selection.family === "storyPack"
           ? `开场场景 ${readStringField(project.storyPack, "scenarioProfile.id") ?? "未设置"}，默认主角 ${readStringField(project.storyPack, "scenarioProfile.playerCharacterId") ?? "未设置"}。`
-          : `${FAMILY_LABELS[selection.family]} 当前对象为 ${selectionLabel}，${createRecordPreview(selectedRecord ?? { id: "none" })}。`,
+          : `${
+              FAMILY_LABELS[selection.family]
+            } 当前对象为 ${selectionLabel}，${
+              selection.family === "menuResources"
+                ? createMenuRecordPreview(project, selectedRecord ?? { id: "none" })
+                : createRecordPreview(selectedRecord ?? { id: "none" })
+            }。`,
       tone: selectedRecord == null && selection.family !== "storyPack" ? "warning" : "neutral",
     },
     {
@@ -777,7 +801,7 @@ function describeSelectionLinkPreview(
         : project.buildings.find((record) => record.id === entityId);
     const menuEntryCount =
       location == null ? 0 : countScriptEditorLocationMenuEntries(project, family, location.id);
-    return `菜单入口 ${menuEntryCount} 条，访问状态 ${location?.access?.conditionExpression == null ? "default-allow" : "configured"}。`;
+    return `菜单组挂载菜单项 ${menuEntryCount} 条，访问状态 ${location?.access?.conditionExpression == null ? "default-allow" : "configured"}。`;
   }
 
   if (family === "dialogues") {
@@ -861,6 +885,10 @@ function describeSelectionExportPreview(
 
   if (family === "textEntries") {
     return "文本条目会直接落到 text-entries.json，供对话与场景演出复用。";
+  }
+
+  if (family === "menuResources") {
+    return "菜单作者面会管理可挂载菜单项及其下级菜单路由，导出时仍收口到 menu-resources.json 与 menu-instances.json。";
   }
 
   return "当前家族尚未声明额外导出落点。";
@@ -981,22 +1009,22 @@ function collectLinkedValidationIssues(
   const menuInstanceById = Object.fromEntries(
     (project.menuInstances ?? []).map((instance) => [instance.id, instance] as const)
   );
-  for (const family of ["cities", "buildings"] as const) {
-    for (const location of project[family]) {
-      for (const menuInstanceId of location.menuInstanceIds ?? []) {
-        const trimmedInstanceId = menuInstanceId.trim();
+  for (const family of ["people", "cities", "buildings"] as const) {
+    for (const owner of project[family]) {
+      for (const mount of listScriptEditorMountedMenus(project, family, owner.id)) {
+        const trimmedInstanceId = mount.instanceId.trim();
         if (trimmedInstanceId.length === 0) {
           continue;
         }
         const menuInstance = menuInstanceById[trimmedInstanceId];
         if (menuInstance == null) {
           addMissingReferenceIssue({
-            id: `linked.${family}.menu-instance.${location.id}.${trimmedInstanceId}`,
+            id: `linked.${family}.menu-instance.${owner.id}.${trimmedInstanceId}`,
             severity: "attention",
-            title: "菜单实例缺失",
-            message: `${FAMILY_LABELS[family]} ${location.id} 引用的菜单实例 ${trimmedInstanceId} 不存在。`,
+            title: "菜单项缺失",
+            message: `${FAMILY_LABELS[family]} ${owner.id} 引用的菜单项 ${trimmedInstanceId} 不存在。`,
             targetFamily: family,
-            targetEntityId: location.id,
+            targetEntityId: owner.id,
             targetTab: "menus",
           });
           continue;
@@ -1005,17 +1033,21 @@ function collectLinkedValidationIssues(
         const menuResource = menuResourceById[resourceId];
         if (resourceId.length === 0 || menuResource == null) {
           addMissingReferenceIssue({
-            id: `linked.${family}.menu-resource.${location.id}.${trimmedInstanceId}`,
+            id: `linked.${family}.menu-resource.${owner.id}.${trimmedInstanceId}`,
             severity: "attention",
-            title: "菜单资源缺失",
-            message: `${FAMILY_LABELS[family]} ${location.id} 的菜单实例 ${trimmedInstanceId} 指向的资源 ${resourceId || "(empty)"} 不存在。`,
+            title: "菜单项资源缺失",
+            message: `${FAMILY_LABELS[family]} ${owner.id} 的菜单项 ${trimmedInstanceId} 指向的资源 ${resourceId || "(empty)"} 不存在。`,
             targetFamily: family,
-            targetEntityId: location.id,
+            targetEntityId: owner.id,
             targetTab: "menus",
           });
         }
       }
+    }
+  }
 
+  for (const family of ["cities", "buildings"] as const) {
+    for (const location of project[family]) {
       for (const bundle of listScriptEditorLocationMenuBundles(project, family, location.id)) {
         for (const entry of bundle.entries) {
           const targetFamily = resolveAuthoringTargetFamily(entry.targetFamily);
@@ -1035,6 +1067,27 @@ function collectLinkedValidationIssues(
             });
           }
         }
+      }
+    }
+  }
+
+  for (const menuRecord of listScriptEditorMenuModuleRecords(project)) {
+    for (const entry of menuRecord.entries) {
+      const targetFamily = resolveAuthoringTargetFamily(entry.targetFamily);
+      if (targetFamily == null || entry.targetId.trim().length === 0) {
+        continue;
+      }
+
+      if (!hasRecord(project, targetFamily, entry.targetId)) {
+        addMissingReferenceIssue({
+          id: `linked.menu.module.${menuRecord.id}.${entry.id}`,
+          severity: "attention",
+          title: "菜单功能目标缺失",
+          message: `菜单 ${menuRecord.title} 的菜单项 ${entry.label || entry.id} 指向的 ${entry.targetId} 不存在。`,
+          targetFamily: "menuResources",
+          targetEntityId: menuRecord.id,
+          targetTab: null,
+        });
       }
     }
   }
@@ -1785,6 +1838,8 @@ function getFamilyRecords(
       return project.storyNodes;
     case "textEntries":
       return project.textEntries;
+    case "menuResources":
+      return project.menuInstances;
     case "conditionGroups":
       return project.conditionGroups;
     case "effectBundles":
@@ -1806,6 +1861,7 @@ function resolveAuthoringTargetFamily(
   family:
     | "dialogue"
     | "event"
+    | "menuInstance"
     | "task"
     | "person"
     | "city"
@@ -1821,6 +1877,8 @@ function resolveAuthoringTargetFamily(
       return "dialogues";
     case "event":
       return "events";
+    case "menuInstance":
+      return "menuResources";
     case "task":
       return "quests";
     case "city":
@@ -1860,6 +1918,37 @@ function createRecordPreview(record: Record<string, unknown>): string {
   }
 
   return lines.join(" | ");
+}
+
+function describeMenuRecordSummary(
+  project: ScriptEditorProjectDefinition,
+  record: Record<string, unknown>
+): string {
+  const menuRecord = listScriptEditorMenuModuleRecords(project).find(
+    (entry) => entry.id === record.id
+  );
+  if (menuRecord == null) {
+    return "菜单项对象已创建，可继续补齐功能绑定。";
+  }
+
+  return "当前菜单项可继续编排事件或下一级菜单。";
+}
+
+function createMenuRecordPreview(
+  project: ScriptEditorProjectDefinition,
+  record: Record<string, unknown>
+): string {
+  const menuRecord = listScriptEditorMenuModuleRecords(project).find(
+    (entry) => entry.id === record.id
+  );
+  if (menuRecord == null) {
+    return "当前菜单项尚未整理出可供创作参考的摘要信息。";
+  }
+
+  const menuLabel = menuRecord.entries[0]?.label?.trim?.() ?? menuRecord.title ?? "";
+  return menuLabel.length > 0
+    ? `当前菜单项名称为“${menuLabel}”，可继续配置目标。`
+    : "当前菜单项尚未命名，可继续配置目标。";
 }
 
 function readPrimarySummary(record: Record<string, unknown>): string | null {

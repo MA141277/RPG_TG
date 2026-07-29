@@ -181,9 +181,68 @@ export type ScriptEditorProgressTrackRecord = ProgressTrackDefinition;
 export type ScriptEditorProgressTrackBindingRecord = ProgressTrackBinding;
 
 export type ScriptEditorMenuTargetFamily = MenuTargetFamily;
-export type ScriptEditorMenuEntry = MenuEntryDefinition;
-export type ScriptEditorMenuResourceRecord = MenuResourceDefinition;
+export type ScriptEditorMenuRouteTarget =
+  | {
+      kind: "event";
+      eventId: string;
+    }
+  | {
+      kind: "menu";
+      menuInstanceId: string;
+    };
+
+export type ScriptEditorMenuEntry = Omit<MenuEntryDefinition, "targetFamily" | "targetId"> & {
+  targetFamily: MenuTargetFamily;
+  targetId: string;
+  authoringTarget?: ScriptEditorMenuRouteTarget | undefined;
+};
+
+export type ScriptEditorMenuResourceRecord = Omit<MenuResourceDefinition, "entries"> & {
+  entries: ScriptEditorMenuEntry[];
+};
 export type ScriptEditorMenuInstanceRecord = MenuInstanceDefinition;
+
+export type ScriptEditorMountRecord =
+  | {
+      kind: "menu";
+      title?: string | undefined;
+      order: number;
+      visible?: boolean | undefined;
+      target: {
+        kind: "menu";
+        menuInstanceId: string;
+      };
+    }
+  | {
+      kind: "city";
+      title?: string | undefined;
+      order: number;
+      visible?: boolean | undefined;
+      target: {
+        kind: "city";
+        cityId: string;
+      };
+    }
+  | {
+      kind: "building";
+      title?: string | undefined;
+      order: number;
+      visible?: boolean | undefined;
+      target: {
+        kind: "building";
+        buildingId: string;
+      };
+    }
+  | {
+      kind: "event";
+      title?: string | undefined;
+      order: number;
+      visible?: boolean | undefined;
+      target: {
+        kind: "event";
+        eventId: string;
+      };
+    };
 
 export type {
   LocationAccessConditionExpression,
@@ -249,6 +308,7 @@ export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
   attributeGroup: Record<string, ScriptEditorPersonAttributeGroup>;
   attributeMappings: ScriptEditorPersonAttributeMapping[];
   attributeValues: ScriptEditorPersonAttributeValue[];
+  mounts?: ScriptEditorMountRecord[];
 };
 
 export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
@@ -285,6 +345,7 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   menuInstanceIds?: string[];
+  mounts?: ScriptEditorMountRecord[];
   access?: ScriptEditorAccessRule;
 };
 
@@ -417,6 +478,7 @@ export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   menuInstanceIds?: string[];
+  mounts?: ScriptEditorMountRecord[];
   access?: ScriptEditorAccessRule;
   entryBinding?: ScriptEditorBuildingEntryBinding;
   backAction?: HouseDefinition["backAction"];
@@ -570,7 +632,8 @@ export type ScriptEditorEventDestinationFamily =
   | "dialogue"
   | "event"
   | "minigame"
-  | "task";
+  | "task"
+  | "menuInstance";
 
 export type ScriptEditorEventType = "settlement";
 

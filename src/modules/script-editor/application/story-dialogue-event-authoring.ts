@@ -244,6 +244,7 @@ export const SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES: readonly ScriptEditorEven
   "event",
   "minigame",
   "task",
+  "menuInstance",
 ] as const;
 
 export function createDefaultScriptEditorStoryNodeRecord(

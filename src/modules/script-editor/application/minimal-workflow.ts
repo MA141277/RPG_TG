@@ -9,6 +9,7 @@
   type ScriptEditorEventBindingRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorFlowRecord,
+  type ScriptEditorMenuInstanceRecord,
   type ScriptEditorMinigameRecord,
   type ScriptEditorPortraitResourceRecord,
   type ScriptEditorPortraitVariantRecord,
@@ -65,6 +66,7 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "minigames",
   "flows",
   "textEntries",
+  "menuResources",
   "storyNodes",
   "settlements",
   "events",
@@ -257,6 +259,7 @@ export function listScriptEditorWorkflowFamilyRecords(
   | ScriptEditorProgressTrackRecord[]
   | ScriptEditorProgressTrackBindingRecord[]
   | ScriptEditorDialogueRecord[]
+  | ScriptEditorMenuInstanceRecord[]
   | ScriptEditorEntityRecord[]
   | ScriptEditorMinigameRecord[]
   | ScriptEditorFlowRecord[]
@@ -286,6 +289,8 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.flows;
     case "textEntries":
       return project.textEntries;
+    case "menuResources":
+      return project.menuInstances;
     case "storyNodes":
       return project.storyNodes;
     case "settlements":
@@ -314,6 +319,7 @@ export function createScriptEditorWorkflowRecordDraft(
   | ScriptEditorProgressTrackRecord
   | ScriptEditorProgressTrackBindingRecord
   | ScriptEditorDialogueRecord
+  | ScriptEditorMenuInstanceRecord
   | ScriptEditorEntityRecord
   | ScriptEditorMinigameRecord
   | ScriptEditorFlowRecord
@@ -391,6 +397,18 @@ export function createScriptEditorWorkflowRecordDraft(
             : allocateNextScriptEditorProjectCanonicalId(project, "textEntries"),
         text: `Text entry ${(project?.textEntries.length ?? legacyIndex) + 1}.`,
       };
+    case "menuResources":
+      return {
+        id:
+          project == null
+            ? createDefaultScriptEditorCanonicalId("menuInstances", legacyIndex)
+            : allocateNextScriptEditorProjectCanonicalId(project, "menuInstances"),
+        title: `菜单项 ${(project?.menuInstances.length ?? legacyIndex) + 1}`,
+        resourceId:
+          project == null
+            ? createDefaultScriptEditorCanonicalId("menuResources", legacyIndex)
+            : allocateNextScriptEditorProjectCanonicalId(project, "menuResources"),
+      };
     case "storyNodes":
       return createDefaultScriptEditorStoryNodeRecord(
         project == null
@@ -441,10 +459,11 @@ export function upsertScriptEditorWorkflowRecord(
     | ScriptEditorCityRecord
     | ScriptEditorBuildingRecord
     | ScriptEditorSettlementRecord
-    | ScriptEditorProgressTrackRecord
-    | ScriptEditorProgressTrackBindingRecord
-    | ScriptEditorDialogueRecord
-    | ScriptEditorEntityRecord
+  | ScriptEditorProgressTrackRecord
+  | ScriptEditorProgressTrackBindingRecord
+  | ScriptEditorDialogueRecord
+  | ScriptEditorMenuInstanceRecord
+  | ScriptEditorEntityRecord
     | ScriptEditorMinigameRecord
     | ScriptEditorFlowRecord
     | ScriptEditorStoryNodeRecord
@@ -496,6 +515,7 @@ function replaceProjectFamily(
     | ScriptEditorProgressTrackRecord[]
     | ScriptEditorProgressTrackBindingRecord[]
     | ScriptEditorDialogueRecord[]
+    | ScriptEditorMenuInstanceRecord[]
     | ScriptEditorMinigameRecord[]
     | ScriptEditorFlowRecord[]
     | ScriptEditorStoryNodeRecord[]
@@ -531,6 +551,11 @@ function replaceProjectFamily(
       return { ...project, flows: nextRecords as ScriptEditorFlowRecord[] };
     case "textEntries":
       return { ...project, textEntries: nextRecords as ScriptEditorTextEntryRecord[] };
+    case "menuResources":
+      return {
+        ...project,
+        menuInstances: nextRecords as ScriptEditorMenuInstanceRecord[],
+      };
     case "storyNodes":
       return { ...project, storyNodes: nextRecords as ScriptEditorStoryNodeRecord[] };
     case "settlements":
