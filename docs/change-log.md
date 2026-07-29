@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Event-Owned Playable Settlement Continuation Slice
+
+### Added
+- `continueStoryFromSourceEvent()` 现在会在后续 event 为 `type: "settlement"` 时应用对应 settlement contents，并把角色定义变更返回给调用方。
+- 扩展 `tests/event-continuation-runtime.test.cjs`，覆盖 event-owned playable completion 后续 settlement 给玩家角色加体力。
+
+### Impact
+- 这片只迁移 story/event continuation 的 settlement runtime 能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续可以继续补 settlement 后再接 `nextEventId`、city/building settlement target，或把这段 story settlement 应用逻辑收口到更通用的 runtime helper。
+
 ## 2026-07-29 Event-Owned Playable Continuation Slice
 
 ### Added

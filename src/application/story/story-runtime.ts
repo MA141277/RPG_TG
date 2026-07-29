@@ -3,6 +3,10 @@ import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import {
+  applySettlementContents,
+  type ExportedSettlement,
+} from "../../core/runtime/runtime-settlement";
 import { continueToEvent } from "../events/event-continuation";
 import { startEvent } from "../events/event-runner";
 import {
@@ -16,6 +20,7 @@ type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  settlementDefinitionsById?: Record<string, StorySettlementDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
@@ -25,6 +30,10 @@ type StoryRuntimeContext = {
 };
 
 type StoryRuntimeResult = StoryRuntimeContext;
+
+type StorySettlementDefinition = ExportedSettlement & {
+  id: string;
+};
 
 function createScopedTriggerContext(
   state: GameState,
@@ -127,11 +136,17 @@ export function continueStoryFromSourceEvent(
     return null;
   }
 
-  return syncStoryScene(
+  const settledRuntime = applyStorySettlementEvent(
     {
       state: continuation.state,
       characterDefinitions: runtime.characterDefinitions,
     },
+    content,
+    continuation.eventDefinition
+  );
+
+  return syncStoryScene(
+    settledRuntime,
     content
   );
 }
@@ -213,6 +228,50 @@ export function getCurrentSceneAction(
   }
 
   return activeScene.actions[state.scene.cursor] ?? null;
+}
+
+function applyStorySettlementEvent(
+  runtime: StoryRuntimeContext,
+  content: StoryContent,
+  eventDefinition: EventDefinition
+): StoryRuntimeContext {
+  if (eventDefinition.type !== "settlement") {
+    return runtime;
+  }
+
+  const settlementId =
+    typeof eventDefinition.settlementId === "string"
+      ? eventDefinition.settlementId.trim()
+      : "";
+  const settlement =
+    settlementId.length === 0
+      ? undefined
+      : content.settlementDefinitionsById?.[settlementId];
+  if (settlement == null) {
+    return runtime;
+  }
+
+  const people = Object.fromEntries(
+    runtime.characterDefinitions.map((character) => [
+      character.id,
+      character as unknown as Record<string, unknown>,
+    ])
+  );
+  const settlementState = applySettlementContents(
+    { people },
+    settlement,
+    { people }
+  );
+
+  return {
+    ...runtime,
+    characterDefinitions: runtime.characterDefinitions.map(
+      (character) =>
+        (settlementState.people?.[character.id] as
+          | CharacterDefinition
+          | undefined) ?? character
+    ),
+  };
 }
 
 export function getCurrentChoiceOptions(

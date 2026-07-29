@@ -285,3 +285,95 @@ test(
     assert.equal(result.state.scene.status, "idle");
   }
 );
+
+test(
+  "event-owned playable completion applies a source event settlement continuation",
+  () => {
+    const characterDefinitions = prototypeCharacters.map((character) =>
+      character.id === "char.player"
+        ? {
+            ...character,
+            stamina: 100,
+          }
+        : character
+    );
+    const content = {
+      eventDefinitionsById: {
+        "event.playable.source": createEvent(
+          "event.playable.source",
+          "scene.playable.source",
+          "event.playable.settlement"
+        ),
+        "event.playable.settlement": {
+          ...createEvent(
+            "event.playable.settlement",
+            "scene.playable.settlement"
+          ),
+          type: "settlement",
+          settlementId: "settlement.playable.reward",
+        },
+      },
+      sceneDefinitionsById: {
+        "scene.playable.source": {
+          id: "scene.playable.source",
+          name: "Playable Source",
+          actions: [],
+        },
+        "scene.playable.settlement": {
+          id: "scene.playable.settlement",
+          name: "Playable Settlement",
+          actions: [],
+        },
+      },
+      settlementDefinitionsById: {
+        "settlement.playable.reward": {
+          id: "settlement.playable.reward",
+          title: "Playable Reward",
+          contents: [
+            {
+              targetFamily: "person",
+              targetId: "char.player",
+              attributeKey: "stamina",
+              attributeType: "number",
+              operation: "add",
+              value: 10,
+            },
+          ],
+        },
+      },
+    };
+
+    const result = applyEventOwnedPlayableCompletion({
+      state: createBaseState(),
+      characterDefinitions,
+      previousPlayableSession: createEventOwnedPlayableSession(
+        "event.playable.source"
+      ),
+      settlement: { outcome: "success" },
+      continueFromSourceEvent: ({ sourceEventId, state, characterDefinitions }) =>
+        continueStoryFromSourceEvent(
+          {
+            state,
+            characterDefinitions,
+          },
+          content,
+          sourceEventId
+        ),
+    });
+
+    const player = result.characterDefinitions.find(
+      (character) => character.id === "char.player"
+    );
+
+    assert.equal(result.handled, true);
+    assert.equal(player?.stamina, 110);
+    assert.equal(
+      result.state.runtime.eventHistory["event.playable.settlement"]
+        ?.firedCount,
+      1
+    );
+    assert.equal(result.state.scene.activeEventId, null);
+    assert.equal(result.state.scene.activeSceneId, null);
+    assert.equal(result.state.scene.status, "idle");
+  }
+);
