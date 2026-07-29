@@ -287,7 +287,7 @@ ItemDefinition.menuInstanceIds
 -> event routing trigger context
 ```
 
-This keeps item authoring from becoming a second menu editor. The item module may show linked menu instances and resolved action previews, but editing menu rows belongs to the menu module.
+This keeps item authoring from becoming a second menu editor. The item module may show linked menu instances, but editing menu rows belongs to the menu module.
 
 ## Settlement Runtime Alignment
 
@@ -424,13 +424,8 @@ The script editor should organize `items` with these sections:
 
 - Basic information
 - Display
-- Classification and tags
 - Stack rule
-- Components
 - Linked menu instances
-- Resolved action preview
-- References
-- Validation
 
 Creator-facing basic information should use:
 
@@ -444,6 +439,17 @@ It should not expose raw runtime ID as an editable primary field. If an advanced
 The editor should not introduce a heavy `backpacks` content module.
 
 The item editor should not introduce a second heavy menu editor either. Menu groups are optional references to menu module instances. The item editor can provide shortcuts such as "create linked backpack menu", but the created menu remains owned by the menu module.
+
+The creator-facing item module should stay intentionally small. It should not include:
+
+- Copy item
+- Classification and tag editing
+- Static component editing
+- Action preview
+- Reverse-reference browsing
+- A dedicated validation panel
+
+Reference diagnostics and export validation may still exist in shared editor-level tooling, but they should not be part of the item module surface.
 
 If backpack settings are needed, keep them as small system configuration:
 
