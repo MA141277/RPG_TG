@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-30`
-- Current Focus: `Task 2 and the code portion of Task 3 are complete: scene-runtime now exposes canonical taskInputs in both its contract and helper returns, while runtime-dispatch compatibility fallback for taskSignals remains intentionally untouched.`
-- Next Step: `Record Task 4 verification and decide whether to commit/push this producer-side convergence slice immediately or batch it with another adjacent runtime-only child.`
+- Current Focus: `Scene-runtime task input convergence is implemented, verified, committed as 9acb1ae, and pushed to origin/codex/migration-hot-tasks. The remaining decision is whether to merge this checkpoint back to the aligned baseline now or hold it on the hot-task branch.`
+- Next Step: `Merge the pushed checkpoint back to codex/sync-naqishuo-721ui-to-mmz-followup and origin/codex/sync-naqishuo-721ui-to-mmz, then open the next adjacent runtime-only child for runtime-dispatch split task input compatibility narrowing.`
 - Verification: `pnpm run build:test`; `pnpm exec node --test tests/robustness.test.cjs --test-name-pattern "scene runtime accepts an activated event handoff|child 33 event runtime task input contract stays canonical-first|child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator"`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check` passed; `pnpm run lint:plans` still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue; the broader targeted robustness invocation still carries the known unrelated "runtime router contract exports a formal routing seam" assertion.`
-- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. This child remains producer-side only: it narrows scene-runtime from taskSignals to taskInputs, but does not remove RuntimeResult.taskSignals fallback from dispatch.`
+- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. This child remains producer-side only: it narrows scene-runtime from taskSignals to taskInputs, but does not remove RuntimeResult.taskSignals fallback from dispatch. Project-progress remains intentionally unsynced because docs/superpowers/project-progress.md still tracks an unrelated map-renderer child and the user has not asked to repoint it.`
 
 ## Progress Log
 
@@ -27,6 +27,10 @@
   - Summary: `Completed Task 2 and the implementation portion of Task 3. Added a RED source assertion for scene-runtime task input ownership, then narrowed SceneRuntimeResult and story-trigger helper returns from taskSignals to canonical taskInputs without widening the slice into dispatch fallback removal.`
   - Verification: `pnpm run build:test`; `pnpm exec node --test tests/robustness.test.cjs --test-name-pattern "scene runtime accepts an activated event handoff|child 33 event runtime task input contract stays canonical-first|child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator"`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`; `pnpm run lint:plans`.`
   - Next: `Sync the handoff and decide whether to commit/push this runtime-only checkpoint now or keep it local for another adjacent slice.`
+- 2026-07-30
+  - Summary: `Completed Task 4 and pushed the scene-runtime task input convergence checkpoint as 9acb1ae on codex/migration-hot-tasks.`
+  - Verification: `git commit -m "merge: converge scene runtime task inputs"` created `9acb1ae`; `git push` updated `origin/codex/migration-hot-tasks` from `91780be` to `9acb1ae`; previous targeted verification remained green with the same known unrelated robustness and plan-lint failures only.`
+  - Next: `Merge the pushed checkpoint back to the aligned baseline, then promote the next adjacent runtime-only child for runtime-dispatch split task input compatibility narrowing.`
 
 ---
 
@@ -225,7 +229,7 @@ Do not widen this child into dispatch fallback removal. The goal here is to conv
 - Modify: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-30-scene-runtime-task-input-convergence-plan.md`
 
-- [ ] **Step 1: Run the required verification**
+- [x] **Step 1: Run the required verification**
 
 Run:
 
@@ -245,7 +249,7 @@ Expected:
 - boundary diff is empty
 - `lint:plans` fails only on the known unrelated `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md` title issue unless that blocker is fixed separately
 
-- [ ] **Step 2: Record verification and exact boundary outcome**
+- [x] **Step 2: Record verification and exact boundary outcome**
 
 Update both plans with:
 
@@ -254,7 +258,7 @@ Update both plans with:
 - confirmation that protected paths remained untouched
 - the exact next unchecked task or merge checkpoint
 
-- [ ] **Step 3: Commit and push the runtime-only slice**
+- [x] **Step 3: Commit and push the runtime-only slice**
 
 Run:
 
@@ -274,15 +278,31 @@ Report:
 
 ## Exit Check
 
-- [ ] `scene-runtime` emits canonical `taskInputs` instead of split `taskSignals`.
-- [ ] No unapproved changes landed in `src/main.ts`, UI, map, backpack, or styles.
-- [ ] Existing task-input and follow-up ownership assertions remain green.
-- [ ] The child plan and parent handoff both record the exact post-slice resume point.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] `scene-runtime` emits canonical `taskInputs` instead of split `taskSignals`.
+- [x] No unapproved changes landed in `src/main.ts`, UI, map, backpack, or styles.
+- [x] Existing task-input and follow-up ownership assertions remain green.
+- [x] The child plan and parent handoff both record the exact post-slice resume point.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
+
+## Child Closeout
+
+- Closed Child: `Scene Runtime Task Input Convergence`
+- Parent Task: `Mod First Runtime Migration`
+- Parent Stage: `Runtime Migration`
+- Closeout Status: `completed-but-open`
+- Project Progress Synced: `no`
+- Next Child: `Runtime Dispatch Split Task Input Compatibility Narrowing`
+- Next Child Status: `waiting`
+- Next Required Action: `Merge the current checkpoint back to the aligned baseline, then open the next adjacent runtime-only child for runtime-dispatch split task input compatibility narrowing.`
+- Next Entry Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
+- Push Status: `success`
+- Push Commit: `9acb1ae`
+- Resume From: `Stay on codex/migration-hot-tasks, confirm the worktree is clean, merge this checkpoint back to codex/sync-naqishuo-721ui-to-mmz-followup, then decide whether to open the dispatch-compatibility child immediately.`
