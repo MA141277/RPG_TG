@@ -15,7 +15,7 @@
 - Current Focus: `Continue runtime-only migration from the clean branch codex/mod-first-runtime-integration.`
 - Next Step: `Pick the next runtime-only slice from Task 1, write/adjust focused tests first, then implement without touching UI/map/backpack/main shell unless explicitly scoped.`
 - Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor codex/mod-first-runtime-integration origin/codex/sync-naqishuo-721ui-to-mmz`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/mod-first-runtime-integration`; targeted runtime test suite listed below.
-- Notes: `Current branch HEAD is 8d8e5145 and is identical to origin/codex/mod-first-runtime-integration, origin/codex/sync-naqishuo-721ui-to-mmz, and local migrate-scripteditor at the time this handoff was written. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
+- Notes: `Current branch is codex/mod-first-runtime-integration and tracks origin/codex/mod-first-runtime-integration. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document commits may exist only on the integration branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
 
 ## Progress Log
 
@@ -27,6 +27,10 @@
   - Summary: `Runtime migration stack already landed into the current baseline: dialogue compatibility, event binding start, event-owned playable start/completion, settlement effect handling, state-sync status/settlement commits, navigation access, playable registries/contributions, city-begging/grain/medicine status patches, interactive follow-up/status forwarding, flow playable kernel/dispatch/presenter, followUp aliases, runtime router/dispatch followUp handling, and source-event settlement/world continuation.`
   - Verification: `Recent recorded verification pattern: npm.cmd run build:test; node --test tests\event-owned-playable-completion.test.cjs tests\story-settlement-continuation.test.cjs tests\event-continuation-runtime.test.cjs tests\event-playable-start-runtime.test.cjs tests\runtime-settlement-content.test.cjs tests\runtime-dispatch-settlement.test.cjs tests\runtime-router-follow-up-contract.test.cjs tests\runtime-follow-up-contract.test.cjs tests\interactive-runtime-status.test.cjs; npm.cmd run typecheck; boundary diff checks for src\main.ts, UI, map, backpack, and styles.`
   - Next: `Continue with runtime-only callers and contracts; defer shellification and UI-facing mod-first-dev diffs.`
+- 2026-07-29
+  - Summary: `Added explicit branch topology and merge-back flow requirements so future sessions know which branch to work on, when to commit/push, and how to return verified integration slices to the current baseline.`
+  - Verification: `git status --short --branch`; `git branch -vv` filtered for mod-first runtime, migrate-scripteditor, baseline, and mod-first-dev branches.
+  - Next: `After this document update is pushed, resume Task 1 on codex/mod-first-runtime-integration; merge back to the baseline only after a verified runtime slice or agreed documentation checkpoint.`
 
 ---
 
@@ -53,9 +57,210 @@
   - Current working branch: `codex/mod-first-runtime-integration`.
   - Upstream: `origin/codex/mod-first-runtime-integration`.
   - Baseline branch for user-visible current app: `origin/codex/sync-naqishuo-721ui-to-mmz`.
-  - Current branch and baseline both resolve to commit `8d8e5145` at handoff time, so all prior local runtime migration commits have already been merged back into the baseline.
+  - Runtime migration code up through commit `8d8e5145` is present in both the current integration branch history and `origin/codex/sync-naqishuo-721ui-to-mmz`.
+  - Documentation commits after `8d8e5145`, such as the handoff document commit, may exist only on `codex/mod-first-runtime-integration` until a deliberate merge-back step updates the baseline.
   - Local `migrate-scripteditor` also points to `8d8e5145` and tracks `origin/codex/sync-naqishuo-721ui-to-mmz`.
   - Direct comparison to `origin/mod-first-dev` still shows large differences in `src/main.ts`, `src/ui/**`, `src/styles/**`, `src/application/map/**`, house modules, audio, layout editor, and presenter/runtime coordinator files. These are not safe to merge wholesale.
+
+## Branch Topology
+
+Use these branch roles unless the user explicitly gives a new branch name:
+
+- Current branch: `codex/mod-first-runtime-integration`
+- Branches involved in this migration flow:
+  - `origin/codex/sync-naqishuo-721ui-to-mmz`
+    - Role: remote target baseline branch.
+    - Purpose: protects the current UI, map, backpack, script editor entry, and app behavior.
+    - Rule: only receive verified integration slices after boundary checks pass.
+  - `migrate-scripteditor`
+    - Role: local baseline receiving branch.
+    - Upstream/remote counterpart: `origin/codex/sync-naqishuo-721ui-to-mmz`.
+    - Purpose: local branch used to merge integration work back into the remote target baseline.
+    - Rule: update from remote before merging an integration slice back.
+  - `codex/mod-first-runtime-integration`
+    - Role: current runtime integration branch.
+    - Upstream: `origin/codex/mod-first-runtime-integration`.
+    - Purpose: continue runtime-only migration work in small commits.
+    - Rule: all new runtime migration slices should start here or from a fresh child branch based on it.
+- Source reference branch: `origin/mod-first-dev`
+  - Role: read-only source for runtime ideas, existing shellification direction, and mod-first contracts.
+  - Rule: do not merge this branch directly into the current baseline or integration branch.
+- Older integration checkpoint: `codex/mod-first-dev-block-integration`
+  - Role: historical checkpoint that brought in script editor entry baseline work.
+  - Rule: do not continue new work there unless the user explicitly asks.
+
+Historical final synchronized state after the `8d8e5145` runtime-stack merge-back:
+
+- `origin/codex/sync-naqishuo-721ui-to-mmz`
+- `origin/codex/mod-first-runtime-integration`
+- `migrate-scripteditor`
+- `codex/mod-first-runtime-integration`
+
+At that checkpoint, these branches had no remaining runtime migration differences. Later documentation-only commits, such as this handoff document, can make `codex/mod-first-runtime-integration` temporarily lead the baseline until they are intentionally merged back.
+
+Before starting any slice, run:
+
+```powershell
+git fetch origin
+git status --short --branch
+git branch --show-current
+git rev-parse --abbrev-ref --symbolic-full-name '@{u}'
+```
+
+Expected:
+
+- Current branch is `codex/mod-first-runtime-integration` or a clearly named child branch based on it.
+- Worktree is clean before migration edits begin.
+- Upstream is known.
+
+## Merge Back Flow
+
+Use this flow after each verified runtime slice or agreed documentation checkpoint:
+
+1. Work on `codex/mod-first-runtime-integration` or a child branch created from it.
+2. Implement one narrow runtime slice only.
+3. Update this handoff document with checkbox state, `Execution State`, `Progress Log`, verification result, branch/baseline status if changed, and the exact next unchecked task.
+4. Run targeted runtime tests and `npm.cmd run typecheck`.
+5. Run the boundary proof:
+
+```powershell
+git diff --name-only -- src\main.ts src\ui src\components src\application\map src\application\backpack src\domain\backpack src\domain\map src\styles
+```
+
+Expected:
+
+- Empty output unless the user explicitly approved that slice to touch one of these paths.
+
+6. Commit on the integration branch with a runtime-specific message.
+7. Push the integration branch:
+
+```powershell
+git push
+```
+
+8. Decide whether this is a merge-back checkpoint:
+   - Merge back immediately for completed, verified slices that should become part of the current baseline.
+   - Defer merge-back for exploratory or incomplete slices.
+9. When merging back to the baseline, use the local baseline mirror:
+
+```powershell
+git switch migrate-scripteditor
+git pull --ff-only
+git merge --no-ff codex/mod-first-runtime-integration
+```
+
+10. Re-run the boundary proof and the relevant verification on `migrate-scripteditor`.
+11. Push the baseline:
+
+```powershell
+git push origin migrate-scripteditor:codex/sync-naqishuo-721ui-to-mmz
+```
+
+12. Switch back to the integration branch and sync it from the updated baseline if needed:
+
+```powershell
+git switch codex/mod-first-runtime-integration
+git merge --ff-only origin/codex/sync-naqishuo-721ui-to-mmz
+git push
+```
+
+If `--ff-only` fails in step 12, stop and inspect the graph before merging. Do not rewrite either branch unless the user explicitly asks.
+
+## Recorded Merge Back: Runtime Stack To Baseline
+
+This is the completed merge-back flow that synchronized the runtime migration stack into the target baseline before this handoff document was added:
+
+1. Checked the current integration branch:
+
+```powershell
+git switch codex/mod-first-runtime-integration
+git status --short --branch
+```
+
+2. Found the integration branch was ahead of the target baseline by one runtime-support commit:
+
+```text
+db50ef1c chore: ignore local brainstorm notes
+```
+
+3. Switched to the local receiving baseline branch:
+
+```powershell
+git switch migrate-scripteditor
+```
+
+4. Aligned `migrate-scripteditor` with the remote target baseline:
+
+```powershell
+git fetch origin
+git pull --ff-only
+```
+
+5. Merged the remote integration branch into the local receiving baseline:
+
+```powershell
+git merge --no-ff origin/codex/mod-first-runtime-integration
+```
+
+6. Created merge commit:
+
+```text
+8d8e5145 Merge remote-tracking branch 'origin/codex/mod-first-runtime-integration' into migrate-scripteditor
+```
+
+7. Ran the lightweight merge check:
+
+```powershell
+git diff --check
+```
+
+8. Pushed the local receiving branch back to the remote target baseline:
+
+```powershell
+git push origin migrate-scripteditor:codex/sync-naqishuo-721ui-to-mmz
+```
+
+9. Re-synced local `migrate-scripteditor` to the latest remote target baseline.
+
+10. Switched back to the current integration branch:
+
+```powershell
+git switch codex/mod-first-runtime-integration
+```
+
+11. Fast-forwarded the integration branch to the latest target baseline.
+
+12. Pushed the integration branch:
+
+```powershell
+git push origin codex/mod-first-runtime-integration
+```
+
+13. Final confirmation at that checkpoint:
+
+```text
+origin/codex/sync-naqishuo-721ui-to-mmz ... origin/codex/mod-first-runtime-integration = 0 0
+origin/codex/sync-naqishuo-721ui-to-mmz ... migrate-scripteditor = 0 0
+```
+
+Result:
+
+- No remaining runtime-stack commits needed to be merged into the target baseline.
+- The last synchronized runtime-stack merge point was `8d8e5145`.
+
+## Commit And Reporting Rules
+
+- Commit once per completed runtime slice or documentation checkpoint.
+- Push the active integration branch after each commit.
+- Merge back to `origin/codex/sync-naqishuo-721ui-to-mmz` only after the slice is verified and the user-visible boundary check is clean.
+- After merge-back, report:
+  - active branch and commit
+  - baseline branch and commit
+  - what was implemented
+  - verification commands and results
+  - boundary diff result
+  - whether baseline was updated
+  - next task to run
 
 ## Migration Reason
 
@@ -455,6 +660,8 @@ Record any need for full shellification as a new dedicated plan. Do not borrow `
 - [x] Handoff goal recorded.
 - [x] Hard requirements recorded.
 - [x] Current branch/upstream/baseline recorded.
+- [x] Branch topology recorded.
+- [x] Merge-back flow recorded.
 - [x] Completed migration progress recorded.
 - [x] Remaining safe migration tasks recorded.
 - [x] Verification and boundary commands recorded.
@@ -470,9 +677,9 @@ Record any need for full shellification as a new dedicated plan. Do not borrow `
 - Project Progress Synced: `no`
 - Next Child: `World Definition Caller Wiring Audit`
 - Next Child Status: `waiting`
-- Next Required Action: `Run lint:plans for this handoff doc, commit/push the documentation slice if requested, then resume at Task 1.`
+- Next Required Action: `Resume at Task 1 on codex/mod-first-runtime-integration, then merge verified checkpoints back to origin/codex/sync-naqishuo-721ui-to-mmz through the documented merge-back flow.`
 - Next Entry Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
-- Push Status: `not-pushed`
-- Push Commit: `none`
+- Push Status: `integration-branch-pushed; baseline-merge-pending-for-latest-doc-checkpoint`
+- Push Commit: `latest origin/codex/mod-first-runtime-integration`
 - Resume From: `Open this document, confirm branch codex/mod-first-runtime-integration, then execute the first unchecked task without changing UI/map/backpack/main shell paths unless the user explicitly approves that slice.`
