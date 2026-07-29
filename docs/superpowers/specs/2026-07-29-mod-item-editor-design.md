@@ -31,20 +31,24 @@ The editor should generate and maintain runtime IDs internally:
 
 ```txt
 creator creates "小药水"
--> editor allocates runtime id item.potion.small or item.<stable-generated-id>
+-> editor allocates numeric runtime id such as 510001
 -> creator sees "小药水"
 -> references use selection controls, not raw id text inputs
 -> export writes the runtime id
 ```
 
-This applies to item IDs, event IDs, settlement IDs, binding IDs, resource IDs, and generated menu/action IDs wherever practical. The creator-facing model should be:
+All runtime IDs must follow the script editor canonical ID rules and be stored as numeric strings. Existing families use a numeric family code plus a fixed-width sequence, for example `110001` for people, `240001` for settlements, and `280001` for menu instances. Before implementing `items`, the editor must reserve an item family code in the canonical ID allocator.
+
+This applies to item IDs, event IDs, settlement IDs, binding IDs, resource IDs, inventory instance IDs, and generated menu/action IDs wherever practical. The creator-facing model should be:
 
 ```txt
 Select "小药水" + action "使用"
-not type item.potion.small + use
+not type 510001 + use
 ```
 
 IDs remain required in exported runtime data and internal reference graphs. They are just not the primary authoring surface.
+
+Attribute paths, semantic resolver keys, and namespaced mod component types are not entity IDs. Values such as `stats.martial`, `hp`, or `mod:alchemy.catalyst` may remain semantic strings because they identify fields or extension namespaces rather than editor records.
 
 ## Core Boundary
 
@@ -190,7 +194,7 @@ Example equipment item:
 
 ```json
 {
-  "id": "item.sword.longquan",
+  "id": "510001",
   "name": "龙泉剑",
   "classification": {
     "primaryCategory": "equipment",
@@ -216,7 +220,7 @@ Example trade good:
 
 ```json
 {
-  "id": "item.grain",
+  "id": "510002",
   "name": "粮食",
   "classification": {
     "primaryCategory": "goods",
@@ -239,7 +243,7 @@ Example quest item:
 
 ```json
 {
-  "id": "item.letter.secret",
+  "id": "510003",
   "name": "密信",
   "classification": {
     "primaryCategory": "quest",
@@ -248,7 +252,7 @@ Example quest item:
   "components": [
     {
       "type": "questItem",
-      "questIds": ["quest.deliver_secret_letter"],
+      "questIds": ["310001"],
       "consumedOnSubmit": true
     }
   ]
@@ -327,7 +331,7 @@ Example healing item:
 
 ```json
 {
-  "id": "item.potion.small",
+  "id": "510004",
   "name": "小药水",
   "classification": {
     "primaryCategory": "consumable",
@@ -343,7 +347,7 @@ Example healing item:
       "consumeOnUse": true
     }
   ],
-  "menuInstanceIds": ["menu-instance.item.potion.small.backpack"]
+  "menuInstanceIds": ["280001"]
 }
 ```
 
@@ -351,12 +355,12 @@ Matching settlement:
 
 ```json
 {
-  "id": "settlement.item.potion.small.use",
+  "id": "240001",
   "title": "使用小药水",
   "contents": [
     {
       "targetFamily": "person",
-      "targetId": "player",
+      "targetId": "110001",
       "attributeKey": "hp",
       "attributeType": "number",
       "operation": "add",
@@ -366,19 +370,19 @@ Matching settlement:
 }
 ```
 
-The exact player target and `attributeKey` must follow the existing script-editor field mapping and runtime mutation contract. If `hp` is a mod-defined character attribute, the settlement authoring and export validation must know how that key maps to runtime state before the item action can be considered valid.
+The exact player target and `attributeKey` must follow the existing script-editor field mapping and runtime mutation contract. If the creator selects "current player" in the UI, the editor must lower that selection to a valid numeric runtime target or a documented runtime resolver before export. If `hp` is a mod-defined character attribute, the settlement authoring and export validation must know how that key maps to runtime state before the item action can be considered valid.
 
 Example random item:
 
 ```json
 {
-  "id": "item.coin.fate",
+  "id": "510005",
   "name": "命运硬币",
   "classification": {
     "primaryCategory": "consumable",
     "secondaryCategories": ["curio", "random"]
   },
-  "menuInstanceIds": ["menu-instance.item.coin.fate.backpack"]
+  "menuInstanceIds": ["280002"]
 }
 ```
 
