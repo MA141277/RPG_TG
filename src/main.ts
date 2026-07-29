@@ -542,6 +542,28 @@ let currentPlayerCharacterId = defaultPlayerCharacterId;
 
 const BATTLE_UI_EDITOR_STORAGE_KEY = "rpg_tg_battle_ui_values_v1";
 
+const STALE_BATTLE_UI_EDITOR_DEFAULTS: Partial<
+  Record<BattleUiEditorVariableName, string>
+> = {
+  "--battle-command-left": "-0.05%",
+  "--battle-command-top": "16.1458%",
+  "--battle-command-height": "67.6215%",
+  "--battle-right-panel-left": "72.6074%",
+  "--battle-right-panel-top": "12.5%",
+  "--battle-right-panel-width": "27.3438%",
+  "--battle-right-panel-height": "19.0972%",
+  "--battle-controls-button-height": "6.1%",
+  "--battle-start-left": "78.35%",
+  "--battle-start-top": "92.52%",
+  "--battle-start-width": "9.45%",
+  "--battle-end-turn-left": "89.55%",
+  "--battle-end-turn-top": "92.46%",
+  "--battle-end-turn-width": "9.45%",
+  "--battle-deploy-translate-y": "9px",
+  "--battle-action-menu-width": "29.75%",
+  "--battle-action-menu-height": "26.85%",
+};
+
 function loadPersistedBattleUiEditorValues(): Partial<BattleUiEditorValues> {
   try {
     const raw = window.localStorage.getItem(BATTLE_UI_EDITOR_STORAGE_KEY);
@@ -577,7 +599,8 @@ function applyPersistedBattleUiEditorValues(nextState: AppState): AppState {
   const persistedValues = loadPersistedBattleUiEditorValues();
   for (const definition of battleUiEditorVariableDefinitions) {
     const value = persistedValues[definition.name];
-    if (typeof value === "string") {
+    const staleDefault = STALE_BATTLE_UI_EDITOR_DEFAULTS[definition.name];
+    if (typeof value === "string" && value !== staleDefault) {
       mergedValues[definition.name] = value;
     }
   }
