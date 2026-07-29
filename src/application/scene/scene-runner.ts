@@ -9,6 +9,7 @@ import {
   continueToEvent,
   createEventContinuationTracker,
 } from "../events/event-continuation";
+import { runEventPlayableRuntime } from "../events/event-playable-runtime";
 import { runStoryCallback } from "../story/story-callbacks";
 
 export type SceneRunnerContext = {
@@ -36,6 +37,25 @@ export function runSceneUntilPause(
   ]);
 
   while (nextState.scene.activeSceneId != null) {
+    const activeEvent =
+      nextState.scene.activeEventId == null
+        ? null
+        : context.eventDefinitionsById[nextState.scene.activeEventId] ?? null;
+    const playableResult = runEventPlayableRuntime({
+      state: nextState,
+      characterDefinitions: nextCharacterDefinitions,
+      eventDefinition: activeEvent,
+      activityDefinitionsById: context.activityDefinitionsById,
+      textEntriesById: context.textEntriesById,
+    });
+    if (playableResult?.handled) {
+      return {
+        state: playableResult.state,
+        characterDefinitions: playableResult.characterDefinitions,
+        currentAction: null,
+      };
+    }
+
     const activeScene = context.sceneDefinitionsById[nextState.scene.activeSceneId];
     if (activeScene == null) {
       const continuedState = continueSceneEvent(

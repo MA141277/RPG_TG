@@ -4,7 +4,70 @@ const assert = require("node:assert/strict");
 const {
   applySettlementContents,
   applySettlementInstances,
+  settleRuntimeEffects,
 } = require("../.test-dist/core/runtime/runtime-settlement.js");
+const {
+  createInitialState,
+} = require("../.test-dist/application/state/create-initial-state.js");
+
+function createBaseRuntimeState() {
+  return {
+    core: createInitialState({
+      currentMapId: "map.test",
+      currentCityId: "city.test",
+      currentHouseId: null,
+      playerCharacterId: "hero",
+      chapterId: "chapter.test",
+      year: 1560,
+      month: 1,
+      day: 1,
+      pinnedCharacterId: "hero",
+      reviewDateText: "",
+      mainHouseMissionText: "",
+      cards: { ownedCardIds: [] },
+      valuables: { ownedItemIds: [] },
+    }),
+    app: {
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
+    },
+    view: {},
+  };
+}
+
+function createCharacterDefinition(overrides = {}) {
+  return {
+    id: "hero",
+    name: "Hero",
+    birthYear: 1540,
+    age: 20,
+    cityId: "city.test",
+    portraitId: "portrait.hero",
+    stats: {
+      leadership: 10,
+      martial: 20,
+      intelligence: 30,
+      politics: 40,
+      charm: 50,
+      fame: 0,
+      gold: 100,
+    },
+    stamina: 100,
+    availableFunctions: [],
+    skills: {
+      arithmetic: 2,
+    },
+    customProperties: {
+      contribution: 5,
+    },
+    ...overrides,
+  };
+}
 
 test("applySettlementContents applies numeric, boolean, and enum changes", () => {
   const state = {
@@ -135,5 +198,96 @@ test("applySettlementInstances reports missing settlement definitions", () => {
   assert.equal(result.state, state);
   assert.deepEqual(result.warnings, [
     "missing-progression-settlement:missing-settlement",
+  ]);
+});
+
+test("settleRuntimeEffects applies progression settlement instances to character definitions", () => {
+  const characterDefinitions = [createCharacterDefinition()];
+
+  const result = settleRuntimeEffects({
+    state: createBaseRuntimeState(),
+    effects: [],
+    settlementInstances: [
+      {
+        settlementId: "hero-tier-entry",
+        payload: {
+          hostFamily: "person",
+          hostId: "hero",
+          trackId: "merit",
+          fromTierId: null,
+          toTierId: "tier.1",
+          metricValue: 10,
+        },
+      },
+    ],
+    settlementDefinitionsById: {
+      "hero-tier-entry": {
+        contents: [
+          {
+            targetFamily: "person",
+            targetId: "hero",
+            attributeKey: "customProperties.contribution",
+            attributeType: "number",
+            operation: "add",
+            value: 7,
+          },
+        ],
+      },
+    },
+    emittedBy: "progression-runtime",
+    appliedBy: "runtime-settlement",
+    characterDefinitions,
+  });
+
+  assert.equal(result.characterDefinitions[0].customProperties.contribution, 12);
+  assert.equal(characterDefinitions[0].customProperties.contribution, 5);
+  assert.deepEqual(result.warnings, []);
+});
+
+test("settleRuntimeEffects settles character numeric property mutations with status patches", () => {
+  const result = settleRuntimeEffects({
+    state: createBaseRuntimeState(),
+    effects: [
+      {
+        type: "mutateCharacterNumericProperty",
+        characterId: "hero",
+        propertyId: "stats.martial",
+        operation: "add",
+        value: 3,
+      },
+    ],
+    emittedBy: "event-runtime",
+    appliedBy: "runtime-settlement",
+    characterDefinitions: [createCharacterDefinition()],
+  });
+
+  assert.equal(result.characterDefinitions[0].stats.martial, 23);
+  assert.deepEqual(result.characterStatusById.hero.statPatch, {
+    martial: 23,
+  });
+  assert.equal(result.settledEffects.length, 1);
+  assert.deepEqual(result.unsupportedEffects, []);
+});
+
+test("settleRuntimeEffects reports character mutation without character definitions as unsupported", () => {
+  const effect = {
+    type: "mutateCharacterNumericProperty",
+    characterId: "hero",
+    propertyId: "stats.martial",
+    operation: "add",
+    value: 3,
+  };
+
+  const result = settleRuntimeEffects({
+    state: createBaseRuntimeState(),
+    effects: [effect],
+    emittedBy: "event-runtime",
+    appliedBy: "runtime-settlement",
+  });
+
+  assert.deepEqual(result.settledEffects, []);
+  assert.deepEqual(result.unsupportedEffects, [effect]);
+  assert.deepEqual(result.warnings, [
+    "unsupported-effect:mutateCharacterNumericProperty:missing-character-definitions:emitted-by:event-runtime",
   ]);
 });

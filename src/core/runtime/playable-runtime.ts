@@ -5,6 +5,7 @@ import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
   ActivePlayableSession,
+  PlayableCommand,
   PlayableFamily,
   PlayableId,
   PlayableIntegrationDefinition,
@@ -14,6 +15,11 @@ import type {
   PlayableOwnerContext,
   PlayableSettlement,
 } from "../contracts/playable-runtime";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
+import {
+  launchFlowPlayable,
+  reduceFlowPlayable,
+} from "../../application/playables/flow/flow-playable-definition";
 import type { RuntimeState } from "../contracts/runtime-state";
 import {
   startActivityQtePlayable,
@@ -53,13 +59,15 @@ import {
 import { CITY_BEGGING_DURATION_DAYS } from "../../application/minigames/city-begging-minigame";
 import { convertHouseActivityDaysToSegments } from "../../application/house/house-activity-costs";
 import {
-  builtinPlayableDefinitionRegistry,
   type PlayableDefinitionRegistry,
 } from "../registry/playable-definition-registry";
 import {
-  builtinPlayableIntegrationRegistry,
   type PlayableIntegrationRegistry,
 } from "../registry/playable-integration-registry";
+import {
+  readDefaultPlayableDefinitionRegistry,
+  readDefaultPlayableIntegrationRegistry,
+} from "./playable-runtime-registries";
 import { settleRuntimeEffects } from "./runtime-settlement";
 
 export const PLAYABLE_LAUNCH_EVENT_ID = "playable.launch";
@@ -172,8 +180,9 @@ export function resolvePlayableLaunch(input: {
   definitions?: PlayableDefinitionRegistry | undefined;
   integrations?: PlayableIntegrationRegistry | undefined;
 }): PlayableLaunchResolution {
-  const definitions = input.definitions ?? builtinPlayableDefinitionRegistry;
-  const integrations = input.integrations ?? builtinPlayableIntegrationRegistry;
+  const definitions = input.definitions ?? readDefaultPlayableDefinitionRegistry();
+  const integrations =
+    input.integrations ?? readDefaultPlayableIntegrationRegistry();
 
   const integration = resolveIntegration({
     launch: input.launch,
@@ -221,6 +230,7 @@ export function runPlayableRuntime(input: {
   playerCharacterId?: string;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string> | undefined;
+  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
 }): PlayableRuntimeOutput {
   const resolvedRequest = toPlayableRuntimeRequest(input.request);
   if (resolvedRequest == null) {
@@ -233,6 +243,44 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "launch") {
+    if (resolvedRequest.launch.launch.family === "flow") {
+      const flowPlayable =
+        input.flowPlayablesById?.[resolvedRequest.launch.launch.playableId] ??
+        null;
+      if (flowPlayable == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(
+            input.state,
+            resolvedRequest.launch.launch.playableId
+          ),
+        };
+      }
+
+      const nextState = {
+        ...input.state,
+        core: {
+          ...input.state.core,
+          runtime: {
+            ...input.state.core.runtime,
+            playableSession: launchFlowPlayable({
+              definition: flowPlayable,
+              integrationId: resolvedRequest.launch.launch.integrationId,
+              ownerContext: resolvedRequest.launch.launch.ownerContext,
+            }),
+          },
+        },
+      };
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, flowPlayable.id),
+      };
+    }
+
     if (resolvedRequest.launch.launch.playableId === "activity-qte") {
       const activityId = resolvedRequest.launch.launch.payload?.activityId;
       if (typeof activityId !== "string") {
@@ -409,6 +457,28 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "exit") {
+    if (
+      getActivePlayableSession(input.state, resolvedRequest.playableId)?.family ===
+      "flow"
+    ) {
+      const nextState = {
+        ...input.state,
+        core: {
+          ...input.state.core,
+          runtime: {
+            ...input.state.core.runtime,
+            playableSession: null,
+          },
+        },
+      };
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: null,
+      };
+    }
+
     if (resolvedRequest.playableId === "activity-qte") {
       const nextState = exitActivityQtePlayable(input.state);
       return {
@@ -464,6 +534,76 @@ export function runPlayableRuntime(input: {
       effects: [],
       handled: false,
       session: getActivePlayableSession(input.state, resolvedRequest.playableId),
+    };
+  }
+
+  const activeFlowSession = getActivePlayableSession(
+    input.state,
+    resolvedRequest.playableId
+  );
+  const flowPlayable =
+    input.flowPlayablesById?.[resolvedRequest.playableId] ?? null;
+  if (activeFlowSession?.family === "flow" && flowPlayable != null) {
+    const command = toFlowPlayableCommand(
+      resolvedRequest.action,
+      resolvedRequest.payload
+    );
+    if (command == null) {
+      return {
+        state: input.state,
+        effects: [],
+        handled: true,
+        session: activeFlowSession,
+      };
+    }
+
+    const reduction = reduceFlowPlayable({
+      definition: flowPlayable,
+      session: activeFlowSession,
+      command,
+    });
+    if (
+      reduction.lifecycle.type === "completed" ||
+      reduction.lifecycle.type === "cancelled"
+    ) {
+      const settlement = createPlayableSettlementShell({
+        session: reduction.session,
+        outcome: toPlayableOutcome(reduction.lifecycle),
+        factResult: reduction.lifecycle.result,
+      });
+      return {
+        state: {
+          ...input.state,
+          core: {
+            ...input.state.core,
+            runtime: {
+              ...input.state.core.runtime,
+              playableSession: null,
+            },
+          },
+        },
+        effects: [],
+        handled: true,
+        session: null,
+        settlement,
+      };
+    }
+
+    const nextState = {
+      ...input.state,
+      core: {
+        ...input.state.core,
+        runtime: {
+          ...input.state.core.runtime,
+          playableSession: reduction.session,
+        },
+      },
+    };
+    return {
+      state: nextState,
+      effects: [],
+      handled: true,
+      session: reduction.session,
     };
   }
 
@@ -722,6 +862,7 @@ export function runPlayableRuntime(input: {
           },
         },
         characterDefinitions: completion.characterDefinitions,
+        characterStatusById: completion.characterStatusById,
         effects: [],
         handled: true,
         session: null,
@@ -748,6 +889,9 @@ export function runPlayableRuntime(input: {
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.characterStatusById == null
+          ? {}
+          : { characterStatusById: completion.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(completion.state, "grain-accounting"),
@@ -774,6 +918,9 @@ export function runPlayableRuntime(input: {
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.characterStatusById == null
+          ? {}
+          : { characterStatusById: completion.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(completion.state, "grain-accounting"),
@@ -800,6 +947,9 @@ export function runPlayableRuntime(input: {
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.characterStatusById == null
+          ? {}
+          : { characterStatusById: completion.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(
@@ -828,6 +978,9 @@ export function runPlayableRuntime(input: {
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.characterStatusById == null
+          ? {}
+          : { characterStatusById: completion.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(
@@ -893,6 +1046,7 @@ export function runPlayableRuntime(input: {
         handled: true,
         session: getActivePlayableSession(result.state, "story-battle"),
         interactive: result.interactive,
+        followUp: result.followUp ?? result.interactive,
       };
     }
   }
@@ -928,9 +1082,11 @@ export function createLegacyPlayableSession(input: {
   source: LegacyInteractiveSource;
 }): ActivePlayableSession | null {
   const definition =
-    builtinPlayableDefinitionRegistry.getByLegacyInteractiveKind(input.kind);
+    readDefaultPlayableDefinitionRegistry().getByLegacyInteractiveKind(
+      input.kind
+    );
   const integrationId = getLegacyIntegrationId(input.kind);
-  const integration = builtinPlayableIntegrationRegistry.get(integrationId);
+  const integration = readDefaultPlayableIntegrationRegistry().get(integrationId);
 
   if (definition == null || integration == null) {
     return null;
@@ -1002,9 +1158,8 @@ function toPlayableRuntimeRequest(
     };
   }
 
-  const legacyDefinition = builtinPlayableDefinitionRegistry.matchActionId(
-    request.actionId
-  );
+  const legacyDefinition =
+    readDefaultPlayableDefinitionRegistry().matchActionId(request.actionId);
   if (legacyDefinition == null) {
     return null;
   }
@@ -1232,6 +1387,7 @@ function normalizeOwnerContext(input: {
   const ownerKind = merged.ownerKind;
   if (
     ownerKind !== "house" &&
+    ownerKind !== "dialogue" &&
     ownerKind !== "scene" &&
     ownerKind !== "task" &&
     ownerKind !== "external"
@@ -1310,6 +1466,50 @@ function getLegacyIntegrationId(
   }
 
   return "playable.city-begging.external.default";
+}
+
+function toFlowPlayableCommand(
+  action: string,
+  payload: Record<string, unknown> | undefined
+): PlayableCommand | null {
+  if (action === "confirm") {
+    return { type: "confirm" };
+  }
+
+  if (action === "cancel") {
+    return { type: "cancel" };
+  }
+
+  if (action === "select" && typeof payload?.value === "string") {
+    return { type: "select", value: payload.value };
+  }
+
+  return {
+    type: "custom",
+    actionId: action,
+    ...(payload == null ? {} : { payload }),
+  };
+}
+
+function toPlayableOutcome(
+  lifecycle: Extract<
+    ReturnType<typeof reduceFlowPlayable>["lifecycle"],
+    { type: "completed" | "cancelled" }
+  >
+): PlayableSettlement["outcome"] {
+  if (lifecycle.type === "cancelled") {
+    return "cancelled";
+  }
+
+  if (lifecycle.result.status === "failed") {
+    return "failure";
+  }
+
+  if (lifecycle.result.status === "cancelled") {
+    return "cancelled";
+  }
+
+  return "success";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

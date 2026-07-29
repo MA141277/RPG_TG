@@ -5,7 +5,12 @@ import type {
 } from "../../domain/city-begging-minigame";
 import { CITY_BEGGING_RUNTIME_KEYS } from "../../domain/city-begging-minigame";
 import type { CharacterDefinition } from "../../domain/character";
+import {
+  mergeCharacterStatusMaps,
+  type CharacterStatusById,
+} from "../../domain/character-status";
 import type { GameState } from "../../domain/game-state";
+import { mutateCharacterNumericProperty } from "../character/runtime-property-mutation";
 import {
   ensurePlayerGrainInventory,
   mutatePlayerGrainDou,
@@ -153,24 +158,29 @@ export function applyCityBeggingMiniGameCompletion(
 ): {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById: CharacterStatusById;
 } {
   let nextState = recordCityBeggingMiniGameCompletion(
     mutatePlayerGrainDou(ensurePlayerGrainInventory(state), result.foodGain),
     result
   );
-  let nextCharacters = characterDefinitions.map((characterDefinition) => {
-    if (characterDefinition.id !== playerCharacterId || result.goldGain <= 0) {
-      return characterDefinition;
-    }
+  let nextCharacters = characterDefinitions;
+  let characterStatusById: CharacterStatusById = {};
 
-    return {
-      ...characterDefinition,
-      stats: {
-        ...characterDefinition.stats,
-        gold: characterDefinition.stats.gold + result.goldGain,
-      },
-    };
-  });
+  if (result.goldGain > 0) {
+    const goldMutation = mutateCharacterNumericProperty({
+      state: nextState,
+      characterDefinitions: nextCharacters,
+      characterId: playerCharacterId,
+      propertyId: "stats.gold",
+      operation: "add",
+      value: result.goldGain,
+      characterStatusById,
+    });
+    nextState = goldMutation.state;
+    nextCharacters = goldMutation.characterDefinitions;
+    characterStatusById = goldMutation.characterStatusById;
+  }
 
   const staminaMutation = spendPlayerStamina(
     nextState,
@@ -179,9 +189,14 @@ export function applyCityBeggingMiniGameCompletion(
   );
   nextState = staminaMutation.state;
   nextCharacters = staminaMutation.characterDefinitions;
+  characterStatusById = mergeCharacterStatusMaps(
+    characterStatusById,
+    staminaMutation.characterStatusById ?? {}
+  );
 
   return {
     state: nextState,
     characterDefinitions: nextCharacters,
+    characterStatusById,
   };
 }

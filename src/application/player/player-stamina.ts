@@ -1,4 +1,8 @@
 import type { CharacterDefinition } from "../../domain/character";
+import {
+  mergeCharacterStatusById,
+  type CharacterStatusById,
+} from "../../domain/character-status";
 import type { GameState } from "../../domain/game-state";
 
 export const ACTIVITY_COMPLETION_STAMINA_COST = 15;
@@ -6,6 +10,7 @@ export const ACTIVITY_COMPLETION_STAMINA_COST = 15;
 export type PlayerStaminaMutationResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 };
 
 export function canAffordActivityCost(
@@ -21,6 +26,8 @@ export function mutatePlayerStamina(
   playerCharacterId: string,
   delta: number
 ): PlayerStaminaMutationResult {
+  let characterStatusById: CharacterStatusById = {};
+
   return {
     state,
     characterDefinitions: characterDefinitions.map((characterDefinition) => {
@@ -28,11 +35,19 @@ export function mutatePlayerStamina(
         return characterDefinition;
       }
 
+      const nextStamina = Math.max(0, characterDefinition.stamina + delta);
+      characterStatusById = mergeCharacterStatusById(
+        characterStatusById,
+        playerCharacterId,
+        { stamina: nextStamina }
+      );
+
       return {
         ...characterDefinition,
-        stamina: Math.max(0, characterDefinition.stamina + delta),
+        stamina: nextStamina,
       };
     }),
+    characterStatusById,
   };
 }
 

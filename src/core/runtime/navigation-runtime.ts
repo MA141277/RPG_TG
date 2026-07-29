@@ -1,8 +1,15 @@
 import { enterCity } from "../../application/navigation/enter-city";
 import { enterHouse } from "../../application/navigation/enter-house";
+import { evaluateLocationAccess } from "../../application/location-access/location-access-runtime";
+import type { CharacterDefinition } from "../../domain/character";
+import type { CityDefinition } from "../../domain/city";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
+import type {
+  LocationAccessDefinition,
+  LocationAccessResult,
+} from "../../domain/location-access";
 import type { NavigationTarget } from "../contracts/navigation";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
@@ -14,6 +21,7 @@ import type { RuntimeState } from "../contracts/runtime-state";
 type NavigationRuntimeResult = {
   state: GameState;
   navigation: NavigationTarget | null;
+  access?: LocationAccessResult;
   outcome?: RuntimeFollowUpOutcome | null;
 };
 
@@ -40,6 +48,9 @@ export function runNavigationRuntime(input: {
   request: RuntimeRequest;
   houseDefinition?: HouseDefinition | null;
   eventDefinitionsById?: Record<string, EventDefinition>;
+  cityDefinitionsById?: Record<string, CityDefinition>;
+  characterDefinitions?: readonly CharacterDefinition[];
+  locationAccessDefinitions?: readonly LocationAccessDefinition[];
 }): NavigationRuntimeResult {
   if (input.request.type !== "external") {
     return {
@@ -54,6 +65,22 @@ export function runNavigationRuntime(input: {
       return {
         state: input.state,
         navigation: null,
+      };
+    }
+
+    const access = evaluateLocationAccess({
+      state: input.state,
+      targetFamily: "city",
+      targetId: cityId,
+      targetCity: input.cityDefinitionsById?.[cityId] ?? null,
+      characterDefinitions: input.characterDefinitions ?? [],
+      locationAccessDefinitions: input.locationAccessDefinitions ?? [],
+    });
+    if (!access.canEnter) {
+      return {
+        state: input.state,
+        navigation: null,
+        access,
       };
     }
 
@@ -72,6 +99,22 @@ export function runNavigationRuntime(input: {
     input.houseDefinition != null &&
     input.eventDefinitionsById != null
   ) {
+    const access = evaluateLocationAccess({
+      state: input.state,
+      targetFamily: "building",
+      targetId: input.houseDefinition.id,
+      targetBuilding: input.houseDefinition,
+      characterDefinitions: input.characterDefinitions ?? [],
+      locationAccessDefinitions: input.locationAccessDefinitions ?? [],
+    });
+    if (!access.canEnter) {
+      return {
+        state: input.state,
+        navigation: null,
+        access,
+      };
+    }
+
     return {
       state: enterHouse(
         input.state,
@@ -96,6 +139,9 @@ export function routeNavigationRuntime(input: {
   request: RuntimeRequest;
   houseDefinition?: HouseDefinition | null;
   eventDefinitionsById?: Record<string, EventDefinition>;
+  cityDefinitionsById?: Record<string, CityDefinition>;
+  characterDefinitions?: readonly CharacterDefinition[];
+  locationAccessDefinitions?: readonly LocationAccessDefinition[];
 }): RuntimeResult {
   const result = runNavigationRuntime({
     state: input.state.core,
@@ -106,6 +152,15 @@ export function routeNavigationRuntime(input: {
     ...(input.eventDefinitionsById === undefined
       ? {}
       : { eventDefinitionsById: input.eventDefinitionsById }),
+    ...(input.cityDefinitionsById === undefined
+      ? {}
+      : { cityDefinitionsById: input.cityDefinitionsById }),
+    ...(input.characterDefinitions === undefined
+      ? {}
+      : { characterDefinitions: input.characterDefinitions }),
+    ...(input.locationAccessDefinitions === undefined
+      ? {}
+      : { locationAccessDefinitions: input.locationAccessDefinitions }),
   });
 
   return {
@@ -114,6 +169,7 @@ export function routeNavigationRuntime(input: {
       core: result.state,
     },
     effects: [],
+    ...(result.access == null ? {} : { access: result.access }),
     ...(result.outcome == null ? {} : { outcome: result.outcome }),
     navigation: result.navigation,
   };

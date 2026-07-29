@@ -81,6 +81,12 @@ export type PlayableLaunchRequest = {
   payload?: Record<string, unknown> | undefined;
 };
 
+export type PlayableCommand =
+  | { type: "confirm" }
+  | { type: "cancel" }
+  | { type: "select"; value: string }
+  | { type: "custom"; actionId: string; payload?: Record<string, unknown> };
+
 export type ActivePlayableSession = {
   sessionId: string;
   playableId: PlayableId;
@@ -88,6 +94,7 @@ export type ActivePlayableSession = {
   family: PlayableFamily;
   ownerContext: PlayableOwnerContext;
   status: "active" | "completed" | "cancelled";
+  state?: Record<string, unknown> | undefined;
 };
 
 export type PlayablePresenterModel = {
@@ -101,6 +108,7 @@ export type PlayablePresenterModel = {
     label: string;
     commandType: "confirm" | "cancel" | "custom";
   }>;
+  viewModel?: Record<string, unknown> | undefined;
   detail?: Record<string, unknown> | undefined;
 };
 
@@ -116,6 +124,8 @@ export type PlayableSettlement = {
   };
   effects: Effect[];
 };
+
+export type PlayableResult = PlayableSettlement;
 
 export type PlayableLaunchFailureCode =
   | "missing-playable-id"

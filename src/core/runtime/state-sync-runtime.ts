@@ -9,7 +9,12 @@ import type { RuntimeResult } from "../contracts/runtime-result";
 import type { TaskDefinition } from "../contracts/task-runtime";
 import type { RuntimeState as LegacyBridgeRuntimeState } from "../contracts/runtime-state";
 import type { RuntimeFollowUpContext, RuntimeRouter } from "./runtime-router";
+import {
+  stateSyncCoreSeam,
+  type RuntimeAppStateInput,
+} from "./state-sync-core-seam";
 import { dispatchRuntimeRequest } from "./runtime-dispatch";
+import { settleRuntimeEffects } from "./runtime-settlement";
 import { syncAppState } from "./state-sync-app-bridge";
 import { hydrateFromSave } from "./state-sync-hydration";
 import { rebuildAfterModActivation } from "./state-sync-mod-rebuild";
@@ -18,7 +23,7 @@ import { preparePresentationInput } from "./state-sync-presentation";
 import { prepareSaveState } from "./state-sync-save";
 import { validateCanonicalRuntimeState } from "./state-sync-validation";
 
-export type RuntimeStateBridgeInput = {
+export type RuntimeStateBridgeInput = RuntimeAppStateInput & {
   gameState: LegacyBridgeRuntimeState["core"];
   beggingMiniGameState: LegacyBridgeRuntimeState["app"]["beggingMiniGameState"];
   autoAdvanceState: LegacyBridgeRuntimeState["app"]["autoAdvanceState"];
@@ -32,7 +37,10 @@ export type RuntimeStateBridgeInput = {
 
 export type RuntimeResultBridgeInput = {
   state: LegacyBridgeRuntimeState;
-  characterDefinitions?: unknown;
+  characterDefinitions?: RuntimeResult["characterDefinitions"];
+  characterStatusById?: RuntimeResult["characterStatusById"];
+  cityStatusById?: RuntimeResult["cityStatusById"];
+  buildingStatusById?: RuntimeResult["buildingStatusById"];
 };
 
 export type RuntimeCommitInput<TAppState extends RuntimeStateBridgeInput> = {
@@ -53,19 +61,7 @@ export type RuntimeCommitResult<TAppState extends RuntimeStateBridgeInput> = {
 export function createRuntimeBridgeState(
   state: RuntimeStateBridgeInput
 ): LegacyBridgeRuntimeState {
-  return {
-    core: state.gameState,
-    app: {
-      beggingMiniGameState: state.beggingMiniGameState,
-      autoAdvanceState: state.autoAdvanceState,
-      campaignTravelState: state.campaignTravelState,
-      cityDirectoryState: state.cityDirectoryState,
-      cityMenuState: state.cityMenuState,
-      locationDialogueState: state.locationDialogueState,
-      modalState: state.modalState,
-    },
-    view: {},
-  };
+  return stateSyncCoreSeam.createRuntimeStateFromAppState(state);
 }
 
 export function applyRuntimeBridgeState<
@@ -73,22 +69,19 @@ export function applyRuntimeBridgeState<
 >(
   state: TAppState,
   runtimeState: LegacyBridgeRuntimeState,
-  characterDefinitions?: unknown
+  characterDefinitions?: RuntimeResult["characterDefinitions"],
+  characterStatusById?: RuntimeResult["characterStatusById"],
+  cityStatusById?: RuntimeResult["cityStatusById"],
+  buildingStatusById?: RuntimeResult["buildingStatusById"]
 ): TAppState {
-  return {
-    ...state,
-    gameState: runtimeState.core,
-    beggingMiniGameState: runtimeState.app.beggingMiniGameState,
-    autoAdvanceState: runtimeState.app.autoAdvanceState,
-    campaignTravelState: runtimeState.app.campaignTravelState,
-    cityDirectoryState: runtimeState.app.cityDirectoryState,
-    cityMenuState: runtimeState.app.cityMenuState,
-    locationDialogueState: runtimeState.app.locationDialogueState,
-    modalState: runtimeState.app.modalState,
-    ...(characterDefinitions == null
-      ? {}
-      : { characterDefinitions }),
-  } as TAppState;
+  return stateSyncCoreSeam.applyRuntimeStateToAppState(
+    state,
+    runtimeState,
+    characterDefinitions,
+    characterStatusById,
+    cityStatusById,
+    buildingStatusById
+  );
 }
 
 export function applyRuntimeBridgeResult<
@@ -97,7 +90,10 @@ export function applyRuntimeBridgeResult<
   return applyRuntimeBridgeState(
     state,
     result.state,
-    result.characterDefinitions
+    result.characterDefinitions,
+    result.characterStatusById,
+    result.cityStatusById,
+    result.buildingStatusById
   );
 }
 
@@ -112,7 +108,7 @@ export function applyInteractiveRuntimeState<
 >(
   state: TAppState,
   runtimeState: LegacyBridgeRuntimeState,
-  characterDefinitions?: unknown
+  characterDefinitions?: RuntimeResult["characterDefinitions"]
 ): TAppState {
   return applyRuntimeBridgeState(state, runtimeState, characterDefinitions);
 }
@@ -126,19 +122,67 @@ export function applyInteractiveRuntimeResult<
 export function commitRuntimeRequest<
   TAppState extends RuntimeStateBridgeInput,
 >(input: RuntimeCommitInput<TAppState>): RuntimeCommitResult<TAppState> {
-  const runtimeResult = dispatchRuntimeRequest({
+  const routedRuntimeResult = dispatchRuntimeRequest({
     state: createRuntimeBridgeState(input.state),
     request: input.request,
     context: input.context,
   });
+  const runtimeResult = settleRuntimeResultSettlementEffects(routedRuntimeResult);
 
   return {
     state: applyRuntimeBridgeState(
       input.state,
       runtimeResult.state,
-      runtimeResult.characterDefinitions
+      runtimeResult.characterDefinitions,
+      runtimeResult.characterStatusById,
+      runtimeResult.cityStatusById,
+      runtimeResult.buildingStatusById
     ),
     runtimeResult,
+  };
+}
+
+function settleRuntimeResultSettlementEffects(
+  runtimeResult: RuntimeResult
+): RuntimeResult {
+  const settlementEffects = runtimeResult.settlement?.effects ?? [];
+  if (settlementEffects.length === 0) {
+    return runtimeResult;
+  }
+
+  const settled = settleRuntimeEffects({
+    state: runtimeResult.state,
+    effects: settlementEffects,
+    emittedBy: "event-runtime",
+    appliedBy: "runtime-settlement",
+    ...(runtimeResult.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: runtimeResult.characterDefinitions }),
+    ...(runtimeResult.characterStatusById == null
+      ? {}
+      : { characterStatusById: runtimeResult.characterStatusById }),
+  });
+
+  return {
+    ...runtimeResult,
+    state: settled.state,
+    ...(settled.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: settled.characterDefinitions }),
+    ...(settled.characterStatusById == null
+      ? {}
+      : { characterStatusById: settled.characterStatusById }),
+    ...(runtimeResult.settlement === undefined
+      ? {}
+      : {
+          settlement:
+            runtimeResult.settlement === null
+              ? null
+              : {
+            ...runtimeResult.settlement,
+            effects: settled.settledEffects,
+          },
+        }),
   };
 }
 

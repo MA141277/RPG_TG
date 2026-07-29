@@ -1,12 +1,15 @@
 import type { CharacterDefinition } from "../../domain/character";
+import type { CharacterStatusById } from "../../domain/character-status";
 import type { GameState } from "../../domain/game-state";
 import { convertShiToDou } from "../../domain/grain-unit";
 import { GRAIN_SHOP_VARIABLE_KEYS } from "../../domain/grain-shop";
+import { mutateCharacterNumericProperty } from "../character/runtime-property-mutation";
 import { mutatePlayerGrainDou } from "../inventory/trade-inventory";
 
 export type GrainShopMutationResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 };
 
 function withVariable(
@@ -53,22 +56,14 @@ export function mutatePlayerGold(
   playerCharacterId: string,
   delta: number
 ): GrainShopMutationResult {
-  return {
+  return mutateCharacterNumericProperty({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId) {
-        return characterDefinition;
-      }
-
-      return {
-        ...characterDefinition,
-        stats: {
-          ...characterDefinition.stats,
-          gold: characterDefinition.stats.gold + delta,
-        },
-      };
-    }),
-  };
+    characterDefinitions,
+    characterId: playerCharacterId,
+    propertyId: "stats.gold",
+    operation: "add",
+    value: delta,
+  });
 }
 
 export function mutatePlayerAccountingLevel(
@@ -77,27 +72,14 @@ export function mutatePlayerAccountingLevel(
   playerCharacterId: string,
   delta: number
 ): GrainShopMutationResult {
-  return {
+  return mutateCharacterNumericProperty({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId) {
-        return characterDefinition;
-      }
-
-      const baseSkills = characterDefinition.skills;
-      if (baseSkills == null) {
-        return characterDefinition;
-      }
-
-      return {
-        ...characterDefinition,
-        skills: {
-          ...baseSkills,
-          accounting: Math.max(0, (baseSkills.accounting ?? 0) + delta),
-        },
-      };
-    }),
-  };
+    characterDefinitions,
+    characterId: playerCharacterId,
+    propertyId: "skills.accounting",
+    operation: "add",
+    value: delta,
+  });
 }
 
 export function mutateGrainShopFood(

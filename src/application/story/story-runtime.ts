@@ -1,9 +1,16 @@
 import type { ChoiceOption, SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
+import type { CityDefinition } from "../../domain/city";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { HouseDefinition } from "../../domain/house";
+import { continueToEvent } from "../events/event-continuation";
 import { startEvent } from "../events/event-runner";
+import {
+  applyStorySettlementEvent,
+  type StorySettlementDefinition,
+} from "./story-settlement-continuation";
 import {
   selectTriggeredEvents,
   type TriggerEvaluationInput,
@@ -15,12 +22,15 @@ type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  settlementDefinitionsById?: Record<string, StorySettlementDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
 type StoryRuntimeContext = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  cityDefinitions?: CityDefinition[] | undefined;
+  houseDefinitions?: HouseDefinition[] | undefined;
 };
 
 type StoryRuntimeResult = StoryRuntimeContext;
@@ -87,6 +97,12 @@ export function syncStoryScene(
   return {
     state: result.state,
     characterDefinitions: result.characterDefinitions,
+    ...(runtime.cityDefinitions == null
+      ? {}
+      : { cityDefinitions: runtime.cityDefinitions }),
+    ...(runtime.houseDefinitions == null
+      ? {}
+      : { houseDefinitions: runtime.houseDefinitions }),
   };
 }
 
@@ -105,6 +121,44 @@ export function startStoryEventById(
       state: startEvent(runtime.state, eventDefinition),
       characterDefinitions: runtime.characterDefinitions,
     },
+    content
+  );
+}
+
+export function continueStoryFromSourceEvent(
+  runtime: StoryRuntimeContext,
+  content: StoryContent,
+  sourceEventId: string
+): StoryRuntimeResult | null {
+  const sourceEventDefinition = content.eventDefinitionsById[sourceEventId];
+  const continuation = continueToEvent({
+    state: runtime.state,
+    eventDefinitionsById: content.eventDefinitionsById,
+    sourceEventId,
+    targetEventId: sourceEventDefinition?.nextEventId,
+    visitedEventIds: [sourceEventId],
+  });
+  if (continuation == null) {
+    return null;
+  }
+
+  const settledRuntime = applyStorySettlementEvent(
+    {
+      state: continuation.state,
+      characterDefinitions: runtime.characterDefinitions,
+      ...(runtime.cityDefinitions == null
+        ? {}
+        : { cityDefinitions: runtime.cityDefinitions }),
+      ...(runtime.houseDefinitions == null
+        ? {}
+        : { houseDefinitions: runtime.houseDefinitions }),
+    },
+    content,
+    continuation.eventDefinition
+  );
+
+  return syncStoryScene(
+    settledRuntime,
     content
   );
 }

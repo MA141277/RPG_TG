@@ -1,4 +1,7 @@
-import type { RuntimeInteractiveSignal } from "../../../core/contracts/runtime-result";
+import type {
+  RuntimeFollowUp,
+  RuntimeInteractiveSignal,
+} from "../../../core/contracts/runtime-result";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
 import type { GameState } from "../../../domain/game-state";
 import type { StoryBattleCompletion } from "../../../domain/story-battle";
@@ -56,6 +59,7 @@ export function dispatchStoryBattlePlayableAction(input: {
 }): {
   state: RuntimeState;
   interactive: RuntimeInteractiveSignal;
+  followUp: RuntimeFollowUp;
 } {
   const result = dispatchStoryBattleAction(input.state.core, input.battleActionId, {
     textEntriesById: input.textEntriesById,
@@ -75,15 +79,18 @@ export function dispatchStoryBattlePlayableAction(input: {
         }
       : withPlayableSession(result.state, ownerId);
 
+  const followUp: RuntimeFollowUp =
+    result.enterHouseId == null
+      ? { type: "none" }
+      : { type: "reenter-house", houseId: result.enterHouseId };
+
   return {
     state: {
       ...input.state,
       core: nextCore,
     },
-    interactive:
-      result.enterHouseId == null
-        ? { type: "none" }
-        : { type: "reenter-house", houseId: result.enterHouseId },
+    interactive: followUp,
+    followUp,
   };
 }
 

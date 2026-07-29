@@ -12,10 +12,16 @@ const {
 } = require("../.test-dist/application/state/create-initial-state.js");
 const {
   chooseStorySceneOption,
+  continueStoryFromSourceEvent,
   startStoryEventById,
 } = require("../.test-dist/application/story/story-runtime.js");
 const {
+  applyEventOwnedPlayableCompletion,
+} = require("../.test-dist/application/events/event-playable-runtime.js");
+const {
   prototypeCharacters,
+  prototypeCities,
+  prototypeHouses,
   prototypeMap,
 } = require("../.test-dist/content/prototype-world.js");
 
@@ -46,6 +52,22 @@ function createEvent(id, entrySceneId, nextEventId) {
     conditions: [],
     entrySceneId,
     ...(nextEventId == null ? {} : { nextEventId }),
+  };
+}
+
+function createEventOwnedPlayableSession(sourceEventId) {
+  return {
+    sessionId: "playable.story-battle",
+    playableId: "story-battle",
+    integrationId: "playable.story-battle.scene.default",
+    family: "battle",
+    status: "active",
+    ownerContext: {
+      ownerKind: "scene",
+      ownerId: "scene.source",
+      returnPolicy: "reenter-owner",
+      sessionToken: sourceEventId,
+    },
   };
 }
 
@@ -199,5 +221,258 @@ test(
     assert.equal(continued.state.scene.activeEventId, null);
     assert.equal(continued.state.scene.activeSceneId, null);
     assert.equal(continued.state.scene.status, "idle");
+  }
+);
+
+test(
+  "event-owned playable completion continues the source event through story continuation seam",
+  () => {
+    assert.equal(
+      typeof continueStoryFromSourceEvent,
+      "function",
+      "story runtime should expose event-owned playable continuation"
+    );
+
+    const content = {
+      eventDefinitionsById: {
+        "event.playable.source": createEvent(
+          "event.playable.source",
+          "scene.playable.source",
+          "event.playable.followup"
+        ),
+        "event.playable.followup": createEvent(
+          "event.playable.followup",
+          "scene.playable.followup"
+        ),
+      },
+      sceneDefinitionsById: {
+        "scene.playable.source": {
+          id: "scene.playable.source",
+          name: "Playable Source",
+          actions: [],
+        },
+        "scene.playable.followup": {
+          id: "scene.playable.followup",
+          name: "Playable Follow-up",
+          actions: [],
+        },
+      },
+    };
+
+    const result = applyEventOwnedPlayableCompletion({
+      state: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      previousPlayableSession: createEventOwnedPlayableSession(
+        "event.playable.source"
+      ),
+      settlement: { outcome: "success" },
+      continueFromSourceEvent: ({ sourceEventId, state, characterDefinitions }) =>
+        continueStoryFromSourceEvent(
+          {
+            state,
+            characterDefinitions,
+          },
+          content,
+          sourceEventId
+        ),
+    });
+
+    assert.equal(result.handled, true);
+    assert.equal(
+      result.state.runtime.eventHistory["event.playable.followup"]?.firedCount,
+      1
+    );
+    assert.equal(result.state.scene.activeEventId, null);
+    assert.equal(result.state.scene.activeSceneId, null);
+    assert.equal(result.state.scene.status, "idle");
+  }
+);
+
+test(
+  "event-owned playable completion applies a source event settlement continuation",
+  () => {
+    const characterDefinitions = prototypeCharacters.map((character) =>
+      character.id === "char.player"
+        ? {
+            ...character,
+            stamina: 100,
+          }
+        : character
+    );
+    const content = {
+      eventDefinitionsById: {
+        "event.playable.source": createEvent(
+          "event.playable.source",
+          "scene.playable.source",
+          "event.playable.settlement"
+        ),
+        "event.playable.settlement": {
+          ...createEvent(
+            "event.playable.settlement",
+            "scene.playable.settlement"
+          ),
+          type: "settlement",
+          settlementId: "settlement.playable.reward",
+        },
+      },
+      sceneDefinitionsById: {
+        "scene.playable.source": {
+          id: "scene.playable.source",
+          name: "Playable Source",
+          actions: [],
+        },
+        "scene.playable.settlement": {
+          id: "scene.playable.settlement",
+          name: "Playable Settlement",
+          actions: [],
+        },
+      },
+      settlementDefinitionsById: {
+        "settlement.playable.reward": {
+          id: "settlement.playable.reward",
+          title: "Playable Reward",
+          contents: [
+            {
+              targetFamily: "person",
+              targetId: "char.player",
+              attributeKey: "stamina",
+              attributeType: "number",
+              operation: "add",
+              value: 10,
+            },
+          ],
+        },
+      },
+    };
+
+    const result = applyEventOwnedPlayableCompletion({
+      state: createBaseState(),
+      characterDefinitions,
+      previousPlayableSession: createEventOwnedPlayableSession(
+        "event.playable.source"
+      ),
+      settlement: { outcome: "success" },
+      continueFromSourceEvent: ({ sourceEventId, state, characterDefinitions }) =>
+        continueStoryFromSourceEvent(
+          {
+            state,
+            characterDefinitions,
+          },
+          content,
+          sourceEventId
+        ),
+    });
+
+    const player = result.characterDefinitions.find(
+      (character) => character.id === "char.player"
+    );
+
+    assert.equal(result.handled, true);
+    assert.equal(player?.stamina, 110);
+    assert.equal(
+      result.state.runtime.eventHistory["event.playable.settlement"]
+        ?.firedCount,
+      1
+    );
+    assert.equal(result.state.scene.activeEventId, null);
+    assert.equal(result.state.scene.activeSceneId, null);
+    assert.equal(result.state.scene.status, "idle");
+  }
+);
+
+test(
+  "event-owned playable settlement continuation returns city and building changes",
+  () => {
+    const cityBefore = prototypeCities.find((city) => city.id === "city.kulan");
+    const houseBefore = prototypeHouses.find(
+      (house) => house.moduleId === "grain-shop"
+    );
+    assert.ok(cityBefore, "Expected prototype Kulan city to exist.");
+    assert.ok(houseBefore, "Expected prototype grain shop house to exist.");
+
+    const content = {
+      eventDefinitionsById: {
+        "event.playable.source": createEvent(
+          "event.playable.source",
+          "scene.playable.source",
+          "event.playable.settlement"
+        ),
+        "event.playable.settlement": {
+          ...createEvent(
+            "event.playable.settlement",
+            "scene.playable.settlement"
+          ),
+          type: "settlement",
+          settlementId: "settlement.playable.world-reward",
+        },
+      },
+      sceneDefinitionsById: {
+        "scene.playable.source": {
+          id: "scene.playable.source",
+          name: "Playable Source",
+          actions: [],
+        },
+        "scene.playable.settlement": {
+          id: "scene.playable.settlement",
+          name: "Playable Settlement",
+          actions: [],
+        },
+      },
+      settlementDefinitionsById: {
+        "settlement.playable.world-reward": {
+          id: "settlement.playable.world-reward",
+          title: "Playable World Reward",
+          contents: [
+            {
+              targetFamily: "city",
+              targetId: cityBefore.id,
+              attributeKey: "prosperity",
+              attributeType: "number",
+              operation: "add",
+              value: 5,
+            },
+            {
+              targetFamily: "building",
+              targetId: houseBefore.id,
+              attributeKey: "outputMultiplier",
+              attributeType: "number",
+              operation: "set",
+              value: 2,
+            },
+          ],
+        },
+      },
+    };
+
+    const result = applyEventOwnedPlayableCompletion({
+      state: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      previousPlayableSession: createEventOwnedPlayableSession(
+        "event.playable.source"
+      ),
+      settlement: { outcome: "success" },
+      continueFromSourceEvent: ({ sourceEventId, state, characterDefinitions }) =>
+        continueStoryFromSourceEvent(
+          {
+            state,
+            characterDefinitions,
+            cityDefinitions: prototypeCities,
+            houseDefinitions: prototypeHouses,
+          },
+          content,
+          sourceEventId
+        ),
+    });
+
+    const cityAfter = result.cityDefinitions?.find(
+      (city) => city.id === cityBefore.id
+    );
+    const houseAfter = result.houseDefinitions?.find(
+      (house) => house.id === houseBefore.id
+    );
+
+    assert.equal(result.handled, true);
+    assert.equal(cityAfter?.prosperity, cityBefore.prosperity + 5);
+    assert.equal(houseAfter?.outputMultiplier, 2);
   }
 );

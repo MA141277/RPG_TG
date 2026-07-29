@@ -1,4 +1,8 @@
 import type { CharacterDefinition } from "../../domain/character";
+import {
+  mergeCharacterStatusMaps,
+  type CharacterStatusById,
+} from "../../domain/character-status";
 import type { GameState } from "../../domain/game-state";
 import {
   getMedicineHouseFavorabilityVariableKey,
@@ -10,10 +14,12 @@ import {
   getPlayerPoisonVariableKey,
   type MedicineHouseActionOutcome,
 } from "../../domain/medicine-house";
+import { mutateCharacterNumericProperty } from "../character/runtime-property-mutation";
 
 export type MedicineHouseMutationResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 };
 
 function withVariable(
@@ -56,6 +62,7 @@ export function applyMedicineHouseOutcome(
 ): MedicineHouseMutationResult {
   let nextState = state;
   let nextCharacterDefinitions = characterDefinitions;
+  let characterStatusById: CharacterStatusById = {};
 
   if (outcome.moneyChange !== 0) {
     const goldMutation = mutatePlayerGold(
@@ -66,6 +73,10 @@ export function applyMedicineHouseOutcome(
     );
     nextState = goldMutation.state;
     nextCharacterDefinitions = goldMutation.characterDefinitions;
+    characterStatusById = mergeCharacterStatusMaps(
+      characterStatusById,
+      goldMutation.characterStatusById ?? {}
+    );
   }
 
   if (outcome.relationshipChange !== 0) {
@@ -99,6 +110,10 @@ export function applyMedicineHouseOutcome(
       );
       nextState = skillMutation.state;
       nextCharacterDefinitions = skillMutation.characterDefinitions;
+      characterStatusById = mergeCharacterStatusMaps(
+        characterStatusById,
+        skillMutation.characterStatusById ?? {}
+      );
     }
   }
 
@@ -125,6 +140,7 @@ export function applyMedicineHouseOutcome(
   return {
     state: nextState,
     characterDefinitions: nextCharacterDefinitions,
+    characterStatusById,
   };
 }
 
@@ -134,22 +150,14 @@ export function mutatePlayerGold(
   playerCharacterId: string,
   delta: number
 ): MedicineHouseMutationResult {
-  return {
+  return mutateCharacterNumericProperty({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId) {
-        return characterDefinition;
-      }
-
-      return {
-        ...characterDefinition,
-        stats: {
-          ...characterDefinition.stats,
-          gold: characterDefinition.stats.gold + delta,
-        },
-      };
-    }),
-  };
+    characterDefinitions,
+    characterId: playerCharacterId,
+    propertyId: "stats.gold",
+    operation: "add",
+    value: delta,
+  });
 }
 
 export function mutatePlayerCompoundingLevel(
@@ -158,25 +166,14 @@ export function mutatePlayerCompoundingLevel(
   playerCharacterId: string,
   delta: number
 ): MedicineHouseMutationResult {
-  return {
+  return mutateCharacterNumericProperty({
     state,
-    characterDefinitions: characterDefinitions.map((characterDefinition) => {
-      if (characterDefinition.id !== playerCharacterId || characterDefinition.skills == null) {
-        return characterDefinition;
-      }
-
-      return {
-        ...characterDefinition,
-        skills: {
-          ...characterDefinition.skills,
-          compounding: Math.max(
-            0,
-            (characterDefinition.skills.compounding ?? 0) + delta
-          ),
-        },
-      };
-    }),
-  };
+    characterDefinitions,
+    characterId: playerCharacterId,
+    propertyId: "skills.compounding",
+    operation: "add",
+    value: delta,
+  });
 }
 
 export function readMedicineInventoryQuantity(

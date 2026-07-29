@@ -19,6 +19,340 @@
 - 本次变更保持实现收敛在 `src/modules/script-editor/**` 内，不把菜单作者面逻辑泄漏到剧本编辑器模块外。
 - 后续若需要扩展更多挂载类型，应继续沿用 `mounts` 顶层扩展点和菜单模块内的功能绑定作者面，而不是回到人物 / 城市 / 建筑分栏内追加专用表结构。
 
+## 2026-07-29 Event-Owned Playable World Continuation Input Slice
+
+### Added
+- `applyEventOwnedPlayableCompletion()` input 现在可携带 `cityDefinitions` / `houseDefinitions`，并会把它们传入 source event continuation。
+- 扩展 `tests/event-owned-playable-completion.test.cjs`，覆盖 event-owned playable completion 调用链向 continuation 传递并返回世界定义集合。
+
+### Impact
+- 这片只迁移 event-owned playable completion 的 runtime input/result 透传，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续实际调用方可把 active content 的 city/house definitions 传入 completion 链路，从而接收上一片 story settlement world target 变更。
+
+## 2026-07-29 Story Settlement Continuation Helper Slice
+
+### Added
+- 新增 `application/story/story-settlement-continuation`，集中承接 story settlement event 的 person/city/building target 应用逻辑。
+- `story-runtime` 改为复用该 helper，避免后续 event/dialogue/playable continuation 路径复制 settlement 应用代码。
+- 新增 `tests/story-settlement-continuation.test.cjs`，覆盖 helper 对角色、城市、建筑三类目标的 settlement 应用。
+
+### Impact
+- 这片只抽取 application story runtime helper，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续迁 event/dialogue runtime completion 时可复用该 helper，而不是把 settlement 兼容逻辑散落到各调用方。
+
+## 2026-07-29 Story Settlement World Target Continuation Slice
+
+### Added
+- `continueStoryFromSourceEvent()` 的 runtime context 现在可携带并返回 `cityDefinitions` / `houseDefinitions`。
+- story settlement continuation 现在会把 `city` 与 `building` settlement contents 应用到传入的城市/建筑定义。
+- 扩展 `tests/event-continuation-runtime.test.cjs`，覆盖 event-owned playable completion 后续 settlement 修改城市繁荣度和建筑输出倍率。
+
+### Impact
+- 这片只迁移 story/event continuation 的 world target settlement 返回能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续上层调用方若提供 city/house definitions，即可接收 settlement 后的世界定义变更；未提供时保持原有角色-only 行为。
+
+## 2026-07-29 Event-Owned Playable Settlement Continuation Slice
+
+### Added
+- `continueStoryFromSourceEvent()` 现在会在后续 event 为 `type: "settlement"` 时应用对应 settlement contents，并把角色定义变更返回给调用方。
+- 扩展 `tests/event-continuation-runtime.test.cjs`，覆盖 event-owned playable completion 后续 settlement 给玩家角色加体力。
+
+### Impact
+- 这片只迁移 story/event continuation 的 settlement runtime 能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续可以继续补 settlement 后再接 `nextEventId`、city/building settlement target，或把这段 story settlement 应用逻辑收口到更通用的 runtime helper。
+
+## 2026-07-29 Event-Owned Playable Continuation Slice
+
+### Added
+- `story-runtime` 新增 `continueStoryFromSourceEvent()`，让 event-owned playable completion 可以从 source event 继续到 authored `nextEventId`。
+- 扩展 `tests/event-continuation-runtime.test.cjs`，覆盖 event-owned playable completion 通过共享 story continuation seam 推进后续事件。
+
+### Impact
+- 这片只迁移 application story/event continuation runtime seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续可以继续把 event-owned playable completion 的 settlement / follow-up 链路收敛到同一 source event continuation 路径。
+
+## 2026-07-29 Interactive Runtime FollowUp Forwarding Slice
+
+### Added
+- story-battle playable action 现在会在保留旧 `interactive` 结果的同时产出新的 `followUp` 字段。
+- `runPlayableRuntime()` 与 `runInteractiveRuntime()` 会向上转发 delegated playable 的 `followUp`，旧 `interactive` 字段继续保留作为兼容 fallback。
+- 扩展 `tests/interactive-runtime-status.test.cjs`，覆盖 story-battle completion 同时返回 `interactive` 与 `followUp`。
+
+### Impact
+- 这片只迁移 story-battle/playable/interactive runtime 的 follow-up 输出兼容，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 下一步可以继续把其它 runtime 分发结果逐步改为优先产出 `followUp`，并保持旧字段到入口完全迁完之前可用。
+
+## 2026-07-29 Runtime Dispatch FollowUp Handler Slice
+
+### Added
+- `dispatchRuntimeRequest()` 现在会优先处理 routed result 上的 `followUp` 并调用 `RuntimeFollowUpContext.handleFollowUp()`。
+- 新增回归覆盖：现代 `followUp` 被处理后不会再触发旧 `interactive` fallback；仅有旧 `interactive` 时仍按原路径处理。
+
+### Impact
+- 这片只迁移 core runtime-dispatch 的 follow-up handler 接线，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 下一步可以逐步让 interactive/story battle 等 runtime 输出同时填充 `followUp`，继续保留旧 `interactive` 字段作为兼容 fallback。
+
+## 2026-07-29 Runtime Router FollowUp Contract Slice
+
+### Added
+- `runtime-router` 新增 `RuntimeRouteResult`、`RuntimeFollowUpInput`、`RuntimeFollowUpResult` 与 `RuntimeFollowUpContext.handleFollowUp()` 命名入口。
+- 旧的 `handleInteractive()` / `handleOutcome()` 保持可用，`RuntimeRouter.route()` 仍返回兼容的 runtime result。
+- 新增 `tests/runtime-router-follow-up-contract.test.cjs`，锁定新命名入口和旧 handler 并存。
+
+### Impact
+- 这片只迁移 core runtime-router 类型命名兼容，不改 runtime 行为、UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 下一步可以在 `runtime-dispatch` 内部优先消费 `handleFollowUp()`，同时保留旧 handler 作为兼容 fallback。
+
+## 2026-07-29 Runtime FollowUp Contract Alias Slice
+
+### Added
+- 新增 `RuntimeFollowUp` 兼容别名，并让 `RuntimeResult.followUp` 使用该别名，为后续逐步对齐 mod-first-dev 的统一 follow-up 命名预留路径。
+- 新增 `tests/runtime-follow-up-contract.test.cjs`，锁定 `RuntimeFollowUp` 可用，同时保留当前 `interactive` 与 `outcome` 兼容字段。
+
+### Impact
+- 这片只迁移 core runtime result 类型命名兼容，不改 runtime 行为、UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续可以分批把 runtime-router / runtime-dispatch 的 follow-up 处理收敛到 `RuntimeFollowUp`，而不需要一次性删除当前基线仍可能依赖的旧字段。
+
+## 2026-07-29 Playable Result Contract Alias Slice
+
+### Added
+- `PlayableSettlement` 保持不变，同时新增 `PlayableResult` 兼容别名，为后续逐步对齐 mod-first-dev 的 playable result 命名预留迁移路径。
+- 新增 `tests/playable-result-contract.test.cjs`，锁定旧 settlement 合同仍存在且新 result 别名可用。
+
+### Impact
+- 这片只迁移 core playable runtime 类型命名兼容，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续可以逐步把内部新代码改读 `PlayableResult`，而不用一次性破坏当前依赖 `PlayableSettlement` 的调用方。
+
+## 2026-07-29 Flow Playable Presenter Model Slice
+
+### Added
+- 新增 `presentFlowPlayable()`，把 flow playable 当前节点投影为数据化 `PlayablePresenterModel`，支持 text 节点 confirm action、choice 节点 custom actions，以及缺失节点 fail-closed 输出。
+- `PlayablePresenterModel` 增加可选 `viewModel` 字段，用于承载 presenter 层结构化数据。
+- 新增 `tests/flow-playable-presenter.test.cjs`，覆盖 text、choice、缺失 session 节点三类输出。
+
+### Impact
+- 这片只迁移 application/playable presenter 数据模型，不渲染 HTML，不接入 UI，不改 UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续若要在 runtime preview 或事件 playable 中显示 flow，可复用这个 presenter 数据模型，而不是在 UI 层直接解释 flow definition。
+
+## 2026-07-29 Flow Playable Runtime Dispatch Slice
+
+### Added
+- `runPlayableRuntime()` 现在可在调用方显式传入 `flowPlayablesById` 时启动、推进、退出 flow playable，并在完成时返回结构化 playable settlement。
+- 新增 `tests/flow-playable-runtime-dispatch.test.cjs`，覆盖 flow playable launch、confirm、select completion、settlement 与 exit。
+
+### Impact
+- 这片只迁移 core playable runtime 的 flow 分发接线，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 当前没有把 flow playable 接到任何可见 UI；后续接入剧本编辑器 runtime preview 或事件 playable 时，可继续沿用这条集中 runtime 分发路径。
+
+## 2026-07-29 Flow Playable Runtime Kernel Slice
+
+### Added
+- 新增 `launchFlowPlayable()` / `reduceFlowPlayable()`，提供 flow playable 的纯运行时启动与节点推进内核，支持 text confirm、choice select、complete 与 cancel lifecycle。
+- `ActivePlayableSession` 增加可选 `state`，并新增 `PlayableCommand` 合同，用于承载 flow playable 当前节点与命令输入。
+- 新增 `tests/flow-playable-runtime.test.cjs`，覆盖 flow playable 启动、节点推进、无效选择保持、完成与取消。
+
+### Impact
+- 这片只迁移 application/playable runtime 内核骨架，不接入 `runPlayableRuntime()`，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续若要把剧本编辑器生成的 flow 接入 runtime，可在此内核之上继续做分发接线，而不是把 flow 状态机散落到 UI 或入口。
+
+## 2026-07-29 Interactive Runtime Status Patch Forwarding Slice
+
+### Added
+- `runInteractiveRuntime()` 现在会把 delegated playable runtime 返回的 `characterStatusById` 原样透传给上层 runtime dispatch / commit 链路。
+- 新增 `tests/interactive-runtime-status.test.cjs`，覆盖 interactive runtime 包装 city-begging completion 时保留角色 status patch。
+
+### Impact
+- 这片只迁移 core interactive runtime 的结果透传能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续经 interactive runtime 调用的 playable completion 也能被统一 state-sync commit 写回角色状态。
+
+## 2026-07-29 Medicine Compounding Runtime Status Patch Slice
+
+### Added
+- medicine-compounding completion 现在会把调药技能与体力变化生成为 `characterStatusById`，并通过 `playable-runtime` 返回给统一 runtime commit 链路。
+- 新增 `tests/medicine-compounding-runtime-status.test.cjs`，覆盖 medicine-compounding 结算后返回角色 status patch。
+
+### Changed
+- medicine house 金币与调药技能 mutation 改为复用 `mutateCharacterNumericProperty()`，并在 outcome helper / playable settle 中合并角色 status patch。
+
+### Impact
+- 这片只迁移 medicine-compounding application/playable runtime 结算链路，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 medicine-compounding completion 可通过统一 state-sync commit 写回角色状态，避免调用方只依赖直接替换后的 characterDefinitions。
+
+## 2026-07-29 Grain Accounting Runtime Status Patch Slice
+
+### Added
+- grain-accounting completion 现在会把金币、算术技能与体力变化生成为 `characterStatusById`，并通过 `playable-runtime` 返回给统一 runtime commit 链路。
+- 新增 `tests/grain-accounting-runtime-status.test.cjs`，覆盖 grain-accounting 结算后返回角色 status patch。
+
+### Changed
+- grain shop 奖励 mutation 改为复用 `mutateCharacterNumericProperty()` 生成 `stats.gold` 与 `skills.accounting` patch，并在奖励 helper 内合并体力 patch。
+
+### Impact
+- 这片只迁移 grain-accounting application/playable runtime 结算链路，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 grain-accounting completion 可通过统一 state-sync commit 写回角色状态，避免调用方只依赖直接替换后的 characterDefinitions。
+
+## 2026-07-29 City Begging Runtime Status Patch Slice
+
+### Added
+- city-begging completion 现在会把金币与体力变化生成为 `characterStatusById`，并通过 `playable-runtime` 返回给统一 runtime commit 链路。
+- 新增 `tests/city-begging-runtime-status.test.cjs`，覆盖 city-begging 完成后返回角色 status patch。
+
+### Changed
+- 玩家体力 mutation helper 现在可返回体力 status patch；city-begging 金币结算改为复用 `mutateCharacterNumericProperty()` 生成 `stats.gold` patch。
+
+### Impact
+- 这片只迁移 application/playable runtime 结算链路，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 city-begging completion 可通过前面迁入的 `commitRuntimeRequest()` / `stateSyncCoreSeam` 把角色状态补丁统一写回 app state。
+
+## 2026-07-29 Scenario Pack Playable Contribution Slice
+
+### Added
+- `createLoadedModFromScenarioPack()` 现在会把场景包内声明的 `playables` 与 `playableIntegrations` 投影为 manifest `gameplayContributions`。
+- 扩展 `tests/mod-runtime-contribution.test.cjs`，覆盖 scenario pack 激活后可暴露 playable runtime 贡献。
+
+### Impact
+- 这片只迁移 core/mod runtime 的贡献声明能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续场景包激活后，上一片默认 playable registry seam 可以读取到由场景包贡献的 playable 与 integration。
+
+## 2026-07-29 Playable Runtime Default Registry Slice
+
+### Added
+- `playable-runtime` 的 launch/action 解析现在读取可配置的默认 playable runtime registries，而不是直接固定到 builtin registry。
+- 扩展 `tests/playable-runtime-registries.test.cjs`，覆盖 activated mod 配置默认 registry 后，`resolvePlayableLaunchRequest()` 可解析 contributed playable。
+
+### Impact
+- 这片只迁移 core playable runtime registry seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 mod 激活后注入的 playable/playableIntegration 可通过默认 runtime registry 被 playable runtime 解析。
+
+## 2026-07-29 Runtime Result Settlement Contract Slice
+
+### Added
+- 新增 `RuntimeSettlementResult` 合同，显式声明 runtime result settlement 至少包含 `effects: Effect[]`。
+- 新增 `tests/runtime-result-contract.test.cjs`，锁定 `RuntimeResult.settlement` 不再使用 `unknown`。
+
+### Changed
+- `RuntimeResult.settlement` 从 `unknown` 收紧为 `RuntimeSettlementResult | null`。
+- `state-sync-runtime` 的 settlement effects 读取改为依赖明确合同，不再对 `unknown` 做 ad hoc cast。
+
+### Impact
+- 这片只收紧 core runtime result 合同，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 playable/event runtime 返回 settlement 时，应保持 `effects` 明确可结算。
+
+## 2026-07-29 State Sync Runtime Settlement Effects Slice
+
+### Added
+- `commitRuntimeRequest()` 现在会在 app state 写回前结算 runtime result `settlement.effects`，统一通过 `settleRuntimeEffects()` 应用 effect。
+- 扩展 `tests/state-sync-runtime-commit.test.cjs`，覆盖 playable settlement effects 在 commit 阶段写入 `GameState.runtime.flags`。
+
+### Impact
+- 这片只迁移 state-sync runtime commit 的 settlement effects 串联能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 playable/event runtime 若返回 settlement effects，可依赖 commit helper 统一结算，避免调用方自行处理 effects。
+
+## 2026-07-29 State Sync Runtime Commit Patch Slice
+
+### Added
+- `commitRuntimeRequest()` 现在会把 runtime result 中的 `characterStatusById`、`cityStatusById`、`buildingStatusById` 传给统一 `stateSyncCoreSeam` 回写。
+- 新增 `tests/state-sync-runtime-commit.test.cjs`，覆盖 dispatch/commit 后 status patch 与 app state 既有 status 的合并。
+
+### Changed
+- `state-sync-runtime` 的 bridge 创建与应用逻辑复用 `stateSyncCoreSeam`，避免在 commit helper 内分散维护一套状态回写逻辑。
+
+### Impact
+- 这片只迁移 state-sync runtime commit 串联能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 runtime dispatch 产出的角色/城市/建筑状态补丁可通过 `commitRuntimeRequest()` 自动合并回 app state。
+
+## 2026-07-29 Navigation Runtime Access Slice
+
+### Added
+- `runNavigationRuntime()` / `routeNavigationRuntime()` 新增可选 location access 输入，支持 city/building enter 前通过 `evaluateLocationAccess()` 返回结构化 access refusal。
+- 新增 `tests/navigation-runtime-access.test.cjs`，覆盖未提供规则时保持原 enter-city 行为，以及 city/building 被规则拒绝时不切换状态。
+
+### Impact
+- 这片只迁移 navigation runtime 的访问判定 seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 为避免覆盖当前分支行为，本片没有引入 mod-first-dev 中“缺少建筑编排即禁止进入”的行为；只有调用方显式传入 location access 数据时才会触发访问判定。
+
+## 2026-07-29 State Sync Runtime Status Patch Slice
+
+### Added
+- `stateSyncCoreSeam.applyRuntimeStateToAppState()` 新增角色、城市、建筑 status patch 参数，并通过已有 `merge*StatusMaps` 合并回 app state。
+- 扩展 `tests/state-sync-core-seam.test.cjs`，覆盖已有 status 与运行时 patch 的合并行为。
+
+### Impact
+- 这片只扩展 core state-sync seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 runtime dispatch 返回 `characterStatusById` / `cityStatusById` / `buildingStatusById` 时，可通过统一 state sync seam 回写，不需要调用方手写状态表合并。
+
+## 2026-07-29 Runtime Dispatch Settlement Carry Slice
+
+### Added
+- `dispatchRuntimeRequest()` 现在会把 routed result 上的 `characterDefinitions` / `characterStatusById` 传入 `runtime-settlement`，并把结算后的角色定义/status 带回结果。
+- `dispatchRuntimeRequest()` 支持合同中已有的 `taskInputs` 聚合字段，同时继续兼容旧的 `taskActions` / `taskSignals` 分离字段。
+- 新增 `tests/runtime-dispatch-settlement.test.cjs`，覆盖 dispatch 结算角色数值 mutation 与 `taskInputs` 任务结算。
+
+### Changed
+- `RuntimeResult` 的 runtime status 字段从 `unknown` 收紧为已有 domain status 类型，`settlementInstances` 收紧为 `ProgressionSettlementInstance[]`。
+- `RuntimeOutcomeFollowUpResult.characterDefinitions` 收紧为 `CharacterDefinition[]`，便于 follow-up 与 settlement result 类型一致。
+
+### Impact
+- 这片只迁移 core runtime dispatch/contract 串联能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 runtime router 输出角色状态或任务输入时，应通过 `dispatchRuntimeRequest()` 统一结算，不在调用方手动应用角色补丁或拆分任务 action/signal。
+
+## 2026-07-29 Runtime Settlement Effect Slice
+
+### Added
+- `settleRuntimeEffects()` 现在可集中承接 progression runtime 产生的 settlement instances，并把 settlement content 应用回传入的角色定义投影。
+- effect settlement contract 增加 `progression-runtime` emitter、settlement instance/definition 输入，以及 `characterDefinitions` / `characterStatusById` 输出。
+- `settleRuntimeEffects()` 支持 `mutateCharacterNumericProperty` effect，通过既有 runtime property mutation helper 写入角色 status patch。
+- 扩展 `tests/runtime-settlement-content.test.cjs`，覆盖 progression settlement 应用、角色数值 mutation，以及缺少角色定义时的 unsupported 诊断。
+
+### Impact
+- 这片只迁移结算运行时能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 progression/event/dialogue 产生角色数值变更时，应优先交给 `runtime-settlement` 统一结算，避免在调用方分散写兼容分支。
+
+## 2026-07-29 Event-Owned Playable Start Runtime Slice
+
+### Added
+- 新增 `runEventPlayableRuntime()`，让事件定义中的 `launchPlayable` action 通过 playable runtime 启动小游戏/战斗，并写入 source event `sessionToken`。
+- scene runner 现在会在 active event 声明 `launchPlayable` 时优先交给 event playable runtime；普通 scene 事件仍走原 scene runner。
+- playable integration registry 增加 dialogue owner 默认接入：`playable.activity-qte.dialogue.default` 与 `playable.story-battle.dialogue.default`，同时保留旧 scene integration。
+- 新增 `tests/event-playable-start-runtime.test.cjs`，覆盖事件拥有 playable action 的启动路径。
+
+### Changed
+- playable runtime 的 owner normalization 现在接受已在类型契约中声明的 `ownerKind: "dialogue"`。
+
+### Impact
+- 这片只迁移事件/可玩运行时闭环，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续事件绑定到 playable/minigame 时应优先通过 event action + playable runtime，而不是在 UI 或 house 调用方补特殊启动分支。
+
+## 2026-07-29 Event Binding Start Runtime Slice
+
+### Added
+- 新增完整 `runEventBindingRuntime()`，在匹配 event binding 后通过共享 event activation/start seam 启动事件。
+- 新增 state-only runtime action 处理，当前支持 `closeBuilding`，可关闭 building/house 上下文并回到 city，而不强制打开 scene。
+- 新增 `tests/event-binding-start-runtime.test.cjs`，覆盖 binding 启动事件与 state-only action。
+
+### Changed
+- building container item action 现在复用完整 event binding runtime，不再在调用方手动 `startEvent()`。
+- `event-binding-contract` 继续保留旧 `runModFirstEventBindingRuntime()` shell，同时导出完整 `runEventBindingRuntime()` 作为后续迁移入口。
+
+### Impact
+- 这片只迁移运行时启动/状态动作 seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续新增 event binding action 时应集中扩展 event binding runtime，而不是在 building、house 或 UI 调用方分散处理。
+
+## 2026-07-29 Dialogue Runtime Compatibility Slice
+
+### Added
+- 新增 `DialogueRuntime` 合同与运行时入口，让 runtime 可以消费 `RuntimeDialogueDefinition`，同时暂时复用当前 `GameState.scene` carrier 和 scene runner。
+- 在 `mod-first-compatibility` 中集中新增 dialogue-to-scene 转换 helper，统一处理 `nodes -> actions`、`nextDialogueId -> nextSceneId` 的兼容映射。
+- 新增 `tests/dialogue-runtime-compatibility.test.cjs`，覆盖 dialogues-only scenario pack、active content 兼容 scene 生成、dialogue runtime 暂停点。
+
+### Changed
+- content pack 与 scenario pack loader 现在识别 `dialogues` 文件；scenario pack 可只提供 `dialogues` 而不强制要求旧 `scenes`。
+- active content 会保留 `dialogueDefinitionsById`，并在缺少同 id scene 时生成当前运行时可消费的兼容 scene。
+
+### Impact
+- 这片只迁移运行时/内容装配兼容层，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续若正式从 `scene` carrier 切换到 `dialogue` carrier，应继续在集中兼容模块收口转换逻辑，不把 dialogue/scene 兼容分支散落到 UI 或主入口。
+
 ## 2026-07-29 Mod-First Runtime Status Mutation Slice
 
 ### Added

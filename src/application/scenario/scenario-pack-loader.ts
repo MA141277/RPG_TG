@@ -98,7 +98,15 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     assertArray(value.cityEntries, "scenario city entries");
   }
   assertArray(value.events, "scenario events");
-  assertArray(value.scenes, "scenario scenes");
+  if (value.scenes == null && value.dialogues == null) {
+    throw new Error("scenario pack must include scenes or dialogues.");
+  }
+  if (value.scenes != null) {
+    assertArray(value.scenes, "scenario scenes");
+  }
+  if (value.dialogues != null) {
+    assertArray(value.dialogues, "scenario dialogues");
+  }
   if (value.tasks != null) {
     assertArray(value.tasks, "scenario tasks");
   }
@@ -144,7 +152,8 @@ type ScenarioPackManifestFiles = {
   scenarioProfile: string;
   characters: string;
   events: string;
-  scenes: string;
+  scenes?: string;
+  dialogues?: string;
   tasks?: string;
   cities?: string;
   houses?: string;
@@ -518,7 +527,7 @@ function isScenarioPackManifest(value: unknown): value is ScenarioPackManifest {
     typeof files.scenarioProfile === "string" &&
     typeof files.characters === "string" &&
     typeof files.events === "string" &&
-    typeof files.scenes === "string"
+    (typeof files.scenes === "string" || typeof files.dialogues === "string")
   );
 }
 

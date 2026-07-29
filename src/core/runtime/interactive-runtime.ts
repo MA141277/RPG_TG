@@ -88,6 +88,9 @@ export function runInteractiveRuntime(input: {
       ...(playableResult.characterDefinitions == null
         ? {}
         : { characterDefinitions: playableResult.characterDefinitions }),
+      ...(playableResult.characterStatusById == null
+        ? {}
+        : { characterStatusById: playableResult.characterStatusById }),
       effects: playableResult.effects,
       session:
         playableResult.session == null
@@ -96,6 +99,10 @@ export function runInteractiveRuntime(input: {
             ? createInteractiveSession(request)
             : getActiveInteractiveSession(playableResult.state, request.kind),
       interactive: playableResult.interactive ?? { type: "none" },
+      followUp:
+        playableResult.followUp ??
+        playableResult.interactive ??
+        { type: "none" },
     };
   }
 
