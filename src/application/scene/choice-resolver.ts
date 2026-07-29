@@ -3,7 +3,7 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import { applyEffects } from "../effects/effect-applier";
-import { startEvent } from "../events/event-runner";
+import { continueToEvent } from "../events/event-continuation";
 
 export type ChoiceResolutionContext = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
@@ -36,7 +36,18 @@ export function resolveChoiceOption(
   if (selectedOption.nextEventId != null) {
     const targetEvent = context.eventDefinitionsById[selectedOption.nextEventId];
     if (targetEvent != null) {
-      nextState = startEvent(nextState, targetEvent);
+      const continuation = continueToEvent({
+        state: nextState,
+        eventDefinitionsById: context.eventDefinitionsById,
+        sourceEventId: nextState.scene.activeEventId,
+        targetEventId: targetEvent.id,
+        visitedEventIds:
+          nextState.scene.activeEventId == null
+            ? []
+            : [nextState.scene.activeEventId],
+      });
+      nextState =
+        continuation == null ? finishChoiceScene(nextState) : continuation.state;
     }
   } else if (selectedOption.nextSceneId != null) {
     nextState = {
@@ -62,5 +73,22 @@ export function resolveChoiceOption(
   return {
     state: nextState,
     characterDefinitions: nextCharacterDefinitions,
+  };
+}
+
+function finishChoiceScene(state: GameState): GameState {
+  return {
+    ...state,
+    scene: {
+      ...state.scene,
+      activeEventId: null,
+      activeSceneId: null,
+      cursor: 0,
+      status: "idle",
+    },
+    ui: {
+      ...state.ui,
+      currentView: state.world.currentHouseId == null ? "city" : "house",
+    },
   };
 }
