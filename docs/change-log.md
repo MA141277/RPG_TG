@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Runtime Settlement Effect Slice
+
+### Added
+- `settleRuntimeEffects()` 现在可集中承接 progression runtime 产生的 settlement instances，并把 settlement content 应用回传入的角色定义投影。
+- effect settlement contract 增加 `progression-runtime` emitter、settlement instance/definition 输入，以及 `characterDefinitions` / `characterStatusById` 输出。
+- `settleRuntimeEffects()` 支持 `mutateCharacterNumericProperty` effect，通过既有 runtime property mutation helper 写入角色 status patch。
+- 扩展 `tests/runtime-settlement-content.test.cjs`，覆盖 progression settlement 应用、角色数值 mutation，以及缺少角色定义时的 unsupported 诊断。
+
+### Impact
+- 这片只迁移结算运行时能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 progression/event/dialogue 产生角色数值变更时，应优先交给 `runtime-settlement` 统一结算，避免在调用方分散写兼容分支。
+
 ## 2026-07-29 Event-Owned Playable Start Runtime Slice
 
 ### Added

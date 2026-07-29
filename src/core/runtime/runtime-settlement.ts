@@ -3,9 +3,11 @@ import type {
   EffectSettlementInput,
   EffectSettlementResult,
 } from "../contracts/effect-settlement";
+import type { ProgressionSettlementInstance } from "../contracts/progression-runtime";
 import type { RuntimeState } from "../contracts/runtime-state";
-import type { ModFirstProgressionSettlementInstance } from "./mod-first-compatibility";
+import type { CharacterDefinition } from "../../domain/character";
 import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
+import { mutateCharacterNumericProperty } from "../../application/character/runtime-property-mutation";
 import { advanceGameStateTimeSegments } from "../../application/time/time-progression";
 
 export type ExportedSettlementContent = {
@@ -77,7 +79,7 @@ export function applySettlementInstances<
 >(
   gameState: TState,
   input: {
-    settlementInstances: readonly ModFirstProgressionSettlementInstance[];
+    settlementInstances: readonly ProgressionSettlementInstance[];
     settlementDefinitionsById?: Record<string, ExportedSettlement | undefined>;
     context?: SettlementRuntimeContext;
   }
@@ -287,9 +289,50 @@ export function settleRuntimeEffects(
   input: EffectSettlementInput
 ): EffectSettlementResult {
   let nextState = input.state;
+  let nextCharacterDefinitions = input.characterDefinitions;
+  let nextCharacterStatusById = input.characterStatusById;
   const settledEffects: Effect[] = [];
   const unsupportedEffects: Effect[] = [];
   const warnings: string[] = [];
+
+  const settlementInstances = input.settlementInstances ?? [];
+  if (settlementInstances.length > 0) {
+    if (nextCharacterDefinitions == null) {
+      warnings.push(
+        `unsupported-progression-settlement:missing-character-definitions:emitted-by:${input.emittedBy}`
+      );
+    } else if (input.settlementDefinitionsById == null) {
+      warnings.push(
+        `unsupported-progression-settlement:missing-settlement-definitions:emitted-by:${input.emittedBy}`
+      );
+    } else {
+      const peopleById = Object.fromEntries(
+        nextCharacterDefinitions.map((character) => [
+          character.id,
+          character as unknown as Record<string, unknown>,
+        ])
+      );
+      const appliedProgressionSettlements = applySettlementInstances(
+        {
+          people: peopleById,
+        },
+        {
+          settlementInstances,
+          settlementDefinitionsById: input.settlementDefinitionsById,
+          context: {
+            people: peopleById,
+          },
+        }
+      );
+      nextCharacterDefinitions = nextCharacterDefinitions.map(
+        (character) =>
+          (appliedProgressionSettlements.state.people?.[character.id] as
+            | CharacterDefinition
+            | undefined) ?? character
+      );
+      warnings.push(...appliedProgressionSettlements.warnings);
+    }
+  }
 
   for (const effect of input.effects) {
     if (effect.type === "setFlag") {
@@ -341,6 +384,45 @@ export function settleRuntimeEffects(
       continue;
     }
 
+    if (effect.type === "mutateCharacterNumericProperty") {
+      if (nextCharacterDefinitions == null) {
+        unsupportedEffects.push(effect);
+        warnings.push(
+          `unsupported-effect:${effect.type}:missing-character-definitions:emitted-by:${input.emittedBy}`
+        );
+        continue;
+      }
+
+      try {
+        const mutation = mutateCharacterNumericProperty({
+          state: nextState.core,
+          characterDefinitions: nextCharacterDefinitions,
+          characterId: effect.characterId,
+          propertyId: effect.propertyId,
+          operation: effect.operation,
+          value: effect.value,
+          ...(nextCharacterStatusById == null
+            ? {}
+            : { characterStatusById: nextCharacterStatusById }),
+        });
+        nextState = {
+          ...nextState,
+          core: mutation.state,
+        };
+        nextCharacterDefinitions = mutation.characterDefinitions;
+        nextCharacterStatusById = mutation.characterStatusById;
+        settledEffects.push(effect);
+      } catch (error) {
+        unsupportedEffects.push(effect);
+        warnings.push(
+          `unsupported-effect:${effect.type}:${
+            error instanceof Error ? error.message : "unknown-error"
+          }:emitted-by:${input.emittedBy}`
+        );
+      }
+      continue;
+    }
+
     unsupportedEffects.push(effect);
     warnings.push(
       `unsupported-effect:${effect.type}:emitted-by:${input.emittedBy}`
@@ -349,6 +431,12 @@ export function settleRuntimeEffects(
 
   return {
     state: nextState,
+    ...(nextCharacterDefinitions == null
+      ? {}
+      : { characterDefinitions: nextCharacterDefinitions }),
+    ...(nextCharacterStatusById == null
+      ? {}
+      : { characterStatusById: nextCharacterStatusById }),
     settledEffects,
     unsupportedEffects,
     warnings,
