@@ -1,4 +1,14 @@
 import type {
+  ActionNode,
+  ChoiceOption,
+  SceneDefinition,
+} from "../../domain/action";
+import type {
+  RuntimeDialogueChoiceOption,
+  RuntimeDialogueDefinition,
+  RuntimeDialogueNode,
+} from "../../domain/dialogue";
+import type {
   EventDefinition,
   EventId,
   EventParticipant,
@@ -14,6 +24,59 @@ import { matchesCanonicalBuildingOwnerId } from "./building-owner-canonicalizati
 export type ModFirstRuntimeTaskInput =
   | RuntimeTaskAction
   | RuntimeTaskSignal;
+
+export function createCompatibleSceneDefinitions(input: {
+  sceneDefinitions?: readonly SceneDefinition[];
+  dialogueDefinitions?: readonly RuntimeDialogueDefinition[];
+}): SceneDefinition[] {
+  const sceneDefinitions = [...(input.sceneDefinitions ?? [])];
+  const sceneIds = new Set(sceneDefinitions.map((scene) => scene.id));
+  const convertedDialogueScenes = (input.dialogueDefinitions ?? [])
+    .filter((dialogue) => !sceneIds.has(dialogue.id))
+    .map(toCompatibleSceneDefinitionFromRuntimeDialogue);
+
+  return [...sceneDefinitions, ...convertedDialogueScenes];
+}
+
+export function toCompatibleSceneDefinitionFromRuntimeDialogue(
+  dialogue: RuntimeDialogueDefinition
+): SceneDefinition {
+  return {
+    id: dialogue.id,
+    name: dialogue.name,
+    actions: dialogue.nodes.map(toCompatibleActionNodeFromRuntimeDialogueNode),
+  };
+}
+
+function toCompatibleActionNodeFromRuntimeDialogueNode(
+  node: RuntimeDialogueNode
+): ActionNode {
+  if (node.type === "choice") {
+    return {
+      ...node,
+      options: node.options.map(toCompatibleChoiceOption),
+    };
+  }
+
+  if (node.type === "jump") {
+    return {
+      type: "jump",
+      nextSceneId: node.nextDialogueId,
+    };
+  }
+
+  return node;
+}
+
+function toCompatibleChoiceOption(
+  option: RuntimeDialogueChoiceOption
+): ChoiceOption {
+  const { nextDialogueId, ...rest } = option;
+  return {
+    ...rest,
+    ...(nextDialogueId == null ? {} : { nextSceneId: nextDialogueId }),
+  };
+}
 
 export type ModFirstEventBindingOwner = {
   family: string;

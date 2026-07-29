@@ -2,6 +2,21 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Dialogue Runtime Compatibility Slice
+
+### Added
+- 新增 `DialogueRuntime` 合同与运行时入口，让 runtime 可以消费 `RuntimeDialogueDefinition`，同时暂时复用当前 `GameState.scene` carrier 和 scene runner。
+- 在 `mod-first-compatibility` 中集中新增 dialogue-to-scene 转换 helper，统一处理 `nodes -> actions`、`nextDialogueId -> nextSceneId` 的兼容映射。
+- 新增 `tests/dialogue-runtime-compatibility.test.cjs`，覆盖 dialogues-only scenario pack、active content 兼容 scene 生成、dialogue runtime 暂停点。
+
+### Changed
+- content pack 与 scenario pack loader 现在识别 `dialogues` 文件；scenario pack 可只提供 `dialogues` 而不强制要求旧 `scenes`。
+- active content 会保留 `dialogueDefinitionsById`，并在缺少同 id scene 时生成当前运行时可消费的兼容 scene。
+
+### Impact
+- 这片只迁移运行时/内容装配兼容层，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续若正式从 `scene` carrier 切换到 `dialogue` carrier，应继续在集中兼容模块收口转换逻辑，不把 dialogue/scene 兼容分支散落到 UI 或主入口。
+
 ## 2026-07-29 Mod-First Runtime Status Mutation Slice
 
 ### Added

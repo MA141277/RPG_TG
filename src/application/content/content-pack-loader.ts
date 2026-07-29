@@ -10,6 +10,7 @@ const CONTENT_PACK_FILE_KEYS = [
   "characters",
   "events",
   "scenes",
+  "dialogues",
   "tasks",
   "textEntries",
   "activities",
