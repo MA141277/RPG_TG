@@ -7,6 +7,7 @@ import {
   type CoordinateSpace,
   type GridCoordinate,
   type HexCoordinate,
+  type HexCoordinateSystem,
 } from "./travel-to-coordinate";
 
 export type CampaignMapFogViewState = {
@@ -76,6 +77,7 @@ export function revealCampaignMapAroundCoordinate(input: {
   mapId: MapId;
   coordinate: GridCoordinate;
   coordinateSpace: CoordinateSpace;
+  coordinateSystem?: HexCoordinateSystem;
   revealedAtMs?: number;
   animateNewHexes?: boolean;
 }): GameState {
@@ -90,7 +92,8 @@ export function revealCampaignMapAroundCoordinate(input: {
   );
   const centerHex = coordinateToRoundedHex(
     input.coordinate,
-    input.coordinateSpace
+    input.coordinateSpace,
+    input.coordinateSystem
   );
   let changed = false;
 
@@ -133,12 +136,17 @@ export function isCampaignMapCoordinateRevealed(input: {
   mapId: MapId;
   coordinate: GridCoordinate;
   coordinateSpace: CoordinateSpace;
+  coordinateSystem?: HexCoordinateSystem;
 }): boolean {
   const explorationState = input.state.runtime.mapExplorationByMapId?.[input.mapId];
   if (explorationState == null) {
     return false;
   }
 
-  const hex = coordinateToRoundedHex(input.coordinate, input.coordinateSpace);
+  const hex = coordinateToRoundedHex(
+    input.coordinate,
+    input.coordinateSpace,
+    input.coordinateSystem
+  );
   return new Set(explorationState.revealedHexKeys).has(getHexKey(hex));
 }

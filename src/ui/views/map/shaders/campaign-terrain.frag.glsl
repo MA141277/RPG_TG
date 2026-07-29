@@ -20,6 +20,7 @@ uniform float uGrassAmbientLight;
 uniform float uGrassTextureDetail;
 uniform float uHexMapAspect;
 uniform float uHexTerrainScale;
+uniform vec4 uHexPointBounds;
 uniform float uTerrainGridLandOpacity;
 uniform float uTerrainGridWaterOpacity;
 uniform float uTerrainDirectionalLightStrength;
@@ -187,24 +188,22 @@ float getMaterialSemanticStructureGroundAtCell(vec2 cell) {
 }
 
 float getSemanticLandAmountAtCell(vec2 cell, float hexScale, float mapAspect) {
-  return getMaterialSemanticLandAtCell(cell) *
-    getMapUvInsideAmount(getHexCellUv(cell, hexScale, mapAspect));
+  return getMaterialSemanticLandAtCell(cell);
 }
 
 float getSemanticWaterAmountAtCell(vec2 cell, float hexScale, float mapAspect) {
   float semanticInside = getMaterialSemanticInsideAmount(cell);
   float semanticLand = getMaterialSemanticLandAtCell(cell);
   float semanticWater = mix(1.0, 1.0 - semanticLand, semanticInside);
-  float mapInside = getMapUvInsideAmount(getHexCellUv(cell, hexScale, mapAspect));
 
-  return mix(1.0, semanticWater, mapInside);
+  return semanticWater;
 }
 
 float getSemanticWaterAmountAtUv(vec2 uv) {
   vec2 point = vec2(
-    (uv.x - 0.5) * uHexMapAspect,
-    uv.y - 0.5
-  ) * uHexTerrainScale;
+    mix(uHexPointBounds.x, uHexPointBounds.y, uv.x),
+    mix(uHexPointBounds.z, uHexPointBounds.w, uv.y)
+  );
   vec2 cell = pixelToRoundedHex(point);
 
   return getSemanticWaterAmountAtCell(cell, uHexTerrainScale, uHexMapAspect);
@@ -212,12 +211,22 @@ float getSemanticWaterAmountAtUv(vec2 uv) {
 
 float getSemanticLandAmountAtUv(vec2 uv) {
   vec2 point = vec2(
-    (uv.x - 0.5) * uHexMapAspect,
-    uv.y - 0.5
-  ) * uHexTerrainScale;
+    mix(uHexPointBounds.x, uHexPointBounds.y, uv.x),
+    mix(uHexPointBounds.z, uHexPointBounds.w, uv.y)
+  );
   vec2 cell = pixelToRoundedHex(point);
 
   return getSemanticLandAmountAtCell(cell, uHexTerrainScale, uHexMapAspect);
+}
+
+vec2 getHexPointBoundsSize() {
+  return max(
+    vec2(
+      uHexPointBounds.y - uHexPointBounds.x,
+      uHexPointBounds.w - uHexPointBounds.z
+    ),
+    vec2(0.0001)
+  );
 }
 
 vec2 getTerrainUvOffset(
@@ -228,10 +237,7 @@ vec2 getTerrainUvOffset(
 ) {
   vec2 unitDirection = normalize(direction);
 
-  return vec2(
-    unitDirection.x * hexRadius / (hexScale * mapAspect),
-    unitDirection.y * hexRadius / hexScale
-  );
+  return unitDirection * hexRadius / getHexPointBoundsSize();
 }
 
 float sampleLandAtDiskOffset(
@@ -241,10 +247,7 @@ float sampleLandAtDiskOffset(
   float hexScale,
   float mapAspect
 ) {
-  return getRawMaterialLandAmountAtUv(uv + vec2(
-    diskOffset.x * radius / (hexScale * mapAspect),
-    diskOffset.y * radius / hexScale
-  ));
+  return getSemanticLandAmountAtUv(uv + diskOffset * radius / getHexPointBoundsSize());
 }
 
 float sampleSoftLandDisk(
@@ -344,16 +347,11 @@ float decodeShorelineDistance(vec2 encodedBytes) {
 }
 
 vec2 getMapInteriorAndShorelineValid(vec2 uv, float valid) {
-  float mapInterior =
-    smoothstep(0.0, 0.018, uv.x) *
-    smoothstep(0.0, 0.018, uv.y) *
-    smoothstep(0.0, 0.018, 1.0 - uv.x) *
-    smoothstep(0.0, 0.018, 1.0 - uv.y);
   float shorelineValid = smoothstep(0.20, 0.85, valid);
 
   return vec2(
-    mapInterior,
-    mapInterior * shorelineValid * step(0.001, uShorelineVisualWaterStrength)
+    1.0,
+    shorelineValid * step(0.001, uShorelineVisualWaterStrength)
   );
 }
 
@@ -510,6 +508,23 @@ vec3 getHexTerrainColor(vec3 terrainType, float water) {
   return color;
 }
 
+vec3 getSemanticTerrainColor(vec2 cell, float water) {
+  float land = getMaterialSemanticLandAtCell(cell);
+  float mountain = getMaterialSemanticMountainAtCell(cell);
+  vec3 color = vec3(0.18, 0.55, 0.26);
+
+  color = mix(color, vec3(0.44, 0.38, 0.25), mountain * land);
+  color = mix(color, vec3(0.10, 0.35, 0.72), water);
+
+  return color;
+}
+
+float getSemanticMaterialLuma(vec2 cell) {
+  float mountain = getMaterialSemanticMountainAtCell(cell);
+
+  return mix(0.62, 0.46, mountain);
+}
+
 vec3 boostLandTextureColor(vec3 color) {
   float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
   vec3 saturated = mix(vec3(luma), color, uLandTextureColorAdjust.x);
@@ -664,8 +679,7 @@ float getMountainTerrainAmount(
   float visualLandWater,
   float sandMask
 ) {
-  float currentMountain = getMaterialSemanticMountainAtCell(cell) *
-    getMapUvInsideAmount(getHexCellUv(cell, hexScale, mapAspect));
+  float currentMountain = getMaterialSemanticMountainAtCell(cell);
   float edgeInset = 1.0;
 
   edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(1.0, 0.0), currentMountain));
@@ -816,23 +830,19 @@ vec3 getAnimatedWaterColor(
 void main() {
   float hexScale = uHexTerrainScale;
   float mapAspect = uHexMapAspect;
-  vec2 hexPoint = vec2((vUv.x - 0.5) * mapAspect, vUv.y - 0.5) * hexScale;
+  vec2 hexPoint = vec2(
+    mix(uHexPointBounds.x, uHexPointBounds.y, vUv.x),
+    mix(uHexPointBounds.z, uHexPointBounds.w, vUv.y)
+  );
   vec2 hexCell = pixelToRoundedHex(hexPoint);
-  if (getMaterialSemanticInsideAmount(hexCell) < 0.5) {
-    discard;
-  }
 
-  vec2 hexUv = getHexCellUv(hexCell, hexScale, mapAspect);
-  vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
-  float water = getSemanticWaterAmountAtUv(hexUv);
-  vec3 terrainColor = getHexTerrainColor(material, water);
+  float water = getSemanticWaterAmountAtCell(hexCell, hexScale, mapAspect);
+  vec3 terrainColor = getSemanticTerrainColor(hexCell, water);
   vec2 shoreline = sampleShorelineDistanceField(vUv);
   float boundaryWater = getShorelineBoundaryWater(vUv, water, shoreline);
   float nearShoreTint = getShorelineNearShoreTint(vUv, shoreline, boundaryWater);
   vec3 visualLandCellData = getVisualLandCellData(hexCell, water);
   vec2 visualLandCell = visualLandCellData.xy;
-  vec2 visualLandUv = getHexCellUv(visualLandCell, hexScale, mapAspect);
-  vec3 landMaterial = texture2D(uMaterialTexture, clamp(visualLandUv, 0.0, 1.0)).rgb;
   float visualLandWater = getSemanticWaterAmountAtCell(visualLandCell, hexScale, mapAspect);
   vec2 nearSeaBoundaryFlow = vec2(uTimeSeconds * 0.026, -uTimeSeconds * 0.010);
   float nearSeaBoundaryNoise = sampleNearSeaBoundaryNoise(vUv, nearSeaBoundaryFlow);
@@ -866,7 +876,7 @@ void main() {
     steepShadow * uTerrainSteepShadowStrength;
   float waterReliefShade = 1.0 + (reliefShade - 1.0) * uTerrainWaterShadowStrength;
   float terrainReliefShade = clamp(mix(reliefShade, waterReliefShade, boundaryWater), 0.48, 1.34);
-  float materialLuma = dot(landMaterial, vec3(0.2126, 0.7152, 0.0722));
+  float materialLuma = getSemanticMaterialLuma(visualLandCell);
   vec3 grassTexture = boostLandTextureColor(sampleGrassMaterial(vUv));
   float grassTextureLuma = dot(grassTexture, vec3(0.2126, 0.7152, 0.0722));
   grassTexture = clamp(

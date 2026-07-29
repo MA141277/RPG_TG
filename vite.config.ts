@@ -195,6 +195,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         battleDemo: resolve(__dirname, "prototypes/battle-demo/index.html"),
+        yuanmoHexEditor: resolve(__dirname, "prototypes/yuanmo-hex-editor/index.html"),
       },
     },
   },

@@ -4,19 +4,19 @@
 
 - Current Stage: `Map Renderer Architecture`
 - Current Stage Status: `running`
-- Current Task: `Campaign Fort City Model Renderer`
+- Current Task: `Campaign Hex Runtime Grid Architecture`
 - Current Task Status: `completed-but-open`
-- Current Child: `Campaign Fort City Model Renderer`
+- Current Child: `Campaign Hex Runtime Grid Architecture`
 - Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-and-push-campaign-fort-city-model-renderer`
+- Next Required Action: `review-and-push-campaign-hex-runtime-grid-architecture`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-28-campaign-hex-runtime-grid-architecture-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md; do not close until push succeeds and the child 27 baseline is accepted or resolved.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-28-campaign-hex-runtime-grid-architecture-plan.md; do not close until final review and push succeed.`
 
 ## Progress Log
 
@@ -88,6 +88,14 @@
   - Summary: `Added camera-scale LOD for the campaign structure model renderer so far zoom levels skip or reduce fort/city and village building allocations before expensive placement, shadow, instanced-buffer, and draw work.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign fort city model renderer applies camera-scale LOD before building placement" tests/robustness.test.cjs }`; `node --test --test-name-pattern "campaign fort city model renderer ports cyh instanced draw path|campaign fort city model renderer applies camera-scale LOD before building placement|campaign fort city model assets are engine-owned and not imported by map UI|campaign terrain canvas receives fort city model profile attributes|campaign map removes legacy city depth mesh model and texture assets|campaign map uses shoreamend visual renderer" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check` passed with only existing LF-to-CRLF working-copy warnings.`
   - Next: `Review final diff and push when requested; do not close while remote push is absent or the child 27 baseline remains unresolved/unaccepted.`
+- 2026-07-28
+  - Summary: `Completed the local campaign hex runtime grid architecture child: map3 exports now keep fixed gameplay hex size, map3 generated cells map one-to-one into runtime cells, runtime extent uses hexPointBounds, renderer/shader/runtime-grid paths use the loaded coordinate service, and maps.json is regenerated from map3 settlements without old fort-only nodes.`
+  - Verification: `node tools\build-yuanmo-runtime-grid-from-editor-package.cjs --input map3`; `node --test --test-name-pattern "map3 runtime export keeps gameplay hex size|campaign terrain renderer uses loaded hex point bounds|runtime grid paths do not use default hex conversion|dynamic shoreline|loaded hex grid coordinate system" tests\robustness.test.cjs`; `npm run typecheck --silent`; `npm run build:test --silent`; `npm run build`; `npm run lint:plans`; browser runtime verification at `http://127.0.0.1:5173/` reached a fresh campaign in 濠州 with terrain/building/labels visible and no console errors.
+  - Next: `Run final code review, then push/review before child closeout; do not close while remote push is absent.`
+- 2026-07-28
+  - Summary: `Resolved final review findings for the campaign hex runtime grid architecture child: chunk cache signatures include coordinate-system bounds, shader soft shoreline sampling uses hexPointBounds size, and override tests assert exact one-to-one runtime cells. Final re-review found no Critical or Important issues.`
+  - Verification: `node --test --test-name-pattern "map3 runtime export keeps gameplay hex size|campaign terrain renderer uses loaded hex point bounds|runtime grid paths do not use default hex conversion|dynamic shoreline|loaded hex grid coordinate system" tests\robustness.test.cjs`; `npm run typecheck --silent`; `npm run build:test --silent`; `npm run build`; `npm run lint:plans`; browser smoke reached 濠州 with terrain visible and no console errors; final re-review reran targeted robustness subset with 5 pass, 0 fail.
+  - Next: `Push/review before child closeout; do not close while remote push is absent.`
 
 ## Latest Closeout
 

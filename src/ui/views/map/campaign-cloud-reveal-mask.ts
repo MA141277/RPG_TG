@@ -5,7 +5,7 @@ import {
 } from "../../../application/navigation/travel-to-coordinate";
 import {
   getCampaignTerrainProjectionSignature,
-  projectCampaignTerrainUvToClientPointAtCloudRevealHeight,
+  projectCampaignTerrainUvToClientPoint,
 } from "./campaign-terrain-webgl";
 
 const CLOUD_REVEAL_MASK_MAX_TEXTURE_SIZE = 1024;
@@ -382,7 +382,7 @@ function projectCoordinateToRevealMaskPoint(input: {
     input.coordinate.x / Math.max(input.descriptor.coordinateSpace.width, 1);
   const v =
     1 - input.coordinate.y / Math.max(input.descriptor.coordinateSpace.height, 1);
-  const projectedPoint = projectCampaignTerrainUvToClientPointAtCloudRevealHeight(
+  const projectedPoint = projectCampaignTerrainUvToClientPoint(
     input.projectionRoot,
     u,
     v

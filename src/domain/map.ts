@@ -62,6 +62,12 @@ export type CampaignHexGridDefinition = {
   coordinateSystem: {
     hexTerrainScale: number;
     hexMapAspect: number;
+    hexPointBounds?: {
+      minX: number;
+      maxX: number;
+      minY: number;
+      maxY: number;
+    };
     coordinateSpace: {
       width: number;
       height: number;

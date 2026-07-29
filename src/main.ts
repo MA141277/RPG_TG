@@ -98,6 +98,7 @@ import {
   snapCoordinateToHexCenter,
   travelToCoordinate,
   type GridCoordinate,
+  type HexCoordinateSystem,
 } from "./application/navigation/travel-to-coordinate";
 import {
   revealCampaignMapHexesForCoordinate,
@@ -267,6 +268,7 @@ import {
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
   createCampaignTerrainCameraCenteredOnCoordinate,
   getCampaignTerrainCameraTiltRadiansForScale,
+  getCampaignTerrainHexCoordinateSystem,
   getCampaignTerrainTravelGrid,
   isCampaignTerrainUvPassable,
   projectCampaignTerrainUvToClientPointAtHeightAnchor,
@@ -419,6 +421,7 @@ function revealCampaignMapAroundAppCoordinate(
   coordinate: GridCoordinate,
   options?: {
     animateNewHexes?: boolean;
+    coordinateSystem?: HexCoordinateSystem;
     revealedAtMs?: number;
   }
 ): AppState {
@@ -436,6 +439,9 @@ function revealCampaignMapAroundAppCoordinate(
     mapId: mapDefinition.id,
     coordinate,
     coordinateSpace: mapDefinition.coordinateSpace,
+    ...(options?.coordinateSystem == null
+      ? {}
+      : { coordinateSystem: options.coordinateSystem }),
     ...(options?.animateNewHexes == null
       ? {}
       : { animateNewHexes: options.animateNewHexes }),
@@ -462,12 +468,43 @@ function isCurrentCampaignCoordinateRevealed(coordinate: GridCoordinate): boolea
     return true;
   }
 
+  const coordinateSystem = getCurrentCampaignHexCoordinateSystem();
   return isCampaignMapCoordinateRevealed({
     state: appState.gameState,
     mapId: mapDefinition.id,
     coordinate,
     coordinateSpace: mapDefinition.coordinateSpace,
+    ...(coordinateSystem == null ? {} : { coordinateSystem }),
   });
+}
+
+function getCurrentCampaignHexCoordinateSystem(): HexCoordinateSystem | null {
+  const mapViewport = appRoot.querySelector<HTMLElement>("[data-campaign-map-viewport]");
+  if (mapViewport == null) {
+    return null;
+  }
+
+  return getCampaignTerrainHexCoordinateSystem(mapViewport);
+}
+
+function ensureCurrentCampaignRevealForCoordinateSystem(
+  coordinateSystem: HexCoordinateSystem | null
+): void {
+  if (coordinateSystem == null) {
+    return;
+  }
+
+  const nextAppState = revealCampaignMapAroundAppCoordinate(
+    appState,
+    appState.playerCoordinate,
+    {
+      animateNewHexes: false,
+      coordinateSystem,
+    }
+  );
+  if (nextAppState !== appState) {
+    appState = nextAppState;
+  }
 }
 
 function getRuntimeText(textId: string, fallback?: string): string {
@@ -5131,7 +5168,8 @@ function handleModalConfirm() {
           gameState: revealCampaignMapHexesForCoordinate(
             nextAppState.gameState,
             currentMapDefinition,
-            nextCoordinate
+            nextCoordinate,
+            getCurrentCampaignHexCoordinateSystem() ?? undefined
           ),
         };
       }
@@ -5385,7 +5423,8 @@ function startCampaignTravel(
         gameState: revealCampaignMapHexesForCoordinate(
           nextAppState.gameState,
           currentMapDefinition,
-          nextCoordinate
+          nextCoordinate,
+          getCurrentCampaignHexCoordinateSystem() ?? undefined
         ),
       };
     }
@@ -5413,10 +5452,16 @@ function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordin
     currentMapDefinition?.mode === "campaign"
       ? currentMapDefinition.coordinateSpace ?? null
       : null;
+  const campaignCoordinateSystem = getCurrentCampaignHexCoordinateSystem();
+  ensureCurrentCampaignRevealForCoordinateSystem(campaignCoordinateSystem);
   const snappedTargetCoordinate =
     campaignCoordinateSpace == null
       ? targetCoordinate
-      : snapCoordinateToHexCenter(targetCoordinate, campaignCoordinateSpace);
+      : snapCoordinateToHexCenter(
+          targetCoordinate,
+          campaignCoordinateSpace,
+          campaignCoordinateSystem ?? undefined
+        );
   const nextCoordinate = travelToCoordinate(
     appState.playerCoordinate,
     snappedTargetCoordinate
@@ -5442,6 +5487,9 @@ function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordin
     targetCoordinate: nextCoordinate,
     coordinateSpace: currentMapDefinition.coordinateSpace,
     travelGrid,
+    ...(campaignCoordinateSystem == null
+      ? {}
+      : { coordinateSystem: campaignCoordinateSystem }),
   });
 }
 
@@ -5515,10 +5563,17 @@ function updateCampaignHoverHexOutline(event: PointerEvent): void {
     x: clickTarget.u * coordinateSpace.width,
     y: (1 - clickTarget.v) * coordinateSpace.height,
   };
-  const hoverHex = coordinateToRoundedHex(targetCoordinate, coordinateSpace);
+  const coordinateSystem = getCampaignTerrainHexCoordinateSystem(campaignMap);
+  ensureCurrentCampaignRevealForCoordinateSystem(coordinateSystem);
+  const hoverHex = coordinateToRoundedHex(
+    targetCoordinate,
+    coordinateSpace,
+    coordinateSystem ?? undefined
+  );
   const hoverCenterCoordinate = snapCoordinateToHexCenter(
     targetCoordinate,
-    coordinateSpace
+    coordinateSpace,
+    coordinateSystem ?? undefined
   );
   const hoverCenterU = hoverCenterCoordinate.x / coordinateSpace.width;
   const hoverCenterV = 1 - hoverCenterCoordinate.y / coordinateSpace.height;
@@ -5546,6 +5601,7 @@ function updateCampaignHoverHexOutline(event: PointerEvent): void {
   const hoverHexPolygon = hexToCoordinatePolygon({
     hex: hoverHex,
     coordinateSpace,
+    ...(coordinateSystem == null ? {} : { coordinateSystem }),
     radiusScale: 1.015,
   });
   const hoverHexOutlineCoordinates = createTerrainFollowingHexOutlineCoordinates(
@@ -5724,6 +5780,9 @@ function syncCampaignActorRuntimeState(
   };
   const nextAppState = revealCampaignMapAroundAppCoordinate(appState, coordinate, {
     animateNewHexes: true,
+    ...(getCurrentCampaignHexCoordinateSystem() == null
+      ? {}
+      : { coordinateSystem: getCurrentCampaignHexCoordinateSystem() as HexCoordinateSystem }),
   });
   if (nextAppState !== appState) {
     appState = nextAppState;
@@ -5743,6 +5802,9 @@ function syncCampaignActorView(): void {
 
   const playerHeightX = appState.playerCoordinate.x / coordinateSpace.width;
   const playerHeightY = 1 - appState.playerCoordinate.y / coordinateSpace.height;
+  const coordinateSystem = getCurrentCampaignHexCoordinateSystem();
+  ensureCurrentCampaignRevealForCoordinateSystem(coordinateSystem);
+
   playerElement.dataset.mapHeightU = playerHeightX.toFixed(5);
   playerElement.dataset.mapHeightV = playerHeightY.toFixed(5);
   playerElement.dataset.campaignPlayerFacingDeg =

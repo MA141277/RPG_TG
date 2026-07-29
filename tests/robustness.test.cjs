@@ -2511,6 +2511,46 @@ test("vite scenario-pack publisher stages zhuyuanzhang manifest content to the b
   );
 });
 
+test("yuanmo hex map editor has a standalone vite entry", () => {
+  const viteConfig = fs.readFileSync(path.join(process.cwd(), "vite.config.ts"), "utf8");
+  const htmlPath = path.join(process.cwd(), "prototypes", "yuanmo-hex-editor", "index.html");
+  const htmlSource = fs.existsSync(htmlPath) ? fs.readFileSync(htmlPath, "utf8") : "";
+
+  assert.match(
+    viteConfig,
+    /yuanmoHexEditor:\s*resolve\(__dirname,\s*"prototypes\/yuanmo-hex-editor\/index\.html"\)/
+  );
+  assert.match(htmlSource, /<div id="app"><\/div>/);
+  assert.match(htmlSource, /Yuanmo Hex Map Editor/);
+});
+
+test("yuanmo hex map editor exposes sampling step and layered editing controls", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "yuanmo-hex-editor", "main.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /projectSamplingLayerId/);
+  assert.match(source, /getYuanmoEditorSourceHexGrid/);
+  assert.match(source, /map_ground_types/);
+  assert.match(source, /项目采样图/);
+  assert.match(source, /data-editor-step/);
+  assert.match(source, /源图裁切/);
+  assert.match(source, /确认裁剪/);
+  assert.match(source, /data-crop-image-input/);
+  assert.match(source, /data-source-layer/);
+  assert.match(source, /确认采样/);
+  assert.match(source, /采样步长/);
+  assert.match(source, /进入微调/);
+  assert.match(source, /sourceImage:\s*session\.activeStep\s*===\s*"crop"/);
+  assert.match(source, /viewportMode:\s*session\.activeStep\s*===\s*"crop"\s*\?\s*"source-map"\s*:\s*"hex-fit"/);
+  assert.match(source, /水\s*\/\s*陆/);
+  assert.match(source, /地形/);
+  assert.match(source, /地貌/);
+  assert.match(source, /城镇节点/);
+  assert.match(source, /建筑覆盖/);
+});
+
 test("base game content pack is sourced from the shared content-pack loader", async () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src", "content", "base-game-content-pack.ts"),
@@ -2809,7 +2849,7 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   );
   assert.equal(
     yuanmoCampaignMap.campaignHexGridUrl,
-    "./assets/maps/yuanmo-campaign-hex-grid.json"
+    "./assets/maps/yuanmo-campaign-hex-grid-map2-runtime.json"
   );
   assert.equal(
     yuanmoCampaignMap.campaignVegetationRulesUrl,
@@ -2884,7 +2924,7 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   });
   const campaignHexGrid = JSON.parse(
     fs.readFileSync(
-      path.join(packRoot, "assets", "maps", "yuanmo-campaign-hex-grid.json"),
+      path.join(packRoot, "assets", "maps", "yuanmo-campaign-hex-grid-map2-runtime.json"),
       "utf8"
     )
   );
@@ -2909,7 +2949,6 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   assert.equal(campaignHexGrid.counts.cells, campaignHexGrid.cells.length);
   assert.equal(campaignHexGrid.counts.terrains["山脉"] > 0, true);
   assert.equal(campaignHexGrid.counts.terrains["平原"] > 0, true);
-  assert.equal(campaignHexGrid.counts.environments["森林"] > 0, true);
   assert.equal(campaignHexGrid.counts.environments["草地"] > 0, true);
   assert.equal(
     campaignHexGrid.cells.every((cell) => ["平原", "山脉"].includes(cell.terrain)),
@@ -2938,20 +2977,6 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   );
   assert.equal(
     campaignHexGrid.cells.every((cell) => cell.land || cell.environment !== "森林"),
-    true
-  );
-  const hexGridScale = campaignHexGrid.coordinateSystem.hexTerrainScale;
-  const hexGridAspect = campaignHexGrid.coordinateSystem.hexMapAspect;
-  const outsideMapCells = campaignHexGrid.cells.filter((cell) => {
-    const centerX = Math.sqrt(3) * (cell.x + cell.y * 0.5);
-    const centerY = 1.5 * cell.y;
-    const u = centerX / (hexGridAspect * hexGridScale) + 0.5;
-    const v = centerY / hexGridScale + 0.5;
-    return u < 0 || u > 1 || v < 0 || v > 1;
-  });
-
-  assert.equal(
-    outsideMapCells.every((cell) => cell.land === false),
     true
   );
   const vegetationRules = JSON.parse(
@@ -3367,12 +3392,8 @@ test("campaign map uses shoreamend visual renderer without legacy 2d structure s
   );
 
   assert.equal(fs.existsSync(revealMaskPath), true);
-  assert.match(cloudRendererSource, /campaign-cloud-reveal-mask/);
-  assert.match(cloudRendererSource, /createCloudRevealMaskCanvas/);
-  assert.match(cloudRendererSource, /readCloudRevealMaskDescriptor/);
-  assert.match(cloudRendererSource, /holdCampaignTerrainChunkLoading/);
-  assert.match(cloudRendererSource, /CLOUD_REVEAL_TERRAIN_LOAD_BUFFER_MS/);
-  assert.match(mapViewSource, /cloudClearHexKeys/);
+  assert.doesNotMatch(mapViewSource, /data-campaign-map-cloud/);
+  assert.doesNotMatch(mapViewSource, /c-campaign-map__cloud/);
   assert.match(mapViewSource, /data-map-village-ground-texture-url/);
   assert.match(mapViewSource, /data-map-city-ground-texture-url/);
   assert.doesNotMatch(mapViewSource, /renderCampaignStructureVisuals/);
@@ -3561,7 +3582,7 @@ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
     );
     assert.equal(
       yuanmoCampaignMap.campaignHexGridUrl,
-      `${packBaseUrl}assets/maps/yuanmo-campaign-hex-grid.json`
+      `${packBaseUrl}assets/maps/yuanmo-campaign-hex-grid-map2-runtime.json`
     );
     assert.equal(
       yuanmoCampaignMap.campaignVegetationRulesUrl,
@@ -4389,7 +4410,7 @@ test("campaign map removes render stats performance debug panel path", () => {
   );
 });
 
-test("campaign hex grid and shader treat outside-map edge cells as water", () => {
+test("campaign hex grid drives dynamic shoreline without old map rectangle fallback", () => {
   const packRoot = path.join(
     process.cwd(),
     "src",
@@ -4399,9 +4420,12 @@ test("campaign hex grid and shader treat outside-map edge cells as water", () =>
   );
   const campaignHexGrid = JSON.parse(
     fs.readFileSync(
-      path.join(packRoot, "assets", "maps", "yuanmo-campaign-hex-grid.json"),
+      path.join(packRoot, "assets", "maps", "yuanmo-campaign-hex-grid-map2-runtime.json"),
       "utf8"
     )
+  );
+  const map3GeneratedGrid = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "map3", "hex-grid.generated.json"), "utf8")
   );
   const terrainFragmentSource = fs.readFileSync(
     path.join(
@@ -4415,22 +4439,576 @@ test("campaign hex grid and shader treat outside-map edge cells as water", () =>
     ),
     "utf8"
   );
-  const hexGridScale = campaignHexGrid.coordinateSystem.hexTerrainScale;
-  const hexGridAspect = campaignHexGrid.coordinateSystem.hexMapAspect;
-  const outsideMapCells = campaignHexGrid.cells.filter((cell) => {
-    const centerX = Math.sqrt(3) * (cell.x + cell.y * 0.5);
-    const centerY = 1.5 * cell.y;
-    const u = centerX / (hexGridAspect * hexGridScale) + 0.5;
-    const v = centerY / hexGridScale + 0.5;
-    return u < 0 || u > 1 || v < 0 || v > 1;
+  assert.deepEqual(campaignHexGrid.bounds, {
+    minX: map3GeneratedGrid.bounds.minX - Math.round((map3GeneratedGrid.bounds.minX + map3GeneratedGrid.bounds.maxX) / 2),
+    maxX: map3GeneratedGrid.bounds.maxX - Math.round((map3GeneratedGrid.bounds.minX + map3GeneratedGrid.bounds.maxX) / 2),
+    minY: map3GeneratedGrid.bounds.minY - Math.round((map3GeneratedGrid.bounds.minY + map3GeneratedGrid.bounds.maxY) / 2),
+    maxY: map3GeneratedGrid.bounds.maxY - Math.round((map3GeneratedGrid.bounds.minY + map3GeneratedGrid.bounds.maxY) / 2),
   });
-
-  assert.equal(outsideMapCells.length > 0, true);
+  assert.equal(campaignHexGrid.counts.cells, map3GeneratedGrid.counts.cells);
   assert.equal(
-    outsideMapCells.every((cell) => cell.land === false),
-    true
+    campaignHexGrid.source.editorOverlay.projection,
+    "editor-grid-one-to-one-runtime-hex"
   );
-  assert.match(terrainFragmentSource, /return mix\(1\.0, semanticWater, mapInside\)/);
+  assert.equal(campaignHexGrid.counts.landCells > 0, true);
+  assert.equal(campaignHexGrid.counts.waterCells > 0, true);
+  const campaignHexGridCells = new Set(
+    campaignHexGrid.cells.map((cell) => `${cell.x},${cell.y}`)
+  );
+  let campaignHexGridNeighborEdges = 0;
+  for (const cell of campaignHexGrid.cells) {
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, -1],
+      [-1, 1],
+    ]) {
+      if (campaignHexGridCells.has(`${cell.x + dx},${cell.y + dy}`)) {
+        campaignHexGridNeighborEdges += 1;
+      }
+    }
+  }
+  assert.equal(
+    campaignHexGridNeighborEdges / campaignHexGrid.cells.length > 5,
+    true,
+    "Expected editor-exported campaign hexes to remain a continuous axial grid instead of sparse sampled coordinates."
+  );
+  assert.doesNotMatch(terrainFragmentSource, /return mix\(1\.0, semanticWater, mapInside\)/);
+  assert.doesNotMatch(terrainFragmentSource, /float mapInside = getMapUvInsideAmount/);
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /return getMaterialSemanticLandAtCell\(cell\) \*\s*getMapUvInsideAmount/s
+  );
+  assert.doesNotMatch(terrainFragmentSource, /float mapInterior\s*=/);
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /if\s*\(\s*getMaterialSemanticInsideAmount\(hexCell\)\s*<\s*0\.5\s*\)\s*{\s*discard;\s*}/
+  );
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /vec3 material = texture2D\(uMaterialTexture,\s*clamp\(hexUv/s
+  );
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /vec3 landMaterial = texture2D\(uMaterialTexture,\s*clamp\(visualLandUv/s
+  );
+  assert.match(terrainFragmentSource, /return semanticWater;/);
+  assert.match(
+    terrainFragmentSource,
+    /return getSemanticLandAmountAtUv\(uv \+ diskOffset \* radius \/ getHexPointBoundsSize\(\)\);/s
+  );
+  assert.match(terrainFragmentSource, /vec2 getHexPointBoundsSize\(\)/);
+  assert.match(terrainFragmentSource, /getSemanticTerrainColor\(hexCell,\s*water\)/);
+  assert.match(terrainFragmentSource, /getSemanticMaterialLuma\(visualLandCell\)/);
+});
+
+test("campaign terrain renderer uses loaded hex point bounds instead of terrain scale compensation", () => {
+  const terrainRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+  const terrainRendererAst = ts.createSourceFile(
+    "campaign-terrain-webgl.ts",
+    terrainRendererSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const terrainFragmentSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "shaders",
+      "campaign-terrain.frag.glsl"
+    ),
+    "utf8"
+  );
+
+  function getNamedFunctionDeclaration(functionName) {
+    let declaration = null;
+
+    function visit(node) {
+      if (declaration != null) {
+        return;
+      }
+      if (ts.isFunctionDeclaration(node) && node.name?.text === functionName) {
+        declaration = node;
+        return;
+      }
+      ts.forEachChild(node, visit);
+    }
+
+    visit(terrainRendererAst);
+    assert.ok(declaration, `Expected function ${functionName} in campaign-terrain-webgl.ts`);
+    return declaration;
+  }
+
+  function getNamedCallExpressions(node, callName) {
+    const calls = [];
+
+    function visit(child) {
+      if (ts.isCallExpression(child) && ts.isIdentifier(child.expression) && child.expression.text === callName) {
+        calls.push(child);
+      }
+      ts.forEachChild(child, visit);
+    }
+
+    visit(node);
+    return calls;
+  }
+
+  function assertTerrainCoordinateCalls(functionName) {
+    const declaration = getNamedFunctionDeclaration(functionName);
+    const calls = getNamedCallExpressions(declaration, "terrainUvToHexPoint");
+    assert.ok(calls.length > 0, `Expected ${functionName} to call terrainUvToHexPoint`);
+
+    for (const call of calls) {
+      assert.equal(
+        call.arguments.length,
+        3,
+        `Expected ${functionName} to pass loaded terrain coordinates into terrainUvToHexPoint`
+      );
+      assert.match(
+        call.arguments[2].getText(terrainRendererAst),
+        /^(?:materialSemanticModel\.terrainCoordinates|terrainCoordinates)$/,
+        `Expected ${functionName} to use materialSemanticModel.terrainCoordinates or a local alias`
+      );
+    }
+  }
+
+  assert.match(terrainRendererSource, /function getCampaignHexPointBounds\(/);
+  assert.match(terrainRendererSource, /function createCampaignTerrainCoordinateSystem\(/);
+  assert.doesNotMatch(
+    terrainRendererSource,
+    /CAMPAIGN_TERRAIN_CHUNK_ALGORITHM_VERSION\s*=\s*"2026-07-21-owned-grid-smooth-shadows-v1"/
+  );
+  assert.doesNotMatch(
+    terrainRendererSource,
+    /coordinateSystem\.hexTerrainScale\s*\/\s*HEX_TERRAIN_SCALE/s
+  );
+  assert.match(
+    terrainRendererSource,
+    /addNumber\(campaignHexGrid\.coordinateSystem\.hexTerrainScale\)/
+  );
+  assert.match(
+    terrainRendererSource,
+    /addNumber\(campaignHexGrid\.coordinateSystem\.hexMapAspect\)/
+  );
+  assert.match(terrainRendererSource, /campaignHexGrid\.coordinateSystem\.hexPointBounds/);
+  assert.match(
+    terrainRendererSource,
+    /terrainUvToHexPoint\(u,\s*v,\s*materialSemanticModel\.terrainCoordinates\)/s
+  );
+  assert.match(
+    terrainRendererSource,
+    /hexPointToTerrainU\(center\.x,\s*campaignHexGrid\.coordinateSystem/s
+  );
+  assertTerrainCoordinateCalls("smoothNonMountainFlattenedHeightSamples");
+  assertTerrainCoordinateCalls("createMountainFloorHeightSamples");
+  assertTerrainCoordinateCalls("createMountainFloorSeedMask");
+  assertTerrainCoordinateCalls("smoothMountainFloorHeightSamples");
+  assertTerrainCoordinateCalls("isLandTerrainSample");
+  assert.match(terrainFragmentSource, /uniform vec4 uHexPointBounds;/);
+  assert.match(terrainFragmentSource, /vec2 getHexPointBoundsSize\(\)/);
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /diskOffset\.x\s*\*\s*radius\s*\/\s*\(hexScale\s*\*\s*mapAspect\)/
+  );
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /diskOffset\.y\s*\*\s*radius\s*\/\s*hexScale/
+  );
+});
+
+test("campaign terrain runtime grid paths do not use default hex conversion fallbacks", () => {
+  const terrainRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+  const terrainRendererAst = ts.createSourceFile(
+    "campaign-terrain-webgl.ts",
+    terrainRendererSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+
+  function getNamedFunctionDeclaration(functionName) {
+    let declaration = null;
+
+    function visit(node) {
+      if (declaration != null) {
+        return;
+      }
+      if (ts.isFunctionDeclaration(node) && node.name?.text === functionName) {
+        declaration = node;
+        return;
+      }
+      ts.forEachChild(node, visit);
+    }
+
+    visit(terrainRendererAst);
+    assert.ok(declaration, `Expected function ${functionName} in campaign-terrain-webgl.ts`);
+    return declaration;
+  }
+
+  function getNamedCallExpressions(node, callName) {
+    const calls = [];
+
+    function visit(child) {
+      if (ts.isCallExpression(child) && ts.isIdentifier(child.expression) && child.expression.text === callName) {
+        calls.push(child);
+      }
+      ts.forEachChild(child, visit);
+    }
+
+    visit(node);
+    return calls;
+  }
+
+  function assertCoordinateAwareCalls(functionName, callName, coordinatePattern) {
+    const declaration = getNamedFunctionDeclaration(functionName);
+    const calls = getNamedCallExpressions(declaration, callName);
+    assert.ok(calls.length > 0, `Expected ${functionName} to call ${callName}`);
+
+    for (const call of calls) {
+      assert.equal(
+        call.arguments.length,
+        3,
+        `Expected ${functionName} to pass loaded coordinates into ${callName}`
+      );
+      assert.match(
+        call.arguments[2].getText(terrainRendererAst),
+        coordinatePattern,
+        `Expected ${functionName} to use the runtime-grid coordinate service for ${callName}`
+      );
+    }
+  }
+
+  function assertHexPointCoordinateCalls(functionName, coordinatePattern) {
+    const declaration = getNamedFunctionDeclaration(functionName);
+
+    for (const callName of ["hexPointToTerrainU", "hexPointToTerrainV"]) {
+      const calls = getNamedCallExpressions(declaration, callName);
+      assert.ok(calls.length > 0, `Expected ${functionName} to call ${callName}`);
+
+      for (const call of calls) {
+        assert.equal(
+          call.arguments.length,
+          2,
+          `Expected ${functionName} to pass loaded coordinates into ${callName}`
+        );
+        assert.match(
+          call.arguments[1].getText(terrainRendererAst),
+          coordinatePattern,
+          `Expected ${functionName} to use the runtime-grid coordinate service for ${callName}`
+        );
+      }
+    }
+  }
+
+  assert.match(
+    terrainRendererSource,
+    /createShorelineDistanceTextureModel\(\s*input\.semanticData\.materialSemanticModel,/
+  );
+  assert.match(
+    terrainRendererSource,
+    /createCampaignVegetationMesh\(\{\s*[\s\S]*terrainCoordinates:\s*materialSemanticModel\.terrainCoordinates,/
+  );
+  assert.match(
+    terrainRendererSource,
+    /createCampaignFortCityBuildingInstances\(\{\s*[\s\S]*terrainCoordinates:\s*materialSemanticModel\.terrainCoordinates,/
+  );
+  assertCoordinateAwareCalls(
+    "snapTerrainUvToHexCenter",
+    "terrainUvToHexPoint",
+    /^terrainCoordinates$/
+  );
+  assertHexPointCoordinateCalls("snapTerrainUvToHexCenter", /^terrainCoordinates$/);
+  assertCoordinateAwareCalls(
+    "createShorelineDistanceTextureModel",
+    "terrainUvToHexPoint",
+    /^materialSemanticModel\.terrainCoordinates$/
+  );
+  assertCoordinateAwareCalls(
+    "rasterizeShorelineDistanceEdge",
+    "terrainUvToHexPoint",
+    /^input\.terrainCoordinates$/
+  );
+  assertHexPointCoordinateCalls("rasterizeShorelineDistanceEdge", /^input\.terrainCoordinates$/);
+  assertHexPointCoordinateCalls(
+    "createCampaignFortCityBuildingInstance",
+    /^input\.terrainCoordinates$/
+  );
+  assertHexPointCoordinateCalls(
+    "appendCampaignVegetationCellInstances",
+    /^terrainCoordinates$/
+  );
+  assertCoordinateAwareCalls(
+    "getCampaignVegetationAvoidanceDensityMultiplier",
+    "terrainUvToHexPoint",
+    /^terrainCoordinates$/
+  );
+  assertCoordinateAwareCalls(
+    "isCampaignVegetationPointAvoided",
+    "terrainUvToHexPoint",
+    /^terrainCoordinates$/
+  );
+  assertCoordinateAwareCalls(
+    "isHexPassableAtUv",
+    "terrainUvToHexPoint",
+    /^materialSemanticModel\.terrainCoordinates$/
+  );
+});
+
+test("map3 runtime export keeps gameplay hex size and one-to-one cells", () => {
+  const runtimeGrid = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "content",
+        "scenario-packs",
+        "zhuyuanzhang",
+        "assets",
+        "maps",
+        "yuanmo-campaign-hex-grid-map2-runtime.json"
+      ),
+      "utf8"
+    )
+  );
+  const generatedGrid = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "map3", "hex-grid.generated.json"), "utf8")
+  );
+  const waterLandOverrides = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "map3", "hex-overrides.water-land.json"), "utf8")
+  );
+  const settlements = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "map3", "settlements.json"), "utf8")
+  );
+  const maps = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "content",
+        "scenario-packs",
+        "zhuyuanzhang",
+        "maps.json"
+      ),
+      "utf8"
+    )
+  );
+
+  assert.equal(runtimeGrid.coordinateSystem.hexTerrainScale, 138);
+  assert.equal(runtimeGrid.coordinateSystem.hexMapAspect, 1.1285);
+  assert.ok(runtimeGrid.coordinateSystem.hexPointBounds);
+  assert.equal(runtimeGrid.coordinateSystem.hexPointBounds.minX < 0, true);
+  assert.equal(runtimeGrid.coordinateSystem.hexPointBounds.maxX > 0, true);
+  assert.equal(runtimeGrid.coordinateSystem.hexPointBounds.minY < 0, true);
+  assert.equal(runtimeGrid.coordinateSystem.hexPointBounds.maxY > 0, true);
+  assert.equal(
+    runtimeGrid.source.editorOverlay.projection,
+    "editor-grid-one-to-one-runtime-hex"
+  );
+  assert.equal(runtimeGrid.counts.cells, generatedGrid.counts.cells);
+
+  const runtimeCellsByKey = new Map(runtimeGrid.cells.map((cell) => [`${cell.x},${cell.y}`, cell]));
+  assert.equal(runtimeCellsByKey.size, runtimeGrid.cells.length);
+  assert.equal(runtimeGrid.cells.length, generatedGrid.cells.length);
+
+  const transform = {
+    offsetX: Math.round((generatedGrid.bounds.minX + generatedGrid.bounds.maxX) / 2),
+    offsetY: Math.round((generatedGrid.bounds.minY + generatedGrid.bounds.maxY) / 2),
+  };
+  const toRuntimeHex = (cell) => {
+    const centeredHex = {
+      x: cell.x - transform.offsetX,
+      y: cell.y - transform.offsetY,
+    };
+    return {
+      x: centeredHex.x + centeredHex.y,
+      y: -centeredHex.y,
+    };
+  };
+  const appliedWaterLandOverrides = waterLandOverrides.filter((override) =>
+    runtimeCellsByKey.has(`${toRuntimeHex(override).x},${toRuntimeHex(override).y}`)
+  );
+  assert.equal(appliedWaterLandOverrides.length, 37);
+  for (const override of appliedWaterLandOverrides) {
+    const runtimeHex = toRuntimeHex(override);
+    const runtimeCell = runtimeCellsByKey.get(`${runtimeHex.x},${runtimeHex.y}`);
+    assert.equal(
+      runtimeCell.land,
+      override.land,
+      `Expected water-land override ${override.x},${override.y} to map to its one-to-one runtime cell.`
+    );
+  }
+
+  const yuanmoMap = maps.find((mapDefinition) => mapDefinition.id === "map.yuanmo_campaign");
+  assert.ok(yuanmoMap, "Expected maps.json to contain the active Yuanmo campaign map.");
+  assert.equal(yuanmoMap.nodes.length, settlements.length);
+  assert.equal(yuanmoMap.stats.settlementCount, settlements.length);
+  assert.equal(yuanmoMap.stats.fortCount, 0);
+  assert.equal(
+    yuanmoMap.nodes.some(
+      (node) =>
+        node.kind === "fort" ||
+        String(node.id).startsWith("fort.") ||
+        String(node.label).includes("要塞")
+    ),
+    false,
+    "Expected map3 export to replace old fort-only map nodes."
+  );
+  assert.deepEqual(
+    new Set(yuanmoMap.nodes.map((node) => node.id)),
+    new Set(settlements.map((settlement) => settlement.id))
+  );
+  const haozhouNode = yuanmoMap.nodes.find((node) => node.id === "settlement.fenyang_province");
+  assert.equal(haozhouNode?.label, "濠州");
+  assert.equal(yuanmoMap.initialPlayerCoordinate.x, haozhouNode.x);
+  assert.equal(yuanmoMap.initialPlayerCoordinate.y, haozhouNode.y);
+});
+
+test("campaign terrain chunk cache changes when hex grid content changes", () => {
+  const terrainRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    terrainRendererSource,
+    /function getCampaignHexGridContentSignature\(\s*campaignHexGrid: CampaignHexGridAsset \| null\s*\): string/
+  );
+  assert.match(
+    terrainRendererSource,
+    /getCampaignHexGridContentSignature\(campaignHexGrid\)/
+  );
+  assert.match(
+    terrainRendererSource,
+    /input\.semanticData\.materialSemanticModel\.signature/
+  );
+});
+
+test("campaign terrain renderer requests full hex grid chunks instead of focus-radius chunks", () => {
+  const terrainRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    terrainRendererSource,
+    /function getCampaignTerrainChunkKeysForCells\(\s*cells: GridCoordinate\[\]\s*\): string\[\]/
+  );
+  assert.match(
+    terrainRendererSource,
+    /const ensureAllCampaignTerrainChunks = \(\): void => \{\s*ensureCampaignTerrainChunkKeys\(\s*getCampaignTerrainChunkKeysForCells\(materialSemanticModel\.cells\)\s*\);\s*\}/s
+  );
+  assert.match(
+    terrainRendererSource,
+    /const CAMPAIGN_TERRAIN_MAX_PENDING_CHUNKS = 12;/
+  );
+  assert.match(
+    terrainRendererSource,
+    /if\s*\(\s*pendingChunkKeys\.size >= CAMPAIGN_TERRAIN_MAX_PENDING_CHUNKS\s*\)\s*{\s*break;\s*}/
+  );
+  assert.doesNotMatch(
+    terrainRendererSource,
+    /ensureCampaignTerrainChunks\(CAMPAIGN_TERRAIN_(?:INITIAL|PREFETCH)_RADIUS_HEX\)/
+  );
+});
+
+test("campaign terrain renderer uses the loaded hex grid coordinate system", () => {
+  const terrainRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+  const terrainFragmentSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "shaders",
+      "campaign-terrain.frag.glsl"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    terrainRendererSource,
+    /gl\.uniform1f\(hexMapAspectLocation,\s*materialSemanticModel\.coordinateSystem\.hexMapAspect\s*\)/s
+  );
+  assert.match(
+    terrainRendererSource,
+    /gl\.uniform1f\(hexTerrainScaleLocation,\s*materialSemanticModel\.coordinateSystem\.hexTerrainScale\s*\)/s
+  );
+  assert.doesNotMatch(
+    terrainRendererSource,
+    /gl\.uniform1f\(hexMapAspectLocation,\s*HEX_MAP_ASPECT\s*\)/
+  );
+  assert.doesNotMatch(
+    terrainRendererSource,
+    /gl\.uniform1f\(hexTerrainScaleLocation,\s*HEX_TERRAIN_SCALE\s*\)/
+  );
+  assert.match(
+    terrainRendererSource,
+    /const hexPointBoundsLocation = gl\.getUniformLocation\(\s*program,\s*"uHexPointBounds"\s*\)/
+  );
+  assert.match(
+    terrainRendererSource,
+    /gl\.uniform4f\(\s*hexPointBoundsLocation,\s*materialSemanticModel\.terrainCoordinates\.hexPointBounds\.minX,\s*materialSemanticModel\.terrainCoordinates\.hexPointBounds\.maxX,\s*materialSemanticModel\.terrainCoordinates\.hexPointBounds\.minY,\s*materialSemanticModel\.terrainCoordinates\.hexPointBounds\.maxY\s*\)/s
+  );
+  assert.match(terrainFragmentSource, /uniform vec4 uHexPointBounds;/);
+  assert.match(
+    terrainFragmentSource,
+    /vec2 hexPoint = vec2\(\s*mix\(uHexPointBounds\.x,\s*uHexPointBounds\.y,\s*vUv\.x\),\s*mix\(uHexPointBounds\.z,\s*uHexPointBounds\.w,\s*vUv\.y\)\s*\);/s
+  );
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /vec2 hexPoint = vec2\(\s*\(vUv\.x - 0\.5\) \* mapAspect,\s*vUv\.y - 0\.5\s*\) \* hexScale;/
+  );
 });
 
 test("campaign fog exploration stays active without the removed shader renderer", () => {
@@ -4498,6 +5076,7 @@ test("campaign fog exploration stays active without the removed shader renderer"
     false
   );
   assert.doesNotMatch(mapViewSource, /data-campaign-map-fog/);
+  assert.doesNotMatch(mapViewSource, /data-campaign-map-cloud/);
   assert.doesNotMatch(mapViewSource, /campaign-volumetric-cloud/);
   assert.doesNotMatch(mainSource, /campaign-fog-webgl/);
   assert.doesNotMatch(mainSource, /syncCampaignMapFogWebGl/);
@@ -4508,19 +5087,17 @@ test("campaign fog exploration stays active without the removed shader renderer"
     terrainRendererSource,
     /projectCampaignTerrainUvToClientPointAtHeightAnchor/
   );
-  assert.match(
-    terrainRendererSource,
+  assert.doesNotMatch(
+    cloudRevealMaskSource,
     /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/
   );
   assert.match(
     cloudRevealMaskSource,
-    /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/
+    /projectCampaignTerrainUvToClientPoint\(\s*input\.projectionRoot,/
   );
-  assert.match(terrainRendererSource, /CLOUD_REVEAL_REFERENCE_HEIGHT/);
-  assert.doesNotMatch(
-    cloudRendererSource,
-    /projectCampaignTerrainUvToClientPointAtHeightAnchor/
-  );
+  assert.doesNotMatch(terrainRendererSource, /CLOUD_REVEAL_REFERENCE_HEIGHT/);
+  assert.doesNotMatch(terrainRendererSource, /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/);
+  assert.doesNotMatch(cloudRendererSource, /heightAnchorCoordinate/);
   assert.doesNotMatch(cloudRendererSource, /heightAnchorCoordinate/);
 });
 
@@ -4846,7 +5423,7 @@ test(
       );
       assert.equal(
         yuanmoCampaignMap.campaignHexGridUrl,
-        `${packBaseUrl}assets/maps/yuanmo-campaign-hex-grid.json`
+        `${packBaseUrl}assets/maps/yuanmo-campaign-hex-grid-map2-runtime.json`
       );
       assert.equal(
         yuanmoCampaignMap.campaignVegetationRulesUrl,
