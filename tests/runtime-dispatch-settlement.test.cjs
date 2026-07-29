@@ -148,3 +148,101 @@ test("dispatchRuntimeRequest settles routed taskInputs without requiring split t
     ["started", "completed"]
   );
 });
+
+test("dispatchRuntimeRequest handles routed followUp before legacy interactive fallback", () => {
+  const state = createBaseRuntimeState();
+  let handledFollowUp = null;
+  let handledInteractive = null;
+
+  const result = dispatchRuntimeRequest({
+    state,
+    request: { family: "action", type: "action", actionId: "test.follow-up" },
+    context: {
+      router: {
+        route: ({ state: routeState }) => ({
+          state: routeState,
+          effects: [],
+          followUp: { type: "reenter-house", houseId: "house.follow-up" },
+          interactive: { type: "reenter-house", houseId: "house.legacy" },
+        }),
+      },
+      followUp: {
+        handleFollowUp: ({ state: followUpState, followUp }) => {
+          handledFollowUp = followUp;
+          return {
+            state: {
+              ...followUpState,
+              core: {
+                ...followUpState.core,
+                world: {
+                  ...followUpState.core.world,
+                  currentHouseId: followUp.houseId,
+                },
+              },
+            },
+          };
+        },
+        handleInteractive: ({ interactive }) => {
+          handledInteractive = interactive;
+          return state;
+        },
+      },
+    },
+  });
+
+  assert.deepEqual(handledFollowUp, {
+    type: "reenter-house",
+    houseId: "house.follow-up",
+  });
+  assert.equal(handledInteractive, null);
+  assert.equal(result.state.core.world.currentHouseId, "house.follow-up");
+  assert.deepEqual(result.followUp, { type: "none" });
+  assert.deepEqual(result.interactive, {
+    type: "reenter-house",
+    houseId: "house.legacy",
+  });
+});
+
+test("dispatchRuntimeRequest keeps legacy interactive follow-up fallback", () => {
+  let handledInteractive = null;
+
+  const result = dispatchRuntimeRequest({
+    state: createBaseRuntimeState(),
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.legacy-interactive",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [],
+          interactive: { type: "reenter-house", houseId: "house.legacy" },
+        }),
+      },
+      followUp: {
+        handleInteractive: ({ state, interactive }) => {
+          handledInteractive = interactive;
+          return {
+            ...state,
+            core: {
+              ...state.core,
+              world: {
+                ...state.core.world,
+                currentHouseId: interactive.houseId,
+              },
+            },
+          };
+        },
+      },
+    },
+  });
+
+  assert.deepEqual(handledInteractive, {
+    type: "reenter-house",
+    houseId: "house.legacy",
+  });
+  assert.equal(result.state.core.world.currentHouseId, "house.legacy");
+  assert.deepEqual(result.interactive, { type: "none" });
+});

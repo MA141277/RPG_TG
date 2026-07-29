@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Runtime Dispatch FollowUp Handler Slice
+
+### Added
+- `dispatchRuntimeRequest()` 现在会优先处理 routed result 上的 `followUp` 并调用 `RuntimeFollowUpContext.handleFollowUp()`。
+- 新增回归覆盖：现代 `followUp` 被处理后不会再触发旧 `interactive` fallback；仅有旧 `interactive` 时仍按原路径处理。
+
+### Impact
+- 这片只迁移 core runtime-dispatch 的 follow-up handler 接线，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 下一步可以逐步让 interactive/story battle 等 runtime 输出同时填充 `followUp`，继续保留旧 `interactive` 字段作为兼容 fallback。
+
 ## 2026-07-29 Runtime Router FollowUp Contract Slice
 
 ### Added

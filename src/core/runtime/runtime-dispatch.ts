@@ -72,6 +72,7 @@ export function dispatchRuntimeRequest(input: {
         });
   const followUp = settleRuntimeFollowUp({
     state: settlement.state,
+    followUp: routed.followUp,
     outcome: routed.outcome,
     interactive: routed.interactive,
     context: input.context.followUp,
@@ -99,6 +100,7 @@ export function dispatchRuntimeRequest(input: {
       : { characterStatusById: settlement.characterStatusById }),
     state: followUp.state,
     ...(followUp.outcome === undefined ? {} : { outcome: followUp.outcome }),
+    ...(followUp.followUp === undefined ? {} : { followUp: followUp.followUp }),
     ...(followUp.interactive === undefined
       ? {}
       : { interactive: followUp.interactive }),
@@ -210,21 +212,45 @@ function isTaskRuntimeSignal(value: unknown): value is TaskSignal {
 
 function settleRuntimeFollowUp(input: {
   state: RuntimeState;
+  followUp: RuntimeResult["followUp"];
   outcome: RuntimeResult["outcome"];
   interactive: RuntimeResult["interactive"];
   context: RuntimeFollowUpContext | undefined;
 }): {
   state: RuntimeState;
   characterDefinitions?: RuntimeResult["characterDefinitions"];
+  followUp: RuntimeResult["followUp"];
   outcome: RuntimeResult["outcome"];
   interactive: RuntimeResult["interactive"];
 } {
   let state = input.state;
   let characterDefinitions: RuntimeResult["characterDefinitions"];
+  let followUp = input.followUp;
   let outcome = input.outcome;
   let interactive = input.interactive;
+  let handledModernFollowUp = false;
 
-  if (outcome != null && input.context?.handleOutcome != null) {
+  if (
+    followUp != null &&
+    followUp.type !== "none" &&
+    input.context?.handleFollowUp != null
+  ) {
+    const handled = input.context.handleFollowUp({
+      state,
+      followUp,
+    });
+    state = handled.state;
+    characterDefinitions = handled.characterDefinitions;
+    followUp = { type: "none" };
+    handledModernFollowUp = true;
+  }
+
+  if (
+    !handledModernFollowUp &&
+    (followUp == null || followUp.type === "none") &&
+    outcome != null &&
+    input.context?.handleOutcome != null
+  ) {
     const handled = input.context.handleOutcome({
       state,
       outcome,
@@ -235,6 +261,8 @@ function settleRuntimeFollowUp(input: {
   }
 
   if (
+    !handledModernFollowUp &&
+    (followUp == null || followUp.type === "none") &&
     interactive != null &&
     interactive.type !== "none" &&
     input.context?.handleInteractive != null
@@ -249,6 +277,7 @@ function settleRuntimeFollowUp(input: {
   return {
     state,
     ...(characterDefinitions === undefined ? {} : { characterDefinitions }),
+    followUp,
     outcome,
     interactive,
   };
