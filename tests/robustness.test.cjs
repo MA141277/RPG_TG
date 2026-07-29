@@ -56,6 +56,9 @@ const {
   renderTavernHouseView,
 } = require("../.test-dist/ui/views/house/tavern-house-view.js");
 const {
+  renderGrainShopHouseView,
+} = require("../.test-dist/ui/views/house/grain-shop-house-view.js");
+const {
   marketHouseHouseModule,
 } = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
 const {
@@ -311,6 +314,60 @@ function createRuntimeState(coreState = createBaseState()) {
       modalState: null,
     },
     view: {},
+  };
+}
+
+function withPlayerGold(characterDefinitions, gold) {
+  return characterDefinitions.map((characterDefinition) =>
+    characterDefinition.id !== playerCharacterId
+      ? characterDefinition
+      : {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            gold,
+          },
+        }
+  );
+}
+
+function createFixedGrainShopMarket(price, goodsId = "rice") {
+  return {
+    shopType: "grain-shop",
+    inventory: [
+      {
+        goodsId,
+        buyPrice: price,
+        sellPrice: Math.max(1, price - 12),
+        rolledBasePrice: price,
+        selectionWeight: 100,
+      },
+    ],
+    lastRefreshedOnDay: 1,
+    refreshAfterDay: 999999,
+  };
+}
+
+function withSeededCityGrainMarkets(state, cityPrices) {
+  return {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      cityMarkets: {
+        ...state.runtime.cityMarkets,
+        ...Object.fromEntries(
+          Object.entries(cityPrices).map(([cityId, price]) => [
+            cityId,
+            {
+              cityId,
+              shops: {
+                "grain-shop": createFixedGrainShopMarket(price),
+              },
+            },
+          ])
+        ),
+      },
+    },
   };
 }
 
@@ -2730,6 +2787,7 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
     houseAccessRefusalRules.some(
       (rule) =>
         rule.id === "rule.zhu_yuanzhang.temple.first_review_stay" &&
+        rule.excludedHouseModuleIds?.includes("grain-shop") === true &&
         rule.excludedHouseModuleIds?.includes("tavern") === true &&
         rule.excludedHouseModuleIds?.includes("market-house") === true
     ),
@@ -8316,7 +8374,7 @@ test("story-stage access keeps leader residence entry visible in monk stage", ()
   );
 });
 
-test("house access refusal still blocks most houses before first review but temporarily allows tavern and market house", () => {
+test("house access refusal still blocks most houses before first review but temporarily allows grain shop tavern and market house", () => {
   const monkState = createMonkStageState();
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
@@ -8364,12 +8422,8 @@ test("house access refusal still blocks most houses before first review but temp
     prototypeHouseAccessRefusalRules
   );
 
-  assert.equal(grainShopAccess.canEnter, false);
-  assert.equal(grainShopAccess.refusal?.speakerCharacterId, "char.player");
-  assert.equal(
-    grainShopAccess.refusal?.text,
-    "既然答应了主持，就先不要离开寺院吧。"
-  );
+  assert.equal(grainShopAccess.canEnter, true);
+  assert.equal(grainShopAccess.refusal, null);
   assert.equal(templeAccess.canEnter, true);
   assert.equal(marketHouseAccess.canEnter, true);
   assert.equal(marketHouseAccess.refusal, null);
@@ -9896,7 +9950,7 @@ test("grain shop trade overlay reads buy and sell price from unified city market
   );
 });
 
-test("grain shop greeting and investigate copy resolve from text entries", () => {
+test("grain shop investigate turns into paid grain intel flow and projects nearby city prices", () => {
   const textEntriesById = {
     "runtime.zhu_yuanzhang.grain_shop.greeting.001": "自定义粮铺招呼一。",
     "runtime.zhu_yuanzhang.grain_shop.greeting.002": "自定义粮铺招呼一。",
@@ -9906,17 +9960,29 @@ test("grain shop greeting and investigate copy resolve from text entries", () =>
     "runtime.zhu_yuanzhang.grain_shop.default.002": "自定义粮铺常规招呼。",
     "runtime.zhu_yuanzhang.grain_shop.default.003": "自定义粮铺常规招呼。",
     "runtime.zhu_yuanzhang.grain_shop.default.004": "自定义粮铺常规招呼。",
-    "runtime.zhu_yuanzhang.grain_market.rumor.001": "自定义粮市传闻。",
-    "runtime.zhu_yuanzhang.grain_market.rumor.002": "自定义粮市传闻。",
-    "runtime.zhu_yuanzhang.grain_market.rumor.003": "自定义粮市传闻。",
-    "runtime.zhu_yuanzhang.grain_market.rumor.004": "自定义粮市传闻。",
-    "runtime.zhu_yuanzhang.grain_market.investigate.high": "自定义粮价看涨。",
-    "runtime.zhu_yuanzhang.grain_market.investigate.low": "自定义粮价走低。",
-    "runtime.zhu_yuanzhang.grain_market.investigate.neutral": "自定义粮价平稳。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.001": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.002": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.003": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.004": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.005": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.001": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.002": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.003": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.004": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.005": "自定义银钱不凑手。",
   };
+  const seededState = withSeededCityGrainMarkets(createBaseState(), {
+    "city.kulan": 96,
+    "city.anfeng": 88,
+    "city.luzhou": 124,
+    "city.huaian": 110,
+    "city.runing": 132,
+    "city.kaifeng": 140,
+    "city.taiping": 91,
+  });
 
   const enterResult = grainShopHouseModule.enter({
-    gameState: createBaseState(),
+    gameState: seededState,
     characterDefinitions: prototypeCharacters,
     houseDefinition: grainShopHouse,
     playerCharacterId,
@@ -9926,30 +9992,237 @@ test("grain shop greeting and investigate copy resolve from text entries", () =>
   assert.equal(enterResult.sessionState?.npcGreeting, "自定义粮铺招呼一。");
   assert.equal(enterResult.sessionState?.npcDefaultLine, "自定义粮铺常规招呼。");
 
-  const investigateResult = grainShopHouseModule.dispatch({
+  const openResult = grainShopHouseModule.dispatch({
     gameState: enterResult.gameState,
     characterDefinitions: enterResult.characterDefinitions,
     houseDefinition: grainShopHouse,
     playerCharacterId,
     sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+    textEntriesById,
+  });
+  const investigateResult = grainShopHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
     request: { type: "action", actionId: "investigate" },
     textEntriesById,
   });
+  const offerViewModel = grainShopHouseModule.selectViewModel({
+    gameState: investigateResult.gameState,
+    characterDefinitions: investigateResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: investigateResult.sessionState,
+  });
 
-  assert.equal(investigateResult.sessionState?.overlay?.type, "alert");
-  const investigatedPrice =
-    enterResult.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.grainPrice];
-  const expectedInvestigateLine =
-    investigatedPrice > 130
-      ? "自定义粮价看涨。"
-      : investigatedPrice < 100
-        ? "自定义粮价走低。"
-        : "自定义粮价平稳。";
-  assert.deepEqual(investigateResult.sessionState?.overlay?.paragraphs, [
-    expectedInvestigateLine,
-    "传闻：自定义粮市传闻。",
-    `当前粮价约为每石 ${investigatedPrice} 文。`,
+  assert.equal(investigateResult.sessionState?.overlay, null);
+  assert.equal(investigateResult.sessionState?.dialoguePhase, "investigation-offer");
+  assert.deepEqual(offerViewModel.dialogue?.textLines, ["自定义情报讨价。"]);
+  assert.deepEqual(
+    offerViewModel.actionContainer?.actions.map((action) => ({
+      id: action.id,
+      label: action.label,
+    })),
+    [
+      { id: "inquire-grain-price", label: "询问价格（100 文）" },
+      { id: "cancel-grain-investigation", label: "返回" },
+    ]
+  );
+  assert.equal(offerViewModel.standbyRoster[0]?.actionId, undefined);
+
+  const reportResult = grainShopHouseModule.dispatch({
+    gameState: investigateResult.gameState,
+    characterDefinitions: investigateResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: investigateResult.sessionState,
+    request: { type: "action", actionId: "inquire-grain-price" },
+    textEntriesById,
+  });
+  const reportViewModel = grainShopHouseModule.selectViewModel({
+    gameState: reportResult.gameState,
+    characterDefinitions: reportResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: reportResult.sessionState,
+  });
+  const reportMarkup = renderGrainShopHouseView(reportViewModel);
+  const playerAfterReport = reportResult.characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === playerCharacterId
+  );
+
+  assert.equal(reportResult.timeAdvanceCost, 1);
+  assert.equal(playerAfterReport?.stats.gold, 20);
+  assert.equal(reportViewModel.overlay?.type, "grain-price-report");
+  assert.match(reportMarkup, /data-house-overlay="grain-price-report"/);
+  if (reportViewModel.overlay?.type !== "grain-price-report") {
+    return;
+  }
+
+  assert.equal(reportViewModel.overlay.title, "米市价");
+  assert.equal(reportViewModel.overlay.confirmLabel, "返回买卖粮食");
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.cityName), [
+    "濠州",
+    "安丰路",
+    "庐州路",
+    "高邮府",
+    "颍州",
+    "汴梁路",
+    "太平路",
   ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.directionLabel), [
+    "—",
+    "西北",
+    "正北",
+    "正东",
+    "西北",
+    "西南",
+    "正北",
+  ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.sellPrice), [
+    84,
+    76,
+    112,
+    98,
+    120,
+    128,
+    79,
+  ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.buyPrice), [
+    96,
+    88,
+    124,
+    110,
+    132,
+    140,
+    91,
+  ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.comparisonLabel), [
+    "基准",
+    "↓ 低 8 文",
+    "↑ 高 28 文",
+    "↑ 高 14 文",
+    "↑ 高 36 文",
+    "↑ 高 44 文",
+    "↓ 低 5 文",
+  ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.priceTone), [
+    "neutral",
+    "low",
+    "high",
+    "high",
+    "high",
+    "high",
+    "low",
+  ]);
+  assert.match(reportMarkup, /米市价/);
+  assert.match(reportMarkup, /城名/);
+  assert.match(reportMarkup, /方位/);
+  assert.match(reportMarkup, /卖价/);
+  assert.match(reportMarkup, /买价/);
+  assert.match(reportMarkup, /对比本城/);
+  assert.match(reportMarkup, /濠州（本城）/);
+});
+
+test("grain shop grain intel refuses politely when player cannot afford the fee", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.grain_shop.greeting.001": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.greeting.002": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.greeting.003": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.greeting.004": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.default.001": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.default.002": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.default.003": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.default.004": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.001": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.002": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.003": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.004": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.005": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.001": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.002": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.003": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.004": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.005": "自定义银钱不凑手。",
+  };
+  const poorCharacters = withPlayerGold(prototypeCharacters, 80);
+  const enterResult = grainShopHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: poorCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const openResult = grainShopHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+    textEntriesById,
+  });
+  const offerResult = grainShopHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "investigate" },
+    textEntriesById,
+  });
+  const refusalResult = grainShopHouseModule.dispatch({
+    gameState: offerResult.gameState,
+    characterDefinitions: offerResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: offerResult.sessionState,
+    request: { type: "action", actionId: "inquire-grain-price" },
+    textEntriesById,
+  });
+  const refusalViewModel = grainShopHouseModule.selectViewModel({
+    gameState: refusalResult.gameState,
+    characterDefinitions: refusalResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: refusalResult.sessionState,
+  });
+  const playerAfterRefusal = refusalResult.characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === playerCharacterId
+  );
+
+  assert.equal(refusalResult.timeAdvanceCost, undefined);
+  assert.equal(playerAfterRefusal?.stats.gold, 80);
+  assert.equal(refusalResult.sessionState?.overlay, null);
+  assert.equal(refusalResult.sessionState?.dialoguePhase, "investigation-report");
+  assert.deepEqual(refusalViewModel.dialogue?.textLines, ["自定义银钱不凑手。"]);
+  assert.equal(refusalViewModel.actionContainer, null);
+
+  const reopenResult = grainShopHouseModule.dispatch({
+    gameState: refusalResult.gameState,
+    characterDefinitions: refusalResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: refusalResult.sessionState,
+    request: { type: "action", actionId: "advance-grain-investigation-report" },
+    textEntriesById,
+  });
+  const reopenViewModel = grainShopHouseModule.selectViewModel({
+    gameState: reopenResult.gameState,
+    characterDefinitions: reopenResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: reopenResult.sessionState,
+  });
+
+  assert.equal(reopenResult.sessionState?.dialoguePhase, "open");
+  assert.equal(
+    reopenViewModel.actionContainer?.actions.some((action) => action.id === "buy"),
+    true
+  );
 });
 
 test("grain market and grain shop content no longer keep core greeting and rumor prose inline", () => {
@@ -14933,6 +15206,10 @@ test("covered settlement path stays on shared runtime ownership", () => {
     type: "action",
     actionId: "investigate",
   });
+  dispatchHouseRuntimeRequest(houseRuntime, {
+    type: "action",
+    actionId: "inquire-grain-price",
+  });
 
   assert.deepEqual(
     interactiveResult.state.core.calendar,
@@ -14943,7 +15220,10 @@ test("covered settlement path stays on shared runtime ownership", () => {
     expectedInteractiveState.world.timeOfDay
   );
   assert.equal(appState.gameState.world.timeOfDay, "afternoon");
-  assert.equal(appState.gameState.ui.houseSession?.state?.overlay?.type, "alert");
+  assert.equal(
+    appState.gameState.ui.houseSession?.state?.overlay?.type,
+    "grain-price-report"
+  );
   assert.match(settlementSource, /effect\.type === "advanceTime"/);
   assert.doesNotMatch(interactiveSource, /runTimeRuntime\(/);
   assert.doesNotMatch(houseRuntimeSource, /advanceGameStateTimeSegments\(/);

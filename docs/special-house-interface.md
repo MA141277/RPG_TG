@@ -402,6 +402,12 @@ Shared overlay unions may grow when a special house needs a richer structured in
 (for example a module-specific trade picker, a rest-days input panel, a quantity confirmation
 panel, or a market trade selector),
 but the data must remain typed and UI-facing.
+If a house needs a scrollable market/intel report instead of a one-shot alert, extend the shared
+overlay union with a structured report variant (for example `grain-price-report`) that carries
+row data, comparison labels, relative-location fields, paired buy/sell prices, and explicit
+confirm/back action ids. The renderer may decide how to scroll or highlight the current city, but
+the report content, button ids, and staged return flow must stay in typed session/view-model data
+rather than DOM-only popup logic.
 Use `quantity-confirm` for reusable numeric submissions where a module needs min/max bounded
 quantity input plus increment/decrement actions. The temporary input stays in the module session;
 confirmation performs the persistent mutation through the module lifecycle.

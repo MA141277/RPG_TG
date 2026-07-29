@@ -473,4 +473,15 @@
   "runtime.zhu_yuanzhang.grain_shop.sold_out.title": "今日无米可买",
   "runtime.zhu_yuanzhang.grain_shop.sold_out.001": "粮铺掌柜摊了摊手，“濠州这一阵闹得太凶，店里剩下的几袋米早被熟客和军中先订走了。”",
   "runtime.zhu_yuanzhang.grain_shop.sold_out.002": "“你若真要替寺里寻粮，别在城里耗着，还是往外地再碰碰运气吧。”"
+,
+  "runtime.zhu_yuanzhang.grain_shop.investigation.offer.001": "客官面生得很呐……这年头兵荒马乱，粮价一日三变。老汉我倒是知道些门道，不过嘛，这消息可不是白来的。若肯留下 {fee} 文茶钱，我便与你细讲。",
+  "runtime.zhu_yuanzhang.grain_shop.investigation.offer.002": "嘿，看你也是走南闯北的人。近来几城粮价，老汉心里有本账。你若舍得 {fee} 文润润嘴皮，我就把门路说给你听。",
+  "runtime.zhu_yuanzhang.grain_shop.investigation.offer.003": "乱世里头，粮食就是命根子。老汉这里攥着几城米价，比银子还紧要。客官若有心，拿 {fee} 文出来，我保你听完不亏。",
+  "runtime.zhu_yuanzhang.grain_shop.investigation.offer.004": "哎哟客官，光看牌价可不成。哪座城压价，哪座城缺粮，老汉都摸得明白。只是这张嘴啊，得先见着 {fee} 文，才肯张开。",
+  "runtime.zhu_yuanzhang.grain_shop.investigation.offer.005": "这世道，消息有时比粮还金贵。你若信得过老汉，添上 {fee} 文，附近几城的粮情，我一五一十都说与你听。",
+  "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.001": "客官莫怪，不是老汉拿乔。行情册子向来收钱开口，你这手头还差些，等银钱凑齐了再来问吧。",
+  "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.002": "老汉做的是小本买卖，消息也得算账。眼下这 {fee} 文还没凑够，我不好坏了规矩，只能先请客官改日再问。",
+  "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.003": "客官有心问路，老汉明白。只是这份粮情得收 {fee} 文，如今钱数不齐，我也只得先把话收住。",
+  "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.004": "请客官包涵，乱年头里连消息都得折本计价。你若眼下银钱紧，我便不多说了，等宽裕些再来。",
+  "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.005": "买卖有买卖的规矩，行情也有行情的价。如今还差着 {fee} 文的数目，老汉只能先向你陪个不是。"
 }

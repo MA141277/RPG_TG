@@ -7,6 +7,7 @@ export function createInitialGrainShopSessionState(
   return {
     npcGreeting,
     npcDefaultLine,
+    dialogueLines: npcGreeting.length > 0 ? [npcGreeting] : [],
     dialoguePhase: "greeting",
     overlay: null,
   };

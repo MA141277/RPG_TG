@@ -2,6 +2,13 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Grain Shop Paid Grain Intel
+
+- Grain shop `调查` is now a typed two-step house flow: the owner first offers paid intel, insufficient funds resolve through a dialogue-only report state, and successful payment opens a structured `grain-price-report` overlay instead of an ad hoc alert branch.
+- Added reusable `SettlementGrainIntelService` plus `grain-intel` settlement effect wiring, so grain-price intel resolves through module-owned typed mutations/effects and shared session/overlay contracts rather than `src/main.ts` house-specific logic.
+- Default runtime content now exposes `maps`, allowing settlement-owned grain intel to pick nearby cities from configured neighbors or map-node distance and project the resulting city-price rows through the shared grain shop view model and renderer.
+- `grain-price-report` now renders as a market table with `城名 / 方位 / 卖价 / 买价 / 对比本城`; current-city rows stay pinned at the top as the baseline, direction labels come from map-node coordinates, and comparison tone uses typed high/low/neutral fields rather than renderer-local heuristics.
+
 ## 2026-07-29 Tavern Short Claim Locking
 
 - Tavern short `pendingIncomingCard` can now carry typed `lockedCardIds` during post-claim discard resolution, so the domain runtime explicitly marks the claimed public discard plus the consumed hand cards as temporarily non-discardable without breaking the fixed `5`-card hand contract.

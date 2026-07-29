@@ -485,6 +485,24 @@ export type HouseOverlayViewModel =
       helperLines: string[];
     }
   | {
+      type: "grain-price-report";
+      title: string;
+      subtitle: string;
+      rows: Array<{
+        cityId: string;
+        cityName: string;
+        directionLabel: string;
+        grainUnit: string;
+        sellPrice: number;
+        buyPrice: number;
+        comparisonLabel: string;
+        priceTone: "low" | "high" | "neutral";
+        isCurrentCity: boolean;
+      }>;
+      confirmActionId: string;
+      confirmLabel: string;
+    }
+  | {
       type: "minigame";
       title: string;
       secondsLeft: number;

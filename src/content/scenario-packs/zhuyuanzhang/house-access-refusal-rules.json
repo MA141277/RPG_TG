@@ -8,6 +8,7 @@
     "excludedHouseModuleIds": [
       "temple-house",
       "keep-house",
+      "grain-shop",
       "tavern",
       "market-house"
     ],
