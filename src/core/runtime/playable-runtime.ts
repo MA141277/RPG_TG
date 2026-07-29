@@ -810,6 +810,9 @@ export function runPlayableRuntime(input: {
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.characterStatusById == null
+          ? {}
+          : { characterStatusById: completion.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(
@@ -838,6 +841,9 @@ export function runPlayableRuntime(input: {
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.characterStatusById == null
+          ? {}
+          : { characterStatusById: completion.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(

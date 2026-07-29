@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Medicine Compounding Runtime Status Patch Slice
+
+### Added
+- medicine-compounding completion 现在会把调药技能与体力变化生成为 `characterStatusById`，并通过 `playable-runtime` 返回给统一 runtime commit 链路。
+- 新增 `tests/medicine-compounding-runtime-status.test.cjs`，覆盖 medicine-compounding 结算后返回角色 status patch。
+
+### Changed
+- medicine house 金币与调药技能 mutation 改为复用 `mutateCharacterNumericProperty()`，并在 outcome helper / playable settle 中合并角色 status patch。
+
+### Impact
+- 这片只迁移 medicine-compounding application/playable runtime 结算链路，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 medicine-compounding completion 可通过统一 state-sync commit 写回角色状态，避免调用方只依赖直接替换后的 characterDefinitions。
+
 ## 2026-07-29 Grain Accounting Runtime Status Patch Slice
 
 ### Added

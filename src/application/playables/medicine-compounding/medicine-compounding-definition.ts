@@ -1,4 +1,8 @@
 import type { CharacterDefinition } from "../../../domain/character";
+import {
+  mergeCharacterStatusMaps,
+  type CharacterStatusById,
+} from "../../../domain/character-status";
 import type { MedicineHouseActionOutcome } from "../../../domain/medicine-house";
 import type { MedicineHouseSessionState } from "../../../domain/house-modules/medicine-house-session";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
@@ -162,6 +166,7 @@ export function tickMedicineCompoundingPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 } {
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
@@ -213,6 +218,7 @@ export function selectMedicineCompoundingHerbPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 } {
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
@@ -258,6 +264,7 @@ export function settleMedicineCompoundingPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 } {
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
@@ -310,6 +317,10 @@ export function settleMedicineCompoundingPlayable(input: {
     mutation.characterDefinitions,
     input.playerCharacterId
   );
+  const characterStatusById = mergeCharacterStatusMaps(
+    mutation.characterStatusById ?? {},
+    staminaMutation.characterStatusById ?? {}
+  );
   const rewardLines = [
     ...formatOutcomeSummary(outcome),
     `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
@@ -350,6 +361,7 @@ export function settleMedicineCompoundingPlayable(input: {
       },
     },
     characterDefinitions: staminaMutation.characterDefinitions,
+    characterStatusById,
   };
 }
 
