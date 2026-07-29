@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Story Settlement Continuation Helper Slice
+
+### Added
+- 新增 `application/story/story-settlement-continuation`，集中承接 story settlement event 的 person/city/building target 应用逻辑。
+- `story-runtime` 改为复用该 helper，避免后续 event/dialogue/playable continuation 路径复制 settlement 应用代码。
+- 新增 `tests/story-settlement-continuation.test.cjs`，覆盖 helper 对角色、城市、建筑三类目标的 settlement 应用。
+
+### Impact
+- 这片只抽取 application story runtime helper，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续迁 event/dialogue runtime completion 时可复用该 helper，而不是把 settlement 兼容逻辑散落到各调用方。
+
 ## 2026-07-29 Story Settlement World Target Continuation Slice
 
 ### Added
