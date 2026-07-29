@@ -15,6 +15,10 @@ export type RuntimeTaskAction = TaskAction | {
   taskId: string;
 };
 
+export type RuntimeTaskInput =
+  | RuntimeTaskAction
+  | RuntimeTaskSignal;
+
 export type RuntimeInteractiveSignal =
   | { type: "reenter-house"; houseId: string }
   | { type: "none" };
@@ -28,6 +32,10 @@ export type RuntimeResult = {
   state: RuntimeState;
   effects: Effect[];
   characterDefinitions?: unknown;
+  characterStatusById?: unknown;
+  cityStatusById?: unknown;
+  buildingStatusById?: unknown;
+  access?: unknown;
   navigation?: NavigationTarget | null;
   scene?:
     | {
@@ -35,9 +43,13 @@ export type RuntimeResult = {
         currentNodeId?: string | null;
       }
     | null;
+  taskInputs?: RuntimeTaskInput[];
   taskActions?: RuntimeTaskAction[];
   taskSignals?: RuntimeTaskSignal[];
   taskUpdates?: TaskUpdate[];
+  settlementInstances?: unknown[];
+  settlement?: unknown;
+  followUp?: RuntimeInteractiveSignal | null;
   outcome?: RuntimeFollowUpOutcome | null;
   interactive?: RuntimeInteractiveSignal | null;
 };

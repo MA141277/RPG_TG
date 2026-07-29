@@ -88,6 +88,24 @@ export type CharacterFunction = {
 };
 
 export type CharacterStats = Record<CharacterStatKey, number>;
+export type CharacterAttributeGroup = {
+  key: string;
+  keyName: string;
+  order: number;
+  itemKeys: string[];
+};
+export type CharacterAttributeMapping = {
+  key: string;
+  keyName: string;
+  type: "string" | "number" | "boolean" | "enum";
+  semanticKey?: string;
+  options?: string[];
+};
+export type CharacterAttributeValue = {
+  key: string;
+  value: string | number | boolean;
+};
+export type CharacterCustomProperties = Record<string, string | number | boolean>;
 export type CharacterPersonType = "角色" | "NPC";
 
 export type CharacterDefinition = {
@@ -120,4 +138,8 @@ export type CharacterDefinition = {
   onTalkSceneId?: SceneId;
   skills?: Partial<Record<SkillKey, number>>;
   teachableSkillKeys?: SkillKey[];
+  attributeGroups?: CharacterAttributeGroup[];
+  attributeMappings?: CharacterAttributeMapping[];
+  attributeValues?: CharacterAttributeValue[];
+  customProperties?: CharacterCustomProperties;
 };

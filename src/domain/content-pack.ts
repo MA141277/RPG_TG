@@ -13,6 +13,14 @@ import type {
 } from "./historical-character";
 import type { HouseDefinition, HouseAccessRefusalRule } from "./house";
 import type { MapDefinition } from "./map";
+import type { RuntimeDialogueDefinition } from "./dialogue";
+import type { LocationAccessDefinition } from "./location-access";
+import type { MenuInstanceDefinition, MenuResourceDefinition } from "./menu";
+import type { FlowPlayableDefinition } from "./playables/flow";
+import type {
+  PlayableDefinition,
+  PlayableIntegrationDefinition,
+} from "../core/contracts/playable-runtime";
 import type { UiAssetCatalog } from "./ui/asset-catalog";
 import type { ScreenLayoutPreset } from "./ui/screen-layout";
 import type { ScreenSchema } from "./ui/screen-schema";
@@ -40,6 +48,19 @@ export type ContentPackDefinition = {
   valuables?: ValuableItemDefinition[];
   cityNpcPools?: CityNpcPoolDefinition[];
   houseAccessRefusalRules?: HouseAccessRefusalRule[];
+  locationAccess?: LocationAccessDefinition[];
+  menuResources?: MenuResourceDefinition[];
+  menuInstances?: MenuInstanceDefinition[];
+  dialogues?: RuntimeDialogueDefinition[];
+  playables?: PlayableDefinition[];
+  playableIntegrations?: PlayableIntegrationDefinition[];
+  flows?: FlowPlayableDefinition[];
+  eventBindings?: unknown[];
+  settlements?: unknown[];
+  settlementContents?: unknown[];
+  progressTracks?: unknown[];
+  progressTrackBindings?: unknown[];
+  houseModuleDefaults?: Record<string, unknown>;
   cityPortraits?: Record<string, string>;
   historicalCharacterIdByCharacterId?: Record<string, string>;
   historicalCharacters?: HistoricalCharacterRecord[];

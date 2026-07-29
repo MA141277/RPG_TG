@@ -5,7 +5,10 @@ import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import { runActivity } from "../activity/activity-runner";
 import { applyEffects } from "../effects/effect-applier";
-import { startEvent } from "../events/event-runner";
+import {
+  continueToEvent,
+  createEventContinuationTracker,
+} from "../events/event-continuation";
 import { runStoryCallback } from "../story/story-callbacks";
 
 export type SceneRunnerContext = {
@@ -28,15 +31,38 @@ export function runSceneUntilPause(
 ): SceneStepResult {
   let nextState = state;
   let nextCharacterDefinitions = context.characterDefinitions;
+  let continuationVisitedEventIds = createEventContinuationTracker([
+    state.scene.activeEventId,
+  ]);
 
   while (nextState.scene.activeSceneId != null) {
     const activeScene = context.sceneDefinitionsById[nextState.scene.activeSceneId];
     if (activeScene == null) {
+      const continuedState = continueSceneEvent(
+        nextState,
+        context,
+        continuationVisitedEventIds
+      );
+      if (continuedState != null) {
+        nextState = continuedState.state;
+        continuationVisitedEventIds = continuedState.visitedEventIds;
+        continue;
+      }
       return finishScene(nextState, nextCharacterDefinitions);
     }
 
     const currentAction = activeScene.actions[nextState.scene.cursor] ?? null;
     if (currentAction == null) {
+      const continuedState = continueSceneEvent(
+        nextState,
+        context,
+        continuationVisitedEventIds
+      );
+      if (continuedState != null) {
+        nextState = continuedState.state;
+        continuationVisitedEventIds = continuedState.visitedEventIds;
+        continue;
+      }
       return finishScene(nextState, nextCharacterDefinitions);
     }
 
@@ -97,9 +123,18 @@ export function runSceneUntilPause(
     }
 
     if (currentAction.type === "start-event") {
-      const targetEvent = context.eventDefinitionsById[currentAction.eventId];
+      const continuedState = continueToEvent({
+        state: nextState,
+        eventDefinitionsById: context.eventDefinitionsById,
+        sourceEventId: nextState.scene.activeEventId,
+        targetEventId: currentAction.eventId,
+        visitedEventIds: continuationVisitedEventIds,
+      });
       nextState =
-        targetEvent == null ? incrementSceneCursor(nextState) : startEvent(nextState, targetEvent);
+        continuedState == null ? incrementSceneCursor(nextState) : continuedState.state;
+      continuationVisitedEventIds =
+        continuedState?.visitedEventIds ??
+        createEventContinuationTracker([nextState.scene.activeEventId]);
       continue;
     }
 
@@ -179,4 +214,23 @@ function finishScene(
     characterDefinitions,
     currentAction: null,
   };
+}
+
+function continueSceneEvent(
+  state: GameState,
+  context: SceneRunnerContext,
+  visitedEventIds: Iterable<string>
+) {
+  const activeEventId = state.scene.activeEventId;
+  const nextEventId =
+    activeEventId == null
+      ? undefined
+      : context.eventDefinitionsById[activeEventId]?.nextEventId;
+  return continueToEvent({
+    state,
+    eventDefinitionsById: context.eventDefinitionsById,
+    sourceEventId: activeEventId,
+    targetEventId: nextEventId,
+    visitedEventIds,
+  });
 }

@@ -1,0 +1,345 @@
+[
+  {
+    "id": "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.leader_residence",
+    "targetFamily": "building",
+    "targetId": "house.template.leader_residence",
+    "conditionExpression": {
+      "type": "not",
+      "condition": {
+        "type": "all",
+        "conditions": [
+          {
+            "type": "compare",
+            "left": {
+              "type": "literal",
+              "value": [
+                "huangjue-temple"
+              ]
+            },
+            "operator": "includes",
+            "right": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "zhuYuanzhangStage"
+            }
+          },
+          {
+            "type": "compare",
+            "left": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "flag:flag.story.zhu_yuanzhang.first_temple_review.completed"
+            },
+            "operator": "equals",
+            "right": {
+              "type": "literal",
+              "value": false
+            }
+          }
+        ]
+      }
+    },
+    "blockedTitle": "暂且留在寺中",
+    "blockedMessage": "既然答应了主持，就先不要离开寺院吧。",
+    "blockedSpeakerId": "player",
+    "guidance": "知道了"
+  },
+  {
+    "id": "location-access.zhu_yuanzhang.temple.keep_closed.house.kulan.keep",
+    "targetFamily": "building",
+    "targetId": "house.template.keep",
+    "conditionExpression": {
+      "type": "not",
+      "condition": {
+        "type": "compare",
+        "left": {
+          "type": "literal",
+          "value": [
+            "huangjue-temple",
+            "huangjue-begging-journey"
+          ]
+        },
+        "operator": "includes",
+        "right": {
+          "type": "field",
+          "subject": "story",
+          "fieldId": "zhuYuanzhangStage"
+        }
+      }
+    },
+    "blockedTitle": "帅府闭门",
+    "blockedMessage": "军机要出，请阁下回避。",
+    "blockedSpeakerId": "char.kulan_soldier",
+    "guidance": "离开"
+  },
+  {
+    "id": "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.tea_house",
+    "targetFamily": "building",
+    "targetId": "house.template.tea_house",
+    "conditionExpression": {
+      "type": "not",
+      "condition": {
+        "type": "all",
+        "conditions": [
+          {
+            "type": "compare",
+            "left": {
+              "type": "literal",
+              "value": [
+                "huangjue-temple"
+              ]
+            },
+            "operator": "includes",
+            "right": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "zhuYuanzhangStage"
+            }
+          },
+          {
+            "type": "compare",
+            "left": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "flag:flag.story.zhu_yuanzhang.first_temple_review.completed"
+            },
+            "operator": "equals",
+            "right": {
+              "type": "literal",
+              "value": false
+            }
+          }
+        ]
+      }
+    },
+    "blockedTitle": "暂且留在寺中",
+    "blockedMessage": "既然答应了主持，就先不要离开寺院吧。",
+    "blockedSpeakerId": "player",
+    "guidance": "知道了"
+  },
+  {
+    "id": "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.market",
+    "targetFamily": "building",
+    "targetId": "house.template.market",
+    "conditionExpression": {
+      "type": "not",
+      "condition": {
+        "type": "all",
+        "conditions": [
+          {
+            "type": "compare",
+            "left": {
+              "type": "literal",
+              "value": [
+                "huangjue-temple"
+              ]
+            },
+            "operator": "includes",
+            "right": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "zhuYuanzhangStage"
+            }
+          },
+          {
+            "type": "compare",
+            "left": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "flag:flag.story.zhu_yuanzhang.first_temple_review.completed"
+            },
+            "operator": "equals",
+            "right": {
+              "type": "literal",
+              "value": false
+            }
+          }
+        ]
+      }
+    },
+    "blockedTitle": "暂且留在寺中",
+    "blockedMessage": "既然答应了主持，就先不要离开寺院吧。",
+    "blockedSpeakerId": "player",
+    "guidance": "知道了"
+  },
+  {
+    "id": "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.grain_shop",
+    "targetFamily": "building",
+    "targetId": "house.template.grain_shop",
+    "conditionExpression": {
+      "type": "not",
+      "condition": {
+        "type": "all",
+        "conditions": [
+          {
+            "type": "compare",
+            "left": {
+              "type": "literal",
+              "value": [
+                "huangjue-temple"
+              ]
+            },
+            "operator": "includes",
+            "right": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "zhuYuanzhangStage"
+            }
+          },
+          {
+            "type": "compare",
+            "left": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "flag:flag.story.zhu_yuanzhang.first_temple_review.completed"
+            },
+            "operator": "equals",
+            "right": {
+              "type": "literal",
+              "value": false
+            }
+          }
+        ]
+      }
+    },
+    "blockedTitle": "暂且留在寺中",
+    "blockedMessage": "既然答应了主持，就先不要离开寺院吧。",
+    "blockedSpeakerId": "player",
+    "guidance": "知道了"
+  },
+  {
+    "id": "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.medicine_house",
+    "targetFamily": "building",
+    "targetId": "house.template.medicine_house",
+    "conditionExpression": {
+      "type": "not",
+      "condition": {
+        "type": "all",
+        "conditions": [
+          {
+            "type": "compare",
+            "left": {
+              "type": "literal",
+              "value": [
+                "huangjue-temple"
+              ]
+            },
+            "operator": "includes",
+            "right": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "zhuYuanzhangStage"
+            }
+          },
+          {
+            "type": "compare",
+            "left": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "flag:flag.story.zhu_yuanzhang.first_temple_review.completed"
+            },
+            "operator": "equals",
+            "right": {
+              "type": "literal",
+              "value": false
+            }
+          }
+        ]
+      }
+    },
+    "blockedTitle": "暂且留在寺中",
+    "blockedMessage": "既然答应了主持，就先不要离开寺院吧。",
+    "blockedSpeakerId": "player",
+    "guidance": "知道了"
+  },
+  {
+    "id": "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.inn",
+    "targetFamily": "building",
+    "targetId": "house.template.inn",
+    "conditionExpression": {
+      "type": "not",
+      "condition": {
+        "type": "all",
+        "conditions": [
+          {
+            "type": "compare",
+            "left": {
+              "type": "literal",
+              "value": [
+                "huangjue-temple"
+              ]
+            },
+            "operator": "includes",
+            "right": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "zhuYuanzhangStage"
+            }
+          },
+          {
+            "type": "compare",
+            "left": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "flag:flag.story.zhu_yuanzhang.first_temple_review.completed"
+            },
+            "operator": "equals",
+            "right": {
+              "type": "literal",
+              "value": false
+            }
+          }
+        ]
+      }
+    },
+    "blockedTitle": "暂且留在寺中",
+    "blockedMessage": "既然答应了主持，就先不要离开寺院吧。",
+    "blockedSpeakerId": "player",
+    "guidance": "知道了"
+  },
+  {
+    "id": "location-access.zhu_yuanzhang.temple.first_review_stay.home.template",
+    "targetFamily": "building",
+    "targetId": "home.template",
+    "conditionExpression": {
+      "type": "not",
+      "condition": {
+        "type": "all",
+        "conditions": [
+          {
+            "type": "compare",
+            "left": {
+              "type": "literal",
+              "value": [
+                "huangjue-temple"
+              ]
+            },
+            "operator": "includes",
+            "right": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "zhuYuanzhangStage"
+            }
+          },
+          {
+            "type": "compare",
+            "left": {
+              "type": "field",
+              "subject": "story",
+              "fieldId": "flag:flag.story.zhu_yuanzhang.first_temple_review.completed"
+            },
+            "operator": "equals",
+            "right": {
+              "type": "literal",
+              "value": false
+            }
+          }
+        ]
+      }
+    },
+    "blockedTitle": "暂且留在寺中",
+    "blockedMessage": "既然答应了主持，就先不要离开寺院吧。",
+    "blockedSpeakerId": "player",
+    "guidance": "知道了"
+  }
+]

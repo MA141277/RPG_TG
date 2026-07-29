@@ -1,0 +1,529 @@
+{
+  "home-house": {
+    "homeHouseIntroLines": [],
+    "homeHouseMainLines": [],
+    "homeHouseRestMenuLines": [],
+    "homeHouseRecoveryTuning": {
+      "hpBase": 10,
+      "hpRatio": 0.15,
+      "fatigueBase": 12,
+      "fatigueRatio": 0.18,
+      "customRestMaxDays": 99
+    }
+  },
+  "keep-house": {
+    "keepHouseDefaultStrategy": {
+      "titleTextId": "runtime.zhu_yuanzhang.keep.review.strategy.title",
+      "lineTextIds": [
+        "runtime.zhu_yuanzhang.keep.review.strategy.001",
+        "runtime.zhu_yuanzhang.keep.review.strategy.002",
+        "runtime.zhu_yuanzhang.keep.review.strategy.003"
+      ]
+    },
+    "keepHouseDefaultContributions": [
+      {
+        "characterId": "char.kulan_tang_he",
+        "contribution": 32
+      },
+      {
+        "characterId": "char.kulan_xu_da",
+        "contribution": 27
+      },
+      {
+        "characterId": "char.player",
+        "contribution": 11
+      },
+      {
+        "characterId": "char.kulan_chang_yuchun",
+        "contribution": 9
+      },
+      {
+        "characterId": "char.kulan_guard",
+        "contribution": 6
+      }
+    ]
+  },
+  "market-house": {
+    "marketHouseBossOpenTextIds": [
+      "runtime.zhu_yuanzhang.market_house.boss_open.001",
+      "runtime.zhu_yuanzhang.market_house.boss_open.002"
+    ],
+    "marketHouseFixedBoss": {
+      "id": "shopkeeper_qian",
+      "name": "钱掌柜",
+      "title": "货栈老板",
+      "personality": "精明",
+      "specialty": "交易",
+      "favorability": 0,
+      "isFixedHost": true
+    },
+    "marketHouseGeneralRumorTextIds": [
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.general.001",
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.general.002",
+      "runtime.zhu_yuanzhang.market_house.investigate.rumor.general.003"
+    ],
+    "marketHouseGreetingTextIds": [
+      "runtime.zhu_yuanzhang.market_house.greeting.001",
+      "runtime.zhu_yuanzhang.market_house.greeting.002"
+    ],
+    "marketHouseGuestOpenTextIdsByActorId": {
+      "horse_merchant": [
+        "runtime.zhu_yuanzhang.market_house.guest_open.horse_merchant.001",
+        "runtime.zhu_yuanzhang.market_house.guest_open.horse_merchant.002"
+      ],
+      "medicine_merchant": [
+        "runtime.zhu_yuanzhang.market_house.guest_open.medicine_merchant.001",
+        "runtime.zhu_yuanzhang.market_house.guest_open.medicine_merchant.002"
+      ],
+      "silk_merchant": [
+        "runtime.zhu_yuanzhang.market_house.guest_open.silk_merchant.001",
+        "runtime.zhu_yuanzhang.market_house.guest_open.silk_merchant.002"
+      ],
+      "traveler_merchant": [
+        "runtime.zhu_yuanzhang.market_house.guest_open.traveler_merchant.001",
+        "runtime.zhu_yuanzhang.market_house.guest_open.traveler_merchant.002"
+      ]
+    },
+    "marketHouseInvestigationSpecialtyTextIdByActorId": {
+      "shopkeeper_qian": "runtime.zhu_yuanzhang.market_house.investigate.specialty.trade",
+      "horse_merchant": "runtime.zhu_yuanzhang.market_house.investigate.specialty.painting",
+      "medicine_merchant": "runtime.zhu_yuanzhang.market_house.investigate.specialty.medicine",
+      "silk_merchant": "runtime.zhu_yuanzhang.market_house.investigate.specialty.silk",
+      "traveler_merchant": "runtime.zhu_yuanzhang.market_house.investigate.specialty.travel"
+    },
+    "marketHouseRandomNpcPool": [
+      {
+        "id": "horse_merchant",
+        "name": "韩书商",
+        "title": "书画货贩",
+        "personality": "豪爽",
+        "specialty": "书画",
+        "favorability": 0,
+        "isFixedHost": false
+      },
+      {
+        "id": "medicine_merchant",
+        "name": "孙药商",
+        "title": "药材商",
+        "personality": "谨慎",
+        "specialty": "药材",
+        "favorability": 0,
+        "isFixedHost": false
+      },
+      {
+        "id": "silk_merchant",
+        "name": "沈老板",
+        "title": "丝商",
+        "personality": "圆滑",
+        "specialty": "丝绸",
+        "favorability": 0,
+        "isFixedHost": false
+      },
+      {
+        "id": "traveler_merchant",
+        "name": "罗行商",
+        "title": "行脚商人",
+        "personality": "健谈",
+        "specialty": "外地见闻",
+        "favorability": 0,
+        "isFixedHost": false
+      }
+    ],
+    "marketHouseRumorTextIdsByCategory": {
+      "grain": [
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.grain.001",
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.grain.002"
+      ],
+      "medicine": [
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.medicine.001",
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.medicine.002"
+      ],
+      "silk": [
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.silk.001",
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.silk.002"
+      ],
+      "arms": [
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.arms.001",
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.arms.002"
+      ],
+      "horses": [
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.horses.001",
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.horses.002"
+      ],
+      "special": [
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.special.001",
+        "runtime.zhu_yuanzhang.market_house.investigate.rumor.special.002"
+      ]
+    },
+    "marketHouseSmallTalkTextIds": [
+      "runtime.zhu_yuanzhang.market_house.small_talk.001",
+      "runtime.zhu_yuanzhang.market_house.small_talk.002",
+      "runtime.zhu_yuanzhang.market_house.small_talk.003",
+      "runtime.zhu_yuanzhang.market_house.small_talk.004"
+    ]
+  },
+  "tavern": {
+    "tavernBossGreetingTextIds": [
+      "runtime.zhu_yuanzhang.tavern.greeting.001"
+    ],
+    "tavernBossOpenTextIds": [
+      "runtime.zhu_yuanzhang.tavern.open.001",
+      "runtime.zhu_yuanzhang.tavern.open.002"
+    ],
+    "tavernBossProfile": {
+      "actorId": "char.kulan_innkeeper",
+      "name": "酒馆老板",
+      "title": "酒馆老板",
+      "specialty": "门路"
+    },
+    "tavernDefaultWager": 100,
+    "tavernDrinkPrice": 100,
+    "tavernWagerStep": 50,
+    "tavernWorkOffers": [
+      {
+        "id": "offer.kulan.wash_dishes",
+        "type": "dishwashing",
+        "title": "刷盘子",
+        "description": "到后厨帮忙清洗碗碟，手脚利落就能多拿些工钱。",
+        "rewardText": "最高 70 文",
+        "maxRewardGold": 70,
+        "canStartImmediately": true
+      },
+      {
+        "id": "offer.kulan.supply_run",
+        "type": "random-event",
+        "title": "跑腿采买",
+        "description": "替酒馆跑一趟采买，把短缺的酒食带回来。",
+        "rewardText": "事件接口预留",
+        "maxRewardGold": 80
+      },
+      {
+        "id": "offer.kulan.caravan_escort",
+        "type": "random-event",
+        "title": "护送商队",
+        "description": "替熟客护送一段短程商队，后续可接入随机事件和战斗判定。",
+        "rewardText": "事件接口预留",
+        "maxRewardGold": 120,
+        "minFame": 45
+      }
+    ]
+  },
+  "tea-house": {
+    "teaHouseBossDialogueTextIds": [
+      "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.001",
+      "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.002",
+      "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.003",
+      "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.004",
+      "runtime.zhu_yuanzhang.tea_house.dialogue.fixed.005"
+    ],
+    "teaHouseBossGreetingTextIds": [
+      "runtime.zhu_yuanzhang.tea_house.greeting.fixed.001"
+    ],
+    "teaHouseBossIntelTextIds": [
+      "runtime.zhu_yuanzhang.tea_house.intel.fixed.001",
+      "runtime.zhu_yuanzhang.tea_house.intel.fixed.002",
+      "runtime.zhu_yuanzhang.tea_house.intel.fixed.003",
+      "runtime.zhu_yuanzhang.tea_house.intel.fixed.004",
+      "runtime.zhu_yuanzhang.tea_house.intel.fixed.005",
+      "runtime.zhu_yuanzhang.tea_house.intel.fixed.006"
+    ],
+    "teaHouseBossOpenTextIds": [
+      "runtime.zhu_yuanzhang.tea_house.open.fixed.001"
+    ],
+    "teaHouseBossProfile": {
+      "actorId": "char.kulan_tea_boss",
+      "name": "柳四",
+      "title": "茶馆老板",
+      "personality": "圆滑",
+      "specialty": "情报",
+      "favorability": 0
+    },
+    "teaHouseInitialSpirit": 10,
+    "teaHouseLowIntelChance": 0.25,
+    "teaHousePersonalityTopicWeights": {
+      "精明": {
+        "利": 40,
+        "义": 15,
+        "名": 15,
+        "情": 15,
+        "势": 15
+      },
+      "傲气": {
+        "利": 15,
+        "义": 15,
+        "名": 40,
+        "情": 15,
+        "势": 15
+      },
+      "豪爽": {
+        "利": 15,
+        "义": 15,
+        "名": 15,
+        "情": 40,
+        "势": 15
+      },
+      "警惕": {
+        "利": 15,
+        "义": 15,
+        "名": 15,
+        "情": 15,
+        "势": 40
+      },
+      "圆滑": {
+        "利": 20,
+        "义": 20,
+        "名": 20,
+        "情": 20,
+        "势": 20
+      }
+    },
+    "teaHouseTeaCost": 20,
+    "teaHouseTopicCounterMap": {
+      "利": "情",
+      "情": "名",
+      "名": "势",
+      "势": "义",
+      "义": "利"
+    },
+    "teaHouseTurnTimeLimitSec": 5
+  },
+  "medicine-house": {
+    "medicineHouseAilmentTargets": [
+      {
+        "ailmentId": "wind_cold",
+        "ailmentName": "风寒",
+        "coldRequired": 2,
+        "healRequired": 5,
+        "maxPoison": 1
+      },
+      {
+        "ailmentId": "inner_heat",
+        "ailmentName": "内热",
+        "coldRequired": -2,
+        "healRequired": 4,
+        "maxPoison": 1
+      },
+      {
+        "ailmentId": "trauma",
+        "ailmentName": "外伤",
+        "coldRequired": 0,
+        "healRequired": 6,
+        "maxPoison": 0
+      },
+      {
+        "ailmentId": "damp_toxin",
+        "ailmentName": "湿毒",
+        "coldRequired": 1,
+        "healRequired": 5,
+        "maxPoison": 2
+      },
+      {
+        "ailmentId": "miasma",
+        "ailmentName": "瘴气",
+        "coldRequired": 2,
+        "healRequired": 7,
+        "maxPoison": 1
+      }
+    ],
+    "medicineHouseCompoundingBaseDurationSec": 45,
+    "medicineHouseCompoundingBaseTurns": 5,
+    "medicineHouseCompoundingGradeRewards": {
+      "S": {
+        "medicine": 3,
+        "relationship": 3
+      },
+      "A": {
+        "medicine": 2,
+        "relationship": 2
+      },
+      "B": {
+        "medicine": 1,
+        "relationship": 1
+      },
+      "C": {
+        "medicine": 0,
+        "relationship": 1
+      },
+      "D": {
+        "medicine": 0,
+        "relationship": -1
+      }
+    },
+    "medicineHouseDialogueTextIds": [
+      "runtime.zhu_yuanzhang.medicine_house.dialogue.001",
+      "runtime.zhu_yuanzhang.medicine_house.dialogue.002",
+      "runtime.zhu_yuanzhang.medicine_house.dialogue.003",
+      "runtime.zhu_yuanzhang.medicine_house.dialogue.004"
+    ],
+    "medicineHouseDoctorProfile": {
+      "actorId": "char.kulan_medicine_doctor",
+      "name": "陈郎中",
+      "title": "坐堂医师",
+      "personality": "沉稳",
+      "specialty": "医术",
+      "favorability": 0
+    },
+    "medicineHouseGreetingTextIds": [
+      "runtime.zhu_yuanzhang.medicine_house.greeting.001",
+      "runtime.zhu_yuanzhang.medicine_house.greeting.002"
+    ],
+    "medicineHouseHealService": {
+      "cost": 50,
+      "fatigueRecovery": 30
+    },
+    "medicineHouseHerbCatalog": [
+      {
+        "id": "herb_ai_cao",
+        "name": "艾草",
+        "cold": 0,
+        "heat": 2,
+        "poison": 0,
+        "heal": 1
+      },
+      {
+        "id": "herb_huang_lian",
+        "name": "黄连",
+        "cold": 3,
+        "heat": 0,
+        "poison": 1,
+        "heal": 2
+      },
+      {
+        "id": "herb_sheng_jiang",
+        "name": "生姜",
+        "cold": 0,
+        "heat": 2,
+        "poison": 0,
+        "heal": 1
+      },
+      {
+        "id": "herb_bo_he",
+        "name": "薄荷",
+        "cold": 2,
+        "heat": 0,
+        "poison": 0,
+        "heal": 1
+      },
+      {
+        "id": "herb_dang_gui",
+        "name": "当归",
+        "cold": 0,
+        "heat": 1,
+        "poison": 0,
+        "heal": 3
+      },
+      {
+        "id": "herb_xing_ren",
+        "name": "杏仁",
+        "cold": 1,
+        "heat": 0,
+        "poison": 0,
+        "heal": 2
+      },
+      {
+        "id": "herb_gan_cao",
+        "name": "甘草",
+        "cold": 0,
+        "heat": 0,
+        "poison": -1,
+        "heal": 2
+      },
+      {
+        "id": "herb_wu_tou",
+        "name": "乌头",
+        "cold": 0,
+        "heat": 1,
+        "poison": 3,
+        "heal": 4
+      }
+    ],
+    "medicineHouseOpenTextIds": [
+      "runtime.zhu_yuanzhang.medicine_house.open.001"
+    ],
+    "medicineHousePreparedMedicines": [
+      {
+        "id": "medicine_heal_001",
+        "name": "金创药",
+        "type": "heal",
+        "price": 80,
+        "effect": {
+          "hp": 30
+        }
+      },
+      {
+        "id": "medicine_fatigue_001",
+        "name": "安神汤",
+        "type": "fatigue",
+        "price": 60,
+        "effect": {
+          "fatigue": 20
+        }
+      },
+      {
+        "id": "medicine_poison_001",
+        "name": "解毒丸",
+        "type": "detox",
+        "price": 120,
+        "effect": {
+          "poison": -25
+        }
+      }
+    ]
+  },
+  "grain-shop": {
+    "accountingGameDurationSec": 30,
+    "accountingGradeRewards": {
+      "S": {
+        "math": 3,
+        "money": 80,
+        "relationship": 3
+      },
+      "A": {
+        "math": 2,
+        "money": 50,
+        "relationship": 2
+      },
+      "B": {
+        "math": 1,
+        "money": 30,
+        "relationship": 1
+      },
+      "C": {
+        "math": 0,
+        "money": 10,
+        "relationship": 0
+      },
+      "D": {
+        "math": -1,
+        "money": 0,
+        "relationship": 0
+      }
+    },
+    "accountingMaxWrongAnswers": 3,
+    "grainShopInitialValues": {
+      "money": 200,
+      "food": 5,
+      "math": 1,
+      "relationship": 0,
+      "time": 1
+    },
+    "grainShopMarketRumorTextIds": [
+      "runtime.zhu_yuanzhang.grain_market.rumor.001",
+      "runtime.zhu_yuanzhang.grain_market.rumor.002",
+      "runtime.zhu_yuanzhang.grain_market.rumor.003",
+      "runtime.zhu_yuanzhang.grain_market.rumor.004"
+    ],
+    "grainShopNpcDefaultLineTextIds": [
+      "runtime.zhu_yuanzhang.grain_shop.default.001",
+      "runtime.zhu_yuanzhang.grain_shop.default.002",
+      "runtime.zhu_yuanzhang.grain_shop.default.003",
+      "runtime.zhu_yuanzhang.grain_shop.default.004"
+    ],
+    "grainShopNpcGreetingTextIds": [
+      "runtime.zhu_yuanzhang.grain_shop.greeting.001",
+      "runtime.zhu_yuanzhang.grain_shop.greeting.002",
+      "runtime.zhu_yuanzhang.grain_shop.greeting.003",
+      "runtime.zhu_yuanzhang.grain_shop.greeting.004"
+    ]
+  }
+}

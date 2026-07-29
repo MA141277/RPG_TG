@@ -2,6 +2,39 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Mod-First Runtime Status Mutation Slice
+
+### Added
+- 新增 `CharacterStatus` / `CityStatus` / `BuildingStatus` materialize 与 merge helper，用于把运行时状态补丁投影到人物、城市、建筑定义上，而不是直接覆盖 authored definition。
+- 新增 `mutateCharacterNumericProperty()` 与 `mutateCharacterNumericAttributeBySemanticKey()`，让运行时可通过统一 status patch 修改人物 stats、skills、custom property 与语义属性。
+
+### Changed
+- `CharacterDefinition` 增加可选 `attributeMappings`、`attributeValues`、`customProperties`；`HouseDefinition` 增加可选 `level`、`damaged`、`outputMultiplier`，用于承接运行时状态投影。
+
+### Impact
+- 这片只增加 runtime/data 兼容层和测试，不改 UI、地图、背包、入口或 `src/main.ts`。
+- 后续从剧本或事件结算写入角色/城市/建筑状态时，应优先通过 status materializer 与 runtime property mutation helper，避免把兼容逻辑散落到具体 UI 或 house 模块。
+
+## 2026-07-29 Location Access Runtime Slice
+
+### Added
+- 新增 `src/application/location-access/location-access-runtime.ts`，统一评估 city/building enter/leave 访问规则，支持 event/person/time/world/story/target 条件引用和结构化 refusal 输出。
+- 新增 `tests/location-access-runtime.test.cjs`，锁定默认放行、复合条件、enter/leave 拒绝结果。
+
+### Impact
+- 这片只增加 application runtime 判定层，不接入 UI、地图、背包、入口或 `src/main.ts`。
+- 当前基线仍使用 `GameState.scene`，所以 story 条件读取适配当前 scene 状态；后续若正式切到 dialogue runtime，再在该模块集中调整，不把兼容判断散落到调用方。
+
+## 2026-07-29 Scenario Runtime Preview Sanitizer Slice
+
+### Added
+- 新增 `sanitizeScenarioPackForRuntimePreview()`，用于在 runtime preview 中剥离 `entryEventTiming: "after-map-entry"` 对应的 deferred entry event，避免预览导入时提前触发入口事件。
+- 新增 `tests/scenario-preview-sanitizer.test.cjs`，锁定 deferred entry event 剥离、immediate 策略保持原引用、空 launchPolicy 清理。
+
+### Impact
+- 这片只新增启动/预览数据净化 helper，不接入 UI、地图、背包、入口或 `src/main.ts`。
+- 后续把 JSON 剧本预览接入运行时时，应在启动/预览边界集中调用该 helper，而不是在 UI 事件处理里散落特殊判断。
+
 ## 2026-07-28 Faction Review Reward And Personnel Settlement
 
 ### Added
