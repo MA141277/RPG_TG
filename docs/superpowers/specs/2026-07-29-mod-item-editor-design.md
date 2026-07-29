@@ -21,6 +21,31 @@ This keeps item content, player state, and backpack UI from becoming one tangled
 
 The module should not be called `assets`. `assets` is a broader category that also includes images, audio, maps, portraits, and resource manifests. `items` are one kind of content asset, like `people`, `buildings`, and `events`.
 
+## Creator-Facing Identity
+
+Runtime IDs must not be exposed as normal creator-facing fields.
+
+Creators should work with human-readable names, display labels, categories, tags, and reference pickers. The editor may show a compact technical reference only in diagnostics, advanced debug views, or export validation details, but ordinary authoring screens should not ask creators to type or manage IDs.
+
+The editor should generate and maintain runtime IDs internally:
+
+```txt
+creator creates "小药水"
+-> editor allocates runtime id item.potion.small or item.<stable-generated-id>
+-> creator sees "小药水"
+-> references use selection controls, not raw id text inputs
+-> export writes the runtime id
+```
+
+This applies to item IDs, event IDs, settlement IDs, binding IDs, resource IDs, and generated menu/action IDs wherever practical. The creator-facing model should be:
+
+```txt
+Select "小药水" + action "使用"
+not type item.potion.small + use
+```
+
+IDs remain required in exported runtime data and internal reference graphs. They are just not the primary authoring surface.
+
 ## Core Boundary
 
 ### Event Routing Is The Gameplay Dispatch Spine
@@ -109,6 +134,8 @@ type ItemDefinition = {
 ```
 
 The required minimum fields are `id` and `name`. Other sections should be optional so mods can define simple and advanced items through the same contract.
+
+`id` is required in runtime data, but it should be hidden from normal creator-facing item forms. The editor owns ID allocation, uniqueness, rename stability, and reference updates.
 
 ## Classification
 
@@ -444,6 +471,15 @@ The script editor should organize `items` with these sections:
 - References
 - Validation
 
+Creator-facing basic information should use:
+
+- Name
+- Display title or short label
+- Description
+- Internal note
+
+It should not expose raw runtime ID as an editable primary field. If an advanced view is needed, it should be explicitly marked as technical/debug information.
+
 The editor should not introduce a heavy `backpacks` content module.
 
 If backpack settings are needed, keep them as small system configuration:
@@ -468,6 +504,7 @@ type BackpackSystemConfig = {
 4. Mod-specific behavior should use namespaced custom components.
 5. Item actions should reference settlements, settlement events, flows, tasks, or built-in handlers.
 6. Backpack UI should render resolved state and available actions; it should not own item business rules.
+7. Creator-facing editor screens should avoid raw ID entry. References should be selected through typed pickers backed by internal IDs.
 
 Example namespaced custom component:
 
