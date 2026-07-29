@@ -20,6 +20,8 @@ const {
 } = require("../.test-dist/application/events/event-playable-runtime.js");
 const {
   prototypeCharacters,
+  prototypeCities,
+  prototypeHouses,
   prototypeMap,
 } = require("../.test-dist/content/prototype-world.js");
 
@@ -375,5 +377,102 @@ test(
     assert.equal(result.state.scene.activeEventId, null);
     assert.equal(result.state.scene.activeSceneId, null);
     assert.equal(result.state.scene.status, "idle");
+  }
+);
+
+test(
+  "event-owned playable settlement continuation returns city and building changes",
+  () => {
+    const cityBefore = prototypeCities.find((city) => city.id === "city.kulan");
+    const houseBefore = prototypeHouses.find(
+      (house) => house.moduleId === "grain-shop"
+    );
+    assert.ok(cityBefore, "Expected prototype Kulan city to exist.");
+    assert.ok(houseBefore, "Expected prototype grain shop house to exist.");
+
+    const content = {
+      eventDefinitionsById: {
+        "event.playable.source": createEvent(
+          "event.playable.source",
+          "scene.playable.source",
+          "event.playable.settlement"
+        ),
+        "event.playable.settlement": {
+          ...createEvent(
+            "event.playable.settlement",
+            "scene.playable.settlement"
+          ),
+          type: "settlement",
+          settlementId: "settlement.playable.world-reward",
+        },
+      },
+      sceneDefinitionsById: {
+        "scene.playable.source": {
+          id: "scene.playable.source",
+          name: "Playable Source",
+          actions: [],
+        },
+        "scene.playable.settlement": {
+          id: "scene.playable.settlement",
+          name: "Playable Settlement",
+          actions: [],
+        },
+      },
+      settlementDefinitionsById: {
+        "settlement.playable.world-reward": {
+          id: "settlement.playable.world-reward",
+          title: "Playable World Reward",
+          contents: [
+            {
+              targetFamily: "city",
+              targetId: cityBefore.id,
+              attributeKey: "prosperity",
+              attributeType: "number",
+              operation: "add",
+              value: 5,
+            },
+            {
+              targetFamily: "building",
+              targetId: houseBefore.id,
+              attributeKey: "outputMultiplier",
+              attributeType: "number",
+              operation: "set",
+              value: 2,
+            },
+          ],
+        },
+      },
+    };
+
+    const result = applyEventOwnedPlayableCompletion({
+      state: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      previousPlayableSession: createEventOwnedPlayableSession(
+        "event.playable.source"
+      ),
+      settlement: { outcome: "success" },
+      continueFromSourceEvent: ({ sourceEventId, state, characterDefinitions }) =>
+        continueStoryFromSourceEvent(
+          {
+            state,
+            characterDefinitions,
+            cityDefinitions: prototypeCities,
+            houseDefinitions: prototypeHouses,
+          },
+          content,
+          sourceEventId
+        ),
+    });
+
+    const cityAfter = result.cityDefinitions?.find(
+      (city) => city.id === cityBefore.id
+    );
+    const houseAfter = result.houseDefinitions?.find(
+      (house) => house.id === houseBefore.id
+    );
+
+    assert.equal(result.handled, true);
+    assert.equal(cityAfter?.prosperity, cityBefore.prosperity + 5);
+    assert.equal(houseAfter?.outputMultiplier, 2);
   }
 );

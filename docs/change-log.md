@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Story Settlement World Target Continuation Slice
+
+### Added
+- `continueStoryFromSourceEvent()` 的 runtime context 现在可携带并返回 `cityDefinitions` / `houseDefinitions`。
+- story settlement continuation 现在会把 `city` 与 `building` settlement contents 应用到传入的城市/建筑定义。
+- 扩展 `tests/event-continuation-runtime.test.cjs`，覆盖 event-owned playable completion 后续 settlement 修改城市繁荣度和建筑输出倍率。
+
+### Impact
+- 这片只迁移 story/event continuation 的 world target settlement 返回能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续上层调用方若提供 city/house definitions，即可接收 settlement 后的世界定义变更；未提供时保持原有角色-only 行为。
+
 ## 2026-07-29 Event-Owned Playable Settlement Continuation Slice
 
 ### Added

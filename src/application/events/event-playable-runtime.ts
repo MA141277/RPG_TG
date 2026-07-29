@@ -1,7 +1,9 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
+import type { CityDefinition } from "../../domain/city";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { HouseDefinition } from "../../domain/house";
 import type { ActivePlayableSession } from "../../core/contracts/playable-runtime";
 import type { RuntimeInteractiveSignal } from "../../core/contracts/runtime-result";
 import {
@@ -27,6 +29,8 @@ export type EventPlayableRuntimeResult = {
 export type EventOwnedPlayableContinuationResult<State = unknown> = {
   state: State;
   characterDefinitions: CharacterDefinition[];
+  cityDefinitions?: CityDefinition[] | undefined;
+  houseDefinitions?: HouseDefinition[] | undefined;
 };
 
 export type EventOwnedPlayableCompletionResult<State = unknown> =

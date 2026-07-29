@@ -1,8 +1,10 @@
 import type { ChoiceOption, SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
+import type { CityDefinition } from "../../domain/city";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { HouseDefinition } from "../../domain/house";
 import {
   applySettlementContents,
   type ExportedSettlement,
@@ -27,6 +29,8 @@ type StoryContent = {
 type StoryRuntimeContext = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  cityDefinitions?: CityDefinition[] | undefined;
+  houseDefinitions?: HouseDefinition[] | undefined;
 };
 
 type StoryRuntimeResult = StoryRuntimeContext;
@@ -97,6 +101,12 @@ export function syncStoryScene(
   return {
     state: result.state,
     characterDefinitions: result.characterDefinitions,
+    ...(runtime.cityDefinitions == null
+      ? {}
+      : { cityDefinitions: runtime.cityDefinitions }),
+    ...(runtime.houseDefinitions == null
+      ? {}
+      : { houseDefinitions: runtime.houseDefinitions }),
   };
 }
 
@@ -140,6 +150,12 @@ export function continueStoryFromSourceEvent(
     {
       state: continuation.state,
       characterDefinitions: runtime.characterDefinitions,
+      ...(runtime.cityDefinitions == null
+        ? {}
+        : { cityDefinitions: runtime.cityDefinitions }),
+      ...(runtime.houseDefinitions == null
+        ? {}
+        : { houseDefinitions: runtime.houseDefinitions }),
     },
     content,
     continuation.eventDefinition
@@ -257,10 +273,36 @@ function applyStorySettlementEvent(
       character as unknown as Record<string, unknown>,
     ])
   );
+  const cities =
+    runtime.cityDefinitions == null
+      ? undefined
+      : Object.fromEntries(
+          runtime.cityDefinitions.map((city) => [
+            city.id,
+            city as unknown as Record<string, unknown>,
+          ])
+        );
+  const buildings =
+    runtime.houseDefinitions == null
+      ? undefined
+      : Object.fromEntries(
+          runtime.houseDefinitions.map((house) => [
+            house.id,
+            house as unknown as Record<string, unknown>,
+          ])
+        );
   const settlementState = applySettlementContents(
-    { people },
+    {
+      people,
+      ...(cities == null ? {} : { cities }),
+      ...(buildings == null ? {} : { buildings }),
+    },
     settlement,
-    { people }
+    {
+      people,
+      ...(cities == null ? {} : { cities }),
+      ...(buildings == null ? {} : { buildings }),
+    }
   );
 
   return {
@@ -271,6 +313,26 @@ function applyStorySettlementEvent(
           | CharacterDefinition
           | undefined) ?? character
     ),
+    ...(runtime.cityDefinitions == null
+      ? {}
+      : {
+          cityDefinitions: runtime.cityDefinitions.map(
+            (city) =>
+              (settlementState.cities?.[city.id] as
+                | CityDefinition
+                | undefined) ?? city
+          ),
+        }),
+    ...(runtime.houseDefinitions == null
+      ? {}
+      : {
+          houseDefinitions: runtime.houseDefinitions.map(
+            (house) =>
+              (settlementState.buildings?.[house.id] as
+                | HouseDefinition
+                | undefined) ?? house
+          ),
+        }),
   };
 }
 
