@@ -62,7 +62,9 @@ export type RuntimeResult = {
   taskUpdates?: TaskUpdate[];
   settlementInstances?: ProgressionSettlementInstance[];
   settlement?: RuntimeSettlementResult | null;
+  // canonical continuation surface
   followUp?: RuntimeFollowUp | null;
+  // compatibility-only legacy continuation surfaces
   outcome?: RuntimeFollowUpOutcome | null;
   interactive?: RuntimeInteractiveSignal | null;
 };

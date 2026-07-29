@@ -12,10 +12,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-30`
-- Current Focus: `Task 1 audit is complete: followUp is already the canonical type alias, but runtime-result still exposes legacy outcome/interactive fields, runtime-router still exposes handleOutcome/handleInteractive compatibility handlers, and runtime-dispatch still mutates state through canonical followUp plus legacy outcome and interactive fallback paths.`
-- Next Step: `Start Task 2 by adding failing contract tests that keep followUp canonical while explicitly asserting the retained compatibility surface and dispatch ordering before any runtime code change.`
-- Verification: `Audit reads completed for src/core/contracts/runtime-result.ts, src/core/runtime/runtime-router.ts, src/core/runtime/runtime-dispatch.ts, tests/runtime-follow-up-contract.test.cjs, tests/runtime-router-follow-up-contract.test.cjs, and the relevant robustness follow-up ownership assertions; implementation verification has not run yet; pnpm run lint:plans still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue.`
-- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. Do not remove a legacy field unless a targeted test first proves the current branch no longer needs it. The current audit shows outcome/interactive compatibility remains part of the live contract, so this slice should narrow and test those paths before deleting anything.`
+- Current Focus: `Task 2 and the minimal Task 3 convergence are implemented locally: contract tests now require explicit canonical-versus-compatibility grouping, runtime-dispatch no longer runs interactive fallback after outcome handling in the same follow-up cycle, and protected shell/UI/map/backpack paths remain untouched.`
+- Next Step: `Finish Task 4 by re-running pnpm run lint:plans after this doc sync, then commit and push the runtime-only convergence slice.`
+- Verification: `pnpm run build:test`; `node --test tests/runtime-follow-up-contract.test.cjs tests/runtime-router-follow-up-contract.test.cjs tests/runtime-dispatch-settlement.test.cjs`; `node --test --test-name-pattern "child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check` passed; `pnpm run lint:plans` still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue.`
+- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. The current convergence intentionally retains RuntimeResult.outcome, RuntimeResult.interactive, RuntimeFollowUpContext.handleOutcome, and RuntimeFollowUpContext.handleInteractive as explicit compatibility surfaces while narrowing dispatch so only one compatibility fallback path runs after canonical followUp is absent.`
 
 ## Progress Log
 
@@ -27,6 +27,14 @@
   - Summary: `Completed Task 1 contract audit. followUp is already the canonical alias in runtime-result, but the current baseline still retains legacy outcome/interactive fields in RuntimeResult, handleOutcome/handleInteractive in RuntimeFollowUpContext, and explicit fallback branches in runtime-dispatch after canonical handleFollowUp runs.`
   - Verification: `sed -n '1,220p' src/core/contracts/runtime-result.ts`; `sed -n '1,220p' src/core/runtime/runtime-router.ts`; `sed -n '1,320p' src/core/runtime/runtime-dispatch.ts`; `sed -n '1,220p' tests/runtime-follow-up-contract.test.cjs`; `sed -n '1,220p' tests/runtime-router-follow-up-contract.test.cjs`; `sed -n '15530,15595p' tests/robustness.test.cjs`; `sed -n '17440,17490p' tests/robustness.test.cjs`; `git status --short --branch`.`
   - Next: `Add failing tests that assert followUp stays canonical while outcome/interactive remain explicit compatibility-only surfaces and runtime-dispatch preserves canonical-first ordering before the fallback handlers.`
+- 2026-07-30
+  - Summary: `Completed Task 2 and the minimal Task 3 convergence. Added failing contract tests for canonical followUp grouping and canonical-first fallback ordering, then updated runtime-result to label canonical versus compatibility fields explicitly and narrowed runtime-dispatch so interactive fallback only runs when outcome is absent.`
+  - Verification: `pnpm run build:test`; `node --test tests/runtime-follow-up-contract.test.cjs tests/runtime-router-follow-up-contract.test.cjs tests/runtime-dispatch-settlement.test.cjs`; `node --test --test-name-pattern "child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`.`
+  - Next: `Sync both plan docs, rerun pnpm run lint:plans, then commit and push the convergence slice if the plan lint blocker remains only the known unrelated title issue.`
+- 2026-07-30
+  - Summary: `Re-ran plan lint after the latest doc sync. No new governance issue was introduced by this child; the only remaining plan-lint failure is still the unrelated pre-existing missing title in docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md.`
+  - Verification: `pnpm run lint:plans` failed only on `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md: missing required section matching /^# .+/m`.`
+  - Next: `Commit and push the runtime-only convergence slice, then decide whether to merge this checkpoint back to the aligned baseline immediately or keep it as a branch checkpoint.`
 
 ---
 
@@ -181,7 +189,7 @@ Update the handoff plan so it points at this child as the next runtime-only conv
 - Modify: `tests/runtime-router-follow-up-contract.test.cjs`
 - Modify: `tests/robustness.test.cjs` only if a narrow ownership assertion needs extension
 
-- [ ] **Step 1: Add a failing runtime-result contract test**
+- [x] **Step 1: Add a failing runtime-result contract test**
 - [ ] **Step 1: Add a failing runtime-result contract test**
 
 Add assertions like:
@@ -204,7 +212,7 @@ Concrete first failure target:
 - add a new assertion that the contract file groups `followUp` ahead of the retained legacy fields
 - add a new assertion that the test description and regex comments treat `interactive` / `outcome` as compatibility-only surfaces instead of co-equal primary channels
 
-- [ ] **Step 2: Add a failing router/dispatch contract test**
+- [x] **Step 2: Add a failing router/dispatch contract test**
 
 Add assertions like:
 
@@ -222,7 +230,7 @@ Concrete first failure target:
 - add a source assertion over `src/core/runtime/runtime-dispatch.ts` that requires the `handleFollowUp` branch to run before `handleOutcome`, and `handleOutcome` before `handleInteractive`
 - add a second assertion that no legacy fallback branch runs unless canonical `followUp` is absent or `none`
 
-- [ ] **Step 3: Run the new tests to confirm at least one assertion fails before implementation**
+- [x] **Step 3: Run the new tests to confirm at least one assertion fails before implementation**
 
 Run:
 
@@ -236,6 +244,11 @@ Expected:
 - at least one test fails against the pre-implementation contract
 - failure clearly identifies the contract drift being corrected
 
+Recorded result:
+
+- `tests/runtime-follow-up-contract.test.cjs` failed because `src/core/contracts/runtime-result.ts` did not yet label the canonical `followUp` surface separately from retained compatibility fields.
+- `tests/runtime-router-follow-up-contract.test.cjs` failed because `src/core/runtime/runtime-dispatch.ts` still allowed the `interactive` fallback branch to run without an explicit `outcome == null` guard.
+
 ## Task 3: Implement The Runtime-Only Convergence
 
 **Files:**
@@ -243,7 +256,7 @@ Expected:
 - Modify: `src/core/runtime/runtime-router.ts`
 - Modify: `src/core/runtime/runtime-dispatch.ts`
 
-- [ ] **Step 1: Clarify the canonical and compatibility types in runtime-result**
+- [x] **Step 1: Clarify the canonical and compatibility types in runtime-result**
 
 Implement the smallest change that keeps canonical and compatibility layers explicit, for example:
 
@@ -261,7 +274,7 @@ export type RuntimeResult = {
 
 If the audit proves a compatibility field is still required, keep it and comment only through type grouping, not broad prose comments.
 
-- [ ] **Step 2: Narrow router follow-up handling without breaking compatibility**
+- [x] **Step 2: Narrow router follow-up handling without breaking compatibility**
 
 Keep canonical handler ownership explicit, for example:
 
@@ -275,7 +288,12 @@ export type RuntimeFollowUpContext = {
 
 Only remove a legacy handler if Task 2 proved the current branch no longer needs it.
 
-- [ ] **Step 3: Centralize canonical-first ordering in runtime-dispatch**
+Recorded result:
+
+- No router type deletion was needed in this slice.
+- `RuntimeFollowUpContext.handleOutcome` and `RuntimeFollowUpContext.handleInteractive` remain part of the live compatibility surface and are intentionally retained.
+
+- [x] **Step 3: Centralize canonical-first ordering in runtime-dispatch**
 
 Preserve state forwarding while ensuring canonical follow-up wins first, for example:
 
@@ -294,7 +312,12 @@ if (
 
 Then keep any required legacy `outcome` / `interactive` fallback explicit and secondary.
 
-- [ ] **Step 4: Keep the write scope fail-closed**
+Recorded result:
+
+- `src/core/runtime/runtime-dispatch.ts` now requires `outcome == null` before entering the `interactive` fallback branch.
+- This preserves canonical `followUp` first, then at most one compatibility fallback path in a single follow-up settlement cycle.
+
+- [x] **Step 4: Keep the write scope fail-closed**
 
 Do not touch:
 
@@ -313,7 +336,7 @@ Do not touch:
 - Modify: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-30-runtime-follow-up-contract-convergence-plan.md`
 
-- [ ] **Step 1: Run the required verification**
+- [x] **Step 1: Run the required verification**
 
 Run:
 
@@ -334,7 +357,7 @@ Expected:
 - boundary diff is empty
 - `lint:plans` fails only on the known unrelated `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md` title issue, unless that blocker is fixed separately
 
-- [ ] **Step 2: Record verification and exact boundary outcome**
+- [x] **Step 2: Record verification and exact boundary outcome**
 
 Update both plans with:
 
