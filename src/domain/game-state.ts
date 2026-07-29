@@ -17,6 +17,7 @@ import type { TroopRuntimeState } from "./troop-editor";
 import type { TaskRuntimeState } from "../core/contracts/task-runtime";
 import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
 import type { CampaignMapExplorationState } from "./map-exploration";
+import type { RuntimeProgressState } from "../core/contracts/progression-runtime";
 
 export type ViewName =
   | "map"
@@ -104,6 +105,7 @@ export type GameState = {
     activitySession: ActiveActivitySession;
     troops: TroopRuntimeState;
     mapExploration: CampaignMapExplorationState;
+    progression?: RuntimeProgressState;
     eventHistory: Record<
       EventId,
       {

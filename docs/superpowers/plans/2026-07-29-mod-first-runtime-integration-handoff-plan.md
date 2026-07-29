@@ -12,10 +12,11 @@
 
 - Status: `running`
 - Last Updated: `2026-07-29`
-- Current Focus: `Continue runtime-only migration from the clean branch codex/mod-first-runtime-integration.`
-- Next Step: `Pick the next runtime-only slice from Task 1, write/adjust focused tests first, then implement without touching UI/map/backpack/main shell unless explicitly scoped.`
-- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor codex/mod-first-runtime-integration origin/codex/sync-naqishuo-721ui-to-mmz`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/mod-first-runtime-integration`; targeted runtime test suite listed below.
-- Notes: `Current branch is codex/mod-first-runtime-integration and tracks origin/codex/mod-first-runtime-integration. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document commits may exist only on the integration branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
+- Current Focus: `Task 4 second narrow runtime slice is implemented on codex/migration-hot-tasks: shared story-runtime now consumes eventBindings/progressTracks for city-enter, house-enter, and indoor-screen-shown, while the already-approved src/main.ts wiring expansion remains limited to storyContent passthrough into main-runtime-orchestrator and house-runtime.`
+- Next Step: `The second Task 4 slice is already committed and pushed. If city-enter follow-up migration should continue, execute docs/superpowers/plans/2026-07-29-navigation-time-follow-up-story-runtime-city-enter-plan.md instead of extending this handoff ad hoc.`
+- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/indoor-screen-story-runtime.test.cjs`; `node --test --test-name-pattern "child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`; browser smoke on \`http://localhost:5173/\`: main menu -> 开始游戏 -> 开始冒险 -> campaign map -> 背包 -> 濠州 -> 进入城市, with no console warn/error logs.`
+- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stayed deferred until the user explicitly approved a tiny main.ts slice. That approval is still only used for narrow storyContent passthrough in src/main.ts and the active runtime behavior remains in application/core seams. The first Task 4 slice closed the earlier gap where indoor-screen and house-enter timing triggers could fire settlement events without projecting city/building authored-definition changes back into app-state status layers. This second Task 4 slice now consumes eventBindings/progressTracks in shared story-runtime for orchestrated trigger-story-events plus house/indoor timing paths, and stores progression runtime state on optional gameState.runtime.progression. navigation-time-follow-up still uses the older scene-runtime compatibility seam. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
+- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stayed deferred until the user explicitly approved a tiny main.ts slice. That approval is still only used for narrow storyContent passthrough in src/main.ts and the active runtime behavior remains in application/core seams. The first Task 4 slice closed the earlier gap where indoor-screen and house-enter timing triggers could fire settlement events without projecting city/building authored-definition changes back into app-state status layers. This second Task 4 slice now consumes eventBindings/progressTracks in shared story-runtime for orchestrated trigger-story-events plus house/indoor timing paths, and stores progression runtime state on optional gameState.runtime.progression. navigation-time-follow-up still uses the older scene-runtime compatibility seam. A dedicated follow-up child now exists at docs/superpowers/plans/2026-07-29-navigation-time-follow-up-story-runtime-city-enter-plan.md so any city-enter seam migration can be reviewed independently from this handoff. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
 
 ## Progress Log
 
@@ -31,6 +32,42 @@
   - Summary: `Added explicit branch topology and merge-back flow requirements so future sessions know which branch to work on, when to commit/push, and how to return verified integration slices to the current baseline.`
   - Verification: `git status --short --branch`; `git branch -vv` filtered for mod-first runtime, migrate-scripteditor, baseline, and mod-first-dev branches.
   - Next: `After this document update is pushed, resume Task 1 on codex/mod-first-runtime-integration; merge back to the baseline only after a verified runtime slice or agreed documentation checkpoint.`
+- 2026-07-29
+  - Summary: `Corrected the handoff branch ownership: local continuation, submit, and merge work now runs on codex/migration-hot-tasks instead of codex/mod-first-runtime-integration.`
+  - Verification: `git branch --show-current` returned `codex/migration-hot-tasks`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'` returned `origin/codex/migration-hot-tasks`.
+  - Next: `Resume Task 1 on codex/migration-hot-tasks; treat codex/mod-first-runtime-integration as historical context only unless the user explicitly asks to revive it.`
+- 2026-07-29
+  - Summary: `Completed Task 1 audit and deferred caller wiring because applyEventOwnedPlayableCompletion() still has no non-UI production caller outside entry-owned paths; then completed a Task 2 local convergence slice so story runtime scene helpers preserve cityDefinitions/houseDefinitions across start and choice continuation.`
+  - Verification: `rg -n "applyEventOwnedPlayableCompletion|continueStoryFromSourceEvent|cityDefinitions|houseDefinitions" src/core src/application tests`; `rg -n "applyEventOwnedPlayableCompletion\\(" src tests`; `git diff --name-status HEAD..origin/mod-first-dev -- src/application/dialogue src/application/events src/application/story src/core/runtime src/core/contracts tests`; `pnpm run build:test`; `node --test tests/event-continuation-runtime.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `If this local Task 2 slice should be kept, commit/push it with docs/change-log.md and this handoff document; otherwise continue Task 3 Step 1 from codex/migration-hot-tasks.`
+- 2026-07-29
+  - Summary: `Completed a Task 3 local dormant-helper slice by exporting council priority house resolution from navigation-time-follow-up and teaching it to apply city-scoped buildingArrangements/primaryNpcId overrides through canonical building owner matching.`
+  - Verification: `git diff --name-status HEAD..origin/mod-first-dev -- src/application/runtime src/application/startup src/core/runtime src/main.ts`; `pnpm run build:test`; `node --test tests/navigation-time-follow-up.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `If this local Task 3 slice should be kept, commit/push it with docs/change-log.md and this handoff document; otherwise continue Task 3 by auditing for one more dormant helper that still avoids src/main.ts shellification.`
+- 2026-07-29
+  - Summary: `Completed another Task 3 local dormant-helper slice by adding story-runtime-state-bridge, a pure bidirectional bridge between authored city/house definitions plus app-state status layers and the runtime definition/result shape.`
+  - Verification: `pnpm run build:test`; `node --test tests/story-runtime-state-bridge.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `If this local Task 3 slice should be kept, commit/push it with docs/change-log.md and this handoff document; otherwise continue Task 3 by auditing whether indoor-screen-story-follow-up can safely consume the bridge without requiring entry-shell rewiring.`
+- 2026-07-29
+  - Summary: `Completed another Task 3 local context-exposure slice by teaching content-pack loading and active-game-content/storyContent to retain eventBindings, settlements, progressTracks, and progressTrackBindings alongside city/house definition maps.`
+  - Verification: `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/active-game-content-story-context.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `Commit/push this richer storyContent context slice, then decide whether any remaining Task 3 consumer can safely use it without crossing the entry/runtime wiring boundary.`
+- 2026-07-29
+  - Summary: `Committed and pushed the richer storyContent context slice as 2442566, then audited indoor-screen-story-follow-up and stopped Task 3 there because the remaining consumer path would require widening house-runtime/main.ts story-content wiring and broader story-runtime seam work beyond a dormant helper slice.`
+  - Verification: `git status --short`; `git show --stat --oneline HEAD`; `git push`; `rg -n "getStoryContent|applyIndoorScreenStoryFollowUp|triggerStoryEvents|eventBindingsById|progressTrackDefinitionsById|settlementDefinitionsById|cityDefinitionsById|houseDefinitionsById" src/main.ts src/application/runtime src/application/story src/core/runtime/house-runtime.ts`; `sed -n '1,240p' src/application/runtime/indoor-screen-story-follow-up.ts`; `sed -n '1,260p' src/application/runtime/main-runtime-orchestrator.ts`
+  - Next: `Do not extend indoor-screen-story-follow-up further under Task 3. Enter Task 4 only with explicit user approval for a tiny entry-wiring or house-runtime dependency slice, or open a new dedicated story-runtime follow-up plan if deeper seam migration is desired.`
+- 2026-07-29
+  - Summary: `After explicit user approval, entered Task 4 and implemented a tiny entry-wiring/runtime seam slice: indoor-screen-story-follow-up now uses story-runtime plus state-bridge world projection, story-runtime applies settlement contents on initial trigger activation, main-runtime-orchestrator projects timing-trigger settlement updates, and house-runtime projects house-enter settlement world updates.`
+  - Verification: `pnpm run build:test`; `node --test tests/indoor-screen-story-runtime.test.cjs`; `node --test --test-name-pattern "child 26|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `Commit/push this Task 4 slice, then decide whether remaining eventBindings/progressTrack runtime consumption belongs in this handoff or should move to a new dedicated follow-up plan.`
+- 2026-07-29
+  - Summary: `Completed a second Task 4 narrow story-runtime slice: story-runtime now consumes eventBindings for city-enter/house-enter/indoor-screen-shown via the shared event-binding runtime, applies progression after settlement events, stores optional runtime.progression state on GameState, and receives event/progression storyContent passthrough from indoor-screen-story-follow-up, main-runtime-orchestrator, house-runtime, and the existing tiny main.ts wiring seam.`
+  - Verification: `pnpm run build:test`; `node --test tests/indoor-screen-story-runtime.test.cjs`; `node --test --test-name-pattern "child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned only `src/main.ts`; `git diff --check`; browser smoke on `http://localhost:5173/` reached main menu, character select, campaign map, backpack overlay, city entry prompt, and city view with no console warn/error logs.
+  - Next: `Commit/push this second Task 4 slice, then decide whether navigation-time-follow-up city-enter should migrate to story-runtime here or move into a new dedicated follow-up plan.`
+- 2026-07-29
+  - Summary: `Created a dedicated child plan for the remaining navigation-time-follow-up city-enter migration so future work can switch that seam from scene-runtime to shared story-runtime without reopening this handoff's boundary ad hoc.`
+  - Verification: `pnpm run lint:plans` was attempted and failed on unrelated pre-existing file `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md` because it is missing the required top-level title heading.`
+  - Next: `If city-enter migration should proceed, execute docs/superpowers/plans/2026-07-29-navigation-time-follow-up-story-runtime-city-enter-plan.md from Task 1.`
 
 ---
 
@@ -45,6 +82,7 @@
   - `docs/superpowers/plans/2026-07-03-child-24-main-runtime-orchestration-ownerization-plan.md`
   - `docs/superpowers/plans/2026-07-03-child-25-navigation-time-follow-up-de-shell-plan.md`
   - `docs/superpowers/plans/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-plan.md`
+  - `docs/superpowers/plans/2026-07-29-navigation-time-follow-up-story-runtime-city-enter-plan.md`
 - Plan governance:
   - `docs/superpowers/specs/plan-governance-spec.md`
 - Canonical progress entry:
@@ -54,11 +92,12 @@
 
 - Recheck result: `changed`
 - Notes:
-  - Current working branch: `codex/mod-first-runtime-integration`.
-  - Upstream: `origin/codex/mod-first-runtime-integration`.
+  - Current working branch: `codex/migration-hot-tasks`.
+  - Upstream: `origin/codex/migration-hot-tasks`.
   - Baseline branch for user-visible current app: `origin/codex/sync-naqishuo-721ui-to-mmz`.
-  - Runtime migration code up through commit `8d8e5145` is present in both the current integration branch history and `origin/codex/sync-naqishuo-721ui-to-mmz`.
-  - Documentation commits after `8d8e5145`, such as the handoff document commit, may exist only on `codex/mod-first-runtime-integration` until a deliberate merge-back step updates the baseline.
+  - Runtime migration code up through commit `8d8e5145` is present in the historical integration branch history and `origin/codex/sync-naqishuo-721ui-to-mmz`.
+  - Documentation or migration hot-task commits after `8d8e5145` may exist only on `codex/migration-hot-tasks` until a deliberate merge-back step updates the baseline.
+  - `codex/mod-first-runtime-integration` is now a historical predecessor branch, not the active local submit/merge branch.
   - Local `migrate-scripteditor` also points to `8d8e5145` and tracks `origin/codex/sync-naqishuo-721ui-to-mmz`.
   - Direct comparison to `origin/mod-first-dev` still shows large differences in `src/main.ts`, `src/ui/**`, `src/styles/**`, `src/application/map/**`, house modules, audio, layout editor, and presenter/runtime coordinator files. These are not safe to merge wholesale.
 
@@ -66,7 +105,7 @@
 
 Use these branch roles unless the user explicitly gives a new branch name:
 
-- Current branch: `codex/mod-first-runtime-integration`
+- Current branch: `codex/migration-hot-tasks`
 - Branches involved in this migration flow:
   - `origin/codex/sync-naqishuo-721ui-to-mmz`
     - Role: remote target baseline branch.
@@ -77,11 +116,14 @@ Use these branch roles unless the user explicitly gives a new branch name:
     - Upstream/remote counterpart: `origin/codex/sync-naqishuo-721ui-to-mmz`.
     - Purpose: local branch used to merge integration work back into the remote target baseline.
     - Rule: update from remote before merging an integration slice back.
-  - `codex/mod-first-runtime-integration`
-    - Role: current runtime integration branch.
-    - Upstream: `origin/codex/mod-first-runtime-integration`.
-    - Purpose: continue runtime-only migration work in small commits.
+  - `codex/migration-hot-tasks`
+    - Role: current runtime hot-task branch.
+    - Upstream: `origin/codex/migration-hot-tasks`.
+    - Purpose: continue runtime-only migration work in small commits from the current handoff state.
     - Rule: all new runtime migration slices should start here or from a fresh child branch based on it.
+- Historical predecessor branch: `codex/mod-first-runtime-integration`
+  - Role: previous local integration branch used before the handoff moved to `codex/migration-hot-tasks`.
+  - Rule: do not use it for new local submit/merge flow unless the user explicitly asks.
 - Source reference branch: `origin/mod-first-dev`
   - Role: read-only source for runtime ideas, existing shellification direction, and mod-first contracts.
   - Rule: do not merge this branch directly into the current baseline or integration branch.
@@ -96,7 +138,7 @@ Historical final synchronized state after the `8d8e5145` runtime-stack merge-bac
 - `migrate-scripteditor`
 - `codex/mod-first-runtime-integration`
 
-At that checkpoint, these branches had no remaining runtime migration differences. Later documentation-only commits, such as this handoff document, can make `codex/mod-first-runtime-integration` temporarily lead the baseline until they are intentionally merged back.
+At that checkpoint, these branches had no remaining runtime migration differences. Later documentation-only commits, such as this handoff document, or newer migration hot-task commits can make the current working branch `codex/migration-hot-tasks` lead the baseline until they are intentionally merged back.
 
 Before starting any slice, run:
 
@@ -109,7 +151,7 @@ git rev-parse --abbrev-ref --symbolic-full-name '@{u}'
 
 Expected:
 
-- Current branch is `codex/mod-first-runtime-integration` or a clearly named child branch based on it.
+- Current branch is `codex/migration-hot-tasks` or a clearly named child branch based on it.
 - Worktree is clean before migration edits begin.
 - Upstream is known.
 
@@ -117,7 +159,7 @@ Expected:
 
 Use this flow after each verified runtime slice or agreed documentation checkpoint:
 
-1. Work on `codex/mod-first-runtime-integration` or a child branch created from it.
+1. Work on `codex/migration-hot-tasks` or a child branch created from it.
 2. Implement one narrow runtime slice only.
 3. Update this handoff document with checkbox state, `Execution State`, `Progress Log`, verification result, branch/baseline status if changed, and the exact next unchecked task.
 4. Run targeted runtime tests and `npm.cmd run typecheck`.
@@ -131,8 +173,8 @@ Expected:
 
 - Empty output unless the user explicitly approved that slice to touch one of these paths.
 
-6. Commit on the integration branch with a runtime-specific message.
-7. Push the integration branch:
+6. Commit on the current runtime branch with a runtime-specific message.
+7. Push the current runtime branch:
 
 ```powershell
 git push
@@ -146,7 +188,7 @@ git push
 ```powershell
 git switch migrate-scripteditor
 git pull --ff-only
-git merge --no-ff codex/mod-first-runtime-integration
+git merge --no-ff codex/migration-hot-tasks
 ```
 
 10. Re-run the boundary proof and the relevant verification on `migrate-scripteditor`.
@@ -156,10 +198,10 @@ git merge --no-ff codex/mod-first-runtime-integration
 git push origin migrate-scripteditor:codex/sync-naqishuo-721ui-to-mmz
 ```
 
-12. Switch back to the integration branch and sync it from the updated baseline if needed:
+12. Switch back to the current runtime branch and sync it from the updated baseline if needed:
 
 ```powershell
-git switch codex/mod-first-runtime-integration
+git switch codex/migration-hot-tasks
 git merge --ff-only origin/codex/sync-naqishuo-721ui-to-mmz
 git push
 ```
@@ -417,7 +459,7 @@ The current baseline also contains newer UI, map, backpack, script editor, entry
 - Test: `tests/event-owned-playable-completion.test.cjs`
 - Test: `tests/event-continuation-runtime.test.cjs`
 
-- [ ] **Step 1: Find non-UI callers of event-owned playable completion**
+- [x] **Step 1: Find non-UI callers of event-owned playable completion**
 
 Run:
 
@@ -439,6 +481,11 @@ If a non-UI runtime caller exists, extend the nearest test so it proves:
 - old character-only behavior still works when world definitions are omitted
 
 Run the test first and confirm the new assertion fails before implementation.
+
+Status note:
+
+- Audit result: all current production callers remain entry/UI-owned; `applyEventOwnedPlayableCompletion()` is referenced directly only by tests in this branch.
+- Therefore Task 1 caller wiring is intentionally deferred until a runtime/application-owned caller exists or the user explicitly approves a tiny `src/main.ts` slice.
 
 - [ ] **Step 3: Implement minimal caller wiring**
 
@@ -492,7 +539,7 @@ Report:
 - Test: `tests/runtime-router-follow-up-contract.test.cjs`
 - Test: `tests/runtime-follow-up-contract.test.cjs`
 
-- [ ] **Step 1: Compare remaining runtime-only diffs against mod-first-dev**
+- [x] **Step 1: Compare remaining runtime-only diffs against mod-first-dev**
 
 Run:
 
@@ -505,7 +552,7 @@ Expected:
 - Extract runtime-only candidates.
 - Exclude renames or deletions that drag UI/main shell changes into the current branch.
 
-- [ ] **Step 2: Select one isolated completion/follow-up gap**
+- [x] **Step 2: Select one isolated completion/follow-up gap**
 
 Choose one gap that:
 
@@ -514,11 +561,11 @@ Choose one gap that:
 - preserves old compatibility fields
 - keeps compatibility in a shared runtime helper or contract module
 
-- [ ] **Step 3: Write failing test and implement**
+- [x] **Step 3: Write failing test and implement**
 
 Use the nearest existing runtime test file. Keep the slice narrow enough for one commit.
 
-- [ ] **Step 4: Run verification and boundary proof**
+- [x] **Step 4: Run verification and boundary proof**
 
 Run:
 
@@ -534,6 +581,12 @@ Expected:
 
 - Tests and typecheck pass.
 - Boundary diff is empty.
+
+Local slice completed:
+
+- Selected gap: `story-runtime` scene helpers were dropping `cityDefinitions` / `houseDefinitions` outside the continuation helper path.
+- Implemented slice: `startStoryEventById()`, `triggerStoryEvents()`, `advanceStorySceneStep()`, and `chooseStorySceneOption()` now keep the incoming world-definition context.
+- Added/updated coverage: `tests/event-continuation-runtime.test.cjs` now proves story runtime keeps world definitions across scene start and choice continuation.
 
 - [ ] **Step 5: Commit and report**
 
@@ -554,7 +607,7 @@ Before committing, update this handoff document with completed checkboxes, `Exec
 - Read: `src/main.ts`
 - Test: choose focused tests under `tests/*.test.cjs`
 
-- [ ] **Step 1: Audit mod-first-dev application runtime coordinators**
+- [x] **Step 1: Audit mod-first-dev application runtime coordinators**
 
 Run:
 
@@ -567,7 +620,7 @@ Expected:
 - Identify coordinator helpers that can be added as dormant or test-only application modules without changing visible entry flow.
 - Explicitly list any helper that would require `src/main.ts` shellification and defer it.
 
-- [ ] **Step 2: Pick only a dormant/testable helper**
+- [x] **Step 2: Pick only a dormant/testable helper**
 
 Allowed examples:
 
@@ -582,11 +635,11 @@ Rejected examples:
 - map travel UI animation coordinator replacement
 - city/house transition rewrite that changes current behavior
 
-- [ ] **Step 3: Test first and implement**
+- [x] **Step 3: Test first and implement**
 
 Add a Node test that imports the helper directly and validates pure behavior.
 
-- [ ] **Step 4: Run verification**
+- [x] **Step 4: Run verification**
 
 Run:
 
@@ -602,7 +655,28 @@ Expected:
 
 - No UI/main/map/backpack diff unless explicitly approved before this task.
 
-- [ ] **Step 5: Commit and report**
+Local slice completed:
+
+- Selected helper: council priority house resolution inside `src/application/runtime/navigation-time-follow-up.ts`.
+- Why this fit Task 3: it is a pure runtime/application helper, it can be imported directly by a Node test, and it does not require entry-shell takeover or visible transition rewrites.
+- Implemented behavior: exported `resolveCouncilPriorityHouseDefinition()` now accepts optional `buildingArrangements` and uses canonical owner matching to project current-city and `primaryNpcId` overrides onto the resolved priority house.
+- Added coverage: `tests/navigation-time-follow-up.test.cjs`.
+
+Additional local helper slice completed:
+
+- Selected helper: `src/application/story/story-runtime-state-bridge.ts`.
+- Why this fit Task 3: it is a pure runtime/application helper, directly testable in Node, and it stays dormant until a runtime caller chooses to consume authored city/house definition context.
+- Implemented behavior: `createStoryRuntimeDefinitionContext()` materializes authored world definitions through app-state status layers, and `applyStoryRuntimeResultToAppState()` maps runtime world-definition results back into `cityStatusById` / `buildingStatusById`.
+- Added coverage: `tests/story-runtime-state-bridge.test.cjs`.
+
+Additional local context slice completed:
+
+- Selected helper seam: `src/application/content/active-game-content.ts` plus content/scenario pack manifest loading.
+- Why this fit Task 3: it stays inside content/runtime context preparation, is directly testable in Node, and does not require `src/main.ts`, UI, map, backpack, or visible flow rewiring.
+- Implemented behavior: content packs now explicitly accept `eventBindings`, `settlements`, `progressTracks`, and `progressTrackBindings`; `createActiveGameContent()` builds arrays plus `ById` maps for them; `createActiveGameContentContext()` exposes those maps together with `cityDefinitionsById` / `houseDefinitionsById` on `storyContent`.
+- Added coverage: `tests/active-game-content-story-context.test.cjs`.
+
+- [x] **Step 5: Commit and report**
 
 Use a commit message of the form:
 
@@ -622,14 +696,14 @@ Before committing, update this handoff document with completed checkboxes, `Exec
 - Read: `docs/superpowers/plans/2026-07-03-child-23-main-startup-orchestration-extraction-plan.md`
 - Read: `docs/superpowers/plans/2026-07-03-child-24-main-runtime-orchestration-ownerization-plan.md`
 
-- [ ] **Step 1: Do not start this task until runtime-only slices are stable**
+- [x] **Step 1: Do not start this task until runtime-only slices are stable**
 
 Expected:
 
 - Tasks 1-3 are complete or explicitly deferred with reasons.
 - User has explicitly approved considering `src/main.ts`.
 
-- [ ] **Step 2: Decide whether a tiny entry-wiring slice is needed**
+- [x] **Step 2: Decide whether a tiny entry-wiring slice is needed**
 
 If `src/main.ts` is the only remaining caller for an already-tested runtime helper, propose a tiny wiring slice that:
 
@@ -638,13 +712,25 @@ If `src/main.ts` is the only remaining caller for an already-tested runtime help
 - includes targeted tests or browser smoke
 - has an explicit rollback boundary
 
-- [ ] **Step 3: Reject full shellification in this plan**
+- [x] **Step 3: Reject full shellification in this plan**
+
+Local Task 4 slice completed:
+
+- Approved boundary: one narrow `src/main.ts` wiring expansion plus runtime/application seam changes only; no UI/map/backpack shell rewrite.
+- Implemented behavior: `indoor-screen-story-follow-up` now routes timing-trigger settlement world updates through `story-runtime` + `story-runtime-state-bridge`; `story-runtime` applies settlement contents on initial trigger activation; `main-runtime-orchestrator` and `house-runtime` both project resulting city/building definition deltas back into app-state status layers.
+- Added coverage: `tests/indoor-screen-story-runtime.test.cjs` plus the existing child 25/26 robustness subset.
+
+Additional local Task 4 slice completed:
+
+- Approved boundary: keep the same tiny `src/main.ts` passthrough seam and continue only inside shared runtime/application story modules.
+- Implemented behavior: `story-runtime` now consumes `eventBindingsById` for `city-enter`, `house-enter`, and `indoor-screen-shown`, runs settlement-triggered progression evaluation plus settlement emission, persists optional `gameState.runtime.progression`, and receives `eventBindings/progressTrack` storyContent passthrough from `indoor-screen-story-follow-up`, `main-runtime-orchestrator`, and `house-runtime`.
+- Added coverage: `tests/indoor-screen-story-runtime.test.cjs` now also proves main runtime orchestrator consumes event binding plus progression settlement output, and browser smoke confirmed current localhost startup -> map -> backpack -> city flow without console warn/error logs.
 
 Record any need for full shellification as a new dedicated plan. Do not borrow `mod-first-dev` shellification wholesale inside this runtime migration handoff.
 
 ## Exit Check
 
-- [ ] Current branch remains based on the current UI/map/backpack baseline.
+- [ ] Current branch `codex/migration-hot-tasks` remains based on the current UI/map/backpack baseline.
 - [ ] Every runtime slice has a focused test.
 - [ ] Every runtime slice has a commit and push.
 - [ ] This handoff document is updated after every completed plan task or migration slice.
@@ -677,9 +763,9 @@ Record any need for full shellification as a new dedicated plan. Do not borrow `
 - Project Progress Synced: `no`
 - Next Child: `World Definition Caller Wiring Audit`
 - Next Child Status: `waiting`
-- Next Required Action: `Resume at Task 1 on codex/mod-first-runtime-integration, then merge verified checkpoints back to origin/codex/sync-naqishuo-721ui-to-mmz through the documented merge-back flow.`
+- Next Required Action: `Resume at Task 1 on codex/migration-hot-tasks, then merge verified checkpoints back to origin/codex/sync-naqishuo-721ui-to-mmz through the documented merge-back flow.`
 - Next Entry Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
-- Push Status: `integration-branch-pushed; baseline-merge-pending-for-latest-doc-checkpoint`
-- Push Commit: `latest origin/codex/mod-first-runtime-integration`
-- Resume From: `Open this document, confirm branch codex/mod-first-runtime-integration, then execute the first unchecked task without changing UI/map/backpack/main shell paths unless the user explicitly approves that slice.`
+- Push Status: `current-branch-pushed; baseline-merge-pending-for-latest-doc-checkpoint`
+- Push Commit: `latest origin/codex/migration-hot-tasks`
+- Resume From: `Open this document, confirm branch codex/migration-hot-tasks, then execute the first unchecked task without changing UI/map/backpack/main shell paths unless the user explicitly approves that slice.`

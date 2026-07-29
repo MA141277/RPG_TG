@@ -4,9 +4,17 @@ import {
   type IndoorScreenStoryFollowUpContent,
 } from "../../application/runtime/indoor-screen-story-follow-up";
 import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
-import { triggerStoryEvents } from "../../application/story/story-runtime";
+import {
+  buildStoryTriggerInput,
+  triggerStoryEvents,
+} from "../../application/story/story-runtime";
+import {
+  applyStoryRuntimeResultToAppState,
+  createStoryRuntimeDefinitionContext,
+} from "../../application/story/story-runtime-state-bridge";
 import type { ActivityDefinition } from "../../domain/activity";
-import type { EventDefinition } from "../../domain/event";
+import type { CityDefinition } from "../../domain/city";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
 import type {
@@ -20,6 +28,11 @@ import type {
 } from "../../domain/house-module";
 import type { SceneDefinition } from "../../domain/action";
 import { assertExists } from "../../shared/assert";
+import type { StorySettlementDefinition } from "../../application/story/story-settlement-continuation";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../contracts/progression-runtime";
 import {
   builtinHouseModuleRegistry,
   type HouseModuleRegistry,
@@ -50,7 +63,20 @@ export type HouseRuntimeDependencies = {
   playerCharacterId: string;
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  eventBindingsById?: Record<string, EventBinding> | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  settlementDefinitionsById?: Record<
+    string,
+    StorySettlementDefinition | undefined
+  >;
+  progressTrackDefinitionsById?:
+    | Record<string, ProgressTrackDefinition>
+    | undefined;
+  progressTrackBindingsById?:
+    | Record<string, ProgressTrackBinding>
+    | undefined;
+  cityDefinitionsById?: Record<string, CityDefinition> | undefined;
+  houseDefinitionsById?: Record<string, HouseDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
   houseModuleRegistry?: HouseModuleRegistry | undefined;
   syncCouncilPriorityAfterGameStateChange(
@@ -92,9 +118,33 @@ export function createHouseRuntimeBridge(
     return {
       eventDefinitionsById: dependencies.eventDefinitionsById,
       sceneDefinitionsById: dependencies.sceneDefinitionsById,
+      ...(dependencies.eventBindingsById == null
+        ? {}
+        : { eventBindingsById: dependencies.eventBindingsById }),
       ...(dependencies.activityDefinitionsById == null
         ? {}
         : { activityDefinitionsById: dependencies.activityDefinitionsById }),
+      ...(dependencies.settlementDefinitionsById == null
+        ? {}
+        : { settlementDefinitionsById: dependencies.settlementDefinitionsById }),
+      ...(dependencies.progressTrackDefinitionsById == null
+        ? {}
+        : {
+            progressTrackDefinitionsById:
+              dependencies.progressTrackDefinitionsById,
+          }),
+      ...(dependencies.progressTrackBindingsById == null
+        ? {}
+        : {
+            progressTrackBindingsById:
+              dependencies.progressTrackBindingsById,
+          }),
+      ...(dependencies.cityDefinitionsById == null
+        ? {}
+        : { cityDefinitionsById: dependencies.cityDefinitionsById }),
+      ...(dependencies.houseDefinitionsById == null
+        ? {}
+        : { houseDefinitionsById: dependencies.houseDefinitionsById }),
       ...(dependencies.textEntriesById == null
         ? {}
         : { textEntriesById: dependencies.textEntriesById }),
@@ -344,27 +394,48 @@ export function createHouseRuntimeBridge(
       {
         state: dependencies.getAppState().gameState,
         characterDefinitions: dependencies.getAppState().characterDefinitions,
+        ...createStoryRuntimeDefinitionContext(
+          dependencies.getAppState(),
+          getIndoorScreenStoryContent()
+        ),
       },
       {
         eventDefinitionsById: dependencies.eventDefinitionsById,
         sceneDefinitionsById: dependencies.sceneDefinitionsById,
+        eventBindingsById: dependencies.eventBindingsById,
         activityDefinitionsById: dependencies.activityDefinitionsById,
+        settlementDefinitionsById: dependencies.settlementDefinitionsById,
+        progressTrackDefinitionsById:
+          dependencies.progressTrackDefinitionsById,
+        progressTrackBindingsById: dependencies.progressTrackBindingsById,
+        cityDefinitionsById: dependencies.cityDefinitionsById,
+        houseDefinitionsById: dependencies.houseDefinitionsById,
         textEntriesById: dependencies.textEntriesById,
       },
-      {
-        timing: "house-enter",
-        cityId: houseDefinition.cityId,
-        houseId: houseDefinition.id,
-      }
+      buildStoryTriggerInput("house-enter", {
+        ...dependencies.getAppState().gameState,
+        world: {
+          ...dependencies.getAppState().gameState.world,
+          currentCityId: houseDefinition.cityId,
+          currentHouseId: houseDefinition.id,
+        },
+      })
     );
 
-    if (storyResult.state !== dependencies.getAppState().gameState) {
+    const indoorStoryContent = getIndoorScreenStoryContent();
+    if (
+      storyResult.state !== dependencies.getAppState().gameState ||
+      storyResult.characterDefinitions !==
+        dependencies.getAppState().characterDefinitions
+    ) {
       const latestAppState = dependencies.getAppState();
-      dependencies.setAppState({
-        ...latestAppState,
-        gameState: storyResult.state,
-        characterDefinitions: storyResult.characterDefinitions,
-      });
+      dependencies.setAppState(
+        applyStoryRuntimeResultToAppState(
+          latestAppState,
+          indoorStoryContent,
+          storyResult
+        )
+      );
     }
 
     settleIndoorScreenStoryFollowUp();

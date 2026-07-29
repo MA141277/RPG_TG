@@ -107,6 +107,18 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.dialogues != null) {
     assertArray(value.dialogues, "scenario dialogues");
   }
+  if (value.eventBindings != null) {
+    assertArray(value.eventBindings, "scenario event bindings");
+  }
+  if (value.settlements != null) {
+    assertArray(value.settlements, "scenario settlements");
+  }
+  if (value.progressTracks != null) {
+    assertArray(value.progressTracks, "scenario progress tracks");
+  }
+  if (value.progressTrackBindings != null) {
+    assertArray(value.progressTrackBindings, "scenario progress track bindings");
+  }
   if (value.tasks != null) {
     assertArray(value.tasks, "scenario tasks");
   }
@@ -154,6 +166,10 @@ type ScenarioPackManifestFiles = {
   events: string;
   scenes?: string;
   dialogues?: string;
+  eventBindings?: string;
+  settlements?: string;
+  progressTracks?: string;
+  progressTrackBindings?: string;
   tasks?: string;
   cities?: string;
   houses?: string;

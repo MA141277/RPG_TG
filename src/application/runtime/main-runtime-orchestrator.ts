@@ -2,17 +2,40 @@ import type { AppState } from "../app-shell";
 import type { ActiveGameContentContext } from "../content/active-game-content";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { SceneDefinition } from "../../domain/action";
+import type { BuildingStatusById } from "../../domain/building-status";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
+import type { CityDefinition } from "../../domain/city";
+import type { CityStatusById } from "../../domain/city-status";
+import type {
+  EventBinding,
+  EventDefinition,
+  EventTriggerTiming,
+} from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { HouseDefinition } from "../../domain/house";
 import type { StartupSessionBootstrap } from "../startup/startup-session-coordinator";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../../core/contracts/progression-runtime";
 import { applyIndoorScreenStoryFollowUp } from "./indoor-screen-story-follow-up";
 import {
   advanceStorySceneStep,
+  buildStoryTriggerInput,
   chooseStorySceneOption,
   getCurrentChoiceOptions,
+  triggerStoryEvents,
 } from "../story/story-runtime";
-import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
+import {
+  applyStoryRuntimeResultToAppState,
+  createStoryRuntimeDefinitionContext,
+} from "../story/story-runtime-state-bridge";
+import type { StorySettlementDefinition } from "../story/story-settlement-continuation";
+
+type RuntimeStoryAppState = AppState & {
+  cityStatusById?: CityStatusById;
+  buildingStatusById?: BuildingStatusById;
+};
 
 export type MainRuntimeOrchestratorRequest =
   | {
@@ -37,6 +60,8 @@ export type MainRuntimeOrchestratorResult = {
   appState: AppState;
   gameState?: GameState;
   characterDefinitions?: CharacterDefinition[];
+  cityStatusById?: CityStatusById;
+  buildingStatusById?: BuildingStatusById;
   playerCharacterId?: string;
   didChange: boolean;
   shouldRender: boolean;
@@ -49,7 +74,16 @@ export type MainRuntimeOrchestratorDependencies = {
   getStoryContent(): {
     eventDefinitionsById: Record<string, EventDefinition>;
     sceneDefinitionsById: Record<string, SceneDefinition>;
+    eventBindingsById?: Record<string, EventBinding>;
     activityDefinitionsById?: Record<string, ActivityDefinition>;
+    settlementDefinitionsById?: Record<
+      string,
+      StorySettlementDefinition | undefined
+    >;
+    progressTrackDefinitionsById?: Record<string, ProgressTrackDefinition>;
+    progressTrackBindingsById?: Record<string, ProgressTrackBinding>;
+    cityDefinitionsById?: Record<string, CityDefinition>;
+    houseDefinitionsById?: Record<string, HouseDefinition>;
     textEntriesById?: Record<string, string>;
   };
   resetMainGameRuntime(): void;
@@ -62,6 +96,8 @@ export type MainRuntimeOrchestratorDependencies = {
 type StoryTimingResult = {
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
+  cityStatusById?: CityStatusById;
+  buildingStatusById?: BuildingStatusById;
 };
 
 export function createMainRuntimeOrchestrator(
@@ -80,24 +116,48 @@ export function createMainRuntimeOrchestrator(
     state: GameState,
     characterDefinitions: CharacterDefinition[]
   ): StoryTimingResult {
+    const appState = dependencies.getAppState() as RuntimeStoryAppState;
     const storyContent = dependencies.getStoryContent();
-    const result = runStoryTriggerRuntime({
-      timing,
-      state,
-      characterDefinitions,
-      eventDefinitionsById: storyContent.eventDefinitionsById,
-      sceneDefinitionsById: storyContent.sceneDefinitionsById,
-      ...(storyContent.activityDefinitionsById == null
-        ? {}
-        : { activityDefinitionsById: storyContent.activityDefinitionsById }),
-      ...(storyContent.textEntriesById == null
-        ? {}
-        : { textEntriesById: storyContent.textEntriesById }),
-    });
+    const runtimeDefinitionContext = createStoryRuntimeDefinitionContext(
+      appState,
+      storyContent
+    );
+    const result = triggerStoryEvents(
+      {
+        state,
+        characterDefinitions,
+        ...runtimeDefinitionContext,
+      },
+      {
+        eventDefinitionsById: storyContent.eventDefinitionsById,
+        sceneDefinitionsById: storyContent.sceneDefinitionsById,
+        eventBindingsById: storyContent.eventBindingsById,
+        activityDefinitionsById: storyContent.activityDefinitionsById,
+        settlementDefinitionsById: storyContent.settlementDefinitionsById,
+        progressTrackDefinitionsById:
+          storyContent.progressTrackDefinitionsById,
+        progressTrackBindingsById: storyContent.progressTrackBindingsById,
+        cityDefinitionsById: storyContent.cityDefinitionsById,
+        houseDefinitionsById: storyContent.houseDefinitionsById,
+        textEntriesById: storyContent.textEntriesById,
+      },
+      buildStoryTriggerInput(timing, state)
+    );
+    const projectedAppState = applyStoryRuntimeResultToAppState(
+      appState,
+      storyContent,
+      result
+    );
 
     return {
-      gameState: result.state,
-      characterDefinitions: result.characterDefinitions,
+      gameState: projectedAppState.gameState,
+      characterDefinitions: projectedAppState.characterDefinitions,
+      ...(projectedAppState.cityStatusById == null
+        ? {}
+        : { cityStatusById: projectedAppState.cityStatusById }),
+      ...(projectedAppState.buildingStatusById == null
+        ? {}
+        : { buildingStatusById: projectedAppState.buildingStatusById }),
     };
   }
 
@@ -136,6 +196,12 @@ export function createMainRuntimeOrchestrator(
           appState: dependencies.getAppState(),
           gameState: result.gameState,
           characterDefinitions: result.characterDefinitions,
+          ...(result.cityStatusById == null
+            ? {}
+            : { cityStatusById: result.cityStatusById }),
+          ...(result.buildingStatusById == null
+            ? {}
+            : { buildingStatusById: result.buildingStatusById }),
           didChange:
             result.gameState !== request.state ||
             result.characterDefinitions !== request.characterDefinitions,

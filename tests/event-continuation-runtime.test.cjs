@@ -72,6 +72,102 @@ function createEventOwnedPlayableSession(sourceEventId) {
 }
 
 test(
+  "story runtime preserves world definitions across scene start and choice helpers",
+  () => {
+    const startContent = {
+      eventDefinitionsById: {
+        "event.world.start": createEvent("event.world.start", "scene.world.start"),
+      },
+      sceneDefinitionsById: {
+        "scene.world.start": {
+          id: "scene.world.start",
+          name: "World Start",
+          actions: [],
+        },
+      },
+    };
+
+    const started = startStoryEventById(
+      {
+        state: createBaseState(),
+        characterDefinitions: prototypeCharacters,
+        cityDefinitions: prototypeCities,
+        houseDefinitions: prototypeHouses,
+      },
+      startContent,
+      "event.world.start"
+    );
+
+    assert.equal(started.cityDefinitions, prototypeCities);
+    assert.equal(started.houseDefinitions, prototypeHouses);
+
+    const choiceContent = {
+      eventDefinitionsById: {
+        "event.world.choice": createEvent(
+          "event.world.choice",
+          "scene.world.choice"
+        ),
+        "event.world.followup": createEvent(
+          "event.world.followup",
+          "scene.world.followup"
+        ),
+      },
+      sceneDefinitionsById: {
+        "scene.world.choice": {
+          id: "scene.world.choice",
+          name: "World Choice",
+          actions: [
+            {
+              type: "choice",
+              options: [
+                {
+                  id: "option.world.followup",
+                  label: "Follow-up",
+                  nextEventId: "event.world.followup",
+                },
+              ],
+            },
+          ],
+        },
+        "scene.world.followup": {
+          id: "scene.world.followup",
+          name: "World Follow-up",
+          actions: [],
+        },
+      },
+    };
+
+    const waitingChoice = startStoryEventById(
+      {
+        state: createBaseState(),
+        characterDefinitions: prototypeCharacters,
+        cityDefinitions: prototypeCities,
+        houseDefinitions: prototypeHouses,
+      },
+      choiceContent,
+      "event.world.choice"
+    );
+
+    assert.equal(waitingChoice.state.scene.status, "waiting-choice");
+    assert.equal(waitingChoice.cityDefinitions, prototypeCities);
+    assert.equal(waitingChoice.houseDefinitions, prototypeHouses);
+
+    const continued = chooseStorySceneOption(waitingChoice, choiceContent, {
+      id: "option.world.followup",
+      label: "Follow-up",
+      nextEventId: "event.world.followup",
+    });
+
+    assert.equal(continued.cityDefinitions, prototypeCities);
+    assert.equal(continued.houseDefinitions, prototypeHouses);
+    assert.equal(
+      continued.state.runtime.eventHistory["event.world.followup"]?.firedCount,
+      1
+    );
+  }
+);
+
+test(
   "scene runner fails closed when automatic nextEvent continuation revisits an already continued event",
   () => {
     const eventDefinitionsById = {

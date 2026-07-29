@@ -2,6 +2,75 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Story Runtime Event Binding And Progression Slice
+
+### Added
+- `story-runtime` 现在会在现有 scene-trigger 兼容路径之外，优先消费 `eventBindingsById`，并为 `city-enter`、`house-enter`、`indoor-screen-shown` 三类 timing 构造 shared `event-binding-runtime` trigger context。
+- `story-runtime` 现在会在 settlement 事件完成后执行 progression 评估，把 `progressTrackDefinitionsById` / `progressTrackBindingsById` 产出的 tier settlement 继续应用回角色、城市、建筑 runtime definition context。
+- `GameState.runtime` 新增可选 `progression` 状态位，用于持久保存 progress track tier state。
+- `indoor-screen-story-follow-up`、`main-runtime-orchestrator`、`house-runtime` 与当前分支 `src/main.ts` storyContent wiring 现在都会透传 `eventBindings` 和 `progressTrack` family。
+- 扩展 `tests/indoor-screen-story-runtime.test.cjs`，新增 coverage 锁定 main runtime orchestrator 通过 shared `story-runtime` 消费 event binding 并触发 progression settlement。
+
+### Impact
+- 当前 handoff 内已经完成 `eventBindings/progressTracks` 在 shared `story-runtime` 上的最小可用接线，house-enter / indoor-screen / orchestrated trigger-story-events 都能走同一条 runtime seam。
+- `navigation-time-follow-up` 仍停留在旧的 `scene-runtime` 兼容层；是否把 city-enter follow-up 也切到 `story-runtime`，应作为下一步单独判断，而不是把 full shellification 混进本切片。
+
+## 2026-07-29 Indoor Screen Settlement Runtime Bridge Slice
+
+### Added
+- `indoor-screen-story-follow-up` 现在改走 `application/story/story-runtime` 与 `story-runtime-state-bridge`，可在 house indoor follow-up 中把 settlement 事件对城市/建筑 authored definitions 的修改投影回 `cityStatusById` / `buildingStatusById`。
+- `story-runtime` 的 `startStoryEventById()` 与 `triggerStoryEvents()` 现在会在首次触发 settlement 事件时立即应用 settlement contents，而不是只在 source-event continuation 路径上支持 settlement。
+- `main-runtime-orchestrator` 与 `house-runtime` 现在都显式把 `settlementDefinitionsById`、`cityDefinitionsById`、`houseDefinitionsById` 传入对应 runtime seam；其中 `src/main.ts` 只做了受控的 storyContent wiring 扩充，没有替换入口壳。
+- 新增 `tests/indoor-screen-story-runtime.test.cjs`，覆盖 indoor-screen follow-up、main runtime trigger-story-events、house-enter runtime 三条路径上的 settlement world-update 投影。
+
+### Impact
+- 这片允许 indoor-screen/house-enter story trigger 在 runtime seam 内直接产出城市与建筑状态补丁，不再要求后续调用方另写 world-definition 回填逻辑。
+- 本次对 `src/main.ts` 的改动属于用户已批准的 tiny wiring slice；未触碰 `src/ui/**`、`src/styles/**`、地图、背包或其它入口壳替换工作。
+
+## 2026-07-29 Story Content Rich Runtime Context Slice
+
+### Added
+- `ContentPackDefinition`、content-pack manifest loader、scenario-pack manifest loader 现在都显式支持 `eventBindings`、`settlements`、`progressTracks`、`progressTrackBindings` 四个 story runtime family。
+- `createActiveGameContent()` / `createActiveGameContentContext()` 现在会把这些 family 建成数组和 `ById` 索引，并把它们连同 `cityDefinitionsById` / `houseDefinitionsById` 一起暴露到 `storyContent` 上下文。
+- 新增 `tests/active-game-content-story-context.test.cjs`，锁定 richer story runtime family 已进入 `storyContent`，但不要求入口流程立刻消费它们。
+
+### Impact
+- 这片只扩充内容加载与 runtime content context，不改 `src/main.ts`、UI、地图、背包或入口壳。
+- 下一片若要让 `indoor-screen-story-follow-up` 或其它 runtime bridge 消费 dialogue/event-binding/settlement/progression world context，所需数据已经在 active content context 中可用，不需要再回头改 pack/context 基础结构。
+
+## 2026-07-29 Story Runtime State Bridge Helper Slice
+
+### Added
+- 新增 `src/application/story/story-runtime-state-bridge.ts`，提供两个纯 helper：
+  - `createStoryRuntimeDefinitionContext()`：把 authored `cityDefinitionsById` / `houseDefinitionsById` 结合 app-state status 层 materialize 成 runtime 可消费的 definitions。
+  - `applyStoryRuntimeResultToAppState()`：把 runtime 返回的 world definitions 反推成 `cityStatusById` / `buildingStatusById`，同时同步 `gameState` 与 `characterDefinitions`。
+- 新增 `tests/story-runtime-state-bridge.test.cjs`，覆盖 definition materialize 和 runtime-result-to-status-bridge 两个方向。
+
+### Impact
+- 这片是纯 application helper，不改 `src/main.ts`、UI、地图、背包或入口壳。
+- 后续 `indoor-screen-story-follow-up`、story trigger bridge、或任何 runtime orchestrator 如果要开始消费 authored city/house definitions，都可以复用这条双向桥接，而不需要各自重复写 status/definition 转换逻辑。
+
+## 2026-07-29 Council Priority House Resolution Helper Slice
+
+### Added
+- `navigation-time-follow-up` 新增导出的纯 helper `resolveCouncilPriorityHouseDefinition()`，用于解析当前评定优先 house。
+- 该 helper 现在可选接受 `buildingArrangements`，并在 arrangement owner 与 canonical building owner 匹配时，把当前城市与 `primaryNpcId` 覆盖到返回的优先 house 定义上。
+- 新增 `tests/navigation-time-follow-up.test.cjs`，锁定“模板优先 house + 当前城市 arrangement”会解析出当前城市和当前主 NPC。
+
+### Impact
+- 这片只增加 `src/application/runtime/navigation-time-follow-up.ts` 的纯解析 helper 和测试，不改 `src/main.ts`、UI、地图、背包或入口壳。
+- 后续如果入口层或 runtime orchestrator 开始提供 `buildingArrangements`，评定提醒可以直接复用这条 helper，而不需要把 canonical owner 匹配逻辑散落回入口代码。
+
+## 2026-07-29 Story Runtime World Definition Retention Slice
+
+### Added
+- `startStoryEventById()`、`triggerStoryEvents()`、`advanceStorySceneStep()`、`chooseStorySceneOption()` 现在都会保留传入 runtime context 里的 `cityDefinitions` / `houseDefinitions`，不再在普通 story scene helper 中把世界定义集合丢掉。
+- 扩展 `tests/event-continuation-runtime.test.cjs`，覆盖 story runtime 在 scene start 与 choice continuation 两条 helper 路径上保留 world definitions。
+
+### Impact
+- 这片只收敛 `src/application/story/story-runtime.ts` 的 runtime context 透传，不改 UI、地图、背包、入口壳或 `src/main.ts`。
+- 后续若真正把 event-owned playable completion 的 world-definition caller 从入口层下沉到 runtime/application 层，这些 story helper 不会再把已提供的城市/建筑定义中途清空。
+
 ## 2026-07-29 Script Editor Menu Authoring Slice
 
 ### Added

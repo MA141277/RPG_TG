@@ -14,13 +14,19 @@ import type {
 import type { HouseDefinition, HouseAccessRefusalRule } from "./house";
 import type { MapDefinition } from "./map";
 import type { RuntimeDialogueDefinition } from "./dialogue";
+import type { EventBinding } from "./event";
 import type { LocationAccessDefinition } from "./location-access";
 import type { MenuInstanceDefinition, MenuResourceDefinition } from "./menu";
 import type { FlowPlayableDefinition } from "./playables/flow";
+import type { SettlementDefinition } from "../core/contracts/effect-settlement";
 import type {
   PlayableDefinition,
   PlayableIntegrationDefinition,
 } from "../core/contracts/playable-runtime";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../core/contracts/progression-runtime";
 import type { UiAssetCatalog } from "./ui/asset-catalog";
 import type { ScreenLayoutPreset } from "./ui/screen-layout";
 import type { ScreenSchema } from "./ui/screen-schema";
@@ -55,11 +61,11 @@ export type ContentPackDefinition = {
   playables?: PlayableDefinition[];
   playableIntegrations?: PlayableIntegrationDefinition[];
   flows?: FlowPlayableDefinition[];
-  eventBindings?: unknown[];
-  settlements?: unknown[];
+  eventBindings?: EventBinding[];
+  settlements?: (SettlementDefinition & { id: string; title?: string; nextEventId?: string })[];
   settlementContents?: unknown[];
-  progressTracks?: unknown[];
-  progressTrackBindings?: unknown[];
+  progressTracks?: ProgressTrackDefinition[];
+  progressTrackBindings?: ProgressTrackBinding[];
   houseModuleDefaults?: Record<string, unknown>;
   cityPortraits?: Record<string, string>;
   historicalCharacterIdByCharacterId?: Record<string, string>;

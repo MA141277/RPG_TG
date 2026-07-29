@@ -21,7 +21,7 @@ export type StorySettlementRuntimeContext = {
 
 export type StorySettlementContent = {
   settlementDefinitionsById?:
-    | Record<string, StorySettlementDefinition>
+    | Record<string, StorySettlementDefinition | undefined>
     | undefined;
 };
 
