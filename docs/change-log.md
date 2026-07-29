@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 State Sync Runtime Settlement Effects Slice
+
+### Added
+- `commitRuntimeRequest()` 现在会在 app state 写回前结算 runtime result `settlement.effects`，统一通过 `settleRuntimeEffects()` 应用 effect。
+- 扩展 `tests/state-sync-runtime-commit.test.cjs`，覆盖 playable settlement effects 在 commit 阶段写入 `GameState.runtime.flags`。
+
+### Impact
+- 这片只迁移 state-sync runtime commit 的 settlement effects 串联能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 playable/event runtime 若返回 settlement effects，可依赖 commit helper 统一结算，避免调用方自行处理 effects。
+
 ## 2026-07-29 State Sync Runtime Commit Patch Slice
 
 ### Added

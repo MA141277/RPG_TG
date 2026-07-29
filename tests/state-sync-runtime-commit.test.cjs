@@ -79,3 +79,48 @@ test("commitRuntimeRequest applies runtime status patches through the state sync
     runtimePatch: { level: 1, damaged: true },
   });
 });
+
+test("commitRuntimeRequest settles playable settlement effects before app state write-back", () => {
+  const result = commitRuntimeRequest({
+    state: createAppState(),
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.playable-settlement",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [],
+          settlement: {
+            integrationId: "playable.test",
+            outcome: "success",
+            factResult: { status: "completed" },
+            handoff: {
+              type: "close-only",
+              ownerKind: "external",
+              ownerId: null,
+            },
+            effects: [
+              {
+                type: "setFlag",
+                key: "playable.settled",
+                value: true,
+              },
+            ],
+          },
+        }),
+      },
+    },
+  });
+
+  assert.equal(result.state.gameState.runtime.flags["playable.settled"], true);
+  assert.deepEqual(result.runtimeResult.settlement.effects, [
+    {
+      type: "setFlag",
+      key: "playable.settled",
+      value: true,
+    },
+  ]);
+});

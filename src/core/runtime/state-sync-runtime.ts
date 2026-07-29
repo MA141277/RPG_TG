@@ -4,6 +4,7 @@ import type {
   StateSyncResult,
   StateSyncTrigger,
 } from "../contracts/state-sync-runtime";
+import type { Effect } from "../contracts/effect";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
 import type { TaskDefinition } from "../contracts/task-runtime";
@@ -14,6 +15,7 @@ import {
   type RuntimeAppStateInput,
 } from "./state-sync-core-seam";
 import { dispatchRuntimeRequest } from "./runtime-dispatch";
+import { settleRuntimeEffects } from "./runtime-settlement";
 import { syncAppState } from "./state-sync-app-bridge";
 import { hydrateFromSave } from "./state-sync-hydration";
 import { rebuildAfterModActivation } from "./state-sync-mod-rebuild";
@@ -121,11 +123,12 @@ export function applyInteractiveRuntimeResult<
 export function commitRuntimeRequest<
   TAppState extends RuntimeStateBridgeInput,
 >(input: RuntimeCommitInput<TAppState>): RuntimeCommitResult<TAppState> {
-  const runtimeResult = dispatchRuntimeRequest({
+  const routedRuntimeResult = dispatchRuntimeRequest({
     state: createRuntimeBridgeState(input.state),
     request: input.request,
     context: input.context,
   });
+  const runtimeResult = settleRuntimeResultSettlementEffects(routedRuntimeResult);
 
   return {
     state: applyRuntimeBridgeState(
@@ -138,6 +141,56 @@ export function commitRuntimeRequest<
     ),
     runtimeResult,
   };
+}
+
+function settleRuntimeResultSettlementEffects(
+  runtimeResult: RuntimeResult
+): RuntimeResult {
+  const settlementEffects = readSettlementEffects(runtimeResult.settlement);
+  if (settlementEffects.length === 0) {
+    return runtimeResult;
+  }
+
+  const settled = settleRuntimeEffects({
+    state: runtimeResult.state,
+    effects: settlementEffects,
+    emittedBy: "event-runtime",
+    appliedBy: "runtime-settlement",
+    ...(runtimeResult.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: runtimeResult.characterDefinitions }),
+    ...(runtimeResult.characterStatusById == null
+      ? {}
+      : { characterStatusById: runtimeResult.characterStatusById }),
+  });
+
+  return {
+    ...runtimeResult,
+    state: settled.state,
+    ...(settled.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: settled.characterDefinitions }),
+    ...(settled.characterStatusById == null
+      ? {}
+      : { characterStatusById: settled.characterStatusById }),
+    settlement:
+      runtimeResult.settlement == null ||
+      typeof runtimeResult.settlement !== "object" ||
+      Array.isArray(runtimeResult.settlement)
+        ? runtimeResult.settlement
+        : {
+            ...runtimeResult.settlement,
+            effects: settled.settledEffects,
+          },
+  };
+}
+
+function readSettlementEffects(settlement: RuntimeResult["settlement"]): Effect[] {
+  if (settlement == null || typeof settlement !== "object") {
+    return [];
+  }
+  const effects = (settlement as { effects?: unknown }).effects;
+  return Array.isArray(effects) ? (effects as Effect[]) : [];
 }
 
 export function syncState(
