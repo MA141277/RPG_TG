@@ -6,6 +6,9 @@ dist/
 .worktrees/
 tmp/
 
+# Local agent scratch notes
+.superpowers/brainstorm/
+
 # Local build/package outputs
 release/
 
