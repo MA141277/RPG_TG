@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Runtime Result Settlement Contract Slice
+
+### Added
+- 新增 `RuntimeSettlementResult` 合同，显式声明 runtime result settlement 至少包含 `effects: Effect[]`。
+- 新增 `tests/runtime-result-contract.test.cjs`，锁定 `RuntimeResult.settlement` 不再使用 `unknown`。
+
+### Changed
+- `RuntimeResult.settlement` 从 `unknown` 收紧为 `RuntimeSettlementResult | null`。
+- `state-sync-runtime` 的 settlement effects 读取改为依赖明确合同，不再对 `unknown` 做 ad hoc cast。
+
+### Impact
+- 这片只收紧 core runtime result 合同，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 playable/event runtime 返回 settlement 时，应保持 `effects` 明确可结算。
+
 ## 2026-07-29 State Sync Runtime Settlement Effects Slice
 
 ### Added

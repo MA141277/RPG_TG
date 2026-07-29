@@ -4,7 +4,6 @@ import type {
   StateSyncResult,
   StateSyncTrigger,
 } from "../contracts/state-sync-runtime";
-import type { Effect } from "../contracts/effect";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
 import type { TaskDefinition } from "../contracts/task-runtime";
@@ -146,7 +145,7 @@ export function commitRuntimeRequest<
 function settleRuntimeResultSettlementEffects(
   runtimeResult: RuntimeResult
 ): RuntimeResult {
-  const settlementEffects = readSettlementEffects(runtimeResult.settlement);
+  const settlementEffects = runtimeResult.settlement?.effects ?? [];
   if (settlementEffects.length === 0) {
     return runtimeResult;
   }
@@ -173,24 +172,18 @@ function settleRuntimeResultSettlementEffects(
     ...(settled.characterStatusById == null
       ? {}
       : { characterStatusById: settled.characterStatusById }),
-    settlement:
-      runtimeResult.settlement == null ||
-      typeof runtimeResult.settlement !== "object" ||
-      Array.isArray(runtimeResult.settlement)
-        ? runtimeResult.settlement
-        : {
+    ...(runtimeResult.settlement === undefined
+      ? {}
+      : {
+          settlement:
+            runtimeResult.settlement === null
+              ? null
+              : {
             ...runtimeResult.settlement,
             effects: settled.settledEffects,
           },
+        }),
   };
-}
-
-function readSettlementEffects(settlement: RuntimeResult["settlement"]): Effect[] {
-  if (settlement == null || typeof settlement !== "object") {
-    return [];
-  }
-  const effects = (settlement as { effects?: unknown }).effects;
-  return Array.isArray(effects) ? (effects as Effect[]) : [];
 }
 
 export function syncState(

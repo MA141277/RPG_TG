@@ -34,6 +34,11 @@ export type RuntimeFollowUpOutcome =
   | { type: "time.advanced" }
   | { type: "time.council-threshold-crossed" };
 
+export type RuntimeSettlementResult = {
+  effects: Effect[];
+  [key: string]: unknown;
+};
+
 export type RuntimeResult = {
   state: RuntimeState;
   effects: Effect[];
@@ -54,7 +59,7 @@ export type RuntimeResult = {
   taskSignals?: RuntimeTaskSignal[];
   taskUpdates?: TaskUpdate[];
   settlementInstances?: ProgressionSettlementInstance[];
-  settlement?: unknown;
+  settlement?: RuntimeSettlementResult | null;
   followUp?: RuntimeInteractiveSignal | null;
   outcome?: RuntimeFollowUpOutcome | null;
   interactive?: RuntimeInteractiveSignal | null;
