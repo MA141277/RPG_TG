@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Mod-First Runtime Status Mutation Slice
+
+### Added
+- 新增 `CharacterStatus` / `CityStatus` / `BuildingStatus` materialize 与 merge helper，用于把运行时状态补丁投影到人物、城市、建筑定义上，而不是直接覆盖 authored definition。
+- 新增 `mutateCharacterNumericProperty()` 与 `mutateCharacterNumericAttributeBySemanticKey()`，让运行时可通过统一 status patch 修改人物 stats、skills、custom property 与语义属性。
+
+### Changed
+- `CharacterDefinition` 增加可选 `attributeMappings`、`attributeValues`、`customProperties`；`HouseDefinition` 增加可选 `level`、`damaged`、`outputMultiplier`，用于承接运行时状态投影。
+
+### Impact
+- 这片只增加 runtime/data 兼容层和测试，不改 UI、地图、背包、入口或 `src/main.ts`。
+- 后续从剧本或事件结算写入角色/城市/建筑状态时，应优先通过 status materializer 与 runtime property mutation helper，避免把兼容逻辑散落到具体 UI 或 house 模块。
+
 ## 2026-07-28 Faction Review Reward And Personnel Settlement
 
 ### Added

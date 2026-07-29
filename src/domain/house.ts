@@ -44,6 +44,9 @@ export type HouseDefinition = {
   moduleId?: HouseModuleId | null;
   onEnterEventId?: EventId;
   onLeaveEventId?: EventId;
+  level?: number;
+  damaged?: boolean;
+  outputMultiplier?: number;
   backAction: {
     label: string;
     targetView: "city";
