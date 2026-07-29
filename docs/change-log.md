@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Scenario Pack Playable Contribution Slice
+
+### Added
+- `createLoadedModFromScenarioPack()` 现在会把场景包内声明的 `playables` 与 `playableIntegrations` 投影为 manifest `gameplayContributions`。
+- 扩展 `tests/mod-runtime-contribution.test.cjs`，覆盖 scenario pack 激活后可暴露 playable runtime 贡献。
+
+### Impact
+- 这片只迁移 core/mod runtime 的贡献声明能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续场景包激活后，上一片默认 playable registry seam 可以读取到由场景包贡献的 playable 与 integration。
+
 ## 2026-07-29 Playable Runtime Default Registry Slice
 
 ### Added
