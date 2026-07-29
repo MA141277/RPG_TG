@@ -12,10 +12,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-29`
-- Current Focus: `Continue runtime-only migration from the clean branch codex/mod-first-runtime-integration.`
-- Next Step: `Pick the next runtime-only slice from Task 1, write/adjust focused tests first, then implement without touching UI/map/backpack/main shell unless explicitly scoped.`
-- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor codex/mod-first-runtime-integration origin/codex/sync-naqishuo-721ui-to-mmz`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/mod-first-runtime-integration`; targeted runtime test suite listed below.
-- Notes: `Current branch is codex/mod-first-runtime-integration and tracks origin/codex/mod-first-runtime-integration. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document commits may exist only on the integration branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
+- Current Focus: `Task 2 local slice is implemented on codex/migration-hot-tasks: story runtime scene helpers now retain city/house definition context without touching main/UI/map/backpack paths.`
+- Next Step: `Review and commit/push the local Task 2 slice if requested, then continue with Task 3 or the next runtime-only convergence gap that still stays out of src/main.ts and UI-owned paths.`
+- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/event-continuation-runtime.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stays deferred until a runtime/application seam exists or the user explicitly approves a tiny main.ts slice. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
 
 ## Progress Log
 
@@ -31,6 +31,14 @@
   - Summary: `Added explicit branch topology and merge-back flow requirements so future sessions know which branch to work on, when to commit/push, and how to return verified integration slices to the current baseline.`
   - Verification: `git status --short --branch`; `git branch -vv` filtered for mod-first runtime, migrate-scripteditor, baseline, and mod-first-dev branches.
   - Next: `After this document update is pushed, resume Task 1 on codex/mod-first-runtime-integration; merge back to the baseline only after a verified runtime slice or agreed documentation checkpoint.`
+- 2026-07-29
+  - Summary: `Corrected the handoff branch ownership: local continuation, submit, and merge work now runs on codex/migration-hot-tasks instead of codex/mod-first-runtime-integration.`
+  - Verification: `git branch --show-current` returned `codex/migration-hot-tasks`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'` returned `origin/codex/migration-hot-tasks`.
+  - Next: `Resume Task 1 on codex/migration-hot-tasks; treat codex/mod-first-runtime-integration as historical context only unless the user explicitly asks to revive it.`
+- 2026-07-29
+  - Summary: `Completed Task 1 audit and deferred caller wiring because applyEventOwnedPlayableCompletion() still has no non-UI production caller outside entry-owned paths; then completed a Task 2 local convergence slice so story runtime scene helpers preserve cityDefinitions/houseDefinitions across start and choice continuation.`
+  - Verification: `rg -n "applyEventOwnedPlayableCompletion|continueStoryFromSourceEvent|cityDefinitions|houseDefinitions" src/core src/application tests`; `rg -n "applyEventOwnedPlayableCompletion\\(" src tests`; `git diff --name-status HEAD..origin/mod-first-dev -- src/application/dialogue src/application/events src/application/story src/core/runtime src/core/contracts tests`; `pnpm run build:test`; `node --test tests/event-continuation-runtime.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `If this local Task 2 slice should be kept, commit/push it with docs/change-log.md and this handoff document; otherwise continue Task 3 Step 1 from codex/migration-hot-tasks.`
 
 ---
 
@@ -54,11 +62,12 @@
 
 - Recheck result: `changed`
 - Notes:
-  - Current working branch: `codex/mod-first-runtime-integration`.
-  - Upstream: `origin/codex/mod-first-runtime-integration`.
+  - Current working branch: `codex/migration-hot-tasks`.
+  - Upstream: `origin/codex/migration-hot-tasks`.
   - Baseline branch for user-visible current app: `origin/codex/sync-naqishuo-721ui-to-mmz`.
-  - Runtime migration code up through commit `8d8e5145` is present in both the current integration branch history and `origin/codex/sync-naqishuo-721ui-to-mmz`.
-  - Documentation commits after `8d8e5145`, such as the handoff document commit, may exist only on `codex/mod-first-runtime-integration` until a deliberate merge-back step updates the baseline.
+  - Runtime migration code up through commit `8d8e5145` is present in the historical integration branch history and `origin/codex/sync-naqishuo-721ui-to-mmz`.
+  - Documentation or migration hot-task commits after `8d8e5145` may exist only on `codex/migration-hot-tasks` until a deliberate merge-back step updates the baseline.
+  - `codex/mod-first-runtime-integration` is now a historical predecessor branch, not the active local submit/merge branch.
   - Local `migrate-scripteditor` also points to `8d8e5145` and tracks `origin/codex/sync-naqishuo-721ui-to-mmz`.
   - Direct comparison to `origin/mod-first-dev` still shows large differences in `src/main.ts`, `src/ui/**`, `src/styles/**`, `src/application/map/**`, house modules, audio, layout editor, and presenter/runtime coordinator files. These are not safe to merge wholesale.
 
@@ -66,7 +75,7 @@
 
 Use these branch roles unless the user explicitly gives a new branch name:
 
-- Current branch: `codex/mod-first-runtime-integration`
+- Current branch: `codex/migration-hot-tasks`
 - Branches involved in this migration flow:
   - `origin/codex/sync-naqishuo-721ui-to-mmz`
     - Role: remote target baseline branch.
@@ -77,11 +86,14 @@ Use these branch roles unless the user explicitly gives a new branch name:
     - Upstream/remote counterpart: `origin/codex/sync-naqishuo-721ui-to-mmz`.
     - Purpose: local branch used to merge integration work back into the remote target baseline.
     - Rule: update from remote before merging an integration slice back.
-  - `codex/mod-first-runtime-integration`
-    - Role: current runtime integration branch.
-    - Upstream: `origin/codex/mod-first-runtime-integration`.
-    - Purpose: continue runtime-only migration work in small commits.
+  - `codex/migration-hot-tasks`
+    - Role: current runtime hot-task branch.
+    - Upstream: `origin/codex/migration-hot-tasks`.
+    - Purpose: continue runtime-only migration work in small commits from the current handoff state.
     - Rule: all new runtime migration slices should start here or from a fresh child branch based on it.
+- Historical predecessor branch: `codex/mod-first-runtime-integration`
+  - Role: previous local integration branch used before the handoff moved to `codex/migration-hot-tasks`.
+  - Rule: do not use it for new local submit/merge flow unless the user explicitly asks.
 - Source reference branch: `origin/mod-first-dev`
   - Role: read-only source for runtime ideas, existing shellification direction, and mod-first contracts.
   - Rule: do not merge this branch directly into the current baseline or integration branch.
@@ -96,7 +108,7 @@ Historical final synchronized state after the `8d8e5145` runtime-stack merge-bac
 - `migrate-scripteditor`
 - `codex/mod-first-runtime-integration`
 
-At that checkpoint, these branches had no remaining runtime migration differences. Later documentation-only commits, such as this handoff document, can make `codex/mod-first-runtime-integration` temporarily lead the baseline until they are intentionally merged back.
+At that checkpoint, these branches had no remaining runtime migration differences. Later documentation-only commits, such as this handoff document, or newer migration hot-task commits can make the current working branch `codex/migration-hot-tasks` lead the baseline until they are intentionally merged back.
 
 Before starting any slice, run:
 
@@ -109,7 +121,7 @@ git rev-parse --abbrev-ref --symbolic-full-name '@{u}'
 
 Expected:
 
-- Current branch is `codex/mod-first-runtime-integration` or a clearly named child branch based on it.
+- Current branch is `codex/migration-hot-tasks` or a clearly named child branch based on it.
 - Worktree is clean before migration edits begin.
 - Upstream is known.
 
@@ -117,7 +129,7 @@ Expected:
 
 Use this flow after each verified runtime slice or agreed documentation checkpoint:
 
-1. Work on `codex/mod-first-runtime-integration` or a child branch created from it.
+1. Work on `codex/migration-hot-tasks` or a child branch created from it.
 2. Implement one narrow runtime slice only.
 3. Update this handoff document with checkbox state, `Execution State`, `Progress Log`, verification result, branch/baseline status if changed, and the exact next unchecked task.
 4. Run targeted runtime tests and `npm.cmd run typecheck`.
@@ -131,8 +143,8 @@ Expected:
 
 - Empty output unless the user explicitly approved that slice to touch one of these paths.
 
-6. Commit on the integration branch with a runtime-specific message.
-7. Push the integration branch:
+6. Commit on the current runtime branch with a runtime-specific message.
+7. Push the current runtime branch:
 
 ```powershell
 git push
@@ -146,7 +158,7 @@ git push
 ```powershell
 git switch migrate-scripteditor
 git pull --ff-only
-git merge --no-ff codex/mod-first-runtime-integration
+git merge --no-ff codex/migration-hot-tasks
 ```
 
 10. Re-run the boundary proof and the relevant verification on `migrate-scripteditor`.
@@ -156,10 +168,10 @@ git merge --no-ff codex/mod-first-runtime-integration
 git push origin migrate-scripteditor:codex/sync-naqishuo-721ui-to-mmz
 ```
 
-12. Switch back to the integration branch and sync it from the updated baseline if needed:
+12. Switch back to the current runtime branch and sync it from the updated baseline if needed:
 
 ```powershell
-git switch codex/mod-first-runtime-integration
+git switch codex/migration-hot-tasks
 git merge --ff-only origin/codex/sync-naqishuo-721ui-to-mmz
 git push
 ```
@@ -417,7 +429,7 @@ The current baseline also contains newer UI, map, backpack, script editor, entry
 - Test: `tests/event-owned-playable-completion.test.cjs`
 - Test: `tests/event-continuation-runtime.test.cjs`
 
-- [ ] **Step 1: Find non-UI callers of event-owned playable completion**
+- [x] **Step 1: Find non-UI callers of event-owned playable completion**
 
 Run:
 
@@ -439,6 +451,11 @@ If a non-UI runtime caller exists, extend the nearest test so it proves:
 - old character-only behavior still works when world definitions are omitted
 
 Run the test first and confirm the new assertion fails before implementation.
+
+Status note:
+
+- Audit result: all current production callers remain entry/UI-owned; `applyEventOwnedPlayableCompletion()` is referenced directly only by tests in this branch.
+- Therefore Task 1 caller wiring is intentionally deferred until a runtime/application-owned caller exists or the user explicitly approves a tiny `src/main.ts` slice.
 
 - [ ] **Step 3: Implement minimal caller wiring**
 
@@ -492,7 +509,7 @@ Report:
 - Test: `tests/runtime-router-follow-up-contract.test.cjs`
 - Test: `tests/runtime-follow-up-contract.test.cjs`
 
-- [ ] **Step 1: Compare remaining runtime-only diffs against mod-first-dev**
+- [x] **Step 1: Compare remaining runtime-only diffs against mod-first-dev**
 
 Run:
 
@@ -505,7 +522,7 @@ Expected:
 - Extract runtime-only candidates.
 - Exclude renames or deletions that drag UI/main shell changes into the current branch.
 
-- [ ] **Step 2: Select one isolated completion/follow-up gap**
+- [x] **Step 2: Select one isolated completion/follow-up gap**
 
 Choose one gap that:
 
@@ -514,11 +531,11 @@ Choose one gap that:
 - preserves old compatibility fields
 - keeps compatibility in a shared runtime helper or contract module
 
-- [ ] **Step 3: Write failing test and implement**
+- [x] **Step 3: Write failing test and implement**
 
 Use the nearest existing runtime test file. Keep the slice narrow enough for one commit.
 
-- [ ] **Step 4: Run verification and boundary proof**
+- [x] **Step 4: Run verification and boundary proof**
 
 Run:
 
@@ -534,6 +551,12 @@ Expected:
 
 - Tests and typecheck pass.
 - Boundary diff is empty.
+
+Local slice completed:
+
+- Selected gap: `story-runtime` scene helpers were dropping `cityDefinitions` / `houseDefinitions` outside the continuation helper path.
+- Implemented slice: `startStoryEventById()`, `triggerStoryEvents()`, `advanceStorySceneStep()`, and `chooseStorySceneOption()` now keep the incoming world-definition context.
+- Added/updated coverage: `tests/event-continuation-runtime.test.cjs` now proves story runtime keeps world definitions across scene start and choice continuation.
 
 - [ ] **Step 5: Commit and report**
 
@@ -644,7 +667,7 @@ Record any need for full shellification as a new dedicated plan. Do not borrow `
 
 ## Exit Check
 
-- [ ] Current branch remains based on the current UI/map/backpack baseline.
+- [ ] Current branch `codex/migration-hot-tasks` remains based on the current UI/map/backpack baseline.
 - [ ] Every runtime slice has a focused test.
 - [ ] Every runtime slice has a commit and push.
 - [ ] This handoff document is updated after every completed plan task or migration slice.
@@ -677,9 +700,9 @@ Record any need for full shellification as a new dedicated plan. Do not borrow `
 - Project Progress Synced: `no`
 - Next Child: `World Definition Caller Wiring Audit`
 - Next Child Status: `waiting`
-- Next Required Action: `Resume at Task 1 on codex/mod-first-runtime-integration, then merge verified checkpoints back to origin/codex/sync-naqishuo-721ui-to-mmz through the documented merge-back flow.`
+- Next Required Action: `Resume at Task 1 on codex/migration-hot-tasks, then merge verified checkpoints back to origin/codex/sync-naqishuo-721ui-to-mmz through the documented merge-back flow.`
 - Next Entry Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
-- Push Status: `integration-branch-pushed; baseline-merge-pending-for-latest-doc-checkpoint`
-- Push Commit: `latest origin/codex/mod-first-runtime-integration`
-- Resume From: `Open this document, confirm branch codex/mod-first-runtime-integration, then execute the first unchecked task without changing UI/map/backpack/main shell paths unless the user explicitly approves that slice.`
+- Push Status: `current-branch-pushed; baseline-merge-pending-for-latest-doc-checkpoint`
+- Push Commit: `latest origin/codex/migration-hot-tasks`
+- Resume From: `Open this document, confirm branch codex/migration-hot-tasks, then execute the first unchecked task without changing UI/map/backpack/main shell paths unless the user explicitly approves that slice.`

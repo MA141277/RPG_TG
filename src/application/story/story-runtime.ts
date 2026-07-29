@@ -120,6 +120,12 @@ export function startStoryEventById(
     {
       state: startEvent(runtime.state, eventDefinition),
       characterDefinitions: runtime.characterDefinitions,
+      ...(runtime.cityDefinitions == null
+        ? {}
+        : { cityDefinitions: runtime.cityDefinitions }),
+      ...(runtime.houseDefinitions == null
+        ? {}
+        : { houseDefinitions: runtime.houseDefinitions }),
     },
     content
   );
@@ -183,6 +189,12 @@ export function triggerStoryEvents(
     {
       state: startEvent(runtime.state, targetEvent),
       characterDefinitions: runtime.characterDefinitions,
+      ...(runtime.cityDefinitions == null
+        ? {}
+        : { cityDefinitions: runtime.cityDefinitions }),
+      ...(runtime.houseDefinitions == null
+        ? {}
+        : { houseDefinitions: runtime.houseDefinitions }),
     },
     content
   );
@@ -203,6 +215,12 @@ export function advanceStorySceneStep(
   return {
     state: result.state,
     characterDefinitions: result.characterDefinitions,
+    ...(runtime.cityDefinitions == null
+      ? {}
+      : { cityDefinitions: runtime.cityDefinitions }),
+    ...(runtime.houseDefinitions == null
+      ? {}
+      : { houseDefinitions: runtime.houseDefinitions }),
   };
 }
 
@@ -221,6 +239,12 @@ export function chooseStorySceneOption(
     {
       state: choiceResult.state,
       characterDefinitions: choiceResult.characterDefinitions,
+      ...(runtime.cityDefinitions == null
+        ? {}
+        : { cityDefinitions: runtime.cityDefinitions }),
+      ...(runtime.houseDefinitions == null
+        ? {}
+        : { houseDefinitions: runtime.houseDefinitions }),
     },
     content
   );

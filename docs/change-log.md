@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Story Runtime World Definition Retention Slice
+
+### Added
+- `startStoryEventById()`、`triggerStoryEvents()`、`advanceStorySceneStep()`、`chooseStorySceneOption()` 现在都会保留传入 runtime context 里的 `cityDefinitions` / `houseDefinitions`，不再在普通 story scene helper 中把世界定义集合丢掉。
+- 扩展 `tests/event-continuation-runtime.test.cjs`，覆盖 story runtime 在 scene start 与 choice continuation 两条 helper 路径上保留 world definitions。
+
+### Impact
+- 这片只收敛 `src/application/story/story-runtime.ts` 的 runtime context 透传，不改 UI、地图、背包、入口壳或 `src/main.ts`。
+- 后续若真正把 event-owned playable completion 的 world-definition caller 从入口层下沉到 runtime/application 层，这些 story helper 不会再把已提供的城市/建筑定义中途清空。
+
 ## 2026-07-29 Script Editor Menu Authoring Slice
 
 ### Added
