@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 State Sync Runtime Commit Patch Slice
+
+### Added
+- `commitRuntimeRequest()` 现在会把 runtime result 中的 `characterStatusById`、`cityStatusById`、`buildingStatusById` 传给统一 `stateSyncCoreSeam` 回写。
+- 新增 `tests/state-sync-runtime-commit.test.cjs`，覆盖 dispatch/commit 后 status patch 与 app state 既有 status 的合并。
+
+### Changed
+- `state-sync-runtime` 的 bridge 创建与应用逻辑复用 `stateSyncCoreSeam`，避免在 commit helper 内分散维护一套状态回写逻辑。
+
+### Impact
+- 这片只迁移 state-sync runtime commit 串联能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 runtime dispatch 产出的角色/城市/建筑状态补丁可通过 `commitRuntimeRequest()` 自动合并回 app state。
+
 ## 2026-07-29 Navigation Runtime Access Slice
 
 ### Added

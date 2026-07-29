@@ -9,6 +9,10 @@ import type { RuntimeResult } from "../contracts/runtime-result";
 import type { TaskDefinition } from "../contracts/task-runtime";
 import type { RuntimeState as LegacyBridgeRuntimeState } from "../contracts/runtime-state";
 import type { RuntimeFollowUpContext, RuntimeRouter } from "./runtime-router";
+import {
+  stateSyncCoreSeam,
+  type RuntimeAppStateInput,
+} from "./state-sync-core-seam";
 import { dispatchRuntimeRequest } from "./runtime-dispatch";
 import { syncAppState } from "./state-sync-app-bridge";
 import { hydrateFromSave } from "./state-sync-hydration";
@@ -18,7 +22,7 @@ import { preparePresentationInput } from "./state-sync-presentation";
 import { prepareSaveState } from "./state-sync-save";
 import { validateCanonicalRuntimeState } from "./state-sync-validation";
 
-export type RuntimeStateBridgeInput = {
+export type RuntimeStateBridgeInput = RuntimeAppStateInput & {
   gameState: LegacyBridgeRuntimeState["core"];
   beggingMiniGameState: LegacyBridgeRuntimeState["app"]["beggingMiniGameState"];
   autoAdvanceState: LegacyBridgeRuntimeState["app"]["autoAdvanceState"];
@@ -32,7 +36,10 @@ export type RuntimeStateBridgeInput = {
 
 export type RuntimeResultBridgeInput = {
   state: LegacyBridgeRuntimeState;
-  characterDefinitions?: unknown;
+  characterDefinitions?: RuntimeResult["characterDefinitions"];
+  characterStatusById?: RuntimeResult["characterStatusById"];
+  cityStatusById?: RuntimeResult["cityStatusById"];
+  buildingStatusById?: RuntimeResult["buildingStatusById"];
 };
 
 export type RuntimeCommitInput<TAppState extends RuntimeStateBridgeInput> = {
@@ -53,19 +60,7 @@ export type RuntimeCommitResult<TAppState extends RuntimeStateBridgeInput> = {
 export function createRuntimeBridgeState(
   state: RuntimeStateBridgeInput
 ): LegacyBridgeRuntimeState {
-  return {
-    core: state.gameState,
-    app: {
-      beggingMiniGameState: state.beggingMiniGameState,
-      autoAdvanceState: state.autoAdvanceState,
-      campaignTravelState: state.campaignTravelState,
-      cityDirectoryState: state.cityDirectoryState,
-      cityMenuState: state.cityMenuState,
-      locationDialogueState: state.locationDialogueState,
-      modalState: state.modalState,
-    },
-    view: {},
-  };
+  return stateSyncCoreSeam.createRuntimeStateFromAppState(state);
 }
 
 export function applyRuntimeBridgeState<
@@ -73,22 +68,19 @@ export function applyRuntimeBridgeState<
 >(
   state: TAppState,
   runtimeState: LegacyBridgeRuntimeState,
-  characterDefinitions?: unknown
+  characterDefinitions?: RuntimeResult["characterDefinitions"],
+  characterStatusById?: RuntimeResult["characterStatusById"],
+  cityStatusById?: RuntimeResult["cityStatusById"],
+  buildingStatusById?: RuntimeResult["buildingStatusById"]
 ): TAppState {
-  return {
-    ...state,
-    gameState: runtimeState.core,
-    beggingMiniGameState: runtimeState.app.beggingMiniGameState,
-    autoAdvanceState: runtimeState.app.autoAdvanceState,
-    campaignTravelState: runtimeState.app.campaignTravelState,
-    cityDirectoryState: runtimeState.app.cityDirectoryState,
-    cityMenuState: runtimeState.app.cityMenuState,
-    locationDialogueState: runtimeState.app.locationDialogueState,
-    modalState: runtimeState.app.modalState,
-    ...(characterDefinitions == null
-      ? {}
-      : { characterDefinitions }),
-  } as TAppState;
+  return stateSyncCoreSeam.applyRuntimeStateToAppState(
+    state,
+    runtimeState,
+    characterDefinitions,
+    characterStatusById,
+    cityStatusById,
+    buildingStatusById
+  );
 }
 
 export function applyRuntimeBridgeResult<
@@ -97,7 +89,10 @@ export function applyRuntimeBridgeResult<
   return applyRuntimeBridgeState(
     state,
     result.state,
-    result.characterDefinitions
+    result.characterDefinitions,
+    result.characterStatusById,
+    result.cityStatusById,
+    result.buildingStatusById
   );
 }
 
@@ -112,7 +107,7 @@ export function applyInteractiveRuntimeState<
 >(
   state: TAppState,
   runtimeState: LegacyBridgeRuntimeState,
-  characterDefinitions?: unknown
+  characterDefinitions?: RuntimeResult["characterDefinitions"]
 ): TAppState {
   return applyRuntimeBridgeState(state, runtimeState, characterDefinitions);
 }
@@ -136,7 +131,10 @@ export function commitRuntimeRequest<
     state: applyRuntimeBridgeState(
       input.state,
       runtimeResult.state,
-      runtimeResult.characterDefinitions
+      runtimeResult.characterDefinitions,
+      runtimeResult.characterStatusById,
+      runtimeResult.cityStatusById,
+      runtimeResult.buildingStatusById
     ),
     runtimeResult,
   };

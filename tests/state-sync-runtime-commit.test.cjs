@@ -1,0 +1,81 @@
+const assert = require("node:assert/strict");
+const test = require("node:test");
+
+const {
+  commitRuntimeRequest,
+} = require("../.test-dist/core/runtime/state-sync-runtime.js");
+const {
+  createInitialState,
+} = require("../.test-dist/application/state/create-initial-state.js");
+
+function createAppState() {
+  return {
+    gameState: createInitialState({
+      currentMapId: "map.test",
+      currentCityId: "city.test",
+      currentHouseId: null,
+      playerCharacterId: "hero",
+      chapterId: "chapter.test",
+      year: 1560,
+      month: 1,
+      day: 1,
+      pinnedCharacterId: "hero",
+      reviewDateText: "",
+      mainHouseMissionText: "",
+      cards: { ownedCardIds: [] },
+      valuables: { ownedItemIds: [] },
+    }),
+    beggingMiniGameState: null,
+    autoAdvanceState: null,
+    campaignTravelState: null,
+    cityDirectoryState: null,
+    cityMenuState: null,
+    locationDialogueState: null,
+    modalState: null,
+    characterDefinitions: [{ id: "hero" }],
+    characterStatusById: {
+      hero: { statPatch: { martial: 20 } },
+    },
+    cityStatusById: {
+      "city.test": { valuePatch: { prosperity: 10 } },
+    },
+    buildingStatusById: {
+      "house.test": { runtimePatch: { level: 1 } },
+    },
+  };
+}
+
+test("commitRuntimeRequest applies runtime status patches through the state sync seam", () => {
+  const result = commitRuntimeRequest({
+    state: createAppState(),
+    request: { family: "action", type: "action", actionId: "test.status" },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [],
+          characterStatusById: {
+            hero: { skillPatch: { arithmetic: 3 } },
+          },
+          cityStatusById: {
+            "city.test": { valuePatch: { danger: 4 } },
+          },
+          buildingStatusById: {
+            "house.test": { runtimePatch: { damaged: true } },
+          },
+        }),
+      },
+    },
+  });
+
+  assert.deepEqual(result.state.characterStatusById.hero, {
+    statPatch: { martial: 20 },
+    skillPatch: { arithmetic: 3 },
+  });
+  assert.deepEqual(result.state.cityStatusById["city.test"], {
+    valuePatch: { prosperity: 10, danger: 4 },
+  });
+  assert.deepEqual(result.state.buildingStatusById["house.test"], {
+    runtimePatch: { level: 1, damaged: true },
+  });
+});
