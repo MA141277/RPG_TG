@@ -9,6 +9,7 @@ import type {
   ScriptEditorMenuEntry,
   ScriptEditorMenuInstanceRecord,
   ScriptEditorMenuResourceRecord,
+  ScriptEditorMenuTargetFamily,
   ScriptEditorMountRecord,
   ScriptEditorPersonRecord,
   ScriptEditorProjectDefinition,
@@ -985,20 +986,24 @@ function replaceMenuOwnerReferences<TOwner extends ScriptEditorMenuOwnerRecord>(
   owner: TOwner,
   replacementInstanceIds: ReadonlyMap<string, string[]>
 ): TOwner {
-  const nextMounts = normalizeScriptEditorMounts(owner.mounts).flatMap((mount) => {
+  const nextMounts: ScriptEditorMountRecord[] = normalizeScriptEditorMounts(
+    owner.mounts
+  ).flatMap<ScriptEditorMountRecord>((mount) => {
     if (mount.kind !== "menu") {
       return [mount];
     }
     const nextIds = replacementInstanceIds.get(mount.target.menuInstanceId) ?? [
       mount.target.menuInstanceId,
     ];
-    return nextIds.map((menuInstanceId) => ({
-      ...mount,
-      target: {
-        kind: "menu" as const,
-        menuInstanceId,
-      },
-    }));
+    return nextIds.map(
+      (menuInstanceId): ScriptEditorMountRecord => ({
+        ...mount,
+        target: {
+          kind: "menu",
+          menuInstanceId,
+        },
+      })
+    );
   });
 
   const hasMenuInstanceIds = "menuInstanceIds" in owner;
@@ -1234,7 +1239,7 @@ function normalizeMenuEntryRouteTarget(
 
     return {
       authoringTarget: undefined,
-      targetFamily: rawTargetFamily || "event",
+      targetFamily: normalizeMenuTargetFamily(rawTargetFamily || "event"),
       targetId: explicitTargetId ?? rawTargetId,
     };
   }
@@ -1287,6 +1292,12 @@ function normalizeString(value: unknown, fallback: string): string {
 
 function normalizeOptionalString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeMenuTargetFamily(value?: string): ScriptEditorMenuTargetFamily {
+  return ["dialogue", "event", "trade", "minigame", "info"].includes(value ?? "")
+    ? (value as ScriptEditorMenuTargetFamily)
+    : "info";
 }
 
 function normalizeScriptEditorMountRecord(
