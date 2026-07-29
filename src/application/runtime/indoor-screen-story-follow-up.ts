@@ -1,14 +1,29 @@
 import type { AppState } from "../app-shell";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { SceneDefinition } from "../../domain/action";
-import type { CharacterDefinition } from "../../domain/character";
+import type { CityDefinition } from "../../domain/city";
 import type { EventDefinition } from "../../domain/event";
-import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
+import type { HouseDefinition } from "../../domain/house";
+import {
+  buildStoryTriggerInput,
+  triggerStoryEvents,
+} from "../story/story-runtime";
+import {
+  applyStoryRuntimeResultToAppState,
+  createStoryRuntimeDefinitionContext,
+} from "../story/story-runtime-state-bridge";
+import type { StorySettlementDefinition } from "../story/story-settlement-continuation";
 
 export type IndoorScreenStoryFollowUpContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
+  settlementDefinitionsById?: Record<
+    string,
+    StorySettlementDefinition | undefined
+  >;
+  cityDefinitionsById?: Record<string, CityDefinition>;
+  houseDefinitionsById?: Record<string, HouseDefinition>;
   textEntriesById?: Record<string, string>;
 };
 
@@ -25,30 +40,34 @@ export function applyIndoorScreenStoryFollowUp(input: {
     return appState;
   }
 
-  const result = runStoryTriggerRuntime({
-    timing: "indoor-screen-shown",
-    state: appState.gameState,
-    characterDefinitions: appState.characterDefinitions,
-    eventDefinitionsById: content.eventDefinitionsById,
-    sceneDefinitionsById: content.sceneDefinitionsById,
-    ...(content.activityDefinitionsById == null
-      ? {}
-      : { activityDefinitionsById: content.activityDefinitionsById }),
-    ...(content.textEntriesById == null
-      ? {}
-      : { textEntriesById: content.textEntriesById }),
-  });
+  const runtimeDefinitionContext = createStoryRuntimeDefinitionContext(
+    appState,
+    content
+  );
+  const result = triggerStoryEvents(
+    {
+      state: appState.gameState,
+      characterDefinitions: appState.characterDefinitions,
+      ...runtimeDefinitionContext,
+    },
+    {
+      eventDefinitionsById: content.eventDefinitionsById,
+      sceneDefinitionsById: content.sceneDefinitionsById,
+      activityDefinitionsById: content.activityDefinitionsById,
+      settlementDefinitionsById: content.settlementDefinitionsById,
+      textEntriesById: content.textEntriesById,
+    },
+    buildStoryTriggerInput("indoor-screen-shown", appState.gameState)
+  );
 
   if (
     result.state === appState.gameState &&
-    result.characterDefinitions === appState.characterDefinitions
+    result.characterDefinitions === appState.characterDefinitions &&
+    result.cityDefinitions === runtimeDefinitionContext.cityDefinitions &&
+    result.houseDefinitions === runtimeDefinitionContext.houseDefinitions
   ) {
     return appState;
   }
 
-  return {
-    ...appState,
-    gameState: result.state,
-    characterDefinitions: result.characterDefinitions,
-  };
+  return applyStoryRuntimeResultToAppState(appState, content, result);
 }

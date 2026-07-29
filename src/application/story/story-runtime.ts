@@ -22,7 +22,9 @@ type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  settlementDefinitionsById?: Record<string, StorySettlementDefinition> | undefined;
+  settlementDefinitionsById?:
+    | Record<string, StorySettlementDefinition | undefined>
+    | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
@@ -34,6 +36,33 @@ type StoryRuntimeContext = {
 };
 
 type StoryRuntimeResult = StoryRuntimeContext;
+
+function createRuntimeWorldDefinitionContext(runtime: StoryRuntimeContext) {
+  return {
+    ...(runtime.cityDefinitions == null
+      ? {}
+      : { cityDefinitions: runtime.cityDefinitions }),
+    ...(runtime.houseDefinitions == null
+      ? {}
+      : { houseDefinitions: runtime.houseDefinitions }),
+  };
+}
+
+function applyTriggeredStoryEvent(
+  runtime: StoryRuntimeContext,
+  content: StoryContent,
+  eventDefinition: EventDefinition
+): StoryRuntimeContext {
+  return applyStorySettlementEvent(
+    {
+      state: startEvent(runtime.state, eventDefinition),
+      characterDefinitions: runtime.characterDefinitions,
+      ...createRuntimeWorldDefinitionContext(runtime),
+    },
+    content,
+    eventDefinition
+  );
+}
 
 function createScopedTriggerContext(
   state: GameState,
@@ -116,19 +145,7 @@ export function startStoryEventById(
     return runtime;
   }
 
-  return syncStoryScene(
-    {
-      state: startEvent(runtime.state, eventDefinition),
-      characterDefinitions: runtime.characterDefinitions,
-      ...(runtime.cityDefinitions == null
-        ? {}
-        : { cityDefinitions: runtime.cityDefinitions }),
-      ...(runtime.houseDefinitions == null
-        ? {}
-        : { houseDefinitions: runtime.houseDefinitions }),
-    },
-    content
-  );
+  return syncStoryScene(applyTriggeredStoryEvent(runtime, content, eventDefinition), content);
 }
 
 export function continueStoryFromSourceEvent(
@@ -185,19 +202,7 @@ export function triggerStoryEvents(
     return runtime;
   }
 
-  return syncStoryScene(
-    {
-      state: startEvent(runtime.state, targetEvent),
-      characterDefinitions: runtime.characterDefinitions,
-      ...(runtime.cityDefinitions == null
-        ? {}
-        : { cityDefinitions: runtime.cityDefinitions }),
-      ...(runtime.houseDefinitions == null
-        ? {}
-        : { houseDefinitions: runtime.houseDefinitions }),
-    },
-    content
-  );
+  return syncStoryScene(applyTriggeredStoryEvent(runtime, content, targetEvent), content);
 }
 
 export function advanceStorySceneStep(

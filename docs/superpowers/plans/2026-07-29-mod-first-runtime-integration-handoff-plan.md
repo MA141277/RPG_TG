@@ -12,10 +12,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-29`
-- Current Focus: `Task 3 audit is complete on codex/migration-hot-tasks: richer storyContent exposure is committed, but indoor-screen-story-follow-up cannot safely consume the new runtime families yet without crossing house-runtime/main.ts dependency wiring and broader story-runtime seam changes.`
-- Next Step: `Stop Task 3 here. Only enter Task 4 if the user explicitly approves evaluating a tiny entry-wiring or house-runtime dependency slice; otherwise keep this branch at the current runtime-only helper/context checkpoint.`
-- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/active-game-content-story-context.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
-- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stays deferred until a runtime/application seam exists or the user explicitly approves a tiny main.ts slice. Task 3 selected only dormant/testable helpers or context exposure slices so far: council priority house resolution inside navigation-time-follow-up, the authored world-definition/status bridge inside story-runtime-state-bridge, and richer story runtime family exposure inside active-game-content. The follow-up audit after commit 2442566 found that indoor-screen-story-follow-up still sits behind house-runtime/main.ts-provided minimal story content and the current story-runtime seam does not yet consume eventBindings/progressTracks or apply settlement world updates on initial timing-trigger activation, so further progress there would stop being a runtime-only helper slice. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
+- Current Focus: `Task 4 tiny entry-wiring/runtime seam slice is implemented on codex/migration-hot-tasks: indoor-screen-story-follow-up, main runtime trigger-story-events, and house-enter timing now project settlement world updates back into city/building status layers, with only a narrow src/main.ts storyContent wiring expansion.`
+- Next Step: `Review, commit, and push this Task 4 slice. After that, decide whether remaining eventBindings/progressTrack consumption still belongs in this handoff or should move to a new dedicated story-runtime follow-up plan.`
+- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/indoor-screen-story-runtime.test.cjs`; `node --test --test-name-pattern "child 26|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stayed deferred until the user explicitly approved a tiny main.ts slice. That approval has now been used exactly once: src/main.ts only widened storyContent wiring into main-runtime-orchestrator and house-runtime, while the behavior change itself stays in application/core runtime seams. This slice also closes the earlier gap where indoor-screen and house-enter timing triggers could fire settlement events without projecting city/building authored-definition changes back into app-state status layers. eventBindings/progressTracks are still exposed in storyContent but remain unconsumed by the current scene-based runtime seam. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
 
 ## Progress Log
 
@@ -55,6 +55,10 @@
   - Summary: `Committed and pushed the richer storyContent context slice as 2442566, then audited indoor-screen-story-follow-up and stopped Task 3 there because the remaining consumer path would require widening house-runtime/main.ts story-content wiring and broader story-runtime seam work beyond a dormant helper slice.`
   - Verification: `git status --short`; `git show --stat --oneline HEAD`; `git push`; `rg -n "getStoryContent|applyIndoorScreenStoryFollowUp|triggerStoryEvents|eventBindingsById|progressTrackDefinitionsById|settlementDefinitionsById|cityDefinitionsById|houseDefinitionsById" src/main.ts src/application/runtime src/application/story src/core/runtime/house-runtime.ts`; `sed -n '1,240p' src/application/runtime/indoor-screen-story-follow-up.ts`; `sed -n '1,260p' src/application/runtime/main-runtime-orchestrator.ts`
   - Next: `Do not extend indoor-screen-story-follow-up further under Task 3. Enter Task 4 only with explicit user approval for a tiny entry-wiring or house-runtime dependency slice, or open a new dedicated story-runtime follow-up plan if deeper seam migration is desired.`
+- 2026-07-29
+  - Summary: `After explicit user approval, entered Task 4 and implemented a tiny entry-wiring/runtime seam slice: indoor-screen-story-follow-up now uses story-runtime plus state-bridge world projection, story-runtime applies settlement contents on initial trigger activation, main-runtime-orchestrator projects timing-trigger settlement updates, and house-runtime projects house-enter settlement world updates.`
+  - Verification: `pnpm run build:test`; `node --test tests/indoor-screen-story-runtime.test.cjs`; `node --test --test-name-pattern "child 26|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `Commit/push this Task 4 slice, then decide whether remaining eventBindings/progressTrack runtime consumption belongs in this handoff or should move to a new dedicated follow-up plan.`
 
 ---
 
@@ -682,14 +686,14 @@ Before committing, update this handoff document with completed checkboxes, `Exec
 - Read: `docs/superpowers/plans/2026-07-03-child-23-main-startup-orchestration-extraction-plan.md`
 - Read: `docs/superpowers/plans/2026-07-03-child-24-main-runtime-orchestration-ownerization-plan.md`
 
-- [ ] **Step 1: Do not start this task until runtime-only slices are stable**
+- [x] **Step 1: Do not start this task until runtime-only slices are stable**
 
 Expected:
 
 - Tasks 1-3 are complete or explicitly deferred with reasons.
 - User has explicitly approved considering `src/main.ts`.
 
-- [ ] **Step 2: Decide whether a tiny entry-wiring slice is needed**
+- [x] **Step 2: Decide whether a tiny entry-wiring slice is needed**
 
 If `src/main.ts` is the only remaining caller for an already-tested runtime helper, propose a tiny wiring slice that:
 
@@ -698,7 +702,13 @@ If `src/main.ts` is the only remaining caller for an already-tested runtime help
 - includes targeted tests or browser smoke
 - has an explicit rollback boundary
 
-- [ ] **Step 3: Reject full shellification in this plan**
+- [x] **Step 3: Reject full shellification in this plan**
+
+Local Task 4 slice completed:
+
+- Approved boundary: one narrow `src/main.ts` wiring expansion plus runtime/application seam changes only; no UI/map/backpack shell rewrite.
+- Implemented behavior: `indoor-screen-story-follow-up` now routes timing-trigger settlement world updates through `story-runtime` + `story-runtime-state-bridge`; `story-runtime` applies settlement contents on initial trigger activation; `main-runtime-orchestrator` and `house-runtime` both project resulting city/building definition deltas back into app-state status layers.
+- Added coverage: `tests/indoor-screen-story-runtime.test.cjs` plus the existing child 25/26 robustness subset.
 
 Record any need for full shellification as a new dedicated plan. Do not borrow `mod-first-dev` shellification wholesale inside this runtime migration handoff.
 

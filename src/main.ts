@@ -972,6 +972,11 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
+    settlementDefinitionsById:
+      activeContentContext.storyContent.settlementDefinitionsById,
+    cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
+    houseDefinitionsById:
+      activeContentContext.storyContent.houseDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,
   }),
   resetMainGameRuntime,
@@ -1754,6 +1759,10 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
+    settlementDefinitionsById:
+      activeContentContext.storyContent.settlementDefinitionsById,
+    cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
+    houseDefinitionsById: activeContentContext.storyContent.houseDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,
   });
 }

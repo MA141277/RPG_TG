@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Indoor Screen Settlement Runtime Bridge Slice
+
+### Added
+- `indoor-screen-story-follow-up` 现在改走 `application/story/story-runtime` 与 `story-runtime-state-bridge`，可在 house indoor follow-up 中把 settlement 事件对城市/建筑 authored definitions 的修改投影回 `cityStatusById` / `buildingStatusById`。
+- `story-runtime` 的 `startStoryEventById()` 与 `triggerStoryEvents()` 现在会在首次触发 settlement 事件时立即应用 settlement contents，而不是只在 source-event continuation 路径上支持 settlement。
+- `main-runtime-orchestrator` 与 `house-runtime` 现在都显式把 `settlementDefinitionsById`、`cityDefinitionsById`、`houseDefinitionsById` 传入对应 runtime seam；其中 `src/main.ts` 只做了受控的 storyContent wiring 扩充，没有替换入口壳。
+- 新增 `tests/indoor-screen-story-runtime.test.cjs`，覆盖 indoor-screen follow-up、main runtime trigger-story-events、house-enter runtime 三条路径上的 settlement world-update 投影。
+
+### Impact
+- 这片允许 indoor-screen/house-enter story trigger 在 runtime seam 内直接产出城市与建筑状态补丁，不再要求后续调用方另写 world-definition 回填逻辑。
+- 本次对 `src/main.ts` 的改动属于用户已批准的 tiny wiring slice；未触碰 `src/ui/**`、`src/styles/**`、地图、背包或其它入口壳替换工作。
+
 ## 2026-07-29 Story Content Rich Runtime Context Slice
 
 ### Added
