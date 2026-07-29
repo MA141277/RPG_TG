@@ -275,6 +275,7 @@ function settleRuntimeFollowUp(input: {
   if (
     !handledModernFollowUp &&
     (followUp == null || followUp.type === "none") &&
+    outcome == null &&
     interactive != null &&
     interactive.type !== "none" &&
     input.context?.handleInteractive != null
