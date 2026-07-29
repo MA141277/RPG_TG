@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Council Priority House Resolution Helper Slice
+
+### Added
+- `navigation-time-follow-up` 新增导出的纯 helper `resolveCouncilPriorityHouseDefinition()`，用于解析当前评定优先 house。
+- 该 helper 现在可选接受 `buildingArrangements`，并在 arrangement owner 与 canonical building owner 匹配时，把当前城市与 `primaryNpcId` 覆盖到返回的优先 house 定义上。
+- 新增 `tests/navigation-time-follow-up.test.cjs`，锁定“模板优先 house + 当前城市 arrangement”会解析出当前城市和当前主 NPC。
+
+### Impact
+- 这片只增加 `src/application/runtime/navigation-time-follow-up.ts` 的纯解析 helper 和测试，不改 `src/main.ts`、UI、地图、背包或入口壳。
+- 后续如果入口层或 runtime orchestrator 开始提供 `buildingArrangements`，评定提醒可以直接复用这条 helper，而不需要把 canonical owner 匹配逻辑散落回入口代码。
+
 ## 2026-07-29 Story Runtime World Definition Retention Slice
 
 ### Added

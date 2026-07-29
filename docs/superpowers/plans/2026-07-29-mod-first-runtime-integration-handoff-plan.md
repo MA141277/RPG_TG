@@ -12,10 +12,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-29`
-- Current Focus: `Task 2 local slice is implemented on codex/migration-hot-tasks: story runtime scene helpers now retain city/house definition context without touching main/UI/map/backpack paths.`
-- Next Step: `Review and commit/push the local Task 2 slice if requested, then continue with Task 3 or the next runtime-only convergence gap that still stays out of src/main.ts and UI-owned paths.`
-- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/event-continuation-runtime.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
-- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stays deferred until a runtime/application seam exists or the user explicitly approves a tiny main.ts slice. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
+- Current Focus: `Task 3 local slice is implemented on codex/migration-hot-tasks: navigation-time-follow-up now exposes a pure council priority house resolver that can consume buildingArrangements without touching src/main.ts or UI-owned paths.`
+- Next Step: `Review and commit/push the local Task 3 slice if requested, then continue auditing Task 3 for another dormant/testable helper or stop before any src/main.ts shellification boundary.`
+- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/navigation-time-follow-up.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stays deferred until a runtime/application seam exists or the user explicitly approves a tiny main.ts slice. Task 3 selected only a dormant/testable helper: council priority house resolution inside navigation-time-follow-up. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
 
 ## Progress Log
 
@@ -39,6 +39,10 @@
   - Summary: `Completed Task 1 audit and deferred caller wiring because applyEventOwnedPlayableCompletion() still has no non-UI production caller outside entry-owned paths; then completed a Task 2 local convergence slice so story runtime scene helpers preserve cityDefinitions/houseDefinitions across start and choice continuation.`
   - Verification: `rg -n "applyEventOwnedPlayableCompletion|continueStoryFromSourceEvent|cityDefinitions|houseDefinitions" src/core src/application tests`; `rg -n "applyEventOwnedPlayableCompletion\\(" src tests`; `git diff --name-status HEAD..origin/mod-first-dev -- src/application/dialogue src/application/events src/application/story src/core/runtime src/core/contracts tests`; `pnpm run build:test`; `node --test tests/event-continuation-runtime.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
   - Next: `If this local Task 2 slice should be kept, commit/push it with docs/change-log.md and this handoff document; otherwise continue Task 3 Step 1 from codex/migration-hot-tasks.`
+- 2026-07-29
+  - Summary: `Completed a Task 3 local dormant-helper slice by exporting council priority house resolution from navigation-time-follow-up and teaching it to apply city-scoped buildingArrangements/primaryNpcId overrides through canonical building owner matching.`
+  - Verification: `git diff --name-status HEAD..origin/mod-first-dev -- src/application/runtime src/application/startup src/core/runtime src/main.ts`; `pnpm run build:test`; `node --test tests/navigation-time-follow-up.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `If this local Task 3 slice should be kept, commit/push it with docs/change-log.md and this handoff document; otherwise continue Task 3 by auditing for one more dormant helper that still avoids src/main.ts shellification.`
 
 ---
 
@@ -577,7 +581,7 @@ Before committing, update this handoff document with completed checkboxes, `Exec
 - Read: `src/main.ts`
 - Test: choose focused tests under `tests/*.test.cjs`
 
-- [ ] **Step 1: Audit mod-first-dev application runtime coordinators**
+- [x] **Step 1: Audit mod-first-dev application runtime coordinators**
 
 Run:
 
@@ -590,7 +594,7 @@ Expected:
 - Identify coordinator helpers that can be added as dormant or test-only application modules without changing visible entry flow.
 - Explicitly list any helper that would require `src/main.ts` shellification and defer it.
 
-- [ ] **Step 2: Pick only a dormant/testable helper**
+- [x] **Step 2: Pick only a dormant/testable helper**
 
 Allowed examples:
 
@@ -605,11 +609,11 @@ Rejected examples:
 - map travel UI animation coordinator replacement
 - city/house transition rewrite that changes current behavior
 
-- [ ] **Step 3: Test first and implement**
+- [x] **Step 3: Test first and implement**
 
 Add a Node test that imports the helper directly and validates pure behavior.
 
-- [ ] **Step 4: Run verification**
+- [x] **Step 4: Run verification**
 
 Run:
 
@@ -624,6 +628,13 @@ git diff --check
 Expected:
 
 - No UI/main/map/backpack diff unless explicitly approved before this task.
+
+Local slice completed:
+
+- Selected helper: council priority house resolution inside `src/application/runtime/navigation-time-follow-up.ts`.
+- Why this fit Task 3: it is a pure runtime/application helper, it can be imported directly by a Node test, and it does not require entry-shell takeover or visible transition rewrites.
+- Implemented behavior: exported `resolveCouncilPriorityHouseDefinition()` now accepts optional `buildingArrangements` and uses canonical owner matching to project current-city and `primaryNpcId` overrides onto the resolved priority house.
+- Added coverage: `tests/navigation-time-follow-up.test.cjs`.
 
 - [ ] **Step 5: Commit and report**
 
