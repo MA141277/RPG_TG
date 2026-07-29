@@ -12,10 +12,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-29`
-- Current Focus: `Task 3 local slice is implemented on codex/migration-hot-tasks: navigation-time-follow-up now exposes a pure council priority house resolver that can consume buildingArrangements without touching src/main.ts or UI-owned paths.`
-- Next Step: `Review and commit/push the local Task 3 slice if requested, then continue auditing Task 3 for another dormant/testable helper or stop before any src/main.ts shellification boundary.`
-- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/navigation-time-follow-up.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
-- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stays deferred until a runtime/application seam exists or the user explicitly approves a tiny main.ts slice. Task 3 selected only a dormant/testable helper: council priority house resolution inside navigation-time-follow-up. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
+- Current Focus: `Task 3 local slice is implemented on codex/migration-hot-tasks: story-runtime-state-bridge now provides a pure authored-definition/status bridge for city and house runtime definitions without touching src/main.ts or UI-owned paths.`
+- Next Step: `Review and commit/push the local Task 3 bridge helper slice if requested, then either keep auditing Task 3 for another dormant helper or stop before any src/main.ts shellification boundary.`
+- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/story-runtime-state-bridge.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stays deferred until a runtime/application seam exists or the user explicitly approves a tiny main.ts slice. Task 3 selected only dormant/testable helpers so far: council priority house resolution inside navigation-time-follow-up, then the authored world-definition/status bridge inside story-runtime-state-bridge. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
 
 ## Progress Log
 
@@ -43,6 +43,10 @@
   - Summary: `Completed a Task 3 local dormant-helper slice by exporting council priority house resolution from navigation-time-follow-up and teaching it to apply city-scoped buildingArrangements/primaryNpcId overrides through canonical building owner matching.`
   - Verification: `git diff --name-status HEAD..origin/mod-first-dev -- src/application/runtime src/application/startup src/core/runtime src/main.ts`; `pnpm run build:test`; `node --test tests/navigation-time-follow-up.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
   - Next: `If this local Task 3 slice should be kept, commit/push it with docs/change-log.md and this handoff document; otherwise continue Task 3 by auditing for one more dormant helper that still avoids src/main.ts shellification.`
+- 2026-07-29
+  - Summary: `Completed another Task 3 local dormant-helper slice by adding story-runtime-state-bridge, a pure bidirectional bridge between authored city/house definitions plus app-state status layers and the runtime definition/result shape.`
+  - Verification: `pnpm run build:test`; `node --test tests/story-runtime-state-bridge.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `If this local Task 3 slice should be kept, commit/push it with docs/change-log.md and this handoff document; otherwise continue Task 3 by auditing whether indoor-screen-story-follow-up can safely consume the bridge without requiring entry-shell rewiring.`
 
 ---
 
@@ -635,6 +639,13 @@ Local slice completed:
 - Why this fit Task 3: it is a pure runtime/application helper, it can be imported directly by a Node test, and it does not require entry-shell takeover or visible transition rewrites.
 - Implemented behavior: exported `resolveCouncilPriorityHouseDefinition()` now accepts optional `buildingArrangements` and uses canonical owner matching to project current-city and `primaryNpcId` overrides onto the resolved priority house.
 - Added coverage: `tests/navigation-time-follow-up.test.cjs`.
+
+Additional local helper slice completed:
+
+- Selected helper: `src/application/story/story-runtime-state-bridge.ts`.
+- Why this fit Task 3: it is a pure runtime/application helper, directly testable in Node, and it stays dormant until a runtime caller chooses to consume authored city/house definition context.
+- Implemented behavior: `createStoryRuntimeDefinitionContext()` materializes authored world definitions through app-state status layers, and `applyStoryRuntimeResultToAppState()` maps runtime world-definition results back into `cityStatusById` / `buildingStatusById`.
+- Added coverage: `tests/story-runtime-state-bridge.test.cjs`.
 
 - [ ] **Step 5: Commit and report**
 

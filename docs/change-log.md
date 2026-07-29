@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Story Runtime State Bridge Helper Slice
+
+### Added
+- 新增 `src/application/story/story-runtime-state-bridge.ts`，提供两个纯 helper：
+  - `createStoryRuntimeDefinitionContext()`：把 authored `cityDefinitionsById` / `houseDefinitionsById` 结合 app-state status 层 materialize 成 runtime 可消费的 definitions。
+  - `applyStoryRuntimeResultToAppState()`：把 runtime 返回的 world definitions 反推成 `cityStatusById` / `buildingStatusById`，同时同步 `gameState` 与 `characterDefinitions`。
+- 新增 `tests/story-runtime-state-bridge.test.cjs`，覆盖 definition materialize 和 runtime-result-to-status-bridge 两个方向。
+
+### Impact
+- 这片是纯 application helper，不改 `src/main.ts`、UI、地图、背包或入口壳。
+- 后续 `indoor-screen-story-follow-up`、story trigger bridge、或任何 runtime orchestrator 如果要开始消费 authored city/house definitions，都可以复用这条双向桥接，而不需要各自重复写 status/definition 转换逻辑。
+
 ## 2026-07-29 Council Priority House Resolution Helper Slice
 
 ### Added
