@@ -53,13 +53,15 @@ import {
 import { CITY_BEGGING_DURATION_DAYS } from "../../application/minigames/city-begging-minigame";
 import { convertHouseActivityDaysToSegments } from "../../application/house/house-activity-costs";
 import {
-  builtinPlayableDefinitionRegistry,
   type PlayableDefinitionRegistry,
 } from "../registry/playable-definition-registry";
 import {
-  builtinPlayableIntegrationRegistry,
   type PlayableIntegrationRegistry,
 } from "../registry/playable-integration-registry";
+import {
+  readDefaultPlayableDefinitionRegistry,
+  readDefaultPlayableIntegrationRegistry,
+} from "./playable-runtime-registries";
 import { settleRuntimeEffects } from "./runtime-settlement";
 
 export const PLAYABLE_LAUNCH_EVENT_ID = "playable.launch";
@@ -172,8 +174,9 @@ export function resolvePlayableLaunch(input: {
   definitions?: PlayableDefinitionRegistry | undefined;
   integrations?: PlayableIntegrationRegistry | undefined;
 }): PlayableLaunchResolution {
-  const definitions = input.definitions ?? builtinPlayableDefinitionRegistry;
-  const integrations = input.integrations ?? builtinPlayableIntegrationRegistry;
+  const definitions = input.definitions ?? readDefaultPlayableDefinitionRegistry();
+  const integrations =
+    input.integrations ?? readDefaultPlayableIntegrationRegistry();
 
   const integration = resolveIntegration({
     launch: input.launch,
@@ -928,9 +931,11 @@ export function createLegacyPlayableSession(input: {
   source: LegacyInteractiveSource;
 }): ActivePlayableSession | null {
   const definition =
-    builtinPlayableDefinitionRegistry.getByLegacyInteractiveKind(input.kind);
+    readDefaultPlayableDefinitionRegistry().getByLegacyInteractiveKind(
+      input.kind
+    );
   const integrationId = getLegacyIntegrationId(input.kind);
-  const integration = builtinPlayableIntegrationRegistry.get(integrationId);
+  const integration = readDefaultPlayableIntegrationRegistry().get(integrationId);
 
   if (definition == null || integration == null) {
     return null;
@@ -1002,9 +1007,8 @@ function toPlayableRuntimeRequest(
     };
   }
 
-  const legacyDefinition = builtinPlayableDefinitionRegistry.matchActionId(
-    request.actionId
-  );
+  const legacyDefinition =
+    readDefaultPlayableDefinitionRegistry().matchActionId(request.actionId);
   if (legacyDefinition == null) {
     return null;
   }

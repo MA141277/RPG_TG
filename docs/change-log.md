@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Playable Runtime Default Registry Slice
+
+### Added
+- `playable-runtime` 的 launch/action 解析现在读取可配置的默认 playable runtime registries，而不是直接固定到 builtin registry。
+- 扩展 `tests/playable-runtime-registries.test.cjs`，覆盖 activated mod 配置默认 registry 后，`resolvePlayableLaunchRequest()` 可解析 contributed playable。
+
+### Impact
+- 这片只迁移 core playable runtime registry seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 mod 激活后注入的 playable/playableIntegration 可通过默认 runtime registry 被 playable runtime 解析。
+
 ## 2026-07-29 Runtime Result Settlement Contract Slice
 
 ### Added
