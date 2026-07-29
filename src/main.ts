@@ -130,6 +130,7 @@ import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtim
 import {
   applyCouncilPriorityFollowUp,
   createNavigationTimeFollowUpBridge,
+  type NavigationTimeFollowUpAppState,
 } from "./application/runtime/navigation-time-follow-up";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
 import {
@@ -997,11 +998,22 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
 const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
   getCharacterDefinitions: () => appState.characterDefinitions,
   getHouseDefinitions: () => activeContentContext.houses,
+  getAppState: () => appState as NavigationTimeFollowUpAppState,
   getStoryContent: () => ({
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+    eventBindingsById: activeContentContext.storyContent.eventBindingsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
+    settlementDefinitionsById:
+      activeContentContext.storyContent.settlementDefinitionsById,
+    progressTrackDefinitionsById:
+      activeContentContext.storyContent.progressTrackDefinitionsById,
+    progressTrackBindingsById:
+      activeContentContext.storyContent.progressTrackBindingsById,
+    cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
+    houseDefinitionsById:
+      activeContentContext.storyContent.houseDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,
   }),
 });
