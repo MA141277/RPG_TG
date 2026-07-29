@@ -25,6 +25,16 @@
 - 这片只增加 application runtime 判定层，不接入 UI、地图、背包、入口或 `src/main.ts`。
 - 当前基线仍使用 `GameState.scene`，所以 story 条件读取适配当前 scene 状态；后续若正式切到 dialogue runtime，再在该模块集中调整，不把兼容判断散落到调用方。
 
+## 2026-07-29 Scenario Runtime Preview Sanitizer Slice
+
+### Added
+- 新增 `sanitizeScenarioPackForRuntimePreview()`，用于在 runtime preview 中剥离 `entryEventTiming: "after-map-entry"` 对应的 deferred entry event，避免预览导入时提前触发入口事件。
+- 新增 `tests/scenario-preview-sanitizer.test.cjs`，锁定 deferred entry event 剥离、immediate 策略保持原引用、空 launchPolicy 清理。
+
+### Impact
+- 这片只新增启动/预览数据净化 helper，不接入 UI、地图、背包、入口或 `src/main.ts`。
+- 后续把 JSON 剧本预览接入运行时时，应在启动/预览边界集中调用该 helper，而不是在 UI 事件处理里散落特殊判断。
+
 ## 2026-07-28 Faction Review Reward And Personnel Settlement
 
 ### Added
