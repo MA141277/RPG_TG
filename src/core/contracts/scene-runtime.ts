@@ -4,7 +4,7 @@ import type { ActivityDefinition } from "../../domain/activity";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { Effect } from "./effect";
-import type { RuntimeTaskSignal } from "./runtime-result";
+import type { RuntimeTaskInput } from "./runtime-result";
 
 export type SceneRuntimeSession = {
   sceneId: string;
@@ -24,6 +24,6 @@ export type SceneRuntimeResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
   session: SceneRuntimeSession | null;
-  taskSignals: RuntimeTaskSignal[];
+  taskInputs: RuntimeTaskInput[];
   effects: Effect[];
 };

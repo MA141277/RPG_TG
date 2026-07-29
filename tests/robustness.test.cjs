@@ -15344,8 +15344,16 @@ test("scene runtime accepts an activated event handoff", async () => {
     path.join(process.cwd(), "src/core/runtime/scene-runtime.ts"),
     "utf8"
   );
+  const contractSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/scene-runtime.ts"),
+    "utf8"
+  );
 
   assert.match(source, /runSceneFromEvent/);
+  assert.match(source, /taskInputs:/);
+  assert.doesNotMatch(source, /taskSignals:/);
+  assert.match(contractSource, /taskInputs: RuntimeTaskInput\[\];/);
+  assert.doesNotMatch(contractSource, /taskSignals: RuntimeTaskSignal\[\];/);
 });
 
 test("main.ts no longer imports application house-runtime directly for production ownership", () => {
