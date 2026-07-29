@@ -8,8 +8,9 @@ import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition, CityNpcPoolRuntimeState } from "../../domain/city-npc";
 import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
+import type { SettlementDefinition } from "../../core/contracts/effect-settlement";
 import type { ModActivationResult } from "../../core/contracts/mod-runtime";
-import type { EventDefinition } from "../../domain/event";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
@@ -17,6 +18,10 @@ import type {
 import type { HouseAccessRefusalRule, HouseDefinition } from "../../domain/house";
 import type { MapDefinition, MapNode } from "../../domain/map";
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../../core/contracts/progression-runtime";
 import type { TaskDefinition } from "../../core/contracts/task-runtime";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import type { ValuableItemDefinition } from "../../domain/valuable-item";
@@ -48,6 +53,26 @@ export type ActiveGameContent = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   dialogueDefinitions: RuntimeDialogueDefinition[];
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
+  eventBindings: EventBinding[];
+  eventBindingsById: Record<string, EventBinding>;
+  settlementDefinitions: (SettlementDefinition & {
+    id: string;
+    title?: string;
+    nextEventId?: string;
+  })[];
+  settlementDefinitionsById: Record<
+    string,
+    | (SettlementDefinition & {
+        id: string;
+        title?: string;
+        nextEventId?: string;
+      })
+    | undefined
+  >;
+  progressTrackDefinitions: ProgressTrackDefinition[];
+  progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
+  progressTrackBindings: ProgressTrackBinding[];
+  progressTrackBindingsById: Record<string, ProgressTrackBinding>;
   taskDefinitions: TaskDefinition[];
   taskDefinitionsById: Record<string, TaskDefinition>;
   activityDefinitions: ActivityDefinition[];
@@ -90,7 +115,21 @@ export type ActiveGameContentContext = {
     eventDefinitionsById: Record<string, EventDefinition>;
     sceneDefinitionsById: Record<string, SceneDefinition>;
     dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
+    eventBindingsById: Record<string, EventBinding>;
+    settlementDefinitionsById: Record<
+      string,
+      | (SettlementDefinition & {
+          id: string;
+          title?: string;
+          nextEventId?: string;
+        })
+      | undefined
+    >;
+    progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
+    progressTrackBindingsById: Record<string, ProgressTrackBinding>;
     activityDefinitionsById: Record<string, ActivityDefinition>;
+    cityDefinitionsById: Record<string, CityDefinition>;
+    houseDefinitionsById: Record<string, HouseDefinition>;
     textEntriesById: Record<string, string>;
   };
 };
@@ -112,6 +151,10 @@ export function createActiveGameContent(
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
+  const eventBindings = resolvedPack.eventBindings ?? [];
+  const settlementDefinitions = resolvedPack.settlements ?? [];
+  const progressTrackDefinitions = resolvedPack.progressTracks ?? [];
+  const progressTrackBindings = resolvedPack.progressTrackBindings ?? [];
   const sceneDefinitions = createCompatibleSceneDefinitions({
     sceneDefinitions: resolvedPack.scenes ?? [],
     dialogueDefinitions,
@@ -176,6 +219,31 @@ export function createActiveGameContent(
         dialogueDefinition,
       ])
     ),
+    eventBindings,
+    eventBindingsById: Object.fromEntries(
+      eventBindings.map((eventBinding) => [eventBinding.id, eventBinding])
+    ),
+    settlementDefinitions,
+    settlementDefinitionsById: Object.fromEntries(
+      settlementDefinitions.map((settlementDefinition) => [
+        settlementDefinition.id,
+        settlementDefinition,
+      ])
+    ),
+    progressTrackDefinitions,
+    progressTrackDefinitionsById: Object.fromEntries(
+      progressTrackDefinitions.map((progressTrackDefinition) => [
+        progressTrackDefinition.id,
+        progressTrackDefinition,
+      ])
+    ),
+    progressTrackBindings,
+    progressTrackBindingsById: Object.fromEntries(
+      progressTrackBindings.map((progressTrackBinding) => [
+        progressTrackBinding.id,
+        progressTrackBinding,
+      ])
+    ),
     taskDefinitions,
     taskDefinitionsById: Object.fromEntries(
       taskDefinitions.map((taskDefinition) => [taskDefinition.id, taskDefinition])
@@ -235,7 +303,13 @@ export function createActiveGameContentContext(
       eventDefinitionsById: gameContent.eventDefinitionsById,
       sceneDefinitionsById: gameContent.sceneDefinitionsById,
       dialogueDefinitionsById: gameContent.dialogueDefinitionsById,
+      eventBindingsById: gameContent.eventBindingsById,
+      settlementDefinitionsById: gameContent.settlementDefinitionsById,
+      progressTrackDefinitionsById: gameContent.progressTrackDefinitionsById,
+      progressTrackBindingsById: gameContent.progressTrackBindingsById,
       activityDefinitionsById: gameContent.activityDefinitionsById,
+      cityDefinitionsById: gameContent.cityDefinitionById,
+      houseDefinitionsById: gameContent.houseDefinitionById,
       textEntriesById: gameContent.textEntriesById,
     },
   };
@@ -277,6 +351,22 @@ export function mergeContentPacks(
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
     scenes: mergeById(basePack.scenes ?? [], overridePack.scenes ?? []),
     dialogues: mergeById(basePack.dialogues ?? [], overridePack.dialogues ?? []),
+    eventBindings: mergeById(
+      basePack.eventBindings ?? [],
+      overridePack.eventBindings ?? []
+    ),
+    settlements: mergeById(
+      basePack.settlements ?? [],
+      overridePack.settlements ?? []
+    ),
+    progressTracks: mergeById(
+      basePack.progressTracks ?? [],
+      overridePack.progressTracks ?? []
+    ),
+    progressTrackBindings: mergeById(
+      basePack.progressTrackBindings ?? [],
+      overridePack.progressTrackBindings ?? []
+    ),
     tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
     cards: mergeById(basePack.cards ?? [], overridePack.cards ?? []),
@@ -319,6 +409,10 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     events: pack.events ?? [],
     scenes: pack.scenes ?? [],
     dialogues: pack.dialogues ?? [],
+    eventBindings: pack.eventBindings ?? [],
+    settlements: pack.settlements ?? [],
+    progressTracks: pack.progressTracks ?? [],
+    progressTrackBindings: pack.progressTrackBindings ?? [],
     tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],
     cards: pack.cards ?? [],

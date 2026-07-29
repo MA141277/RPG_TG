@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Story Content Rich Runtime Context Slice
+
+### Added
+- `ContentPackDefinition`、content-pack manifest loader、scenario-pack manifest loader 现在都显式支持 `eventBindings`、`settlements`、`progressTracks`、`progressTrackBindings` 四个 story runtime family。
+- `createActiveGameContent()` / `createActiveGameContentContext()` 现在会把这些 family 建成数组和 `ById` 索引，并把它们连同 `cityDefinitionsById` / `houseDefinitionsById` 一起暴露到 `storyContent` 上下文。
+- 新增 `tests/active-game-content-story-context.test.cjs`，锁定 richer story runtime family 已进入 `storyContent`，但不要求入口流程立刻消费它们。
+
+### Impact
+- 这片只扩充内容加载与 runtime content context，不改 `src/main.ts`、UI、地图、背包或入口壳。
+- 下一片若要让 `indoor-screen-story-follow-up` 或其它 runtime bridge 消费 dialogue/event-binding/settlement/progression world context，所需数据已经在 active content context 中可用，不需要再回头改 pack/context 基础结构。
+
 ## 2026-07-29 Story Runtime State Bridge Helper Slice
 
 ### Added

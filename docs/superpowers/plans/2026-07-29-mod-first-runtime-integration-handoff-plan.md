@@ -12,10 +12,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-29`
-- Current Focus: `Task 3 local slice is implemented on codex/migration-hot-tasks: story-runtime-state-bridge now provides a pure authored-definition/status bridge for city and house runtime definitions without touching src/main.ts or UI-owned paths.`
-- Next Step: `Review and commit/push the local Task 3 bridge helper slice if requested, then either keep auditing Task 3 for another dormant helper or stop before any src/main.ts shellification boundary.`
-- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/story-runtime-state-bridge.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
-- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stays deferred until a runtime/application seam exists or the user explicitly approves a tiny main.ts slice. Task 3 selected only dormant/testable helpers so far: council priority house resolution inside navigation-time-follow-up, then the authored world-definition/status bridge inside story-runtime-state-bridge. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
+- Current Focus: `Task 3 local slice is implemented on codex/migration-hot-tasks: active-game-content now exposes richer story runtime families and world-definition maps through storyContent without touching src/main.ts or UI-owned paths.`
+- Next Step: `Audit whether indoor-screen-story-follow-up can safely consume the richer storyContent context without crossing into src/main.ts or entry/runtime wiring; if not, stop Task 3 here and carry the decision into Task 4's explicit gate.`
+- Verification: `git status --short --branch`; `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/active-game-content-story-context.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+- Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stays deferred until a runtime/application seam exists or the user explicitly approves a tiny main.ts slice. Task 3 selected only dormant/testable helpers or context exposure slices so far: council priority house resolution inside navigation-time-follow-up, the authored world-definition/status bridge inside story-runtime-state-bridge, and richer story runtime family exposure inside active-game-content. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
 
 ## Progress Log
 
@@ -47,6 +47,10 @@
   - Summary: `Completed another Task 3 local dormant-helper slice by adding story-runtime-state-bridge, a pure bidirectional bridge between authored city/house definitions plus app-state status layers and the runtime definition/result shape.`
   - Verification: `pnpm run build:test`; `node --test tests/story-runtime-state-bridge.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
   - Next: `If this local Task 3 slice should be kept, commit/push it with docs/change-log.md and this handoff document; otherwise continue Task 3 by auditing whether indoor-screen-story-follow-up can safely consume the bridge without requiring entry-shell rewiring.`
+- 2026-07-29
+  - Summary: `Completed another Task 3 local context-exposure slice by teaching content-pack loading and active-game-content/storyContent to retain eventBindings, settlements, progressTracks, and progressTrackBindings alongside city/house definition maps.`
+  - Verification: `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`; `git merge-base --is-ancestor origin/codex/sync-naqishuo-721ui-to-mmz codex/migration-hot-tasks`; `pnpm run build:test`; `node --test tests/active-game-content-story-context.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles`; `git diff --check`
+  - Next: `Commit/push this richer storyContent context slice, then decide whether any remaining Task 3 consumer can safely use it without crossing the entry/runtime wiring boundary.`
 
 ---
 
@@ -647,7 +651,14 @@ Additional local helper slice completed:
 - Implemented behavior: `createStoryRuntimeDefinitionContext()` materializes authored world definitions through app-state status layers, and `applyStoryRuntimeResultToAppState()` maps runtime world-definition results back into `cityStatusById` / `buildingStatusById`.
 - Added coverage: `tests/story-runtime-state-bridge.test.cjs`.
 
-- [ ] **Step 5: Commit and report**
+Additional local context slice completed:
+
+- Selected helper seam: `src/application/content/active-game-content.ts` plus content/scenario pack manifest loading.
+- Why this fit Task 3: it stays inside content/runtime context preparation, is directly testable in Node, and does not require `src/main.ts`, UI, map, backpack, or visible flow rewiring.
+- Implemented behavior: content packs now explicitly accept `eventBindings`, `settlements`, `progressTracks`, and `progressTrackBindings`; `createActiveGameContent()` builds arrays plus `ById` maps for them; `createActiveGameContentContext()` exposes those maps together with `cityDefinitionsById` / `houseDefinitionsById` on `storyContent`.
+- Added coverage: `tests/active-game-content-story-context.test.cjs`.
+
+- [x] **Step 5: Commit and report**
 
 Use a commit message of the form:
 
