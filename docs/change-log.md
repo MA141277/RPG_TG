@@ -2,6 +2,21 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Event Binding Start Runtime Slice
+
+### Added
+- 新增完整 `runEventBindingRuntime()`，在匹配 event binding 后通过共享 event activation/start seam 启动事件。
+- 新增 state-only runtime action 处理，当前支持 `closeBuilding`，可关闭 building/house 上下文并回到 city，而不强制打开 scene。
+- 新增 `tests/event-binding-start-runtime.test.cjs`，覆盖 binding 启动事件与 state-only action。
+
+### Changed
+- building container item action 现在复用完整 event binding runtime，不再在调用方手动 `startEvent()`。
+- `event-binding-contract` 继续保留旧 `runModFirstEventBindingRuntime()` shell，同时导出完整 `runEventBindingRuntime()` 作为后续迁移入口。
+
+### Impact
+- 这片只迁移运行时启动/状态动作 seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续新增 event binding action 时应集中扩展 event binding runtime，而不是在 building、house 或 UI 调用方分散处理。
+
 ## 2026-07-29 Dialogue Runtime Compatibility Slice
 
 ### Added

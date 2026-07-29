@@ -2,9 +2,15 @@ export {
   createRuntimeTriggerContext,
   isSupportedEventBindingOwnerFamily,
   isSupportedEventBindingTrigger,
+  runEventBindingRuntime,
   runModFirstEventBindingRuntime,
   selectModFirstEventBindingCandidate,
-} from "./mod-first-compatibility";
+} from "./event-binding-runtime";
+export type {
+  EventBindingRuntimeCandidate,
+  EventBindingRuntimeInput,
+  EventBindingRuntimeResult,
+} from "./event-binding-runtime";
 export type {
   ModFirstEventBinding as EventBinding,
   ModFirstEventBindingTrigger as EventBindingTrigger,

@@ -1,12 +1,11 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
-import type { ModFirstActivatedEvent } from "../../core/runtime/event-binding-runtime";
+import type { ActivatedEvent } from "../../core/runtime/event-activation";
 import {
   createRuntimeTriggerContext,
-  runModFirstEventBindingRuntime,
+  runEventBindingRuntime,
 } from "../../core/runtime/event-binding-runtime";
-import { startEvent } from "../events/event-runner";
 
 export type BuildingContainerItemAction = {
   arrangementId: string;
@@ -27,7 +26,7 @@ export type BuildingContainerEventRuntimeResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
   handled: boolean;
-  activation: ModFirstActivatedEvent | null;
+  activation: ActivatedEvent | null;
 };
 
 export function triggerBuildingContainerItemAction(
@@ -38,7 +37,7 @@ export function triggerBuildingContainerItemAction(
     return createUnhandledResult(input);
   }
 
-  const bindingResult = runModFirstEventBindingRuntime({
+  const bindingResult = runEventBindingRuntime({
     state: input.state,
     eventDefinitionsById: input.eventDefinitionsById,
     eventBindings: filterEventBindings(input.eventBindings, input.action),
@@ -61,14 +60,8 @@ export function triggerBuildingContainerItemAction(
     return createUnhandledResult(input);
   }
 
-  const eventDefinition =
-    input.eventDefinitionsById[bindingResult.activation.activeEventId];
-  if (eventDefinition == null) {
-    return createUnhandledResult(input);
-  }
-
   return {
-    state: startEvent(bindingResult.state, eventDefinition),
+    state: bindingResult.state,
     characterDefinitions: input.characterDefinitions,
     handled: true,
     activation: bindingResult.activation,
