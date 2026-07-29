@@ -12,10 +12,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-30`
-- Current Focus: `Write the runtime-only child that formalizes canonical followUp ownership, restores focused contract coverage, and keeps legacy compatibility behavior explicit instead of implicit.`
-- Next Step: `Start Task 1 by rechecking the current runtime-result/runtime-router/runtime-dispatch contract shape and the tests that still mention legacy follow-up fields.`
-- Verification: `Implementation verification has not run yet; design spec was committed separately as fa70603; pnpm run lint:plans was re-run after saving this child and still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue.`
-- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. Do not remove a legacy field unless a targeted test first proves the current branch no longer needs it.`
+- Current Focus: `Task 1 audit is complete: followUp is already the canonical type alias, but runtime-result still exposes legacy outcome/interactive fields, runtime-router still exposes handleOutcome/handleInteractive compatibility handlers, and runtime-dispatch still mutates state through canonical followUp plus legacy outcome and interactive fallback paths.`
+- Next Step: `Start Task 2 by adding failing contract tests that keep followUp canonical while explicitly asserting the retained compatibility surface and dispatch ordering before any runtime code change.`
+- Verification: `Audit reads completed for src/core/contracts/runtime-result.ts, src/core/runtime/runtime-router.ts, src/core/runtime/runtime-dispatch.ts, tests/runtime-follow-up-contract.test.cjs, tests/runtime-router-follow-up-contract.test.cjs, and the relevant robustness follow-up ownership assertions; implementation verification has not run yet; pnpm run lint:plans still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue.`
+- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. Do not remove a legacy field unless a targeted test first proves the current branch no longer needs it. The current audit shows outcome/interactive compatibility remains part of the live contract, so this slice should narrow and test those paths before deleting anything.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Opened the runtime follow-up contract convergence child from the new design spec so the next runtime-only slice can focus on canonical followUp ownership and compatibility guardrails instead of new caller wiring.`
   - Verification: `Design spec written at docs/superpowers/specs/2026-07-30-runtime-follow-up-contract-convergence-design.md and committed as fa70603; pnpm run lint:plans was re-run after saving this child and still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue; implementation verification not run yet.`
   - Next: `Run Task 1 contract audit, then add failing tests before touching runtime-result/runtime-router/runtime-dispatch.`
+- 2026-07-30
+  - Summary: `Completed Task 1 contract audit. followUp is already the canonical alias in runtime-result, but the current baseline still retains legacy outcome/interactive fields in RuntimeResult, handleOutcome/handleInteractive in RuntimeFollowUpContext, and explicit fallback branches in runtime-dispatch after canonical handleFollowUp runs.`
+  - Verification: `sed -n '1,220p' src/core/contracts/runtime-result.ts`; `sed -n '1,220p' src/core/runtime/runtime-router.ts`; `sed -n '1,320p' src/core/runtime/runtime-dispatch.ts`; `sed -n '1,220p' tests/runtime-follow-up-contract.test.cjs`; `sed -n '1,220p' tests/runtime-router-follow-up-contract.test.cjs`; `sed -n '15530,15595p' tests/robustness.test.cjs`; `sed -n '17440,17490p' tests/robustness.test.cjs`; `git status --short --branch`.`
+  - Next: `Add failing tests that assert followUp stays canonical while outcome/interactive remain explicit compatibility-only surfaces and runtime-dispatch preserves canonical-first ordering before the fallback handlers.`
 
 ---
 
@@ -124,6 +128,7 @@
 - Modify: `docs/superpowers/plans/2026-07-30-runtime-follow-up-contract-convergence-plan.md`
 
 - [ ] **Step 1: Record the exact canonical versus compatibility contract shape**
+- [x] **Step 1: Record the exact canonical versus compatibility contract shape**
 
 Run:
 
@@ -141,7 +146,15 @@ Expected:
 - identify every retained legacy field and handler (`interactive`, `outcome`, `handleInteractive`, `handleOutcome`)
 - record whether dispatch currently mutates state through more than one follow-up path
 
-- [ ] **Step 2: Update the child plan with the audited write scope**
+Recorded result:
+
+- `src/core/contracts/runtime-result.ts` already defines `RuntimeFollowUp` as the canonical alias to `RuntimeInteractiveSignal` and exposes `followUp` on `RuntimeResult`.
+- The same `RuntimeResult` still retains legacy compatibility fields `outcome` and `interactive`.
+- `src/core/runtime/runtime-router.ts` still retains `RuntimeInteractiveFollowUpInput`, `RuntimeOutcomeFollowUpInput`, `RuntimeOutcomeFollowUpResult`, and compatibility handlers `handleInteractive` plus `handleOutcome` alongside canonical `handleFollowUp`.
+- `src/core/runtime/runtime-dispatch.ts` currently mutates state through three follow-up branches in `settleRuntimeFollowUp()`: canonical `handleFollowUp` first, then `handleOutcome`, then `handleInteractive`, while task settling also still preserves `taskInputs` plus legacy `taskActions` and `taskSignals`.
+- The existing contract tests currently assert retention of the legacy fields and handlers, but they do not yet assert that legacy surfaces are compatibility-only or that dispatch preserves canonical-first ordering.
+
+- [x] **Step 2: Update the child plan with the audited write scope**
 
 Document:
 
@@ -149,7 +162,15 @@ Document:
 - which legacy paths can be narrowed but not deleted in this slice
 - which tests will fail first before implementation starts
 
-- [ ] **Step 3: Sync the parent handoff with the new active child**
+Audited write scope:
+
+- Compatibility fields that must remain unless Task 2 disproves usage: `RuntimeResult.outcome`, `RuntimeResult.interactive`, `RuntimeFollowUpContext.handleOutcome`, `RuntimeFollowUpContext.handleInteractive`, and the associated router input/result types they depend on.
+- Legacy paths that can be narrowed but should not be deleted in this slice: dispatch fallback handling for `outcome` and `interactive`, plus the wording and tests that currently treat legacy fields as peers instead of explicit compatibility surfaces.
+- The first failing tests should be:
+  - `tests/runtime-follow-up-contract.test.cjs` extended so it asserts `followUp` is the canonical continuation surface and `interactive` / `outcome` remain retained only as compatibility.
+  - `tests/runtime-router-follow-up-contract.test.cjs` extended so it asserts the router keeps compatibility handlers visible while `runtime-dispatch` handles canonical follow-up before checking `outcome` and `interactive`.
+
+- [x] **Step 3: Sync the parent handoff with the new active child**
 
 Update the handoff plan so it points at this child as the next runtime-only convergence slice and no longer frames the city-enter child as the immediate review checkpoint.
 
@@ -160,6 +181,7 @@ Update the handoff plan so it points at this child as the next runtime-only conv
 - Modify: `tests/runtime-router-follow-up-contract.test.cjs`
 - Modify: `tests/robustness.test.cjs` only if a narrow ownership assertion needs extension
 
+- [ ] **Step 1: Add a failing runtime-result contract test**
 - [ ] **Step 1: Add a failing runtime-result contract test**
 
 Add assertions like:
@@ -176,6 +198,12 @@ The test must make explicit:
 - `followUp` is canonical
 - retained legacy fields remain visible only as compatibility surface
 
+Concrete first failure target:
+
+- keep the existing field-presence assertions
+- add a new assertion that the contract file groups `followUp` ahead of the retained legacy fields
+- add a new assertion that the test description and regex comments treat `interactive` / `outcome` as compatibility-only surfaces instead of co-equal primary channels
+
 - [ ] **Step 2: Add a failing router/dispatch contract test**
 
 Add assertions like:
@@ -187,6 +215,12 @@ assert.match(source, /handleOutcome\\?\\(input: RuntimeOutcomeFollowUpInput\\): 
 ```
 
 Then add a narrow dispatch source assertion that proves canonical follow-up handling occurs before any compatibility fallback path.
+
+Concrete first failure target:
+
+- keep the existing handler-shape assertions
+- add a source assertion over `src/core/runtime/runtime-dispatch.ts` that requires the `handleFollowUp` branch to run before `handleOutcome`, and `handleOutcome` before `handleInteractive`
+- add a second assertion that no legacy fallback branch runs unless canonical `followUp` is absent or `none`
 
 - [ ] **Step 3: Run the new tests to confirm at least one assertion fails before implementation**
 
