@@ -1,7 +1,13 @@
 import type { Effect } from "./effect";
 import type { NavigationTarget } from "./navigation";
+import type { ProgressionSettlementInstance } from "./progression-runtime";
 import type { RuntimeState } from "./runtime-state";
 import type { TaskAction, TaskSignal, TaskUpdate } from "./task-runtime";
+import type { BuildingStatusById } from "../../domain/building-status";
+import type { CharacterDefinition } from "../../domain/character";
+import type { CharacterStatusById } from "../../domain/character-status";
+import type { CityStatusById } from "../../domain/city-status";
+import type { LocationAccessResult } from "../../domain/location-access";
 
 export type RuntimeTaskSignal =
   | TaskSignal
@@ -31,11 +37,11 @@ export type RuntimeFollowUpOutcome =
 export type RuntimeResult = {
   state: RuntimeState;
   effects: Effect[];
-  characterDefinitions?: unknown;
-  characterStatusById?: unknown;
-  cityStatusById?: unknown;
-  buildingStatusById?: unknown;
-  access?: unknown;
+  characterDefinitions?: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
+  cityStatusById?: CityStatusById;
+  buildingStatusById?: BuildingStatusById;
+  access?: LocationAccessResult;
   navigation?: NavigationTarget | null;
   scene?:
     | {
@@ -47,7 +53,7 @@ export type RuntimeResult = {
   taskActions?: RuntimeTaskAction[];
   taskSignals?: RuntimeTaskSignal[];
   taskUpdates?: TaskUpdate[];
-  settlementInstances?: unknown[];
+  settlementInstances?: ProgressionSettlementInstance[];
   settlement?: unknown;
   followUp?: RuntimeInteractiveSignal | null;
   outcome?: RuntimeFollowUpOutcome | null;

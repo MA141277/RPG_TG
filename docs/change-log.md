@@ -2,6 +2,21 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Runtime Dispatch Settlement Carry Slice
+
+### Added
+- `dispatchRuntimeRequest()` 现在会把 routed result 上的 `characterDefinitions` / `characterStatusById` 传入 `runtime-settlement`，并把结算后的角色定义/status 带回结果。
+- `dispatchRuntimeRequest()` 支持合同中已有的 `taskInputs` 聚合字段，同时继续兼容旧的 `taskActions` / `taskSignals` 分离字段。
+- 新增 `tests/runtime-dispatch-settlement.test.cjs`，覆盖 dispatch 结算角色数值 mutation 与 `taskInputs` 任务结算。
+
+### Changed
+- `RuntimeResult` 的 runtime status 字段从 `unknown` 收紧为已有 domain status 类型，`settlementInstances` 收紧为 `ProgressionSettlementInstance[]`。
+- `RuntimeOutcomeFollowUpResult.characterDefinitions` 收紧为 `CharacterDefinition[]`，便于 follow-up 与 settlement result 类型一致。
+
+### Impact
+- 这片只迁移 core runtime dispatch/contract 串联能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 runtime router 输出角色状态或任务输入时，应通过 `dispatchRuntimeRequest()` 统一结算，不在调用方手动应用角色补丁或拆分任务 action/signal。
+
 ## 2026-07-29 Runtime Settlement Effect Slice
 
 ### Added
