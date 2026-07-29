@@ -1,0 +1,82 @@
+﻿<h2>酒馆短牌：状态数据分层</h2>
+<p class="subtitle">这一节只定结构边界。目标是把“酒馆里的持续筹码局”与“单手牌规则引擎”拆开，避免 short/long 共用一堆互相污染的字段。</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">三层状态边界</div>
+    <div class="mockup-body">
+      <div class="section">
+        <div class="label">House Session</div>
+        <div class="mock-content">
+          <strong>TavernSessionState</strong><br>
+          负责酒馆 UI、入口 overlay、选中的玩法、玩家这次准备兑换多少文钱、是否显示“继续下一局 / 再兑换 / 退出结算”。<br><br>
+          这里不直接处理发牌、抢牌、边池。
+        </div>
+      </div>
+      <div class="section">
+        <div class="label">短牌桌 Session</div>
+        <div class="mock-content">
+          <strong>ShortTableSession</strong><br>
+          负责持续筹码：当前剩余筹码、累计兑换金钱、手数、庄位轮转、是否还能再开一手、退出时能换回多少文钱。<br><br>
+          它持有当前这手的 <strong>currentHand</strong>。
+        </div>
+      </div>
+      <div class="section">
+        <div class="label">单手牌 State</div>
+        <div class="mock-content">
+          <strong>ShortHandState</strong><br>
+          只负责一手牌：52 张牌堆、4 家手牌、2 张公牌、下注轮次、摸打轮次、抢牌链、边池、摊牌结果。<br><br>
+          一手结束即可丢弃，不承担跨手结转逻辑。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">单手牌内部核心对象</div>
+    <div class="mockup-body">
+      <div class="section">
+        <div class="label">PlayerState</div>
+        <div class="mock-content">seat / name / privateHand(恒 5 张) / stack / committedThisRound / committedThisHand / folded / allIn / discardHistory / lastAction</div>
+      </div>
+      <div class="section">
+        <div class="label">ClaimChain</div>
+        <div class="mock-content">lastDiscard / claimCandidates / claimPriority / originNextSeat / chainDepth。用于连锁吃碰杠，直到无人响应再回主轮转。</div>
+      </div>
+      <div class="section">
+        <div class="label">PotState</div>
+        <div class="mock-content">mainPot + sidePots[]。每个 pot 记录金额和可争夺玩家集合，便于 all-in 与杠惩罚一起结算。</div>
+      </div>
+      <div class="section">
+        <div class="label">ShowdownState</div>
+        <div class="mock-content">7 选 5 最佳牌型、比较键、每个 pot 的赢家、分池明细、最终筹码变化。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="label">与现有 tavern house 的连接方式</div>
+  <div class="mock-content">
+    `tavern-house-module` 继续负责把领域状态映射成 `gamble-table` overlay；但 `gamble-table` 内部改成 <strong>variant-specific payload</strong>：<br><br>
+    short 显示：筹码、当前 pot/side pot、2 张公牌、5 张手牌、可抢牌动作、牌型结果。<br>
+    long 继续显示原来的麻将字段，不和 short 共用“番型/出组/公共牌窗”语义。
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="session-good" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>这一层次拆分对</h3>
+      <p>可以按这个边界去写 spec 和后续实现。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="session-change" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>这里还要改</h3>
+      <p>如果你更想把筹码续局放进 house 层，或者对象拆分要更简单，点这个再在终端说。</p>
+    </div>
+  </div>
+</div>

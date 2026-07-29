@@ -10,15 +10,50 @@
 - Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-tavern-short-gamble-task-3`
+- Next Required Action: `review-tavern-short-gamble-claim-locking`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 3.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md and the current diff.`
 
 ## Progress Log
+
+- 2026-07-29
+  - Summary: `Locked short-table post-claim discard flow behind typed runtime state: the claimed discard plus consumed claim cards now stay visible but non-discardable through pendingIncomingCard.lockedCardIds, duplicate claim clicks are ignored outside claim-window, and the short renderer no longer auto-wires discard actions for cards without an explicit actionId.`
+  - Verification: `C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc -p tsconfig.test.json passed; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 33/33; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table claim-locking follow-up when requested.`
+
+- 2026-07-29
+  - Summary: `Added a dedicated exposed-meld row for each tavern short-table player by persisting typed short-session meldHistory, mapping it into per-player meldLabels, and rendering that row separately from the existing discard strip.`
+  - Verification: `C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc -p tsconfig.test.json passed; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 29/29; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc --noEmit -p tsconfig.json passed; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\tools\\lint-superpowers-plans.mjs passed for 75 files.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table exposed-meld-row follow-up when requested.`
+
+- 2026-07-29
+  - Summary: `Added a short-table claim countdown owned by the tavern short session and house tick wiring: non-upstream pong/kong claim windows now start at 10 seconds, auto-pass on expiry, skip the timer for chow-only or upstream exceptions, and clear the countdown immediately once the player accepts pong/kong and enters discard selection.`
+  - Verification: `C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc -p tsconfig.test.json passed; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 27/27; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc --noEmit -p tsconfig.json passed; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\tools\\lint-superpowers-plans.mjs passed for 75 files.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table claim-countdown follow-up when requested.`
+
+- 2026-07-29
+  - Summary: `Added an explicit short-table debug preset toggle to the tavern wager overlay, stored the selected debug mode under the tavern short table session, and introduced a deterministic pong -> kong -> chow hand cycle so consecutive debug hands reliably expose 碰 / 杠 / 吃 claim windows without touching normal shuffle flow or the temporary tavern-entry debug bypass.`
+  - Verification: `C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc -p tsconfig.test.json passed; node --test --test-isolation=none tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 15/15; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 21/21; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\tools\\lint-superpowers-plans.mjs passed for 75 files; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table debug claim-cycle follow-up when requested.`
+
+- 2026-07-28
+  - Summary: `Completed the unified player item inventory migration locally after subagent implementer/reviewer dispatch failed with external deployment 404s; medicine-house and market-house inventory now normalize into var.player_inventory.item.*, and backpack projection reads the shared helper while grain stays on var.player_inventory.grain_dou.`
+  - Verification: `bundled node .\tools\lint-superpowers-plans.mjs` passed; `bundled node .\node_modules\typescript\bin\tsc -p tsconfig.test.json` + `Set-Content .test-dist\package.json {"type":"commonjs"}` + `bundled node --test --test-isolation=none tests/unified-backpack-inventory.test.cjs tests/backpack-ui-contract.test.cjs` passed 16/16; `bundled node .\node_modules\typescript\bin\tsc -p tsconfig.test.json` + `Set-Content .test-dist\package.json {"type":"commonjs"}` + `bundled node --test --test-isolation=none --test-name-pattern "market house can open trade overlay and execute buy flow|market house can sell legacy-only goods through normalized player item inventory|medicine house heal and buy update fatigue inventory and gold" tests/robustness.test.cjs` passed 3/3; `bundled node .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` passed; `bundled node .\node_modules\vite\bin\vite.js build` failed with sandbox `spawn EPERM`.
+  - Next: `Review the diff, push when requested, and keep the child completed-but-open until remote push succeeds and the blocked Vite build path is rerun or explicitly accepted.`
+
+- 2026-07-28
+  - Summary: `Opened the superseding unified player item inventory migration child from the approved migration design and moved canonical resume ownership away from the compatibility-only backpack projection plan.`
+  - Verification: `bundled node .\tools\lint-superpowers-plans.mjs`
+  - Next: `Wait for the user to choose Subagent-Driven or Inline execution, then execute docs/superpowers/plans/2026-07-28-unified-player-item-inventory-migration-plan.md from Task 1.`
+
+- 2026-07-28
+  - Summary: `Projected prepared medicine and shop trade goods into the unified backpack while preserving the existing shop runtime ownership and the shared single-row grain view.`
+  - Verification: `bundled node .\tools\lint-superpowers-plans.mjs`; `bundled node .\node_modules\typescript\bin\tsc -p tsconfig.test.json` + `Set-Content .test-dist\package.json {"type":"commonjs"}` + `bundled node --test --test-isolation=none tests/unified-backpack-inventory.test.cjs tests/backpack-ui-contract.test.cjs`; `bundled node .\node_modules\typescript\bin\tsc -p tsconfig.test.json` + `Set-Content .test-dist\package.json {"type":"commonjs"}` + `bundled node --test --test-isolation=none --test-name-pattern "market house can open trade overlay and execute buy flow|medicine house heal and buy update fatigue inventory and gold" tests/robustness.test.cjs`; `bundled node .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `bundled node .\node_modules\vite\bin\vite.js build` blocked by sandbox `spawn EPERM`, and escalation could not proceed because the approval/deployment path returned 404.
+  - Next: `Rerun the unsandboxed build when approval works, then review diff, push if requested, and close or continue the backpack child.`
 
 - 2026-07-06
   - Summary: `Created the first fail-closed progress-driven governance spec and started replacing the old weekly-governance entry surfaces.`
@@ -108,6 +143,18 @@
   - Summary: `Completed Task 2 for the tavern short gamble child by adding the short hand runtime, claim-chain flow, auto-bet consumption, and showdown helpers.`
   - Verification: `RED bundled node + tsc + node --test --test-isolation=none failed because createTavernShortHand is not a function; GREEN the same command passed 6/6 tests in tests/tavern-short-gamble-domain.test.cjs.`
   - Next: `Execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 3 and wire the tavern short table session into the house module.`
+- 2026-07-28
+  - Summary: `Completed Task 3 by wiring the tavern short-table session union, buy-in/rebuy/cash-out economy flow, and one-time stamina charge into the tavern house module.`
+  - Verification: `bundled node + tsc + node --test --test-isolation=none passed 3/3 tests in tests/tavern-short-gamble-house.test.cjs after the initial red house-session failures.`
+  - Next: `Execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 4 and split the public gamble-table overlay by variant.`
+- 2026-07-28
+  - Summary: `Completed Task 4 by adding the tavern short overlay mapper, variant-specific gamble-table public contract, short renderer path, and short-table layout styling while preserving the long renderer flow.`
+  - Verification: `bundled node + tsc + node --test --test-isolation=none passed 3/3 tests in tests/tavern-short-gamble-ui-contract.test.cjs after the expected MODULE_NOT_FOUND red on the missing view-model helper.`
+  - Next: `Execute docs/superpowers/plans/2026-07-28-tavern-short-gamble-plan.md from Task 5 and replace the old short-mode robustness assumptions.`
+- 2026-07-28
+  - Summary: `Completed the tavern short gamble code/doc rollout and targeted tavern verification; the remaining follow-up is a bundled-node Vite CLI exit anomaly after successful dist emission.`
+  - Verification: `Plan lint passed for 73 files; tavern-short domain + house + UI suites passed 12/12; tavern robustness pattern passed 13/13; tsconfig typecheck passed; Vite build emitted dist output but the bundled-node CLI exited with Windows code -1073740791 after warning-only output.`
+  - Next: `Confirm whether the bundled-node Vite build exit is acceptable in this environment, then commit/push or continue build-exit investigation.`
 
 ## Latest Closeout
 

@@ -67,12 +67,13 @@ function renderSceneDialogueCard(
   } = {}
 ): string {
   const clickable = options.advanceActionId != null;
+  const hasAdvanceHint = clickable;
   const typewriterLines = renderDialogueTypewriterLines(paragraphs);
 
   return `
     <footer class="c-grain-shop-dialogue c-scene-dialogue" aria-label="剧情对话">
       <div
-        class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
+        class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""} ${hasAdvanceHint ? "c-grain-shop-dialogue__text--with-hint" : ""}"
         ${clickable ? `data-scene-action="${options.advanceActionId}" role="button" tabindex="0"` : ""}
       >
         ${typewriterLines.markup}

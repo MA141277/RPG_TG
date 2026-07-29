@@ -5,11 +5,18 @@ import type {
   BackpackItemDefinition,
   ItemActionId,
 } from "../../domain/item";
+import {
+  medicineHousePreparedMedicines,
+} from "../../content/houses/medicine-house-content";
+import type { MedicineHousePreparedMedicineDefinition } from "../../content/houses/medicine-house-content";
+import { runtimeTradeGoodsPool } from "../../content/markets/runtime-trade-goods-pool";
+import type { TradeGoodDefinition } from "../../domain/trade-good";
 import type {
   ValuableItemDefinition,
   ValuableItemInventory,
 } from "../../domain/valuable-item";
 import { equipValuableItem } from "./inventory-selection";
+import { readPlayerItemQuantity } from "./player-item-inventory";
 import { readPlayerGrainDou } from "./trade-inventory";
 
 export const PLAYER_GRAIN_ITEM_ID = "item.grain";
@@ -81,6 +88,90 @@ function projectGrainItem(gameState: Pick<GameState, "runtime">): BackpackItemDe
   };
 }
 
+function describePreparedMedicine(
+  medicine: MedicineHousePreparedMedicineDefinition
+): string {
+  const parts: string[] = [];
+  if (typeof medicine.effect.hp === "number" && medicine.effect.hp > 0) {
+    parts.push(`Restore ${medicine.effect.hp} HP`);
+  }
+  if (
+    typeof medicine.effect.fatigue === "number" &&
+    medicine.effect.fatigue > 0
+  ) {
+    parts.push(`Restore ${medicine.effect.fatigue} fatigue`);
+  }
+  if (
+    typeof medicine.effect.poison === "number" &&
+    medicine.effect.poison < 0
+  ) {
+    parts.push(`Cure ${Math.abs(medicine.effect.poison)} poison`);
+  }
+  return parts.join("; ") || "Prepared medicine.";
+}
+
+function projectPreparedMedicineItems(
+  gameState: Pick<GameState, "runtime">
+): BackpackItemDefinition[] {
+  return medicineHousePreparedMedicines.flatMap((medicine) => {
+    const count = readPlayerItemQuantity(
+      gameState,
+      medicine.id,
+      ["medicine-house"]
+    );
+    if (count <= 0) {
+      return [];
+    }
+
+    const description = describePreparedMedicine(medicine);
+    return [
+      {
+        id: `item.medicine.${medicine.id}`,
+        name: medicine.name,
+        icon: null,
+        value: medicine.price,
+        types: ["other", "prepared-medicine"],
+        count,
+        description,
+        detailText: description,
+        actions: [],
+      },
+    ];
+  });
+}
+
+function projectTradeGoods(
+  gameState: Pick<GameState, "runtime">
+): BackpackItemDefinition[] {
+  return runtimeTradeGoodsPool.flatMap((goodsDefinition: TradeGoodDefinition) => {
+    if (goodsDefinition.shopType === "grain-shop") {
+      return [];
+    }
+
+    const count = readPlayerItemQuantity(
+      gameState,
+      goodsDefinition.id,
+      ["market-house"]
+    );
+    if (count <= 0) {
+      return [];
+    }
+
+    return [
+      {
+        id: `item.trade.${goodsDefinition.id}`,
+        name: goodsDefinition.name,
+        icon: null,
+        value: goodsDefinition.basePrice,
+        types: compactTypes(["other", "trade", goodsDefinition.category]),
+        count,
+        description: goodsDefinition.description,
+        actions: [],
+      },
+    ];
+  });
+}
+
 export function projectBackpackItems(
   input: ProjectBackpackItemsInput
 ): BackpackItemDefinition[] {
@@ -88,6 +179,8 @@ export function projectBackpackItems(
   return [
     ...input.valuableInventory.items.map(projectValuableItem),
     ...(grainItem == null ? [] : [grainItem]),
+    ...projectPreparedMedicineItems(input.gameState),
+    ...projectTradeGoods(input.gameState),
   ];
 }
 

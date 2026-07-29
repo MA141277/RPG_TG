@@ -154,6 +154,162 @@ test("tavern short claim chains keep original resume seat and highest priority o
   assert.equal(claimed.pendingIncomingCard.ownerSeatId, "broker");
 });
 
+test("tavern short claims record exposed meld history separately from discard history", () => {
+  const cards = byId();
+  const base = createTavernShortHand({
+    seed: 11,
+    dealerSeatIndex: 0,
+    playerName: "tester",
+    openingStacks: [1200, 1200, 1200, 1200],
+  });
+  const claimed = claimTavernShortDiscard(
+    {
+      ...base,
+      phase: "claim-window",
+      actingSeatIndex: 2,
+      players: base.players.map((player) =>
+        player.seatId !== "broker"
+          ? player
+          : {
+              ...player,
+              hand: [
+                cards["bing-7"],
+                cards["tong-7"],
+                cards["wan-2"],
+                cards["bing-3"],
+                cards["tong-4"],
+              ],
+              discardHistory: [],
+            }
+      ),
+      claimChain: {
+        discarderSeatId: "traveler",
+        visibleDiscard: { id: "wan-7", suit: "wan", rank: 7 },
+        originalResumeSeatId: "broker",
+        turnOwnerSeatId: "traveler",
+        stage: "pong-chow",
+        chainDepth: 0,
+        passedSeatIds: [],
+        options: [
+          {
+            id: "pong-broker",
+            seatId: "broker",
+            kind: "pong",
+            discardCardId: "wan-7",
+            consumeCardIds: ["bing-7", "tong-7"],
+            priority: 2,
+          },
+        ],
+      },
+    },
+    "pong-broker"
+  );
+
+  const broker = claimed.players.find((player) => player.seatId === "broker");
+  assert.ok(broker);
+  assert.deepEqual(
+    broker.meldHistory.map((meld) => ({
+      kind: meld.kind,
+      cardIds: meld.cards.map((card) => card.id),
+    })),
+    [
+      {
+        kind: "pong",
+        cardIds: ["wan-7", "bing-7", "tong-7"],
+      },
+    ]
+  );
+  assert.deepEqual(broker.discardHistory, []);
+});
+
+test("tavern short claims lock meld cards for the forced discard step", () => {
+  const cards = byId();
+  const base = createTavernShortHand({
+    seed: 11,
+    dealerSeatIndex: 0,
+    playerName: "tester",
+    openingStacks: [1200, 1200, 1200, 1200],
+  });
+  const claimed = claimTavernShortDiscard(
+    {
+      ...base,
+      phase: "claim-window",
+      actingSeatIndex: 2,
+      players: base.players.map((player) =>
+        player.seatId !== "broker"
+          ? player
+          : {
+              ...player,
+              hand: [
+                cards["bing-7"],
+                cards["tong-7"],
+                cards["wan-2"],
+                cards["bing-3"],
+                cards["tong-4"],
+              ],
+              discardHistory: [],
+            }
+      ),
+      claimChain: {
+        discarderSeatId: "traveler",
+        visibleDiscard: { id: "wan-7", suit: "wan", rank: 7 },
+        originalResumeSeatId: "broker",
+        turnOwnerSeatId: "traveler",
+        stage: "pong-chow",
+        chainDepth: 0,
+        passedSeatIds: [],
+        options: [
+          {
+            id: "pong-broker",
+            seatId: "broker",
+            kind: "pong",
+            discardCardId: "wan-7",
+            consumeCardIds: ["bing-7", "tong-7"],
+            priority: 2,
+          },
+        ],
+      },
+    },
+    "pong-broker"
+  );
+
+  assert.deepEqual(claimed.pendingIncomingCard?.lockedCardIds, [
+    "wan-7",
+    "bing-7",
+    "tong-7",
+  ]);
+
+  const rejectedConsumed = chooseTavernShortDiscardCandidate(
+    claimed,
+    "broker",
+    "bing-7"
+  );
+  assert.equal(rejectedConsumed.selectedDiscardCardId, null);
+
+  const rejectedClaimed = chooseTavernShortDiscardCandidate(
+    claimed,
+    "broker",
+    "wan-7"
+  );
+  assert.equal(rejectedClaimed.selectedDiscardCardId, null);
+
+  const selectedUnlocked = chooseTavernShortDiscardCandidate(
+    claimed,
+    "broker",
+    "wan-2"
+  );
+  assert.equal(selectedUnlocked.selectedDiscardCardId, "wan-2");
+
+  const confirmed = confirmTavernShortDiscard(claimed, "broker");
+  const broker = confirmed.players.find((player) => player.seatId === "broker");
+  assert.ok(broker);
+  assert.equal(broker.hand.length, 5);
+  assert.equal(broker.discardHistory.at(-1)?.id, "wan-2");
+  assert.ok(broker.hand.some((card) => card.id === "wan-7"));
+  assert.ok(broker.hand.some((card) => card.id === "bing-7"));
+  assert.ok(broker.hand.some((card) => card.id === "tong-7"));
+});
+
 test("tavern short auto-bet is consumed once and a short all-in kong penalty rebuilds pots", () => {
   const hand = createTavernShortHand({
     seed: 21,
@@ -176,4 +332,76 @@ test("tavern short auto-bet is consumed once and a short all-in kong penalty reb
     resolved.players[0].allIn || resolved.players[0].committedThisRound >= 200,
     true
   );
+});
+
+test("tavern short logs use Chinese broadcast text for betting and draw-discard flow", () => {
+  let hand = createTavernShortHand({
+    seed: 7,
+    dealerSeatIndex: 0,
+    playerName: "tester",
+    openingStacks: [1200, 1200, 1200, 1200],
+  });
+
+  hand = resolveTavernShortBetAction(hand, "guard", { kind: "call" });
+  hand = drawTavernShortIncomingCard(hand, "you");
+  hand = chooseTavernShortDiscardCandidate(hand, "you", hand.players[0].hand[0].id);
+  hand = confirmTavernShortDiscard(hand, "you");
+
+  const recentLogs = hand.logLines.slice(-3);
+  assert.equal(recentLogs.length, 3);
+  assert.match(recentLogs[0], /护院/u);
+  assert.match(recentLogs[0], /跟注/u);
+  assert.doesNotMatch(recentLogs[0], /\bguard\b|\bcall\b/u);
+  assert.match(recentLogs[1], /你/u);
+  assert.match(recentLogs[1], /摸入/u);
+  assert.match(recentLogs[1], /[万饼筒条]/u);
+  assert.doesNotMatch(recentLogs[1], /\b(?:you|wan|bing|tong|tiao)-\d+\b/u);
+  assert.match(recentLogs[2], /你/u);
+  assert.match(recentLogs[2], /打出/u);
+  assert.match(recentLogs[2], /[万饼筒条]/u);
+  assert.doesNotMatch(recentLogs[2], /\b(?:you|wan|bing|tong|tiao)-\d+\b/u);
+});
+
+test("tavern short logs use Chinese broadcast text for claim resolution", () => {
+  const base = createTavernShortHand({
+    seed: 11,
+    dealerSeatIndex: 0,
+    playerName: "tester",
+    openingStacks: [1200, 1200, 1200, 1200],
+  });
+  const claimed = claimTavernShortDiscard(
+    {
+      ...base,
+      phase: "claim-window",
+      actingSeatIndex: 2,
+      logLines: [],
+      claimChain: {
+        discarderSeatId: "traveler",
+        visibleDiscard: { id: "wan-7", suit: "wan", rank: 7 },
+        originalResumeSeatId: "broker",
+        turnOwnerSeatId: "traveler",
+        stage: "pong-chow",
+        chainDepth: 0,
+        passedSeatIds: [],
+        options: [
+          {
+            id: "pong-broker",
+            seatId: "broker",
+            kind: "pong",
+            discardCardId: "wan-7",
+            consumeCardIds: ["bing-7", "tong-7"],
+            priority: 2,
+          },
+        ],
+      },
+    },
+    "pong-broker"
+  );
+
+  const latestLog = claimed.logLines.at(-1) ?? "";
+  assert.match(latestLog, /牙人/u);
+  assert.match(latestLog, /抢得/u);
+  assert.match(latestLog, /碰/u);
+  assert.match(latestLog, /7万/u);
+  assert.doesNotMatch(latestLog, /\b(?:broker|wan-7|pong)\b/u);
 });

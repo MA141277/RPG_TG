@@ -25,13 +25,58 @@
 ## Execution State
 
 - Status: `running`
-- Last Updated: `2026-07-28`
-- Current Focus: `Task 2 complete; Task 3 tavern house session wiring next.`
-- Next Step: `Write Task 3 short-table house tests.`
-- Verification: `Task 2 RED: bundled node + tsc + node --test --test-isolation=none failed because createTavernShortHand is not a function. Task 2 GREEN: the same command passed 6/6 tests in tests/tavern-short-gamble-domain.test.cjs.`
-- Notes: `This child is now the active governance target in docs/superpowers/project-progress.md. Stale .test-dist tavern-short outputs had to be removed before RED so the new tests exercised real missing-module behavior instead of cached build artifacts.`
+- Last Updated: `2026-07-29`
+- Current Focus: `Short-table claim resolution now locks the claimed discard plus consumed claim cards through typed pendingIncomingCard.lockedCardIds, rejects repeated claim actions outside claim-window, and keeps locked post-claim cards visible but inert until the forced discard is completed.`
+- Next Step: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table claim-locking follow-up when requested.`
+- Verification: `RED C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --test --test-isolation=none tests\\tavern-short-gamble-domain.test.cjs tests\\tavern-short-gamble-house.test.cjs tests\\tavern-short-gamble-ui-contract.test.cjs failed on the missing pendingIncomingCard.lockedCardIds state, repeated claim acceptance after leaving claim-window, stale claim controls in draw-discard, and the short renderer auto-wiring discard actions for cards without actionId. GREEN after implementation C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc -p tsconfig.test.json passed; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --test --test-isolation=none tests\\tavern-short-gamble-domain.test.cjs tests\\tavern-short-gamble-house.test.cjs tests\\tavern-short-gamble-ui-contract.test.cjs passed 33/33; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests\\robustness.test.cjs passed 13/13; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc --noEmit -p tsconfig.json passed.`
+- Notes: `Post-claim discard now uses typed lock metadata on the pending incoming slot, short claim buttons only dispatch during claim-window, and short hand tiles without explicit actionId stay inert so claim-participating cards cannot be discarded or re-claimed.`
+- Historical Execution State Note: `The focus/next-step/verification/notes lines below are the previous batch snapshot and are superseded by the update above until the next cleanup pass.`
+- Current Focus: `Short-table player summaries now keep a dedicated exposed-meld row ahead of the discard strip, backed by typed meldHistory on each short player state so claimed 吃 / 碰 / 杠 groups remain publicly visible as complete records.`
+- Next Step: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table exposed-meld-row follow-up when requested.`
+- Verification: `RED C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --test --test-isolation=none tests\\tavern-short-gamble-domain.test.cjs tests\\tavern-short-gamble-ui-contract.test.cjs failed on the missing player meldHistory field, missing overlay meldLabels mapping, and missing tavern sidebar meld row/CSS. GREEN after implementation C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc -p tsconfig.test.json passed; node --test --test-isolation=none tests\\tavern-short-gamble-domain.test.cjs tests\\tavern-short-gamble-house.test.cjs tests\\tavern-short-gamble-ui-contract.test.cjs passed 29/29; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests\\robustness.test.cjs passed 13/13; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc --noEmit -p tsconfig.json passed; and C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\tools\\lint-superpowers-plans.mjs passed for 75 files.`
+- Notes: `Exposed melds are now stored separately from discardHistory, mapped to per-player meldLabels, and rendered on their own sidebar row without changing the temporary tavern-entry debug bypass or the short-table discard strip semantics.`
+- Historical Execution State Note: `The focus/next-step/verification/notes lines below are earlier batch snapshots and are superseded by the update above until the next cleanup pass.`
+- Current Focus: `The tavern short table now exposes an explicit short-only debug preset toggle and a deterministic pong -> kong -> chow hand cycle, so consecutive debug hands reliably surface 碰 / 杠 / 吃 windows for testing while normal shuffled hands and the tavern-entry debug bypass stay unchanged.`
+- Next Step: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table debug claim-cycle follow-up when requested.`
+- Verification: `RED C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --test --test-isolation=none tests\\tavern-short-gamble-house.test.cjs tests\\tavern-short-gamble-ui-contract.test.cjs failed on the missing short-table debugPresetMode session field and the missing wager-overlay debugToggle control. GREEN after implementation C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc -p tsconfig.test.json passed; node --test --test-isolation=none tests\\tavern-short-gamble-house.test.cjs tests\\tavern-short-gamble-ui-contract.test.cjs passed 15/15; node --test --test-isolation=none tests\\tavern-short-gamble-domain.test.cjs tests\\tavern-short-gamble-house.test.cjs tests\\tavern-short-gamble-ui-contract.test.cjs passed 21/21; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests\\robustness.test.cjs passed 13/13; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\tools\\lint-superpowers-plans.mjs passed for 75 files; and C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc --noEmit -p tsconfig.json passed.`
+- Notes: `Temporary tavern-entry debug bypass changes remain preserved in unrelated modified files, and the new debug claim-cycle path stays opt-in under typed tavern short session state instead of globals or main.ts branches.`
+- Historical Execution State Note: `The four focus/next-step/verification/notes lines below are the previous batch snapshot and are superseded by the update above until the next cleanup pass.`
+- Current Focus: `Short-table broadcasts now format seat names, card labels, and claim/bet action text through the domain runtime, so the log panel no longer leaks internal IDs such as guard / broker / wan-7 / pong while keeping the current claim-row UI and tavern-entry debug bypass intact.`
+- Next Step: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit this short-table Chinese-broadcast follow-up together with the rest of the tavern UI polish when requested.`
+- Verification: `RED C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --test --test-isolation=none tests\\tavern-short-gamble-domain.test.cjs failed on raw log strings such as "guard call" and "broker 抢得 wan-7 并执行 pong". GREEN after implementation bundled-node test compile passed, the focused tavern short domain + house + UI suites passed 21/21, and C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc --noEmit -p tsconfig.json passed.`
+- Notes: `Temporary tavern-entry debug bypass changes remain preserved in unrelated modified files. The tavern short feature itself is implemented and locally covered; the remaining verification caveat is the bundled-node Vite CLI exit code in this Codex Windows environment.`
 
 ## Progress Log
+
+- 2026-07-29
+  - Summary: `Locked short-table post-claim discard flow behind typed pendingIncomingCard.lockedCardIds, rejected repeated claim actions after the hand leaves claim-window, hid stale claim controls during draw-discard, and stopped the short renderer from auto-wiring discard clicks for cards without an explicit actionId.`
+  - Verification: `RED bundled-node tests/tavern-short-gamble-domain.test.cjs + tests/tavern-short-gamble-house.test.cjs + tests/tavern-short-gamble-ui-contract.test.cjs failed on the missing locked-card state, repeated claim clicks, stale draw-discard claim controls, and the short hand-tile action fallback; GREEN after implementation bundled-node test compile passed; bundled-node node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 33/33; bundled-node node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled-node tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table claim-locking follow-up when requested.`
+
+- 2026-07-29
+  - Summary: `Added a dedicated exposed-meld sidebar row for each tavern short-table player by persisting meldHistory on short player state, mapping those complete claimed groups into meldLabels, and rendering them separately from the discard strip.`
+  - Verification: `RED bundled-node tests/tavern-short-gamble-domain.test.cjs + tests/tavern-short-gamble-ui-contract.test.cjs failed on the missing player meldHistory field, missing overlay meldLabels, and missing tavern sidebar meld row/CSS; GREEN after implementation bundled-node test compile passed; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 29/29; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled-node tsc --noEmit -p tsconfig.json passed; bundled-node tools/lint-superpowers-plans.mjs passed for 75 files.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table exposed-meld-row follow-up when requested.`
+
+- 2026-07-29
+  - Summary: `Added a session-owned short-table claim countdown for non-upstream pong/kong response windows: the tavern house module now starts a dedicated one-second interval, the overlay exposes progress-bar data, timeout auto-passes the claim window, and accepting pong/kong clears the timer before discard selection begins.`
+  - Verification: `RED bundled-node tests/tavern-short-gamble-house.test.cjs + tests/tavern-short-gamble-ui-contract.test.cjs failed on the missing claimCountdown session field, overlay countdown payload, and countdown markup/CSS; GREEN after implementation bundled-node test compile passed; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 27/27; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled-node tools/lint-superpowers-plans.mjs passed for 75 files; bundled-node tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table claim-countdown follow-up when requested.`
+
+- 2026-07-29
+  - Summary: `Added an explicit short-table debug preset toggle to the tavern wager overlay, stored the selected mode under the tavern short session, and introduced a deterministic pong -> kong -> chow hand cycle so consecutive debug hands reliably expose 碰 / 杠 / 吃 claim windows without changing normal shuffle flow or the temporary tavern-entry debug bypass.`
+  - Verification: `RED bundled-node tests/tavern-short-gamble-house.test.cjs + tests/tavern-short-gamble-ui-contract.test.cjs failed on the missing short-table debugPresetMode field and wager-overlay debugToggle. GREEN after implementation bundled-node test compile passed; node --test --test-isolation=none tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 15/15; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 21/21; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled-node tools/lint-superpowers-plans.mjs passed for 75 files; bundled-node tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table debug claim-cycle follow-up when requested.`
+
+- 2026-07-29
+  - Summary: `Changed short-table broadcast/log generation to use Chinese seat labels, Chinese tile labels, and Chinese action text inside the short runtime itself, so betting, draw-discard, and claim-resolution messages no longer expose internal IDs such as you / guard / broker / wan-7 / pong.`
+  - Verification: `RED bundled-node tests/tavern-short-gamble-domain.test.cjs failed on the raw English/internal-ID broadcasts "guard call" and "broker 抢得 wan-7 并执行 pong"; GREEN after implementation bundled-node test compile passed, tests/tavern-short-gamble-domain.test.cjs + tests/tavern-short-gamble-house.test.cjs + tests/tavern-short-gamble-ui-contract.test.cjs passed 21/21, and bundled-node tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table Chinese-broadcast follow-up when requested.`
+
+- 2026-07-29
+  - Summary: `Moved short-table temporary claim controls into a dedicated upper row inside the existing bottom gameplay panel, added a structured claimPassAction to the short gamble overlay, and kept the change inside the tavern house module/view/style seams after checking the older mod-first-dev tavern/style layout surface.`
+  - Verification: `RED bundled-node tests/tavern-short-gamble-ui-contract.test.cjs failed on the missing claimPassAction field, the still-single-row short action panel, and missing short-play claim-row CSS; GREEN after bundled-node test compile the focused UI contract suite passed 10/10, and bundled-node tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table claim-row follow-up when requested.`
 
 - 2026-07-28
   - Summary: `Created the tavern short gamble implementation plan after the design spec was approved.`
@@ -45,6 +90,58 @@
   - Summary: `Completed Task 2 by adding the short hand runtime, claim-chain state, auto-bet consumption, showdown settlement, and deterministic NPC progression helpers.`
   - Verification: `RED bundled node + tsc + node --test --test-isolation=none failed because createTavernShortHand is not a function; GREEN the same command passed 6/6 tests in tests/tavern-short-gamble-domain.test.cjs.`
   - Next: `Write Task 3 short-table house tests and wire the tavern short table session into the house module.`
+- 2026-07-28
+  - Summary: `Completed Task 3 by introducing a persistent short-table session, buy-in/rebuy/cash-out economy wiring, short-vs-long tavern gamble union state, and one-time stamina charge on short table entry.`
+  - Verification: `RED bundled node + tsc + node --test --test-isolation=none initially failed the tavern house suite because short mode still left gold unchanged and did not clear the old gamble session on cash-out; GREEN the focused tavern house suite passed 3/3 in tests/tavern-short-gamble-house.test.cjs.`
+  - Next: `Write Task 4 short overlay and renderer contract tests.`
+- 2026-07-28
+  - Summary: `Completed Task 4 by splitting gamble-table into variant-specific contracts, adding a dedicated tavern short overlay mapper, wiring a short-specific tavern renderer path, and styling the short-table center layout.`
+  - Verification: `RED bundled node + tsc + node --test --test-isolation=none failed with MODULE_NOT_FOUND for tavern-short-gamble-view-model.js; GREEN the focused UI contract suite passed 3/3 in tests/tavern-short-gamble-ui-contract.test.cjs.`
+  - Next: `Replace old short robustness assumptions, update docs, and run the final verification sweep.`
+- 2026-07-28
+  - Summary: `Completed the Task 5 code and doc changes: robustness now asserts persistent short-table behavior and long isolation, docs record the tavern session/overlay contract changes, and final targeted tavern verification is green.`
+  - Verification: `Plan lint passed for 73 files; tavern-short domain + house + UI suites passed 12/12; tavern robustness pattern passed 13/13; tsconfig typecheck passed; Vite build emitted dist but the bundled-node CLI exited with Windows code -1073740791 after warning-only output.`
+  - Next: `Confirm whether the bundled-node Vite exit is acceptable in this environment, then commit/push or continue build-exit investigation.`
+- 2026-07-28
+  - Summary: `Applied the requested short-table UI polish: the short minigame panel is centered, the action bar moved to the top, currently available actions render with explicit highlight state, and opponent discard tiles are compact with centered green text.`
+  - Verification: `Bundled node + tsc test compile passed; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 13/13; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled node + tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the tavern debug-entry bypass in place, then decide whether to commit these tavern UI follow-ups or continue the separate bundled-node Vite exit investigation.`
+- 2026-07-28
+  - Summary: `Adjusted the short-table UI per follow-up feedback: enemy discard tiles reverted to default size/color, short action text is now uniformly gold, and available-action highlighting keeps only a much smaller green edge glow without green text glow.`
+  - Verification: `node --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs initially failed on the remaining opponent-discard class and missing gold action text rule; GREEN after bundled node + tsc test compile the focused UI contract passed 4/4; bundled node + tsc --noEmit -p tsconfig.json passed; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 13/13; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13.`
+  - Next: `Keep the temporary tavern-entry bypass unchanged, then review/commit the tavern UI follow-up together with the earlier short-table rollout when requested.`
+- 2026-07-28
+  - Summary: `Refined the short-table top action bar so available-action highlighting appears only during the player's own action window; NPC turns keep the top controls visible but unlit.`
+  - Verification: `node --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs failed first on missing highlightAvailableActions support and still-glowing NPC-turn buttons; GREEN after bundled node + tsc test compile the focused UI contract passed 6/6; bundled node + tsc --noEmit -p tsconfig.json passed; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 15/15; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13.`
+  - Next: `Keep the temporary tavern-entry bypass unchanged, then review/commit the tavern short-table rollout and follow-up UI fixes together when requested.`
+- 2026-07-28
+  - Summary: `Centered the short-table public-card panel with real auto margins and narrowed the short sidebar discard tiles to a dedicated 12px compact strip so opponent discards take less horizontal space without changing the turn-owned action highlight behavior.`
+  - Verification: `RED node --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs failed on the missing c-tavern-gamble__discard-strip--narrow markup and missing .c-tavern-gamble__center--short margin-inline:auto rule; GREEN after bundled node + tsc test compile the focused UI contract passed 6/6; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 15/15; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled node + tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table rollout and UI follow-ups together when requested.`
+- 2026-07-28
+  - Summary: `Removed the short-table green action highlight, switched short gameplay buttons to a simple gold-or-dim enabled/disabled model, dimmed the whole gameplay action row during NPC turns, and reduced the short-table frame/top-bar height so the green felt area is about 50px shorter.`
+  - Verification: `RED node --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs failed on lingering is-available button markup, missing NPC-turn disabled gameplay buttons, and the old 760px short-table height/top-bar padding; GREEN after bundled node + tsc test compile the focused UI contract passed 6/6; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 15/15; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled node + tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table rollout and UI follow-ups together when requested.`
+- 2026-07-28
+  - Summary: `Moved the short-table gameplay action row to sit directly above the hand area while keeping close in the original top bar, tripled the log panel height, changed opponent discards into wide vertical stacks, and centered showdown as stacked result cards that show player name, real best-hand label, and chip delta.`
+  - Verification: `RED node --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs failed on the missing short-play action row, missing vertical wide opponent discard stack, and the old short-table log/showdown layout; GREEN after bundled node + tsc test compile the focused UI contract passed 7/7; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 16/16; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled node + tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table rollout and UI follow-ups together when requested.`
+- 2026-07-28
+  - Summary: `Switched the short-table opponent discard strip back to a horizontal row, increased the short opponent discard long edge from 50px to 63px, and reflowed the centered short showdown into horizontal result cards while keeping the real best-hand text.`
+  - Verification: `RED node --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs failed on the lingering short-table vertical discard strip class, the old 50px discard long edge, and the pre-horizontal showdown layout; GREEN after bundled node + tsc test compile the focused UI contract passed 7/7; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 16/16; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled node + tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table rollout and UI follow-ups together when requested.`
+- 2026-07-28
+  - Summary: `Moved the short-table between-hand actions out of the gameplay button row and into the showdown panel as settlement actions, renamed them to start/end round language, and locked the narrow opponent discard strip to a single horizontal row instead of auto-wrapping.`
+  - Verification: `RED node --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs failed on the still-wrapping short discard strip and on between-hand actions still rendering in the short-play row; GREEN after bundled node + tsc test compile the focused UI contract passed 8/8; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 17/17; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled node + tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table rollout and UI follow-ups together when requested.`
+- 2026-07-28
+  - Summary: `Fixed the actual short discard-row bug by replacing the overly broad .c-tavern-gamble__player div selector with an explicit player-summary class, and switched the showdown cash-out button to the same beige gold skin while keeping the showdown actions mounted without a dark footer block.`
+  - Verification: `RED node --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs failed on the missing player-summary hook, the lingering .c-tavern-gamble__player div override, and cash-out still using the darker paper skin; GREEN after bundled node + tsc test compile the focused UI contract passed 8/8; node --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs passed 17/17; node --test --test-isolation=none --test-name-pattern "tavern short gamble|tavern long gamble|tavern gamble" tests/robustness.test.cjs passed 13/13; bundled node + tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table rollout and UI follow-ups together when requested.`
+- 2026-07-29
+  - Summary: `Changed short-table cash-out to defer gold settlement until the player closes the alert, added a shared HouseModuleSideEffect coin reward contract, threaded pointer coordinates through house runtime dispatch, and reused the global ingot flight animation so the payout bursts from the actual click position instead of a tavern-specific main.ts branch.`
+  - Verification: `RED tests/tavern-short-gamble-house.test.cjs failed because cash-out still added gold immediately, and tests/house-runtime-coin-reward-contract.test.cjs failed because house runtime dispatch had no pointer-aware coin reward seam. GREEN after implementation C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc -p tsconfig.test.json passed; node --test --test-isolation=none tests/tavern-short-gamble-house.test.cjs passed 3/3; node --test --test-isolation=none tests/house-runtime-coin-reward-contract.test.cjs passed 1/1; C:\\Users\\29636\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe .\\node_modules\\typescript\\bin\\tsc --noEmit -p tsconfig.json passed.`
+  - Next: `Keep the temporary tavern-entry debug bypass unchanged, then review/commit the tavern short-table rollout and shared cash-out follow-up together when requested.`
 
 ---
 
@@ -420,7 +517,7 @@ git commit -m "feat: add tavern short evaluator foundations"
 - Consumes: `TavernShortCard`, `TavernShortBestFive`, `buildTavernShortPots()`, `evaluateBestTavernShortShowdown()`
 - Produces: `type TavernShortBetActionKind = "check" | "call" | "raise" | "fold"`
 - Produces: `type TavernShortClaimKind = "chow" | "pong" | "kong"`
-- Produces: `type TavernShortPendingIncomingCard = { ownerSeatId: string; source: "draw" | "claim"; card: TavernShortCard }`
+- Produces: `type TavernShortPendingIncomingCard = { ownerSeatId: string; source: "draw" | "claim"; card: TavernShortCard; lockedCardIds?: string[] }`
 - Produces: `type TavernShortClaimOption = { id: string; seatId: string; kind: TavernShortClaimKind; discardCardId: string; consumeCardIds: string[]; priority: number }`
 - Produces: `type TavernShortHandState = { dealerSeatIndex: number; actingSeatIndex: number; bettingRoundIndex: 0 | 1 | 2 | 3; drawRoundIndex: 0 | 1 | 2 | 3; phase: "betting" | "draw-discard" | "claim-window" | "npc-thinking" | "showdown" | "finished"; players: TavernShortPlayerState[]; publicCards: TavernShortCard[]; deck: TavernShortCard[]; currentBet: number; lastFullRaise: number; pendingIncomingCard: TavernShortPendingIncomingCard | null; selectedDiscardCardId: string | null; claimChain: TavernShortClaimChainState | null; pots: TavernShortPot[]; showdown: TavernShortShowdownRow[] | null; logLines: string[] }`
 - Produces: `createTavernShortHand(input: { seed: number; dealerSeatIndex: number; playerName: string; openingStacks: [number, number, number, number] }): TavernShortHandState`
@@ -614,7 +711,7 @@ Update this plan:
 
 Update `docs/superpowers/project-progress.md` so `Next Required Action` points at `execute-tavern-short-gamble-task-3`.
 
-- [ ] **Step 6: Commit Task 2**
+- [x] **Step 6: Commit Task 2**
 
 Run:
 
@@ -644,7 +741,7 @@ git commit -m "feat: add tavern short hand runtime"
 - Produces: `rebuyTavernShortTableSession(session: TavernShortTableSession, additionalGold: number, seed: number): TavernShortTableSession`
 - Produces: `cashOutTavernShortTableSession(session: TavernShortTableSession): { goldDelta: number; leftoverChips: number }`
 
-- [ ] **Step 1: Write the failing tavern short house-session tests**
+- [x] **Step 1: Write the failing tavern short house-session tests**
 
 Create `tests/tavern-short-gamble-house.test.cjs` with these focused cases:
 
@@ -732,7 +829,7 @@ test("tavern short cash-out floors chips back to gold and clears the short table
 });
 ```
 
-- [ ] **Step 2: Run the focused tavern house test and confirm it fails**
+- [x] **Step 2: Run the focused tavern house test and confirm it fails**
 
 Run:
 
@@ -744,7 +841,7 @@ Expected:
 
 - `FAIL` because the tavern house module still creates the old short mahjong session and has no short-table session actions.
 
-- [ ] **Step 3: Implement the short-table session union and tavern economy wiring**
+- [x] **Step 3: Implement the short-table session union and tavern economy wiring**
 
 Create `src/application/house-modules/tavern/tavern-short-gamble-session.ts` and wire it through `tavern-session.ts`, `tavern-session-state.ts`, and `tavern-house-module.ts`.
 
@@ -811,7 +908,7 @@ Add or replace tavern text ids for:
 - cash-out result
 - short settlement summary
 
-- [ ] **Step 4: Re-run the focused tavern house test and confirm it passes**
+- [x] **Step 4: Re-run the focused tavern house test and confirm it passes**
 
 Run:
 
@@ -823,7 +920,7 @@ Expected:
 
 - `PASS` for buy-in, continue, and cash-out integration.
 
-- [ ] **Step 5: Sync plan and governance state**
+- [x] **Step 5: Sync plan and governance state**
 
 Update this plan:
 
@@ -868,7 +965,7 @@ git commit -m "feat: wire tavern short table session"
   - `playerRows: Array<{ id: string; name: string; seatIndex: number; stack: number; committed: number; folded: boolean; allIn: boolean; autoBetPending: boolean; discardLabels: string[] }>`
 - Produces long overlay compatibility by leaving the existing long-specific render path intact
 
-- [ ] **Step 1: Write the failing short overlay and renderer contract tests**
+- [x] **Step 1: Write the failing short overlay and renderer contract tests**
 
 Create `tests/tavern-short-gamble-ui-contract.test.cjs` with these checks:
 
@@ -956,7 +1053,7 @@ test("tavern long overlay still renders existing long-mode structure", () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused UI contract test and confirm it fails**
+- [x] **Step 2: Run the focused UI contract test and confirm it fails**
 
 Run:
 
@@ -968,7 +1065,7 @@ Expected:
 
 - `FAIL` because the public overlay contract, view-model helper, and short renderer do not exist yet.
 
-- [ ] **Step 3: Implement the short overlay contract, mapper, renderer, and styling**
+- [x] **Step 3: Implement the short overlay contract, mapper, renderer, and styling**
 
 Modify `src/domain/house-module.ts` to split `gamble-table` by variant. Add a short payload with exact field names used in the tests:
 
@@ -1014,7 +1111,7 @@ Renderer requirements:
 - keep bottom-to-top enter animation for short cards
 - keep long-mode markup path unchanged except for the new discriminated union branch
 
-- [ ] **Step 4: Re-run the focused UI contract test and confirm it passes**
+- [x] **Step 4: Re-run the focused UI contract test and confirm it passes**
 
 Run:
 
@@ -1026,7 +1123,7 @@ Expected:
 
 - `PASS` for short overlay mapping, short markup rendering, and long no-regression.
 
-- [ ] **Step 5: Sync plan and governance state**
+- [x] **Step 5: Sync plan and governance state**
 
 Update this plan:
 
@@ -1064,7 +1161,7 @@ git commit -m "feat: render tavern short gamble table"
   - long start path still creates the existing long session
   - `src/main.ts` still has no tavern-specific branch
 
-- [ ] **Step 1: Replace the old short-mode robustness assumptions with failing high-level regressions**
+- [x] **Step 1: Replace the old short-mode robustness assumptions with failing high-level regressions**
 
 In `tests/robustness.test.cjs`, replace the old short-only assertions near the existing tavern gamble tests with these high-level checks:
 
@@ -1093,7 +1190,7 @@ Also keep or add a source-level guard:
 assert.doesNotMatch(readSource("src/main.ts"), /tavern-short|gamble-short/u);
 ```
 
-- [ ] **Step 2: Run the focused robustness pattern and confirm it fails**
+- [x] **Step 2: Run the focused robustness pattern and confirm it fails**
 
 Run:
 
@@ -1105,7 +1202,7 @@ Expected:
 
 - `FAIL` because the old short assumptions in robustness do not match the new table-session model yet.
 
-- [ ] **Step 3: Update docs and finish the new high-level regressions**
+- [x] **Step 3: Update docs and finish the new high-level regressions**
 
 Update `tests/robustness.test.cjs`, `docs/special-house-interface.md`, and `docs/change-log.md`.
 
@@ -1174,19 +1271,19 @@ git commit -m "docs: finalize tavern short gamble rollout"
 
 ## Exit Check
 
-- [ ] `Short mode runs on a dedicated domain runtime and evaluator instead of the old mahjong short branches.`
-- [ ] `Tavern short tables persist chips across hands with continue/rebuy/cash-out behavior and one-time stamina charge per table session.`
-- [ ] `The tavern gamble session and gamble-table overlay are split into short-vs-long variant contracts without regressing long mode.`
-- [ ] `docs/special-house-interface.md` and `docs/change-log.md` are updated for the new session and overlay wiring.`
-- [ ] Project progress sync is updated if execution was promoted to this child.
+- [x] `Short mode runs on a dedicated domain runtime and evaluator instead of the old mahjong short branches.`
+- [x] `Tavern short tables persist chips across hands with continue/rebuy/cash-out behavior and one-time stamina charge per table session.`
+- [x] `The tavern gamble session and gamble-table overlay are split into short-vs-long variant contracts without regressing long mode.`
+- [x] `docs/special-house-interface.md` and `docs/change-log.md` are updated for the new session and overlay wiring.`
+- [x] Project progress sync is updated if execution was promoted to this child.
 - [ ] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 

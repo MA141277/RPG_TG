@@ -143,6 +143,7 @@ const TEMPLE_ACTIVITY_QTE_INTEGRATION_ID = "playable.activity-qte.house.temple";
 const TEMPLE_REST_MAX_DAYS = 99;
 const TEMPLE_REST_BASE_RECOVERY = 12;
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
+const TEMP_ALLOW_TEMPLE_LEAVE_FOR_TAVERN_DEBUG = true;
 
 const defaultZhuyuanzhangActivities =
   defaultPackActivities as ActivityDefinition[];
@@ -1536,6 +1537,14 @@ function readTempleWorkPlan(gameState: GameState): TempleHouseWorkPlan {
 }
 
 function shouldBlockTempleLeave(gameState: GameState): boolean {
+  if (
+    TEMP_ALLOW_TEMPLE_LEAVE_FOR_TAVERN_DEBUG &&
+    readZhuYuanzhangStoryStage(gameState) ===
+      ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  ) {
+    return false;
+  }
+
   const firstReviewCompleted = readBooleanFlag(
     gameState,
     ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted

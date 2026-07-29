@@ -4,7 +4,8 @@ export type MarketShopType =
   | "silk-shop"
   | "smithy"
   | "horse-market"
-  | "general-store";
+  | "general-store"
+  | "settlement-trade";
 
 export type TradeGoodCategory =
   | "grain"
@@ -12,7 +13,11 @@ export type TradeGoodCategory =
   | "silk"
   | "arms"
   | "horses"
-  | "special";
+  | "special"
+  | "seafood"
+  | "industrial"
+  | "fruit"
+  | "misc";
 
 export type TradeGoodRarity = "common" | "uncommon" | "rare" | "epic";
 

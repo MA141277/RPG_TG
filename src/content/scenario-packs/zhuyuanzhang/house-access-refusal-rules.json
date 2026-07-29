@@ -7,7 +7,9 @@
     ],
     "excludedHouseModuleIds": [
       "temple-house",
-      "keep-house"
+      "keep-house",
+      "tavern",
+      "market-house"
     ],
     "missingFlags": [
       "flag.story.zhu_yuanzhang.first_temple_review.completed"

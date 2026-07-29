@@ -483,6 +483,7 @@ export function renderHouseDialogue(
   }
 
   const clickable = viewModel.dialogue.advanceActionId != null;
+  const hasAdvanceHint = viewModel.dialogue.advanceHintText != null;
   const footerClassName = options.footerClassName ?? "c-grain-shop-dialogue";
   const ariaLabel = options.ariaLabel ?? "对话";
   const typewriterLines = renderDialogueTypewriterLines(viewModel.dialogue.textLines);
@@ -490,7 +491,7 @@ export function renderHouseDialogue(
   return `
     <footer class="${footerClassName}" aria-label="${ariaLabel}">
       <div
-        class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
+        class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""} ${hasAdvanceHint ? "c-grain-shop-dialogue__text--with-hint" : ""}"
         ${clickable ? `data-house-action="${viewModel.dialogue.advanceActionId}" role="button" tabindex="0"` : ""}
       >
         ${

@@ -800,6 +800,38 @@ function syncCoinRewardGoldDisplay(): void {
   goldValueElement.textContent = `银两 ${resolvedGoldValue}`;
 }
 
+function playCoinRewardFlight(input: {
+  playerCharacterId: string;
+  delta: number;
+  sourceElement: HTMLElement;
+  sourceClientX?: number;
+  sourceClientY?: number;
+}): void {
+  if (input.delta <= 0) {
+    return;
+  }
+
+  const targetValue = getPlayerCharacter(appState, input.playerCharacterId).stats.gold;
+  const startValue = targetValue - input.delta;
+  coinRewardDisplayValue = startValue;
+  syncCoinRewardGoldDisplay();
+
+  window.requestAnimationFrame(() => {
+    coinRewardAnimator.play({
+      sourceElement: input.sourceElement,
+      ...(input.sourceClientX == null
+        ? {}
+        : { sourceClientX: input.sourceClientX }),
+      ...(input.sourceClientY == null
+        ? {}
+        : { sourceClientY: input.sourceClientY }),
+      startValue,
+      targetValue,
+      amount: input.delta,
+    });
+  });
+}
+
 function isCoinRewardAnchorEditorDirty(): boolean {
   return (
     coinRewardAnchorEditorState.actualOffsetX !== coinRewardAnchorEditorState.draftOffsetX ||
@@ -1627,6 +1659,20 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
       appState = nextAppState;
     },
     renderApp,
+    playCoinReward: ({
+      playerCharacterId,
+      delta,
+      sourceClientX,
+      sourceClientY,
+    }) => {
+      playCoinRewardFlight({
+        playerCharacterId,
+        delta,
+        sourceElement: appRoot,
+        ...(sourceClientX == null ? {} : { sourceClientX }),
+        ...(sourceClientY == null ? {} : { sourceClientY }),
+      });
+    },
     syncCouncilPriorityAfterGameStateChange,
     startMapAutoAdvance,
     stopMapAutoAdvance,
@@ -3982,6 +4028,11 @@ appElement.addEventListener("pointerdown", (event) => {
     dispatchHouseRuntimeRequest(houseRuntime, {
       type: "action",
       actionId: pointerHouseActionId,
+    }, {
+      pointer: {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      },
     });
     return;
   }
@@ -4475,18 +4526,13 @@ appElement.addEventListener("click", (event) => {
     "[data-action='grant-haozhou-test-coin']"
   );
   if (haozhouCoinRewardButton != null) {
-    const playerCharacterBefore = getPlayerCharacter(
-      appState,
-      currentPlayerCharacterId
-    );
     appState = applyCoinReward(appState, currentPlayerCharacterId, 10);
-    coinRewardAnimator.play({
+    playCoinRewardFlight({
+      playerCharacterId: currentPlayerCharacterId,
+      delta: 10,
       sourceElement: haozhouCoinRewardButton,
       sourceClientX: event.clientX,
       sourceClientY: event.clientY,
-      startValue: playerCharacterBefore.stats.gold,
-      targetValue: playerCharacterBefore.stats.gold + 10,
-      amount: 10,
     });
     return;
   }
@@ -5181,6 +5227,11 @@ appElement.addEventListener("click", (event) => {
       dispatchHouseRuntimeRequest(houseRuntime, {
         type: "action",
         actionId,
+      }, {
+        pointer: {
+          clientX: event.clientX,
+          clientY: event.clientY,
+        },
       });
     }
     return;

@@ -30,3 +30,5 @@
 - Task 4: complete (working tree only, review clean after target-binding and layer-preservation fixes; git commit blocked by index.lock permissions).
 - Task 5: complete (working tree only, review findings resolved locally; focused animation timing/randomness verification passed; git commit blocked by index.lock permissions).
 - Task 6: complete (working tree only; focused verification passed for coin reward state/source/animation tests plus tsc --noEmit; robustness suite remains noisy in this environment; git commit blocked by index.lock permissions).
+- 2026-07-28: Tavern Short Gamble Task 1 complete (commit 3bcddf5..26a6fbf, self-reviewed locally; subagent handoff abandoned after deployment failure and stale report corruption).
+- 2026-07-28: Tavern Short Gamble Task 2 complete (commit 26a6fbf..3172d4c, self-reviewed locally; focused runtime domain suite passed 6/6 and plan lint stayed green).

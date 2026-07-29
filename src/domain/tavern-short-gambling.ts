@@ -52,6 +52,10 @@ export type TavernShortPot = {
 export type TavernShortBetActionKind = "check" | "call" | "raise" | "fold";
 export type TavernShortClaimKind = "chow" | "pong" | "kong";
 export type TavernShortClaimStage = "kong-pong-chow" | "pong-chow" | "chow";
+export type TavernShortDebugHandPreset =
+  | "claim-pong"
+  | "claim-kong"
+  | "claim-chow";
 export type TavernShortHandPhase =
   | "betting"
   | "draw-discard"
@@ -64,6 +68,7 @@ export type TavernShortPendingIncomingCard = {
   ownerSeatId: string;
   source: "draw" | "claim";
   card: TavernShortCard;
+  lockedCardIds?: string[];
 };
 
 export type TavernShortClaimOption = {
@@ -73,6 +78,11 @@ export type TavernShortClaimOption = {
   discardCardId: string;
   consumeCardIds: string[];
   priority: number;
+};
+
+export type TavernShortExposedMeld = {
+  kind: TavernShortClaimKind;
+  cards: TavernShortCard[];
 };
 
 export type TavernShortPlayerState = {
@@ -88,6 +98,7 @@ export type TavernShortPlayerState = {
   allIn: boolean;
   autoBetPending: boolean;
   discardHistory: TavernShortCard[];
+  meldHistory: TavernShortExposedMeld[];
   lastAction: string | null;
 };
 

@@ -11,6 +11,7 @@ import type {
   TavernShortClaimKind,
   TavernShortClaimOption,
   TavernShortClaimStage,
+  TavernShortDebugHandPreset,
   TavernShortHandState,
   TavernShortPlayerState,
   TavernShortPot,
@@ -22,6 +23,64 @@ export const TAVERN_SHORT_BIG_BLIND = 200;
 
 const SEAT_IDS = ["you", "traveler", "broker", "guard"] as const;
 const NPC_NAMES = ["行脚客", "牙人", "护院"] as const;
+type TavernShortSeatId = (typeof SEAT_IDS)[number];
+type TavernShortDebugHandDefinition = {
+  publicCardIds: [string, string];
+  handCardIdsBySeatId: Record<
+    TavernShortSeatId,
+    [string, string, string, string, string]
+  >;
+};
+const SHORT_SUIT_LABELS = {
+  wan: "万",
+  bing: "饼",
+  tong: "筒",
+  tiao: "条",
+} as const;
+const SHORT_SUIT_ORDER = {
+  wan: 0,
+  bing: 1,
+  tong: 2,
+  tiao: 3,
+} as const;
+const SEAT_NAME_FALLBACKS = {
+  you: "你",
+  traveler: "行脚客",
+  broker: "牙人",
+  guard: "护院",
+} as const;
+const DEBUG_HAND_PRESETS: Record<
+  TavernShortDebugHandPreset,
+  TavernShortDebugHandDefinition
+> = {
+  "claim-pong": {
+    publicCardIds: ["bing-10", "tiao-10"],
+    handCardIdsBySeatId: {
+      you: ["bing-7", "tong-7", "wan-2", "bing-3", "tong-9"],
+      traveler: ["wan-7", "tiao-2", "tiao-3", "tiao-8", "bing-11"],
+      broker: ["wan-1", "wan-4", "bing-5", "tong-8", "tiao-12"],
+      guard: ["wan-9", "bing-1", "tong-2", "tiao-5", "wan-13"],
+    },
+  },
+  "claim-kong": {
+    publicCardIds: ["tong-10", "tiao-10"],
+    handCardIdsBySeatId: {
+      you: ["wan-4", "bing-4", "tong-4", "wan-2", "bing-9"],
+      traveler: ["wan-1", "bing-2", "tong-3", "tiao-5", "wan-7"],
+      broker: ["tiao-4", "wan-6", "bing-8", "tong-11", "tiao-13"],
+      guard: ["bing-1", "tong-2", "tiao-6", "wan-9", "bing-12"],
+    },
+  },
+  "claim-chow": {
+    publicCardIds: ["wan-4", "tiao-9"],
+    handCardIdsBySeatId: {
+      you: ["tong-4", "tong-5", "wan-2", "bing-9", "tiao-11"],
+      traveler: ["wan-1", "bing-2", "tong-3", "tiao-7", "wan-9"],
+      broker: ["bing-1", "tong-8", "tiao-3", "wan-10", "bing-13"],
+      guard: ["tong-6", "wan-8", "bing-10", "tiao-12", "wan-13"],
+    },
+  },
+};
 
 function createDeck(seed: number): TavernShortCard[] {
   const deck: TavernShortCard[] = [];
@@ -43,6 +102,83 @@ function createDeck(seed: number): TavernShortCard[] {
     }
   }
   return shuffled;
+}
+
+function createCardFromId(id: string): TavernShortCard {
+  const match = /^(wan|bing|tong|tiao)-(\d+)/u.exec(id);
+  const suit = match?.[1];
+  const rankText = match?.[2];
+  if (suit !== "wan" && suit !== "bing" && suit !== "tong" && suit !== "tiao") {
+    throw new Error(`Invalid tavern short suit in debug preset card "${id}".`);
+  }
+  const rank = Number.parseInt(rankText ?? "", 10);
+  if (!Number.isInteger(rank) || rank < 1 || rank > 13) {
+    throw new Error(`Invalid tavern short rank in debug preset card "${id}".`);
+  }
+  return { id, suit, rank };
+}
+
+function compareMeldCards(a: TavernShortCard, b: TavernShortCard): number {
+  if (a.rank !== b.rank) {
+    return a.rank - b.rank;
+  }
+  return SHORT_SUIT_ORDER[a.suit] - SHORT_SUIT_ORDER[b.suit];
+}
+
+function buildExposedMeldCards(
+  player: TavernShortPlayerState,
+  option: TavernShortClaimOption,
+  visibleDiscard: TavernShortCard
+): TavernShortCard[] {
+  const consumedCards = option.consumeCardIds.map(
+    (cardId) =>
+      player.hand.find((card) => card.id === cardId) ?? createCardFromId(cardId)
+  );
+  return [visibleDiscard, ...consumedCards].sort(compareMeldCards);
+}
+
+function buildDebugPresetHandData(input: {
+  playerName: string;
+  openingStacks: [number, number, number, number];
+  debugPreset: TavernShortDebugHandPreset;
+}): {
+  players: TavernShortPlayerState[];
+  publicCards: TavernShortCard[];
+  deck: TavernShortCard[];
+} {
+  const definition = DEBUG_HAND_PRESETS[input.debugPreset];
+  const publicCards = definition.publicCardIds.map(createCardFromId);
+  const players: TavernShortPlayerState[] = SEAT_IDS.map((seatId, index) => ({
+    seatId,
+    name: index === 0 ? input.playerName : NPC_NAMES[index - 1]!,
+    isHuman: index === 0,
+    seatIndex: index,
+    hand: definition.handCardIdsBySeatId[seatId].map(createCardFromId),
+    stack: input.openingStacks[index] ?? 0,
+    committedThisRound: 0,
+    committedThisHand: 0,
+    folded: false,
+    allIn: false,
+    autoBetPending: false,
+    discardHistory: [],
+    meldHistory: [],
+    lastAction: null,
+  }));
+  const usedCardIds = new Set([
+    ...publicCards.map((card) => card.id),
+    ...players.flatMap((player) => player.hand.map((card) => card.id)),
+  ]);
+  if (usedCardIds.size !== 22) {
+    throw new Error(
+      `Tavern short debug preset "${input.debugPreset}" must define 22 unique cards.`
+    );
+  }
+  const deck = createDeck(1).filter((card) => !usedCardIds.has(card.id));
+  return {
+    players,
+    publicCards,
+    deck,
+  };
 }
 
 function toRoundIndex(value: number): 0 | 1 | 2 | 3 {
@@ -84,6 +220,101 @@ function replacePlayer(
 
 function appendLog(hand: TavernShortHandState, line: string): string[] {
   return [...hand.logLines, line].slice(-12);
+}
+
+function getBroadcastSeatName(hand: TavernShortHandState, seatId: string): string {
+  if (seatId === "you") {
+    return "你";
+  }
+  return (
+    hand.players.find((player) => player.seatId === seatId)?.name ??
+    SEAT_NAME_FALLBACKS[seatId as keyof typeof SEAT_NAME_FALLBACKS] ??
+    seatId
+  );
+}
+
+function getBroadcastCardLabel(card: TavernShortCard): string {
+  return `${card.rank}${SHORT_SUIT_LABELS[card.suit]}`;
+}
+
+function getBroadcastClaimKindLabel(kind: TavernShortClaimKind): string {
+  if (kind === "chow") {
+    return "吃";
+  }
+  if (kind === "pong") {
+    return "碰";
+  }
+  return "杠";
+}
+
+function getBroadcastBetActionLabel(action: string | null): string {
+  if (action == null) {
+    return "行动。";
+  }
+  if (action === "small-blind") {
+    return `下小盲 ${TAVERN_SHORT_SMALL_BLIND}。`;
+  }
+  if (action === "big-blind") {
+    return `下大盲 ${TAVERN_SHORT_BIG_BLIND}。`;
+  }
+  if (action === "fold") {
+    return "弃牌。";
+  }
+  if (action === "call") {
+    return "跟注。";
+  }
+  if (action === "call-all-in") {
+    return "跟注并梭哈。";
+  }
+  if (action === "check") {
+    return "过牌。";
+  }
+  if (action.startsWith("raise-")) {
+    const raiseTo = Number.parseInt(action.slice("raise-".length), 10);
+    return Number.isFinite(raiseTo) ? `加注到 ${raiseTo}。` : "加注。";
+  }
+  return "行动。";
+}
+
+function formatBroadcastBetActionLog(
+  hand: TavernShortHandState,
+  seatId: string,
+  action: string | null
+): string {
+  return `${getBroadcastSeatName(hand, seatId)}${getBroadcastBetActionLabel(action)}`;
+}
+
+function formatBroadcastDrawLog(
+  hand: TavernShortHandState,
+  seatId: string,
+  card: TavernShortCard
+): string {
+  return `${getBroadcastSeatName(hand, seatId)}摸入 ${getBroadcastCardLabel(card)}。`;
+}
+
+function formatBroadcastDiscardLog(
+  hand: TavernShortHandState,
+  seatId: string,
+  card: TavernShortCard
+): string {
+  return `${getBroadcastSeatName(hand, seatId)}打出 ${getBroadcastCardLabel(card)}。`;
+}
+
+function formatBroadcastClaimWindowLog(
+  hand: TavernShortHandState,
+  seatId: string,
+  card: TavernShortCard
+): string {
+  return `${getBroadcastSeatName(hand, seatId)}打出 ${getBroadcastCardLabel(card)}，进入抢牌窗口。`;
+}
+
+function formatBroadcastClaimResolutionLog(
+  hand: TavernShortHandState,
+  seatId: string,
+  card: TavernShortCard,
+  kind: TavernShortClaimKind
+): string {
+  return `${getBroadcastSeatName(hand, seatId)}抢得 ${getBroadcastCardLabel(card)}，并执行${getBroadcastClaimKindLabel(kind)}。`;
 }
 
 function rebuildPots(players: readonly TavernShortPlayerState[]): TavernShortPot[] {
@@ -357,7 +588,7 @@ function completeResolvedDiscard(
       ...baseState,
       phase: "draw-discard",
       actingSeatIndex: seatIndexOf(originalResumeSeatId),
-      logLines: appendLog(hand, `${discarderSeatId} 打出 ${discardCard.id}。`),
+      logLines: appendLog(hand, formatBroadcastDiscardLog(hand, discarderSeatId, discardCard)),
     };
   }
 
@@ -382,7 +613,7 @@ function completeResolvedDiscard(
     actingSeatIndex: seatIndexOf(nextSeatId),
     pendingDrawSeatIds,
     currentDrawTurnSeatId: nextSeatId,
-    logLines: appendLog(hand, `${discarderSeatId} 打出 ${discardCard.id}。`),
+    logLines: appendLog(hand, formatBroadcastDiscardLog(hand, discarderSeatId, discardCard)),
   };
 }
 
@@ -405,25 +636,39 @@ export function createTavernShortHand(input: {
   dealerSeatIndex: number;
   playerName: string;
   openingStacks: [number, number, number, number];
+  debugPreset?: TavernShortDebugHandPreset | null;
 }): TavernShortHandState {
-  const deck = createDeck(input.seed);
-  const players: TavernShortPlayerState[] = SEAT_IDS.map((seatId, index) => ({
-    seatId,
-    name: index === 0 ? input.playerName : NPC_NAMES[index - 1]!,
-    isHuman: index === 0,
-    seatIndex: index,
-    hand: deck.slice(index * 5, index * 5 + 5),
-    stack: input.openingStacks[index] ?? 0,
-    committedThisRound: 0,
-    committedThisHand: 0,
-    folded: false,
-    allIn: false,
-    autoBetPending: false,
-    discardHistory: [],
-    lastAction: null,
-  }));
-  const publicCards = deck.slice(20, 22);
-  const remainingDeck = deck.slice(22);
+  const debugHandData =
+    input.debugPreset == null
+      ? null
+      : buildDebugPresetHandData({
+          playerName: input.playerName,
+          openingStacks: input.openingStacks,
+          debugPreset: input.debugPreset,
+        });
+  const shuffledDeck = debugHandData == null ? createDeck(input.seed) : null;
+  const players =
+    debugHandData?.players ??
+    SEAT_IDS.map((seatId, index) => ({
+      seatId,
+      name: index === 0 ? input.playerName : NPC_NAMES[index - 1]!,
+      isHuman: index === 0,
+      seatIndex: index,
+      hand: shuffledDeck!.slice(index * 5, index * 5 + 5),
+      stack: input.openingStacks[index] ?? 0,
+      committedThisRound: 0,
+      committedThisHand: 0,
+      folded: false,
+      allIn: false,
+      autoBetPending: false,
+      discardHistory: [],
+      meldHistory: [],
+      lastAction: null,
+    }));
+  const publicCards =
+    debugHandData?.publicCards ?? shuffledDeck!.slice(20, 22);
+  const remainingDeck =
+    debugHandData?.deck ?? shuffledDeck!.slice(22);
   const smallBlindSeatIndex = (input.dealerSeatIndex + 1) % SEAT_IDS.length;
   const bigBlindSeatIndex = (input.dealerSeatIndex + 2) % SEAT_IDS.length;
   let nextPlayers = players;
@@ -547,7 +792,7 @@ export function resolveTavernShortBetAction(
         ? seatIndexOf(nextPendingBetSeatIds[0]!)
         : hand.actingSeatIndex,
     pots: rebuildPots(nextPlayers),
-    logLines: appendLog(hand, `${seatId} ${nextPlayer.lastAction ?? "行动"}`),
+    logLines: appendLog(hand, formatBroadcastBetActionLog(hand, seatId, nextPlayer.lastAction)),
   };
 
   if (activePlayers.length <= 1) {
@@ -597,8 +842,35 @@ export function drawTavernShortIncomingCard(
     pendingDrawSeatIds: nextPendingDrawSeatIds,
     currentDrawTurnSeatId: hand.currentDrawTurnSeatId ?? seatId,
     selectedDiscardCardId: null,
-    logLines: appendLog(hand, `${seatId} 摸入 ${nextCard.id}。`),
+    logLines: appendLog(hand, formatBroadcastDrawLog(hand, seatId, nextCard)),
   };
+}
+
+function getLockedClaimDiscardCardIds(
+  hand: TavernShortHandState,
+  seatId: string
+): Set<string> {
+  const incoming = hand.pendingIncomingCard;
+  if (
+    incoming == null ||
+    incoming.ownerSeatId !== seatId ||
+    incoming.source !== "claim"
+  ) {
+    return new Set();
+  }
+  return new Set(incoming.lockedCardIds ?? []);
+}
+
+function getSelectableDiscardCards(
+  hand: TavernShortHandState,
+  player: TavernShortPlayerState
+): TavernShortCard[] {
+  const incoming = hand.pendingIncomingCard;
+  if (incoming == null || incoming.ownerSeatId !== player.seatId) {
+    return [];
+  }
+  const lockedCardIds = getLockedClaimDiscardCardIds(hand, player.seatId);
+  return [...player.hand, incoming.card].filter((card) => !lockedCardIds.has(card.id));
 }
 
 export function chooseTavernShortDiscardCandidate(
@@ -607,13 +879,17 @@ export function chooseTavernShortDiscardCandidate(
   cardId: string
 ): TavernShortHandState {
   const player = hand.players.find((candidate) => candidate.seatId === seatId);
-  if (player == null || hand.pendingIncomingCard?.ownerSeatId !== seatId) {
+  if (
+    hand.phase !== "draw-discard" ||
+    player == null ||
+    hand.pendingIncomingCard?.ownerSeatId !== seatId
+  ) {
     return hand;
   }
-  const valid =
-    player.hand.some((card) => card.id === cardId) ||
-    hand.pendingIncomingCard.card.id === cardId;
-  if (!valid) {
+  const selectableCardIds = new Set(
+    getSelectableDiscardCards(hand, player).map((card) => card.id)
+  );
+  if (!selectableCardIds.has(cardId)) {
     return hand;
   }
   return {
@@ -629,11 +905,25 @@ export function confirmTavernShortDiscard(
 ): TavernShortHandState {
   const player = hand.players.find((candidate) => candidate.seatId === seatId);
   const incoming = hand.pendingIncomingCard;
-  if (player == null || incoming == null || incoming.ownerSeatId !== seatId) {
+  if (
+    hand.phase !== "draw-discard" ||
+    player == null ||
+    incoming == null ||
+    incoming.ownerSeatId !== seatId
+  ) {
     return hand;
   }
 
-  const selectedDiscardCardId = hand.selectedDiscardCardId ?? player.hand[0]?.id ?? incoming.card.id;
+  const selectableCards = getSelectableDiscardCards(hand, player);
+  const selectedDiscardCardId = selectableCards.some(
+    (card) => card.id === hand.selectedDiscardCardId
+  )
+    ? hand.selectedDiscardCardId
+    : selectableCards[0]?.id;
+  if (selectedDiscardCardId == null) {
+    return hand;
+  }
+
   const isDiscardingIncoming = selectedDiscardCardId === incoming.card.id;
   const discardedCard =
     isDiscardingIncoming
@@ -681,7 +971,7 @@ export function confirmTavernShortDiscard(
         options: claimOptions,
       },
       lastVisibleDiscard: { seatId, card: discardedCard },
-      logLines: appendLog(hand, `${seatId} 打出 ${discardedCard.id}，进入抢牌窗口。`),
+      logLines: appendLog(hand, formatBroadcastClaimWindowLog(hand, seatId, discardedCard)),
     };
   }
   return completeResolvedDiscard(interimHand, seatId, discardedCard, originalResumeSeatId, turnOwnerSeatId);
@@ -692,7 +982,7 @@ export function passTavernShortClaim(
   seatId: string
 ): TavernShortHandState {
   const claimChain = hand.claimChain;
-  if (claimChain == null) {
+  if (hand.phase !== "claim-window" || claimChain == null) {
     return hand;
   }
   const remainingOptions = claimChain.options.filter((option) => option.seatId !== seatId);
@@ -721,7 +1011,7 @@ export function claimTavernShortDiscard(
   optionId: string
 ): TavernShortHandState {
   const claimChain = hand.claimChain;
-  if (claimChain == null) {
+  if (hand.phase !== "claim-window" || claimChain == null) {
     return hand;
   }
   const normalizedOptions = normalizeClaimOptions(claimChain.options, claimChain.discarderSeatId);
@@ -729,16 +1019,25 @@ export function claimTavernShortDiscard(
   if (option == null) {
     return hand;
   }
+  const lockedCardIds = [...new Set([claimChain.visibleDiscard.id, ...option.consumeCardIds])];
 
-  let nextPlayers = hand.players.map((player) =>
-    player.seatId === option.seatId
-      ? {
-          ...player,
-          autoBetPending: true,
-          lastAction: option.kind,
-        }
-      : player
-  );
+  let nextPlayers = hand.players.map((player) => {
+    if (player.seatId !== option.seatId) {
+      return player;
+    }
+    return {
+      ...player,
+      autoBetPending: true,
+      meldHistory: [
+        ...player.meldHistory,
+        {
+          kind: option.kind,
+          cards: buildExposedMeldCards(player, option, claimChain.visibleDiscard),
+        },
+      ],
+      lastAction: option.kind,
+    };
+  });
 
   if (option.kind === "kong") {
     nextPlayers = nextPlayers.map((player) => {
@@ -762,6 +1061,7 @@ export function claimTavernShortDiscard(
       ownerSeatId: option.seatId,
       source: "claim",
       card: claimChain.visibleDiscard,
+      lockedCardIds,
     },
     selectedDiscardCardId: null,
     claimChain: {
@@ -769,10 +1069,18 @@ export function claimTavernShortDiscard(
       discarderSeatId: option.seatId,
       chainDepth: claimChain.chainDepth + 1,
       passedSeatIds: [],
-      options: normalizedOptions,
+      options: [option],
     },
     pots: rebuildPots(nextPlayers),
-    logLines: appendLog(hand, `${option.seatId} 抢得 ${claimChain.visibleDiscard.id} 并执行 ${option.kind}。`),
+    logLines: appendLog(
+      hand,
+      formatBroadcastClaimResolutionLog(
+        hand,
+        option.seatId,
+        claimChain.visibleDiscard,
+        option.kind
+      )
+    ),
   };
 }
 

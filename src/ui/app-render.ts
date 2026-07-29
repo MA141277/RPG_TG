@@ -398,11 +398,12 @@ function renderLocationDialogue(
   const portraitImageUrl =
     speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
   const typewriterLines = renderDialogueTypewriterLines(dialogueState.textLines);
+  const hasAdvanceHint = dialogueState.advanceHintText.length > 0;
 
   return `
     <footer class="c-grain-shop-dialogue c-scene-dialogue c-location-dialogue" aria-label="地点对话">
       <div
-        class="c-grain-shop-dialogue__text c-grain-shop-skin-card c-grain-shop-dialogue__text--clickable"
+        class="c-grain-shop-dialogue__text c-grain-shop-skin-card c-grain-shop-dialogue__text--clickable ${hasAdvanceHint ? "c-grain-shop-dialogue__text--with-hint" : ""}"
         data-action="close-location-dialogue"
         role="button"
         tabindex="0"

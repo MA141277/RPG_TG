@@ -1,7 +1,12 @@
 import type { CityDefinition } from "../../domain/city";
 import type { MarketEventEffect } from "../../domain/market";
 import type { TradeGoodDefinition } from "../../domain/trade-good";
+import {
+  isSettlementDraftRuntimeTradeGoodId,
+} from "../../content/markets/runtime-trade-goods-pool";
 import { resolveMarketEventPriceMultiplier } from "./market-event-system";
+import { resolveSettlementMarketBias } from "./settlement-market-bias";
+import { quoteSettlementDraftLocalMarket } from "./settlement-trade-draft-pricing";
 
 type RandomSource = () => number;
 
@@ -57,6 +62,11 @@ export function calculateCityPriceModifier(
     modifier += cityDefinition.danger / 1200;
   }
 
+  modifier += resolveSettlementMarketBias(
+    cityDefinition.id,
+    goodDefinition.id
+  ).priceModifierDelta;
+
   return clamp(Number(modifier.toFixed(2)), 0.7, 1.6);
 }
 
@@ -81,17 +91,38 @@ export function generateGoodsPrice(
   marketEvents: MarketEventEffect[],
   randomSource: RandomSource = Math.random
 ): GeneratedGoodsPrice {
+  const eventModifier = resolveMarketEventPriceMultiplier(
+    marketEvents,
+    cityDefinition,
+    goodDefinition
+  );
+  if (isSettlementDraftRuntimeTradeGoodId(goodDefinition.id)) {
+    const settlementDraftMarket = quoteSettlementDraftLocalMarket({
+      goodsId: goodDefinition.id,
+      cityId: cityDefinition.id,
+      rolledBasePrice: goodDefinition.basePrice,
+      minPrice: goodDefinition.minPrice,
+      maxPrice: goodDefinition.maxPrice,
+      eventModifier,
+    });
+
+    if (settlementDraftMarket != null) {
+      return {
+        rolledBasePrice: settlementDraftMarket.rolledBasePrice,
+        buyPrice: settlementDraftMarket.buyPrice,
+        sellPrice: settlementDraftMarket.sellPrice,
+        cityModifier: settlementDraftMarket.cityModifier,
+        eventModifier: settlementDraftMarket.eventModifier,
+      };
+    }
+  }
+
   const rolledBasePrice = randomIntFromSource(
     goodDefinition.minPrice,
     goodDefinition.maxPrice,
     randomSource
   );
   const cityModifier = calculateCityPriceModifier(cityDefinition, goodDefinition);
-  const eventModifier = resolveMarketEventPriceMultiplier(
-    marketEvents,
-    cityDefinition,
-    goodDefinition
-  );
   const rawBuyPrice = rolledBasePrice * cityModifier * eventModifier;
   const buyPrice = clamp(
     Math.round(rawBuyPrice),

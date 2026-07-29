@@ -1,71 +1,68 @@
-# Task 1 Report: Add The Pure Coin Reward State Mutation
+# Task 1 Report: Tavern Short Deck, Evaluator, And Pot Helpers
+
+## Scope
+
+- Promoted tavern short gamble into the canonical progress entry before implementation.
+- Added `src/domain/tavern-short-gambling.ts` as the public short-gambling entry point.
+- Added `src/domain/tavern-short-gambling-evaluator.ts` for pure showdown and pot helpers.
+- Added focused Task 1 coverage in `tests/tavern-short-gamble-domain.test.cjs`.
+- Synced Task 1 governance state in the tavern short plan and project progress docs.
 
 ## Implemented
 
-- Added `applyCoinReward(state, playerCharacterId, delta)` in `src/application/rewards/coin-reward.ts`.
-- The mutation returns a new `AppState` object.
-- Only the matching `characterDefinitions` entry is copied and updated.
-- Non-targeted character definitions retain their original object references.
-- The targeted character's `stats.gold` is incremented by `delta`.
+- `createTavernShortDeck()` builds a unique 52-card deck using `wan / bing / tong / tiao` and ranks `1..13`.
+- `shuffleTavernShortDeck()` uses a deterministic seeded Fisher-Yates shuffle.
+- `getTavernShortCardLabel()` uses the real suit labels:
+  - `wan = 万`
+  - `bing = 饼`
+  - `tong = 筒`
+  - `tiao = 条`
+- `evaluateBestTavernShortShowdown()` evaluates all `7 choose 5` combinations and keeps the strongest best five.
+- `compareTavernShortBestFives()` compares best hands lexicographically by `scoreKey`.
+- `buildTavernShortPots()` reconstructs ordered pots from contribution tiers.
+- `splitTavernShortPot()` splits a pot evenly across eligible winners and awards remainder chips by dealer-next seat order.
 
 ## TDD Evidence
 
 ### RED
 
-Command attempted:
+Commands:
 
 ```powershell
-node --test tests/coin-reward-state.test.cjs
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe node_modules/typescript/bin/tsc -p tsconfig.test.json
+Set-Content -LiteralPath .test-dist/package.json -Value '{"type":"commonjs"}'
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs
 ```
 
 Result:
 
-- Failed before test execution because `node` was not available on the PowerShell PATH.
-- Error: `The term 'node' is not recognized as the name of a cmdlet...`
-
-I then located the bundled Codex Node runtime through the available `pnpm.cmd` wrapper and used it for follow-up verification.
+- `tsc` succeeded.
+- The focused suite failed because the new module did not exist yet.
+- Exact failure basis: `Cannot find module '../.test-dist/domain/tavern-short-gambling.js'`.
 
 ### GREEN
 
-Command attempted with bundled Node and the exact `--test` runner semantics:
+Commands:
 
 ```powershell
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test tests/coin-reward-state.test.cjs
-```
-
-Result:
-
-- Failed before executing the test body due to sandbox child-process restrictions.
-- Error: `spawn EPERM`
-
-Fallback focused verification command:
-
-```powershell
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\coin-reward-state.test.cjs
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe node_modules/typescript/bin/tsc -p tsconfig.test.json
+Set-Content -LiteralPath .test-dist/package.json -Value '{"type":"commonjs"}'
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/tavern-short-gamble-domain.test.cjs
 ```
 
 Result:
 
 - PASS
-- `1` test passed
+- `3` tests passed
 - `0` tests failed
-- Output included: `✔ applyCoinReward adds gold only to the targeted player character`
+- Coverage included the corrected assertion `getTavernShortCardLabel(wan-1) === "1万"`.
 
-## Files Changed
+## Notes
 
-- `src/application/rewards/coin-reward.ts`
-- `tests/coin-reward-state.test.cjs`
-- `.superpowers/sdd/task-1-report.md`
+- The plan snippet’s mojibake suit-label sample was treated as corrupted text and corrected in the implementation, test, and this report.
+- Task 1 stayed within the requested short-gambling foundation scope and did not touch the unrelated temporary tavern-access bypass files.
 
-## Self-Review Notes
+## Commit Status
 
-- Scope stayed limited to application-layer state mutation and focused test.
-- No UI, DOM, animation, Haozhou city button, or runtime wiring was added.
-- Implementation is immutable for the top-level state, target character, and target stats object.
-- The function uses the existing `AppState` type import from `src/application/app-shell`.
-
-## Concerns
-
-- The exact brief command `node --test tests/coin-reward-state.test.cjs` could not be completed in this sandbox because `node` is not on PATH.
-- Running the bundled Node binary with `--test` reached Node but failed with `spawn EPERM`, apparently due to sandbox child-process restrictions.
-- The focused test did pass when run in-process with the bundled Node binary.
+- Task 1 is currently in the working tree.
+- A clean Task 1-only commit remains possible because the unrelated dirty files are outside the task-file set.

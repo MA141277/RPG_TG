@@ -263,6 +263,11 @@
   overflow: hidden;
 }
 
+.c-grain-shop-dialogue__text--with-hint {
+  padding-right: clamp(6.5rem, 7vw, 7.5rem);
+  padding-bottom: clamp(2.4rem, 3vw, 2.9rem);
+}
+
 .c-grain-shop-dialogue__line {
   margin: 0;
   color: #2f2117;
@@ -278,6 +283,10 @@
 .c-dialogue-typewriter__char {
   opacity: 0;
   animation: dialogue-typewriter-char 1ms step-end forwards;
+}
+
+.c-dialogue-typewriter__strong {
+  font-weight: 700;
 }
 
 .c-dialogue-typewriter-hint {
@@ -3248,6 +3257,11 @@
   .c-grain-shop-dialogue__text {
     min-height: 76px;
     padding: var(--space-3) var(--space-4);
+  }
+
+  .c-grain-shop-dialogue__text--with-hint {
+    padding-right: calc(var(--space-4) + 5.25rem);
+    padding-bottom: calc(var(--space-3) + 1.9rem);
   }
 
   .c-grain-shop-portrait {

@@ -2,6 +2,58 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Tavern Short Claim Locking
+
+- Tavern short `pendingIncomingCard` can now carry typed `lockedCardIds` during post-claim discard resolution, so the domain runtime explicitly marks the claimed public discard plus the consumed hand cards as temporarily non-discardable without breaking the fixed `5`-card hand contract.
+- Short-table claim actions now resolve only inside `claim-window`, and the short overlay stops exposing stale `claimOptions` / `claimPassAction` once the hand returns to `draw-discard`, preventing duplicate `吃 / 碰 / 杠` records from repeated clicks.
+- The tavern short renderer no longer auto-infers discard actions for hand cards that lack an explicit `actionId`, so locked post-claim cards stay visible but inert until the forced discard is completed.
+
+## 2026-07-29 Tavern Short Exposed Meld Row
+
+- Tavern short player state now keeps a typed `meldHistory` alongside `discardHistory`, so `吃 / 碰 / 杠` results stay visible as complete exposed groups instead of being inferred later from private hands or ordinary discard piles.
+- Short `gamble-table` player rows now expose dedicated `meldLabels` separate from `discardLabels`, allowing the tavern renderer to show an explicit exposed-meld row without mixing those records into the discard strip.
+- The short tavern sidebar now renders the exposed meld row before the discard row for each player, preserving the old discard layout while giving QA and players a stable public record of every claimed meld.
+
+## 2026-07-29 Tavern Short Claim Countdown
+
+- Tavern short table sessions now persist a typed `claimCountdown` state for temporary `pong / kong` claim windows, and the tavern house module advances it through a dedicated one-second house interval instead of renderer-local timers or `src/main.ts` branches.
+- The countdown starts only when the player can `pong` or `kong` a non-upstream discard; pure `chow` windows and the explicit upstream exception skip the timer entirely, and expiry auto-passes the claim window.
+- Short `gamble-table` overlays now expose countdown progress data, so the shared tavern action panel can render a progress bar and remaining seconds above the temporary claim row and clear it immediately once the player accepts `pong` or `kong` and moves into discard selection.
+
+## 2026-07-29 Tavern Short Debug Claim Cycle
+
+- Tavern short wager overlays now expose an explicit short-only `debugToggle`, so the player can opt into deterministic QA hands through typed overlay data instead of hidden globals or `main.ts` branches.
+- Tavern short table sessions now persist `debugPresetMode`, and the short runtime can start a stable `pong -> kong -> chow` debug hand cycle across consecutive hands to guarantee player-visible `碰 / 杠 / 吃` claim windows while the toggle is on.
+- The debug preset path stays scoped to the tavern short session and view-model contract; normal shuffled hands, long-mode gambling, and the temporary tavern-entry debug bypass remain unchanged.
+
+## 2026-07-29 Tavern Short Claim Action Row
+
+- Tavern short `gamble-table` overlays now expose a structured `claimPassAction` alongside `claimOptions`, so the renderer can surface an explicit skip action without hardcoding tavern-specific action ids in the view.
+- The short-table on-felt action panel now expands upward into a two-row layout when a temporary claim window is active: the upper row is reserved for `吃 / 碰 / 杠 / 跳过`, while the lower row keeps the persistent betting and draw/discard controls in place.
+- The claim-row follow-up was aligned against the older `mod-first-dev` tavern/style seams that still live in `tea-house.css`, while keeping the current short-table mapper/view wiring inside the existing house module contract rather than adding `main.ts` branches.
+
+## 2026-07-28 Unified Player Item Inventory Migration
+
+- Unified medicine-house prepared medicines and market-house non-grain goods now persist through `var.player_inventory.item.<itemId>`.
+- Legacy `var.medicine_inventory.<itemId>` and `var.trade_inventory.<goodsId>` values are merged on read and normalized into the new key on first touch.
+- Backpack projection now reads the shared player-item helper, while grain remains on `var.player_inventory.grain_dou`.
+
+## 2026-07-28 Shop Purchase Backpack Projection
+
+- 统一背包现在会投影药铺成药与已知非粮食商货：`var.medicine_inventory.*` 与已知非粮食 `var.trade_inventory.*` 的正数库存会显示在同一背包里；共享粮食仍保持单行显示，不拆成商货明细，也不改变现有购买结算逻辑。
+
+## 2026-07-28 Tavern Short Gamble Rollout
+
+- Tavern short gambling now uses a dedicated 52-card short runtime with five private cards, two public cards, no-limit betting rounds, discard-claim interaction, and 7-choose-5 showdown evaluation instead of the previous mahjong-shaped short path.
+- `tavern` house session now stores a discriminated short-vs-long gamble session union; short mode owns persistent table bankroll, buy-in/rebuy/cash-out flow, and one-time stamina charge under the house session rather than globals, while long mode remains on the previous mahjong runtime.
+- `gamble-table` overlay is now variant-specific: short mode exposes chip, side-pot, pending-incoming, visible-discard, claim, and between-hand action payloads, while long mode keeps its existing staged mahjong overlay contract and renderer path.
+
+## 2026-07-28 House Coin Reward Side Effect
+
+- Shared `HouseModuleSideEffect` now supports `play-coin-reward`, so houses can request HUD-owned ingot flight feedback through typed runtime data instead of adding house-specific animation branches in `src/main.ts`.
+- Tavern short-table cash-out now defers gold settlement until the player confirms the alert; the alert carries a structured deferred reward payload, and `close-alert` emits the shared coin reward side effect only when the exchanged gold is positive.
+- House runtime dispatch now accepts optional request pointer coordinates, allowing shared reward playback to burst from the actual click position while reusing the existing global gold anchor and rolling-number animation path.
+
 ## 2026-07-26 Campaign Map-Space Volumetric Cloud Slab
 
 - `campaign-cloud-webgl.ts` now uploads terrain-owned cloud projection uniforms so the cloud shader can render the campaign cloud body in terrain/map space while preserving the existing reveal texture lifecycle.

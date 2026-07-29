@@ -155,6 +155,12 @@ export type HouseModuleSideEffect =
   | {
       type: "stop-map-auto-advance";
       intervalId: string;
+    }
+  | {
+      type: "play-coin-reward";
+      playerCharacterId: string;
+      delta: number;
+      source: "request-pointer";
     };
 
 export type MapAutoAdvanceSnapshot = {
@@ -241,6 +247,12 @@ If a module needs to hand control back to the world layer for reusable time-skip
 
 - `start-map-auto-advance`
 - `stop-map-auto-advance`
+
+If a module needs a shared HUD-owned coin / ingot flight or other player-money pickup feedback, emit a shared house side effect such as:
+
+- `play-coin-reward`
+
+The module should describe the reward in typed data and let shared runtime / UI layers resolve the current request pointer, HUD anchor, and animation playback. Do not hardcode one concrete house branch in `main.ts` just to play a settlement animation.
 
 This path is for generic map-view time progression and automatic re-entry, not for house-specific logic inside `main.ts`.
 
@@ -409,12 +421,40 @@ current best pattern data and visible discard history, while private hand tiles 
 from other players in the view model.
 If the table has a timed response window, expose the remaining countdown and shared discard pool
 as typed overlay fields so the view can render them without reading runtime state directly.
+If that timed response can auto-expire, keep the countdown itself under the typed house or table
+session and advance it through shared `tick` requests plus `start-interval` / `stop-interval`
+side effects. Seat-priority exceptions and immediate teardown after the player accepts the staged
+response must stay in module rules, not in renderer-local timers or DOM callbacks.
 If a table flow has a mode picker before configuration, expose that picker as a structured overlay
 such as `gamble-choice`; the UI may render mode buttons, but the selected mode must be dispatched
 through normal house action ids and stored in the typed module session.
+If a table configuration overlay needs a temporary debug or QA-only preset switch, expose it as
+typed overlay data such as `debugToggle` with a normal action id and helper text. The selected
+debug mode must still persist under the typed house or table session with an explicit default such
+as `off`; do not hide deterministic test decks or preset cycles behind globals, URL-only flags,
+or entrypoint-local scratch state.
+If one house table supports materially different variants, keep the public table overlay and the
+typed table session discriminated by `variant` rather than reusing one oversized shape with
+mostly-unused fields. Each variant may expose only the fields its renderer actually consumes.
+If one table variant persists chips, bankroll, or between-hand prompts across multiple rounds,
+that persistent state must still live under the owning house session branch as typed session data.
+Do not move it into top-level globals, entrypoint scratch state, or a second hidden runtime cache.
 If a table response window has staged priority, expose the current stage and each available
 action kind as structured fields. Visual emphasis such as flashing buttons must be driven by
 typed overlay data from the module, not inferred from button text in the view.
+If a temporary claim window must share the same on-felt action panel as persistent controls,
+expose the temporary claim actions and any explicit pass action as structured overlay fields
+such as `claimOptions` and `claimPassAction`; the renderer may place them in a dedicated upper
+row, but it must not hardcode hidden action ids or infer claim layout from button text.
+If a table player's public summary needs to distinguish exposed meld history from ordinary
+discards, expose them as separate structured fields such as `meldLabels` and `discardLabels`.
+Do not ask the renderer to reverse-engineer exposed melds from discard order or private hand
+state.
+If a temporary incoming-card slot must keep some cards visible but unavailable for the follow-up
+discard step, expose that lock state as typed session data such as
+`pendingIncomingCard.lockedCardIds`, and omit discard `actionId`s for those locked cards in the
+overlay. The renderer must not recreate or bypass those locks by inferring actions from layout or
+button text.
 If a table overlay needs local reordering, expose it through generic house action ids and
 data attributes; the entrypoint may dispatch the generic action, but must not understand the
 house-specific reorder semantics.

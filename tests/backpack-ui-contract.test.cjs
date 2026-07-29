@@ -110,6 +110,42 @@ test("backpack icon column only renders image icons and hides plain icon ids", (
   );
 });
 
+test("backpack view renders readable labels for projected shop items without action buttons", () => {
+  const html = renderBackpackView({
+    filter: "other",
+    selectedItemId: "item.trade.silk",
+    items: [
+      {
+        id: "item.trade.silk",
+        name: "Silk",
+        icon: null,
+        value: 450,
+        types: ["other", "trade", "silk"],
+        count: 2,
+        description: "Market good shown through the backpack projection.",
+        actions: [],
+      },
+      {
+        id: "item.medicine.medicine_heal_001",
+        name: "Bandage",
+        icon: null,
+        value: 80,
+        types: ["other", "prepared-medicine"],
+        count: 1,
+        description: "Prepared medicine shown through the backpack projection.",
+        actions: [],
+      },
+    ],
+  });
+
+  assert.match(html, />[^<]*\u5546\u8d27[^<]*</);
+  assert.match(html, />[^<]*\u4e1d\u7ef8[^<]*</);
+  assert.match(html, />[^<]*\u6210\u836f[^<]*</);
+  assert.doesNotMatch(html, />[^<]*trade[^<]*</);
+  assert.doesNotMatch(html, />[^<]*prepared-medicine[^<]*</);
+  assert.doesNotMatch(html, /data-item-action-id=/);
+});
+
 test("backpack shell uses stable grid rows so empty filters do not shift the overlay", () => {
   const prototypeCss = readSource("src/styles/prototype.css");
 
