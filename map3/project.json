@@ -18,11 +18,11 @@
     "environmentSourceImagePath": "yuanmo-map-climates.png"
   },
   "uiState": {
-    "activeToolId": "land",
-    "selectedSettlementId": "settlement.fenyang_province",
+    "activeToolId": "settlement",
+    "selectedSettlementId": "settlement.city.city.7",
     "selectedHexCell": {
-      "x": 241,
-      "y": -90
+      "x": 236,
+      "y": -86
     },
     "showValidationOverlay": false
   },

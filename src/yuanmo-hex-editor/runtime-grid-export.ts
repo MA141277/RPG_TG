@@ -45,6 +45,7 @@ export type RuntimeSettlementAnchor = {
   name?: string;
   type?: string;
   mapPosition: CampaignMapCoordinate;
+  hexCell?: CampaignHexCoordinate;
 };
 
 type RuntimeCellBucket = {
@@ -167,12 +168,15 @@ export function createOneToOneRuntimeCampaignHexGridFromEditorPackage(
   }
 
   for (const settlement of input.settlementAnchors ?? []) {
-    const runtimeHex = mapEditorGameCoordinateToOneToOneRuntimeHex(
-      settlement.mapPosition,
-      input.editorGenerated,
-      input.runtimeGrid,
-      transform
-    );
+    const runtimeHex =
+      settlement.hexCell == null
+        ? mapEditorGameCoordinateToOneToOneRuntimeHex(
+            settlement.mapPosition,
+            input.editorGenerated,
+            input.runtimeGrid,
+            transform
+          )
+        : mapEditorHexCellToOneToOneRuntimeHex(settlement.hexCell, input.editorGenerated, transform);
     const key = getCampaignHexCellKey(runtimeHex.x, runtimeHex.y);
     const current = cellsByRuntimeKey.get(key);
     if (current == null || current.land) {
@@ -241,6 +245,23 @@ export function mapEditorGameCoordinateToOneToOneRuntimeHex(
   if (editorCell == null) {
     return { x: 0, y: 0 };
   }
+
+  return mapEditorCellToOneToOneRuntimeHex(editorCell, transform);
+}
+
+export function mapEditorHexCellToOneToOneRuntimeHex(
+  hexCell: CampaignHexCoordinate,
+  editorGenerated: GeneratedHexGrid,
+  transform = createOneToOneRuntimeGridTransform(editorGenerated)
+): CampaignHexCoordinate {
+  const editorCellsByKey = new Map(
+    editorGenerated.cells.map((cell) => [
+      getCampaignHexCellKey(cell.x, cell.y),
+      cell,
+    ])
+  );
+  const editorCell =
+    editorCellsByKey.get(getCampaignHexCellKey(hexCell.x, hexCell.y)) ?? hexCell;
 
   return mapEditorCellToOneToOneRuntimeHex(editorCell, transform);
 }

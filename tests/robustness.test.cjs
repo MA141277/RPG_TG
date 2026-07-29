@@ -3328,6 +3328,53 @@ test("campaign fort city model renderer ports cyh instanced draw path", () => {
   assert.match(terrainSource, /campaign-structure-shadow\.frag\.glsl/);
 });
 
+test("campaign city model renderer builds city structures for all city markers", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const terrainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "campaign-terrain-webgl.ts"),
+    "utf8"
+  );
+
+  assert.match(terrainSource, /function readCampaignCityStructureInstances/);
+  assert.match(
+    terrainSource,
+    /marker\.kind !== "city" &&\s*marker\.kind !== "fort" &&\s*!fortifiedNodeIds\.has\(marker\.id\)/,
+    "Expected city building instances to include every city marker, while still allowing forts and explicitly fortified nodes."
+  );
+  assert.match(
+    terrainSource,
+    /createCampaignFortCityBuildingInstances\(\{[\s\S]*?fortInstances: cityStructureInstances,/,
+    "Expected city buildings to be driven by city marker instances, not only fort wall instances."
+  );
+});
+
+test("campaign fort wall renderer treats city markers as walled cities by default", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const terrainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "campaign-terrain-webgl.ts"),
+    "utf8"
+  );
+
+  const functionStart = terrainSource.indexOf("function readCampaignFortWallInstances");
+  const functionEnd = terrainSource.indexOf("function readCampaignCityStructureInstances", functionStart);
+  assert.notEqual(functionStart, -1);
+  assert.notEqual(functionEnd, -1);
+  const fortWallSource = terrainSource.slice(functionStart, functionEnd);
+
+  assert.match(
+    fortWallSource,
+    /for \(const marker of readCampaignRuntimeMarkers\(stage\)\)/,
+    "Expected fort wall instances to use runtime marker data instead of DOM marker classes."
+  );
+  assert.match(
+    fortWallSource,
+    /marker\.kind !== "city" &&\s*marker\.kind !== "fort" &&\s*!fortifiedNodeIds\.has\(marker\.id\)/,
+    "Expected fort wall instances to include every city marker by default."
+  );
+});
+
 test("campaign fort city model renderer applies camera-scale LOD before building placement", () => {
   const fs = require("node:fs");
   const path = require("node:path");

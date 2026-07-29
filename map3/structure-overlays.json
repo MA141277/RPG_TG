@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "structure.city-ground",
+    "category": "village-ground",
+    "cells": [
+      {
+        "x": 241,
+        "y": -97
+      }
+    ]
+  }
+]

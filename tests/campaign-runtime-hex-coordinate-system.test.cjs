@@ -185,3 +185,86 @@ test("map3 one-to-one runtime export keeps source image y direction", () => {
     "Expected lower source-image cells to render lower on the campaign terrain."
   );
 });
+
+test("map3 settlement sync keeps enterable city data aligned", () => {
+  const settlements = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, "map3", "settlements.json"), "utf8")
+  );
+  const cities = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        repoRoot,
+        "src",
+        "content",
+        "scenario-packs",
+        "zhuyuanzhang",
+        "cities.json"
+      ),
+      "utf8"
+    )
+  );
+  const maps = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        repoRoot,
+        "src",
+        "content",
+        "scenario-packs",
+        "zhuyuanzhang",
+        "maps.json"
+      ),
+      "utf8"
+    )
+  );
+  const settlementById = Object.fromEntries(
+    settlements.map((settlement) => [settlement.id, settlement])
+  );
+  const cityById = Object.fromEntries(cities.map((city) => [city.id, city]));
+  const campaignMap = maps.find((map) => map.id === "map.yuanmo_campaign");
+  assert.ok(campaignMap);
+  const nodeById = Object.fromEntries(
+    campaignMap.nodes.map((node) => [node.id, node])
+  );
+
+  assert.equal(
+    cityById["city.luzhou"].name,
+    settlementById["settlement.luzhou_province"].name
+  );
+  assert.equal(nodeById["settlement.luzhou_province"].cityId, "city.luzhou");
+  assert.equal(
+    cityById["city.kulan"].name,
+    settlementById["settlement.fenyang_province"].name
+  );
+  assert.equal(nodeById["settlement.fenyang_province"].cityId, "city.kulan");
+});
+
+test("map3 settlement sync uses editor hex cells for editor-created settlements", () => {
+  const maps = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        repoRoot,
+        "src",
+        "content",
+        "scenario-packs",
+        "zhuyuanzhang",
+        "maps.json"
+      ),
+      "utf8"
+    )
+  );
+  const campaignMap = maps.find((map) => map.id === "map.yuanmo_campaign");
+  assert.ok(campaignMap);
+  const node = campaignMap.nodes.find(
+    (candidate) => candidate.id === "settlement.city.city.3"
+  );
+  assert.ok(node);
+
+  assert.deepEqual(
+    coordinateToRoundedHex(
+      { x: node.x, y: node.y },
+      map3CoordinateSystem.coordinateSpace,
+      map3CoordinateSystem
+    ),
+    { x: 0, y: -10 }
+  );
+});

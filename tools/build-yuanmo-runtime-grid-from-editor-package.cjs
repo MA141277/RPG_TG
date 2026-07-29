@@ -29,11 +29,13 @@ const outputGridPath = path.join(
   "yuanmo-campaign-hex-grid-map2-runtime.json"
 );
 const mapsPath = path.join(repoRoot, "src", "content", "scenario-packs", "zhuyuanzhang", "maps.json");
+const citiesPath = path.join(repoRoot, "src", "content", "scenario-packs", "zhuyuanzhang", "cities.json");
 const editorPackageDir = resolveEditorPackageDir(cliOptions.input);
 const editorPackageLabel = formatRepoPath(editorPackageDir);
 
 const {
   createOneToOneRuntimeCampaignHexGridFromEditorPackage,
+  mapEditorHexCellToOneToOneRuntimeHex,
   mapEditorSourcePositionToOneToOneRuntimeHex,
   mapEditorGameCoordinateToOneToOneRuntimeHex,
   mapRuntimeHexToGameCoordinate,
@@ -72,6 +74,7 @@ const settlementAnchors = readOptionalJson(path.join(editorPackageDir, "settleme
     name: settlement.name,
     type: settlement.type,
     mapPosition: settlement.mapPosition,
+    hexCell: settlement.hexCell,
   }));
 const exportedGrid = createOneToOneRuntimeCampaignHexGridFromEditorPackage({
   runtimeGrid,
@@ -106,6 +109,7 @@ const environmentOverrideStats = countProjectedOverrides({
 fs.writeFileSync(outputGridPath, `${JSON.stringify(exportedGrid, null, 2)}\n`, "utf8");
 syncMapNodesFromEditorSettlements({
   mapsPath,
+  citiesPath,
   mapId: exportedGrid.mapId,
   editorPackageLabel,
   settlements: settlementAnchors,
@@ -263,6 +267,7 @@ function syncMapNodesFromEditorSettlements(input) {
   }
 
   const maps = readJson(input.mapsPath);
+  const cities = readJson(input.citiesPath);
   const mapDefinition = maps.find((map) => map.id === input.mapId);
   if (mapDefinition == null || !Array.isArray(mapDefinition.nodes)) {
     return;
@@ -282,14 +287,36 @@ function syncMapNodesFromEditorSettlements(input) {
     seenSettlementIds.add(settlement.id);
     uniqueSettlements.push(settlement);
   }
+  const settlementById = new Map(uniqueSettlements.map((settlement) => [settlement.id, settlement]));
+  const cityIdByMapNodeId = new Map(
+    cities
+      .filter((city) => typeof city.id === "string" && typeof city.mapNodeId === "string")
+      .map((city) => [city.mapNodeId, city.id])
+  );
+  let renamedCityCount = 0;
+  for (const city of cities) {
+    if (typeof city.mapNodeId !== "string") {
+      continue;
+    }
+    const settlement = settlementById.get(city.mapNodeId);
+    if (settlement == null || typeof settlement.name !== "string" || city.name === settlement.name) {
+      continue;
+    }
+    city.name = settlement.name;
+    renamedCityCount += 1;
+  }
 
   mapDefinition.nodes = uniqueSettlements.map((settlement) => {
     const previousNode = previousNodeById.get(settlement.id);
-    const runtimeHex = mapEditorGameCoordinateToOneToOneRuntimeHex(
-      settlement.mapPosition,
-      editorGenerated,
-      input.projectionRuntimeGrid ?? input.runtimeGrid
-    );
+    const cityId = cityIdByMapNodeId.get(settlement.id);
+    const runtimeHex =
+      settlement.hexCell == null
+        ? mapEditorGameCoordinateToOneToOneRuntimeHex(
+            settlement.mapPosition,
+            editorGenerated,
+            input.projectionRuntimeGrid ?? input.runtimeGrid
+          )
+        : mapEditorHexCellToOneToOneRuntimeHex(settlement.hexCell, editorGenerated);
     const coordinate = mapRuntimeHexToGameCoordinate(
       runtimeHex,
       input.runtimeGrid.coordinateSystem.coordinateSpace,
@@ -302,6 +329,7 @@ function syncMapNodesFromEditorSettlements(input) {
       x: coordinate.x,
       y: coordinate.y,
       kind: getMapNodeKindForSettlementType(settlement.type),
+      ...(cityId == null ? {} : { cityId }),
       ...(previousNode?.summary == null ? {} : { summary: previousNode.summary }),
     };
   });
@@ -328,7 +356,9 @@ function syncMapNodesFromEditorSettlements(input) {
   };
 
   fs.writeFileSync(input.mapsPath, `${JSON.stringify(maps, null, 2)}\n`, "utf8");
+  fs.writeFileSync(input.citiesPath, `${JSON.stringify(cities, null, 2)}\n`, "utf8");
   console.log(`Updated ${path.relative(repoRoot, input.mapsPath)}: rebuilt ${mapDefinition.nodes.length} map nodes from ${input.editorPackageLabel} settlements.`);
+  console.log(`Updated ${path.relative(repoRoot, input.citiesPath)}: renamed ${renamedCityCount} existing city records from ${input.editorPackageLabel} settlements.`);
 }
 
 function getMapNodeKindForSettlementType(type) {

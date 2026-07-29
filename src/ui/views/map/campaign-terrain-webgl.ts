@@ -2574,12 +2574,20 @@ async function initCampaignTerrainWebGl(
         fortCityAsset?.rules ?? null
       )
       : [];
+    const cityStructureInstances = renderTerrain
+      ? readCampaignCityStructureInstances({
+        canvas: input.canvas,
+        loadedChunkKeys,
+        materialSemanticModel,
+        rules: fortCityAsset?.rules ?? null,
+      })
+      : [];
     const fortCityBuildingInstances =
       renderTerrain && fortCityAsset != null
         ? createCampaignFortCityBuildingInstances({
           asset: fortCityAsset,
           rules: fortCityAsset.rules,
-          fortInstances,
+          fortInstances: cityStructureInstances,
           matrix: createTerrainMatrix(
             input.canvas.width / Math.max(input.canvas.height, 1)
           ),
@@ -2606,7 +2614,7 @@ async function initCampaignTerrainWebGl(
           canvas: input.canvas,
           loadedChunkKeys,
           materialSemanticModel,
-          cityHexKeys: new Set(fortInstances.map((instance) => instance.key)),
+          cityHexKeys: new Set(cityStructureInstances.map((instance) => instance.key)),
           rules: fortCityAsset?.rules ?? null,
         })
         : [];
@@ -6212,24 +6220,18 @@ function readCampaignFortWallInstances(
 
   const fortifiedNodeIds = new Set(rules?.fortifiedNodeIds ?? []);
   const instancesByHexKey = new Map<string, FortWallInstance>();
-  for (const marker of stage.querySelectorAll<HTMLElement>(
-    "[data-campaign-marker-id][data-map-height-u][data-map-height-v]"
-  )) {
-    const markerId = marker.dataset.campaignMarkerId;
-    const isFortMarker = marker.classList.contains("c-campaign-marker--fort");
-    if (!isFortMarker && (markerId == null || !fortifiedNodeIds.has(markerId))) {
-      continue;
-    }
-
-    const u = Number(marker.dataset.mapHeightU);
-    const v = Number(marker.dataset.mapHeightV);
-    if (!Number.isFinite(u) || !Number.isFinite(v)) {
+  for (const marker of readCampaignRuntimeMarkers(stage)) {
+    if (
+      marker.kind !== "city" &&
+      marker.kind !== "fort" &&
+      !fortifiedNodeIds.has(marker.id)
+    ) {
       continue;
     }
 
     const hexCell = getCampaignTerrainHexCellAtUv(
-      u,
-      v,
+      marker.u,
+      marker.v,
       materialSemanticModel.coordinateSystem
     );
     const chunkKey = getCampaignTerrainChunkKey(
@@ -6243,6 +6245,60 @@ function readCampaignFortWallInstances(
     const instance = {
       u: hexPointToTerrainU(center.x, materialSemanticModel.terrainCoordinates),
       v: hexPointToTerrainV(center.y, materialSemanticModel.terrainCoordinates),
+      key: getHexCellKey(hexCell.x, hexCell.y),
+      x: hexCell.x,
+      y: hexCell.y,
+    };
+    instancesByHexKey.set(instance.key, instance);
+  }
+
+  return Array.from(instancesByHexKey.values()).sort((left, right) =>
+    left.key.localeCompare(right.key)
+  );
+}
+
+function readCampaignCityStructureInstances(input: {
+  canvas: HTMLCanvasElement;
+  loadedChunkKeys: Set<string>;
+  materialSemanticModel: CampaignMaterialSemanticModel;
+  rules: CampaignFortCityRulesAsset | null;
+}): FortCityInstance[] {
+  const stage = input.canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  if (stage == null || input.loadedChunkKeys.size === 0) {
+    return [];
+  }
+
+  const fortifiedNodeIds = new Set(input.rules?.fortifiedNodeIds ?? []);
+  const instancesByHexKey = new Map<string, FortCityInstance>();
+  for (const marker of readCampaignRuntimeMarkers(stage)) {
+    if (
+      marker.kind !== "city" &&
+      marker.kind !== "fort" &&
+      !fortifiedNodeIds.has(marker.id)
+    ) {
+      continue;
+    }
+
+    const hexCell = getCampaignTerrainHexCellAtUv(
+      marker.u,
+      marker.v,
+      input.materialSemanticModel.coordinateSystem
+    );
+    if (!isPlainTerrainHexCell(input.materialSemanticModel, hexCell)) {
+      continue;
+    }
+
+    const chunkKey = getCampaignTerrainChunkKey(
+      getCampaignTerrainChunkForHexCell(hexCell)
+    );
+    if (!input.loadedChunkKeys.has(chunkKey)) {
+      continue;
+    }
+
+    const center = hexToPixel(hexCell.x, hexCell.y);
+    const instance = {
+      u: hexPointToTerrainU(center.x, input.materialSemanticModel.terrainCoordinates),
+      v: hexPointToTerrainV(center.y, input.materialSemanticModel.terrainCoordinates),
       key: getHexCellKey(hexCell.x, hexCell.y),
       x: hexCell.x,
       y: hexCell.y,

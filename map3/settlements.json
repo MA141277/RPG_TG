@@ -677,15 +677,15 @@
   },
   {
     "id": "settlement.kaifeng_province",
-    "name": "汴梁路★开封",
+    "name": "定远",
     "type": "city",
     "mapPosition": {
-      "x": 318,
-      "y": 327
+      "x": 509,
+      "y": 451
     },
     "hexCell": {
-      "x": 229,
-      "y": -84
+      "x": 245,
+      "y": -92
     }
   },
   {
@@ -1154,6 +1154,97 @@
     "hexCell": {
       "x": 186,
       "y": -76
+    }
+  },
+  {
+    "id": "settlement.city.city",
+    "name": "滁州",
+    "type": "city",
+    "mapPosition": {
+      "x": 509,
+      "y": 451
+    },
+    "hexCell": {
+      "x": 250,
+      "y": -93
+    }
+  },
+  {
+    "id": "settlement.city.city.2",
+    "name": "汝宁",
+    "type": "city",
+    "mapPosition": {
+      "x": 509,
+      "y": 451
+    },
+    "hexCell": {
+      "x": 229,
+      "y": -91
+    }
+  },
+  {
+    "id": "settlement.city.city.3",
+    "name": "六安",
+    "type": "city",
+    "mapPosition": {
+      "x": 509,
+      "y": 451
+    },
+    "hexCell": {
+      "x": 242,
+      "y": -97
+    }
+  },
+  {
+    "id": "settlement.city.city.4",
+    "name": "固始",
+    "type": "city",
+    "mapPosition": {
+      "x": 509,
+      "y": 451
+    },
+    "hexCell": {
+      "x": 238,
+      "y": -96
+    }
+  },
+  {
+    "id": "settlement.city.city.5",
+    "name": "光州",
+    "type": "city",
+    "mapPosition": {
+      "x": 509,
+      "y": 451
+    },
+    "hexCell": {
+      "x": 233,
+      "y": -97
+    }
+  },
+  {
+    "id": "settlement.city.city.6",
+    "name": "汴梁路",
+    "type": "city",
+    "mapPosition": {
+      "x": 509,
+      "y": 451
+    },
+    "hexCell": {
+      "x": 229,
+      "y": -83
+    }
+  },
+  {
+    "id": "settlement.city.city.7",
+    "name": "鹿邑",
+    "type": "city",
+    "mapPosition": {
+      "x": 509,
+      "y": 451
+    },
+    "hexCell": {
+      "x": 236,
+      "y": -86
     }
   }
 ]

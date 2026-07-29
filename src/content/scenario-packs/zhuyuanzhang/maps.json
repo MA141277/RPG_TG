@@ -83,6 +83,7 @@
         "x": 109.99576274423296,
         "y": 311.528901734104,
         "kind": "city",
+        "cityId": "city.fengyuan",
         "summary": "Region: 陕西行省 | Owner: france | Level: large_city | Type: town"
       },
       {
@@ -115,6 +116,7 @@
         "x": 23.72457617982369,
         "y": 311.528901734104,
         "kind": "city",
+        "cityId": "city.gongchang",
         "summary": "Region: 陕西行省 | Owner: hre | Level: large_town | Type: town"
       },
       {
@@ -195,6 +197,7 @@
         "x": 12.940677859272517,
         "y": 237.23121387283237,
         "kind": "city",
+        "cityId": "city.chengdu",
         "summary": "Region: 四川行省 | Owner: sicily | Level: large_city | Type: town"
       },
       {
@@ -219,6 +222,7 @@
         "x": 60.38983046969762,
         "y": 221.58959537572255,
         "kind": "city",
+        "cityId": "city.chongqing",
         "summary": "Region: 四川行省 | Owner: sicily | Level: large_town | Type: town"
       },
       {
@@ -235,6 +239,7 @@
         "x": 191.95338998042178,
         "y": 248.96242774566474,
         "kind": "city",
+        "cityId": "city.wuchang",
         "summary": "剧情: 陈汉核心城 | 阵营: 陈汉 | 所有者: 陈友谅集团 | 相关NPC: 张定边、陈理、罗复仁、陈友直 | 注记: 朱元璋早年尚未控制此地"
       },
       {
@@ -291,6 +296,7 @@
         "x": 226.4618646061855,
         "y": 209.85838150289018,
         "kind": "city",
+        "cityId": "city.nanchang",
         "summary": "剧情: 洪都前线 | 阵营: 吴军后期据点 | 所有者: 朱元璋集团 | 相关NPC: 朱文正、花云、沐英、冯胜 | 注记: 和尚时期暂不归朱元璋，后续成为对陈汉前线"
       },
       {
@@ -315,6 +321,7 @@
         "x": 286.85169520127204,
         "y": 162.93352601156067,
         "kind": "city",
+        "cityId": "city.fuzhou",
         "summary": "Region: 江浙行省 | Owner: spain | Level: large_town | Type: town"
       },
       {
@@ -355,6 +362,7 @@
         "x": 325.6737291552562,
         "y": 217.67919075144508,
         "kind": "city",
+        "cityId": "city.ningbo",
         "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"
       },
       {
@@ -363,6 +371,7 @@
         "x": 291.1652545294925,
         "y": 194.21676300578036,
         "kind": "city",
+        "cityId": "city.wenzhou",
         "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"
       },
       {
@@ -379,6 +388,7 @@
         "x": 278.2245765448311,
         "y": 248.96242774566474,
         "kind": "city",
+        "cityId": "city.yingtian",
         "summary": "剧情: 集庆路，后改应天府 | 阵营: 元廷江南重镇，后属朱元璋吴军 | 所有者: 早期为元廷/地方守臣，后为朱元璋 | 相关NPC: 朱元璋、李善长、徐达、常遇春、刘基 | 注记: 朱元璋当和尚时尚未入主"
       },
       {
@@ -395,6 +405,7 @@
         "x": 304.1059325141539,
         "y": 256.78323699421964,
         "kind": "city",
+        "cityId": "city.suzhou",
         "summary": "Region: 江浙行省 | Owner: venice | Level: large_city | Type: town"
       },
       {
@@ -403,6 +414,7 @@
         "x": 293.32203419360275,
         "y": 276.33526011560696,
         "kind": "city",
+        "cityId": "city.yangzhou",
         "summary": "剧情: 淮东盐运重镇 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、李伯升、饶介、施耐庵 | 注记: 朱元璋早期北东侧竞争者"
       },
       {
@@ -419,6 +431,7 @@
         "x": 232.9322035985162,
         "y": 245.05202312138732,
         "kind": "city",
+        "cityId": "city.anqing",
         "summary": "剧情: 江淮西线通道 | 阵营: 元末多方争夺，后属朱元璋吴军 | 所有者: 早期不稳，后为朱元璋集团 | 相关NPC: 汤和、邓愈、李文忠、丁普郎 | 注记: 可作为从濠州南下江南的过渡节点"
       },
       {
@@ -435,6 +448,7 @@
         "x": 245.87288158317762,
         "y": 291.97687861271675,
         "kind": "city",
+        "cityId": "city.kulan",
         "summary": "剧情: 朱元璋和尚时期起点，钟离/皇觉寺附近 | 阵营: 红巾军/小明王宋 | 所有者: 郭子兴部，名义尊小明王韩林儿 | 相关NPC: 朱元璋、郭子兴、马氏、汤和、韩林儿 | 注记: 适合作为早年主线出生点"
       },
       {
@@ -443,14 +457,16 @@
         "x": 278.2245765448311,
         "y": 303.7080924855491,
         "kind": "city",
+        "cityId": "city.huaian",
         "summary": "剧情: 淮东门户 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、施耐庵、潘元绍 | 注记: 与濠州、扬州形成早期江淮压力线"
       },
       {
         "id": "settlement.kaifeng_province",
-        "label": "汴梁路★开封",
-        "x": 207.0508476291934,
-        "y": 315.4393063583815,
+        "label": "定远",
+        "x": 258.813559567839,
+        "y": 284.15606936416185,
         "kind": "city",
+        "cityId": "city.kaifeng",
         "summary": "剧情: 河南元军重镇 | 阵营: 元廷/扩廓帖木儿系 | 所有者: 元廷河南势力 | 相关NPC: 扩廓帖木儿、脱因帖木儿、阎思孝、陈秉直 | 注记: 朱元璋早期北方强敌"
       },
       {
@@ -475,6 +491,7 @@
         "x": 204.8940679650832,
         "y": 272.4248554913295,
         "kind": "city",
+        "cityId": "city.runing",
         "summary": "剧情: 红巾军活动区 | 阵营: 小明王宋 | 所有者: 刘福通/韩林儿系 | 相关NPC: 刘福通、韩童、杜遵道、白不信 | 注记: 可连接濠州早年起义线"
       },
       {
@@ -539,6 +556,7 @@
         "x": 258.813559567839,
         "y": 409.2890173410405,
         "kind": "city",
+        "cityId": "city.dadu",
         "summary": "Region: 中书省 | Owner: byzantium | Level: huge_city | Type: town"
       },
       {
@@ -667,6 +685,7 @@
         "x": 222.14830527796505,
         "y": 280.2456647398844,
         "kind": "city",
+        "cityId": "city.anfeng",
         "summary": "剧情: 小明王宋政权据点 | 阵营: 红巾军/小明王宋 | 所有者: 韩林儿、刘福通 | 相关NPC: 刘福通、韩林儿、盛文郁、白不信 | 注记: 朱元璋早年名义上的上级势力"
       },
       {
@@ -715,6 +734,7 @@
         "x": 265.2838985601697,
         "y": 248.96242774566474,
         "kind": "city",
+        "cityId": "city.taiping",
         "summary": "剧情: 南下江南跳板 | 阵营: 朱元璋吴军后期据点 | 所有者: 朱元璋集团 | 相关NPC: 徐达、常遇春、李善长、胡惟庸 | 注记: 和尚时期未控制，起兵后逐步纳入"
       },
       {
@@ -723,6 +743,7 @@
         "x": 252.3432205755083,
         "y": 264.6040462427746,
         "kind": "city",
+        "cityId": "city.luzhou",
         "summary": "剧情: 江淮枢纽 | 阵营: 朱元璋吴军后期控制区 | 所有者: 早期多方争夺，后为朱元璋集团 | 相关NPC: 蓝玉、傅友德、耿炳文、徐达 | 注记: 适合放置从濠州转入军事集团的过渡事件"
       },
       {
@@ -736,10 +757,59 @@
       {
         "id": "settlement.ganzhou_province",
         "label": "甘州路★张掖",
-        "x": 34.50847450037483,
+        "x": 38.82203382859531,
         "y": 346.7225433526012,
         "kind": "city",
         "summary": "Region: 甘肃行省 | Owner: byzantium | Level: large_city | Type: castle"
+      },
+      {
+        "id": "settlement.city.city",
+        "label": "滁州",
+        "x": 278.2245765448311,
+        "y": 280.2456647398844,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.2",
+        "label": "汝宁",
+        "x": 191.95338998042178,
+        "y": 288.06647398843927,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.3",
+        "label": "六安",
+        "x": 235.08898326262647,
+        "y": 264.6040462427746,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.4",
+        "label": "固始",
+        "x": 219.99152561385483,
+        "y": 268.514450867052,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.5",
+        "label": "光州",
+        "x": 196.2669493086423,
+        "y": 264.6040462427746,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.6",
+        "label": "汴梁路",
+        "x": 209.20762729330366,
+        "y": 319.34971098265896,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.7",
+        "label": "鹿邑",
+        "x": 232.9322035985162,
+        "y": 307.6184971098266,
+        "kind": "city"
       }
     ],
     "layers": [
@@ -874,7 +944,7 @@
     ],
     "stats": {
       "regionCount": 200,
-      "settlementCount": 89,
+      "settlementCount": 96,
       "fortCount": 0,
       "resourceCount": 0,
       "resourceSummary": ""
