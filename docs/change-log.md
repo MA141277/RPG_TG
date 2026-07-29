@@ -15,6 +15,16 @@
 - 这片只增加 runtime/data 兼容层和测试，不改 UI、地图、背包、入口或 `src/main.ts`。
 - 后续从剧本或事件结算写入角色/城市/建筑状态时，应优先通过 status materializer 与 runtime property mutation helper，避免把兼容逻辑散落到具体 UI 或 house 模块。
 
+## 2026-07-29 Location Access Runtime Slice
+
+### Added
+- 新增 `src/application/location-access/location-access-runtime.ts`，统一评估 city/building enter/leave 访问规则，支持 event/person/time/world/story/target 条件引用和结构化 refusal 输出。
+- 新增 `tests/location-access-runtime.test.cjs`，锁定默认放行、复合条件、enter/leave 拒绝结果。
+
+### Impact
+- 这片只增加 application runtime 判定层，不接入 UI、地图、背包、入口或 `src/main.ts`。
+- 当前基线仍使用 `GameState.scene`，所以 story 条件读取适配当前 scene 状态；后续若正式切到 dialogue runtime，再在该模块集中调整，不把兼容判断散落到调用方。
+
 ## 2026-07-28 Faction Review Reward And Personnel Settlement
 
 ### Added
