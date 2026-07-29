@@ -3456,8 +3456,10 @@ test("campaign map uses shoreamend visual renderer without legacy 2d structure s
   );
 
   assert.equal(fs.existsSync(revealMaskPath), true);
-  assert.doesNotMatch(mapViewSource, /data-campaign-map-cloud/);
-  assert.doesNotMatch(mapViewSource, /c-campaign-map__cloud/);
+  assert.match(mapViewSource, /data-campaign-map-cloud/);
+  assert.match(mapViewSource, /c-campaign-map__cloud/);
+  assert.match(mapViewSource, /data-map-cloud-noise-url/);
+  assert.match(mapViewSource, /data-map-revealed-hex-keys/);
   assert.match(mapViewSource, /data-map-village-ground-texture-url/);
   assert.match(mapViewSource, /data-map-city-ground-texture-url/);
   assert.doesNotMatch(mapViewSource, /renderCampaignStructureVisuals/);
@@ -6177,7 +6179,7 @@ test("campaign fog exploration stays active without the removed shader renderer"
     false
   );
   assert.doesNotMatch(mapViewSource, /data-campaign-map-fog/);
-  assert.doesNotMatch(mapViewSource, /data-campaign-map-cloud/);
+  assert.match(mapViewSource, /data-campaign-map-cloud/);
   assert.doesNotMatch(mapViewSource, /campaign-volumetric-cloud/);
   assert.doesNotMatch(mainSource, /campaign-fog-webgl/);
   assert.doesNotMatch(mainSource, /syncCampaignMapFogWebGl/);

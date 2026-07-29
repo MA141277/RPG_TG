@@ -534,6 +534,15 @@ function renderCampaignMap(model: MapViewModel): string {
         ${renderCampaignMapVisualLayer(model, {
           includeInteractivePoints: true,
         })}
+        <canvas
+          class="c-campaign-map__cloud"
+          data-campaign-map-cloud="true"
+          data-map-coordinate-width="${model.coordinateSpace.width}"
+          data-map-coordinate-height="${model.coordinateSpace.height}"
+          data-map-revealed-hex-keys="${escapeHtml(model.revealedHexKeys.join(" "))}"
+          ${model.cloudNoiseTextureImageUrl == null ? "" : `data-map-cloud-noise-url="${model.cloudNoiseTextureImageUrl}"`}
+          aria-hidden="true"
+        ></canvas>
         <svg
           class="c-campaign-map__hover-hex"
           data-campaign-hover-hex="true"
