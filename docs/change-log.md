@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Playable Result Contract Alias Slice
+
+### Added
+- `PlayableSettlement` 保持不变，同时新增 `PlayableResult` 兼容别名，为后续逐步对齐 mod-first-dev 的 playable result 命名预留迁移路径。
+- 新增 `tests/playable-result-contract.test.cjs`，锁定旧 settlement 合同仍存在且新 result 别名可用。
+
+### Impact
+- 这片只迁移 core playable runtime 类型命名兼容，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续可以逐步把内部新代码改读 `PlayableResult`，而不用一次性破坏当前依赖 `PlayableSettlement` 的调用方。
+
 ## 2026-07-29 Flow Playable Presenter Model Slice
 
 ### Added

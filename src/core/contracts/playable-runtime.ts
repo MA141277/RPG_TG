@@ -125,6 +125,8 @@ export type PlayableSettlement = {
   effects: Effect[];
 };
 
+export type PlayableResult = PlayableSettlement;
+
 export type PlayableLaunchFailureCode =
   | "missing-playable-id"
   | "missing-integration"
