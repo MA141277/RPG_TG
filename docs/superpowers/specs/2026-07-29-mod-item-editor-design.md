@@ -124,9 +124,9 @@ type ItemDefinition = {
   display?: ItemDisplayDefinition;
   classification?: ItemClassification;
   stack?: ItemStackRule;
+  menuInstanceIds?: string[];
 
   components?: ItemComponent[];
-  actions?: ItemActionRef[];
 
   tags?: string[];
   customProperties?: Record<string, unknown>;
@@ -136,6 +136,8 @@ type ItemDefinition = {
 The required minimum fields are `id` and `name`. Other sections should be optional so mods can define simple and advanced items through the same contract.
 
 `id` is required in runtime data, but it should be hidden from normal creator-facing item forms. The editor owns ID allocation, uniqueness, rename stability, and reference updates.
+
+`menuInstanceIds` is optional and may be empty. Items should not duplicate menu module data. If an item needs backpack, shop, storage, dialogue, or debug actions, the item references menu instances from the menu module. Those menu instances remain the source of menu groups and action rows.
 
 ## Classification
 
@@ -253,52 +255,15 @@ Example quest item:
 }
 ```
 
-## Actions
+## Menu-Backed Actions
 
-Items may declare actions, but item data must not contain arbitrary script code.
+Items may expose actions through referenced menu module instances, but item data must not contain arbitrary script code.
 
-Actions should reference existing runtime mechanisms. For state changes such as healing, damage, money, task progress, or inventory mutation, the primary target should be the settlement mechanism already present on `mod-first-dev`.
+The menu group for an item may be empty. In that case the item has no item-specific visible operations in that surface, though it can still exist as inventory, quest state, trade stock, or runtime content.
 
-```ts
-type ItemActionRef = {
-  id: string;
-  label: string;
-  trigger: {
-    kind: "settlement" | "event" | "flow" | "builtin";
-    targetId: string;
-  };
-  consumePolicy?: "never" | "onUse" | "onSuccess";
-  conditionGroupId?: string;
-  availabilityText?: string;
-};
-```
+Menu entries should reference existing runtime mechanisms through the menu module and event route. For state changes such as healing, damage, money, task progress, or inventory mutation, the resolved target should ultimately be a settlement event that uses the settlement mechanism already present on `mod-first-dev`.
 
-Example:
-
-```json
-{
-  "actions": [
-    {
-      "id": "item.action.equip",
-      "label": "装备",
-      "trigger": {
-        "kind": "builtin",
-        "targetId": "inventory.equip"
-      }
-    },
-    {
-      "id": "item.action.read",
-      "label": "阅读",
-      "trigger": {
-        "kind": "event",
-        "targetId": "event.read_secret_letter"
-      }
-    }
-  ]
-}
-```
-
-Supported action routing examples:
+Supported resolved action examples:
 
 - Equip: built-in inventory handler
 - Use: settlement
@@ -308,6 +273,17 @@ Supported action routing examples:
 - Launch minigame: flow
 
 The backpack should dispatch actions to runtime handlers. It should not interpret custom business logic itself.
+
+Menu action data should come from the existing menu module:
+
+```txt
+ItemDefinition.menuInstanceIds
+-> MenuInstanceDefinition
+-> MenuResourceDefinition.entries
+-> event routing trigger context
+```
+
+This keeps item authoring from becoming a second menu editor. The item module may show linked menu instances and resolved action previews, but editing menu rows belongs to the menu module.
 
 ## Settlement Runtime Alignment
 
@@ -367,17 +343,7 @@ Example healing item:
       "consumeOnUse": true
     }
   ],
-  "actions": [
-    {
-      "id": "item.action.use",
-      "label": "使用",
-      "trigger": {
-        "kind": "settlement",
-        "targetId": "settlement.item.potion.small.use"
-      },
-      "consumePolicy": "onSuccess"
-    }
-  ]
+  "menuInstanceIds": ["menu-instance.item.potion.small.backpack"]
 }
 ```
 
@@ -412,17 +378,7 @@ Example random item:
     "primaryCategory": "consumable",
     "secondaryCategories": ["curio", "random"]
   },
-  "actions": [
-    {
-      "id": "item.action.flip",
-      "label": "抛掷",
-      "trigger": {
-        "kind": "flow",
-        "targetId": "flow.item.coin.fate.flip"
-      },
-      "consumePolicy": "onSuccess"
-    }
-  ]
+  "menuInstanceIds": ["menu-instance.item.coin.fate.backpack"]
 }
 ```
 
@@ -467,7 +423,8 @@ The script editor should organize `items` with these sections:
 - Classification and tags
 - Stack rule
 - Components
-- Actions
+- Linked menu instances
+- Resolved action preview
 - References
 - Validation
 
@@ -481,6 +438,8 @@ Creator-facing basic information should use:
 It should not expose raw runtime ID as an editable primary field. If an advanced view is needed, it should be explicitly marked as technical/debug information.
 
 The editor should not introduce a heavy `backpacks` content module.
+
+The item editor should not introduce a second heavy menu editor either. Menu groups are optional references to menu module instances. The item editor can provide shortcuts such as "create linked backpack menu", but the created menu remains owned by the menu module.
 
 If backpack settings are needed, keep them as small system configuration:
 
