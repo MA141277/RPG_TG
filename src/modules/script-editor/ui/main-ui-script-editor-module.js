@@ -460,6 +460,7 @@ const SCRIPT_EDITOR_RECORD_SEARCH_FAMILY_ATTRIBUTES = {
   storyNodes: 'data-script-editor-record-search-family="storyNodes"',
   dialogues: 'data-script-editor-record-search-family="dialogues"',
   settlements: 'data-script-editor-record-search-family="settlements"',
+  menuResources: 'data-script-editor-record-search-family="menuResources"',
   stageConfiguration: 'data-script-editor-record-search-family="stageConfiguration"',
   progressTracks: 'data-script-editor-record-search-family="progressTracks"',
   progressTrackBindings: 'data-script-editor-record-search-family="progressTrackBindings"',
@@ -1342,6 +1343,7 @@ class MainUiFlowScriptEditorModule {
       storyNodes: "",
       dialogues: "",
       settlements: "",
+      menuResources: "",
       stageConfiguration: "",
       progressTracks: "",
       progressTrackBindings: "",
@@ -10997,6 +10999,8 @@ class MainUiFlowScriptEditorModule {
         return "建筑";
       case "settlements":
         return "结算";
+      case "menuResources":
+        return "菜单";
       case "quests":
         return "任务";
       case "dialogues":

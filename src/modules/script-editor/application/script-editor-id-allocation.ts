@@ -12,6 +12,7 @@ const SCRIPT_EDITOR_CANONICAL_ID_FAMILY_CODE = {
   settlements: 24,
   progressTracks: 25,
   progressTrackBindings: 26,
+  menuResources: 27,
   quests: 31,
   dialogues: 41,
   minigames: 42,
@@ -92,6 +93,8 @@ export function allocateNextScriptEditorProjectCanonicalId(
         family,
         project.progressTrackBindings ?? []
       );
+    case "menuResources":
+      return allocateNextScriptEditorCanonicalId(family, project.menuResources);
     case "quests":
       return allocateNextScriptEditorCanonicalId(family, project.quests);
     case "dialogues":

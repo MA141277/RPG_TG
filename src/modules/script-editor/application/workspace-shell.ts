@@ -153,6 +153,7 @@ const FAMILY_LABELS: Record<string, string> = {
   progressTracks: "阶段轨道",
   progressTrackBindings: "轨道绑定",
   settlements: "结算",
+  menuResources: "菜单",
   storyPack: "剧本导出",
   people: "人物",
   portraits: "立绘资源",
@@ -187,8 +188,15 @@ const TREE_GROUPS: Array<{
   },
   {
     id: "narrative",
-    label: "剧情与文本",
-    families: ["storyNodes", "dialogues", "minigames", "settlements"],
+    label: "剧本与文本",
+    families: [
+      "storyNodes",
+      "dialogues",
+      "textEntries",
+      "menuResources",
+      "minigames",
+      "settlements",
+    ],
   },
   {
     id: "gameplay",
@@ -198,7 +206,7 @@ const TREE_GROUPS: Array<{
   {
     id: "library",
     label: "资产库",
-    families: ["portraits", "portraitVariants", "textEntries"],
+    families: ["portraits", "portraitVariants"],
   },
 ];
 
@@ -861,6 +869,10 @@ function describeSelectionExportPreview(
 
   if (family === "textEntries") {
     return "文本条目会直接落到 text-entries.json，供对话与场景演出复用。";
+  }
+
+  if (family === "menuResources") {
+    return "菜单资源会落到 menu-resources.json，并继续通过地点菜单实例接入城市、建筑与玩法跳转。";
   }
 
   return "当前家族尚未声明额外导出落点。";
@@ -1785,6 +1797,8 @@ function getFamilyRecords(
       return project.storyNodes;
     case "textEntries":
       return project.textEntries;
+    case "menuResources":
+      return project.menuResources;
     case "conditionGroups":
       return project.conditionGroups;
     case "effectBundles":
