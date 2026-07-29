@@ -1,4 +1,8 @@
 import type { CharacterDefinition } from "../../domain/character";
+import {
+  mergeCharacterStatusMaps,
+  type CharacterStatusById,
+} from "../../domain/character-status";
 import type { GameState } from "../../domain/game-state";
 import type { AccountingGrade } from "../../domain/grain-shop";
 import {
@@ -22,6 +26,7 @@ export function applyAccountingReward(
 
   let nextState = state;
   let nextCharacters = characterDefinitions;
+  let characterStatusById: CharacterStatusById = {};
 
   const goldMutation = mutatePlayerGold(
     nextState,
@@ -31,6 +36,10 @@ export function applyAccountingReward(
   );
   nextState = goldMutation.state;
   nextCharacters = goldMutation.characterDefinitions;
+  characterStatusById = mergeCharacterStatusMaps(
+    characterStatusById,
+    goldMutation.characterStatusById ?? {}
+  );
 
   const mathMutation = mutatePlayerAccountingLevel(
     nextState,
@@ -40,6 +49,10 @@ export function applyAccountingReward(
   );
   nextState = mathMutation.state;
   nextCharacters = mathMutation.characterDefinitions;
+  characterStatusById = mergeCharacterStatusMaps(
+    characterStatusById,
+    mathMutation.characterStatusById ?? {}
+  );
 
   const staminaMutation = spendPlayerStamina(
     nextState,
@@ -48,6 +61,10 @@ export function applyAccountingReward(
   );
   nextState = staminaMutation.state;
   nextCharacters = staminaMutation.characterDefinitions;
+  characterStatusById = mergeCharacterStatusMaps(
+    characterStatusById,
+    staminaMutation.characterStatusById ?? {}
+  );
 
   nextState = mutateGrainShopRelationship(nextState, reward.relationship);
   nextState = advanceGrainShopTime(nextState, durationDays);
@@ -55,5 +72,6 @@ export function applyAccountingReward(
   return {
     state: nextState,
     characterDefinitions: nextCharacters,
+    characterStatusById,
   };
 }

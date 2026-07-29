@@ -1,4 +1,5 @@
 import type { CharacterDefinition } from "../../../domain/character";
+import type { CharacterStatusById } from "../../../domain/character-status";
 import type { GrainShopSessionState } from "../../../domain/house-modules/grain-shop-session";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
 import {
@@ -112,6 +113,7 @@ export function tickGrainAccountingPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 } {
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
@@ -146,6 +148,7 @@ export function answerGrainAccountingPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 } {
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
@@ -198,6 +201,7 @@ export function settleGrainAccountingPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 } {
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
@@ -267,6 +271,9 @@ export function settleGrainAccountingPlayable(input: {
       },
     },
     characterDefinitions: mutation.characterDefinitions,
+    ...(mutation.characterStatusById == null
+      ? {}
+      : { characterStatusById: mutation.characterStatusById }),
   };
 }
 

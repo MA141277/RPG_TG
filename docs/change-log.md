@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Grain Accounting Runtime Status Patch Slice
+
+### Added
+- grain-accounting completion 现在会把金币、算术技能与体力变化生成为 `characterStatusById`，并通过 `playable-runtime` 返回给统一 runtime commit 链路。
+- 新增 `tests/grain-accounting-runtime-status.test.cjs`，覆盖 grain-accounting 结算后返回角色 status patch。
+
+### Changed
+- grain shop 奖励 mutation 改为复用 `mutateCharacterNumericProperty()` 生成 `stats.gold` 与 `skills.accounting` patch，并在奖励 helper 内合并体力 patch。
+
+### Impact
+- 这片只迁移 grain-accounting application/playable runtime 结算链路，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 grain-accounting completion 可通过统一 state-sync commit 写回角色状态，避免调用方只依赖直接替换后的 characterDefinitions。
+
 ## 2026-07-29 City Begging Runtime Status Patch Slice
 
 ### Added

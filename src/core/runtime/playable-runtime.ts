@@ -752,6 +752,9 @@ export function runPlayableRuntime(input: {
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.characterStatusById == null
+          ? {}
+          : { characterStatusById: completion.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(completion.state, "grain-accounting"),
@@ -778,6 +781,9 @@ export function runPlayableRuntime(input: {
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.characterStatusById == null
+          ? {}
+          : { characterStatusById: completion.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(completion.state, "grain-accounting"),
