@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Interactive Runtime Status Patch Forwarding Slice
+
+### Added
+- `runInteractiveRuntime()` 现在会把 delegated playable runtime 返回的 `characterStatusById` 原样透传给上层 runtime dispatch / commit 链路。
+- 新增 `tests/interactive-runtime-status.test.cjs`，覆盖 interactive runtime 包装 city-begging completion 时保留角色 status patch。
+
+### Impact
+- 这片只迁移 core interactive runtime 的结果透传能力，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续经 interactive runtime 调用的 playable completion 也能被统一 state-sync commit 写回角色状态。
+
 ## 2026-07-29 Medicine Compounding Runtime Status Patch Slice
 
 ### Added
