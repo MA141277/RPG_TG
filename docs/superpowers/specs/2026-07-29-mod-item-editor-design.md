@@ -23,6 +23,25 @@ The module should not be called `assets`. `assets` is a broader category that al
 
 ## Core Boundary
 
+### Event Routing Is The Gameplay Dispatch Spine
+
+All editable gameplay dispatch should go through event routing first.
+
+Item actions must not invoke settlement runtime directly. An item action should emit an item-action trigger into event routing. Event bindings resolve that trigger to an event. Settlement runtime executes only after the resolved event is a settlement event.
+
+Recommended item action chain:
+
+```txt
+backpack item action
+-> item action runtime builds TriggerContext
+-> event-binding-runtime matches EventBinding
+-> EventDefinition is activated
+-> if event.type = "settlement", event.settlementId selects SettlementDefinition
+-> runtime-settlement applies settlement contents
+```
+
+This makes event routing the single spine for mod-authored gameplay behavior. Items, houses, dialogue, tasks, minigames, and progression should converge on the same trigger-to-event route wherever they represent editable gameplay.
+
 ### Items Are Content Assets
 
 An item definition answers:
@@ -265,7 +284,7 @@ The backpack should dispatch actions to runtime handlers. It should not interpre
 
 ## Settlement Runtime Alignment
 
-Item actions must align with the settlement instance and settlement runtime model on `mod-first-dev`.
+Item actions must align with the event route, settlement event, and settlement runtime model on `mod-first-dev`.
 
 That branch already has:
 
@@ -292,11 +311,12 @@ Events can reference settlements with `type: "settlement"` and `settlementId`. S
 For item usage, the preferred flow is:
 
 1. Backpack UI dispatches the selected item action.
-2. Item action runtime validates ownership, availability, and consume policy.
-3. The action resolves to a `settlementId`, a settlement event, or a flow/event that eventually emits a settlement.
-4. `runtime-settlement` applies the settlement contents.
-5. Inventory consumption is applied through the same runtime path or through a standard inventory mutation owned by item action runtime after settlement success.
-6. UI re-renders from runtime state.
+2. Item action runtime validates ownership and builds a trigger context.
+3. Event routing resolves the trigger through `EventBinding`.
+4. The resolved event decides the next mechanism: settlement, flow, dialogue, task handoff, or other event-owned runtime behavior.
+5. If the event is a settlement event, `runtime-settlement` applies the settlement contents.
+6. Inventory consumption is applied through the same event-owned settlement path or through a standard inventory mutation owned by item action runtime after settlement success.
+7. UI re-renders from runtime state.
 
 The backpack UI must never directly mutate character attributes, money, item quantity, task state, or flags.
 
@@ -386,7 +406,7 @@ Current `mod-first-dev` settlement targets are `person`, `city`, and `building`.
 - Extend the settlement runtime with an `inventory` target family and update the script-editor/runtime contracts together.
 - Keep inventory consumption inside item action runtime as a standard post-settlement inventory mutation, with no direct UI mutation.
 
-The first path is the long-term cleaner model. The second path is acceptable only as a bounded transition while the inventory runtime contract is being introduced.
+The first path is the long-term cleaner model. The second path is acceptable only as a bounded transition while the inventory runtime contract is being introduced. In both paths, the initial gameplay dispatch still goes through event routing.
 
 ## Inventory State
 
