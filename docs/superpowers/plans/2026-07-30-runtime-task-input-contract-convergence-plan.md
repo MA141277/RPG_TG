@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-30`
-- Current Focus: `Task 2 and the code portion of Task 3 are complete: runtime-dispatch now treats split taskActions/taskSignals as fallback-only when canonical taskInputs are present, and event-runtime / event-activation now expose taskInputs instead of taskActions.`
-- Next Step: `Run Task 4 verification, sync the parent handoff, and record the exact push-ready checkpoint for this child.`
-- Verification: `Targeted verification is green for pnpm run build:test, tests/runtime-dispatch-settlement.test.cjs, and focused robustness assertions covering child 33 plus the previously migrated child 16/25 follow-up boundaries. Full tests/robustness.test.cjs still has one unrelated pre-existing failure: "runtime router contract exports a formal routing seam" expects RuntimeResult instead of the now-exported RuntimeRouteResult alias.`
-- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. Keep taskUpdates unless targeted tests prove they can be narrowed safely; this child is about converging task input channels first.`
+- Current Focus: `Runtime task-input contract convergence is fully implemented, verified, committed as b69d361, and merged back to the aligned baseline at 91780be. The next adjacent runtime-only candidate is narrowing the remaining scene-runtime taskSignals seam onto canonical taskInputs.`
+- Next Step: `Keep this child completed-but-open for governance purposes, then execute docs/superpowers/plans/2026-07-30-scene-runtime-task-input-convergence-plan.md from Task 1.`
+- Verification: `pnpm run build:test`; `pnpm exec node --test tests/runtime-dispatch-settlement.test.cjs`; `pnpm exec node --test tests/robustness.test.cjs --test-name-pattern "child 33 event runtime task input contract stays canonical-first|child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator"`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check` passed; `pnpm run lint:plans` still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue; merge-back updated origin/codex/sync-naqishuo-721ui-to-mmz and origin/codex/migration-hot-tasks to 91780be.`
+- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. This child intentionally retained RuntimeResult.taskActions, RuntimeResult.taskSignals, and runtime-dispatch compatibility fallback so narrower producer-side convergence could continue in adjacent slices. Project-progress remains intentionally unsynced because docs/superpowers/project-progress.md still tracks an unrelated map-renderer child and the user has not asked to repoint it.`
 
 ## Progress Log
 
@@ -31,6 +31,10 @@
   - Summary: `Completed Task 2 and the implementation part of Task 3. Added a RED test proving canonical taskInputs suppress split compatibility channels when present, added a focused robustness guard for the event-runtime task-input contract, then narrowed runtime-dispatch to canonical-first fallback and converged event-runtime / event-activation from taskActions to taskInputs.`
   - Verification: `pnpm run build:test`; `pnpm exec node --test tests/runtime-dispatch-settlement.test.cjs`; `pnpm exec node --test tests/robustness.test.cjs --test-name-pattern "child 33 event runtime task input contract stays canonical-first|child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator"`.`
   - Next: `Run typecheck, boundary diff, git diff --check, and lint:plans; then sync the parent handoff and prepare the push-ready commit.`
+- 2026-07-30
+  - Summary: `Completed Task 4, committed the slice as b69d361, pushed it on codex/migration-hot-tasks, and merged it back to the aligned baseline at 91780be.`
+  - Verification: `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check`; `pnpm run lint:plans` failed only on docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md missing the required title heading; `git commit -m "merge: converge runtime task input contract"` created b69d361; `git push` updated origin/codex/migration-hot-tasks; `git push origin HEAD:codex/sync-naqishuo-721ui-to-mmz` updated the remote baseline to 91780be; `git merge --ff-only codex/sync-naqishuo-721ui-to-mmz-followup`; `git push` updated origin/codex/migration-hot-tasks to 91780be.`
+  - Next: `Add closeout metadata for this child, then start the next adjacent runtime-only child for scene-runtime task input convergence.`
 
 ---
 
@@ -52,7 +56,7 @@
 - Notes:
   - Current working branch is `codex/migration-hot-tasks`.
   - Upstream is `origin/codex/migration-hot-tasks`.
-  - The aligned local receiving branch is `codex/sync-naqishuo-721ui-to-mmz-followup`, which now sits at the same merge-back commit `92769f3` as the current branch and `origin/codex/sync-naqishuo-721ui-to-mmz`.
+  - The aligned local receiving branch is `codex/sync-naqishuo-721ui-to-mmz-followup`, which now sits at the same merge-back commit `91780be` as the current branch and `origin/codex/sync-naqishuo-721ui-to-mmz`.
   - The redundant local branch `codex/sync-naqishuo-721ui-to-mmz` has been deleted.
   - `pnpm run lint:plans` is still expected to fail on unrelated pre-existing file `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md` missing a required top-level title heading unless that blocker is separately fixed.
 
@@ -270,7 +274,7 @@ Do not touch:
 - Modify: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
 - Modify: `docs/superpowers/plans/2026-07-30-runtime-task-input-contract-convergence-plan.md`
 
-- [ ] **Step 1: Run the required verification**
+- [x] **Step 1: Run the required verification**
 
 Run:
 
@@ -291,7 +295,7 @@ Expected:
 - boundary diff is empty
 - `lint:plans` fails only on the known unrelated `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md` title issue unless that blocker is fixed separately
 
-- [ ] **Step 2: Record verification and exact boundary outcome**
+- [x] **Step 2: Record verification and exact boundary outcome**
 
 Update both plans with:
 
@@ -300,7 +304,7 @@ Update both plans with:
 - confirmation that protected paths remained untouched
 - the exact next unchecked task or merge checkpoint
 
-- [ ] **Step 3: Commit and push the runtime-only slice**
+- [x] **Step 3: Commit and push the runtime-only slice**
 
 Run:
 
@@ -320,16 +324,32 @@ Report:
 
 ## Exit Check
 
-- [ ] `taskInputs` remains the canonical settled task input surface and is directly tested.
-- [ ] Any retained split task input compatibility remains explicit and secondary.
-- [ ] No unapproved changes landed in `src/main.ts`, UI, map, backpack, or styles.
-- [ ] Existing migrated ownership assertions remain green and do not regress to older seams.
-- [ ] The child plan and parent handoff both record the exact post-slice resume point.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] `taskInputs` remains the canonical settled task input surface and is directly tested.
+- [x] Any retained split task input compatibility remains explicit and secondary.
+- [x] No unapproved changes landed in `src/main.ts`, UI, map, backpack, or styles.
+- [x] Existing migrated ownership assertions remain green and do not regress to older seams.
+- [x] The child plan and parent handoff both record the exact post-slice resume point.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
+
+## Child Closeout
+
+- Closed Child: `Runtime Task Input Contract Convergence`
+- Parent Task: `Mod First Runtime Migration`
+- Parent Stage: `Runtime Migration`
+- Closeout Status: `completed-but-open`
+- Project Progress Synced: `no`
+- Next Child: `Scene Runtime Task Input Convergence`
+- Next Child Status: `running`
+- Next Required Action: `Execute Task 1 of docs/superpowers/plans/2026-07-30-scene-runtime-task-input-convergence-plan.md.`
+- Next Entry Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-30-scene-runtime-task-input-convergence-plan.md`
+- Push Status: `success`
+- Push Commit: `91780be`
+- Resume From: `Stay on codex/migration-hot-tasks, confirm the worktree is clean, then start the scene-runtime task input convergence child.`

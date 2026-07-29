@@ -24,7 +24,7 @@ export function runSceneFromEvent(input: SceneRuntimeInput): SceneRuntimeResult 
     state: result.state,
     characterDefinitions: result.characterDefinitions,
     session: createSceneSession(result.state),
-    taskSignals: [],
+    taskInputs: [],
     effects: [],
   };
 }
@@ -41,7 +41,7 @@ export function runStoryTriggerRuntime(input: {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
   session: SceneRuntimeResult["session"];
-  taskSignals: SceneRuntimeResult["taskSignals"];
+  taskInputs: SceneRuntimeResult["taskInputs"];
   effects: SceneRuntimeResult["effects"];
 } {
   const eventRuntimeResult = runStoryEventRuntime({
@@ -56,7 +56,7 @@ export function runStoryTriggerRuntime(input: {
       state: eventRuntimeResult.state,
       characterDefinitions: eventRuntimeResult.characterDefinitions,
       session: null,
-      taskSignals: [],
+      taskInputs: [],
       effects: [],
     };
   }
