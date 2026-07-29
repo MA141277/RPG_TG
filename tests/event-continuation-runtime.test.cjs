@@ -12,8 +12,12 @@ const {
 } = require("../.test-dist/application/state/create-initial-state.js");
 const {
   chooseStorySceneOption,
+  continueStoryFromSourceEvent,
   startStoryEventById,
 } = require("../.test-dist/application/story/story-runtime.js");
+const {
+  applyEventOwnedPlayableCompletion,
+} = require("../.test-dist/application/events/event-playable-runtime.js");
 const {
   prototypeCharacters,
   prototypeMap,
@@ -46,6 +50,22 @@ function createEvent(id, entrySceneId, nextEventId) {
     conditions: [],
     entrySceneId,
     ...(nextEventId == null ? {} : { nextEventId }),
+  };
+}
+
+function createEventOwnedPlayableSession(sourceEventId) {
+  return {
+    sessionId: "playable.story-battle",
+    playableId: "story-battle",
+    integrationId: "playable.story-battle.scene.default",
+    family: "battle",
+    status: "active",
+    ownerContext: {
+      ownerKind: "scene",
+      ownerId: "scene.source",
+      returnPolicy: "reenter-owner",
+      sessionToken: sourceEventId,
+    },
   };
 }
 
@@ -199,5 +219,69 @@ test(
     assert.equal(continued.state.scene.activeEventId, null);
     assert.equal(continued.state.scene.activeSceneId, null);
     assert.equal(continued.state.scene.status, "idle");
+  }
+);
+
+test(
+  "event-owned playable completion continues the source event through story continuation seam",
+  () => {
+    assert.equal(
+      typeof continueStoryFromSourceEvent,
+      "function",
+      "story runtime should expose event-owned playable continuation"
+    );
+
+    const content = {
+      eventDefinitionsById: {
+        "event.playable.source": createEvent(
+          "event.playable.source",
+          "scene.playable.source",
+          "event.playable.followup"
+        ),
+        "event.playable.followup": createEvent(
+          "event.playable.followup",
+          "scene.playable.followup"
+        ),
+      },
+      sceneDefinitionsById: {
+        "scene.playable.source": {
+          id: "scene.playable.source",
+          name: "Playable Source",
+          actions: [],
+        },
+        "scene.playable.followup": {
+          id: "scene.playable.followup",
+          name: "Playable Follow-up",
+          actions: [],
+        },
+      },
+    };
+
+    const result = applyEventOwnedPlayableCompletion({
+      state: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      previousPlayableSession: createEventOwnedPlayableSession(
+        "event.playable.source"
+      ),
+      settlement: { outcome: "success" },
+      continueFromSourceEvent: ({ sourceEventId, state, characterDefinitions }) =>
+        continueStoryFromSourceEvent(
+          {
+            state,
+            characterDefinitions,
+          },
+          content,
+          sourceEventId
+        ),
+    });
+
+    assert.equal(result.handled, true);
+    assert.equal(
+      result.state.runtime.eventHistory["event.playable.followup"]?.firedCount,
+      1
+    );
+    assert.equal(result.state.scene.activeEventId, null);
+    assert.equal(result.state.scene.activeSceneId, null);
+    assert.equal(result.state.scene.status, "idle");
   }
 );

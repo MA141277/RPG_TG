@@ -3,6 +3,7 @@ import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import { continueToEvent } from "../events/event-continuation";
 import { startEvent } from "../events/event-runner";
 import {
   selectTriggeredEvents,
@@ -103,6 +104,32 @@ export function startStoryEventById(
   return syncStoryScene(
     {
       state: startEvent(runtime.state, eventDefinition),
+      characterDefinitions: runtime.characterDefinitions,
+    },
+    content
+  );
+}
+
+export function continueStoryFromSourceEvent(
+  runtime: StoryRuntimeContext,
+  content: StoryContent,
+  sourceEventId: string
+): StoryRuntimeResult | null {
+  const sourceEventDefinition = content.eventDefinitionsById[sourceEventId];
+  const continuation = continueToEvent({
+    state: runtime.state,
+    eventDefinitionsById: content.eventDefinitionsById,
+    sourceEventId,
+    targetEventId: sourceEventDefinition?.nextEventId,
+    visitedEventIds: [sourceEventId],
+  });
+  if (continuation == null) {
+    return null;
+  }
+
+  return syncStoryScene(
+    {
+      state: continuation.state,
       characterDefinitions: runtime.characterDefinitions,
     },
     content

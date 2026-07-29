@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Event-Owned Playable Continuation Slice
+
+### Added
+- `story-runtime` 新增 `continueStoryFromSourceEvent()`，让 event-owned playable completion 可以从 source event 继续到 authored `nextEventId`。
+- 扩展 `tests/event-continuation-runtime.test.cjs`，覆盖 event-owned playable completion 通过共享 story continuation seam 推进后续事件。
+
+### Impact
+- 这片只迁移 application story/event continuation runtime seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续可以继续把 event-owned playable completion 的 settlement / follow-up 链路收敛到同一 source event continuation 路径。
+
 ## 2026-07-29 Interactive Runtime FollowUp Forwarding Slice
 
 ### Added
