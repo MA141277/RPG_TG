@@ -50,3 +50,53 @@ test("state sync core seam creates and reapplies runtime bridge state", () => {
   assert.deepEqual(nextAppState.modalState, { kind: "notice" });
   assert.deepEqual(nextAppState.characterDefinitions, [{ id: "updated-hero" }]);
 });
+
+test("state sync core seam merges runtime status patches back into app state", () => {
+  const appState = {
+    gameState: { runtime: { flags: { ready: true } } },
+    beggingMiniGameState: null,
+    autoAdvanceState: null,
+    campaignTravelState: null,
+    cityDirectoryState: null,
+    cityMenuState: null,
+    locationDialogueState: null,
+    modalState: null,
+    characterDefinitions: [{ id: "hero" }],
+    characterStatusById: {
+      hero: { statPatch: { martial: 20 } },
+    },
+    cityStatusById: {
+      "city.test": { valuePatch: { prosperity: 10 } },
+    },
+    buildingStatusById: {
+      "house.test": { runtimePatch: { level: 1 } },
+    },
+  };
+
+  const runtimeState = stateSyncCoreSeam.createRuntimeStateFromAppState(appState);
+  const nextAppState = stateSyncCoreSeam.applyRuntimeStateToAppState(
+    appState,
+    runtimeState,
+    undefined,
+    {
+      hero: { skillPatch: { arithmetic: 3 } },
+    },
+    {
+      "city.test": { valuePatch: { danger: 4 } },
+    },
+    {
+      "house.test": { runtimePatch: { damaged: true } },
+    }
+  );
+
+  assert.deepEqual(nextAppState.characterStatusById.hero, {
+    statPatch: { martial: 20 },
+    skillPatch: { arithmetic: 3 },
+  });
+  assert.deepEqual(nextAppState.cityStatusById["city.test"], {
+    valuePatch: { prosperity: 10, danger: 4 },
+  });
+  assert.deepEqual(nextAppState.buildingStatusById["house.test"], {
+    runtimePatch: { level: 1, damaged: true },
+  });
+});

@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 State Sync Runtime Status Patch Slice
+
+### Added
+- `stateSyncCoreSeam.applyRuntimeStateToAppState()` 新增角色、城市、建筑 status patch 参数，并通过已有 `merge*StatusMaps` 合并回 app state。
+- 扩展 `tests/state-sync-core-seam.test.cjs`，覆盖已有 status 与运行时 patch 的合并行为。
+
+### Impact
+- 这片只扩展 core state-sync seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 runtime dispatch 返回 `characterStatusById` / `cityStatusById` / `buildingStatusById` 时，可通过统一 state sync seam 回写，不需要调用方手写状态表合并。
+
 ## 2026-07-29 Runtime Dispatch Settlement Carry Slice
 
 ### Added
