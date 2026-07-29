@@ -1,71 +1,55 @@
-# Task 1 Report: Add The Pure Coin Reward State Mutation
+# Task 1 Report: Runtime Export Contract
 
-## Implemented
+Status: DONE
 
-- Added `applyCoinReward(state, playerCharacterId, delta)` in `src/application/rewards/coin-reward.ts`.
-- The mutation returns a new `AppState` object.
-- Only the matching `characterDefinitions` entry is copied and updated.
-- Non-targeted character definitions retain their original object references.
-- The targeted character's `stats.gold` is incremented by `delta`.
+Commits created: none (git unavailable)
+
+## Summary
+
+Implemented the Task 1 runtime export contract so map3 editor cells export one-to-one into the runtime campaign hex grid while keeping gameplay hex size fixed at `hexTerrainScale=138` and `hexMapAspect=1.1285`.
+
+The final runtime export now writes signed `coordinateSystem.hexPointBounds`, keeps the one-to-one overlay projection metadata, and regenerates the `map3` runtime grid at `13512` cells. Settlement-backed `maps.json` nodes were regenerated from the updated runtime mapping during the required export step.
 
 ## TDD Evidence
 
-### RED
+RED:
 
-Command attempted:
+- Added `test("map3 runtime export keeps gameplay hex size and one-to-one cells", ...)` to `tests/robustness.test.cjs`.
+- Ran `node --test --test-name-pattern "map3 runtime export keeps gameplay hex size" tests/robustness.test.cjs`.
+- Result: failed as expected with `188.35381 !== 138` from `yuanmo-campaign-hex-grid-map2-runtime.json`.
 
-```powershell
-node --test tests/coin-reward-state.test.cjs
-```
+GREEN:
 
-Result:
+- Kept the existing exploratory `hexPointBounds` support in `src/domain/map.ts`.
+- Updated `src/yuanmo-hex-editor/runtime-grid-export.ts` so `mapRuntimeHexToGameCoordinate` explicitly accepts optional `hexPointBounds` and the one-to-one export preserves signed bound values instead of clamping negative extents.
+- Regenerated runtime data with `node tools\build-yuanmo-runtime-grid-from-editor-package.cjs --input map3`.
+- Result: runtime export now writes `hexTerrainScale: 138`, `hexMapAspect: 1.1285`, signed `hexPointBounds`, and `13512` runtime cells.
 
-- Failed before test execution because `node` was not available on the PowerShell PATH.
-- Error: `The term 'node' is not recognized as the name of a cmdlet...`
+## Verification
 
-I then located the bundled Codex Node runtime through the available `pnpm.cmd` wrapper and used it for follow-up verification.
+- `node tools\build-yuanmo-runtime-grid-from-editor-package.cjs --input map3`
+  - Passed.
+  - Output confirmed `Using editor package: map3` and wrote `13512` runtime cells.
+- `node --test --test-name-pattern "map3 runtime export keeps gameplay hex size" tests/robustness.test.cjs`
+  - Passed.
+- `npm run typecheck --silent`
+  - Passed.
 
-### GREEN
+## Changed Files
 
-Command attempted with bundled Node and the exact `--test` runner semantics:
-
-```powershell
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test tests/coin-reward-state.test.cjs
-```
-
-Result:
-
-- Failed before executing the test body due to sandbox child-process restrictions.
-- Error: `spawn EPERM`
-
-Fallback focused verification command:
-
-```powershell
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\coin-reward-state.test.cjs
-```
-
-Result:
-
-- PASS
-- `1` test passed
-- `0` tests failed
-- Output included: `✔ applyCoinReward adds gold only to the targeted player character`
-
-## Files Changed
-
-- `src/application/rewards/coin-reward.ts`
-- `tests/coin-reward-state.test.cjs`
+- `.superpowers/sdd/task-1-brief.md`
 - `.superpowers/sdd/task-1-report.md`
+- `src/yuanmo-hex-editor/runtime-grid-export.ts`
+- `src/content/scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-hex-grid-map2-runtime.json`
+- `src/content/scenario-packs/zhuyuanzhang/maps.json`
+- `tests/robustness.test.cjs`
 
-## Self-Review Notes
+## Notes
 
-- Scope stayed limited to application-layer state mutation and focused test.
-- No UI, DOM, animation, Haozhou city button, or runtime wiring was added.
-- Implementation is immutable for the top-level state, target character, and target stats object.
-- The function uses the existing `AppState` type import from `src/application/app-shell`.
+- `src/domain/map.ts` already contained the optional `hexPointBounds` contract required by Task 1, so no additional edit was needed there.
+- `tools/build-yuanmo-runtime-grid-from-editor-package.cjs` already supported the required `--input map3` export flow, so no code change was needed there.
+- The task brief asked to update `Execution State` and `Progress Log`, but those sections were missing from the file; they were added while syncing Task 1 completion.
 
 ## Concerns
 
-- The exact brief command `node --test tests/coin-reward-state.test.cjs` could not be completed in this sandbox because `node` is not on PATH.
-- Running the bundled Node binary with `--test` reached Node but failed with `spawn EPERM`, apparently due to sandbox child-process restrictions.
-- The focused test did pass when run in-process with the bundled Node binary.
+None.

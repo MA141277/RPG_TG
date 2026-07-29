@@ -34,7 +34,7 @@
   },
   {
     "id": "city.yingtian",
-    "name": "集庆路",
+    "name": "集庆路★上元",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.yingtian_province",
     "houseIds": [
@@ -65,7 +65,7 @@
   },
   {
     "id": "city.luzhou",
-    "name": "庐州路",
+    "name": "庐州路※合肥",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.luzhou_province",
     "houseIds": [
@@ -96,7 +96,7 @@
   },
   {
     "id": "city.anqing",
-    "name": "安庆路",
+    "name": "安庆路※怀宁",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.anqing_province",
     "houseIds": [
@@ -127,7 +127,7 @@
   },
   {
     "id": "city.taiping",
-    "name": "太平路",
+    "name": "太平路※当涂",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.taiping_province",
     "houseIds": [
@@ -158,7 +158,7 @@
   },
   {
     "id": "city.anfeng",
-    "name": "安丰路",
+    "name": "安丰路※安丰",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.tieling_province",
     "houseIds": [
@@ -220,7 +220,7 @@
   },
   {
     "id": "city.huaian",
-    "name": "高邮府",
+    "name": "高邮府※高邮军",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.huaian_province",
     "houseIds": [
@@ -251,7 +251,7 @@
   },
   {
     "id": "city.yangzhou",
-    "name": "扬州路",
+    "name": "扬州路※江都",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.yangzhou_province",
     "houseIds": [
@@ -282,7 +282,7 @@
   },
   {
     "id": "city.suzhou",
-    "name": "平江路",
+    "name": "平江路※吴县",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.suzhou_province",
     "houseIds": [
@@ -313,7 +313,7 @@
   },
   {
     "id": "city.wuchang",
-    "name": "武昌路",
+    "name": "武昌路★江夏",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.wuchang_province",
     "houseIds": [
@@ -344,7 +344,7 @@
   },
   {
     "id": "city.nanchang",
-    "name": "龙兴路",
+    "name": "龙兴路★南昌",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.nanchang_province",
     "houseIds": [
@@ -375,7 +375,7 @@
   },
   {
     "id": "city.chongqing",
-    "name": "重庆路",
+    "name": "重庆路※巴县",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.chongqing_province",
     "houseIds": [
@@ -406,7 +406,7 @@
   },
   {
     "id": "city.chengdu",
-    "name": "成都路",
+    "name": "成都路★成都",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.chendu_province",
     "houseIds": [
@@ -437,7 +437,7 @@
   },
   {
     "id": "city.ningbo",
-    "name": "庆元路",
+    "name": "庆元路※鄞县",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.ningbo_province",
     "houseIds": [
@@ -468,7 +468,7 @@
   },
   {
     "id": "city.wenzhou",
-    "name": "温州路",
+    "name": "温州路※永嘉",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.wenzhou_province",
     "houseIds": [
@@ -499,7 +499,7 @@
   },
   {
     "id": "city.fuzhou",
-    "name": "福州路",
+    "name": "福州路※闽县",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.fuzhou_province",
     "houseIds": [
@@ -530,7 +530,7 @@
   },
   {
     "id": "city.dadu",
-    "name": "大都路",
+    "name": "大都路★大都",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.shuntian_province",
     "houseIds": [
@@ -561,7 +561,7 @@
   },
   {
     "id": "city.kaifeng",
-    "name": "汴梁路",
+    "name": "定远",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.kaifeng_province",
     "houseIds": [
@@ -592,7 +592,7 @@
   },
   {
     "id": "city.gongchang",
-    "name": "巩昌路",
+    "name": "巩昌路※陇西",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.gongchang_province",
     "houseIds": [
@@ -623,7 +623,7 @@
   },
   {
     "id": "city.fengyuan",
-    "name": "奉元路",
+    "name": "奉元路★咸宁",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.xian_province",
     "houseIds": [

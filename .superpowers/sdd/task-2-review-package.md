@@ -1,507 +1,156 @@
-﻿# Review Package Task 2 Re-Review
+﻿# Task 2 Review Package
 
-Base: b9bd39b6
-Head: ff37697269c89ce4ea29b2c16e749ea072efeffe
+Git is unavailable in this environment. Review current file contents and implementer report against the Task 2 brief.
 
-## Commits
-ff376972 fix: include temple abbot in meeting roster
-6a0900ee feat: keep house primary actors in roster
+## Changed/Relevant Files
 
-## Stat
- .superpowers/sdd/task-2-report.md                  |  92 ++++++++++++++++++
- .../house-modules/tavern/tavern-house-module.ts    |  29 +++---
- .../temple-house/temple-house-house-module.ts      |  92 ++++++++++--------
- tests/robustness.test.cjs                          | 107 +++++++++++++++++++++
- 4 files changed, 264 insertions(+), 56 deletions(-)
+- tests/robustness.test.cjs
+- src/ui/views/map/campaign-terrain-webgl.ts
+- src/ui/views/map/shaders/campaign-terrain.frag.glsl if changed
 
-## Diff
-diff --git a/.superpowers/sdd/task-2-report.md b/.superpowers/sdd/task-2-report.md
-new file mode 100644
-index 00000000..2e204e22
---- /dev/null
-+++ b/.superpowers/sdd/task-2-report.md
-@@ -0,0 +1,92 @@
-+# Task 2 Report: Temple And Tavern View Models
-+
-+## Status
-+
-+DONE
-+
-+## Scope
-+
-+Modified only the Task 2 implementation files:
-+
-+- `src/application/house-modules/temple-house/temple-house-house-module.ts`
-+- `src/application/house-modules/tavern/tavern-house-module.ts`
-+- `tests/robustness.test.cjs`
-+
-+The report file was created as requested and was not included in the original Task 2 implementation commit.
-+
-+## TDD Evidence
-+
-+Added the requested failing tests to `tests/robustness.test.cjs`:
-+
-+- `primary house actor appears first in temple daily roster during greeting`
-+- `primary house actor appears first in tavern roster during greeting`
-+
-+Red run:
-+
-+```bash
-+npm run build:test
-+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
-+```
-+
-+Result: build succeeded; focused test run failed as expected on Tavern because the greeting roster was empty and `viewModel.standbyRoster[0]?.characterId` was `undefined` instead of `char.kulan_innkeeper`.
-+
-+Green run:
-+
-+```bash
-+npm run build:test
-+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
-+```
-+
-+Result: build succeeded; focused test run passed with 298 passing tests and 0 failures under the name pattern.
-+
-+## Implementation Notes
-+
-+Tavern `selectViewModel()` now imports and uses `orderHouseStandbyRoster()`, creates a stable boss actor from `defaultCharacterId ?? tavernBossProfile.actorId`, and returns that actor in `standbyRoster` during greeting/open dialogue as well as idle.
-+
-+Temple `selectViewModel()` now builds the standby actor list before returning, preserves meeting participant order, and applies `orderHouseStandbyRoster()` for non-meeting daily view models so the default abbot actor is first.
-+
-+No `main.ts` house-specific branch was added, no application HTML strings were introduced, and no persistent gameplay state was changed.
-+
-+## Commit
-+
-+Created commit:
-+
-+- `6a0900ee feat: keep house primary actors in roster`
-+
-+## Concerns
-+
-+None.
-+
-+## Reviewer Fix: Temple Meeting Primary Actor
-+
-+Reviewer finding addressed:
-+
-+- Temple meeting view models omitted the abbot/default primary actor because `getTempleMeetingParticipantIds()` filtered the abbot out and meeting mode bypassed `orderHouseStandbyRoster()`.
-+
-+Test coverage added:
-+
-+- `primary house actor appears first in temple meeting roster with player still selected`
-+
-+Red run:
-+
-+```bash
-+npm run build:test
-+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor"
-+```
-+
-+Result: build succeeded; focused test run failed as expected because the meeting roster started with `char.player` instead of `char.kulan_temple_abbot`.
-+
-+Fix:
-+
-+- Temple meeting participant ids now include the abbot/default primary actor.
-+- Temple `selectViewModel()` now applies `orderHouseStandbyRoster()` to meeting and daily rosters.
-+- The existing meeting player selected state remains on the player actor, and non-primary meeting participants remain in the roster.
-+
-+Green run:
-+
-+```bash
-+npm run build:test
-+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor"
-+```
-+
-+Result: build succeeded; focused test run passed with 299 passing tests and 0 failures under the name pattern.
-diff --git a/src/application/house-modules/tavern/tavern-house-module.ts b/src/application/house-modules/tavern/tavern-house-module.ts
-index 7a5fa638..5deef3ed 100644
---- a/src/application/house-modules/tavern/tavern-house-module.ts
-+++ b/src/application/house-modules/tavern/tavern-house-module.ts
-@@ -23,20 +23,21 @@ import type {
-   HouseModuleViewModel,
-   HouseOverlayViewModel,
- } from "../../../domain/house-module";
- import {
-   getTavernDrinkCountVariableKey,
-   getTavernTimeVariableKey,
-   type TavernWorkOffer,
- } from "../../../domain/tavern";
- import { defaultRuntimeContent } from "../../content/default-runtime-content";
- import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
-+import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
- import {
-   advanceTavernGambleMeldCountdown,
-   advanceTavernLongPublicReveal,
-   advanceTavernGambleNpcThinking,
-   canHumanLongHu,
-   clearTavernGamblePlaySlot,
-   confirmSelectedTavernGambleDiscards,
-   confirmTavernGamblePlayGroup,
-   createTavernGambleSession,
-   createTavernLongGambleSession,
-@@ -2076,46 +2077,46 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
-     const drinkCount = readNumericVariable(
-       input.gameState,
-       getTavernDrinkCountVariableKey(input.houseDefinition.id),
-       0
-     );
-     const capacity = getWorkCapacity(playerCharacter.stats.fame);
-     const isIdle = sessionState.dialoguePhase === "idle";
-     const isGreeting = sessionState.dialoguePhase === "greeting";
-     const isOpen = sessionState.dialoguePhase === "open";
-     const firstAvailableOffer = lists.availableOffers[0] ?? null;
-+    const tavernPrimaryActorId =
-+      input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId;
-+    const tavernBossActor = {
-+      characterId: tavernPrimaryActorId,
-+      name: tavernBossProfile.name,
-+      title: tavernBossProfile.title,
-+      actionId: "open-boss-dialogue",
-+      isSelected: !isIdle,
-+    };
- 
-     return {
-       moduleId: "tavern",
-       houseId: input.houseDefinition.id,
-       sceneTitle: "酒馆",
-       sceneSubtitle: "找活 / 买酒 / 下注",
--      standbyRoster: isIdle
--        ? [
--            {
--              characterId:
--                input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
--              name: tavernBossProfile.name,
--              title: tavernBossProfile.title,
--              actionId: "open-boss-dialogue",
--              isSelected: true,
--            },
--          ]
--        : [],
-+      standbyRoster: orderHouseStandbyRoster({
-+        primaryCharacterId: tavernPrimaryActorId,
-+        actors: [tavernBossActor],
-+      }),
-       dialogue:
-         isIdle
-           ? null
-           : {
-               mode: "character",
-               speakerName: tavernBossProfile.name,
--              characterId:
--                input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
-+              characterId: tavernPrimaryActorId,
-               position: "right",
-               textLines: sessionState.dialogueLines,
-               advanceActionId: isGreeting ? "advance-greeting" : null,
-               advanceHintText: isGreeting ? "点击继续" : null,
-             },
-       actionContainer: !isOpen
-         ? null
-         : sessionState.workPanelMode === "closed"
-           ? {
-               title: `${tavernBossProfile.name} / ${tavernBossProfile.specialty}`,
-diff --git a/src/application/house-modules/temple-house/temple-house-house-module.ts b/src/application/house-modules/temple-house/temple-house-house-module.ts
-index 93f190ff..62aadb5e 100644
---- a/src/application/house-modules/temple-house/temple-house-house-module.ts
-+++ b/src/application/house-modules/temple-house/temple-house-house-module.ts
-@@ -61,20 +61,21 @@ import {
- import {
-   ACTIVITY_COMPLETION_STAMINA_COST,
-   canAffordActivityCost,
-   spendPlayerStamina,
- } from "../../player/player-stamina";
- import {
-   convertHouseActivityDaysToSegments,
-   formatHouseActivityCostLine,
-   getHouseWorkDurationDays,
- } from "../../house/house-activity-costs";
-+import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
- import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
- import {
-   createHousePlayableRuntimeState,
-   readHousePlayableSessionState,
- } from "../../playables/house-playable-runtime-bridge";
- import {
-   markLateCouncilAttendancePenaltyProcessed,
-   resolveLateCouncilAttendance,
- } from "../../time/council-attendance";
- import {
-@@ -1629,21 +1630,22 @@ function getDailyTempleTasks(
- }
- 
- function getTempleMeetingParticipantIds(
-   houseCharacterIds: string[],
-   playerCharacterId: string,
-   abbotCharacterId: string
- ): string[] {
-   return Array.from(
-     new Set([
-       playerCharacterId,
--      ...houseCharacterIds.filter((characterId) => characterId !== abbotCharacterId),
-+      abbotCharacterId,
-+      ...houseCharacterIds,
-     ])
-   );
- }
- 
- function getTempleContributionEntries(
-   gameState: GameState,
-   playerCharacter: CharacterDefinition,
-   seniorMonkCharacter: CharacterDefinition
- ): Array<{
-   characterId: string;
-@@ -4413,75 +4415,81 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
-           ) ?? null;
-     const meetingParticipantIds = getTempleMeetingParticipantIds(
-       input.houseDefinition.characterIds,
-       input.playerCharacterId,
-       abbotCharacter.id
-     );
-     const standbyCharacterIds =
-       sessionState.mode === "meeting"
-         ? meetingParticipantIds
-         : input.houseDefinition.characterIds;
-+    const standbyActors = standbyCharacterIds.map((characterId) => {
-+      const characterDefinition = input.characterDefinitions.find(
-+        (candidateCharacter) => candidateCharacter.id === characterId
-+      );
-+      assertExists(
-+        characterDefinition,
-+        `Temple standby character not found for id "${characterId}".`
-+      );
-+      return {
-+        characterId: characterDefinition.id,
-+        name: characterDefinition.name,
-+        ...(sessionState.mode === "daily" &&
-+        characterDefinition.id === abbotCharacter.id
-+          ? { actionId: "open-abbot-dialogue" }
-+          : {}),
-+        ...(sessionState.mode === "meeting" &&
-+        characterDefinition.id === input.playerCharacterId
-+          ? { isSelected: true }
-+          : sessionState.mode === "meeting"
-+            ? { isSelected: false }
-+            : characterDefinition.id === dialogueSpeaker.id
-+              ? { isSelected: true }
-+              : {}),
-+        ...(characterDefinition.id === abbotCharacter.id
-+          ? {
-+              avatarArtClassName: "c-temple-house-avatar-art--abbot",
-+              portraitArtClassName: "c-temple-house-portrait-art--abbot",
-+            }
-+          : characterDefinition.id === input.playerCharacterId
-+            ? {
-+                avatarArtClassName: "c-temple-house-avatar-art--player",
-+                portraitArtClassName: "c-temple-house-portrait-art--player",
-+              }
-+            : {
-+                avatarArtClassName: "c-temple-house-avatar-art--senior-monk",
-+                portraitArtClassName: "c-temple-house-portrait-art--senior-monk",
-+              }),
-+        ...(characterDefinition.title == null
-+          ? {}
-+          : { title: characterDefinition.title }),
-+      };
-+    });
-+    const orderedStandbyActors = orderHouseStandbyRoster({
-+      primaryCharacterId: input.houseDefinition.defaultCharacterId,
-+      actors: standbyActors,
-+    });
- 
-     return {
-       moduleId: "temple-house",
-       houseId: input.houseDefinition.id,
-       sceneTitle: input.houseDefinition.name,
-       sceneSubtitle: isMonkStoryStage(nextState)
-         ? resolveTempleText(
-             input.textEntriesById,
-             "runtime.zhu_yuanzhang.temple.scene.monk.subtitle"
-           )
-         : resolveTempleText(
-             input.textEntriesById,
-             "runtime.zhu_yuanzhang.temple.scene.daily.subtitle"
-           ),
--      standbyRoster: standbyCharacterIds.map((characterId) => {
--          const characterDefinition = input.characterDefinitions.find(
--            (candidateCharacter) => candidateCharacter.id === characterId
--          );
--          assertExists(
--            characterDefinition,
--            `Temple standby character not found for id "${characterId}".`
--          );
--          return {
--            characterId: characterDefinition.id,
--            name: characterDefinition.name,
--            ...(sessionState.mode === "daily" &&
--            characterDefinition.id === abbotCharacter.id &&
--            sessionState.dialoguePhase === "idle"
--              ? { actionId: "open-abbot-dialogue" }
--              : {}),
--            ...(sessionState.mode === "meeting" &&
--            characterDefinition.id === input.playerCharacterId
--              ? { isSelected: true }
--              : sessionState.mode === "meeting"
--                ? { isSelected: false }
--                : {}),
--            ...(characterDefinition.id === abbotCharacter.id
--              ? {
--                  avatarArtClassName: "c-temple-house-avatar-art--abbot",
--                  portraitArtClassName: "c-temple-house-portrait-art--abbot",
--                }
--              : characterDefinition.id === input.playerCharacterId
--                ? {
--                    avatarArtClassName: "c-temple-house-avatar-art--player",
--                    portraitArtClassName: "c-temple-house-portrait-art--player",
--                  }
--                : {
--                    avatarArtClassName: "c-temple-house-avatar-art--senior-monk",
--                    portraitArtClassName: "c-temple-house-portrait-art--senior-monk",
--                  }),
--            ...(characterDefinition.title == null
--              ? {}
--              : { title: characterDefinition.title }),
--          };
--        }),
-+      standbyRoster: orderedStandbyActors,
-       dialogue:
-         sessionState.dialoguePhase === "idle"
-           ? null
-           : {
-               mode: "character",
-               speakerName: dialogueSpeaker.name,
-               characterId: dialogueSpeaker.id,
-               portraitArtClassName: dialoguePortraitArtClassName,
-               position: "right",
-               textLines:
-diff --git a/tests/robustness.test.cjs b/tests/robustness.test.cjs
-index 0d26865a..a872675a 100644
---- a/tests/robustness.test.cjs
-+++ b/tests/robustness.test.cjs
-@@ -3819,20 +3819,127 @@ test("primary house actor roster helper deduplicates actors without losing the f
-       { characterId: "char.guest", name: "Guest Duplicate" },
-     ],
-   });
- 
-   assert.deepEqual(
-     roster.map((actor) => actor.name),
-     ["Owner", "Guest"]
-   );
- });
- 
-+test("primary house actor appears first in temple daily roster during greeting", () => {
-+  const state = createInitialState({
-+    cards: prototypeCards,
-+    characters: prototypeCharacters,
-+    houses: prototypeHouses,
-+    cityEntries: prototypeCityEntries,
-+    map: prototypeMap,
-+  });
-+  const entered = templeHouseHouseModule.enter({
-+    gameState: state,
-+    characterDefinitions: prototypeCharacters,
-+    houseDefinition: templeHouse,
-+    playerCharacterId,
-+  });
-+  const viewModel = templeHouseHouseModule.selectViewModel({
-+    gameState: entered.gameState,
-+    characterDefinitions: entered.characterDefinitions,
-+    houseDefinition: templeHouse,
-+    playerCharacterId,
-+    sessionState: entered.sessionState,
-+  });
-+
-+  assert.equal(viewModel.dialogue?.characterId, templeHouse.defaultCharacterId);
-+  assert.equal(viewModel.standbyRoster[0]?.characterId, templeHouse.defaultCharacterId);
-+  assert.ok(
-+    viewModel.standbyRoster.some(
-+      (actor) => actor.characterId === templeHouse.defaultCharacterId
-+    )
-+  );
-+});
-+
-+test("primary house actor appears first in temple meeting roster with player still selected", () => {
-+  const monkCharacters = createPrototypeCharactersForStoryStage(
-+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-+  );
-+  const baseState = createMonkStageState();
-+  const entered = templeHouseHouseModule.enter({
-+    gameState: {
-+      ...baseState,
-+      runtime: {
-+        ...baseState.runtime,
-+        variables: {
-+          ...baseState.runtime.variables,
-+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
-+        },
-+      },
-+    },
-+    characterDefinitions: monkCharacters,
-+    houseDefinition: templeHouse,
-+    playerCharacterId,
-+  });
-+  const viewModel = templeHouseHouseModule.selectViewModel({
-+    gameState: entered.gameState,
-+    characterDefinitions: entered.characterDefinitions,
-+    houseDefinition: templeHouse,
-+    playerCharacterId,
-+    sessionState: entered.sessionState,
-+  });
-+
-+  assert.equal(entered.sessionState?.mode, "meeting");
-+  assert.equal(viewModel.standbyRoster[0]?.characterId, templeHouse.defaultCharacterId);
-+  assert.ok(
-+    viewModel.standbyRoster.some(
-+      (actor) => actor.characterId === templeHouse.defaultCharacterId
-+    )
-+  );
-+  assert.equal(
-+    viewModel.standbyRoster.find((actor) => actor.characterId === playerCharacterId)
-+      ?.isSelected,
-+    true
-+  );
-+  assert.ok(
-+    viewModel.standbyRoster.some(
-+      (actor) =>
-+        actor.characterId !== templeHouse.defaultCharacterId &&
-+        actor.characterId !== playerCharacterId
-+    )
-+  );
-+});
-+
-+test("primary house actor appears first in tavern roster during greeting", () => {
-+  const state = createInitialState({
-+    cards: prototypeCards,
-+    characters: prototypeCharacters,
-+    houses: prototypeHouses,
-+    cityEntries: prototypeCityEntries,
-+    map: prototypeMap,
-+  });
-+  const entered = tavernHouseModule.enter({
-+    gameState: state,
-+    characterDefinitions: prototypeCharacters,
-+    houseDefinition: tavernHouse,
-+    playerCharacterId,
-+  });
-+  const viewModel = tavernHouseModule.selectViewModel({
-+    gameState: entered.gameState,
-+    characterDefinitions: entered.characterDefinitions,
-+    houseDefinition: tavernHouse,
-+    playerCharacterId,
-+    sessionState: entered.sessionState,
-+  });
-+
-+  assert.equal(viewModel.dialogue?.characterId, tavernHouse.defaultCharacterId);
-+  assert.equal(viewModel.standbyRoster[0]?.characterId, tavernHouse.defaultCharacterId);
-+  assert.ok(viewModel.standbyRoster[0]?.actionId);
-+});
-+
- test("house enter and leave keep session wiring and interval side effects consistent", () => {
-   const state = createBaseState();
-   const enterResult = grainShopHouseModule.enter({
-     gameState: state,
-     characterDefinitions: prototypeCharacters,
-     houseDefinition: grainShopHouse,
-     playerCharacterId,
-   });
- 
-   assert.equal(enterResult.sessionState?.dialoguePhase, "greeting");
+## Search Evidence
+src\ui\views\map\campaign-terrain-webgl.ts:83:  worldScale: CampaignTerrainWorldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:566:    worldScale: DEFAULT_TERRAIN_WORLD_SCALE,
+src\ui\views\map\campaign-terrain-webgl.ts:574:  worldScale: CampaignTerrainWorldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:577:  const worldPoint = createTerrainWorldPoint(input.u, input.v, 0, input.worldScale);
+src\ui\views\map\campaign-terrain-webgl.ts:679:  terrainCoordinates: CampaignTerrainCoordinateSystem;
+src\ui\views\map\campaign-terrain-webgl.ts:680:  worldScale: CampaignTerrainWorldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:899:  worldScale: CampaignTerrainWorldScale
+src\ui\views\map\campaign-terrain-webgl.ts:903:    offsetX: camera.offsetX * worldScale.x,
+src\ui\views\map\campaign-terrain-webgl.ts:904:    offsetY: camera.offsetY * worldScale.y,
+src\ui\views\map\campaign-terrain-webgl.ts:1007:    createTerrainWorldPoint(u, v, height, renderer.projectionInput.materialSemanticModel.worldScale)
+src\ui\views\map\campaign-terrain-webgl.ts:1061:    renderer.projectionInput.materialSemanticModel.worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:1379:  currentTerrainWorldScale = materialSemanticModel.worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:2572:          worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:2607:          worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:2810:          worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:2965:          worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:2988:                worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:3013:            worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:3130:          worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:3151:              worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:3175:            worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:3273:          materialSemanticModel.worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:3365:        worldScale: materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:3378:        materialSemanticModel.worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:3788:  const point = terrainUvToHexPoint(u, v, coordinateSystem);
+src\ui\views\map\campaign-terrain-webgl.ts:3937:    input.semanticData.materialSemanticModel.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:4048:      minU = Math.min(minU, hexPointToTerrainU(center.x - radiusX, coordinateSystem));
+src\ui\views\map\campaign-terrain-webgl.ts:4049:      maxU = Math.max(maxU, hexPointToTerrainU(center.x + radiusX, coordinateSystem));
+src\ui\views\map\campaign-terrain-webgl.ts:4050:      minV = Math.min(minV, hexPointToTerrainV(center.y - radiusY, coordinateSystem));
+src\ui\views\map\campaign-terrain-webgl.ts:4051:      maxV = Math.max(maxV, hexPointToTerrainV(center.y + radiusY, coordinateSystem));
+src\ui\views\map\campaign-terrain-webgl.ts:4075:      const point = terrainUvToHexPoint(u, v, materialSemanticModel.terrainCoordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:4130:      const point = terrainUvToHexPoint(u, v, materialSemanticModel.terrainCoordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:4182:      const point = terrainUvToHexPoint(u, v, materialSemanticModel.terrainCoordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:4334:      const point = terrainUvToHexPoint(u, v, materialSemanticModel.terrainCoordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:4383:      const point = terrainUvToHexPoint(u, v, materialSemanticModel.terrainCoordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:4419:      const point = terrainUvToHexPoint(u, v, materialSemanticModel.terrainCoordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:4434:        const samplePoint = terrainUvToHexPoint(sampleU, sampleV);
+src\ui\views\map\campaign-terrain-webgl.ts:4488:        const point = terrainUvToHexPoint(u, v);
+src\ui\views\map\campaign-terrain-webgl.ts:4590:      const point = terrainUvToHexPoint(u, v, materialSemanticModel.terrainCoordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:4620:      const point = terrainUvToHexPoint(u, v);
+src\ui\views\map\campaign-terrain-webgl.ts:4684:      const point = terrainUvToHexPoint(u, v);
+src\ui\views\map\campaign-terrain-webgl.ts:4699:        const samplePoint = terrainUvToHexPoint(
+src\ui\views\map\campaign-terrain-webgl.ts:4893:  worldScale: CampaignTerrainWorldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:4909:        worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:5692:  worldScale: CampaignTerrainWorldScale
+src\ui\views\map\campaign-terrain-webgl.ts:5707:    const center = createTerrainWorldPoint(instance.u, instance.v, terrainHeight, worldScale);
+src\ui\views\map\campaign-terrain-webgl.ts:6214:      u: hexPointToTerrainU(center.x, materialSemanticModel.terrainCoordinates),
+src\ui\views\map\campaign-terrain-webgl.ts:6215:      v: hexPointToTerrainV(center.y, materialSemanticModel.terrainCoordinates),
+src\ui\views\map\campaign-terrain-webgl.ts:6302:      u: hexPointToTerrainU(center.x, input.materialSemanticModel.terrainCoordinates),
+src\ui\views\map\campaign-terrain-webgl.ts:6303:      v: hexPointToTerrainV(center.y, input.materialSemanticModel.terrainCoordinates),
+src\ui\views\map\campaign-terrain-webgl.ts:6326:  worldScale: CampaignTerrainWorldScale
+src\ui\views\map\campaign-terrain-webgl.ts:6334:        worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:6444:  worldScale: CampaignTerrainWorldScale
+src\ui\views\map\campaign-terrain-webgl.ts:6449:    createTerrainWorldPoint(fort.u, fort.v, height, worldScale)
+src\ui\views\map\campaign-terrain-webgl.ts:6483:  worldScale: CampaignTerrainWorldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:6501:    input.worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:6699:    u: hexPointToTerrainU(point.x),
+src\ui\views\map\campaign-terrain-webgl.ts:6700:    v: hexPointToTerrainV(point.y),
+src\ui\views\map\campaign-terrain-webgl.ts:6907:  worldScale: CampaignTerrainWorldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:6952:          input.worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:7059:  worldScale: CampaignTerrainWorldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:7081:    const center = createTerrainWorldPoint(instance.u, instance.v, height, input.worldScale);
+src\ui\views\map\campaign-terrain-webgl.ts:7088:    const worldScale = placement.baseWorldScale * instance.scale;
+src\ui\views\map\campaign-terrain-webgl.ts:7094:      const localX = (instance.mesh.positions[sourcePositionOffset] ?? 0) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:7095:      const localY = (instance.mesh.positions[sourcePositionOffset + 1] ?? 0) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:7096:      const localZ = (instance.mesh.positions[sourcePositionOffset + 2] ?? 0) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:7204:  const point = terrainUvToHexPoint(u, v);
+src\ui\views\map\campaign-terrain-webgl.ts:7209:    u: hexPointToTerrainU(center.x),
+src\ui\views\map\campaign-terrain-webgl.ts:7210:    v: hexPointToTerrainV(center.y),
+src\ui\views\map\campaign-terrain-webgl.ts:7309:  const terrainCoordinates = createCampaignTerrainCoordinateSystem(coordinateSystem);
+src\ui\views\map\campaign-terrain-webgl.ts:7320:    terrainCoordinates,
+src\ui\views\map\campaign-terrain-webgl.ts:7321:    worldScale: terrainCoordinates.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:7396:  const terrainCoordinates = createCampaignTerrainCoordinateSystem(
+src\ui\views\map\campaign-terrain-webgl.ts:7403:    terrainCoordinates,
+src\ui\views\map\campaign-terrain-webgl.ts:7404:    worldScale: terrainCoordinates.worldScale,
+src\ui\views\map\campaign-terrain-webgl.ts:7433:        u: hexPointToTerrainU(center.x, campaignHexGrid.coordinateSystem),
+src\ui\views\map\campaign-terrain-webgl.ts:7434:        v: hexPointToTerrainV(center.y, campaignHexGrid.coordinateSystem),
+src\ui\views\map\campaign-terrain-webgl.ts:7510:  worldScale: CampaignTerrainWorldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:7528:        input.worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:7590:    input.worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:7611:  worldScale: CampaignTerrainWorldScale
+src\ui\views\map\campaign-terrain-webgl.ts:7616:    createTerrainWorldPoint(cell.u, cell.v, height, worldScale)
+src\ui\views\map\campaign-terrain-webgl.ts:7866:    const u = hexPointToTerrainU(point.x);
+src\ui\views\map\campaign-terrain-webgl.ts:7867:    const v = hexPointToTerrainV(point.y);
+src\ui\views\map\campaign-terrain-webgl.ts:7921:    const point = terrainUvToHexPoint(avoidancePoint.u, avoidancePoint.v);
+src\ui\views\map\campaign-terrain-webgl.ts:7935:    const avoidPoint = terrainUvToHexPoint(avoidancePoint.u, avoidancePoint.v);
+src\ui\views\map\campaign-terrain-webgl.ts:8014:    const worldScale = placement.baseWorldScale * instance.scale;
+src\ui\views\map\campaign-terrain-webgl.ts:8019:      const localX = (instance.mesh.positions[sourcePositionOffset] ?? 0) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:8020:      const localY = (instance.mesh.positions[sourcePositionOffset + 1] ?? 0) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:8021:      const localZ = (instance.mesh.positions[sourcePositionOffset + 2] ?? 0) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:8099:  const worldScale = placement.baseWorldScale * instance.scale;
+src\ui\views\map\campaign-terrain-webgl.ts:8104:  ) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:8108:  ) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:8311:  worldScale: CampaignTerrainWorldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:8325:    const center = createTerrainWorldPoint(instance.u, instance.v, height, input.worldScale);
+src\ui\views\map\campaign-terrain-webgl.ts:8330:    const worldScale = placement.baseWorldScale * instance.scale;
+src\ui\views\map\campaign-terrain-webgl.ts:8335:    ) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:8339:    ) * worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:8372:  worldScale: CampaignTerrainWorldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:8378:    input.worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:8551:      input.materialSemanticModel.worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:8696:      const point = terrainUvToHexPoint(u, v);
+src\ui\views\map\campaign-terrain-webgl.ts:8846:  const minEdgeU = hexPointToTerrainU(minX);
+src\ui\views\map\campaign-terrain-webgl.ts:8847:  const maxEdgeU = hexPointToTerrainU(maxX);
+src\ui\views\map\campaign-terrain-webgl.ts:8848:  const minEdgeV = hexPointToTerrainV(minY);
+src\ui\views\map\campaign-terrain-webgl.ts:8849:  const maxEdgeV = hexPointToTerrainV(maxY);
+src\ui\views\map\campaign-terrain-webgl.ts:8896:      const point = terrainUvToHexPoint(u, v);
+src\ui\views\map\campaign-terrain-webgl.ts:9337:  worldScale: CampaignTerrainWorldScale
+src\ui\views\map\campaign-terrain-webgl.ts:9357:    worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:10316:  const point = terrainUvToHexPoint(u, v);
+src\ui\views\map\campaign-terrain-webgl.ts:10439:  worldScale: CampaignTerrainWorldScale = DEFAULT_TERRAIN_WORLD_SCALE
+src\ui\views\map\campaign-terrain-webgl.ts:10441:  return addTerrainVertex(vertices, u, v, u, v, height, normal, worldScale);
+src\ui\views\map\campaign-terrain-webgl.ts:10452:  worldScale: CampaignTerrainWorldScale = DEFAULT_TERRAIN_WORLD_SCALE
+src\ui\views\map\campaign-terrain-webgl.ts:10456:    (positionU - 0.5) * 2 * worldScale.x,
+src\ui\views\map\campaign-terrain-webgl.ts:10457:    (0.5 - positionV) * 2 * worldScale.y,
+src\ui\views\map\campaign-terrain-webgl.ts:10477:function getCampaignHexPointBounds(
+src\ui\views\map\campaign-terrain-webgl.ts:10492:function createCampaignTerrainCoordinateSystem(
+src\ui\views\map\campaign-terrain-webgl.ts:10495:  const hexPointBounds = getCampaignHexPointBounds(coordinateSystem);
+src\ui\views\map\campaign-terrain-webgl.ts:10502:    worldScale: {
+src\ui\views\map\campaign-terrain-webgl.ts:10515:    "worldScale" in coordinates
+src\ui\views\map\campaign-terrain-webgl.ts:10525:    : createCampaignTerrainCoordinateSystem(coordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:10531:  return createCampaignTerrainCoordinateSystem(coordinateSystem).worldScale;
+src\ui\views\map\campaign-terrain-webgl.ts:10534:function terrainUvToHexPoint(
+src\ui\views\map\campaign-terrain-webgl.ts:10540:  const terrainCoordinates = normalizeCampaignTerrainCoordinates(coordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:10541:  const bounds = terrainCoordinates.hexPointBounds;
+src\ui\views\map\campaign-terrain-webgl.ts:10549:function hexPointToTerrainU(
+src\ui\views\map\campaign-terrain-webgl.ts:10554:  const terrainCoordinates = normalizeCampaignTerrainCoordinates(coordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:10555:  const bounds = terrainCoordinates.hexPointBounds;
+src\ui\views\map\campaign-terrain-webgl.ts:10563:function hexPointToTerrainV(
+src\ui\views\map\campaign-terrain-webgl.ts:10568:  const terrainCoordinates = normalizeCampaignTerrainCoordinates(coordinates);
+src\ui\views\map\campaign-terrain-webgl.ts:10569:  const bounds = terrainCoordinates.hexPointBounds;
+src\ui\views\map\campaign-terrain-webgl.ts:10586:  const point = terrainUvToHexPoint(u, v);
+src\ui\views\map\campaign-terrain-webgl.ts:10609:      hexPointToTerrainU(center.x),
+src\ui\views\map\campaign-terrain-webgl.ts:10610:      hexPointToTerrainV(center.y)
+src\ui\views\map\campaign-terrain-webgl.ts:10764:  worldScale: CampaignTerrainWorldScale = DEFAULT_TERRAIN_WORLD_SCALE
+src\ui\views\map\campaign-terrain-webgl.ts:10767:    (u - 0.5) * 2 * worldScale.x,
+src\ui\views\map\campaign-terrain-webgl.ts:10768:    (0.5 - v) * 2 * worldScale.y,
+src\ui\views\map\campaign-terrain-webgl.ts:10815:  worldScale: CampaignTerrainWorldScale
+src\ui\views\map\campaign-terrain-webgl.ts:10833:        worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:10859:          worldScale
+src\ui\views\map\campaign-terrain-webgl.ts:10879:  worldScale: CampaignTerrainWorldScale
+src\ui\views\map\campaign-terrain-webgl.ts:10882:  const screenPoint = projectPoint(matrix, createTerrainWorldPoint(u, v, height, worldScale));
+tests\robustness.test.cjs:4519:  assert.match(terrainRendererSource, /function getCampaignHexPointBounds\(/);
+tests\robustness.test.cjs:4520:  assert.match(terrainRendererSource, /function createCampaignTerrainCoordinateSystem\(/);
+tests\robustness.test.cjs:4527:    /terrainUvToHexPoint\(u,\s*v,\s*materialSemanticModel\.terrainCoordinates\)/s

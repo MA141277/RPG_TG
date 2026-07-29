@@ -4,19 +4,19 @@
 
 - Current Stage: `Map Renderer Architecture`
 - Current Stage Status: `running`
-- Current Task: `Campaign Map-Space Volumetric Cloud`
+- Current Task: `Campaign Hex Runtime Grid Architecture`
 - Current Task Status: `completed-but-open`
-- Current Child: `Campaign Map-Space Volumetric Cloud`
+- Current Child: `Campaign Hex Runtime Grid Architecture`
 - Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-and-push-campaign-map-space-volumetric-cloud`
+- Next Required Action: `review-and-push-campaign-hex-runtime-grid-architecture`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-28-campaign-hex-runtime-grid-architecture-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md; do not close until push succeeds and the known child 27 baseline is accepted or resolved.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-28-campaign-hex-runtime-grid-architecture-plan.md; do not close until final review and push succeed.`
 
 ## Progress Log
 
@@ -88,18 +88,14 @@
   - Summary: `Added camera-scale LOD for the campaign structure model renderer so far zoom levels skip or reduce fort/city and village building allocations before expensive placement, shadow, instanced-buffer, and draw work.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign fort city model renderer applies camera-scale LOD before building placement" tests/robustness.test.cjs }`; `node --test --test-name-pattern "campaign fort city model renderer ports cyh instanced draw path|campaign fort city model renderer applies camera-scale LOD before building placement|campaign fort city model assets are engine-owned and not imported by map UI|campaign terrain canvas receives fort city model profile attributes|campaign map removes legacy city depth mesh model and texture assets|campaign map uses shoreamend visual renderer" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check` passed with only existing LF-to-CRLF working-copy warnings.`
   - Next: `Review final diff and push when requested; do not close while remote push is absent or the child 27 baseline remains unresolved/unaccepted.`
-- 2026-07-26
-  - Summary: `Opened the campaign map-space volumetric cloud child after user selected the conservative terrain-aligned slab option and requested subagent-driven execution.`
-  - Verification: `npm run lint:plans passed for 69 files.`
-  - Next: `Execute docs/superpowers/plans/2026-07-26-campaign-map-space-volumetric-cloud-plan.md from Task 1 using subagent-driven development.`
-- 2026-07-26
-  - Summary: `Completed local Task 3 verification and governance sync for the campaign map-space volumetric cloud child; child remains completed-but-open pending review, push, and known child 27 baseline resolution.`
-  - Verification: `npm run lint:plans` passed for 69 files; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs }` passed 5/5 tests; `npm run typecheck` passed; `npm run build` passed with existing Vite asset/chunk warnings; Edge/Playwright visual QA on `http://127.0.0.1:5173/` reached ready terrain/cloud canvases, panned/zoomed the map, and captured `D:\RPG_TG\.tmp\campaign-map-space-volumetric-cloud.png`.
-  - Next: `Review final diff and push when requested; do not close while remote push is absent and the known child 27 baseline remains unresolved.`
-- 2026-07-26
-  - Summary: `Fixed final-review issues for campaign map-space volumetric cloud alignment: shader ray reconstruction now follows terrain camera offset-unit, terrain-scale, height-scale, screen-scale, perspective, and tilt conventions; raw 0.0025 offset math and the no-op projection uniform retention were removed.`
-  - Verification: `RED npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud pan basis" tests/robustness.test.cjs }` failed on missing cameraOffsetUnit as expected; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud map-space volumetric slab|campaign cloud render keeps flowing cloud animation timing|campaign cloud freezes animation during map drag and zoom|campaign cloud stays frozen briefly after repeated zoom input stops|campaign fog exploration stays active without the removed shader renderer" tests/robustness.test.cjs }` passed 6/6; `npm run typecheck` passed; `npm run build` passed with existing Vite asset/chunk warnings.
-  - Next: `Commit final-review fix and report; keep child completed-but-open until remote push/review and known child 27 baseline resolution.`
+- 2026-07-28
+  - Summary: `Completed the local campaign hex runtime grid architecture child: map3 exports now keep fixed gameplay hex size, map3 generated cells map one-to-one into runtime cells, runtime extent uses hexPointBounds, renderer/shader/runtime-grid paths use the loaded coordinate service, and maps.json is regenerated from map3 settlements without old fort-only nodes.`
+  - Verification: `node tools\build-yuanmo-runtime-grid-from-editor-package.cjs --input map3`; `node --test --test-name-pattern "map3 runtime export keeps gameplay hex size|campaign terrain renderer uses loaded hex point bounds|runtime grid paths do not use default hex conversion|dynamic shoreline|loaded hex grid coordinate system" tests\robustness.test.cjs`; `npm run typecheck --silent`; `npm run build:test --silent`; `npm run build`; `npm run lint:plans`; browser runtime verification at `http://127.0.0.1:5173/` reached a fresh campaign in 濠州 with terrain/building/labels visible and no console errors.
+  - Next: `Run final code review, then push/review before child closeout; do not close while remote push is absent.`
+- 2026-07-28
+  - Summary: `Resolved final review findings for the campaign hex runtime grid architecture child: chunk cache signatures include coordinate-system bounds, shader soft shoreline sampling uses hexPointBounds size, and override tests assert exact one-to-one runtime cells. Final re-review found no Critical or Important issues.`
+  - Verification: `node --test --test-name-pattern "map3 runtime export keeps gameplay hex size|campaign terrain renderer uses loaded hex point bounds|runtime grid paths do not use default hex conversion|dynamic shoreline|loaded hex grid coordinate system" tests\robustness.test.cjs`; `npm run typecheck --silent`; `npm run build:test --silent`; `npm run build`; `npm run lint:plans`; browser smoke reached 濠州 with terrain visible and no console errors; final re-review reran targeted robustness subset with 5 pass, 0 fail.
+  - Next: `Push/review before child closeout; do not close while remote push is absent.`
 
 ## Latest Closeout
 

@@ -25,6 +25,25 @@ export type HexTravelGrid = {
   bounds: HexTravelBounds;
 };
 
+export type HexCoordinateSystem = {
+  hexTerrainScale: number;
+  hexMapAspect: number;
+  coordinateSpace: CoordinateSpace;
+  hexPointBounds?: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  };
+};
+
+type HexPointBounds = {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+};
+
 const HEX_TERRAIN_SCALE = 138;
 const HEX_MAP_ASPECT = 1.1285;
 const HEX_CORNER_OFFSETS = [
@@ -58,14 +77,17 @@ export function createHexTravelPath(input: {
   currentCoordinate: GridCoordinate;
   targetCoordinate: GridCoordinate;
   coordinateSpace: CoordinateSpace;
+  coordinateSystem?: HexCoordinateSystem;
 }): GridCoordinate[] {
   const startHex = coordinateToRoundedHex(
     input.currentCoordinate,
-    input.coordinateSpace
+    input.coordinateSpace,
+    input.coordinateSystem
   );
   const targetHex = coordinateToRoundedHex(
     input.targetCoordinate,
-    input.coordinateSpace
+    input.coordinateSpace,
+    input.coordinateSystem
   );
   const hexPath = createHexLinePath(startHex, targetHex);
 
@@ -90,7 +112,7 @@ export function createHexTravelPath(input: {
       return input.targetCoordinate;
     }
 
-    return hexToCoordinate(hex, input.coordinateSpace);
+    return hexToCoordinate(hex, input.coordinateSpace, input.coordinateSystem);
   });
 }
 
@@ -99,14 +121,17 @@ export function createPassableHexTravelPath(input: {
   targetCoordinate: GridCoordinate;
   coordinateSpace: CoordinateSpace;
   travelGrid: HexTravelGrid;
+  coordinateSystem?: HexCoordinateSystem;
 }): GridCoordinate[] | null {
   const startHex = coordinateToRoundedHex(
     input.currentCoordinate,
-    input.coordinateSpace
+    input.coordinateSpace,
+    input.coordinateSystem
   );
   const targetHex = coordinateToRoundedHex(
     input.targetCoordinate,
-    input.coordinateSpace
+    input.coordinateSpace,
+    input.coordinateSystem
   );
   const hexPath = createPassableHexPath({
     startHex,
@@ -123,38 +148,48 @@ export function createPassableHexTravelPath(input: {
     currentCoordinate: input.currentCoordinate,
     targetCoordinate: input.targetCoordinate,
     coordinateSpace: input.coordinateSpace,
+    ...(input.coordinateSystem == null ? {} : { coordinateSystem: input.coordinateSystem }),
   });
 }
 
 export function snapCoordinateToHexCenter(
   coordinate: GridCoordinate,
-  coordinateSpace: CoordinateSpace
+  coordinateSpace: CoordinateSpace,
+  coordinateSystem?: HexCoordinateSystem
 ): GridCoordinate {
   return hexToCoordinate(
-    coordinateToRoundedHex(coordinate, coordinateSpace),
-    coordinateSpace
+    coordinateToRoundedHex(coordinate, coordinateSpace, coordinateSystem),
+    coordinateSpace,
+    coordinateSystem
   );
 }
 
 export function coordinateToRoundedHex(
   coordinate: GridCoordinate,
-  coordinateSpace: CoordinateSpace
+  coordinateSpace: CoordinateSpace,
+  coordinateSystem?: HexCoordinateSystem
 ): HexCoordinate {
-  const terrainPoint = coordinateToHexTerrainPoint(coordinate, coordinateSpace);
+  const terrainPoint = coordinateToHexTerrainPoint(
+    coordinate,
+    coordinateSpace,
+    coordinateSystem
+  );
   return pixelToRoundedHex(terrainPoint.x, terrainPoint.y);
 }
 
 export function hexToCoordinate(
   hex: HexCoordinate,
-  coordinateSpace: CoordinateSpace
+  coordinateSpace: CoordinateSpace,
+  coordinateSystem?: HexCoordinateSystem
 ): GridCoordinate {
   const point = hexToPixel(hex);
-  return hexTerrainPointToCoordinate(point, coordinateSpace);
+  return hexTerrainPointToCoordinate(point, coordinateSpace, coordinateSystem);
 }
 
 export function hexToCoordinatePolygon(input: {
   hex: HexCoordinate;
   coordinateSpace: CoordinateSpace;
+  coordinateSystem?: HexCoordinateSystem;
   radiusScale?: number;
 }): GridCoordinate[] {
   const center = hexToPixel(input.hex);
@@ -166,17 +201,28 @@ export function hexToCoordinatePolygon(input: {
         x: center.x + corner.x * radiusScale,
         y: center.y + corner.y * radiusScale,
       },
-      input.coordinateSpace
+      input.coordinateSpace,
+      input.coordinateSystem
     )
   );
 }
 
 function hexTerrainPointToCoordinate(
   point: GridCoordinate,
-  coordinateSpace: CoordinateSpace
+  coordinateSpace: CoordinateSpace,
+  coordinateSystem?: HexCoordinateSystem
 ): GridCoordinate {
-  const u = clamp(point.x / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE) + 0.5, 0, 1);
-  const terrainV = clamp(point.y / HEX_TERRAIN_SCALE + 0.5, 0, 1);
+  const bounds = getHexPointBounds(coordinateSystem);
+  const u = clamp(
+    (point.x - bounds.minX) / Math.max(bounds.maxX - bounds.minX, 1),
+    0,
+    1
+  );
+  const terrainV = clamp(
+    (point.y - bounds.minY) / Math.max(bounds.maxY - bounds.minY, 1),
+    0,
+    1
+  );
 
   return {
     x: u * coordinateSpace.width,
@@ -277,6 +323,7 @@ function mapHexPathToCoordinates(input: {
   currentCoordinate: GridCoordinate;
   targetCoordinate: GridCoordinate;
   coordinateSpace: CoordinateSpace;
+  coordinateSystem?: HexCoordinateSystem;
 }): GridCoordinate[] {
   if (input.hexPath.length === 0) {
     return [input.currentCoordinate];
@@ -299,7 +346,7 @@ function mapHexPathToCoordinates(input: {
       return input.targetCoordinate;
     }
 
-    return hexToCoordinate(hex, input.coordinateSpace);
+    return hexToCoordinate(hex, input.coordinateSpace, input.coordinateSystem);
   });
 }
 
@@ -366,14 +413,31 @@ function isHexWithinBounds(hex: HexCoordinate, bounds: HexTravelBounds): boolean
 
 function coordinateToHexTerrainPoint(
   coordinate: GridCoordinate,
-  coordinateSpace: CoordinateSpace
+  coordinateSpace: CoordinateSpace,
+  coordinateSystem?: HexCoordinateSystem
 ): GridCoordinate {
   const u = coordinate.x / Math.max(coordinateSpace.width, 1);
   const terrainV = 1 - coordinate.y / Math.max(coordinateSpace.height, 1);
+  const bounds = getHexPointBounds(coordinateSystem);
 
   return {
-    x: (u - 0.5) * HEX_MAP_ASPECT * HEX_TERRAIN_SCALE,
-    y: (terrainV - 0.5) * HEX_TERRAIN_SCALE,
+    x: bounds.minX + clamp(u, 0, 1) * (bounds.maxX - bounds.minX),
+    y: bounds.minY + clamp(terrainV, 0, 1) * (bounds.maxY - bounds.minY),
+  };
+}
+
+function getHexPointBounds(coordinateSystem?: HexCoordinateSystem): HexPointBounds {
+  if (coordinateSystem?.hexPointBounds != null) {
+    return coordinateSystem.hexPointBounds;
+  }
+
+  const hexMapAspect = coordinateSystem?.hexMapAspect ?? HEX_MAP_ASPECT;
+  const hexTerrainScale = coordinateSystem?.hexTerrainScale ?? HEX_TERRAIN_SCALE;
+  return {
+    minX: -hexMapAspect * hexTerrainScale * 0.5,
+    maxX: hexMapAspect * hexTerrainScale * 0.5,
+    minY: -hexTerrainScale * 0.5,
+    maxY: hexTerrainScale * 0.5,
   };
 }
 

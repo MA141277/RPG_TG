@@ -1,0 +1,45 @@
+{
+  "mapId": "map.yuanmo_campaign",
+  "sampling": {
+    "scale": 1,
+    "step": 0.3,
+    "offsetX": 0,
+    "offsetY": 0,
+    "sourceCrop": {
+      "x": 237,
+      "y": 74,
+      "width": 200,
+      "height": 169
+    }
+  },
+  "sourceAssets": {
+    "terrainSourceImagePath": "yuanmo-map-ground-types.png",
+    "heightSourceImagePath": "yuanmo-map-heights.png",
+    "environmentSourceImagePath": "yuanmo-map-climates.png"
+  },
+  "uiState": {
+    "activeToolId": "settlement",
+    "selectedSettlementId": "settlement.city.city.7",
+    "selectedHexCell": {
+      "x": 236,
+      "y": -86
+    },
+    "showValidationOverlay": false
+  },
+  "generationMetadata": {
+    "ruleVersion": "yuanmo-hex-editor-v1",
+    "generatedAt": "2026-07-28T01:09:20.412Z",
+    "sampling": {
+      "scale": 1,
+      "step": 0.3,
+      "offsetX": 0,
+      "offsetY": 0,
+      "sourceCrop": {
+        "x": 237,
+        "y": 74,
+        "width": 200,
+        "height": 169
+      }
+    }
+  }
+}

@@ -1,118 +1,72 @@
-# Task 2 Report: Add The City Button And HUD/Overlay Contracts
+# Task 2 Report: Renderer Coordinate Service
 
 ## Status
 
-DONE_WITH_CONCERNS
+DONE
 
-## Implemented
+## Scope
 
-- Added the Haozhou city test button in `src/ui/views/city/city-view.ts`.
-- The button is permanently rendered in the city page and exposes `data-action="grant-haozhou-test-coin"`.
-- Added `goldTextOverride?: string | null` to `GlobalPlayerPanelModel` in `src/ui/panels/global-player-panel.ts`.
-- Added `resolvedGoldText = model.goldTextOverride ?? \`银两 ${model.goldText}\`` in the HUD render path.
-- Added `data-ui-gold-target` on the HUD gold target wrapper.
-- Added `data-ui-gold-value` on the HUD gold numeric text node.
-- Added the global coin reward layer mount point in `src/ui/app-render.ts`:
-  `<div class="p-ui-coin-reward-layer" data-ui-coin-reward-layer aria-hidden="true"></div>`.
-- Added the requested source-contract test in `tests/haozhou-city-coin-reward-source.test.cjs`.
+Implemented the Task 2 renderer coordinate-service seam so loaded runtime-grid extent comes from `coordinateSystem.hexPointBounds` instead of `hexTerrainScale` compensation.
 
-No runtime action handling, state mutation wiring, or animator implementation was added.
+Changed files:
 
-## TDD RED Evidence
-
-Added `tests/haozhou-city-coin-reward-source.test.cjs` with the exact assertions from the task brief.
-
-Initial task command:
-
-```powershell
-node --test tests\haozhou-city-coin-reward-source.test.cjs
-```
-
-Result: could not run because `node` is not on this PowerShell PATH.
-
-Bundled Node default test runner:
-
-```powershell
-& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test tests\haozhou-city-coin-reward-source.test.cjs
-```
-
-Result: failed before assertions with `Error: spawn EPERM`.
-
-Sandbox-compatible RED run:
-
-```powershell
-& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests\haozhou-city-coin-reward-source.test.cjs
-```
-
-Result: failed as expected on missing `data-action="grant-haozhou-test-coin"`.
-
-## TDD GREEN Evidence
-
-After minimal implementation, reran:
-
-```powershell
-& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests\haozhou-city-coin-reward-source.test.cjs
-```
-
-Result:
-
-```text
-✔ city view and hud expose the coin reward animation anchors (2.1893ms)
-ℹ tests 1
-ℹ suites 0
-ℹ pass 1
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 14.9598
-```
-
-## Additional Verification
-
-TypeScript check:
-
-```powershell
-& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' node_modules\typescript\bin\tsc --noEmit -p tsconfig.json
-```
-
-Result: exit code 0, no diagnostics.
-
-## Files Changed
-
-- `src/ui/views/city/city-view.ts`
-- `src/ui/panels/global-player-panel.ts`
-- `src/ui/app-render.ts`
-- `tests/haozhou-city-coin-reward-source.test.cjs`
+- `.superpowers/sdd/task-2-brief.md`
+- `tests/robustness.test.cjs`
+- `src/ui/views/map/campaign-terrain-webgl.ts`
 - `.superpowers/sdd/task-2-report.md`
 
-## Self-Review Notes
+Did not change:
 
-- Scope stayed limited to UI/source contracts.
-- The city button only emits the requested action attribute; no handler was implemented.
-- HUD override is optional and preserves existing text when unset.
-- The app shell layer is a passive mount point only.
-- No `main.ts` changes were made.
-- No gameplay state mutation or persistent data wiring was added.
+- `src/ui/views/map/shaders/campaign-terrain.frag.glsl`
+- Task 1 runtime export/data files
+- broad default conversion cleanup reserved for Task 3
 
-## Git / Commit
+## TDD Evidence
 
-Attempted:
+Red:
 
-```powershell
-git add tests/haozhou-city-coin-reward-source.test.cjs src/ui/views/city/city-view.ts src/ui/panels/global-player-panel.ts src/ui/app-render.ts
+```bash
+node --test --test-name-pattern "campaign terrain renderer uses loaded hex point bounds" tests\robustness.test.cjs
 ```
 
-Result:
+Result: failed as expected because `campaign-terrain-webgl.ts` did not yet contain `getCampaignHexPointBounds()` / `createCampaignTerrainCoordinateSystem()`.
 
-```text
-fatal: Unable to create 'D:/GitHub克隆文件/RPG_TG/RPG_TG/.git/index.lock': Permission denied
+Green:
+
+```bash
+node --test --test-name-pattern "campaign terrain renderer uses loaded hex point bounds" tests\robustness.test.cjs
+npm run typecheck --silent
 ```
 
-No commit was created because git index writes are blocked in this environment.
+Result: both commands passed.
+
+## Implementation Notes
+
+- Added local renderer types `CampaignTerrainHexPointBounds` and `CampaignTerrainCoordinateSystem`.
+- Added `getCampaignHexPointBounds()`, `createCampaignTerrainCoordinateSystem()`, and normalization helpers so UV/hex-point conversions can consume either the raw runtime `coordinateSystem` or the renderer coordinate service.
+- Rewrote `createCampaignTerrainWorldScale()` to derive scale from bounds width/height through the coordinate service.
+- Extended `CampaignMaterialSemanticModel` with `terrainCoordinates` and routed loaded-grid UV/hex-point conversion call sites through that canonical renderer service while keeping raw `coordinateSystem` available for existing callers.
 
 ## Concerns
 
-- The exact requested `node --test ...` command cannot run from the current PATH because `node` is not available there.
-- The bundled Node default test runner cannot spawn child test processes in this sandbox (`spawn EPERM`), so RED/GREEN evidence used `--test-isolation=none`.
-- Git staging/commit is blocked by `.git/index.lock` permission denial, as anticipated in the task brief.
+None.
+
+## Task 2 Review Follow-Up
+
+- Strengthened `tests/robustness.test.cjs` from a single source regex into AST-backed checks that inspect the live private functions `smoothNonMountainFlattenedHeightSamples`, `createMountainFloorHeightSamples`, `createMountainFloorSeedMask`, `smoothMountainFloorHeightSamples`, and `isLandTerrainSample`, and assert each `terrainUvToHexPoint(...)` call passes `materialSemanticModel.terrainCoordinates` (or a local alias) instead of relying on the default coordinate system.
+- Fixed the active loaded-grid terrain pipeline in `src/ui/views/map/campaign-terrain-webgl.ts` so the chunk-height smoothing, mountain-floor seeding/diffusion, and `isLandTerrainSample()` conversion path now sample through `materialSemanticModel.terrainCoordinates` for non-default `hexPointBounds` maps.
+- Scope stayed limited to the Task 2 live path. No runtime export files changed, and the broader default-call cleanup remains deferred to Task 3.
+
+### Review Follow-Up Verification
+
+```bash
+node --test --test-name-pattern "campaign terrain renderer uses loaded hex point bounds" tests\robustness.test.cjs
+```
+
+Result: passed after the AST assertions caught the previously missed default-coordinate calls and the live-path fix routed those calls through `materialSemanticModel.terrainCoordinates`.
+
+```bash
+npm run typecheck --silent
+```
+
+Result: passed.

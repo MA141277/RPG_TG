@@ -1,0 +1,1159 @@
+[
+  {
+    "id": "settlement.ryukyu_province",
+    "name": "首里城",
+    "type": "city",
+    "mapPosition": {
+      "x": 416,
+      "y": 269
+    },
+    "hexCell": {
+      "x": 306,
+      "y": -123
+    }
+  },
+  {
+    "id": "settlement.taiwan_province",
+    "name": "琉球",
+    "type": "city",
+    "mapPosition": {
+      "x": 361,
+      "y": 251
+    },
+    "hexCell": {
+      "x": 280,
+      "y": -135
+    }
+  },
+  {
+    "id": "settlement.lanxang_province",
+    "name": "琅勃拉邦（Luang-Prabang）",
+    "type": "city",
+    "mapPosition": {
+      "x": 241,
+      "y": 214
+    },
+    "hexCell": {
+      "x": 222,
+      "y": -161
+    }
+  },
+  {
+    "id": "settlement.shenglong_province",
+    "name": "东都-升龙府（Đông Đô）",
+    "type": "city",
+    "mapPosition": {
+      "x": 252,
+      "y": 236
+    },
+    "hexCell": {
+      "x": 221,
+      "y": -146
+    }
+  },
+  {
+    "id": "settlement.hatinh_province",
+    "name": "河静（Ha Tinh）",
+    "type": "city",
+    "mapPosition": {
+      "x": 251,
+      "y": 218
+    },
+    "hexCell": {
+      "x": 226,
+      "y": -158
+    }
+  },
+  {
+    "id": "settlement.ningxia_province",
+    "name": "宁夏府路",
+    "type": "city",
+    "mapPosition": {
+      "x": 261,
+      "y": 341
+    },
+    "hexCell": {
+      "x": 190,
+      "y": -74
+    }
+  },
+  {
+    "id": "settlement.xian_province",
+    "name": "奉元路★咸宁",
+    "type": "city",
+    "mapPosition": {
+      "x": 281,
+      "y": 325
+    },
+    "hexCell": {
+      "x": 207,
+      "y": -85
+    }
+  },
+  {
+    "id": "settlement.hanzhong_province",
+    "name": "兴元路※南郑",
+    "type": "city",
+    "mapPosition": {
+      "x": 269,
+      "y": 316
+    },
+    "hexCell": {
+      "x": 203,
+      "y": -91
+    }
+  },
+  {
+    "id": "settlement.yansui_province",
+    "name": "延安路●绥德州",
+    "type": "city",
+    "mapPosition": {
+      "x": 284,
+      "y": 351
+    },
+    "hexCell": {
+      "x": 200,
+      "y": -67
+    }
+  },
+  {
+    "id": "settlement.yanan_province",
+    "name": "延安路※肤施",
+    "type": "city",
+    "mapPosition": {
+      "x": 276,
+      "y": 340
+    },
+    "hexCell": {
+      "x": 200,
+      "y": -75
+    }
+  },
+  {
+    "id": "settlement.gongchang_province",
+    "name": "巩昌路※陇西",
+    "type": "city",
+    "mapPosition": {
+      "x": 246,
+      "y": 325
+    },
+    "hexCell": {
+      "x": 187,
+      "y": -85
+    }
+  },
+  {
+    "id": "settlement.guangzhou_province",
+    "name": "广州路※南海",
+    "type": "city",
+    "mapPosition": {
+      "x": 309,
+      "y": 250
+    },
+    "hexCell": {
+      "x": 249,
+      "y": -136
+    }
+  },
+  {
+    "id": "settlement.chaozhou_province",
+    "name": "潮州路※海阳",
+    "type": "city",
+    "mapPosition": {
+      "x": 325,
+      "y": 251
+    },
+    "hexCell": {
+      "x": 258,
+      "y": -135
+    }
+  },
+  {
+    "id": "settlement.zhaoqing_province",
+    "name": "肇庆路※高要",
+    "type": "city",
+    "mapPosition": {
+      "x": 289,
+      "y": 241
+    },
+    "hexCell": {
+      "x": 241,
+      "y": -142
+    }
+  },
+  {
+    "id": "settlement.qiongzhou_province",
+    "name": "乾宁安抚司※琼山",
+    "type": "city",
+    "mapPosition": {
+      "x": 283,
+      "y": 220
+    },
+    "hexCell": {
+      "x": 244,
+      "y": -156
+    }
+  },
+  {
+    "id": "settlement.guiling_province",
+    "name": "静江路※临桂",
+    "type": "city",
+    "mapPosition": {
+      "x": 288,
+      "y": 260
+    },
+    "hexCell": {
+      "x": 234,
+      "y": -129
+    }
+  },
+  {
+    "id": "settlement.nanning_province",
+    "name": "南宁路※宣化",
+    "type": "city",
+    "mapPosition": {
+      "x": 267,
+      "y": 249
+    },
+    "hexCell": {
+      "x": 225,
+      "y": -137
+    }
+  },
+  {
+    "id": "settlement.liuzhou_province",
+    "name": "柳州路※柳城",
+    "type": "city",
+    "mapPosition": {
+      "x": 280,
+      "y": 252
+    },
+    "hexCell": {
+      "x": 232,
+      "y": -135
+    }
+  },
+  {
+    "id": "settlement.guiyang_province",
+    "name": "顺元宣抚司※贵阳",
+    "type": "city",
+    "mapPosition": {
+      "x": 260,
+      "y": 268
+    },
+    "hexCell": {
+      "x": 215,
+      "y": -124
+    }
+  },
+  {
+    "id": "settlement.tongren_province",
+    "name": "播州宣抚司",
+    "type": "city",
+    "mapPosition": {
+      "x": 276,
+      "y": 276
+    },
+    "hexCell": {
+      "x": 221,
+      "y": -118
+    }
+  },
+  {
+    "id": "settlement.chendu_province",
+    "name": "成都路★成都",
+    "type": "city",
+    "mapPosition": {
+      "x": 242,
+      "y": 297
+    },
+    "hexCell": {
+      "x": 194,
+      "y": -104
+    }
+  },
+  {
+    "id": "settlement.jianchang_province",
+    "name": "建昌路※建安州",
+    "type": "city",
+    "mapPosition": {
+      "x": 244,
+      "y": 280
+    },
+    "hexCell": {
+      "x": 201,
+      "y": -116
+    }
+  },
+  {
+    "id": "settlement.kuizhou_province",
+    "name": "夔州路※奉节",
+    "type": "city",
+    "mapPosition": {
+      "x": 274,
+      "y": 298
+    },
+    "hexCell": {
+      "x": 212,
+      "y": -103
+    }
+  },
+  {
+    "id": "settlement.chongqing_province",
+    "name": "重庆路※巴县",
+    "type": "city",
+    "mapPosition": {
+      "x": 260,
+      "y": 291
+    },
+    "hexCell": {
+      "x": 207,
+      "y": -108
+    }
+  },
+  {
+    "id": "settlement.shunqing_province",
+    "name": "顺庆路※南充",
+    "type": "city",
+    "mapPosition": {
+      "x": 249,
+      "y": 309
+    },
+    "hexCell": {
+      "x": 194,
+      "y": -96
+    }
+  },
+  {
+    "id": "settlement.wuchang_province",
+    "name": "武昌路★江夏",
+    "type": "city",
+    "mapPosition": {
+      "x": 313,
+      "y": 301
+    },
+    "hexCell": {
+      "x": 234,
+      "y": -101
+    }
+  },
+  {
+    "id": "settlement.xiangyang_province",
+    "name": "襄阳路※襄阳",
+    "type": "city",
+    "mapPosition": {
+      "x": 293,
+      "y": 310
+    },
+    "hexCell": {
+      "x": 220,
+      "y": -95
+    }
+  },
+  {
+    "id": "settlement.hengzhou_province",
+    "name": "衡州路※衡阳",
+    "type": "city",
+    "mapPosition": {
+      "x": 303,
+      "y": 268
+    },
+    "hexCell": {
+      "x": 240,
+      "y": -124
+    }
+  },
+  {
+    "id": "settlement.shizhou_province",
+    "name": "沿边溪洞招讨司",
+    "type": "city",
+    "mapPosition": {
+      "x": 288,
+      "y": 285
+    },
+    "hexCell": {
+      "x": 225,
+      "y": -112
+    }
+  },
+  {
+    "id": "settlement.jingzhou_province",
+    "name": "中兴路※江陵",
+    "type": "city",
+    "mapPosition": {
+      "x": 295,
+      "y": 301
+    },
+    "hexCell": {
+      "x": 224,
+      "y": -101
+    }
+  },
+  {
+    "id": "settlement.yuezhou_province",
+    "name": "岳州路※巴陵",
+    "type": "city",
+    "mapPosition": {
+      "x": 306,
+      "y": 292
+    },
+    "hexCell": {
+      "x": 233,
+      "y": -107
+    }
+  },
+  {
+    "id": "settlement.changsha_province",
+    "name": "天临路※长沙",
+    "type": "city",
+    "mapPosition": {
+      "x": 306,
+      "y": 282
+    },
+    "hexCell": {
+      "x": 237,
+      "y": -114
+    }
+  },
+  {
+    "id": "settlement.nanchang_province",
+    "name": "龙兴路★南昌",
+    "type": "city",
+    "mapPosition": {
+      "x": 326,
+      "y": 286
+    },
+    "hexCell": {
+      "x": 247,
+      "y": -111
+    }
+  },
+  {
+    "id": "settlement.jian_province",
+    "name": "吉安路※庐陵",
+    "type": "city",
+    "mapPosition": {
+      "x": 320,
+      "y": 267
+    },
+    "hexCell": {
+      "x": 250,
+      "y": -124
+    }
+  },
+  {
+    "id": "settlement.fuuzhou_province",
+    "name": "抚州路※临川",
+    "type": "city",
+    "mapPosition": {
+      "x": 331,
+      "y": 277
+    },
+    "hexCell": {
+      "x": 253,
+      "y": -118
+    }
+  },
+  {
+    "id": "settlement.fuzhou_province",
+    "name": "福州路※闽县",
+    "type": "city",
+    "mapPosition": {
+      "x": 349,
+      "y": 269
+    },
+    "hexCell": {
+      "x": 267,
+      "y": -123
+    }
+  },
+  {
+    "id": "settlement.jianning_province",
+    "name": "延平路※南平",
+    "type": "city",
+    "mapPosition": {
+      "x": 339,
+      "y": 272
+    },
+    "hexCell": {
+      "x": 260,
+      "y": -121
+    }
+  },
+  {
+    "id": "settlement.zhangzhou_province",
+    "name": "漳州路※龙溪",
+    "type": "city",
+    "mapPosition": {
+      "x": 333,
+      "y": 257
+    },
+    "hexCell": {
+      "x": 261,
+      "y": -131
+    }
+  },
+  {
+    "id": "settlement.quanzhou_province",
+    "name": "泉州路※晋江",
+    "type": "city",
+    "mapPosition": {
+      "x": 339,
+      "y": 261
+    },
+    "hexCell": {
+      "x": 263,
+      "y": -128
+    }
+  },
+  {
+    "id": "settlement.hangzhou_province",
+    "name": "杭州路★钱塘",
+    "type": "city",
+    "mapPosition": {
+      "x": 352,
+      "y": 293
+    },
+    "hexCell": {
+      "x": 260,
+      "y": -107
+    }
+  },
+  {
+    "id": "settlement.ningbo_province",
+    "name": "庆元路※鄞县",
+    "type": "city",
+    "mapPosition": {
+      "x": 365,
+      "y": 290
+    },
+    "hexCell": {
+      "x": 269,
+      "y": -109
+    }
+  },
+  {
+    "id": "settlement.wenzhou_province",
+    "name": "温州路※永嘉",
+    "type": "city",
+    "mapPosition": {
+      "x": 351,
+      "y": 281
+    },
+    "hexCell": {
+      "x": 264,
+      "y": -115
+    }
+  },
+  {
+    "id": "settlement.shaoxing_province",
+    "name": "绍兴路※会稽",
+    "type": "city",
+    "mapPosition": {
+      "x": 358,
+      "y": 289
+    },
+    "hexCell": {
+      "x": 265,
+      "y": -109
+    }
+  },
+  {
+    "id": "settlement.yingtian_province",
+    "name": "集庆路★上元",
+    "type": "city",
+    "mapPosition": {
+      "x": 347,
+      "y": 302
+    },
+    "hexCell": {
+      "x": 254,
+      "y": -101
+    }
+  },
+  {
+    "id": "settlement.songjiang_province",
+    "name": "松江府※华亭",
+    "type": "city",
+    "mapPosition": {
+      "x": 364,
+      "y": 303
+    },
+    "hexCell": {
+      "x": 264,
+      "y": -100
+    }
+  },
+  {
+    "id": "settlement.suzhou_province",
+    "name": "平江路※吴县",
+    "type": "city",
+    "mapPosition": {
+      "x": 357,
+      "y": 304
+    },
+    "hexCell": {
+      "x": 259,
+      "y": -99
+    }
+  },
+  {
+    "id": "settlement.yangzhou_province",
+    "name": "扬州路※江都",
+    "type": "city",
+    "mapPosition": {
+      "x": 353,
+      "y": 312
+    },
+    "hexCell": {
+      "x": 254,
+      "y": -94
+    }
+  },
+  {
+    "id": "settlement.huizhou_province",
+    "name": "徽州路※歙县",
+    "type": "city",
+    "mapPosition": {
+      "x": 337,
+      "y": 294
+    },
+    "hexCell": {
+      "x": 251,
+      "y": -106
+    }
+  },
+  {
+    "id": "settlement.anqing_province",
+    "name": "安庆路※怀宁",
+    "type": "city",
+    "mapPosition": {
+      "x": 328,
+      "y": 300
+    },
+    "hexCell": {
+      "x": 244,
+      "y": -102
+    }
+  },
+  {
+    "id": "settlement.changzhou_province",
+    "name": "常州路※晋陵",
+    "type": "city",
+    "mapPosition": {
+      "x": 351,
+      "y": 306
+    },
+    "hexCell": {
+      "x": 255,
+      "y": -98
+    }
+  },
+  {
+    "id": "settlement.fenyang_province",
+    "name": "濠州",
+    "type": "city",
+    "mapPosition": {
+      "x": 334,
+      "y": 318
+    },
+    "hexCell": {
+      "x": 241,
+      "y": -90
+    }
+  },
+  {
+    "id": "settlement.huaian_province",
+    "name": "高邮府※高邮军",
+    "type": "city",
+    "mapPosition": {
+      "x": 347,
+      "y": 322
+    },
+    "hexCell": {
+      "x": 247,
+      "y": -87
+    }
+  },
+  {
+    "id": "settlement.kaifeng_province",
+    "name": "汴梁路★开封",
+    "type": "city",
+    "mapPosition": {
+      "x": 318,
+      "y": 327
+    },
+    "hexCell": {
+      "x": 229,
+      "y": -84
+    }
+  },
+  {
+    "id": "settlement.henan_province",
+    "name": "河南府路※洛阳",
+    "type": "city",
+    "mapPosition": {
+      "x": 302,
+      "y": 325
+    },
+    "hexCell": {
+      "x": 220,
+      "y": -85
+    }
+  },
+  {
+    "id": "settlement.nanyang_province",
+    "name": "南阳府※南阳",
+    "type": "city",
+    "mapPosition": {
+      "x": 302,
+      "y": 316
+    },
+    "hexCell": {
+      "x": 223,
+      "y": -91
+    }
+  },
+  {
+    "id": "settlement.runing_province",
+    "name": "颍州",
+    "type": "city",
+    "mapPosition": {
+      "x": 318,
+      "y": 311
+    },
+    "hexCell": {
+      "x": 234,
+      "y": -95
+    }
+  },
+  {
+    "id": "settlement.jinan_province",
+    "name": "济南路※历城",
+    "type": "city",
+    "mapPosition": {
+      "x": 334,
+      "y": 344
+    },
+    "hexCell": {
+      "x": 232,
+      "y": -72
+    }
+  },
+  {
+    "id": "settlement.dengzhou_province",
+    "name": "莱州※掖县",
+    "type": "city",
+    "mapPosition": {
+      "x": 361,
+      "y": 344
+    },
+    "hexCell": {
+      "x": 248,
+      "y": -72
+    }
+  },
+  {
+    "id": "settlement.yanzhou_province",
+    "name": "济宁路※巨野",
+    "type": "city",
+    "mapPosition": {
+      "x": 334,
+      "y": 331
+    },
+    "hexCell": {
+      "x": 237,
+      "y": -81
+    }
+  },
+  {
+    "id": "settlement.qingzhou_province",
+    "name": "益都路※益都",
+    "type": "city",
+    "mapPosition": {
+      "x": 348,
+      "y": 337
+    },
+    "hexCell": {
+      "x": 243,
+      "y": -77
+    }
+  },
+  {
+    "id": "settlement.taiyuan_province",
+    "name": "冀宁路※太原",
+    "type": "city",
+    "mapPosition": {
+      "x": 301,
+      "y": 352
+    },
+    "hexCell": {
+      "x": 210,
+      "y": -67
+    }
+  },
+  {
+    "id": "settlement.pingyang_province",
+    "name": "晋宁路※平阳",
+    "type": "city",
+    "mapPosition": {
+      "x": 299,
+      "y": 337
+    },
+    "hexCell": {
+      "x": 214,
+      "y": -77
+    }
+  },
+  {
+    "id": "settlement.datong_province",
+    "name": "大同路※大同",
+    "type": "city",
+    "mapPosition": {
+      "x": 309,
+      "y": 365
+    },
+    "hexCell": {
+      "x": 210,
+      "y": -58
+    }
+  },
+  {
+    "id": "settlement.shuntian_province",
+    "name": "大都路★大都",
+    "type": "city",
+    "mapPosition": {
+      "x": 339,
+      "y": 362
+    },
+    "hexCell": {
+      "x": 229,
+      "y": -60
+    }
+  },
+  {
+    "id": "settlement.daming_province",
+    "name": "大名路※大名",
+    "type": "city",
+    "mapPosition": {
+      "x": 318,
+      "y": 344
+    },
+    "hexCell": {
+      "x": 223,
+      "y": -72
+    }
+  },
+  {
+    "id": "settlement.baoding_province",
+    "name": "保定路※清苑",
+    "type": "city",
+    "mapPosition": {
+      "x": 325,
+      "y": 354
+    },
+    "hexCell": {
+      "x": 223,
+      "y": -65
+    }
+  },
+  {
+    "id": "settlement.xuanfu_province",
+    "name": "宣德府※宣德州",
+    "type": "city",
+    "mapPosition": {
+      "x": 324,
+      "y": 368
+    },
+    "hexCell": {
+      "x": 218,
+      "y": -56
+    }
+  },
+  {
+    "id": "settlement.qujing_province",
+    "name": "曲靖路总管府※南宁州",
+    "type": "city",
+    "mapPosition": {
+      "x": 243,
+      "y": 257
+    },
+    "hexCell": {
+      "x": 208,
+      "y": -131
+    }
+  },
+  {
+    "id": "settlement.hanseong_province",
+    "name": "汉城府（Hanseong）",
+    "type": "city",
+    "mapPosition": {
+      "x": 403,
+      "y": 346
+    },
+    "hexCell": {
+      "x": 272,
+      "y": -71
+    }
+  },
+  {
+    "id": "settlement.gyeongju_province",
+    "name": "庆州府（Gyeongju）",
+    "type": "city",
+    "mapPosition": {
+      "x": 413,
+      "y": 334
+    },
+    "hexCell": {
+      "x": 282,
+      "y": -79
+    }
+  },
+  {
+    "id": "settlement.pyeongyang_province",
+    "name": "平壤府（Pyeongyang）",
+    "type": "city",
+    "mapPosition": {
+      "x": 405,
+      "y": 368
+    },
+    "hexCell": {
+      "x": 266,
+      "y": -56
+    }
+  },
+  {
+    "id": "settlement.haeju_province",
+    "name": "海州府（Haeju）",
+    "type": "city",
+    "mapPosition": {
+      "x": 395,
+      "y": 352
+    },
+    "hexCell": {
+      "x": 266,
+      "y": -67
+    }
+  },
+  {
+    "id": "settlement.jeonju_province",
+    "name": "全州府（Jeonju）",
+    "type": "city",
+    "mapPosition": {
+      "x": 401,
+      "y": 331
+    },
+    "hexCell": {
+      "x": 276,
+      "y": -81
+    }
+  },
+  {
+    "id": "settlement.gangneung_province",
+    "name": "江陵大都护府（Gangneung）",
+    "type": "city",
+    "mapPosition": {
+      "x": 411,
+      "y": 349
+    },
+    "hexCell": {
+      "x": 276,
+      "y": -69
+    }
+  },
+  {
+    "id": "settlement.satsuma_province",
+    "name": "鹿儿岛城（Kagoshima）",
+    "type": "city",
+    "mapPosition": {
+      "x": 430,
+      "y": 308
+    },
+    "hexCell": {
+      "x": 301,
+      "y": -97
+    }
+  },
+  {
+    "id": "settlement.saga_province",
+    "name": "长崎（Nagasaki）",
+    "type": "city",
+    "mapPosition": {
+      "x": 423,
+      "y": 317
+    },
+    "hexCell": {
+      "x": 294,
+      "y": -91
+    }
+  },
+  {
+    "id": "settlement.hetuala_province",
+    "name": "辽阳路●五老山城",
+    "type": "city",
+    "mapPosition": {
+      "x": 387,
+      "y": 373
+    },
+    "hexCell": {
+      "x": 253,
+      "y": -52
+    }
+  },
+  {
+    "id": "settlement.gaizhou_province",
+    "name": "辽阳路●盖州",
+    "type": "city",
+    "mapPosition": {
+      "x": 372,
+      "y": 364
+    },
+    "hexCell": {
+      "x": 248,
+      "y": -59
+    }
+  },
+  {
+    "id": "settlement.guangning_province",
+    "name": "大宁路●锦州城",
+    "type": "city",
+    "mapPosition": {
+      "x": 363,
+      "y": 372
+    },
+    "hexCell": {
+      "x": 240,
+      "y": -53
+    }
+  },
+  {
+    "id": "settlement.tieling_province",
+    "name": "安丰路※安丰",
+    "type": "city",
+    "mapPosition": {
+      "x": 325,
+      "y": 313
+    },
+    "hexCell": {
+      "x": 237,
+      "y": -93
+    }
+  },
+  {
+    "id": "settlement.liaoyang_province",
+    "name": "辽阳路★东宁府",
+    "type": "city",
+    "mapPosition": {
+      "x": 371,
+      "y": 376
+    },
+    "hexCell": {
+      "x": 243,
+      "y": -50
+    }
+  },
+  {
+    "id": "settlement.tumed_province",
+    "name": "大同路●云内州",
+    "type": "city",
+    "mapPosition": {
+      "x": 295,
+      "y": 370
+    },
+    "hexCell": {
+      "x": 200,
+      "y": -54
+    }
+  },
+  {
+    "id": "settlement.cahar_province",
+    "name": "上都路※开平",
+    "type": "city",
+    "mapPosition": {
+      "x": 316,
+      "y": 377
+    },
+    "hexCell": {
+      "x": 211,
+      "y": -50
+    }
+  },
+  {
+    "id": "settlement.ihjuuaimag_province",
+    "name": "延安路※河套",
+    "type": "city",
+    "mapPosition": {
+      "x": 274,
+      "y": 361
+    },
+    "hexCell": {
+      "x": 191,
+      "y": -60
+    }
+  },
+  {
+    "id": "settlement.alasan_province",
+    "name": "兀剌海路※兀剌海城",
+    "type": "city",
+    "mapPosition": {
+      "x": 247,
+      "y": 361
+    },
+    "hexCell": {
+      "x": 175,
+      "y": -60
+    }
+  },
+  {
+    "id": "settlement.taiping_province",
+    "name": "太平路※当涂",
+    "type": "city",
+    "mapPosition": {
+      "x": 341,
+      "y": 301
+    },
+    "hexCell": {
+      "x": 251,
+      "y": -101
+    }
+  },
+  {
+    "id": "settlement.luzhou_province",
+    "name": "庐州路※合肥",
+    "type": "city",
+    "mapPosition": {
+      "x": 336,
+      "y": 307
+    },
+    "hexCell": {
+      "x": 246,
+      "y": -97
+    }
+  },
+  {
+    "id": "settlement.lanzhou_province",
+    "name": "兰州※皋兰",
+    "type": "city",
+    "mapPosition": {
+      "x": 251,
+      "y": 338
+    },
+    "hexCell": {
+      "x": 185,
+      "y": -76
+    }
+  },
+  {
+    "id": "settlement.ganzhou_province",
+    "name": "甘州路★张掖",
+    "type": "city",
+    "mapPosition": {
+      "x": 251,
+      "y": 338
+    },
+    "hexCell": {
+      "x": 186,
+      "y": -76
+    }
+  }
+]

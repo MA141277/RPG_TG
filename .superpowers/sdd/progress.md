@@ -21,12 +21,10 @@
 - 2026-07-25: Campaign Map Visual Profile final verification complete (commit 92db0c15 fixed nullable marker narrowing; targeted contracts, lint:plans, typecheck, and build passed; full npm test failed only known unrelated child 27 startup coordinator baseline, expected event.story.zhu_yuanzhang.haozhou_return_encounter, actual null).
 - 2026-07-25: Campaign Map Visual Profile final review P3 coverage findings resolved (map-view direct asset import guards added; targeted command rerun with 4 matching tests passing).
 - 2026-07-25: Campaign Fort City Model Renderer completed-open locally (commits 331e40ee..8b6fb044; targeted fort/city contracts, lint:plans, typecheck, and build passed; Edge runtime screenshot captured at D:\RPG_TG\.tmp\campaign-fort-city-model-renderer.png; full npm test failed only known unrelated child 27 startup coordinator baseline, expected event.story.zhu_yuanzhang.haozhou_return_encounter, actual null).
-- 2026-07-26: Campaign Map-Space Volumetric Cloud Task 1 complete (commits 9d77a247..c2f42734, review clean; targeted cloud boundary/lifecycle tests passed 5/5).
-- 2026-07-26: Campaign Map-Space Volumetric Cloud Task 2 complete (commits 9b1cac02..9098ec02, review clean after governance log fix; targeted cloud slab tests and typecheck passed).
-- 2026-07-26: Campaign Map-Space Volumetric Cloud Task 3 complete (commits 9098ec02..7127db96, review clean; lint:plans, targeted cloud tests, typecheck, build, and Edge browser QA passed).
-- Task 1: complete (working tree only, review clean; git commit blocked by index.lock permissions).
-- Task 2: complete (working tree only, review clean; git commit blocked by index.lock permissions).
-- Task 3: complete (working tree only, review clean; git commit blocked by index.lock permissions).
-- Task 4: complete (working tree only, review clean after target-binding and layer-preservation fixes; git commit blocked by index.lock permissions).
-- Task 5: complete (working tree only, review findings resolved locally; focused animation timing/randomness verification passed; git commit blocked by index.lock permissions).
-- Task 6: complete (working tree only; focused verification passed for coin reward state/source/animation tests plus tsc --noEmit; robustness suite remains noisy in this environment; git commit blocked by index.lock permissions).
+- 2026-07-27: Starting Yuanmo Hex Map Editor from `docs/superpowers/plans/2026-07-27-yuanmo-hex-map-editor-plan.md` in-place because local `git`/worktree tooling is unavailable; execution will use serialized subagent tasks with controller-side integration and review.
+- 2026-07-28: Campaign Hex Runtime Grid Architecture Task 1 complete (no git commits; review clean; typecheck and targeted runtime export test passed).
+- 2026-07-28: Campaign Hex Runtime Grid Architecture Task 2 complete (no git commits; review clean after live-path coordinate fix; typecheck and targeted renderer coordinate test passed).
+- 2026-07-28: Campaign Hex Runtime Grid Architecture Task 3 complete (no git commits; review clean; targeted runtime-grid cleanup test and typecheck passed).
+- 2026-07-28: Campaign Hex Runtime Grid Architecture Task 4 complete locally (no git commits; regenerated map3 runtime data; targeted grid/renderer tests, typecheck, build:test, build, and browser runtime verification passed; final review still pending).
+- 2026-07-28: Campaign Hex Runtime Grid Architecture final review fixes applied locally (no git commits; cache signature/algorithm version and shader bounds-size sampling fixed; targeted grid/renderer tests, typecheck, build:test, build, lint:plans, and browser smoke passed; final re-review pending).
+- 2026-07-28: Campaign Hex Runtime Grid Architecture final re-review complete (no Critical/Important findings; reviewer reran targeted robustness subset with 5 pass, 0 fail; push still pending because local git tooling is unavailable).

@@ -1,10 +1,13 @@
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import {
-  campaignMapCoordinateToHex,
   getCampaignHexCellKey,
   getCampaignHexDisc,
   type CampaignCoordinateSpace,
 } from "../../domain/campaign-hex";
+import {
+  coordinateToRoundedHex,
+  type HexCoordinateSystem,
+} from "../navigation/travel-to-coordinate";
 import type { GameState } from "../../domain/game-state";
 import type { MapDefinition, MapId } from "../../domain/map";
 import type { CampaignMapExplorationState } from "../../domain/map-exploration";
@@ -25,11 +28,13 @@ export function getRevealedCampaignHexKeys(
 export function getVisibleCampaignHexKeysForCoordinate(input: {
   coordinate: GridCoordinate;
   coordinateSpace: CampaignCoordinateSpace;
+  coordinateSystem?: HexCoordinateSystem;
   radius?: number;
 }): string[] {
-  const centerHex = campaignMapCoordinateToHex(
+  const centerHex = coordinateToRoundedHex(
     input.coordinate,
-    input.coordinateSpace
+    input.coordinateSpace,
+    input.coordinateSystem
   );
 
   return getCampaignHexDisc(centerHex, input.radius ?? 1).map((cell) =>
@@ -41,6 +46,7 @@ export function getClearCampaignHexKeys(input: {
   revealedHexKeys: string[];
   coordinate: GridCoordinate;
   coordinateSpace: CampaignCoordinateSpace;
+  coordinateSystem?: HexCoordinateSystem;
   visibleRadius?: number;
 }): string[] {
   return Array.from(
@@ -51,10 +57,12 @@ export function getClearCampaignHexKeys(input: {
           ? {
               coordinate: input.coordinate,
               coordinateSpace: input.coordinateSpace,
+              ...(input.coordinateSystem == null ? {} : { coordinateSystem: input.coordinateSystem }),
             }
           : {
               coordinate: input.coordinate,
               coordinateSpace: input.coordinateSpace,
+              ...(input.coordinateSystem == null ? {} : { coordinateSystem: input.coordinateSystem }),
               radius: input.visibleRadius,
             }
       ),
@@ -65,7 +73,8 @@ export function getClearCampaignHexKeys(input: {
 export function revealCampaignMapHexesForCoordinate(
   gameState: GameState,
   mapDefinition: MapDefinition,
-  coordinate: GridCoordinate
+  coordinate: GridCoordinate,
+  coordinateSystem?: HexCoordinateSystem
 ): GameState {
   const coordinateSpace =
     mapDefinition.coordinateSpace ??
@@ -78,6 +87,7 @@ export function revealCampaignMapHexesForCoordinate(
     revealedHexKeys: currentRevealed,
     coordinate,
     coordinateSpace,
+    ...(coordinateSystem == null ? {} : { coordinateSystem }),
     visibleRadius: 1,
   });
 

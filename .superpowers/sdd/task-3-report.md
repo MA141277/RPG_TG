@@ -1,112 +1,66 @@
-# Task 3 Report: Build The Coin Reward Animation Controller
+# Task 3 Report: Runtime-Grid Coordinate Cleanup
 
-Status: DONE_WITH_CONCERNS
+Status: DONE
 
 ## Scope
 
-Implemented only the Task 3 animation controller scaffold and focused test:
+Modified Task 3 files only:
 
-- `src/ui/animations/coin-reward-animation.ts`
-- `tests/coin-reward-animation.test.cjs`
+- `src/ui/views/map/campaign-terrain-webgl.ts`
+- `src/ui/views/map/shaders/campaign-terrain.frag.glsl`
+- `tests/robustness.test.cjs`
+- `docs/superpowers/plans/2026-07-28-campaign-hex-runtime-grid-architecture-plan.md`
 
-No `main.ts` wiring was added. No full four-stage coin effect was implemented.
+## TDD Evidence
 
-## Implementation
+Added the focused robustness contract:
 
-- Added `createCoinRewardAnimator(options)` export.
-- Added animator API:
-  - `setGoldTargetElement(element: HTMLElement | null): void`
-  - `play(input): void`
-- Stored the gold target element internally.
-- Implemented the minimal `play()` skeleton from the brief:
-  - emits `startValue`
-  - emits `targetValue`
-  - emits `null`
-  - keeps the target setter state referenced without using it yet.
+- `campaign terrain runtime grid paths do not use default hex conversion fallbacks`
 
-## TDD RED Evidence
+The brief's exact regex shape was too broad because it would also flag the legacy material-image fallback helper `isHexPassableAtHexPoint()`, which still intentionally uses the default conversion path for maps that do not load a runtime grid. The new test is narrowed to named runtime-grid functions and call chains instead of banning every default overload in the file.
 
-Created `tests/coin-reward-animation.test.cjs` first with the focused test from the brief.
-
-Command attempted:
+Red run:
 
 ```bash
-node --test tests/coin-reward-animation.test.cjs
+node --test --test-name-pattern "runtime grid paths do not use default hex conversion" tests\robustness.test.cjs
 ```
 
-Result: exit 1 before test execution because this PowerShell environment cannot find `node`:
+Result: exit `1`.
 
-```text
-node : The term 'node' is not recognized as the name of a cmdlet, function, script file, or operable program.
-```
+- Failed because the renderer still omitted `terrainCoordinates` in runtime-grid vegetation and structure call chains.
 
-Additional runtime lookup:
-
-- `Get-Command node` found no executable.
-- `Get-Command npm` found no executable.
-- `where.exe node` found no executable.
-- Common user/system Node install paths checked did not contain `node.exe`.
-- Local `node_modules/.bin/electron.CMD` exists, but it invokes `node` and fails for the same reason.
-- Local `node_modules/electron` does not currently contain a downloaded `electron.exe` binary.
-
-Expected RED per brief was module-not-found or missing export, but the environment blocked reaching that failure mode.
-
-## TDD GREEN Evidence
-
-After adding the minimal implementation, reran:
+Green run:
 
 ```bash
-node --test tests/coin-reward-animation.test.cjs
+node --test --test-name-pattern "runtime grid paths do not use default hex conversion|loaded hex grid coordinate system|dynamic shoreline" tests\robustness.test.cjs
+npm run typecheck --silent
 ```
 
-Result: exit 1 before test execution for the same missing `node` runtime:
+Result: both commands exited `0`.
 
-```text
-node : The term 'node' is not recognized as the name of a cmdlet, function, script file, or operable program.
-```
+## Implementation Notes
 
-The focused test could not be verified in this environment.
+- Threaded `materialSemanticModel.terrainCoordinates` through remaining runtime-grid cleanup paths:
+  - shoreline fallback sampling and shoreline edge raster bounds
+  - vegetation placement and avoidance
+  - fort/city structure placement
+  - UV passability checks
+  - helper snapping used by runtime-grid click/hex-center projection utilities
+- Kept the legacy material-image fallback helper untouched where default conversion remains intentional.
+- Aligned terrain shader semantics with signed `hexPointBounds` by adding `uHexPointBounds` and reconstructing `hexPoint` from bounds instead of the old centered `hexTerrainScale` rectangle.
 
-## Files Changed
-
-- Added `src/ui/animations/coin-reward-animation.ts`
-- Added `tests/coin-reward-animation.test.cjs`
-- Replaced stale unrelated content in `.superpowers/sdd/task-3-report.md` with this report.
-
-## Commit Attempt
-
-Command attempted:
+## Verification
 
 ```bash
-git add tests/coin-reward-animation.test.cjs src/ui/animations/coin-reward-animation.ts
+node --test --test-name-pattern "runtime grid paths do not use default hex conversion|loaded hex grid coordinate system|dynamic shoreline" tests\robustness.test.cjs
+npm run typecheck --silent
 ```
 
-Result: exit 1:
+Observed:
 
-```text
-fatal: Unable to create 'D:/GitHub克隆文件/RPG_TG/RPG_TG/.git/index.lock': Permission denied
-```
-
-No commit was created because git index writes are blocked in this environment.
-
-## Self-Review Notes
-
-- The implementation matches the exact minimal scaffold requested in the brief.
-- The test file imports the expected module path and uses the brief's values verbatim.
-- No existing Task 1 or Task 2 working-tree files were modified.
-- No special house module work was performed.
+- `3` targeted robustness tests passed.
+- TypeScript typecheck passed with no output.
 
 ## Concerns
 
-- The requested test command could not run because `node` is unavailable on PATH and no fallback Node-compatible executable was found locally.
-- RED/GREEN could not be proven with actual test-run assertions; only command-startup failures were captured.
-- Git staging and commit were blocked by `.git/index.lock` permission failure.
-
-## Controller verification by main thread
-
-Bundled Node fallback command:
-`powershell
-& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests\coin-reward-animation.test.cjs
-` 
-Result: PASS after strengthening the assertion to ssert.deepEqual(seenValues, [10, 20, null]).
-
+None.
