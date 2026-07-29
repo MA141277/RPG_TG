@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Flow Playable Runtime Dispatch Slice
+
+### Added
+- `runPlayableRuntime()` 现在可在调用方显式传入 `flowPlayablesById` 时启动、推进、退出 flow playable，并在完成时返回结构化 playable settlement。
+- 新增 `tests/flow-playable-runtime-dispatch.test.cjs`，覆盖 flow playable launch、confirm、select completion、settlement 与 exit。
+
+### Impact
+- 这片只迁移 core playable runtime 的 flow 分发接线，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 当前没有把 flow playable 接到任何可见 UI；后续接入剧本编辑器 runtime preview 或事件 playable 时，可继续沿用这条集中 runtime 分发路径。
+
 ## 2026-07-29 Flow Playable Runtime Kernel Slice
 
 ### Added
