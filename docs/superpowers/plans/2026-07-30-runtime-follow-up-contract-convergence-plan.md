@@ -12,10 +12,10 @@
 
 - Status: `completed-but-open`
 - Last Updated: `2026-07-30`
-- Current Focus: `The runtime-only convergence slice is implemented, verified, committed as 3f70822, and pushed to origin/codex/migration-hot-tasks. The remaining decision is whether to merge this checkpoint back to the aligned baseline now or keep it as a hot-task branch checkpoint.`
-- Next Step: `Review the pushed convergence checkpoint, then decide whether to merge codex/migration-hot-tasks back into the aligned baseline immediately or continue with another adjacent runtime-only slice first.`
-- Verification: `pnpm run build:test`; `node --test tests/runtime-follow-up-contract.test.cjs tests/runtime-router-follow-up-contract.test.cjs tests/runtime-dispatch-settlement.test.cjs`; `node --test --test-name-pattern "child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check` passed; `pnpm run lint:plans` still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue.`
-- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. The current convergence intentionally retains RuntimeResult.outcome, RuntimeResult.interactive, RuntimeFollowUpContext.handleOutcome, and RuntimeFollowUpContext.handleInteractive as explicit compatibility surfaces while narrowing dispatch so only one compatibility fallback path runs after canonical followUp is absent.`
+- Current Focus: `The runtime-only convergence slice is fully merged back at 92769f3. The next adjacent runtime-only candidate is task-input contract convergence, because taskInputs are already canonical while split taskActions/taskSignals compatibility seams still remain in core contracts and dispatch.`
+- Next Step: `Keep this child as completed-but-open for governance purposes, then start docs/superpowers/plans/2026-07-30-runtime-task-input-contract-convergence-plan.md from Task 1.`
+- Verification: `pnpm run build:test`; `node --test tests/runtime-follow-up-contract.test.cjs tests/runtime-router-follow-up-contract.test.cjs tests/runtime-dispatch-settlement.test.cjs`; `node --test --test-name-pattern "child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check` passed; `pnpm run lint:plans` still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue; merge-back updated origin/codex/sync-naqishuo-721ui-to-mmz and origin/codex/migration-hot-tasks to 92769f3.`
+- Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. The current convergence intentionally retains RuntimeResult.outcome, RuntimeResult.interactive, RuntimeFollowUpContext.handleOutcome, and RuntimeFollowUpContext.handleInteractive as explicit compatibility surfaces while narrowing dispatch so only one compatibility fallback path runs after canonical followUp is absent. Project-progress remains intentionally unsynced because the canonical progress entry still tracks an unrelated child and the user has not asked to repoint it.`
 
 ## Progress Log
 
@@ -39,6 +39,10 @@
   - Summary: `Committed and pushed the runtime follow-up contract convergence slice. The branch checkpoint now contains explicit canonical-versus-compatibility grouping in runtime-result, narrowed interactive fallback gating in runtime-dispatch, updated contract tests, and synchronized handoff/child-plan state.`
   - Verification: `git commit -m "merge: converge runtime follow-up contract"` created `3f70822`; `git push` updated `origin/codex/migration-hot-tasks` from `a7591f5` to `3f70822`.`
   - Next: `Decide whether to merge this pushed checkpoint back into the aligned baseline now or continue with the next adjacent runtime-only slice on codex/migration-hot-tasks.`
+- 2026-07-30
+  - Summary: `Merge-back completed. The convergence slice now sits at 92769f3 on codex/migration-hot-tasks, codex/sync-naqishuo-721ui-to-mmz-followup, origin/codex/migration-hot-tasks, and origin/codex/sync-naqishuo-721ui-to-mmz.`
+  - Verification: `git push origin HEAD:codex/sync-naqishuo-721ui-to-mmz` updated the remote baseline to `92769f3`; `git switch codex/migration-hot-tasks`; `git merge --ff-only codex/sync-naqishuo-721ui-to-mmz-followup`; `git push` updated `origin/codex/migration-hot-tasks` to `92769f3`; `git branch -d codex/sync-naqishuo-721ui-to-mmz` removed the redundant local baseline mirror.`
+  - Next: `Open the next adjacent runtime-only child for task-input contract convergence.`
 
 ---
 
@@ -410,3 +414,19 @@ Recorded result:
 - [x] `Execution State` updated
 - [x] `Progress Log` updated
 - [x] Verification recorded
+
+## Child Closeout
+
+- Closed Child: `Runtime Follow-Up Contract Convergence`
+- Parent Task: `Mod First Runtime Migration`
+- Parent Stage: `Runtime Migration`
+- Closeout Status: `completed-but-open`
+- Project Progress Synced: `no`
+- Next Child: `Runtime Task Input Contract Convergence`
+- Next Child Status: `running`
+- Next Required Action: `Execute Task 1 of docs/superpowers/plans/2026-07-30-runtime-task-input-contract-convergence-plan.md.`
+- Next Entry Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-30-runtime-task-input-contract-convergence-plan.md`
+- Push Status: `success`
+- Push Commit: `92769f3`
+- Resume From: `Stay on codex/migration-hot-tasks, confirm the worktree is clean, then start the runtime task-input contract convergence child.`

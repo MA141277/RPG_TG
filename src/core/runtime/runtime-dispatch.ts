@@ -136,11 +136,7 @@ function settleRuntimeTasks(input: {
     input.state.core.runtime.tasks ?? createEmptyTaskRuntimeState("");
   const taskUpdates: NonNullable<RuntimeResult["taskUpdates"]> = [];
   const effects: RuntimeResult["effects"] = [];
-  const taskInputs = [
-    ...(input.taskInputs ?? []),
-    ...(input.taskActions ?? []),
-    ...(input.taskSignals ?? []),
-  ];
+  const taskInputs = selectRuntimeTaskInputs(input);
 
   for (const taskInput of taskInputs) {
     if (isTaskRuntimeAction(taskInput)) {
@@ -189,6 +185,18 @@ function settleRuntimeTasks(input: {
     taskUpdates,
     effects,
   };
+}
+
+function selectRuntimeTaskInputs(input: {
+  taskInputs: RuntimeResult["taskInputs"];
+  taskActions: RuntimeResult["taskActions"];
+  taskSignals: RuntimeResult["taskSignals"];
+}): NonNullable<RuntimeResult["taskInputs"]> {
+  if ((input.taskInputs?.length ?? 0) > 0) {
+    return input.taskInputs ?? [];
+  }
+
+  return [...(input.taskActions ?? []), ...(input.taskSignals ?? [])];
 }
 
 function isTaskRuntimeAction(value: unknown): value is TaskAction {

@@ -149,6 +149,111 @@ test("dispatchRuntimeRequest settles routed taskInputs without requiring split t
   );
 });
 
+test("dispatchRuntimeRequest treats split task action and signal fields as fallback-only when canonical taskInputs are present", () => {
+  const result = dispatchRuntimeRequest({
+    state: createBaseRuntimeState(),
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.task-inputs-canonical-first",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [],
+          taskInputs: [
+            {
+              type: "start",
+              taskId: "task.dispatch.primary",
+              occurredAt: "2026-07-30T08:00:00.000Z",
+              source: "event-runtime",
+            },
+            {
+              type: "scene.reported",
+              source: "scene-runtime",
+              occurredAt: "2026-07-30T08:05:00.000Z",
+            },
+          ],
+          taskActions: [
+            {
+              type: "start",
+              taskId: "task.dispatch.legacy",
+              occurredAt: "2026-07-30T08:10:00.000Z",
+              source: "event-runtime",
+            },
+          ],
+          taskSignals: [
+            {
+              type: "scene.legacy-only",
+              source: "scene-runtime",
+              occurredAt: "2026-07-30T08:15:00.000Z",
+            },
+          ],
+        }),
+      },
+      taskDefinitionsById: {
+        "task.dispatch.primary": {
+          id: "task.dispatch.primary",
+          title: "Dispatch Primary Task",
+          objectives: [
+            { id: "report", target: 1, signalType: "scene.reported" },
+          ],
+          onCompleteEffects: [
+            {
+              type: "setFlag",
+              key: "task.dispatch.primary.completed",
+              value: true,
+            },
+          ],
+        },
+        "task.dispatch.legacy": {
+          id: "task.dispatch.legacy",
+          title: "Dispatch Legacy Task",
+          objectives: [
+            { id: "report", target: 1, signalType: "scene.legacy-only" },
+          ],
+          onCompleteEffects: [
+            {
+              type: "setFlag",
+              key: "task.dispatch.legacy.completed",
+              value: true,
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  assert.equal(
+    result.state.core.runtime.tasks.instancesByTaskId["task.dispatch.primary"]
+      .status,
+    "completed"
+  );
+  assert.equal(
+    result.state.core.runtime.tasks.instancesByTaskId["task.dispatch.legacy"],
+    undefined
+  );
+  assert.equal(
+    result.state.core.runtime.flags["task.dispatch.primary.completed"],
+    true
+  );
+  assert.equal(
+    result.state.core.runtime.flags["task.dispatch.legacy.completed"],
+    undefined
+  );
+  assert.deepEqual(
+    result.taskUpdates.map((update) => ({
+      taskId: update.taskId,
+      type: update.type,
+    })),
+    [
+      { taskId: "task.dispatch.primary", type: "started" },
+      { taskId: "task.dispatch.primary", type: "completed" },
+    ]
+  );
+});
+
 test("dispatchRuntimeRequest handles routed followUp before legacy interactive fallback", () => {
   const state = createBaseRuntimeState();
   let handledFollowUp = null;
