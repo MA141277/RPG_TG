@@ -84,6 +84,43 @@ In short:
 - prefer reusable systems over temporary patches
 - prefer genre-proven design over ad hoc invention
 
+## Main Shell / Resource / Style Governance
+
+If a task touches any of the following areas:
+
+- `src/main.ts`
+- top-level app bootstrapping
+- runtime / startup / render coordinators
+- UI action dispatch
+- map interaction wiring
+- backpack or inventory actions
+- house action wiring
+- event / dialogue / playable runtime wiring
+- resource imports or resource paths
+- layout presenter / layout view boundaries
+- CSS / style files / design tokens
+
+the agent must read and follow:
+
+- `docs/main-shell-contract.md`
+
+Before editing these areas, the agent must check whether the change belongs in:
+
+- an existing feature module
+- a runtime coordinator
+- a startup coordinator
+- a render coordinator
+- a presenter
+- a transition / compat layer
+
+Do not add new feature business logic to `src/main.ts`.
+
+If the correct owner is unclear, do not put the logic in `src/main.ts`; place it in the documented transition layer and record the target owner and cleanup condition.
+
+For styles, new CSS should use design tokens. Do not add hardcoded colors, z-index values, arbitrary spacing, or viewport-scaled font sizes unless the exception is documented as described in `docs/main-shell-contract.md`.
+
+When modifying `src/main.ts`, resource wiring, layout boundaries, or styles, update or add guard tests where practical.
+
 ## Spine Plugin Trigger
 
 If the user says "启动spine插件", "启动 Spine 插件", "打开骨骼绑定工具", or asks to start the spine/binding editor, use the project skill:
