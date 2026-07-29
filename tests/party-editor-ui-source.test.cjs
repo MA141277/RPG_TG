@@ -1,6 +1,157 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const path = require("node:path");
+const ts = require("typescript");
+
+const TROOP_EDITOR_TEST_DIST = path.join(
+  ".test-dist",
+  "ui",
+  "views",
+  "troop-editor"
+);
+
+function compileTroopEditorModuleForTest(fileName) {
+  const sourcePath = path.join("src", "ui", "views", "troop-editor", fileName);
+  const outputPath = path.join(
+    TROOP_EDITOR_TEST_DIST,
+    fileName.replace(/\.ts$/, ".js")
+  );
+  const source = fs.readFileSync(sourcePath, "utf8");
+  const { outputText } = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+      moduleResolution: ts.ModuleResolutionKind.NodeJs,
+      verbatimModuleSyntax: false,
+    },
+    fileName: sourcePath,
+  });
+
+  fs.mkdirSync(TROOP_EDITOR_TEST_DIST, { recursive: true });
+  fs.writeFileSync(outputPath, outputText);
+}
+
+[
+  "troop-preview-grid.ts",
+  "troop-button-sound-policy.ts",
+  "troop-editor-view.ts",
+  "troop-management-view.ts",
+].forEach(compileTroopEditorModuleForTest);
+
+const {
+  renderTroopEditorView,
+} = require("../.test-dist/ui/views/troop-editor/troop-editor-view.js");
+const {
+  renderTroopManagementView,
+} = require("../.test-dist/ui/views/troop-editor/troop-management-view.js");
+
+const PREVIEW_SLOTS = [
+  "rear-left",
+  "middle-left",
+  "front-left",
+  "rear-center",
+  "middle-center",
+  "front-center",
+  "rear-right",
+  "middle-right",
+  "front-right",
+].map((slotKey) => ({
+  slotKey,
+  label: slotKey,
+  role: null,
+  isOccupied: false,
+}));
+
+const BATTLEFIELD_SLOTS = PREVIEW_SLOTS.map((slot, index) => ({
+  ...slot,
+  row: Math.floor(index / 3),
+  column: index % 3,
+}));
+
+function createTroopEditorHtml() {
+  return renderTroopEditorView({
+    title: "troop-editor",
+    resources: [],
+    troops: [
+      {
+        id: "troop.a",
+        name: "Troop A",
+        subtitle: "",
+        slots: PREVIEW_SLOTS,
+      },
+    ],
+    reserveMembers: [
+      { id: "reserve.a", name: "Reserve A", roleLabel: "infantry" },
+    ],
+    shopOffers: [
+      {
+        id: "offer.a",
+        name: "Offer A",
+        roleLabel: "cavalry",
+        price: 100,
+        priceText: "100",
+        requiredFame: 0,
+        requiredFameText: "0",
+      },
+    ],
+    menu: [
+      { id: "manage", label: "manage", actionId: "open-troop-management" },
+      { id: "create", label: "create", actionId: null },
+      { id: "exit", label: "exit", actionId: "close-troop-editor" },
+    ],
+    selectedTroopId: "troop.a",
+    selectedMenuId: "manage",
+    reserveCount: 1,
+    reserveCapacity: 6,
+    playerGold: 100,
+    playerFame: 0,
+  });
+}
+
+function createTroopManagementHtml() {
+  return renderTroopManagementView({
+    title: "troop-management",
+    resources: [],
+    troops: [
+      {
+        id: "troop.a",
+        name: "Troop A",
+        subtitle: "",
+        slots: PREVIEW_SLOTS,
+      },
+    ],
+    previousTroopId: "troop.b",
+    nextTroopId: "troop.b",
+    canCycleTroops: true,
+    selectedTroopId: "troop.a",
+    troopName: "Troop A",
+    previewSlots: PREVIEW_SLOTS,
+    actions: [
+      { id: "move", label: "move", actionId: null },
+      { id: "add", label: "add", actionId: null },
+      { id: "remove", label: "remove", actionId: null },
+      { id: "clear", label: "clear", actionId: null },
+      { id: "disband", label: "disband", actionId: null },
+      { id: "back", label: "back", actionId: "close-troop-management" },
+    ],
+    summaryFields: [],
+    battlefieldSlots: BATTLEFIELD_SLOTS,
+    battlefieldUnits: [],
+    battlePreview: {
+      id: "troop.a",
+      name: "Troop A",
+      side: "player",
+      generalName: "General",
+      morale: 80,
+      members: [],
+    },
+    reserveMembers: [
+      { id: "reserve.a", name: "Reserve A", roleLabel: "infantry" },
+    ],
+    reserveCapacity: 6,
+  });
+}
 
 test("map view renders a campaign troop-editor entry button", () => {
   const source = fs.readFileSync("src/ui/views/map/map-view.ts", "utf8");
@@ -19,7 +170,6 @@ test("troop-editor view renders the requested layout with scroll list and menu",
   assert.match(viewSource, /class="c-troop-editor__resource-bar"/);
   assert.match(viewSource, /class="c-troop-editor__troop-scroll"/);
   assert.match(viewSource, /class="c-troop-editor__menu"/);
-  assert.match(viewSource, /data-action="open-troop-management"/);
   assert.match(viewSource, /button\.actionId == null \? "disabled" : ""/);
   assert.match(viewSource, /data-action="\$\{button\.actionId\}"/);
   assert.doesNotMatch(viewSource, /c-troop-editor__troop-subtitle/);
@@ -41,6 +191,152 @@ test("troop-editor view renders the requested layout with scroll list and menu",
   );
 });
 
+test("troop-editor applies heavy only to the manage entry and confirm-side actions", () => {
+  const html = createTroopEditorHtml();
+
+  assert.match(
+    html,
+    /data-action="open-troop-management"[\s\S]*data-button-sound="heavy"/
+  );
+  assert.match(
+    html,
+    /data-action="close-troop-editor"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(html, /data-troop-editor-card[\s\S]*data-button-sound="light"/);
+  assert.match(
+    html,
+    /data-troop-editor-shop-offer="offer\.a"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-shop-prompt-action="buy"[\s\S]*data-button-sound="heavy"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-shop-prompt-action="cancel"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-shop-back[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-create-choice="confirm"[\s\S]*data-button-sound="heavy"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-create-choice="cancel"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-dismiss-member="reserve\.a"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-dismiss-prompt-action="dismiss"[\s\S]*data-button-sound="heavy"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-dismiss-prompt-action="back"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-dismiss-close[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-dismiss-confirm-choice="confirm"[\s\S]*data-button-sound="heavy"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-dismiss-confirm-choice="cancel"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-confirm-choice="confirm"[\s\S]*data-button-sound="heavy"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-confirm-choice="cancel"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-troop-editor-alert-close[\s\S]*data-button-sound="light"/
+  );
+});
+
+test(
+  "troop-management keeps browsing light, keeps reserve assign heavy, and leaves remove confirm silent by default",
+  () => {
+    const html = createTroopManagementHtml();
+
+    assert.match(
+      html,
+      /data-action="open-troop-management"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /c-troop-management__cycle-button--left[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /c-troop-management__cycle-button--right[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-action="move"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-action="add"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-action="remove"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-action="clear"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-action="disband"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-action="close-troop-management"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-reserve-member="reserve\.a"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-reserve-prompt-action="assign"[\s\S]*data-button-sound="heavy"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-reserve-prompt-action="back"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-reserve-close[\s\S]*data-button-sound="light"/
+    );
+    assert.doesNotMatch(
+      html,
+      /<button[^>]*data-troop-management-remove-confirm-choice="confirm"[^>]*data-button-sound=/
+    );
+    assert.match(
+      html,
+      /data-troop-management-remove-confirm-choice="cancel"[\s\S]*data-button-sound="light"/
+    );
+    assert.match(
+      html,
+      /data-troop-management-alert-close[\s\S]*data-button-sound="light"/
+    );
+  }
+);
+
 test("troop-management view renders battle workspace, preview, actions and summary", () => {
   const viewSource = fs.readFileSync(
     "src/ui/views/troop-editor/troop-management-view.ts",
@@ -61,7 +357,7 @@ test("troop-management view renders battle workspace, preview, actions and summa
   );
   assert.match(
     styleSource,
-    /\.c-troop-management__pager--left\s*\{[\s\S]*clip-path:/
+    /\.c-troop-management__cycle-button--left\s*\{[\s\S]*clip-path:/
   );
 });
 
@@ -94,7 +390,10 @@ test("main wires the troop-editor entry and exit actions", () => {
   assert.match(source, /\[data-action='close-troop-editor'\]/);
   assert.match(source, /appState = closeTroopEditor\(appState\);/);
   assert.match(source, /\[data-action='open-troop-management'\]/);
-  assert.match(source, /appState = openTroopManagement\(appState\);/);
+  assert.match(
+    source,
+    /appState = openTroopManagement\(appState,\s*\{\s*troopId:/
+  );
   assert.match(source, /\[data-action='close-troop-management'\]/);
   assert.match(source, /appState = closeTroopManagement\(appState\);/);
 });

@@ -2,6 +2,7 @@ import { applyLiveLayoutBindings } from "../tools/live-layout-bindings";
 import { mountOpeningBackgroundAnimation } from "./opening-background-animation";
 import { resolveCharacterAvatarImageUrl } from "../portrait-assets";
 import { renderLayoutEditor } from "../tools/layout-editor-view";
+import { LIGHT_BUTTON_SOUND, HEAVY_BUTTON_SOUND } from "../../application/audio/button-sound";
 
 const startScreenLayoutBindings = [
   { componentId: "main-menu-content", selector: ".c-main-ui-main-menu__content" },
@@ -157,6 +158,14 @@ const characterSelectLayoutBindings = [
   },
 ];
 
+const BUTTON_SOUND_BY_ACTION = {
+  "open-character-select": HEAVY_BUTTON_SOUND,
+  "continue-game": HEAVY_BUTTON_SOUND,
+  "start-adventure": HEAVY_BUTTON_SOUND,
+  "back-to-menu": LIGHT_BUTTON_SOUND,
+  "select-character": LIGHT_BUTTON_SOUND,
+};
+
 export class MainUiFlow {
   constructor(options) {
     this.overlayRoot = options.overlayRoot;
@@ -166,6 +175,7 @@ export class MainUiFlow {
     this.onContinueGame = options.onContinueGame;
     this.onStartScenarioPack = options.onStartScenarioPack;
     this.onImportScenarioPackFiles = options.onImportScenarioPackFiles;
+    this.onQueueButtonSound = options.onQueueButtonSound ?? null;
     this.loadSaveData = options.loadSaveData;
     this.getAppState = options.getAppState;
     this.selectedCharacterId = this.characters[0]?.id ?? null;
@@ -555,7 +565,8 @@ export class MainUiFlow {
     }
 
     const actionElement = target.closest("[data-main-ui-action]");
-    if (actionElement == null) {
+    const pageTurnButton = target.closest(".c-main-ui-page-turn-button");
+    if (actionElement == null && pageTurnButton == null) {
       return;
     }
 
@@ -566,7 +577,18 @@ export class MainUiFlow {
       return;
     }
 
+    if (pageTurnButton != null && actionElement == null) {
+      this.queueButtonSound(LIGHT_BUTTON_SOUND);
+      return;
+    }
+
+    if (actionElement == null) {
+      return;
+    }
+
     const action = actionElement.dataset.mainUiAction;
+    this.queueActionButtonSound(action);
+
     if (action === "open-character-select") {
       this.showCharacterSelect();
       return;
@@ -852,6 +874,17 @@ export class MainUiFlow {
     }
 
     return this.characters.find((character) => character.id === characterId) ?? null;
+  }
+
+  queueButtonSound(effect) {
+    this.onQueueButtonSound?.(effect);
+  }
+
+  queueActionButtonSound(action) {
+    const effect = BUTTON_SOUND_BY_ACTION[action];
+    if (effect != null) {
+      this.queueButtonSound(effect);
+    }
   }
 }
 

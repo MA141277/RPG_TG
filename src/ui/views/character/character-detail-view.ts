@@ -685,21 +685,21 @@ export function renderCharacterDetailView(
           <button ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.cardButton,
             className: "c-character-detail__action-button c-character-detail__action-button--card",
-          })} type="button" data-action="open-cards">
+          })} type="button" data-action="open-cards" data-button-sound="light">
             卡片
             ${renderComponentResizeHandle(options, "character-detail-card-button")}
           </button>
           <button ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.valuablesButton,
             className: "c-character-detail__action-button c-character-detail__action-button--item",
-          })} type="button" data-action="open-backpack">
+          })} type="button" data-action="open-backpack" data-button-sound="heavy">
             背包
             ${renderComponentResizeHandle(options, "character-detail-valuables-button")}
           </button>
           <button ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.backButton,
             className: "c-character-detail__action-button c-character-detail__action-button--back",
-          })} type="button" data-action="close-character-detail">
+          })} type="button" data-action="close-character-detail" data-button-sound="light">
             返回
             ${renderComponentResizeHandle(options, "character-detail-back-button")}
           </button>

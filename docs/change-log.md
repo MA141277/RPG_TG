@@ -81,6 +81,18 @@
 
 ### Impact
 - 阵营评定相关的等级、功绩和任务门槛逻辑现在有共享 domain/application 契约，后续 temple、keep 或其他阵营据点应复用该契约，而不是在各自流程内复制持久状态或评级规则。
+## 2026-07-28 Pachinko Collision Audio
+
+- 新增 `src/application/audio/pachinko-collision-sound.ts` 与 `src/application/audio/pachinko-collision-playback.ts`，把弹珠碰撞 sample 选择与 pulse 消费留在共享音频层，不把 bounce cue id 硬编码到 temple 流程或 `main.ts`。
+- `src/application/audio/audio-manager.ts` 中央注册 `activity.pachinko.bounce.1` / `.2` 两个真实 mp3 cue，并复用统一的人性化播放扰动配置。
+- 共享 `pachinko-board` runtime 现在会为真实反弹写入每 tick `audioPulse`；落槽结算会通过集中播放 helper 触发两次、间隔 `80ms` 的 `哒哒` 音效。
+- 针对当前两份 `弹珠弹墙` 素材极短且浏览器兼容性不稳定的问题，中央音频层现在会在 bounce 资产报错时自动切到内建 percussive fallback，并取消碰撞 cue 的随机起播点/淡入，保证弹珠碰撞优先保留起音。
+
+## 2026-07-24 Button Sound Cue Abstraction
+
+- 新增 `src/application/audio/button-sound.ts`，提供 `LIGHT_BUTTON_SOUND` 与 `HEAVY_BUTTON_SOUND` 两个可复用按钮音效对象，后续按钮逻辑可按对象分配音效而不是直接绑定 mp3。
+- `src/application/audio/audio-manager.ts` 新增 `ui.button.light` 与 `ui.button.heavy` 两个真实 mp3-backed UI cue，保留原有 `ui.click` 作为兼容路径。
+- `src/main.ts` 为这两个按钮音效增加静态 `mp3?url` 资源映射，避免新增按钮音频继续依赖动态字符串路径解析。
 
 ## 2026-07-22 Player UI Cleanup
 

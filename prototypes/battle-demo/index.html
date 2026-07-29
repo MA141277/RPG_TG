@@ -5610,6 +5610,198 @@
       }, '*');
     }
 
+    function postBattleDemoAudioMessage(message) {
+      if (!battleConfig.embedded || !battleConfig.scenarioId) return;
+      window.parent?.postMessage({
+        type: 'rpg-tg:battle-demo-audio',
+        scenarioId: battleConfig.scenarioId,
+        ...message,
+      }, '*');
+    }
+
+    const BATTLE_DEMO_UI_AUDIO_URLS = Object.freeze({
+      troopSelection: '../../src/assets/audio/ui/troop-selection.mp3',
+      buttonLight: '../../src/assets/audio/ui/button-light.mp3',
+      buttonHeavy: '../../src/assets/audio/ui/button-heavy.mp3',
+    });
+
+    function playBattleDemoUiCue(cueId) {
+      if (battleConfig.embedded && battleConfig.scenarioId) {
+        postBattleDemoAudioMessage({ cueId });
+        return;
+      }
+      const src = BATTLE_DEMO_UI_AUDIO_URLS[cueId];
+      if (!src) return;
+      const audio = new Audio(src);
+      audio.preload = 'auto';
+      audio.volume = 0.9;
+      void audio.play().catch(() => {});
+    }
+
+    const BATTLE_DEMO_MUSIC_AUDIO_URLS = Object.freeze({
+      battleMusicStart: '../../src/assets/audio/battle/battle-bgm.mp3',
+      battleMusicVictory: '../../src/assets/audio/battle/battle-victory.mp3',
+    });
+
+    let battleDemoLocalBgmAudio = null;
+    let battleDemoLocalVictoryAudio = null;
+    let battleDemoLocalBgmLoopToken = 0;
+
+    function ensureBattleDemoLocalBgmAudio() {
+      if (battleDemoLocalBgmAudio) return battleDemoLocalBgmAudio;
+      const audio = new Audio(BATTLE_DEMO_MUSIC_AUDIO_URLS.battleMusicStart);
+      audio.preload = 'auto';
+      audio.loop = false;
+      audio.volume = 0.35;
+      battleDemoLocalBgmAudio = audio;
+      return audio;
+    }
+
+    function ensureBattleDemoLocalVictoryAudio() {
+      if (battleDemoLocalVictoryAudio) return battleDemoLocalVictoryAudio;
+      const audio = new Audio(BATTLE_DEMO_MUSIC_AUDIO_URLS.battleMusicVictory);
+      audio.preload = 'auto';
+      audio.volume = 0.26;
+      battleDemoLocalVictoryAudio = audio;
+      return audio;
+    }
+
+    function scheduleBattleDemoLocalBgmLoop(audio, token, delayMs) {
+      const fadeDurationMs = 200;
+      const fadeSteps = 4;
+      const loopDurationMs = 74000;
+      const nextDelayMs = delayMs > fadeDurationMs ? delayMs - fadeDurationMs : 10;
+      window.setTimeout(() => {
+        if (battleDemoLocalBgmLoopToken !== token || battleDemoLocalBgmAudio !== audio) return;
+        if (audio.paused) {
+          window.setTimeout(() => {
+            scheduleBattleDemoLocalBgmLoop(audio, token, 10);
+          }, 50);
+          return;
+        }
+        const remainingMs = Math.round((92 - audio.currentTime) * 1000);
+        if (remainingMs > fadeDurationMs) {
+          scheduleBattleDemoLocalBgmLoop(audio, token, remainingMs);
+          return;
+        }
+        const startVolume = Math.max(0, audio.volume);
+        for (let step = 1; step <= fadeSteps; step += 1) {
+          const delayMsOut = Math.round((fadeDurationMs * step) / fadeSteps);
+          window.setTimeout(() => {
+            if (battleDemoLocalBgmLoopToken !== token || battleDemoLocalBgmAudio !== audio || audio.paused) return;
+            audio.volume = Math.max(0, startVolume * (1 - step / fadeSteps));
+          }, delayMsOut);
+        }
+        window.setTimeout(() => {
+          if (battleDemoLocalBgmLoopToken !== token || battleDemoLocalBgmAudio !== audio) return;
+          audio.currentTime = 18;
+          audio.volume = 0;
+          void audio.play().catch(() => {});
+        }, fadeDurationMs);
+        for (let step = 1; step <= fadeSteps; step += 1) {
+          const delayMsIn = fadeDurationMs + Math.round((fadeDurationMs * step) / fadeSteps);
+          window.setTimeout(() => {
+            if (battleDemoLocalBgmLoopToken !== token || battleDemoLocalBgmAudio !== audio) return;
+            audio.volume = Math.min(startVolume, startVolume * (step / fadeSteps));
+          }, delayMsIn);
+        }
+        scheduleBattleDemoLocalBgmLoop(audio, token, loopDurationMs + fadeDurationMs);
+      }, Math.max(10, nextDelayMs));
+    }
+
+    function fadeOutBattleDemoLocalBgm(onComplete) {
+      battleDemoLocalBgmLoopToken += 1;
+      const audio = battleDemoLocalBgmAudio;
+      if (!audio || audio.paused) {
+        onComplete();
+        return;
+      }
+      const startVolume = audio.volume;
+      const fadeDurationMs = 200;
+      const fadeSteps = 4;
+      for (let step = 1; step <= fadeSteps; step += 1) {
+        const nextVolume = startVolume * (1 - step / fadeSteps);
+        const delayMs = Math.round((fadeDurationMs * step) / fadeSteps);
+        window.setTimeout(() => {
+          if (battleDemoLocalBgmAudio !== audio || audio.paused) return;
+          audio.volume = Math.max(0, nextVolume);
+          if (step === fadeSteps) {
+            audio.pause();
+          }
+        }, delayMs);
+      }
+      window.setTimeout(() => {
+        if (battleDemoLocalBgmAudio === audio) {
+          audio.currentTime = 0;
+          audio.volume = 0.35;
+        }
+        onComplete();
+      }, fadeDurationMs);
+    }
+
+    function playBattleDemoMusicCue(cueId) {
+      if (battleConfig.embedded && battleConfig.scenarioId) {
+        postBattleDemoAudioMessage({ cueId });
+        return;
+      }
+      if (cueId === 'battleMusicStart') {
+        const victoryAudio = ensureBattleDemoLocalVictoryAudio();
+        victoryAudio.pause();
+        victoryAudio.currentTime = 0;
+        const audio = ensureBattleDemoLocalBgmAudio();
+        battleDemoLocalBgmLoopToken += 1;
+        const token = battleDemoLocalBgmLoopToken;
+        if (audio.currentTime >= 92 || audio.currentTime < 0) {
+          audio.currentTime = 0;
+        }
+        audio.volume = 0.35;
+        void audio.play().catch(() => {});
+        scheduleBattleDemoLocalBgmLoop(audio, token, Math.round((92 - audio.currentTime) * 1000));
+        return;
+      }
+      if (cueId !== 'battleMusicVictory') return;
+      fadeOutBattleDemoLocalBgm(() => {
+        const audio = ensureBattleDemoLocalVictoryAudio();
+        audio.currentTime = 0;
+        audio.volume = 0.26;
+        void audio.play().catch(() => {});
+      });
+    }
+
+    function createBattleDemoArcherAudioChainId(step) {
+      return `${step.sourceSide}:${step.sourceSlotKey}:${step.launchAtMs ?? 0}`;
+    }
+
+    function createBattleDemoCavalryAudioChainId(step) {
+      return `${step.sourceSide}:${step.sourceSlotKey}:${step.launchAtMs ?? 0}:cavalry-run`;
+    }
+
+    function createBattleDemoMusketeerAudioChainId(step) {
+      return `${step.sourceSide}:${step.sourceSlotKey}:${step.launchAtMs ?? 0}`;
+    }
+
+    function fadeBattleAudioPlayer(audio, frameDurationMs, fadeFrames = 4) {
+      if (!audio || audio.paused) return;
+      const steps = Math.max(1, Math.round(fadeFrames || 4));
+      const durationMs = Math.max(0, Math.round(Math.max(0, frameDurationMs) * steps));
+      const startVolume = Math.max(0, Number(audio.volume) || 0);
+      if (durationMs === 0) {
+        audio.pause();
+        return;
+      }
+      for (let step = 1; step <= steps; step += 1) {
+        const nextVolume = Math.max(0, startVolume * (1 - step / steps));
+        const delayMs = Math.round((durationMs * step) / steps);
+        window.setTimeout(() => {
+          if (audio.paused) return;
+          audio.volume = nextVolume;
+          if (step === steps) {
+            audio.pause();
+          }
+        }, delayMs);
+      }
+    }
+
     function showOverlay(title, desc, isWin = false) {
       document.getElementById('overlay-title').textContent = title;
       document.getElementById('overlay-desc').textContent = desc;
@@ -5623,6 +5815,9 @@
         recapList.innerHTML = '';
       }
       document.getElementById('overlay').classList.remove('hidden');
+      if (isWin) {
+        playBattleDemoMusicCue('battleMusicVictory');
+      }
       lastBattleResult = { result: isWin ? 'victory' : 'defeat', title, desc };
       const restartButton = document.getElementById('btn-restart');
       if (battleConfig.embedded && restartButton) {
@@ -5903,6 +6098,98 @@
       return getBattleInfantryAttackPlan(renderer, randomValue);
     }
 
+    const BATTLE_MELEE_AUDIO_URLS = Object.freeze({
+      slashHit1: '../../src/assets/audio/battle/slash-hit-1.mp3',
+      slashHit2: '../../src/assets/audio/battle/slash-hit-2.mp3',
+      slashHit3: '../../src/assets/audio/battle/slash-hit-3.mp3',
+      slashMiss: '../../src/assets/audio/battle/slash-miss.mp3',
+      horseRun: '../../src/assets/audio/battle/horse-run.mp3',
+      jump: '../../src/assets/audio/battle/jump.mp3',
+      landing: '../../src/assets/audio/battle/landing.mp3',
+    });
+
+    function pickBattleMeleeHitCue(randomValue = Math.random()) {
+      if (randomValue < 1 / 3) return 'slashHit1';
+      if (randomValue < 2 / 3) return 'slashHit2';
+      return 'slashHit3';
+    }
+
+    function resolveBattleMeleeSoundPlan({ troopType, variant = null, hit, randomValue = Math.random() }) {
+      let triggerFrame = null;
+      if (troopType === 'cavalry') {
+        triggerFrame = 30;
+      } else if (troopType === 'spear') {
+        triggerFrame = 14;
+      } else if (troopType === 'infantry' && variant === 'jump_chop') {
+        triggerFrame = 42;
+      } else if (troopType === 'infantry') {
+        triggerFrame = 13;
+      }
+      if (!Number.isFinite(triggerFrame)) {
+        return null;
+      }
+      return {
+        triggerFrame,
+        cueId: hit ? pickBattleMeleeHitCue(randomValue) : 'slashMiss',
+      };
+    }
+
+    function resolveBattleJumpLandingSoundPlan({ troopType, variant = null }) {
+      if (troopType === 'spear' && variant === 'jump_thrust') {
+        return {
+          jumpTriggerFrame: 8,
+          landingTriggerFrame: 29,
+        };
+      }
+      if (troopType === 'infantry' && variant === 'jump_chop') {
+        return {
+          jumpTriggerFrame: 29,
+          landingTriggerFrame: 42,
+        };
+      }
+      if (troopType === 'infantry' && variant === 'jump_slash') {
+        return {
+          jumpTriggerFrame: 9,
+          landingTriggerFrame: 27,
+        };
+      }
+      return null;
+    }
+
+    function triggerBattleJumpLandingCues(info, jumpLandingSoundPlan, jumpLandingAudioState) {
+      if (!jumpLandingSoundPlan || !jumpLandingAudioState) {
+        return;
+      }
+      if (
+        !jumpLandingAudioState.jumpAudioTriggered &&
+        info.actionFrame >= jumpLandingSoundPlan.jumpTriggerFrame
+      ) {
+        jumpLandingAudioState.jumpAudioTriggered = true;
+        playBattleMeleeCue('jump');
+      }
+      if (
+        !jumpLandingAudioState.landingAudioTriggered &&
+        info.actionFrame >= jumpLandingSoundPlan.landingTriggerFrame
+      ) {
+        jumpLandingAudioState.landingAudioTriggered = true;
+        playBattleMeleeCue('landing');
+      }
+    }
+
+    function playBattleMeleeCue(cueId) {
+      if (battleConfig.embedded && battleConfig.scenarioId) {
+        postBattleDemoAudioMessage({ cueId });
+        return null;
+      }
+      const src = BATTLE_MELEE_AUDIO_URLS[cueId];
+      if (!src) return null;
+      const audio = new Audio(src);
+      audio.preload = 'auto';
+      audio.volume = 0.9;
+      void audio.play().catch(() => {});
+      return audio;
+    }
+
     const BATTLE_MELEE_STRIKE_STAGGER_FRAMES = 56;
     const BATTLE_RANDOM_ATTACK_DELAY_MAX_MS = 500;
     const BATTLE_TIMELINE_ROUND_PAUSE_MS = 140;
@@ -5978,9 +6265,9 @@
         src: '../../ui/battle/战斗/archer_arrow_flat_effect.png',
         width: 185,
         startFrame: 41,
-        vanishFrame: 43,
-        reappearFrame: 47,
-        impactFrame: 49,
+        vanishFrame: 41,
+        reappearFrame: 41,
+        impactFrame: 42,
         speedPx: 240,
         fadeInFrames: 0,
         fadeOutFrames: 0,
@@ -5992,14 +6279,14 @@
       stage1: {
         src: '../../ui/battle/战斗/archer_hit_effect_stage1_v2.png',
         width: 250,
-        frame: 49,
+        frame: 42,
         holdFrames: 2,
         fadeOutFrames: 0,
       },
       stage2: {
         src: '../../ui/battle/战斗/archer_hit_effect_stage2_v2.png',
         width: 260,
-        frame: 51,
+        frame: 44,
         holdFrames: 2,
         fadeOutFrames: 2,
       },
@@ -9294,7 +9581,7 @@
       const attackActionId = infantryAttackPlan?.attackAction || 'attack';
       const attackPeakFrame = infantryAttackPlan?.impactFrame
         ?? troopAsset.attackImpactFrame
-        ?? (troopType === 'archer' ? 49 : 14);
+        ?? (troopType === 'archer' ? 42 : 14);
 
       const sourceFrame = sourceSlot?.querySelector('.formation-spine-frame');
       const targetFrame = targetSlot?.querySelector('.formation-spine-frame');
@@ -9346,6 +9633,23 @@
         y: initialTop,
       };
       const to = getBattleLandingTargetPosition(targetAnchor, troopAsset, proxySide);
+      const jumpLandingSoundPlan = resolveBattleJumpLandingSoundPlan({
+        troopType,
+        variant: infantryAttackPlan?.variant || null,
+      });
+      const moveJumpLandingSoundPlan =
+        jumpLandingSoundPlan && infantryAttackPlan?.moveAction ? jumpLandingSoundPlan : null;
+      const attackJumpLandingSoundPlan =
+        jumpLandingSoundPlan && !infantryAttackPlan?.moveAction ? jumpLandingSoundPlan : null;
+      const moveJumpLandingAudioState = moveJumpLandingSoundPlan
+        ? { jumpAudioTriggered: false, landingAudioTriggered: false }
+        : null;
+      const attackJumpLandingAudioState = attackJumpLandingSoundPlan
+        ? { jumpAudioTriggered: false, landingAudioTriggered: false }
+        : null;
+      let cavalryRunAudioTriggered = false;
+      const cavalryRunAudioChainId = troopType === 'cavalry' ? createBattleDemoCavalryAudioChainId(step) : null;
+      let cavalryRunAudioPlayer = null;
       if (!troopAsset.stationaryAttack && infantryAttackPlan?.moveAction) {
         await animateBattleSpineProxy(
           proxy,
@@ -9358,8 +9662,44 @@
             moveStartFrame: infantryAttackPlan.moveStartFrame,
             moveEndFrame: infantryAttackPlan.moveEndFrame,
             arcHeight: infantryAttackPlan?.moveArcHeight ?? getBattleJumpArcHeight(from, to),
+            onFrame: info => {
+              if (troopType === 'cavalry' && !cavalryRunAudioTriggered && info.actionFrame >= 1) {
+                cavalryRunAudioTriggered = true;
+                if (battleConfig.embedded && battleConfig.scenarioId && cavalryRunAudioChainId) {
+                  postBattleDemoAudioMessage({
+                    chainId: cavalryRunAudioChainId,
+                    phase: 'horse-run',
+                    mode: 'play',
+                    currentActionFrame: info.actionFrame,
+                    frameDurationMs: info.frameDurationMs,
+                  });
+                } else {
+                  cavalryRunAudioPlayer = playBattleMeleeCue('horseRun');
+                }
+              }
+              triggerBattleJumpLandingCues(
+                info,
+                moveJumpLandingSoundPlan,
+                moveJumpLandingAudioState,
+              );
+            },
           }
         );
+        if (troopType === 'cavalry' && cavalryRunAudioTriggered) {
+          const moveFrameDurationMs = 1000 / Math.max(1, renderer.fps || 60);
+          if (battleConfig.embedded && battleConfig.scenarioId && cavalryRunAudioChainId) {
+            postBattleDemoAudioMessage({
+              chainId: cavalryRunAudioChainId,
+              phase: 'horse-run',
+              mode: 'stop',
+              currentActionFrame: renderer.getActionFrameCount(infantryAttackPlan.moveAction),
+              frameDurationMs: moveFrameDurationMs,
+              fadeFrames: 4,
+            });
+          } else {
+            fadeBattleAudioPlayer(cavalryRunAudioPlayer, moveFrameDurationMs, 4);
+          }
+        }
       } else if (!troopAsset.stationaryAttack && !infantryAttackPlan && troopType !== 'archer') {
         await animateBattleSpineProxy(
           proxy,
@@ -9385,6 +9725,24 @@
         ? to
         : attackFrom;
       const targetCanvas = targetSlot?.querySelector('.formation-spine-canvas');
+      const meleeSoundPlan = resolveBattleMeleeSoundPlan({
+        troopType,
+        variant: infantryAttackPlan?.variant || null,
+        hit: step.hit,
+        randomValue: Math.random(),
+      });
+      let meleeSoundTriggered = false;
+      const isMusketeerAudioTroop =
+        troopType === 'musketeer' || troopType === 'gunpowder' || troopType === 'teppo';
+      const archerAudioChainId =
+        troopType === 'archer' ? createBattleDemoArcherAudioChainId(step) : null;
+      const musketeerAudioChainId =
+        isMusketeerAudioTroop ? createBattleDemoMusketeerAudioChainId(step) : null;
+      let archerDrawAudioTriggered = false;
+      let archerReleaseAudioTriggered = false;
+      let archerImpactAudioTriggered = false;
+      let musketeerReloadAudioTriggered = false;
+      let musketeerFireAudioTriggered = false;
       await animateBattleSpineProxy(
         proxy,
         renderer,
@@ -9399,23 +9757,94 @@
             ? getBattleJumpArcHeight(from, to)
             : 0,
           impactFrame: attackPeakFrame,
-          onFrame:
-            troopType === 'archer'
-              ? info => {
-                  if (proxy.__battleArcherEffectsQueued) return;
-                  proxy.__battleArcherEffectsQueued = 'true';
-                  queueBattleArcherAttackEffects({
-                    sourceSlot,
-                    sourceSide: proxySide,
-                    sourceAnchor,
-                    targetAnchor,
-                    targetSlot,
-                    hit: step.hit,
-                    startAt: info.startAt,
-                    frameDurationMs: info.frameDurationMs,
-                  });
-                }
-              : null,
+          onFrame: info => {
+            if (troopType === 'archer') {
+              if (!archerDrawAudioTriggered && info.actionFrame >= 18) {
+                archerDrawAudioTriggered = true;
+                postBattleDemoAudioMessage({
+                  chainId: archerAudioChainId,
+                  phase: 'draw',
+                  mode: 'play',
+                  currentActionFrame: info.actionFrame,
+                  frameDurationMs: info.frameDurationMs,
+                });
+              }
+              if (!archerReleaseAudioTriggered && info.actionFrame >= 37) {
+                archerReleaseAudioTriggered = true;
+                postBattleDemoAudioMessage({
+                  chainId: archerAudioChainId,
+                  phase: 'release',
+                  mode: 'transition',
+                  currentActionFrame: info.actionFrame,
+                  frameDurationMs: info.frameDurationMs,
+                  fadeFrames: 4,
+                  nextStartFrame: 41,
+                });
+              }
+              if (step.hit && !archerImpactAudioTriggered && info.actionFrame >= 41) {
+                archerImpactAudioTriggered = true;
+                postBattleDemoAudioMessage({
+                  chainId: archerAudioChainId,
+                  phase: 'impact',
+                  mode: 'transition',
+                  currentActionFrame: info.actionFrame,
+                  frameDurationMs: info.frameDurationMs,
+                  fadeFrames: 4,
+                  nextStartFrame: 42,
+                });
+              }
+              if (!proxy.__battleArcherEffectsQueued) {
+                proxy.__battleArcherEffectsQueued = 'true';
+                queueBattleArcherAttackEffects({
+                  sourceSlot,
+                  sourceSide: proxySide,
+                  sourceAnchor,
+                  targetAnchor,
+                  targetSlot,
+                  hit: step.hit,
+                  startAt: info.startAt,
+                  frameDurationMs: info.frameDurationMs,
+                });
+              }
+            }
+            if (isMusketeerAudioTroop) {
+              if (!musketeerReloadAudioTriggered && info.actionFrame >= 9) {
+                musketeerReloadAudioTriggered = true;
+                postBattleDemoAudioMessage({
+                  chainId: musketeerAudioChainId,
+                  phase: 'reload',
+                  mode: 'play',
+                  currentActionFrame: info.actionFrame,
+                  frameDurationMs: info.frameDurationMs,
+                });
+              }
+              if (!musketeerFireAudioTriggered && info.actionFrame >= 26) {
+                musketeerFireAudioTriggered = true;
+                postBattleDemoAudioMessage({
+                  chainId: musketeerAudioChainId,
+                  phase: 'fire',
+                  mode: 'transition',
+                  currentActionFrame: info.actionFrame,
+                  frameDurationMs: info.frameDurationMs,
+                  fadeFrames: 3,
+                  nextStartFrame: 29,
+                });
+              }
+            }
+            triggerBattleJumpLandingCues(
+              info,
+              attackJumpLandingSoundPlan,
+              attackJumpLandingAudioState,
+            );
+            if (
+              meleeSoundPlan &&
+              !meleeSoundTriggered &&
+              info.actionFrame >= meleeSoundPlan.triggerFrame
+            ) {
+              meleeSoundTriggered = true;
+              playBattleMeleeCue(meleeSoundPlan.cueId);
+            }
+          },
           onImpact: info => {
             onImpact?.();
             if (step.hit) {
@@ -9536,14 +9965,14 @@
       ];
       if (hit) {
         plan.push(
-          { kind: 'flight', frame: 45, fadeInFrames: 0, holdFrames: 4, fadeOutFrames: 0, motionStartFrame: 45, motionEndFrame: 48 },
-          { kind: 'stage1', frame: 49, fadeInFrames: 0, holdFrames: 2, fadeOutFrames: 0 },
-          { kind: 'stage2', frame: 51, fadeInFrames: 0, holdFrames: 2, fadeOutFrames: 2 },
+          { kind: 'flight', frame: 41, fadeInFrames: 0, holdFrames: 1, fadeOutFrames: 0, motionStartFrame: 41, motionEndFrame: 42 },
+          { kind: 'stage1', frame: 42, fadeInFrames: 0, holdFrames: 2, fadeOutFrames: 0 },
+          { kind: 'stage2', frame: 44, fadeInFrames: 0, holdFrames: 2, fadeOutFrames: 2 },
         );
         return plan;
       }
       plan.push(
-        { kind: 'flight', frame: 45, fadeInFrames: 0, holdFrames: 5, fadeOutFrames: 1, motionStartFrame: 45, motionEndFrame: 50 },
+        { kind: 'flight', frame: 41, fadeInFrames: 0, holdFrames: 2, fadeOutFrames: 1, motionStartFrame: 41, motionEndFrame: 43 },
       );
       return plan;
     }
@@ -11712,6 +12141,7 @@
         attackRangeCells = computeAttackRangeCells(unit);
       }
       skillTargets = [];
+      playBattleDemoUiCue('troopSelection');
       return true;
     }
 
@@ -11795,6 +12225,7 @@
           updateUI();
         } else if (reachable.some(c => c.x === x && c.y === y)) {
           selectedUnit.movedFrom = { x: selectedUnit.x, y: selectedUnit.y, inRiver: selectedUnit.inRiver };
+          playBattleDemoUiCue('troopSelection');
           applyMove(selectedUnit, x, y);
           if (selectedUnit.hasActed) {
             finishUnitAction(selectedUnit);
@@ -11817,6 +12248,7 @@
       if (mode === 'target-attack') {
         if (clicked?.side === 'enemy' && attackable.some(u => u.id === clicked.id)) {
           selectedUnit.movedFrom = null;
+          playBattleDemoUiCue('buttonHeavy');
           await resolveAttack(selectedUnit, clicked);
           finishUnitAction(selectedUnit);
           clearSelection(); updateUI();
@@ -11861,6 +12293,7 @@
           log('斩将战必须先部署我方主将', 'system'); return;
         }
       }
+      playBattleDemoMusicCue('battleMusicStart');
       showObjectiveIntro();
     }
 
@@ -11900,6 +12333,16 @@
       droppedSupplies = [];
       battleRecap = [];
       lastBattleResult = null;
+      battleDemoLocalBgmLoopToken += 1;
+      if (battleDemoLocalBgmAudio) {
+        battleDemoLocalBgmAudio.pause();
+        battleDemoLocalBgmAudio.currentTime = 0;
+        battleDemoLocalBgmAudio.volume = 0.35;
+      }
+      if (battleDemoLocalVictoryAudio) {
+        battleDemoLocalVictoryAudio.pause();
+        battleDemoLocalVictoryAudio.currentTime = 0;
+      }
       inspectedUnit = null;
       clearSelection();
       hideObjectiveIntro();
@@ -11929,12 +12372,20 @@
       }
     }
 
-    document.getElementById('btn-start').addEventListener('click', startBattle);
-    document.getElementById('btn-objective-ok').addEventListener('click', beginBattle);
+    document.getElementById('btn-start').addEventListener('click', () => {
+      playBattleDemoUiCue('buttonHeavy');
+      startBattle();
+    });
+    document.getElementById('btn-objective-ok').addEventListener('click', () => {
+      playBattleDemoUiCue('buttonHeavy');
+      playBattleDemoMusicCue('battleMusicStart');
+      beginBattle();
+    });
     document.getElementById('btn-tutorial-close').addEventListener('click', () => BattleTutorialManager.hideToast());
     document.getElementById('btn-end-turn').addEventListener('click', async () => {
       if (isBattleInteractionLocked()) return;
       if (turn !== 'player') return;
+      playBattleDemoUiCue('buttonHeavy');
       processCaptureProgress();
       if (processSupplyCartMoves()) return;
       processRout();
@@ -11943,19 +12394,37 @@
       if (await runNpcAllyTurn()) return;
     });
     document.getElementById('btn-wait').addEventListener('click', () => {
+      if (!selectedUnit) return;
+      playBattleDemoUiCue('troopSelection');
       waitSelectedUnit();
     });
-    document.getElementById('action-wait').addEventListener('click', waitSelectedUnit);
-    document.getElementById('action-rally').addEventListener('click', rallySelectedUnit);
+    document.getElementById('action-wait').addEventListener('click', () => {
+      if (!selectedUnit) return;
+      playBattleDemoUiCue('troopSelection');
+      waitSelectedUnit();
+    });
+    document.getElementById('action-rally').addEventListener('click', () => {
+      if (!selectedUnit) return;
+      playBattleDemoUiCue('troopSelection');
+      rallySelectedUnit();
+    });
     document.getElementById('action-attack').addEventListener('click', () => {
       if (isBattleInteractionLocked()) return;
       if (!selectedUnit || !attackable.length) return;
+      playBattleDemoUiCue('troopSelection');
       mode = 'target-attack';
       log('选择敌方编队进入战斗演出', 'skill');
       updateUI();
     });
-    document.getElementById('action-cancel').addEventListener('click', undoPendingMove);
-    document.getElementById('battle-close').addEventListener('click', closeFormationBattleOverlay);
+    document.getElementById('action-cancel').addEventListener('click', () => {
+      if (!selectedUnit?.movedFrom || !['post-move', 'target-attack'].includes(mode)) return;
+      playBattleDemoUiCue('troopSelection');
+      undoPendingMove();
+    });
+    document.getElementById('battle-close').addEventListener('click', () => {
+      playBattleDemoUiCue('buttonLight');
+      closeFormationBattleOverlay();
+    });
     document.getElementById('board').addEventListener('contextmenu', event => {
       event.preventDefault();
       if (isBattleInteractionLocked()) return;

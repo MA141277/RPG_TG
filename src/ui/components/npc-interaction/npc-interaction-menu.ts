@@ -28,6 +28,10 @@ export function renderNpcInteractionMenu(
       const optionId = escapeHtml(option.id);
       const optionKind = escapeHtml(option.kind);
       const optionLabel = escapeHtml(option.label);
+      const buttonSoundAttribute =
+        option.buttonSound == null
+          ? ""
+          : ` data-button-sound="${option.buttonSound}"`;
 
       if (option.kind === "special") {
         return `
@@ -36,6 +40,7 @@ export function renderNpcInteractionMenu(
             class="c-button c-grain-shop-button ${buttonTone}"
             data-npc-action="special"
             data-house-action="${optionId}"
+            ${buttonSoundAttribute}
             ${disabled}
           >
             ${optionLabel}
@@ -49,6 +54,7 @@ export function renderNpcInteractionMenu(
           class="c-button c-grain-shop-button ${buttonTone}"
           data-npc-action="${optionKind}"
           data-character-id="${targetCharacterId}"
+          ${buttonSoundAttribute}
           ${disabled}
         >
           ${optionLabel}
@@ -71,6 +77,7 @@ export function renderNpcInteractionMenu(
           type="button"
           class="c-button c-grain-shop-button c-grain-shop-button--paper c-npc-interaction-dismiss"
           data-npc-action="close"
+          data-button-sound="light"
         >
           关闭
         </button>
@@ -132,6 +139,7 @@ export function renderNpcInteractionDialogue(input: {
             type="button"
             class="c-button c-grain-shop-button c-grain-shop-button--gold"
             data-npc-action="continue"
+            data-ui-click-sound="none"
           >
             继续
           </button>
@@ -139,6 +147,7 @@ export function renderNpcInteractionDialogue(input: {
             type="button"
             class="c-button c-grain-shop-button c-grain-shop-button--paper c-npc-interaction-dismiss"
             data-npc-action="close"
+            data-ui-click-sound="none"
           >
             关闭
           </button>

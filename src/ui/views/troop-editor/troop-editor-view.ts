@@ -1,10 +1,17 @@
 import type { TroopEditorStageViewModel } from "../../../application/troop-editor/troop-editor-stage-view-model";
 import { renderTroopPreviewGrid } from "./troop-preview-grid";
+import { getTroopEditorButtonSound } from "./troop-button-sound-policy";
 
 function renderMenuButton(
   model: TroopEditorStageViewModel,
   button: TroopEditorStageViewModel["menu"][number]
 ): string {
+  const buttonSound = getTroopEditorButtonSound({
+    kind: "menu",
+    menuId: button.id,
+    actionId: button.actionId,
+  });
+
   if (
     button.id === "disband" ||
     button.id === "create" ||
@@ -17,6 +24,7 @@ function renderMenuButton(
         type="button"
         class="c-button c-troop-editor__menu-button${button.id === model.selectedMenuId ? " is-selected" : ""}"
         data-troop-editor-action="${button.id}"
+        data-button-sound="${buttonSound}"
         aria-pressed="false"
       >
         ${button.label}
@@ -37,6 +45,7 @@ function renderMenuButton(
       ${button.actionId == null ? "disabled" : ""}
       ${button.actionId == null ? "" : `data-action="${button.actionId}"`}
       ${troopIdAttribute}
+      data-button-sound="${buttonSound}"
       ${button.id === model.selectedMenuId ? 'aria-selected="true"' : ""}
     >
       ${button.label}
@@ -69,6 +78,7 @@ function renderShopScreen(model: TroopEditorStageViewModel): string {
                       data-offer-id="${offer.id}"
                       data-price="${offer.price}"
                       data-required-fame="${offer.requiredFame}"
+                      data-button-sound="${getTroopEditorButtonSound({ kind: "shop-offer" })}"
                     >
                       <div class="c-troop-editor__shop-offer-main">
                         <strong class="c-troop-editor__shop-offer-name">${offer.name}</strong>
@@ -90,6 +100,10 @@ function renderShopScreen(model: TroopEditorStageViewModel): string {
           type="button"
           class="c-button c-troop-editor__menu-button c-troop-management__reserve-prompt-button"
           data-troop-editor-shop-prompt-action="buy"
+          data-button-sound="${getTroopEditorButtonSound({
+            kind: "shop-prompt",
+            action: "buy",
+          })}"
         >
           购买
         </button>
@@ -97,6 +111,10 @@ function renderShopScreen(model: TroopEditorStageViewModel): string {
           type="button"
           class="c-button c-troop-editor__menu-button c-troop-management__reserve-prompt-button"
           data-troop-editor-shop-prompt-action="cancel"
+          data-button-sound="${getTroopEditorButtonSound({
+            kind: "shop-prompt",
+            action: "cancel",
+          })}"
         >
           取消
         </button>
@@ -106,6 +124,7 @@ function renderShopScreen(model: TroopEditorStageViewModel): string {
         type="button"
         class="c-button c-troop-editor__menu-button c-troop-management__reserve-return"
         data-troop-editor-shop-back
+        data-button-sound="${getTroopEditorButtonSound({ kind: "shop-back" })}"
       >
         返回
       </button>
@@ -183,6 +202,7 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
                       class="c-troop-editor__troop-card${troop.id === model.selectedTroopId ? " is-selected" : ""}"
                       data-troop-editor-card
                       data-troop-id="${troop.id}"
+                      data-button-sound="${getTroopEditorButtonSound({ kind: "troop-card" })}"
                       role="button"
                       tabindex="0"
                     >
@@ -245,6 +265,10 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-editor-create-choice="confirm"
+              data-button-sound="${getTroopEditorButtonSound({
+                kind: "create-choice",
+                choice: "confirm",
+              })}"
             >
               确定创建
             </button>
@@ -252,6 +276,10 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-editor-create-choice="cancel"
+              data-button-sound="${getTroopEditorButtonSound({
+                kind: "create-choice",
+                choice: "cancel",
+              })}"
             >
               返回
             </button>
@@ -288,6 +316,9 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
                             type="button"
                             class="c-button c-troop-management__reserve-member"
                             data-troop-editor-dismiss-member="${member.id}"
+                            data-button-sound="${getTroopEditorButtonSound({
+                              kind: "dismiss-member",
+                            })}"
                           >
                             <strong class="c-troop-management__reserve-member-name">${member.name}</strong>
                             <span class="c-troop-management__reserve-member-role">${member.roleLabel}</span>
@@ -303,6 +334,10 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
                 type="button"
                 class="c-button c-troop-editor__menu-button c-troop-management__reserve-prompt-button c-troop-management__confirm-button--danger"
                 data-troop-editor-dismiss-prompt-action="dismiss"
+                data-button-sound="${getTroopEditorButtonSound({
+                  kind: "dismiss-prompt",
+                  action: "dismiss",
+                })}"
               >
                 解雇
               </button>
@@ -310,6 +345,10 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
                 type="button"
                 class="c-button c-troop-editor__menu-button c-troop-management__reserve-prompt-button"
                 data-troop-editor-dismiss-prompt-action="back"
+                data-button-sound="${getTroopEditorButtonSound({
+                  kind: "dismiss-prompt",
+                  action: "back",
+                })}"
               >
                 返回
               </button>
@@ -319,6 +358,9 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__reserve-return"
               data-troop-editor-dismiss-close
+              data-button-sound="${getTroopEditorButtonSound({
+                kind: "dismiss-close",
+              })}"
             >
               返回
             </button>
@@ -344,6 +386,10 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-editor-dismiss-confirm-choice="cancel"
+              data-button-sound="${getTroopEditorButtonSound({
+                kind: "dismiss-confirm",
+                choice: "cancel",
+              })}"
             >
               取消
             </button>
@@ -351,6 +397,10 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button c-troop-management__confirm-button--danger"
               data-troop-editor-dismiss-confirm-choice="confirm"
+              data-button-sound="${getTroopEditorButtonSound({
+                kind: "dismiss-confirm",
+                choice: "confirm",
+              })}"
             >
               解雇
             </button>
@@ -376,6 +426,10 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-editor-confirm-choice="confirm"
+              data-button-sound="${getTroopEditorButtonSound({
+                kind: "confirm-choice",
+                choice: "confirm",
+              })}"
             >
               是
             </button>
@@ -383,6 +437,10 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-editor-confirm-choice="cancel"
+              data-button-sound="${getTroopEditorButtonSound({
+                kind: "confirm-choice",
+                choice: "cancel",
+              })}"
             >
               否
             </button>
@@ -406,6 +464,9 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-editor-alert-close
+              data-button-sound="${getTroopEditorButtonSound({
+                kind: "alert-close",
+              })}"
             >
               知道了
             </button>

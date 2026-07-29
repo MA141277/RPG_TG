@@ -10,7 +10,7 @@ export function renderCity3dView(
       <section class="view-city-3d">
         <div class="c-city-3d-empty">
           <p>当前城市还没有 3D 场景映射。</p>
-          <button type="button" data-action="leave-city-3d">返回城市</button>
+          <button type="button" data-action="leave-city-3d" data-button-sound="light">返回城市</button>
         </div>
       </section>
     `;
@@ -25,7 +25,7 @@ export function renderCity3dView(
         loading="eager"
       ></iframe>
       <div class="c-city-3d-bridge" aria-label="3D scene controls">
-        <button type="button" class="c-city-3d-bridge__back" data-action="leave-city-3d">
+        <button type="button" class="c-city-3d-bridge__back" data-action="leave-city-3d" data-button-sound="light">
           返回城市
         </button>
       </div>

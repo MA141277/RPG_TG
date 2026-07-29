@@ -39,21 +39,33 @@ function renderConfirmOverlay(
       ? " c-assessment-popup c-house-contribution-settlement c-house-temple-task-confirm"
       : `${templePopupModalClassName} c-house-temple-confirm-popup`
   }`;
+  const confirmButtonSoundAttribute =
+    overlay.confirmButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.confirmButtonSound}"`;
+  const cancelButtonSoundAttribute =
+    overlay.cancelButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.cancelButtonSound}"`;
+  const quickCompleteButtonSoundAttribute =
+    overlay.quickCompleteButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.quickCompleteButtonSound}"`;
   const quickCompleteAction =
     overlay.quickCompleteActionId == null
       ? ""
       : `
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.quickCompleteActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.quickCompleteActionId}"${quickCompleteButtonSoundAttribute}>
             ${overlay.quickCompleteLabel ?? "快捷完成"}
           </button>
         `;
   const actionsMarkup = `
         <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}"${cancelButtonSoundAttribute}>
             ${overlay.cancelLabel}
           </button>
           ${quickCompleteAction}
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}"${confirmButtonSoundAttribute}>
             ${overlay.confirmLabel}
           </button>
         </div>
@@ -290,6 +302,10 @@ function renderPachinkoBoardOverlay(
       : overlay.activeBall == null
         ? []
         : [overlay.activeBall];
+  const playButtonSoundAttribute =
+    overlay.phase === "settling"
+      ? 'data-button-sound="heavy"'
+      : 'data-pachinko-sound="launch"';
   const playButtonLabel =
     overlay.phase === "settling"
       ? "确认结果"
@@ -365,7 +381,7 @@ function renderPachinkoBoardOverlay(
           <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 转盘</span>
         </div>
         <div class="c-grain-shop-modal__actions c-pachinko-board__actions">
-          <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" data-house-action="${overlay.playActionId}" ${overlay.phase === "dropping" ? "disabled" : ""}>
+          <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" data-house-action="${overlay.playActionId}" ${playButtonSoundAttribute} ${overlay.phase === "dropping" ? "disabled" : ""}>
             ${playButtonLabel}
           </button>
         </div>
@@ -406,6 +422,10 @@ function renderResultOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "result" }>
 ): string {
   const summaryLines = selectTempleResultSummaryLines(overlay);
+  const confirmButtonSoundAttribute =
+    overlay.confirmButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.confirmButtonSound}"`;
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="result"${templePopupOverlayAttribute}>
       <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal${templePopupModalClassName}" role="dialog" aria-modal="true">
@@ -414,7 +434,7 @@ function renderResultOverlay(
           ${summaryLines.map((line) => `<p>${line}</p>`).join("")}
         </div>
         <div class="c-grain-shop-modal__actions">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}"${confirmButtonSoundAttribute}>
             ${overlay.confirmLabel}
           </button>
         </div>
@@ -426,6 +446,15 @@ function renderResultOverlay(
 function renderRestDaysOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "rest-days" }>
 ): string {
+  const confirmButtonSoundAttribute =
+    overlay.confirmButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.confirmButtonSound}"`;
+  const cancelButtonSoundAttribute =
+    overlay.cancelButtonSound == null
+      ? ""
+      : ` data-button-sound="${overlay.cancelButtonSound}"`;
+
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="rest-days"${templePopupOverlayAttribute}>
       <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal${templePopupModalClassName}" role="dialog" aria-modal="true">
@@ -444,10 +473,10 @@ function renderRestDaysOverlay(
           </label>
         </div>
         <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}"${cancelButtonSoundAttribute}>
             ${overlay.cancelLabel}
           </button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}"${confirmButtonSoundAttribute}>
             ${overlay.confirmLabel}
           </button>
         </div>

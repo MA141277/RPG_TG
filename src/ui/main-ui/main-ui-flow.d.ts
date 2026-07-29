@@ -1,5 +1,6 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { AppState } from "../../application/app-shell";
+import type { ButtonSoundEffect } from "../../application/audio/button-sound";
 import type { ScenarioPackSummary } from "../../domain/scenario-pack";
 
 type SaveDataResult = {
@@ -17,6 +18,7 @@ type MainUiFlowOptions = {
   ): void;
   onStartScenarioPack?(scenarioPack: ScenarioPackSummary): void | Promise<void>;
   onImportScenarioPackFiles?(files: File[]): void | Promise<void>;
+  onQueueButtonSound?(effect: ButtonSoundEffect): void;
   loadSaveData(): Promise<SaveDataResult> | SaveDataResult;
   getAppState(): AppState;
 };

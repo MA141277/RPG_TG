@@ -60,7 +60,7 @@ function renderBattleAction(session: NonNullable<ActiveStoryBattleSession>): str
 
   if (session.phase === "awaiting-player-order") {
     return `
-      <button type="button" class="c-button c-story-battle__primary-action" data-story-battle-action="player-advance">
+      <button type="button" class="c-button c-story-battle__primary-action" data-story-battle-action="player-advance" data-ui-click-sound="none">
         指挥本队突入缺口
       </button>
     `;
@@ -68,14 +68,14 @@ function renderBattleAction(session: NonNullable<ActiveStoryBattleSession>): str
 
   if (session.phase === "npc-resolution") {
     return `
-      <button type="button" class="c-button c-story-battle__primary-action" data-story-battle-action="npc-resolve">
+      <button type="button" class="c-button c-story-battle__primary-action" data-story-battle-action="npc-resolve" data-ui-click-sound="none">
         观看友军合围解救
       </button>
     `;
   }
 
   return `
-    <button type="button" class="c-button c-story-battle__primary-action" data-story-battle-action="finish">
+    <button type="button" class="c-button c-story-battle__primary-action" data-story-battle-action="finish" data-ui-click-sound="none">
       胜利，回帅府评定
     </button>
   `;

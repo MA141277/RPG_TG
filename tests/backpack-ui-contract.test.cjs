@@ -175,6 +175,46 @@ test("game-visible app state suppresses the full-screen main menu layer", () => 
   assert.match(
     mainUiCss,
     /body\.is-game-visible\s+\.c-main-ui-overlay\s*\{[\s\S]*?display:\s*none !important;[\s\S]*?visibility:\s*hidden;[\s\S]*?pointer-events:\s*none;/
+test("backpack view keeps browsing light and promotes equip actions to heavy", () => {
+  const html = renderBackpackView({
+    filter: "all",
+    selectedItemId: "item.weapon",
+    items: [
+      {
+        id: "item.weapon",
+        name: "Weapon",
+        icon: "/ui/items/sword.png",
+        value: 8,
+        types: ["equipment", "weapon"],
+        count: 1,
+        description: "test",
+        actions: [
+          { id: "equip.weapon", label: "Equip" },
+          { id: "submit.quest", label: "Submit" },
+        ],
+      },
+    ],
+  });
+
+  assert.match(
+    html,
+    /<button[^>]*data-backpack-filter="equipment"[^>]*data-button-sound="light"[^>]*>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-backpack-item-id="item\.weapon"[^>]*data-button-sound="light"[^>]*>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-action="run-backpack-item-action"[^>]*data-item-action-id="equip\.weapon"[^>]*data-button-sound="heavy"[^>]*>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-action="run-backpack-item-action"[^>]*data-item-action-id="submit\.quest"[^>]*data-button-sound="light"[^>]*>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-action="close-overlay"[^>]*data-button-sound="light"[^>]*>/
   );
 });
 

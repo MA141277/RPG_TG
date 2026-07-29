@@ -1,6 +1,11 @@
 import type { HouseModuleRegistration } from "../../../core/registry/house-module-registry";
+import type { HouseModuleViewRenderer } from "../../../domain/house-module";
 import { renderGrainShopHouseView } from "./grain-shop-house-view";
 import { renderHomeHouseView } from "./home-house-view";
+import {
+  applyHouseOverlayButtonSoundMarkup,
+  withHouseButtonSoundPolicies,
+} from "./house-button-sound-policy";
 import { renderKeepHouseView } from "./keep-house-view";
 import { renderLeaderResidenceHouseView } from "./leader-residence-house-view";
 import { renderMarketHouseView } from "./market-house-view";
@@ -9,41 +14,53 @@ import { renderTavernHouseView } from "./tavern-house-view";
 import { renderTeaHouseHouseView } from "./tea-house-house-view";
 import { renderTempleHouseView } from "./temple-house-view";
 
+function withHouseButtonSoundPolicy(
+  render: HouseModuleViewRenderer
+): HouseModuleViewRenderer {
+  return (viewModel) => {
+    const nextViewModel = withHouseButtonSoundPolicies(viewModel);
+    return applyHouseOverlayButtonSoundMarkup(
+      render(nextViewModel),
+      nextViewModel.overlay
+    );
+  };
+}
+
 export const builtinHouseRendererRegistrations: HouseModuleRegistration[] = [
   {
     moduleId: "home-house",
-    render: renderHomeHouseView,
+    render: withHouseButtonSoundPolicy(renderHomeHouseView),
   },
   {
     moduleId: "keep-house",
-    render: renderKeepHouseView,
+    render: withHouseButtonSoundPolicy(renderKeepHouseView),
   },
   {
     moduleId: "leader-residence",
-    render: renderLeaderResidenceHouseView,
+    render: withHouseButtonSoundPolicy(renderLeaderResidenceHouseView),
   },
   {
     moduleId: "grain-shop",
-    render: renderGrainShopHouseView,
+    render: withHouseButtonSoundPolicy(renderGrainShopHouseView),
   },
   {
     moduleId: "market-house",
-    render: renderMarketHouseView,
+    render: withHouseButtonSoundPolicy(renderMarketHouseView),
   },
   {
     moduleId: "medicine-house",
-    render: renderMedicineHouseHouseView,
+    render: withHouseButtonSoundPolicy(renderMedicineHouseHouseView),
   },
   {
     moduleId: "temple-house",
-    render: renderTempleHouseView,
+    render: withHouseButtonSoundPolicy(renderTempleHouseView),
   },
   {
     moduleId: "tavern",
-    render: renderTavernHouseView,
+    render: withHouseButtonSoundPolicy(renderTavernHouseView),
   },
   {
     moduleId: "tea-house",
-    render: renderTeaHouseHouseView,
+    render: withHouseButtonSoundPolicy(renderTeaHouseHouseView),
   },
 ];

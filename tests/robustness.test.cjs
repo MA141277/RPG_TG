@@ -14895,7 +14895,7 @@ test("child 15 covered advance-segments travel paths route through shared runtim
     /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
   )?.[0] ?? "";
   const startCampaignTravelBlock = source.match(
-    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nasync function animateCampaignMovePath/
   )?.[0] ?? "";
 
   assert.doesNotMatch(handleModalConfirmBlock, /runTimeRuntime\(/);
@@ -15007,13 +15007,13 @@ test("main runtime orchestration uses shared runtime commit helper for covered d
     /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryScene/
   )?.[0] ?? "";
   const dispatchCurrentStoryBattleActionBlock = source.match(
-    /function dispatchCurrentStoryBattleAction\(actionId: string\): void \{[\s\S]*?\r?\n}\r?\n\r?\ntype BattleDemoResultMessage/
+    /function dispatchCurrentStoryBattleAction\([\s\S]*?\): void \{[\s\S]*?\r?\n}\r?\n\r?\ntype BattleDemoResultMessage/
   )?.[0] ?? "";
   const handleModalConfirmBlock = source.match(
     /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
   )?.[0] ?? "";
   const startCampaignTravelBlock = source.match(
-    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nasync function animateCampaignMovePath/
   )?.[0] ?? "";
 
   assert.match(startMapAutoAdvanceBlock, /commitRuntimeRequest\(/);
