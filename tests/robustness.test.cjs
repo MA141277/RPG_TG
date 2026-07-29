@@ -9260,7 +9260,7 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
       factionMerit: {
         ...createMonkStageState().runtime.factionMerit,
         temple: {
-          [playerCharacterId]: 80,
+          [playerCharacterId]: 30,
         },
       },
     },
@@ -9628,7 +9628,7 @@ test("temple house unlocked begging is chosen in review and executes later witho
         factionMerit: {
           ...baseState.runtime.factionMerit,
           temple: {
-            [playerCharacterId]: 80,
+            [playerCharacterId]: 30,
           },
         },
       },
@@ -9736,7 +9736,7 @@ test("temple review unlocked work choice still requires minimum rank and cannot 
         variables: {
           ...baseState.runtime.variables,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 29,
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
         },
       },

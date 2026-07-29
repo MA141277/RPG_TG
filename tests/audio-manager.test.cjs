@@ -1252,7 +1252,7 @@ test("audio controller keeps one looping BGM player and switches its source when
 
   assert.equal(players.length, 1);
   const openingSrc = players[0].src;
-  assert.match(openingSrc, /^asset:\/\/BGM\//);
+  assert.equal(openingSrc, "asset://BGM/开局.mp3");
   assert.equal(players[0].loop, true);
 
   controller.sync({
@@ -1261,7 +1261,6 @@ test("audio controller keeps one looping BGM player and switches its source when
   });
 
   assert.equal(players.length, 1);
-  assert.match(players[0].src, /^asset:\/\/BGM\//);
-  assert.notEqual(players[0].src, openingSrc);
+  assert.equal(players[0].src, "asset://BGM/游戏内.mp3");
 });
 

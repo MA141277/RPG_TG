@@ -43,8 +43,8 @@ test("review completion grades use the requested five Chinese labels", () => {
 
 test("faction rank lookup resolves temple and red turban threshold boundaries", () => {
   assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 0).label, "杂役");
-  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 79).label, "杂役");
-  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 80).label, "沙弥");
+  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 29).label, "杂役");
+  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 30).label, "沙弥");
   assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 1800).label, "监院");
   assert.equal(resolveFactionMeritRank(RED_TURBAN_FACTION_RANKS, 199).label, "亲兵");
   assert.equal(resolveFactionMeritRank(RED_TURBAN_FACTION_RANKS, 200).label, "亲兵队长");

@@ -257,7 +257,7 @@ const BUILTIN_AUDIO_CUE_DEFINITIONS: readonly AudioCueDefinition[] = [
     defaultVolume: 0.35,
     source: {
       kind: "asset-path",
-      assetPath: "BGM/游戏�?mp3",
+      assetPath: "BGM/游戏内.mp3",
     },
   },
   {
@@ -267,7 +267,7 @@ const BUILTIN_AUDIO_CUE_DEFINITIONS: readonly AudioCueDefinition[] = [
     defaultVolume: 0.35,
     source: {
       kind: "asset-path",
-      assetPath: "BGM/游戏�?mp3",
+      assetPath: "BGM/游戏内.mp3",
     },
   },
   {

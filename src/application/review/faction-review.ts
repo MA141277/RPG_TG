@@ -23,7 +23,7 @@ export const REVIEW_COMPLETION_GRADE_LABELS: Record<ReviewCompletionGrade, strin
 
 export const TEMPLE_FACTION_RANKS: FactionMeritRank[] = [
   { id: "temple.laborer", label: "杂役", minMerit: 0, stipendLabel: "0（管饭）" },
-  { id: "temple.novice", label: "沙弥", minMerit: 80, stipendLabel: "1 斗米" },
+  { id: "temple.novice", label: "沙弥", minMerit: 30, stipendLabel: "1 斗米" },
   { id: "temple.itinerant", label: "云游僧", minMerit: 200, stipendLabel: "化缘所得" },
   { id: "temple.monk", label: "比丘", minMerit: 500, stipendLabel: "3 斗米" },
   { id: "temple.guest_master", label: "知客僧", minMerit: 1000, stipendLabel: "5 斗米" },

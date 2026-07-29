@@ -49,6 +49,7 @@
 - 开局朱元璋的可见身份从 `亲兵` 改为 `流民`；寺庙评定人事结算不再从角色 title 推断前一阵营身份，因此首轮会表现为 `流民` 入寺、初列 `杂役`，再按贡献晋为 `沙弥`。
 - 剃度剧情不再通过 `patch-character` 覆盖玩家 `title` 为 `挂单僧`；寺中叙事身份保留在 occupation/biography，阵营身份由评定人事机制接管。
 - 评定委托的最低身份判定统一由 shared review task gate 合并 `reviewMinRankId` 与额外锁定条件；剧情解锁不能绕过最低身份要求。
+- 寺庙身份档位调整：`沙弥` 门槛由 80 点阵营贡献降为 30 点阵营贡献。
 
 ### Impact
 - 后续 keep 或其他阵营据点接入评定奖励、人事与委托门槛时，应复用 shared review reward/personnel/task-gate helpers，并继续通过统一 runtime 库存、`GameState.runtime.factionMerit`、`GameState.runtime.factionMemberships` 写入持久变化，避免在 `main.ts` 或 house view 中补业务分支。

@@ -481,7 +481,8 @@ export function renderCityView(
               houseDefinitions,
               cityEntries,
             })}
-            ${haozhouCoinTestButton}`r`n            <button type="button" class="c-kulan-city__leave-action" data-action="leave-city" data-button-sound="light">
+            ${haozhouCoinTestButton}
+            <button type="button" class="c-kulan-city__leave-action" data-action="leave-city" data-button-sound="light">
               返回地图
             </button>
             ${city3dButton}

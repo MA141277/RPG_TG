@@ -224,8 +224,8 @@ test("review completion grades use the requested five Chinese labels", () => {
 
 test("faction rank lookup resolves temple and red turban threshold boundaries", () => {
   assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 0).label, "杂役");
-  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 79).label, "杂役");
-  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 80).label, "沙弥");
+  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 29).label, "杂役");
+  assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 30).label, "沙弥");
   assert.equal(resolveFactionMeritRank(TEMPLE_FACTION_RANKS, 1800).label, "监院");
   assert.equal(resolveFactionMeritRank(RED_TURBAN_FACTION_RANKS, 199).label, "亲兵");
   assert.equal(resolveFactionMeritRank(RED_TURBAN_FACTION_RANKS, 200).label, "亲兵队长");
@@ -365,7 +365,7 @@ Create `src/application/review/faction-review.ts` exporting the functions used i
 ```ts
 export const TEMPLE_FACTION_RANKS: FactionMeritRank[] = [
   { id: "temple.laborer", label: "杂役", minMerit: 0, stipendLabel: "0（管饭）" },
-  { id: "temple.novice", label: "沙弥", minMerit: 80, stipendLabel: "1 斗米" },
+  { id: "temple.novice", label: "沙弥", minMerit: 30, stipendLabel: "1 斗米" },
   { id: "temple.itinerant", label: "云游僧", minMerit: 200, stipendLabel: "化缘所得" },
   { id: "temple.monk", label: "比丘", minMerit: 500, stipendLabel: "3 斗米" },
   { id: "temple.guest_master", label: "知客僧", minMerit: 1000, stipendLabel: "5 斗米" },
