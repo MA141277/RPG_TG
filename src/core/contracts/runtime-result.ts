@@ -29,6 +29,8 @@ export type RuntimeInteractiveSignal =
   | { type: "reenter-house"; houseId: string }
   | { type: "none" };
 
+export type RuntimeFollowUp = RuntimeInteractiveSignal;
+
 export type RuntimeFollowUpOutcome =
   | { type: "navigation.entered-city"; cityId: string }
   | { type: "time.advanced" }
@@ -60,7 +62,7 @@ export type RuntimeResult = {
   taskUpdates?: TaskUpdate[];
   settlementInstances?: ProgressionSettlementInstance[];
   settlement?: RuntimeSettlementResult | null;
-  followUp?: RuntimeInteractiveSignal | null;
+  followUp?: RuntimeFollowUp | null;
   outcome?: RuntimeFollowUpOutcome | null;
   interactive?: RuntimeInteractiveSignal | null;
 };

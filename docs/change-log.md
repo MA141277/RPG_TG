@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Runtime FollowUp Contract Alias Slice
+
+### Added
+- 新增 `RuntimeFollowUp` 兼容别名，并让 `RuntimeResult.followUp` 使用该别名，为后续逐步对齐 mod-first-dev 的统一 follow-up 命名预留路径。
+- 新增 `tests/runtime-follow-up-contract.test.cjs`，锁定 `RuntimeFollowUp` 可用，同时保留当前 `interactive` 与 `outcome` 兼容字段。
+
+### Impact
+- 这片只迁移 core runtime result 类型命名兼容，不改 runtime 行为、UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续可以分批把 runtime-router / runtime-dispatch 的 follow-up 处理收敛到 `RuntimeFollowUp`，而不需要一次性删除当前基线仍可能依赖的旧字段。
+
 ## 2026-07-29 Playable Result Contract Alias Slice
 
 ### Added
