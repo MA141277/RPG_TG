@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Navigation Runtime Access Slice
+
+### Added
+- `runNavigationRuntime()` / `routeNavigationRuntime()` 新增可选 location access 输入，支持 city/building enter 前通过 `evaluateLocationAccess()` 返回结构化 access refusal。
+- 新增 `tests/navigation-runtime-access.test.cjs`，覆盖未提供规则时保持原 enter-city 行为，以及 city/building 被规则拒绝时不切换状态。
+
+### Impact
+- 这片只迁移 navigation runtime 的访问判定 seam，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 为避免覆盖当前分支行为，本片没有引入 mod-first-dev 中“缺少建筑编排即禁止进入”的行为；只有调用方显式传入 location access 数据时才会触发访问判定。
+
 ## 2026-07-29 State Sync Runtime Status Patch Slice
 
 ### Added
