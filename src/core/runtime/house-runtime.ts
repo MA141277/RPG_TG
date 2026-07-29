@@ -14,7 +14,7 @@ import {
 } from "../../application/story/story-runtime-state-bridge";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CityDefinition } from "../../domain/city";
-import type { EventDefinition } from "../../domain/event";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
 import type {
@@ -29,6 +29,10 @@ import type {
 import type { SceneDefinition } from "../../domain/action";
 import { assertExists } from "../../shared/assert";
 import type { StorySettlementDefinition } from "../../application/story/story-settlement-continuation";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../contracts/progression-runtime";
 import {
   builtinHouseModuleRegistry,
   type HouseModuleRegistry,
@@ -59,11 +63,18 @@ export type HouseRuntimeDependencies = {
   playerCharacterId: string;
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  eventBindingsById?: Record<string, EventBinding> | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   settlementDefinitionsById?: Record<
     string,
     StorySettlementDefinition | undefined
   >;
+  progressTrackDefinitionsById?:
+    | Record<string, ProgressTrackDefinition>
+    | undefined;
+  progressTrackBindingsById?:
+    | Record<string, ProgressTrackBinding>
+    | undefined;
   cityDefinitionsById?: Record<string, CityDefinition> | undefined;
   houseDefinitionsById?: Record<string, HouseDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
@@ -107,12 +118,27 @@ export function createHouseRuntimeBridge(
     return {
       eventDefinitionsById: dependencies.eventDefinitionsById,
       sceneDefinitionsById: dependencies.sceneDefinitionsById,
+      ...(dependencies.eventBindingsById == null
+        ? {}
+        : { eventBindingsById: dependencies.eventBindingsById }),
       ...(dependencies.activityDefinitionsById == null
         ? {}
         : { activityDefinitionsById: dependencies.activityDefinitionsById }),
       ...(dependencies.settlementDefinitionsById == null
         ? {}
         : { settlementDefinitionsById: dependencies.settlementDefinitionsById }),
+      ...(dependencies.progressTrackDefinitionsById == null
+        ? {}
+        : {
+            progressTrackDefinitionsById:
+              dependencies.progressTrackDefinitionsById,
+          }),
+      ...(dependencies.progressTrackBindingsById == null
+        ? {}
+        : {
+            progressTrackBindingsById:
+              dependencies.progressTrackBindingsById,
+          }),
       ...(dependencies.cityDefinitionsById == null
         ? {}
         : { cityDefinitionsById: dependencies.cityDefinitionsById }),
@@ -376,8 +402,14 @@ export function createHouseRuntimeBridge(
       {
         eventDefinitionsById: dependencies.eventDefinitionsById,
         sceneDefinitionsById: dependencies.sceneDefinitionsById,
+        eventBindingsById: dependencies.eventBindingsById,
         activityDefinitionsById: dependencies.activityDefinitionsById,
         settlementDefinitionsById: dependencies.settlementDefinitionsById,
+        progressTrackDefinitionsById:
+          dependencies.progressTrackDefinitionsById,
+        progressTrackBindingsById: dependencies.progressTrackBindingsById,
+        cityDefinitionsById: dependencies.cityDefinitionsById,
+        houseDefinitionsById: dependencies.houseDefinitionsById,
         textEntriesById: dependencies.textEntriesById,
       },
       buildStoryTriggerInput("house-enter", {

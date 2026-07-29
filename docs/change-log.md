@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Story Runtime Event Binding And Progression Slice
+
+### Added
+- `story-runtime` 现在会在现有 scene-trigger 兼容路径之外，优先消费 `eventBindingsById`，并为 `city-enter`、`house-enter`、`indoor-screen-shown` 三类 timing 构造 shared `event-binding-runtime` trigger context。
+- `story-runtime` 现在会在 settlement 事件完成后执行 progression 评估，把 `progressTrackDefinitionsById` / `progressTrackBindingsById` 产出的 tier settlement 继续应用回角色、城市、建筑 runtime definition context。
+- `GameState.runtime` 新增可选 `progression` 状态位，用于持久保存 progress track tier state。
+- `indoor-screen-story-follow-up`、`main-runtime-orchestrator`、`house-runtime` 与当前分支 `src/main.ts` storyContent wiring 现在都会透传 `eventBindings` 和 `progressTrack` family。
+- 扩展 `tests/indoor-screen-story-runtime.test.cjs`，新增 coverage 锁定 main runtime orchestrator 通过 shared `story-runtime` 消费 event binding 并触发 progression settlement。
+
+### Impact
+- 当前 handoff 内已经完成 `eventBindings/progressTracks` 在 shared `story-runtime` 上的最小可用接线，house-enter / indoor-screen / orchestrated trigger-story-events 都能走同一条 runtime seam。
+- `navigation-time-follow-up` 仍停留在旧的 `scene-runtime` 兼容层；是否把 city-enter follow-up 也切到 `story-runtime`，应作为下一步单独判断，而不是把 full shellification 混进本切片。
+
 ## 2026-07-29 Indoor Screen Settlement Runtime Bridge Slice
 
 ### Added

@@ -970,10 +970,15 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
   getStoryContent: () => ({
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+    eventBindingsById: activeContentContext.storyContent.eventBindingsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
     settlementDefinitionsById:
       activeContentContext.storyContent.settlementDefinitionsById,
+    progressTrackDefinitionsById:
+      activeContentContext.storyContent.progressTrackDefinitionsById,
+    progressTrackBindingsById:
+      activeContentContext.storyContent.progressTrackBindingsById,
     cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
     houseDefinitionsById:
       activeContentContext.storyContent.houseDefinitionsById,
@@ -1757,10 +1762,15 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
     playerCharacterId: currentPlayerCharacterId,
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+    eventBindingsById: activeContentContext.storyContent.eventBindingsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
     settlementDefinitionsById:
       activeContentContext.storyContent.settlementDefinitionsById,
+    progressTrackDefinitionsById:
+      activeContentContext.storyContent.progressTrackDefinitionsById,
+    progressTrackBindingsById:
+      activeContentContext.storyContent.progressTrackBindingsById,
     cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
     houseDefinitionsById: activeContentContext.storyContent.houseDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,

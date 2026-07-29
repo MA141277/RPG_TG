@@ -6,10 +6,18 @@ import type { BuildingStatusById } from "../../domain/building-status";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityDefinition } from "../../domain/city";
 import type { CityStatusById } from "../../domain/city-status";
-import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
+import type {
+  EventBinding,
+  EventDefinition,
+  EventTriggerTiming,
+} from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
 import type { StartupSessionBootstrap } from "../startup/startup-session-coordinator";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../../core/contracts/progression-runtime";
 import { applyIndoorScreenStoryFollowUp } from "./indoor-screen-story-follow-up";
 import {
   advanceStorySceneStep,
@@ -66,11 +74,14 @@ export type MainRuntimeOrchestratorDependencies = {
   getStoryContent(): {
     eventDefinitionsById: Record<string, EventDefinition>;
     sceneDefinitionsById: Record<string, SceneDefinition>;
+    eventBindingsById?: Record<string, EventBinding>;
     activityDefinitionsById?: Record<string, ActivityDefinition>;
     settlementDefinitionsById?: Record<
       string,
       StorySettlementDefinition | undefined
     >;
+    progressTrackDefinitionsById?: Record<string, ProgressTrackDefinition>;
+    progressTrackBindingsById?: Record<string, ProgressTrackBinding>;
     cityDefinitionsById?: Record<string, CityDefinition>;
     houseDefinitionsById?: Record<string, HouseDefinition>;
     textEntriesById?: Record<string, string>;
@@ -120,8 +131,14 @@ export function createMainRuntimeOrchestrator(
       {
         eventDefinitionsById: storyContent.eventDefinitionsById,
         sceneDefinitionsById: storyContent.sceneDefinitionsById,
+        eventBindingsById: storyContent.eventBindingsById,
         activityDefinitionsById: storyContent.activityDefinitionsById,
         settlementDefinitionsById: storyContent.settlementDefinitionsById,
+        progressTrackDefinitionsById:
+          storyContent.progressTrackDefinitionsById,
+        progressTrackBindingsById: storyContent.progressTrackBindingsById,
+        cityDefinitionsById: storyContent.cityDefinitionsById,
+        houseDefinitionsById: storyContent.houseDefinitionsById,
         textEntriesById: storyContent.textEntriesById,
       },
       buildStoryTriggerInput(timing, state)

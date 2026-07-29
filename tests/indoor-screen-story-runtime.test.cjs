@@ -125,6 +125,118 @@ function createSettlementContent(eventDefinition, houseDefinition = targetHouse)
   };
 }
 
+function createEventBindingProgressionContent(input = {}) {
+  const cityId = input.cityId ?? targetCity.id;
+  const houseDefinition = input.houseDefinition ?? targetHouse;
+  const eventId = input.eventId ?? "event.test.binding";
+  const entrySceneId = input.entrySceneId ?? "scene.test.binding";
+  const settlementId = input.settlementId ?? "settlement.test.binding";
+  const triggerAction = input.triggerAction ?? "city-enter";
+  const bindingOwner =
+    input.bindingOwner ??
+    (triggerAction === "city-enter"
+      ? { family: "city", id: cityId }
+      : { family: "building", id: houseDefinition.id });
+
+  return {
+    eventDefinitionsById: {
+      [eventId]: {
+        id: eventId,
+        chapterId: "chapter.prototype",
+        name: eventId,
+        occurrence: "once",
+        trigger: { timing: "manual" },
+        conditions: [],
+        entrySceneId,
+        type: "settlement",
+        settlementId,
+      },
+    },
+    sceneDefinitionsById: {
+      [entrySceneId]: {
+        id: entrySceneId,
+        name: "Binding Scene",
+        actions: [],
+      },
+    },
+    eventBindingsById: {
+      [`binding.${eventId}`]: {
+        id: `binding.${eventId}`,
+        eventId,
+        owner: bindingOwner,
+        trigger: {
+          timing: "after",
+          action: triggerAction,
+        },
+      },
+    },
+    settlementDefinitionsById: {
+      [settlementId]: {
+        id: settlementId,
+        title: "Binding Settlement",
+        contents: [
+          {
+            targetFamily: "city",
+            targetId: cityId,
+            attributeKey: "prosperity",
+            attributeType: "number",
+            operation: "add",
+            value: 5,
+          },
+        ],
+      },
+      "settlement.test.progress-tier": {
+        id: "settlement.test.progress-tier",
+        title: "Progress Tier Settlement",
+        contents: [
+          {
+            targetFamily: "building",
+            targetId: houseDefinition.id,
+            attributeKey: "outputMultiplier",
+            attributeType: "number",
+            operation: "set",
+            value: 4,
+          },
+        ],
+      },
+    },
+    progressTrackDefinitionsById: {
+      "track.city.prosperity": {
+        id: "track.city.prosperity",
+        title: "City Prosperity",
+        metricKey: "prosperity",
+        metricLabel: "Prosperity",
+        hostFamily: "city",
+        allowDemotion: false,
+        tiers: [
+          {
+            id: "tier.city.prosperity",
+            title: "Prosperous",
+            threshold: targetCity.prosperity + 5,
+            targetTierSettlementId: "settlement.test.progress-tier",
+          },
+        ],
+      },
+    },
+    progressTrackBindingsById: {
+      "binding.track.city.prosperity": {
+        id: "binding.track.city.prosperity",
+        trackId: "track.city.prosperity",
+        host: {
+          family: "city",
+          id: cityId,
+        },
+      },
+    },
+    cityDefinitionsById: {
+      [cityId]: targetCity,
+    },
+    houseDefinitionsById: {
+      [houseDefinition.id]: houseDefinition,
+    },
+  };
+}
+
 test("applyIndoorScreenStoryFollowUp projects settlement world updates into app-state status layers", () => {
   const appState = {
     ...createAppState(),
@@ -301,4 +413,56 @@ test("house runtime enter applies house-enter settlement world updates before re
     },
   });
   assert.equal(renderCount, 1);
+});
+
+test("main runtime orchestrator consumes event bindings and progression settlements through story runtime", () => {
+  let appState = createAppState();
+  const storyContent = createEventBindingProgressionContent();
+  const orchestrator = createMainRuntimeOrchestrator({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    setPlayerCharacterId: () => {},
+    getStoryContent: () => storyContent,
+    resetMainGameRuntime: () => {},
+    setActiveContentContext: () => {},
+    recreateHouseRuntime: () => {},
+    setGameVisibility: () => {},
+    hideMainUiFlow: () => {},
+  });
+
+  const result = orchestrator.execute({
+    type: "trigger-story-events",
+    timing: "city-enter",
+    state: {
+      ...appState.gameState,
+      world: {
+        ...appState.gameState.world,
+        currentCityId: targetCity.id,
+      },
+    },
+    characterDefinitions: appState.characterDefinitions,
+  });
+
+  assert.equal(
+    result.gameState.runtime.eventHistory["event.test.binding"]?.firedCount,
+    1
+  );
+  assert.equal(
+    result.gameState.runtime.progression?.trackStatesByHostKey?.[
+      `city:${targetCity.id}`
+    ]?.["track.city.prosperity"]?.currentTierId,
+    "tier.city.prosperity"
+  );
+  assert.deepEqual(result.cityStatusById?.[targetCity.id], {
+    valuePatch: {
+      prosperity: targetCity.prosperity + 5,
+    },
+  });
+  assert.deepEqual(result.buildingStatusById?.[targetHouse.id], {
+    runtimePatch: {
+      outputMultiplier: 4,
+    },
+  });
 });
