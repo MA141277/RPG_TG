@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Flow Playable Presenter Model Slice
+
+### Added
+- 新增 `presentFlowPlayable()`，把 flow playable 当前节点投影为数据化 `PlayablePresenterModel`，支持 text 节点 confirm action、choice 节点 custom actions，以及缺失节点 fail-closed 输出。
+- `PlayablePresenterModel` 增加可选 `viewModel` 字段，用于承载 presenter 层结构化数据。
+- 新增 `tests/flow-playable-presenter.test.cjs`，覆盖 text、choice、缺失 session 节点三类输出。
+
+### Impact
+- 这片只迁移 application/playable presenter 数据模型，不渲染 HTML，不接入 UI，不改 UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续若要在 runtime preview 或事件 playable 中显示 flow，可复用这个 presenter 数据模型，而不是在 UI 层直接解释 flow definition。
+
 ## 2026-07-29 Flow Playable Runtime Dispatch Slice
 
 ### Added

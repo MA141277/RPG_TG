@@ -108,6 +108,7 @@ export type PlayablePresenterModel = {
     label: string;
     commandType: "confirm" | "cancel" | "custom";
   }>;
+  viewModel?: Record<string, unknown> | undefined;
   detail?: Record<string, unknown> | undefined;
 };
 
