@@ -211,14 +211,17 @@ Example quest item:
 
 Items may declare actions, but item data must not contain arbitrary script code.
 
-Actions should reference existing runtime mechanisms:
+Actions should reference existing runtime mechanisms. For state changes such as healing, damage, money, task progress, or inventory mutation, the primary target should be the settlement mechanism already present on `mod-first-dev`.
 
 ```ts
 type ItemActionRef = {
   id: string;
   label: string;
-  kind: "effectBundle" | "event" | "flow" | "builtin";
-  targetId: string;
+  trigger: {
+    kind: "settlement" | "event" | "flow" | "builtin";
+    targetId: string;
+  };
+  consumePolicy?: "never" | "onUse" | "onSuccess";
   conditionGroupId?: string;
   availabilityText?: string;
 };
@@ -232,14 +235,18 @@ Example:
     {
       "id": "item.action.equip",
       "label": "装备",
-      "kind": "builtin",
-      "targetId": "inventory.equip"
+      "trigger": {
+        "kind": "builtin",
+        "targetId": "inventory.equip"
+      }
     },
     {
       "id": "item.action.read",
       "label": "阅读",
-      "kind": "event",
-      "targetId": "event.read_secret_letter"
+      "trigger": {
+        "kind": "event",
+        "targetId": "event.read_secret_letter"
+      }
     }
   ]
 }
@@ -248,13 +255,138 @@ Example:
 Supported action routing examples:
 
 - Equip: built-in inventory handler
-- Use: effect bundle
+- Use: settlement
 - Read: event or dialogue flow
-- Submit: task or effect bundle
+- Submit: settlement event or task handoff
 - Trigger story: event
 - Launch minigame: flow
 
 The backpack should dispatch actions to runtime handlers. It should not interpret custom business logic itself.
+
+## Settlement Runtime Alignment
+
+Item actions must align with the settlement instance and settlement runtime model on `mod-first-dev`.
+
+That branch already has:
+
+```ts
+type SettlementDefinition = {
+  id: string;
+  title?: string;
+  nextEventId?: string;
+  contents?: SettlementContentDefinition[];
+};
+
+type SettlementContentDefinition = {
+  targetFamily: "person" | "city" | "building";
+  targetId: string;
+  attributeKey: string;
+  attributeType: "number" | "boolean" | "enum";
+  operation: "add" | "subtract" | "set";
+  value: string | number | boolean;
+};
+```
+
+Events can reference settlements with `type: "settlement"` and `settlementId`. Scenario-pack loading and script-editor export already reject settlement events without a valid `settlementId`.
+
+For item usage, the preferred flow is:
+
+1. Backpack UI dispatches the selected item action.
+2. Item action runtime validates ownership, availability, and consume policy.
+3. The action resolves to a `settlementId`, a settlement event, or a flow/event that eventually emits a settlement.
+4. `runtime-settlement` applies the settlement contents.
+5. Inventory consumption is applied through the same runtime path or through a standard inventory mutation owned by item action runtime after settlement success.
+6. UI re-renders from runtime state.
+
+The backpack UI must never directly mutate character attributes, money, item quantity, task state, or flags.
+
+Example healing item:
+
+```json
+{
+  "id": "item.potion.small",
+  "name": "小药水",
+  "classification": {
+    "primaryCategory": "consumable",
+    "secondaryCategories": ["medicine"]
+  },
+  "stack": {
+    "stackable": true,
+    "maxStack": 99
+  },
+  "components": [
+    {
+      "type": "consumable",
+      "consumeOnUse": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "item.action.use",
+      "label": "使用",
+      "trigger": {
+        "kind": "settlement",
+        "targetId": "settlement.item.potion.small.use"
+      },
+      "consumePolicy": "onSuccess"
+    }
+  ]
+}
+```
+
+Matching settlement:
+
+```json
+{
+  "id": "settlement.item.potion.small.use",
+  "title": "使用小药水",
+  "contents": [
+    {
+      "targetFamily": "person",
+      "targetId": "player",
+      "attributeKey": "hp",
+      "attributeType": "number",
+      "operation": "add",
+      "value": 10
+    }
+  ]
+}
+```
+
+The exact player target and `attributeKey` must follow the existing script-editor field mapping and runtime mutation contract. If `hp` is a mod-defined character attribute, the settlement authoring and export validation must know how that key maps to runtime state before the item action can be considered valid.
+
+Example random item:
+
+```json
+{
+  "id": "item.coin.fate",
+  "name": "命运硬币",
+  "classification": {
+    "primaryCategory": "consumable",
+    "secondaryCategories": ["curio", "random"]
+  },
+  "actions": [
+    {
+      "id": "item.action.flip",
+      "label": "抛掷",
+      "trigger": {
+        "kind": "flow",
+        "targetId": "flow.item.coin.fate.flip"
+      },
+      "consumePolicy": "onSuccess"
+    }
+  ]
+}
+```
+
+The random branch should be implemented by a reusable flow or future generic settlement random-choice mechanism. The item itself must not own coin-specific code.
+
+Current `mod-first-dev` settlement targets are `person`, `city`, and `building`. Inventory is not yet a settlement target family there. Therefore, item consumption has two acceptable implementation paths:
+
+- Extend the settlement runtime with an `inventory` target family and update the script-editor/runtime contracts together.
+- Keep inventory consumption inside item action runtime as a standard post-settlement inventory mutation, with no direct UI mutation.
+
+The first path is the long-term cleaner model. The second path is acceptable only as a bounded transition while the inventory runtime contract is being introduced.
 
 ## Inventory State
 
@@ -314,7 +446,7 @@ type BackpackSystemConfig = {
 2. New item categories should not require TypeScript code changes.
 3. Stable built-in behavior can graduate into built-in components.
 4. Mod-specific behavior should use namespaced custom components.
-5. Item actions should reference events, effect bundles, flows, tasks, or built-in handlers.
+5. Item actions should reference settlements, settlement events, flows, tasks, or built-in handlers.
 6. Backpack UI should render resolved state and available actions; it should not own item business rules.
 
 Example namespaced custom component:
@@ -338,7 +470,8 @@ The current codebase still has legacy `valuables` and a unified backpack project
 3. Project old valuables, grain, and reward variables into unified backpack entries as compatibility inputs.
 4. Move persistent player ownership into unified inventory state.
 5. Remove `count` from item definitions and keep it in inventory stacks.
-6. Let backpack presenter/view consume resolved item inventory projections only.
+6. Route state-changing item actions through the `mod-first-dev` settlement runtime model.
+7. Let backpack presenter/view consume resolved item inventory projections only.
 
 ## Non-Goals
 
