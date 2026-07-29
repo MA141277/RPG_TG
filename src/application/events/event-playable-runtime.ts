@@ -41,6 +41,8 @@ export type EventOwnedPlayableCompletionResult<State = unknown> =
 export type EventOwnedPlayableCompletionInput<State = unknown> = {
   state: State;
   characterDefinitions: CharacterDefinition[];
+  cityDefinitions?: CityDefinition[] | undefined;
+  houseDefinitions?: HouseDefinition[] | undefined;
   previousPlayableSession: ActivePlayableSession | null | undefined;
   settlement?: unknown;
   followUp?: RuntimeInteractiveSignal | null | undefined;
@@ -174,6 +176,12 @@ export function applyEventOwnedPlayableCompletion<State = unknown>(
     sourceEventId,
     state: input.state,
     characterDefinitions: input.characterDefinitions,
+    ...(input.cityDefinitions == null
+      ? {}
+      : { cityDefinitions: input.cityDefinitions }),
+    ...(input.houseDefinitions == null
+      ? {}
+      : { houseDefinitions: input.houseDefinitions }),
   };
   const continued = input.continueFromSourceEvent?.(continuationInput) ?? null;
   if (continued != null) {

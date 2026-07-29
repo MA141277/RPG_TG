@@ -14,6 +14,10 @@ assert.equal(
 const {
   applyEventOwnedPlayableCompletion,
 } = require("../.test-dist/application/events/event-playable-runtime.js");
+const {
+  prototypeCities,
+  prototypeHouses,
+} = require("../.test-dist/content/prototype-world.js");
 
 function createSession(sourceEventId) {
   return {
@@ -99,6 +103,48 @@ test("event-owned playable completion applies a runtime follow-up when no contin
     ui: { currentView: "house" },
   });
   assert.equal(result.characterDefinitions, characterDefinitions);
+});
+
+test("event-owned playable completion passes world definitions into source event continuation", () => {
+  const state = {
+    runtime: { marker: "before" },
+  };
+  const characterDefinitions = [{ id: "char.player" }];
+  const cityDefinitions = prototypeCities.slice(0, 1);
+  const houseDefinitions = prototypeHouses.slice(0, 1);
+
+  const result = applyEventOwnedPlayableCompletion({
+    state,
+    characterDefinitions,
+    cityDefinitions,
+    houseDefinitions,
+    previousPlayableSession: createSession("event.world.settlement"),
+    settlement: { outcome: "success" },
+    continueFromSourceEvent: ({
+      sourceEventId,
+      cityDefinitions: continuedCities,
+      houseDefinitions: continuedHouses,
+    }) => {
+      assert.equal(sourceEventId, "event.world.settlement");
+      assert.equal(continuedCities, cityDefinitions);
+      assert.equal(continuedHouses, houseDefinitions);
+      return {
+        state: {
+          runtime: { marker: "continued" },
+        },
+        characterDefinitions,
+        cityDefinitions: continuedCities,
+        houseDefinitions: continuedHouses,
+      };
+    },
+  });
+
+  assert.equal(result.handled, true);
+  assert.deepEqual(result.state, {
+    runtime: { marker: "continued" },
+  });
+  assert.equal(result.cityDefinitions, cityDefinitions);
+  assert.equal(result.houseDefinitions, houseDefinitions);
 });
 
 test("event-owned playable completion ignores sessions without a source event token", () => {

@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Event-Owned Playable World Continuation Input Slice
+
+### Added
+- `applyEventOwnedPlayableCompletion()` input 现在可携带 `cityDefinitions` / `houseDefinitions`，并会把它们传入 source event continuation。
+- 扩展 `tests/event-owned-playable-completion.test.cjs`，覆盖 event-owned playable completion 调用链向 continuation 传递并返回世界定义集合。
+
+### Impact
+- 这片只迁移 event-owned playable completion 的 runtime input/result 透传，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续实际调用方可把 active content 的 city/house definitions 传入 completion 链路，从而接收上一片 story settlement world target 变更。
+
 ## 2026-07-29 Story Settlement Continuation Helper Slice
 
 ### Added
