@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 City Begging Runtime Status Patch Slice
+
+### Added
+- city-begging completion 现在会把金币与体力变化生成为 `characterStatusById`，并通过 `playable-runtime` 返回给统一 runtime commit 链路。
+- 新增 `tests/city-begging-runtime-status.test.cjs`，覆盖 city-begging 完成后返回角色 status patch。
+
+### Changed
+- 玩家体力 mutation helper 现在可返回体力 status patch；city-begging 金币结算改为复用 `mutateCharacterNumericProperty()` 生成 `stats.gold` patch。
+
+### Impact
+- 这片只迁移 application/playable runtime 结算链路，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续 city-begging completion 可通过前面迁入的 `commitRuntimeRequest()` / `stateSyncCoreSeam` 把角色状态补丁统一写回 app state。
+
 ## 2026-07-29 Scenario Pack Playable Contribution Slice
 
 ### Added

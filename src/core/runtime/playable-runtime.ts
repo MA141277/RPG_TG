@@ -725,6 +725,7 @@ export function runPlayableRuntime(input: {
           },
         },
         characterDefinitions: completion.characterDefinitions,
+        characterStatusById: completion.characterStatusById,
         effects: [],
         handled: true,
         session: null,
