@@ -99,6 +99,10 @@ export function runInteractiveRuntime(input: {
             ? createInteractiveSession(request)
             : getActiveInteractiveSession(playableResult.state, request.kind),
       interactive: playableResult.interactive ?? { type: "none" },
+      followUp:
+        playableResult.followUp ??
+        playableResult.interactive ??
+        { type: "none" },
     };
   }
 

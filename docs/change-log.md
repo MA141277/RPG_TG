@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Interactive Runtime FollowUp Forwarding Slice
+
+### Added
+- story-battle playable action 现在会在保留旧 `interactive` 结果的同时产出新的 `followUp` 字段。
+- `runPlayableRuntime()` 与 `runInteractiveRuntime()` 会向上转发 delegated playable 的 `followUp`，旧 `interactive` 字段继续保留作为兼容 fallback。
+- 扩展 `tests/interactive-runtime-status.test.cjs`，覆盖 story-battle completion 同时返回 `interactive` 与 `followUp`。
+
+### Impact
+- 这片只迁移 story-battle/playable/interactive runtime 的 follow-up 输出兼容，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 下一步可以继续把其它 runtime 分发结果逐步改为优先产出 `followUp`，并保持旧字段到入口完全迁完之前可用。
+
 ## 2026-07-29 Runtime Dispatch FollowUp Handler Slice
 
 ### Added

@@ -1046,6 +1046,7 @@ export function runPlayableRuntime(input: {
         handled: true,
         session: getActivePlayableSession(result.state, "story-battle"),
         interactive: result.interactive,
+        followUp: result.followUp ?? result.interactive,
       };
     }
   }
