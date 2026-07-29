@@ -10,10 +10,10 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-30`
-- Current Focus: `Task 2 and the minimal Task 3 convergence are implemented locally: contract tests now require explicit canonical-versus-compatibility grouping, runtime-dispatch no longer runs interactive fallback after outcome handling in the same follow-up cycle, and protected shell/UI/map/backpack paths remain untouched.`
-- Next Step: `Finish Task 4 by re-running pnpm run lint:plans after this doc sync, then commit and push the runtime-only convergence slice.`
+- Current Focus: `The runtime-only convergence slice is implemented, verified, committed as 3f70822, and pushed to origin/codex/migration-hot-tasks. The remaining decision is whether to merge this checkpoint back to the aligned baseline now or keep it as a hot-task branch checkpoint.`
+- Next Step: `Review the pushed convergence checkpoint, then decide whether to merge codex/migration-hot-tasks back into the aligned baseline immediately or continue with another adjacent runtime-only slice first.`
 - Verification: `pnpm run build:test`; `node --test tests/runtime-follow-up-contract.test.cjs tests/runtime-router-follow-up-contract.test.cjs tests/runtime-dispatch-settlement.test.cjs`; `node --test --test-name-pattern "child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check` passed; `pnpm run lint:plans` still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue.`
 - Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. The current convergence intentionally retains RuntimeResult.outcome, RuntimeResult.interactive, RuntimeFollowUpContext.handleOutcome, and RuntimeFollowUpContext.handleInteractive as explicit compatibility surfaces while narrowing dispatch so only one compatibility fallback path runs after canonical followUp is absent.`
 
@@ -35,6 +35,10 @@
   - Summary: `Re-ran plan lint after the latest doc sync. No new governance issue was introduced by this child; the only remaining plan-lint failure is still the unrelated pre-existing missing title in docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md.`
   - Verification: `pnpm run lint:plans` failed only on `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md: missing required section matching /^# .+/m`.`
   - Next: `Commit and push the runtime-only convergence slice, then decide whether to merge this checkpoint back to the aligned baseline immediately or keep it as a branch checkpoint.`
+- 2026-07-30
+  - Summary: `Committed and pushed the runtime follow-up contract convergence slice. The branch checkpoint now contains explicit canonical-versus-compatibility grouping in runtime-result, narrowed interactive fallback gating in runtime-dispatch, updated contract tests, and synchronized handoff/child-plan state.`
+  - Verification: `git commit -m "merge: converge runtime follow-up contract"` created `3f70822`; `git push` updated `origin/codex/migration-hot-tasks` from `a7591f5` to `3f70822`.`
+  - Next: `Decide whether to merge this pushed checkpoint back into the aligned baseline now or continue with the next adjacent runtime-only slice on codex/migration-hot-tasks.`
 
 ---
 
@@ -366,7 +370,7 @@ Update both plans with:
 - confirmation that protected paths remained untouched
 - the exact next unchecked task or merge checkpoint
 
-- [ ] **Step 3: Commit and push the runtime-only slice**
+- [x] **Step 3: Commit and push the runtime-only slice**
 
 Run:
 
@@ -384,18 +388,25 @@ Report:
 - whether compatibility fields were retained
 - whether the slice is ready for merge-back or should remain as a branch checkpoint
 
+Recorded result:
+
+- Commit: `3f70822` (`merge: converge runtime follow-up contract`)
+- Push: `origin/codex/migration-hot-tasks` updated successfully
+- Compatibility fields retained explicitly: `RuntimeResult.outcome`, `RuntimeResult.interactive`, `RuntimeFollowUpContext.handleOutcome`, `RuntimeFollowUpContext.handleInteractive`
+- Current recommendation: this slice is safe as a merge-back checkpoint, but it can also stay on `codex/migration-hot-tasks` if the user wants to batch another adjacent runtime-only convergence first
+
 ## Exit Check
 
-- [ ] `RuntimeFollowUp` remains the canonical continuation surface and is directly tested.
-- [ ] Router/dispatch handle canonical follow-up before any retained compatibility fallback.
-- [ ] No unapproved changes landed in `src/main.ts`, UI, map, backpack, or styles.
-- [ ] Existing migrated ownership assertions remain green and do not regress to older seams.
-- [ ] The child plan and parent handoff both record the exact post-slice resume point.
+- [x] `RuntimeFollowUp` remains the canonical continuation surface and is directly tested.
+- [x] Router/dispatch handle canonical follow-up before any retained compatibility fallback.
+- [x] No unapproved changes landed in `src/main.ts`, UI, map, backpack, or styles.
+- [x] Existing migrated ownership assertions remain green and do not regress to older seams.
+- [x] The child plan and parent handoff both record the exact post-slice resume point.
 - [ ] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
