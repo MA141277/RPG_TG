@@ -98,6 +98,12 @@ export function dispatchRuntimeRequest(input: {
     ...(settlement.characterStatusById === undefined
       ? {}
       : { characterStatusById: settlement.characterStatusById }),
+    ...(followUp.cityStatusById === undefined
+      ? {}
+      : { cityStatusById: followUp.cityStatusById }),
+    ...(followUp.buildingStatusById === undefined
+      ? {}
+      : { buildingStatusById: followUp.buildingStatusById }),
     state: followUp.state,
     ...(followUp.outcome === undefined ? {} : { outcome: followUp.outcome }),
     ...(followUp.followUp === undefined ? {} : { followUp: followUp.followUp }),
@@ -219,12 +225,16 @@ function settleRuntimeFollowUp(input: {
 }): {
   state: RuntimeState;
   characterDefinitions?: RuntimeResult["characterDefinitions"];
+  cityStatusById?: RuntimeResult["cityStatusById"];
+  buildingStatusById?: RuntimeResult["buildingStatusById"];
   followUp: RuntimeResult["followUp"];
   outcome: RuntimeResult["outcome"];
   interactive: RuntimeResult["interactive"];
 } {
   let state = input.state;
   let characterDefinitions: RuntimeResult["characterDefinitions"];
+  let cityStatusById: RuntimeResult["cityStatusById"];
+  let buildingStatusById: RuntimeResult["buildingStatusById"];
   let followUp = input.followUp;
   let outcome = input.outcome;
   let interactive = input.interactive;
@@ -257,6 +267,8 @@ function settleRuntimeFollowUp(input: {
     });
     state = handled.state;
     characterDefinitions = handled.characterDefinitions;
+    cityStatusById = handled.cityStatusById;
+    buildingStatusById = handled.buildingStatusById;
     outcome = null;
   }
 
@@ -277,6 +289,8 @@ function settleRuntimeFollowUp(input: {
   return {
     state,
     ...(characterDefinitions === undefined ? {} : { characterDefinitions }),
+    ...(cityStatusById === undefined ? {} : { cityStatusById }),
+    ...(buildingStatusById === undefined ? {} : { buildingStatusById }),
     followUp,
     outcome,
     interactive,

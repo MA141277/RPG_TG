@@ -15536,7 +15536,7 @@ test("child 15 covered advance-segments travel paths route through shared runtim
   assert.match(startCampaignTravelBlock, /commitRuntimeRequest\(/);
 });
 
-test("child 16 story trigger helper routes through one runtime-owned seam instead of direct event and scene stitching", () => {
+test("child 16 city-enter follow-up uses shared story-runtime instead of the scene-runtime compatibility seam", () => {
   const followUpSource = fs.readFileSync(
     path.join(
       process.cwd(),
@@ -15554,7 +15554,9 @@ test("child 16 story trigger helper routes through one runtime-owned seam instea
 
   assert.doesNotMatch(followUpSource, /runEventRuntime\(/);
   assert.doesNotMatch(followUpSource, /runSceneFromEvent\(/);
-  assert.match(navigationFollowUpSource, /runStoryTriggerRuntime\(/);
+  assert.match(navigationFollowUpSource, /story-runtime/);
+  assert.doesNotMatch(navigationFollowUpSource, /runStoryTriggerRuntime\(/);
+  assert.doesNotMatch(navigationFollowUpSource, /scene-runtime/);
 });
 
 test("child 16 covered city-enter story handoff stays on the shared trigger seam", () => {
@@ -17468,7 +17470,7 @@ test("child 25 narrow follow-up contract stays outside main.ts and main-runtime-
   assert.match(followUpSource, /navigation\.entered-city/);
   assert.match(followUpSource, /time\.advanced/);
   assert.match(followUpSource, /time\.council-threshold-crossed/);
-  assert.match(followUpSource, /timing:\s*"city-enter"/);
+  assert.match(followUpSource, /buildStoryTriggerInput\("city-enter"/);
   assert.doesNotMatch(
     orchestratorSource,
     /navigation\.entered-city|time\.advanced|time\.council-threshold-crossed/

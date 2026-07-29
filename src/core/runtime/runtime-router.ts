@@ -6,7 +6,9 @@ import type {
 } from "../contracts/runtime-result";
 import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
+import type { BuildingStatusById } from "../../domain/building-status";
 import type { CharacterDefinition } from "../../domain/character";
+import type { CityStatusById } from "../../domain/city-status";
 
 export type RuntimeRouteInput = {
   state: RuntimeState;
@@ -38,6 +40,8 @@ export type RuntimeFollowUpResult = {
 export type RuntimeOutcomeFollowUpResult = {
   state: RuntimeState;
   characterDefinitions?: CharacterDefinition[];
+  cityStatusById?: CityStatusById;
+  buildingStatusById?: BuildingStatusById;
 };
 
 export type RuntimeFollowUpContext = {
