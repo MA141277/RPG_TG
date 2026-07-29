@@ -1,5 +1,6 @@
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
+  RuntimeFollowUp,
   RuntimeFollowUpOutcome,
   RuntimeInteractiveSignal,
 } from "../contracts/runtime-result";
@@ -12,14 +13,26 @@ export type RuntimeRouteInput = {
   request: RuntimeRequest;
 };
 
+export type RuntimeRouteResult = RuntimeResult;
+
 export type RuntimeInteractiveFollowUpInput = {
   state: RuntimeState;
   interactive: Exclude<NonNullable<RuntimeInteractiveSignal>, { type: "none" }>;
 };
 
+export type RuntimeFollowUpInput = {
+  state: RuntimeState;
+  followUp: Exclude<NonNullable<RuntimeFollowUp>, { type: "none" }>;
+};
+
 export type RuntimeOutcomeFollowUpInput = {
   state: RuntimeState;
   outcome: RuntimeFollowUpOutcome;
+};
+
+export type RuntimeFollowUpResult = {
+  state: RuntimeState;
+  characterDefinitions?: CharacterDefinition[];
 };
 
 export type RuntimeOutcomeFollowUpResult = {
@@ -28,10 +41,11 @@ export type RuntimeOutcomeFollowUpResult = {
 };
 
 export type RuntimeFollowUpContext = {
+  handleFollowUp?(input: RuntimeFollowUpInput): RuntimeFollowUpResult;
   handleInteractive?(input: RuntimeInteractiveFollowUpInput): RuntimeState;
   handleOutcome?(input: RuntimeOutcomeFollowUpInput): RuntimeOutcomeFollowUpResult;
 };
 
 export interface RuntimeRouter {
-  route(input: RuntimeRouteInput): RuntimeResult;
+  route(input: RuntimeRouteInput): RuntimeRouteResult;
 }

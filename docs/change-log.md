@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Runtime Router FollowUp Contract Slice
+
+### Added
+- `runtime-router` 新增 `RuntimeRouteResult`、`RuntimeFollowUpInput`、`RuntimeFollowUpResult` 与 `RuntimeFollowUpContext.handleFollowUp()` 命名入口。
+- 旧的 `handleInteractive()` / `handleOutcome()` 保持可用，`RuntimeRouter.route()` 仍返回兼容的 runtime result。
+- 新增 `tests/runtime-router-follow-up-contract.test.cjs`，锁定新命名入口和旧 handler 并存。
+
+### Impact
+- 这片只迁移 core runtime-router 类型命名兼容，不改 runtime 行为、UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 下一步可以在 `runtime-dispatch` 内部优先消费 `handleFollowUp()`，同时保留旧 handler 作为兼容 fallback。
+
 ## 2026-07-29 Runtime FollowUp Contract Alias Slice
 
 ### Added
