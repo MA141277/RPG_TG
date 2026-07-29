@@ -42,6 +42,20 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
     outcomeConfig: {},
   },
   {
+    integrationId: "playable.activity-qte.dialogue.default",
+    playableId: "activity-qte",
+    ownerDefaults: {
+      ownerKind: "dialogue",
+      returnPolicy: "resume-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.activity-qte.dialogue.default",
+      ownerKind: "dialogue",
+      trigger: "legacy-activity-start",
+    },
+    outcomeConfig: {},
+  },
+  {
     integrationId: "playable.activity-qte.house.temple",
     playableId: "activity-qte",
     ownerDefaults: {
@@ -93,6 +107,20 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
     trigger: {
       triggerId: "trigger.playable.story-battle.scene.default",
       ownerKind: "scene",
+      trigger: "legacy-story-battle-start",
+    },
+    outcomeConfig: {},
+  },
+  {
+    integrationId: "playable.story-battle.dialogue.default",
+    playableId: "story-battle",
+    ownerDefaults: {
+      ownerKind: "dialogue",
+      returnPolicy: "reenter-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.story-battle.dialogue.default",
+      ownerKind: "dialogue",
       trigger: "legacy-story-battle-start",
     },
     outcomeConfig: {},

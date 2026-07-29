@@ -1232,6 +1232,7 @@ function normalizeOwnerContext(input: {
   const ownerKind = merged.ownerKind;
   if (
     ownerKind !== "house" &&
+    ownerKind !== "dialogue" &&
     ownerKind !== "scene" &&
     ownerKind !== "task" &&
     ownerKind !== "external"

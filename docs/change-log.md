@@ -2,6 +2,21 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Event-Owned Playable Start Runtime Slice
+
+### Added
+- 新增 `runEventPlayableRuntime()`，让事件定义中的 `launchPlayable` action 通过 playable runtime 启动小游戏/战斗，并写入 source event `sessionToken`。
+- scene runner 现在会在 active event 声明 `launchPlayable` 时优先交给 event playable runtime；普通 scene 事件仍走原 scene runner。
+- playable integration registry 增加 dialogue owner 默认接入：`playable.activity-qte.dialogue.default` 与 `playable.story-battle.dialogue.default`，同时保留旧 scene integration。
+- 新增 `tests/event-playable-start-runtime.test.cjs`，覆盖事件拥有 playable action 的启动路径。
+
+### Changed
+- playable runtime 的 owner normalization 现在接受已在类型契约中声明的 `ownerKind: "dialogue"`。
+
+### Impact
+- 这片只迁移事件/可玩运行时闭环，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续事件绑定到 playable/minigame 时应优先通过 event action + playable runtime，而不是在 UI 或 house 调用方补特殊启动分支。
+
 ## 2026-07-29 Event Binding Start Runtime Slice
 
 ### Added

@@ -1,6 +1,28 @@
+import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
+import type { EventDefinition } from "../../domain/event";
+import type { GameState } from "../../domain/game-state";
 import type { ActivePlayableSession } from "../../core/contracts/playable-runtime";
 import type { RuntimeInteractiveSignal } from "../../core/contracts/runtime-result";
+import {
+  createLaunchPlayableRequest,
+  runPlayableRuntime,
+} from "../../core/runtime/playable-runtime";
+import { stateSyncCoreSeam } from "../../core/runtime/state-sync-core-seam";
+
+export type EventPlayableRuntimeInput = {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  eventDefinition: EventDefinition | null | undefined;
+  activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  textEntriesById?: Record<string, string> | undefined;
+};
+
+export type EventPlayableRuntimeResult = {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  handled: boolean;
+};
 
 export type EventOwnedPlayableContinuationResult<State = unknown> = {
   state: State;
@@ -37,6 +59,93 @@ export type EventOwnedPlayableCompletionInput<State = unknown> = {
       })
     | undefined;
 };
+
+export function runEventPlayableRuntime(
+  input: EventPlayableRuntimeInput
+): EventPlayableRuntimeResult | null {
+  const activeEventDefinition = input.eventDefinition;
+  const launchPlayableAction = activeEventDefinition?.actions?.find(
+    (
+      action
+    ): action is Extract<
+      NonNullable<EventDefinition["actions"]>[number],
+      { type: "launchPlayable" }
+    > => action.type === "launchPlayable"
+  );
+  if (launchPlayableAction == null || activeEventDefinition == null) {
+    return null;
+  }
+
+  const playableResult = runPlayableRuntime({
+    state: stateSyncCoreSeam.createRuntimeStateFromAppState({
+      gameState: input.state,
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
+    }),
+    request: createLaunchPlayableRequest(launchPlayableAction.playableId, {
+      integrationId: launchPlayableAction.integrationId,
+      ownerContext: {
+        ...launchPlayableAction.ownerContext,
+        sessionToken: activeEventDefinition.id,
+      },
+      ...(launchPlayableAction.payload == null
+        ? {}
+        : { payload: launchPlayableAction.payload }),
+    }),
+    characterDefinitions: input.characterDefinitions,
+    ...(input.activityDefinitionsById == null
+      ? {}
+      : { activityDefinitionsById: input.activityDefinitionsById }),
+    ...(input.textEntriesById == null
+      ? {}
+      : { textEntriesById: input.textEntriesById }),
+  });
+  if (
+    !playableResult.handled ||
+    playableResult.state.core.runtime.playableSession == null
+  ) {
+    return {
+      state: input.state,
+      characterDefinitions: input.characterDefinitions,
+      handled: false,
+    };
+  }
+
+  return {
+    state: {
+      ...playableResult.state.core,
+      scene: {
+        ...playableResult.state.core.scene,
+        activeEventId: null,
+        activeSceneId: null,
+        cursor: 0,
+        status: "idle",
+      },
+      ui: {
+        ...playableResult.state.core.ui,
+        currentView: "minigame",
+      },
+      runtime: {
+        ...playableResult.state.core.runtime,
+        playableSession: {
+          ...playableResult.state.core.runtime.playableSession,
+          ownerContext: {
+            ...playableResult.state.core.runtime.playableSession.ownerContext,
+            sessionToken: activeEventDefinition.id,
+          },
+        },
+      },
+    },
+    characterDefinitions:
+      playableResult.characterDefinitions ?? input.characterDefinitions,
+    handled: true,
+  };
+}
 
 export function applyEventOwnedPlayableCompletion<State = unknown>(
   input: EventOwnedPlayableCompletionInput<State>
