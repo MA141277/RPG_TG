@@ -15314,6 +15314,31 @@ test("event runtime exports candidate selection and activation seams", async () 
   assert.match(source, /activateEvent/);
 });
 
+test("child 33 event runtime task input contract stays canonical-first", async () => {
+  const eventRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
+    "utf8"
+  );
+  const eventRuntimeContractSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/event-runtime.ts"),
+    "utf8"
+  );
+  const eventActivationSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-activation.ts"),
+    "utf8"
+  );
+
+  assert.match(eventRuntimeSource, /taskInputs:/);
+  assert.doesNotMatch(eventRuntimeSource, /taskActions:/);
+  assert.match(eventRuntimeContractSource, /taskInputs\?: RuntimeTaskInput\[\];/);
+  assert.doesNotMatch(
+    eventRuntimeContractSource,
+    /taskActions\?: RuntimeTaskAction\[\];/
+  );
+  assert.match(eventActivationSource, /taskInputs: candidate\.taskInputs \?\? \[\]/);
+  assert.doesNotMatch(eventActivationSource, /taskActions:/);
+});
+
 test("scene runtime accepts an activated event handoff", async () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/scene-runtime.ts"),

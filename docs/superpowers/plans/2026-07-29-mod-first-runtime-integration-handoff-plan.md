@@ -12,9 +12,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-30`
-- Current Focus: `The runtime follow-up contract convergence child is now implemented, verified, committed as 3f70822, and pushed to origin/codex/migration-hot-tasks. The next decision is whether to merge this runtime-only checkpoint back to the aligned baseline immediately or continue another adjacent hot-task slice first.`
-- Next Step: `Review the pushed convergence checkpoint at docs/superpowers/plans/2026-07-30-runtime-follow-up-contract-convergence-plan.md, then decide whether to merge codex/migration-hot-tasks back into the aligned baseline now or keep building on this branch.`
-- Verification: `pnpm run build:test`; `node --test tests/runtime-follow-up-contract.test.cjs tests/runtime-router-follow-up-contract.test.cjs tests/runtime-dispatch-settlement.test.cjs`; `node --test --test-name-pattern "child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator" tests/robustness.test.cjs`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check` passed; `pnpm run lint:plans` still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue; `git push` updated origin/codex/migration-hot-tasks to 3f70822.`
+- Current Focus: `Runtime task-input contract convergence is in progress on codex/migration-hot-tasks: runtime-dispatch is now canonical-first for taskInputs and the event-runtime activation seam has been narrowed from taskActions to taskInputs.`
+- Next Step: `Finish Task 4 verification and closeout in docs/superpowers/plans/2026-07-30-runtime-task-input-contract-convergence-plan.md, then decide whether to commit/push this slice immediately or batch it with the next runtime-only child.`
+- Verification: `Merge-back updated origin/codex/sync-naqishuo-721ui-to-mmz and origin/codex/migration-hot-tasks to 92769f3; local codex/sync-naqishuo-721ui-to-mmz-followup and codex/migration-hot-tasks both point to 92769f3; the redundant local baseline mirror codex/sync-naqishuo-721ui-to-mmz was deleted. The preceding follow-up contract child verification remains recorded in docs/superpowers/plans/2026-07-30-runtime-follow-up-contract-convergence-plan.md.`
 - Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stayed deferred until the user explicitly approved a tiny main.ts slice. That approval is still only used for narrow storyContent passthrough in src/main.ts and the active runtime behavior remains in application/core seams. The first Task 4 slice closed the earlier gap where indoor-screen and house-enter timing triggers could fire settlement events without projecting city/building authored-definition changes back into app-state status layers. This second Task 4 slice now consumes eventBindings/progressTracks in shared story-runtime for orchestrated trigger-story-events plus house/indoor timing paths, and stores progression runtime state on optional gameState.runtime.progression. navigation-time-follow-up still uses the older scene-runtime compatibility seam. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
 - Notes: `Current branch is codex/migration-hot-tasks and tracks origin/codex/migration-hot-tasks. Local submit/merge work no longer uses codex/mod-first-runtime-integration as the active continuation branch. Task 1 audit found no non-UI production caller of applyEventOwnedPlayableCompletion(), so caller wiring stayed deferred until the user explicitly approved a tiny main.ts slice. That approval is still only used for narrow storyContent passthrough in src/main.ts and the active runtime behavior remains in application/core seams. The first Task 4 slice closed the earlier gap where indoor-screen and house-enter timing triggers could fire settlement events without projecting city/building authored-definition changes back into app-state status layers. This second Task 4 slice now consumes eventBindings/progressTracks in shared story-runtime for orchestrated trigger-story-events plus house/indoor timing paths, and stores progression runtime state on optional gameState.runtime.progression. navigation-time-follow-up still uses the older scene-runtime compatibility seam. A dedicated follow-up child now exists at docs/superpowers/plans/2026-07-29-navigation-time-follow-up-story-runtime-city-enter-plan.md so any city-enter seam migration can be reviewed independently from this handoff. The runtime migration code stack was already merged into origin/codex/sync-naqishuo-721ui-to-mmz at commit 8d8e5145; later handoff-document or hot-task commits may exist only on the current branch until explicitly merged back. The existing docs/superpowers/project-progress.md still points at an unrelated map renderer child; do not close or repoint that child unless the user explicitly asks.`
 
@@ -92,6 +92,18 @@
   - Summary: `Committed and pushed the runtime follow-up contract convergence checkpoint as 3f70822 on codex/migration-hot-tasks. The branch now carries explicit canonical-versus-compatibility follow-up grouping, narrowed interactive fallback gating, updated contract tests, and synchronized child/handoff docs.`
   - Verification: `git commit -m "merge: converge runtime follow-up contract"` created `3f70822`; `git push` updated `origin/codex/migration-hot-tasks` from `a7591f5` to `3f70822`.`
   - Next: `Decide whether to merge this pushed runtime-only checkpoint back into the aligned baseline now or continue with another adjacent runtime-only slice first.`
+- 2026-07-30
+  - Summary: `Merge-back completed at 92769f3 and the next adjacent runtime-only child is now task-input contract convergence. The local receiving branch role is unified on codex/sync-naqishuo-721ui-to-mmz-followup after deleting the redundant local codex/sync-naqishuo-721ui-to-mmz mirror.`
+  - Verification: `git push origin HEAD:codex/sync-naqishuo-721ui-to-mmz` updated the remote baseline to `92769f3`; `git switch codex/migration-hot-tasks`; `git merge --ff-only codex/sync-naqishuo-721ui-to-mmz-followup`; `git push` updated `origin/codex/migration-hot-tasks` to `92769f3`; `git branch -d codex/sync-naqishuo-721ui-to-mmz`; audit queries over RuntimeResult, event-runtime, event-activation, runtime-dispatch, and runtime-dispatch-settlement coverage identified taskInputs as the canonical next convergence target.`
+  - Next: `Execute docs/superpowers/plans/2026-07-30-runtime-task-input-contract-convergence-plan.md from Task 1.`
+- 2026-07-30
+  - Summary: `Completed Task 1 of the runtime task-input contract convergence child. The audit confirmed that dispatch already settles canonical taskInputs, while split taskActions/taskSignals remain as compatibility-only seams in RuntimeResult, EventRuntimeCandidate, ActivatedEvent, and settleRuntimeTasks().`
+  - Verification: `sed -n '1,220p' src/core/contracts/runtime-result.ts`; `sed -n '1,220p' src/core/contracts/event-runtime.ts`; `sed -n '1,220p' src/core/runtime/event-activation.ts`; `sed -n '1,260p' src/core/runtime/runtime-dispatch.ts`; `sed -n '1,260p' tests/runtime-dispatch-settlement.test.cjs`; `rg -n "taskActions\\?:|taskSignals\\?:|taskUpdates\\?:|taskInputs\\?:|taskInputs:|taskActions:|taskSignals:|taskUpdates:" src tests | head -n 250`.`
+  - Next: `Run Task 2 in docs/superpowers/plans/2026-07-30-runtime-task-input-contract-convergence-plan.md and add failing tests for canonical taskInputs plus explicit split-input compatibility.`
+- 2026-07-30
+  - Summary: `Completed the RED/GREEN portion of Runtime Task Input Contract Convergence. dispatchRuntimeRequest() now treats split taskActions/taskSignals as fallback-only when taskInputs are present, and event-runtime / event-activation now expose taskInputs instead of taskActions.`
+  - Verification: `pnpm run build:test`; `pnpm exec node --test tests/runtime-dispatch-settlement.test.cjs`; `pnpm exec node --test tests/robustness.test.cjs --test-name-pattern "child 33 event runtime task input contract stays canonical-first|child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator"`.`
+  - Next: `Finish Task 4 verification and record the push-ready checkpoint in the child plan before opening the next runtime-only slice.`
 
 ---
 
@@ -135,7 +147,7 @@ Use these branch roles unless the user explicitly gives a new branch name:
     - Role: remote target baseline branch.
     - Purpose: protects the current UI, map, backpack, script editor entry, and app behavior.
     - Rule: only receive verified integration slices after boundary checks pass.
-  - `migrate-scripteditor`
+  - `codex/sync-naqishuo-721ui-to-mmz-followup`
     - Role: local baseline receiving branch.
     - Upstream/remote counterpart: `origin/codex/sync-naqishuo-721ui-to-mmz`.
     - Purpose: local branch used to merge integration work back into the remote target baseline.
@@ -159,10 +171,10 @@ Historical final synchronized state after the `8d8e5145` runtime-stack merge-bac
 
 - `origin/codex/sync-naqishuo-721ui-to-mmz`
 - `origin/codex/mod-first-runtime-integration`
-- `migrate-scripteditor`
+- `codex/sync-naqishuo-721ui-to-mmz-followup`
 - `codex/mod-first-runtime-integration`
 
-At that checkpoint, these branches had no remaining runtime migration differences. Later documentation-only commits, such as this handoff document, or newer migration hot-task commits can make the current working branch `codex/migration-hot-tasks` lead the baseline until they are intentionally merged back.
+At that checkpoint, these branches had no remaining runtime migration differences. Later documentation-only commits, such as this handoff document, or newer migration hot-task commits can make the current working branch `codex/migration-hot-tasks` lead the baseline until they are intentionally merged back. The current local receiving branch for future merge-back is `codex/sync-naqishuo-721ui-to-mmz-followup`; the redundant local branch `codex/sync-naqishuo-721ui-to-mmz` has been deleted.
 
 Before starting any slice, run:
 
@@ -207,19 +219,19 @@ git push
 8. Decide whether this is a merge-back checkpoint:
    - Merge back immediately for completed, verified slices that should become part of the current baseline.
    - Defer merge-back for exploratory or incomplete slices.
-9. When merging back to the baseline, use the local baseline mirror:
+9. When merging back to the baseline, use the local baseline receiving branch:
 
 ```powershell
-git switch migrate-scripteditor
+git switch codex/sync-naqishuo-721ui-to-mmz-followup
 git pull --ff-only
 git merge --no-ff codex/migration-hot-tasks
 ```
 
-10. Re-run the boundary proof and the relevant verification on `migrate-scripteditor`.
+10. Re-run the boundary proof and the relevant verification on `codex/sync-naqishuo-721ui-to-mmz-followup`.
 11. Push the baseline:
 
 ```powershell
-git push origin migrate-scripteditor:codex/sync-naqishuo-721ui-to-mmz
+git push origin codex/sync-naqishuo-721ui-to-mmz-followup:codex/sync-naqishuo-721ui-to-mmz
 ```
 
 12. Switch back to the current runtime branch and sync it from the updated baseline if needed:
@@ -785,11 +797,11 @@ Record any need for full shellification as a new dedicated plan. Do not borrow `
 - Parent Stage: `Runtime Migration`
 - Closeout Status: `completed-but-open`
 - Project Progress Synced: `no`
-- Next Child: `World Definition Caller Wiring Audit`
-- Next Child Status: `waiting`
-- Next Required Action: `Resume at Task 1 on codex/migration-hot-tasks, then merge verified checkpoints back to origin/codex/sync-naqishuo-721ui-to-mmz through the documented merge-back flow.`
+- Next Child: `Runtime Task Input Contract Convergence`
+- Next Child Status: `running`
+- Next Required Action: `Execute Task 1 of docs/superpowers/plans/2026-07-30-runtime-task-input-contract-convergence-plan.md on codex/migration-hot-tasks.`
 - Next Entry Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
-- Push Status: `current-branch-pushed; baseline-merge-pending-for-latest-doc-checkpoint`
-- Push Commit: `latest origin/codex/migration-hot-tasks`
-- Resume From: `Open this document, confirm branch codex/migration-hot-tasks, then execute the first unchecked task without changing UI/map/backpack/main shell paths unless the user explicitly approves that slice.`
+- Next Owner Document: `docs/superpowers/plans/2026-07-30-runtime-task-input-contract-convergence-plan.md`
+- Push Status: `success`
+- Push Commit: `92769f3`
+- Resume From: `Stay on codex/migration-hot-tasks, confirm the worktree is clean, then start the runtime task-input contract convergence child without changing UI/map/backpack/main shell paths.`

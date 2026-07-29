@@ -56,7 +56,9 @@ export type RuntimeResult = {
         currentNodeId?: string | null;
       }
     | null;
+  // canonical task input surface
   taskInputs?: RuntimeTaskInput[];
+  // compatibility-only legacy split task input surfaces
   taskActions?: RuntimeTaskAction[];
   taskSignals?: RuntimeTaskSignal[];
   taskUpdates?: TaskUpdate[];
