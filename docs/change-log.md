@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-29 Flow Playable Runtime Kernel Slice
+
+### Added
+- 新增 `launchFlowPlayable()` / `reduceFlowPlayable()`，提供 flow playable 的纯运行时启动与节点推进内核，支持 text confirm、choice select、complete 与 cancel lifecycle。
+- `ActivePlayableSession` 增加可选 `state`，并新增 `PlayableCommand` 合同，用于承载 flow playable 当前节点与命令输入。
+- 新增 `tests/flow-playable-runtime.test.cjs`，覆盖 flow playable 启动、节点推进、无效选择保持、完成与取消。
+
+### Impact
+- 这片只迁移 application/playable runtime 内核骨架，不接入 `runPlayableRuntime()`，不改 UI、UI 功能、地图、背包、入口壳或 `src/main.ts`。
+- 后续若要把剧本编辑器生成的 flow 接入 runtime，可在此内核之上继续做分发接线，而不是把 flow 状态机散落到 UI 或入口。
+
 ## 2026-07-29 Interactive Runtime Status Patch Forwarding Slice
 
 ### Added
