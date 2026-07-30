@@ -27,6 +27,8 @@ const SCRIPT_EDITOR_PERSON_ATTRIBUTE_EXCLUDED_ROOT_KEYS = new Set([
   "name",
   "personType",
   "role",
+  "title",
+  "occupation",
   "biography",
   "cityId",
   "houseId",

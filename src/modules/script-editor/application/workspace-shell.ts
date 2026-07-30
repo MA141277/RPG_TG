@@ -24,7 +24,8 @@ import {
 
 export type ScriptEditorWorkspaceFamily =
   | ScriptEditorProjectFileKey
-  | "stageConfiguration";
+  | "stageConfiguration"
+  | "menuItems";
 
 export type ScriptEditorWorkspaceSelection = {
   family: ScriptEditorWorkspaceFamily;
@@ -164,6 +165,7 @@ const FAMILY_LABELS: Record<string, string> = {
   activities: "活动",
   dialogues: "对话",
   minigames: "玩法",
+  menuItems: "菜单",
   storyNodes: "剧情节点",
   textEntries: "文本",
   conditionGroups: "条件组",
@@ -193,7 +195,7 @@ const TREE_GROUPS: Array<{
   {
     id: "gameplay",
     label: "玩法",
-    families: ["events", "stageConfiguration"],
+    families: ["events", "stageConfiguration", "menuItems"],
   },
   {
     id: "library",
@@ -729,6 +731,7 @@ function createPreviewCards(
       body: exportPreview,
       tone:
         selection.family !== STAGE_CONFIGURATION_FAMILY &&
+        selection.family !== "menuItems" &&
         DEFERRED_EXPORT_TARGET_FAMILIES.has(selection.family)
           ? "warning"
           : "neutral",
@@ -1616,6 +1619,16 @@ function createExportTargets(
           blockedStatus
         ),
       ];
+    case "menuItems":
+      return [
+        buildTarget(
+          "export.menu-items",
+          "菜单项落点",
+          "menu-resources.json",
+          "菜单项会写入菜单资源分表，运行时通过城市或建筑引用的菜单入口使用。",
+          blockedStatus
+        ),
+      ];
     default:
       return [
         buildTarget(
@@ -1660,6 +1673,12 @@ function isWorkspaceFamilyVisible(
       visibleFamilies.has(sourceFamily)
     );
   }
+  if (family === "menuItems") {
+    return (
+      visibleFamilies.has("menuResources") ||
+      (visibleFamilies as ReadonlySet<string>).has("menuItems")
+    );
+  }
 
   return visibleFamilies.has(family);
 }
@@ -1673,6 +1692,9 @@ function hasWorkspaceFamilyAttention(
       attentionFamilies.has(sourceFamily)
     );
   }
+  if (family === "menuItems") {
+    return attentionFamilies.has("menuResources") || attentionFamilies.has("menuInstances");
+  }
 
   return attentionFamilies.has(family);
 }
@@ -1682,6 +1704,7 @@ function isDeferredWorkspaceFamily(
 ): boolean {
   return (
     family !== STAGE_CONFIGURATION_FAMILY &&
+    family !== "menuItems" &&
     DEFERRED_SHELL_FAMILIES.has(family)
   );
 }
@@ -1692,6 +1715,9 @@ function getWorkspaceFamilyCount(
 ): number {
   if (family === STAGE_CONFIGURATION_FAMILY) {
     return project.progressTrackBindings?.length ?? 0;
+  }
+  if (family === "menuItems") {
+    return getWorkspaceMenuItemRecords(project).length;
   }
 
   return getFamilyCount(project, family);
@@ -1707,6 +1733,9 @@ function getWorkspaceFamilyPreviewRecord(
 
   if (family === STAGE_CONFIGURATION_FAMILY) {
     return project.progressTrackBindings?.[0] ?? null;
+  }
+  if (family === "menuItems") {
+    return getWorkspaceMenuItemRecords(project)[0] ?? null;
   }
 
   return getFamilyRecords(project, family)[0] ?? null;
@@ -1733,8 +1762,22 @@ function getWorkspaceFamilyRecords(
   if (family === "storyPack") {
     return [];
   }
+  if (family === "menuItems") {
+    return getWorkspaceMenuItemRecords(project);
+  }
 
   return getFamilyRecords(project, family);
+}
+
+function getWorkspaceMenuItemRecords(
+  project: ScriptEditorProjectDefinition
+): ScriptEditorEntityRecord[] {
+  return (project.menuResources ?? []).flatMap((resource) =>
+    (resource.entries ?? []).map((entry, index) => ({
+      id: `${resource.id}:${index}`,
+      title: entry.label || "未命名菜单项",
+    }))
+  );
 }
 
 function getFamilyCount(
@@ -1806,6 +1849,7 @@ function resolveAuthoringTargetFamily(
   family:
     | "dialogue"
     | "event"
+    | "menu"
     | "task"
     | "person"
     | "city"

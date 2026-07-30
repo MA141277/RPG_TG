@@ -2,7 +2,7 @@ import type { HouseDefinition } from "../../../domain/house";
 import type {
   EventOccurrence,
   EventParticipant,
-  EventRuntimeAction,
+  EventRouteCommand,
 } from "../../../domain/event";
 import type {
   LocationAccessConditionExpression,
@@ -569,10 +569,11 @@ export type ScriptEditorConditionGroup = {
 export type ScriptEditorEventDestinationFamily =
   | "dialogue"
   | "event"
+  | "menu"
   | "minigame"
   | "task";
 
-export type ScriptEditorEventType = "settlement";
+export type ScriptEditorEventType = "settlement" | "menu";
 
 export type ScriptEditorEventDestination = {
   family: ScriptEditorEventDestinationFamily;
@@ -642,6 +643,7 @@ export type ScriptEditorMinigameRecord = ScriptEditorEntityRecord & {
   description?: string;
   playableId?: string;
   integrationId?: string;
+  settlementId?: string;
   ownerKind?: ScriptEditorMinigameOwnerKind;
   ownerId?: string;
   returnPolicy?: ScriptEditorMinigameReturnPolicy;
@@ -686,7 +688,7 @@ export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   occurrence?: EventOccurrence;
   type?: ScriptEditorEventType;
   participants?: EventParticipant[];
-  actions?: EventRuntimeAction[];
+  actions?: EventRouteCommand[];
   settlementId?: string;
   tags?: string[];
   triggerTiming?: ScriptEditorEventTriggerTiming;

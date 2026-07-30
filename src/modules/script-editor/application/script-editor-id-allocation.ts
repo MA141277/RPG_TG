@@ -20,6 +20,9 @@ const SCRIPT_EDITOR_CANONICAL_ID_FAMILY_CODE = {
   storyNodes: 45,
   events: 46,
   eventBindings: 47,
+  menuResources: 48,
+  menuInstances: 49,
+  menuItems: 50,
 } as const;
 
 export type ScriptEditorCanonicalIdFamily =
@@ -108,6 +111,15 @@ export function allocateNextScriptEditorProjectCanonicalId(
       return allocateNextScriptEditorCanonicalId(family, project.events);
     case "eventBindings":
       return allocateNextScriptEditorCanonicalId(family, project.eventBindings);
+    case "menuResources":
+      return allocateNextScriptEditorCanonicalId(family, project.menuResources);
+    case "menuInstances":
+      return allocateNextScriptEditorCanonicalId(family, project.menuInstances);
+    case "menuItems":
+      return allocateNextScriptEditorCanonicalId(
+        family,
+        project.menuResources.flatMap((resource) => resource.entries ?? [])
+      );
   }
 }
 

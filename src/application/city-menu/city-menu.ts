@@ -27,6 +27,10 @@ export type CityMenuEntryAction =
       dialogueId: string;
     }
   | {
+      type: "event";
+      eventId: string;
+    }
+  | {
       type: "minigame";
       minigameId: string;
       integrationId?: string | undefined;
@@ -281,13 +285,6 @@ export function resolveCityMenuEntries(input: {
       return resource.entries
         .filter((entry) => entry.isVisible !== false)
         .flatMap((entry) => {
-          if (
-            isBeggingMenuFamily(entry.menuFamily) &&
-            !isPlayerMonkIdentity(input.playerCharacter)
-          ) {
-            return [];
-          }
-
           const action = resolveCityMenuEntryAction(
             entry.menuFamily,
             entry.targetFamily,
@@ -436,6 +433,13 @@ function resolveCityMenuEntryAction(
     return {
       type: "dialogue",
       dialogueId: targetId.trim(),
+    };
+  }
+
+  if (targetFamily === "event" && targetId.trim().length > 0) {
+    return {
+      type: "event",
+      eventId: targetId.trim(),
     };
   }
 

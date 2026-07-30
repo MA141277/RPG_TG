@@ -9,7 +9,8 @@
   },
   "files": [
     "src/ui/panels/global-player-panel.ts",
-    "src/ui/panels/player-card-panel.ts"
+    "src/ui/panels/player-card-panel.ts",
+    "src/ui/views/playables/house-playable-overlay.ts"
   ],
   "include": [
     "src/core/**/*.ts",

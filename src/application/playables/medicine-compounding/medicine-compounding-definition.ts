@@ -80,6 +80,15 @@ function getActiveSession(state: RuntimeState): MedicineHouseSessionState | null
   return houseSession.state as MedicineHouseSessionState;
 }
 
+function createExternalSession(): MedicineHouseSessionState {
+  const { medicineHouseDoctorProfile } = getMedicineHouseContentDefaults();
+  return {
+    npcGreeting: medicineHouseDoctorProfile.name,
+    dialoguePhase: "open",
+    overlay: null,
+  };
+}
+
 function withSessionState(
   state: RuntimeState,
   sessionState: MedicineHouseSessionState
@@ -151,10 +160,7 @@ export function launchMedicineCompoundingPlayable(input: {
   playerCharacterId: string;
   ownerId: string | null;
 }): RuntimeState {
-  const sessionState = getActiveSession(input.state);
-  if (sessionState == null) {
-    return input.state;
-  }
+  const sessionState = getActiveSession(input.state) ?? createExternalSession();
 
   const medicineSkill = getPlayerMedicineSkill(
     input.characterDefinitions,

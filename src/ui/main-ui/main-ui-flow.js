@@ -1083,6 +1083,14 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-menu-item-field]")) {
+      const field = target.dataset.scriptEditorMenuItemField;
+      if (["label", "targetId"].includes(field ?? "")) {
+        this.applyScriptEditorMenuItemField(field, target.value);
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-minigame-launch-field]")) {
       const field = target.dataset.scriptEditorMinigameLaunchField;
       const index = Number.parseInt(

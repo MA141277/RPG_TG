@@ -1120,6 +1120,7 @@ function mapImportedPlayableIntegrations(
         description: "",
         playableId: integration.playableId,
         integrationId: integration.integrationId,
+        settlementId: "",
         ownerKind,
         ownerId:
           typeof ownerDefaults.ownerId === "string" ? ownerDefaults.ownerId : "",

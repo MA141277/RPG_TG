@@ -21,6 +21,10 @@ import {
   resolveAccountingGrade,
 } from "../../grain-shop/accounting-minigame";
 import { getGrainShopContentDefaults } from "../../grain-shop/grain-shop-content-defaults";
+import {
+  pickNpcDefaultLine,
+  pickNpcGreeting,
+} from "../../grain-shop/grain-market";
 
 type GrainShopOverlayState =
   | {
@@ -69,6 +73,15 @@ function getActiveSession(state: RuntimeState): GrainShopSessionState | null {
   return houseSession.state as GrainShopSessionState;
 }
 
+function createExternalSession(): GrainShopSessionState {
+  return {
+    npcGreeting: pickNpcGreeting(),
+    npcDefaultLine: pickNpcDefaultLine(),
+    dialoguePhase: "open",
+    overlay: null,
+  };
+}
+
 function getPlayerArithmeticSkill(
   characterDefinitions: CharacterDefinition[],
   playerCharacterId: string
@@ -112,10 +125,7 @@ export function launchGrainAccountingPlayable(input: {
   ownerId: string | null;
 }): RuntimeState {
   const { accountingGameDurationSec } = getGrainShopContentDefaults();
-  const sessionState = getActiveSession(input.state);
-  if (sessionState == null) {
-    return input.state;
-  }
+  const sessionState = getActiveSession(input.state) ?? createExternalSession();
 
   const nextState = withSessionState(input.state, {
     ...sessionState,

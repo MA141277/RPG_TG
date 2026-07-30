@@ -48,6 +48,7 @@ import {
   renderFlowPlayableOverlay,
   renderFlowPlayableView,
 } from "./views/playables/flow-playable-view";
+import { renderHousePlayableOverlay } from "./views/playables/house-playable-overlay";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
@@ -459,7 +460,11 @@ function renderStage(
     const activityOverlay = renderActivityOverlay(
       input.appState.gameState.runtime.activitySession
     );
-    return `${cityMarkup}${activityOverlay}`;
+    const housePlayableOverlay = renderHousePlayableOverlay({
+      session: input.appState.gameState.runtime.playableSession,
+      houseSession: input.appState.gameState.ui.houseSession,
+    });
+    return `${cityMarkup}${activityOverlay}${housePlayableOverlay}`;
   }
 
   if (stage.type === "city-3d") {
@@ -478,7 +483,11 @@ function renderStage(
     const activityOverlay = renderActivityOverlay(
       input.appState.gameState.runtime.activitySession
     );
-    return `${buildingMarkup}${activityOverlay}`;
+    const housePlayableOverlay = renderHousePlayableOverlay({
+      session: input.appState.gameState.runtime.playableSession,
+      houseSession: input.appState.gameState.ui.houseSession,
+    });
+    return `${buildingMarkup}${activityOverlay}${housePlayableOverlay}`;
   }
 
   if (stage.type === "dialogue") {

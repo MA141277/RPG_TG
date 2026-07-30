@@ -95,19 +95,21 @@ export function listScriptEditorBuiltinMinigameIntegrationOptions(
 export function createDefaultScriptEditorMinigameRecord(
   indexOrId: number | string
 ): ScriptEditorMinigameRecord {
-  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
+  const id =
+    typeof indexOrId === "string"
+      ? indexOrId
+      : createDefaultScriptEditorCanonicalId("minigames", indexOrId);
+  const suffix = readDefaultMinigameSequence(id, indexOrId);
   return {
-    id:
-      typeof indexOrId === "string"
-        ? indexOrId
-        : createDefaultScriptEditorCanonicalId("minigames", indexOrId),
+    id,
     title: `玩法绑定 ${suffix}`,
     description: "",
     playableId: "activity-qte",
-    integrationId: "playable.activity-qte.dialogue.default",
-    ownerKind: "dialogue",
+    integrationId: `playable.activity-qte.external.${id}`,
+    settlementId: "",
+    ownerKind: "external",
     ownerId: "",
-    returnPolicy: "resume-owner",
+    returnPolicy: "close-only",
     triggerId: "trigger.playable.activity-qte.dialogue.default",
     triggerSource: "manual",
     triggerEvent: "legacy-activity-start",
@@ -119,6 +121,19 @@ export function createDefaultScriptEditorMinigameRecord(
   };
 }
 
+function readDefaultMinigameSequence(id: string, indexOrId: number | string): number {
+  if (typeof indexOrId === "number") {
+    return indexOrId + 1;
+  }
+
+  const firstId = Number(createDefaultScriptEditorCanonicalId("minigames", 0));
+  const numericId = Number(id);
+  if (!Number.isSafeInteger(numericId) || numericId < firstId) {
+    return 1;
+  }
+  return numericId - firstId + 1;
+}
+
 export function normalizeScriptEditorMinigameRecord(
   record: Partial<ScriptEditorMinigameRecord> & { id: string }
 ): ScriptEditorMinigameRecord {
@@ -128,6 +143,7 @@ export function normalizeScriptEditorMinigameRecord(
     description: normalizeOptionalString(record.description),
     playableId: normalizeOptionalString(record.playableId),
     integrationId: normalizeOptionalString(record.integrationId),
+    settlementId: normalizeOptionalString(record.settlementId),
     ownerKind: normalizeOwnerKind(record.ownerKind),
     ownerId: normalizeOptionalString(record.ownerId),
     returnPolicy: normalizeReturnPolicy(record.returnPolicy),
@@ -148,6 +164,7 @@ export function updateScriptEditorMinigameField(
     | "description"
     | "playableId"
     | "integrationId"
+    | "settlementId"
     | "ownerKind"
     | "ownerId"
     | "returnPolicy"

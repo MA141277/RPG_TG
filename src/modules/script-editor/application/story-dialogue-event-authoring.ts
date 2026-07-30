@@ -53,6 +53,7 @@ export const SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS: readonly ScriptEditorEventTrig
 
 export const SCRIPT_EDITOR_EVENT_TYPES: readonly ScriptEditorEventType[] = [
   "settlement",
+  "menu",
 ] as const;
 
 export const SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS: readonly ScriptEditorConditionGroupOperator[] = [
@@ -242,6 +243,7 @@ export const SCRIPT_EDITOR_CONDITION_NODE_TYPES = [
 export const SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES: readonly ScriptEditorEventDestinationFamily[] = [
   "dialogue",
   "event",
+  "menu",
   "minigame",
   "task",
 ] as const;
@@ -838,6 +840,10 @@ export function updateScriptEditorEventField(
       const { type: _ignoredType, settlementId: _ignoredSettlementId, ...nextRecord } =
         record;
       return nextRecord;
+    }
+    if (nextType !== "settlement") {
+      const { settlementId: _ignoredSettlementId, ...nextRecord } = record;
+      return { ...nextRecord, type: nextType };
     }
     return { ...record, type: nextType };
   }

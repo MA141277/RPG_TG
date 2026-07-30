@@ -8,8 +8,18 @@ import type {
   ScriptEditorBuildingArrangementRecord,
   ScriptEditorBuildingRecord,
   ScriptEditorCityRecord,
+  ScriptEditorEventDestination,
+  ScriptEditorEventRecord,
+  ScriptEditorMinigameRecord,
   ScriptEditorProjectDefinition,
 } from "../domain/script-editor-project";
+import {
+  builtinPlayableDefinitionRegistry,
+} from "../../../core/registry/builtin-playable-definition-registry";
+import {
+  builtinPlayableIntegrationRegistry,
+} from "../../../core/registry/builtin-playable-integration-registry";
+import { allocateNextScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 type ScriptEditorLocationFamily = "cities" | "buildings";
 
@@ -43,7 +53,7 @@ const MENU_FAMILY_LABELS: Record<string, string> = {
   trade: "交易",
   work: "工作",
   rest: "休息",
-  minigame: "小游戏",
+  minigame: "玩法",
   leave: "离开",
   begging: "化缘",
   other: "其他",
@@ -59,7 +69,9 @@ export function formalizeScriptEditorProjectMenus(
     throw new Error(legacyActionMenuItemsError);
   }
   const locationFormalizedProject = formalizeLocationProjectMenus(project);
-  return formalizeBuildingArrangementProjectMenus(locationFormalizedProject);
+  const arrangementFormalizedProject =
+    formalizeBuildingArrangementProjectMenus(locationFormalizedProject);
+  return formalizeMenuEntriesThroughEvents(arrangementFormalizedProject);
 }
 
 function formalizeLocationProjectMenus(
@@ -239,7 +251,7 @@ export function appendScriptEditorLocationMenuEntry(
     return formalizeScriptEditorProjectMenus(project);
   }
   const { project: formalizedProject, resourceId } = prepared;
-  return {
+  return formalizeScriptEditorProjectMenus({
     ...formalizedProject,
     menuResources: (formalizedProject.menuResources ?? []).map((resource) => {
       if (resource.id !== resourceId) {
@@ -255,7 +267,7 @@ export function appendScriptEditorLocationMenuEntry(
         ],
       };
     }),
-  };
+  });
 }
 
 export function removeScriptEditorLocationMenuEntry(
@@ -768,11 +780,279 @@ function normalizeMenuTargetFamily(value?: string): MenuTargetFamily {
     : "info";
 }
 
+function formalizeMenuEntriesThroughEvents(
+  project: ScriptEditorProjectDefinition
+): ScriptEditorProjectDefinition {
+  const events = [...(project.events ?? [])];
+  const minigames = [...(project.minigames ?? [])];
+  const projectMinigameIds = new Set(
+    minigames
+      .map((minigame) => normalizeOptionalString(minigame.id))
+      .filter((id) => id.length > 0)
+  );
+  let resourcesChanged = false;
+  let eventsChanged = false;
+  let minigamesChanged = false;
+
+  const nextMenuResources = (project.menuResources ?? []).map((resource) => {
+    const normalizedEntries = normalizeMenuEntries(
+      resource.entries,
+      `${resource.id}.entry`
+    );
+    let entriesChanged =
+      JSON.stringify(normalizedEntries) !== JSON.stringify(resource.entries ?? []);
+    const nextEntries = normalizedEntries.map((entry, index) => {
+      const result = formalizeMenuEntryThroughEvent(
+        events,
+        minigames,
+        entry,
+        index,
+        projectMinigameIds
+      );
+      eventsChanged ||= result.eventsChanged;
+      minigamesChanged ||= result.minigamesChanged;
+      entriesChanged ||= result.entry !== entry;
+      return result.entry;
+    });
+
+    if (!entriesChanged) {
+      return resource;
+    }
+    resourcesChanged = true;
+    return {
+      ...resource,
+      entries: nextEntries,
+    };
+  });
+
+  if (!resourcesChanged && !eventsChanged && !minigamesChanged) {
+    return project;
+  }
+
+  return {
+    ...project,
+    ...(resourcesChanged ? { menuResources: nextMenuResources } : {}),
+    ...(eventsChanged ? { events } : {}),
+    ...(minigamesChanged ? { minigames } : {}),
+  };
+}
+
+function formalizeMenuEntryThroughEvent(
+  events: ScriptEditorEventRecord[],
+  minigames: ScriptEditorMinigameRecord[],
+  entry: MenuEntryDefinition,
+  index: number,
+  projectMinigameIds: Set<string>
+): {
+  entry: MenuEntryDefinition;
+  eventsChanged: boolean;
+  minigamesChanged: boolean;
+} {
+  const directTargetEvent = events.find(
+    (eventRecord) => entry.targetFamily === "event" && eventRecord.id === entry.targetId
+  );
+  if (directTargetEvent != null) {
+    return {
+      entry: {
+        ...entry,
+        targetFamily: "event",
+        targetId: directTargetEvent.id,
+      },
+      eventsChanged: false,
+      minigamesChanged: false,
+    };
+  }
+
+  const existingTargetEvent = events.find(
+    (eventRecord) =>
+      entry.targetFamily === "event" &&
+      eventRecord.id === entry.targetId &&
+      eventRecord.type === "menu" &&
+      eventRecord.destination?.family === "menu"
+  );
+  if (existingTargetEvent != null) {
+    return {
+      entry: {
+        ...entry,
+        targetFamily: "event",
+        targetId: existingTargetEvent.id,
+      },
+      eventsChanged: false,
+      minigamesChanged: false,
+    };
+  }
+
+  const provisionalMenuEventId = allocateNextScriptEditorCanonicalId("events", events);
+  const minigameResolution = resolveMenuEntryMinigamePrototypeDestination(
+    entry,
+    minigames,
+    projectMinigameIds,
+    provisionalMenuEventId
+  );
+  if (minigameResolution != null) {
+    minigames.push(minigameResolution.minigame);
+    projectMinigameIds.add(minigameResolution.minigame.id);
+    events.push({
+      id: provisionalMenuEventId,
+      title: normalizeString(entry.label, resolveMenuFamilyLabel(entry.menuFamily, index)),
+      type: "menu",
+      destination: minigameResolution.destination,
+    });
+    return {
+      entry: {
+        ...entry,
+        targetFamily: "event",
+        targetId: provisionalMenuEventId,
+      },
+      eventsChanged: true,
+      minigamesChanged: true,
+    };
+  }
+
+  const destination = resolveMenuEventDestination(entry, index, projectMinigameIds);
+  const existingMenuEvent = events.find(
+    (eventRecord) =>
+      eventRecord.type === "menu" &&
+      eventRecord.destination?.family === destination.family &&
+      eventRecord.destination.targetId === destination.targetId
+  );
+  const menuEventId = existingMenuEvent?.id ?? provisionalMenuEventId;
+
+  if (existingMenuEvent == null) {
+    events.push({
+      id: menuEventId,
+      title: normalizeString(entry.label, resolveMenuFamilyLabel(entry.menuFamily, index)),
+      type: "menu",
+      destination,
+    });
+  }
+
+  const nextEntry = {
+    ...entry,
+    targetFamily: "event",
+    targetId: menuEventId,
+  } satisfies MenuEntryDefinition;
+
+  return {
+    entry: nextEntry,
+    eventsChanged: existingMenuEvent == null,
+    minigamesChanged: false,
+  };
+}
+
+function resolveMenuEventDestination(
+  entry: MenuEntryDefinition,
+  index: number,
+  projectMinigameIds: ReadonlySet<string>
+): ScriptEditorEventDestination {
+  const targetId = normalizeOptionalString(entry.targetId);
+  if (entry.targetFamily === "dialogue" && targetId.length > 0) {
+    return {
+      family: "dialogue",
+      targetId,
+    };
+  }
+  if (
+    entry.targetFamily === "minigame" &&
+    targetId.length > 0 &&
+    projectMinigameIds.has(targetId)
+  ) {
+    return {
+      family: "minigame",
+      targetId,
+    };
+  }
+  if (entry.targetFamily === "info" && targetId.startsWith("city-panel.")) {
+    return {
+      family: "menu",
+      targetId: normalizeString(targetId.slice("city-panel.".length), entry.menuFamily),
+    };
+  }
+  return {
+    family: "menu",
+    targetId: normalizeString(entry.menuFamily, suggestMenuFamilyByIndex(index)),
+  };
+}
+
+function resolveMenuEntryMinigamePrototypeDestination(
+  entry: MenuEntryDefinition,
+  minigames: readonly ScriptEditorMinigameRecord[],
+  projectMinigameIds: ReadonlySet<string>,
+  menuEventId: string
+): { destination: ScriptEditorEventDestination; minigame: ScriptEditorMinigameRecord } | null {
+  if (entry.targetFamily !== "minigame") {
+    return null;
+  }
+  const playableId = normalizeOptionalString(entry.targetId);
+  if (playableId.length === 0 || projectMinigameIds.has(playableId)) {
+    return null;
+  }
+  const playableDefinition = builtinPlayableDefinitionRegistry.get(playableId);
+  if (playableDefinition?.family !== "minigame") {
+    return null;
+  }
+
+  const minigameId = allocateNextScriptEditorCanonicalId("minigames", minigames);
+  const builtinIntegration = Array.from(
+    builtinPlayableIntegrationRegistry.entries()
+  ).find((integration) => integration.playableId === playableId);
+  const ownerKind =
+    builtinIntegration?.ownerDefaults.ownerKind ??
+    builtinIntegration?.trigger.ownerKind ??
+    "external";
+  const returnPolicy =
+    (builtinIntegration?.ownerDefaults.returnPolicy ?? "close-only") as NonNullable<
+      ScriptEditorMinigameRecord["returnPolicy"]
+    >;
+
+  return {
+    destination: {
+      family: "minigame",
+      targetId: minigameId,
+    },
+    minigame: {
+      id: minigameId,
+      title: normalizeString(entry.label, playableId),
+      description: "",
+      playableId,
+      integrationId: `playable.${playableId}.script-editor.${minigameId}`,
+      ownerKind,
+      ownerId:
+        typeof builtinIntegration?.ownerDefaults.ownerId === "string"
+          ? builtinIntegration.ownerDefaults.ownerId
+          : "",
+      returnPolicy,
+      triggerId: `trigger.playable.${playableId}.script-editor.${minigameId}`,
+      triggerSource: "event-destination",
+      triggerEvent: menuEventId,
+      launchPayload: [],
+      outcomeRoutes: createDefaultMenuMinigameOutcomeRoutes(
+        minigameId,
+        returnPolicy
+      ),
+      notes: "由菜单中的玩法原型自动包装为玩法实例。",
+    },
+  };
+}
+
+function createDefaultMenuMinigameOutcomeRoutes(
+  minigameId: string,
+  handoffPolicy: NonNullable<ScriptEditorMinigameRecord["returnPolicy"]>
+): NonNullable<ScriptEditorMinigameRecord["outcomeRoutes"]> {
+  return (["success", "failure", "cancelled"] as const).map((outcome, index) => ({
+    id: `${minigameId}${index + 1}`,
+    outcome,
+    handoffPolicy,
+    summary: "",
+    effectHint: "",
+  }));
+}
+
 function syncCityPanelTargetForMenuFamily(
   entry: MenuEntryDefinition,
   locationFamily: ScriptEditorLocationFamily | null
 ): MenuEntryDefinition {
-  if (locationFamily !== "cities") {
+  if (locationFamily !== "cities" || entry.targetFamily === "event") {
     return entry;
   }
 

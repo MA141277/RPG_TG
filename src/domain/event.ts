@@ -68,8 +68,11 @@ export type EventParticipant = {
   required?: boolean;
 };
 
-export type EventRuntimeAction = {
+export type EventRouteCommand = {
   type: "closeBuilding";
+} | {
+  type: "openCityMenuPanel";
+  panelId: "overview" | "intel" | "locations" | "management";
 } | {
   type: "launchPlayable";
   playableId: string;
@@ -98,7 +101,7 @@ export type EventDefinition = {
   type?: "settlement";
   participants?: EventParticipant[];
   dialogueId: string;
-  actions?: EventRuntimeAction[];
+  actions?: EventRouteCommand[];
   settlementId?: string;
   nextEventId?: EventId;
   taskInputs?: RuntimeTaskInput[];

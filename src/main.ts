@@ -23,6 +23,7 @@ import {
   createCityMenuState,
   resolveCityMenuEntries,
 } from "./application/city-menu/city-menu";
+import { launchCityMenuEvent } from "./application/city-menu/city-menu-event-launch";
 import { launchCityMenuPlayable } from "./application/city-menu/city-menu-playable-launch";
 import { createAppRenderCoordinator } from "./application/presenter/app-render-coordinator";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
@@ -811,6 +812,15 @@ function openCityMenuEntry(entryId: string | undefined): void {
   }
   if (menuEntry.action.type === "dialogue") {
     appState = openDialogueFromMenuTarget(appState, menuEntry.action.dialogueId);
+    renderApp();
+    return;
+  }
+  if (menuEntry.action.type === "event") {
+    appState = launchCityMenuEvent({
+      state: appState,
+      action: menuEntry.action,
+      storyContent: activeContentContext.storyContent,
+    });
     renderApp();
     return;
   }
