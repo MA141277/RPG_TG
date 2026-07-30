@@ -31,10 +31,15 @@ import {
   tickActivityQtePlayable,
 } from "../../application/playables/activity-qte/activity-qte-definition";
 import {
+  confirmCityBeggingDefaultFortunePlayable,
+  confirmCityBeggingDefaultOutcomePlayable,
   completeCityBeggingPlayable,
   exitCityBeggingPlayable,
   launchCityBeggingPlayable,
+  selectCityBeggingDefaultLocationPlayable,
+  selectCityBeggingDefaultOptionPlayable,
   tickCityBeggingPlayable,
+  tickCityBeggingDefaultDialoguePlayable,
   updateCityBeggingPointerPlayable,
 } from "../../application/playables/city-begging/city-begging-definition";
 import {
@@ -770,6 +775,112 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.playableId === "city-begging") {
+    const cityBeggingState = input.state.app.beggingMiniGameState;
+    if (
+      cityBeggingState != null &&
+      "mode" in cityBeggingState &&
+      cityBeggingState.mode === "default-dialogue"
+    ) {
+      if (resolvedRequest.action === "select-location") {
+        const locationId = resolvedRequest.payload?.locationId;
+        if (typeof locationId !== "string") {
+          return {
+            state: input.state,
+            effects: [],
+            handled: true,
+            session: getActivePlayableSession(input.state, "city-begging"),
+          };
+        }
+
+        const nextState = selectCityBeggingDefaultLocationPlayable({
+          state: input.state,
+          locationId,
+        });
+        return {
+          state: nextState,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(nextState, "city-begging"),
+        };
+      }
+
+      if (resolvedRequest.action === "select-option") {
+        const optionId = resolvedRequest.payload?.optionId;
+        const now = resolvedRequest.payload?.now;
+        if (typeof optionId !== "string" || typeof now !== "number") {
+          return {
+            state: input.state,
+            effects: [],
+            handled: true,
+            session: getActivePlayableSession(input.state, "city-begging"),
+          };
+        }
+
+        const nextState = selectCityBeggingDefaultOptionPlayable({
+          state: input.state,
+          optionId,
+          now,
+        });
+        return {
+          state: nextState,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(nextState, "city-begging"),
+        };
+      }
+
+      if (resolvedRequest.action === "confirm-fortune") {
+        const nextState = confirmCityBeggingDefaultFortunePlayable({
+          state: input.state,
+        });
+        return {
+          state: nextState,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(nextState, "city-begging"),
+        };
+      }
+
+      if (resolvedRequest.action === "tick") {
+        const now = resolvedRequest.payload?.now;
+        if (typeof now !== "number") {
+          return {
+            state: input.state,
+            effects: [],
+            handled: true,
+            session: getActivePlayableSession(input.state, "city-begging"),
+          };
+        }
+
+        const nextState = tickCityBeggingDefaultDialoguePlayable({
+          state: input.state,
+          now,
+        });
+        return {
+          state: nextState,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(nextState, "city-begging"),
+        };
+      }
+
+      if (resolvedRequest.action === "confirm-outcome") {
+        const completion = confirmCityBeggingDefaultOutcomePlayable({
+          state: input.state,
+          characterDefinitions: input.characterDefinitions,
+          playerCharacterId: input.playerCharacterId,
+        });
+        return {
+          state: completion.state,
+          characterDefinitions: completion.characterDefinitions,
+          characterStatusById: completion.characterStatusById,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(completion.state, "city-begging"),
+        };
+      }
+    }
+
     if (resolvedRequest.action === "pointer") {
       const pointerX = resolvedRequest.payload?.pointerX;
       if (typeof pointerX !== "number") {

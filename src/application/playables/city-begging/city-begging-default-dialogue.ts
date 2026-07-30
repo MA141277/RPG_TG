@@ -114,3 +114,16 @@ export function advanceCityBeggingDefaultThinking(
     thinkingUntil: null,
   };
 }
+
+export function confirmCityBeggingDefaultFortune(
+  state: CityBeggingDefaultDialogueState
+): CityBeggingDefaultDialogueState {
+  if (state.phase !== "fortune-draw" || state.fixedResult == null) {
+    return state;
+  }
+
+  return {
+    ...state,
+    phase: "thinking",
+  };
+}

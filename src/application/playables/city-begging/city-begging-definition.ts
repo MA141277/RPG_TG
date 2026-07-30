@@ -6,7 +6,15 @@ import type {
   CityBeggingPlayableState,
 } from "../../../domain/city-begging-minigame";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
-import { createCityBeggingDefaultDialogueState } from "./city-begging-default-dialogue";
+import {
+  advanceCityBeggingDefaultThinking,
+  confirmCityBeggingDefaultFortune,
+  createCityBeggingDefaultDialogueState,
+  selectCityBeggingDefaultLocation,
+  selectCityBeggingDefaultOption,
+  type CityBeggingDefaultDialogueState,
+} from "./city-begging-default-dialogue";
+import { applyCityBeggingDefaultSettlement } from "./city-begging-default-settlement";
 import {
   applyCityBeggingMiniGameCompletion,
   createCityBeggingMiniGameState,
@@ -18,6 +26,12 @@ function isCityBeggingMiniGameState(
   state: CityBeggingPlayableState | null
 ): state is CityBeggingMiniGameState {
   return state != null && "variantId" in state;
+}
+
+function isCityBeggingDefaultDialogueState(
+  state: CityBeggingPlayableState | null
+): state is CityBeggingDefaultDialogueState {
+  return state != null && "mode" in state && state.mode === "default-dialogue";
 }
 
 export function launchCityBeggingPlayable(input: {
@@ -93,6 +107,132 @@ export function tickCityBeggingPlayable(input: {
       ...input.state.app,
       beggingMiniGameState: updateCityBeggingMiniGameState(currentState, input.now),
     },
+  };
+}
+
+export function selectCityBeggingDefaultLocationPlayable(input: {
+  state: RuntimeState;
+  locationId: string;
+}): RuntimeState {
+  const currentState = input.state.app.beggingMiniGameState;
+  if (!isCityBeggingDefaultDialogueState(currentState)) {
+    return input.state;
+  }
+
+  return {
+    ...input.state,
+    app: {
+      ...input.state.app,
+      beggingMiniGameState: selectCityBeggingDefaultLocation(
+        currentState,
+        input.locationId
+      ),
+    },
+  };
+}
+
+export function selectCityBeggingDefaultOptionPlayable(input: {
+  state: RuntimeState;
+  optionId: string;
+  now: number;
+}): RuntimeState {
+  const currentState = input.state.app.beggingMiniGameState;
+  if (!isCityBeggingDefaultDialogueState(currentState)) {
+    return input.state;
+  }
+
+  return {
+    ...input.state,
+    app: {
+      ...input.state.app,
+      beggingMiniGameState: selectCityBeggingDefaultOption(
+        currentState,
+        input.optionId,
+        input.now
+      ),
+    },
+  };
+}
+
+export function confirmCityBeggingDefaultFortunePlayable(input: {
+  state: RuntimeState;
+}): RuntimeState {
+  const currentState = input.state.app.beggingMiniGameState;
+  if (!isCityBeggingDefaultDialogueState(currentState)) {
+    return input.state;
+  }
+
+  return {
+    ...input.state,
+    app: {
+      ...input.state.app,
+      beggingMiniGameState: confirmCityBeggingDefaultFortune(currentState),
+    },
+  };
+}
+
+export function tickCityBeggingDefaultDialoguePlayable(input: {
+  state: RuntimeState;
+  now: number;
+}): RuntimeState {
+  const currentState = input.state.app.beggingMiniGameState;
+  if (!isCityBeggingDefaultDialogueState(currentState)) {
+    return input.state;
+  }
+
+  return {
+    ...input.state,
+    app: {
+      ...input.state.app,
+      beggingMiniGameState: advanceCityBeggingDefaultThinking(
+        currentState,
+        input.now
+      ),
+    },
+  };
+}
+
+export function confirmCityBeggingDefaultOutcomePlayable(input: {
+  state: RuntimeState;
+  characterDefinitions: CharacterDefinition[];
+  playerCharacterId?: string | undefined;
+}): {
+  state: RuntimeState;
+  characterDefinitions: CharacterDefinition[];
+  characterStatusById: CharacterStatusById;
+} {
+  const currentState = input.state.app.beggingMiniGameState;
+  if (
+    !isCityBeggingDefaultDialogueState(currentState) ||
+    currentState.phase !== "outcome" ||
+    currentState.settlementApplied
+  ) {
+    return {
+      state: input.state,
+      characterDefinitions: input.characterDefinitions,
+      characterStatusById: {},
+    };
+  }
+
+  const settlement = applyCityBeggingDefaultSettlement(input);
+
+  return {
+    state: {
+      ...settlement.state,
+      core: {
+        ...settlement.state.core,
+        runtime: {
+          ...settlement.state.core.runtime,
+          playableSession: null,
+        },
+      },
+      app: {
+        ...settlement.state.app,
+        beggingMiniGameState: null,
+      },
+    },
+    characterDefinitions: settlement.characterDefinitions,
+    characterStatusById: settlement.characterStatusById,
   };
 }
 
