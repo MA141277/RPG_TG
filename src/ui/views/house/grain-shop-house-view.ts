@@ -44,6 +44,58 @@ function renderTradeOverlay(
   `;
 }
 
+function renderPriceReportOverlay(
+  overlay: Extract<HouseOverlayViewModel, { type: "grain-price-report" }>
+): string {
+  return `
+    <div class="c-grain-shop-overlay" data-house-overlay="grain-price-report">
+      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel c-house-trade-popup c-grain-intel-report" role="dialog" aria-modal="true">
+        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
+        <div class="c-grain-shop-modal__body c-house-trade-popup__body">
+          <p class="c-grain-shop-price-hint">${overlay.subtitle}</p>
+          <div class="c-market-house-trade-list c-grain-intel-report__list">
+            <table class="c-grain-intel-report__table">
+              <thead>
+                <tr>
+                  <th scope="col">城名</th>
+                  <th scope="col">方位</th>
+                  <th scope="col">卖价</th>
+                  <th scope="col">买价</th>
+                  <th scope="col">对比本城</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${overlay.rows
+                  .map(
+                    (row) => `
+                      <tr class="c-grain-intel-report__row${row.isCurrentCity ? " c-grain-intel-report__row--current" : ""}">
+                        <th scope="row" class="c-grain-intel-report__city">
+                          ${row.cityName}${row.isCurrentCity ? "（本城）" : ""}
+                        </th>
+                        <td class="c-grain-intel-report__direction">${row.directionLabel}</td>
+                        <td class="c-grain-intel-report__price">${row.sellPrice} 文/${row.grainUnit}</td>
+                        <td class="c-grain-intel-report__price">${row.buyPrice} 文/${row.grainUnit}</td>
+                        <td class="c-grain-intel-report__compare c-grain-intel-report__compare--${row.priceTone}">
+                          ${row.comparisonLabel}
+                        </td>
+                      </tr>
+                    `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="c-grain-shop-modal__actions">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+            ${overlay.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderMinigameOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "minigame" }>
 ): string {
@@ -204,6 +256,8 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
       return renderHouseConfirmOverlay(overlay);
     case "trade":
       return renderTradeOverlay(overlay);
+    case "grain-price-report":
+      return renderPriceReportOverlay(overlay);
     case "minigame":
       return renderMinigameOverlay(overlay);
     case "result":

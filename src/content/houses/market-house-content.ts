@@ -21,6 +21,7 @@ type MarketHouseContent = {
   marketHouseRumorTextIdsByCategory: Partial<Record<TradeGoodCategory, string[]>>;
   marketHouseGeneralRumorTextIds: string[];
   marketHouseInvestigationSpecialtyTextIdByActorId: Record<string, string>;
+  marketHouseInvestigationVoiceByCityId: Record<string, string>;
 };
 
 const marketHouseContent = defaultMarketHouseContent as MarketHouseContent;
@@ -38,3 +39,5 @@ export const marketHouseGeneralRumorTextIds =
   marketHouseContent.marketHouseGeneralRumorTextIds;
 export const marketHouseInvestigationSpecialtyTextIdByActorId =
   marketHouseContent.marketHouseInvestigationSpecialtyTextIdByActorId;
+export const marketHouseInvestigationVoiceByCityId =
+  marketHouseContent.marketHouseInvestigationVoiceByCityId;

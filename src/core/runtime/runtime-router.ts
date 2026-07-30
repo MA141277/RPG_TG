@@ -51,5 +51,5 @@ export type RuntimeFollowUpContext = {
 };
 
 export interface RuntimeRouter {
-  route(input: RuntimeRouteInput): RuntimeRouteResult;
+  route(input: RuntimeRouteInput): RuntimeResult;
 }

@@ -17,7 +17,11 @@ export type MarketHouseOverlayState =
   | MarketHouseTradeOverlayState
   | null;
 
-export type MarketHouseDialoguePhase = "greeting" | "open" | "idle";
+export type MarketHouseDialoguePhase =
+  | "greeting"
+  | "open"
+  | "idle"
+  | "investigation-report";
 
 export type MarketHouseSessionState = {
   guestActorIds: string[];

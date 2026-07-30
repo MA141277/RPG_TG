@@ -331,6 +331,10 @@ import { preloadInitialMapViewAssets } from "./ui/startup-asset-preloader";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import { createCoinRewardAnimator } from "./ui/animations/coin-reward-animation";
 import {
+  CardDrawAnimator,
+  formatCardDrawResultLabel,
+} from "./ui/animations/card-draw-animation";
+import {
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
   createCampaignTerrainCameraCenteredOnCoordinate,
   getCampaignTerrainCameraTiltRadiansForScale,
@@ -358,6 +362,7 @@ import {
 } from "./ui/views/map/campaign-cloud-webgl";
 import { mountCityStageDomRuntime } from "./ui/views/city/city-stage-dom-runtime";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
+import { syncDialogueTypewriterRuntime } from "./ui/components/dialogue/dialogue-typewriter-runtime";
 import { syncTroopEditorInteractions } from "./ui/views/troop-editor/troop-editor-interactions";
 import { syncTroopManagementBattlePreview } from "./ui/views/troop-editor/troop-management-battle-preview";
 import { syncTroopManagementMoveInteractions } from "./ui/views/troop-editor/troop-management-move-interactions";
@@ -425,6 +430,14 @@ type CampaignMoveAnimationState = {
   to: GridCoordinate;
   durationMs: number;
   resolve: () => void;
+};
+
+type CityCardDrawOverlayRuntime = {
+  overlay: HTMLElement;
+  mount: HTMLElement;
+  sessionId: number;
+  animator: CardDrawAnimator;
+  hasStarted: boolean;
 };
 
 const appElement = document.querySelector<HTMLElement>("#app");
@@ -845,6 +858,8 @@ const coinRewardAnimator = {
     getCoinRewardAnimator().play(input);
   },
 };
+let nextCityCardDrawTestSessionId = 0;
+let cityCardDrawOverlayRuntime: CityCardDrawOverlayRuntime | null = null;
 let campaignMapDebugState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
@@ -867,6 +882,9 @@ let pendingInitialCampaignMapIntroTerrainReady = false;
 let cityStageDomRuntimeHandle: {
   cityId: string;
   attach(root: HTMLElement): void;
+  destroy(): void;
+} | null = null;
+let dialogueTypewriterRuntimeHandle: {
   destroy(): void;
 } | null = null;
 let campaignMapScaleDraftValue: string | null = null;
@@ -985,6 +1003,140 @@ function syncCoinRewardGoldDisplay(): void {
     coinRewardDisplayValue ??
     getPlayerCharacter(appState, currentPlayerCharacterId).stats.gold;
   goldValueElement.textContent = `银两 ${resolvedGoldValue}`;
+}
+
+function destroyCityCardDrawOverlayRuntime(): void {
+  if (cityCardDrawOverlayRuntime == null) {
+    return;
+  }
+
+  cityCardDrawOverlayRuntime.animator.destroy();
+  cityCardDrawOverlayRuntime = null;
+}
+
+function syncCityCardDrawTestOverlayView(
+  overlay: ParentNode,
+  resultValue: number | null
+): void {
+  const resultLabelElement = overlay.querySelector<HTMLElement>(
+    "[data-city-card-draw-result-label]"
+  );
+  if (resultLabelElement != null) {
+    resultLabelElement.textContent =
+      resultValue == null
+        ? "\u70b9\u51fb\u5361\u724c\u5f00\u59cb\u62bd\u53d6\uff0c\u8fd4\u56de 1-6 \u7684\u6d4b\u8bd5\u7ed3\u679c\u3002"
+        : `\u672c\u6b21\u7ed3\u679c\u4e3a ${formatCardDrawResultLabel(resultValue)} (${resultValue})`;
+  }
+
+  const confirmButton = overlay.querySelector<HTMLButtonElement>(
+    "[data-action='confirm-city-card-draw-test']"
+  );
+  if (confirmButton != null) {
+    confirmButton.hidden = resultValue == null;
+  }
+}
+
+function syncCityCardDrawTestOverlay(): void {
+  const overlay = appRoot.querySelector<HTMLElement>("[data-city-card-draw-overlay]");
+  const currentState = appState.cityCardDrawTestState;
+  if (overlay == null || currentState == null) {
+    destroyCityCardDrawOverlayRuntime();
+    return;
+  }
+
+  syncCityCardDrawTestOverlayView(overlay, currentState.resultValue);
+
+  const mount = overlay.querySelector<HTMLElement>("[data-city-card-draw-mount]");
+  assertExists(mount, "Missing city card draw overlay mount.");
+  const hasMatchingRuntime =
+    cityCardDrawOverlayRuntime != null &&
+    cityCardDrawOverlayRuntime.sessionId === currentState.sessionId &&
+    cityCardDrawOverlayRuntime.mount === mount &&
+    cityCardDrawOverlayRuntime.overlay === overlay;
+
+  if (currentState.resultValue != null) {
+    if (!hasMatchingRuntime) {
+      destroyCityCardDrawOverlayRuntime();
+    }
+    return;
+  }
+
+  if (!hasMatchingRuntime) {
+    destroyCityCardDrawOverlayRuntime();
+    mount.replaceChildren();
+    cityCardDrawOverlayRuntime = {
+      overlay,
+      mount,
+      sessionId: currentState.sessionId,
+      animator: new CardDrawAnimator({
+        host: mount,
+        stackCount: 5,
+        cardWidthPx: 146,
+        cardHeightPx: 192,
+        clickHintText: "\u70b9\u51fb\u62bd\u53d6",
+        busyHintText: "\u62bd\u53d6\u4e2d...",
+      }),
+      hasStarted: false,
+    };
+  }
+
+  const runtime = cityCardDrawOverlayRuntime;
+  if (runtime == null || runtime.hasStarted) {
+    return;
+  }
+
+  runtime.hasStarted = true;
+  const activeSessionId = currentState.sessionId;
+  void runtime.animator
+    .play()
+    .then((value) => {
+      const latestState = appState.cityCardDrawTestState;
+      if (latestState == null || latestState.sessionId !== activeSessionId) {
+        return;
+      }
+
+      appState = {
+        ...appState,
+        cityCardDrawTestState: {
+          ...latestState,
+          resultValue: value,
+        },
+      };
+      syncCityCardDrawTestOverlayView(overlay, value);
+    })
+    .catch(() => {});
+}
+
+function playCoinRewardFlight(input: {
+  playerCharacterId: string;
+  delta: number;
+  sourceElement: HTMLElement;
+  sourceClientX?: number;
+  sourceClientY?: number;
+}): void {
+  if (input.delta <= 0) {
+    return;
+  }
+
+  const targetValue = getPlayerCharacter(appState, input.playerCharacterId).stats.gold;
+  const startValue = targetValue - input.delta;
+  coinRewardDisplayValue = startValue;
+  syncCoinRewardGoldDisplay();
+
+  window.requestAnimationFrame(() => {
+    coinRewardAnimator.play({
+      sourceElement: input.sourceElement,
+      ...(input.sourceClientX == null
+        ? {}
+        : { sourceClientX: input.sourceClientX }),
+      ...(input.sourceClientY == null
+        ? {}
+        : { sourceClientY: input.sourceClientY }),
+      startValue,
+      targetValue,
+      amount: input.delta,
+    });
+  });
 }
 
 function isCoinRewardAnchorEditorDirty(): boolean {
@@ -1236,6 +1388,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     modalState: null,
     locationDialogueState: null,
     beggingMiniGameState: null,
+    cityCardDrawTestState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -1502,6 +1655,7 @@ function clearTransientUiForCouncilTrigger(): void {
     modalState: null,
     locationDialogueState: null,
     beggingMiniGameState: null,
+    cityCardDrawTestState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -1861,6 +2015,20 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
       appState = nextAppState;
     },
     renderApp,
+    playCoinReward: ({
+      playerCharacterId,
+      delta,
+      sourceClientX,
+      sourceClientY,
+    }) => {
+      playCoinRewardFlight({
+        playerCharacterId,
+        delta,
+        sourceElement: appRoot,
+        ...(sourceClientX == null ? {} : { sourceClientX }),
+        ...(sourceClientY == null ? {} : { sourceClientY }),
+      });
+    },
     syncCouncilPriorityAfterGameStateChange,
     startMapAutoAdvance,
     stopMapAutoAdvance,
@@ -3185,6 +3353,7 @@ function createScenarioPackAppState(
     modalState: null,
     locationDialogueState: null,
     beggingMiniGameState: null,
+    cityCardDrawTestState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -3269,6 +3438,7 @@ function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
     cityMenuState: null,
     cityDirectoryState: null,
     beggingMiniGameState: null,
+    cityCardDrawTestState: null,
     campaignTravelState: null,
   };
 
@@ -4599,6 +4769,11 @@ appElement.addEventListener("pointerdown", (event) => {
     dispatchHouseRuntimeRequest(houseRuntime, {
       type: "action",
       actionId: pointerHouseActionId,
+    }, {
+      pointer: {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      },
     });
     return;
   }
@@ -5118,19 +5293,54 @@ appElement.addEventListener("click", (event) => {
     "[data-action='grant-haozhou-test-coin']"
   );
   if (haozhouCoinRewardButton != null) {
-    const playerCharacterBefore = getPlayerCharacter(
-      appState,
-      currentPlayerCharacterId
-    );
     appState = applyCoinReward(appState, currentPlayerCharacterId, 10);
-    coinRewardAnimator.play({
+    playCoinRewardFlight({
+      playerCharacterId: currentPlayerCharacterId,
+      delta: 10,
       sourceElement: haozhouCoinRewardButton,
       sourceClientX: event.clientX,
       sourceClientY: event.clientY,
-      startValue: playerCharacterBefore.stats.gold,
-      targetValue: playerCharacterBefore.stats.gold + 10,
-      amount: 10,
     });
+    return;
+  }
+
+  const openCityCardDrawTestButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-city-card-draw-test']"
+  );
+  if (openCityCardDrawTestButton != null) {
+    appState = {
+      ...closeCityMenu(closeCityDirectory(appState)),
+      locationDialogueState: null,
+      cityCardDrawTestState: {
+        sessionId: (nextCityCardDrawTestSessionId += 1),
+        resultValue: null,
+      },
+    };
+    renderApp();
+    return;
+  }
+
+  const closeCityCardDrawTestButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-city-card-draw-test']"
+  );
+  if (closeCityCardDrawTestButton != null) {
+    appState = {
+      ...appState,
+      cityCardDrawTestState: null,
+    };
+    renderApp();
+    return;
+  }
+
+  const confirmCityCardDrawTestButton = targetElement.closest<HTMLElement>(
+    "[data-action='confirm-city-card-draw-test']"
+  );
+  if (confirmCityCardDrawTestButton != null) {
+    appState = {
+      ...appState,
+      cityCardDrawTestState: null,
+    };
+    renderApp();
     return;
   }
 
@@ -5562,6 +5772,7 @@ appElement.addEventListener("click", (event) => {
     houseRuntime.clearAllHouseIntervals();
     appState = {
       ...appState,
+      cityCardDrawTestState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       locationDialogueState: null,
@@ -5589,6 +5800,7 @@ appElement.addEventListener("click", (event) => {
   if (leaveCity3dButton != null) {
     appState = {
       ...appState,
+      cityCardDrawTestState: null,
       cityMenuState: null,
       gameState: {
         ...appState.gameState,
@@ -5709,6 +5921,7 @@ appElement.addEventListener("click", (event) => {
 
         appState = {
           ...closeCityDirectory(appState),
+          cityCardDrawTestState: null,
           gameState: {
           ...appState.gameState,
           runtime: {
@@ -5802,6 +6015,11 @@ appElement.addEventListener("click", (event) => {
       dispatchHouseRuntimeRequest(houseRuntime, {
         type: "action",
         actionId,
+      }, {
+        pointer: {
+          clientX: event.clientX,
+          clientY: event.clientY,
+        },
       });
     }
     return;
@@ -5830,6 +6048,10 @@ appElement.addEventListener("click", (event) => {
         return;
       }
 
+      appState = {
+        ...appState,
+        cityCardDrawTestState: null,
+      };
       enterHouseThroughRuntime(houseRuntime, houseId);
     }
     return;
@@ -6950,6 +7172,24 @@ function captureCoinRewardLayer(root: ParentNode): HTMLElement | null {
   return layer;
 }
 
+function captureCityCardDrawOverlay(root: ParentNode): HTMLElement | null {
+  const state = appState.cityCardDrawTestState;
+  if (state == null) {
+    return null;
+  }
+
+  const overlay = root.querySelector<HTMLElement>("[data-city-card-draw-overlay]");
+  if (
+    overlay == null ||
+    overlay.dataset.cityCardDrawSessionId !== String(state.sessionId)
+  ) {
+    return null;
+  }
+
+  overlay.remove();
+  return overlay;
+}
+
 function syncPreservedCampaignMarkerAttributes(
   preservedElement: HTMLElement,
   replacementElement: HTMLElement
@@ -7019,6 +7259,24 @@ function restoreCoinRewardLayer(
   }
 
   replacementLayer.replaceWith(preservedLayer);
+}
+
+function restoreCityCardDrawOverlay(
+  root: ParentNode,
+  preservedOverlay: HTMLElement | null
+): void {
+  if (preservedOverlay == null) {
+    return;
+  }
+
+  const replacementOverlay = root.querySelector<HTMLElement>(
+    "[data-city-card-draw-overlay]"
+  );
+  if (replacementOverlay == null) {
+    return;
+  }
+
+  replacementOverlay.replaceWith(preservedOverlay);
 }
 
 function renderApp() {
@@ -7097,6 +7355,7 @@ function renderAppFrame(
     ? cachedCampaignMarkers
     : null;
   const preservedCoinRewardLayer = captureCoinRewardLayer(appRoot);
+  const preservedCityCardDrawOverlay = captureCityCardDrawOverlay(appRoot);
   const presenterOutput = createAppPresenterOutput({
     appState,
     playerCharacterId: currentPlayerCharacterId,
@@ -7112,6 +7371,8 @@ function renderAppFrame(
   });
   syncAppAudio();
 
+  dialogueTypewriterRuntimeHandle?.destroy();
+  dialogueTypewriterRuntimeHandle = null;
   appRoot.innerHTML = renderAppMarkup({
     appState,
     playerCharacterId: currentPlayerCharacterId,
@@ -7143,6 +7404,7 @@ function renderAppFrame(
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   restoreCampaignMarkerElements(appRoot, preservedCampaignMarkers);
   restoreCoinRewardLayer(appRoot, preservedCoinRewardLayer);
+  restoreCityCardDrawOverlay(appRoot, preservedCityCardDrawOverlay);
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
   restoreCampaignMapScaleInputFocus(focusedScaleInput);
@@ -7177,6 +7439,7 @@ function renderAppFrame(
     syncCampaignCloudWebGl(appRoot);
   }
   syncCampaignCloudTextureScaleControl();
+  syncCityCardDrawTestOverlay();
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
   syncCityStageDomRuntime();
   syncCoinRewardAnimatorTarget();
@@ -7231,6 +7494,7 @@ function renderAppFrame(
     },
   });
   syncEmbeddedBattleUiEditor();
+  dialogueTypewriterRuntimeHandle = syncDialogueTypewriterRuntime(appRoot);
 }
 
 function syncCityStageDomRuntime(): void {

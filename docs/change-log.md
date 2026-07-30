@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-30 NQS To MMZ Minigame Branch Merge
+
+### Added
+- Merged `origin/nqs-to-mmz-minigame` into a local integration branch, bringing in tavern short gambling domain/runtime support, grain shop paid grain intel, unified player item inventory projection, city card-draw test overlay, dialogue typewriter runtime helpers, and faster battle-demo timing.
+- House-facing additions remain under typed module/session/view-model contracts; concrete tavern or grain-shop business branches should stay out of `src/main.ts`.
+
+### Impact
+- Tavern, grain, market, medicine inventory, and minigame behavior should continue through the shared house module lifecycle and unified runtime item variables.
+- Verification for this merge should focus on typecheck, tavern short gamble tests, grain intel tests, unified backpack projection tests, card draw tests, dialogue typewriter runtime tests, and the relevant robustness guards.
+
 ## 2026-07-29 Story Runtime Event Binding And Progression Slice
 
 ### Added

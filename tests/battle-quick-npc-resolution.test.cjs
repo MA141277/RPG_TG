@@ -169,7 +169,7 @@ test("quick npc battle portrait area reuses battle spine canvases and supports h
   assert.match(source, /if \(shouldPlayPortraitHit\) \{/);
 });
 
-test("quick npc battle timing waits 3 seconds before settlement, animates losses for 1 second, then holds 3 seconds before exit", () => {
+test("quick npc battle timing waits 0.7 second before settlement, animates losses for 0.5 second, then holds 1 second before exit", () => {
   const { source } = loadQuickBattleFns();
   assert.match(source, /\.quick-battle-morale-fill \{[\s\S]*background: linear-gradient\(90deg, #1780a5, #35d7ce\);/);
   assert.match(source, /const durationMs = 1000;/);
@@ -184,7 +184,7 @@ test("quick npc battle timing waits 3 seconds before settlement, animates losses
   assert.match(source, /animateQuickBattleSlotHp\(slotHpText, beforeSoldiers, activeSoldiers\);/);
   assert.match(
     source,
-    /function showQuickBattleOverlay\(report\) \{[\s\S]*await sleep\(2000\);[\s\S]*settleQuickBattleOverlay\(report\);[\s\S]*await sleep\(1000\);[\s\S]*overlay\.classList\.add\('is-results-visible'\);[\s\S]*await sleep\(3000\);/,
+    /function showQuickBattleOverlay\(report\) \{[\s\S]*await sleep\(700\);[\s\S]*settleQuickBattleOverlay\(report\);[\s\S]*await sleep\(500\);[\s\S]*overlay\.classList\.add\('is-results-visible'\);[\s\S]*await sleep\(1000\);/,
   );
 });
 

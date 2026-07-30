@@ -11,6 +11,7 @@ import type {
 } from "../../domain/trade-good";
 import { resolveMarketEventWeightMultiplier } from "./market-event-system";
 import { generateGoodsPrice } from "./price-generator";
+import { resolveSettlementMarketBias } from "./settlement-market-bias";
 
 type RandomSource = () => number;
 
@@ -68,6 +69,11 @@ export function calculateTradeGoodSelectionWeight(
   if (goodDefinition.category === "grain" && cityDefinition.danger >= 50) {
     weight += cityDefinition.danger * 0.25;
   }
+
+  weight += resolveSettlementMarketBias(
+    cityDefinition.id,
+    goodDefinition.id
+  ).selectionWeightDelta;
 
   weight *= resolveMarketEventWeightMultiplier(
     marketEvents,

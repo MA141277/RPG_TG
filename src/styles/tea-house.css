@@ -34,6 +34,12 @@
   background: rgb(9 12 10 / 78%);
 }
 
+.c-tavern-gamble-overlay--short {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
 .c-tavern-gamble {
   position: relative;
   width: 100vw;
@@ -130,7 +136,7 @@
   gap: 5px;
 }
 
-.c-tavern-gamble__player div {
+.c-tavern-gamble__player-summary {
   display: grid;
   gap: 2px;
 }
@@ -148,6 +154,35 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.c-tavern-gamble__meld-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 24px;
+}
+
+.c-tavern-gamble__meld-strip span {
+  padding: 2px 6px;
+  border: 1px solid rgb(255 230 168 / 30%);
+  border-radius: 999px;
+  background: rgb(40 82 68 / 72%);
+  color: #f6e6b0;
+  font-size: 0.74rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.c-tavern-gamble__discard-strip--vertical {
+  flex-direction: column;
+  align-items: center;
+}
+
+.c-tavern-gamble__discard-strip--narrow {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .c-tavern-gamble__played-groups,
@@ -230,6 +265,41 @@
 .c-tavern-gamble__center--long {
   inset: 100px 180px 226px;
   align-content: center;
+}
+
+.c-tavern-gamble--short {
+  width: min(1120px, calc(100vw - 40px));
+  height: min(710px, calc(100vh - 40px));
+  max-width: 1120px;
+  max-height: 710px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border: 1px solid rgb(255 230 168 / 18%);
+  border-radius: 18px;
+}
+
+.c-tavern-gamble__table--short {
+  grid-template-columns: minmax(220px, 280px) 1fr;
+  min-height: 0;
+}
+
+.c-tavern-gamble__center--short {
+  position: relative;
+  inset: auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 560px;
+  padding: 18px;
+  margin-inline: auto;
+}
+
+.c-tavern-gamble__short-note {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgb(255 240 196 / 14%);
+  color: #fff1c4;
+  font-size: 0.94rem;
+  letter-spacing: 0.02em;
 }
 
 .c-tavern-gamble__public-discards {
@@ -341,6 +411,15 @@
   min-width: 38px;
   min-height: 50px;
   font-size: 0.82rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.c-tavern-gamble__discard-strip--narrow .c-tavern-gamble__tile--discard {
+  min-width: 48px;
+  width: 48px;
+  min-height: 63px;
 }
 
 .c-tavern-gamble__tile--discard-public {
@@ -429,8 +508,8 @@
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: 10px;
-  max-height: 62px;
+  bottom: 262px;
+  max-height: 186px;
   overflow: auto;
   border-radius: 6px;
   background: rgb(0 0 0 / 18%);
@@ -493,6 +572,53 @@
   background: #f7d982;
 }
 
+.c-tavern-gamble--short .c-tavern-gamble__showdown {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  width: min(720px, calc(100% - 40px));
+  max-height: min(70%, 420px);
+  margin: 0;
+  transform: translate(-50%, -50%);
+  z-index: 16;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  gap: 10px;
+}
+
+.c-tavern-gamble--short .c-tavern-gamble__showdown > div {
+  flex: 1 1 140px;
+  min-width: 140px;
+  max-width: 170px;
+  justify-items: center;
+  text-align: center;
+  padding: 12px 14px;
+}
+
+.c-tavern-gamble--short .c-tavern-gamble__showdown header {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.c-tavern-gamble--short .c-tavern-gamble__showdown-actions {
+  flex-basis: 100%;
+  width: 100%;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.c-tavern-gamble--short .c-tavern-gamble__showdown-detail {
+  display: none;
+}
+
 .c-tavern-gamble__actions {
   justify-content: center;
   max-height: 96px;
@@ -503,6 +629,97 @@
     linear-gradient(180deg, rgb(18 30 25 / 94%), rgb(20 13 8 / 96%)),
     rgb(18 30 25);
   box-shadow: 0 -10px 24px rgb(0 0 0 / 22%);
+}
+
+.c-tavern-gamble__actions--top {
+  max-height: none;
+  overflow: visible;
+  padding: 8px 14px;
+  border-top: 0;
+  border-bottom: 1px solid rgb(255 230 168 / 18%);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 12%);
+  justify-content: flex-end;
+}
+
+.c-tavern-gamble__action-button {
+  min-width: 94px;
+  color: #f0d79b;
+}
+
+.c-tavern-gamble__actions--short-play {
+  position: absolute;
+  left: 50%;
+  bottom: 182px;
+  z-index: 5;
+  width: min(680px, calc(100% - 40px));
+  max-height: none;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  transform: translateX(-50%);
+  padding: 10px 12px;
+  border: 1px solid rgb(255 230 168 / 18%);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgb(18 30 25 / 90%), rgb(20 13 8 / 92%));
+  box-shadow: 0 10px 20px rgb(0 0 0 / 18%);
+}
+
+.c-tavern-gamble__actions--short-play.has-claim-row {
+  padding-top: 14px;
+}
+
+.c-tavern-gamble__actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  gap: 8px;
+}
+
+.c-tavern-gamble__claim-countdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 0 4px 2px;
+  color: #f0d79b;
+}
+
+.c-tavern-gamble__claim-countdown-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.84rem;
+}
+
+.c-tavern-gamble__claim-countdown-value {
+  color: #fff1c4;
+}
+
+.c-tavern-gamble__claim-countdown-track {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(255 241 196 / 18%);
+  box-shadow: inset 0 0 0 1px rgb(255 230 168 / 14%);
+}
+
+.c-tavern-gamble__claim-countdown-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f5dd8c 0%, #d8ad4a 100%);
+  transition: width 0.25s ease;
+}
+
+.c-tavern-gamble__action-button:disabled {
+  opacity: 0.54;
 }
 
 .c-tavern-gamble__meld-action.is-flashing {
@@ -536,8 +753,18 @@
 }
 
 @media (width <= 760px) {
+  .c-tavern-gamble-overlay--short {
+    padding: 12px;
+  }
+
   .c-tavern-gamble {
     overflow: hidden;
+  }
+
+  .c-tavern-gamble--short {
+    width: min(100vw - 24px, 1120px);
+    height: min(100vh - 24px, 760px);
+    border-radius: 12px;
   }
 
   .c-tavern-gamble__table,
@@ -591,9 +818,22 @@
     bottom: 84px;
   }
 
+  .c-tavern-gamble__log {
+    bottom: 278px;
+  }
+
   .c-tavern-gamble__actions {
     max-height: 118px;
     justify-content: flex-start;
+  }
+
+  .c-tavern-gamble__actions--top {
+    max-height: none;
+  }
+
+  .c-tavern-gamble__actions--short-play {
+    bottom: 186px;
+    width: calc(100% - 28px);
   }
 }
 

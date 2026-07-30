@@ -62,6 +62,7 @@ import { renderTroopManagementView } from "./views/troop-editor/troop-management
 import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
 import { renderLayoutEditor } from "./tools/layout-editor-view";
+import { formatCardDrawResultLabel } from "./animations/card-draw-animation";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
 
@@ -399,11 +400,12 @@ function renderLocationDialogue(
   const portraitImageUrl =
     speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
   const typewriterLines = renderDialogueTypewriterLines(dialogueState.textLines);
+  const hasAdvanceHint = dialogueState.advanceHintText.length > 0;
 
   return `
     <footer class="c-grain-shop-dialogue c-scene-dialogue c-location-dialogue" aria-label="地点对话">
       <div
-        class="c-grain-shop-dialogue__text c-grain-shop-skin-card c-grain-shop-dialogue__text--clickable"
+        class="c-grain-shop-dialogue__text c-grain-shop-skin-card c-grain-shop-dialogue__text--clickable ${hasAdvanceHint ? "c-grain-shop-dialogue__text--with-hint" : ""}"
         data-action="close-location-dialogue"
         role="button"
         tabindex="0"
@@ -655,6 +657,74 @@ function renderStage(
   return "";
 }
 
+function renderCityCardDrawTestOverlay(input: AppRenderInput): string {
+  const state = input.appState.cityCardDrawTestState;
+  if (state == null || input.presenterOutput.stage.type !== "city") {
+    return "";
+  }
+
+  const resultText =
+    state.resultValue == null
+      ? "\u70b9\u51fb\u5361\u724c\u5f00\u59cb\u62bd\u53d6\uff0c\u8fd4\u56de 1-6 \u7684\u6d4b\u8bd5\u7ed3\u679c\u3002"
+      : `\u672c\u6b21\u7ed3\u679c\u4e3a ${formatCardDrawResultLabel(state.resultValue)} (${state.resultValue})`;
+
+  return `
+    <div
+      class="c-city-card-draw-test"
+      data-city-card-draw-overlay
+      data-city-card-draw-session-id="${state.sessionId}"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="city-card-draw-test-title"
+    >
+      <div class="c-city-card-draw-test__veil"></div>
+      <section class="c-city-card-draw-test__panel">
+        <button
+          type="button"
+          class="c-city-card-draw-test__close"
+          data-action="close-city-card-draw-test"
+          aria-label="\u5173\u95ed\u62bd\u5361\u6d4b\u8bd5"
+        >
+          ×
+        </button>
+        <p class="c-city-card-draw-test__eyebrow">\u4e34\u65f6\u6d4b\u8bd5</p>
+        <h2 class="c-city-card-draw-test__title" id="city-card-draw-test-title">
+          \u62bd\u5361\u52a8\u753b
+        </h2>
+        <p class="c-city-card-draw-test__copy">
+          CardDrawAnimator \u4f1a\u5728\u70b9\u51fb\u5361\u724c\u540e\u8fd4\u56de\u4e00\u4e2a 1-6 \u6570\u503c\uff0c\u53ef\u4ee5\u76f4\u63a5\u7ed9\u5224\u5b9a\u903b\u8f91\u4f7f\u7528\u3002
+        </p>
+        <div class="c-city-card-draw-test__stage" data-city-card-draw-mount>
+          ${
+            state.resultValue == null
+              ? ""
+              : `
+                <div class="c-city-card-draw-test__static-card" aria-hidden="true">
+                  <span class="c-city-card-draw-test__static-card-label">${formatCardDrawResultLabel(
+                    state.resultValue
+                  )}</span>
+                </div>
+              `
+          }
+        </div>
+        <p class="c-city-card-draw-test__result" data-city-card-draw-result-label>
+          ${resultText}
+        </p>
+        <div class="c-city-card-draw-test__actions">
+          <button
+            type="button"
+            class="c-city-card-draw-test__confirm"
+            data-action="confirm-city-card-draw-test"
+            ${state.resultValue == null ? "hidden" : ""}
+          >
+            \u786e\u5b9a
+          </button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 export function renderApp(input: AppRenderInput): string {
   const playerCharacter = getPlayerCharacter(
     input.appState,
@@ -713,6 +783,7 @@ export function renderApp(input: AppRenderInput): string {
               input.cityDefinitions ?? []
             )}
             ${renderNpcInteractionOverlay(input)}
+            ${renderCityCardDrawTestOverlay(input)}
             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
             <div class="p-ui-coin-reward-layer" data-ui-coin-reward-layer aria-hidden="true"></div>
             ${renderOverlay(input, playerCharacter)}

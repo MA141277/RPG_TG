@@ -342,7 +342,7 @@ function resetIngot(node: HTMLElement): void {
   node.style.backgroundPosition = "center";
   node.style.backgroundSize = "contain";
   node.style.border = "0";
-  node.style.boxShadow = "0 2px 6px rgba(112, 72, 0, 0.22)";
+  node.style.boxShadow = "";
   node.style.pointerEvents = "none";
   node.style.userSelect = "none";
   node.style.transformOrigin = "50% 50%";

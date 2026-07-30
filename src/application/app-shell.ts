@@ -43,6 +43,11 @@ export type AppLocationDialogueState =
     }
   | null;
 
+export type AppCityCardDrawTestState = {
+  sessionId: number;
+  resultValue: number | null;
+};
+
 export type AppState = {
   gameState: ReturnType<typeof createInitialState>;
   characterDefinitions: CharacterDefinition[];
@@ -61,6 +66,7 @@ export type AppState = {
   modalState: AppModalState;
   locationDialogueState: AppLocationDialogueState;
   beggingMiniGameState: CityBeggingMiniGameState | null;
+  cityCardDrawTestState: AppCityCardDrawTestState | null;
   cityMenuState: CityMenuState | null;
   cityDirectoryState:
     | {

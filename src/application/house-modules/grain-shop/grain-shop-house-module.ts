@@ -21,9 +21,12 @@ import { applyAccountingReward } from "../../grain-shop/apply-accounting-reward"
 import { createGrainShopSnapshot } from "../../grain-shop/grain-shop-snapshot";
 import { executeGrainTrade } from "../../grain-shop/grain-trade";
 import { getQuotedGrainPrice, getTradeTotal, pickNpcDefaultLine, pickNpcGreeting } from "../../grain-shop/grain-market";
-import { investigateGrainMarket } from "../../grain-shop/investigate-grain-market";
 import { initGrainShopSession } from "../../grain-shop/init-grain-shop-session";
-import { setGrainPrice } from "../../grain-shop/grain-shop-mutations";
+import {
+  applySettlementGrainIntelEffect,
+  setGrainPrice,
+} from "../../grain-shop/grain-shop-mutations";
+import { SettlementGrainIntelService } from "../../grain-shop/settlement-grain-intel-service";
 import {
   convertHouseActivityDaysToSegments,
   formatHouseActivityCostLine,
@@ -55,6 +58,11 @@ const ACCOUNTING_INTERVAL_ID = "grain-shop-accounting";
 const TRADE_QUANTITY_FIELD_ID = "grain-shop-trade-quantity";
 const CONFIRM_START_ACCOUNTING_ACTION_ID = "confirm-start-accounting";
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
+const GRAIN_INTEL_ACTION_ID = "inquire-grain-price";
+const CANCEL_GRAIN_INTEL_ACTION_ID = "cancel-grain-investigation";
+const ADVANCE_GRAIN_INTEL_REPORT_ACTION_ID = "advance-grain-investigation-report";
+const CLOSE_GRAIN_PRICE_REPORT_ACTION_ID = "close-grain-price-report";
+const grainIntelService = new SettlementGrainIntelService();
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -127,7 +135,8 @@ function withDialoguePhase(
     "gameState" | "characterDefinitions"
   >,
   sessionState: GrainShopSessionState | null,
-  dialoguePhase: GrainShopDialoguePhase
+  dialoguePhase: GrainShopDialoguePhase,
+  dialogueLines?: string[]
 ): HouseModuleTransitionResult<"grain-shop"> {
   if (sessionState == null) {
     return {
@@ -143,6 +152,7 @@ function withDialoguePhase(
     sessionState: {
       ...sessionState,
       dialoguePhase,
+      ...(dialogueLines == null ? {} : { dialogueLines }),
     },
   };
 }
@@ -174,6 +184,32 @@ function withOverlay(
     },
     ...(sideEffects == null ? {} : { sideEffects }),
   };
+}
+
+function getOpenDialogueLines(
+  sessionState: GrainShopSessionState | null
+): string[] {
+  return sessionState == null ? [] : [sessionState.npcDefaultLine];
+}
+
+function reopenGrainShopDialogue(
+  input: Pick<
+    HouseModuleDispatchInput<"grain-shop">,
+    "gameState" | "characterDefinitions"
+  >,
+  sessionState: GrainShopSessionState | null
+): HouseModuleTransitionResult<"grain-shop"> {
+  return withDialoguePhase(
+    input,
+    sessionState == null
+      ? sessionState
+      : {
+          ...sessionState,
+          overlay: null,
+        },
+    "open",
+    getOpenDialogueLines(sessionState)
+  );
 }
 
 function runGrainAccountingPlayableRequest(
@@ -482,6 +518,17 @@ function createGrainSoldOutOverlay(
   );
 }
 
+function createGrainPriceReportOverlay(
+  rows: NonNullable<
+    Extract<GrainShopSessionState["overlay"], { type: "grain-price-report" }>
+  >["rows"]
+): GrainShopSessionState["overlay"] {
+  return {
+    type: "grain-price-report",
+    rows,
+  };
+}
+
 function startAccountingMinigame(
   input: HouseModuleDispatchInput<"grain-shop">,
   sessionState: GrainShopSessionState | null
@@ -545,7 +592,12 @@ function handleAction(
   switch (input.request.actionId) {
     case "advance-greeting":
     case "open-npc-dialogue":
-      return withDialoguePhase(input, sessionState, "open");
+      return withDialoguePhase(
+        input,
+        sessionState,
+        "open",
+        getOpenDialogueLines(sessionState)
+      );
     case "dismiss-dialogue":
       return withDialoguePhase(input, sessionState, "idle");
     case "buy":
@@ -559,34 +611,81 @@ function handleAction(
       return openTradeOverlay(input, sessionState, "buy");
     case "sell":
       return openTradeOverlay(input, sessionState, "sell");
+    case CANCEL_GRAIN_INTEL_ACTION_ID:
+    case ADVANCE_GRAIN_INTEL_REPORT_ACTION_ID:
+      return reopenGrainShopDialogue(input, sessionState);
     case "close-alert":
     case "close-trade":
     case "close-result":
+    case CLOSE_GRAIN_PRICE_REPORT_ACTION_ID:
     case CANCEL_ACTIVITY_CONFIRM_ACTION_ID:
       return withOverlay(input, sessionState, null, [
         { type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID },
       ]);
     case "investigate": {
-      const result = investigateGrainMarket(
-        input.gameState,
+      const offer = grainIntelService.createOffer(input.textEntriesById);
+      return withDialoguePhase(
+        input,
+        sessionState == null
+          ? sessionState
+          : {
+              ...sessionState,
+              overlay: null,
+            },
+        "investigation-offer",
+        [offer.dialogueLine]
+      );
+    }
+    case GRAIN_INTEL_ACTION_ID: {
+      const playerCharacter = getPlayerCharacter(
+        input.characterDefinitions,
+        input.playerCharacterId
+      );
+      const result = grainIntelService.purchaseIntel({
+        state: input.gameState,
+        playerGold: playerCharacter.stats.gold,
+        ...(input.textEntriesById == null
+          ? {}
+          : { textEntriesById: input.textEntriesById }),
+      });
+
+      if (result.status === "insufficient-funds") {
+        return withDialoguePhase(
+          {
+            gameState: result.state,
+            characterDefinitions: input.characterDefinitions,
+          },
+          sessionState == null
+            ? sessionState
+            : {
+                ...sessionState,
+                overlay: null,
+              },
+          "investigation-report",
+          [result.dialogueLine]
+        );
+      }
+
+      const mutation = applySettlementGrainIntelEffect(
+        result.state,
         input.characterDefinitions,
         input.playerCharacterId,
-        input.textEntriesById
+        result.effect
       );
+
       return {
-        ...withOverlay(
-          {
-            gameState: result.mutation.state,
-            characterDefinitions: result.mutation.characterDefinitions,
-          },
-          sessionState,
-          toAlertOverlay("市场调查", [
-            result.dialogue,
-            `传闻：${result.rumor}`,
-            `当前粮价约为每石 ${result.grainPrice} 文。`,
-          ])
-        ),
-        timeAdvanceCost: 1,
+        gameState: mutation.state,
+        characterDefinitions: mutation.characterDefinitions,
+        sessionState:
+          sessionState == null
+            ? sessionState
+            : {
+                ...sessionState,
+                dialoguePhase: "open",
+                dialogueLines: getOpenDialogueLines(sessionState),
+                overlay: createGrainPriceReportOverlay(result.report.rows),
+              },
+        timeAdvanceCost: result.effect.timeDelta,
       };
     }
     case "confirm-trade": {
@@ -780,6 +879,15 @@ function selectOverlayViewModel(overlay: GrainShopSessionState["overlay"]): Hous
         cancelActionId: "close-trade",
         cancelLabel: "取消",
       };
+    case "grain-price-report":
+      return {
+        type: "grain-price-report",
+        title: "米市价",
+        subtitle: "单位：文/石",
+        rows: overlay.rows,
+        confirmActionId: CLOSE_GRAIN_PRICE_REPORT_ACTION_ID,
+        confirmLabel: "返回买卖粮食",
+      };
     case "activity-confirm":
       return {
         type: "confirm",
@@ -907,6 +1015,10 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
     const isIdle = sessionState.dialoguePhase === "idle";
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
+    const isInvestigationOffer =
+      sessionState.dialoguePhase === "investigation-offer";
+    const isInvestigationReport =
+      sessionState.dialoguePhase === "investigation-report";
     const isBuyBlocked = isHaozhouShortageDuringBeggingJourney(input.gameState);
     const standbyRoster = orderHouseStandbyRoster({
       primaryCharacterId: input.houseDefinition.defaultCharacterId,
@@ -918,7 +1030,9 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
                 characterId: npc.id,
                 name: npc.name,
                 ...(npc.title == null ? {} : { title: npc.title }),
-                actionId: "open-npc-dialogue",
+                ...((isInvestigationOffer || isInvestigationReport)
+                  ? {}
+                  : { actionId: "open-npc-dialogue" }),
               },
             ],
     });
@@ -937,9 +1051,18 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
               speakerName: npc.name,
               characterId: npc.id,
               position: "right",
-              textLines: [isGreeting ? sessionState.npcGreeting : sessionState.npcDefaultLine],
-              advanceActionId: isGreeting ? "advance-greeting" : null,
-              advanceHintText: isGreeting ? "点击继续" : null,
+              textLines:
+                sessionState.dialogueLines.length > 0
+                  ? sessionState.dialogueLines
+                  : [isGreeting ? sessionState.npcGreeting : sessionState.npcDefaultLine],
+              advanceActionId:
+                isGreeting
+                  ? "advance-greeting"
+                  : isInvestigationReport
+                    ? ADVANCE_GRAIN_INTEL_REPORT_ACTION_ID
+                    : null,
+              advanceHintText:
+                isGreeting || isInvestigationReport ? "点击继续" : null,
             },
       actionContainer: isOpen
         ? {
@@ -964,7 +1087,22 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
               { id: "dismiss-dialogue", label: "关闭" },
             ],
           }
-        : null,
+        : isInvestigationOffer
+          ? {
+              title: "粮情打听",
+              actions: [
+                {
+                  id: GRAIN_INTEL_ACTION_ID,
+                  label: `询问价格（${grainIntelService.fee} 文）`,
+                  tone: "accent",
+                },
+                {
+                  id: CANCEL_GRAIN_INTEL_ACTION_ID,
+                  label: "返回",
+                },
+              ],
+            }
+          : null,
       statusCard: createStatusCard(snapshot, input.houseDefinition.name),
       overlay: selectOverlayViewModel(sessionState.overlay),
       leaveAction: {

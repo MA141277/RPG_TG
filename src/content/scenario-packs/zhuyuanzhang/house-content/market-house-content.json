@@ -46,6 +46,30 @@
     "silk_merchant": "runtime.zhu_yuanzhang.market_house.investigate.specialty.silk",
     "traveler_merchant": "runtime.zhu_yuanzhang.market_house.investigate.specialty.travel"
   },
+  "marketHouseInvestigationVoiceByCityId": {
+    "default": "做买卖先看缺口与脚程，别被本地热闹迷了眼。",
+    "city.kulan": "濠州先紧的是米面肚皮，精货得挑真缺的城去走。",
+    "city.yingtian": "集庆的云锦不愁识货人，北地豪门和军中采办都肯抬价。",
+    "city.luzhou": "庐州茶货讲火候，走北路怕颠，顺江下去价更稳。",
+    "city.anqing": "安庆守着江道，茶货一上船，卖相和时辰都得一起算。",
+    "city.taiping": "太平路出的粮是稳货，你若压仓得住，外地荒年最吃香。",
+    "city.anfeng": "安丰路的谷麦走的是稳利，别贪快，挑缺盐缺锦的埠头去。",
+    "city.runing": "颍州地里出来的麦粮最怕贱卖，等缺口一开再出手。",
+    "city.huaian": "高邮湖鲜要趁鲜气，拖久了就只剩脚程钱。",
+    "city.yangzhou": "扬州盐货讲的是路引和门道，卖得稳比卖得猛更要紧。",
+    "city.suzhou": "平江路的丝货看花样也看门第，送进富户城才显身价。",
+    "city.wuchang": "武昌江鲜名气响，若逢北路席面多，价能翻得比鱼还快。",
+    "city.nanchang": "龙兴路的粮船最怕空转，认准缺盐缺锦的地方再压舱。",
+    "city.chongqing": "重庆井盐重在路险，能翻过山的人少，肯接手的人自然出高价。",
+    "city.chengdu": "成都蜀锦不怕卖不掉，怕的是碰不上懂行的富城。",
+    "city.ningbo": "庆元路海货讲潮汛和船期，错一阵风，价就差一截。",
+    "city.wenzhou": "温州矾货压得住本钱就有赚，内陆做染做药的城最肯加码。",
+    "city.fuzhou": "福州茶果走海路快，若转进北城，稀罕劲儿就能换成银钱。",
+    "city.dadu": "大都识货的人多，南货若少见，抬价比你开口还快。",
+    "city.kaifeng": "汴梁人讲究场面，绣货药材只要紧俏，就有人争着收。",
+    "city.gongchang": "巩昌药材卖的是地道二字，越往富庶城走，越能分出价码。",
+    "city.fengyuan": "奉元马货与麦货都看长路，越是远城，越肯为省事多掏钱。"
+  },
   "marketHouseRandomNpcPool": [
     {
       "id": "horse_merchant",

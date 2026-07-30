@@ -8,6 +8,7 @@ import type {
   ActiveHouseModuleSession,
   HouseMapAutoAdvanceCompletion,
   HouseModuleId,
+  HouseModuleSideEffect,
   MapAutoAdvanceSnapshot,
   HouseModuleTransitionResult,
   HouseModuleRequest,
@@ -144,24 +145,15 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
   function applyHouseSideEffects(
     houseDefinition: HouseDefinition,
     moduleId: HouseModuleId,
-    sideEffects: Array<{
-      type:
-        | "start-interval"
-        | "stop-interval"
-        | "start-map-auto-advance"
-        | "stop-map-auto-advance";
-      intervalId: string;
-      everyMs?: number;
-      request?: HouseModuleRequest;
-      targetHouseId?: string;
-      label?: string;
-      snapshots?: MapAutoAdvanceSnapshot[];
-      completion?: HouseMapAutoAdvanceCompletion;
-    }>
+    sideEffects: HouseModuleSideEffect[]
   ): void {
     sideEffects.forEach((sideEffect) => {
       if (sideEffect.type === "stop-interval") {
         stopHouseInterval(sideEffect.intervalId);
+        return;
+      }
+
+      if (sideEffect.type === "play-coin-reward") {
         return;
       }
 

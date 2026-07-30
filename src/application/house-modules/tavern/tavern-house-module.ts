@@ -11,9 +11,12 @@ import type { CharacterDefinition } from "../../../domain/character";
 import type { GameState } from "../../../domain/game-state";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
+  TavernAlertOverlayState,
   TavernOverlayState,
   TavernQteOverlayState,
   TavernSessionState,
+  TavernShortTableDebugPresetMode,
+  TavernShortTableSession,
 } from "../../../domain/house-modules/tavern-session";
 import type {
   HouseActionViewModel,
@@ -39,7 +42,6 @@ import {
   clearTavernGamblePlaySlot,
   confirmSelectedTavernGambleDiscards,
   confirmTavernGamblePlayGroup,
-  createTavernGambleSession,
   createTavernLongGambleSession,
   declareTavernGambleMeld,
   drawForTavernGamble,
@@ -63,6 +65,16 @@ import {
   type TavernGambleSession,
   type TavernGambleVariant,
 } from "../../../domain/tavern-gambling";
+import {
+  advanceTavernShortNpcAction,
+  chooseTavernShortDiscardCandidate,
+  claimTavernShortDiscard,
+  confirmTavernShortDiscard,
+  drawTavernShortIncomingCard,
+  passTavernShortClaim,
+  resolveTavernShortBetAction,
+  type TavernShortBetActionKind,
+} from "../../../domain/tavern-short-gambling";
 import { assertExists } from "../../../shared/assert";
 import {
   acceptTavernWork,
@@ -90,12 +102,22 @@ import {
 } from "../../house/house-activity-costs";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialTavernSessionState } from "./tavern-session-state";
+import {
+  cashOutTavernShortTableSession,
+  continueTavernShortTableSession,
+  createTavernShortTableSession,
+  rebuyTavernShortTableSession,
+  tickTavernShortClaimCountdown,
+  updateTavernShortTableSession,
+} from "./tavern-short-gamble-session";
+import { selectTavernShortGambleOverlay } from "./tavern-short-gamble-view-model";
 
 const ACCEPT_WORK_ACTION_PREFIX = "accept-work:";
 const CONFIRM_START_WORK_ACTION_PREFIX = "confirm-start-work:";
 const SUBMIT_WORK_ACTION_PREFIX = "submit-work:";
 const TAVERN_WORK_INTERVAL_ID = "tavern-work-qte";
 const TAVERN_GAMBLE_NPC_INTERVAL_ID = "tavern-gamble-npc-thinking";
+const TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID = "tavern-gamble-short-claim-timeout";
 const TAVERN_WORK_TOTAL_ROUNDS = 3;
 const TAVERN_WORK_MARKER_STEP = 7;
 const GAMBLE_MELD_ACTION_PREFIX = "gamble-meld:";
@@ -104,6 +126,10 @@ const GAMBLE_REORDER_ACTION_PREFIX = "gamble-reorder:";
 const GAMBLE_PLAY_TILE_ACTION_PREFIX = "gamble-play-tile:";
 const SELECT_GAMBLE_VARIANT_ACTION_PREFIX = "select-gamble-variant:";
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
+const GAMBLE_SHORT_CONTINUE_ACTION_ID = "gamble-short-continue-hand";
+const GAMBLE_SHORT_REBUY_ACTION_ID = "gamble-short-rebuy";
+const GAMBLE_SHORT_CASH_OUT_ACTION_ID = "gamble-short-cash-out";
+const TOGGLE_SHORT_DEBUG_PRESET_ACTION_ID = "toggle-short-debug-claim-cycle";
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -128,7 +154,7 @@ function createAlertOverlay(
   title: string,
   paragraphs: string[],
   tone?: "info" | "success" | "warning"
-): TavernOverlayState {
+): TavernAlertOverlayState {
   return {
     type: "alert",
     title,
@@ -1054,6 +1080,50 @@ function getGambleVariantLabel(variant: TavernGambleVariant): string {
   return variant === "long" ? "长牌" : "短牌";
 }
 
+function getShortDebugPresetToggleLabel(
+  mode: TavernShortTableDebugPresetMode
+): string {
+  return mode === "claim-cycle"
+    ? "调试预设：已开启"
+    : "调试预设：已关闭";
+}
+
+function createGambleOverlayState(input: {
+  variant: TavernGambleVariant;
+  wager: number;
+  playerGold: number;
+  shortDebugPresetMode: TavernShortTableDebugPresetMode;
+}): TavernOverlayState {
+  return {
+    type: "gamble",
+    title: `${getGambleVariantLabel(input.variant)}下注`,
+    variant: input.variant,
+    variantLabel: getGambleVariantLabel(input.variant),
+    wager: input.wager,
+    options: [
+      tavernWagerStep,
+      Math.min(100, input.playerGold),
+      Math.min(200, input.playerGold),
+    ].filter(
+      (value, index, values) =>
+        value >= tavernWagerStep && values.indexOf(value) === index
+    ),
+    decrementActionId: "decrease-wager",
+    incrementActionId: "increase-wager",
+    confirmActionId: "confirm-gamble",
+    cancelActionId: "cancel-overlay",
+    debugToggle:
+      input.variant !== "short"
+        ? null
+        : {
+            actionId: TOGGLE_SHORT_DEBUG_PRESET_ACTION_ID,
+            label: getShortDebugPresetToggleLabel(input.shortDebugPresetMode),
+            helperText:
+              "开启后，连续几手会固定给出可碰、可杠、可吃的测试牌局。",
+          },
+  };
+}
+
 function getHumanGamblePlayer(session: TavernGambleSession) {
   const player = session.players.find((candidate) => candidate.isHuman);
   assertExists(player, "Tavern gambling session has no human player.");
@@ -1072,7 +1142,7 @@ function getGambleNetResult(session: TavernGambleSession): number {
   return Math.floor(session.pot / winners.length) - human.committed;
 }
 
-function resolveGambleSettlement(
+function resolveLongGambleSettlement(
   input: HouseModuleDispatchInput<"tavern">,
   sessionState: TavernSessionState,
   session: TavernGambleSession
@@ -1152,7 +1222,9 @@ function resolveGambleSettlement(
   };
 }
 
-function getGambleSideEffects(session: TavernGambleSession): HouseModuleTransitionResult<"tavern">["sideEffects"] {
+function getLongGambleSideEffects(
+  session: TavernGambleSession
+): HouseModuleTransitionResult<"tavern">["sideEffects"] {
   return session.phase !== "npc-thinking" &&
     session.phase !== "meld-window" &&
     (session.longPublicRevealTicks ?? 0) <= 0
@@ -1168,7 +1240,117 @@ function getGambleSideEffects(session: TavernGambleSession): HouseModuleTransiti
       ];
 }
 
-function withGambleSession(
+function getShortTablePlayerChips(table: TavernShortTableSession): number {
+  return (
+    table.currentHand?.players.find((player) => player.seatId === table.playerSeatId)?.stack ??
+    table.bankrollBySeatId[table.playerSeatId] ??
+    0
+  );
+}
+
+function getShortTableDialogueLines(
+  input: HouseModuleDispatchInput<"tavern">,
+  table: TavernShortTableSession
+): string[] {
+  const entries = getTavernTextEntries(input.textEntriesById);
+  const playerChips = getShortTablePlayerChips(table);
+  if (table.prompt === "rebuy-or-cashout") {
+    return [
+      resolveTavernText(
+        entries,
+        "runtime.zhu_yuanzhang.tavern.gamble.short.prompt.rebuy.001",
+        "桌上的筹码已经见底。"
+      ),
+      resolveTavernTemplateText(
+        entries,
+        "runtime.zhu_yuanzhang.tavern.gamble.short.prompt.rebuy.002",
+        { chips: playerChips },
+        `你桌上还剩 ${playerChips} 筹码，可以补码或退桌。`
+      ),
+    ];
+  }
+  if (table.prompt === "continue-or-cashout") {
+    return [
+      resolveTavernText(
+        entries,
+        "runtime.zhu_yuanzhang.tavern.gamble.short.prompt.continue.001",
+        "这一手已经打完。"
+      ),
+      resolveTavernTemplateText(
+        entries,
+        "runtime.zhu_yuanzhang.tavern.gamble.short.prompt.continue.002",
+        { chips: playerChips },
+        `你桌上还剩 ${playerChips} 筹码，继续还是退桌？`
+      ),
+    ];
+  }
+  return [
+    resolveTavernText(
+      entries,
+      "runtime.zhu_yuanzhang.tavern.gamble.short.start.001",
+      "你把赌本换成筹码，坐上了短牌桌。"
+    ),
+    resolveTavernText(
+      entries,
+      "runtime.zhu_yuanzhang.tavern.gamble.short.start.002",
+      "盲注固定 100 / 200，继续下一手不会再额外耗体力。"
+    ),
+  ];
+}
+
+function getShortGambleSideEffects(
+  table: TavernShortTableSession
+): HouseModuleTransitionResult<"tavern">["sideEffects"] {
+  const stopEffects: HouseModuleTransitionResult<"tavern">["sideEffects"] = [
+    { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+    { type: "stop-interval", intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID },
+  ];
+  const hand = table.currentHand;
+  if (hand == null) {
+    return stopEffects;
+  }
+  const actingSeatId = hand.players[hand.actingSeatIndex]?.seatId ?? null;
+  const claimSeatId = hand.claimChain?.options[0]?.seatId ?? null;
+  const requiresNpcTick =
+    hand.phase === "showdown" ||
+    (hand.phase === "claim-window" &&
+      claimSeatId != null &&
+      claimSeatId !== table.playerSeatId) ||
+    ((hand.phase === "betting" ||
+      hand.phase === "draw-discard" ||
+      hand.phase === "npc-thinking") &&
+      actingSeatId != null &&
+      actingSeatId !== table.playerSeatId);
+  const requiresClaimCountdownTick = table.claimCountdown != null;
+  return [
+    ...stopEffects,
+    ...(requiresNpcTick
+      ? [
+          {
+            type: "start-interval" as const,
+            intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID,
+            everyMs: 1000,
+            request: { type: "tick" as const, tickId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+          },
+        ]
+      : []),
+    ...(requiresClaimCountdownTick
+      ? [
+          {
+            type: "start-interval" as const,
+            intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+            everyMs: 1000,
+            request: {
+              type: "tick" as const,
+              tickId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+            },
+          },
+        ]
+      : []),
+  ];
+}
+
+function withLongGambleSession(
   input: HouseModuleDispatchInput<"tavern">,
   sessionState: TavernSessionState,
   gambleSession: TavernGambleSession
@@ -1177,10 +1359,16 @@ function withGambleSession(
     input,
     sessionState,
     {
-      gambleSession,
+      gambleSession: {
+        variant: "long",
+        session: gambleSession,
+      },
       overlay: {
         type: "gamble-table",
-        session: gambleSession,
+        session: {
+          variant: "long",
+          session: gambleSession,
+        },
       },
       dialoguePhase: "open",
       dialogueLines: [
@@ -1194,7 +1382,34 @@ function withGambleSession(
         ),
       ],
     },
-    getGambleSideEffects(gambleSession)
+    getLongGambleSideEffects(gambleSession)
+  );
+}
+
+function withShortGambleSession(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState,
+  table: TavernShortTableSession
+): HouseModuleTransitionResult<"tavern"> {
+  return withSessionState(
+    input,
+    sessionState,
+    {
+      gambleSession: {
+        variant: "short",
+        table,
+      },
+      overlay: {
+        type: "gamble-table",
+        session: {
+          variant: "short",
+          table,
+        },
+      },
+      dialoguePhase: "open",
+      dialogueLines: getShortTableDialogueLines(input, table),
+    },
+    getShortGambleSideEffects(table)
   );
 }
 
@@ -1202,21 +1417,64 @@ function handleGambleTick(
   input: HouseModuleDispatchInput<"tavern">,
   sessionState: TavernSessionState
 ): HouseModuleTransitionResult<"tavern"> {
-  if (
-    input.request.type !== "tick" ||
-    input.request.tickId !== TAVERN_GAMBLE_NPC_INTERVAL_ID ||
-    sessionState.gambleSession == null
-  ) {
+  if (input.request.type !== "tick" || sessionState.gambleSession == null) {
     return createTransitionResult(input);
   }
 
+  if (sessionState.gambleSession.variant === "short") {
+    if (input.request.tickId === TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID) {
+      if (sessionState.gambleSession.table.claimCountdown == null) {
+        return createTransitionResult(input, {
+          sideEffects: [
+            {
+              type: "stop-interval",
+              intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+            },
+          ],
+        });
+      }
+      return withShortGambleSession(
+        input,
+        sessionState,
+        tickTavernShortClaimCountdown(sessionState.gambleSession.table)
+      );
+    }
+    if (input.request.tickId !== TAVERN_GAMBLE_NPC_INTERVAL_ID) {
+      return createTransitionResult(input);
+    }
+    const currentHand = sessionState.gambleSession.table.currentHand;
+    if (currentHand == null) {
+      return createTransitionResult(input, {
+        sideEffects: [
+          { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+          {
+            type: "stop-interval",
+            intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+          },
+        ],
+      });
+    }
+    return withShortGambleSession(
+      input,
+      sessionState,
+      updateTavernShortTableSession(
+        sessionState.gambleSession.table,
+        advanceTavernShortNpcAction(currentHand)
+      )
+    );
+  }
+
+  if (input.request.tickId !== TAVERN_GAMBLE_NPC_INTERVAL_ID) {
+    return createTransitionResult(input);
+  }
+  const longSession = sessionState.gambleSession.session;
   const nextSession =
-    (sessionState.gambleSession.longPublicRevealTicks ?? 0) > 0
-      ? advanceTavernLongPublicReveal(sessionState.gambleSession)
-      : sessionState.gambleSession.phase === "meld-window"
-        ? advanceTavernGambleMeldCountdown(sessionState.gambleSession)
-        : advanceTavernGambleNpcThinking(sessionState.gambleSession);
-  return withGambleSession(input, sessionState, nextSession);
+    (longSession.longPublicRevealTicks ?? 0) > 0
+      ? advanceTavernLongPublicReveal(longSession)
+      : longSession.phase === "meld-window"
+        ? advanceTavernGambleMeldCountdown(longSession)
+        : advanceTavernGambleNpcThinking(longSession);
+  return withLongGambleSession(input, sessionState, nextSession);
 }
 
 function getGambleSessionSeed(
@@ -1244,6 +1502,278 @@ function getGambleSessionSeed(
       randomSeed) >>>
       0
   );
+}
+
+function withUpdatedShortTableHand(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState,
+  table: TavernShortTableSession,
+  nextHand: Parameters<typeof updateTavernShortTableSession>[1]
+): HouseModuleTransitionResult<"tavern"> {
+  return withShortGambleSession(
+    input,
+    sessionState,
+    updateTavernShortTableSession(table, nextHand)
+  );
+}
+
+function resolveTavernAlertClose(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState | null
+): HouseModuleTransitionResult<"tavern"> {
+  const deferredReward =
+    sessionState?.overlay?.type === "alert"
+      ? sessionState.overlay.deferredReward
+      : undefined;
+
+  if (
+    deferredReward?.type !== "coin-reward" ||
+    deferredReward.delta <= 0
+  ) {
+    return withSessionState(input, sessionState, {
+      overlay: null,
+    });
+  }
+
+  const rewardMutation = mutatePlayerGold(
+    input.gameState,
+    input.characterDefinitions,
+    deferredReward.playerCharacterId,
+    deferredReward.delta
+  );
+
+  return {
+    gameState: rewardMutation.state,
+    characterDefinitions: rewardMutation.characterDefinitions,
+    sessionState:
+      sessionState == null
+        ? sessionState
+        : {
+            ...sessionState,
+            overlay: null,
+          },
+    sideEffects: [
+      {
+        type: "play-coin-reward",
+        playerCharacterId: deferredReward.playerCharacterId,
+        delta: deferredReward.delta,
+        source: deferredReward.source,
+      },
+    ],
+  };
+}
+
+function resolveShortTableCashOut(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState,
+  table: TavernShortTableSession
+): HouseModuleTransitionResult<"tavern"> {
+  const entries = getTavernTextEntries(input.textEntriesById);
+  const { goldDelta, leftoverChips } = cashOutTavernShortTableSession(table);
+  const cashOutOverlay = createAlertOverlay(
+    resolveTavernText(
+      entries,
+      "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.title",
+      "短牌退桌"
+    ),
+    [
+      resolveTavernTemplateText(
+        entries,
+        "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.001",
+        { goldDelta },
+        `你把桌上的筹码兑回了 ${goldDelta} 文。`
+      ),
+      resolveTavernTemplateText(
+        entries,
+        "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.002",
+        { leftoverChips },
+        leftoverChips > 0
+          ? `有 ${leftoverChips} 筹码不足整兑，直接作废。`
+          : "桌上的筹码已经全部兑清。"
+      ),
+    ],
+    goldDelta > 0 ? "success" : "info"
+  );
+  return {
+    gameState: input.gameState,
+    characterDefinitions: input.characterDefinitions,
+    sessionState: {
+      ...sessionState,
+      currentWager: tavernDefaultWager,
+      gambleSession: null,
+      dialoguePhase: "open",
+      dialogueLines: [
+        resolveTavernText(
+          entries,
+          "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.dialogue.001",
+          "你离开了短牌桌。"
+        ),
+        resolveTavernTemplateText(
+          entries,
+          "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.dialogue.002",
+          { goldDelta, leftoverChips },
+          `兑回 ${goldDelta} 文，余下 ${leftoverChips} 筹码作废。`
+        ),
+      ],
+      overlay:
+        goldDelta > 0
+          ? {
+              ...cashOutOverlay,
+              deferredReward: {
+                type: "coin-reward",
+                playerCharacterId: input.playerCharacterId,
+                delta: goldDelta,
+                source: "request-pointer",
+              },
+            }
+          : cashOutOverlay,
+    },
+    sideEffects: [
+      { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+      {
+        type: "stop-interval",
+        intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+      },
+    ],
+  };
+}
+
+function handleShortGambleTableAction(
+  input: HouseModuleDispatchInput<"tavern">,
+  sessionState: TavernSessionState,
+  table: TavernShortTableSession,
+  playerGold: number
+): HouseModuleTransitionResult<"tavern"> {
+  const actionId = input.request.type === "action" ? input.request.actionId : "";
+  if (actionId === GAMBLE_SHORT_CASH_OUT_ACTION_ID || actionId === "gamble-close") {
+    return resolveShortTableCashOut(input, sessionState, table);
+  }
+  if (actionId === GAMBLE_SHORT_CONTINUE_ACTION_ID) {
+    return withShortGambleSession(
+      input,
+      sessionState,
+      continueTavernShortTableSession(
+        table,
+        getGambleSessionSeed(input, sessionState.currentWager)
+      )
+    );
+  }
+  if (actionId === GAMBLE_SHORT_REBUY_ACTION_ID) {
+    const rebuyGold = clampWager(
+      sessionState.currentWager ?? tavernDefaultWager,
+      playerGold
+    );
+    if (playerGold < rebuyGold) {
+      const entries = getTavernTextEntries(input.textEntriesById);
+      return withSessionState(input, sessionState, {
+        overlay: createAlertOverlay(
+          resolveTavernText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.title"
+          ),
+          [
+            resolveTavernTemplateText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.001",
+              { minimumWager: rebuyGold }
+            ),
+            resolveTavernText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.002"
+            ),
+          ],
+          "warning"
+        ),
+      });
+    }
+    const goldMutation = mutatePlayerGold(
+      input.gameState,
+      input.characterDefinitions,
+      input.playerCharacterId,
+      -rebuyGold
+    );
+    return withShortGambleSession(
+      {
+        ...input,
+        gameState: goldMutation.state,
+        characterDefinitions: goldMutation.characterDefinitions,
+      },
+      sessionState,
+      rebuyTavernShortTableSession(
+        table,
+        rebuyGold,
+        getGambleSessionSeed(input, rebuyGold)
+      )
+    );
+  }
+
+  const currentHand = table.currentHand;
+  if (currentHand == null) {
+    return createTransitionResult(input);
+  }
+  if (
+    actionId === "gamble-check" ||
+    actionId === "gamble-call" ||
+    actionId === "gamble-raise" ||
+    actionId === "gamble-fold"
+  ) {
+    const action = actionId.replace("gamble-", "") as TavernShortBetActionKind;
+    return withUpdatedShortTableHand(
+      input,
+      sessionState,
+      table,
+      resolveTavernShortBetAction(currentHand, table.playerSeatId, { kind: action })
+    );
+  }
+  if (actionId === "gamble-draw") {
+    return withUpdatedShortTableHand(
+      input,
+      sessionState,
+      table,
+      drawTavernShortIncomingCard(currentHand, table.playerSeatId)
+    );
+  }
+  if (actionId === "gamble-confirm-discard") {
+    return withUpdatedShortTableHand(
+      input,
+      sessionState,
+      table,
+      confirmTavernShortDiscard(currentHand, table.playerSeatId)
+    );
+  }
+  if (actionId === "gamble-skip-meld") {
+    if (currentHand.phase !== "claim-window") {
+      return createTransitionResult(input);
+    }
+    return withUpdatedShortTableHand(
+      input,
+      sessionState,
+      table,
+      passTavernShortClaim(currentHand, table.playerSeatId)
+    );
+  }
+  const meldId = parseActionId(actionId, GAMBLE_MELD_ACTION_PREFIX);
+  if (meldId != null) {
+    if (currentHand.phase !== "claim-window") {
+      return createTransitionResult(input);
+    }
+    return withUpdatedShortTableHand(
+      input,
+      sessionState,
+      table,
+      claimTavernShortDiscard(currentHand, meldId)
+    );
+  }
+  const playTileId = parseActionId(actionId, GAMBLE_PLAY_TILE_ACTION_PREFIX);
+  if (playTileId != null) {
+    return withUpdatedShortTableHand(
+      input,
+      sessionState,
+      table,
+      chooseTavernShortDiscardCandidate(currentHand, table.playerSeatId, playTileId)
+    );
+  }
+  return createTransitionResult(input);
 }
 
 function handleGambleAction(
@@ -1297,7 +1827,7 @@ function handleGambleAction(
           {
             id: "short",
             label: "短牌",
-            description: "保留原有酒馆短牌规则。",
+            description: "5 手牌 + 2 公共牌，下注沿用德州，弃牌可被吃碰杠抢走。",
             actionId: `${SELECT_GAMBLE_VARIANT_ACTION_PREFIX}short`,
           },
         ],
@@ -1318,22 +1848,12 @@ function handleGambleAction(
     return withSessionState(input, sessionState, {
       currentWager,
       currentGambleVariant: selectedVariant,
-      overlay: {
-        type: "gamble",
-        title: `${getGambleVariantLabel(selectedVariant)}下注`,
+      overlay: createGambleOverlayState({
         variant: selectedVariant,
-        variantLabel: getGambleVariantLabel(selectedVariant),
         wager: currentWager,
-        options: [
-          tavernWagerStep,
-          Math.min(100, playerCharacter.stats.gold),
-          Math.min(200, playerCharacter.stats.gold),
-        ].filter((value, index, values) => value >= tavernWagerStep && values.indexOf(value) === index),
-        decrementActionId: "decrease-wager",
-        incrementActionId: "increase-wager",
-        confirmActionId: "confirm-gamble",
-        cancelActionId: "cancel-overlay",
-      },
+        playerGold: playerCharacter.stats.gold,
+        shortDebugPresetMode: sessionState?.shortDebugPresetMode ?? "off",
+      }),
     });
   }
 
@@ -1346,7 +1866,12 @@ function handleGambleAction(
       currentWager: nextWager,
       overlay:
         sessionState?.overlay?.type === "gamble"
-          ? { ...sessionState.overlay, wager: nextWager }
+          ? createGambleOverlayState({
+              variant: sessionState.currentGambleVariant,
+              wager: nextWager,
+              playerGold: playerCharacter.stats.gold,
+              shortDebugPresetMode: sessionState.shortDebugPresetMode,
+            })
           : sessionState?.overlay ?? null,
     });
   }
@@ -1360,7 +1885,29 @@ function handleGambleAction(
       currentWager: nextWager,
       overlay:
         sessionState?.overlay?.type === "gamble"
-          ? { ...sessionState.overlay, wager: nextWager }
+          ? createGambleOverlayState({
+              variant: sessionState.currentGambleVariant,
+              wager: nextWager,
+              playerGold: playerCharacter.stats.gold,
+              shortDebugPresetMode: sessionState.shortDebugPresetMode,
+            })
+          : sessionState?.overlay ?? null,
+    });
+  }
+
+  if (input.request.actionId === TOGGLE_SHORT_DEBUG_PRESET_ACTION_ID) {
+    const nextMode: TavernShortTableDebugPresetMode =
+      sessionState?.shortDebugPresetMode === "claim-cycle" ? "off" : "claim-cycle";
+    return withSessionState(input, sessionState, {
+      shortDebugPresetMode: nextMode,
+      overlay:
+        sessionState?.overlay?.type === "gamble"
+          ? createGambleOverlayState({
+              variant: sessionState.currentGambleVariant,
+              wager: sessionState.currentWager,
+              playerGold: playerCharacter.stats.gold,
+              shortDebugPresetMode: nextMode,
+            })
           : sessionState?.overlay ?? null,
     });
   }
@@ -1373,6 +1920,17 @@ function handleGambleAction(
     const actionId = input.request.actionId;
     const gambleSession = sessionState.gambleSession;
 
+    if (gambleSession.variant === "short") {
+      return handleShortGambleTableAction(
+        input,
+        sessionState,
+        gambleSession.table,
+        playerCharacter.stats.gold
+      );
+    }
+
+    const longSession = gambleSession.session;
+
     if (
       actionId === "gamble-check" ||
       actionId === "gamble-call" ||
@@ -1380,58 +1938,74 @@ function handleGambleAction(
       actionId === "gamble-fold"
     ) {
       const action = actionId.replace("gamble-", "") as TavernGambleActionKind;
-      return withGambleSession(
+      return withLongGambleSession(
         input,
         sessionState,
-        resolveTavernGambleBettingAction(gambleSession, action)
+        resolveTavernGambleBettingAction(longSession, action)
       );
     }
     if (actionId === "gamble-skip-meld") {
-      return withGambleSession(input, sessionState, skipTavernGambleMeld(gambleSession));
+      return withLongGambleSession(input, sessionState, skipTavernGambleMeld(longSession));
     }
     const meldId = parseActionId(actionId, GAMBLE_MELD_ACTION_PREFIX);
     if (meldId != null) {
-      return withGambleSession(input, sessionState, declareTavernGambleMeld(gambleSession, meldId));
-    }
-    if (actionId === "gamble-draw") {
-      return withGambleSession(input, sessionState, drawForTavernGamble(gambleSession));
-    }
-    if (actionId === "gamble-clear-play") {
-      return withGambleSession(input, sessionState, clearTavernGamblePlaySlot(gambleSession));
-    }
-    if (actionId === "gamble-confirm-play") {
-      return withGambleSession(input, sessionState, confirmTavernGamblePlayGroup(gambleSession));
-    }
-    if (actionId === "gamble-pass-play") {
-      return withGambleSession(input, sessionState, passTavernGamblePlayGroups(gambleSession));
-    }
-    if (actionId === "gamble-push-hu") {
-      return withGambleSession(input, sessionState, pushHumanLongHu(gambleSession));
-    }
-    if (actionId === "gamble-pass-hu") {
-      return withGambleSession(input, sessionState, passHumanLongHu(gambleSession));
-    }
-    if (actionId === "gamble-confirm-discard") {
-      return withGambleSession(
+      return withLongGambleSession(
         input,
         sessionState,
-        confirmSelectedTavernGambleDiscards(gambleSession)
+        declareTavernGambleMeld(longSession, meldId)
+      );
+    }
+    if (actionId === "gamble-draw") {
+      return withLongGambleSession(input, sessionState, drawForTavernGamble(longSession));
+    }
+    if (actionId === "gamble-clear-play") {
+      return withLongGambleSession(
+        input,
+        sessionState,
+        clearTavernGamblePlaySlot(longSession)
+      );
+    }
+    if (actionId === "gamble-confirm-play") {
+      return withLongGambleSession(
+        input,
+        sessionState,
+        confirmTavernGamblePlayGroup(longSession)
+      );
+    }
+    if (actionId === "gamble-pass-play") {
+      return withLongGambleSession(
+        input,
+        sessionState,
+        passTavernGamblePlayGroups(longSession)
+      );
+    }
+    if (actionId === "gamble-push-hu") {
+      return withLongGambleSession(input, sessionState, pushHumanLongHu(longSession));
+    }
+    if (actionId === "gamble-pass-hu") {
+      return withLongGambleSession(input, sessionState, passHumanLongHu(longSession));
+    }
+    if (actionId === "gamble-confirm-discard") {
+      return withLongGambleSession(
+        input,
+        sessionState,
+        confirmSelectedTavernGambleDiscards(longSession)
       );
     }
     const playTileId = parseActionId(actionId, GAMBLE_PLAY_TILE_ACTION_PREFIX);
     if (playTileId != null) {
-      return withGambleSession(
+      return withLongGambleSession(
         input,
         sessionState,
-        toggleTavernGamblePlayTile(gambleSession, playTileId)
+        toggleTavernGamblePlayTile(longSession, playTileId)
       );
     }
     const discardTileId = parseActionId(actionId, GAMBLE_DISCARD_ACTION_PREFIX);
     if (discardTileId != null) {
-      return withGambleSession(
+      return withLongGambleSession(
         input,
         sessionState,
-        toggleTavernGamblePlayTile(gambleSession, discardTileId)
+        toggleTavernGamblePlayTile(longSession, discardTileId)
       );
     }
     const reorderPayload = parseActionId(actionId, GAMBLE_REORDER_ACTION_PREFIX);
@@ -1440,18 +2014,18 @@ function handleGambleAction(
       if (tileId == null || tileId.length === 0) {
         return createTransitionResult(input);
       }
-      return withGambleSession(
+      return withLongGambleSession(
         input,
         sessionState,
         reorderTavernGambleHand(
-          gambleSession,
+          longSession,
           tileId,
           beforeTileId == null || beforeTileId === "end" ? null : beforeTileId
         )
       );
     }
     if (actionId === "gamble-settle") {
-      return resolveGambleSettlement(input, sessionState, gambleSession);
+      return resolveLongGambleSettlement(input, sessionState, longSession);
     }
     if (actionId === "gamble-close") {
       return withSessionState(
@@ -1503,16 +2077,41 @@ function handleGambleAction(
   if (sessionState == null) {
     return createTransitionResult(input);
   }
-  const createSession =
-    sessionState.currentGambleVariant === "long"
-      ? createTavernLongGambleSession
-      : createTavernGambleSession;
-  return withGambleSession(
+  const seed = getGambleSessionSeed(input, wager);
+  if (sessionState.currentGambleVariant === "short") {
+    const nextState = increaseTavernTime(input.gameState, input.houseDefinition.id, 1);
+    const staminaMutation = spendPlayerStamina(
+      nextState,
+      input.characterDefinitions,
+      input.playerCharacterId
+    );
+    const goldMutation = mutatePlayerGold(
+      staminaMutation.state,
+      staminaMutation.characterDefinitions,
+      input.playerCharacterId,
+      -wager
+    );
+    return withShortGambleSession(
+      {
+        ...input,
+        gameState: goldMutation.state,
+        characterDefinitions: goldMutation.characterDefinitions,
+      },
+      sessionState,
+      createTavernShortTableSession({
+        playerName: playerCharacter.name,
+        buyInGold: wager,
+        seed,
+        debugPresetMode: sessionState.shortDebugPresetMode,
+      })
+    );
+  }
+  return withLongGambleSession(
     input,
     sessionState,
-    createSession({
+    createTavernLongGambleSession({
       wager,
-      seed: getGambleSessionSeed(input, wager),
+      seed,
       playerName: playerCharacter.name,
       limitMode: "no-limit",
     })
@@ -1618,48 +2217,45 @@ function selectOverlayViewModel(
 
   if (overlay.type === "gamble-table") {
     const session = overlay.session;
-    const human = getHumanGamblePlayer(session);
-    const winners = getTavernGambleWinners(session);
-    const isLong = session.variant === "long";
+    if (session.variant === "short") {
+      return selectTavernShortGambleOverlay(session.table);
+    }
+
+    const longSession = session.session;
+    const human = getHumanGamblePlayer(longSession);
+    const winners = getTavernGambleWinners(longSession);
+    const isLong = longSession.variant === "long";
     const humanPublicSlots = human.publicTileSlots ?? [];
     const humanOpenPublicSlots = humanPublicSlots.filter((slot) => !slot.covered);
     const longPublicStage = !isLong
       ? undefined
-      : session.street === "pre-flop"
+      : longSession.street === "pre-flop"
         ? "hidden"
-        : session.street === "flop" && session.phase === "betting"
+        : longSession.street === "flop" && longSession.phase === "betting"
           ? "centered"
-          : (session.longPublicRevealTicks ?? 0) > 0
+          : (longSession.longPublicRevealTicks ?? 0) > 0
             ? "revealing"
             : "revealed";
     const longPublicInHand = isLong && (longPublicStage === "revealing" || longPublicStage === "revealed");
-    const humanPublicTiles = isLong
-      ? (longPublicInHand
-          ? humanOpenPublicSlots.map((slot) => ({
-              tile: slot.tile,
-            }))
-          : session.publicTiles.map((tile) => ({
-              tile,
-            }))).map((slot, index) => ({
-          id: slot.tile.id,
-          label: getTavernMahjongTileLabel(slot.tile),
-          selected: session.selectedPlayTileIds.includes(slot.tile.id),
-          spent: false,
-          covered: false,
-          actionId:
-            longPublicInHand &&
-            session.phase === "draw-discard" &&
-            session.pendingDiscardsRemaining > 0
-              ? `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${slot.tile.id}`
-              : `gamble-long-public-preview:${index}`,
+    const humanPublicTiles = (longPublicInHand
+      ? humanOpenPublicSlots.map((slot) => ({
+          tile: slot.tile,
         }))
-      : session.publicTiles.map((tile) => ({
-          id: tile.id,
-          label: getTavernMahjongTileLabel(tile),
-          selected: session.selectedPlayTileIds.includes(tile.id),
-          spent: (human.spentPublicTileIds ?? []).includes(tile.id),
-          actionId: `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${tile.id}`,
-        }));
+      : longSession.publicTiles.map((tile) => ({
+          tile,
+        }))).map((slot, index) => ({
+      id: slot.tile.id,
+      label: getTavernMahjongTileLabel(slot.tile),
+      selected: longSession.selectedPlayTileIds.includes(slot.tile.id),
+      spent: false,
+      covered: false,
+      actionId:
+        longPublicInHand &&
+        longSession.phase === "draw-discard" &&
+        longSession.pendingDiscardsRemaining > 0
+          ? `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${slot.tile.id}`
+          : `gamble-long-public-preview:${index}`,
+    }));
     const longVisibleTileIds = [
       ...human.hand.map((tile) => tile.id),
       ...humanOpenPublicSlots.map((slot) => slot.tile.id),
@@ -1673,13 +2269,14 @@ function selectOverlayViewModel(
         const handTile = human.hand.find((tile) => tile.id === tileId);
         if (handTile != null) {
           const actionId =
-            session.phase === "draw-discard" && session.pendingDiscardsRemaining > 0
+            longSession.phase === "draw-discard" &&
+            longSession.pendingDiscardsRemaining > 0
               ? `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${handTile.id}`
               : null;
           return {
             id: handTile.id,
             label: getTavernMahjongTileLabel(handTile),
-            selected: session.selectedPlayTileIds.includes(handTile.id),
+            selected: longSession.selectedPlayTileIds.includes(handTile.id),
             tone: "hand" as const,
             ...(actionId == null ? {} : { actionId }),
           };
@@ -1689,67 +2286,71 @@ function selectOverlayViewModel(
           return null;
         }
         const actionId =
-          session.phase === "draw-discard" && session.pendingDiscardsRemaining > 0
+          longSession.phase === "draw-discard" &&
+          longSession.pendingDiscardsRemaining > 0
             ? `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${publicSlot.tile.id}`
             : null;
         return {
           id: publicSlot.tile.id,
           label: getTavernMahjongTileLabel(publicSlot.tile),
-          selected: session.selectedPlayTileIds.includes(publicSlot.tile.id),
+          selected: longSession.selectedPlayTileIds.includes(publicSlot.tile.id),
           tone: "public" as const,
           entering: longPublicStage === "revealing",
-          revealIndex: humanOpenPublicSlots.findIndex((slot) => slot.tile.id === publicSlot.tile.id),
+          revealIndex: humanOpenPublicSlots.findIndex(
+            (slot) => slot.tile.id === publicSlot.tile.id
+          ),
           ...(actionId == null ? {} : { actionId }),
         };
       })
       .filter((tile): tile is NonNullable<typeof tile> => tile != null);
     return {
       type: "gamble-table",
-      variant: session.variant,
-      title: isLong ? "酒馆长牌" : "酒馆短牌",
-      street: getTavernGambleStreetLabel(session.street),
-      phase: getTavernGamblePhaseLabel(session.phase),
-      pot: session.pot,
-      currentBet: session.currentBet,
-      wager: session.wager,
+      variant: "long",
+      title: "酒馆长牌",
+      street: getTavernGambleStreetLabel(longSession.street),
+      phase: getTavernGamblePhaseLabel(longSession.phase),
+      pot: longSession.pot,
+      currentBet: longSession.currentBet,
+      wager: longSession.wager,
       smallBlind: TAVERN_GAMBLE_SMALL_BLIND,
       bigBlind: TAVERN_GAMBLE_BIG_BLIND,
-      wallCount: session.wall.length,
+      wallCount: longSession.wall.length,
       publicTiles: humanPublicTiles,
-      publicDiscardTiles: session.publicDiscards.map((tile) => ({
+      publicDiscardTiles: longSession.publicDiscards.map((tile) => ({
         label: getTavernMahjongTileLabel(tile),
-        fromPublicTile: (session.unclaimableDiscardTileIds ?? []).includes(tile.id),
+        fromPublicTile: (longSession.unclaimableDiscardTileIds ?? []).includes(tile.id),
       })),
       handTiles:
         isLong && longPublicInHand
           ? longCombinedHandTiles
           : human.hand.map((tile) => {
               const actionId =
-                session.phase === "draw-discard" && session.pendingDiscardsRemaining > 0
+                longSession.phase === "draw-discard" &&
+                longSession.pendingDiscardsRemaining > 0
                   ? `${GAMBLE_PLAY_TILE_ACTION_PREFIX}${tile.id}`
                   : null;
               return {
                 id: tile.id,
                 label: getTavernMahjongTileLabel(tile),
-                selected: session.selectedPlayTileIds.includes(tile.id),
+                selected: longSession.selectedPlayTileIds.includes(tile.id),
                 tone: "hand" as const,
                 ...(actionId == null ? {} : { actionId }),
               };
             }),
       flowers: human.flowers.map(getTavernMahjongTileLabel),
-      playSlotTiles: session.selectedPlayTileIds
+      playSlotTiles: longSession.selectedPlayTileIds
         .map(
           (tileId) =>
             [
               ...human.hand,
-              ...(isLong ? humanOpenPublicSlots.map((slot) => slot.tile) : session.publicTiles),
+              ...humanOpenPublicSlots.map((slot) => slot.tile),
             ].find((tile) => tile.id === tileId) ?? null
         )
         .filter((tile): tile is NonNullable<typeof tile> => tile != null)
         .map(getTavernMahjongTileLabel),
       playedOwnTileCount: human.playedOwnTileCount,
       completedPlayedGroups: human.playedGroups.length >= 2,
-      canConfirmPlayGroup: session.selectedPlayTileIds.length === 3,
+      canConfirmPlayGroup: longSession.selectedPlayTileIds.length === 3,
       melds: [
         ...human.exposedMelds.map(
           (meld) => `${getMeldKindLabel(meld.kind)} ${meld.tileLabel} / ${meld.fan} 番`
@@ -1759,24 +2360,25 @@ function selectOverlayViewModel(
             `${group.usesPublicTile ? "明" : "暗"}${group.kind === "sequence" ? "顺" : "刻"} ${group.tileLabels.join("、")} / 自牌 ${group.ownTileCount}`
         ),
       ],
-      logLines: session.roundLog.slice(-5),
-      pendingDiscardsRemaining: session.pendingDiscardsRemaining,
-      hasPendingDraw: session.pendingDrawTile != null,
-      pendingHuChoice: session.pendingHumanHu === true && canHumanLongHu(session),
+      logLines: longSession.roundLog.slice(-5),
+      pendingDiscardsRemaining: longSession.pendingDiscardsRemaining,
+      hasPendingDraw: longSession.pendingDrawTile != null,
+      pendingHuChoice: longSession.pendingHumanHu === true && canHumanLongHu(longSession),
       longPublicStage,
-      meldCountdownTicks: session.meldCountdownTicks,
-      meldWindowStage: session.meldWindow?.stage ?? null,
-      playerRows: session.players.map((player) => {
-        const score = scoreTavernGambleSessionPlayer(session, player).bestScore;
+      meldCountdownTicks: longSession.meldCountdownTicks,
+      meldWindowStage: longSession.meldWindow?.stage ?? null,
+      playerRows: longSession.players.map((player) => {
+        const score = scoreTavernGambleSessionPlayer(longSession, player).bestScore;
         const playerPublicSlots = player.publicTileSlots ?? [];
         const playerOpenPublicSlots = playerPublicSlots.filter((slot) => !slot.covered);
-        const playerCoveredPublicCount = playerPublicSlots.length - playerOpenPublicSlots.length;
+        const playerCoveredPublicCount =
+          playerPublicSlots.length - playerOpenPublicSlots.length;
         return {
           id: player.id,
           name: player.name,
           seatIndex: player.seatIndex,
           committed: player.committed,
-          remainingChips: Math.max(0, session.wager - player.committed),
+          remainingChips: Math.max(0, longSession.wager - player.committed),
           folded: player.folded,
           completedPlayedGroups: player.playedGroups.length >= 2,
           handCount:
@@ -1790,17 +2392,15 @@ function selectOverlayViewModel(
               : getTavernMahjongTileLabel(player.discarded[player.discarded.length - 1]!),
           discardLabels: player.discarded.map((tile) => ({
             label: getTavernMahjongTileLabel(tile),
-            fromPublicTile: (session.unclaimableDiscardTileIds ?? []).includes(tile.id),
+            fromPublicTile: (longSession.unclaimableDiscardTileIds ?? []).includes(tile.id),
           })),
           publicTileLabels:
             !longPublicInHand
               ? []
               : playerOpenPublicSlots.map((slot) => getTavernMahjongTileLabel(slot.tile)),
-          privateBackCount: isLong
-            ? !longPublicInHand
-              ? TAVERN_LONG_GAMBLE_HAND_SIZE
-              : player.hand.length + playerCoveredPublicCount
-            : 0,
+          privateBackCount: !longPublicInHand
+            ? TAVERN_LONG_GAMBLE_HAND_SIZE
+            : player.hand.length + playerCoveredPublicCount,
           playedGroupLabels: player.playedGroups.map(
             (group) =>
               `${group.usesPublicTile ? "明" : "暗"}${group.kind === "sequence" ? "顺" : "刻"} ${group.tileLabels.join("、")}`
@@ -1809,14 +2409,14 @@ function selectOverlayViewModel(
           bestFan: score.validHu ? score.totalFan : 0,
         };
       }),
-      meldOptions: session.pendingMelds.map((option) => ({
+      meldOptions: longSession.pendingMelds.map((option) => ({
         id: option.id,
         kind: option.kind,
         label: `${getMeldKindLabel(option.kind)} ${option.tileLabel} / ${option.fan} 番`,
         actionId: `${GAMBLE_MELD_ACTION_PREFIX}${option.id}`,
-        flashing: session.meldWindow?.source === "discard",
+        flashing: longSession.meldWindow?.source === "discard",
       })),
-      showdownRows: (session.showdown ?? []).map((row) => ({
+      showdownRows: (longSession.showdown ?? []).map((row) => ({
         playerName: row.playerName,
         totalFan: row.totalFan,
         best: `${row.bestScore.mainPattern} ${row.bestScore.totalFan} 番`,
@@ -1856,6 +2456,7 @@ function selectOverlayViewModel(
     confirmLabel: "开始赌局",
     cancelActionId: overlay.cancelActionId,
     cancelLabel: "取消",
+    ...(overlay.debugToggle == null ? {} : { debugToggle: overlay.debugToggle }),
   };
 }
 
@@ -1923,6 +2524,10 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       sideEffects: [
         { type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID },
         { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+        {
+          type: "stop-interval",
+          intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+        },
       ],
     };
   },
@@ -1931,7 +2536,10 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       if (input.sessionState == null) {
         return createTransitionResult(input);
       }
-      if (input.request.tickId === TAVERN_GAMBLE_NPC_INTERVAL_ID) {
+      if (
+        input.request.tickId === TAVERN_GAMBLE_NPC_INTERVAL_ID ||
+        input.request.tickId === TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID
+      ) {
         return handleGambleTick(input, input.sessionState);
       }
       return handleTavernWorkTick(input, input.sessionState);
@@ -2000,6 +2608,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       input.request.actionId === "open-gamble" ||
       input.request.actionId === "decrease-wager" ||
       input.request.actionId === "increase-wager" ||
+      input.request.actionId === TOGGLE_SHORT_DEBUG_PRESET_ACTION_ID ||
       input.request.actionId === "confirm-gamble" ||
       input.request.actionId.startsWith(SELECT_GAMBLE_VARIANT_ACTION_PREFIX) ||
       input.request.actionId === "gamble-check" ||
@@ -2013,6 +2622,9 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       input.request.actionId === "gamble-pass-play" ||
       input.request.actionId === "gamble-settle" ||
       input.request.actionId === "gamble-close" ||
+      input.request.actionId === GAMBLE_SHORT_CONTINUE_ACTION_ID ||
+      input.request.actionId === GAMBLE_SHORT_REBUY_ACTION_ID ||
+      input.request.actionId === GAMBLE_SHORT_CASH_OUT_ACTION_ID ||
       input.request.actionId.startsWith(GAMBLE_MELD_ACTION_PREFIX) ||
       input.request.actionId.startsWith(GAMBLE_DISCARD_ACTION_PREFIX) ||
       input.request.actionId.startsWith(GAMBLE_REORDER_ACTION_PREFIX) ||
@@ -2028,6 +2640,9 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       input.request.actionId === "cancel-overlay" ||
       input.request.actionId === "close-alert"
     ) {
+      if (input.request.actionId === "close-alert") {
+        return resolveTavernAlertClose(input, input.sessionState);
+      }
       return withSessionState(input, input.sessionState, {
         overlay: null,
       });
@@ -2043,6 +2658,10 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       sideEffects: [
         { type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID },
         { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
+        {
+          type: "stop-interval",
+          intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+        },
       ],
     };
   },

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>抽卡动画预览</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "KaiTi", "STKaiti", "Noto Serif SC", serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at top, rgba(122, 68, 28, 0.18), transparent 44%),
+          linear-gradient(180deg, #1d130c 0%, #070504 72%, #020101 100%);
+        color: #f0d9ae;
+      }
+
+      .card-draw-demo {
+        width: min(420px, 100%);
+        padding: 34px 28px 26px;
+        border: 1px solid rgba(185, 133, 80, 0.34);
+        background:
+          linear-gradient(180deg, rgba(18, 11, 8, 0.96) 0%, rgba(7, 4, 3, 0.98) 100%);
+        box-shadow:
+          0 24px 48px rgba(0, 0, 0, 0.52),
+          inset 0 1px 0 rgba(255, 225, 181, 0.06);
+      }
+
+      .card-draw-demo__title {
+        margin: 0;
+        text-align: center;
+        font-size: clamp(2rem, 5vw, 2.6rem);
+        letter-spacing: 0.14em;
+      }
+
+      .card-draw-demo__divider {
+        height: 1px;
+        margin: 18px 0 26px;
+        background: linear-gradient(
+          90deg,
+          rgba(185, 133, 80, 0),
+          rgba(185, 133, 80, 0.72),
+          rgba(185, 133, 80, 0)
+        );
+      }
+
+      .card-draw-demo__meta,
+      .card-draw-demo__rule,
+      .card-draw-demo__result,
+      .card-draw-demo__status {
+        margin: 0;
+        text-align: center;
+      }
+
+      .card-draw-demo__meta {
+        color: #d06851;
+        font-size: 1.02rem;
+      }
+
+      .card-draw-demo__rule,
+      .card-draw-demo__result {
+        margin-top: 8px;
+        color: rgba(213, 191, 164, 0.92);
+        font-size: 1rem;
+        letter-spacing: 0.06em;
+      }
+
+      .card-draw-demo__result {
+        min-height: 1.7em;
+      }
+
+      .card-draw-demo__mount {
+        display: grid;
+        justify-content: center;
+        margin-top: 18px;
+      }
+
+      .card-draw-demo__status {
+        margin-top: 6px;
+        min-height: 1.6em;
+        color: #ef836a;
+        font-size: 1.02rem;
+        letter-spacing: 0.12em;
+      }
+
+      .card-draw-demo__confirm {
+        width: 100%;
+        margin-top: 22px;
+        padding: 14px 18px;
+        border: 1px solid rgba(187, 131, 75, 0.6);
+        background:
+          linear-gradient(180deg, rgba(63, 35, 17, 0.96) 0%, rgba(42, 22, 10, 0.98) 100%);
+        color: #f0d9ae;
+        font: inherit;
+        font-size: 1rem;
+        letter-spacing: 0.2em;
+        cursor: pointer;
+      }
+
+      .card-draw-demo__confirm:focus-visible {
+        outline: 2px solid rgba(244, 210, 161, 0.92);
+        outline-offset: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card-draw-demo">
+      <h1 class="card-draw-demo__title">勉力一试</h1>
+      <div class="card-draw-demo__divider" aria-hidden="true"></div>
+      <p class="card-draw-demo__meta">难度: 4级 ●○○○○</p>
+      <p class="card-draw-demo__rule">当前武略 25，武略 &gt;= 60 可直接通过</p>
+      <p class="card-draw-demo__result" data-demo-result>结果为 ?</p>
+      <div class="card-draw-demo__mount" id="card-draw-mount"></div>
+      <p class="card-draw-demo__status" data-demo-status>点击抽取</p>
+      <button type="button" class="card-draw-demo__confirm" data-demo-confirm hidden>
+        确认
+      </button>
+    </main>
+
+    <script type="module">
+      import "../src/styles/card-draw.css";
+      import {
+        CardDrawAnimator,
+        formatCardDrawResultLabel,
+      } from "../src/ui/animations/card-draw-animation.ts";
+
+      const mount = document.querySelector("#card-draw-mount");
+      const resultNode = document.querySelector("[data-demo-result]");
+      const statusNode = document.querySelector("[data-demo-status]");
+      const confirmButton = document.querySelector("[data-demo-confirm]");
+
+      if (
+        !(mount instanceof HTMLElement) ||
+        !(resultNode instanceof HTMLElement) ||
+        !(statusNode instanceof HTMLElement) ||
+        !(confirmButton instanceof HTMLButtonElement)
+      ) {
+        throw new Error("Card draw demo mount failed.");
+      }
+
+      const animator = new CardDrawAnimator({
+        host: mount,
+      });
+
+      function resolveOutcomeText(value) {
+        return value >= 5 ? "大 可通过" : "小 不通过";
+      }
+
+      async function startRound() {
+        confirmButton.hidden = true;
+        resultNode.textContent = "结果为 ?";
+        statusNode.textContent = "点击抽取";
+        const value = await animator.play();
+        resultNode.textContent = `结果为 ${formatCardDrawResultLabel(value)} ${resolveOutcomeText(value)}`;
+        statusNode.textContent =
+          value >= 5 ? "勉力有进，判定通过" : "力有不逮，判定失败";
+        confirmButton.hidden = false;
+      }
+
+      confirmButton.addEventListener("click", () => {
+        void startRound();
+      });
+
+      void startRound();
+    </script>
+  </body>
+</html>

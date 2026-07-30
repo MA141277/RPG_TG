@@ -24,6 +24,16 @@ const BACKPACK_TYPE_LABELS: Record<string, string> = {
   other: "其他",
 };
 
+Object.assign(BACKPACK_TYPE_LABELS, {
+  "prepared-medicine": "\u6210\u836f",
+  trade: "\u5546\u8d27",
+  medicine: "\u836f\u6750",
+  silk: "\u4e1d\u7ef8",
+  arms: "\u519b\u8d44",
+  horses: "\u5750\u9a91",
+  special: "\u5947\u8d27",
+});
+
 function renderCityChoiceSkin(): string {
   return `
     <span class="c-city-choice-skin" aria-hidden="true">
