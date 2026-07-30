@@ -11,6 +11,7 @@ import type {
 import { runStoryEventRuntime } from "./event-runtime";
 import { createCompatibleSceneDefinitions } from "./mod-first-compatibility";
 import { createDialogueSession } from "./dialogue-session";
+import { routeSceneRuntimeContinuationEvent } from "./scene-runtime";
 
 export function runDialogueFromEvent(
   input: DialogueRuntimeInput
@@ -26,6 +27,18 @@ export function runDialogueFromEvent(
     activityDefinitionsById: input.activityDefinitionsById,
     characterDefinitions: input.characterDefinitions,
     textEntriesById: input.textEntriesById,
+    continueFromSceneEvent: ({
+      state,
+      characterDefinitions,
+      eventDefinition,
+    }) => ({
+      state: routeSceneRuntimeContinuationEvent({
+        state,
+        eventDefinition,
+        eventDefinitionsById: input.eventDefinitionsById,
+      }),
+      characterDefinitions,
+    }),
   });
 
   return {

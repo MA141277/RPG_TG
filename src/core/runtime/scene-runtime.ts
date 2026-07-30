@@ -3,12 +3,16 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { SceneDefinition } from "../../domain/action";
+import { startEvent } from "../../application/events/event-runner";
 import { runSceneUntilPause } from "../../application/scene/scene-runner";
+import type { RuntimeEventEntity } from "../contracts/event-router";
 import type {
   SceneRuntimeInput,
   SceneRuntimeResult,
 } from "../contracts/scene-runtime";
+import type { RuntimeState } from "../contracts/runtime-state";
 import { runStoryEventRuntime } from "./event-runtime";
+import { dispatchEventRoute } from "./event-router";
 import { createSceneSession } from "./scene-session";
 
 export function runSceneFromEvent(input: SceneRuntimeInput): SceneRuntimeResult {
@@ -18,6 +22,18 @@ export function runSceneFromEvent(input: SceneRuntimeInput): SceneRuntimeResult 
     activityDefinitionsById: input.activityDefinitionsById,
     characterDefinitions: input.characterDefinitions,
     textEntriesById: input.textEntriesById,
+    continueFromSceneEvent: ({
+      state,
+      characterDefinitions,
+      eventDefinition,
+    }) => ({
+      state: routeSceneRuntimeContinuationEvent({
+        state,
+        eventDefinition,
+        eventDefinitionsById: input.eventDefinitionsById,
+      }),
+      characterDefinitions,
+    }),
   });
 
   return {
@@ -69,4 +85,76 @@ export function runStoryTriggerRuntime(input: {
     activityDefinitionsById: input.activityDefinitionsById,
     textEntriesById: input.textEntriesById,
   });
+}
+
+export function routeSceneRuntimeContinuationEvent(input: {
+  state: GameState;
+  eventDefinition: EventDefinition;
+  eventDefinitionsById: Record<string, EventDefinition>;
+}): GameState {
+  return dispatchEventRoute({
+    state: toSceneRuntimeState(input.state),
+    eventId: input.eventDefinition.id,
+    context: {
+      repository: {
+        resolveById: (eventId) => {
+          const eventDefinition = input.eventDefinitionsById[eventId];
+          return eventDefinition == null
+            ? null
+            : toSceneRuntimeEventEntity(eventDefinition);
+        },
+      },
+      handlers: {
+        dialogue: ({ state, event }) => ({
+          state: {
+            ...state,
+            core: startEvent(
+              state.core,
+              input.eventDefinitionsById[event.id] ?? input.eventDefinition
+            ),
+          },
+          effects: [],
+        }),
+        settlement: ({ state, event }) => ({
+          state: {
+            ...state,
+            core: startEvent(
+              state.core,
+              input.eventDefinitionsById[event.id] ?? input.eventDefinition
+            ),
+          },
+          effects: [],
+        }),
+      },
+    },
+  }).state.core;
+}
+
+function toSceneRuntimeState(state: GameState): RuntimeState {
+  return {
+    core: state,
+    app: {
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
+    },
+    view: {},
+  };
+}
+
+function toSceneRuntimeEventEntity(
+  eventDefinition: EventDefinition
+): RuntimeEventEntity {
+  return {
+    id: eventDefinition.id,
+    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
+    payload: {},
+    ...(eventDefinition.nextEventId == null
+      ? {}
+      : { nextEventId: eventDefinition.nextEventId }),
+  };
 }

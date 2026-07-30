@@ -16,6 +16,9 @@ const {
 const {
   runDialogueFromEvent,
 } = require("../.test-dist/core/runtime/dialogue-runtime.js");
+const {
+  runSceneFromEvent,
+} = require("../.test-dist/core/runtime/scene-runtime.js");
 
 function createBaseState() {
   return createInitialState({
@@ -132,3 +135,179 @@ test("dialogue runtime runs dialogue definitions through the current scene carri
   assert.equal(result.session.dialogueId, "dialogue.opening");
   assert.equal(result.session.eventId, "event.dialogue.opening");
 });
+
+test(
+  "scene runtime routes automatic nextEvent continuation through the shared event-router seam",
+  { concurrency: false },
+  () => {
+    const eventRouterPath = require.resolve(
+      "../.test-dist/core/runtime/event-router.js"
+    );
+    const sceneRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/scene-runtime.js"
+    );
+
+    delete require.cache[sceneRuntimePath];
+    delete require.cache[eventRouterPath];
+
+    const patchedEventRouter = require(eventRouterPath);
+    const originalDispatchEventRoute = patchedEventRouter.dispatchEventRoute;
+    let dispatchEventRouteCalls = 0;
+
+    patchedEventRouter.dispatchEventRoute = (...args) => {
+      dispatchEventRouteCalls += 1;
+      return originalDispatchEventRoute(...args);
+    };
+
+    try {
+      const {
+        runSceneFromEvent: runSceneFromEventWithPatchedRouter,
+      } = require(sceneRuntimePath);
+      const eventDefinitionsById = {
+        "event.scene.start": {
+          id: "event.scene.start",
+          chapterId: "chapter.test",
+          name: "Scene Start",
+          occurrence: "repeatable",
+          trigger: { timing: "manual" },
+          conditions: [],
+          entrySceneId: "scene.start",
+          nextEventId: "event.scene.followup",
+        },
+        "event.scene.followup": {
+          id: "event.scene.followup",
+          chapterId: "chapter.test",
+          name: "Scene Followup",
+          occurrence: "repeatable",
+          trigger: { timing: "manual" },
+          conditions: [],
+          entrySceneId: "scene.followup",
+        },
+      };
+      const startedState = startEvent(
+        createBaseState(),
+        eventDefinitionsById["event.scene.start"]
+      );
+
+      const result = runSceneFromEventWithPatchedRouter({
+        state: startedState,
+        characterDefinitions: [{ id: "char.player", name: "Player" }],
+        sceneDefinitionsById: {
+          "scene.start": {
+            id: "scene.start",
+            name: "Scene Start",
+            actions: [],
+          },
+          "scene.followup": {
+            id: "scene.followup",
+            name: "Scene Followup",
+            actions: [],
+          },
+        },
+        eventDefinitionsById,
+      });
+
+      assert.equal(
+        result.state.runtime.eventHistory["event.scene.followup"]?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchEventRouteCalls > 0,
+        "runSceneFromEvent should route continuation through dispatchEventRoute instead of leaving scene-runner on the local continuation fallback"
+      );
+    } finally {
+      patchedEventRouter.dispatchEventRoute = originalDispatchEventRoute;
+      delete require.cache[sceneRuntimePath];
+      delete require.cache[eventRouterPath];
+    }
+  }
+);
+
+test(
+  "dialogue runtime routes automatic nextEvent continuation through the shared event-router seam",
+  { concurrency: false },
+  () => {
+    const eventRouterPath = require.resolve(
+      "../.test-dist/core/runtime/event-router.js"
+    );
+    const dialogueRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/dialogue-runtime.js"
+    );
+
+    delete require.cache[dialogueRuntimePath];
+    delete require.cache[eventRouterPath];
+
+    const patchedEventRouter = require(eventRouterPath);
+    const originalDispatchEventRoute = patchedEventRouter.dispatchEventRoute;
+    let dispatchEventRouteCalls = 0;
+
+    patchedEventRouter.dispatchEventRoute = (...args) => {
+      dispatchEventRouteCalls += 1;
+      return originalDispatchEventRoute(...args);
+    };
+
+    try {
+      const {
+        runDialogueFromEvent: runDialogueFromEventWithPatchedRouter,
+      } = require(dialogueRuntimePath);
+      const eventDefinitionsById = {
+        "event.dialogue.empty": {
+          id: "event.dialogue.empty",
+          chapterId: "chapter.test",
+          name: "Dialogue Empty",
+          occurrence: "repeatable",
+          trigger: { timing: "manual" },
+          conditions: [],
+          entrySceneId: "dialogue.empty",
+          dialogueId: "dialogue.empty",
+          nextEventId: "event.dialogue.followup",
+        },
+        "event.dialogue.followup": {
+          id: "event.dialogue.followup",
+          chapterId: "chapter.test",
+          name: "Dialogue Followup",
+          occurrence: "repeatable",
+          trigger: { timing: "manual" },
+          conditions: [],
+          entrySceneId: "dialogue.followup",
+          dialogueId: "dialogue.followup",
+        },
+      };
+      const startedState = startEvent(
+        createBaseState(),
+        eventDefinitionsById["event.dialogue.empty"]
+      );
+
+      const result = runDialogueFromEventWithPatchedRouter({
+        state: startedState,
+        characterDefinitions: [{ id: "char.player", name: "Player" }],
+        dialogueDefinitionsById: {
+          "dialogue.empty": {
+            id: "dialogue.empty",
+            name: "Empty",
+            nodes: [],
+          },
+          "dialogue.followup": {
+            id: "dialogue.followup",
+            name: "Followup",
+            nodes: [],
+          },
+        },
+        eventDefinitionsById,
+      });
+
+      assert.equal(
+        result.state.runtime.eventHistory["event.dialogue.followup"]?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchEventRouteCalls > 0,
+        "runDialogueFromEvent should route continuation through dispatchEventRoute instead of leaving scene-runner on the local continuation fallback"
+      );
+    } finally {
+      patchedEventRouter.dispatchEventRoute = originalDispatchEventRoute;
+      delete require.cache[dialogueRuntimePath];
+      delete require.cache[eventRouterPath];
+    }
+  }
+);

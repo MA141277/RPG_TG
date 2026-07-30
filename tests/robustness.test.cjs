@@ -15629,6 +15629,26 @@ test("story runtime state-only binding route convergence keeps applyTriggeredSto
   );
 });
 
+test("scene dialogue runtime continuation route convergence keeps owner wrappers on one shared continuation seam", () => {
+  const sceneRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/scene-runtime.ts"),
+    "utf8"
+  );
+  const dialogueRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/dialogue-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(sceneRuntimeSource, /export function routeSceneRuntimeContinuationEvent/);
+  assert.match(sceneRuntimeSource, /continueFromSceneEvent:/);
+  assert.match(sceneRuntimeSource, /dispatchEventRoute\(/);
+  assert.match(dialogueRuntimeSource, /continueFromSceneEvent:/);
+  assert.match(
+    dialogueRuntimeSource,
+    /routeSceneRuntimeContinuationEvent\(/
+  );
+});
+
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
