@@ -25,7 +25,10 @@ import {
   runEventBindingRuntime,
 } from "../../core/runtime/event-binding-runtime";
 import { createEventRouteActivationHandlers } from "../../core/runtime/event-route-activation";
-import { createRuntimeEventEntity } from "../../core/runtime/event-entity-projection";
+import {
+  createRuntimeEventEntity,
+  readRuntimeEventTaskInputs,
+} from "../../core/runtime/event-entity-projection";
 import { dispatchEventRoute } from "../../core/runtime/event-router";
 import { runProgressionRuntime } from "../../core/runtime/progression-runtime";
 import { dispatchRuntimeRequest } from "../../core/runtime/runtime-dispatch";
@@ -178,7 +181,7 @@ function routeStoryDirectEntry(
                           state,
                           effects: [],
                         }),
-                        taskInputs: eventDefinition.taskInputs ?? [],
+                        taskInputs: readRuntimeEventTaskInputs(event),
                       };
                 },
                 settlement: ({ state, event }) => {
@@ -196,7 +199,7 @@ function routeStoryDirectEntry(
                           state,
                           effects: [],
                         }),
-                        taskInputs: eventDefinition.taskInputs ?? [],
+                        taskInputs: readRuntimeEventTaskInputs(event),
                       };
                 },
               },

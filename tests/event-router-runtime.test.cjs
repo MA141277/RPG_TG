@@ -170,6 +170,32 @@ test("runtime event entity payload projection preserves authored runtime payload
   assert.deepEqual(entity.emitEventIds, ["event.payload.emit.second"]);
 });
 
+test("runtime event task input payload helper reads canonical task inputs from the routed event payload", () => {
+  const {
+    readRuntimeEventTaskInputs,
+  } = require("../.test-dist/core/runtime/event-entity-projection.js");
+
+  const taskInputs = readRuntimeEventTaskInputs({
+    id: "event.task-input.payload",
+    kind: "dialogue",
+    payload: {
+      taskInputs: [
+        {
+          type: "task.signal.test",
+          taskId: "task.test.payload",
+        },
+      ],
+    },
+  });
+
+  assert.deepEqual(taskInputs, [
+    {
+      type: "task.signal.test",
+      taskId: "task.test.payload",
+    },
+  ]);
+});
+
 test(
   "runStoryEventRuntime preserves authored emitEventIds on the routed runtime event entity",
   () => {

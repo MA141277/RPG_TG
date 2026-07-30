@@ -15740,6 +15740,26 @@ test("runtime event entity payload projection keeps one shared authored projecti
   assert.doesNotMatch(sceneRuntimeSource, /payload:\s*\{\}/);
 });
 
+test("runtime event task input payload consumption keeps story-runtime on the routed payload seam", () => {
+  const projectionSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-entity-projection.ts"),
+    "utf8"
+  );
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const routedHandlersBlock =
+    storyRuntimeSource.match(
+      /handlers:\s*\{[\s\S]*?dialogue:\s*\(\{ state, event \}\)\s*=>[\s\S]*?settlement:\s*\(\{ state, event \}\)\s*=>[\s\S]*?\n\s*\},/
+    )?.[0] ?? "";
+
+  assert.match(projectionSource, /export function readRuntimeEventTaskInputs\(/);
+  assert.match(projectionSource, /payload\.taskInputs/);
+  assert.match(storyRuntimeSource, /readRuntimeEventTaskInputs/);
+  assert.doesNotMatch(routedHandlersBlock, /taskInputs:\s*eventDefinition\.taskInputs/);
+});
+
 test("navigation enter-house convergence keeps on-enter event activation on the shared event-router seam", () => {
   const enterHouseSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/navigation/enter-house.ts"),

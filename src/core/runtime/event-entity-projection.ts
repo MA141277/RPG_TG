@@ -1,4 +1,5 @@
 import type { RuntimeEventEntity } from "../contracts/event-router";
+import type { RuntimeTaskInput } from "../contracts/runtime-result";
 import type { EventDefinition } from "../../domain/event";
 
 export function createRuntimeEventEntity(
@@ -33,4 +34,11 @@ export function createRuntimeEventEntity(
       ...(eventDefinition.tags == null ? {} : { tags: eventDefinition.tags }),
     },
   };
+}
+
+export function readRuntimeEventTaskInputs(
+  event: RuntimeEventEntity
+): RuntimeTaskInput[] {
+  const taskInputs = event.payload.taskInputs;
+  return Array.isArray(taskInputs) ? (taskInputs as RuntimeTaskInput[]) : [];
 }
