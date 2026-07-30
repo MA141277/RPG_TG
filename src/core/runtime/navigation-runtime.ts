@@ -1,4 +1,3 @@
-import { startEvent } from "../../application/events/event-runner";
 import { enterCity } from "../../application/navigation/enter-city";
 import { enterHouse } from "../../application/navigation/enter-house";
 import { evaluateLocationAccess } from "../../application/location-access/location-access-runtime";
@@ -20,6 +19,7 @@ import type {
 } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
 import { dispatchEventRoute } from "./event-router";
+import { createEventRouteActivationHandlers } from "./event-route-activation";
 
 type NavigationRuntimeResult = {
   state: GameState;
@@ -203,28 +203,10 @@ function routeHouseEnterEvent(
           return resolved == null ? null : toNavigationRuntimeEventEntity(resolved);
         },
       },
-      handlers: {
-        dialogue: ({ state, event }) => ({
-          state: {
-            ...state,
-            core: startEvent(
-              state.core,
-              eventDefinitionsById[event.id] ?? eventDefinition
-            ),
-          },
-          effects: [],
-        }),
-        settlement: ({ state, event }) => ({
-          state: {
-            ...state,
-            core: startEvent(
-              state.core,
-              eventDefinitionsById[event.id] ?? eventDefinition
-            ),
-          },
-          effects: [],
-        }),
-      },
+      handlers: createEventRouteActivationHandlers({
+        eventDefinitionsById,
+        fallbackEventDefinition: eventDefinition,
+      }),
     },
   }).state.core;
 }

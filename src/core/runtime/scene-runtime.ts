@@ -3,7 +3,6 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { SceneDefinition } from "../../domain/action";
-import { startEvent } from "../../application/events/event-runner";
 import { runSceneUntilPause } from "../../application/scene/scene-runner";
 import type { RuntimeEventEntity } from "../contracts/event-router";
 import type {
@@ -12,6 +11,7 @@ import type {
 } from "../contracts/scene-runtime";
 import type { RuntimeState } from "../contracts/runtime-state";
 import { runStoryEventRuntime } from "./event-runtime";
+import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { dispatchEventRoute } from "./event-router";
 import { createSceneSession } from "./scene-session";
 
@@ -104,28 +104,10 @@ export function routeSceneRuntimeContinuationEvent(input: {
             : toSceneRuntimeEventEntity(eventDefinition);
         },
       },
-      handlers: {
-        dialogue: ({ state, event }) => ({
-          state: {
-            ...state,
-            core: startEvent(
-              state.core,
-              input.eventDefinitionsById[event.id] ?? input.eventDefinition
-            ),
-          },
-          effects: [],
-        }),
-        settlement: ({ state, event }) => ({
-          state: {
-            ...state,
-            core: startEvent(
-              state.core,
-              input.eventDefinitionsById[event.id] ?? input.eventDefinition
-            ),
-          },
-          effects: [],
-        }),
-      },
+      handlers: createEventRouteActivationHandlers({
+        eventDefinitionsById: input.eventDefinitionsById,
+        fallbackEventDefinition: input.eventDefinition,
+      }),
     },
   }).state.core;
 }

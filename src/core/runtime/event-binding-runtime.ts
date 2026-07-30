@@ -1,9 +1,9 @@
-import { startEvent } from "../../application/events/event-runner";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { RuntimeEventEntity } from "../contracts/event-router";
 import type { RuntimeState } from "../contracts/runtime-state";
 import { activateEvent, type ActivatedEvent } from "./event-activation";
+import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { dispatchEventRoute } from "./event-router";
 import {
   createRuntimeTriggerContext,
@@ -134,28 +134,10 @@ function routeBindingEvent(
           return resolved == null ? null : toEventBindingRuntimeEventEntity(resolved);
         },
       },
-      handlers: {
-        dialogue: ({ state, event }) => ({
-          state: {
-            ...state,
-            core: startEvent(
-              state.core,
-              eventDefinitionsById[event.id] ?? eventDefinition
-            ),
-          },
-          effects: [],
-        }),
-        settlement: ({ state, event }) => ({
-          state: {
-            ...state,
-            core: startEvent(
-              state.core,
-              eventDefinitionsById[event.id] ?? eventDefinition
-            ),
-          },
-          effects: [],
-        }),
-      },
+      handlers: createEventRouteActivationHandlers({
+        eventDefinitionsById,
+        fallbackEventDefinition: eventDefinition,
+      }),
     },
   }).state.core;
 }

@@ -16,6 +16,7 @@ import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeState } from "../contracts/runtime-state";
 import { activateEvent, type ActivatedEvent } from "./event-activation";
 import { selectEventCandidate } from "./event-candidate-selector";
+import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { canActivateEvent } from "./event-condition-evaluator";
 import { dispatchEventRoute } from "./event-router";
 
@@ -131,28 +132,10 @@ function routeTriggeredEvent(
           return resolved == null ? null : toEventRuntimeEventEntity(resolved);
         },
       },
-      handlers: {
-        dialogue: ({ state, event }) => ({
-          state: {
-            ...state,
-            core: startEvent(
-              state.core,
-              eventDefinitionsById[event.id] ?? eventDefinition
-            ),
-          },
-          effects: [],
-        }),
-        settlement: ({ state, event }) => ({
-          state: {
-            ...state,
-            core: startEvent(
-              state.core,
-              eventDefinitionsById[event.id] ?? eventDefinition
-            ),
-          },
-          effects: [],
-        }),
-      },
+      handlers: createEventRouteActivationHandlers({
+        eventDefinitionsById,
+        fallbackEventDefinition: eventDefinition,
+      }),
     },
   }).state.core;
 }

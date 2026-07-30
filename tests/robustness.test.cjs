@@ -15679,6 +15679,53 @@ test("event continuation contract narrowing keeps pure resolution separate from 
   assert.match(sceneRunnerSource, /\bresolveEventContinuation\s*\(/);
 });
 
+test("runtime route activation seam convergence keeps owner runtimes on shared activation handlers", () => {
+  const eventRouteActivationSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-route-activation.ts"),
+    "utf8"
+  );
+  const eventRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
+    "utf8"
+  );
+  const eventBindingRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-binding-runtime.ts"),
+    "utf8"
+  );
+  const navigationRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/navigation-runtime.ts"),
+    "utf8"
+  );
+  const sceneRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/scene-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    eventRouteActivationSource,
+    /export function createEventRouteActivationHandlers/
+  );
+  assert.match(eventRouteActivationSource, /\bstartEvent\s*\(/);
+  assert.match(
+    eventRouteActivationSource,
+    /const activateRoutedEvent =/
+  );
+  assert.match(eventRuntimeSource, /\bcreateEventRouteActivationHandlers\s*\(/);
+  assert.match(
+    eventBindingRuntimeSource,
+    /\bcreateEventRouteActivationHandlers\s*\(/
+  );
+  assert.match(
+    navigationRuntimeSource,
+    /\bcreateEventRouteActivationHandlers\s*\(/
+  );
+  assert.match(sceneRuntimeSource, /\bcreateEventRouteActivationHandlers\s*\(/);
+  assert.doesNotMatch(eventRuntimeSource, /\bstartEvent\s*\(/);
+  assert.doesNotMatch(eventBindingRuntimeSource, /\bstartEvent\s*\(/);
+  assert.doesNotMatch(navigationRuntimeSource, /\bstartEvent\s*\(/);
+  assert.doesNotMatch(sceneRuntimeSource, /\bstartEvent\s*\(/);
+});
+
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),

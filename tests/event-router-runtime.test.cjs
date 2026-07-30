@@ -227,6 +227,45 @@ test("dispatchEventRoute returns a standardized routed result envelope and leave
   assert.equal(result.settlement, undefined);
 });
 
+test("event route activation handlers share one canonical event-start seam", () => {
+  const {
+    createEventRouteActivationHandlers,
+  } = require("../.test-dist/core/runtime/event-route-activation.js");
+  const eventDefinitionsById = {
+    "event.test.followup": createStoryEvent(
+      "event.test.followup",
+      "scene.test.followup",
+      { timing: "manual" }
+    ),
+  };
+  const handlers = createEventRouteActivationHandlers({
+    eventDefinitionsById,
+    fallbackEventDefinition: eventDefinitionsById["event.test.followup"],
+  });
+
+  assert.equal(
+    handlers.dialogue,
+    handlers.settlement,
+    "dialogue and settlement activation should reuse the same handler seam"
+  );
+
+  const handled = handlers.dialogue({
+    state: createBaseRuntimeState(),
+    event: {
+      id: "event.test.followup",
+      kind: "dialogue",
+      payload: {},
+    },
+  });
+
+  assert.equal(handled.state.core.scene.activeEventId, "event.test.followup");
+  assert.equal(
+    handled.state.core.scene.activeSceneId,
+    "scene.test.followup"
+  );
+  assert.deepEqual(handled.effects, []);
+});
+
 test(
   "runStoryEventRuntime routes activated trigger events through the shared event-router seam",
   { concurrency: false },
