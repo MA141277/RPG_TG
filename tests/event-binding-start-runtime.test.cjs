@@ -177,3 +177,72 @@ test("event binding runtime applies state-only runtime actions without opening a
   assert.equal(result.state.scene.activeEventId, null);
   assert.equal(result.state.scene.activeSceneId, null);
 });
+
+test(
+  "event binding runtime state-only classification consumes the payload dialogue-id seam",
+  { concurrency: false },
+  () => {
+    const projectionPath = require.resolve(
+      "../.test-dist/core/runtime/event-entity-projection.js"
+    );
+    const eventBindingRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/event-binding-runtime.js"
+    );
+
+    delete require.cache[projectionPath];
+    delete require.cache[eventBindingRuntimePath];
+
+    const projectionModule = require(projectionPath);
+    const originalReadRuntimeEventDialogueId =
+      projectionModule.readRuntimeEventDialogueId;
+
+    projectionModule.readRuntimeEventDialogueId = (event) =>
+      event?.id === "event.close.building" ? "dialogue.payload.runtime" : null;
+
+    try {
+      const {
+        runEventBindingRuntime: runEventBindingRuntimeWithPatchedProjection,
+      } = require(eventBindingRuntimePath);
+      const state = createBaseState({
+        ui: {
+          ...createBaseState().ui,
+          currentView: "house",
+          overlayView: "detail",
+          houseSession: { moduleId: "module.test", state: {} },
+        },
+      });
+      const result = runEventBindingRuntimeWithPatchedProjection({
+        state,
+        eventDefinitionsById: {
+          "event.close.building": createEventDefinition("event.close.building", {
+            actions: [{ type: "closeBuilding" }],
+          }),
+        },
+        eventBindings: [
+          {
+            id: "binding.close.building",
+            eventId: "event.close.building",
+            owner: { family: "building", id: "building.temple" },
+            trigger: { timing: "after", action: "building-exit" },
+          },
+        ],
+        triggerContext: {
+          timing: "after",
+          action: "building-exit",
+          owner: { family: "building", id: "building.temple" },
+        },
+      });
+
+      assert.equal(result.activation.activeEventId, "event.close.building");
+      assert.equal(result.state.world.currentHouseId, null);
+      assert.equal(result.state.scene.activeEventId, "event.close.building");
+      assert.equal(result.state.scene.activeSceneId, "event.close.building.scene");
+      assert.equal(result.state.ui.currentView, "scene");
+    } finally {
+      projectionModule.readRuntimeEventDialogueId =
+        originalReadRuntimeEventDialogueId;
+      delete require.cache[projectionPath];
+      delete require.cache[eventBindingRuntimePath];
+    }
+  }
+);

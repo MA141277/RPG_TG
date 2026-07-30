@@ -15812,6 +15812,36 @@ test("runtime event settlement id payload consumption keeps story-runtime settle
   );
 });
 
+test("runtime event dialogue id payload consumption keeps state-only classification on the routed payload seam", () => {
+  const projectionSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-entity-projection.ts"),
+    "utf8"
+  );
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const eventBindingRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-binding-runtime.ts"),
+    "utf8"
+  );
+  const storyStateOnlyBlock =
+    storyRuntimeSource.match(
+      /function isStateOnlyRuntimeActionEvent\([\s\S]*?\n}\n\nfunction applyStoryProgressionAfterSettlement/
+    )?.[0] ?? "";
+  const bindingStateOnlyBlock =
+    eventBindingRuntimeSource.match(
+      /function hasOnlyStateRuntimeActions\([\s\S]*?\n}\n$/
+    )?.[0] ?? "";
+
+  assert.match(projectionSource, /export function readRuntimeEventDialogueId\(/);
+  assert.match(projectionSource, /payload\.dialogueId/);
+  assert.match(storyRuntimeSource, /readRuntimeEventDialogueId/);
+  assert.match(eventBindingRuntimeSource, /readRuntimeEventDialogueId/);
+  assert.doesNotMatch(storyStateOnlyBlock, /eventDefinition\.dialogueId/);
+  assert.doesNotMatch(bindingStateOnlyBlock, /eventDefinition\.dialogueId/);
+});
+
 test("navigation enter-house convergence keeps on-enter event activation on the shared event-router seam", () => {
   const enterHouseSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/navigation/enter-house.ts"),

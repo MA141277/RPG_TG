@@ -7,7 +7,11 @@ import type { GameState } from "../../domain/game-state";
 import type { RuntimeEventEntity } from "../contracts/event-router";
 import type { RuntimeState } from "../contracts/runtime-state";
 import { activateEvent, type ActivatedEvent } from "./event-activation";
-import { createRuntimeEventEntity } from "./event-entity-projection";
+import {
+  createRuntimeEventEntity,
+  readRuntimeEventActions,
+  readRuntimeEventDialogueId,
+} from "./event-entity-projection";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { dispatchEventRoute } from "./event-router";
 import {
@@ -206,9 +210,9 @@ export function applyRuntimeActions(
 }
 
 function hasOnlyStateRuntimeActions(eventDefinition: EventDefinition): boolean {
-  const dialogueId =
-    typeof eventDefinition.dialogueId === "string"
-      ? eventDefinition.dialogueId.trim()
-      : "";
-  return (eventDefinition.actions?.length ?? 0) > 0 && dialogueId.length === 0;
+  const runtimeEvent = createRuntimeEventEntity(eventDefinition);
+  return (
+    readRuntimeEventActions(runtimeEvent).length > 0 &&
+    readRuntimeEventDialogueId(runtimeEvent) == null
+  );
 }

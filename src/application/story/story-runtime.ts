@@ -29,6 +29,7 @@ import { createEventRouteActivationHandlers } from "../../core/runtime/event-rou
 import {
   createRuntimeEventEntity,
   readRuntimeEventActions,
+  readRuntimeEventDialogueId,
   readRuntimeEventSettlementId,
   readRuntimeEventTaskInputs,
 } from "../../core/runtime/event-entity-projection";
@@ -727,11 +728,11 @@ function createStoryEventBindingTriggerContext(
 }
 
 function isStateOnlyRuntimeActionEvent(eventDefinition: EventDefinition): boolean {
-  const dialogueId =
-    typeof eventDefinition.dialogueId === "string"
-      ? eventDefinition.dialogueId.trim()
-      : "";
-  return (eventDefinition.actions?.length ?? 0) > 0 && dialogueId.length === 0;
+  const runtimeEvent = createRuntimeEventEntity(eventDefinition);
+  return (
+    readRuntimeEventActions(runtimeEvent).length > 0 &&
+    readRuntimeEventDialogueId(runtimeEvent) == null
+  );
 }
 
 function applyStoryProgressionAfterSettlement(

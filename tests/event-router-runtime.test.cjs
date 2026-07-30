@@ -228,6 +228,22 @@ test("runtime event settlement id payload helper reads canonical settlement ids 
   assert.equal(settlementId, "settlement.payload.runtime");
 });
 
+test("runtime event dialogue id payload helper reads canonical dialogue ids from the routed event payload", () => {
+  const {
+    readRuntimeEventDialogueId,
+  } = require("../.test-dist/core/runtime/event-entity-projection.js");
+
+  const dialogueId = readRuntimeEventDialogueId({
+    id: "event.dialogue.payload",
+    kind: "dialogue",
+    payload: {
+      dialogueId: "dialogue.payload.runtime",
+    },
+  });
+
+  assert.equal(dialogueId, "dialogue.payload.runtime");
+});
+
 test(
   "runStoryEventRuntime preserves authored emitEventIds on the routed runtime event entity",
   () => {

@@ -50,6 +50,15 @@ export function readRuntimeEventActions(
   return Array.isArray(actions) ? (actions as EventRuntimeAction[]) : [];
 }
 
+export function readRuntimeEventDialogueId(
+  event: RuntimeEventEntity | null | undefined
+): string | null {
+  const dialogueId = event?.payload.dialogueId;
+  return typeof dialogueId === "string" && dialogueId.trim().length > 0
+    ? dialogueId.trim()
+    : null;
+}
+
 export function readRuntimeEventSettlementId(
   event: RuntimeEventEntity | null | undefined
 ): string | null {
