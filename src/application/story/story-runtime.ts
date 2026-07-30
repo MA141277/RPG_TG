@@ -115,6 +115,9 @@ function toStoryRuntimeEventEntity(
     ...(eventDefinition.nextEventId == null
       ? {}
       : { nextEventId: eventDefinition.nextEventId }),
+    ...(eventDefinition.emitEventIds == null
+      ? {}
+      : { emitEventIds: eventDefinition.emitEventIds }),
     metadata: {
       title: eventDefinition.name,
       ...(eventDefinition.tags == null ? {} : { tags: eventDefinition.tags }),

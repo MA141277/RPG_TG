@@ -121,6 +121,22 @@ test("event router contract defines a canonical event entity and routed result s
   assert.match(source, /followUpEventIds\??:/);
 });
 
+test(
+  "runStoryEventRuntime preserves authored emitEventIds on the routed runtime event entity",
+  () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
+      "utf8"
+    );
+    const eventEntityProjectionBlock =
+      source.match(
+        /function toEventRuntimeEventEntity\([\s\S]*?\n}\n\nfunction createScopedTriggerContext/
+      )?.[0] ?? "";
+
+    assert.match(eventEntityProjectionBlock, /emitEventIds/);
+  }
+);
+
 test("dispatchEventRoute resolves a canonical event entity and dispatches by kind", () => {
   const { dispatchEventRoute } = require("../.test-dist/core/runtime/event-router.js");
   const handledKinds = [];

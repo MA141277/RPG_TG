@@ -138,5 +138,8 @@ function toSceneRuntimeEventEntity(
     ...(eventDefinition.nextEventId == null
       ? {}
       : { nextEventId: eventDefinition.nextEventId }),
+    ...(eventDefinition.emitEventIds == null
+      ? {}
+      : { emitEventIds: eventDefinition.emitEventIds }),
   };
 }

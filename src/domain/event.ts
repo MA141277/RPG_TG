@@ -221,5 +221,6 @@ export type EventDefinition = {
   settlementId?: string;
   taskInputs?: RuntimeTaskInput[];
   nextEventId?: EventId;
+  emitEventIds?: EventId[];
   tags?: string[];
 };

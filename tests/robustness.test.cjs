@@ -15661,6 +15661,40 @@ test("event binding runtime route convergence keeps binding activation on the sh
   );
 });
 
+test("event entity emit event ids propagation keeps authored multi-follow-up intent on the live runtime event projections", () => {
+  const eventDomainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/domain/event.ts"),
+    "utf8"
+  );
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const eventRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
+    "utf8"
+  );
+  const eventBindingRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-binding-runtime.ts"),
+    "utf8"
+  );
+  const navigationRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/navigation-runtime.ts"),
+    "utf8"
+  );
+  const sceneRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/scene-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(eventDomainSource, /emitEventIds\?: EventId\[\];/);
+  assert.match(storyRuntimeSource, /emitEventIds/);
+  assert.match(eventRuntimeSource, /emitEventIds/);
+  assert.match(eventBindingRuntimeSource, /emitEventIds/);
+  assert.match(navigationRuntimeSource, /emitEventIds/);
+  assert.match(sceneRuntimeSource, /emitEventIds/);
+});
+
 test("navigation enter-house convergence keeps on-enter event activation on the shared event-router seam", () => {
   const enterHouseSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/navigation/enter-house.ts"),
