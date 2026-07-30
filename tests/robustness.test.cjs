@@ -15544,6 +15544,28 @@ test("scene runner scene-end continuation convergence keeps one shared continuat
   assert.doesNotMatch(sceneRunnerSource, /continueFromStartEvent/);
 });
 
+test("event trigger runtime route convergence keeps trigger activation on the shared event-router seam", () => {
+  const eventRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
+    "utf8"
+  );
+  const runEventRuntimeBlock =
+    eventRuntimeSource.match(
+      /export function runEventRuntime\([\s\S]*?\n}\n\nexport function runStoryEventRuntime/
+    )?.[0] ?? "";
+  const routeTriggeredEventBlock =
+    eventRuntimeSource.match(
+      /function routeTriggeredEvent\([\s\S]*?\n}\n\nfunction toEventRuntimeEventEntity/
+    )?.[0] ?? "";
+
+  assert.match(runEventRuntimeBlock, /\brouteTriggeredEvent\s*\(/);
+  assert.match(routeTriggeredEventBlock, /\bdispatchEventRoute\s*\(/);
+  assert.doesNotMatch(
+    runEventRuntimeBlock,
+    /return\s*\{[\s\S]*state:\s*startEvent\(/
+  );
+});
+
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),

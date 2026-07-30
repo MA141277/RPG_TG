@@ -7,14 +7,17 @@ import {
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { RuntimeEventEntity } from "../contracts/event-router";
 import type {
   EventRuntimeCandidate,
   EventRuntimeInput,
 } from "../contracts/event-runtime";
 import type { RuntimeRequest } from "../contracts/runtime-request";
+import type { RuntimeState } from "../contracts/runtime-state";
 import { activateEvent, type ActivatedEvent } from "./event-activation";
 import { selectEventCandidate } from "./event-candidate-selector";
 import { canActivateEvent } from "./event-condition-evaluator";
+import { dispatchEventRoute } from "./event-router";
 
 export type EventRuntimeResult = {
   state: GameState;
@@ -80,7 +83,7 @@ export function runEventRuntime(input: EventRuntimeInput): EventRuntimeResult {
   }
 
   return {
-    state: startEvent(input.state, eventDefinition),
+    state: routeTriggeredEvent(input.state, eventDefinition, input.eventDefinitionsById),
     characterDefinitions: input.characterDefinitions,
     activation,
     candidate,
@@ -110,6 +113,76 @@ function toEventRuntimeCandidate(
     priority: eventDefinition.trigger.priority ?? 0,
     sceneId: eventDefinition.entrySceneId,
     taskInputs: eventDefinition.taskInputs ?? [],
+  };
+}
+
+function routeTriggeredEvent(
+  state: GameState,
+  eventDefinition: EventDefinition,
+  eventDefinitionsById: Record<string, EventDefinition>
+): GameState {
+  return dispatchEventRoute({
+    state: toEventRuntimeState(state),
+    eventId: eventDefinition.id,
+    context: {
+      repository: {
+        resolveById: (eventId) => {
+          const resolved = eventDefinitionsById[eventId];
+          return resolved == null ? null : toEventRuntimeEventEntity(resolved);
+        },
+      },
+      handlers: {
+        dialogue: ({ state, event }) => ({
+          state: {
+            ...state,
+            core: startEvent(
+              state.core,
+              eventDefinitionsById[event.id] ?? eventDefinition
+            ),
+          },
+          effects: [],
+        }),
+        settlement: ({ state, event }) => ({
+          state: {
+            ...state,
+            core: startEvent(
+              state.core,
+              eventDefinitionsById[event.id] ?? eventDefinition
+            ),
+          },
+          effects: [],
+        }),
+      },
+    },
+  }).state.core;
+}
+
+function toEventRuntimeState(state: GameState): RuntimeState {
+  return {
+    core: state,
+    app: {
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
+    },
+    view: {},
+  };
+}
+
+function toEventRuntimeEventEntity(
+  eventDefinition: EventDefinition
+): RuntimeEventEntity {
+  return {
+    id: eventDefinition.id,
+    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
+    payload: {},
+    ...(eventDefinition.nextEventId == null
+      ? {}
+      : { nextEventId: eventDefinition.nextEventId }),
   };
 }
 

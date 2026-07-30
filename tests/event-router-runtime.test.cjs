@@ -10,6 +10,9 @@ const {
   triggerStoryEvents,
 } = require("../.test-dist/application/story/story-runtime.js");
 const {
+  runStoryEventRuntime,
+} = require("../.test-dist/core/runtime/event-runtime.js");
+const {
   prototypeCharacters,
   prototypeCities,
   prototypeHouses,
@@ -208,6 +211,66 @@ test("dispatchEventRoute returns a standardized routed result envelope and leave
   assert.equal(result.state.core.runtime.flags["event.test.settlement.pending"], undefined);
   assert.equal(result.settlement, undefined);
 });
+
+test(
+  "runStoryEventRuntime routes activated trigger events through the shared event-router seam",
+  { concurrency: false },
+  () => {
+    const eventRouterPath = require.resolve(
+      "../.test-dist/core/runtime/event-router.js"
+    );
+    const eventRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/event-runtime.js"
+    );
+
+    delete require.cache[eventRuntimePath];
+    delete require.cache[eventRouterPath];
+
+    const patchedEventRouter = require(eventRouterPath);
+    const originalDispatchEventRoute = patchedEventRouter.dispatchEventRoute;
+    let dispatchEventRouteCalls = 0;
+
+    patchedEventRouter.dispatchEventRoute = (...args) => {
+      dispatchEventRouteCalls += 1;
+      return originalDispatchEventRoute(...args);
+    };
+
+    try {
+      const { runStoryEventRuntime: runStoryEventRuntimeWithPatchedRouter } =
+        require(eventRuntimePath);
+      const result = runStoryEventRuntimeWithPatchedRouter({
+        timing: "city-enter",
+        state: createBaseStoryState(),
+        characterDefinitions: prototypeCharacters,
+        eventDefinitionsById: {
+          "event.router.triggered": createStoryEvent(
+            "event.router.triggered",
+            "scene.router.triggered",
+            {
+              timing: "city-enter",
+              scope: {
+                cityId: "city.kulan",
+              },
+            }
+          ),
+        },
+      });
+
+      assert.equal(result.activation?.activeEventId, "event.router.triggered");
+      assert.equal(result.activation?.sceneId, "scene.router.triggered");
+      assert.equal(result.state.scene.activeEventId, "event.router.triggered");
+      assert.equal(result.state.scene.activeSceneId, "scene.router.triggered");
+      assert.ok(
+        dispatchEventRouteCalls > 0,
+        "runStoryEventRuntime should route activated trigger events through dispatchEventRoute instead of starting them locally"
+      );
+    } finally {
+      patchedEventRouter.dispatchEventRoute = originalDispatchEventRoute;
+      delete require.cache[eventRuntimePath];
+      delete require.cache[eventRouterPath];
+    }
+  }
+);
 
 test(
   "triggerStoryEvents routes non-binding direct fallback through the shared router seam while preserving world definitions",
