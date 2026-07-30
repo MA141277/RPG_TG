@@ -7,7 +7,6 @@ import type { GameState } from "../../domain/game-state";
 import {
   getMedicineHouseFavorabilityVariableKey,
   getMedicineHouseTimeVariableKey,
-  getMedicineInventoryQuantityVariableKey,
   getPlayerFatigueVariableKey,
   getPlayerHpVariableKey,
   getPlayerInjuryVariableKey,
@@ -15,6 +14,10 @@ import {
   type MedicineHouseActionOutcome,
 } from "../../domain/medicine-house";
 import { mutateCharacterNumericProperty } from "../character/runtime-property-mutation";
+import {
+  applyPlayerItemMutations,
+  readPlayerItemQuantity,
+} from "../inventory/player-item-inventory";
 
 export type MedicineHouseMutationResult = {
   state: GameState;
@@ -117,14 +120,16 @@ export function applyMedicineHouseOutcome(
     }
   }
 
-  for (const inventoryChange of outcome.inventoryChange) {
-    const inventoryKey = getMedicineInventoryQuantityVariableKey(
-      inventoryChange.itemId
-    );
-    nextState = withVariable(
+  if (outcome.inventoryChange.length > 0) {
+    nextState = applyPlayerItemMutations(
       nextState,
-      inventoryKey,
-      readNumericVariable(nextState, inventoryKey, 0) + inventoryChange.quantity
+      outcome.inventoryChange
+        .filter((inventoryChange) => inventoryChange.quantity !== 0)
+        .map((inventoryChange) => ({
+          itemId: inventoryChange.itemId,
+          delta: inventoryChange.quantity,
+          legacySources: ["medicine-house"] as const,
+        }))
     );
   }
 
@@ -180,11 +185,7 @@ export function readMedicineInventoryQuantity(
   state: GameState,
   itemId: string
 ): number {
-  return readNumericVariable(
-    state,
-    getMedicineInventoryQuantityVariableKey(itemId),
-    0
-  );
+  return readPlayerItemQuantity(state, itemId, ["medicine-house"]);
 }
 
 export function readReservedPlayerStatus(state: GameState): {

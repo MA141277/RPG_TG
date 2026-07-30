@@ -2,8 +2,6 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
-<<<<<<< Updated upstream
-=======
 ## 2026-07-30 Campaign Terrain Local Chunk Loading
 
 ### Changed
@@ -25,7 +23,6 @@
 - Tavern, grain, market, medicine inventory, and minigame behavior should continue through the shared house module lifecycle and unified runtime item variables.
 - Verification for this merge should focus on typecheck, tavern short gamble tests, grain intel tests, unified backpack projection tests, card draw tests, dialogue typewriter runtime tests, and the relevant robustness guards.
 
->>>>>>> Stashed changes
 ## 2026-07-29 Story Runtime Event Binding And Progression Slice
 
 ### Added

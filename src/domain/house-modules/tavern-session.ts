@@ -1,12 +1,26 @@
 import type { HouseActivityConfirmOverlayState } from "../house-activity";
 import type { TavernWorkOffer } from "../tavern";
 import type { TavernGambleSession, TavernGambleVariant } from "../tavern-gambling";
+import type { TavernShortHandState } from "../tavern-short-gambling";
+
+export type TavernShortTableDebugPresetMode = "off" | "claim-cycle";
+
+export type TavernShortClaimCountdownState = {
+  totalSeconds: number;
+  remainingSeconds: number;
+};
 
 export type TavernAlertOverlayState = {
   type: "alert";
   title: string;
   paragraphs: string[];
   tone?: "info" | "success" | "warning";
+  deferredReward?: {
+    type: "coin-reward";
+    playerCharacterId: string;
+    delta: number;
+    source: "request-pointer";
+  };
 };
 
 export type TavernDrinkConfirmOverlayState = {
@@ -29,6 +43,11 @@ export type TavernGambleOverlayState = {
   decrementActionId: string;
   confirmActionId: string;
   cancelActionId: string;
+  debugToggle?: {
+    actionId: string;
+    label: string;
+    helperText: string;
+  } | null;
 };
 
 export type TavernGambleChoiceOverlayState = {
@@ -43,9 +62,44 @@ export type TavernGambleChoiceOverlayState = {
   cancelActionId: string;
 };
 
+export type TavernShortCompletedHand = {
+  handNumber: number;
+  hand: TavernShortHandState;
+};
+
+export type TavernShortTableSessionPrompt =
+  | "continue-or-cashout"
+  | "rebuy-or-cashout";
+
+export type TavernShortTableSession = {
+  variant: "short";
+  playerSeatId: string;
+  debugPresetMode: TavernShortTableDebugPresetMode;
+  claimCountdown: TavernShortClaimCountdownState | null;
+  bankrollBySeatId: Record<string, number>;
+  npcBaselineChips: number;
+  dealerSeatIndex: number;
+  handCount: number;
+  buyInGoldTotal: number;
+  currentHand: TavernShortHandState | null;
+  lastCompletedHand: TavernShortCompletedHand | null;
+  prompt: TavernShortTableSessionPrompt | null;
+  staminaCharged: boolean;
+};
+
+export type TavernActiveGambleSession =
+  | {
+      variant: "long";
+      session: TavernGambleSession;
+    }
+  | {
+      variant: "short";
+      table: TavernShortTableSession;
+    };
+
 export type TavernGambleTableOverlayState = {
   type: "gamble-table";
-  session: TavernGambleSession;
+  session: TavernActiveGambleSession;
 };
 
 export type TavernSubmitConfirmOverlayState = {
@@ -103,7 +157,8 @@ export type TavernSessionState = {
   overlay: TavernOverlayState;
   currentWager: number;
   currentGambleVariant: TavernGambleVariant;
-  gambleSession: TavernGambleSession | null;
+  shortDebugPresetMode: TavernShortTableDebugPresetMode;
+  gambleSession: TavernActiveGambleSession | null;
   availableOffers: TavernWorkOffer[];
   acceptedOffers: TavernWorkOffer[];
 };

@@ -38,6 +38,7 @@ import {
   type HouseModuleRegistry,
 } from "../registry/house-module-registry";
 import type {
+  HouseRuntimeDispatchContext,
   HouseRuntimeRequest,
   HouseRuntimeSessionRequest,
 } from "../contracts/house-runtime";
@@ -50,6 +51,12 @@ export type HouseRuntimeDependencies = {
   getAppState(): AppState;
   setAppState(appState: AppState): void;
   renderApp(): void;
+  playCoinReward?(input: {
+    playerCharacterId: string;
+    delta: number;
+    sourceClientX?: number;
+    sourceClientY?: number;
+  }): void;
   startMapAutoAdvance(input: {
     intervalId: string;
     everyMs: number;
@@ -175,7 +182,8 @@ export function createHouseRuntimeBridge(
   function applyHouseModuleResult(
     houseDefinition: HouseDefinition,
     moduleId: HouseModuleId,
-    result: HouseModuleTransitionResult<HouseModuleId>
+    result: HouseModuleTransitionResult<HouseModuleId>,
+    requestContext?: HouseRuntimeDispatchContext
   ): boolean {
     const appState = dependencies.getAppState();
     const previousGameState = appState.gameState;
@@ -215,7 +223,12 @@ export function createHouseRuntimeBridge(
       characterDefinitions: result.characterDefinitions,
     });
 
-    applyHouseSideEffects(houseDefinition, moduleId, result.sideEffects ?? []);
+    applyHouseSideEffects(
+      houseDefinition,
+      moduleId,
+      result.sideEffects ?? [],
+      requestContext
+    );
     return dependencies.syncCouncilPriorityAfterGameStateChange(
       previousGameState,
       result.councilArrivalNotice
@@ -245,7 +258,8 @@ export function createHouseRuntimeBridge(
   }
 
   function dispatchCurrentHouseRequest(
-    request: HouseRuntimeSessionRequest
+    request: HouseRuntimeSessionRequest,
+    requestContext?: HouseRuntimeDispatchContext
   ): void {
     const activeHouse = getActiveHouseDefinition();
     const moduleId = activeHouse?.moduleId;
@@ -270,7 +284,12 @@ export function createHouseRuntimeBridge(
       request,
     });
 
-    const councilTriggered = applyHouseModuleResult(activeHouse, moduleId, result);
+    const councilTriggered = applyHouseModuleResult(
+      activeHouse,
+      moduleId,
+      result,
+      requestContext
+    );
     if (!councilTriggered) {
       settleIndoorScreenStoryFollowUp();
       dependencies.renderApp();
@@ -294,11 +313,26 @@ export function createHouseRuntimeBridge(
   function applyHouseSideEffects(
     houseDefinition: HouseDefinition,
     moduleId: HouseModuleId,
-    sideEffects: HouseModuleSideEffect[]
+    sideEffects: HouseModuleSideEffect[],
+    requestContext?: HouseRuntimeDispatchContext
   ): void {
     sideEffects.forEach((sideEffect) => {
       if (sideEffect.type === "stop-interval") {
         stopHouseInterval(sideEffect.intervalId);
+        return;
+      }
+
+      if (sideEffect.type === "play-coin-reward") {
+        dependencies.playCoinReward?.({
+          playerCharacterId: sideEffect.playerCharacterId,
+          delta: sideEffect.delta,
+          ...(requestContext?.pointer?.clientX == null
+            ? {}
+            : { sourceClientX: requestContext.pointer.clientX }),
+          ...(requestContext?.pointer?.clientY == null
+            ? {}
+            : { sourceClientY: requestContext.pointer.clientY }),
+        });
         return;
       }
 
@@ -543,7 +577,7 @@ export function createHouseRuntimeBridge(
       return;
     }
 
-    dispatchCurrentHouseRequest(request.request);
+    dispatchCurrentHouseRequest(request.request, request.context);
   }
 
   function applyInteractiveFollowUp(
@@ -582,10 +616,12 @@ export function leaveHouseThroughRuntime(runtime: HouseRuntimeBridge): void {
 
 export function dispatchHouseRuntimeRequest(
   runtime: HouseRuntimeBridge,
-  request: HouseRuntimeSessionRequest
+  request: HouseRuntimeSessionRequest,
+  context?: HouseRuntimeDispatchContext
 ): void {
   runtime.dispatch({
     type: "dispatch",
     request,
+    ...(context == null ? {} : { context }),
   });
 }

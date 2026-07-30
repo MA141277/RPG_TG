@@ -1,5 +1,18 @@
 [
   {
+    "id": "settlement.huangcun",
+    "name": "荒村",
+    "type": "village",
+    "mapPosition": {
+      "x": 239.4025425908469,
+      "y": 280.2456647398844
+    },
+    "hexCell": {
+      "x": 241,
+      "y": -93
+    }
+  },
+  {
     "id": "settlement.ryukyu_province",
     "name": "首里城",
     "type": "city",

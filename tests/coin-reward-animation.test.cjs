@@ -306,6 +306,7 @@ test("coin reward animator applies critical inline visibility styles to layer an
   assert.equal(firstIngot?.style.width, "84px");
   assert.equal(firstIngot?.style.height, "48px");
   assert.equal(firstIngot?.style.display, "block");
+  assert.equal(firstIngot?.style.boxShadow, "");
 });
 
 test("coin reward animator snaps direct convergence to the anchor once positions overlap", async () => {

@@ -1,4 +1,4 @@
-import { globalGoodsPool } from "../../content/markets/global-goods-pool";
+import { runtimeTradeGoodsPool } from "../../content/markets/runtime-trade-goods-pool";
 import type { CityDefinition } from "../../domain/city";
 import type { GameState } from "../../domain/game-state";
 import type {
@@ -69,7 +69,7 @@ export function ensureShopMarketData(
   const nextShopMarket = generateShopInventory(
     cityDefinition,
     shopType,
-    globalGoodsPool,
+    runtimeTradeGoodsPool,
     marketEvents,
     currentDay,
     randomSource

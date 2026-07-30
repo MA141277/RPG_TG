@@ -5,6 +5,8 @@ type GrainShopContent = {
   grainShopNpcGreetingTextIds: string[];
   grainShopNpcDefaultLineTextIds: string[];
   grainShopMarketRumorTextIds: string[];
+  grainShopInvestigationOfferTextIds: string[];
+  grainShopInvestigationRefusalTextIds: string[];
   grainShopInitialValues: {
     money: number;
     food: number;
@@ -22,6 +24,10 @@ const grainShopContent = defaultGrainShopContent as GrainShopContent;
 export const grainShopNpcGreetingTextIds = grainShopContent.grainShopNpcGreetingTextIds;
 export const grainShopNpcDefaultLineTextIds = grainShopContent.grainShopNpcDefaultLineTextIds;
 export const grainShopMarketRumorTextIds = grainShopContent.grainShopMarketRumorTextIds;
+export const grainShopInvestigationOfferTextIds =
+  grainShopContent.grainShopInvestigationOfferTextIds;
+export const grainShopInvestigationRefusalTextIds =
+  grainShopContent.grainShopInvestigationRefusalTextIds;
 export const grainShopInitialValues = grainShopContent.grainShopInitialValues;
 export const accountingGradeRewards = grainShopContent.accountingGradeRewards;
 export const accountingGameDurationSec = grainShopContent.accountingGameDurationSec;

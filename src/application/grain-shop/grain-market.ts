@@ -131,11 +131,35 @@ export function ensureCurrentGrainMarket(state: GameState): GrainMarketSnapshot 
   };
 }
 
+export function quoteCityGrainPrice(
+  state: GameState,
+  cityDefinition: CityDefinition
+): {
+  state: GameState;
+  buyPrice: number;
+  sellPrice: number;
+  goodName: string;
+  unit: string;
+} {
+  const ensuredMarket = ensureShopMarketData(state, cityDefinition, "grain-shop");
+  const featuredEntry = pickFeaturedEntry(ensuredMarket.marketData);
+  const featuredGood = pickFeaturedGood(featuredEntry.goodsId);
+
+  return {
+    state: ensuredMarket.state,
+    buyPrice: featuredEntry.buyPrice,
+    sellPrice: featuredEntry.sellPrice,
+    goodName: featuredGood.name,
+    unit: featuredGood.unit,
+  };
+}
+
 export function getQuotedGrainPrice(state: GameState): {
   state: GameState;
   buyPrice: number;
   sellPrice: number;
   goodName: string;
+  unit: string;
 } {
   const market = ensureCurrentGrainMarket(state);
   return {
@@ -143,5 +167,6 @@ export function getQuotedGrainPrice(state: GameState): {
     buyPrice: market.featuredEntry.buyPrice,
     sellPrice: market.featuredEntry.sellPrice,
     goodName: market.featuredGood.name,
+    unit: market.featuredGood.unit,
   };
 }

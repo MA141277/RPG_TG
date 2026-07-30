@@ -1,16 +1,16 @@
 import {
   marketHouseBossOpenTextIds,
   marketHouseFixedBoss,
-  marketHouseGeneralRumorTextIds,
   marketHouseGreetingTextIds,
   marketHouseGuestOpenTextIdsByActorId,
-  marketHouseInvestigationSpecialtyTextIdByActorId,
   marketHouseRandomNpcPool,
-  marketHouseRumorTextIdsByCategory,
   marketHouseSmallTalkTextIds,
   type MarketHouseActorContent,
 } from "../../../content/houses/market-house-content";
-import { globalGoodsPool } from "../../../content/markets/global-goods-pool";
+import {
+  getRuntimeTradeGoodDefinition,
+  runtimeTradeGoodsPool,
+} from "../../../content/markets/runtime-trade-goods-pool";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CityDefinition } from "../../../domain/city";
 import type { HouseDefinition } from "../../../domain/house";
@@ -34,7 +34,6 @@ import {
   getMarketHouseRefreshAfterDayVariableKey,
   getMarketHouseStockVariableKey,
   getMarketHouseTimeVariableKey,
-  getTradeInventoryQuantityVariableKey,
   type MarketHouseActionOutcome,
   type MarketHouseTradeMode,
 } from "../../../domain/market-house";
@@ -49,7 +48,12 @@ import { pickRandom, randomInt } from "../../../shared/random";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
+import {
+  applyPlayerItemMutations,
+  readPlayerItemQuantity,
+} from "../../inventory/player-item-inventory";
 import { ensureShopMarketData, readShopMarketData } from "../../markets/market-refresh-system";
+import { defaultMarketHouseInvestigationDialogue } from "./market-house-investigation";
 import { createInitialMarketHouseSessionState } from "./market-house-session-state";
 
 const AVAILABLE_MARKET_SHOPS: MarketShopType[] = [
@@ -59,6 +63,7 @@ const AVAILABLE_MARKET_SHOPS: MarketShopType[] = [
   "smithy",
   "horse-market",
   "general-store",
+  "settlement-trade",
 ];
 
 const MARKET_HOUSE_SOURCE_SHOPS: MarketShopType[] = [
@@ -66,6 +71,7 @@ const MARKET_HOUSE_SOURCE_SHOPS: MarketShopType[] = [
   "silk-shop",
   "smithy",
   "general-store",
+  "settlement-trade",
 ];
 
 const SELECT_ACTOR_ACTION_PREFIX = "select-market-actor:";
@@ -147,7 +153,7 @@ function getCityDefinition(cityId: string): CityDefinition {
 }
 
 function getTradeGoodDefinition(goodsId: string): TradeGoodDefinition {
-  const goodDefinition = globalGoodsPool.find((candidateGood) => candidateGood.id === goodsId);
+  const goodDefinition = getRuntimeTradeGoodDefinition(goodsId);
   assertExists(goodDefinition, `Trade good definition missing for id "${goodsId}".`);
   return goodDefinition;
 }
@@ -166,6 +172,14 @@ function getCategoryLabel(category: TradeGoodCategory): string {
       return "马匹";
     case "special":
       return "奇货";
+    case "seafood":
+      return "海货";
+    case "industrial":
+      return "工料";
+    case "fruit":
+      return "果品";
+    case "misc":
+      return "杂货";
     default:
       return category;
   }
@@ -460,7 +474,7 @@ function createGoodsSnapshots(
           getMarketHouseStockVariableKey(houseDefinition.id, goodsId),
           0
         ),
-        ownedQuantity: readNumericVariable(state, getTradeInventoryQuantityVariableKey(goodsId), 0),
+        ownedQuantity: readOwnedMarketGoodsQuantity(state, goodsId),
         adjustedBuyPrice,
         adjustedSellPrice: adjustSellPrice(
           matchedEntry.entry.sellPrice,
@@ -482,11 +496,7 @@ function createSellableGoodsSnapshots(
 
   return cityEntries
     .map(({ entry, goodDefinition }) => {
-      const ownedQuantity = readNumericVariable(
-        state,
-        getTradeInventoryQuantityVariableKey(entry.goodsId),
-        0
-      );
+      const ownedQuantity = readOwnedMarketGoodsQuantity(state, entry.goodsId);
       if (ownedQuantity <= 0) {
         return null;
       }
@@ -712,12 +722,8 @@ function mutatePlayerGold(
   };
 }
 
-function mutateTradeInventory(state: GameState, goodsId: string, delta: number): GameState {
-  const nextQuantity = Math.max(
-    0,
-    readNumericVariable(state, getTradeInventoryQuantityVariableKey(goodsId), 0) + delta
-  );
-  return withVariable(state, getTradeInventoryQuantityVariableKey(goodsId), nextQuantity);
+function readOwnedMarketGoodsQuantity(state: GameState, goodsId: string): number {
+  return readPlayerItemQuantity(state, goodsId, ["market-house"]);
 }
 
 function mutateHouseStock(
@@ -759,7 +765,10 @@ function increaseMarketHouseTime(state: GameState, houseId: string, delta: numbe
   );
 }
 
-function formatOutcomeSummary(outcome: MarketHouseActionOutcome, goodsPool = globalGoodsPool): string[] {
+function formatOutcomeSummary(
+  outcome: MarketHouseActionOutcome,
+  goodsPool = runtimeTradeGoodsPool
+): string[] {
   const summaryLines = [
     `金钱 ${outcome.moneyChange >= 0 ? "+" : ""}${outcome.moneyChange}`,
     `关系 ${outcome.relationshipChange >= 0 ? "+" : ""}${outcome.relationshipChange}`,
@@ -803,8 +812,20 @@ function applyActionOutcome(
   nextState = goldMutation.state;
   nextCharacterDefinitions = goldMutation.characterDefinitions;
 
+  if (outcome.inventoryChange.length > 0) {
+    nextState = applyPlayerItemMutations(
+      nextState,
+      outcome.inventoryChange
+        .filter((change) => change.quantity !== 0)
+        .map((change) => ({
+          itemId: change.goodsId,
+          delta: change.quantity,
+          legacySources: ["market-house"] as const,
+        }))
+    );
+  }
+
   outcome.inventoryChange.forEach((change) => {
-    nextState = mutateTradeInventory(nextState, change.goodsId, change.quantity);
     if (change.quantity > 0) {
       nextState = mutateHouseStock(nextState, input.houseDefinition.id, change.goodsId, -change.quantity);
       return;
@@ -831,51 +852,8 @@ function applyActionOutcome(
   };
 }
 
-function pickInvestigationMessage(
-  actor: MarketHouseActor,
-  cityDefinition: CityDefinition,
-  displayedGoods: MarketHouseGoodsSnapshot[],
-  textEntriesById?: Record<string, string>
-): string {
-  const entries = getMarketTextEntries(textEntriesById);
-  const focusGoods = displayedGoods[0]?.goodDefinition ?? null;
-  const rumorTextIds =
-    focusGoods == null
-      ? marketHouseGeneralRumorTextIds
-      : marketHouseRumorTextIdsByCategory[focusGoods.category] ??
-        marketHouseGeneralRumorTextIds;
-  const specialDemandList =
-    cityDefinition.specialDemand.length > 0
-      ? cityDefinition.specialDemand.join(" / ")
-      : "无";
-  const specialtyActorId = actor.isFixedHost ? marketHouseFixedBoss.id : actor.id;
-  const specialtyTextId =
-    marketHouseInvestigationSpecialtyTextIdByActorId[specialtyActorId] ??
-    "runtime.zhu_yuanzhang.market_house.investigate.specialty.default";
-
-  return [
-    resolveMarketTemplateText(
-      entries,
-      "runtime.zhu_yuanzhang.market_house.investigate.city.001",
-      {
-        cityName: cityDefinition.name,
-        prosperity: cityDefinition.prosperity,
-        danger: cityDefinition.danger,
-      }
-    ),
-    resolveMarketTemplateText(
-      entries,
-      "runtime.zhu_yuanzhang.market_house.investigate.city.002",
-      {
-        cityName: cityDefinition.name,
-        specialDemandList,
-      }
-    ),
-    pickRandomResolvedMarketText(entries, rumorTextIds),
-    resolveMarketTemplateText(entries, specialtyTextId, {
-      specialty: actor.specialty,
-    }),
-  ].join("\n");
+function pickInvestigationDialogueLines(cityDefinition: CityDefinition): string[] {
+  return defaultMarketHouseInvestigationDialogue.createDialogueLines(cityDefinition.id);
 }
 
 function createPriceTone(price: number, referencePrice: number): "low" | "high" | "neutral" {
@@ -1038,6 +1016,27 @@ function handleAction(
     );
   }
 
+  if (input.request.actionId === "advance-investigation-report") {
+    const fixedHostActor = findFixedHostActor(snapshot.actors, input.houseDefinition);
+    if (fixedHostActor == null) {
+      return createTransitionResult(input, { gameState: snapshot.state });
+    }
+
+    return withSessionState(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        selectedActorId: fixedHostActor.id,
+        dialoguePhase: "open",
+        dialogueLines: getActorOpenLines(fixedHostActor, input.textEntriesById),
+        overlay: null,
+      }
+    );
+  }
+
   if (input.request.actionId === "dismiss-dialogue") {
     return withSessionState(
       {
@@ -1132,17 +1131,29 @@ function handleAction(
   }
 
   if (input.request.actionId === "investigate-market") {
+    if (!selectedActor.isFixedHost) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "不能打听",
+            ["这位客商只谈自家门路，不替货栈报行情。"],
+            "warning"
+          ),
+        }
+      );
+    }
+
     const outcome: MarketHouseActionOutcome = {
       moneyChange: 0,
       inventoryChange: [],
       relationshipChange: 0,
       timeCost: 1,
-      marketMessage: pickInvestigationMessage(
-        selectedActor,
-        snapshot.cityDefinition,
-        snapshot.displayedGoods,
-        input.textEntriesById
-      ),
+      marketMessage: pickInvestigationDialogueLines(snapshot.cityDefinition).join("\n"),
     };
     const mutation = applyActionOutcome(input, selectedActor, outcome);
 
@@ -1154,14 +1165,9 @@ function handleAction(
         },
         sessionState,
         {
-          overlay: createAlertOverlay(
-            resolveMarketText(
-              getMarketTextEntries(input.textEntriesById),
-              "runtime.zhu_yuanzhang.market_house.investigate.overlay.title"
-            ),
-            outcome.marketMessage.split("\n"),
-            "info"
-          ),
+          dialoguePhase: "investigation-report",
+          dialogueLines: outcome.marketMessage.split("\n"),
+          overlay: null,
         }
       ),
       timeAdvanceCost: outcome.timeCost,
@@ -1474,6 +1480,7 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
     const playerCharacter = getPlayerCharacter(input.characterDefinitions, input.playerCharacterId);
     const isIdle = sessionState.dialoguePhase === "idle";
     const isGreeting = sessionState.dialoguePhase === "greeting";
+    const isInvestigationReport = sessionState.dialoguePhase === "investigation-report";
     const isOpen = sessionState.dialoguePhase === "open";
     const selectedActor = snapshot.selectedActor;
     const standbyRoster = orderHouseStandbyRoster({
@@ -1482,25 +1489,36 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
         characterId: actor.id,
         name: actor.name,
         title: actor.title,
-        actionId: `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
+        ...(isInvestigationReport
+          ? {}
+          : { actionId: `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}` }),
         isSelected: actor.id === selectedActor?.id,
-        interactionActions: [
-          { id: "investigate-market", label: "调查", kind: "special" },
-          {
-            id: "buy-goods",
-            label: "买入",
-            kind: "special",
-            disabled: !actor.isFixedHost,
-          },
-          {
-            id: "sell-goods",
-            label: "卖出",
-            kind: "special",
-            disabled: !actor.isFixedHost,
-          },
-        ],
+        interactionActions: isInvestigationReport
+          ? []
+          : [
+              { id: "investigate-market", label: "调查", kind: "special" },
+              {
+                id: "buy-goods",
+                label: "买入",
+                kind: "special",
+                disabled: !actor.isFixedHost,
+              },
+              {
+                id: "sell-goods",
+                label: "卖出",
+                kind: "special",
+                disabled: !actor.isFixedHost,
+              },
+            ],
       })),
-    });
+    }).map((entry) =>
+      entry.characterId === input.houseDefinition.defaultCharacterId && !isInvestigationReport
+        ? entry
+        : {
+            ...entry,
+            interactionActions: [],
+          }
+    );
 
     return {
       moduleId: "market-house",
@@ -1517,8 +1535,12 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
               characterId: selectedActor.id,
               position: "right",
               textLines: sessionState.dialogueLines,
-              advanceActionId: isGreeting ? "advance-greeting" : null,
-              advanceHintText: isGreeting ? "点击继续" : null,
+              advanceActionId: isGreeting
+                ? "advance-greeting"
+                : isInvestigationReport
+                  ? "advance-investigation-report"
+                  : null,
+              advanceHintText: isGreeting || isInvestigationReport ? "点击继续" : null,
             },
       actionContainer:
         !isOpen || selectedActor == null
@@ -1530,9 +1552,9 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
                   ? ([
                       { id: "buy-goods", label: "买入商品" },
                       { id: "sell-goods", label: "出售商品" },
+                      { id: "investigate-market", label: "调查行情" },
                     ] satisfies HouseActionViewModel[])
                   : []),
-                { id: "investigate-market", label: "调查行情" },
                 { id: "dismiss-dialogue", label: "关闭" },
               ],
             },

@@ -1,4 +1,4 @@
-﻿# 婵犲窞鍦板浘閾朵袱椋炲厓瀹濆姩鐢?Implementation Plan
+# 婵犲窞鍦板浘閾朵袱椋炲厓瀹濆姩鐢?Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 

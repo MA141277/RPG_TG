@@ -41,6 +41,20 @@
     "runtime.zhu_yuanzhang.grain_market.rumor.003",
     "runtime.zhu_yuanzhang.grain_market.rumor.004"
   ],
+  "grainShopInvestigationOfferTextIds": [
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.001",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.002",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.003",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.004",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.005"
+  ],
+  "grainShopInvestigationRefusalTextIds": [
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.001",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.002",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.003",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.004",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.005"
+  ],
   "grainShopNpcDefaultLineTextIds": [
     "runtime.zhu_yuanzhang.grain_shop.default.001",
     "runtime.zhu_yuanzhang.grain_shop.default.002",

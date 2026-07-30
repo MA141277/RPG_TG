@@ -12,8 +12,19 @@ const {
   getRuntimeItemQuantityKey,
 } = require("../.test-dist/application/review/faction-review.js");
 const {
+  applyPlayerItemMutations,
+  getPlayerItemQuantityVariableKey,
+  readPlayerItemQuantity,
+} = require("../.test-dist/application/inventory/player-item-inventory.js");
+const {
   PLAYER_GRAIN_RUNTIME_KEYS,
 } = require("../.test-dist/application/inventory/trade-inventory.js");
+const {
+  getMedicineInventoryQuantityVariableKey,
+} = require("../.test-dist/domain/medicine-house.js");
+const {
+  getTradeInventoryQuantityVariableKey,
+} = require("../.test-dist/domain/market-house.js");
 
 function createValuableInventory() {
   return {
@@ -121,18 +132,142 @@ test("projects review runtime items into unified backpack rows", () => {
     },
   });
 
-  assert.deepEqual(items, [
+  const rewardItem = items.find(
+    (item) => item.id === "item.temple.scripture_copy"
+  );
+
+  assert.deepEqual(rewardItem?.types, ["other", "quest"]);
+  assert.equal(rewardItem?.count, 1);
+  assert.deepEqual(rewardItem?.actions, []);
+});
+
+test("backpack projection reads unified player items and exposes the required shop item fields", () => {
+  const items = projectBackpackItems({
+    valuableInventory: createValuableInventory(),
+    gameState: {
+      runtime: {
+        variables: {
+          [PLAYER_GRAIN_RUNTIME_KEYS.quantityDou]: 12,
+          [getPlayerItemQuantityVariableKey("medicine_heal_001")]: 2,
+          [getMedicineInventoryQuantityVariableKey("medicine_heal_001")]: 1,
+          [getPlayerItemQuantityVariableKey("silk")]: 1,
+          [getTradeInventoryQuantityVariableKey("silk")]: 2,
+          [getTradeInventoryQuantityVariableKey("rice")]: 7,
+          "var.medicine_inventory.missing_legacy_id": 5,
+          "var.trade_inventory.missing_legacy_id": 4,
+        },
+      },
+    },
+  });
+
+  const medicineItem = items.find(
+    (item) => item.id === "item.medicine.medicine_heal_001"
+  );
+  const tradeItem = items.find((item) => item.id === "item.trade.silk");
+
+  assert.equal(items.filter((item) => item.id === "item.grain").length, 1);
+  assert.equal(items.some((item) => item.id === "item.trade.rice"), false);
+  assert.equal(
+    items.some((item) => item.id === "item.medicine.missing_legacy_id"),
+    false
+  );
+  assert.equal(
+    items.some((item) => item.id === "item.trade.missing_legacy_id"),
+    false
+  );
+
+  assert.deepEqual(medicineItem?.types, ["other", "prepared-medicine"]);
+  assert.equal(medicineItem?.count, 3);
+  assert.equal(medicineItem?.icon, null);
+  assert.equal(typeof medicineItem?.name, "string");
+  assert.equal(typeof medicineItem?.value, "number");
+  assert.equal(typeof medicineItem?.description, "string");
+  assert.deepEqual(medicineItem?.actions, []);
+
+  assert.deepEqual(tradeItem?.types, ["other", "trade", "silk"]);
+  assert.equal(tradeItem?.count, 3);
+  assert.equal(tradeItem?.icon, null);
+  assert.equal(typeof tradeItem?.name, "string");
+  assert.equal(typeof tradeItem?.value, "number");
+  assert.equal(typeof tradeItem?.description, "string");
+  assert.deepEqual(tradeItem?.actions, []);
+});
+
+test("player item helper merges unified and legacy quantities by source", () => {
+  const state = {
+    runtime: {
+      variables: {
+        [getPlayerItemQuantityVariableKey("medicine_heal_001")]: 1,
+        [getMedicineInventoryQuantityVariableKey("medicine_heal_001")]: 2,
+        [getTradeInventoryQuantityVariableKey("silk")]: 3,
+      },
+    },
+  };
+
+  assert.equal(
+    readPlayerItemQuantity(state, "medicine_heal_001", ["medicine-house"]),
+    3
+  );
+  assert.equal(readPlayerItemQuantity(state, "silk", ["market-house"]), 3);
+  assert.equal(readPlayerItemQuantity(state, "silk"), 0);
+});
+
+test("player item helper writes unified quantities and clears touched legacy keys", () => {
+  const state = {
+    runtime: {
+      variables: {
+        [getMedicineInventoryQuantityVariableKey("medicine_heal_001")]: 2,
+        [getTradeInventoryQuantityVariableKey("silk")]: 4,
+      },
+    },
+  };
+
+  const nextState = applyPlayerItemMutations(state, [
     {
-      id: "item.temple.scripture_copy",
-      name: "经书抄本",
-      icon: null,
-      value: 0,
-      types: ["other", "quest"],
-      count: 1,
-      description: "寺中评定赐下的经书抄本。",
-      actions: [],
+      itemId: "medicine_heal_001",
+      delta: 1,
+      legacySources: ["medicine-house"],
+    },
+    {
+      itemId: "silk",
+      delta: -1,
+      legacySources: ["market-house"],
     },
   ]);
+
+  assert.equal(
+    nextState.runtime.variables[
+      getPlayerItemQuantityVariableKey("medicine_heal_001")
+    ],
+    3
+  );
+  assert.equal(
+    nextState.runtime.variables[
+      getMedicineInventoryQuantityVariableKey("medicine_heal_001")
+    ],
+    0
+  );
+  assert.equal(
+    nextState.runtime.variables[getPlayerItemQuantityVariableKey("silk")],
+    3
+  );
+  assert.equal(
+    nextState.runtime.variables[getTradeInventoryQuantityVariableKey("silk")],
+    0
+  );
+});
+
+test("player item helper clamps invalid runtime values to zero", () => {
+  const state = {
+    runtime: {
+      variables: {
+        [getPlayerItemQuantityVariableKey("broken")]: -4,
+        [getTradeInventoryQuantityVariableKey("broken")]: "oops",
+      },
+    },
+  };
+
+  assert.equal(readPlayerItemQuantity(state, "broken", ["market-house"]), 0);
 });
 
 test("filters backpack rows by top-level category", () => {

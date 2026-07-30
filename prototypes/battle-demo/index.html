@@ -11499,14 +11499,14 @@
         startBattleSpineIdleLoop();
         void overlay.offsetWidth;
         overlay.classList.add('is-active');
-        await sleep(2000);
+        await sleep(700);
         settleQuickBattleOverlay(report);
         renderBoard();
         updateDebug();
         updateUI();
-        await sleep(1000);
+        await sleep(500);
         overlay.classList.add('is-results-visible');
-        await sleep(3000);
+        await sleep(1000);
         overlay.classList.remove('is-results-visible', 'is-active');
         await sleep(220);
         overlay.classList.add('hidden');

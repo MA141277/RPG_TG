@@ -1,0 +1,368 @@
+.c-card-draw {
+  --card-draw-width: 132px;
+  --card-draw-height: 172px;
+  --card-draw-radius: 16px;
+  --card-draw-front-text: #f2dfbe;
+  --card-draw-back-text: #ff7b66;
+
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  width: max-content;
+  perspective: 1200px;
+}
+
+.c-card-draw__stack {
+  position: relative;
+  display: grid;
+  place-items: start center;
+  width: calc(var(--card-draw-width) + 40px);
+  height: calc(var(--card-draw-height) + 82px);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.c-card-draw__stack:focus-visible {
+  outline: 2px solid rgb(244 210 161 / 92%);
+  outline-offset: 6px;
+}
+
+.c-card-draw__stack:disabled {
+  cursor: default;
+}
+
+.c-card-draw__deck {
+  position: relative;
+  width: var(--card-draw-width);
+  height: var(--card-draw-height);
+  margin-top: 18px;
+  transform-origin: 50% 88%;
+}
+
+.c-card-draw__card {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgb(173 120 72 / 48%);
+  border-radius: var(--card-draw-radius);
+  background:
+    linear-gradient(180deg, rgb(80 54 34 / 96%) 0%, rgb(54 34 22 / 98%) 100%);
+  box-shadow:
+    0 14px 32px rgb(0 0 0 / 40%),
+    inset 0 1px 0 rgb(255 236 208 / 8%);
+}
+
+.c-card-draw__card::before,
+.c-card-draw__card::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  content: "";
+}
+
+.c-card-draw__card::before {
+  inset: 8px;
+  border: 1px solid rgb(235 184 125 / 12%);
+}
+
+.c-card-draw__card::after {
+  background:
+    linear-gradient(
+      135deg,
+      rgb(255 255 255 / 8%) 0%,
+      rgb(255 255 255 / 0%) 34%,
+      rgb(0 0 0 / 10%) 100%
+    );
+}
+
+.c-card-draw__card--stack {
+  transform:
+    translate(
+      calc(var(--card-layer-index, 1) * 4px),
+      calc(var(--card-layer-index, 1) * 5px)
+    )
+    rotate(calc(var(--card-layer-index, 1) * 2deg));
+}
+
+.c-card-draw__card--stack[data-card-layer="1"] {
+  transform: translate(10px, 8px) rotate(6deg);
+}
+
+.c-card-draw__card--stack[data-card-layer="2"] {
+  transform: translate(6px, 11px) rotate(1deg);
+}
+
+.c-card-draw__card--stack[data-card-layer="3"] {
+  transform: translate(14px, 15px) rotate(8deg);
+}
+
+.c-card-draw__card--stack[data-card-layer="4"] {
+  transform: translate(4px, 18px) rotate(-2deg);
+}
+
+.c-card-draw__card--top {
+  z-index: 2;
+  transform-style: preserve-3d;
+  transition:
+    transform 420ms cubic-bezier(0.2, 0.72, 0.18, 1),
+    box-shadow 280ms ease;
+  box-shadow:
+    0 20px 38px rgb(0 0 0 / 48%),
+    inset 0 1px 0 rgb(255 236 208 / 10%);
+}
+
+.c-card-draw__card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  font-family: KaiTi, STKaiti, "Noto Serif SC", serif;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.c-card-draw__card-face--front {
+  color: var(--card-draw-front-text);
+  font-size: clamp(3rem, 4vw, 4.5rem);
+  text-shadow: 0 4px 16px rgb(0 0 0 / 32%);
+}
+
+.c-card-draw__card-face--back {
+  transform: rotateY(180deg);
+  color: var(--card-draw-back-text);
+  font-size: clamp(3.3rem, 4.2vw, 4.8rem);
+  text-shadow:
+    0 0 18px rgb(255 110 88 / 18%),
+    0 4px 16px rgb(0 0 0 / 28%);
+}
+
+.c-card-draw__hint {
+  margin: 0;
+  color: rgb(211 187 154 / 78%);
+  font-size: 0.95rem;
+  letter-spacing: 0.18em;
+}
+
+.c-card-draw[data-card-draw-phase="shake"] .c-card-draw__deck {
+  animation: card-draw-stack-shake 340ms ease-in-out;
+}
+
+.c-card-draw[data-card-draw-phase="lift"] .c-card-draw__card--top,
+.c-card-draw[data-card-draw-phase="flip"] .c-card-draw__card--top {
+  transform: translate(24px, -58px) rotate(11deg);
+  box-shadow:
+    0 28px 54px rgb(0 0 0 / 54%),
+    inset 0 1px 0 rgb(255 236 208 / 14%);
+}
+
+.c-card-draw[data-card-draw-phase="flip"] .c-card-draw__card--top {
+  transform: translate(24px, -58px) rotate(11deg) rotateY(180deg);
+}
+
+.c-card-draw[data-card-draw-phase="settle"] .c-card-draw__card--top,
+.c-card-draw[data-card-draw-phase="done"] .c-card-draw__card--top {
+  transform: translate(0, 0) rotate(0deg) rotateY(180deg);
+}
+
+.c-card-draw[data-card-draw-phase="done"] .c-card-draw__hint {
+  color: rgb(247 182 154 / 92%);
+}
+
+.c-city-card-draw-test {
+  position: fixed;
+  inset: 0;
+  z-index: 36;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.c-city-card-draw-test__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 28%, rgb(116 73 34 / 18%), transparent 40%),
+    rgb(5 4 3 / 78%);
+  backdrop-filter: blur(4px);
+}
+
+.c-city-card-draw-test__panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  width: min(520px, calc(100vw - 32px));
+  padding: 34px 32px 30px;
+  border: 1px solid rgb(183 135 83 / 54%);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgb(38 25 16 / 98%) 0%, rgb(16 11 9 / 98%) 100%);
+  box-shadow:
+    0 26px 60px rgb(0 0 0 / 46%),
+    inset 0 1px 0 rgb(255 237 210 / 8%);
+  text-align: center;
+}
+
+.c-city-card-draw-test__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgb(204 166 109 / 34%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 3%);
+  color: rgb(243 220 176 / 88%);
+  font: 400 22px/1 var(--font-ui);
+  cursor: pointer;
+}
+
+.c-city-card-draw-test__eyebrow {
+  margin: 0;
+  color: rgb(223 171 120 / 88%);
+  font: 700 0.86rem/1 var(--font-ui);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.c-city-card-draw-test__title {
+  margin: 0;
+  color: #f3dfb7;
+  font: 700 clamp(1.7rem, 2.5vw, 2.2rem)/1.1 var(--font-title);
+}
+
+.c-city-card-draw-test__copy {
+  margin: 0;
+  max-width: 28rem;
+  color: rgb(214 190 160 / 76%);
+  font: 400 0.98rem/1.7 var(--font-ui);
+}
+
+.c-city-card-draw-test__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 314px;
+}
+
+.c-city-card-draw-test__static-card {
+  display: grid;
+  place-items: center;
+  width: 146px;
+  height: 192px;
+  border: 1px solid rgb(173 120 72 / 48%);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgb(80 54 34 / 96%) 0%, rgb(54 34 22 / 98%) 100%);
+  box-shadow:
+    0 20px 38px rgb(0 0 0 / 48%),
+    inset 0 1px 0 rgb(255 236 208 / 10%);
+}
+
+.c-city-card-draw-test__static-card-label {
+  color: #ff7b66;
+  font-family: KaiTi, STKaiti, "Noto Serif SC", serif;
+  font-size: clamp(3.3rem, 4.2vw, 4.8rem);
+  font-weight: 700;
+  text-shadow:
+    0 0 18px rgb(255 110 88 / 18%),
+    0 4px 16px rgb(0 0 0 / 28%);
+}
+
+.c-city-card-draw-test__result {
+  margin: 0;
+  min-height: 1.7em;
+  color: rgb(246 176 145 / 94%);
+  font: 700 1rem/1.5 var(--font-ui);
+  letter-spacing: 0.06em;
+}
+
+.c-city-card-draw-test__actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.c-city-card-draw-test__confirm {
+  min-width: 164px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid rgb(204 158 106 / 60%);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgb(94 60 33 / 96%) 0%, rgb(56 36 20 / 98%) 100%);
+  color: #f8e7c4;
+  font: 700 1rem/1 var(--font-title);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+}
+
+.c-city-card-draw-test__confirm:hover,
+.c-city-card-draw-test__close:hover {
+  filter: brightness(1.08);
+}
+
+.c-city-card-draw-test__confirm:hover {
+  transform: translateY(-1px);
+  border-color: rgb(240 200 136 / 74%);
+}
+
+@keyframes card-draw-stack-shake {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  20% {
+    transform: translateX(-5px) rotate(-2deg);
+  }
+
+  40% {
+    transform: translateX(6px) rotate(2deg);
+  }
+
+  60% {
+    transform: translateX(-4px) rotate(-1.6deg);
+  }
+
+  82% {
+    transform: translateX(3px) rotate(1.2deg);
+  }
+
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c-card-draw__card--top {
+    transition-duration: 0ms;
+  }
+
+  .c-card-draw[data-card-draw-phase="shake"] .c-card-draw__deck {
+    animation-duration: 0ms;
+  }
+}
+
+@media (width <= 640px) {
+  .c-city-card-draw-test {
+    padding: 16px;
+  }
+
+  .c-city-card-draw-test__panel {
+    width: min(100%, 420px);
+    padding: 28px 20px 24px;
+  }
+
+  .c-city-card-draw-test__stage {
+    min-height: 286px;
+  }
+}

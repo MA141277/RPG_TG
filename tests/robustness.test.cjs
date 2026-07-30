@@ -29,6 +29,12 @@ const {
   PLAYER_GRAIN_RUNTIME_KEYS,
 } = require("../.test-dist/application/inventory/trade-inventory.js");
 const {
+  getPlayerItemQuantityVariableKey,
+} = require("../.test-dist/application/inventory/player-item-inventory.js");
+const {
+  projectBackpackItems,
+} = require("../.test-dist/application/inventory/item-inventory.js");
+const {
   homeHouseHouseModule,
 } = require("../.test-dist/application/house-modules/home-house/home-house-house-module.js");
 const {
@@ -49,6 +55,9 @@ const {
 const {
   renderTavernHouseView,
 } = require("../.test-dist/ui/views/house/tavern-house-view.js");
+const {
+  renderGrainShopHouseView,
+} = require("../.test-dist/ui/views/house/grain-shop-house-view.js");
 const {
   marketHouseHouseModule,
 } = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
@@ -151,6 +160,9 @@ const {
   getMedicineInventoryQuantityVariableKey,
   getPlayerFatigueVariableKey,
 } = require("../.test-dist/domain/medicine-house.js");
+const {
+  getTradeInventoryQuantityVariableKey,
+} = require("../.test-dist/domain/market-house.js");
 const {
   getTavernCompletedWorkKey,
   getTavernFailedWorkKey,
@@ -302,6 +314,60 @@ function createRuntimeState(coreState = createBaseState()) {
       modalState: null,
     },
     view: {},
+  };
+}
+
+function withPlayerGold(characterDefinitions, gold) {
+  return characterDefinitions.map((characterDefinition) =>
+    characterDefinition.id !== playerCharacterId
+      ? characterDefinition
+      : {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            gold,
+          },
+        }
+  );
+}
+
+function createFixedGrainShopMarket(price, goodsId = "rice") {
+  return {
+    shopType: "grain-shop",
+    inventory: [
+      {
+        goodsId,
+        buyPrice: price,
+        sellPrice: Math.max(1, price - 12),
+        rolledBasePrice: price,
+        selectionWeight: 100,
+      },
+    ],
+    lastRefreshedOnDay: 1,
+    refreshAfterDay: 999999,
+  };
+}
+
+function withSeededCityGrainMarkets(state, cityPrices) {
+  return {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      cityMarkets: {
+        ...state.runtime.cityMarkets,
+        ...Object.fromEntries(
+          Object.entries(cityPrices).map(([cityId, price]) => [
+            cityId,
+            {
+              cityId,
+              shops: {
+                "grain-shop": createFixedGrainShopMarket(price),
+              },
+            },
+          ])
+        ),
+      },
+    },
   };
 }
 
@@ -2819,6 +2885,16 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
   assert.equal(
     houseAccessRefusalRules.some(
       (rule) => rule.id === "rule.zhu_yuanzhang.temple.first_review_stay"
+    ),
+    true
+  );
+  assert.equal(
+    houseAccessRefusalRules.some(
+      (rule) =>
+        rule.id === "rule.zhu_yuanzhang.temple.first_review_stay" &&
+        rule.excludedHouseModuleIds?.includes("grain-shop") === true &&
+        rule.excludedHouseModuleIds?.includes("tavern") === true &&
+        rule.excludedHouseModuleIds?.includes("market-house") === true
     ),
     true
   );
@@ -9342,7 +9418,7 @@ test("story-stage access keeps leader residence entry visible in monk stage", ()
   );
 });
 
-test("house access refusal blocks leaving temple before first review", () => {
+test("house access refusal still blocks most houses before first review but temporarily allows grain shop tavern and market house", () => {
   const monkState = createMonkStageState();
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
@@ -9350,11 +9426,19 @@ test("house access refusal blocks leaving temple before first review", () => {
   const monkGrainShop = prototypeHouses.find(
     (houseDefinition) => houseDefinition.id === "house.kulan.grain_shop"
   );
+  const monkMarketHouse = prototypeHouses.find(
+    (houseDefinition) => houseDefinition.id === "house.kulan.market"
+  );
+  const monkTavern = prototypeHouses.find(
+    (houseDefinition) => houseDefinition.id === "house.kulan.inn"
+  );
   const monkTempleHouse = prototypeHouses.find(
     (houseDefinition) => houseDefinition.id === "house.kulan.temple"
   );
 
   assert.ok(monkGrainShop);
+  assert.ok(monkMarketHouse);
+  assert.ok(monkTavern);
   assert.ok(monkTempleHouse);
 
   const grainShopAccess = selectHouseEntryAccess(
@@ -9369,14 +9453,26 @@ test("house access refusal blocks leaving temple before first review", () => {
     monkTempleHouse,
     prototypeHouseAccessRefusalRules
   );
-
-  assert.equal(grainShopAccess.canEnter, false);
-  assert.equal(grainShopAccess.refusal?.speakerCharacterId, "char.player");
-  assert.equal(
-    grainShopAccess.refusal?.text,
-    "既然答应了主持，就先不要离开寺院吧。"
+  const marketHouseAccess = selectHouseEntryAccess(
+    monkState,
+    monkCharacters,
+    monkMarketHouse,
+    prototypeHouseAccessRefusalRules
   );
+  const tavernAccess = selectHouseEntryAccess(
+    monkState,
+    monkCharacters,
+    monkTavern,
+    prototypeHouseAccessRefusalRules
+  );
+
+  assert.equal(grainShopAccess.canEnter, true);
+  assert.equal(grainShopAccess.refusal, null);
   assert.equal(templeAccess.canEnter, true);
+  assert.equal(marketHouseAccess.canEnter, true);
+  assert.equal(marketHouseAccess.refusal, null);
+  assert.equal(tavernAccess.canEnter, true);
+  assert.equal(tavernAccess.refusal, null);
 });
 
 test("house access refusal shows guard dialogue for keep during monk stage", () => {
@@ -10192,9 +10288,8 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
     textEntriesById: begAlmsTextEntries,
   });
 
-  assert.deepEqual(leaveResult.sessionState?.dialogueOverride?.textLines, [
-    "自定义离寺拦截。",
-  ]);
+  assert.equal(leaveResult.navigation, undefined);
+  assert.equal(leaveResult.sessionState, null);
 });
 
 test("temple house rest summary resolves from text entries", () => {
@@ -10337,7 +10432,7 @@ test("temple and keep house content files no longer author pack task definitions
   assert.equal(templeContentSource.trim(), "export {};");
 });
 
-test("temple house blocks leaving during first review with player dialogue", () => {
+test("temple house temporarily allows leaving during first review for tavern debugging", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
   );
@@ -10373,33 +10468,11 @@ test("temple house blocks leaving during first review with player dialogue", () 
     },
   });
 
-  assert.deepEqual(leaveResult.navigation, { type: "stay-in-house" });
-  assert.equal(leaveResult.sessionState?.overlay, null);
-  assert.equal(leaveResult.sessionState?.dialogueOverride?.speakerCharacterId, playerCharacterId);
-  assert.deepEqual(leaveResult.sessionState?.dialogueOverride?.textLines, [
-    "既然答应了主持，就先不要离开寺院吧。",
-  ]);
-
-  const viewModel = templeHouseHouseModule.selectViewModel({
-    gameState: leaveResult.gameState,
-    characterDefinitions: leaveResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: leaveResult.sessionState,
-  });
-
-  assert.equal(viewModel.dialogue?.characterId, playerCharacterId);
-  assert.deepEqual(viewModel.dialogue?.textLines, [
-    "既然答应了主持，就先不要离开寺院吧。",
-  ]);
-  assert.equal(
-    viewModel.dialogue?.portraitArtClassName,
-    "c-temple-house-portrait-art--player"
-  );
-
+  assert.equal(leaveResult.navigation, undefined);
+  assert.equal(leaveResult.sessionState, null);
 });
 
-test("temple house only blocks leaving during the first tutorial work period", () => {
+test("temple house temporarily allows leaving during the first tutorial work period", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
   );
@@ -10435,10 +10508,8 @@ test("temple house only blocks leaving during the first tutorial work period", (
     sessionState: firstWorkEnterResult.sessionState,
   });
 
-  assert.deepEqual(blockedLeaveResult.navigation, { type: "stay-in-house" });
-  assert.deepEqual(blockedLeaveResult.sessionState?.dialogueOverride?.textLines, [
-    "既然答应了主持，就先不要离开寺院吧。",
-  ]);
+  assert.equal(blockedLeaveResult.navigation, undefined);
+  assert.equal(blockedLeaveResult.sessionState, null);
 
   const nextReviewEnterResult = templeHouseHouseModule.enter({
     gameState: {
@@ -11168,7 +11239,7 @@ test("grain shop trade overlay reads buy and sell price from unified city market
   );
 });
 
-test("grain shop greeting and investigate copy resolve from text entries", () => {
+test("grain shop investigate turns into paid grain intel flow and projects nearby city prices", () => {
   const textEntriesById = {
     "runtime.zhu_yuanzhang.grain_shop.greeting.001": "自定义粮铺招呼一。",
     "runtime.zhu_yuanzhang.grain_shop.greeting.002": "自定义粮铺招呼一。",
@@ -11178,17 +11249,30 @@ test("grain shop greeting and investigate copy resolve from text entries", () =>
     "runtime.zhu_yuanzhang.grain_shop.default.002": "自定义粮铺常规招呼。",
     "runtime.zhu_yuanzhang.grain_shop.default.003": "自定义粮铺常规招呼。",
     "runtime.zhu_yuanzhang.grain_shop.default.004": "自定义粮铺常规招呼。",
-    "runtime.zhu_yuanzhang.grain_market.rumor.001": "自定义粮市传闻。",
-    "runtime.zhu_yuanzhang.grain_market.rumor.002": "自定义粮市传闻。",
-    "runtime.zhu_yuanzhang.grain_market.rumor.003": "自定义粮市传闻。",
-    "runtime.zhu_yuanzhang.grain_market.rumor.004": "自定义粮市传闻。",
-    "runtime.zhu_yuanzhang.grain_market.investigate.high": "自定义粮价看涨。",
-    "runtime.zhu_yuanzhang.grain_market.investigate.low": "自定义粮价走低。",
-    "runtime.zhu_yuanzhang.grain_market.investigate.neutral": "自定义粮价平稳。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.001": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.002": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.003": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.004": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.005": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.001": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.002": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.003": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.004": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.005": "自定义银钱不凑手。",
   };
+  const seededState = withSeededCityGrainMarkets(createBaseState(), {
+    "city.kulan": 96,
+    "city.huangcun": 141,
+    "city.anfeng": 88,
+    "city.luzhou": 124,
+    "city.huaian": 110,
+    "city.runing": 132,
+    "city.kaifeng": 140,
+    "city.taiping": 91,
+  });
 
   const enterResult = grainShopHouseModule.enter({
-    gameState: createBaseState(),
+    gameState: seededState,
     characterDefinitions: prototypeCharacters,
     houseDefinition: grainShopHouse,
     playerCharacterId,
@@ -11198,30 +11282,237 @@ test("grain shop greeting and investigate copy resolve from text entries", () =>
   assert.equal(enterResult.sessionState?.npcGreeting, "自定义粮铺招呼一。");
   assert.equal(enterResult.sessionState?.npcDefaultLine, "自定义粮铺常规招呼。");
 
-  const investigateResult = grainShopHouseModule.dispatch({
+  const openResult = grainShopHouseModule.dispatch({
     gameState: enterResult.gameState,
     characterDefinitions: enterResult.characterDefinitions,
     houseDefinition: grainShopHouse,
     playerCharacterId,
     sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+    textEntriesById,
+  });
+  const investigateResult = grainShopHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
     request: { type: "action", actionId: "investigate" },
     textEntriesById,
   });
+  const offerViewModel = grainShopHouseModule.selectViewModel({
+    gameState: investigateResult.gameState,
+    characterDefinitions: investigateResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: investigateResult.sessionState,
+  });
 
-  assert.equal(investigateResult.sessionState?.overlay?.type, "alert");
-  const investigatedPrice =
-    enterResult.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.grainPrice];
-  const expectedInvestigateLine =
-    investigatedPrice > 130
-      ? "自定义粮价看涨。"
-      : investigatedPrice < 100
-        ? "自定义粮价走低。"
-        : "自定义粮价平稳。";
-  assert.deepEqual(investigateResult.sessionState?.overlay?.paragraphs, [
-    expectedInvestigateLine,
-    "传闻：自定义粮市传闻。",
-    `当前粮价约为每石 ${investigatedPrice} 文。`,
+  assert.equal(investigateResult.sessionState?.overlay, null);
+  assert.equal(investigateResult.sessionState?.dialoguePhase, "investigation-offer");
+  assert.deepEqual(offerViewModel.dialogue?.textLines, ["自定义情报讨价。"]);
+  assert.deepEqual(
+    offerViewModel.actionContainer?.actions.map((action) => ({
+      id: action.id,
+      label: action.label,
+    })),
+    [
+      { id: "inquire-grain-price", label: "询问价格（100 文）" },
+      { id: "cancel-grain-investigation", label: "返回" },
+    ]
+  );
+  assert.equal(offerViewModel.standbyRoster[0]?.actionId, undefined);
+
+  const reportResult = grainShopHouseModule.dispatch({
+    gameState: investigateResult.gameState,
+    characterDefinitions: investigateResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: investigateResult.sessionState,
+    request: { type: "action", actionId: "inquire-grain-price" },
+    textEntriesById,
+  });
+  const reportViewModel = grainShopHouseModule.selectViewModel({
+    gameState: reportResult.gameState,
+    characterDefinitions: reportResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: reportResult.sessionState,
+  });
+  const reportMarkup = renderGrainShopHouseView(reportViewModel);
+  const playerAfterReport = reportResult.characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === playerCharacterId
+  );
+
+  assert.equal(reportResult.timeAdvanceCost, 1);
+  assert.equal(playerAfterReport?.stats.gold, 20);
+  assert.equal(reportViewModel.overlay?.type, "grain-price-report");
+  assert.match(reportMarkup, /data-house-overlay="grain-price-report"/);
+  if (reportViewModel.overlay?.type !== "grain-price-report") {
+    return;
+  }
+
+  assert.equal(reportViewModel.overlay.title, "米市价");
+  assert.equal(reportViewModel.overlay.confirmLabel, "返回买卖粮食");
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.cityName), [
+    "濠州",
+    "荒村",
+    "汴梁路★开封",
+    "安丰路※安丰",
+    "庐州路※合肥",
+    "高邮府※高邮军",
+    "颍州",
   ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.directionLabel), [
+    "—",
+    "西北",
+    "东北",
+    "西北",
+    "正北",
+    "正东",
+    "西北",
+  ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.sellPrice), [
+    84,
+    129,
+    128,
+    76,
+    112,
+    98,
+    120,
+  ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.buyPrice), [
+    96,
+    141,
+    140,
+    88,
+    124,
+    110,
+    132,
+  ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.comparisonLabel), [
+    "基准",
+    "↑ 高 45 文",
+    "↑ 高 44 文",
+    "↓ 低 8 文",
+    "↑ 高 28 文",
+    "↑ 高 14 文",
+    "↑ 高 36 文",
+  ]);
+  assert.deepEqual(reportViewModel.overlay.rows.map((row) => row.priceTone), [
+    "neutral",
+    "high",
+    "high",
+    "low",
+    "high",
+    "high",
+    "high",
+  ]);
+  assert.match(reportMarkup, /米市价/);
+  assert.match(reportMarkup, /城名/);
+  assert.match(reportMarkup, /方位/);
+  assert.match(reportMarkup, /卖价/);
+  assert.match(reportMarkup, /买价/);
+  assert.match(reportMarkup, /对比本城/);
+  assert.match(reportMarkup, /濠州（本城）/);
+});
+
+test("grain shop grain intel refuses politely when player cannot afford the fee", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.grain_shop.greeting.001": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.greeting.002": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.greeting.003": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.greeting.004": "自定义粮铺招呼一。",
+    "runtime.zhu_yuanzhang.grain_shop.default.001": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.default.002": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.default.003": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.default.004": "自定义粮铺常规招呼。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.001": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.002": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.003": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.004": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.offer.005": "自定义情报讨价。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.001": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.002": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.003": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.004": "自定义银钱不凑手。",
+    "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.005": "自定义银钱不凑手。",
+  };
+  const poorCharacters = withPlayerGold(prototypeCharacters, 80);
+  const enterResult = grainShopHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: poorCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+  const openResult = grainShopHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+    textEntriesById,
+  });
+  const offerResult = grainShopHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "investigate" },
+    textEntriesById,
+  });
+  const refusalResult = grainShopHouseModule.dispatch({
+    gameState: offerResult.gameState,
+    characterDefinitions: offerResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: offerResult.sessionState,
+    request: { type: "action", actionId: "inquire-grain-price" },
+    textEntriesById,
+  });
+  const refusalViewModel = grainShopHouseModule.selectViewModel({
+    gameState: refusalResult.gameState,
+    characterDefinitions: refusalResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: refusalResult.sessionState,
+  });
+  const playerAfterRefusal = refusalResult.characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === playerCharacterId
+  );
+
+  assert.equal(refusalResult.timeAdvanceCost, undefined);
+  assert.equal(playerAfterRefusal?.stats.gold, 80);
+  assert.equal(refusalResult.sessionState?.overlay, null);
+  assert.equal(refusalResult.sessionState?.dialoguePhase, "investigation-report");
+  assert.deepEqual(refusalViewModel.dialogue?.textLines, ["自定义银钱不凑手。"]);
+  assert.equal(refusalViewModel.actionContainer, null);
+
+  const reopenResult = grainShopHouseModule.dispatch({
+    gameState: refusalResult.gameState,
+    characterDefinitions: refusalResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: refusalResult.sessionState,
+    request: { type: "action", actionId: "advance-grain-investigation-report" },
+    textEntriesById,
+  });
+  const reopenViewModel = grainShopHouseModule.selectViewModel({
+    gameState: reopenResult.gameState,
+    characterDefinitions: reopenResult.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: reopenResult.sessionState,
+  });
+
+  assert.equal(reopenResult.sessionState?.dialoguePhase, "open");
+  assert.equal(
+    reopenViewModel.actionContainer?.actions.some((action) => action.id === "buy"),
+    true
+  );
 });
 
 test("grain market and grain shop content no longer keep core greeting and rumor prose inline", () => {
@@ -11473,7 +11764,7 @@ test("market house follows greeting open idle rhythm with fixed boss and guest r
   assert.equal(idleViewModel.actionContainer, null);
 });
 
-test("market house copy resolves from text entries for greeting, open, small talk, and investigate", async () => {
+test("market house copy resolves from text entries for greeting, open, and small talk while investigate uses spoken report state", async () => {
   const state = ensureCityNpcPoolsForCurrentDay(
     createBaseState(),
     prototypeCityNpcPools,
@@ -11488,25 +11779,6 @@ test("market house copy resolves from text entries for greeting, open, small tal
     "runtime.zhu_yuanzhang.market_house.small_talk.002": "自定义货栈闲谈。",
     "runtime.zhu_yuanzhang.market_house.small_talk.003": "自定义货栈闲谈。",
     "runtime.zhu_yuanzhang.market_house.small_talk.004": "自定义货栈闲谈。",
-    "runtime.zhu_yuanzhang.market_house.investigate.city.001":
-      "{cityName}繁荣 {prosperity}，风险 {danger}。",
-    "runtime.zhu_yuanzhang.market_house.investigate.city.002":
-      "城中偏好：{specialDemandList}",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.general.001": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.grain.001": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.grain.002": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.medicine.001": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.medicine.002": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.silk.001": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.silk.002": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.arms.001": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.arms.002": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.horses.001": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.horses.002": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.special.001": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.rumor.special.002": "自定义货栈传闻。",
-    "runtime.zhu_yuanzhang.market_house.investigate.specialty.trade": "自定义货栈行规。",
-    "runtime.zhu_yuanzhang.market_house.investigate.overlay.title": "自定义调查行情",
     "runtime.zhu_yuanzhang.market_house.small_talk.overlay.title": "自定义闲谈",
   };
 
@@ -11563,20 +11835,22 @@ test("market house copy resolves from text entries for greeting, open, small tal
     request: { type: "action", actionId: "investigate-market" },
     textEntriesById,
   });
-  const runtimeContent = await loadDefaultRuntimeContent();
-  const marketCity = runtimeContent.cities.find(
-    (cityDefinition) => cityDefinition.id === marketHouse.cityId
+
+  assert.equal(investigateResult.sessionState?.overlay, null);
+  assert.equal(investigateResult.sessionState?.dialoguePhase, "investigation-report");
+  assert.equal(investigateResult.sessionState?.dialogueLines.length, 3);
+  assert.equal(
+    investigateResult.sessionState?.dialogueLines[0].startsWith("自定义特产："),
+    false
   );
-
-  assert.ok(marketCity);
-
-  assert.equal(investigateResult.sessionState?.overlay?.title, "自定义调查行情");
-  assert.deepEqual(investigateResult.sessionState?.overlay?.paragraphs, [
-    `${marketCity.name}繁荣 ${marketCity.prosperity}，风险 ${marketCity.danger}。`,
-    `城中偏好：${marketCity.specialDemand.join(" / ") || "无"}`,
-    "自定义货栈传闻。",
-    "自定义货栈行规。",
-  ]);
+  assert.equal(
+    investigateResult.sessionState?.dialogueLines[0].includes("**"),
+    true
+  );
+  assert.equal(
+    investigateResult.sessionState?.dialogueLines[1].includes("**"),
+    true
+  );
 });
 
 test("market house runtime and content no longer keep core greeting rumor prose inline", () => {
@@ -11690,7 +11964,135 @@ test("market house can open trade overlay and execute buy flow", () => {
   const playerCharacter = getPlayerCharacter(buyResult.characterDefinitions);
   assert.equal(playerCharacter.stats.gold < 5000, true);
   assert.equal(
-    buyResult.gameState.runtime.variables[`var.trade_inventory.${goodsId}`] > 0,
+    buyResult.gameState.runtime.variables[
+      getPlayerItemQuantityVariableKey(goodsId)
+    ] > 0,
+    true
+  );
+  assert.equal(
+    buyResult.gameState.runtime.variables[
+      getTradeInventoryQuantityVariableKey(goodsId)
+    ],
+    0
+  );
+
+  const projectedItems = projectBackpackItems({
+    valuableInventory: buyResult.gameState.valuables,
+    gameState: buyResult.gameState,
+  });
+
+  assert.equal(
+    projectedItems.some(
+      (item) => item.id === `item.trade.${goodsId}` && item.count > 0
+    ),
+    true
+  );
+});
+
+test("market house can sell legacy-only goods through normalized player item inventory", () => {
+  const baseState = createBaseState();
+  const state = ensureCityNpcPoolsForCurrentDay(
+    {
+      ...baseState,
+      runtime: {
+        ...baseState.runtime,
+        variables: {
+          ...baseState.runtime.variables,
+          [getTradeInventoryQuantityVariableKey("silk")]: 2,
+        },
+      },
+    },
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+  const playerGoldBefore = 120;
+  const richCharacters = prototypeCharacters.map((characterDefinition) =>
+    characterDefinition.id !== playerCharacterId
+      ? characterDefinition
+      : {
+          ...characterDefinition,
+          stats: {
+            ...characterDefinition.stats,
+            gold: playerGoldBefore,
+          },
+        }
+  );
+
+  const enterResult = marketHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: richCharacters,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+  });
+
+  const openResult = marketHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "advance-greeting",
+    },
+  });
+
+  const sellOverlay = marketHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "sell-goods",
+    },
+  });
+
+  assert.equal(sellOverlay.sessionState?.overlay?.type, "market-trade");
+  if (sellOverlay.sessionState?.overlay?.type !== "market-trade") {
+    return;
+  }
+
+  assert.equal(sellOverlay.sessionState.overlay.mode, "sell");
+  assert.equal(sellOverlay.sessionState.overlay.selectedGoodsId, "silk");
+
+  const sellResult = marketHouseHouseModule.dispatch({
+    gameState: sellOverlay.gameState,
+    characterDefinitions: sellOverlay.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: sellOverlay.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-trade",
+    },
+  });
+
+  assert.equal(
+    sellResult.gameState.runtime.variables[
+      getTradeInventoryQuantityVariableKey("silk")
+    ],
+    0
+  );
+  assert.equal(
+    sellResult.gameState.runtime.variables[
+      getPlayerItemQuantityVariableKey("silk")
+    ],
+    1
+  );
+  assert.equal(
+    getPlayerCharacter(sellResult.characterDefinitions).stats.gold > playerGoldBefore,
+    true
+  );
+
+  const projectedItems = projectBackpackItems({
+    valuableInventory: sellResult.gameState.valuables,
+    gameState: sellResult.gameState,
+  });
+
+  assert.equal(
+    projectedItems.some((item) => item.id === "item.trade.silk" && item.count === 1),
     true
   );
 });
@@ -12281,15 +12683,20 @@ test("tavern drink flow spends 100 gold after confirmation", () => {
   assert.equal(confirmDrink.sessionState?.overlay?.type, "alert");
 });
 
-test("tavern gamble flow opens structured mahjong table session", () => {
-  const state = createBaseState();
+function openTavernGambleVariant(
+  baseState,
+  characterDefinitions,
+  variant,
+  wager = 100,
+  textEntriesById
+) {
   const enterResult = tavernHouseModule.enter({
-    gameState: state,
-    characterDefinitions: prototypeCharacters,
+    gameState: baseState,
+    characterDefinitions,
     houseDefinition: tavernHouse,
     playerCharacterId,
+    ...(textEntriesById == null ? {} : { textEntriesById }),
   });
-
   const openGamble = tavernHouseModule.dispatch({
     gameState: enterResult.gameState,
     characterDefinitions: enterResult.characterDefinitions,
@@ -12297,43 +12704,70 @@ test("tavern gamble flow opens structured mahjong table session", () => {
     playerCharacterId,
     sessionState: enterResult.sessionState,
     request: { type: "action", actionId: "open-gamble" },
+    ...(textEntriesById == null ? {} : { textEntriesById }),
   });
-
-  assert.equal(openGamble.sessionState?.overlay?.type, "gamble-choice");
-
-  const selectShortGamble = tavernHouseModule.dispatch({
+  const selectedGamble = tavernHouseModule.dispatch({
     gameState: openGamble.gameState,
     characterDefinitions: openGamble.characterDefinitions,
     houseDefinition: tavernHouse,
     playerCharacterId,
     sessionState: openGamble.sessionState,
-    request: { type: "action", actionId: "select-gamble-variant:short" },
+    request: { type: "action", actionId: `select-gamble-variant:${variant}` },
+    ...(textEntriesById == null ? {} : { textEntriesById }),
   });
-
-  assert.equal(selectShortGamble.sessionState?.overlay?.type, "gamble");
-
-  const startGamble = tavernHouseModule.dispatch({
-    gameState: selectShortGamble.gameState,
-    characterDefinitions: selectShortGamble.characterDefinitions,
+  return tavernHouseModule.dispatch({
+    gameState: selectedGamble.gameState,
+    characterDefinitions: selectedGamble.characterDefinitions,
     houseDefinition: tavernHouse,
     playerCharacterId,
     sessionState: {
-      ...selectShortGamble.sessionState,
-      currentWager: 100,
+      ...selectedGamble.sessionState,
+      currentWager: wager,
     },
     request: { type: "action", actionId: "confirm-gamble" },
+    ...(textEntriesById == null ? {} : { textEntriesById }),
   });
+}
 
-  const playerCharacter = getPlayerCharacter(startGamble.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 120);
-  assert.equal(startGamble.sessionState?.overlay?.type, "gamble-table");
-  assert.equal(startGamble.sessionState?.gambleSession?.phase, "betting");
-  assert.equal(startGamble.sessionState?.gambleSession?.players[0]?.hand.length, 4);
-  assert.equal(startGamble.sessionState?.gambleSession?.wager, 100);
-  assert.equal(startGamble.sessionState?.gambleSession?.currentBet, 20);
-  assert.equal(startGamble.sessionState?.gambleSession?.pot, 30);
-  assert.equal(startGamble.sessionState?.gambleSession?.players[1]?.committed, 10);
-  assert.equal(startGamble.sessionState?.gambleSession?.players[2]?.committed, 20);
+function openShortTable(baseState, characterDefinitions, wager = 100, textEntriesById) {
+  return openTavernGambleVariant(
+    baseState,
+    characterDefinitions,
+    "short",
+    wager,
+    textEntriesById
+  );
+}
+
+function openLongTable(baseState, characterDefinitions, wager = 100, textEntriesById) {
+  return openTavernGambleVariant(
+    baseState,
+    characterDefinitions,
+    "long",
+    wager,
+    textEntriesById
+  );
+}
+
+test("tavern short gamble start creates a persistent short table session", () => {
+  const started = openShortTable(createBaseState(), prototypeCharacters, 100);
+  const playerCharacter = getPlayerCharacter(started.characterDefinitions);
+
+  assert.equal(playerCharacter.stats.gold, 20);
+  assert.equal(started.sessionState?.overlay?.type, "gamble-table");
+  assert.equal(started.sessionState?.gambleSession?.variant, "short");
+  assert.equal(
+    started.sessionState?.gambleSession?.table.currentHand.players[0]?.hand.length,
+    5
+  );
+  assert.equal(
+    started.sessionState?.gambleSession?.table.currentHand.publicCards.length,
+    2
+  );
+  assert.equal(
+    started.sessionState?.gambleSession?.table.currentHand.currentBet,
+    200
+  );
 });
 
 test("tavern gamble start is blocked when stamina is below activity cost", () => {
@@ -12380,57 +12814,17 @@ test("tavern gamble start is blocked when stamina is below activity cost", () =>
   assert.equal(result.sessionState?.gambleSession, null);
 });
 
-test("tavern gamble settlement spends stamina", () => {
-  const startingStamina = getPlayerCharacter(prototypeCharacters).stamina;
-  const enterResult = tavernHouseModule.enter({
-    gameState: createBaseState(),
-    characterDefinitions: prototypeCharacters,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-  });
-  const openGamble = tavernHouseModule.dispatch({
-    gameState: enterResult.gameState,
-    characterDefinitions: enterResult.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: enterResult.sessionState,
-    request: { type: "action", actionId: "open-gamble" },
-  });
-  const selectShortGamble = tavernHouseModule.dispatch({
-    gameState: openGamble.gameState,
-    characterDefinitions: openGamble.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openGamble.sessionState,
-    request: { type: "action", actionId: "select-gamble-variant:short" },
-  });
-  const startGamble = tavernHouseModule.dispatch({
-    gameState: selectShortGamble.gameState,
-    characterDefinitions: selectShortGamble.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: {
-      ...selectShortGamble.sessionState,
-      currentWager: 100,
-    },
-    request: { type: "action", actionId: "confirm-gamble" },
-  });
+test("tavern short and long sessions stay isolated behind the tavern gamble session union", () => {
+  const shortStarted = openShortTable(createBaseState(), prototypeCharacters, 100);
+  const longStarted = openLongTable(createBaseState(), prototypeCharacters, 100);
 
-  const result = tavernHouseModule.dispatch({
-    gameState: startGamble.gameState,
-    characterDefinitions: startGamble.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: startGamble.sessionState,
-    request: { type: "action", actionId: "gamble-settle" },
-  });
+  assert.equal(shortStarted.sessionState?.gambleSession?.variant, "short");
+  assert.equal(longStarted.sessionState?.gambleSession?.variant, "long");
+  assert.equal(longStarted.sessionState?.gambleSession?.session.variant, "long");
+});
 
-  assert.equal(result.sessionState?.overlay?.type, "alert");
-  assert.equal(
-    getPlayerCharacter(result.characterDefinitions).stamina,
-    startingStamina - ACTIVITY_COMPLETION_STAMINA_COST
-  );
-  assert.equal(result.sessionState?.gambleSession, null);
+test("tavern gamble integration keeps src/main.ts free of tavern short branches", () => {
+  assert.doesNotMatch(readSource("src/main.ts"), /tavern-short|gamble-short/u);
 });
 
 test("tavern long gamble starts with personal public tile slots", () => {
@@ -12472,7 +12866,7 @@ test("tavern long gamble starts with personal public tile slots", () => {
     request: { type: "action", actionId: "confirm-gamble" },
   });
 
-  const session = startGamble.sessionState?.gambleSession;
+  const session = startGamble.sessionState?.gambleSession?.session;
   assert.equal(session?.variant, "long");
   assert.equal(session?.players[0]?.hand.length, 5);
   assert.equal(session?.players[0]?.publicTileSlots?.length, 9);
@@ -13190,20 +13584,18 @@ test("tavern copy resolves from text entries for capacity drink gamble and insuf
     "runtime.zhu_yuanzhang.tavern.drink.result.dialogue.002": "自定义松快。",
     "runtime.zhu_yuanzhang.tavern.drink.result.001": "自定义花费 {price} 文。",
     "runtime.zhu_yuanzhang.tavern.drink.result.002": "自定义喝酒结算。",
-    "runtime.zhu_yuanzhang.tavern.gamble.start.001": "自定义坐上赌桌。",
-    "runtime.zhu_yuanzhang.tavern.gamble.start.002": "自定义赌局开场。",
-    "runtime.zhu_yuanzhang.tavern.gamble.settlement.title": "自定义赌局结算",
-    "runtime.zhu_yuanzhang.tavern.gamble.settlement.dialogue.loss":
-      "自定义本局净输 {amount} 文。",
-    "runtime.zhu_yuanzhang.tavern.gamble.settlement.dialogue.win":
-      "自定义本局净赚 {amount} 文。",
-    "runtime.zhu_yuanzhang.tavern.gamble.settlement.001": "自定义底池 {pot} 文。",
-    "runtime.zhu_yuanzhang.tavern.gamble.settlement.delta.loss":
-      "自定义金钱变化 {delta} 文。",
-    "runtime.zhu_yuanzhang.tavern.gamble.settlement.delta.win":
-      "自定义金钱变化 +{delta} 文。",
-    "runtime.zhu_yuanzhang.tavern.gamble.settlement.002":
-      "自定义体力 -{requiredStamina}",
+    "runtime.zhu_yuanzhang.tavern.gamble.short.start.001": "自定义短牌入桌。",
+    "runtime.zhu_yuanzhang.tavern.gamble.short.start.002": "自定义短牌开场。",
+    "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.title":
+      "自定义短牌退桌",
+    "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.dialogue.001":
+      "自定义离桌。",
+    "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.dialogue.002":
+      "自定义兑回 {goldDelta} 文，余 {leftoverChips} 筹码。",
+    "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.001":
+      "自定义兑回 {goldDelta} 文。",
+    "runtime.zhu_yuanzhang.tavern.gamble.short.cash_out.002":
+      "自定义零散筹码 {leftoverChips}。",
     "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.title":
       "自定义赌本不够",
     "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.001":
@@ -13360,8 +13752,8 @@ test("tavern copy resolves from text entries for capacity drink gamble and insuf
   });
 
   assert.deepEqual(startGamble.sessionState?.dialogueLines, [
-    "自定义坐上赌桌。",
-    "自定义赌局开场。",
+    "自定义短牌入桌。",
+    "自定义短牌开场。",
   ]);
 
   const settleGamble = tavernHouseModule.dispatch({
@@ -13370,27 +13762,23 @@ test("tavern copy resolves from text entries for capacity drink gamble and insuf
     houseDefinition: tavernHouse,
     playerCharacterId,
     sessionState: startGamble.sessionState,
-    request: { type: "action", actionId: "gamble-settle" },
+    request: { type: "action", actionId: "gamble-short-cash-out" },
     textEntriesById,
   });
 
-  assert.equal(settleGamble.sessionState?.overlay?.title, "自定义赌局结算");
+  assert.equal(settleGamble.sessionState?.overlay?.title, "自定义短牌退桌");
   assert.equal(
     settleGamble.sessionState?.overlay?.paragraphs[0],
-    "自定义底池 30 文。"
+    "自定义兑回 100 文。"
   );
   assert.equal(
-    settleGamble.sessionState?.overlay?.paragraphs[1]?.startsWith("自定义金钱变化 "),
-    true
+    settleGamble.sessionState?.overlay?.paragraphs[1],
+    "自定义零散筹码 0。"
   );
+  assert.equal(settleGamble.sessionState?.dialogueLines?.[0], "自定义离桌。");
   assert.equal(
-    settleGamble.sessionState?.overlay?.paragraphs[2],
-    `自定义体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`
-  );
-  assert.equal(settleGamble.sessionState?.dialogueLines?.[0], "牌局已结。");
-  assert.equal(
-    settleGamble.sessionState?.dialogueLines?.[1]?.startsWith("自定义本局净"),
-    true
+    settleGamble.sessionState?.dialogueLines?.[1],
+    "自定义兑回 100 文，余 0 筹码。"
   );
 
   const poorCharacters = prototypeCharacters.map((characterDefinition) =>
@@ -14075,6 +14463,7 @@ test("medicine house heal and buy update fatigue inventory and gold", () => {
 
   const playerAfterHeal = getPlayerCharacter(healResult.characterDefinitions);
   assert.equal(playerAfterHeal.stats.gold, 250);
+  const goldAfterHeal = playerAfterHeal.stats.gold;
 
   const afterAlert = medicineHouseHouseModule.dispatch({
     gameState: healResult.gameState,
@@ -14107,9 +14496,32 @@ test("medicine house heal and buy update fatigue inventory and gold", () => {
 
   assert.equal(
     buyResult.gameState.runtime.variables[
-      getMedicineInventoryQuantityVariableKey("medicine_heal_001")
+      getPlayerItemQuantityVariableKey("medicine_heal_001")
     ],
     1
+  );
+  assert.equal(
+    buyResult.gameState.runtime.variables[
+      getMedicineInventoryQuantityVariableKey("medicine_heal_001")
+    ],
+    0
+  );
+  assert.equal(
+    getPlayerCharacter(buyResult.characterDefinitions).stats.gold < goldAfterHeal,
+    true
+  );
+
+  const projectedItems = projectBackpackItems({
+    valuableInventory: buyResult.gameState.valuables,
+    gameState: buyResult.gameState,
+  });
+
+  assert.equal(
+    projectedItems.some(
+      (item) =>
+        item.id === "item.medicine.medicine_heal_001" && item.count === 1
+    ),
+    true
   );
 });
 
@@ -16086,6 +16498,10 @@ test("covered settlement path stays on shared runtime ownership", () => {
     type: "action",
     actionId: "investigate",
   });
+  dispatchHouseRuntimeRequest(houseRuntime, {
+    type: "action",
+    actionId: "inquire-grain-price",
+  });
 
   assert.deepEqual(
     interactiveResult.state.core.calendar,
@@ -16096,7 +16512,10 @@ test("covered settlement path stays on shared runtime ownership", () => {
     expectedInteractiveState.world.timeOfDay
   );
   assert.equal(appState.gameState.world.timeOfDay, "afternoon");
-  assert.equal(appState.gameState.ui.houseSession?.state?.overlay?.type, "alert");
+  assert.equal(
+    appState.gameState.ui.houseSession?.state?.overlay?.type,
+    "grain-price-report"
+  );
   assert.match(settlementSource, /effect\.type === "advanceTime"/);
   assert.doesNotMatch(interactiveSource, /runTimeRuntime\(/);
   assert.doesNotMatch(houseRuntimeSource, /advanceGameStateTimeSegments\(/);
