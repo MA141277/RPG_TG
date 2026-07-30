@@ -149,6 +149,95 @@ test("dispatchRuntimeRequest settles routed taskInputs without requiring split t
   );
 });
 
+test("dispatchRuntimeRequest routes immediate followUpEventIds through the shared event-chain owner", () => {
+  const visitedEventIds = [];
+
+  const result = dispatchRuntimeRequest({
+    state: createBaseRuntimeState(),
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.follow-up-event-chain",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [
+            {
+              type: "setFlag",
+              key: "event.chain.root",
+              value: true,
+            },
+          ],
+          followUpEventIds: ["event.chain.second"],
+        }),
+        routeEventChain: ({ state, eventId }) => {
+          visitedEventIds.push(eventId);
+          return {
+            state,
+            effects: [
+              {
+                type: "setFlag",
+                key: eventId,
+                value: true,
+              },
+            ],
+            taskInputs: [
+              {
+                type: "start",
+                taskId: `task.${eventId}`,
+                occurredAt: "2026-07-30T10:00:00.000Z",
+                source: "event-runtime",
+              },
+            ],
+            event: {
+              id: eventId,
+              kind: "bridge",
+              payload: {},
+            },
+            ...(eventId === "event.chain.second"
+              ? { followUpEventIds: ["event.chain.third"] }
+              : {}),
+          };
+        },
+      },
+      taskDefinitionsById: {
+        "task.event.chain.second": {
+          id: "task.event.chain.second",
+          title: "Second Chain Task",
+          objectives: [],
+          onCompleteEffects: [],
+        },
+        "task.event.chain.third": {
+          id: "task.event.chain.third",
+          title: "Third Chain Task",
+          objectives: [],
+          onCompleteEffects: [],
+        },
+      },
+    },
+  });
+
+  assert.deepEqual(visitedEventIds, [
+    "event.chain.second",
+    "event.chain.third",
+  ]);
+  assert.equal(result.state.core.runtime.flags["event.chain.root"], true);
+  assert.equal(result.state.core.runtime.flags["event.chain.second"], true);
+  assert.equal(result.state.core.runtime.flags["event.chain.third"], true);
+  assert.equal(
+    result.state.core.runtime.tasks.instancesByTaskId["task.event.chain.second"]
+      .status,
+    "active"
+  );
+  assert.equal(
+    result.state.core.runtime.tasks.instancesByTaskId["task.event.chain.third"]
+      .status,
+    "active"
+  );
+});
+
 test("dispatchRuntimeRequest treats split task action and signal fields as fallback-only when canonical taskInputs are present", () => {
   const result = dispatchRuntimeRequest({
     state: createBaseRuntimeState(),

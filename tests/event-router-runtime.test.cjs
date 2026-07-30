@@ -227,6 +227,69 @@ test("dispatchEventRoute returns a standardized routed result envelope and leave
   assert.equal(result.settlement, undefined);
 });
 
+test("event router follow-up ids are consumable by a shared chain owner for immediate routed events", () => {
+  const { dispatchEventRoute } = require("../.test-dist/core/runtime/event-router.js");
+  const { runEventChain } = require("../.test-dist/core/runtime/event-chain-runtime.js");
+
+  const result = runEventChain({
+    state: createBaseRuntimeState(),
+    rootEventId: "event.test.chain.root",
+    maxDepth: 4,
+    router: {
+      dispatchEventRoute: ({ state, eventId }) =>
+        dispatchEventRoute({
+          state,
+          eventId,
+          context: {
+            repository: {
+              resolveById: (resolvedEventId) =>
+                resolvedEventId === "event.test.chain.root"
+                  ? {
+                      id: resolvedEventId,
+                      kind: "bridge",
+                      payload: {},
+                      emitEventIds: [
+                        "event.test.chain.second",
+                        "event.test.chain.third",
+                      ],
+                    }
+                  : {
+                      id: resolvedEventId,
+                      kind: "bridge",
+                      payload: {},
+                    },
+            },
+            handlers: {
+              bridge: ({ state, event }) => ({
+                state: {
+                  ...state,
+                  core: {
+                    ...state.core,
+                    runtime: {
+                      ...state.core.runtime,
+                      flags: {
+                        ...state.core.runtime.flags,
+                        [event.id]: true,
+                      },
+                    },
+                  },
+                },
+                effects: [],
+              }),
+            },
+          },
+        }),
+    },
+  });
+
+  assert.deepEqual(result.visitedEventIds, [
+    "event.test.chain.root",
+    "event.test.chain.second",
+    "event.test.chain.third",
+  ]);
+  assert.equal(result.state.core.runtime.flags["event.test.chain.third"], true);
+});
+
 test("event route activation handlers share one canonical event-start seam", () => {
   const {
     createEventRouteActivationHandlers,

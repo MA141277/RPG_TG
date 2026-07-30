@@ -15373,6 +15373,39 @@ test("event-router runtime owner exists and dispatches canonical event kinds", (
   assert.match(source, /event\.kind/);
 });
 
+test("event chain runtime owner exists and stays separate from scene/dialogue continuation pacing", () => {
+  const runtimeOwnerPath = path.join(
+    process.cwd(),
+    "src/core/runtime/event-chain-runtime.ts"
+  );
+
+  assert.equal(fs.existsSync(runtimeOwnerPath), true);
+  const source = fs.readFileSync(runtimeOwnerPath, "utf8");
+
+  assert.match(source, /export function runEventChain/);
+  assert.match(source, /export function continueEventChain/);
+  assert.match(source, /followUpEventIds/);
+  assert.match(source, /maxDepth/);
+  assert.doesNotMatch(source, /\bcontinueToEvent\s*\(/);
+  assert.doesNotMatch(source, /\bstartEvent\s*\(/);
+});
+
+test("shared runtime dispatch consumes the shared event-chain owner through an optional router seam", () => {
+  const runtimeDispatchSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+  const runtimeRouterSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-router.ts"),
+    "utf8"
+  );
+
+  assert.match(runtimeDispatchSource, /continueEventChain/);
+  assert.match(runtimeDispatchSource, /routeEventChain/);
+  assert.match(runtimeDispatchSource, /followUpEventIds/);
+  assert.match(runtimeRouterSource, /routeEventChain\?/);
+});
+
 test("event router runtime core keeps story bindings on the binding-owned runtime path", () => {
   const storyRuntimeSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/story/story-runtime.ts"),

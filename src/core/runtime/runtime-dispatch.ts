@@ -8,6 +8,7 @@ import type {
 } from "../contracts/task-runtime";
 import type { RuntimeFollowUpContext } from "./runtime-router";
 import type { RuntimeRouter } from "./runtime-router";
+import { continueEventChain } from "./event-chain-runtime";
 import { settleRuntimeEffects } from "./runtime-settlement";
 import {
   applyTaskAction,
@@ -28,9 +29,39 @@ export function dispatchRuntimeRequest(input: {
     state: input.state,
     request: input.request,
   });
+  const chained =
+    routed.followUpEventIds == null ||
+    routed.followUpEventIds.length === 0 ||
+    input.context.router.routeEventChain == null
+      ? null
+      : continueEventChain({
+          state: routed.state,
+          followUpEventIds: routed.followUpEventIds,
+          maxDepth: 16,
+          router: {
+            dispatchEventRoute: ({ state, eventId }) =>
+              input.context.router.routeEventChain?.({
+                state,
+                eventId,
+              }) ?? {
+                state,
+                event: {
+                  id: eventId,
+                  kind: "bridge",
+                  payload: {},
+                },
+                effects: [],
+              },
+          },
+        });
+  const routedEffects = [...routed.effects, ...(chained?.effects ?? [])];
+  const routedTaskInputs = [
+    ...(routed.taskInputs ?? []),
+    ...(chained?.taskInputs ?? []),
+  ];
   const effectSettlement = settleRuntimeEffects({
-    state: routed.state,
-    effects: routed.effects,
+    state: chained?.state ?? routed.state,
+    effects: routedEffects,
     emittedBy: "runtime-router",
     appliedBy: "runtime-settlement",
     ...(routed.characterDefinitions == null
@@ -42,7 +73,7 @@ export function dispatchRuntimeRequest(input: {
   });
   const taskSettlement = settleRuntimeTasks({
     state: effectSettlement.state,
-    taskInputs: routed.taskInputs,
+    taskInputs: routedTaskInputs,
     taskDefinitionsById: input.context.taskDefinitionsById,
   });
   const taskEffectSettlement =

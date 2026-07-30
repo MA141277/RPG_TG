@@ -54,4 +54,8 @@ export type RuntimeFollowUpContext = {
 
 export interface RuntimeRouter {
   route(input: RuntimeRouteInput): RuntimeRouteResult;
+  routeEventChain?(input: {
+    state: RuntimeState;
+    eventId: string;
+  }): RuntimeEventRouteResult;
 }
