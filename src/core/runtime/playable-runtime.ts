@@ -68,7 +68,7 @@ import {
   readDefaultPlayableDefinitionRegistry,
   readDefaultPlayableIntegrationRegistry,
 } from "./playable-runtime-registries";
-import { settleRuntimeEffects } from "./runtime-settlement";
+import { settleRuntimeCommands } from "./runtime-settlement";
 
 export const PLAYABLE_LAUNCH_EVENT_ID = "playable.launch";
 
@@ -835,11 +835,11 @@ export function runPlayableRuntime(input: {
         characterDefinitions: input.characterDefinitions,
         result: result as CityBeggingGameCompletionResult,
       });
-      const settledState = settleRuntimeEffects({
+      const settledState = settleRuntimeCommands({
         state: completion.state,
-        effects: [
+        commands: [
           {
-            type: "advanceTime",
+            type: "time.advance",
             days:
               convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS) === 0
                 ? 0

@@ -12,8 +12,18 @@ const {
   runPlayableRuntime,
 } = require("../.test-dist/core/runtime/playable-runtime.js");
 const {
+  createAdvanceTimeSegmentsRequest,
+  runTimeRuntime,
+} = require("../.test-dist/core/runtime/time-runtime.js");
+const {
   ACTIVITY_COMPLETION_STAMINA_COST,
 } = require("../.test-dist/application/player/player-stamina.js");
+const {
+  CITY_BEGGING_DURATION_DAYS,
+} = require("../.test-dist/application/minigames/city-begging-minigame.js");
+const {
+  convertHouseActivityDaysToSegments,
+} = require("../.test-dist/application/house/house-activity-costs.js");
 const {
   prototypeCards,
   prototypeCharacters,
@@ -108,4 +118,13 @@ test("city-begging completion returns character status patches for runtime commi
     statPatch: { gold: playerBefore.stats.gold + 2 },
     stamina: Math.max(0, playerBefore.stamina - ACTIVITY_COMPLETION_STAMINA_COST),
   });
+
+  const expectedState = runTimeRuntime({
+    state: launched.state.core,
+    request: createAdvanceTimeSegmentsRequest(
+      convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
+    ),
+  }).state;
+  assert.deepEqual(completed.state.core.calendar, expectedState.calendar);
+  assert.equal(completed.state.core.world.timeOfDay, expectedState.world.timeOfDay);
 });

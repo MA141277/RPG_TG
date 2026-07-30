@@ -43,8 +43,9 @@ import type {
 } from "../contracts/house-runtime";
 import type { RuntimeInteractiveSignal } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
+import type { SettlementCommand } from "../contracts/settlement-command";
 import { createInteractiveRuntimeState } from "./state-sync-runtime";
-import { settleRuntimeEffects } from "./runtime-settlement";
+import { settleRuntimeCommands } from "./runtime-settlement";
 
 export type HouseRuntimeDependencies = {
   getAppState(): AppState;
@@ -179,7 +180,7 @@ export function createHouseRuntimeBridge(
   ): boolean {
     const appState = dependencies.getAppState();
     const previousGameState = appState.gameState;
-    const nextGameState = settleRuntimeEffects({
+    const nextGameState = settleRuntimeCommands({
       state: {
         core: result.gameState,
         app: {
@@ -193,7 +194,7 @@ export function createHouseRuntimeBridge(
         },
         view: {},
       },
-      effects: createHouseSettlementEffects(result.timeAdvanceCost),
+      commands: createHouseSettlementCommands(result.timeAdvanceCost),
       emittedBy: "house-runtime",
       appliedBy: "runtime-settlement",
     }).state.core;
@@ -222,9 +223,9 @@ export function createHouseRuntimeBridge(
     );
   }
 
-  function createHouseSettlementEffects(
+  function createHouseSettlementCommands(
     timeAdvanceCost: number | undefined
-  ): Array<{ type: "advanceTime"; days?: number; hours?: number }> {
+  ): SettlementCommand[] {
     if (timeAdvanceCost == null || timeAdvanceCost <= 0) {
       return [];
     }
@@ -237,7 +238,7 @@ export function createHouseRuntimeBridge(
 
     return [
       {
-        type: "advanceTime",
+        type: "time.advance",
         ...(wholeDays > 0 ? { days: wholeDays } : {}),
         ...(remainderSegments > 0 ? { hours: remainderSegments } : {}),
       },

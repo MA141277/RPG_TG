@@ -17016,6 +17016,24 @@ test("covered settlement path stays on shared runtime ownership", () => {
   assert.doesNotMatch(houseRuntimeSource, /advanceGameStateTimeSegments\(/);
 });
 
+test("time advance settlement command direct callers keep playable and house runtimes off direct effect settlement", () => {
+  const playableRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
+    "utf8"
+  );
+  const houseRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(playableRuntimeSource, /import \{ settleRuntimeCommands \} from "\.\/runtime-settlement"/);
+  assert.match(houseRuntimeSource, /import \{ settleRuntimeCommands \} from "\.\/runtime-settlement"/);
+  assert.doesNotMatch(playableRuntimeSource, /settleRuntimeEffects\(/);
+  assert.doesNotMatch(houseRuntimeSource, /settleRuntimeEffects\(/);
+  assert.doesNotMatch(playableRuntimeSource, /type:\s*"advanceTime"/);
+  assert.doesNotMatch(houseRuntimeSource, /type:\s*"advanceTime"/);
+});
+
 test("house runtime request contract exports enter leave and dispatch variants", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/house-runtime.ts"),
