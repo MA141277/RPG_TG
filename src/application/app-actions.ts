@@ -79,6 +79,36 @@ export function closeCityDirectory(appState: AppState): AppState {
   };
 }
 
+export function openDialogueFromMenuTarget(
+  appState: AppState,
+  dialogueId: string
+): AppState {
+  const normalizedDialogueId = dialogueId.trim();
+  if (normalizedDialogueId.length === 0) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    locationDialogueState: null,
+    gameState: {
+      ...appState.gameState,
+      dialogue: {
+        activeEventId: null,
+        activeDialogueId: normalizedDialogueId,
+        cursor: 0,
+        status: "playing",
+      },
+      ui: {
+        ...appState.gameState.ui,
+        currentView: "dialogue",
+      },
+    },
+  };
+}
+
 export function setCardFilter(
   appState: AppState,
   filter: CardLibraryFilter,

@@ -6,6 +6,7 @@ import {
   closeCityDirectory,
   equipValuable,
   openCityMenu,
+  openDialogueFromMenuTarget,
   selectCard,
   selectValuable,
   setCardFilter,
@@ -799,6 +800,11 @@ function openCityMenuEntry(entryId: string | undefined): void {
     if (menuEntry.action.minigameId === "city-begging") {
       openBeggingMiniGame();
     }
+    return;
+  }
+  if (menuEntry.action.type === "dialogue") {
+    appState = openDialogueFromMenuTarget(appState, menuEntry.action.dialogueId);
+    renderApp();
     return;
   }
   const cityMenuState = createCityMenuState({

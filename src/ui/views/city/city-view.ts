@@ -275,8 +275,6 @@ function renderCityMenuPanel(input: {
         </section>
       `;
       break;
-    case "locations":
-      break;
   }
 
   return `

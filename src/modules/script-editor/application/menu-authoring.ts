@@ -46,6 +46,7 @@ const MENU_FAMILY_LABELS: Record<string, string> = {
   minigame: "小游戏",
   leave: "离开",
   begging: "化缘",
+  other: "其他",
 };
 
 export function formalizeScriptEditorProjectMenus(
@@ -311,10 +312,19 @@ export function updateScriptEditorLocationMenuEntryField(
                     targetFamily: normalizeMenuTargetFamily(value),
                   };
                 }
+                if (field === "menuFamily") {
+                  return syncCityPanelTargetForMenuFamily(
+                    {
+                      ...entry,
+                      menuFamily: normalizeString(value, entry.menuFamily),
+                    },
+                    resolved.locationFamily
+                  );
+                }
                 return {
                   ...entry,
                   [field]:
-                    field === "id" || field === "label" || field === "menuFamily"
+                    field === "id" || field === "label"
                       ? normalizeString(value, entry[field])
                       : normalizeOptionalString(value),
                 };
@@ -513,6 +523,7 @@ function resolveMenuBundleIds(
 ): {
   project: ScriptEditorProjectDefinition;
   resourceId: string;
+  locationFamily: ScriptEditorLocationFamily | null;
 } | null {
   const formalizedProject = formalizeScriptEditorProjectMenus(project);
   const instance = (formalizedProject.menuInstances ?? []).find(
@@ -524,7 +535,31 @@ function resolveMenuBundleIds(
   return {
     project: formalizedProject,
     resourceId: normalizeOptionalString(instance.resourceId),
+    locationFamily: resolveLocationFamilyForMenuInstance(formalizedProject, instanceId),
   };
+}
+
+function resolveLocationFamilyForMenuInstance(
+  project: ScriptEditorProjectDefinition,
+  instanceId: string
+): ScriptEditorLocationFamily | null {
+  if (
+    project.cities.some((city) =>
+      readTrimmedStringArray(city.menuInstanceIds).includes(instanceId)
+    )
+  ) {
+    return "cities";
+  }
+
+  if (
+    project.buildings.some((building) =>
+      readTrimmedStringArray(building.menuInstanceIds).includes(instanceId)
+    )
+  ) {
+    return "buildings";
+  }
+
+  return null;
 }
 
 function replaceProjectLocation(
@@ -731,6 +766,42 @@ function normalizeMenuTargetFamily(value?: string): MenuTargetFamily {
   return ["dialogue", "event", "trade", "minigame", "info"].includes(value ?? "")
     ? (value as MenuTargetFamily)
     : "info";
+}
+
+function syncCityPanelTargetForMenuFamily(
+  entry: MenuEntryDefinition,
+  locationFamily: ScriptEditorLocationFamily | null
+): MenuEntryDefinition {
+  if (locationFamily !== "cities") {
+    return entry;
+  }
+
+  const panelTargetId = resolveCityPanelTargetId(entry.menuFamily);
+  if (panelTargetId == null) {
+    return entry;
+  }
+
+  return {
+    ...entry,
+    targetFamily: "info",
+    targetId: panelTargetId,
+  };
+}
+
+function resolveCityPanelTargetId(menuFamily: string): string | null {
+  switch (normalizeOptionalString(menuFamily).toLowerCase()) {
+    case "overview":
+    case "culture":
+      return "city-panel.overview";
+    case "intel":
+      return "city-panel.intel";
+    case "locations":
+      return "city-panel.locations";
+    case "management":
+      return "city-panel.management";
+    default:
+      return null;
+  }
 }
 
 function normalizeString(value: unknown, fallback: string): string {

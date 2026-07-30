@@ -437,7 +437,7 @@ export function renderDialogueView(input: DialogueViewInput): string {
         attributes: {
           "data-dialogue-background-id": action.backgroundId,
         },
-        underlayMarkup: input.underlayMarkup,
+        ...(input.underlayMarkup == null ? {} : { underlayMarkup: input.underlayMarkup }),
         previewMarkup: renderDialogueBackgroundPreview(action.backgroundId),
       })}
       ${activityOverlay}
@@ -455,7 +455,7 @@ export function renderDialogueView(input: DialogueViewInput): string {
             "data-dialogue-music-id": action.musicId,
             "data-dialogue-music-loop": action.loop === true ? "true" : "false",
           },
-          underlayMarkup: input.underlayMarkup,
+          ...(input.underlayMarkup == null ? {} : { underlayMarkup: input.underlayMarkup }),
         }
       )}
       ${activityOverlay}

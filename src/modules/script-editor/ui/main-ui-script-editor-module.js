@@ -2275,6 +2275,7 @@ class MainUiFlowScriptEditorModule {
             { value: "locations", label: "地点" },
             { value: "management", label: "管理" },
             { value: "begging", label: "化缘" },
+            { value: "other", label: "其他" },
           ]
         : [
             { value: "dialogue", label: "对话" },
@@ -2285,6 +2286,7 @@ class MainUiFlowScriptEditorModule {
             { value: "minigame", label: "小游戏" },
             { value: "management", label: "管理" },
             { value: "leave", label: "离开" },
+            { value: "other", label: "其他" },
           ];
     return this.getScriptEditorLocationMenuOptionsWithFallback(
       baseOptions,
@@ -2669,7 +2671,6 @@ class MainUiFlowScriptEditorModule {
         ${this.renderScriptEditorPersonTabButton("profile", "属性")}
         ${this.renderScriptEditorPersonTabButton("attribute-group", "属性组")}
         ${this.renderScriptEditorPersonTabButton("dialogues", "对话")}
-        ${this.renderScriptEditorPersonTabButton("trade", "交易")}
         ${this.renderScriptEditorPersonTabButton("events", "事件")}
       </div>
     `;
@@ -8874,7 +8875,7 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    if (!["profile", "attribute-group", "dialogues", "trade", "events"].includes(tab)) {
+    if (!["profile", "attribute-group", "dialogues", "events"].includes(tab)) {
       return;
     }
 
@@ -10946,7 +10947,14 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.scriptEditorSelection = { ...returnContext.selection };
-    this.scriptEditorPersonTab = returnContext.personTab;
+    this.scriptEditorPersonTab = [
+      "profile",
+      "attribute-group",
+      "dialogues",
+      "events",
+    ].includes(returnContext.personTab)
+      ? returnContext.personTab
+      : "profile";
     this.scriptEditorLocationTab = returnContext.locationTab;
     this.scriptEditorNarrativeTab = returnContext.narrativeTab;
     this.scriptEditorEventTab = returnContext.eventTab;

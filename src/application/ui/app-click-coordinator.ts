@@ -10,6 +10,7 @@ import {
   closeCityDirectory,
   closeCityMenu,
   equipValuable,
+  openDialogueFromMenuTarget,
   openCityMenu,
   selectCard,
   selectValuable,
@@ -71,6 +72,10 @@ export function createAppClickCoordinator(
       if (menuEntry.action.minigameId === "city-begging") {
         dependencies.openBeggingMiniGame();
       }
+      return;
+    }
+    if (menuEntry.action.type === "dialogue") {
+      commitAppState(openDialogueFromMenuTarget(appState, menuEntry.action.dialogueId));
       return;
     }
     const cityMenuState = createCityMenuState({

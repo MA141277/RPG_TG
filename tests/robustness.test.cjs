@@ -11040,6 +11040,68 @@ test("script editor menu authoring defaults use Chinese creator-facing copy", ()
   );
 });
 
+test("script editor city menu purpose supports creator-facing other selection", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
+  const {
+    listScriptEditorLocationMenuBundles,
+    updateScriptEditorLocationMenuEntryField,
+  } = require("../.test-dist/modules/script-editor/application/menu-authoring.js");
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/modules/script-editor/ui/main-ui-script-editor-module.js"),
+    "utf8"
+  );
+
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "menu-other",
+    title: "Menu Other",
+  });
+  const city = project.cities[0];
+  const overviewTargetProject = {
+    ...project,
+    menuResources: project.menuResources.map((resource) => ({
+      ...resource,
+      entries: resource.entries.map((entry, index) =>
+        index === 0
+          ? {
+              ...entry,
+              menuFamily: "overview",
+              targetFamily: "info",
+              targetId: "city-panel.overview",
+            }
+          : entry
+      ),
+    })),
+  };
+  const bundle = listScriptEditorLocationMenuBundles(
+    overviewTargetProject,
+    "cities",
+    city.id
+  )[0];
+
+  const updatedProject = updateScriptEditorLocationMenuEntryField(
+    overviewTargetProject,
+    bundle.instanceId,
+    0,
+    "menuFamily",
+    "locations"
+  );
+  const updatedBundle = listScriptEditorLocationMenuBundles(
+    updatedProject,
+    "cities",
+    city.id
+  )[0];
+  const cityPurposeOptionsSource =
+    mainUiSource.match(
+      /getScriptEditorLocationMenuPurposeOptions\(locationFamily, selectedValue = ""\) \{[\s\S]*?\n  \}/
+    )?.[0] ?? "";
+
+  assert.equal(updatedBundle.entries[0].menuFamily, "locations");
+  assert.equal(updatedBundle.entries[0].targetId, "city-panel.locations");
+  assert.match(cityPurposeOptionsSource, /value:\s*"other"[\s\S]*label:\s*"其他"/);
+});
+
 test("default scenario city menu resources keep Chinese menu copy", () => {
   const menuResources = JSON.parse(
     fs.readFileSync(
@@ -18202,6 +18264,16 @@ test("city menu runtime resolves formal menu resource and instance chains into r
             isEnabled: true,
             disabledHint: "",
           },
+          {
+            id: "menu-entry.city.start.dialogue",
+            label: "Meet Abbot",
+            menuFamily: "other",
+            targetFamily: "dialogue",
+            targetId: "dialogue.abbot.unlock_begging",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
         ],
       },
     },
@@ -18218,10 +18290,28 @@ test("city menu runtime resolves formal menu resource and instance chains into r
     entries.map((entry) => ({
       id: entry.id,
       action: entry.action.type,
+      dialogueId: entry.action.type === "dialogue" ? entry.action.dialogueId : null,
+      enabled: entry.isEnabled,
     })),
     [
-      { id: "menu-entry.city.start.overview", action: "panel" },
-      { id: "menu-entry.city.start.begging", action: "minigame" },
+      {
+        id: "menu-entry.city.start.overview",
+        action: "panel",
+        dialogueId: null,
+        enabled: true,
+      },
+      {
+        id: "menu-entry.city.start.begging",
+        action: "minigame",
+        dialogueId: null,
+        enabled: true,
+      },
+      {
+        id: "menu-entry.city.start.dialogue",
+        action: "dialogue",
+        dialogueId: "dialogue.abbot.unlock_begging",
+        enabled: true,
+      },
     ]
   );
 });
@@ -18295,6 +18385,62 @@ test("city menu runtime localizes default panel labels when menu entries omit cu
     entries.map((entry) => entry.label),
     ["概况", "地点"]
   );
+});
+
+test("city menu dialogue target opens runtime dialogue view through app action", () => {
+  const {
+    openDialogueFromMenuTarget,
+  } = require("../.test-dist/application/app-actions.js");
+  const appState = {
+    gameState: createInitialState({
+      currentMapId: "map.test",
+      currentCityId: "city.start",
+      currentHouseId: null,
+      playerCharacterId: "person.player",
+      chapterId: "chapter.test",
+      year: 1,
+      month: 1,
+      day: 1,
+      pinnedCharacterId: "person.player",
+      reviewDateText: "",
+      mainHouseMissionText: "",
+      cards: { ownedCardIds: [], equippedCardId: null },
+      valuables: { items: [], selectedItemId: null },
+      currentView: "city",
+    }),
+    characterDefinitions: [],
+    playerCoordinate: { q: 0, r: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: "person.guard",
+      textLines: ["blocked"],
+      advanceHintText: "close",
+    },
+    beggingMiniGameState: null,
+    cityMenuState: { entryId: "menu.entry", title: "Menu", panelId: "overview", intelItems: [] },
+    cityDirectoryState: { type: "house", title: "Directory", targetHouseId: "house.test", options: [] },
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const nextState = openDialogueFromMenuTarget(
+    appState,
+    "dialogue.abbot.unlock_begging"
+  );
+
+  assert.equal(nextState.gameState.ui.currentView, "dialogue");
+  assert.equal(
+    nextState.gameState.dialogue.activeDialogueId,
+    "dialogue.abbot.unlock_begging"
+  );
+  assert.equal(nextState.gameState.dialogue.cursor, 0);
+  assert.equal(nextState.gameState.dialogue.status, "playing");
+  assert.equal(nextState.cityMenuState, null);
+  assert.equal(nextState.cityDirectoryState, null);
+  assert.equal(nextState.locationDialogueState, null);
 });
 
 test("city entry artwork class comes from city entry artwork id", () => {
@@ -18503,6 +18649,24 @@ test("script editor owner-local event binding authoring is routed through event 
   const minigameBasicsSource =
     source.match(/return `\s*<section class="c-script-editor-minigame-panel" aria-label="玩法绑定基础信息分栏">[\s\S]*?\n  renderScriptEditorEventBindingsEditor/)?.[0] ?? "";
   assert.doesNotMatch(minigameBasicsSource, /renderScriptEditorOwnerLocalEventBindingsPanel/);
+});
+
+test("script editor person editor no longer exposes trade as a creator tab", () => {
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
+
+  const tabListSource =
+    source.match(/renderScriptEditorPersonTabList\(\) \{[\s\S]*?\n  \}/)?.[0] ?? "";
+  const selectTabSource =
+    source.match(/selectScriptEditorPersonTab\(tab\) \{[\s\S]*?\n  \}/)?.[0] ?? "";
+
+  assert.match(tabListSource, /renderScriptEditorPersonTabButton\("profile"/);
+  assert.match(tabListSource, /renderScriptEditorPersonTabButton\("dialogues"/);
+  assert.match(tabListSource, /renderScriptEditorPersonTabButton\("events"/);
+  assert.doesNotMatch(tabListSource, /renderScriptEditorPersonTabButton\("trade"/);
+  assert.doesNotMatch(selectTabSource, /"trade"/);
 });
 
 test("script editor owner-local event binding trigger edits keep the binding anchored", () => {

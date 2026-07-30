@@ -22,6 +22,10 @@ export type CityMenuEntryAction =
       panelId: CityMenuPanelId;
     }
   | {
+      type: "dialogue";
+      dialogueId: string;
+    }
+  | {
       type: "minigame";
       minigameId: string;
     }
@@ -387,6 +391,13 @@ function resolveCityMenuEntryAction(
     return {
       type: "minigame",
       minigameId: targetId.trim().length > 0 ? targetId : "city-begging",
+    };
+  }
+
+  if (targetFamily === "dialogue" && targetId.trim().length > 0) {
+    return {
+      type: "dialogue",
+      dialogueId: targetId.trim(),
     };
   }
 
