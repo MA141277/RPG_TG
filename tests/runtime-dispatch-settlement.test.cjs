@@ -605,7 +605,6 @@ test("dispatchRuntimeRequest preserves canonical settlement command payloads for
                 value: true,
               },
             ],
-            effects: [],
           },
         }),
       },
@@ -634,4 +633,5 @@ test("dispatchRuntimeRequest preserves canonical settlement command payloads for
       value: true,
     },
   ]);
+  assert.equal("effects" in result.settlement, false);
 });

@@ -116,13 +116,7 @@ test("commitRuntimeRequest no longer settles legacy playable settlement effects 
   });
 
   assert.equal(result.state.gameState.runtime.flags["playable.settled"], undefined);
-  assert.deepEqual(result.runtimeResult.settlement.effects, [
-    {
-      type: "setFlag",
-      key: "playable.settled",
-      value: true,
-    },
-  ]);
+  assert.equal("effects" in result.runtimeResult.settlement, false);
 });
 
 test("commitRuntimeRequest settles playable settlement commands before app state write-back", () => {
@@ -154,7 +148,6 @@ test("commitRuntimeRequest settles playable settlement commands before app state
                 value: true,
               },
             ],
-            effects: [],
           },
         }),
       },

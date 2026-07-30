@@ -157,6 +157,16 @@ function createRuntimeSettlementSummary(input: {
   routedEffects: ReturnType<typeof settleRuntimeEffects>;
   taskEffects: ReturnType<typeof settleRuntimeEffects> | null;
 }): RuntimeResult["settlement"] | undefined {
+  const routedSettlementMetadata =
+    input.routedSettlement != null && typeof input.routedSettlement === "object"
+      ? input.routedSettlement
+      : null;
+  const hasPendingSettlementCommands =
+    routedSettlementMetadata != null &&
+    Array.isArray(routedSettlementMetadata.commands);
+  const pendingSettlementCommands = hasPendingSettlementCommands
+    ? (routedSettlementMetadata.commands as SettlementCommand[])
+    : [];
   const settledEffects = [
     ...input.routedEffects.settledEffects,
     ...(input.taskEffects?.settledEffects ?? []),
@@ -175,29 +185,23 @@ function createRuntimeSettlementSummary(input: {
     unsupportedEffects.length === 0 &&
     warnings.length === 0
   ) {
-    return input.routedSettlement;
+    if (routedSettlementMetadata == null) {
+      return input.routedSettlement;
+    }
+
+    return {
+      ...omitRuntimeSettlementOwnership(routedSettlementMetadata),
+      ...(hasPendingSettlementCommands
+        ? { commands: pendingSettlementCommands }
+        : {}),
+    };
   }
 
-  const routedSettlementMetadata =
-    input.routedSettlement != null && typeof input.routedSettlement === "object"
-      ? input.routedSettlement
-      : null;
-  const pendingSettlementEffects =
-    routedSettlementMetadata != null &&
-    Array.isArray(routedSettlementMetadata.effects)
-      ? routedSettlementMetadata.effects
-      : null;
-  const pendingSettlementCommands =
-    routedSettlementMetadata != null &&
-    Array.isArray(routedSettlementMetadata.commands)
-      ? (routedSettlementMetadata.commands as SettlementCommand[])
-      : [];
   const summary = {
     ...(routedSettlementMetadata == null
       ? {}
       : omitRuntimeSettlementOwnership(routedSettlementMetadata)),
     commands: pendingSettlementCommands,
-    ...(pendingSettlementEffects == null ? {} : { effects: pendingSettlementEffects }),
     appliedBy: "runtime-settlement",
     emittedBy:
       input.routedEffects.settledEffects.length > 0 ||

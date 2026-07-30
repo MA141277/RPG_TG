@@ -16768,7 +16768,7 @@ test("runtime result settlement payload exposes canonical settlement commands", 
   assert.match(source, /effects\??:\s*Effect\[\]/);
 });
 
-test("runtime settlement effects compatibility optional keeps effects off the canonical required surface", () => {
+test("runtime settlement effects contract removal keeps settlement payload command-only", () => {
   const runtimeResultSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
     "utf8"
@@ -16778,15 +16778,10 @@ test("runtime settlement effects compatibility optional keeps effects off the ca
     "utf8"
   );
 
-  assert.match(runtimeResultSource, /effects\?: Effect\[\]/);
-  assert.doesNotMatch(
-    runtimeDispatchSource,
-    /commands:\s*pendingSettlementCommands,\s*effects:\s*pendingSettlementEffects/
-  );
-  assert.match(
-    runtimeDispatchSource,
-    /\.\.\.\(pendingSettlementEffects == null \? \{\} : \{ effects: pendingSettlementEffects \}\)/
-  );
+  assert.doesNotMatch(runtimeResultSource, /effects\?: Effect\[\]/);
+  assert.doesNotMatch(runtimeDispatchSource, /pendingSettlementEffects/);
+  assert.doesNotMatch(runtimeDispatchSource, /effects:\s*pendingSettlementEffects/);
+  assert.match(runtimeDispatchSource, /commands:\s*pendingSettlementCommands/);
 });
 
 test("runtime settlement effects fallback removal keeps state sync runtime command-only", () => {
