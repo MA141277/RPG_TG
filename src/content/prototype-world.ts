@@ -24,13 +24,9 @@ export const prototypeHouseAccessRefusalRules: HouseAccessRefusalRule[] = [
     id: "rule.zhu_yuanzhang.temple.first_review_stay",
     priority: 100,
     storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueTemple],
-    // TEMP: keep grain shop, tavern, and market house enterable before the first temple review while those modules are under active debugging.
     excludedHouseModuleIds: [
       "temple-house",
       "keep-house",
-      "grain-shop",
-      "tavern",
-      "market-house",
     ],
     missingFlags: [
       ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted,

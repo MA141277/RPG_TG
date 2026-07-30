@@ -87,6 +87,12 @@ export type HouseMapAutoAdvanceCompletion =
       houseSession: ActiveHouseModuleSession;
     };
 
+export type HouseMapAutoAdvanceStatusPanel = {
+  variant: "temple-review-rest";
+  title: string;
+  lines: string[];
+};
+
 export type HouseModuleSideEffect =
   | {
       type: "start-interval";
@@ -106,6 +112,7 @@ export type HouseModuleSideEffect =
       label: string;
       snapshots?: MapAutoAdvanceSnapshot[];
       completion?: HouseMapAutoAdvanceCompletion;
+      statusPanel?: HouseMapAutoAdvanceStatusPanel | null;
     }
   | {
       type: "stop-map-auto-advance";

@@ -17,6 +17,9 @@ const {
   runStoryCallback,
 } = require("../.test-dist/application/story/story-callbacks.js");
 const {
+  STORY_PRESENTATION_VARIABLE_KEYS,
+} = require("../.test-dist/domain/story-presentation.js");
+const {
   ACTIVITY_COMPLETION_STAMINA_COST,
 } = require("../.test-dist/application/player/player-stamina.js");
 const {
@@ -109,6 +112,40 @@ function startStoryBattleRuntimeState() {
   return createRuntimeState(started.state);
 }
 
+function startSceneOwnedStoryBattleRuntimeState() {
+  const baseState = createRuntimeState().core;
+  const started = runStoryCallback(
+    "story.zhu_yuanzhang.start-sundeya-rescue-battle",
+    {
+      completedFlagKey:
+        ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted,
+      winFlagKey: ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleWon,
+      battleIdVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId,
+      resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
+    },
+    {
+      state: {
+        ...baseState,
+        scene: {
+          ...baseState.scene,
+          activeEventId: "event.story.zhu_yuanzhang.haozhou_return_encounter",
+          activeSceneId: "scene.story.zhu_yuanzhang.haozhou_return_encounter",
+          cursor: 16,
+          status: "playing",
+          returnView: "house",
+        },
+        ui: {
+          ...baseState.ui,
+          currentView: "scene",
+        },
+      },
+      characterDefinitions: prototypeCharacters,
+    }
+  );
+
+  return createRuntimeState(started.state);
+}
+
 test("interactive runtime forwards playable character status patches", () => {
   const playerBefore = prototypeCharacters.find(
     (characterDefinition) => characterDefinition.id === playerCharacterId
@@ -145,40 +182,81 @@ test("interactive runtime forwards playable character status patches", () => {
   });
 });
 
-test("story battle playable runtime mirrors legacy interactive result as follow-up", () => {
+test("story battle playable runtime resumes the owning scene after embedded victory", () => {
   assert.ok(keepHouse, "Expected prototype keep house to exist.");
 
   const settled = runPlayableRuntime({
-    state: startStoryBattleRuntimeState(),
+    state: startSceneOwnedStoryBattleRuntimeState(),
     request: createPlayableActionRequest("story-battle", "battle-action", {
       battleActionId: "embedded-victory",
     }),
     characterDefinitions: prototypeCharacters,
   });
 
-  const expectedFollowUp = {
-    type: "reenter-house",
-    houseId: keepHouse.id,
-  };
-  assert.deepEqual(settled.interactive, expectedFollowUp);
-  assert.deepEqual(settled.followUp, expectedFollowUp);
+  assert.equal(settled.state.core.ui.currentView, "scene");
+  assert.equal(
+    settled.state.core.scene.activeSceneId,
+    "scene.story.zhu_yuanzhang.haozhou_return_encounter"
+  );
+  assert.equal(settled.state.core.scene.cursor, 16);
+  assert.deepEqual(settled.interactive, { type: "none" });
+  assert.deepEqual(settled.followUp, { type: "none" });
 });
 
-test("interactive runtime forwards playable follow-up while keeping legacy interactive", () => {
+test("interactive runtime keeps the return-to-haozhou story scene active after embedded victory", () => {
   assert.ok(keepHouse, "Expected prototype keep house to exist.");
 
   const settled = runInteractiveRuntime({
-    state: startStoryBattleRuntimeState(),
+    state: startSceneOwnedStoryBattleRuntimeState(),
     request: createInteractiveActionRequest("interactive.story-battle.action", {
       battleActionId: "embedded-victory",
     }),
     characterDefinitions: prototypeCharacters,
   });
 
-  const expectedFollowUp = {
-    type: "reenter-house",
-    houseId: keepHouse.id,
-  };
-  assert.deepEqual(settled.interactive, expectedFollowUp);
-  assert.deepEqual(settled.followUp, expectedFollowUp);
+  assert.equal(settled.state.core.ui.currentView, "scene");
+  assert.equal(
+    settled.state.core.scene.activeSceneId,
+    "scene.story.zhu_yuanzhang.haozhou_return_encounter"
+  );
+  assert.equal(settled.state.core.scene.cursor, 16);
+  assert.deepEqual(settled.interactive, { type: "none" });
+  assert.deepEqual(settled.followUp, { type: "none" });
+});
+
+test("story show chapter title callback only writes presentation state", () => {
+  const state = createRuntimeState().core;
+
+  const result = runStoryCallback(
+    "story.show-chapter-title",
+    { titleText: "第二章 濠州从戎" },
+    {
+      state,
+      characterDefinitions: prototypeCharacters,
+    }
+  );
+
+  assert.equal(result.state.storyBattle, null);
+  assert.equal(
+    result.state.runtime.variables[STORY_PRESENTATION_VARIABLE_KEYS.chapterTitleText],
+    "第二章 濠州从戎"
+  );
+});
+
+test("joining guo zixing camp switches the player portrait to the red turban variant", () => {
+  const result = runStoryCallback(
+    "story.zhu_yuanzhang.join-guo-zixing-camp",
+    undefined,
+    {
+      state: createRuntimeState().core,
+      characterDefinitions: prototypeCharacters,
+    }
+  );
+
+  const player = result.characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === playerCharacterId
+  );
+
+  assert.ok(player);
+  assert.equal(player.portraitVariantId, "stage-25");
 });

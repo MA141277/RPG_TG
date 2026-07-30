@@ -55,11 +55,13 @@ import { renderCityView } from "./views/city/city-view";
 import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging-minigame-view";
 import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
+import { renderTempleAutoAdvanceStatusPanel } from "./views/house/temple-auto-advance-status-view";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import { renderTroopEditorView } from "./views/troop-editor/troop-editor-view";
 import { renderTroopManagementView } from "./views/troop-editor/troop-management-view";
 import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
+import { renderStoryChapterTitleOverlay } from "./views/story/story-chapter-title-overlay";
 import { renderLayoutEditor } from "./tools/layout-editor-view";
 import { formatCardDrawResultLabel } from "./animations/card-draw-animation";
 import { resolveCharacterFactionLabel } from "../application/faction/faction-affiliation-runtime";
@@ -516,6 +518,15 @@ function renderCampaignTravelBanner(
   `;
 }
 
+function renderAutoAdvanceStatusPanel(input: AppRenderInput): string {
+  const panel = input.appState.autoAdvanceState?.statusPanel;
+  if (panel == null) {
+    return "";
+  }
+
+  return renderTempleAutoAdvanceStatusPanel(panel);
+}
+
 function renderStage(
   input: AppRenderInput,
   playerCharacter: CharacterDefinition
@@ -785,6 +796,14 @@ export function renderApp(input: AppRenderInput): string {
               input.presenterOutput.overlay.locationDialogueState,
               input.appState.characterDefinitions
             )}
+            ${
+              input.presenterOutput.overlay.storyChapterTitleText.length === 0
+                ? ""
+                : renderStoryChapterTitleOverlay(
+                    input.presenterOutput.overlay.storyChapterTitleText
+                  )
+            }
+            ${renderAutoAdvanceStatusPanel(input)}
             ${renderModal(
               input.presenterOutput.overlay.modalState,
               input.cityPortraits,

@@ -226,6 +226,11 @@
           },
           {
             "type": "set-flag",
+            "key": "flag.story.zhu_yuanzhang.haozhou_uprising_broadcasted",
+            "value": false
+          },
+          {
+            "type": "set-flag",
             "key": "flag.story.zhu_yuanzhang.bandit_battle.completed",
             "value": false
           },
@@ -309,6 +314,12 @@
         "type": "effect",
         "effects": [
           {
+            "type": "modify-character-stat",
+            "characterId": "char.player",
+            "stat": "gold",
+            "delta": 500
+          },
+          {
             "type": "set-variable",
             "key": "var.story.zhu_yuanzhang.temple_week",
             "value": 2
@@ -317,6 +328,10 @@
             "type": "set-flag",
             "key": "flag.story.zhu_yuanzhang.begging_unlocked",
             "value": true
+          },
+          {
+            "type": "set-main-mission-text",
+            "text": "前往附近城市买粮"
           }
         ]
       }
@@ -327,20 +342,32 @@
     "name": "颍州街头风声",
     "actions": [
       {
+        "type": "background",
+        "backgroundId": "bg.story.qiyi"
+      },
+      {
         "type": "narration",
         "textId": "scene.story.zhu_yuanzhang.runing_broadcast.001"
       },
       {
-        "type": "narration",
+        "type": "dialogue",
+        "characterId": "char.player",
+        "side": "right",
         "textId": "scene.story.zhu_yuanzhang.runing_broadcast.002"
       },
       {
-        "type": "narration",
-        "textId": "scene.story.zhu_yuanzhang.runing_broadcast.003"
-      },
-      {
-        "type": "narration",
-        "textId": "scene.story.zhu_yuanzhang.runing_broadcast.004"
+        "type": "effect",
+        "effects": [
+          {
+            "type": "set-flag",
+            "key": "flag.story.zhu_yuanzhang.haozhou_uprising_broadcasted",
+            "value": true
+          },
+          {
+            "type": "set-main-mission-text",
+            "text": "买到粮食后回濠州"
+          }
+        ]
       }
     ]
   },
@@ -453,6 +480,38 @@
       {
         "type": "narration",
         "textId": "scene.story.zhu_yuanzhang.haozhou_return_encounter.015"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_lord",
+        "side": "left",
+        "textId": "scene.story.zhu_yuanzhang.haozhou_return_encounter.016"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.yuanmo.sun_deya",
+        "side": "left",
+        "textId": "scene.story.zhu_yuanzhang.haozhou_return_encounter.017"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.player",
+        "side": "right",
+        "textId": "scene.story.zhu_yuanzhang.haozhou_return_encounter.018"
+      },
+      {
+        "type": "callback",
+        "handlerId": "story.show-chapter-title",
+        "payload": {
+          "titleText": "第二章 濠州从戎"
+        }
+      },
+      {
+        "type": "reward",
+        "title": "感谢您的游玩",
+        "lines": [
+          "请关注funloom了解游戏最新进展。"
+        ]
       }
     ]
   }

@@ -29,6 +29,8 @@ export const ZHU_YUANZHANG_STORY_FLAG_KEYS = {
   beggingUnlocked: "flag.story.zhu_yuanzhang.begging_unlocked",
   beggingTransitionAssigned:
     "flag.story.zhu_yuanzhang.begging_transition_assigned",
+  haozhouUprisingBroadcasted:
+    "flag.story.zhu_yuanzhang.haozhou_uprising_broadcasted",
   banditBattleCompleted: "flag.story.zhu_yuanzhang.bandit_battle.completed",
   banditBattleWon: "flag.story.zhu_yuanzhang.bandit_battle.won",
   sundeyaRescueBattleCompleted:
@@ -78,6 +80,8 @@ export function isHaozhouShortageDuringBeggingJourney(
 ): boolean {
   return (
     isZhuYuanzhangBeggingJourneyStage(state) &&
+    state.runtime.flags[ZHU_YUANZHANG_STORY_FLAG_KEYS.haozhouUprisingBroadcasted] ===
+      true &&
     state.world.currentCityId === "city.kulan"
   );
 }

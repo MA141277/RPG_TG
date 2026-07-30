@@ -408,8 +408,10 @@
     "name": "粮铺",
     "type": "merchant",
     "moduleId": "grain-shop",
-    "characterIds": [],
-    "defaultCharacterId": null,
+    "characterIds": [
+      "char.luzhou_grain_shopkeeper"
+    ],
+    "defaultCharacterId": "char.luzhou_grain_shopkeeper",
     "backAction": {
       "label": "返回庐州路",
       "targetView": "city"
@@ -803,8 +805,10 @@
     "name": "粮铺",
     "type": "merchant",
     "moduleId": "grain-shop",
-    "characterIds": [],
-    "defaultCharacterId": null,
+    "characterIds": [
+      "char.anfeng_grain_shopkeeper"
+    ],
+    "defaultCharacterId": "char.anfeng_grain_shopkeeper",
     "backAction": {
       "label": "返回安丰路",
       "targetView": "city"
@@ -935,8 +939,10 @@
     "name": "粮铺",
     "type": "merchant",
     "moduleId": "grain-shop",
-    "characterIds": [],
-    "defaultCharacterId": null,
+    "characterIds": [
+      "char.runing_grain_shopkeeper"
+    ],
+    "defaultCharacterId": "char.runing_grain_shopkeeper",
     "backAction": {
       "label": "返回颍州",
       "targetView": "city"

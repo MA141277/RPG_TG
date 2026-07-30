@@ -48,6 +48,7 @@ export type AppPresenterOverlayOutput = {
   overlayView: AppState["gameState"]["ui"]["overlayView"];
   shouldShowGlobalHud: boolean;
   locationText: string;
+  storyChapterTitleText: string;
   campaignTravelState: AppState["campaignTravelState"];
   modalState: AppModalState;
   locationDialogueState: AppLocationDialogueState;

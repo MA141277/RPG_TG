@@ -48,6 +48,12 @@ export type AppCityCardDrawTestState = {
   resultValue: number | null;
 };
 
+export type AutoAdvanceStatusPanel = {
+  variant: "temple-review-rest";
+  title: string;
+  lines: string[];
+};
+
 export type AppState = {
   gameState: ReturnType<typeof createInitialState>;
   characterDefinitions: CharacterDefinition[];
@@ -83,6 +89,7 @@ export type AppState = {
         targetHouseId: string;
         snapshots: MapAutoAdvanceSnapshot[] | null;
         completion: HouseMapAutoAdvanceCompletion | null;
+        statusPanel?: AutoAdvanceStatusPanel | null;
       }
     | null;
   uiLayouts: UiLayoutByTargetId;

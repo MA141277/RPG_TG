@@ -21,6 +21,7 @@ import buildingBackgroundTempleUrl from "../../ui/background/temple.jpg?url";
 import buildingBackgroundTiejiangpuUrl from "../../ui/background/tiejiangpu.png?url";
 import buildingBackgroundWuguanUrl from "../../ui/background/wuguan.png?url";
 import buildingBackgroundZizhaiUrl from "../../ui/background/zizhai.png?url";
+import storyBackgroundQiyiUrl from "../../ui/cg/qiyi.png?url";
 
 export type LocationBackgroundOption = {
   value: string;
@@ -83,6 +84,7 @@ const LOCATION_BACKGROUND_IMAGE_URLS: Record<string, string> = {
 };
 
 const DIALOGUE_BACKGROUND_PREVIEW_IMAGE_URLS: Record<string, string> = {
+  "bg.story.qiyi": storyBackgroundQiyiUrl,
   "bg.temple.courtyard": buildingBackgroundTempleUrl,
   "bg.temple.hall": buildingBackgroundTempleUrl,
   "bg.pei_county.office": buildingBackgroundJiangshuaizhaidiUrl,

@@ -127,6 +127,8 @@ import {
 } from "./application/audio/battle-sound";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
+import { createTempleReviewRestAutoAdvanceStatus } from "./application/house-modules/temple-house/temple-rest-auto-advance-status";
+import { resolveStorySceneHouseFollowUp } from "./application/runtime/transition/story-scene-house-follow-up";
 import { processMapReturnEffects } from "./application/runtime/transition/map-return-effect-transition";
 import {
   applyCouncilPriorityFollowUp,
@@ -318,6 +320,7 @@ import {
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
 } from "./domain/zhu-yuanzhang-story";
+import { STORY_PRESENTATION_VARIABLE_KEYS } from "./domain/story-presentation";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
 import {
@@ -1352,7 +1355,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
         currentHouseId: null,
         playerCharacterId,
         chapterId: "chapter.prototype",
-        year: 1567,
+        year: 1448,
         month: 1,
         day: 1,
         pinnedCharacterId: playerCharacterId,
@@ -2621,6 +2624,7 @@ function startMapAutoAdvance(input: {
   label: string;
   snapshots?: NonNullable<AppState["autoAdvanceState"]>["snapshots"];
   completion?: NonNullable<AppState["autoAdvanceState"]>["completion"];
+  statusPanel?: NonNullable<AppState["autoAdvanceState"]>["statusPanel"];
 }): void {
   stopMapAutoAdvance(input.intervalId);
   if (input.snapshots != null && input.snapshots.length === 0 && input.completion != null) {
@@ -2642,6 +2646,7 @@ function startMapAutoAdvance(input: {
       targetHouseId: input.targetHouseId,
       snapshots: input.snapshots ?? null,
       completion: input.completion ?? null,
+      statusPanel: input.statusPanel ?? null,
     },
     gameState: {
       ...appState.gameState,
@@ -2678,12 +2683,19 @@ function startMapAutoAdvance(input: {
         return;
       }
 
+      const refreshedStatusPanel = refreshAutoAdvanceStatusPanel(
+        autoAdvanceState,
+        nextSnapshot.gameState,
+        nextSnapshot.characterDefinitions
+      );
+
       appState = {
         ...appState,
         characterDefinitions: nextSnapshot.characterDefinitions,
         autoAdvanceState: {
           ...autoAdvanceState,
           snapshots: remainingSnapshots,
+          statusPanel: refreshedStatusPanel,
         },
         gameState: {
           ...nextSnapshot.gameState,
@@ -2742,10 +2754,35 @@ function startMapAutoAdvance(input: {
   }, input.everyMs);
 }
 
+function refreshAutoAdvanceStatusPanel(
+  autoAdvanceState: NonNullable<AppState["autoAdvanceState"]>,
+  nextGameState: AppState["gameState"],
+  nextCharacterDefinitions: AppState["characterDefinitions"]
+): NonNullable<NonNullable<AppState["autoAdvanceState"]>["statusPanel"]> | null {
+  if (autoAdvanceState.statusPanel?.variant !== "temple-review-rest") {
+    return autoAdvanceState.statusPanel ?? null;
+  }
+
+  return createTempleReviewRestAutoAdvanceStatus({
+    gameState: nextGameState,
+    characterDefinitions: nextCharacterDefinitions,
+    playerCharacterId: currentPlayerCharacterId,
+    textEntriesById: activeContentContext.textEntriesById,
+  });
+}
+
 function advanceCurrentStoryScene(): void {
+  const previousAppState = appState;
   mainRuntimeOrchestrator.execute({
     type: "advance-story-scene",
   });
+  const followUp = resolveStorySceneHouseFollowUp({
+    previousAppState,
+    nextAppState: appState,
+  });
+  if (followUp?.type === "reenter-house") {
+    houseRuntime.applyInteractiveFollowUp(followUp);
+  }
   renderApp();
 }
 
@@ -5352,6 +5389,27 @@ appElement.addEventListener("click", (event) => {
     appState = {
       ...appState,
       locationDialogueState: null,
+    };
+    renderApp();
+    return;
+  }
+
+  const dismissStoryChapterTitleAction = targetElement.closest<HTMLElement>(
+    "[data-action='dismiss-story-chapter-title']"
+  );
+  if (dismissStoryChapterTitleAction != null) {
+    appState = {
+      ...appState,
+      gameState: {
+        ...appState.gameState,
+        runtime: {
+          ...appState.gameState.runtime,
+          variables: {
+            ...appState.gameState.runtime.variables,
+            [STORY_PRESENTATION_VARIABLE_KEYS.chapterTitleText]: "",
+          },
+        },
+      },
     };
     renderApp();
     return;

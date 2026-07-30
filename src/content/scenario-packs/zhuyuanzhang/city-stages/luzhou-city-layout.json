@@ -1,0 +1,123 @@
+{
+  "version": 2,
+  "map": {
+    "id": "luzhou",
+    "name": "\u5e90\u5dde\u8def",
+    "stageWidth": 2048,
+    "stageHeight": 1152,
+    "baseSpace": {
+      "x": 139,
+      "y": 88,
+      "width": 1771,
+      "height": 976
+    },
+    "backgroundImage": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/20260716-111958.png",
+    "foregroundImage": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/20260716-141239.png",
+    "referenceMask": []
+  },
+  "grid": {
+    "type": "isometric-board",
+    "cols": 40,
+    "rows": 40,
+    "cellWidth": 40,
+    "cellHeight": 20,
+    "originX": 885,
+    "originY": 110,
+    "snap": true,
+    "visible": true,
+    "showCoordinates": false,
+    "showOutline": false
+  },
+  "entities": [
+    {
+      "id": "luzhou.keep",
+      "name": "\u5e05\u5e9c",
+      "category": "house",
+      "entry": { "type": "house", "houseId": "house.luzhou.keep" },
+      "asset": { "image": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/shuaifu.png", "naturalWidth": 1333, "naturalHeight": 710, "scale": 0.2, "offsetX": 0, "offsetY": 0, "anchor": "bottom-center" },
+      "lot": { "gridX": 16, "gridY": 6, "cols": 8, "rows": 6 },
+      "render": { "visible": true, "locked": false, "zIndexMode": "y-sort", "zIndex": null },
+      "interaction": { "clickable": true, "label": { "text": "\u5e05\u5e9c", "offsetX": 0, "offsetY": -142, "width": 96, "height": 32 }, "hitArea": { "type": "ellipse", "offsetX": 0, "offsetY": -8, "width": 132, "height": 52 } }
+    },
+    {
+      "id": "luzhou.leader-residence",
+      "name": "\u5c06\u9886\u5e9c\u90b8",
+      "category": "house",
+      "entry": { "type": "house", "houseId": "house.luzhou.leader_residence" },
+      "asset": { "image": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/huozhai.png", "naturalWidth": 975, "naturalHeight": 722, "scale": 0.19, "offsetX": 0, "offsetY": 0, "anchor": "bottom-center" },
+      "lot": { "gridX": 8, "gridY": 10, "cols": 6, "rows": 5 },
+      "render": { "visible": true, "locked": false, "zIndexMode": "y-sort", "zIndex": null },
+      "interaction": { "clickable": true, "label": { "text": "\u5c06\u9886\u5e9c\u90b8", "offsetX": 0, "offsetY": -124, "width": 112, "height": 32 }, "hitArea": { "type": "ellipse", "offsetX": 0, "offsetY": -8, "width": 120, "height": 48 } }
+    },
+    {
+      "id": "luzhou.temple",
+      "name": "\u5bfa\u5e99",
+      "category": "house",
+      "entry": { "type": "house", "houseId": "house.luzhou.temple" },
+      "asset": { "image": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/huangjuesi.png", "naturalWidth": 1066, "naturalHeight": 783, "scale": 0.19, "offsetX": 0, "offsetY": 0, "anchor": "bottom-center" },
+      "lot": { "gridX": 25, "gridY": 10, "cols": 7, "rows": 6 },
+      "render": { "visible": true, "locked": false, "zIndexMode": "y-sort", "zIndex": null },
+      "interaction": { "clickable": true, "label": { "text": "\u5bfa\u5e99", "offsetX": 0, "offsetY": -130, "width": 96, "height": 32 }, "hitArea": { "type": "ellipse", "offsetX": 0, "offsetY": -8, "width": 126, "height": 50 } }
+    },
+    {
+      "id": "luzhou.market",
+      "name": "\u8d27\u6808",
+      "category": "house",
+      "entry": { "type": "house", "houseId": "house.luzhou.market" },
+      "asset": { "image": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/1.png", "naturalWidth": 1065, "naturalHeight": 668, "scale": 0.22, "offsetX": 0, "offsetY": 0, "anchor": "bottom-center" },
+      "lot": { "gridX": 12, "gridY": 18, "cols": 6, "rows": 5 },
+      "render": { "visible": true, "locked": false, "zIndexMode": "y-sort", "zIndex": null },
+      "interaction": { "clickable": true, "label": { "text": "\u8d27\u6808", "offsetX": 0, "offsetY": -116, "width": 96, "height": 32 }, "hitArea": { "type": "ellipse", "offsetX": 0, "offsetY": -8, "width": 118, "height": 48 } }
+    },
+    {
+      "id": "luzhou.tea-house",
+      "name": "\u8336\u9986",
+      "category": "house",
+      "entry": { "type": "house", "houseId": "house.luzhou.tea_house" },
+      "asset": { "image": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/chaguan.png", "naturalWidth": 1003, "naturalHeight": 770, "scale": 0.19, "offsetX": 0, "offsetY": 0, "anchor": "bottom-center" },
+      "lot": { "gridX": 21, "gridY": 18, "cols": 6, "rows": 5 },
+      "render": { "visible": true, "locked": false, "zIndexMode": "y-sort", "zIndex": null },
+      "interaction": { "clickable": true, "label": { "text": "\u8336\u9986", "offsetX": 0, "offsetY": -126, "width": 96, "height": 32 }, "hitArea": { "type": "ellipse", "offsetX": 0, "offsetY": -8, "width": 118, "height": 48 } }
+    },
+    {
+      "id": "luzhou.inn",
+      "name": "\u5ba2\u6808",
+      "category": "house",
+      "entry": { "type": "house", "houseId": "house.luzhou.inn" },
+      "asset": { "image": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/kezhan.png", "naturalWidth": 909, "naturalHeight": 829, "scale": 0.17, "offsetX": 0, "offsetY": 0, "anchor": "bottom-center" },
+      "lot": { "gridX": 4, "gridY": 21, "cols": 6, "rows": 5 },
+      "render": { "visible": true, "locked": false, "zIndexMode": "y-sort", "zIndex": null },
+      "interaction": { "clickable": true, "label": { "text": "\u5ba2\u6808", "offsetX": 0, "offsetY": -128, "width": 96, "height": 32 }, "hitArea": { "type": "ellipse", "offsetX": 0, "offsetY": -8, "width": 118, "height": 48 } }
+    },
+    {
+      "id": "luzhou.grain-shop",
+      "name": "\u7cae\u94fa",
+      "category": "house",
+      "entry": { "type": "house", "houseId": "house.luzhou.grain_shop" },
+      "asset": { "image": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/liangpu.png", "naturalWidth": 1054, "naturalHeight": 804, "scale": 0.17, "offsetX": 0, "offsetY": 0, "anchor": "bottom-center" },
+      "lot": { "gridX": 29, "gridY": 21, "cols": 6, "rows": 5 },
+      "render": { "visible": true, "locked": false, "zIndexMode": "y-sort", "zIndex": null },
+      "interaction": { "clickable": true, "label": { "text": "\u7cae\u94fa", "offsetX": 0, "offsetY": -122, "width": 96, "height": 32 }, "hitArea": { "type": "ellipse", "offsetX": 0, "offsetY": -8, "width": 118, "height": 48 } }
+    },
+    {
+      "id": "luzhou.medicine-house",
+      "name": "\u836f\u94fa",
+      "category": "house",
+      "entry": { "type": "house", "houseId": "house.luzhou.medicine_house" },
+      "asset": { "image": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/yaopu.png", "naturalWidth": 1068, "naturalHeight": 710, "scale": 0.19, "offsetX": 0, "offsetY": 0, "anchor": "bottom-center" },
+      "lot": { "gridX": 10, "gridY": 29, "cols": 6, "rows": 5 },
+      "render": { "visible": true, "locked": false, "zIndexMode": "y-sort", "zIndex": null },
+      "interaction": { "clickable": true, "label": { "text": "\u836f\u94fa", "offsetX": 0, "offsetY": -118, "width": 96, "height": 32 }, "hitArea": { "type": "ellipse", "offsetX": 0, "offsetY": -8, "width": 118, "height": 48 } }
+    },
+    {
+      "id": "luzhou.home",
+      "name": "\u81ea\u5b85",
+      "category": "house",
+      "entry": { "type": "house", "houseId": "home.luzhou" },
+      "asset": { "image": "ui/yuansu/\u83f1\u5f62\u683c\u5b50/2.png", "naturalWidth": 1003, "naturalHeight": 648, "scale": 0.21, "offsetX": 0, "offsetY": 0, "anchor": "bottom-center" },
+      "lot": { "gridX": 23, "gridY": 29, "cols": 6, "rows": 5 },
+      "render": { "visible": true, "locked": false, "zIndexMode": "y-sort", "zIndex": null },
+      "interaction": { "clickable": true, "label": { "text": "\u81ea\u5b85", "offsetX": 0, "offsetY": -116, "width": 96, "height": 32 }, "hitArea": { "type": "ellipse", "offsetX": 0, "offsetY": -8, "width": 118, "height": 48 } }
+    }
+  ]
+}

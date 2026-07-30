@@ -80,7 +80,7 @@ export function dispatchStoryBattlePlayableAction(input: {
       : withPlayableSession(result.state, ownerId);
 
   const followUp: RuntimeFollowUp =
-    result.enterHouseId == null
+    result.state.scene.activeSceneId != null || result.enterHouseId == null
       ? { type: "none" }
       : { type: "reenter-house", houseId: result.enterHouseId };
 

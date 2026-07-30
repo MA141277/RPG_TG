@@ -20,6 +20,7 @@ import type { HouseDefinition } from "../../domain/house";
 import type {
   ActiveHouseModuleSession,
   HouseMapAutoAdvanceCompletion,
+  HouseMapAutoAdvanceStatusPanel,
   HouseModuleId,
   HouseModuleSessionState,
   HouseModuleSideEffect,
@@ -64,6 +65,7 @@ export type HouseRuntimeDependencies = {
     label: string;
     snapshots?: MapAutoAdvanceSnapshot[];
     completion?: HouseMapAutoAdvanceCompletion;
+    statusPanel?: HouseMapAutoAdvanceStatusPanel | null;
   }): void;
   stopMapAutoAdvance(intervalId: string): void;
   houseDefinitions: HouseDefinition[];
@@ -353,6 +355,9 @@ export function createHouseRuntimeBridge(
           ...(sideEffect.completion == null
             ? {}
             : { completion: sideEffect.completion }),
+          ...(sideEffect.statusPanel == null
+            ? {}
+            : { statusPanel: sideEffect.statusPanel }),
         });
         return;
       }

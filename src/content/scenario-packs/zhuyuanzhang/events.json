@@ -119,9 +119,6 @@
     "occurrence": "once",
     "trigger": {
       "timing": "city-enter",
-      "scope": {
-        "cityId": "city.runing"
-      },
       "priority": 160
     },
     "conditions": [
@@ -135,6 +132,16 @@
         "key": "var.story.zhu_yuanzhang.stage",
         "operator": "==",
         "value": "huangjue-begging-journey"
+      },
+      {
+        "type": "group",
+        "operator": "not",
+        "conditions": [
+          {
+            "type": "location",
+            "cityId": "city.kulan"
+          }
+        ]
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.runing_broadcast",
@@ -164,10 +171,9 @@
         "value": "huangjue-begging-journey"
       },
       {
-        "type": "variable",
-        "key": "var.story.zhu_yuanzhang.temple_week",
-        "operator": "==",
-        "value": 4
+        "type": "flag",
+        "key": "flag.story.zhu_yuanzhang.haozhou_uprising_broadcasted",
+        "expected": true
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.haozhou_return_encounter",

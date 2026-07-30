@@ -27,6 +27,7 @@ import type {
   HouseActionViewModel,
   HouseModuleDefinition,
   HouseModuleDispatchInput,
+  HouseMapAutoAdvanceStatusPanel,
   HouseModuleTransitionResult,
   HouseModuleViewModel,
   HouseOverlayViewModel,
@@ -97,6 +98,7 @@ import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
+import { createTempleReviewRestAutoAdvanceStatus } from "./temple-rest-auto-advance-status";
 import {
   applyReviewItemReward,
   createReviewTaskChoiceViewModels,
@@ -152,7 +154,6 @@ const TEMPLE_ACTIVITY_QTE_INTEGRATION_ID = "playable.activity-qte.house.temple";
 const TEMPLE_REST_MAX_DAYS = 99;
 const TEMPLE_REST_BASE_RECOVERY = 12;
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
-const TEMP_ALLOW_TEMPLE_LEAVE_FOR_TAVERN_DEBUG = true;
 
 const defaultZhuyuanzhangActivities =
   defaultPackActivities as ActivityDefinition[];
@@ -1258,7 +1259,8 @@ function createTempleRestAutoAdvanceResult(
   sessionState: TempleHouseSessionState,
   summary: TempleRestSummary,
   title: string,
-  currentState: GameState
+  currentState: GameState,
+  statusPanel?: HouseMapAutoAdvanceStatusPanel | null
 ): HouseModuleTransitionResult<"temple-house"> {
   return {
     gameState: currentState,
@@ -1272,6 +1274,7 @@ function createTempleRestAutoAdvanceResult(
         targetHouseId: input.houseDefinition.id,
         label: title,
         snapshots: summary.snapshots,
+        ...(statusPanel == null ? {} : { statusPanel }),
         completion: summary.interruptedByCouncilDate
           ? {
               type: "enter-house",
@@ -1546,14 +1549,6 @@ function readTempleWorkPlan(gameState: GameState): TempleHouseWorkPlan {
 }
 
 function shouldBlockTempleLeave(gameState: GameState): boolean {
-  if (
-    TEMP_ALLOW_TEMPLE_LEAVE_FOR_TAVERN_DEBUG &&
-    readZhuYuanzhangStoryStage(gameState) ===
-      ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-  ) {
-    return false;
-  }
-
   const firstReviewCompleted = readBooleanFlag(
     gameState,
     ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted
@@ -3714,6 +3709,16 @@ function handleAction(
       }
     );
 
+    const statusPanel =
+      actionId === TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID
+        ? createTempleReviewRestAutoAdvanceStatus({
+            gameState: summary.state,
+            characterDefinitions: summary.characterDefinitions,
+            playerCharacterId: input.playerCharacterId,
+            textEntriesById: input.textEntriesById,
+          })
+        : null;
+
     return createTempleRestAutoAdvanceResult(
       input,
       sessionState,
@@ -3723,7 +3728,8 @@ function handleAction(
         : actionId === TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID
           ? "休至评定日"
           : "休至体力恢复",
-      nextState
+      nextState,
+      statusPanel
     );
   }
 
