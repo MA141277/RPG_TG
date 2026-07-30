@@ -392,6 +392,113 @@ test(
 );
 
 test(
+  "chooseStorySceneOption routes nextEvent choices through the shared router seam",
+  { concurrency: false },
+  () => {
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
+    );
+    const storyRuntimePath = require.resolve(
+      "../.test-dist/application/story/story-runtime.js"
+    );
+
+    delete require.cache[storyRuntimePath];
+    delete require.cache[runtimeDispatchPath];
+
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const {
+        chooseStorySceneOption: chooseStorySceneOptionWithPatchedDispatch,
+        startStoryEventById: startStoryEventByIdWithPatchedDispatch,
+      } = require(storyRuntimePath);
+      const content = {
+        eventDefinitionsById: {
+          "event.choice.router-start": createEvent(
+            "event.choice.router-start",
+            "scene.choice.router-start"
+          ),
+          "event.choice.router-followup": createEvent(
+            "event.choice.router-followup",
+            "scene.choice.router-followup"
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.choice.router-start": {
+            id: "scene.choice.router-start",
+            name: "Choice Router Start",
+            actions: [
+              {
+                type: "choice",
+                options: [
+                  {
+                    id: "option.router-followup",
+                    label: "Follow-up",
+                    nextEventId: "event.choice.router-followup",
+                  },
+                ],
+              },
+            ],
+          },
+          "scene.choice.router-followup": {
+            id: "scene.choice.router-followup",
+            name: "Choice Router Follow-up",
+            actions: [],
+          },
+        },
+      };
+
+      const waitingChoice = startStoryEventByIdWithPatchedDispatch(
+        {
+          state: createBaseState(),
+          characterDefinitions: prototypeCharacters,
+          cityDefinitions: prototypeCities,
+          houseDefinitions: prototypeHouses,
+        },
+        content,
+        "event.choice.router-start"
+      );
+      dispatchRuntimeRequestCalls = 0;
+
+      const continued = chooseStorySceneOptionWithPatchedDispatch(
+        waitingChoice,
+        content,
+        {
+          id: "option.router-followup",
+          label: "Follow-up",
+          nextEventId: "event.choice.router-followup",
+        }
+      );
+
+      assert.equal(continued.cityDefinitions, prototypeCities);
+      assert.equal(continued.houseDefinitions, prototypeHouses);
+      assert.equal(
+        continued.state.runtime.eventHistory["event.choice.router-followup"]
+          ?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "chooseStorySceneOption should route nextEvent continuation through dispatchRuntimeRequest instead of starting the follow-up locally"
+      );
+    } finally {
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
+      delete require.cache[storyRuntimePath];
+      delete require.cache[runtimeDispatchPath];
+    }
+  }
+);
+
+test(
   "continueStoryFromSourceEvent routes the follow-up target through the shared router seam",
   { concurrency: false },
   () => {

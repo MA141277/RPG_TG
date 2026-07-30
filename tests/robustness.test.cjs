@@ -15497,6 +15497,23 @@ test("story source event continuation convergence keeps continueStoryFromSourceE
   );
 });
 
+test("story choice event continuation convergence keeps chooseStorySceneOption nextEvent on the shared router seam", () => {
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const chooseStorySceneOptionBlock =
+    storyRuntimeSource.match(
+      /export function chooseStorySceneOption\([\s\S]*?\r?\n}\r?\n\r?\nexport function getCurrentSceneAction/
+    )?.[0] ?? "";
+
+  assert.match(
+    chooseStorySceneOptionBlock,
+    /if \(selectedOption\.nextEventId != null\)/
+  );
+  assert.match(chooseStorySceneOptionBlock, /\brouteStoryDirectEntry\s*\(/);
+});
+
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),

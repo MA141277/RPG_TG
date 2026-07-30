@@ -271,11 +271,11 @@ with the exact verified resume point and the remaining next child scope.
 - Parent Stage: `Runtime Migration Narrowing`
 - Closeout Status: `completed-but-open`
 - Project Progress Synced: `no`
-- Next Child: `none`
-- Next Child Status: `none`
-- Next Required Action: `Decide whether to keep this verified checkpoint local or commit/push it from codex/migration-hot-tasks before opening the next continuation child for choice/scene-owned callers.`
-- Next Entry Document: `docs/superpowers/plans/2026-07-30-story-source-event-continuation-convergence-plan.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-30-story-source-event-continuation-convergence-plan.md`
-- Push Status: `not-pushed`
-- Push Commit: `none`
-- Resume From: `Stay on codex/migration-hot-tasks at the verified local source-event continuation checkpoint, then either commit/push it or open the next adjacent continuation child without widening into UI/map/backpack/main shell work.`
+- Next Child: `Story Choice Event Continuation Convergence`
+- Next Child Status: `completed-but-open`
+- Next Required Action: `Use the pushed source-event checkpoint as completed context and continue from the choice-event continuation child.`
+- Next Entry Document: `docs/superpowers/plans/2026-07-30-story-choice-event-continuation-convergence-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-30-story-choice-event-continuation-convergence-plan.md`
+- Push Status: `success`
+- Push Commit: `fb32b99`
+- Resume From: `Resume adjacent story-runtime continuation convergence from the choice-event child; source-event continuation is already implemented, verified, and pushed.`

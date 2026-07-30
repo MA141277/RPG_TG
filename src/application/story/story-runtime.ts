@@ -29,6 +29,7 @@ import { runProgressionRuntime } from "../../core/runtime/progression-runtime";
 import { dispatchRuntimeRequest } from "../../core/runtime/runtime-dispatch";
 import { continueToEvent } from "../events/event-continuation";
 import { startEvent } from "../events/event-runner";
+import { applyEffects } from "../effects/effect-applier";
 import {
   applyStorySettlementEvent,
   type StorySettlementDefinition,
@@ -413,6 +414,75 @@ export function chooseStorySceneOption(
   content: StoryContent,
   selectedOption: ChoiceOption
 ): StoryRuntimeResult {
+  if (selectedOption.nextEventId != null) {
+    let nextState = runtime.state;
+    let nextCharacterDefinitions = runtime.characterDefinitions;
+
+    if (selectedOption.effects != null && selectedOption.effects.length > 0) {
+      const effectResult = applyEffects(nextState, selectedOption.effects, {
+        characterDefinitions: nextCharacterDefinitions,
+      });
+
+      nextState = effectResult.state;
+      nextCharacterDefinitions = effectResult.characterDefinitions;
+    }
+
+    const targetEvent = content.eventDefinitionsById[selectedOption.nextEventId];
+    if (targetEvent != null) {
+      const continuation = continueToEvent({
+        state: nextState,
+        eventDefinitionsById: content.eventDefinitionsById,
+        sourceEventId: nextState.scene.activeEventId,
+        targetEventId: targetEvent.id,
+        visitedEventIds:
+          nextState.scene.activeEventId == null
+            ? []
+            : [nextState.scene.activeEventId],
+      });
+
+      if (continuation == null) {
+        return syncStoryScene(
+          {
+            state: {
+              ...nextState,
+              scene: {
+                ...nextState.scene,
+                activeEventId: null,
+                activeSceneId: null,
+                cursor: 0,
+                status: "idle",
+              },
+              ui: {
+                ...nextState.ui,
+                currentView:
+                  nextState.world.currentHouseId == null ? "city" : "house",
+              },
+            },
+            characterDefinitions: nextCharacterDefinitions,
+            ...createRuntimeWorldDefinitionContext(runtime),
+          },
+          content
+        );
+      }
+
+      return syncStoryScene(
+        routeStoryDirectEntry(
+          {
+            state: nextState,
+            characterDefinitions: nextCharacterDefinitions,
+            ...createRuntimeWorldDefinitionContext(runtime),
+          },
+          content,
+          {
+            eventId: targetEvent.id,
+            eventDefinition: targetEvent,
+          }
+        ),
+        content
+      );
+    }
+  }
+
   const choiceResult = resolveChoiceOption(runtime.state, selectedOption, {
     sceneDefinitionsById: content.sceneDefinitionsById,
     eventDefinitionsById: content.eventDefinitionsById,
