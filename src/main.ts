@@ -3317,6 +3317,7 @@ function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): v
       applyActivatedModSession(startupSession);
       await waitForInitialMapReadyWithLoading(requestId);
       endLoadingScreen(requestId);
+      scheduleInitialMapIntroAfterLoading();
     })
     .catch((error: unknown) => {
       endLoadingScreen(requestId);
@@ -3355,6 +3356,7 @@ function startRestoredGameWithLoading(
       applyActivatedModSession(startupSession);
       await waitForInitialMapReadyWithLoading(requestId);
       endLoadingScreen(requestId);
+      scheduleInitialMapIntroAfterLoading();
     })
     .catch((error: unknown) => {
       endLoadingScreen(requestId);
@@ -3392,6 +3394,7 @@ function startMainGameWithLoading(
     applyActivatedModSession(startupSession);
     await waitForInitialMapReadyWithLoading(requestId);
     endLoadingScreen(requestId);
+    scheduleInitialMapIntroAfterLoading();
   }).catch((error: unknown) => {
     endLoadingScreen(requestId);
     showStartupError(error);
@@ -3422,6 +3425,7 @@ function runScenarioPackStartupRequestWithLoading(
     applyActivatedModSession(startupSession);
     await waitForInitialMapReadyWithLoading(requestId);
     endLoadingScreen(requestId);
+    scheduleInitialMapIntroAfterLoading();
   }).catch((error) => {
     endLoadingScreen(requestId);
     window.alert(
@@ -8163,6 +8167,7 @@ function triggerGameStartStoryAfterInitialMapIntro(): void {
 
 function scheduleMapIntroOverlayAfterTerrainReady(): void {
   if (
+    !isGameVisible ||
     pendingInitialCampaignMapIntroTerrainReady ||
     hasStartedInitialCampaignMapDebugAnimation ||
     hasAppliedInitialCampaignMapDebug ||
@@ -8180,6 +8185,14 @@ function scheduleMapIntroOverlayAfterTerrainReady(): void {
 
     startInitialCampaignMapDebugAnimationIfNeeded();
   });
+}
+
+function scheduleInitialMapIntroAfterLoading(): void {
+  if (!isGameVisible) {
+    return;
+  }
+
+  scheduleMapIntroOverlayAfterTerrainReady();
 }
 
 function interpolateCampaignMapDebugState(progress: number): CampaignMapDebugState {

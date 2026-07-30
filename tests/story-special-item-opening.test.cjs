@@ -463,6 +463,33 @@ test("initial map chapter intro triggers game-start story after title fade", () 
   );
 });
 
+test("initial map chapter intro starts after startup loading is dismissed", () => {
+  const source = fs.readFileSync("src/main.ts", "utf8");
+
+  assert.match(source, /function scheduleInitialMapIntroAfterLoading\(\): void/);
+  assert.match(
+    source,
+    /function scheduleMapIntroOverlayAfterTerrainReady\(\): void \{[\s\S]*?!isGameVisible[\s\S]*?startInitialCampaignMapDebugAnimationIfNeeded\(\);/s
+  );
+
+  for (const functionName of [
+    "startContinueGameWithLoading",
+    "startRestoredGameWithLoading",
+    "startMainGameWithLoading",
+    "runScenarioPackStartupRequestWithLoading",
+  ]) {
+    const match = source.match(
+      new RegExp(
+        `function ${functionName}[\\s\\S]*?applyActivatedModSession\\(startupSession\\);[\\s\\S]*?await waitForInitialMapReadyWithLoading\\(requestId\\);[\\s\\S]*?endLoadingScreen\\(requestId\\);[\\s\\S]*?scheduleInitialMapIntroAfterLoading\\(\\);`
+      )
+    );
+    assert.ok(
+      match,
+      `Expected ${functionName} to schedule the map chapter intro only after startup loading ends.`
+    );
+  }
+});
+
 test("builtin zhu yuanzhang start uses the village opening state", () => {
   const source = fs.readFileSync("src/main.ts", "utf8");
   const prototypeAppStateBlock =

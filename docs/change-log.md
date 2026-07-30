@@ -8,10 +8,12 @@
 - `MapAutoAdvanceSnapshot` 与 `start-map-auto-advance` side effect 明确支持结构化 `statusPanel`，house 模块可以为每个自动推进日提供刷新后的只读状态面板。
 - `src/main.ts` 播放自动推进 snapshot 时只消费共享 `statusPanel` 数据，不直接 import concrete temple house status builder。
 - 恢复 777 的寺庙剧情衔接语义：皇觉寺剃度事件不再通过 `nextEventId` 直连首轮评定 scene，而是回到 temple house 后由 house re-entry 进入正式评定流程。
+- 初始地图第一章标题现在会在 startup loading 关闭后再启动，避免标题动画在 loading 覆盖层下提前播放完。
 
 ### Impact
 - 寺庙 `休至评定日` 自动推进状态窗保留每日刷新能力，同时维持 special house module 边界。
 - 剃度后的首轮评定继续复用 temple house 评定骨架，避免退回“一段 scene 插片强接评定”的临时实现。
+- “第一章·淮西托钵”重新成为玩家可见的开局章节卡，淡出后再触发 `game-start` 村中长者托信事件。
 
 ## 2026-07-31 City Begging Default Dialogue Runtime
 
