@@ -301,7 +301,7 @@ function createStorySceneRunnerContext(
     activityDefinitionsById: content.activityDefinitionsById,
     characterDefinitions: runtime.characterDefinitions,
     textEntriesById: content.textEntriesById,
-    continueFromStartEvent: ({ state, characterDefinitions, eventDefinition }) =>
+    continueFromSceneEvent: ({ state, characterDefinitions, eventDefinition }) =>
       routeStoryDirectEntry(
         {
           state,

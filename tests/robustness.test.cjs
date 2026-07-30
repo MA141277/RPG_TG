@@ -15514,7 +15514,7 @@ test("story choice event continuation convergence keeps chooseStorySceneOption n
   assert.match(chooseStorySceneOptionBlock, /\brouteStoryDirectEntry\s*\(/);
 });
 
-test("scene runner start event convergence keeps start-event actions on an injected seam", () => {
+test("scene runner start event convergence keeps start-event actions on the shared continuation seam", () => {
   const sceneRunnerSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/scene/scene-runner.ts"),
     "utf8"
@@ -15524,8 +15524,24 @@ test("scene runner start event convergence keeps start-event actions on an injec
       /if \(currentAction\.type === "start-event"\) \{[\s\S]*?continue;\n    \}/
     )?.[0] ?? "";
 
-  assert.match(startEventBlock, /context\.[a-zA-Z0-9_]*start[a-zA-Z0-9_]*event/i);
+  assert.match(startEventBlock, /context\.continueFromSceneEvent/);
   assert.match(startEventBlock, /continueToEvent\(/);
+});
+
+test("scene runner scene-end continuation convergence keeps one shared continuation seam", () => {
+  const sceneRunnerSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/scene/scene-runner.ts"),
+    "utf8"
+  );
+  const continueSceneEventBlock =
+    sceneRunnerSource.match(
+      /function continueSceneEvent\([\s\S]*?\n}\n/
+    )?.[0] ?? "";
+
+  assert.match(sceneRunnerSource, /continueFromSceneEvent\?:/);
+  assert.match(sceneRunnerSource, /context\.continueFromSceneEvent/);
+  assert.match(continueSceneEventBlock, /context\.continueFromSceneEvent/);
+  assert.doesNotMatch(sceneRunnerSource, /continueFromStartEvent/);
 });
 
 test("shared dispatch consumes the hardened runtime router contract", () => {

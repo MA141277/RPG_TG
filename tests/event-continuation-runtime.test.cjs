@@ -373,6 +373,102 @@ test(
 );
 
 test(
+  "advanceStorySceneStep routes automatic scene-end continuation through the shared router seam",
+  { concurrency: false },
+  () => {
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
+    );
+    const storyRuntimePath = require.resolve(
+      "../.test-dist/application/story/story-runtime.js"
+    );
+
+    delete require.cache[storyRuntimePath];
+    delete require.cache[runtimeDispatchPath];
+
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const {
+        advanceStorySceneStep: advanceStorySceneStepWithPatchedDispatch,
+        startStoryEventById: startStoryEventByIdWithPatchedDispatch,
+      } = require(storyRuntimePath);
+      const content = {
+        eventDefinitionsById: {
+          "event.scene.auto-start": createEvent(
+            "event.scene.auto-start",
+            "scene.scene.auto-start",
+            "event.scene.auto-followup"
+          ),
+          "event.scene.auto-followup": createEvent(
+            "event.scene.auto-followup",
+            "scene.scene.auto-followup"
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.scene.auto-start": {
+            id: "scene.scene.auto-start",
+            name: "Scene Auto Start",
+            actions: [
+              {
+                type: "narration",
+                text: "Lead-in",
+              },
+            ],
+          },
+          "scene.scene.auto-followup": {
+            id: "scene.scene.auto-followup",
+            name: "Scene Auto Follow-up",
+            actions: [],
+          },
+        },
+      };
+
+      const started = startStoryEventByIdWithPatchedDispatch(
+        {
+          state: createBaseState(),
+          characterDefinitions: prototypeCharacters,
+          cityDefinitions: prototypeCities,
+          houseDefinitions: prototypeHouses,
+        },
+        content,
+        "event.scene.auto-start"
+      );
+      dispatchRuntimeRequestCalls = 0;
+
+      const continued = advanceStorySceneStepWithPatchedDispatch(
+        started,
+        content
+      );
+
+      assert.equal(continued.cityDefinitions, prototypeCities);
+      assert.equal(continued.houseDefinitions, prototypeHouses);
+      assert.equal(
+        continued.state.runtime.eventHistory["event.scene.auto-followup"]?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "advanceStorySceneStep should route automatic scene-end continuation through dispatchRuntimeRequest instead of starting the follow-up locally"
+      );
+    } finally {
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
+      delete require.cache[storyRuntimePath];
+      delete require.cache[runtimeDispatchPath];
+    }
+  }
+);
+
+test(
   "story scene choice nextEvent fails closed when selected option points back to the active event",
   () => {
     const content = {
