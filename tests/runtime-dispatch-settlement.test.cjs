@@ -562,7 +562,6 @@ test("dispatchRuntimeRequest does not treat router-supplied settlement payloads 
   );
   assert.deepEqual(result.settlement, {
     commands: [],
-    effects: [],
     appliedBy: "runtime-settlement",
     emittedBy: "runtime-router",
     settledEffects: [settledEffect],

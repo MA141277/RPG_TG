@@ -186,8 +186,8 @@ function settleRuntimeResultSettlementEffects(
     };
   }
 
-  const settlementEffects = runtimeResult.settlement?.effects ?? [];
-  if (settlementEffects.length === 0) {
+  const settlementEffects = runtimeResult.settlement?.effects;
+  if (settlementEffects == null || settlementEffects.length === 0) {
     return runtimeResult;
   }
 

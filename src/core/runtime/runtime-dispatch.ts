@@ -186,7 +186,7 @@ function createRuntimeSettlementSummary(input: {
     routedSettlementMetadata != null &&
     Array.isArray(routedSettlementMetadata.effects)
       ? routedSettlementMetadata.effects
-      : [];
+      : null;
   const pendingSettlementCommands =
     routedSettlementMetadata != null &&
     Array.isArray(routedSettlementMetadata.commands)
@@ -197,7 +197,7 @@ function createRuntimeSettlementSummary(input: {
       ? {}
       : omitRuntimeSettlementOwnership(routedSettlementMetadata)),
     commands: pendingSettlementCommands,
-    effects: pendingSettlementEffects,
+    ...(pendingSettlementEffects == null ? {} : { effects: pendingSettlementEffects }),
     appliedBy: "runtime-settlement",
     emittedBy:
       input.routedEffects.settledEffects.length > 0 ||

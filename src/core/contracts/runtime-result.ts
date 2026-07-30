@@ -32,7 +32,7 @@ export type RuntimeFollowUpOutcome =
 
 export type RuntimeSettlementResult = {
   commands?: SettlementCommand[];
-  effects: Effect[];
+  effects?: Effect[];
   [key: string]: unknown;
 };
 

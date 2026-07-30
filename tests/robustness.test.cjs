@@ -16765,7 +16765,28 @@ test("runtime result settlement payload exposes canonical settlement commands", 
 
   assert.match(source, /export type RuntimeSettlementResult =/);
   assert.match(source, /commands\??:\s*SettlementCommand\[\]/);
-  assert.match(source, /effects:\s*Effect\[\]/);
+  assert.match(source, /effects\??:\s*Effect\[\]/);
+});
+
+test("runtime settlement effects compatibility optional keeps effects off the canonical required surface", () => {
+  const runtimeResultSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+  const runtimeDispatchSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.match(runtimeResultSource, /effects\?: Effect\[\]/);
+  assert.doesNotMatch(
+    runtimeDispatchSource,
+    /commands:\s*pendingSettlementCommands,\s*effects:\s*pendingSettlementEffects/
+  );
+  assert.match(
+    runtimeDispatchSource,
+    /\.\.\.\(pendingSettlementEffects == null \? \{\} : \{ effects: pendingSettlementEffects \}\)/
+  );
 });
 
 test("settlement command runtime owns the covered concrete mutation families", () => {
