@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-31 City Begging Default Content Contract
+
+### Added
+- 新增 `src/content/playables/city-begging-default-content.ts`，以结构化 content table 保存濠州城默认化缘地点、固定吉凶结果、选项、结算文案与结构化 effects。
+- 新增 `tests/city-begging-default-content.test.cjs`，覆盖三处默认化缘地点、固定结果表、原始中文文案保真，以及 `getCityBeggingDefaultLocation()` 命中/缺失查询。
+
+### Changed
+- 城中默认化缘文案已按原始交接稿恢复 encounter / option / outcome / settlement copy，不再使用概述性改写文本。
+
+### Impact
+- 后续 runtime 接线可以直接消费 `src/content/playables` 下的结构化默认化缘内容，无需在运行时解析中文文案，也无需向 `src/main.ts` 添加化缘内容分支。
+
 ## 2026-07-30 Unified Equipment Slot UI And Backpack Contract
 
 ### Added

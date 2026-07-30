@@ -2,7 +2,7 @@
 
 ## Status
 
-DONE_WITH_CONCERNS
+DONE
 
 ## Scope Completed
 
@@ -49,9 +49,50 @@ fail 0
   - `beicheng_ciji`: `ji`, `ji`, `ping`
 - `help_mend_net` is present for the later runtime task described in the implementation plan.
 
-## Concerns
+## Original Concerns
 
-- The Task 1 brief and approved design require preserving the exact Chinese copy from the original user request, but the accessible brief/spec contain only branch summaries, not the full nine original paragraphs. The table therefore preserves the fixed structure, ids, result contract, and branch meanings, but the prose should be replaced if the original exact copy becomes available.
+- The original Task 1 implementation noted that exact Chinese copy was not available. The review-fix handoff supplied `.superpowers/sdd/city-begging-default-dialogue-original-copy.md`, and the content table now preserves that exact copy.
+
+## Review Fixes
+
+- Updated `docs/change-log.md` for the new production content under `src/content/playables`.
+- Replaced the summarized/default begging prose with exact UTF-8 Chinese encounter, option, outcome, settlement, and closing copy from `.superpowers/sdd/city-begging-default-dialogue-original-copy.md`.
+- Added structured `settlementText` fields to `CityBeggingDefaultOption` so settlement copy is preserved without runtime string parsing.
+- Added direct test coverage for `getCityBeggingDefaultLocation()` returning both a matching location and `null`.
+
+Review-fix red run:
+
+```text
+npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/city-begging-default-content.test.cjs }
+```
+
+Result:
+
+```text
+pass 2
+fail 2
+city begging default content preserves exact requested Chinese copy
+getCityBeggingDefaultLocation returns a matching location or null
+```
+
+Review-fix green run:
+
+```text
+npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/city-begging-default-content.test.cjs }
+```
+
+Result:
+
+```text
+pass 4
+fail 0
+```
+
+## Review Fix Status
+
+DONE
+
+The original exact copy handoff was available during review-fix work, so the previous exact-copy concern is resolved.
 
 ## Git Scope
 
