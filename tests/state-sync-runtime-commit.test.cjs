@@ -124,3 +124,52 @@ test("commitRuntimeRequest settles playable settlement effects before app state 
     },
   ]);
 });
+
+test("commitRuntimeRequest settles playable settlement commands before app state write-back", () => {
+  const result = commitRuntimeRequest({
+    state: createAppState(),
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.playable-settlement-commands",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [],
+          settlement: {
+            integrationId: "playable.test",
+            outcome: "success",
+            factResult: { status: "completed" },
+            handoff: {
+              type: "close-only",
+              ownerKind: "external",
+              ownerId: null,
+            },
+            commands: [
+              {
+                type: "flag.set",
+                key: "playable.commands.settled",
+                value: true,
+              },
+            ],
+            effects: [],
+          },
+        }),
+      },
+    },
+  });
+
+  assert.equal(
+    result.state.gameState.runtime.flags["playable.commands.settled"],
+    true
+  );
+  assert.deepEqual(result.runtimeResult.settlement.commands, [
+    {
+      type: "flag.set",
+      key: "playable.commands.settled",
+      value: true,
+    },
+  ]);
+});

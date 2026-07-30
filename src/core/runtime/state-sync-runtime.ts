@@ -14,7 +14,10 @@ import {
   type RuntimeAppStateInput,
 } from "./state-sync-core-seam";
 import { dispatchRuntimeRequest } from "./runtime-dispatch";
-import { settleRuntimeEffects } from "./runtime-settlement";
+import {
+  settleRuntimeCommands,
+  settleRuntimeEffects,
+} from "./runtime-settlement";
 import { syncAppState } from "./state-sync-app-bridge";
 import { hydrateFromSave } from "./state-sync-hydration";
 import { rebuildAfterModActivation } from "./state-sync-mod-rebuild";
@@ -145,6 +148,44 @@ export function commitRuntimeRequest<
 function settleRuntimeResultSettlementEffects(
   runtimeResult: RuntimeResult
 ): RuntimeResult {
+  const settlementCommands = runtimeResult.settlement?.commands ?? [];
+  if (settlementCommands.length > 0) {
+    const settled = settleRuntimeCommands({
+      state: runtimeResult.state,
+      commands: settlementCommands,
+      emittedBy: "event-runtime",
+      appliedBy: "runtime-settlement",
+      ...(runtimeResult.characterDefinitions == null
+        ? {}
+        : { characterDefinitions: runtimeResult.characterDefinitions }),
+      ...(runtimeResult.characterStatusById == null
+        ? {}
+        : { characterStatusById: runtimeResult.characterStatusById }),
+    });
+
+    return {
+      ...runtimeResult,
+      state: settled.state,
+      ...(settled.characterDefinitions == null
+        ? {}
+        : { characterDefinitions: settled.characterDefinitions }),
+      ...(settled.characterStatusById == null
+        ? {}
+        : { characterStatusById: settled.characterStatusById }),
+      ...(runtimeResult.settlement === undefined
+        ? {}
+        : {
+            settlement:
+              runtimeResult.settlement === null
+                ? null
+                : {
+                    ...runtimeResult.settlement,
+                    commands: settled.settledCommands,
+                  },
+          }),
+    };
+  }
+
   const settlementEffects = runtimeResult.settlement?.effects ?? [];
   if (settlementEffects.length === 0) {
     return runtimeResult;
@@ -179,9 +220,9 @@ function settleRuntimeResultSettlementEffects(
             runtimeResult.settlement === null
               ? null
               : {
-            ...runtimeResult.settlement,
-            effects: settled.settledEffects,
-          },
+                  ...runtimeResult.settlement,
+                  effects: settled.settledEffects,
+                },
         }),
   };
 }

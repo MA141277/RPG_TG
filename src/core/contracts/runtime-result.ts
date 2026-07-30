@@ -3,6 +3,7 @@ import type { RuntimeEventEntity } from "./event-router";
 import type { NavigationTarget } from "./navigation";
 import type { ProgressionSettlementInstance } from "./progression-runtime";
 import type { RuntimeState } from "./runtime-state";
+import type { SettlementCommand } from "./settlement-command";
 import type { TaskAction, TaskSignal, TaskUpdate } from "./task-runtime";
 import type { BuildingStatusById } from "../../domain/building-status";
 import type { CharacterDefinition } from "../../domain/character";
@@ -30,6 +31,7 @@ export type RuntimeFollowUpOutcome =
   | { type: "time.council-threshold-crossed" };
 
 export type RuntimeSettlementResult = {
+  commands?: SettlementCommand[];
   effects: Effect[];
   [key: string]: unknown;
 };

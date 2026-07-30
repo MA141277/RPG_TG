@@ -16757,6 +16757,17 @@ test("runtime settlement uses explicit contract and reports unsupported effect k
   assert.doesNotMatch(source, /runTask|activateEvent|renderApp|writeSave/);
 });
 
+test("runtime result settlement payload exposes canonical settlement commands", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeSettlementResult =/);
+  assert.match(source, /commands\??:\s*SettlementCommand\[\]/);
+  assert.match(source, /effects:\s*Effect\[\]/);
+});
+
 test("settlement command runtime owns the covered concrete mutation families", () => {
   const contractSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/settlement-command.ts"),

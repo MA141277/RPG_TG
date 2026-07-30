@@ -561,6 +561,7 @@ test("dispatchRuntimeRequest does not treat router-supplied settlement payloads 
     true
   );
   assert.deepEqual(result.settlement, {
+    commands: [],
     effects: [],
     appliedBy: "runtime-settlement",
     emittedBy: "runtime-router",
@@ -568,4 +569,70 @@ test("dispatchRuntimeRequest does not treat router-supplied settlement payloads 
     unsupportedEffects: [],
     warnings: [],
   });
+});
+
+test("dispatchRuntimeRequest preserves canonical settlement command payloads for downstream settlement", () => {
+  const result = dispatchRuntimeRequest({
+    state: createBaseRuntimeState(),
+    request: {
+      family: "external",
+      type: "external",
+      eventId: "event.test.pending-settlement-commands",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [
+            {
+              type: "setFlag",
+              key: "event.test.pending-settlement-routed",
+              value: true,
+            },
+          ],
+          settlement: {
+            integrationId: "playable.pending",
+            outcome: "success",
+            factResult: { status: "completed" },
+            handoff: {
+              type: "close-only",
+              ownerKind: "external",
+              ownerId: null,
+            },
+            commands: [
+              {
+                type: "flag.set",
+                key: "event.test.pending-settlement-command",
+                value: true,
+              },
+            ],
+            effects: [],
+          },
+        }),
+      },
+    },
+  });
+
+  assert.deepEqual(result.settlement.commands, [
+    {
+      type: "flag.set",
+      key: "event.test.pending-settlement-command",
+      value: true,
+    },
+  ]);
+  assert.equal(
+    result.state.core.runtime.flags["event.test.pending-settlement-routed"],
+    true
+  );
+  assert.equal(
+    result.state.core.runtime.flags["event.test.pending-settlement-command"],
+    undefined
+  );
+  assert.deepEqual(result.settlement.settledEffects, [
+    {
+      type: "setFlag",
+      key: "event.test.pending-settlement-routed",
+      value: true,
+    },
+  ]);
 });

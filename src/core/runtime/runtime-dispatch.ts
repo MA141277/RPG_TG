@@ -1,6 +1,7 @@
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
+import type { SettlementCommand } from "../contracts/settlement-command";
 import type {
   TaskAction,
   TaskDefinition,
@@ -186,10 +187,16 @@ function createRuntimeSettlementSummary(input: {
     Array.isArray(routedSettlementMetadata.effects)
       ? routedSettlementMetadata.effects
       : [];
+  const pendingSettlementCommands =
+    routedSettlementMetadata != null &&
+    Array.isArray(routedSettlementMetadata.commands)
+      ? (routedSettlementMetadata.commands as SettlementCommand[])
+      : [];
   const summary = {
     ...(routedSettlementMetadata == null
       ? {}
       : omitRuntimeSettlementOwnership(routedSettlementMetadata)),
+    commands: pendingSettlementCommands,
     effects: pendingSettlementEffects,
     appliedBy: "runtime-settlement",
     emittedBy:
@@ -215,6 +222,7 @@ function omitRuntimeSettlementOwnership(
     settledEffects: _settledEffects,
     unsupportedEffects: _unsupportedEffects,
     warnings: _warnings,
+    commands: _commands,
     effects: _effects,
     ...rest
   } = settlement as Record<string, unknown>;
