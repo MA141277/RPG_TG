@@ -31,6 +31,7 @@ type LeaveButtonOptions = {
 type OverlaySkinOptions = {
   overlayAttribute?: string;
   modalClassName?: string;
+  confirmActionAttribute?: string;
 };
 
 type IdleOwnerOptions = {
@@ -183,6 +184,8 @@ export function renderHouseAlertOverlay(
     overlay.confirmButtonSound == null
       ? ""
       : ` data-button-sound="${overlay.confirmButtonSound}"`;
+  const confirmActionAttribute =
+    options.confirmActionAttribute ?? "data-house-action";
   const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${
     getAssessmentPopupClassName(overlay.paragraphs.length, options.modalClassName)
   }${isContributionSettlement ? " c-house-contribution-popup" : ""}${
@@ -200,7 +203,7 @@ export function renderHouseAlertOverlay(
           <button
             type="button"
             class="c-button c-grain-shop-button c-grain-shop-button--gold"
-            data-house-action="${overlay.confirmActionId}"
+            ${confirmActionAttribute}="${overlay.confirmActionId}"
             ${confirmButtonSoundAttribute}
           >
             ${overlay.confirmLabel}

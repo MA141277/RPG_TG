@@ -127,6 +127,7 @@ import {
 } from "./application/audio/battle-sound";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
+import { processMapReturnEffects } from "./application/runtime/transition/map-return-effect-transition";
 import {
   applyCouncilPriorityFollowUp,
   createNavigationTimeFollowUpBridge,
@@ -303,7 +304,6 @@ import type {
   ValuableLibraryFilter,
   ValuableLibrarySortKey,
 } from "./domain/global-ui";
-import { KEEP_HOUSE_VARIABLE_KEYS } from "./domain/keep-house";
 import { LEADER_RESIDENCE_VARIABLE_KEYS } from "./domain/leader-residence";
 import type {
   UiLayoutBackgroundMode,
@@ -317,7 +317,6 @@ import {
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
-  type ZhuYuanzhangStoryStage,
 } from "./domain/zhu-yuanzhang-story";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
@@ -1328,16 +1327,23 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     activeContentContext.mapDefinitionById["map.yuanmo_campaign"] ??
     activeContentContext.maps[0];
   const defaultCityDefinition =
-    activeContentContext.cityDefinitionById["city.kulan"] ??
+    activeContentContext.cityDefinitionById["city.huangcun"] ??
     activeContentContext.cities[0];
   assertExists(defaultMapDefinition, "Missing default map definition.");
   assertExists(defaultCityDefinition, "Missing default city definition.");
-  const storyStage: ZhuYuanzhangStoryStage =
+  const initialRuntime =
     playerCharacterId === defaultPlayerCharacterId
-      ? ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-      : ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp;
-  const storyCharacterDefinitions =
-    createPrototypeCharactersForStoryStage(storyStage);
+      ? {
+          variables: {
+            "var.story.zhu_yuanzhang.stage": "village-opening",
+          },
+        }
+      : {
+          variables: {
+            [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
+              ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp,
+          },
+        };
   let nextAppState: AppState = {
     gameState: ensureCityNpcPoolsForCurrentDay(
       createInitialState({
@@ -1374,12 +1380,16 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
               )?.id ?? null,
           },
         },
+        initialRuntime,
         currentView: "map",
       }),
       activeContentContext.cityNpcPools
     ),
-    characterDefinitions: storyCharacterDefinitions,
-    playerCoordinate: defaultMapDefinition.initialPlayerCoordinate ?? { x: 0, y: 0 },
+    characterDefinitions: activeContentContext.gameContent.characters,
+    playerCoordinate:
+      activeContentContext.cityCoordinatesById[defaultCityDefinition.id] ??
+      defaultMapDefinition.initialPlayerCoordinate ??
+      { x: 0, y: 0 },
     campaignActorState: {
       facingDegrees: 0,
       isMoving: false,
@@ -1415,34 +1425,6 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
       defaultMapDefinition,
       nextAppState.playerCoordinate
     ),
-  };
-
-  nextAppState = {
-    ...nextAppState,
-    gameState: {
-      ...nextAppState.gameState,
-      ui: {
-        ...nextAppState.gameState.ui,
-        reviewDateText:
-          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? formatCouncilStatusText(0)
-            : nextAppState.gameState.ui.reviewDateText,
-        mainHouseMissionText:
-          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? getRuntimeText(
-                "runtime.zhu_yuanzhang.prototype.main_mission.temple_review"
-              )
-            : nextAppState.gameState.ui.mainHouseMissionText,
-      },
-      runtime: {
-        ...nextAppState.gameState.runtime,
-        variables: {
-          ...nextAppState.gameState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: storyStage,
-        },
-      },
-    },
   };
 
   return nextAppState;
@@ -3336,6 +3318,7 @@ function createScenarioPackAppState(
               )?.id ?? null,
           },
         },
+        initialRuntime: profile.initialRuntime,
         currentView: profile.initialLocation.view,
       }),
       activeContentContext.cityNpcPools
@@ -7279,6 +7262,48 @@ function restoreCityCardDrawOverlay(
   replacementOverlay.replaceWith(preservedOverlay);
 }
 
+let mapReturnEffectTimeoutId: number | null = null;
+
+function scheduleMapReturnEffectProcessing(delayMs: number | null): void {
+  if (mapReturnEffectTimeoutId != null) {
+    window.clearTimeout(mapReturnEffectTimeoutId);
+    mapReturnEffectTimeoutId = null;
+  }
+
+  if (delayMs == null) {
+    return;
+  }
+
+  mapReturnEffectTimeoutId = window.setTimeout(() => {
+    mapReturnEffectTimeoutId = null;
+    if (syncMapReturnEffects(Date.now())) {
+      renderApp();
+    }
+  }, delayMs);
+}
+
+function syncMapReturnEffects(nowMs: number = Date.now()): boolean {
+  const result = processMapReturnEffects({
+    state: appState.gameState,
+    characterDefinitions: appState.characterDefinitions,
+    nowMs,
+  });
+  const didChange =
+    result.state !== appState.gameState ||
+    result.characterDefinitions !== appState.characterDefinitions;
+
+  if (didChange) {
+    appState = {
+      ...appState,
+      gameState: result.state,
+      characterDefinitions: result.characterDefinitions,
+    };
+  }
+
+  scheduleMapReturnEffectProcessing(result.nextDelayMs);
+  return didChange;
+}
+
 function renderApp() {
   if (syncRenderedFortuneBoardOverlay()) {
     return;
@@ -7323,6 +7348,7 @@ function renderAppFrame(
       },
     },
   };
+  syncMapReturnEffects();
   const currentMapDefinition = getCurrentMapDefinition();
   const currentCityDefinition =
     activeContentContext.cityDefinitionById[appState.gameState.world.currentCityId] ??
@@ -7795,10 +7821,21 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
       ...TARGET_CAMPAIGN_MAP_DEBUG_STATE,
     };
     hideMapIntroOverlay();
+    triggerGameStartStoryAfterInitialMapIntro();
     initialCampaignMapDebugAnimationFrame = null;
   };
 
   initialCampaignMapDebugAnimationFrame = window.requestAnimationFrame(animate);
+}
+
+function triggerGameStartStoryAfterInitialMapIntro(): void {
+  const result = mainRuntimeOrchestrator.execute({
+    type: "trigger-current-story-events",
+    timing: "game-start",
+  });
+  if (result.didChange && result.shouldRender) {
+    renderApp();
+  }
 }
 
 function scheduleMapIntroOverlayAfterTerrainReady(): void {

@@ -61,7 +61,7 @@ function evaluateSingleEventCondition(
 ): boolean {
   switch (condition.type) {
     case "flag":
-      return state.runtime.flags[condition.key] === condition.expected;
+      return (state.runtime.flags[condition.key] ?? false) === condition.expected;
     case "variable":
       return compareValue(
         state.runtime.variables[condition.key],

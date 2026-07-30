@@ -203,6 +203,8 @@ export function createStagePresenterOutput(
         input.appState.gameState,
         input.sceneDefinitionsById ?? {}
       ),
+      currentSceneBackgroundId:
+        input.appState.gameState.scene.backgroundId ?? null,
     };
   }
 

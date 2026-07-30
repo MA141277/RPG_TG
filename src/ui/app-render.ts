@@ -633,6 +633,7 @@ function renderStage(
   if (stage.type === "scene") {
     return renderSceneView({
       currentAction: stage.currentSceneAction,
+      currentBackgroundId: stage.currentSceneBackgroundId,
       activitySession: input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,
       choiceOptions: stage.currentSceneChoiceOptions,

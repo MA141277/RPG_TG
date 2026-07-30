@@ -1,7 +1,7 @@
 import type { ChoiceOption, SceneDefinition } from "../../domain/action";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition } from "../../domain/event";
-import type { GameState } from "../../domain/game-state";
+import type { GameState, ViewName } from "../../domain/game-state";
 import { applyEffects } from "../effects/effect-applier";
 import { continueToEvent } from "../events/event-continuation";
 
@@ -83,12 +83,18 @@ function finishChoiceScene(state: GameState): GameState {
       ...state.scene,
       activeEventId: null,
       activeSceneId: null,
+      backgroundId: null,
+      returnView: null,
       cursor: 0,
       status: "idle",
     },
     ui: {
       ...state.ui,
-      currentView: state.world.currentHouseId == null ? "city" : "house",
+      currentView: resolveSceneReturnView(state),
     },
   };
+}
+
+function resolveSceneReturnView(state: GameState): ViewName {
+  return state.scene.returnView ?? (state.world.currentHouseId == null ? "city" : "house");
 }

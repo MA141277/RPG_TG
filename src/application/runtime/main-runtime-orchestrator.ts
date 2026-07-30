@@ -54,6 +54,10 @@ export type MainRuntimeOrchestratorRequest =
       timing: EventTriggerTiming;
       state: GameState;
       characterDefinitions: CharacterDefinition[];
+    }
+  | {
+      type: "trigger-current-story-events";
+      timing: EventTriggerTiming;
     };
 
 export type MainRuntimeOrchestratorResult = {
@@ -211,6 +215,36 @@ export function createMainRuntimeOrchestrator(
 
       const appState = dependencies.getAppState();
       const storyContent = dependencies.getStoryContent();
+
+      if (request.type === "trigger-current-story-events") {
+        const result = runStoryTiming(
+          request.timing,
+          appState.gameState,
+          appState.characterDefinitions
+        );
+        const nextAppState = {
+          ...appState,
+          gameState: result.gameState,
+          characterDefinitions: result.characterDefinitions,
+          ...(result.cityStatusById == null
+            ? {}
+            : { cityStatusById: result.cityStatusById }),
+          ...(result.buildingStatusById == null
+            ? {}
+            : { buildingStatusById: result.buildingStatusById }),
+        };
+        dependencies.setAppState(nextAppState);
+
+        return {
+          appState: nextAppState,
+          gameState: nextAppState.gameState,
+          characterDefinitions: nextAppState.characterDefinitions,
+          didChange:
+            result.gameState !== appState.gameState ||
+            result.characterDefinitions !== appState.characterDefinitions,
+          shouldRender: true,
+        };
+      }
 
       if (request.type === "advance-story-scene") {
         const result = advanceStorySceneStep(

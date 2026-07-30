@@ -7,6 +7,7 @@ import type {
 } from "../../../application/navigation/travel-to-coordinate";
 import type {
   CampaignHexGridDefinition,
+  CampaignHexStructureGround,
   CampaignFortCityRulesDefinition,
   CampaignMapNodeMeshDefinition,
   CampaignVegetationMeshDefinition,
@@ -85,6 +86,23 @@ type CampaignTerrainCoordinateSystem = {
   hexPointBounds: CampaignTerrainHexPointBounds;
   worldScale: CampaignTerrainWorldScale;
 };
+
+type CampaignStructureGroundSemantic = CampaignHexStructureGround;
+
+const CAMPAIGN_STRUCTURE_GROUND_SEMANTIC_VALUE: Record<
+  CampaignStructureGroundSemantic,
+  number
+> = {
+  farmland: 64,
+  village: 128,
+  city: 255,
+};
+
+function isCampaignStructureGroundSemantic(
+  value: unknown
+): value is CampaignStructureGroundSemantic {
+  return value === "farmland" || value === "village" || value === "city";
+}
 
 type ActorMeshData = {
   vertices: Float32Array;
@@ -721,7 +739,7 @@ type CampaignMaterialSemanticModel = {
   mountainByCellKey: Map<string, boolean>;
   terrainByCellKey: Map<string, string>;
   referenceHeightByCellKey: Map<string, number>;
-  structureGroundByCellKey: Map<string, "village" | "city">;
+  structureGroundByCellKey: Map<string, CampaignStructureGroundSemantic>;
 };
 
 type CampaignHexGridAsset = CampaignHexGridDefinition;
@@ -4042,7 +4060,7 @@ function applyCampaignStructureGroundSemanticOverlay(
 function setCampaignStructureGroundSemanticCell(
   materialSemanticModel: CampaignMaterialSemanticModel,
   cell: GridCoordinate,
-  ground: "village" | "city"
+  ground: Exclude<CampaignStructureGroundSemantic, "farmland">
 ): void {
   const pixelX = cell.x - materialSemanticModel.minCellX;
   const pixelY = cell.y - materialSemanticModel.minCellY;
@@ -4064,7 +4082,7 @@ function setCampaignStructureGroundSemanticCell(
   const pixelOffset =
     (pixelY * materialSemanticModel.textureColumns + pixelX) * 4;
   materialSemanticModel.source.data[pixelOffset + 2] =
-    ground === "city" ? 255 : 128;
+    CAMPAIGN_STRUCTURE_GROUND_SEMANTIC_VALUE[ground];
   materialSemanticModel.structureGroundByCellKey.set(cellKey, ground);
 }
 
@@ -7729,7 +7747,7 @@ function createCampaignMaterialSemanticModel(
   const mountainByCellKey = new Map<string, boolean>();
   const terrainByCellKey = new Map<string, string>();
   const referenceHeightByCellKey = new Map<string, number>();
-  const structureGroundByCellKey = new Map<string, "village" | "city">();
+  const structureGroundByCellKey = new Map<string, CampaignStructureGroundSemantic>();
 
   for (const cell of cells) {
     const isLand = isHexPassableAtHexPoint(
@@ -7815,13 +7833,18 @@ function createCampaignMaterialSemanticModelFromHexGrid(
   const mountainByCellKey = new Map<string, boolean>();
   const terrainByCellKey = new Map<string, string>();
   const referenceHeightByCellKey = new Map<string, number>();
-  const structureGroundByCellKey = new Map<string, "village" | "city">();
+  const structureGroundByCellKey = new Map<string, CampaignStructureGroundSemantic>();
 
   for (const cell of campaignHexGrid.cells) {
     const pixelX = cell.x - minCellX;
     const pixelY = cell.y - minCellY;
     const pixelOffset = (pixelY * textureColumns + pixelX) * 4;
     const value = cell.land ? 255 : 0;
+    const cellKey = getHexCellKey(cell.x, cell.y);
+    const structureGround =
+      cell.land && isCampaignStructureGroundSemantic(cell.structureGround)
+        ? cell.structureGround
+        : null;
     const mountainValue = cell.land && cell.terrain === "山脉" ? 255 : 0;
 
     if (
@@ -7835,17 +7858,23 @@ function createCampaignMaterialSemanticModelFromHexGrid(
       continue;
     }
 
-    landByCellKey.set(getHexCellKey(cell.x, cell.y), cell.land);
-    mountainByCellKey.set(getHexCellKey(cell.x, cell.y), mountainValue > 0);
-    terrainByCellKey.set(getHexCellKey(cell.x, cell.y), cell.land ? cell.terrain : "");
+    landByCellKey.set(cellKey, cell.land);
+    mountainByCellKey.set(cellKey, mountainValue > 0);
+    terrainByCellKey.set(cellKey, cell.land ? cell.terrain : "");
     referenceHeightByCellKey.set(
-      getHexCellKey(cell.x, cell.y),
+      cellKey,
       cell.land ? clamp(cell.referenceHeight, 0, 1) : 0
     );
     pixels[pixelOffset] = value;
     pixels[pixelOffset + 1] = mountainValue;
-    pixels[pixelOffset + 2] = 0;
+    pixels[pixelOffset + 2] =
+      structureGround == null
+        ? 0
+        : CAMPAIGN_STRUCTURE_GROUND_SEMANTIC_VALUE[structureGround];
     pixels[pixelOffset + 3] = 255;
+    if (structureGround != null) {
+      structureGroundByCellKey.set(cellKey, structureGround);
+    }
   }
 
   const terrainCoordinates = createCampaignTerrainCoordinateSystem(

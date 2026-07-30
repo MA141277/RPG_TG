@@ -17389,6 +17389,115 @@ test("child 29 startup coordinator keeps builtin and scenario startup on one exp
   assert.equal(scenarioResult.session.contentContext, contentContext);
 });
 
+test("scenario startup can defer entry event until after map entry", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+  const baseAppState = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+  const scenarioPack = {
+    id: "scenario.defer-entry",
+    schemaVersion: 1,
+    title: "Deferred Entry Scenario",
+    characters: [],
+    events: [],
+    scenes: [],
+    scenarioProfile: {
+      id: "scenario.defer-entry",
+      playerCharacterId: "char.player",
+      chapterId: "chapter.test",
+      initialLocation: {
+        mapId: "map.world",
+        cityId: "city.test",
+        houseId: null,
+        view: "map",
+      },
+      launchPolicy: {
+        entryEventTiming: "after-map-entry",
+      },
+      entryEventId: "event.scenario.entry",
+    },
+  };
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [scenarioPack],
+    },
+  };
+  let bootstrapInput = undefined;
+
+  const result = await runStartupSessionCoordinator(
+    {
+      type: "restore",
+      selectedCharacter: prototypeCharacters[0],
+      saveData: {
+        selectedModId: scenarioPack.id,
+        selectedModSource: {
+          kind: "url",
+          name: scenarioPack.title,
+          url: "https://example.com/deferred-entry.json",
+        },
+        selectedCharacterId: "char.player",
+      },
+    },
+    {
+      activateBuiltinDefaultMod: async () => activationResult,
+      restoreModFromSave: async () => activationResult,
+      activateScenarioPackMod: async () => activationResult,
+      createPrototypeAppState: () => baseAppState,
+      createHaozhouReturnEncounterAppState: (appState) => appState,
+      createScenarioPackAppState: () => baseAppState,
+      createStartupContentContext: () => ({
+        storyContent: {
+          eventDefinitionsById: {
+            "event.scenario.entry": {
+              id: "event.scenario.entry",
+              chapterId: "chapter.test",
+              name: "Entry",
+              occurrence: "once",
+              trigger: { timing: "game-start" },
+              conditions: [],
+              entrySceneId: "scene.scenario.entry",
+            },
+          },
+          sceneDefinitionsById: {
+            "scene.scenario.entry": {
+              id: "scene.scenario.entry",
+              name: "Entry",
+              actions: [],
+            },
+          },
+        },
+      }),
+      bootstrapStartupStoryAppState: (input) => {
+        bootstrapInput = input.bootstrap;
+        return input.appState;
+      },
+    }
+  );
+
+  assert.equal(result.ok, true);
+  result.session.createAppState();
+  assert.equal(bootstrapInput, null);
+});
+
 test("save restore re-activates selected mod through mod runtime", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
 

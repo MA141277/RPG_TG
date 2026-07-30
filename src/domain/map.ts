@@ -42,6 +42,8 @@ export type CampaignHexTerrain = string;
 
 export type CampaignHexEnvironment = string;
 
+export type CampaignHexStructureGround = "village" | "city" | "farmland";
+
 export type CampaignHexGridCell = {
   x: number;
   y: number;
@@ -49,6 +51,7 @@ export type CampaignHexGridCell = {
   referenceHeight: number;
   terrain: CampaignHexTerrain;
   environment: CampaignHexEnvironment;
+  structureGround?: CampaignHexStructureGround;
 };
 
 export type CampaignHexGridDefinition = {

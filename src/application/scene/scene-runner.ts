@@ -2,7 +2,7 @@ import type { ActionNode, SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition } from "../../domain/event";
-import type { GameState } from "../../domain/game-state";
+import type { GameState, ViewName } from "../../domain/game-state";
 import { runActivity } from "../activity/activity-runner";
 import { applyEffects } from "../effects/effect-applier";
 import {
@@ -86,11 +86,23 @@ export function runSceneUntilPause(
       return finishScene(nextState, nextCharacterDefinitions);
     }
 
+    if (currentAction.type === "background") {
+      nextState = incrementSceneCursor({
+        ...nextState,
+        scene: {
+          ...nextState.scene,
+          backgroundId: currentAction.backgroundId,
+          status: "playing",
+        },
+      });
+      continue;
+    }
+
     if (
-      currentAction.type === "background" ||
       currentAction.type === "music" ||
       currentAction.type === "narration" ||
-      currentAction.type === "dialogue"
+      currentAction.type === "dialogue" ||
+      currentAction.type === "reward"
     ) {
       return {
         state: {
@@ -223,17 +235,23 @@ function finishScene(
         ...state.scene,
         activeEventId: null,
         activeSceneId: null,
+        backgroundId: null,
+        returnView: null,
         cursor: 0,
         status: "idle",
       },
       ui: {
         ...state.ui,
-        currentView: state.world.currentHouseId == null ? "city" : "house",
+        currentView: resolveSceneReturnView(state),
       },
     },
     characterDefinitions,
     currentAction: null,
   };
+}
+
+function resolveSceneReturnView(state: GameState): ViewName {
+  return state.scene.returnView ?? (state.world.currentHouseId == null ? "city" : "house");
 }
 
 function continueSceneEvent(

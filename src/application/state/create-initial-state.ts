@@ -2,6 +2,7 @@ import type { CardInventory } from "../../domain/card";
 import type { GameState } from "../../domain/game-state";
 import type { EquipmentLoadout } from "../../domain/equipment/equipment-loadout-service";
 import { normalizeEquipmentLoadout } from "../../domain/equipment/equipment-loadout-service";
+import type { ScenarioRuntimeBootstrap } from "../../domain/scenario-profile";
 import type {
   ValuableItemId,
   ValuableItemInventory,
@@ -42,6 +43,7 @@ export type InitialStateInput = {
   currentView?: GameState["ui"]["currentView"];
   timeOfDay?: GameState["world"]["timeOfDay"];
   councilDate?: GameState["world"]["schedule"]["councilDate"];
+  initialRuntime?: ScenarioRuntimeBootstrap | undefined;
 };
 
 function createInitialTaskRuntimeState(): TaskRuntimeState {
@@ -100,6 +102,8 @@ export function createInitialState(input: InitialStateInput): GameState {
     scene: {
       activeEventId: input.activeEventId ?? null,
       activeSceneId: input.activeSceneId ?? null,
+      backgroundId: null,
+      returnView: null,
       cursor: 0,
       status:
         input.activeSceneId == null ? "idle" : "playing",
@@ -132,8 +136,8 @@ export function createInitialState(input: InitialStateInput): GameState {
     cards: input.cards,
     valuables: normalizeInitialValuables(input.valuables),
     runtime: {
-      flags: {},
-      variables: {},
+      flags: input.initialRuntime?.flags ?? {},
+      variables: input.initialRuntime?.variables ?? {},
       factionMerit: {},
       factionMemberships: {},
       factionAffiliations: {},

@@ -39,6 +39,7 @@ export type AppPresenterStageOutput =
       type: "scene";
       currentSceneAction: ActionNode | null;
       currentSceneChoiceOptions: ChoiceOption[];
+      currentSceneBackgroundId: string | null;
     }
   | { type: "battle" }
   | { type: "empty" };

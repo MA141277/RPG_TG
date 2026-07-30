@@ -569,7 +569,8 @@
       "land": true,
       "referenceHeight": 0.247059,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 16,
@@ -825,7 +826,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 48,
@@ -841,7 +843,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 50,
@@ -1513,7 +1516,8 @@
       "land": true,
       "referenceHeight": 0.25098,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 16,
@@ -1769,7 +1773,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 48,
@@ -1777,7 +1782,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 49,
@@ -1841,7 +1847,8 @@
       "land": true,
       "referenceHeight": 0.141176,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 57,
@@ -2673,7 +2680,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 43,
@@ -2681,7 +2689,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 44,
@@ -2777,7 +2786,8 @@
       "land": true,
       "referenceHeight": 0.101961,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 56,
@@ -3609,7 +3619,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 42,
@@ -3625,7 +3636,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 44,
@@ -3721,7 +3733,8 @@
       "land": true,
       "referenceHeight": 0.090196,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 56,
@@ -4225,7 +4238,8 @@
       "land": true,
       "referenceHeight": 0.27451,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -5169,7 +5183,8 @@
       "land": true,
       "referenceHeight": 0.176471,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -5313,7 +5328,8 @@
       "land": true,
       "referenceHeight": 0.313725,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 19,
@@ -5689,7 +5705,8 @@
       "land": true,
       "referenceHeight": 0.4,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 66,
@@ -6241,7 +6258,8 @@
       "land": true,
       "referenceHeight": 0.129412,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -6257,7 +6275,8 @@
       "land": true,
       "referenceHeight": 0.133333,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 19,
@@ -6625,7 +6644,8 @@
       "land": true,
       "referenceHeight": 0.439216,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 65,
@@ -7113,7 +7133,8 @@
       "land": true,
       "referenceHeight": 0.207843,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 8,
@@ -7185,7 +7206,8 @@
       "land": true,
       "referenceHeight": 0.278431,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -7569,7 +7591,8 @@
       "land": true,
       "referenceHeight": 0.239216,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 65,
@@ -7577,7 +7600,8 @@
       "land": true,
       "referenceHeight": 0.05098,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 66,
@@ -8049,7 +8073,8 @@
       "land": true,
       "referenceHeight": 0.176471,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 7,
@@ -8353,7 +8378,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 45,
@@ -8361,7 +8387,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 46,
@@ -8705,7 +8732,8 @@
       "land": true,
       "referenceHeight": 0.211765,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -29,
@@ -8713,7 +8741,8 @@
       "land": true,
       "referenceHeight": 0.239216,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -28,
@@ -8841,7 +8870,8 @@
       "land": true,
       "referenceHeight": 0.305882,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -12,
@@ -8993,7 +9023,8 @@
       "land": true,
       "referenceHeight": 0.180392,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 7,
@@ -9001,7 +9032,8 @@
       "land": true,
       "referenceHeight": 0.207843,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 8,
@@ -9137,7 +9169,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 25,
@@ -9305,7 +9338,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 46,
@@ -9641,7 +9675,8 @@
       "land": true,
       "referenceHeight": 0.207843,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -30,
@@ -9769,7 +9804,8 @@
       "land": true,
       "referenceHeight": 0.266667,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -14,
@@ -10073,7 +10109,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 24,
@@ -10241,7 +10278,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 45,
@@ -10585,7 +10623,8 @@
       "land": true,
       "referenceHeight": 0.211765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -30,
@@ -10593,7 +10632,8 @@
       "land": true,
       "referenceHeight": 0.2,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -29,
@@ -10713,7 +10753,8 @@
       "land": true,
       "referenceHeight": 0.266667,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -14,
@@ -11017,7 +11058,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 24,
@@ -13777,7 +13819,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -14705,7 +14748,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 13,
@@ -14721,7 +14765,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -15545,7 +15590,8 @@
       "land": true,
       "referenceHeight": 0.356863,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 0,
@@ -15649,7 +15695,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 13,
@@ -15657,7 +15704,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 14,
@@ -15993,7 +16041,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 56,
@@ -16409,7 +16458,8 @@
       "land": true,
       "referenceHeight": 0.231373,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -10,
@@ -16489,7 +16539,8 @@
       "land": true,
       "referenceHeight": 0.211765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 0,
@@ -16921,7 +16972,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 54,
@@ -17337,7 +17389,8 @@
       "land": true,
       "referenceHeight": 0.247059,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -12,
@@ -17937,7 +17990,8 @@
       "land": true,
       "referenceHeight": 0.184314,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 63,
@@ -18873,7 +18927,8 @@
       "land": true,
       "referenceHeight": 0.094118,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 62,
@@ -18889,7 +18944,8 @@
       "land": true,
       "referenceHeight": 0.27451,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 64,
@@ -19817,7 +19873,8 @@
       "land": true,
       "referenceHeight": 0.172549,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 62,
@@ -19825,7 +19882,8 @@
       "land": true,
       "referenceHeight": 0.172549,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 63,
@@ -20329,7 +20387,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 8,
@@ -20393,7 +20452,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 16,
@@ -20401,7 +20461,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -20521,7 +20582,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 32,
@@ -20713,7 +20775,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 56,
@@ -21257,7 +21320,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -21273,7 +21337,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 8,
@@ -21329,7 +21394,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -21345,7 +21411,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -21457,7 +21524,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 31,
@@ -21473,7 +21541,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 33,
@@ -21657,7 +21726,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 56,
@@ -21929,7 +21999,8 @@
       "land": true,
       "referenceHeight": 0.172549,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -28,
@@ -22201,7 +22272,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -22209,7 +22281,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 7,
@@ -22273,7 +22346,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -22401,7 +22475,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 31,
@@ -22409,7 +22484,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 32,
@@ -22865,7 +22941,8 @@
       "land": true,
       "referenceHeight": 0.180392,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -29,
@@ -22945,7 +23022,8 @@
       "land": true,
       "referenceHeight": 0.231373,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -19,
@@ -23761,7 +23839,8 @@
       "land": true,
       "referenceHeight": 0.180392,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -35,
@@ -23817,7 +23896,8 @@
       "land": true,
       "referenceHeight": 0.176471,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -28,
@@ -24697,7 +24777,8 @@
       "land": true,
       "referenceHeight": 0.168627,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -36,
@@ -24705,7 +24786,8 @@
       "land": true,
       "referenceHeight": 0.156863,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -35,
@@ -24721,7 +24803,8 @@
       "land": true,
       "referenceHeight": 0.196078,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -33,
@@ -24833,7 +24916,8 @@
       "land": true,
       "referenceHeight": 0.258824,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -19,
@@ -24929,7 +25013,8 @@
       "land": true,
       "referenceHeight": 0.227451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -7,
@@ -24937,7 +25022,8 @@
       "land": true,
       "referenceHeight": 0.227451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -6,
@@ -25161,7 +25247,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 22,
@@ -25641,7 +25728,8 @@
       "land": true,
       "referenceHeight": 0.168627,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -36,
@@ -25649,7 +25737,8 @@
       "land": true,
       "referenceHeight": 0.152941,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -35,
@@ -25881,7 +25970,8 @@
       "land": true,
       "referenceHeight": 0.172549,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -6,
@@ -26817,7 +26907,8 @@
       "land": true,
       "referenceHeight": 0.27451,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -7,
@@ -27049,7 +27140,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 22,
@@ -27345,7 +27437,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 59,
@@ -27353,7 +27446,8 @@
       "land": true,
       "referenceHeight": 0.047059,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 60,
@@ -28297,7 +28391,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 60,
@@ -28857,7 +28952,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 12,
@@ -28865,7 +28961,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 13,
@@ -29169,7 +29266,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 51,
@@ -29177,7 +29275,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 52,
@@ -29225,7 +29324,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 58,
@@ -29233,7 +29333,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 59,
@@ -29793,7 +29894,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 11,
@@ -30121,7 +30223,8 @@
       "land": true,
       "referenceHeight": 0.031373,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 52,
@@ -30737,7 +30840,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 11,
@@ -30745,7 +30849,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 12,
@@ -31057,7 +31162,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 51,
@@ -31601,7 +31707,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -32201,7 +32308,8 @@
       "land": true,
       "referenceHeight": 0.333333,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -42,
@@ -32209,7 +32317,8 @@
       "land": true,
       "referenceHeight": 0.258824,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -41,
@@ -32361,7 +32470,8 @@
       "land": true,
       "referenceHeight": 0.105882,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -22,
@@ -32545,7 +32655,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -33137,7 +33248,8 @@
       "land": true,
       "referenceHeight": 0.270588,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -43,
@@ -33153,7 +33265,8 @@
       "land": true,
       "referenceHeight": 0.317647,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -41,
@@ -33401,7 +33514,8 @@
       "land": true,
       "referenceHeight": 0.094118,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -10,
@@ -33529,7 +33643,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -33537,7 +33652,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 7,
@@ -34081,7 +34197,8 @@
       "land": true,
       "referenceHeight": 0.305882,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -43,
@@ -34241,7 +34358,8 @@
       "land": true,
       "referenceHeight": 0.215686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -23,
@@ -34249,7 +34367,8 @@
       "land": true,
       "referenceHeight": 0.317647,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -22,
@@ -34345,7 +34464,8 @@
       "land": true,
       "referenceHeight": 0.129412,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -10,
@@ -34353,7 +34473,8 @@
       "land": true,
       "referenceHeight": 0.082353,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -9,
@@ -34465,7 +34586,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 5,
@@ -34553,7 +34675,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 16,
@@ -34561,7 +34684,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -35409,7 +35533,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 5,
@@ -35417,7 +35542,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -35489,7 +35615,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -35505,7 +35632,8 @@
       "land": true,
       "referenceHeight": 0.003922,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -37313,7 +37441,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 7,
@@ -37945,7 +38074,8 @@
       "land": true,
       "referenceHeight": 0.113725,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -32,
@@ -37953,7 +38083,8 @@
       "land": true,
       "referenceHeight": 0.12549,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -31,
@@ -38113,7 +38244,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -11,
@@ -38249,7 +38381,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -38673,7 +38806,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 59,
@@ -38681,7 +38815,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 60,
@@ -38897,7 +39032,8 @@
       "land": true,
       "referenceHeight": 0.219608,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -31,
@@ -39041,7 +39177,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -13,
@@ -39089,7 +39226,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -7,
@@ -39193,7 +39331,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -39217,7 +39356,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 9,
@@ -39225,7 +39365,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 10,
@@ -39833,7 +39974,8 @@
       "land": true,
       "referenceHeight": 0.364706,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -32,
@@ -39985,7 +40127,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -13,
@@ -40033,7 +40176,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -7,
@@ -40097,7 +40241,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -40169,7 +40314,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 10,
@@ -40561,7 +40707,8 @@
       "land": true,
       "referenceHeight": 0.0722,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 59,
@@ -41025,7 +41172,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -1,
@@ -41041,7 +41189,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -41105,7 +41254,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 9,
@@ -41129,7 +41279,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 12,
@@ -41833,7 +41984,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -18,
@@ -41945,7 +42097,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -4,
@@ -41969,7 +42122,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -1,
@@ -41977,7 +42131,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 0,
@@ -42073,7 +42228,8 @@
       "land": true,
       "referenceHeight": 0.007843,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 12,
@@ -42097,7 +42253,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -42553,7 +42710,8 @@
       "land": true,
       "referenceHeight": 0.192157,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -46,
@@ -42777,7 +42935,8 @@
       "land": true,
       "referenceHeight": 0.070588,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -18,
@@ -42889,7 +43048,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -4,
@@ -42905,7 +43065,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -2,
@@ -42913,7 +43074,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -1,
@@ -43041,7 +43203,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -43489,7 +43652,8 @@
       "land": true,
       "referenceHeight": 0.188235,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -47,
@@ -43713,7 +43877,8 @@
       "land": true,
       "referenceHeight": 0.168627,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -19,
@@ -43809,7 +43974,8 @@
       "land": true,
       "referenceHeight": 0.031373,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -7,
@@ -43857,7 +44023,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -1,
@@ -43873,7 +44040,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -43881,7 +44049,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 2,
@@ -43905,7 +44074,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 5,
@@ -44345,7 +44515,8 @@
       "land": true,
       "referenceHeight": 0.113725,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 60,
@@ -44353,7 +44524,8 @@
       "land": true,
       "referenceHeight": 0.05098,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 61,
@@ -44433,7 +44605,8 @@
       "land": true,
       "referenceHeight": 0.101961,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -47,
@@ -44441,7 +44614,8 @@
       "land": true,
       "referenceHeight": 0.098039,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -46,
@@ -44753,7 +44927,8 @@
       "land": true,
       "referenceHeight": 0.058824,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -7,
@@ -44793,7 +44968,8 @@
       "land": true,
       "referenceHeight": 0.082353,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -2,
@@ -44825,7 +45001,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 2,
@@ -44841,7 +45018,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 4,
@@ -44913,7 +45091,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 13,
@@ -45281,7 +45460,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 59,
@@ -45297,7 +45477,8 @@
       "land": true,
       "referenceHeight": 0.066667,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 61,
@@ -45689,7 +45870,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -8,
@@ -45753,7 +45935,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 0,
@@ -45761,7 +45944,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -45785,7 +45969,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 4,
@@ -45793,7 +45978,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 5,
@@ -45881,7 +46067,8 @@
       "land": true,
       "referenceHeight": 0.007843,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 16,
@@ -45889,7 +46076,8 @@
       "land": true,
       "referenceHeight": 0.003922,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -46233,7 +46421,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 60,
@@ -46801,7 +46990,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 13,
@@ -46817,7 +47007,8 @@
       "land": true,
       "referenceHeight": 0.0722,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -46833,7 +47024,8 @@
       "land": true,
       "referenceHeight": 0.003922,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -47473,7 +47665,8 @@
       "land": true,
       "referenceHeight": 0.12549,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -21,
@@ -47553,7 +47746,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -11,
@@ -47561,7 +47755,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -10,
@@ -47689,7 +47884,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -47697,7 +47893,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 7,
@@ -47713,7 +47910,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 9,
@@ -47721,7 +47919,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 10,
@@ -47793,7 +47992,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 19,
@@ -47809,7 +48009,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 21,
@@ -48425,7 +48626,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -20,
@@ -48505,7 +48707,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -10,
@@ -48569,7 +48772,8 @@
       "land": true,
       "referenceHeight": 0.172549,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -2,
@@ -48577,7 +48781,8 @@
       "land": true,
       "referenceHeight": 0.098039,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -1,
@@ -48625,7 +48830,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 5,
@@ -48641,7 +48847,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 7,
@@ -48665,7 +48872,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 10,
@@ -48745,7 +48953,8 @@
       "land": true,
       "referenceHeight": 0.003922,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 20,
@@ -49257,7 +49466,8 @@
       "land": true,
       "referenceHeight": 0.007843,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -34,
@@ -49361,7 +49571,8 @@
       "land": true,
       "referenceHeight": 0.007843,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -21,
@@ -49441,7 +49652,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -11,
@@ -49505,7 +49717,8 @@
       "land": true,
       "referenceHeight": 0.078431,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -3,
@@ -49577,7 +49790,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -49601,7 +49815,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 9,
@@ -50049,7 +50264,8 @@
       "land": true,
       "referenceHeight": 0.090196,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -53,
@@ -50201,7 +50417,8 @@
       "land": true,
       "referenceHeight": 0.254902,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -34,
@@ -50449,7 +50666,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -3,
@@ -50457,7 +50675,8 @@
       "land": true,
       "referenceHeight": 0.007843,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -2,
@@ -50993,7 +51212,8 @@
       "land": true,
       "referenceHeight": 0.090196,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -53,
@@ -51129,7 +51349,8 @@
       "land": true,
       "referenceHeight": 0.105882,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -36,
@@ -51137,7 +51358,8 @@
       "land": true,
       "referenceHeight": 0.337255,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -35,
@@ -52377,7 +52599,8 @@
       "land": true,
       "referenceHeight": 0.082353,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 2,
@@ -53305,7 +53528,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 0,
@@ -53377,7 +53601,8 @@
       "land": true,
       "referenceHeight": 0.05098,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 9,
@@ -53385,7 +53610,8 @@
       "land": true,
       "referenceHeight": 0.109804,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 10,
@@ -54113,7 +54339,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -17,
@@ -54249,7 +54476,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 0,
@@ -54313,7 +54541,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 8,
@@ -54841,7 +55070,8 @@
       "land": true,
       "referenceHeight": 0.090196,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -44,
@@ -55041,7 +55271,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -19,
@@ -55257,7 +55488,8 @@
       "land": true,
       "referenceHeight": 0.035294,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 8,
@@ -55265,7 +55497,8 @@
       "land": true,
       "referenceHeight": 0.035294,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 9,
@@ -55289,7 +55522,8 @@
       "land": true,
       "referenceHeight": 0.07451,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 12,
@@ -55329,7 +55563,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -55769,7 +56004,8 @@
       "land": true,
       "referenceHeight": 0.066667,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -46,
@@ -55777,7 +56013,8 @@
       "land": true,
       "referenceHeight": 0.082353,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -45,
@@ -56257,7 +56494,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -56273,7 +56511,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 17,
@@ -57177,7 +57416,8 @@
       "land": true,
       "referenceHeight": 0.058824,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 12,
@@ -57201,7 +57441,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 15,
@@ -57777,7 +58018,8 @@
       "land": true,
       "referenceHeight": 0.07451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -31,
@@ -57953,7 +58195,8 @@
       "land": true,
       "referenceHeight": 0.003922,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -9,
@@ -57969,7 +58212,8 @@
       "land": true,
       "referenceHeight": 0.0722,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -7,
@@ -58897,7 +59141,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -9,
@@ -58905,7 +59150,8 @@
       "land": true,
       "referenceHeight": 0,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -8,
@@ -59657,7 +59903,8 @@
       "land": true,
       "referenceHeight": 0.054902,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -32,
@@ -59665,7 +59912,8 @@
       "land": true,
       "referenceHeight": 0.109804,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -31,
@@ -59745,7 +59993,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -21,
@@ -59753,7 +60002,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -20,
@@ -60697,7 +60947,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -20,
@@ -60905,7 +61156,8 @@
       "land": true,
       "referenceHeight": 0.121569,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -61337,7 +61589,8 @@
       "land": true,
       "referenceHeight": 0.262745,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -58,
@@ -61633,7 +61886,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -21,
@@ -61833,7 +62087,8 @@
       "land": true,
       "referenceHeight": 0.176471,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 4,
@@ -61849,7 +62104,8 @@
       "land": true,
       "referenceHeight": 0.109804,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 6,
@@ -62281,7 +62537,8 @@
       "land": true,
       "referenceHeight": 0.258824,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -58,
@@ -63617,7 +63874,8 @@
       "land": true,
       "referenceHeight": 0.062745,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -9,
@@ -63625,7 +63883,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -8,
@@ -64297,7 +64556,8 @@
       "land": true,
       "referenceHeight": 0.12549,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -42,
@@ -64569,7 +64829,8 @@
       "land": true,
       "referenceHeight": 0.05098,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -8,
@@ -65241,7 +65502,8 @@
       "land": true,
       "referenceHeight": 0.141176,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -42,
@@ -65497,7 +65759,8 @@
       "land": true,
       "referenceHeight": 0.043137,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -10,
@@ -65505,7 +65768,8 @@
       "land": true,
       "referenceHeight": 0.078431,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -9,
@@ -67417,7 +67681,8 @@
       "land": true,
       "referenceHeight": 0.066667,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -6,
@@ -67433,7 +67698,8 @@
       "land": true,
       "referenceHeight": 0.082353,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -4,
@@ -68361,7 +68627,8 @@
       "land": true,
       "referenceHeight": 0.117647,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -6,
@@ -68417,7 +68684,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -68929,7 +69197,8 @@
       "land": true,
       "referenceHeight": 0.2,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -53,
@@ -69129,7 +69398,8 @@
       "land": true,
       "referenceHeight": 0.090196,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -28,
@@ -69137,7 +69407,8 @@
       "land": true,
       "referenceHeight": 0.035294,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -27,
@@ -69209,7 +69480,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -18,
@@ -69217,7 +69489,8 @@
       "land": true,
       "referenceHeight": 0.035294,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -17,
@@ -69361,7 +69634,8 @@
       "land": true,
       "referenceHeight": 0.003922,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -69865,7 +70139,8 @@
       "land": true,
       "referenceHeight": 0.207843,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -54,
@@ -69881,7 +70156,8 @@
       "land": true,
       "referenceHeight": 0.196078,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -52,
@@ -70081,7 +70357,8 @@
       "land": true,
       "referenceHeight": 0.035294,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -27,
@@ -70161,7 +70438,8 @@
       "land": true,
       "referenceHeight": 0.066667,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -17,
@@ -70809,7 +71087,8 @@
       "land": true,
       "referenceHeight": 0.172549,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -54,
@@ -70817,7 +71096,8 @@
       "land": true,
       "referenceHeight": 0.152941,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -53,
@@ -71009,7 +71289,8 @@
       "land": true,
       "referenceHeight": 0.062745,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -29,
@@ -71017,7 +71298,8 @@
       "land": true,
       "referenceHeight": 0.098039,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -28,
@@ -71089,7 +71371,8 @@
       "land": true,
       "referenceHeight": 0.054902,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -19,
@@ -71097,7 +71380,8 @@
       "land": true,
       "referenceHeight": 0.098039,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -18,
@@ -73065,7 +73349,8 @@
       "land": true,
       "referenceHeight": 0.117647,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -8,
@@ -73769,7 +74054,8 @@
       "land": true,
       "referenceHeight": 0.12549,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -38,
@@ -74009,7 +74295,8 @@
       "land": true,
       "referenceHeight": 0.058824,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -8,
@@ -74713,7 +75000,8 @@
       "land": true,
       "referenceHeight": 0.062745,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -38,
@@ -75849,7 +76137,8 @@
       "land": true,
       "referenceHeight": 0.101961,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -14,
@@ -75857,7 +76146,8 @@
       "land": true,
       "referenceHeight": 0.12549,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -13,
@@ -76361,7 +76651,8 @@
       "land": true,
       "referenceHeight": 0.258824,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -68,
@@ -76377,7 +76668,8 @@
       "land": true,
       "referenceHeight": 0.176471,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -66,
@@ -76801,7 +77093,8 @@
       "land": true,
       "referenceHeight": 0.086275,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -13,
@@ -77305,7 +77598,8 @@
       "land": true,
       "referenceHeight": 0.180392,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -68,
@@ -79361,7 +79655,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -47,
@@ -79577,7 +79872,8 @@
       "land": true,
       "referenceHeight": 0.082353,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -20,
@@ -79753,7 +80049,8 @@
       "land": true,
       "referenceHeight": 0.380392,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 2,
@@ -80433,7 +80730,8 @@
       "land": true,
       "referenceHeight": 0.019608,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -31,
@@ -80441,7 +80739,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -30,
@@ -80505,7 +80804,8 @@
       "land": true,
       "referenceHeight": 0.058824,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -22,
@@ -80521,7 +80821,8 @@
       "land": true,
       "referenceHeight": 0.070588,
       "terrain": "山脉",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -20,
@@ -80697,7 +80998,8 @@
       "land": true,
       "referenceHeight": 0.086275,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": 2,
@@ -81177,7 +81479,8 @@
       "land": true,
       "referenceHeight": 0.058824,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -56,
@@ -81241,7 +81544,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -48,
@@ -81249,7 +81553,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -47,
@@ -81385,7 +81690,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -30,
@@ -81449,7 +81755,8 @@
       "land": true,
       "referenceHeight": 0.07451,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -22,
@@ -81633,7 +81940,8 @@
       "land": true,
       "referenceHeight": 0.188235,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": 1,
@@ -82313,7 +82621,8 @@
       "land": true,
       "referenceHeight": 0.011765,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -32,
@@ -82321,7 +82630,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -31,
@@ -83065,7 +83375,8 @@
       "land": true,
       "referenceHeight": 0.062745,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -56,
@@ -85985,7 +86296,8 @@
       "land": true,
       "referenceHeight": 0.027451,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -45,
@@ -87873,7 +88185,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -45,
@@ -89577,7 +89890,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -68,
@@ -90521,7 +90835,8 @@
       "land": true,
       "referenceHeight": 0.015686,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -68,
@@ -99113,7 +99428,8 @@
       "land": true,
       "referenceHeight": 0.05098,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -56,
@@ -99121,7 +99437,8 @@
       "land": true,
       "referenceHeight": 0.031373,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -55,
@@ -100065,7 +100382,8 @@
       "land": true,
       "referenceHeight": 0.043137,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -55,
@@ -100841,7 +101159,8 @@
       "land": true,
       "referenceHeight": 0.078431,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -76,
@@ -100993,7 +101312,8 @@
       "land": true,
       "referenceHeight": 0.121569,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -57,
@@ -101001,7 +101321,8 @@
       "land": true,
       "referenceHeight": 0.082353,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -56,
@@ -101777,7 +102098,8 @@
       "land": true,
       "referenceHeight": 0.192157,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -77,
@@ -101793,7 +102115,8 @@
       "land": true,
       "referenceHeight": 0.035294,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -75,
@@ -102721,7 +103044,8 @@
       "land": true,
       "referenceHeight": 0.141176,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -77,
@@ -102729,7 +103053,8 @@
       "land": true,
       "referenceHeight": 0.121569,
       "terrain": "山脉",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -76,
@@ -104553,7 +104878,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "草地"
+      "environment": "草地",
+      "structureGround": "farmland"
     },
     {
       "x": -84,
@@ -105497,7 +105823,8 @@
       "land": true,
       "referenceHeight": 0.023529,
       "terrain": "平原",
-      "environment": "森林"
+      "environment": "森林",
+      "structureGround": "farmland"
     },
     {
       "x": -84,

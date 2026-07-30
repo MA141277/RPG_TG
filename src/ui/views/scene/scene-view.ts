@@ -5,6 +5,7 @@ import {
   FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
 } from "../../../domain/activity-session";
 import type { CharacterDefinition } from "../../../domain/character";
+import type { HouseOverlayViewModel } from "../../../domain/house-module";
 import {
   resolveActionNodeText,
   resolveChoiceOptionText,
@@ -13,10 +14,13 @@ import {
   renderDialogueTypewriterHint,
   renderDialogueTypewriterLines,
 } from "../../dialogue-typewriter";
+import { resolveDialogueBackgroundPreviewImageUrl } from "../../location-backgrounds";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
+import { renderHouseAlertOverlay } from "../house/house-shared-view";
 
 type SceneViewInput = {
   currentAction: ActionNode | null;
+  currentBackgroundId?: string | null;
   activitySession: ActiveActivitySession;
   characterDefinitions: CharacterDefinition[];
   choiceOptions: ChoiceOption[];
@@ -128,6 +132,43 @@ function renderChoiceList(choiceOptions: ChoiceOption[]): string {
       </nav>
     </div>
   `;
+}
+
+function renderSceneSection(
+  viewName: string,
+  body: string,
+  backgroundId: string | null | undefined
+): string {
+  const backgroundImageUrl = resolveDialogueBackgroundPreviewImageUrl(backgroundId);
+  const backgroundStyle =
+    backgroundImageUrl == null
+      ? ""
+      : ` style="--scene-background-image: url('${backgroundImageUrl.replaceAll("'", "%27")}')"`;
+
+  return `
+    <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="${viewName}"${backgroundStyle}>
+      ${body}
+    </section>
+  `;
+}
+
+function renderSceneRewardPopup(action: Extract<ActionNode, { type: "reward" }>): string {
+  const overlay: Extract<HouseOverlayViewModel, { type: "alert" }> = {
+    type: "alert",
+    title: action.title,
+    paragraphs: action.lines,
+    tone: "success",
+    confirmActionId: "advance",
+    confirmLabel: "收下",
+  };
+
+  return renderHouseAlertOverlay(overlay, {
+    overlayAttribute:
+      ' data-house-overlay-variant="temple-utility-popup" data-scene-item-reward-popup',
+    modalClassName:
+      " c-assessment-popup c-house-contribution-settlement c-house-temple-utility-popup",
+    confirmActionAttribute: "data-scene-action",
+  });
 }
 
 function getFortuneBoardKindLabel(kind: string): string {
@@ -522,12 +563,14 @@ export function renderSceneView(input: SceneViewInput): string {
 
   if (action.type === "narration") {
     return `
-      <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="narration">
-        ${renderSceneDialogueCard([action.text ?? ""], {
+      ${renderSceneSection(
+        "narration",
+        renderSceneDialogueCard([action.text ?? ""], {
           advanceActionId: "advance",
           narration: true,
-        })}
-      </section>
+        }),
+        input.currentBackgroundId
+      )}
       ${activityOverlay}
     `;
   }
@@ -541,8 +584,9 @@ export function renderSceneView(input: SceneViewInput): string {
       speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
 
     return `
-      <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="dialogue">
-        ${renderSceneDialogueCard([action.text ?? ""], {
+      ${renderSceneSection(
+        "dialogue",
+        renderSceneDialogueCard([action.text ?? ""], {
           advanceActionId: "advance",
           speakerName:
             speaker?.name ??
@@ -555,32 +599,48 @@ export function renderSceneView(input: SceneViewInput): string {
                 ),
               }
             : {}),
-        })}
-      </section>
+        }),
+        input.currentBackgroundId
+      )}
       ${activityOverlay}
     `;
   }
 
   if (action.type === "choice") {
     return `
-      <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="choice">
-        ${renderSceneDialogueCard(
+      ${renderSceneSection(
+        "choice",
+        `${renderSceneDialogueCard(
           [action.prompt ?? "你要如何回应？"],
           { narration: true }
         )}
-        ${renderChoiceList(resolvedChoiceOptions)}
-      </section>
+        ${renderChoiceList(resolvedChoiceOptions)}`,
+        input.currentBackgroundId
+      )}
+      ${activityOverlay}
+    `;
+  }
+
+  if (action.type === "reward") {
+    return `
+      ${renderSceneSection(
+        "reward",
+        renderSceneRewardPopup(action),
+        input.currentBackgroundId
+      )}
       ${activityOverlay}
     `;
   }
 
   return `
-    <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="transition">
-      ${renderSceneDialogueCard(["场景推进中。"], {
+    ${renderSceneSection(
+      "transition",
+      renderSceneDialogueCard(["场景推进中。"], {
         advanceActionId: "advance",
         narration: true,
-      })}
-    </section>
+      }),
+      input.currentBackgroundId
+    )}
     ${activityOverlay}
   `;
 }

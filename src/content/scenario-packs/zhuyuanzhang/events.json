@@ -1,5 +1,28 @@
 [
   {
+    "id": "event.story.zhu_yuanzhang.village_elder_letter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "村中长者托信",
+    "occurrence": "once",
+    "trigger": {
+      "timing": "game-start",
+      "priority": 210
+    },
+    "conditions": [
+      {
+        "type": "flag",
+        "key": "flag.story.zhu_yuanzhang.village_elder_letter.completed",
+        "expected": false
+      }
+    ],
+    "entrySceneId": "scene.story.zhu_yuanzhang.village_elder_letter",
+    "tags": [
+      "main-story",
+      "village-opening",
+      "letter"
+    ]
+  },
+  {
     "id": "event.story.zhu_yuanzhang.ordination",
     "chapterId": "chapter.zhu-yuanzhang-rise",
     "name": "皇觉寺剃度",
@@ -19,7 +42,11 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.ordination",
-    "tags": ["main-story", "temple-opening", "fictionalized-bridge"]
+    "tags": [
+      "main-story",
+      "temple-opening",
+      "fictionalized-bridge"
+    ]
   },
   {
     "id": "event.story.zhu_yuanzhang.first_temple_review",
@@ -43,7 +70,10 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.first_temple_review",
-    "tags": ["main-story", "temple-review"]
+    "tags": [
+      "main-story",
+      "temple-review"
+    ]
   },
   {
     "id": "event.story.zhu_yuanzhang.unlock_begging",
@@ -76,7 +106,11 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.unlock_begging",
-    "tags": ["main-story", "unlock", "temple-loop"]
+    "tags": [
+      "main-story",
+      "unlock",
+      "temple-loop"
+    ]
   },
   {
     "id": "event.story.zhu_yuanzhang.runing_broadcast",
@@ -104,7 +138,11 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.runing_broadcast",
-    "tags": ["main-story", "city-enter", "foreshadowing"]
+    "tags": [
+      "main-story",
+      "city-enter",
+      "foreshadowing"
+    ]
   },
   {
     "id": "event.story.zhu_yuanzhang.haozhou_return_encounter",
@@ -133,6 +171,11 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.haozhou_return_encounter",
-    "tags": ["main-story", "city-enter", "battle-hook", "join-guo-zixing"]
+    "tags": [
+      "main-story",
+      "city-enter",
+      "battle-hook",
+      "join-guo-zixing"
+    ]
   }
 ]

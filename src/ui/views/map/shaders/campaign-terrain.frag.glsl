@@ -971,8 +971,12 @@ void main() {
   float structureGround = getMaterialSemanticStructureGroundAtCell(hexCell);
   float cityGroundTextureSelector = step(0.75, structureGround) * uCityGroundTextureEnabled;
   float cityGroundAmount = cityGroundTextureSelector;
+  float farmlandGroundAmount =
+    step(0.20, structureGround) *
+    (1.0 - step(0.35, structureGround)) *
+    uVillageGroundTextureEnabled;
   float villageGroundAmount =
-    step(0.25, structureGround) *
+    step(0.45, structureGround) *
     (1.0 - step(0.75, structureGround)) *
     uVillageGroundTextureEnabled;
   cityGroundAmount = getCityStructureGroundAmount(
@@ -980,7 +984,7 @@ void main() {
     hexCell,
     cityGroundAmount
   );
-  float structureGroundAmount = max(villageGroundAmount, cityGroundAmount);
+  float structureGroundAmount = max(max(farmlandGroundAmount, villageGroundAmount), cityGroundAmount);
   vec3 structureGroundTexture = sampleStructureGroundMaterial(
     hexPoint,
     hexCell,

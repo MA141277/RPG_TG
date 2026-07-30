@@ -1,5 +1,129 @@
 [
   {
+    "id": "scene.story.zhu_yuanzhang.village_elder_letter",
+    "name": "村中长者托信",
+    "actions": [
+      {
+        "type": "background",
+        "backgroundId": "xiangcun"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.zhu_yuanzhang.village_elder",
+        "side": "left",
+        "textId": "scene.story.zhu_yuanzhang.village_elder_letter.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.zhu_yuanzhang.village_elder",
+        "side": "left",
+        "textId": "scene.story.zhu_yuanzhang.village_elder_letter.002"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.zhu_yuanzhang.village_elder",
+        "side": "left",
+        "textId": "scene.story.zhu_yuanzhang.village_elder_letter.003"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.zhu_yuanzhang.village_elder",
+        "side": "left",
+        "textId": "scene.story.zhu_yuanzhang.village_elder_letter.004"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.zhu_yuanzhang.village_elder",
+        "side": "left",
+        "textId": "scene.story.zhu_yuanzhang.village_elder_letter.005"
+      },
+      {
+        "type": "choice",
+        "promptTextId": "scene.story.zhu_yuanzhang.village_elder_letter.choice.prompt",
+        "options": [
+          {
+            "id": "accept-letter",
+            "labelTextId": "scene.story.zhu_yuanzhang.village_elder_letter.choice.accept",
+            "effects": [
+              {
+                "type": "grant-special-item",
+                "item": {
+                  "instanceId": "story.zhu_yuanzhang.opening.letter",
+                  "name": "书信",
+                  "icon": null,
+                  "value": 0,
+                  "types": [
+                    "other",
+                    "quest",
+                    "letter"
+                  ],
+                  "count": 1,
+                  "description": "村中长者托你交给皇觉寺住持的书信。",
+                  "actions": [],
+                  "sourceEventId": "event.story.zhu_yuanzhang.village_elder_letter"
+                }
+              },
+              {
+                "type": "set-flag",
+                "key": "flag.story.zhu_yuanzhang.village_elder_letter.completed",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "reward",
+        "title": "获得物品",
+        "lines": [
+          "书信 x1"
+        ]
+      },
+      {
+        "type": "effect",
+        "effects": [
+          {
+            "type": "queue-map-return-effects",
+            "id": "story.zhu_yuanzhang.opening.reveal-haozhou",
+            "delayMs": 1000,
+            "effects": [
+              {
+                "type": "reveal-map-coordinate",
+                "mapId": "map.yuanmo_campaign",
+                "coordinate": {
+                  "x": 245.87288158317762,
+                  "y": 291.97687861271675
+                },
+                "coordinateSpace": {
+                  "width": 509,
+                  "height": 451
+                },
+                "coordinateSystem": {
+                  "hexTerrainScale": 138,
+                  "hexMapAspect": 1.1285,
+                  "coordinateSpace": {
+                    "width": 509,
+                    "height": 451
+                  },
+                  "hexPointBounds": {
+                    "minX": -103.057023,
+                    "maxX": 101.324972,
+                    "minY": -86.5,
+                    "maxY": 86.5
+                  }
+                }
+              },
+              {
+                "type": "set-main-mission-text",
+                "text": "前往 濠州·皇觉寺"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "scene.story.zhu_yuanzhang.ordination",
     "name": "皇觉寺剃度",
     "actions": [

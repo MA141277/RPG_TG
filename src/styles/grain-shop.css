@@ -43,6 +43,13 @@
     center / cover no-repeat var(--grain-shop-scene-bg);
 }
 
+.view-scene.view-house-grain-shop::before {
+  background-image: var(--scene-background-image);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
 .view-house-grain-shop::after {
   z-index: 0;
   background:

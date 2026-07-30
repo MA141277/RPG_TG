@@ -4,17 +4,28 @@
   "playerCharacterId": "char.player",
   "chapterId": "chapter.zhu-yuanzhang-rise",
   "initialLocation": {
-    "mapId": "map.prototype_frontier",
-    "cityId": "city.kulan",
-    "houseId": "house.kulan.temple",
-    "view": "house"
+    "mapId": "map.yuanmo_campaign",
+    "cityId": "city.huangcun",
+    "houseId": null,
+    "view": "map"
   },
   "initialRuntime": {
     "variables": {
-      "var.story.zhu_yuanzhang.stage": "huangjue-temple"
+      "var.story.zhu_yuanzhang.stage": "village-opening"
     }
   },
-  "entryEventId": "event.story.zhu_yuanzhang.ordination",
+  "entryEventId": "event.story.zhu_yuanzhang.village_elder_letter",
   "openingFlowId": "flow.zhu_yuanzhang.monk_opening",
-  "tags": ["built-in", "main-story", "temple"]
+  "tags": [
+    "built-in",
+    "main-story",
+    "temple"
+  ],
+  "initialPlayerCoordinate": {
+    "x": 239.4025425908469,
+    "y": 280.2456647398844
+  },
+  "launchPolicy": {
+    "entryEventTiming": "after-map-entry"
+  }
 }

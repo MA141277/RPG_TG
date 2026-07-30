@@ -248,6 +248,34 @@ function projectTradeGoods(
   });
 }
 
+function projectSpecialItemInstances(
+  gameState: Pick<GameState, "runtime">
+): BackpackItemDefinition[] {
+  return Object.values(gameState.runtime.specialItemsByInstanceId ?? {}).flatMap(
+    (itemInstance) => {
+      if (itemInstance.count <= 0) {
+        return [];
+      }
+
+      return [
+        {
+          id: itemInstance.instanceId,
+          name: itemInstance.name,
+          icon: itemInstance.icon,
+          value: itemInstance.value,
+          types: itemInstance.types,
+          count: itemInstance.count,
+          description: itemInstance.description,
+          ...(itemInstance.detailText == null
+            ? {}
+            : { detailText: itemInstance.detailText }),
+          actions: itemInstance.actions,
+        },
+      ];
+    }
+  );
+}
+
 export function projectBackpackItems(
   input: ProjectBackpackItemsInput
 ): BackpackItemDefinition[] {
@@ -262,6 +290,7 @@ export function projectBackpackItems(
     ...projectReviewRuntimeItems(input.gameState),
     ...projectPreparedMedicineItems(input.gameState),
     ...projectTradeGoods(input.gameState),
+    ...projectSpecialItemInstances(input.gameState),
   ];
 }
 

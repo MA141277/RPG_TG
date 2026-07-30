@@ -294,6 +294,10 @@ function readBuiltinStartupStoryBootstrap(
 function readScenarioStartupStoryBootstrap(
   scenarioPack: ScenarioPackDefinition
 ): StartupStoryBootstrap | null {
+  if (scenarioPack.scenarioProfile.launchPolicy?.entryEventTiming === "after-map-entry") {
+    return null;
+  }
+
   const entryEventId = scenarioPack.scenarioProfile.entryEventId;
   return entryEventId == null
     ? null

@@ -1,11 +1,34 @@
 import type { EventId } from "./event";
 import type { ActivityId } from "./activity";
 import type { CharacterId } from "./character";
+import type { SpecialBackpackItemInstance } from "./item";
 
 export type SceneId = string;
 export type BackgroundId = string;
 export type MusicId = string;
 export type ChoiceId = string;
+
+type GridCoordinate = {
+  x: number;
+  y: number;
+};
+
+type CoordinateSpace = {
+  width: number;
+  height: number;
+};
+
+type HexCoordinateSystem = {
+  hexTerrainScale: number;
+  hexMapAspect: number;
+  coordinateSpace: CoordinateSpace;
+  hexPointBounds?: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+    };
+};
 
 export type DialogueSide = "left" | "right" | "center";
 
@@ -18,6 +41,23 @@ export type Effect =
   | { type: "set-flag"; key: string; value: boolean }
   | { type: "set-variable"; key: string; value: number | string }
   | { type: "change-variable"; key: string; delta: number }
+  | { type: "grant-special-item"; item: SpecialBackpackItemInstance }
+  | {
+      type: "queue-map-return-effects";
+      id: string;
+      delayMs?: number;
+      effects: Effect[];
+    }
+  | {
+      type: "reveal-map-coordinate";
+      mapId: string;
+      coordinate: GridCoordinate;
+      coordinateSpace: CoordinateSpace;
+      coordinateSystem?: HexCoordinateSystem;
+      revealedAtMs?: number;
+      animateNewHexes?: boolean;
+    }
+  | { type: "set-main-mission-text"; text: string }
   | {
       type: "patch-character";
       characterId: CharacterId;
@@ -80,6 +120,11 @@ export type ActionNode =
       prompt?: string;
       promptTextId?: string;
       options: ChoiceOption[];
+    }
+  | {
+      type: "reward";
+      title: string;
+      lines: string[];
     }
   | {
       type: "effect";

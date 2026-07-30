@@ -5,6 +5,7 @@ import type {
 } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import { factionAffiliationRuntime } from "../faction/faction-affiliation-runtime";
+import { revealCampaignMapAroundCoordinate } from "../navigation/campaign-map-exploration";
 
 export type EffectApplicationContext = {
   characterDefinitions: CharacterDefinition[];
@@ -65,6 +66,76 @@ export function applyEffects(
         };
         break;
       }
+      case "grant-special-item": {
+        const existingItem =
+          nextState.runtime.specialItemsByInstanceId?.[effect.item.instanceId] ??
+          null;
+        const nextCount = Math.max(
+          0,
+          (existingItem?.count ?? 0) + effect.item.count
+        );
+
+        nextState = {
+          ...nextState,
+          runtime: {
+            ...nextState.runtime,
+            specialItemsByInstanceId: {
+              ...(nextState.runtime.specialItemsByInstanceId ?? {}),
+              [effect.item.instanceId]: {
+                ...effect.item,
+                count: nextCount,
+              },
+            },
+          },
+        };
+        break;
+      }
+      case "queue-map-return-effects": {
+        const existingQueue = nextState.runtime.pendingMapReturnEffects ?? [];
+        const queuedEffect = {
+          id: effect.id,
+          delayMs: Math.max(0, effect.delayMs ?? 0),
+          effects: effect.effects,
+        };
+
+        nextState = {
+          ...nextState,
+          runtime: {
+            ...nextState.runtime,
+            pendingMapReturnEffects: [
+              ...existingQueue.filter((entry) => entry.id !== effect.id),
+              queuedEffect,
+            ],
+          },
+        };
+        break;
+      }
+      case "reveal-map-coordinate":
+        nextState = revealCampaignMapAroundCoordinate({
+          state: nextState,
+          mapId: effect.mapId,
+          coordinate: effect.coordinate,
+          coordinateSpace: effect.coordinateSpace,
+          ...(effect.coordinateSystem == null
+            ? {}
+            : { coordinateSystem: effect.coordinateSystem }),
+          ...(effect.revealedAtMs == null
+            ? {}
+            : { revealedAtMs: effect.revealedAtMs }),
+          ...(effect.animateNewHexes == null
+            ? {}
+            : { animateNewHexes: effect.animateNewHexes }),
+        });
+        break;
+      case "set-main-mission-text":
+        nextState = {
+          ...nextState,
+          ui: {
+            ...nextState.ui,
+            mainHouseMissionText: effect.text,
+          },
+        };
+        break;
       case "patch-character":
         nextCharacterDefinitions = nextCharacterDefinitions.map((characterDefinition) => {
           if (characterDefinition.id !== effect.characterId) {

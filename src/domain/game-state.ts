@@ -1,4 +1,4 @@
-import type { SceneId } from "./action";
+import type { Effect, SceneId } from "./action";
 import type { CharacterId } from "./character";
 import type { CityId } from "./city";
 import type { CityNpcPoolRuntimeState } from "./city-npc";
@@ -14,6 +14,7 @@ import type { ActiveActivitySession } from "./activity-session";
 import type { GlobalUIState } from "./global-ui";
 import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
+import type { SpecialBackpackItemInstance } from "./item";
 import type { TroopRuntimeState } from "./troop-editor";
 import type { TaskRuntimeState } from "../core/contracts/task-runtime";
 import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
@@ -80,6 +81,8 @@ export type GameState = {
   scene: {
     activeEventId: EventId | null;
     activeSceneId: SceneId | null;
+    backgroundId?: string | null;
+    returnView?: ViewName | null;
     cursor: number;
     status: SceneStatus;
   };
@@ -96,6 +99,7 @@ export type GameState = {
   runtime: {
     flags: Record<string, boolean>;
     variables: Record<string, number | string>;
+    specialItemsByInstanceId?: Record<string, SpecialBackpackItemInstance>;
     factionMerit: Record<string, Record<CharacterId, number>>;
     factionMemberships: FactionMembershipsState;
     factionAffiliations: FactionAffiliationsState;
@@ -107,6 +111,13 @@ export type GameState = {
     activitySession: ActiveActivitySession;
     troops: TroopRuntimeState;
     mapExploration: CampaignMapExplorationState;
+    pendingMapReturnEffects?: Array<{
+      id: string;
+      delayMs: number;
+      effects: Effect[];
+      scheduledAtMs?: number;
+      readyAtMs?: number;
+    }>;
     progression?: RuntimeProgressState;
     eventHistory: Record<
       EventId,

@@ -38,7 +38,7 @@ export type YuanmoHexEditorProject = {
   sampling: YuanmoHexSamplingConfig;
 };
 
-export type GeneratedHexCell = CampaignHexGridCell & {
+export type GeneratedHexCell = Omit<CampaignHexGridCell, "terrain" | "environment"> & {
   terrain: YuanmoHexTerrain;
   environment: YuanmoHexEnvironment;
   sourcePosition?: {
@@ -145,7 +145,7 @@ export type ResolvedHexPassability = {
   blockingReason: "water" | null;
 };
 
-export type ResolvedHexCell = GeneratedHexCell & {
+export type ResolvedHexCell = Omit<GeneratedHexCell, "structureGround"> & {
   key: string;
   structureGround: StructureGround;
   overlays: StructureOverlayCategory[];

@@ -1,5 +1,5 @@
 import type { EventDefinition } from "../../domain/event";
-import type { GameState } from "../../domain/game-state";
+import type { GameState, ViewName } from "../../domain/game-state";
 
 export function startEvent(state: GameState, eventDefinition: EventDefinition): GameState {
   const currentHistory = state.runtime.eventHistory[eventDefinition.id];
@@ -16,6 +16,8 @@ export function startEvent(state: GameState, eventDefinition: EventDefinition): 
       ...state.scene,
       activeEventId: eventDefinition.id,
       activeSceneId: eventDefinition.entrySceneId,
+      backgroundId: null,
+      returnView: resolveSceneReturnView(state),
       cursor: 0,
       status: "playing",
     },
@@ -41,4 +43,16 @@ export function startEvent(state: GameState, eventDefinition: EventDefinition): 
       currentView: "scene",
     },
   };
+}
+
+function resolveSceneReturnView(state: GameState): ViewName {
+  if (state.scene.returnView != null) {
+    return state.scene.returnView;
+  }
+
+  if (state.ui.currentView !== "scene") {
+    return state.ui.currentView;
+  }
+
+  return state.world.currentHouseId == null ? "city" : "house";
 }

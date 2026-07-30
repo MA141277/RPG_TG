@@ -644,7 +644,14 @@ function resolveCellFill(
   if ("structureGround" in cell && cell.structureGround === "village-ground") {
     return "rgba(131, 140, 76, 0.88)";
   }
-  if ("overlays" in cell && cell.overlays.includes("farmland")) {
+  if ("structureGround" in cell && cell.structureGround === "farmland") {
+    return "rgba(182, 154, 77, 0.88)";
+  }
+  if (
+    "overlays" in cell &&
+    Array.isArray(cell.overlays) &&
+    cell.overlays.includes("farmland")
+  ) {
     return "rgba(182, 154, 77, 0.88)";
   }
   if (cell.terrain === "山脉") {

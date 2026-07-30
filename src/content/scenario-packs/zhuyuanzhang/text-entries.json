@@ -1,4 +1,11 @@
 {
+  "scene.story.zhu_yuanzhang.village_elder_letter.001": "重八啊，你父母双亡，是你命里的苦。",
+  "scene.story.zhu_yuanzhang.village_elder_letter.002": "可这世道，饿死道旁、流离失所的又何止你一个？村里家家都揭不开锅，实在是有心无力，接济不了你了。",
+  "scene.story.zhu_yuanzhang.village_elder_letter.003": "老夫思来想去，倒有一条活路——这里有封书信，你拿着，去濠州城下的皇觉寺，交到住持手上。",
+  "scene.story.zhu_yuanzhang.village_elder_letter.004": "他念这份情面，总会收留你。进了寺，先干些扫洒挑水的杂役糊口。",
+  "scene.story.zhu_yuanzhang.village_elder_letter.005": "若能趁便认得几个字，往后闯荡，也算多条本事、多条退路。那地方虽算不得什么好去处……唉，就当老夫替你爹娘，尽了这点同乡的情分吧。",
+  "scene.story.zhu_yuanzhang.village_elder_letter.choice.prompt": "村中长者把书信递到你面前。",
+  "scene.story.zhu_yuanzhang.village_elder_letter.choice.accept": "接过信件",
   "scene.story.zhu_yuanzhang.ordination.001": "濠州城外荒烟未散，皇觉寺山门前却还留着一线香火。朱重八被领进院中，站在石阶下，听着木鱼声一下一下敲进暮色里。",
   "scene.story.zhu_yuanzhang.ordination.002": "低头些。剃了发，入了门，从今往后便算佛门里的人。",
   "scene.story.zhu_yuanzhang.ordination.003": "刀锋贴着头皮走过，断发簌簌落地。待师兄持香轻轻触到朱重八头顶，那一点火星竟倏地熄了。",
@@ -472,8 +479,7 @@
   "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.soon.003": "“先去把评定应下，回头再来拨算盘。”",
   "runtime.zhu_yuanzhang.grain_shop.sold_out.title": "今日无米可买",
   "runtime.zhu_yuanzhang.grain_shop.sold_out.001": "粮铺掌柜摊了摊手，“濠州这一阵闹得太凶，店里剩下的几袋米早被熟客和军中先订走了。”",
-  "runtime.zhu_yuanzhang.grain_shop.sold_out.002": "“你若真要替寺里寻粮，别在城里耗着，还是往外地再碰碰运气吧。”"
-,
+  "runtime.zhu_yuanzhang.grain_shop.sold_out.002": "“你若真要替寺里寻粮，别在城里耗着，还是往外地再碰碰运气吧。”",
   "runtime.zhu_yuanzhang.grain_shop.investigation.offer.001": "客官面生得很呐……这年头兵荒马乱，粮价一日三变。老汉我倒是知道些门道，不过嘛，这消息可不是白来的。若肯留下 {fee} 文茶钱，我便与你细讲。",
   "runtime.zhu_yuanzhang.grain_shop.investigation.offer.002": "嘿，看你也是走南闯北的人。近来几城粮价，老汉心里有本账。你若舍得 {fee} 文润润嘴皮，我就把门路说给你听。",
   "runtime.zhu_yuanzhang.grain_shop.investigation.offer.003": "乱世里头，粮食就是命根子。老汉这里攥着几城米价，比银子还紧要。客官若有心，拿 {fee} 文出来，我保你听完不亏。",

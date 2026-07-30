@@ -34,6 +34,32 @@
 - 玩家“所属阵营”现在有全局单一来源，Temple -> `皇觉寺`、Guo Zixing -> `红巾军` 的切换可以在 runtime state 中被后续系统统一消费。
 - `runtime.factionMemberships` 仍只服务于 faction review / rank 体系，没有被混用为可见阵营状态。
 
+## 2026-07-30 Zhu Yuanzhang Village Letter Opening
+
+### Added
+- 朱元璋开局入口现在会在“淮西托钵”章节标题淡出后触发独立的“村中长者托信”剧情。
+- `GameState.runtime.specialItemsByInstanceId` 新增可选特殊物品实例运行态；`grant-special-item` scene effect 可把字段齐全的特殊物品动态写入背包。
+- 背包投影现在会显示特殊物品实例；scene runtime 会记忆 background action 并让后续对话/选择/奖励弹窗共享同一背景图。
+- scene view 的剧情物品获得提示现在复用评定奖励弹窗皮肤，用于“获得物品：书信 x1”这类奖励提示，并与“经书抄本”窗口保持一致。
+- scene effect 新增通用 `reveal-map-coordinate`、`set-main-mission-text` 与 `queue-map-return-effects`，剧情可在不写入口特判的情况下揭示地图坐标、刷新当前任务，或把这些效果排到回到地图后延迟执行。
+
+### Changed
+- 朱元璋剧本初始位置从 `house.kulan.temple` 的 house view 改为 `city.huangcun` 的地图出生点，避免开局尚未到皇觉寺时抢先触发皇觉寺 house-enter 剧情。
+- 普通“开始游戏”朱元璋路径现在也使用荒村地图起点、`village-opening` 阶段变量和 active content 角色表，不再从旧 prototype 的皇觉寺阶段/住持角色表开局。
+- scene runtime 现在记录剧情进入前的 `returnView`；地图标题后触发的开局剧情结束时会回到大地图，而不是因为 `currentHouseId == null` 被硬送进当前城市界面。
+- 剧本 `launchPolicy.entryEventTiming: "after-map-entry"` 现在会跳过 startup 阶段的即时 entry scene bootstrap，让开局剧情等“淮西托钵”地图标题完成后再由通用 `game-start` trigger 触发。
+- 初始状态创建现在会应用剧本 `initialRuntime` 的 flags / variables，使“村中长者托信”这类开局阶段变量能在新游戏状态里生效。
+- “淮西托钵”地图章节标题淡出后，会通过 `main-runtime-orchestrator` 的通用 current-state `game-start` story trigger 触发开局事件，不再只隐藏标题 overlay。
+- `flow.zhu_yuanzhang.monk_opening` 的 opening slot 已同步从“皇觉寺剃度”改为“村中长者托信”，避免 flow 路径绕过信件剧情；托信事件不再用 `nextEventId` 粘连到皇觉寺剃度。
+- “村中长者托信”的对白拆成多段 dialogue action，并且所有对白只引用 `char.zhu_yuanzhang.village_elder`。
+- “村中长者托信”的获得书信弹窗关闭后，只先写入地图返回队列；回到大地图 1 秒后才揭示濠州城所在地图格，并把当前任务改为“前往 濠州·皇觉寺”，避免剧情退出时立即触发主地图重载。
+- 事件条件里的 `flag expected:false` 现在把未设置 flag 按 false 处理，避免新开局的“未完成”条件因缺省值而筛掉开局事件。
+- scene view 现在通过 `--scene-background-image` 把剧情背景传给复用的 house 皮肤伪元素，避免“村中长者托信”场景被 `view-house-temple` 的 `temple.jpg` 覆盖。
+
+### Impact
+- 本片只完善开局信件，不迁移经书；经书后续应按“书籍类”重新设计通用道具模型。
+- `src/main.ts` 只接入通用 `game-start` story trigger，没有写入朱元璋或信件专属事件 id；具体开局业务仍由内容数据和 story runtime 选择。
+
 ## 2026-07-30 Campaign Terrain Local Chunk Loading
 
 ### Changed

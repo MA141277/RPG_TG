@@ -32,7 +32,7 @@ export const scenarioFlows: FlowDefinition[] = [
         steps: [
           {
             type: "start-event",
-            eventId: "event.story.zhu_yuanzhang.ordination",
+            eventId: "event.story.zhu_yuanzhang.village_elder_letter",
           },
         ],
       },

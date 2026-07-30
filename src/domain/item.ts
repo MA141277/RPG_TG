@@ -36,3 +36,15 @@ export type BackpackItemDefinition = {
 
 export type BackpackActionStatus = "applied" | "unsupported";
 
+export type SpecialBackpackItemInstance = {
+  instanceId: string;
+  name: string;
+  icon: string | null;
+  value: number;
+  types: string[];
+  count: number;
+  description: string;
+  detailText?: string;
+  actions: ItemActionDefinition[];
+  sourceEventId?: string;
+};
