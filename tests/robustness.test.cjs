@@ -15525,7 +15525,8 @@ test("scene runner start event convergence keeps start-event actions on the shar
     )?.[0] ?? "";
 
   assert.match(startEventBlock, /context\.continueFromSceneEvent/);
-  assert.match(startEventBlock, /continueToEvent\(/);
+  assert.match(startEventBlock, /resolveEventContinuation\(/);
+  assert.match(startEventBlock, /startEvent\(/);
 });
 
 test("scene runner scene-end continuation convergence keeps one shared continuation seam", () => {
@@ -15647,6 +15648,35 @@ test("scene dialogue runtime continuation route convergence keeps owner wrappers
     dialogueRuntimeSource,
     /routeSceneRuntimeContinuationEvent\(/
   );
+});
+
+test("event continuation contract narrowing keeps pure resolution separate from compatibility start", () => {
+  const continuationSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/events/event-continuation.ts"),
+    "utf8"
+  );
+  const resolveEventContinuationBlock =
+    continuationSource.match(
+      /export function resolveEventContinuation\([\s\S]*?\n}\n\nexport function continueToEvent/
+    )?.[0] ?? "";
+  const continueToEventBlock =
+    continuationSource.match(
+      /export function continueToEvent\([\s\S]*?\n}\n/
+    )?.[0] ?? "";
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const sceneRunnerSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/scene/scene-runner.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(resolveEventContinuationBlock, /\bstartEvent\s*\(/);
+  assert.match(continueToEventBlock, /\bresolveEventContinuation\s*\(/);
+  assert.match(continueToEventBlock, /\bstartEvent\s*\(/);
+  assert.match(storyRuntimeSource, /\bresolveEventContinuation\s*\(/);
+  assert.match(sceneRunnerSource, /\bresolveEventContinuation\s*\(/);
 });
 
 test("shared dispatch consumes the hardened runtime router contract", () => {

@@ -3,7 +3,8 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import { applyEffects } from "../effects/effect-applier";
-import { continueToEvent } from "../events/event-continuation";
+import { resolveEventContinuation } from "../events/event-continuation";
+import { startEvent } from "../events/event-runner";
 
 export type ChoiceResolutionContext = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
@@ -36,7 +37,7 @@ export function resolveChoiceOption(
   if (selectedOption.nextEventId != null) {
     const targetEvent = context.eventDefinitionsById[selectedOption.nextEventId];
     if (targetEvent != null) {
-      const continuation = continueToEvent({
+      const continuation = resolveEventContinuation({
         state: nextState,
         eventDefinitionsById: context.eventDefinitionsById,
         sourceEventId: nextState.scene.activeEventId,
@@ -47,7 +48,9 @@ export function resolveChoiceOption(
             : [nextState.scene.activeEventId],
       });
       nextState =
-        continuation == null ? finishChoiceScene(nextState) : continuation.state;
+        continuation == null
+          ? finishChoiceScene(nextState)
+          : startEvent(nextState, continuation.eventDefinition);
     }
   } else if (selectedOption.nextSceneId != null) {
     nextState = {

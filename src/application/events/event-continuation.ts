@@ -8,6 +8,11 @@ export type EventContinuationResult = {
   visitedEventIds: Set<string>;
 };
 
+export type EventContinuationResolution = {
+  eventDefinition: EventDefinition;
+  visitedEventIds: Set<string>;
+};
+
 export function createEventContinuationTracker(
   initialEventIds: Iterable<string | null | undefined> = []
 ): Set<string> {
@@ -21,13 +26,13 @@ export function createEventContinuationTracker(
   return visitedEventIds;
 }
 
-export function continueToEvent(input: {
+export function resolveEventContinuation(input: {
   state: GameState;
   eventDefinitionsById: Record<string, EventDefinition>;
   sourceEventId?: string | null | undefined;
   targetEventId?: string | null | undefined;
   visitedEventIds?: Iterable<string> | undefined;
-}): EventContinuationResult | null {
+}): EventContinuationResolution | null {
   const nextVisitedEventIds = createEventContinuationTracker(
     input.visitedEventIds ?? []
   );
@@ -52,9 +57,27 @@ export function continueToEvent(input: {
 
   nextVisitedEventIds.add(targetEventId);
   return {
-    state: startEvent(input.state, eventDefinition),
     eventDefinition,
     visitedEventIds: nextVisitedEventIds,
+  };
+}
+
+export function continueToEvent(input: {
+  state: GameState;
+  eventDefinitionsById: Record<string, EventDefinition>;
+  sourceEventId?: string | null | undefined;
+  targetEventId?: string | null | undefined;
+  visitedEventIds?: Iterable<string> | undefined;
+}): EventContinuationResult | null {
+  const continuation = resolveEventContinuation(input);
+  if (continuation == null) {
+    return null;
+  }
+
+  return {
+    state: startEvent(input.state, continuation.eventDefinition),
+    eventDefinition: continuation.eventDefinition,
+    visitedEventIds: continuation.visitedEventIds,
   };
 }
 

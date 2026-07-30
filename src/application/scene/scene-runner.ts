@@ -6,9 +6,10 @@ import type { GameState } from "../../domain/game-state";
 import { runActivity } from "../activity/activity-runner";
 import { applyEffects } from "../effects/effect-applier";
 import {
-  continueToEvent,
   createEventContinuationTracker,
+  resolveEventContinuation,
 } from "../events/event-continuation";
+import { startEvent } from "../events/event-runner";
 import { runEventPlayableRuntime } from "../events/event-playable-runtime";
 import { runStoryCallback } from "../story/story-callbacks";
 
@@ -158,29 +159,29 @@ export function runSceneUntilPause(
     }
 
     if (currentAction.type === "start-event") {
-      const continuedState = continueToEvent({
+      const continuation = resolveEventContinuation({
         state: nextState,
         eventDefinitionsById: context.eventDefinitionsById,
         sourceEventId: nextState.scene.activeEventId,
         targetEventId: currentAction.eventId,
         visitedEventIds: continuationVisitedEventIds,
       });
-      if (continuedState == null) {
+      if (continuation == null) {
         nextState = incrementSceneCursor(nextState);
       } else if (context.continueFromSceneEvent != null) {
         const continuedRuntime = context.continueFromSceneEvent({
           state: nextState,
           characterDefinitions: nextCharacterDefinitions,
-          eventDefinition: continuedState.eventDefinition,
+          eventDefinition: continuation.eventDefinition,
           reason: "start-event",
         });
         nextState = continuedRuntime.state;
         nextCharacterDefinitions = continuedRuntime.characterDefinitions;
       } else {
-        nextState = continuedState.state;
+        nextState = startEvent(nextState, continuation.eventDefinition);
       }
       continuationVisitedEventIds =
-        continuedState?.visitedEventIds ??
+        continuation?.visitedEventIds ??
         createEventContinuationTracker([nextState.scene.activeEventId]);
       continue;
     }
@@ -274,14 +275,14 @@ function continueSceneEvent(
     activeEventId == null
       ? undefined
       : context.eventDefinitionsById[activeEventId]?.nextEventId;
-  const continuedState = continueToEvent({
+  const continuation = resolveEventContinuation({
     state,
     eventDefinitionsById: context.eventDefinitionsById,
     sourceEventId: activeEventId,
     targetEventId: nextEventId,
     visitedEventIds,
   });
-  if (continuedState == null) {
+  if (continuation == null) {
     return null;
   }
 
@@ -289,19 +290,19 @@ function continueSceneEvent(
     const continuedRuntime = context.continueFromSceneEvent({
       state,
       characterDefinitions,
-      eventDefinition: continuedState.eventDefinition,
+      eventDefinition: continuation.eventDefinition,
       reason: "scene-end",
     });
     return {
       state: continuedRuntime.state,
       characterDefinitions: continuedRuntime.characterDefinitions,
-      visitedEventIds: continuedState.visitedEventIds,
+      visitedEventIds: continuation.visitedEventIds,
     };
   }
 
   return {
-    state: continuedState.state,
+    state: startEvent(state, continuation.eventDefinition),
     characterDefinitions,
-    visitedEventIds: continuedState.visitedEventIds,
+    visitedEventIds: continuation.visitedEventIds,
   };
 }

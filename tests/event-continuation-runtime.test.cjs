@@ -5,6 +5,9 @@ const {
   runSceneUntilPause,
 } = require("../.test-dist/application/scene/scene-runner.js");
 const {
+  resolveEventContinuation,
+} = require("../.test-dist/application/events/event-continuation.js");
+const {
   startEvent,
 } = require("../.test-dist/application/events/event-runner.js");
 const {
@@ -272,6 +275,29 @@ test(
     );
   }
 );
+
+test("resolveEventContinuation returns the next event definition without mutating state", () => {
+  const eventDefinitionsById = {
+    "event.loop.a": createEvent("event.loop.a", "scene.empty.a", "event.loop.b"),
+    "event.loop.b": createEvent("event.loop.b", "scene.empty.b"),
+  };
+  const state = createBaseState();
+
+  const continuation = resolveEventContinuation({
+    state,
+    eventDefinitionsById,
+    sourceEventId: "event.loop.a",
+    targetEventId: "event.loop.b",
+    visitedEventIds: ["event.loop.a"],
+  });
+
+  assert.ok(continuation, "Expected pure continuation resolution to succeed.");
+  assert.equal(continuation.eventDefinition.id, "event.loop.b");
+  assert.equal(continuation.visitedEventIds.has("event.loop.a"), true);
+  assert.equal(continuation.visitedEventIds.has("event.loop.b"), true);
+  assert.equal(state.scene.activeEventId, null);
+  assert.equal(state.scene.activeSceneId, null);
+});
 
 test(
   "advanceStorySceneStep routes scene start-event actions through the shared router seam",

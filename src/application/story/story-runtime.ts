@@ -27,7 +27,7 @@ import {
 import { dispatchEventRoute } from "../../core/runtime/event-router";
 import { runProgressionRuntime } from "../../core/runtime/progression-runtime";
 import { dispatchRuntimeRequest } from "../../core/runtime/runtime-dispatch";
-import { continueToEvent } from "../events/event-continuation";
+import { resolveEventContinuation } from "../events/event-continuation";
 import { startEvent } from "../events/event-runner";
 import { applyEffects } from "../effects/effect-applier";
 import {
@@ -372,7 +372,7 @@ export function continueStoryFromSourceEvent(
   sourceEventId: string
 ): StoryRuntimeResult | null {
   const sourceEventDefinition = content.eventDefinitionsById[sourceEventId];
-  const continuation = continueToEvent({
+  const continuation = resolveEventContinuation({
     state: runtime.state,
     eventDefinitionsById: content.eventDefinitionsById,
     sourceEventId,
@@ -462,7 +462,7 @@ export function chooseStorySceneOption(
 
     const targetEvent = content.eventDefinitionsById[selectedOption.nextEventId];
     if (targetEvent != null) {
-      const continuation = continueToEvent({
+      const continuation = resolveEventContinuation({
         state: nextState,
         eventDefinitionsById: content.eventDefinitionsById,
         sourceEventId: nextState.scene.activeEventId,
@@ -507,8 +507,8 @@ export function chooseStorySceneOption(
           },
           content,
           {
-            eventId: targetEvent.id,
-            eventDefinition: targetEvent,
+            eventId: continuation.eventDefinition.id,
+            eventDefinition: continuation.eventDefinition,
           }
         ),
         content
