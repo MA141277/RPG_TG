@@ -15,7 +15,10 @@ import type {
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeState } from "../contracts/runtime-state";
 import { activateEvent, type ActivatedEvent } from "./event-activation";
-import { createRuntimeEventEntity } from "./event-entity-projection";
+import {
+  createRuntimeEventEntity,
+  readRuntimeEventTaskInputs,
+} from "./event-entity-projection";
 import { selectEventCandidate } from "./event-candidate-selector";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { canActivateEvent } from "./event-condition-evaluator";
@@ -110,11 +113,12 @@ export function runStoryEventRuntime(input: {
 function toEventRuntimeCandidate(
   eventDefinition: EventDefinition
 ): EventRuntimeCandidate {
+  const runtimeEvent = createRuntimeEventEntity(eventDefinition);
   return {
     eventId: eventDefinition.id,
     priority: eventDefinition.trigger.priority ?? 0,
     sceneId: eventDefinition.entrySceneId,
-    taskInputs: eventDefinition.taskInputs ?? [],
+    taskInputs: readRuntimeEventTaskInputs(runtimeEvent),
   };
 }
 

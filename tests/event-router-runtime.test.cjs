@@ -260,6 +260,66 @@ test(
   }
 );
 
+test(
+  "runStoryEventRuntime candidate task inputs consume the payload task-input seam",
+  { concurrency: false },
+  () => {
+    const projectionPath = require.resolve(
+      "../.test-dist/core/runtime/event-entity-projection.js"
+    );
+    const eventRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/event-runtime.js"
+    );
+
+    delete require.cache[projectionPath];
+    delete require.cache[eventRuntimePath];
+
+    const projectionModule = require(projectionPath);
+    const originalReadRuntimeEventTaskInputs =
+      projectionModule.readRuntimeEventTaskInputs;
+
+    projectionModule.readRuntimeEventTaskInputs = (event) =>
+      event?.id === "event.story.candidate.payload"
+        ? [
+            {
+              type: "task.signal.payload",
+              taskId: "task.payload.only",
+            },
+          ]
+        : [];
+
+    try {
+      const {
+        runStoryEventRuntime: runStoryEventRuntimeWithPatchedProjection,
+      } = require(eventRuntimePath);
+      const result = runStoryEventRuntimeWithPatchedProjection({
+        timing: "manual",
+        state: createBaseStoryState(),
+        characterDefinitions: prototypeCharacters,
+        eventDefinitionsById: {
+          "event.story.candidate.payload": createStoryEvent(
+            "event.story.candidate.payload",
+            "scene.story.candidate.payload",
+            { timing: "manual", priority: 3 }
+          ),
+        },
+      });
+
+      assert.deepEqual(result.candidate?.taskInputs, [
+        {
+          type: "task.signal.payload",
+          taskId: "task.payload.only",
+        },
+      ]);
+    } finally {
+      projectionModule.readRuntimeEventTaskInputs =
+        originalReadRuntimeEventTaskInputs;
+      delete require.cache[projectionPath];
+      delete require.cache[eventRuntimePath];
+    }
+  }
+);
+
 test("dispatchEventRoute resolves a canonical event entity and dispatches by kind", () => {
   const { dispatchEventRoute } = require("../.test-dist/core/runtime/event-router.js");
   const handledKinds = [];

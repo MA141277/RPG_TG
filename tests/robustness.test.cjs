@@ -15760,6 +15760,21 @@ test("runtime event task input payload consumption keeps story-runtime on the ro
   assert.doesNotMatch(routedHandlersBlock, /taskInputs:\s*eventDefinition\.taskInputs/);
 });
 
+test("event runtime candidate task input payload consumption keeps candidate projection on the routed payload seam", () => {
+  const eventRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
+    "utf8"
+  );
+  const candidateProjectionBlock =
+    eventRuntimeSource.match(
+      /function toEventRuntimeCandidate\([\s\S]*?\n}\n\nfunction routeTriggeredEvent/
+    )?.[0] ?? "";
+
+  assert.match(candidateProjectionBlock, /createRuntimeEventEntity/);
+  assert.match(candidateProjectionBlock, /readRuntimeEventTaskInputs/);
+  assert.doesNotMatch(candidateProjectionBlock, /eventDefinition\.taskInputs/);
+});
+
 test("runtime event action payload application keeps story-runtime direct-entry on the routed payload seam", () => {
   const projectionSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/event-entity-projection.ts"),
