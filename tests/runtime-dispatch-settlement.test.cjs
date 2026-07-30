@@ -351,3 +351,132 @@ test("dispatchRuntimeRequest keeps legacy interactive follow-up fallback", () =>
   assert.equal(result.state.core.world.currentHouseId, "house.legacy");
   assert.deepEqual(result.interactive, { type: "none" });
 });
+
+test("dispatchRuntimeRequest settles routed and task effects before follow-up handling", () => {
+  let followUpFlags = null;
+
+  const result = dispatchRuntimeRequest({
+    state: createBaseRuntimeState(),
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.follow-up-after-settlement",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [
+            {
+              type: "setFlag",
+              key: "event.test.follow-up.routed",
+              value: true,
+            },
+          ],
+          taskInputs: [
+            {
+              type: "start",
+              taskId: "task.follow-up.settlement",
+              occurredAt: "2026-07-30T09:00:00.000Z",
+              source: "event-runtime",
+            },
+            {
+              type: "scene.reported",
+              source: "scene-runtime",
+              occurredAt: "2026-07-30T09:05:00.000Z",
+            },
+          ],
+          followUp: { type: "reenter-house", houseId: "house.after-settlement" },
+        }),
+      },
+      taskDefinitionsById: {
+        "task.follow-up.settlement": {
+          id: "task.follow-up.settlement",
+          title: "Follow-Up Settlement Task",
+          objectives: [
+            { id: "report", target: 1, signalType: "scene.reported" },
+          ],
+          onCompleteEffects: [
+            {
+              type: "setFlag",
+              key: "event.test.follow-up.task",
+              value: true,
+            },
+          ],
+        },
+      },
+      followUp: {
+        handleFollowUp: ({ state, followUp }) => {
+          followUpFlags = {
+            routed: state.core.runtime.flags["event.test.follow-up.routed"],
+            task: state.core.runtime.flags["event.test.follow-up.task"],
+          };
+          return {
+            state: {
+              ...state,
+              core: {
+                ...state.core,
+                world: {
+                  ...state.core.world,
+                  currentHouseId: followUp.houseId,
+                },
+              },
+            },
+          };
+        },
+      },
+    },
+  });
+
+  assert.deepEqual(followUpFlags, {
+    routed: true,
+    task: true,
+  });
+  assert.equal(result.state.core.world.currentHouseId, "house.after-settlement");
+  assert.deepEqual(result.followUp, { type: "none" });
+});
+
+test("dispatchRuntimeRequest does not treat router-supplied settlement payloads as the routed settlement owner", () => {
+  const settledEffect = {
+    type: "setFlag",
+    key: "event.test.router-owned-settlement",
+    value: true,
+  };
+
+  const result = dispatchRuntimeRequest({
+    state: createBaseRuntimeState(),
+    request: {
+      family: "external",
+      type: "external",
+      eventId: "event.test.router-owned-settlement",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [settledEffect],
+          settlement: {
+            appliedBy: "feature-runtime",
+            emittedBy: "runtime-router",
+            settledEffects: [],
+            unsupportedEffects: [settledEffect],
+            warnings: ["router-pre-settled"],
+          },
+        }),
+      },
+    },
+  });
+
+  assert.equal(
+    result.state.core.runtime.flags["event.test.router-owned-settlement"],
+    true
+  );
+  assert.deepEqual(result.settlement, {
+    effects: [],
+    appliedBy: "runtime-settlement",
+    emittedBy: "runtime-router",
+    settledEffects: [settledEffect],
+    unsupportedEffects: [],
+    warnings: [],
+  });
+});

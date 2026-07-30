@@ -168,6 +168,77 @@ test(
 );
 
 test(
+  "startStoryEventById routes direct story entry through the shared router seam while preserving world definitions",
+  { concurrency: false },
+  () => {
+    const runtimeDispatch = require("../.test-dist/core/runtime/runtime-dispatch.js");
+    const originalDispatchRuntimeRequest =
+      runtimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    runtimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const content = {
+        eventDefinitionsById: {
+          "event.world.router-start": createEvent(
+            "event.world.router-start",
+            "scene.world.router-start"
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.world.router-start": {
+            id: "scene.world.router-start",
+            name: "World Router Start",
+            actions: [],
+          },
+        },
+      };
+
+      const started = startStoryEventById(
+        {
+          state: createBaseState(),
+          characterDefinitions: prototypeCharacters,
+          cityDefinitions: prototypeCities,
+          houseDefinitions: prototypeHouses,
+        },
+        content,
+        "event.world.router-start"
+      );
+
+      assert.equal(started.cityDefinitions, prototypeCities);
+      assert.equal(started.houseDefinitions, prototypeHouses);
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "startStoryEventById should route direct story entry through dispatchRuntimeRequest instead of starting the event locally"
+      );
+    } finally {
+      runtimeDispatch.dispatchRuntimeRequest = originalDispatchRuntimeRequest;
+    }
+  }
+);
+
+test("startStoryEventById fails closed when the requested event does not exist", () => {
+  const runtime = {
+    state: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    cityDefinitions: prototypeCities,
+    houseDefinitions: prototypeHouses,
+  };
+  const content = {
+    eventDefinitionsById: {},
+    sceneDefinitionsById: {},
+  };
+
+  const result = startStoryEventById(runtime, content, "event.missing");
+
+  assert.strictEqual(result, runtime);
+});
+
+test(
   "scene runner fails closed when automatic nextEvent continuation revisits an already continued event",
   () => {
     const eventDefinitionsById = {

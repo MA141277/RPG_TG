@@ -15,15 +15,8 @@ import type {
 } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { PlayableReturnPolicy } from "../contracts/playable-runtime";
-import type {
-  RuntimeTaskAction,
-  RuntimeTaskSignal,
-} from "../contracts/runtime-result";
+import type { RuntimeTaskInput } from "../contracts/runtime-result";
 import { matchesCanonicalBuildingOwnerId } from "./building-owner-canonicalization";
-
-export type ModFirstRuntimeTaskInput =
-  | RuntimeTaskAction
-  | RuntimeTaskSignal;
 
 export function createCompatibleSceneDefinitions(input: {
   sceneDefinitions?: readonly SceneDefinition[];
@@ -161,7 +154,7 @@ export type ModFirstEventDefinitionOverlay = {
   dialogueId?: string;
   actions?: ModFirstEventRuntimeAction[];
   settlementId?: string;
-  taskInputs?: ModFirstRuntimeTaskInput[];
+  taskInputs?: RuntimeTaskInput[];
   participants?: EventParticipant[];
   tags?: string[];
 };
@@ -180,12 +173,12 @@ export type ModFirstEventBindingRuntimeCandidate = {
   bindingId: string;
   eventId: string;
   priority: number;
-  taskInputs: ModFirstRuntimeTaskInput[];
+  taskInputs: RuntimeTaskInput[];
 };
 
 export type ModFirstActivatedEvent = {
   activeEventId: string;
-  taskInputs: ModFirstRuntimeTaskInput[];
+  taskInputs: RuntimeTaskInput[];
 };
 
 export type ModFirstEventBindingRuntimeInput = {

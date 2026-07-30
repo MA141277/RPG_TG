@@ -12,9 +12,9 @@
 
 - Status: `completed-but-open`
 - Last Updated: `2026-07-30`
-- Current Focus: `Scene-runtime task input convergence is implemented, verified, committed as 9acb1ae, and pushed to origin/codex/migration-hot-tasks. The remaining decision is whether to merge this checkpoint back to the aligned baseline now or hold it on the hot-task branch.`
-- Next Step: `Merge the pushed checkpoint back to codex/sync-naqishuo-721ui-to-mmz-followup and origin/codex/sync-naqishuo-721ui-to-mmz, then open the next adjacent runtime-only child for runtime-dispatch split task input compatibility narrowing.`
-- Verification: `pnpm run build:test`; `pnpm exec node --test tests/robustness.test.cjs --test-name-pattern "scene runtime accepts an activated event handoff|child 33 event runtime task input contract stays canonical-first|child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator"`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check` passed; `pnpm run lint:plans` still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue; the broader targeted robustness invocation still carries the known unrelated "runtime router contract exports a formal routing seam" assertion.`
+- Current Focus: `Scene-runtime task input convergence is fully merged back at 81becd1 across codex/migration-hot-tasks, codex/sync-naqishuo-721ui-to-mmz-followup, and origin/codex/sync-naqishuo-721ui-to-mmz. The next adjacent runtime-only candidate is runtime-dispatch task-input compatibility narrowing.`
+- Next Step: `Use this child as the completed merge-back checkpoint, then execute docs/superpowers/plans/2026-07-30-runtime-dispatch-task-input-compatibility-narrowing-plan.md from Task 1.`
+- Verification: `pnpm run build:test`; `pnpm exec node --test tests/robustness.test.cjs --test-name-pattern "scene runtime accepts an activated event handoff|child 33 event runtime task input contract stays canonical-first|child 16|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator"`; `pnpm run typecheck`; `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output; `git diff --check` passed; `pnpm run lint:plans` still fails only on the unrelated pre-existing docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md title-heading issue; the broader targeted robustness invocation still carries the known unrelated "runtime router contract exports a formal routing seam" assertion; merge-back updated codex/sync-naqishuo-721ui-to-mmz-followup, origin/codex/sync-naqishuo-721ui-to-mmz, and origin/codex/migration-hot-tasks to 81becd1.`
 - Notes: `Do not touch src/main.ts, src/ui/**, map, backpack, or styles. This child remains producer-side only: it narrows scene-runtime from taskSignals to taskInputs, but does not remove RuntimeResult.taskSignals fallback from dispatch. Project-progress remains intentionally unsynced because docs/superpowers/project-progress.md still tracks an unrelated map-renderer child and the user has not asked to repoint it.`
 
 ## Progress Log
@@ -31,6 +31,10 @@
   - Summary: `Completed Task 4 and pushed the scene-runtime task input convergence checkpoint as 9acb1ae on codex/migration-hot-tasks.`
   - Verification: `git commit -m "merge: converge scene runtime task inputs"` created `9acb1ae`; `git push` updated `origin/codex/migration-hot-tasks` from `91780be` to `9acb1ae`; previous targeted verification remained green with the same known unrelated robustness and plan-lint failures only.`
   - Next: `Merge the pushed checkpoint back to the aligned baseline, then promote the next adjacent runtime-only child for runtime-dispatch split task input compatibility narrowing.`
+- 2026-07-30
+  - Summary: `Merged the scene-runtime task input convergence checkpoint back to the aligned baseline at 81becd1 and promoted runtime-dispatch task-input compatibility narrowing as the next adjacent runtime-only child.`
+  - Verification: `git switch codex/sync-naqishuo-721ui-to-mmz-followup`; `git merge --ff-only codex/migration-hot-tasks`; `git push origin HEAD:codex/sync-naqishuo-721ui-to-mmz` updated the remote baseline to `81becd1`; `git switch codex/migration-hot-tasks`; `git merge --ff-only codex/sync-naqishuo-721ui-to-mmz-followup`; `git push` updated origin/codex/migration-hot-tasks to `81becd1`.`
+  - Next: `Treat this child as completed merge-back history and continue in docs/superpowers/plans/2026-07-30-runtime-dispatch-task-input-compatibility-narrowing-plan.md.`
 
 ---
 
@@ -52,7 +56,7 @@
 - Notes:
   - Current working branch is `codex/migration-hot-tasks`.
   - Upstream is `origin/codex/migration-hot-tasks`.
-  - The aligned local receiving branch is `codex/sync-naqishuo-721ui-to-mmz-followup`, which now sits at the same merge-back commit `91780be` as the current branch and `origin/codex/sync-naqishuo-721ui-to-mmz`.
+  - The aligned local receiving branch is `codex/sync-naqishuo-721ui-to-mmz-followup`, which now sits at the same merge-back commit `81becd1` as the current branch and `origin/codex/sync-naqishuo-721ui-to-mmz`.
   - `docs/superpowers/project-progress.md` still points at an unrelated map-renderer child and remains intentionally unsynced because the user has not asked to repoint it.
   - `pnpm run lint:plans` is still expected to fail on unrelated pre-existing file `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md` missing a required top-level title heading unless that blocker is separately fixed.
 
@@ -298,11 +302,11 @@ Report:
 - Parent Stage: `Runtime Migration`
 - Closeout Status: `completed-but-open`
 - Project Progress Synced: `no`
-- Next Child: `Runtime Dispatch Split Task Input Compatibility Narrowing`
+- Next Child: `Runtime Dispatch Task Input Compatibility Narrowing`
 - Next Child Status: `waiting`
-- Next Required Action: `Merge the current checkpoint back to the aligned baseline, then open the next adjacent runtime-only child for runtime-dispatch split task input compatibility narrowing.`
+- Next Required Action: `Use the completed merge-back checkpoint as history, then continue in docs/superpowers/plans/2026-07-30-runtime-dispatch-task-input-compatibility-narrowing-plan.md.`
 - Next Entry Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-29-mod-first-runtime-integration-handoff-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-30-runtime-dispatch-task-input-compatibility-narrowing-plan.md`
 - Push Status: `success`
-- Push Commit: `9acb1ae`
-- Resume From: `Stay on codex/migration-hot-tasks, confirm the worktree is clean, merge this checkpoint back to codex/sync-naqishuo-721ui-to-mmz-followup, then decide whether to open the dispatch-compatibility child immediately.`
+- Push Commit: `81becd1`
+- Resume From: `Open docs/superpowers/plans/2026-07-30-runtime-dispatch-task-input-compatibility-narrowing-plan.md and continue from Task 2 RED coverage.`

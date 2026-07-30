@@ -1,0 +1,354 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const test = require("node:test");
+
+const {
+  createInitialState,
+} = require("../.test-dist/application/state/create-initial-state.js");
+const {
+  triggerStoryEvents,
+} = require("../.test-dist/application/story/story-runtime.js");
+const {
+  prototypeCharacters,
+  prototypeCities,
+  prototypeHouses,
+  prototypeMap,
+} = require("../.test-dist/content/prototype-world.js");
+
+function createBaseRuntimeState() {
+  return {
+    core: createInitialState({
+      currentMapId: "map.test",
+      currentCityId: "city.test",
+      currentHouseId: null,
+      playerCharacterId: "hero",
+      chapterId: "chapter.test",
+      year: 1560,
+      month: 1,
+      day: 1,
+      pinnedCharacterId: "hero",
+      reviewDateText: "",
+      mainHouseMissionText: "",
+      cards: { ownedCardIds: [] },
+      valuables: { ownedItemIds: [] },
+    }),
+    app: {
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
+    },
+    view: {},
+  };
+}
+
+function createBaseStoryState() {
+  return createInitialState({
+    currentMapId: prototypeMap.id,
+    currentCityId: "city.kulan",
+    currentHouseId: null,
+    playerCharacterId: "char.player",
+    chapterId: "chapter.prototype",
+    year: 1567,
+    month: 1,
+    day: 1,
+    pinnedCharacterId: "char.player",
+    reviewDateText: "test",
+    mainHouseMissionText: "test",
+    currentView: "city",
+  });
+}
+
+function createStoryEvent(id, entrySceneId, trigger) {
+  return {
+    id,
+    chapterId: "chapter.prototype",
+    name: id,
+    occurrence: "repeatable",
+    trigger,
+    conditions: [],
+    entrySceneId,
+  };
+}
+
+test("event router contract defines a canonical event entity and routed result seam", () => {
+  const contractPath = path.join(
+    process.cwd(),
+    "src/core/contracts/event-router.ts"
+  );
+
+  assert.equal(fs.existsSync(contractPath), true);
+  const source = fs.readFileSync(contractPath, "utf8");
+
+  assert.match(source, /RuntimeEventKind/);
+  assert.match(source, /"dialogue"/);
+  assert.match(source, /"navigation"/);
+  assert.match(source, /"menu"/);
+  assert.match(source, /"playable"/);
+  assert.match(source, /"settlement"/);
+  assert.match(source, /"composite"/);
+  assert.match(source, /"bridge"/);
+  assert.match(source, /RuntimeEventEntity/);
+  assert.match(source, /kind:\s*RuntimeEventKind/);
+  assert.match(source, /payload:\s*Record<string,\s*unknown>/);
+  assert.match(source, /nextEventId\??:/);
+  assert.match(source, /emitEventIds\??:/);
+  assert.match(source, /RuntimeEventRouteResult/);
+  assert.match(source, /event:\s*RuntimeEventEntity/);
+  assert.match(source, /effects:\s*Effect\[\]/);
+  assert.match(source, /followUpEventIds\??:/);
+});
+
+test("dispatchEventRoute resolves a canonical event entity and dispatches by kind", () => {
+  const { dispatchEventRoute } = require("../.test-dist/core/runtime/event-router.js");
+  const handledKinds = [];
+
+  const result = dispatchEventRoute({
+    state: createBaseRuntimeState(),
+    eventId: "event.test.dialogue",
+    context: {
+      repository: {
+        resolveById: (eventId) =>
+          eventId === "event.test.dialogue"
+            ? {
+                id: eventId,
+                kind: "dialogue",
+                payload: {
+                  dialogueId: "dialogue.test.entry",
+                },
+                nextEventId: "event.test.dialogue.follow-up",
+              }
+            : null,
+      },
+      handlers: {
+        dialogue: ({ state, event }) => {
+          handledKinds.push(event.kind);
+          return {
+            state,
+            effects: [
+              {
+                type: "setFlag",
+                key: "event.test.dialogue.routed",
+                value: true,
+              },
+            ],
+            dialogue: {
+              id: event.payload.dialogueId,
+              name: "Test Dialogue",
+              nodes: [],
+            },
+          };
+        },
+      },
+    },
+  });
+
+  assert.deepEqual(handledKinds, ["dialogue"]);
+  assert.equal(result.event.id, "event.test.dialogue");
+  assert.equal(result.event.kind, "dialogue");
+  assert.equal(result.dialogue.id, "dialogue.test.entry");
+  assert.deepEqual(result.effects, [
+    {
+      type: "setFlag",
+      key: "event.test.dialogue.routed",
+      value: true,
+    },
+  ]);
+  assert.deepEqual(result.followUpEventIds, [
+    "event.test.dialogue.follow-up",
+  ]);
+});
+
+test("dispatchEventRoute returns a standardized routed result envelope and leaves settlement centralized", () => {
+  const { dispatchEventRoute } = require("../.test-dist/core/runtime/event-router.js");
+
+  const result = dispatchEventRoute({
+    state: createBaseRuntimeState(),
+    eventId: "event.test.settlement",
+    context: {
+      repository: {
+        resolveById: (eventId) =>
+          eventId === "event.test.settlement"
+            ? {
+                id: eventId,
+                kind: "settlement",
+                payload: {
+                  flagKey: "event.test.settlement.pending",
+                },
+              }
+            : null,
+      },
+      handlers: {
+        settlement: ({ state, event }) => ({
+          state,
+          effects: [
+            {
+              type: "setFlag",
+              key: event.payload.flagKey,
+              value: true,
+            },
+          ],
+        }),
+      },
+    },
+  });
+
+  assert.equal(result.event.kind, "settlement");
+  assert.deepEqual(result.effects, [
+    {
+      type: "setFlag",
+      key: "event.test.settlement.pending",
+      value: true,
+    },
+  ]);
+  assert.equal(result.state.core.runtime.flags["event.test.settlement.pending"], undefined);
+  assert.equal(result.settlement, undefined);
+});
+
+test(
+  "triggerStoryEvents routes non-binding direct fallback through the shared router seam while preserving world definitions",
+  { concurrency: false },
+  () => {
+    const runtimeDispatch = require("../.test-dist/core/runtime/runtime-dispatch.js");
+    const originalDispatchRuntimeRequest =
+      runtimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    runtimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const content = {
+        eventDefinitionsById: {
+          "event.router.city-enter": createStoryEvent(
+            "event.router.city-enter",
+            "scene.router.city-enter",
+            {
+              timing: "city-enter",
+              scope: {
+                cityId: "city.kulan",
+              },
+            }
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.router.city-enter": {
+            id: "scene.router.city-enter",
+            name: "Router City Enter",
+            actions: [],
+          },
+        },
+      };
+
+      const started = triggerStoryEvents(
+        {
+          state: createBaseStoryState(),
+          characterDefinitions: prototypeCharacters,
+          cityDefinitions: prototypeCities,
+          houseDefinitions: prototypeHouses,
+        },
+        content,
+        {
+          timing: "city-enter",
+          cityId: "city.kulan",
+        }
+      );
+
+      assert.equal(started.cityDefinitions, prototypeCities);
+      assert.equal(started.houseDefinitions, prototypeHouses);
+      assert.equal(
+        started.state.runtime.eventHistory["event.router.city-enter"]?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "triggerStoryEvents should route non-binding fallback entry through dispatchRuntimeRequest instead of starting the event locally"
+      );
+    } finally {
+      runtimeDispatch.dispatchRuntimeRequest = originalDispatchRuntimeRequest;
+    }
+  }
+);
+
+test(
+  "triggerStoryEvents preserves the binding-owned path without routing it through dispatchRuntimeRequest",
+  { concurrency: false },
+  () => {
+    const runtimeDispatch = require("../.test-dist/core/runtime/runtime-dispatch.js");
+    const originalDispatchRuntimeRequest =
+      runtimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    runtimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const content = {
+        eventDefinitionsById: {
+          "event.binding.city-enter": createStoryEvent(
+            "event.binding.city-enter",
+            "scene.binding.city-enter",
+            {
+              timing: "manual",
+            }
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.binding.city-enter": {
+            id: "scene.binding.city-enter",
+            name: "Binding City Enter",
+            actions: [],
+          },
+        },
+        eventBindingsById: {
+          "binding.city-enter": {
+            id: "binding.city-enter",
+            eventId: "event.binding.city-enter",
+            owner: {
+              family: "city",
+              id: "city.kulan",
+            },
+            trigger: {
+              timing: "after",
+              action: "city-enter",
+            },
+          },
+        },
+      };
+
+      const started = triggerStoryEvents(
+        {
+          state: createBaseStoryState(),
+          characterDefinitions: prototypeCharacters,
+          cityDefinitions: prototypeCities,
+          houseDefinitions: prototypeHouses,
+        },
+        content,
+        {
+          timing: "city-enter",
+          cityId: "city.kulan",
+        }
+      );
+
+      assert.equal(
+        started.state.runtime.eventHistory["event.binding.city-enter"]?.firedCount,
+        1
+      );
+      assert.equal(
+        dispatchRuntimeRequestCalls,
+        0,
+        "triggerStoryEventBindings should keep its existing binding-owned runtime path"
+      );
+    } finally {
+      runtimeDispatch.dispatchRuntimeRequest = originalDispatchRuntimeRequest;
+    }
+  }
+);

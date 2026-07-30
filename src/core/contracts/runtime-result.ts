@@ -1,4 +1,5 @@
 import type { Effect } from "./effect";
+import type { RuntimeEventEntity } from "./event-router";
 import type { NavigationTarget } from "./navigation";
 import type { ProgressionSettlementInstance } from "./progression-runtime";
 import type { RuntimeState } from "./runtime-state";
@@ -9,21 +10,13 @@ import type { CharacterStatusById } from "../../domain/character-status";
 import type { CityStatusById } from "../../domain/city-status";
 import type { LocationAccessResult } from "../../domain/location-access";
 
-export type RuntimeTaskSignal =
+export type RuntimeTaskInput =
+  | TaskAction
   | TaskSignal
   | {
       type: string;
       taskId: string;
     };
-
-export type RuntimeTaskAction = TaskAction | {
-  type: string;
-  taskId: string;
-};
-
-export type RuntimeTaskInput =
-  | RuntimeTaskAction
-  | RuntimeTaskSignal;
 
 export type RuntimeInteractiveSignal =
   | { type: "reenter-house"; houseId: string }
@@ -44,6 +37,7 @@ export type RuntimeSettlementResult = {
 export type RuntimeResult = {
   state: RuntimeState;
   effects: Effect[];
+  event?: RuntimeEventEntity;
   characterDefinitions?: CharacterDefinition[];
   characterStatusById?: CharacterStatusById;
   cityStatusById?: CityStatusById;
@@ -56,14 +50,11 @@ export type RuntimeResult = {
         currentNodeId?: string | null;
       }
     | null;
-  // canonical task input surface
   taskInputs?: RuntimeTaskInput[];
-  // compatibility-only legacy split task input surfaces
-  taskActions?: RuntimeTaskAction[];
-  taskSignals?: RuntimeTaskSignal[];
   taskUpdates?: TaskUpdate[];
   settlementInstances?: ProgressionSettlementInstance[];
   settlement?: RuntimeSettlementResult | null;
+  followUpEventIds?: string[];
   // canonical continuation surface
   followUp?: RuntimeFollowUp | null;
   // compatibility-only legacy continuation surfaces

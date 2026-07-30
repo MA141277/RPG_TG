@@ -15332,8 +15332,148 @@ test("runtime router contract exports a formal routing seam", () => {
   );
 
   assert.match(source, /export type RuntimeRouteInput =/);
+  assert.match(source, /export type RuntimeRouteResult = RuntimeResult;/);
   assert.match(source, /export interface RuntimeRouter/);
-  assert.match(source, /route\(input: RuntimeRouteInput\): RuntimeResult/);
+  assert.match(source, /route\(input: RuntimeRouteInput\): RuntimeRouteResult/);
+});
+
+test("runtime router seam is anchored to the canonical event-router contract", () => {
+  const contractPath = path.join(
+    process.cwd(),
+    "src/core/contracts/event-router.ts"
+  );
+  const runtimeRouterSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-router.ts"),
+    "utf8"
+  );
+
+  assert.equal(fs.existsSync(contractPath), true);
+  const contractSource = fs.readFileSync(contractPath, "utf8");
+
+  assert.match(contractSource, /RuntimeEventEntity/);
+  assert.match(contractSource, /RuntimeEventRouteResult/);
+  assert.match(runtimeRouterSource, /\.\.\/contracts\/event-router/);
+  assert.match(runtimeRouterSource, /RuntimeEventRouteResult/);
+  assert.match(runtimeRouterSource, /RuntimeRouteResult/);
+});
+
+test("event-router runtime owner exists and dispatches canonical event kinds", () => {
+  const runtimeOwnerPath = path.join(
+    process.cwd(),
+    "src/core/runtime/event-router.ts"
+  );
+
+  assert.equal(fs.existsSync(runtimeOwnerPath), true);
+  const source = fs.readFileSync(runtimeOwnerPath, "utf8");
+
+  assert.match(source, /export function dispatchEventRoute/);
+  assert.match(source, /resolveById/);
+  assert.match(source, /RuntimeEventEntity/);
+  assert.match(source, /handlers/);
+  assert.match(source, /event\.kind/);
+});
+
+test("event router runtime core keeps story bindings on the binding-owned runtime path", () => {
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const triggerStoryEventBindingsBlock =
+    storyRuntimeSource.match(
+      /function triggerStoryEventBindings\([\s\S]*?\r?\n}\r?\n\r?\nfunction createStoryEventBindingTriggerContext/
+    )?.[0] ?? "";
+
+  assert.match(triggerStoryEventBindingsBlock, /runEventBindingRuntime\(/);
+  assert.match(
+    triggerStoryEventBindingsBlock,
+    /content\.eventDefinitionsById\[bindingResult\.activation\.activeEventId\]/
+  );
+  assert.match(
+    triggerStoryEventBindingsBlock,
+    /eventAlreadyStarted:\s*!isStateOnlyRuntimeActionEvent\(eventDefinition\)/
+  );
+  assert.doesNotMatch(triggerStoryEventBindingsBlock, /dispatchRuntimeRequest\(/);
+  assert.doesNotMatch(triggerStoryEventBindingsBlock, /dispatchEventRoute\(/);
+});
+
+test("story direct event entry convergence keeps direct callers on the shared router seam", () => {
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "story-runtime.ts",
+    storyRuntimeSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const callableBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name != null) {
+      callableBlocksByName.set(
+        statement.name.text,
+        storyRuntimeSource.slice(statement.pos, statement.end)
+      );
+      continue;
+    }
+
+    if (!ts.isVariableStatement(statement)) {
+      continue;
+    }
+
+    for (const declaration of statement.declarationList.declarations) {
+      if (
+        !ts.isIdentifier(declaration.name) ||
+        declaration.initializer == null ||
+        (!ts.isArrowFunction(declaration.initializer) &&
+          !ts.isFunctionExpression(declaration.initializer))
+      ) {
+        continue;
+      }
+
+      callableBlocksByName.set(
+        declaration.name.text,
+        storyRuntimeSource.slice(statement.pos, statement.end)
+      );
+    }
+  }
+
+  const startStoryEventByIdBlock =
+    callableBlocksByName.get("startStoryEventById") ?? "";
+  const triggerStoryEventsBlock =
+    callableBlocksByName.get("triggerStoryEvents") ?? "";
+  const directEntryRouterHelpers = [...callableBlocksByName.entries()]
+    .filter(
+      ([name, block]) =>
+        name !== "triggerStoryEventBindings" &&
+        /dispatchRuntimeRequest\(/.test(block) &&
+        /dispatchEventRoute\(/.test(block)
+    )
+    .map(([name]) => name);
+
+  assert.equal(
+    directEntryRouterHelpers.length,
+    1,
+    "Expected exactly one converged direct-entry helper to own router dispatch outside triggerStoryEventBindings."
+  );
+  const [sharedDirectEntryHelperName] = directEntryRouterHelpers;
+
+  const sharedDirectEntryHelperPattern = new RegExp(
+    `\\b${sharedDirectEntryHelperName}\\(`
+  );
+
+  assert.match(startStoryEventByIdBlock, sharedDirectEntryHelperPattern);
+  assert.match(triggerStoryEventsBlock, sharedDirectEntryHelperPattern);
+  assert.doesNotMatch(
+    startStoryEventByIdBlock,
+    /\bapplyTriggeredStoryEvent\s*\(/
+  );
+  assert.doesNotMatch(
+    triggerStoryEventsBlock,
+    /\bapplyTriggeredStoryEvent\s*\(/
+  );
 });
 
 test("shared dispatch consumes the hardened runtime router contract", () => {
@@ -15596,15 +15736,13 @@ test("runtime dispatch settles routed task actions and signals into unified task
         route: ({ state }) => ({
           state,
           effects: [],
-          taskActions: [
+          taskInputs: [
             {
               type: "start",
               taskId: "task.runtime.test",
               occurredAt: "2026-07-02T08:00:00.000Z",
               source: "event-runtime",
             },
-          ],
-          taskSignals: [
             {
               type: "scene.reported",
               source: "scene-runtime",
