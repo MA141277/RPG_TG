@@ -150,6 +150,39 @@ test("city begging default dialogue ignores invalid and duplicate option selecti
   assert.equal(afterChangedOption.fixedResult, "ji");
 });
 
+test("city begging default dialogue does not clear a locked result by reselecting location", async () => {
+  const {
+    createCityBeggingDefaultDialogueState,
+    selectCityBeggingDefaultLocation,
+    selectCityBeggingDefaultOption,
+  } = await import(
+    "../.test-dist/application/playables/city-begging/city-begging-default-dialogue.js"
+  );
+
+  const launched = createCityBeggingDefaultDialogueState(1000);
+  const atLocation = selectCityBeggingDefaultLocation(
+    launched,
+    "xicheng_guanyin"
+  );
+  const afterOption = selectCityBeggingDefaultOption(
+    atLocation,
+    "help_mend_net",
+    1200
+  );
+
+  const afterReselectLocation = selectCityBeggingDefaultLocation(
+    afterOption,
+    "dongshi_mishi"
+  );
+
+  assert.strictEqual(afterReselectLocation, afterOption);
+  assert.equal(afterReselectLocation.selectedLocationId, "xicheng_guanyin");
+  assert.equal(afterReselectLocation.selectedOptionId, "help_mend_net");
+  assert.equal(afterReselectLocation.fixedResult, "ji");
+  assert.equal(afterReselectLocation.thinkingUntil, 3600);
+  assert.equal(afterReselectLocation.settlementApplied, false);
+});
+
 test("city begging launch payload can start the default dialogue mode", () => {
   const launched = runPlayableRuntime({
     state: createRuntimeState(),

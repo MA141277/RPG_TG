@@ -100,3 +100,37 @@ tests 7
 pass 7
 fail 0
 ```
+
+## Second Review Fixes
+
+- Guarded `selectCityBeggingDefaultLocation()` so location selection only applies from the initial `location-select` phase before any location, option, or fixed result is locked.
+- Added focused regression coverage proving location reselection after a fixed option result returns the same state and cannot clear `selectedOptionId`, `fixedResult`, `thinkingUntil`, or `settlementApplied`.
+
+Second review-fix red check:
+
+```text
+npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/city-begging-default-runtime.test.cjs tests/city-begging-runtime-status.test.cjs tests/interactive-runtime-status.test.cjs }
+```
+
+Expected failure observed:
+
+```text
+city begging default dialogue does not clear a locked result by reselecting location
+AssertionError [ERR_ASSERTION]: Expected "actual" to be reference-equal to "expected"
+actual fixedResult: null
+expected fixedResult: 'ji'
+```
+
+Second review-fix green check:
+
+```text
+npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/city-begging-default-runtime.test.cjs tests/city-begging-runtime-status.test.cjs tests/interactive-runtime-status.test.cjs }
+```
+
+Result:
+
+```text
+tests 8
+pass 8
+fail 0
+```

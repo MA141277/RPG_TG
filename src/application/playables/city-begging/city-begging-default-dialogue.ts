@@ -41,7 +41,13 @@ export function selectCityBeggingDefaultLocation(
   state: CityBeggingDefaultDialogueState,
   locationId: string
 ): CityBeggingDefaultDialogueState {
-  if (getCityBeggingDefaultLocation(locationId) == null) {
+  if (
+    state.phase !== "location-select" ||
+    state.selectedLocationId != null ||
+    state.selectedOptionId != null ||
+    state.fixedResult != null ||
+    getCityBeggingDefaultLocation(locationId) == null
+  ) {
     return state;
   }
 
