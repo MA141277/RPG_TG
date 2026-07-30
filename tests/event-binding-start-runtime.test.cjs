@@ -74,6 +74,70 @@ test("event binding runtime starts the selected event through the shared entry",
   );
 });
 
+test(
+  "event binding runtime routes the selected event through the shared event-router seam",
+  { concurrency: false },
+  () => {
+    const eventRouterPath = require.resolve(
+      "../.test-dist/core/runtime/event-router.js"
+    );
+    const eventBindingRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/event-binding-runtime.js"
+    );
+
+    delete require.cache[eventBindingRuntimePath];
+    delete require.cache[eventRouterPath];
+
+    const patchedEventRouter = require(eventRouterPath);
+    const originalDispatchEventRoute = patchedEventRouter.dispatchEventRoute;
+    let dispatchEventRouteCalls = 0;
+
+    patchedEventRouter.dispatchEventRoute = (...args) => {
+      dispatchEventRouteCalls += 1;
+      return originalDispatchEventRoute(...args);
+    };
+
+    try {
+      const {
+        runEventBindingRuntime: runEventBindingRuntimeWithPatchedRouter,
+      } = require(eventBindingRuntimePath);
+      const state = createBaseState();
+      const result = runEventBindingRuntimeWithPatchedRouter({
+        state,
+        eventDefinitionsById: {
+          "event.temple.router": createEventDefinition("event.temple.router"),
+        },
+        eventBindings: [
+          {
+            id: "binding.temple.router",
+            eventId: "event.temple.router",
+            owner: { family: "building", id: "building.temple" },
+            trigger: { timing: "after", action: "building-enter" },
+          },
+        ],
+        triggerContext: {
+          timing: "after",
+          action: "building-enter",
+          owner: { family: "building", id: "building.temple" },
+        },
+      });
+
+      assert.equal(result.activation.activeEventId, "event.temple.router");
+      assert.equal(result.activation.sceneId, "event.temple.router.scene");
+      assert.equal(result.state.scene.activeEventId, "event.temple.router");
+      assert.equal(result.state.scene.activeSceneId, "event.temple.router.scene");
+      assert.ok(
+        dispatchEventRouteCalls > 0,
+        "runEventBindingRuntime should route binding-selected events through dispatchEventRoute instead of starting them locally"
+      );
+    } finally {
+      patchedEventRouter.dispatchEventRoute = originalDispatchEventRoute;
+      delete require.cache[eventBindingRuntimePath];
+      delete require.cache[eventRouterPath];
+    }
+  }
+);
+
 test("event binding runtime applies state-only runtime actions without opening a scene", () => {
   const state = createBaseState({
     ui: {

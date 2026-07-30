@@ -15566,6 +15566,28 @@ test("event trigger runtime route convergence keeps trigger activation on the sh
   );
 });
 
+test("event binding runtime route convergence keeps binding activation on the shared event-router seam", () => {
+  const eventBindingRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-binding-runtime.ts"),
+    "utf8"
+  );
+  const runEventBindingRuntimeBlock =
+    eventBindingRuntimeSource.match(
+      /export function runEventBindingRuntime\([\s\S]*?\n}\n\nexport function selectEventBindingActivation/
+    )?.[0] ?? "";
+  const routeBindingEventBlock =
+    eventBindingRuntimeSource.match(
+      /function routeBindingEvent\([\s\S]*?\n}\n\nfunction toEventBindingRuntimeState/
+    )?.[0] ?? "";
+
+  assert.match(runEventBindingRuntimeBlock, /\brouteBindingEvent\s*\(/);
+  assert.match(routeBindingEventBlock, /\bdispatchEventRoute\s*\(/);
+  assert.doesNotMatch(
+    runEventBindingRuntimeBlock,
+    /return\s*\{[\s\S]*state:\s*startEvent\(/
+  );
+});
+
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),

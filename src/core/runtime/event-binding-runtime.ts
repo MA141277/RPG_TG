@@ -1,7 +1,10 @@
 import { startEvent } from "../../application/events/event-runner";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { RuntimeEventEntity } from "../contracts/event-router";
+import type { RuntimeState } from "../contracts/runtime-state";
 import { activateEvent, type ActivatedEvent } from "./event-activation";
+import { dispatchEventRoute } from "./event-router";
 import {
   createRuntimeTriggerContext,
   isSupportedEventBindingOwnerFamily,
@@ -78,7 +81,11 @@ export function runEventBindingRuntime(
   }
 
   return {
-    state: startEvent(actionState, selection.eventDefinition),
+    state: routeBindingEvent(
+      actionState,
+      selection.eventDefinition,
+      input.eventDefinitionsById
+    ),
     activation: selection.activation,
     candidate: selection.candidate,
   };
@@ -109,6 +116,76 @@ function toEventBindingRuntimeCandidate(
   return {
     ...candidate,
     sceneId: eventDefinition?.entrySceneId ?? null,
+  };
+}
+
+function routeBindingEvent(
+  state: GameState,
+  eventDefinition: EventDefinition,
+  eventDefinitionsById: Record<string, EventDefinition>
+): GameState {
+  return dispatchEventRoute({
+    state: toEventBindingRuntimeState(state),
+    eventId: eventDefinition.id,
+    context: {
+      repository: {
+        resolveById: (eventId) => {
+          const resolved = eventDefinitionsById[eventId];
+          return resolved == null ? null : toEventBindingRuntimeEventEntity(resolved);
+        },
+      },
+      handlers: {
+        dialogue: ({ state, event }) => ({
+          state: {
+            ...state,
+            core: startEvent(
+              state.core,
+              eventDefinitionsById[event.id] ?? eventDefinition
+            ),
+          },
+          effects: [],
+        }),
+        settlement: ({ state, event }) => ({
+          state: {
+            ...state,
+            core: startEvent(
+              state.core,
+              eventDefinitionsById[event.id] ?? eventDefinition
+            ),
+          },
+          effects: [],
+        }),
+      },
+    },
+  }).state.core;
+}
+
+function toEventBindingRuntimeState(state: GameState): RuntimeState {
+  return {
+    core: state,
+    app: {
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
+    },
+    view: {},
+  };
+}
+
+function toEventBindingRuntimeEventEntity(
+  eventDefinition: EventDefinition
+): RuntimeEventEntity {
+  return {
+    id: eventDefinition.id,
+    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
+    payload: {},
+    ...(eventDefinition.nextEventId == null
+      ? {}
+      : { nextEventId: eventDefinition.nextEventId }),
   };
 }
 
