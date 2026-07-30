@@ -3,6 +3,7 @@ import type { CharacterId } from "./character";
 import type { CityId } from "./city";
 import type { CityNpcPoolRuntimeState } from "./city-npc";
 import type { EventId } from "./event";
+import type { FactionAffiliationsState } from "./faction-affiliation";
 import type { HouseId } from "./house";
 import type { CityMarketData } from "./market";
 import type { MapExplorationState, MapId } from "./map";
@@ -97,6 +98,7 @@ export type GameState = {
     variables: Record<string, number | string>;
     factionMerit: Record<string, Record<CharacterId, number>>;
     factionMemberships: FactionMembershipsState;
+    factionAffiliations: FactionAffiliationsState;
     tasks: TaskRuntimeState;
     playableSession: ActivePlayableSession | null;
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;

@@ -8,6 +8,9 @@ import type {
   ValuableLibraryFilter,
   ValuableLibrarySortKey,
 } from "../../../domain/global-ui";
+import { defaultEquipmentLoadoutService } from "../../../domain/equipment/equipment-loadout-service";
+import { defaultEquipmentSlotRegistry } from "../../../domain/equipment/equipment-slot-registry";
+import type { EquipmentSlotId } from "../../../domain/equipment/equipment-slot-registry";
 
 const VALUABLE_FILTER_LABELS: Record<ValuableLibraryFilter, string> = {
   all: "全部",
@@ -22,9 +25,17 @@ const VALUABLE_SORT_LABELS: Record<ValuableLibrarySortKey, string> = {
 };
 
 const CATEGORY_LABELS: Record<ValuableItemCategory, string> = {
-  weapon: "刀剑",
-  armor: "铠甲",
+  weapon: "武器",
+  armor: "防具",
+  accessory: "饰品",
+  mount: "坐骑",
 };
+
+function getEquipmentSlotId(
+  category: ValuableItemCategory
+): EquipmentSlotId | null {
+  return defaultEquipmentSlotRegistry.getSlotForCategory(category)?.slotId ?? null;
+}
 
 function getVisibleItems(
   items: ValuableItemDefinition[],
@@ -34,7 +45,7 @@ function getVisibleItems(
     return items;
   }
 
-  return items.filter((itemDefinition) => itemDefinition.category === "weapon" || itemDefinition.category === "armor");
+  return items.filter((itemDefinition) => getEquipmentSlotId(itemDefinition.category) != null);
 }
 
 function sortItems(
@@ -65,6 +76,32 @@ function sortItems(
   return clonedItems;
 }
 
+function findValuableItemName(
+  inventory: ValuableItemInventory,
+  itemId: string | null
+): string | null {
+  if (itemId == null) {
+    return null;
+  }
+
+  return inventory.items.find((itemDefinition) => itemDefinition.id === itemId)?.name ?? null;
+}
+
+function renderEquipmentSummary(inventory: ValuableItemInventory): string {
+  return defaultEquipmentSlotRegistry
+    .getAll()
+    .map((slot) => {
+      const equippedItemId = defaultEquipmentLoadoutService.getEquippedItemId(
+        inventory,
+        slot.slotId
+      );
+      const equippedName = findValuableItemName(inventory, equippedItemId);
+
+      return `<span>${slot.label}: ${equippedName ?? "未装备"}</span>`;
+    })
+    .join("");
+}
+
 export function renderValuableLibraryView(input: {
   inventory: ValuableItemInventory;
   filter: ValuableLibraryFilter;
@@ -80,13 +117,11 @@ export function renderValuableLibraryView(input: {
     visibleItems.find((itemDefinition) => itemDefinition.id === input.inventory.selectedItemId) ??
     visibleItems[0] ??
     null;
-  const equippedWeaponSet = input.inventory.equippedWeaponSet;
-  const isWeaponEquipped =
-    selectedItem?.category === "weapon" && equippedWeaponSet.swordId === selectedItem.id;
-  const isArmorEquipped =
-    selectedItem?.category === "armor" && equippedWeaponSet.armorId === selectedItem.id;
+  const isSelectedItemEquipped =
+    selectedItem != null &&
+    defaultEquipmentLoadoutService.isItemEquipped(input.inventory, selectedItem.id);
   const canEquip =
-    selectedItem != null && (selectedItem.category === "weapon" || selectedItem.category === "armor");
+    selectedItem != null && getEquipmentSlotId(selectedItem.category) != null;
 
   return `
     <section class="view-library-overlay">
@@ -115,8 +150,7 @@ export function renderValuableLibraryView(input: {
               .join("")}
           </div>
           <div class="c-equipment-summary">
-            <span>刀剑: ${equippedWeaponSet.swordId ?? "未装备"}</span>
-            <span>铠甲: ${equippedWeaponSet.armorId ?? "未装备"}</span>
+            ${renderEquipmentSummary(input.inventory)}
           </div>
         </div>
         <div class="c-library-shell__body">
@@ -146,12 +180,12 @@ export function renderValuableLibraryView(input: {
                 ${visibleItems
                   .map((itemDefinition) => {
                     const isSelected = selectedItem?.id === itemDefinition.id;
-                    const equippedLabel =
-                      itemDefinition.category === "weapon" && equippedWeaponSet.swordId === itemDefinition.id
-                        ? "已装备"
-                        : itemDefinition.category === "armor" && equippedWeaponSet.armorId === itemDefinition.id
-                          ? "已装备"
-                          : "";
+                    const equippedLabel = defaultEquipmentLoadoutService.isItemEquipped(
+                      input.inventory,
+                      itemDefinition.id
+                    )
+                      ? "已装备"
+                      : "";
 
                     return `
                       <tr class="${isSelected ? "is-selected" : ""}" data-valuable-id="${itemDefinition.id}">
@@ -212,7 +246,7 @@ export function renderValuableLibraryView(input: {
                       canEquip
                         ? `
                           <button class="c-button" type="button" data-action="equip-valuable" data-valuable-id="${selectedItem.id}">
-                            ${isWeaponEquipped || isArmorEquipped ? "已装备" : "装备"}
+                            ${isSelectedItemEquipped ? "已装备" : "装备"}
                           </button>
                         `
                         : ""

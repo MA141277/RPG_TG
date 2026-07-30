@@ -3,6 +3,7 @@ import type { CityEntryDefinition, CityEntryOption } from "../../domain/city-ent
 import type { GameState } from "../../domain/game-state";
 import type { HistoricalCharacterRecord } from "../../domain/historical-character";
 import { getLeaderResidenceRelationKey } from "../../domain/leader-residence";
+import { resolveCharacterFactionLabel } from "../faction/faction-affiliation-runtime";
 
 function isLeaderResidenceCharacter(characterDefinition: CharacterDefinition): boolean {
   return (
@@ -83,8 +84,10 @@ export function selectLeaderResidenceOptions(
         characterDefinition.occupation ??
         "历史人物",
       factionLabel:
-        characterDefinition.affiliationLabel ??
-        characterDefinition.clanId ??
+        resolveCharacterFactionLabel({
+          state,
+          character: characterDefinition,
+        }) ??
         "无所属",
       relationLabel: formatRelationLabel(state, characterDefinition.id),
       statusLabel: formatStatusLabel(characterDefinition),

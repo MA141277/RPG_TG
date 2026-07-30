@@ -4,6 +4,7 @@ import type {
   CharacterStatKey,
 } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
+import { factionAffiliationRuntime } from "../faction/faction-affiliation-runtime";
 
 export type EffectApplicationContext = {
   characterDefinitions: CharacterDefinition[];
@@ -125,6 +126,20 @@ export function applyEffects(
           return nextCharacter;
         });
         break;
+      case "set-faction-affiliation": {
+        const result = factionAffiliationRuntime.joinFaction({
+          state: nextState,
+          characterDefinitions: nextCharacterDefinitions,
+          characterId: effect.characterId,
+          factionId: effect.factionId,
+          factionName: effect.factionName,
+          joinedBy: effect.joinedBy,
+          sourceEventId: effect.sourceEventId,
+        });
+        nextState = result.state;
+        nextCharacterDefinitions = result.characterDefinitions;
+        break;
+      }
       case "modify-character-stat":
         nextCharacterDefinitions = nextCharacterDefinitions.map((characterDefinition) => {
           if (characterDefinition.id !== effect.characterId) {

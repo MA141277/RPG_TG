@@ -14,6 +14,7 @@ import type {
 } from "../../../domain/house-module";
 import type { LeaderResidenceSessionState } from "../../../domain/house-modules/leader-residence-session";
 import { assertExists } from "../../../shared/assert";
+import { resolveCharacterFactionLabel } from "../../faction/faction-affiliation-runtime";
 import { createInitialLeaderResidenceSessionState } from "./leader-residence-session-state";
 
 const ACTION_GREETING = "leader-residence:greeting";
@@ -209,7 +210,11 @@ function buildStatusMetrics(
   return [
     {
       label: "阵营",
-      value: visitedCharacter.affiliationLabel ?? visitedCharacter.clanId ?? "无所属",
+      value:
+        resolveCharacterFactionLabel({
+          state: input.gameState,
+          character: visitedCharacter,
+        }) ?? "无所属",
     },
     {
       label: "关系",

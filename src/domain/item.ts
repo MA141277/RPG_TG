@@ -6,6 +6,7 @@ export type BackpackItemSortKey = "name" | "value" | "count" | "type";
 
 export type ItemActionId =
   | "equip.valuable"
+  | "unequip.valuable"
   | "consume.food"
   | "consume.medicine"
   | "submit.quest"

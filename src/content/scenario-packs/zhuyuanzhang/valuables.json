@@ -18,5 +18,25 @@
     "kindText": "铠甲",
     "itemImageId": "item-image.armor.tetsu",
     "description": "基础护具，适合近身防护。"
+  },
+  {
+    "id": "item.accessory.sachet",
+    "name": "香囊",
+    "category": "accessory",
+    "price": 1,
+    "ownedCount": 1,
+    "kindText": "饰品",
+    "itemImageId": "item-image.accessory.sachet",
+    "description": "随身佩戴的香囊，醒神避秽。"
+  },
+  {
+    "id": "item.mount.yellow-horse",
+    "name": "黄骠马",
+    "category": "mount",
+    "price": 1,
+    "ownedCount": 1,
+    "kindText": "坐骑",
+    "itemImageId": "item-image.mount.yellow-horse",
+    "description": "毛色明亮的黄骠马，脚程稳健。"
   }
 ]

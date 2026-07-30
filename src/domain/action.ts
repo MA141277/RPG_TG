@@ -1,12 +1,11 @@
 import type { EventId } from "./event";
 import type { ActivityId } from "./activity";
+import type { CharacterId } from "./character";
 
 export type SceneId = string;
 export type BackgroundId = string;
 export type MusicId = string;
 export type ChoiceId = string;
-
-type CharacterId = string;
 
 export type DialogueSide = "left" | "right" | "center";
 
@@ -30,6 +29,14 @@ export type Effect =
         clanId?: string | null;
         affiliationLabel?: string | null;
       };
+    }
+  | {
+      type: "set-faction-affiliation";
+      characterId: CharacterId;
+      factionId: string;
+      factionName: string;
+      joinedBy: string;
+      sourceEventId?: string;
     }
   | { type: "modify-character-stat"; characterId: CharacterId; stat: string; delta: number }
   | { type: "start-mission"; missionId: string }

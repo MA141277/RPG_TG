@@ -26,7 +26,7 @@ test("backpack view renders filters, table columns, detail, and item action butt
         types: ["equipment", "weapon"],
         count: 1,
         description: "旧刀。",
-        actions: [{ id: "equip.weapon", label: "装备" }],
+        actions: [{ id: "equip.valuable", label: "装备" }],
       },
       {
         id: "item.food",
@@ -67,7 +67,7 @@ test("backpack view renders filters, table columns, detail, and item action butt
   assert.match(html, /data-backpack-filter="equipment"/);
   assert.match(html, /data-backpack-item-id="item\.weapon"/);
   assert.match(html, /data-action="run-backpack-item-action"/);
-  assert.match(html, /data-item-action-id="equip\.weapon"/);
+  assert.match(html, /data-item-action-id="equip\.valuable"/);
   assert.match(html, /class="c-city-choice-skin"/);
   assert.match(html, /<h2 class="c-library-detail__title">锈刀<\/h2>/);
 });
@@ -85,7 +85,7 @@ test("backpack icon column only renders image icons and hides plain icon ids", (
         types: ["equipment", "weapon"],
         count: 1,
         description: "旧刀。",
-        actions: [{ id: "equip.weapon", label: "装备" }],
+        actions: [{ id: "equip.valuable", label: "装备" }],
       },
       {
         id: "item.image-icon",
@@ -146,6 +146,51 @@ test("backpack view renders readable labels for projected shop items without act
   assert.doesNotMatch(html, /data-item-action-id=/);
 });
 
+test("backpack view renders equip and unequip buttons for equipped equipment detail", () => {
+  const html = renderBackpackView({
+    filter: "equipment",
+    selectedItemId: "valuable.accessory",
+    items: [
+      {
+        id: "valuable.accessory",
+        name: "香囊",
+        icon: null,
+        value: 4,
+        types: ["equipment", "accessory"],
+        count: 1,
+        description: "test",
+        actions: [
+          { id: "equip.valuable", label: "装备", disabled: true },
+          { id: "unequip.valuable", label: "卸除", disabled: false },
+        ],
+        equipSlotId: "accessory",
+        isEquipped: true,
+        equippedLabel: "已装备",
+        canEquip: true,
+      },
+    ],
+  });
+
+  assert.match(html, /data-item-action-id="equip\.valuable"/);
+  assert.match(html, /data-item-action-id="unequip\.valuable"/);
+  assert.match(html, /<span class="c-backpack-table__equipped">已装备<\/span>/);
+  assert.match(html, /<dt>状态<\/dt>\s*<dd>已装备<\/dd>/);
+  assert.match(
+    html,
+    /<button[^>]*data-item-action-id="equip\.valuable"[^>]*disabled[^>]*>\s*装备\s*<\/button>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-item-action-id="unequip\.valuable"[^>]*>\s*卸除\s*<\/button>/
+  );
+  assert.doesNotMatch(
+    html,
+    /<button[^>]*data-item-action-id="unequip\.valuable"[^>]*disabled[^>]*>/
+  );
+  assert.match(html, />饰品</);
+  assert.doesNotMatch(html, />accessory</);
+});
+
 test("backpack shell uses stable grid rows so empty filters do not shift the overlay", () => {
   const prototypeCss = readSource("src/styles/prototype.css");
 
@@ -200,6 +245,42 @@ test("backpack overlay overrides generic beige library surfaces", () => {
   );
 });
 
+test("backpack detail places action buttons directly below the item title", () => {
+  const html = renderBackpackView({
+    filter: "equipment",
+    selectedItemId: "valuable.accessory",
+    items: [
+      {
+        id: "valuable.accessory",
+        name: "香囊",
+        icon: null,
+        value: 4,
+        types: ["equipment", "accessory"],
+        count: 1,
+        description: "test",
+        actions: [
+          { id: "equip.valuable", label: "装备", disabled: true },
+          { id: "unequip.valuable", label: "卸除", disabled: false },
+        ],
+        equipSlotId: "accessory",
+        isEquipped: true,
+        equippedLabel: "已装备",
+        canEquip: true,
+      },
+    ],
+  });
+  const prototypeCss = readSource("src/styles/prototype.css");
+
+  assert.match(
+    html,
+    /<div class="c-library-detail__headline">[\s\S]*?<h2 class="c-library-detail__title">香囊<\/h2>[\s\S]*?<div class="c-library-detail__actions">[\s\S]*?data-item-action-id="equip\.valuable"[\s\S]*?data-item-action-id="unequip\.valuable"[\s\S]*?<\/div>[\s\S]*?<\/div>\s*<\/div>\s*<dl class="c-library-detail__grid">/
+  );
+  assert.match(
+    prototypeCss,
+    /\.view-backpack-overlay\s+\.c-library-detail__headline\s+\.c-library-detail__actions\s*\{[\s\S]*?justify-content:\s*flex-start;/
+  );
+});
+
 test("game-visible app state suppresses the full-screen main menu layer", () => {
   const mainSource = readSource("src/main.ts");
   const mainUiCss = readSource("src/styles/main-ui.css");
@@ -228,7 +309,8 @@ test("backpack view keeps browsing light and promotes equip actions to heavy", (
         count: 1,
         description: "test",
         actions: [
-          { id: "equip.weapon", label: "Equip" },
+          { id: "equip.valuable", label: "Equip" },
+          { id: "unequip.valuable", label: "Unequip" },
           { id: "submit.quest", label: "Submit" },
         ],
       },
@@ -245,7 +327,11 @@ test("backpack view keeps browsing light and promotes equip actions to heavy", (
   );
   assert.match(
     html,
-    /<button[^>]*data-action="run-backpack-item-action"[^>]*data-item-action-id="equip\.weapon"[^>]*data-button-sound="heavy"[^>]*>/
+    /<button[^>]*data-action="run-backpack-item-action"[^>]*data-item-action-id="equip\.valuable"[^>]*data-button-sound="heavy"[^>]*>/
+  );
+  assert.match(
+    html,
+    /<button[^>]*data-action="run-backpack-item-action"[^>]*data-item-action-id="unequip\.valuable"[^>]*data-button-sound="heavy"[^>]*>/
   );
   assert.match(
     html,

@@ -2205,7 +2205,7 @@ test("story callback resolves guo zixing camp copy from text entries", () => {
         "runtime.zhu_yuanzhang.main_mission.guo_zixing_keep": "转去帅府待命",
         "runtime.zhu_yuanzhang.player.title.guo_zixing_camp": "帐前亲兵",
         "runtime.zhu_yuanzhang.player.occupation.guo_zixing_camp": "郭营近卫",
-        "runtime.zhu_yuanzhang.player.affiliation.guo_zixing_camp": "濠州义军",
+        "runtime.zhu_yuanzhang.player.affiliation.guo_zixing_camp": "红巾军",
         "runtime.zhu_yuanzhang.player.biography.guo_zixing_camp":
           "你被编入郭营近侧，先从亲兵杂务做起。",
       },
@@ -2216,7 +2216,11 @@ test("story callback resolves guo zixing camp copy from text entries", () => {
   assert.equal(result.state.ui.mainHouseMissionText, "转去帅府待命");
   assert.equal(playerCharacter.title, "帐前亲兵");
   assert.equal(playerCharacter.occupation, "郭营近卫");
-  assert.equal(playerCharacter.affiliationLabel, "濠州义军");
+  assert.equal(playerCharacter.affiliationLabel, "红巾军");
+  assert.equal(
+    result.state.runtime.factionAffiliations[playerCharacterId]?.factionName,
+    "红巾军"
+  );
   assert.equal(
     playerCharacter.biography,
     "你被编入郭营近侧，先从亲兵杂务做起。"
@@ -8643,20 +8647,83 @@ test("character detail source declares the new ability and reputation field labe
   assert.doesNotMatch(characterDetailSource, /renderSkillIconRow/);
 });
 
-test("character detail source keeps a toggle button and detail popup for substats", () => {
+test("character detail source renders ability detail as a standalone enlarged screen", () => {
   const characterDetailSource = fs.readFileSync(
     path.join(process.cwd(), "src", "ui", "views", "character", "character-detail-view.ts"),
     "utf8"
+  );
+  const resolveStyleMatch = characterDetailSource.match(
+    /function resolveAbilityDetailScreenStyle[\s\S]*?\n\}/
   );
 
   assert.match(characterDetailSource, /abilityDetailOpen/);
   assert.match(characterDetailSource, /open-character-ability-detail/);
   assert.match(characterDetailSource, /close-character-ability-detail/);
-  assert.match(characterDetailSource, /renderAbilityDetailPopup/);
+  assert.match(characterDetailSource, /renderAbilityDetailScreen/);
+  assert.match(characterDetailSource, /resolveAbilityDetailScreenStyle/);
+  assert.ok(resolveStyleMatch, "ability detail screen style resolver must exist");
+  assert.match(resolveStyleMatch[0], /const panelLiftPixels = 20;/);
+  assert.match(resolveStyleMatch[0], /Math\.min\(basicInfoComponent\.rect\.y, abilityInfoComponent\.rect\.y\) - panelLiftPixels/);
+  assert.match(
+    characterDetailSource,
+    /characterDetailLiveBindings\.basicInfo\.componentId/
+  );
+  assert.match(
+    characterDetailSource,
+    /characterDetailLiveBindings\.abilityInfo\.componentId/
+  );
+  assert.match(characterDetailSource, /c-character-detail__ability-detail-screen/);
+  assert.match(
+    characterDetailSource,
+    /c-character-detail__ability-detail-screen-grid/
+  );
+  assert.doesNotMatch(resolveStyleMatch[0], /backgroundImageUrl/);
+  assert.doesNotMatch(resolveStyleMatch[0], /background-image:url/);
+  assert.doesNotMatch(characterDetailSource, /renderAbilityDetailPopup/);
+  assert.doesNotMatch(
+    characterDetailSource,
+    /c-character-detail__ability-detail-backdrop/
+  );
+  assert.doesNotMatch(characterDetailSource, /c-character-detail__ability-detail-popup/);
   assert.match(characterDetailSource, /renderAbilitySummaryRow/);
   assert.match(characterDetailSource, /力量/);
   assert.match(characterDetailSource, /机变/);
   assert.match(characterDetailSource, /善名/);
+});
+
+test("character detail source renders 饰品 and 坐骑 equipment labels", () => {
+  const source = readSource("src/ui/views/character/character-detail-view.ts");
+  const appRenderSource = readSource("src/ui/app-render.ts");
+
+  assert.match(source, />饰品</);
+  assert.match(source, />坐骑</);
+  assert.match(source, />装备武器</);
+  assert.match(source, />装备防具</);
+  assert.doesNotMatch(source, />所属流派</);
+  assert.doesNotMatch(source, />武艺师傅</);
+
+  assert.match(appRenderSource, /defaultEquipmentLoadoutService/);
+  for (const optionName of ["accessoryName", "mountName", "weaponName", "armorName"]) {
+    assert.match(appRenderSource, new RegExp(optionName));
+  }
+  for (const slotId of ["accessory", "mount", "weapon", "armor"]) {
+    assert.match(appRenderSource, new RegExp(`resolveEquippedItemName\\(input\\.appState, "${slotId}"\\)`));
+  }
+  assert.doesNotMatch(appRenderSource, /equippedSlots\.(?:weapon|armor|accessory|mount)/);
+});
+
+test("valuable library renders four-slot equipment summary", () => {
+  const source = readSource("src/ui/views/valuables/valuable-library-view.ts");
+
+  for (const label of ["武器", "防具", "饰品", "坐骑", "未装备"]) {
+    assert.match(source, new RegExp(label));
+  }
+
+  assert.match(source, /defaultEquipmentSlotRegistry/);
+  assert.match(source, /defaultEquipmentLoadoutService/);
+  assert.match(source, /getEquippedItemId/);
+  assert.match(source, /isItemEquipped/);
+  assert.doesNotMatch(source, /equippedSlots\.(?:weapon|armor|accessory|mount)/);
 });
 
 test("character detail ability panel keeps the old compact five-stat order", () => {
@@ -8720,6 +8787,53 @@ test("character detail ability panel keeps compact two-column meter layout", () 
   assert.ok(abilityStatRowBlock, "ability grid stat row override must exist");
   assert.match(abilityStatRowBlock[0], /grid-template-columns:\s*clamp\([^;]+?\)\s+minmax\([^;]+?\)\s+clamp\([^;]+?\);/);
   assert.match(abilityStatRowBlock[0], /min-height:\s*0;/);
+});
+
+test("character detail ability detail screen uses a standalone overlay panel layout", () => {
+  const prototypeCss = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "prototype.css"),
+    "utf8"
+  );
+  const abilityDetailScreenBlock = prototypeCss.match(
+    /\.c-character-detail__ability-detail-screen\s*\{[\s\S]*?\n\}/
+  );
+  const abilityDetailScreenGridBlock = prototypeCss.match(
+    /\.c-character-detail__ability-detail-screen-grid\s*\{[\s\S]*?\n\}/
+  );
+
+  assert.ok(abilityDetailScreenBlock, "ability detail screen css block must exist");
+  assert.match(abilityDetailScreenBlock[0], /position:\s*absolute;/);
+  assert.match(abilityDetailScreenBlock[0], /left:\s*39\.4%;/);
+  assert.match(abilityDetailScreenBlock[0], /top:\s*calc\(4\.2%\s*-\s*20px\);/);
+  assert.match(abilityDetailScreenBlock[0], /width:\s*55\.7%;/);
+  assert.match(abilityDetailScreenBlock[0], /height:\s*calc\(54\.5%\s*\+\s*20px\);/);
+  assert.match(abilityDetailScreenBlock[0], /z-index:\s*4;/);
+  assert.match(
+    abilityDetailScreenBlock[0],
+    /background:\s*linear-gradient\(180deg,[^;]+rgb\(251 239 199 \/ 98%\)[^;]+rgb\(229 203 136 \/ 94%\)[^;]+\);/
+  );
+  assert.match(
+    abilityDetailScreenBlock[0],
+    /box-shadow:\s*0 18px 30px rgb\(60 42 20 \/ 18%\), inset 0 1px 0 rgb\(255 252 239 \/ 72%\);/
+  );
+  assert.match(abilityDetailScreenBlock[0], /border:\s*1px solid rgb\(123 92 45 \/ 34%\);/);
+  assert.doesNotMatch(abilityDetailScreenBlock[0], /backdrop-filter/);
+  assert.doesNotMatch(abilityDetailScreenBlock[0], /background-image:/);
+
+  assert.ok(
+    abilityDetailScreenGridBlock,
+    "ability detail screen grid css block must exist"
+  );
+  assert.match(abilityDetailScreenGridBlock[0], /position:\s*absolute;/);
+  assert.match(abilityDetailScreenGridBlock[0], /display:\s*grid;/);
+  assert.match(
+    abilityDetailScreenGridBlock[0],
+    /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/
+  );
+  assert.match(abilityDetailScreenGridBlock[0], /overflow:\s*auto;/);
+
+  assert.doesNotMatch(prototypeCss, /\.c-character-detail__ability-detail-backdrop\s*\{/);
+  assert.doesNotMatch(prototypeCss, /\.c-character-detail__ability-detail-popup\s*\{/);
 });
 
 test("character detail ability layout preset leaves room below the title", () => {

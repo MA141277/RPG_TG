@@ -19,6 +19,8 @@ const BACKPACK_TYPE_LABELS: Record<string, string> = {
   equipment: "装备",
   weapon: "武器",
   armor: "防具",
+  accessory: "饰品",
+  mount: "坐骑",
   food: "食物",
   grain: "粮食",
   other: "其他",
@@ -51,7 +53,16 @@ function renderCityChoiceSkin(): string {
 }
 
 function renderItemTypes(types: string[]): string {
-  return types.map((type) => BACKPACK_TYPE_LABELS[type] ?? type).join("；");
+  const hasSpecificEquipmentType = types.some((type) =>
+    ["weapon", "armor", "accessory", "mount"].includes(type)
+  );
+  const displayTypes = hasSpecificEquipmentType
+    ? types.filter((type) => type !== "equipment")
+    : types;
+
+  return displayTypes
+    .map((type) => BACKPACK_TYPE_LABELS[type] ?? type)
+    .join("；");
 }
 
 function isImageIcon(icon: string): boolean {
@@ -76,6 +87,47 @@ function renderDetailIcon(item: BackpackItemDefinition): string {
   return item.icon != null && isImageIcon(item.icon)
     ? `<img class="c-backpack-detail__icon-image" src="${item.icon}" alt="">`
     : "<span>物</span>";
+}
+
+function renderEquippedMarker(item: BackpackItemDefinition): string {
+  return item.isEquipped === true && (item.equippedLabel?.length ?? 0) > 0
+    ? `<span class="c-backpack-table__equipped">${item.equippedLabel}</span>`
+    : "";
+}
+
+function resolveEquipSlotLabel(item: BackpackItemDefinition): string | null {
+  return item.equipSlotId == null
+    ? null
+    : BACKPACK_TYPE_LABELS[item.equipSlotId] ?? item.equipSlotId;
+}
+
+function renderEquipmentDetailRows(item: BackpackItemDefinition): string {
+  if (item.canEquip !== true) {
+    return "";
+  }
+
+  const slotLabel = resolveEquipSlotLabel(item);
+  const statusLabel =
+    item.isEquipped === true && (item.equippedLabel?.length ?? 0) > 0
+      ? item.equippedLabel
+      : "未装备";
+
+  return `
+    ${
+      slotLabel == null
+        ? ""
+        : `
+          <div>
+            <dt>装备位</dt>
+            <dd>${slotLabel}</dd>
+          </div>
+        `
+    }
+    <div>
+      <dt>状态</dt>
+      <dd>${statusLabel}</dd>
+    </div>
+  `;
 }
 
 export function renderBackpackView(input: {
@@ -142,6 +194,7 @@ export function renderBackpackView(input: {
                           <button class="c-library-table__select c-backpack-table__select" type="button" data-backpack-item-id="${item.id}" data-button-sound="light">
                             ${renderCityChoiceSkin()}
                             <span>${item.name}</span>
+                            ${renderEquippedMarker(item)}
                           </button>
                         </td>
                         <td>${item.value}</td>
@@ -171,6 +224,25 @@ export function renderBackpackView(input: {
                     <div class="c-library-detail__headline">
                       <p class="c-library-detail__eyebrow">${renderItemTypes(selectedItem.types)}</p>
                       <h2 class="c-library-detail__title">${selectedItem.name}</h2>
+                      <div class="c-library-detail__actions">
+                        ${selectedItem.actions
+                          .map(
+                            (action) => `
+                              <button
+                                class="c-button"
+                                type="button"
+                                data-action="run-backpack-item-action"
+                                data-backpack-item-id="${selectedItem.id}"
+                                data-item-action-id="${action.id}"
+                                data-button-sound="${getBackpackActionButtonSound(action.id)}"
+                                ${action.disabled === true ? "disabled" : ""}
+                              >
+                                ${action.label}
+                              </button>
+                            `
+                          )
+                          .join("")}
+                      </div>
                     </div>
                   </div>
                   <dl class="c-library-detail__grid">
@@ -186,30 +258,12 @@ export function renderBackpackView(input: {
                       <dt>类型</dt>
                       <dd>${renderItemTypes(selectedItem.types)}</dd>
                     </div>
+                    ${renderEquipmentDetailRows(selectedItem)}
                     <div>
                       <dt>说明</dt>
                       <dd>${selectedItem.detailText ?? selectedItem.description}</dd>
                     </div>
                   </dl>
-                  <div class="c-library-detail__actions">
-                    ${selectedItem.actions
-                      .map(
-                        (action) => `
-                          <button
-                            class="c-button"
-                            type="button"
-                            data-action="run-backpack-item-action"
-                            data-backpack-item-id="${selectedItem.id}"
-                            data-item-action-id="${action.id}"
-                            data-button-sound="${getBackpackActionButtonSound(action.id)}"
-                            ${action.disabled === true ? "disabled" : ""}
-                          >
-                            ${action.label}
-                          </button>
-                        `
-                      )
-                      .join("")}
-                  </div>
                 `
             }
           </article>

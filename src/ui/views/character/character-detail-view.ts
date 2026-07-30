@@ -94,8 +94,8 @@ type CharacterDetailViewOptions = {
   houseName?: string;
   lordName?: string;
   stipendText?: string;
-  schoolName?: string;
-  masterName?: string;
+  accessoryName?: string;
+  mountName?: string;
   weaponName?: string;
   armorName?: string;
   notoriety?: number;
@@ -432,7 +432,45 @@ function renderAbilityDetailGroup(
   `;
 }
 
-function renderAbilityDetailPopup(
+function resolveAbilityDetailScreenStyle(
+  options: CharacterDetailViewOptions
+): string {
+  const basicInfoComponent = getLayoutComponent(
+    options.layout,
+    characterDetailLiveBindings.basicInfo.componentId
+  );
+  const abilityInfoComponent = getLayoutComponent(
+    options.layout,
+    characterDetailLiveBindings.abilityInfo.componentId
+  );
+
+  if (basicInfoComponent == null || abilityInfoComponent == null) {
+    return "";
+  }
+
+  const panelLiftPixels = 20;
+  const left = Math.min(basicInfoComponent.rect.x, abilityInfoComponent.rect.x);
+  const top =
+    Math.min(basicInfoComponent.rect.y, abilityInfoComponent.rect.y) - panelLiftPixels;
+  const right = Math.max(
+    basicInfoComponent.rect.x + basicInfoComponent.rect.width,
+    abilityInfoComponent.rect.x + abilityInfoComponent.rect.width
+  );
+  const bottom = Math.max(
+    basicInfoComponent.rect.y + basicInfoComponent.rect.height,
+    abilityInfoComponent.rect.y + abilityInfoComponent.rect.height
+  );
+  const style = [
+    `left:${left}px`,
+    `top:${top}px`,
+    `width:${right - left}px`,
+    `height:${bottom - top}px`,
+  ];
+
+  return ` style="${style.join(";")}"`;
+}
+
+function renderAbilityDetailScreen(
   character: CharacterDefinition,
   options: CharacterDetailViewOptions,
   goodwill: number,
@@ -444,19 +482,18 @@ function renderAbilityDetailPopup(
   }
 
   return `
-    <div class="c-character-detail__ability-detail-backdrop">
-      <article class="c-character-detail__ability-detail-popup">
-        <header class="c-character-detail__ability-detail-header">
+    <section
+      class="c-character-detail__ability-detail-screen"${resolveAbilityDetailScreenStyle(options)}
+    >
           <h3 class="c-character-detail__ability-detail-title">能力详情</h3>
           <button
-            class="c-character-detail__ability-detail-close"
+            class="c-character-detail__detail-toggle c-character-detail__detail-toggle--detail-screen"
             type="button"
             data-action="close-character-ability-detail"
           >
             关闭
           </button>
-        </header>
-        <div class="c-character-detail__ability-detail-grid">
+      <div class="c-character-detail__ability-detail-screen-grid">
           ${ABILITY_GROUPS.map((group) =>
             renderAbilityDetailGroup(character, options, group)
           ).join("")}
@@ -488,8 +525,7 @@ function renderAbilityDetailPopup(
             </p>
           </section>
         </div>
-      </article>
-    </div>
+    </section>
   `;
 }
 
@@ -591,12 +627,12 @@ export function renderCharacterDetailView(
                 <strong>${options.stipendText ?? `${character.stats.gold}贯`}</strong>
               </div>
               <div class="c-character-detail__info-row">
-                <span class="c-character-detail__label">所属流派</span>
-                <strong class="c-character-detail__info-span">${options.schoolName ?? "无"}</strong>
+                <span class="c-character-detail__label">饰品</span>
+                <strong class="c-character-detail__info-span">${options.accessoryName ?? "无"}</strong>
               </div>
               <div class="c-character-detail__info-row">
-                <span class="c-character-detail__label">武艺师傅</span>
-                <strong class="c-character-detail__info-span">${options.masterName ?? "无"}</strong>
+                <span class="c-character-detail__label">坐骑</span>
+                <strong class="c-character-detail__info-span">${options.mountName ?? "无"}</strong>
               </div>
               <div class="c-character-detail__info-row">
                 <span class="c-character-detail__label">装备武器</span>
@@ -637,13 +673,6 @@ export function renderCharacterDetailView(
                 renderAbilitySummaryRow(character, options, row)
               ).join("")}
             </div>
-            ${renderAbilityDetailPopup(
-              character,
-              options,
-              goodwill,
-              notoriety,
-              heroicFame
-            )}
           </div>
 
           <div ${renderComponentLayoutAttributes(options, {
@@ -676,6 +705,14 @@ export function renderCharacterDetailView(
             </ul>
           </div>
 
+          ${renderAbilityDetailScreen(
+            character,
+            options,
+            goodwill,
+            notoriety,
+            heroicFame
+          )}
+
           <div ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.actions,
             className: "c-character-detail__actions",
@@ -686,7 +723,7 @@ export function renderCharacterDetailView(
             ...characterDetailLiveBindings.cardButton,
             className: "c-character-detail__action-button c-character-detail__action-button--card",
           })} type="button" data-action="open-cards" data-button-sound="light">
-            卡片
+            藏品
             ${renderComponentResizeHandle(options, "character-detail-card-button")}
           </button>
           <button ${renderComponentLayoutAttributes(options, {

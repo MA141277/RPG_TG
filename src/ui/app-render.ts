@@ -26,7 +26,6 @@ import type {
   HistoricalCityRoster,
 } from "../domain/historical-character";
 import type { MapDefinition } from "../domain/map";
-import type { ValuableItemDefinition } from "../domain/valuable-item";
 import { projectBackpackItems } from "../application/inventory/item-inventory";
 import { assertExists } from "../shared/assert";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
@@ -63,6 +62,9 @@ import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
 import { renderLayoutEditor } from "./tools/layout-editor-view";
 import { formatCardDrawResultLabel } from "./animations/card-draw-animation";
+import { resolveCharacterFactionLabel } from "../application/faction/faction-affiliation-runtime";
+import { defaultEquipmentLoadoutService } from "../domain/equipment/equipment-loadout-service";
+import type { EquipmentSlotId } from "../domain/equipment/equipment-slot-registry";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
 
@@ -127,12 +129,12 @@ function getDetailCharacter(
 
 function resolveEquippedItemName(
   appState: AppState,
-  category: ValuableItemDefinition["category"]
+  slotId: EquipmentSlotId
 ): string | null {
-  const equippedId =
-    category === "weapon"
-      ? appState.gameState.valuables.equippedWeaponSet.swordId
-      : appState.gameState.valuables.equippedWeaponSet.armorId;
+  const equippedId = defaultEquipmentLoadoutService.getEquippedItemId(
+    appState.gameState.valuables,
+    slotId
+  );
 
   if (equippedId == null) {
     return null;
@@ -160,6 +162,8 @@ function buildCharacterDetailOptions(
         ) ?? null;
   const equippedWeapon = resolveEquippedItemName(input.appState, "weapon");
   const equippedArmor = resolveEquippedItemName(input.appState, "armor");
+  const equippedAccessory = resolveEquippedItemName(input.appState, "accessory");
+  const equippedMount = resolveEquippedItemName(input.appState, "mount");
   const notorietyValue = input.appState.gameState.runtime.variables.notoriety;
 
   const options: CharacterDetailViewOptions = {
@@ -168,8 +172,8 @@ function buildCharacterDetailOptions(
     abilityDetailOpen: input.appState.gameState.ui.isCharacterAbilityDetailOpen,
     notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
     stipendText: `${playerCharacter.stats.gold} 文`,
-    schoolName: "无",
-    masterName: "无",
+    accessoryName: equippedAccessory ?? "无",
+    mountName: equippedMount ?? "无",
     weaponName: equippedWeapon ?? "无",
     armorName: equippedArmor ?? "无",
   };
@@ -179,7 +183,11 @@ function buildCharacterDetailOptions(
     options.cityName = cityName;
   }
 
-  options.clanName = playerCharacter.clanId ?? "无";
+  options.clanName =
+    resolveCharacterFactionLabel({
+      state: input.appState.gameState,
+      character: playerCharacter,
+    }) ?? "无";
   options.houseName =
     playerCharacter.houseId == null
       ? "无"

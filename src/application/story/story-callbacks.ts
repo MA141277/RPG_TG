@@ -10,6 +10,7 @@ import {
   addDaysToCalendarDate,
   formatCouncilStatusText,
 } from "../time/time-progression";
+import { factionAffiliationRuntime } from "../faction/faction-affiliation-runtime";
 import {
   launchStoryBattlePlayable,
 } from "../playables/story-battle/story-battle-definition";
@@ -86,23 +87,36 @@ function runJoinGuoZixingCampCallback(
   runtime: StoryCallbackRuntime
 ): StoryCallbackRuntime {
   const nextCouncilDate = addDaysToCalendarDate(runtime.state.calendar, 60);
+  const affiliationLabel = getStoryCallbackText(
+    runtime,
+    "runtime.zhu_yuanzhang.player.affiliation.guo_zixing_camp"
+  );
+  const joinedFaction = factionAffiliationRuntime.joinFaction({
+    state: runtime.state,
+    characterDefinitions: runtime.characterDefinitions,
+    characterId: runtime.state.player.characterId,
+    factionId: "red_turban",
+    factionName: affiliationLabel,
+    joinedBy: "story.zhu_yuanzhang.join-guo-zixing-camp",
+    sourceEventId: runtime.state.scene.activeEventId ?? undefined,
+  });
 
   return {
     state: {
-      ...runtime.state,
+      ...joinedFaction.state,
       world: {
-        ...runtime.state.world,
+        ...joinedFaction.state.world,
         currentHouseId: null,
         schedule: {
           councilDate: nextCouncilDate,
         },
       },
       missions: {
-        ...runtime.state.missions,
+        ...joinedFaction.state.missions,
         activeMissionId: null,
       },
       ui: {
-        ...runtime.state.ui,
+        ...joinedFaction.state.ui,
         activeMissionId: null,
         reviewDateText: formatCouncilStatusText(60),
         mainHouseMissionText: getStoryCallbackText(
@@ -111,9 +125,9 @@ function runJoinGuoZixingCampCallback(
         ),
       },
       runtime: {
-        ...runtime.state.runtime,
+        ...joinedFaction.state.runtime,
         variables: {
-          ...runtime.state.runtime.variables,
+          ...joinedFaction.state.runtime.variables,
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
             ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
@@ -124,7 +138,7 @@ function runJoinGuoZixingCampCallback(
         },
       },
     },
-    characterDefinitions: runtime.characterDefinitions.map((characterDefinition) =>
+    characterDefinitions: joinedFaction.characterDefinitions.map((characterDefinition) =>
       characterDefinition.id !== runtime.state.player.characterId
         ? characterDefinition
         : {
@@ -136,10 +150,6 @@ function runJoinGuoZixingCampCallback(
             occupation: getStoryCallbackText(
               runtime,
               "runtime.zhu_yuanzhang.player.occupation.guo_zixing_camp"
-            ),
-            affiliationLabel: getStoryCallbackText(
-              runtime,
-              "runtime.zhu_yuanzhang.player.affiliation.guo_zixing_camp"
             ),
             clanId: "clan.guo",
             houseId: "house.kulan.keep",

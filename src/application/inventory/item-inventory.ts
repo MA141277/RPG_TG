@@ -25,7 +25,7 @@ import {
   TEMPLE_TOP_RANK_REWARD,
   readRuntimeItemQuantity,
 } from "../review/faction-review";
-import { equipValuableItem } from "./inventory-selection";
+import { defaultBackpackEquipmentActionRuntime } from "./backpack-equipment-action-runtime";
 import { readPlayerItemQuantity } from "./player-item-inventory";
 import { readPlayerGrainDou } from "./trade-inventory";
 
@@ -96,11 +96,8 @@ function projectValuableItem(
   item: ValuableItemDefinition,
   inventory: ValuableItemInventory
 ): BackpackItemDefinition {
-  const slot = defaultEquipmentSlotRegistry.getSlotForCategory(item.category);
-  const isEquipped = defaultEquipmentLoadoutService.isItemEquipped(
-    inventory,
-    item.id
-  );
+  const equipmentProjection =
+    defaultBackpackEquipmentActionRuntime.projectItem(item, inventory);
   return {
     id: item.id,
     name: item.name,
@@ -114,20 +111,8 @@ function projectValuableItem(
     count: item.ownedCount,
     description: item.description,
     ...(item.detailText == null ? {} : { detailText: item.detailText }),
-    ...(slot == null
-      ? {}
-      : {
-          equipSlotId: slot.slotId,
-          isEquipped,
-          equippedLabel: isEquipped ? "已装备" : "",
-          canEquip: true,
-        }),
-    actions: [
-      {
-        id: "equip.valuable",
-        label: "装备",
-      },
-    ],
+    ...(equipmentProjection ?? {}),
+    actions: equipmentProjection?.actions ?? [],
   };
 }
 
@@ -307,23 +292,5 @@ export function resolveSelectedBackpackItemId<T extends { id: string }>(
 export function applyBackpackItemAction(
   input: ApplyBackpackItemActionInput
 ): ApplyBackpackItemActionResult {
-  if (input.actionId === "equip.valuable") {
-    const matchedItem = input.valuableInventory.items.find(
-      (item) => item.id === input.itemId
-    );
-    if (
-      matchedItem != null &&
-      defaultEquipmentSlotRegistry.getSlotForCategory(matchedItem.category) != null
-    ) {
-      return {
-        valuableInventory: equipValuableItem(input.valuableInventory, input.itemId),
-        status: "applied",
-      };
-    }
-  }
-
-  return {
-    valuableInventory: input.valuableInventory,
-    status: "unsupported",
-  };
+  return defaultBackpackEquipmentActionRuntime.applyAction(input);
 }

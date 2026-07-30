@@ -55,9 +55,15 @@
               "occupation": "皇觉寺僧人",
               "biography": "寺中饥荒未歇，你暂在皇觉寺挂单度日，一边听候住持训示，一边思量乱世中的出路。",
               "houseId": "house.kulan.temple",
-              "clanId": null,
-              "affiliationLabel": null
+              "clanId": null
             }
+          },
+          {
+            "type": "set-faction-affiliation",
+            "characterId": "char.player",
+            "factionId": "temple",
+            "factionName": "皇觉寺",
+            "joinedBy": "scene.story.zhu_yuanzhang.ordination"
           },
           {
             "type": "set-variable",

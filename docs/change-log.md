@@ -2,6 +2,38 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-30 Unified Equipment Slot UI And Backpack Contract
+
+### Added
+- `zhuyuanzhang` 开局贵重物新增可见的 `accessory` / `mount` 样例物品 `香囊` 与 `黄骠马`，便于在运行中的背包、贵重物和人物属性界面直接验证四槽装备流。
+
+### Changed
+- 统一装备槽批次现在以 `equippedSlots` 作为唯一长期装备来源；旧 `equippedWeaponSet` 仅保留在输入兼容迁移边界，不再作为角色详情、贵重物页或背包页的活动读取路径。
+- 角色详情面板改为通过 shared equipment loadout helper 渲染 `饰品 / 坐骑 / 装备武器 / 装备防具`，不再继续展示旧的 `所属流派 / 武艺师傅` 占位字段。
+- 贵重物页的装备汇总现在通过 equipment slot registry 遍历 `weapon / armor / accessory / mount` 四个槽位，并统一通过 shared loadout 读取已装备状态。
+- 背包装备条目现在统一使用 `equip.valuable` 动作 id，并消费投影字段 `equipSlotId / isEquipped / equippedLabel / canEquip` 渲染 `已装备` 标记。
+- 背包装备投影顺序现在固定为“已装备优先”，然后按 `weapon -> armor -> accessory -> mount` 槽位顺序排序，避免四槽混排。
+
+### Impact
+- `weapon / armor / accessory / mount` 四个装备槽现在在角色详情、贵重物页与背包页上共享同一套注册、排序与装备状态读取逻辑。
+- 装备类物品现在可以在背包里直接辨认是否已装备，且与贵重物页、人物属性页显示保持一致。
+
+## 2026-07-30 Player Faction Affiliation Runtime
+
+### Added
+- `GameState.runtime` 新增 `factionAffiliations`，作为玩家当前所属阵营的统一 runtime 来源，独立于既有 `factionMemberships` 的评定/阶次用途。
+- 新增 `src/application/faction/faction-affiliation-runtime.ts`，由 `FactionAffiliationRuntime` 统一负责读取当前阵营、加入阵营、离开阵营，以及把兼容标签同步回 `character.affiliationLabel`。
+- `scene` effect 新增 `set-faction-affiliation`，允许内容层通过结构化 effect 驱动阵营变化，而不是在壳层或 story callback 中写死显示逻辑。
+
+### Changed
+- 朱元璋第一次进入皇觉寺的剃度 scene 现在会通过结构化 faction effect 加入 `皇觉寺`，不再只清空 `affiliationLabel`。
+- `story.zhu_yuanzhang.join-guo-zixing-camp` 现在会通过 shared runtime 加入 `红巾军`，同时保留 title/occupation/biography 等剧情补丁。
+- 角色详情面板、帅府拜访入口列表、帅府状态卡现在都优先读取 shared faction runtime，再回退到兼容 `affiliationLabel` 和 `clanId`。
+
+### Impact
+- 玩家“所属阵营”现在有全局单一来源，Temple -> `皇觉寺`、Guo Zixing -> `红巾军` 的切换可以在 runtime state 中被后续系统统一消费。
+- `runtime.factionMemberships` 仍只服务于 faction review / rank 体系，没有被混用为可见阵营状态。
+
 ## 2026-07-30 Campaign Terrain Local Chunk Loading
 
 ### Changed

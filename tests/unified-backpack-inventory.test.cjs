@@ -155,7 +155,7 @@ test("projects legacy valuables and shared grain into unified backpack rows", ()
         value: 8,
         types: ["equipment", "weapon", "刀剑"],
         count: 1,
-        actionIds: ["equip.valuable"],
+        actionIds: ["equip.valuable", "unequip.valuable"],
       },
       {
         id: "valuable.old-armor",
@@ -164,7 +164,7 @@ test("projects legacy valuables and shared grain into unified backpack rows", ()
         value: 12,
         types: ["equipment", "armor", "铠甲"],
         count: 1,
-        actionIds: ["equip.valuable"],
+        actionIds: ["equip.valuable", "unequip.valuable"],
       },
       {
         id: "item.grain",
@@ -385,6 +385,23 @@ test("dispatches declared equipment item actions through safe handlers", () => {
   }
 });
 
+test("dispatches declared equipment unequip actions without clearing other slots", () => {
+  const inventory = createFourSlotValuableInventory();
+  const result = applyBackpackItemAction({
+    valuableInventory: inventory,
+    itemId: "valuable.sword",
+    actionId: "unequip.valuable",
+  });
+
+  assert.equal(result.status, "applied");
+  assert.deepEqual(result.valuableInventory.equippedSlots, {
+    weapon: null,
+    armor: null,
+    accessory: "valuable.accessory",
+    mount: null,
+  });
+});
+
 test("valuable equipment filtering includes accessory and mount items", () => {
   const visibleItems = getVisibleValuables(
     createFourSlotValuableInventory().items,
@@ -429,8 +446,8 @@ test("projects equipment rows with slot metadata and equipped-first ordering", (
     [
       {
         id: "valuable.sword",
-        actionIds: ["equip.valuable"],
-        actionLabels: ["装备"],
+        actionIds: ["equip.valuable", "unequip.valuable"],
+        actionLabels: ["装备", "卸除"],
         equipSlotId: "weapon",
         isEquipped: true,
         equippedLabel: "已装备",
@@ -438,8 +455,8 @@ test("projects equipment rows with slot metadata and equipped-first ordering", (
       },
       {
         id: "valuable.accessory",
-        actionIds: ["equip.valuable"],
-        actionLabels: ["装备"],
+        actionIds: ["equip.valuable", "unequip.valuable"],
+        actionLabels: ["装备", "卸除"],
         equipSlotId: "accessory",
         isEquipped: true,
         equippedLabel: "已装备",
@@ -447,8 +464,8 @@ test("projects equipment rows with slot metadata and equipped-first ordering", (
       },
       {
         id: "valuable.armor",
-        actionIds: ["equip.valuable"],
-        actionLabels: ["装备"],
+        actionIds: ["equip.valuable", "unequip.valuable"],
+        actionLabels: ["装备", "卸除"],
         equipSlotId: "armor",
         isEquipped: false,
         equippedLabel: "",
@@ -456,8 +473,8 @@ test("projects equipment rows with slot metadata and equipped-first ordering", (
       },
       {
         id: "valuable.mount",
-        actionIds: ["equip.valuable"],
-        actionLabels: ["装备"],
+        actionIds: ["equip.valuable", "unequip.valuable"],
+        actionLabels: ["装备", "卸除"],
         equipSlotId: "mount",
         isEquipped: false,
         equippedLabel: "",
