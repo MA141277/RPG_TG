@@ -39,7 +39,11 @@ import {
   type TriggerEvaluationInput,
 } from "../events/trigger-evaluator";
 import { resolveChoiceOption } from "../scene/choice-resolver";
-import { advanceScene, runSceneUntilPause } from "../scene/scene-runner";
+import {
+  advanceScene,
+  runSceneUntilPause,
+  type SceneRunnerContext,
+} from "../scene/scene-runner";
 
 type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
@@ -287,17 +291,40 @@ function createScopedTriggerContext(
   };
 }
 
-export function syncStoryScene(
+function createStorySceneRunnerContext(
   runtime: StoryRuntimeContext,
   content: StoryContent
-): StoryRuntimeResult {
-  const result = runSceneUntilPause(runtime.state, {
+): SceneRunnerContext {
+  return {
     sceneDefinitionsById: content.sceneDefinitionsById,
     eventDefinitionsById: content.eventDefinitionsById,
     activityDefinitionsById: content.activityDefinitionsById,
     characterDefinitions: runtime.characterDefinitions,
     textEntriesById: content.textEntriesById,
-  });
+    continueFromStartEvent: ({ state, characterDefinitions, eventDefinition }) =>
+      routeStoryDirectEntry(
+        {
+          state,
+          characterDefinitions,
+          ...createRuntimeWorldDefinitionContext(runtime),
+        },
+        content,
+        {
+          eventId: eventDefinition.id,
+          eventDefinition,
+        }
+      ),
+  };
+}
+
+export function syncStoryScene(
+  runtime: StoryRuntimeContext,
+  content: StoryContent
+): StoryRuntimeResult {
+  const result = runSceneUntilPause(
+    runtime.state,
+    createStorySceneRunnerContext(runtime, content)
+  );
 
   return {
     state: result.state,
@@ -389,13 +416,10 @@ export function advanceStorySceneStep(
   runtime: StoryRuntimeContext,
   content: StoryContent
 ): StoryRuntimeResult {
-  const result = advanceScene(runtime.state, {
-    sceneDefinitionsById: content.sceneDefinitionsById,
-    eventDefinitionsById: content.eventDefinitionsById,
-    activityDefinitionsById: content.activityDefinitionsById,
-    characterDefinitions: runtime.characterDefinitions,
-    textEntriesById: content.textEntriesById,
-  });
+  const result = advanceScene(
+    runtime.state,
+    createStorySceneRunnerContext(runtime, content)
+  );
 
   return {
     state: result.state,

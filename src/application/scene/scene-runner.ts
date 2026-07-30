@@ -18,6 +18,16 @@ export type SceneRunnerContext = {
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   characterDefinitions: CharacterDefinition[];
   textEntriesById?: Record<string, string> | undefined;
+  continueFromStartEvent?:
+    | ((input: {
+        state: GameState;
+        characterDefinitions: CharacterDefinition[];
+        eventDefinition: EventDefinition;
+      }) => {
+        state: GameState;
+        characterDefinitions: CharacterDefinition[];
+      })
+    | undefined;
 };
 
 export type SceneStepResult = {
@@ -150,8 +160,19 @@ export function runSceneUntilPause(
         targetEventId: currentAction.eventId,
         visitedEventIds: continuationVisitedEventIds,
       });
-      nextState =
-        continuedState == null ? incrementSceneCursor(nextState) : continuedState.state;
+      if (continuedState == null) {
+        nextState = incrementSceneCursor(nextState);
+      } else if (context.continueFromStartEvent != null) {
+        const continuedRuntime = context.continueFromStartEvent({
+          state: nextState,
+          characterDefinitions: nextCharacterDefinitions,
+          eventDefinition: continuedState.eventDefinition,
+        });
+        nextState = continuedRuntime.state;
+        nextCharacterDefinitions = continuedRuntime.characterDefinitions;
+      } else {
+        nextState = continuedState.state;
+      }
       continuationVisitedEventIds =
         continuedState?.visitedEventIds ??
         createEventContinuationTracker([nextState.scene.activeEventId]);

@@ -15514,6 +15514,20 @@ test("story choice event continuation convergence keeps chooseStorySceneOption n
   assert.match(chooseStorySceneOptionBlock, /\brouteStoryDirectEntry\s*\(/);
 });
 
+test("scene runner start event convergence keeps start-event actions on an injected seam", () => {
+  const sceneRunnerSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/scene/scene-runner.ts"),
+    "utf8"
+  );
+  const startEventBlock =
+    sceneRunnerSource.match(
+      /if \(currentAction\.type === "start-event"\) \{[\s\S]*?continue;\n    \}/
+    )?.[0] ?? "";
+
+  assert.match(startEventBlock, /context\.[a-zA-Z0-9_]*start[a-zA-Z0-9_]*event/i);
+  assert.match(startEventBlock, /continueToEvent\(/);
+});
+
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),

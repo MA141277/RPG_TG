@@ -11,6 +11,7 @@ const {
   createInitialState,
 } = require("../.test-dist/application/state/create-initial-state.js");
 const {
+  advanceStorySceneStep,
   chooseStorySceneOption,
   continueStoryFromSourceEvent,
   startStoryEventById,
@@ -269,6 +270,105 @@ test(
       result.state.runtime.eventHistory["event.loop.b"]?.firedCount,
       1
     );
+  }
+);
+
+test(
+  "advanceStorySceneStep routes scene start-event actions through the shared router seam",
+  { concurrency: false },
+  () => {
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
+    );
+    const storyRuntimePath = require.resolve(
+      "../.test-dist/application/story/story-runtime.js"
+    );
+
+    delete require.cache[storyRuntimePath];
+    delete require.cache[runtimeDispatchPath];
+
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const {
+        advanceStorySceneStep: advanceStorySceneStepWithPatchedDispatch,
+        startStoryEventById: startStoryEventByIdWithPatchedDispatch,
+      } = require(storyRuntimePath);
+      const content = {
+        eventDefinitionsById: {
+          "event.scene.start": createEvent(
+            "event.scene.start",
+            "scene.scene.start"
+          ),
+          "event.scene.followup": createEvent(
+            "event.scene.followup",
+            "scene.scene.followup"
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.scene.start": {
+            id: "scene.scene.start",
+            name: "Scene Start Event",
+            actions: [
+              {
+                type: "narration",
+                text: "Lead-in",
+              },
+              {
+                type: "start-event",
+                eventId: "event.scene.followup",
+              },
+            ],
+          },
+          "scene.scene.followup": {
+            id: "scene.scene.followup",
+            name: "Scene Follow-up Event",
+            actions: [],
+          },
+        },
+      };
+
+      const started = startStoryEventByIdWithPatchedDispatch(
+        {
+          state: createBaseState(),
+          characterDefinitions: prototypeCharacters,
+          cityDefinitions: prototypeCities,
+          houseDefinitions: prototypeHouses,
+        },
+        content,
+        "event.scene.start"
+      );
+      dispatchRuntimeRequestCalls = 0;
+
+      const continued = advanceStorySceneStepWithPatchedDispatch(
+        started,
+        content
+      );
+
+      assert.equal(continued.cityDefinitions, prototypeCities);
+      assert.equal(continued.houseDefinitions, prototypeHouses);
+      assert.equal(
+        continued.state.runtime.eventHistory["event.scene.followup"]?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "advanceStorySceneStep should route scene start-event continuation through dispatchRuntimeRequest instead of starting the follow-up locally"
+      );
+    } finally {
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
+      delete require.cache[storyRuntimePath];
+      delete require.cache[runtimeDispatchPath];
+    }
   }
 );
 
