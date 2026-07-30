@@ -22,6 +22,7 @@ const SCRIPT_EDITOR_CANONICAL_ID_FAMILY_CODE = {
   storyNodes: 45,
   events: 46,
   eventBindings: 47,
+  items: 51,
 } as const;
 
 export type ScriptEditorCanonicalIdFamily =
@@ -114,6 +115,8 @@ export function allocateNextScriptEditorProjectCanonicalId(
       return allocateNextScriptEditorCanonicalId(family, project.events);
     case "eventBindings":
       return allocateNextScriptEditorCanonicalId(family, project.eventBindings);
+    case "items":
+      return allocateNextScriptEditorCanonicalId(family, project.items);
   }
 }
 

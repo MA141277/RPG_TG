@@ -7,6 +7,7 @@ import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition, CityNpcPoolRuntimeState } from "../../domain/city-npc";
 import type { ContentPackDefinition } from "../../domain/content-pack";
+import type { ItemDefinition } from "../../domain/content-pack";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { SettlementDefinition } from "../../core/contracts/effect-settlement";
 import type { ModActivationResult } from "../../core/contracts/mod-runtime";
@@ -79,6 +80,7 @@ export type ActiveGameContent = {
   activityDefinitionsById: Record<string, ActivityDefinition>;
   cards: CardDefinition[];
   valuables: ValuableItemDefinition[];
+  items: ItemDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
   houseAccessRefusalRules: HouseAccessRefusalRule[];
   cityPortraits: Record<string, string>;
@@ -163,6 +165,7 @@ export function createActiveGameContent(
   const activityDefinitions = resolvedPack.activities ?? [];
   const cards = resolvedPack.cards ?? [];
   const valuables = resolvedPack.valuables ?? [];
+  const items = resolvedPack.items ?? [];
   const cityNpcPools = resolvedPack.cityNpcPools ?? [];
   const houseAccessRefusalRules = resolvedPack.houseAccessRefusalRules ?? [];
   const historicalCharacters = resolvedPack.historicalCharacters ?? [];
@@ -254,6 +257,7 @@ export function createActiveGameContent(
     ),
     cards,
     valuables,
+    items,
     cityNpcPools,
     houseAccessRefusalRules,
     cityPortraits: { ...(resolvedPack.cityPortraits ?? {}) },
@@ -371,6 +375,7 @@ export function mergeContentPacks(
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
     cards: mergeById(basePack.cards ?? [], overridePack.cards ?? []),
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
+    items: mergeById(basePack.items ?? [], overridePack.items ?? []),
     cityNpcPools: mergeCityNpcPools(basePack.cityNpcPools ?? [], overridePack.cityNpcPools ?? []),
     houseAccessRefusalRules: mergeById(
       basePack.houseAccessRefusalRules ?? [],
@@ -417,6 +422,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     activities: pack.activities ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
+    items: pack.items ?? [],
     cityNpcPools: pack.cityNpcPools ?? [],
     houseAccessRefusalRules: pack.houseAccessRefusalRules ?? [],
     cityPortraits: pack.cityPortraits ?? {},

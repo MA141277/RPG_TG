@@ -132,6 +132,9 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.valuables != null) {
     assertArray(value.valuables, "scenario valuables");
   }
+  if (value.items != null) {
+    assertArray(value.items, "scenario items");
+  }
   if (value.cityNpcPools != null) {
     assertArray(value.cityNpcPools, "scenario city npc pools");
   }
@@ -180,6 +183,7 @@ type ScenarioPackManifestFiles = {
   activities?: string;
   cards?: string;
   valuables?: string;
+  items?: string;
   cityNpcPools?: string;
   houseAccessRefusalRules?: string;
   historicalCharacters?: string;

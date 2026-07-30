@@ -77,6 +77,7 @@ type RuntimePackManifestFiles = {
   activities?: string;
   cards?: string;
   valuables?: string;
+  items?: string;
   cityNpcPools?: string;
   locationAccess?: string;
   houseModuleDefaults?: string;
@@ -303,6 +304,7 @@ export function importScenarioPackToScriptEditorProject(
     activities: pack.activities ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
+    items: readItemFamily(rawPack),
     cityNpcPools,
     houseModuleDefaults: cloneObjectRecord(pack.houseModuleDefaults),
     portraits: readPortraitFamily(rawPack),
@@ -1287,6 +1289,12 @@ function readMenuInstanceFamily(
     rawPack,
     "menuInstances"
   ) as ScriptEditorProjectDefinition["menuInstances"];
+}
+
+function readItemFamily(
+  rawPack: Record<string, unknown>
+): ScriptEditorProjectDefinition["items"] {
+  return readArrayFamily(rawPack, "items") as ScriptEditorProjectDefinition["items"];
 }
 
 function readPortraitFamily(

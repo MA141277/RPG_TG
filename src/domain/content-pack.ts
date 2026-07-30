@@ -34,6 +34,28 @@ import type { ScreenSkinPreset } from "./ui/screen-skin";
 import type { ValuableItemDefinition } from "./valuable-item";
 import type { TaskDefinition } from "../core/contracts/task-runtime";
 
+export type ItemDisplayDefinition = {
+  title?: string;
+  iconId?: string;
+  imageId?: string;
+};
+
+export type ItemStackRule = {
+  stackable: boolean;
+  maxStack?: number;
+  unit?: string;
+};
+
+export type ItemDefinition = {
+  id: string;
+  name: string;
+  description?: string;
+  internalNote?: string;
+  display?: ItemDisplayDefinition;
+  stack?: ItemStackRule;
+  menuInstanceIds?: string[];
+};
+
 export type ContentPackDefinition = {
   schemaVersion: 1;
   id: string;
@@ -52,6 +74,7 @@ export type ContentPackDefinition = {
   activities?: ActivityDefinition[];
   cards?: CardDefinition[];
   valuables?: ValuableItemDefinition[];
+  items?: ItemDefinition[];
   cityNpcPools?: CityNpcPoolDefinition[];
   houseAccessRefusalRules?: HouseAccessRefusalRule[];
   locationAccess?: LocationAccessDefinition[];

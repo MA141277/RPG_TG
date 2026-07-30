@@ -9,6 +9,7 @@
   type ScriptEditorEventBindingRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorFlowRecord,
+  type ScriptEditorItemRecord,
   type ScriptEditorMenuInstanceRecord,
   type ScriptEditorMinigameRecord,
   type ScriptEditorPortraitResourceRecord,
@@ -66,6 +67,7 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "minigames",
   "flows",
   "textEntries",
+  "items",
   "menuResources",
   "storyNodes",
   "settlements",
@@ -201,6 +203,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
     activities: [],
     cards: [],
     valuables: [],
+    items: [],
     cityNpcPools: [],
     houseModuleDefaults: {},
     cityPortraits: {},
@@ -267,7 +270,8 @@ export function listScriptEditorWorkflowFamilyRecords(
   | ScriptEditorEventRecord[]
   | ScriptEditorEventBindingRecord[]
   | ScriptEditorEntityRecord[]
-  | ScriptEditorTextEntryRecord[] {
+  | ScriptEditorTextEntryRecord[]
+  | ScriptEditorItemRecord[] {
   switch (family) {
     case "people":
       return project.people;
@@ -289,6 +293,8 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.flows;
     case "textEntries":
       return project.textEntries;
+    case "items":
+      return project.items;
     case "menuResources":
       return project.menuInstances;
     case "storyNodes":
@@ -327,7 +333,8 @@ export function createScriptEditorWorkflowRecordDraft(
   | ScriptEditorEventRecord
   | ScriptEditorEventBindingRecord
   | ScriptEditorEntityRecord
-  | ScriptEditorTextEntryRecord {
+  | ScriptEditorTextEntryRecord
+  | ScriptEditorItemRecord {
   const project =
     typeof projectOrIndex === "number" ? null : projectOrIndex;
   const legacyIndex = typeof projectOrIndex === "number" ? projectOrIndex : 0;
@@ -397,6 +404,24 @@ export function createScriptEditorWorkflowRecordDraft(
             : allocateNextScriptEditorProjectCanonicalId(project, "textEntries"),
         text: `Text entry ${(project?.textEntries.length ?? legacyIndex) + 1}.`,
       };
+    case "items": {
+      const itemIndex = (project?.items.length ?? legacyIndex) + 1;
+      const name = `道具 ${itemIndex}`;
+      return {
+        id:
+          project == null
+            ? createDefaultScriptEditorCanonicalId("items", legacyIndex)
+            : allocateNextScriptEditorProjectCanonicalId(project, "items"),
+        name,
+        display: {
+          title: name,
+        },
+        stack: {
+          stackable: false,
+        },
+        menuInstanceIds: [],
+      };
+    }
     case "menuResources":
       return {
         id:
@@ -471,6 +496,7 @@ export function upsertScriptEditorWorkflowRecord(
     | ScriptEditorEventBindingRecord
     | ScriptEditorEntityRecord
     | ScriptEditorTextEntryRecord
+    | ScriptEditorItemRecord
 ): ScriptEditorProjectDefinition {
   const currentRecords = listScriptEditorWorkflowFamilyRecords(project, family);
   const nextRecords = replaceOrAppendRecord(currentRecords, nextRecord);
@@ -523,6 +549,7 @@ function replaceProjectFamily(
     | ScriptEditorEventBindingRecord[]
     | ScriptEditorEntityRecord[]
     | ScriptEditorTextEntryRecord[]
+    | ScriptEditorItemRecord[]
 ): ScriptEditorProjectDefinition {
   switch (family) {
     case "people":
@@ -551,6 +578,8 @@ function replaceProjectFamily(
       return { ...project, flows: nextRecords as ScriptEditorFlowRecord[] };
     case "textEntries":
       return { ...project, textEntries: nextRecords as ScriptEditorTextEntryRecord[] };
+    case "items":
+      return { ...project, items: nextRecords as ScriptEditorItemRecord[] };
     case "menuResources":
       return {
         ...project,
@@ -711,6 +740,6 @@ function removeDialogueEventFollowUps(
 
 export function getScriptEditorWorkflowVisibleFamilies(): readonly ScriptEditorProjectFileKey[] {
   return SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES.filter(
-    (family) => family !== "flows"
+    (family) => family !== "flows" && family !== "storyNodes"
   ) as readonly ScriptEditorProjectFileKey[];
 }

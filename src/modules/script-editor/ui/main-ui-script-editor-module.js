@@ -26,6 +26,7 @@ const {
   SCRIPT_EDITOR_MINIGAME_TRIGGER_SOURCES,
   SCRIPT_EDITOR_STORY_PROGRESS_MODES,
   allocateNextScriptEditorProjectCanonicalId,
+  appendScriptEditorItemCustomProperty,
   appendScriptEditorAccessCondition,
   appendScriptEditorBuildingArrangement,
   appendScriptEditorBuildingArrangementContainer,
@@ -107,6 +108,7 @@ const {
   removeScriptEditorDialogueParticipant,
   removeScriptEditorEventBindingConditionItem,
   removeScriptEditorEventRelationEntry,
+  removeScriptEditorItemCustomProperty,
   findScriptEditorProjectLibraryEntry,
   removeScriptEditorLocationAttribute,
   removeScriptEditorLocationMenuEntry,
@@ -157,6 +159,10 @@ const {
   updateScriptEditorEventPreviewSummaryField,
   updateScriptEditorEventRelationField,
   updateScriptEditorLocationAttribute,
+  updateScriptEditorItemCustomProperty,
+  updateScriptEditorItemDisplayField,
+  updateScriptEditorItemField,
+  updateScriptEditorItemStackField,
   updateScriptEditorLocationMenuEntryField,
   updateScriptEditorLocationMenuInstanceTitle,
   updateScriptEditorLocationMenuResourceTitle,
@@ -498,10 +504,13 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "restoreScriptEditorScrollPosition",
   "renderLegacyScriptEditorLanding",
   "renderScriptEditorLanding",
+  "renderScriptEditorWorkspaceContent",
   "renderScriptEditorWorkspace",
+  "refreshScriptEditorWorkspace",
   "renderRuntimePreviewOverlay",
   "renderRuntimePreviewSessionBanner",
   "renderScriptEditorEditorPanel",
+  "renderScriptEditorItemEditor",
   "renderScriptEditorTextEntryEditor",
   "getScriptEditorRecordListPage",
   "resetScriptEditorRecordListPages",
@@ -749,6 +758,14 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "addScriptEditorMinigameOutcomeRoute",
   "removeScriptEditorMinigameOutcomeRoute",
   "applyScriptEditorMinigameOutcomeField",
+  "getSelectedScriptEditorItem",
+  "replaceSelectedScriptEditorItem",
+  "applyScriptEditorItemField",
+  "applyScriptEditorItemDisplayField",
+  "applyScriptEditorItemStackField",
+  "addScriptEditorItemCustomProperty",
+  "removeScriptEditorItemCustomProperty",
+  "applyScriptEditorItemCustomPropertyField",
   "applyScriptEditorLocationField",
   "applyScriptEditorLocationMenuField",
   "applyScriptEditorLocationMenuInstanceField",
@@ -846,6 +863,9 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "resolveScriptEditorEventRelationField",
   "getScriptEditorProjectLibraryEntries",
   "getScriptEditorProjectSourceLabel",
+  "getCachedScriptEditorExportDiagnostics",
+  "refreshScriptEditorExportDiagnostics",
+  "invalidateScriptEditorExportDiagnostics",
   "commitScriptEditorProject",
   "rememberScriptEditorProjectPackageLocation",
   "continueScriptEditorProject",
@@ -894,6 +914,7 @@ export function installMainUiFlowScriptEditorModule(host, options) {
     host.scriptEditorScrollTop = 0;
     host.scriptEditorRuntimePreviewSession = null;
     host.scriptEditorStageConfigurationHelpOpen = false;
+    host.scriptEditorExportDiagnosticsCache = null;
 
   const module = new MainUiFlowScriptEditorModule();
   for (const methodName of SCRIPT_EDITOR_MODULE_METHOD_NAMES) {
@@ -961,12 +982,7 @@ class MainUiFlowScriptEditorModule {
     });
   }
 
-  renderScriptEditorWorkspace() {
-    if (this.scriptEditorProject == null) {
-      this.currentScreen = "script-editor-landing";
-      return this.renderScriptEditorLanding();
-    }
-
+  renderScriptEditorWorkspaceContent() {
     this.ensureScriptEditorVisibleSelection();
 
     const workspace = createScriptEditorWorkspaceShellViewModel({
@@ -974,18 +990,50 @@ class MainUiFlowScriptEditorModule {
       selection: this.scriptEditorSelection,
       visibleFamilies: getScriptEditorWorkflowVisibleFamilies(),
       auxiliaryPanelOpen: this.scriptEditorAuxiliaryPanelOpen,
+      exportDiagnostics: this.getCachedScriptEditorExportDiagnostics(),
+      projectIsFormalized: true,
     });
 
     return `
-      <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器工作流">
         ${this.renderScriptEditorFileInputs()}
         ${this.renderScriptEditorNotice()}
         ${renderScriptEditorWorkspaceView(
           workspace,
           this.renderScriptEditorEditorPanel()
         )}
+    `;
+  }
+
+  renderScriptEditorWorkspace() {
+    if (this.scriptEditorProject == null) {
+      this.currentScreen = "script-editor-landing";
+      return this.renderScriptEditorLanding();
+    }
+
+    return `
+      <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器工作流">
+        ${this.renderScriptEditorWorkspaceContent()}
       </section>
     `;
+  }
+
+  refreshScriptEditorWorkspace() {
+    if (this.currentScreen !== "script-editor-workspace" || this.scriptEditorProject == null) {
+      this.render();
+      return;
+    }
+
+    const scriptEditorScreen = this.overlayRoot.querySelector(
+      ".c-main-ui-screen--script-editor-flow"
+    );
+    if (!(scriptEditorScreen instanceof globalThis.HTMLElement)) {
+      this.render();
+      return;
+    }
+
+    this.captureScriptEditorScrollPosition();
+    scriptEditorScreen.innerHTML = this.renderScriptEditorWorkspaceContent();
+    this.restoreScriptEditorScrollPosition();
   }
 
   renderRuntimePreviewOverlay() {
@@ -1050,9 +1098,7 @@ class MainUiFlowScriptEditorModule {
         .map(createRecordOption);
       const cityOptions = this.scriptEditorProject.cities.map(createRecordOption);
       const buildingOptions = this.scriptEditorProject.buildings.map(createRecordOption);
-      const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(
-        this.scriptEditorProject
-      );
+      const exportDiagnostics = this.getCachedScriptEditorExportDiagnostics();
       const compatibilityResidueCount = this.countScriptEditorCompatibilityResidue();
 
       return `
@@ -1081,7 +1127,7 @@ class MainUiFlowScriptEditorModule {
             )}
             ${this.renderScriptEditorOverviewCard(
               "创作进度",
-              `当前已收录人物 ${this.scriptEditorProject.people.length} 条、文本 ${this.scriptEditorProject.textEntries.length} 条、剧情节点 ${this.scriptEditorProject.storyNodes.length} 条、事件 ${this.scriptEditorProject.events.length} 条。`,
+              `当前已收录人物 ${this.scriptEditorProject.people.length} 条、文本 ${this.scriptEditorProject.textEntries.length} 条、事件 ${this.scriptEditorProject.events.length} 条。`,
               "neutral"
             )}
             ${this.renderScriptEditorOverviewCard(
@@ -1198,6 +1244,10 @@ class MainUiFlowScriptEditorModule {
       return this.renderScriptEditorTextEntryEditor(records, selectedRecord);
     }
 
+    if (family === "items") {
+      return this.renderScriptEditorItemEditor(records, selectedRecord);
+    }
+
     return `
       <div class="c-script-editor-editor-card">
         <header class="c-script-editor-editor-card__header">
@@ -1266,6 +1316,141 @@ class MainUiFlowScriptEditorModule {
               spellcheck="false"
             >${escapeHtml(selectedRecordJson)}</textarea>
           </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderScriptEditorItemEditor(records, selectedRecord) {
+    const portraitOptions = (this.scriptEditorProject?.portraits ?? []).map((portrait) => ({
+      value: portrait.id,
+      label: portrait.label ?? portrait.id,
+    }));
+    const customProperties = Array.isArray(selectedRecord?.customProperties)
+      ? selectedRecord.customProperties
+      : [];
+
+    return `
+      <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
+      <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+      <div class="c-script-editor-editor-card">
+        <div class="c-script-editor-record-layout">
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "items",
+            records,
+            ariaLabel: "道具列表",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增道具
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => `
+              <button
+                type="button"
+                class="c-script-editor-record-list__item ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                data-script-editor-record-id="${escapeHtml(record.id)}"
+              >
+                <strong>${escapeHtml(this.getScriptEditorRecordLabel(record))}</strong>
+              </button>
+            `,
+          })}
+          <section class="c-script-editor-record-editor" aria-label="道具工作台">
+            <div class="c-script-editor-editor-card__header">
+              <div>
+                <p class="c-script-editor-editor-card__eyebrow">道具</p>
+                <h2 class="c-script-editor-editor-card__title">道具工作台</h2>
+              </div>
+            </div>
+            ${
+              selectedRecord == null
+                ? `<p class="c-script-editor-editor-card__hint">当前还没有道具，先从左侧新增道具。</p>`
+                : `
+                  <div class="c-script-editor-form-grid">
+                    <label class="c-script-editor-form-field">
+                      <span>道具名称</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(selectedRecord.name ?? "")}" data-script-editor-item-field="name" />
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>道具说明</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(selectedRecord.description ?? "")}" data-script-editor-item-field="description" />
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>图标资源</span>
+                      <select class="c-script-editor-form-field__input" data-script-editor-item-display-field="iconId">
+                        ${this.renderScriptEditorSelectOptions(
+                          portraitOptions,
+                          selectedRecord.display?.iconId ?? "",
+                          "未选择图标资源"
+                        )}
+                      </select>
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>是否可堆叠</span>
+                      <select class="c-script-editor-form-field__input" data-script-editor-item-stack-field="stackable">
+                        <option value="false" ${selectedRecord.stack?.stackable === true ? "" : "selected"}>否</option>
+                        <option value="true" ${selectedRecord.stack?.stackable === true ? "selected" : ""}>是</option>
+                      </select>
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>最大堆叠数量</span>
+                      <input class="c-script-editor-form-field__input" type="number" min="1" step="1" value="${escapeHtml(String(selectedRecord.stack?.maxStack ?? ""))}" data-script-editor-item-stack-field="maxStack" />
+                    </label>
+                  </div>
+
+                  ${this.renderScriptEditorOwnerMenuMountPanel(
+                    "items",
+                    selectedRecord.id,
+                    "菜单组",
+                    "这里引用菜单模块中的实例。道具的使用、销毁等操作应先在菜单模块维护，再添加到当前道具。"
+                  )}
+
+                  <section class="c-script-editor-narrative-panel" aria-label="自定义属性">
+                    <div class="c-script-editor-narrative-panel__header">
+                      <div>
+                        <p class="c-script-editor-editor-card__eyebrow">自定义属性</p>
+                        <h3 class="c-script-editor-editor-card__title">自定义属性</h3>
+                      </div>
+                      <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-item-custom-property">
+                        新增属性
+                      </button>
+                    </div>
+                    <div class="c-script-editor-narrative-list">
+                      ${
+                        customProperties.length === 0
+                          ? `<p class="c-script-editor-editor-card__hint">没有自定义属性。需要给运行时识别的通用字段时，再新增属性。</p>`
+                          : customProperties
+                              .map(
+                                (property, index) => `
+                                  <div class="c-script-editor-narrative-inline">
+                                    <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(property.key ?? "")}" placeholder="属性名" data-script-editor-item-custom-property-field="key" data-script-editor-item-custom-property-index="${index}" />
+                                    <select class="c-script-editor-form-field__input" data-script-editor-item-custom-property-field="type" data-script-editor-item-custom-property-index="${index}">
+                                      <option value="string" ${property.type === "string" ? "selected" : ""}>文本</option>
+                                      <option value="number" ${property.type === "number" ? "selected" : ""}>数字</option>
+                                      <option value="boolean" ${property.type === "boolean" ? "selected" : ""}>开关</option>
+                                    </select>
+                                    <input class="c-script-editor-form-field__input" type="${property.type === "number" ? "number" : "text"}" value="${escapeHtml(String(property.value ?? ""))}" placeholder="值" data-script-editor-item-custom-property-field="value" data-script-editor-item-custom-property-index="${index}" />
+                                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-item-custom-property" data-script-editor-item-custom-property-index="${index}">
+                                      删除
+                                    </button>
+                                  </div>
+                                `
+                              )
+                              .join("")
+                      }
+                    </div>
+                  </section>
+
+                  <div class="c-script-editor-form-grid">
+                    <label class="c-script-editor-form-field">
+                      <span>作者备注</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(selectedRecord.internalNote ?? "")}" data-script-editor-item-field="internalNote" />
+                    </label>
+                  </div>
+                `
+            }
+          </section>
         </div>
       </div>
     `;
@@ -1444,7 +1629,7 @@ class MainUiFlowScriptEditorModule {
       [family]: value,
     };
     this.setScriptEditorRecordListPage(family, 1);
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   getScriptEditorCityMountedBuildingUiKey(buildingIndex) {
@@ -1526,7 +1711,7 @@ class MainUiFlowScriptEditorModule {
 
   setScriptEditorCityMountedBuildingExpanded(buildingIndex, expanded) {
     this.setScriptEditorCityMountedBuildingUiState(buildingIndex, { expanded });
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   setScriptEditorCityMountedBuildingSearchValue(buildingIndex, value) {
@@ -1534,7 +1719,7 @@ class MainUiFlowScriptEditorModule {
       search: value,
       page: 1,
     });
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   getScriptEditorMenuModuleItemPageState(instanceId, entries) {
@@ -7880,6 +8065,33 @@ class MainUiFlowScriptEditorModule {
     return 0;
   }
 
+  getCachedScriptEditorExportDiagnostics() {
+    if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    if (Array.isArray(this.scriptEditorExportDiagnosticsCache)) {
+      return this.scriptEditorExportDiagnosticsCache;
+    }
+
+    return this.refreshScriptEditorExportDiagnostics();
+  }
+
+  refreshScriptEditorExportDiagnostics() {
+    if (this.scriptEditorProject == null) {
+      this.scriptEditorExportDiagnosticsCache = [];
+      return this.scriptEditorExportDiagnosticsCache;
+    }
+
+    this.scriptEditorExportDiagnosticsCache =
+      validateScriptEditorProjectForRuntimeExport(this.scriptEditorProject);
+    return this.scriptEditorExportDiagnosticsCache;
+  }
+
+  invalidateScriptEditorExportDiagnostics() {
+    this.scriptEditorExportDiagnosticsCache = null;
+  }
+
   describeScriptEditorPersonListSummary(person) {
     return (
       [person.personType, person.title, person.occupation]
@@ -8189,6 +8401,10 @@ class MainUiFlowScriptEditorModule {
       actionElement?.dataset.scriptEditorMinigameOutcomeIndex ?? "-1",
       10
     );
+    const itemCustomPropertyIndex = Number.parseInt(
+      actionElement?.dataset.scriptEditorItemCustomPropertyIndex ?? "-1",
+      10
+    );
     const buildingId = actionElement?.dataset.scriptEditorBuildingId ?? null;
     const targetFamily = actionElement?.dataset.scriptEditorFamily ?? null;
     const targetEntityId = actionElement?.dataset.scriptEditorEntityId ?? null;
@@ -8377,6 +8593,18 @@ class MainUiFlowScriptEditorModule {
 
     if (action === "remove-record") {
       this.removeScriptEditorRecord();
+      return;
+    }
+
+    if (action === "add-item-custom-property") {
+      this.addScriptEditorItemCustomProperty();
+      return;
+    }
+
+    if (action === "remove-item-custom-property") {
+      if (Number.isInteger(itemCustomPropertyIndex) && itemCustomPropertyIndex >= 0) {
+        this.removeScriptEditorItemCustomProperty(itemCustomPropertyIndex);
+      }
       return;
     }
 
@@ -9051,7 +9279,7 @@ class MainUiFlowScriptEditorModule {
       };
       this.scriptEditorStageConfigurationHelpOpen = false;
       this.scriptEditorNotice = null;
-      this.render();
+      this.refreshScriptEditorWorkspace();
       return;
     }
 
@@ -9062,7 +9290,7 @@ class MainUiFlowScriptEditorModule {
       };
       this.scriptEditorStageConfigurationHelpOpen = false;
       this.scriptEditorNotice = null;
-      this.render();
+      this.refreshScriptEditorWorkspace();
       return;
     }
 
@@ -9102,7 +9330,7 @@ class MainUiFlowScriptEditorModule {
     }
     this.scriptEditorStageConfigurationHelpOpen = false;
     this.scriptEditorNotice = null;
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   selectScriptEditorRecord(recordId) {
@@ -9145,7 +9373,7 @@ class MainUiFlowScriptEditorModule {
     }
     this.scriptEditorStageConfigurationHelpOpen = false;
     this.scriptEditorNotice = null;
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   changeScriptEditorRecordListPage(delta) {
@@ -9161,7 +9389,7 @@ class MainUiFlowScriptEditorModule {
       family,
       this.getScriptEditorRecordListPage(family) + delta
     );
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   goToScriptEditorRecordListPage(page) {
@@ -9173,7 +9401,7 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.setScriptEditorRecordListPage(this.scriptEditorSelection.family, page);
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   selectScriptEditorPersonTab(tab) {
@@ -9190,7 +9418,7 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.scriptEditorPersonTab = tab;
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   changeScriptEditorPersonAttributePage(delta) {
@@ -9211,7 +9439,7 @@ class MainUiFlowScriptEditorModule {
     );
     this.scriptEditorPersonAttributeVisibleIndices = null;
     this.scriptEditorPersonAttributeScrollLeft = 0;
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   selectScriptEditorLocationTab(tab) {
@@ -9230,7 +9458,7 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.scriptEditorLocationTab = tab;
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   selectScriptEditorNarrativeTab(tab) {
@@ -9250,7 +9478,7 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.scriptEditorNarrativeTab = tab;
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   selectScriptEditorEventTab(tab) {
@@ -9263,7 +9491,7 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.scriptEditorEventTab = tab;
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   selectScriptEditorMinigameTab(tab) {
@@ -9276,7 +9504,7 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.scriptEditorMinigameTab = tab;
-    this.render();
+    this.refreshScriptEditorWorkspace();
   }
 
   toggleScriptEditorAuxiliaryPanel(forceValue) {
@@ -10546,6 +10774,110 @@ class MainUiFlowScriptEditorModule {
     );
   }
 
+  getSelectedScriptEditorItem() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "items" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return null;
+    }
+
+    return (
+      this.scriptEditorProject.items.find(
+        (item) => item.id === this.scriptEditorSelection.entityId
+      ) ?? null
+    );
+  }
+
+  replaceSelectedScriptEditorItem(nextItem) {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "items" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return;
+    }
+
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      items: this.scriptEditorProject.items.map((item) =>
+        item.id === this.scriptEditorSelection.entityId ? nextItem : item
+      ),
+    });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorItemField(field, value) {
+    const item = this.getSelectedScriptEditorItem();
+    if (item == null || !["name", "description", "internalNote"].includes(field)) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorItem(
+      updateScriptEditorItemField(item, field, value)
+    );
+  }
+
+  applyScriptEditorItemDisplayField(field, value) {
+    const item = this.getSelectedScriptEditorItem();
+    if (item == null || !["title", "iconId", "imageId"].includes(field)) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorItem(
+      updateScriptEditorItemDisplayField(item, field, value)
+    );
+  }
+
+  applyScriptEditorItemStackField(field, value) {
+    const item = this.getSelectedScriptEditorItem();
+    if (item == null || !["stackable", "maxStack", "unit"].includes(field)) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorItem(
+      updateScriptEditorItemStackField(item, field, value)
+    );
+  }
+
+  addScriptEditorItemCustomProperty() {
+    const item = this.getSelectedScriptEditorItem();
+    if (item == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorItem(appendScriptEditorItemCustomProperty(item));
+  }
+
+  removeScriptEditorItemCustomProperty(index) {
+    const item = this.getSelectedScriptEditorItem();
+    if (item == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorItem(
+      removeScriptEditorItemCustomProperty(item, index)
+    );
+  }
+
+  applyScriptEditorItemCustomPropertyField(index, field, value) {
+    const item = this.getSelectedScriptEditorItem();
+    if (
+      item == null ||
+      !["key", "label", "type", "value"].includes(field) ||
+      !Number.isInteger(index) ||
+      index < 0
+    ) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorItem(
+      updateScriptEditorItemCustomProperty(item, index, field, value)
+    );
+  }
+
   applyScriptEditorLocationField(field, value) {
     const location = this.getSelectedScriptEditorLocation();
     if (location == null) {
@@ -11315,9 +11647,7 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.scriptEditorAuxiliaryPanelOpen = true;
-    const diagnostics = validateScriptEditorProjectForRuntimeExport(
-      this.scriptEditorProject
-    );
+    const diagnostics = this.refreshScriptEditorExportDiagnostics();
     this.recordScriptEditorNotice(
       diagnostics.length === 0
         ? {
@@ -11337,9 +11667,7 @@ class MainUiFlowScriptEditorModule {
       return false;
     }
 
-    const diagnostics = validateScriptEditorProjectForRuntimeExport(
-      this.scriptEditorProject
-    );
+    const diagnostics = this.refreshScriptEditorExportDiagnostics();
     if (diagnostics.length === 0) {
       return false;
     }
@@ -11353,10 +11681,12 @@ class MainUiFlowScriptEditorModule {
   }
 
   async createScriptEditorProjectAtSavePath() {
+    this.invalidateScriptEditorExportDiagnostics();
     return this.scriptEditorWorkflowController.createProjectAtSavePath();
   }
 
   async exportScriptEditorProject() {
+    this.refreshScriptEditorExportDiagnostics();
     return this.scriptEditorWorkflowController.exportProject();
   }
 
@@ -11401,18 +11731,22 @@ class MainUiFlowScriptEditorModule {
   }
 
   async previewScriptEditorProjectRuntime() {
+    this.refreshScriptEditorExportDiagnostics();
     return this.scriptEditorWorkflowController.previewProjectRuntime();
   }
 
   async openScriptEditorProjectFromDirectory() {
+    this.invalidateScriptEditorExportDiagnostics();
     return this.scriptEditorWorkflowController.openProjectFromDirectory();
   }
 
   async handleScriptEditorProjectFileImport(files) {
+    this.invalidateScriptEditorExportDiagnostics();
     return this.scriptEditorWorkflowController.importProjectFiles(files);
   }
 
   async handleScriptEditorTemplateImport() {
+    this.invalidateScriptEditorExportDiagnostics();
     return this.scriptEditorWorkflowController.importTemplateProject();
   }
 
