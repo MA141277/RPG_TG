@@ -15588,6 +15588,25 @@ test("event binding runtime route convergence keeps binding activation on the sh
   );
 });
 
+test("navigation enter-house convergence keeps on-enter event activation on the shared event-router seam", () => {
+  const enterHouseSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/navigation/enter-house.ts"),
+    "utf8"
+  );
+  const navigationRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/navigation-runtime.ts"),
+    "utf8"
+  );
+  const routeHouseEnterEventBlock =
+    navigationRuntimeSource.match(
+      /function routeHouseEnterEvent\([\s\S]*?\n}\n\nfunction toNavigationRuntimeState/
+    )?.[0] ?? "";
+
+  assert.doesNotMatch(enterHouseSource, /\bstartEvent\s*\(/);
+  assert.match(navigationRuntimeSource, /\brouteHouseEnterEvent\s*\(/);
+  assert.match(routeHouseEnterEventBlock, /\bdispatchEventRoute\s*\(/);
+});
+
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),

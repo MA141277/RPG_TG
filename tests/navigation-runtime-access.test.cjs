@@ -41,6 +41,19 @@ function createHouseDefinition() {
   };
 }
 
+function createEventDefinition(id, extra = {}) {
+  return {
+    id,
+    chapterId: "chapter.test",
+    name: id,
+    occurrence: "repeatable",
+    trigger: { timing: "manual" },
+    conditions: [],
+    entrySceneId: `${id}.scene`,
+    ...extra,
+  };
+}
+
 test("navigation runtime preserves enter-city behavior when access definitions are not provided", () => {
   const result = runNavigationRuntime({
     state: createBaseState(),
@@ -136,3 +149,68 @@ test("navigation runtime blocks enter-house when location access denies the buil
     },
   });
 });
+
+test(
+  "navigation runtime routes house on-enter events through the shared event-router seam",
+  { concurrency: false },
+  () => {
+    const eventRouterPath = require.resolve(
+      "../.test-dist/core/runtime/event-router.js"
+    );
+    const navigationRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/navigation-runtime.js"
+    );
+
+    delete require.cache[navigationRuntimePath];
+    delete require.cache[eventRouterPath];
+
+    const patchedEventRouter = require(eventRouterPath);
+    const originalDispatchEventRoute = patchedEventRouter.dispatchEventRoute;
+    let dispatchEventRouteCalls = 0;
+
+    patchedEventRouter.dispatchEventRoute = (...args) => {
+      dispatchEventRouteCalls += 1;
+      return originalDispatchEventRoute(...args);
+    };
+
+    try {
+      const {
+        runNavigationRuntime: runNavigationRuntimeWithPatchedRouter,
+        createEnterHouseRequest: createEnterHouseRequestWithPatchedRouter,
+      } = require(navigationRuntimePath);
+      const state = createBaseState();
+      const result = runNavigationRuntimeWithPatchedRouter({
+        state,
+        request: createEnterHouseRequestWithPatchedRouter("house.temple"),
+        houseDefinition: {
+          ...createHouseDefinition(),
+          onEnterEventId: "event.house.temple.enter",
+        },
+        eventDefinitionsById: {
+          "event.house.temple.enter": createEventDefinition(
+            "event.house.temple.enter"
+          ),
+        },
+      });
+
+      assert.equal(result.state.world.currentHouseId, "house.temple");
+      assert.equal(result.state.scene.activeEventId, "event.house.temple.enter");
+      assert.equal(
+        result.state.scene.activeSceneId,
+        "event.house.temple.enter.scene"
+      );
+      assert.deepEqual(result.navigation, {
+        view: "house",
+        houseId: "house.temple",
+      });
+      assert.ok(
+        dispatchEventRouteCalls > 0,
+        "navigation enter-house should route onEnterEventId through dispatchEventRoute instead of starting it locally"
+      );
+    } finally {
+      patchedEventRouter.dispatchEventRoute = originalDispatchEventRoute;
+      delete require.cache[navigationRuntimePath];
+      delete require.cache[eventRouterPath];
+    }
+  }
+);

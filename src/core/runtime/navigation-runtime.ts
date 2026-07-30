@@ -1,3 +1,4 @@
+import { startEvent } from "../../application/events/event-runner";
 import { enterCity } from "../../application/navigation/enter-city";
 import { enterHouse } from "../../application/navigation/enter-house";
 import { evaluateLocationAccess } from "../../application/location-access/location-access-runtime";
@@ -10,6 +11,7 @@ import type {
   LocationAccessDefinition,
   LocationAccessResult,
 } from "../../domain/location-access";
+import type { RuntimeEventEntity } from "../contracts/event-router";
 import type { NavigationTarget } from "../contracts/navigation";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
@@ -17,6 +19,7 @@ import type {
   RuntimeResult,
 } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
+import { dispatchEventRoute } from "./event-router";
 
 type NavigationRuntimeResult = {
   state: GameState;
@@ -116,8 +119,8 @@ export function runNavigationRuntime(input: {
     }
 
     return {
-      state: enterHouse(
-        input.state,
+      state: routeHouseEnterEvent(
+        enterHouse(input.state, input.houseDefinition),
         input.houseDefinition,
         input.eventDefinitionsById
       ),
@@ -172,5 +175,85 @@ export function routeNavigationRuntime(input: {
     ...(result.access == null ? {} : { access: result.access }),
     ...(result.outcome == null ? {} : { outcome: result.outcome }),
     navigation: result.navigation,
+  };
+}
+
+function routeHouseEnterEvent(
+  state: GameState,
+  houseDefinition: HouseDefinition,
+  eventDefinitionsById: Record<string, EventDefinition>
+): GameState {
+  const eventId = houseDefinition.onEnterEventId;
+  if (eventId == null) {
+    return state;
+  }
+
+  const eventDefinition = eventDefinitionsById[eventId];
+  if (eventDefinition == null) {
+    return state;
+  }
+
+  return dispatchEventRoute({
+    state: toNavigationRuntimeState(state),
+    eventId,
+    context: {
+      repository: {
+        resolveById: (resolvedEventId) => {
+          const resolved = eventDefinitionsById[resolvedEventId];
+          return resolved == null ? null : toNavigationRuntimeEventEntity(resolved);
+        },
+      },
+      handlers: {
+        dialogue: ({ state, event }) => ({
+          state: {
+            ...state,
+            core: startEvent(
+              state.core,
+              eventDefinitionsById[event.id] ?? eventDefinition
+            ),
+          },
+          effects: [],
+        }),
+        settlement: ({ state, event }) => ({
+          state: {
+            ...state,
+            core: startEvent(
+              state.core,
+              eventDefinitionsById[event.id] ?? eventDefinition
+            ),
+          },
+          effects: [],
+        }),
+      },
+    },
+  }).state.core;
+}
+
+function toNavigationRuntimeState(state: GameState): RuntimeState {
+  return {
+    core: state,
+    app: {
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
+    },
+    view: {},
+  };
+}
+
+function toNavigationRuntimeEventEntity(
+  eventDefinition: EventDefinition
+): RuntimeEventEntity {
+  return {
+    id: eventDefinition.id,
+    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
+    payload: {},
+    ...(eventDefinition.nextEventId == null
+      ? {}
+      : { nextEventId: eventDefinition.nextEventId }),
   };
 }
