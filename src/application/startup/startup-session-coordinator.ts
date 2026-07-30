@@ -46,6 +46,11 @@ export type StartupSessionRequest =
   | {
       type: "scenario-files";
       files: File[];
+    }
+  | {
+      type: "loaded-scenario-pack";
+      scenarioPack: ScenarioPackDefinition;
+      source: ModSourceDescriptor;
     };
 
 export type StartupSessionBootstrap = {
@@ -123,6 +128,12 @@ export async function runStartupSessionCoordinator(
         return createScenarioSummaryStartupSession(request.scenarioPack, deps);
       case "scenario-files":
         return createScenarioFilesStartupSession(request.files, deps);
+      case "loaded-scenario-pack":
+        return createLoadedScenarioPackStartupSession(
+          request.scenarioPack,
+          request.source,
+          deps
+        );
       default:
         return assertNeverRequest(request);
     }

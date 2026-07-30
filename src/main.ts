@@ -188,6 +188,7 @@ import {
   type StartupScenario,
   type StartupSessionBootstrap,
 } from "./application/startup/startup-session-coordinator";
+import { sanitizeScenarioPackForRuntimePreview } from "./application/startup/scenario-preview-sanitizer";
 import {
   applyStartupStoryBootstrap,
   type StartupStoryBootstrap,
@@ -1059,8 +1060,10 @@ const mainUiFlow = new MainUiFlow({
   onStartGame: startMainGameWithLoading,
   onContinueGame: startContinueGameWithLoading,
   onStartScenarioPack: startScenarioPackWithLoading,
+  onStartLoadedScenarioPack: startLoadedScenarioPackWithLoading,
   onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
   onQueueButtonSound: queueButtonSoundEffect,
+  onExitRuntimePreview: exitScriptEditorRuntimePreview,
   loadSaveData,
   getAppState: () => appState,
 });
@@ -2860,7 +2863,7 @@ function startMainGameWithLoading(
     setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
   }).then(async () => {
     if (requestId !== loadingScreenRequestId) {
-      return;
+      return "failed";
     }
 
     const startupSession = unwrapStartupSession(
@@ -2889,7 +2892,12 @@ function runScenarioPackStartupRequestWithLoading(
   request:
     | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
     | { type: "scenario-files"; files: File[] }
-): Promise<void> {
+    | {
+        type: "loaded-scenario-pack";
+        scenarioPack: ScenarioPackDefinition;
+        source: ModSourceDescriptor;
+      }
+): Promise<"started" | "failed"> {
   const requestId = beginLoadingScreen();
 
   return simulateLoadingProgress((progress) => {
@@ -2900,7 +2908,7 @@ function runScenarioPackStartupRequestWithLoading(
     setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
   }).then(async () => {
     if (requestId !== loadingScreenRequestId) {
-      return;
+      return "failed";
     }
 
     const startupSession = unwrapStartupSession(
@@ -2912,6 +2920,7 @@ function runScenarioPackStartupRequestWithLoading(
       createStartupPreloadProgressHandler(requestId)
     );
     endLoadingScreen(requestId);
+    return "started";
   }).catch((error) => {
     endLoadingScreen(requestId);
     window.alert(
@@ -2919,6 +2928,7 @@ function runScenarioPackStartupRequestWithLoading(
         ? `JSON 寮€灞€璇诲彇澶辫触锛?{error.message}`
         : "JSON 寮€灞€璇诲彇澶辫触銆?"
     );
+    return "failed";
   });
 }
 
@@ -2926,7 +2936,7 @@ async function startScenarioPackWithLoading(
   scenarioPack: ScenarioPackSummary
 ): Promise<void> {
   try {
-    return runScenarioPackStartupRequestWithLoading({
+    await runScenarioPackStartupRequestWithLoading({
       type: "scenario-summary",
       scenarioPack,
     });
@@ -2948,7 +2958,7 @@ async function startScenarioPackFilesWithLoading(
     "scenario-pack";
 
   try {
-    return runScenarioPackStartupRequestWithLoading({
+    await runScenarioPackStartupRequestWithLoading({
       type: "scenario-files",
       files,
     });
@@ -2959,6 +2969,31 @@ async function startScenarioPackFilesWithLoading(
         : `JSON 开局读取失败（${importLabel}）。`
     );
   }
+}
+
+function createRuntimePreviewScenarioPackSource(
+  scenarioPack: ScenarioPackDefinition
+): ModSourceDescriptor {
+  return {
+    kind: "file",
+    name: `runtime-preview:${scenarioPack.title}`,
+    filePath: `runtime-preview:${scenarioPack.id}`,
+  };
+}
+
+async function startLoadedScenarioPackWithLoading(
+  scenarioPack: ScenarioPackDefinition
+): Promise<"started" | "failed"> {
+  return runScenarioPackStartupRequestWithLoading({
+    type: "loaded-scenario-pack",
+    scenarioPack: sanitizeScenarioPackForRuntimePreview(scenarioPack),
+    source: createRuntimePreviewScenarioPackSource(scenarioPack),
+  });
+}
+
+function exitScriptEditorRuntimePreview(): void {
+  resetMainGameRuntime();
+  setGameVisibility(false);
 }
 
 function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {

@@ -31,3 +31,13 @@ test("main ui flow still wires the script editor entry", () => {
   assert.match(source, /createScriptEditorWorkflowController/);
   assert.match(source, /open-script-editor/);
 });
+
+test("main.ts wires script editor runtime preview callbacks into MainUiFlow", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /onStartLoadedScenarioPack:/);
+  assert.match(source, /onExitRuntimePreview:/);
+});
