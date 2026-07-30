@@ -24,6 +24,7 @@ const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFile
   "menuResources",
   "menuInstances",
   "flows",
+  "items",
   "portraits",
   "portraitVariants",
   "settlements",
@@ -142,6 +143,7 @@ export function parseScriptEditorProject(
   assertEntityRecordArray(value.activities, "script editor project activities");
   assertEntityRecordArray(value.cards, "script editor project cards");
   assertEntityRecordArray(value.valuables, "script editor project valuables");
+  assertEntityRecordArray(value.items ?? [], "script editor project items");
   assertObjectRecordArray(value.cityNpcPools, "script editor project cityNpcPools");
   assertObject(value.houseModuleDefaults, "script editor project houseModuleDefaults");
   assertEntityRecordArray(
@@ -209,6 +211,7 @@ export function parseScriptEditorProject(
     menuInstances:
       (value.menuInstances ?? []) as ScriptEditorProjectDefinition["menuInstances"],
     flows: (value.flows ?? []) as ScriptEditorProjectDefinition["flows"],
+    items: (value.items ?? []) as ScriptEditorProjectDefinition["items"],
   });
 }
 

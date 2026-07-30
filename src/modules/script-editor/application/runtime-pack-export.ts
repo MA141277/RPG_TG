@@ -87,6 +87,7 @@ type RuntimePackManifestFiles = {
   textEntries: string;
   cards: string;
   valuables: string;
+  items: string;
   cityNpcPools: string;
   locationAccess: string;
   houseModuleDefaults: string;
@@ -167,6 +168,7 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   textEntries: "./text-entries.json",
   cards: "./cards.json",
   valuables: "./valuables.json",
+  items: "./items.json",
   cityNpcPools: "./city-npc-pools.json",
   locationAccess: "./location-access.json",
   houseModuleDefaults: "./house-module-defaults.json",
@@ -258,6 +260,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       textEntries: exportedTextEntries,
       cards: project.cards,
       valuables: project.valuables,
+      items: project.items,
       cityNpcPools: cityBuildingRuntimeFamilies.cityNpcPools,
       locationAccess: cityBuildingRuntimeFamilies.locationAccess,
       houseModuleDefaults: project.houseModuleDefaults,
@@ -1022,6 +1025,9 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.valuables)]: stringifyJson(
       project.valuables
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.items)]: stringifyJson(
+      project.items
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityNpcPools)]: stringifyJson(
       cityBuildingRuntimeFamilies.cityNpcPools

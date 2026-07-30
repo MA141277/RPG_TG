@@ -108,9 +108,6 @@ function renderToolbarButtons(model: ScriptEditorWorkspaceViewModel): string {
 function renderTreeGroup(group: ScriptEditorWorkspaceTreeGroup): string {
   return `
     <section class="c-script-editor-tree-group">
-      <header class="c-script-editor-tree-group__header">
-        <h2>${escapeHtml(group.label)}</h2>
-      </header>
       <div class="c-script-editor-tree-group__nodes">
         ${group.nodes.map(renderTreeNode).join("")}
       </div>

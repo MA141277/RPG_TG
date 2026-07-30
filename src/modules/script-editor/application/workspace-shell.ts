@@ -162,6 +162,7 @@ const FAMILY_LABELS: Record<string, string> = {
   buildings: "建筑",
   events: "事件",
   quests: "任务",
+  items: "道具",
   activities: "活动",
   dialogues: "对话",
   minigames: "玩法",
@@ -184,13 +185,12 @@ const TREE_GROUPS: Array<{
   {
     id: "world",
     label: "世界",
-    families: ["people", "cities", "buildings"],
+    families: ["people", "cities", "buildings", "items"],
   },
   {
     id: "narrative",
     label: "剧本与文本",
     families: [
-      "storyNodes",
       "dialogues",
       "textEntries",
       "menuResources",
@@ -244,8 +244,13 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
   selection?: ScriptEditorWorkspaceSelection | undefined;
   visibleFamilies?: readonly ScriptEditorProjectFileKey[] | undefined;
   auxiliaryPanelOpen?: boolean | undefined;
+  exportDiagnostics?: readonly ScriptEditorRuntimeExportDiagnostic[] | undefined;
+  projectIsFormalized?: boolean | undefined;
 }): ScriptEditorWorkspaceViewModel {
-  const project = formalizeScriptEditorProjectMenus(input.project);
+  const project =
+    input.projectIsFormalized === true
+      ? input.project
+      : formalizeScriptEditorProjectMenus(input.project);
   const visibleFamilies = new Set<ScriptEditorProjectFileKey>([
     "storyPack",
     ...(input.visibleFamilies ??
@@ -253,7 +258,10 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
         (family) => family !== STAGE_CONFIGURATION_FAMILY
       ) as ScriptEditorProjectFileKey[])),
   ]);
-  const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  const exportDiagnostics =
+    input.exportDiagnostics == null
+      ? validateScriptEditorProjectForRuntimeExport(project)
+      : [...input.exportDiagnostics];
   const attentionFamilies = collectAttentionFamilies(exportDiagnostics);
   const selection = resolveSelection(project, input.selection, visibleFamilies);
   const compatibilityResidueCount = countCompatibilityResidue(project);
@@ -535,7 +543,7 @@ function createProjectInspector(
       {
         id: "project.progress",
         title: "创作进度",
-        body: `当前已收录人物 ${project.people.length} 条、文本 ${project.textEntries.length} 条、剧情节点 ${project.storyNodes.length} 条、事件 ${project.events.length} 条。`,
+        body: `当前已收录人物 ${project.people.length} 条、文本 ${project.textEntries.length} 条、事件 ${project.events.length} 条。`,
         tone: "neutral",
       },
       {
@@ -1828,6 +1836,8 @@ function getFamilyRecords(
       return project.progressTrackBindings ?? [];
     case "quests":
       return project.quests;
+    case "items":
+      return project.items;
     case "activities":
       return project.activities;
     case "dialogues":

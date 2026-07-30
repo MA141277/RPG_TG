@@ -57,6 +57,7 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "activities",
   "cards",
   "valuables",
+  "items",
   "cityNpcPools",
   "houseModuleDefaults",
   "portraits",
@@ -99,6 +100,7 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   activities: "./activities.json",
   cards: "./cards.json",
   valuables: "./valuables.json",
+  items: "./items.json",
   cityNpcPools: "./city-npc-pools.json",
   houseModuleDefaults: "./house-module-defaults.json",
   portraits: "./portraits.json",
@@ -201,6 +203,29 @@ export type ScriptEditorMenuResourceRecord = Omit<MenuResourceDefinition, "entri
   entries: ScriptEditorMenuEntry[];
 };
 export type ScriptEditorMenuInstanceRecord = MenuInstanceDefinition;
+
+export type ScriptEditorItemDisplayRecord = {
+  title?: string | undefined;
+  iconId?: string | undefined;
+  imageId?: string | undefined;
+};
+
+export type ScriptEditorItemStackRuleRecord = {
+  stackable: boolean;
+  maxStack?: number | undefined;
+  unit?: string | undefined;
+};
+
+export type ScriptEditorItemRecord = ScriptEditorEntityRecord & {
+  name: string;
+  description?: string | undefined;
+  internalNote?: string | undefined;
+  display?: ScriptEditorItemDisplayRecord | undefined;
+  stack?: ScriptEditorItemStackRuleRecord | undefined;
+  menuInstanceIds?: string[] | undefined;
+  mounts?: ScriptEditorMountRecord[] | undefined;
+  customProperties?: ScriptEditorTypedAttributeRecord[] | undefined;
+};
 
 export type ScriptEditorMountRecord =
   | {
@@ -839,6 +864,7 @@ export type ScriptEditorProjectDefinition = {
   activities: ScriptEditorActivityRecord[];
   cards: ScriptEditorEntityRecord[];
   valuables: ScriptEditorEntityRecord[];
+  items: ScriptEditorItemRecord[];
   cityNpcPools: ScriptEditorRuntimeRecord[];
   houseModuleDefaults: Record<string, unknown>;
   portraits: ScriptEditorPortraitResourceRecord[];

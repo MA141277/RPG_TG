@@ -753,6 +753,42 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-item-field]")) {
+      const field = target.dataset.scriptEditorItemField;
+      if (field != null) {
+        this.applyScriptEditorItemField(field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-item-display-field]")) {
+      const field = target.dataset.scriptEditorItemDisplayField;
+      if (field != null) {
+        this.applyScriptEditorItemDisplayField(field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-item-stack-field]")) {
+      const field = target.dataset.scriptEditorItemStackField;
+      if (field != null) {
+        this.applyScriptEditorItemStackField(field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-item-custom-property-field]")) {
+      const field = target.dataset.scriptEditorItemCustomPropertyField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorItemCustomPropertyIndex ?? "-1",
+        10
+      );
+      if (field != null && Number.isInteger(index) && index >= 0) {
+        this.applyScriptEditorItemCustomPropertyField(index, field, target.value);
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-person-attribute-field]")) {
       const field = target.dataset.scriptEditorPersonAttributeField;
       const index = Number.parseInt(

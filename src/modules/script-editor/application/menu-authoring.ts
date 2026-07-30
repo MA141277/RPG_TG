@@ -11,19 +11,25 @@ import type {
   ScriptEditorMenuResourceRecord,
   ScriptEditorMenuTargetFamily,
   ScriptEditorMountRecord,
+  ScriptEditorItemRecord,
   ScriptEditorPersonRecord,
   ScriptEditorProjectDefinition,
 } from "../domain/script-editor-project";
 import { allocateNextScriptEditorProjectCanonicalId } from "./script-editor-id-allocation";
 
 type ScriptEditorLocationFamily = "cities" | "buildings";
-export type ScriptEditorMenuOwnerFamily = "people" | "cities" | "buildings";
+export type ScriptEditorMenuOwnerFamily = "people" | "cities" | "buildings" | "items";
 
 type ScriptEditorLocationRecord = ScriptEditorCityRecord | ScriptEditorBuildingRecord;
+type ScriptEditorMenuInstanceOwnerRecord =
+  | ScriptEditorCityRecord
+  | ScriptEditorBuildingRecord
+  | ScriptEditorItemRecord;
 type ScriptEditorMenuOwnerRecord =
   | ScriptEditorPersonRecord
   | ScriptEditorCityRecord
-  | ScriptEditorBuildingRecord;
+  | ScriptEditorBuildingRecord
+  | ScriptEditorItemRecord;
 
 export type ScriptEditorLocationMenuBundle = {
   instanceId: string;
@@ -54,6 +60,23 @@ type ScriptEditorMenuEntryEditableField =
   | "targetFamily"
   | "targetId"
   | "disabledHint";
+
+const formalizedProjectCache = new WeakMap<
+  ScriptEditorProjectDefinition,
+  ScriptEditorProjectDefinition
+>();
+const menuModuleRecordCache = new WeakMap<
+  ScriptEditorProjectDefinition,
+  ScriptEditorMenuModuleRecord[]
+>();
+const mountedMenuRecordCache = new WeakMap<
+  ScriptEditorProjectDefinition,
+  Map<string, ScriptEditorMountedMenuRecord[]>
+>();
+const locationMenuBundleCache = new WeakMap<
+  ScriptEditorProjectDefinition,
+  Map<string, ScriptEditorLocationMenuBundle[]>
+>();
 
 const DEFAULT_CITY_MENU_FAMILIES = ["overview", "intel", "locations", "management"];
 const DEFAULT_BUILDING_MENU_FAMILIES = ["dialogue", "trade", "work", "rest"];
@@ -87,12 +110,23 @@ export function normalizeScriptEditorMounts(value: unknown): ScriptEditorMountRe
 export function listScriptEditorMenuModuleRecords(
   project: ScriptEditorProjectDefinition
 ): ScriptEditorMenuModuleRecord[] {
+  const cachedRecords = menuModuleRecordCache.get(project);
+  if (cachedRecords != null) {
+    return cachedRecords;
+  }
+
   const formalizedProject = formalizeScriptEditorProjectMenus(project);
+  const cachedFormalizedRecords = menuModuleRecordCache.get(formalizedProject);
+  if (cachedFormalizedRecords != null) {
+    menuModuleRecordCache.set(project, cachedFormalizedRecords);
+    return cachedFormalizedRecords;
+  }
+
   const menuResourceById = Object.fromEntries(
     (formalizedProject.menuResources ?? []).map((resource) => [resource.id, resource] as const)
   );
 
-  return (formalizedProject.menuInstances ?? []).map((instance) => {
+  const records = (formalizedProject.menuInstances ?? []).map((instance) => {
     const resource = menuResourceById[normalizeOptionalString(instance.resourceId)];
     const entries = normalizeMenuEntries(resource?.entries, `${instance.id}.entry`);
     const title = normalizeString(
@@ -106,6 +140,9 @@ export function listScriptEditorMenuModuleRecords(
       entries,
     };
   });
+  menuModuleRecordCache.set(project, records);
+  menuModuleRecordCache.set(formalizedProject, records);
+  return records;
 }
 
 export function appendScriptEditorMenuModuleRecord(
@@ -184,16 +221,33 @@ export function listScriptEditorMountedMenus(
   ownerFamily: ScriptEditorMenuOwnerFamily,
   ownerId: string
 ): ScriptEditorMountedMenuRecord[] {
+  const cacheKey = `${ownerFamily}:${normalizeOptionalString(ownerId)}`;
+  const cachedRecords = mountedMenuRecordCache.get(project)?.get(cacheKey);
+  if (cachedRecords != null) {
+    return cachedRecords;
+  }
+
   const formalizedProject = formalizeScriptEditorProjectMenus(project);
+  const cachedFormalizedRecords = mountedMenuRecordCache
+    .get(formalizedProject)
+    ?.get(cacheKey);
+  if (cachedFormalizedRecords != null) {
+    cacheMountedMenuRecords(project, cacheKey, cachedFormalizedRecords);
+    return cachedFormalizedRecords;
+  }
+
   const owner = getProjectMenuOwner(formalizedProject, ownerFamily, ownerId);
   if (owner == null) {
-    return [];
+    const emptyRecords: ScriptEditorMountedMenuRecord[] = [];
+    cacheMountedMenuRecords(project, cacheKey, emptyRecords);
+    cacheMountedMenuRecords(formalizedProject, cacheKey, emptyRecords);
+    return emptyRecords;
   }
   const menuModuleById = Object.fromEntries(
     listScriptEditorMenuModuleRecords(formalizedProject).map((record) => [record.id, record] as const)
   );
 
-  return normalizeScriptEditorMounts(owner.mounts)
+  const records = normalizeScriptEditorMounts(owner.mounts)
     .filter((mount) => mount.kind === "menu")
     .map((mount) => {
       const menuRecord = menuModuleById[mount.target.menuInstanceId];
@@ -204,6 +258,9 @@ export function listScriptEditorMountedMenus(
         visible: mount.visible !== false,
       };
     });
+  cacheMountedMenuRecords(project, cacheKey, records);
+  cacheMountedMenuRecords(formalizedProject, cacheKey, records);
+  return records;
 }
 
 export function appendScriptEditorOwnerMenuMount(
@@ -275,6 +332,11 @@ export function removeScriptEditorOwnerMenuMount(
 export function formalizeScriptEditorProjectMenus(
   project: ScriptEditorProjectDefinition
 ): ScriptEditorProjectDefinition {
+  const cachedProject = formalizedProjectCache.get(project);
+  if (cachedProject != null) {
+    return cachedProject;
+  }
+
   const legacyActionMenuItemsError = findLegacyArrangementActionMenuItemsError(
     project.buildingArrangements ?? []
   );
@@ -282,11 +344,14 @@ export function formalizeScriptEditorProjectMenus(
     throw new Error(legacyActionMenuItemsError);
   }
   const locationFormalizedProject = formalizeLocationProjectMenus(project);
-  return syncMenuOwnerBindings(
+  const formalizedProject = syncMenuOwnerBindings(
     formalizeMenuModuleItemRecords(
       formalizeBuildingArrangementProjectMenus(locationFormalizedProject)
     )
   );
+  formalizedProjectCache.set(project, formalizedProject);
+  formalizedProjectCache.set(formalizedProject, formalizedProject);
+  return formalizedProject;
 }
 
 function formalizeLocationProjectMenus(
@@ -372,10 +437,27 @@ export function listScriptEditorLocationMenuBundles(
   family: ScriptEditorLocationFamily,
   locationId: string
 ): ScriptEditorLocationMenuBundle[] {
+  const cacheKey = `${family}:${normalizeOptionalString(locationId)}`;
+  const cachedBundles = locationMenuBundleCache.get(project)?.get(cacheKey);
+  if (cachedBundles != null) {
+    return cachedBundles;
+  }
+
   const formalizedProject = formalizeScriptEditorProjectMenus(project);
+  const cachedFormalizedBundles = locationMenuBundleCache
+    .get(formalizedProject)
+    ?.get(cacheKey);
+  if (cachedFormalizedBundles != null) {
+    cacheLocationMenuBundles(project, cacheKey, cachedFormalizedBundles);
+    return cachedFormalizedBundles;
+  }
+
   const location = getProjectLocation(formalizedProject, family, locationId);
   if (location == null) {
-    return [];
+    const emptyBundles: ScriptEditorLocationMenuBundle[] = [];
+    cacheLocationMenuBundles(project, cacheKey, emptyBundles);
+    cacheLocationMenuBundles(formalizedProject, cacheKey, emptyBundles);
+    return emptyBundles;
   }
 
   const menuResourceById = Object.fromEntries(
@@ -385,7 +467,7 @@ export function listScriptEditorLocationMenuBundles(
     (formalizedProject.menuInstances ?? []).map((instance) => [instance.id, instance] as const)
   );
 
-  return readTrimmedStringArray(location.menuInstanceIds).flatMap((instanceId) => {
+  const bundles = readTrimmedStringArray(location.menuInstanceIds).flatMap((instanceId) => {
     const instance = menuInstanceById[instanceId];
     if (instance == null) {
       return [];
@@ -405,6 +487,9 @@ export function listScriptEditorLocationMenuBundles(
       },
     ];
   });
+  cacheLocationMenuBundles(project, cacheKey, bundles);
+  cacheLocationMenuBundles(formalizedProject, cacheKey, bundles);
+  return bundles;
 }
 
 export function countScriptEditorLocationMenuEntries(
@@ -416,6 +501,32 @@ export function countScriptEditorLocationMenuEntries(
     (count, bundle) => count + bundle.entries.length,
     0
   );
+}
+
+function cacheMountedMenuRecords(
+  project: ScriptEditorProjectDefinition,
+  key: string,
+  records: ScriptEditorMountedMenuRecord[]
+): void {
+  let cache = mountedMenuRecordCache.get(project);
+  if (cache == null) {
+    cache = new Map<string, ScriptEditorMountedMenuRecord[]>();
+    mountedMenuRecordCache.set(project, cache);
+  }
+  cache.set(key, records);
+}
+
+function cacheLocationMenuBundles(
+  project: ScriptEditorProjectDefinition,
+  key: string,
+  bundles: ScriptEditorLocationMenuBundle[]
+): void {
+  let cache = locationMenuBundleCache.get(project);
+  if (cache == null) {
+    cache = new Map<string, ScriptEditorLocationMenuBundle[]>();
+    locationMenuBundleCache.set(project, cache);
+  }
+  cache.set(key, bundles);
 }
 
 export function updateScriptEditorLocationMenuInstanceTitle(
@@ -1009,7 +1120,7 @@ function replaceMenuOwnerReferences<TOwner extends ScriptEditorMenuOwnerRecord>(
   const hasMenuInstanceIds = "menuInstanceIds" in owner;
   const nextMenuInstanceIds = hasMenuInstanceIds
     ? readTrimmedStringArray(
-        ((owner as ScriptEditorLocationRecord).menuInstanceIds ?? []).flatMap(
+        ((owner as ScriptEditorMenuInstanceOwnerRecord).menuInstanceIds ?? []).flatMap(
           (menuInstanceId) => replacementInstanceIds.get(menuInstanceId) ?? [menuInstanceId]
         )
       )
@@ -1410,6 +1521,9 @@ function getProjectMenuOwner(
   if (family === "cities") {
     return project.cities.find((record) => record.id === ownerId) ?? null;
   }
+  if (family === "items") {
+    return project.items.find((record) => record.id === ownerId) ?? null;
+  }
   return project.buildings.find((record) => record.id === ownerId) ?? null;
 }
 
@@ -1434,6 +1548,14 @@ function replaceProjectMenuOwner(
       ),
     });
   }
+  if (family === "items") {
+    return syncMenuOwnerBindings({
+      ...project,
+      items: project.items.map((record) =>
+        record.id === nextOwner.id ? (nextOwner as ScriptEditorItemRecord) : record
+      ),
+    });
+  }
   return syncMenuOwnerBindings({
     ...project,
     buildings: project.buildings.map((record) =>
@@ -1453,12 +1575,19 @@ function syncMenuOwnerBindings(
     })),
     cities: project.cities.map((city) => syncLocationMenuMounts(city)),
     buildings: project.buildings.map((building) => syncLocationMenuMounts(building)),
+    items: project.items.map((item) => syncItemMenuMounts(item)),
   };
 }
 
 function syncLocationMenuMounts<TLocation extends ScriptEditorLocationRecord>(
   location: TLocation
 ): TLocation {
+  return syncMenuInstanceOwnerMounts(location);
+}
+
+function syncMenuInstanceOwnerMounts<TOwner extends ScriptEditorMenuInstanceOwnerRecord>(
+  location: TOwner
+): TOwner {
   const normalizedMounts = normalizeScriptEditorMounts(location.mounts);
   const normalizedMenuInstanceIds = readTrimmedStringArray(location.menuInstanceIds);
   const effectiveMounts =
@@ -1483,4 +1612,17 @@ function syncLocationMenuMounts<TLocation extends ScriptEditorLocationRecord>(
             .map((mount) => mount.target.menuInstanceId)
         : normalizedMenuInstanceIds,
   };
+}
+
+function syncItemMenuMounts(item: ScriptEditorItemRecord): ScriptEditorItemRecord {
+  const syncedItem = syncMenuInstanceOwnerMounts(item);
+  if (
+    (syncedItem.mounts?.length ?? 0) === 0 &&
+    (syncedItem.menuInstanceIds?.length ?? 0) === 0
+  ) {
+    const { mounts, ...itemWithoutEmptyMounts } = syncedItem;
+    void mounts;
+    return itemWithoutEmptyMounts;
+  }
+  return syncedItem;
 }

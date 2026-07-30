@@ -218,6 +218,612 @@ const grainShopHouse = prototypeHouses.find(
 const teaHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "tea-house"
 );
+
+test("script editor items are a project family with hidden numeric canonical ids", async () => {
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const ids = await import(
+    "../.test-dist/modules/script-editor/application/script-editor-id-allocation.js"
+  );
+  const projectModule = await import(
+    "../.test-dist/modules/script-editor/domain/script-editor-project.js"
+  );
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+
+  assert.deepEqual(project.items, []);
+  assert.equal(projectModule.SCRIPT_EDITOR_PROJECT_CANONICAL_FILES.items, "./items.json");
+  assert.equal(ids.createDefaultScriptEditorCanonicalId("items", 0), "510001");
+
+  const draft = workflow.createScriptEditorWorkflowRecordDraft("items", project);
+
+  assert.equal(draft.id, "510001");
+  assert.equal(draft.name, "道具 1");
+  assert.deepEqual(draft.menuInstanceIds, []);
+  assert.equal(Object.hasOwn(draft, "count"), false);
+});
+
+test("script editor items survive project parse and workflow upsert", async () => {
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const loader = await import(
+    "../.test-dist/modules/script-editor/application/editor-project-loader.js"
+  );
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const draft = {
+    ...workflow.createScriptEditorWorkflowRecordDraft("items", project),
+    name: "小药水",
+    display: { title: "小药水", iconId: "icon.potion" },
+    stack: { stackable: true, maxStack: 99 },
+    menuInstanceIds: ["280001"],
+    internalNote: "作者备注",
+  };
+
+  const nextProject = workflow.upsertScriptEditorWorkflowRecord(project, "items", draft);
+  const parsed = loader.parseScriptEditorProject(nextProject);
+  const expectedDraft = {
+    ...draft,
+    mounts: [
+      {
+        kind: "menu",
+        order: 0,
+        target: {
+          kind: "menu",
+          menuInstanceId: "280001",
+        },
+      },
+    ],
+  };
+
+  assert.deepEqual(workflow.listScriptEditorWorkflowFamilyRecords(parsed, "items"), [
+    expectedDraft,
+  ]);
+});
+
+test("script editor items export to scenario pack files without legacy valuables counts", async () => {
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const exportModule = await import(
+    "../.test-dist/modules/script-editor/application/runtime-pack-export.js"
+  );
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const item = {
+    ...workflow.createScriptEditorWorkflowRecordDraft("items", project),
+    name: "命运硬币",
+    display: { title: "命运硬币" },
+    stack: { stackable: true, maxStack: 1 },
+    menuInstanceIds: [],
+  };
+  const nextProject = workflow.upsertScriptEditorWorkflowRecord(project, "items", item);
+
+  const files = exportModule.exportScriptEditorProjectToScenarioPackFiles(nextProject);
+  const pack = JSON.parse(files["pack.json"]);
+  const items = JSON.parse(files["items.json"]);
+
+  assert.equal(pack.files.items, "./items.json");
+  assert.deepEqual(items, [item]);
+  assert.equal(Object.hasOwn(items[0], "count"), false);
+});
+
+test("script editor items scenario pack loader hydrates items from manifest files", async () => {
+  const loader = await import("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const files = [
+    new File(
+      [
+        JSON.stringify({
+          schemaVersion: 1,
+          id: "pack.test.items",
+          title: "Items Pack",
+          files: {
+            scenarioProfile: "scenario-profile.json",
+            characters: "characters.json",
+            events: "events.json",
+            scenes: "scenes.json",
+            items: "items.json",
+          },
+        }),
+      ],
+      "pack.json",
+      { type: "application/json" }
+    ),
+    new File(
+      [
+        JSON.stringify({
+          id: "scenario.items",
+          playerCharacterId: "110001",
+          chapterId: "chapter.items",
+          initialLocation: {
+            mapId: "map.items",
+            cityId: "210001",
+            houseId: null,
+            view: "city",
+          },
+        }),
+      ],
+      "scenario-profile.json",
+      { type: "application/json" }
+    ),
+    new File([JSON.stringify([{ id: "110001", name: "主角" }])], "characters.json", {
+      type: "application/json",
+    }),
+    new File([JSON.stringify([])], "events.json", { type: "application/json" }),
+    new File([JSON.stringify([])], "scenes.json", { type: "application/json" }),
+    new File(
+      [JSON.stringify([{ id: "510001", name: "小药水", menuInstanceIds: [] }])],
+      "items.json",
+      { type: "application/json" }
+    ),
+  ];
+
+  const pack = await loader.loadScenarioPackFromFiles(files);
+
+  assert.deepEqual(pack.items, [
+    { id: "510001", name: "小药水", menuInstanceIds: [] },
+  ]);
+});
+
+test("script editor items are visible as 道具 without exposing ids as primary fields", async () => {
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/modules/script-editor/application/workspace-shell.ts"),
+    "utf8"
+  );
+
+  assert.equal(workflow.getScriptEditorWorkflowVisibleFamilies().includes("items"), true);
+  assert.match(source, /items:\s*"道具"/);
+  assert.doesNotMatch(source, /items:\s*"资产"/);
+});
+
+test("script editor items are grouped under world with buildings", async () => {
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const workspaceShell = await import(
+    "../.test-dist/modules/script-editor/application/workspace-shell.js"
+  );
+
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const workspace = workspaceShell.createScriptEditorWorkspaceShellViewModel({
+    project,
+    visibleFamilies: workflow.getScriptEditorWorkflowVisibleFamilies(),
+    projectIsFormalized: true,
+  });
+  const worldGroup = workspace.objectTreeGroups.find((group) => group.id === "world");
+  const libraryGroup = workspace.objectTreeGroups.find((group) => group.id === "library");
+
+  assert.deepEqual(
+    worldGroup?.nodes.map((node) => node.family),
+    ["people", "cities", "buildings", "items"]
+  );
+  assert.deepEqual(
+    libraryGroup?.nodes.map((node) => node.family),
+    ["portraits", "portraitVariants"]
+  );
+});
+
+test("script editor story nodes are hidden from creator module navigation", async () => {
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const workspaceShell = await import(
+    "../.test-dist/modules/script-editor/application/workspace-shell.js"
+  );
+  const uiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/modules/script-editor/ui/main-ui-script-editor-module.js"),
+    "utf8"
+  );
+
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const visibleFamilies = workflow.getScriptEditorWorkflowVisibleFamilies();
+  const workspace = workspaceShell.createScriptEditorWorkspaceShellViewModel({
+    project,
+    visibleFamilies,
+    projectIsFormalized: true,
+  });
+  const visibleTreeFamilies = workspace.objectTreeGroups.flatMap((group) =>
+    group.nodes.map((node) => node.family)
+  );
+
+  assert.equal(visibleFamilies.includes("storyNodes"), false);
+  assert.equal(visibleTreeFamilies.includes("storyNodes"), false);
+  assert.equal(workspace.navigationItems.some((item) => item.family === "storyNodes"), false);
+  assert.doesNotMatch(uiSource, /当前已收录人物 .*剧情节点/);
+});
+
+test("script editor item authoring is a creator-facing workbench form", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/modules/script-editor/ui/main-ui-script-editor-module.js"),
+    "utf8"
+  );
+  const branchStart = source.indexOf('if (family === "items")');
+  const methodStart = source.indexOf("  renderScriptEditorItemEditor(");
+  const methodEnd = source.indexOf("  renderScriptEditorTextEntryEditor(", methodStart);
+
+  assert.notEqual(branchStart, -1, "items should have a dedicated editor branch");
+  assert.notEqual(methodStart, -1, "item editor method should exist");
+  assert.notEqual(methodEnd, -1, "item editor method should end before text editor");
+
+  const methodSource = source.slice(methodStart, methodEnd);
+
+  assert.match(methodSource, /道具工作台/);
+  assert.match(methodSource, /新增道具/);
+  assert.match(methodSource, /道具名称/);
+  assert.match(methodSource, /道具说明/);
+  assert.match(methodSource, /图标资源/);
+  assert.match(methodSource, /是否可堆叠/);
+  assert.match(methodSource, /最大堆叠数量/);
+  assert.match(methodSource, /菜单组/);
+  assert.match(methodSource, /自定义属性/);
+  assert.match(methodSource, /data-script-editor-item-field="name"/);
+  assert.match(methodSource, /data-script-editor-item-display-field="iconId"/);
+  assert.match(methodSource, /portraitOptions/);
+  assert.match(methodSource, /renderScriptEditorOwnerMenuMountPanel/);
+  assert.match(methodSource, /"items"/);
+  assert.match(methodSource, /data-script-editor-item-stack-field="stackable"/);
+  assert.match(methodSource, /data-script-editor-item-custom-property-field/);
+  assert.match(methodSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+  assert.match(methodSource, /SCRIPT_EDITOR_INSPECTOR_SLOT/);
+  assert.match(methodSource, /renderScriptEditorPaginatedRecordList/);
+  assert.doesNotMatch(methodSource, /显示名称/);
+  assert.doesNotMatch(methodSource, /data-script-editor-item-display-field="title"/);
+  assert.doesNotMatch(methodSource, /data-script-editor-item-menu-instance/);
+  assert.doesNotMatch(methodSource, /apply-record-json/);
+  assert.doesNotMatch(methodSource, /data-script-editor-record-json/);
+  assert.doesNotMatch(methodSource, /textarea/);
+  assert.doesNotMatch(methodSource, /remove-record/);
+  assert.doesNotMatch(methodSource, /data-script-editor-item-field="id"/);
+  assert.doesNotMatch(methodSource, /<span>\$\{escapeHtml\(record\.id\)\}<\/span>/);
+});
+
+test("script editor item authoring helpers update structured item fields", async () => {
+  const authoring = await import(
+    "../.test-dist/modules/script-editor/application/item-authoring.js"
+  );
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const draft = workflow.createScriptEditorWorkflowRecordDraft("items", project);
+
+  const named = authoring.updateScriptEditorItemField(draft, "name", "小药水");
+  const described = authoring.updateScriptEditorItemField(named, "description", "恢复生命。");
+  const iconed = authoring.updateScriptEditorItemDisplayField(described, "iconId", "310001");
+  const stacked = authoring.updateScriptEditorItemStackField(iconed, "stackable", "true");
+  const capped = authoring.updateScriptEditorItemStackField(stacked, "maxStack", "10");
+  const menuAuthoring = await import(
+    "../.test-dist/modules/script-editor/application/menu-authoring.js"
+  );
+  const withItemProject = workflow.upsertScriptEditorWorkflowRecord(project, "items", capped);
+  const withMenuProject = menuAuthoring.appendScriptEditorOwnerMenuMount(
+    withItemProject,
+    "items",
+    draft.id,
+    "280001"
+  );
+  const withMenu = withMenuProject.items.find((item) => item.id === draft.id);
+  const mountedMenus = menuAuthoring.listScriptEditorMountedMenus(
+    withMenuProject,
+    "items",
+    draft.id
+  );
+  const withProperty = authoring.appendScriptEditorItemCustomProperty(withMenu);
+  const propertyNamed = authoring.updateScriptEditorItemCustomProperty(
+    withProperty,
+    0,
+    "key",
+    "healAmount"
+  );
+  const propertyTyped = authoring.updateScriptEditorItemCustomProperty(
+    propertyNamed,
+    0,
+    "type",
+    "number"
+  );
+  const propertyValued = authoring.updateScriptEditorItemCustomProperty(
+    propertyTyped,
+    0,
+    "value",
+    "10"
+  );
+
+  assert.equal(propertyValued.id, draft.id);
+  assert.equal(propertyValued.name, "小药水");
+  assert.equal(propertyValued.description, "恢复生命。");
+  assert.deepEqual(propertyValued.display, {
+    title: "道具 1",
+    iconId: "310001",
+  });
+  assert.deepEqual(propertyValued.stack, {
+    stackable: true,
+    maxStack: 10,
+  });
+  assert.deepEqual(propertyValued.menuInstanceIds, ["280001"]);
+  assert.deepEqual(
+    mountedMenus.map((entry) => entry.instanceId),
+    ["280001"]
+  );
+  assert.deepEqual(propertyValued.customProperties, [
+    {
+      key: "healAmount",
+      label: "",
+      type: "number",
+      value: 10,
+    },
+  ]);
+});
+
+test("script editor item fields are dispatched without raw json editing", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(source, /data-script-editor-item-field/);
+  assert.match(source, /applyScriptEditorItemField/);
+  assert.match(source, /data-script-editor-item-display-field/);
+  assert.match(source, /applyScriptEditorItemDisplayField/);
+  assert.match(source, /data-script-editor-item-stack-field/);
+  assert.match(source, /applyScriptEditorItemStackField/);
+  assert.match(source, /data-script-editor-item-custom-property-field/);
+  assert.match(source, /applyScriptEditorItemCustomPropertyField/);
+  assert.doesNotMatch(source, /data-script-editor-item-menu-instance/);
+  assert.doesNotMatch(source, /applyScriptEditorItemMenuInstance/);
+});
+
+test("script editor object tree renders entries without group labels", async () => {
+  const workspaceView = await import(
+    "../.test-dist/modules/script-editor/ui/views/script-editor-workspace-view.js"
+  );
+  const html = workspaceView.renderScriptEditorWorkspaceView({
+    projectId: "project.test",
+    title: "Test Project",
+    subtitle: "",
+    badges: [],
+    navigationItems: [],
+    toolbarActions: [],
+    objectTreeGroups: [
+      {
+        id: "world",
+        label: "世界",
+        nodes: [
+          {
+            id: "node.people",
+            family: "people",
+            entityId: null,
+            label: "人物",
+            description: "",
+            itemCount: 1,
+            isSelected: false,
+            tone: "neutral",
+          },
+        ],
+      },
+      {
+        id: "narrative",
+        label: "剧本与文本",
+        nodes: [
+          {
+            id: "node.textEntries",
+            family: "textEntries",
+            entityId: null,
+            label: "文本",
+            description: "",
+            itemCount: 2,
+            isSelected: false,
+            tone: "neutral",
+          },
+        ],
+      },
+      {
+        id: "gameplay",
+        label: "玩法",
+        nodes: [
+          {
+            id: "node.events",
+            family: "events",
+            entityId: null,
+            label: "事件",
+            description: "",
+            itemCount: 3,
+            isSelected: false,
+            tone: "neutral",
+          },
+        ],
+      },
+      {
+        id: "library",
+        label: "资产库",
+        nodes: [
+          {
+            id: "node.portraits",
+            family: "portraits",
+            entityId: null,
+            label: "立绘资源",
+            description: "",
+            itemCount: 4,
+            isSelected: false,
+            tone: "neutral",
+          },
+        ],
+      },
+    ],
+    inspector: {
+      eyebrow: "",
+      title: "",
+      description: "",
+      stats: [],
+      cards: [],
+    },
+    handoffSummary: {
+      blockedCount: 0,
+      attentionCount: 0,
+      firstMessage: null,
+    },
+    auxiliaryPanel: {
+      isOpen: false,
+      toggleLabel: "",
+      previewCards: [],
+      issues: [],
+      exportTargets: [],
+      summary: {
+        blockedCount: 0,
+        attentionCount: 0,
+        infoCount: 0,
+      },
+    },
+    selection: {
+      family: "people",
+      entityId: null,
+    },
+  });
+
+  assert.doesNotMatch(html, /c-script-editor-tree-group__header/);
+  assert.doesNotMatch(html, />\s*世界\s*</);
+  assert.doesNotMatch(html, />\s*剧本与文本\s*</);
+  assert.doesNotMatch(html, />\s*玩法\s*</);
+  assert.doesNotMatch(html, />\s*资产库\s*</);
+  assert.match(html, />\s*人物\s*</);
+  assert.match(html, />\s*文本\s*</);
+  assert.match(html, />\s*事件\s*</);
+  assert.match(html, />\s*立绘资源\s*</);
+});
+
+test("script editor workspace shell can reuse cached export diagnostics", async () => {
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const workspaceShell = await import(
+    "../.test-dist/modules/script-editor/application/workspace-shell.js"
+  );
+
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.cached-diagnostics-test",
+      title: "Cached Diagnostics Test",
+      contents: [
+        {
+          targetFamily: "person",
+          targetId: "",
+          attributeKey: "",
+          attributeType: "number",
+          operation: "add",
+          value: 10,
+        },
+      ],
+    },
+  ];
+  const workspace =
+    workspaceShell.createScriptEditorWorkspaceShellViewModel({
+      project,
+      exportDiagnostics: [],
+    });
+
+  assert.equal(workspace.handoffSummary.blockedCount, 0);
+  assert.equal(
+    workspace.toolbarActions.find((action) => action.id === "export")?.status,
+    "ready"
+  );
+});
+
+test("script editor menu module records are cached for the same project reference", async () => {
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const menuAuthoring = await import(
+    "../.test-dist/modules/script-editor/application/menu-authoring.js"
+  );
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+
+  const firstRecords = menuAuthoring.listScriptEditorMenuModuleRecords(project);
+  const secondRecords = menuAuthoring.listScriptEditorMenuModuleRecords(project);
+
+  assert.equal(secondRecords, firstRecords);
+});
+
+test("script editor mounted and location menu views are cached for the same project reference", async () => {
+  const workflow = await import(
+    "../.test-dist/modules/script-editor/application/minimal-workflow.js"
+  );
+  const menuAuthoring = await import(
+    "../.test-dist/modules/script-editor/application/menu-authoring.js"
+  );
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const cityId = project.cities[0].id;
+  const buildingId = project.buildings[0].id;
+
+  const firstMounted = menuAuthoring.listScriptEditorMountedMenus(
+    project,
+    "cities",
+    cityId
+  );
+  const secondMounted = menuAuthoring.listScriptEditorMountedMenus(
+    project,
+    "cities",
+    cityId
+  );
+  const firstBundles = menuAuthoring.listScriptEditorLocationMenuBundles(
+    project,
+    "buildings",
+    buildingId
+  );
+  const secondBundles = menuAuthoring.listScriptEditorLocationMenuBundles(
+    project,
+    "buildings",
+    buildingId
+  );
+
+  assert.equal(secondMounted, firstMounted);
+  assert.equal(secondBundles, firstBundles);
+});
+
+test("script editor workspace shell can skip menu formalization for committed projects", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/modules/script-editor/application/workspace-shell.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /projectIsFormalized\?:/);
+  assert.match(source, /input\.projectIsFormalized\s*===\s*true/);
+});
+
+test("script editor workspace navigation uses a local refresh path", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/modules/script-editor/ui/main-ui-script-editor-module.js"),
+    "utf8"
+  );
+
+  assert.match(source, /refreshScriptEditorWorkspace\(\)\s*{/);
+
+  const methodNames = [
+    "selectScriptEditorFamily",
+    "selectScriptEditorRecord",
+    "changeScriptEditorRecordListPage",
+    "goToScriptEditorRecordListPage",
+    "selectScriptEditorPersonTab",
+    "selectScriptEditorLocationTab",
+    "selectScriptEditorNarrativeTab",
+    "selectScriptEditorEventTab",
+    "selectScriptEditorMinigameTab",
+  ];
+
+  for (const [index, methodName] of methodNames.entries()) {
+    const start = source.indexOf(`  ${methodName}(`);
+    const nextMethodName = methodNames[index + 1] ?? "toggleScriptEditorAuxiliaryPanel";
+    const end = source.indexOf(`  ${nextMethodName}(`, start + 1);
+
+    assert.notEqual(start, -1, `${methodName} should exist`);
+    assert.notEqual(end, -1, `${nextMethodName} should exist after ${methodName}`);
+
+    const methodSource = source.slice(start, end);
+    assert.match(methodSource, /this\.refreshScriptEditorWorkspace\(\);/);
+    assert.doesNotMatch(methodSource, /this\.render\(\);/);
+  }
+});
 const marketHouse = prototypeHouses.find(
   (houseDefinition) => houseDefinition.moduleId === "market-house"
 );
