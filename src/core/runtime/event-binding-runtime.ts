@@ -1,4 +1,8 @@
-import type { EventBinding, EventDefinition } from "../../domain/event";
+import type {
+  EventBinding,
+  EventDefinition,
+  EventRuntimeAction,
+} from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { RuntimeEventEntity } from "../contracts/event-router";
 import type { RuntimeState } from "../contracts/runtime-state";
@@ -173,7 +177,14 @@ export function applyEventRuntimeActions(
   state: GameState,
   eventDefinition: EventDefinition
 ): GameState {
-  return (eventDefinition.actions ?? []).reduce((currentState, action) => {
+  return applyRuntimeActions(state, eventDefinition.actions ?? []);
+}
+
+export function applyRuntimeActions(
+  state: GameState,
+  actions: readonly EventRuntimeAction[]
+): GameState {
+  return actions.reduce((currentState, action) => {
     if (action.type === "closeBuilding") {
       return {
         ...currentState,

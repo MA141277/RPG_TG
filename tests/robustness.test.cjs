@@ -15760,6 +15760,29 @@ test("runtime event task input payload consumption keeps story-runtime on the ro
   assert.doesNotMatch(routedHandlersBlock, /taskInputs:\s*eventDefinition\.taskInputs/);
 });
 
+test("runtime event action payload application keeps story-runtime direct-entry on the routed payload seam", () => {
+  const projectionSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-entity-projection.ts"),
+    "utf8"
+  );
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const prepareCoreStateBlock =
+    storyRuntimeSource.match(
+      /prepareCoreState:\s*\(\{[\s\S]*?\}\)\s*=>[\s\S]*?\),/
+    )?.[0] ?? "";
+
+  assert.match(projectionSource, /export function readRuntimeEventActions\(/);
+  assert.match(projectionSource, /payload\.actions/);
+  assert.match(storyRuntimeSource, /readRuntimeEventActions/);
+  assert.doesNotMatch(
+    prepareCoreStateBlock,
+    /applyEventRuntimeActions\(coreState,\s*eventDefinition\)/
+  );
+});
+
 test("navigation enter-house convergence keeps on-enter event activation on the shared event-router seam", () => {
   const enterHouseSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/navigation/enter-house.ts"),

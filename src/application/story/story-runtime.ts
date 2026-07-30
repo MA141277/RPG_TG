@@ -21,12 +21,14 @@ import {
 } from "../../core/runtime/runtime-settlement";
 import {
   applyEventRuntimeActions,
+  applyRuntimeActions,
   createRuntimeTriggerContext,
   runEventBindingRuntime,
 } from "../../core/runtime/event-binding-runtime";
 import { createEventRouteActivationHandlers } from "../../core/runtime/event-route-activation";
 import {
   createRuntimeEventEntity,
+  readRuntimeEventActions,
   readRuntimeEventTaskInputs,
 } from "../../core/runtime/event-entity-projection";
 import { dispatchEventRoute } from "../../core/runtime/event-router";
@@ -138,10 +140,10 @@ function routeStoryDirectEntry(
   const activationHandlers = createEventRouteActivationHandlers({
     eventDefinitionsById: content.eventDefinitionsById,
     fallbackEventDefinition,
-    prepareCoreState: ({ coreState, eventDefinition }) =>
+    prepareCoreState: ({ coreState, event }) =>
       input.actionsAlreadyApplied === true
         ? coreState
-        : applyEventRuntimeActions(coreState, eventDefinition),
+        : applyRuntimeActions(coreState, readRuntimeEventActions(event)),
   });
   const routed = dispatchRuntimeRequest({
     state: toStoryRuntimeState(runtime.state),

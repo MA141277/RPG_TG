@@ -196,6 +196,22 @@ test("runtime event task input payload helper reads canonical task inputs from t
   ]);
 });
 
+test("runtime event action payload helper reads canonical actions from the routed event payload", () => {
+  const {
+    readRuntimeEventActions,
+  } = require("../.test-dist/core/runtime/event-entity-projection.js");
+
+  const actions = readRuntimeEventActions({
+    id: "event.action.payload",
+    kind: "dialogue",
+    payload: {
+      actions: [{ type: "closeBuilding" }],
+    },
+  });
+
+  assert.deepEqual(actions, [{ type: "closeBuilding" }]);
+});
+
 test(
   "runStoryEventRuntime preserves authored emitEventIds on the routed runtime event entity",
   () => {
