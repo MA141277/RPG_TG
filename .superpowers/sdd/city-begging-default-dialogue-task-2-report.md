@@ -63,3 +63,40 @@ fail 0
 - The reducer test uses the repo's established `.test-dist` import pattern after `build:test`; the initial direct `.ts` import red check proved the module was missing but conflicted with TypeScript emit for extensioned source dependencies.
 - No `src/main.ts` changes were made.
 - No Task 3 action routing or settlement behavior was implemented.
+
+## Review Fixes
+
+- Guarded `selectCityBeggingDefaultOption()` so option selection only applies from `phase === "encounter"` when a location is selected and no option/fixed result is already locked.
+- Added a focused reducer regression test covering invalid option selection and duplicate/change attempts after a fixed result is locked.
+- Added `docs/change-log.md` entry for the Task 2 default dialogue runtime/session wiring and result-lock behavior.
+
+## Review Fix TDD Evidence
+
+Red check:
+
+```text
+npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/city-begging-default-runtime.test.cjs tests/city-begging-runtime-status.test.cjs tests/interactive-runtime-status.test.cjs }
+```
+
+Expected failure observed:
+
+```text
+AssertionError [ERR_ASSERTION]: Expected "actual" to be reference-equal to "expected":
+...
++   thinkingUntil: 3700
+-   thinkingUntil: 3600
+```
+
+Green check:
+
+```text
+npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/city-begging-default-runtime.test.cjs tests/city-begging-runtime-status.test.cjs tests/interactive-runtime-status.test.cjs }
+```
+
+Result:
+
+```text
+tests 7
+pass 7
+fail 0
+```

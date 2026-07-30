@@ -61,10 +61,17 @@ export function selectCityBeggingDefaultOption(
   optionId: string,
   now: number
 ): CityBeggingDefaultDialogueState {
+  if (
+    state.phase !== "encounter" ||
+    state.selectedLocationId == null ||
+    state.selectedOptionId != null ||
+    state.fixedResult != null
+  ) {
+    return state;
+  }
+
   const location =
-    state.selectedLocationId == null
-      ? null
-      : getCityBeggingDefaultLocation(state.selectedLocationId);
+    getCityBeggingDefaultLocation(state.selectedLocationId);
   const option =
     location?.options.find((candidate) => candidate.optionId === optionId) ??
     null;

@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-31 City Begging Default Dialogue Runtime
+
+### Added
+- 新增城中默认化缘 `default-dialogue` runtime reducer，用于纯状态方式启动默认化缘、选择地点、锁定固定吉凶选项并推进思考阶段。
+- 城中化缘 playable launch payload 现在支持 `mode: "default-dialogue"`，同时保留旧 minigame 默认启动路径。
+- 新增默认化缘 runtime 覆盖测试，锁定地点选择、固定结果锁定、启动 payload 接线，以及结果锁定后不能重复或改选选项。
+
+### Changed
+- `beggingMiniGameState` 的 runtime 形状扩展为 `CityBeggingPlayableState`，可以承载旧 minigame 状态或新的默认化缘 dialogue 状态。
+- 默认化缘选项选择现在只允许在 `encounter` 阶段、已有地点且尚未存在选项/固定结果时执行，避免已锁定结果被重复选择覆盖。
+
+### Impact
+- Task 3 可以在不改 `src/main.ts` 的前提下继续接入默认化缘动作路由与结算；当前切片只建立 runtime session 状态与 launch wiring。
+
 ## 2026-07-31 City Begging Default Content Contract
 
 ### Added

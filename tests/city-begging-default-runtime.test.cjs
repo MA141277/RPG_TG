@@ -99,6 +99,57 @@ test("city begging default dialogue selects a location and locks a fixed option 
   assert.equal(afterOption.settlementApplied, false);
 });
 
+test("city begging default dialogue ignores invalid and duplicate option selection", async () => {
+  const {
+    createCityBeggingDefaultDialogueState,
+    selectCityBeggingDefaultLocation,
+    selectCityBeggingDefaultOption,
+  } = await import(
+    "../.test-dist/application/playables/city-begging/city-begging-default-dialogue.js"
+  );
+
+  const launched = createCityBeggingDefaultDialogueState(1000);
+  const atLocation = selectCityBeggingDefaultLocation(
+    launched,
+    "xicheng_guanyin"
+  );
+
+  const afterInvalidOption = selectCityBeggingDefaultOption(
+    atLocation,
+    "not_a_real_option",
+    1100
+  );
+  assert.strictEqual(afterInvalidOption, atLocation);
+  assert.equal(afterInvalidOption.phase, "encounter");
+  assert.equal(afterInvalidOption.selectedOptionId, null);
+  assert.equal(afterInvalidOption.fixedResult, null);
+
+  const afterOption = selectCityBeggingDefaultOption(
+    atLocation,
+    "help_mend_net",
+    1200
+  );
+  assert.equal(afterOption.phase, "fortune-draw");
+  assert.equal(afterOption.selectedOptionId, "help_mend_net");
+  assert.equal(afterOption.fixedResult, "ji");
+
+  const afterDuplicateOption = selectCityBeggingDefaultOption(
+    afterOption,
+    "help_mend_net",
+    1300
+  );
+  assert.strictEqual(afterDuplicateOption, afterOption);
+
+  const afterChangedOption = selectCityBeggingDefaultOption(
+    afterOption,
+    "honest_request",
+    1400
+  );
+  assert.strictEqual(afterChangedOption, afterOption);
+  assert.equal(afterChangedOption.selectedOptionId, "help_mend_net");
+  assert.equal(afterChangedOption.fixedResult, "ji");
+});
+
 test("city begging launch payload can start the default dialogue mode", () => {
   const launched = runPlayableRuntime({
     state: createRuntimeState(),
