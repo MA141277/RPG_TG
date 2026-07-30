@@ -45,6 +45,14 @@ function getNpcPortraitClassName(npcId: string): string {
   return `c-city-begging-default__portrait--${npcId}`;
 }
 
+function hasVisitedAllLocations(
+  state: Extract<CityBeggingPlayableState, { mode: "default-dialogue" }>
+): boolean {
+  return CITY_BEGGING_DEFAULT_LOCATIONS.every((location) =>
+    state.visitedLocationIds.includes(location.locationId)
+  );
+}
+
 function renderDialogueText(input: {
   lines: readonly string[];
   speakerName: string;
@@ -92,7 +100,9 @@ function renderLocationSelect(): string {
   });
 }
 
-function renderLocationOptions(): string {
+function renderLocationOptions(
+  state: Extract<CityBeggingPlayableState, { mode: "default-dialogue" }>
+): string {
   return `
     ${renderDialogueText({
       speakerName: "托钵僧",
@@ -100,7 +110,9 @@ function renderLocationOptions(): string {
     })}
     <div class="c-grain-shop-center c-grain-shop-center--open c-city-begging-default__choice-layer">
       <nav class="c-grain-shop-actions c-city-begging-default__choices" aria-label="化缘地点">
-      ${CITY_BEGGING_DEFAULT_LOCATIONS.map(
+      ${CITY_BEGGING_DEFAULT_LOCATIONS.filter(
+        (location) => !state.visitedLocationIds.includes(location.locationId)
+      ).map(
         (location) => `
           <button
             type="button"
@@ -187,9 +199,12 @@ function renderThinking(): string {
 }
 
 function renderOutcome(
+  state: Extract<CityBeggingPlayableState, { mode: "default-dialogue" }>,
   location: CityBeggingDefaultLocation,
   option: CityBeggingDefaultOption
 ): string {
+  const canContinue = !hasVisitedAllLocations(state);
+
   return `
     ${renderDialogueText({
       speakerName: location.npc.name,
@@ -198,6 +213,20 @@ function renderOutcome(
     })}
     <div class="c-grain-shop-center c-grain-shop-center--open c-city-begging-default__choice-layer">
       <nav class="c-grain-shop-actions c-city-begging-default__choices" aria-label="化缘结算">
+      ${
+        canContinue
+          ? `
+      <button
+        type="button"
+        class="c-button c-grain-shop-button c-grain-shop-button--paper"
+        data-scene-action="continue-journey"
+        data-button-sound="light"
+      >
+        继续游历
+      </button>
+      `
+          : ""
+      }
       <button
         type="button"
         class="c-button c-grain-shop-button c-grain-shop-button--paper"
@@ -228,7 +257,7 @@ export function renderCityBeggingDefaultDialogueOverlay(
       : state.phase === "location-options-thinking"
         ? renderThinking()
       : state.phase === "location-options"
-        ? renderLocationOptions()
+        ? renderLocationOptions(state)
         : state.phase === "encounter" && location != null
         ? renderEncounter(location)
         : state.phase === "option-select-thinking"
@@ -240,7 +269,7 @@ export function renderCityBeggingDefaultDialogueOverlay(
           : state.phase === "thinking"
             ? renderThinking()
             : state.phase === "outcome" && location != null && option != null
-              ? renderOutcome(location, option)
+              ? renderOutcome(state, location, option)
               : "";
 
   return `

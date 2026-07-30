@@ -225,6 +225,72 @@ test("city begging default dialogue does not clear a locked result by reselectin
   assert.equal(afterReselectLocation.settlementApplied, false);
 });
 
+test("city begging default dialogue continues through unvisited locations only", async () => {
+  const {
+    advanceCityBeggingDefaultDialogue,
+    advanceCityBeggingDefaultThinking,
+    confirmCityBeggingDefaultFortune,
+    continueCityBeggingDefaultJourney,
+    createCityBeggingDefaultDialogueState,
+    selectCityBeggingDefaultLocation,
+    selectCityBeggingDefaultOption,
+  } = await import(
+    "../.test-dist/application/playables/city-begging/city-begging-default-dialogue.js"
+  );
+
+  const launched = createCityBeggingDefaultDialogueState(1000, []);
+  const atLocationChoices = advanceCityBeggingDefaultThinking(
+    advanceCityBeggingDefaultDialogue(launched, 1100),
+    3500
+  );
+  const atFirstLocation = selectCityBeggingDefaultLocation(
+    atLocationChoices,
+    "xicheng_guanyin"
+  );
+  assert.deepEqual(atFirstLocation.visitedLocationIds, ["xicheng_guanyin"]);
+
+  const atOptionChoices = advanceCityBeggingDefaultThinking(
+    advanceCityBeggingDefaultDialogue(atFirstLocation, 3600),
+    6000
+  );
+  const atFortune = selectCityBeggingDefaultOption(
+    atOptionChoices,
+    "help_mend_net",
+    6200
+  );
+  const atOutcome = advanceCityBeggingDefaultThinking(
+    confirmCityBeggingDefaultFortune(atFortune),
+    9000
+  );
+  const continued = continueCityBeggingDefaultJourney(atOutcome, 9200);
+
+  assert.equal(continued.phase, "location-options-thinking");
+  assert.equal(continued.selectedLocationId, null);
+  assert.equal(continued.selectedOptionId, null);
+  assert.equal(continued.fixedResult, null);
+  assert.deepEqual(continued.visitedLocationIds, ["xicheng_guanyin"]);
+
+  const secondLocationChoices = advanceCityBeggingDefaultThinking(
+    continued,
+    12000
+  );
+  const rejectedRepeat = selectCityBeggingDefaultLocation(
+    secondLocationChoices,
+    "xicheng_guanyin"
+  );
+  assert.strictEqual(rejectedRepeat, secondLocationChoices);
+
+  const acceptedSecond = selectCityBeggingDefaultLocation(
+    secondLocationChoices,
+    "dongshi_mishi"
+  );
+  assert.equal(acceptedSecond.phase, "encounter");
+  assert.deepEqual(acceptedSecond.visitedLocationIds, [
+    "xicheng_guanyin",
+    "dongshi_mishi",
+  ]);
+});
+
 test("city begging launch payload can start the default dialogue mode", () => {
   const launched = runPlayableRuntime({
     state: createRuntimeState(),
@@ -273,6 +339,22 @@ test("ai begging launch uses its own playable id and default dialogue actions", 
   }).state;
 
   assert.equal(runtimeState.app.beggingMiniGameState?.phase, "location-options");
+});
+
+test("ai begging launch refuses after all default locations are completed", () => {
+  const completedState = createRuntimeState();
+  completedState.core.runtime.flags["flag.city_begging.default.completed"] = true;
+
+  const launched = runPlayableRuntime({
+    state: completedState,
+    request: createLaunchPlayableRequest("aibegging", {
+      payload: { now: 1000 },
+    }),
+  });
+
+  assert.equal(launched.handled, true);
+  assert.equal(launched.state.app.beggingMiniGameState, null);
+  assert.equal(launched.state.core.runtime.playableSession, null);
 });
 
 test("city begging default runtime advances dialogue before showing choices", () => {
@@ -455,6 +537,144 @@ test("city begging default runtime applies outcome effects once", () => {
       "var.city_begging.bond.bond.city_begging.xicheng_fisher_old_man"
     ],
     2
+  );
+});
+
+test("city begging default runtime can continue and completes after all locations", () => {
+  let runtimeState = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("aibegging", {
+      payload: { now: 1000 },
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  }).state;
+
+  function advanceToLocationChoices(now) {
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("aibegging", "advance-dialogue", {
+        now,
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("aibegging", "tick", {
+        now: now + 3000,
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+  }
+
+  function completeLocation(locationId, optionId, now) {
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("aibegging", "select-location", {
+        locationId,
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("aibegging", "advance-dialogue", {
+        now: now + 100,
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("aibegging", "tick", {
+        now: now + 3000,
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("aibegging", "select-option", {
+        optionId,
+        now: now + 3100,
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("aibegging", "confirm-fortune"),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("aibegging", "tick", {
+        now: now + 6200,
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+  }
+
+  advanceToLocationChoices(1200);
+  completeLocation("xicheng_guanyin", "honest_request", 5000);
+  assert.equal(
+    runtimeState.core.runtime.flags[
+      "flag.city_begging.default.visited_location.xicheng_guanyin"
+    ],
+    true
+  );
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("aibegging", "continue-journey", {
+      now: 12000,
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  }).state;
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("aibegging", "tick", {
+      now: 15000,
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  }).state;
+  completeLocation("dongshi_mishi", "seek_small_shop", 16000);
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("aibegging", "continue-journey", {
+      now: 23000,
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  }).state;
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("aibegging", "tick", {
+      now: 26000,
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  }).state;
+  completeLocation("beicheng_ciji", "ask_one_bowl", 27000);
+
+  const completed = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("aibegging", "confirm-outcome"),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  assert.equal(completed.state.app.beggingMiniGameState, null);
+  assert.equal(
+    completed.state.core.runtime.flags["flag.city_begging.default.completed"],
+    true
   );
 });
 

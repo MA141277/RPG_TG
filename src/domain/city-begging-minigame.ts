@@ -47,6 +47,7 @@ export type CityBeggingDefaultDialogueRuntimeState = {
   fixedResult: "ji" | "xiong" | "ping" | null;
   thinkingUntil: number | null;
   settlementApplied: boolean;
+  visitedLocationIds: string[];
 };
 
 export type CityBeggingPlayableState =

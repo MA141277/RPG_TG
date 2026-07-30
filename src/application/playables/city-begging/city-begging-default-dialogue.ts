@@ -1,7 +1,20 @@
 import {
+  CITY_BEGGING_DEFAULT_LOCATIONS,
   getCityBeggingDefaultLocation,
+  type CityBeggingDefaultLocation,
   type CityBeggingDefaultResult,
 } from "../../../content/playables/city-begging-default-content";
+
+export const CITY_BEGGING_DEFAULT_COMPLETED_FLAG =
+  "flag.city_begging.default.completed";
+
+export function getCityBeggingDefaultVisitedLocationFlag(
+  locationId: string
+): string {
+  return `flag.city_begging.default.visited_location.${locationId}`;
+}
+
+type CityBeggingDefaultLocationId = CityBeggingDefaultLocation["locationId"];
 
 export type CityBeggingDefaultDialoguePhase =
   | "location-select"
@@ -23,12 +36,14 @@ export type CityBeggingDefaultDialogueState = {
   fixedResult: CityBeggingDefaultResult | null;
   thinkingUntil: number | null;
   settlementApplied: boolean;
+  visitedLocationIds: string[];
 };
 
 const DEFAULT_THINKING_DELAY_MS = 2400;
 
 export function createCityBeggingDefaultDialogueState(
-  _now: number
+  _now: number,
+  visitedLocationIds: string[] = []
 ): CityBeggingDefaultDialogueState {
   return {
     mode: "default-dialogue",
@@ -38,7 +53,19 @@ export function createCityBeggingDefaultDialogueState(
     fixedResult: null,
     thinkingUntil: null,
     settlementApplied: false,
+    visitedLocationIds: visitedLocationIds.filter(
+      (locationId): locationId is CityBeggingDefaultLocationId =>
+        getCityBeggingDefaultLocation(locationId) != null
+    ),
   };
+}
+
+export function hasVisitedAllCityBeggingDefaultLocations(
+  state: CityBeggingDefaultDialogueState
+): boolean {
+  return CITY_BEGGING_DEFAULT_LOCATIONS.every((location) =>
+    state.visitedLocationIds.includes(location.locationId)
+  );
 }
 
 export function advanceCityBeggingDefaultDialogue(
@@ -73,19 +100,23 @@ export function selectCityBeggingDefaultLocation(
     state.selectedLocationId != null ||
     state.selectedOptionId != null ||
     state.fixedResult != null ||
+    state.visitedLocationIds.includes(locationId as CityBeggingDefaultLocationId) ||
     getCityBeggingDefaultLocation(locationId) == null
   ) {
     return state;
   }
 
+  const locationIdValue = locationId as CityBeggingDefaultLocationId;
+
   return {
     ...state,
     phase: "encounter",
-    selectedLocationId: locationId,
+    selectedLocationId: locationIdValue,
     selectedOptionId: null,
     fixedResult: null,
     thinkingUntil: null,
     settlementApplied: false,
+    visitedLocationIds: [...state.visitedLocationIds, locationIdValue],
   };
 }
 
@@ -161,5 +192,24 @@ export function confirmCityBeggingDefaultFortune(
   return {
     ...state,
     phase: "thinking",
+  };
+}
+
+export function continueCityBeggingDefaultJourney(
+  state: CityBeggingDefaultDialogueState,
+  now: number
+): CityBeggingDefaultDialogueState {
+  if (state.phase !== "outcome" || hasVisitedAllCityBeggingDefaultLocations(state)) {
+    return state;
+  }
+
+  return {
+    ...state,
+    phase: "location-options-thinking",
+    selectedLocationId: null,
+    selectedOptionId: null,
+    fixedResult: null,
+    thinkingUntil: now + DEFAULT_THINKING_DELAY_MS,
+    settlementApplied: false,
   };
 }

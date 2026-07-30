@@ -2152,6 +2152,25 @@ function openBeggingMiniGame(): void {
 function openCityBeggingDefault(): void {
   stopCityBeggingMiniGameLoop();
   destroyCityBeggingDefaultFortuneRuntime();
+  if (appState.gameState.runtime.flags["flag.city_begging.default.completed"] === true) {
+    appState = {
+      ...closeCityMenu(closeCityDirectory(appState)),
+      beggingMiniGameState: null,
+      locationDialogueState: {
+        type: "house-access-refusal",
+        speakerCharacterId: currentPlayerCharacterId,
+        textLines: [
+          getRuntimeText(
+            "runtime.city_begging.default.completed_refusal.001"
+          ),
+        ],
+        advanceHintText: "回寺",
+      },
+    };
+    renderApp();
+    return;
+  }
+
   const launchState = {
     ...closeCityMenu(closeCityDirectory(appState)),
     locationDialogueState: null,
@@ -5419,6 +5438,18 @@ appElement.addEventListener("click", (event) => {
     "mode" in cityBeggingDefaultState &&
     cityBeggingDefaultState.mode === "default-dialogue";
   if (isCityBeggingDefaultDialogue) {
+    const sceneContinueElement = targetElement.closest<HTMLElement>(
+      "[data-scene-action='continue-journey']"
+    );
+    if (sceneContinueElement != null) {
+      dispatchCityBeggingDefaultAction("continue-journey", {
+        now: performance.now(),
+      });
+      scheduleCityBeggingDefaultThinkingTick();
+      renderApp();
+      return;
+    }
+
     const sceneAdvanceElement = targetElement.closest<HTMLElement>(
       "[data-scene-action='advance']"
     );

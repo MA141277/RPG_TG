@@ -7,10 +7,18 @@ import type {
 } from "../../../domain/city-begging-minigame";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
 import {
+  CITY_BEGGING_DEFAULT_LOCATIONS,
+  type CityBeggingDefaultLocation,
+} from "../../../content/playables/city-begging-default-content";
+import {
   advanceCityBeggingDefaultDialogue,
   advanceCityBeggingDefaultThinking,
+  CITY_BEGGING_DEFAULT_COMPLETED_FLAG,
   confirmCityBeggingDefaultFortune,
+  continueCityBeggingDefaultJourney,
   createCityBeggingDefaultDialogueState,
+  getCityBeggingDefaultVisitedLocationFlag,
+  hasVisitedAllCityBeggingDefaultLocations,
   selectCityBeggingDefaultLocation,
   selectCityBeggingDefaultOption,
   type CityBeggingDefaultDialogueState,
@@ -35,14 +43,57 @@ function isCityBeggingDefaultDialogueState(
   return state != null && "mode" in state && state.mode === "default-dialogue";
 }
 
+type CityBeggingDefaultLocationId = CityBeggingDefaultLocation["locationId"];
+
+function readVisitedCityBeggingDefaultLocationIds(
+  state: RuntimeState
+): CityBeggingDefaultLocationId[] {
+  return CITY_BEGGING_DEFAULT_LOCATIONS.filter(
+    (location) =>
+      state.core.runtime.flags[
+        getCityBeggingDefaultVisitedLocationFlag(location.locationId)
+      ] === true
+  ).map((location) => location.locationId);
+}
+
+function writeRuntimeFlag(
+  state: RuntimeState,
+  flagKey: string,
+  value: boolean
+): RuntimeState {
+  return {
+    ...state,
+    core: {
+      ...state.core,
+      runtime: {
+        ...state.core.runtime,
+        flags: {
+          ...state.core.runtime.flags,
+          [flagKey]: value,
+        },
+      },
+    },
+  };
+}
+
 export function launchCityBeggingPlayable(input: {
   state: RuntimeState;
   now: number;
   mode?: "minigame" | "default-dialogue";
 }): RuntimeState {
+  if (
+    input.mode === "default-dialogue" &&
+    input.state.core.runtime.flags[CITY_BEGGING_DEFAULT_COMPLETED_FLAG] === true
+  ) {
+    return input.state;
+  }
+
   const beggingState =
     input.mode === "default-dialogue"
-      ? createCityBeggingDefaultDialogueState(input.now)
+      ? createCityBeggingDefaultDialogueState(
+          input.now,
+          readVisitedCityBeggingDefaultLocationIds(input.state)
+        )
       : createCityBeggingMiniGameState(input.now);
 
   return {
@@ -76,6 +127,10 @@ export function launchAiBeggingPlayable(input: {
   state: RuntimeState;
   now: number;
 }): RuntimeState {
+  if (input.state.core.runtime.flags[CITY_BEGGING_DEFAULT_COMPLETED_FLAG] === true) {
+    return input.state;
+  }
+
   return {
     ...input.state,
     core: {
@@ -98,7 +153,10 @@ export function launchAiBeggingPlayable(input: {
     },
     app: {
       ...input.state.app,
-      beggingMiniGameState: createCityBeggingDefaultDialogueState(input.now),
+      beggingMiniGameState: createCityBeggingDefaultDialogueState(
+        input.now,
+        readVisitedCityBeggingDefaultLocationIds(input.state)
+      ),
     },
   };
 }
@@ -151,16 +209,25 @@ export function selectCityBeggingDefaultLocationPlayable(input: {
     return input.state;
   }
 
-  return {
+  const nextDialogueState = selectCityBeggingDefaultLocation(
+    currentState,
+    input.locationId
+  );
+  const nextState = {
     ...input.state,
     app: {
       ...input.state.app,
-      beggingMiniGameState: selectCityBeggingDefaultLocation(
-        currentState,
-        input.locationId
-      ),
+      beggingMiniGameState: nextDialogueState,
     },
   };
+
+  return nextDialogueState === currentState
+    ? nextState
+    : writeRuntimeFlag(
+        nextState,
+        getCityBeggingDefaultVisitedLocationFlag(input.locationId),
+        true
+      );
 }
 
 export function advanceCityBeggingDefaultDialoguePlayable(input: {
@@ -245,6 +312,45 @@ export function tickCityBeggingDefaultDialoguePlayable(input: {
   };
 }
 
+export function continueCityBeggingDefaultJourneyPlayable(input: {
+  state: RuntimeState;
+  now: number;
+  characterDefinitions: CharacterDefinition[];
+  playerCharacterId?: string | undefined;
+}): {
+  state: RuntimeState;
+  characterDefinitions: CharacterDefinition[];
+  characterStatusById: CharacterStatusById;
+} {
+  const currentState = input.state.app.beggingMiniGameState;
+  if (
+    !isCityBeggingDefaultDialogueState(currentState) ||
+    currentState.phase !== "outcome" ||
+    hasVisitedAllCityBeggingDefaultLocations(currentState)
+  ) {
+    return {
+      state: input.state,
+      characterDefinitions: input.characterDefinitions,
+      characterStatusById: {},
+    };
+  }
+
+  const settlement = applyCityBeggingDefaultSettlement(input);
+  const nextDialogueState = continueCityBeggingDefaultJourney(currentState, input.now);
+
+  return {
+    state: {
+      ...settlement.state,
+      app: {
+        ...settlement.state.app,
+        beggingMiniGameState: nextDialogueState,
+      },
+    },
+    characterDefinitions: settlement.characterDefinitions,
+    characterStatusById: settlement.characterStatusById,
+  };
+}
+
 export function confirmCityBeggingDefaultOutcomePlayable(input: {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
@@ -268,19 +374,28 @@ export function confirmCityBeggingDefaultOutcomePlayable(input: {
   }
 
   const settlement = applyCityBeggingDefaultSettlement(input);
+  const shouldMarkCompleted =
+    hasVisitedAllCityBeggingDefaultLocations(currentState);
+  const settledState = shouldMarkCompleted
+    ? writeRuntimeFlag(
+        settlement.state,
+        CITY_BEGGING_DEFAULT_COMPLETED_FLAG,
+        true
+      )
+    : settlement.state;
 
   return {
     state: {
-      ...settlement.state,
+      ...settledState,
       core: {
-        ...settlement.state.core,
+        ...settledState.core,
         runtime: {
-          ...settlement.state.core.runtime,
+          ...settledState.core.runtime,
           playableSession: null,
         },
       },
       app: {
-        ...settlement.state.app,
+        ...settledState.app,
         beggingMiniGameState: null,
       },
     },

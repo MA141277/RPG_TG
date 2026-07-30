@@ -198,6 +198,7 @@
   "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.third_week.label": "远途化缘",
   "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.fourth_week.label": "外地化缘",
   "runtime.zhu_yuanzhang.temple.work.unavailable.beg_alms.001": "本轮外出化缘请直接离寺，在城中进行。",
+  "runtime.city_begging.default.completed_refusal.001": "这座城市都逛遍了，回寺庙休息等候评定吧。",
   "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.default.title": "准备外出化缘",
   "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.default.001": "这次不走寺内杂务考校。离开寺庙后，你便可按外出赚钱的流程推进。",
   "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.third_week.title": "准备远途化缘",

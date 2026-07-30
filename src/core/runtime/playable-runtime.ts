@@ -34,6 +34,7 @@ import {
   advanceCityBeggingDefaultDialoguePlayable,
   confirmCityBeggingDefaultFortunePlayable,
   confirmCityBeggingDefaultOutcomePlayable,
+  continueCityBeggingDefaultJourneyPlayable,
   completeCityBeggingPlayable,
   exitCityBeggingPlayable,
   launchAiBeggingPlayable,
@@ -911,6 +912,24 @@ export function runPlayableRuntime(input: {
         };
       }
 
+      if (resolvedRequest.action === "continue-journey") {
+        const now = resolvedRequest.payload?.now;
+        const completion = continueCityBeggingDefaultJourneyPlayable({
+          state: input.state,
+          now: typeof now === "number" ? now : performance.now(),
+          characterDefinitions: input.characterDefinitions,
+          playerCharacterId: input.playerCharacterId,
+        });
+        return {
+          state: completion.state,
+          characterDefinitions: completion.characterDefinitions,
+          characterStatusById: completion.characterStatusById,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(completion.state, "aibegging"),
+        };
+      }
+
       if (resolvedRequest.action === "exit") {
         const nextState = exitCityBeggingPlayable(input.state);
         return {
@@ -1037,6 +1056,24 @@ export function runPlayableRuntime(input: {
       if (resolvedRequest.action === "confirm-outcome") {
         const completion = confirmCityBeggingDefaultOutcomePlayable({
           state: input.state,
+          characterDefinitions: input.characterDefinitions,
+          playerCharacterId: input.playerCharacterId,
+        });
+        return {
+          state: completion.state,
+          characterDefinitions: completion.characterDefinitions,
+          characterStatusById: completion.characterStatusById,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(completion.state, "city-begging"),
+        };
+      }
+
+      if (resolvedRequest.action === "continue-journey") {
+        const now = resolvedRequest.payload?.now;
+        const completion = continueCityBeggingDefaultJourneyPlayable({
+          state: input.state,
+          now: typeof now === "number" ? now : performance.now(),
           characterDefinitions: input.characterDefinitions,
           playerCharacterId: input.playerCharacterId,
         });
