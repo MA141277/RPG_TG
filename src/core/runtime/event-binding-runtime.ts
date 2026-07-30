@@ -3,6 +3,7 @@ import type { GameState } from "../../domain/game-state";
 import type { RuntimeEventEntity } from "../contracts/event-router";
 import type { RuntimeState } from "../contracts/runtime-state";
 import { activateEvent, type ActivatedEvent } from "./event-activation";
+import { createRuntimeEventEntity } from "./event-entity-projection";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { dispatchEventRoute } from "./event-router";
 import {
@@ -161,17 +162,11 @@ function toEventBindingRuntimeState(state: GameState): RuntimeState {
 function toEventBindingRuntimeEventEntity(
   eventDefinition: EventDefinition
 ): RuntimeEventEntity {
-  return {
-    id: eventDefinition.id,
-    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
-    payload: {},
-    ...(eventDefinition.nextEventId == null
-      ? {}
-      : { nextEventId: eventDefinition.nextEventId }),
-    ...(eventDefinition.emitEventIds == null
-      ? {}
-      : { emitEventIds: eventDefinition.emitEventIds }),
-  };
+  const { emitEventIds } = eventDefinition;
+  return createRuntimeEventEntity({
+    ...eventDefinition,
+    ...(emitEventIds == null ? {} : { emitEventIds }),
+  });
 }
 
 export function applyEventRuntimeActions(

@@ -15695,6 +15695,51 @@ test("event entity emit event ids propagation keeps authored multi-follow-up int
   assert.match(sceneRuntimeSource, /emitEventIds/);
 });
 
+test("runtime event entity payload projection keeps one shared authored projection seam and removes empty payload shells from live projections", () => {
+  const projectionSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-entity-projection.ts"),
+    "utf8"
+  );
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const eventRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
+    "utf8"
+  );
+  const eventBindingRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-binding-runtime.ts"),
+    "utf8"
+  );
+  const navigationRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/navigation-runtime.ts"),
+    "utf8"
+  );
+  const sceneRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/scene-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(projectionSource, /export function createRuntimeEventEntity\(/);
+  assert.match(projectionSource, /payload:/);
+  assert.match(projectionSource, /entrySceneId/);
+  assert.match(projectionSource, /taskInputs/);
+  assert.match(projectionSource, /actions/);
+
+  assert.match(storyRuntimeSource, /createRuntimeEventEntity/);
+  assert.match(eventRuntimeSource, /createRuntimeEventEntity/);
+  assert.match(eventBindingRuntimeSource, /createRuntimeEventEntity/);
+  assert.match(navigationRuntimeSource, /createRuntimeEventEntity/);
+  assert.match(sceneRuntimeSource, /createRuntimeEventEntity/);
+
+  assert.doesNotMatch(storyRuntimeSource, /payload:\s*\{\}/);
+  assert.doesNotMatch(eventRuntimeSource, /payload:\s*\{\}/);
+  assert.doesNotMatch(eventBindingRuntimeSource, /payload:\s*\{\}/);
+  assert.doesNotMatch(navigationRuntimeSource, /payload:\s*\{\}/);
+  assert.doesNotMatch(sceneRuntimeSource, /payload:\s*\{\}/);
+});
+
 test("navigation enter-house convergence keeps on-enter event activation on the shared event-router seam", () => {
   const enterHouseSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/navigation/enter-house.ts"),

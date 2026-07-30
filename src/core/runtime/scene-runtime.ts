@@ -11,6 +11,7 @@ import type {
 } from "../contracts/scene-runtime";
 import type { RuntimeState } from "../contracts/runtime-state";
 import { runStoryEventRuntime } from "./event-runtime";
+import { createRuntimeEventEntity } from "./event-entity-projection";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { dispatchEventRoute } from "./event-router";
 import { createSceneSession } from "./scene-session";
@@ -131,15 +132,9 @@ function toSceneRuntimeState(state: GameState): RuntimeState {
 function toSceneRuntimeEventEntity(
   eventDefinition: EventDefinition
 ): RuntimeEventEntity {
-  return {
-    id: eventDefinition.id,
-    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
-    payload: {},
-    ...(eventDefinition.nextEventId == null
-      ? {}
-      : { nextEventId: eventDefinition.nextEventId }),
-    ...(eventDefinition.emitEventIds == null
-      ? {}
-      : { emitEventIds: eventDefinition.emitEventIds }),
-  };
+  const { emitEventIds } = eventDefinition;
+  return createRuntimeEventEntity({
+    ...eventDefinition,
+    ...(emitEventIds == null ? {} : { emitEventIds }),
+  });
 }

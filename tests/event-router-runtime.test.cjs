@@ -121,6 +121,55 @@ test("event router contract defines a canonical event entity and routed result s
   assert.match(source, /followUpEventIds\??:/);
 });
 
+test("runtime event entity payload projection preserves authored runtime payload", () => {
+  const {
+    createRuntimeEventEntity,
+  } = require("../.test-dist/core/runtime/event-entity-projection.js");
+
+  const entity = createRuntimeEventEntity({
+    id: "event.payload.runtime",
+    chapterId: "chapter.test",
+    name: "Payload Runtime",
+    occurrence: "repeatable",
+    trigger: { timing: "manual" },
+    conditions: [],
+    entrySceneId: "scene.payload.runtime",
+    dialogueId: "dialogue.payload.runtime",
+    settlementId: "settlement.payload.runtime",
+    taskInputs: [
+      {
+        type: "signal.test",
+        source: "event.payload.runtime",
+        occurredAt: "day:1",
+      },
+    ],
+    actions: [
+      {
+        type: "closeBuilding",
+      },
+    ],
+    nextEventId: "event.payload.next",
+    emitEventIds: ["event.payload.emit.second"],
+    tags: ["payload", "runtime"],
+  });
+
+  assert.equal(entity.id, "event.payload.runtime");
+  assert.equal(entity.kind, "dialogue");
+  assert.equal(entity.payload.entrySceneId, "scene.payload.runtime");
+  assert.equal(entity.payload.dialogueId, "dialogue.payload.runtime");
+  assert.equal(entity.payload.settlementId, "settlement.payload.runtime");
+  assert.deepEqual(entity.payload.taskInputs, [
+    {
+      type: "signal.test",
+      source: "event.payload.runtime",
+      occurredAt: "day:1",
+    },
+  ]);
+  assert.deepEqual(entity.payload.actions, [{ type: "closeBuilding" }]);
+  assert.equal(entity.nextEventId, "event.payload.next");
+  assert.deepEqual(entity.emitEventIds, ["event.payload.emit.second"]);
+});
+
 test(
   "runStoryEventRuntime preserves authored emitEventIds on the routed runtime event entity",
   () => {

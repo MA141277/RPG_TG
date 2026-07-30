@@ -18,6 +18,7 @@ import type {
   RuntimeResult,
 } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
+import { createRuntimeEventEntity } from "./event-entity-projection";
 import { dispatchEventRoute } from "./event-router";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
 
@@ -230,15 +231,9 @@ function toNavigationRuntimeState(state: GameState): RuntimeState {
 function toNavigationRuntimeEventEntity(
   eventDefinition: EventDefinition
 ): RuntimeEventEntity {
-  return {
-    id: eventDefinition.id,
-    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
-    payload: {},
-    ...(eventDefinition.nextEventId == null
-      ? {}
-      : { nextEventId: eventDefinition.nextEventId }),
-    ...(eventDefinition.emitEventIds == null
-      ? {}
-      : { emitEventIds: eventDefinition.emitEventIds }),
-  };
+  const { emitEventIds } = eventDefinition;
+  return createRuntimeEventEntity({
+    ...eventDefinition,
+    ...(emitEventIds == null ? {} : { emitEventIds }),
+  });
 }

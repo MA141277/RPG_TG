@@ -25,6 +25,7 @@ import {
   runEventBindingRuntime,
 } from "../../core/runtime/event-binding-runtime";
 import { createEventRouteActivationHandlers } from "../../core/runtime/event-route-activation";
+import { createRuntimeEventEntity } from "../../core/runtime/event-entity-projection";
 import { dispatchEventRoute } from "../../core/runtime/event-router";
 import { runProgressionRuntime } from "../../core/runtime/progression-runtime";
 import { dispatchRuntimeRequest } from "../../core/runtime/runtime-dispatch";
@@ -108,21 +109,11 @@ function toStoryRuntimeState(state: GameState): RuntimeState {
 function toStoryRuntimeEventEntity(
   eventDefinition: EventDefinition
 ): RuntimeEventEntity {
-  return {
-    id: eventDefinition.id,
-    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
-    payload: {},
-    ...(eventDefinition.nextEventId == null
-      ? {}
-      : { nextEventId: eventDefinition.nextEventId }),
-    ...(eventDefinition.emitEventIds == null
-      ? {}
-      : { emitEventIds: eventDefinition.emitEventIds }),
-    metadata: {
-      title: eventDefinition.name,
-      ...(eventDefinition.tags == null ? {} : { tags: eventDefinition.tags }),
-    },
-  };
+  const { emitEventIds } = eventDefinition;
+  return createRuntimeEventEntity({
+    ...eventDefinition,
+    ...(emitEventIds == null ? {} : { emitEventIds }),
+  });
 }
 
 function routeStoryDirectEntry(

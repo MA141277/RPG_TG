@@ -15,6 +15,7 @@ import type {
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeState } from "../contracts/runtime-state";
 import { activateEvent, type ActivatedEvent } from "./event-activation";
+import { createRuntimeEventEntity } from "./event-entity-projection";
 import { selectEventCandidate } from "./event-candidate-selector";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { canActivateEvent } from "./event-condition-evaluator";
@@ -159,17 +160,11 @@ function toEventRuntimeState(state: GameState): RuntimeState {
 function toEventRuntimeEventEntity(
   eventDefinition: EventDefinition
 ): RuntimeEventEntity {
-  return {
-    id: eventDefinition.id,
-    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
-    payload: {},
-    ...(eventDefinition.nextEventId == null
-      ? {}
-      : { nextEventId: eventDefinition.nextEventId }),
-    ...(eventDefinition.emitEventIds == null
-      ? {}
-      : { emitEventIds: eventDefinition.emitEventIds }),
-  };
+  const { emitEventIds } = eventDefinition;
+  return createRuntimeEventEntity({
+    ...eventDefinition,
+    ...(emitEventIds == null ? {} : { emitEventIds }),
+  });
 }
 
 function createScopedTriggerContext(
