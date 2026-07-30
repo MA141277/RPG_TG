@@ -1,6 +1,10 @@
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
+import type {
+  EffectSettlementInput,
+  EffectSettlementResult,
+} from "../contracts/effect-settlement";
 import type { SettlementCommand } from "../contracts/settlement-command";
 import type {
   TaskAction,
@@ -10,7 +14,11 @@ import type {
 import type { RuntimeFollowUpContext } from "./runtime-router";
 import type { RuntimeRouter } from "./runtime-router";
 import { continueEventChain } from "./event-chain-runtime";
-import { settleRuntimeEffects } from "./runtime-settlement";
+import {
+  mapCommandSettlementToEffects,
+  settleRuntimeCommands,
+  translateEffectsToSettlementCommands,
+} from "./runtime-settlement";
 import {
   applyTaskAction,
   applyTaskSignal,
@@ -60,7 +68,7 @@ export function dispatchRuntimeRequest(input: {
     ...(routed.taskInputs ?? []),
     ...(chained?.taskInputs ?? []),
   ];
-  const effectSettlement = settleRuntimeEffects({
+  const effectSettlement = settleRuntimeDispatchEffects({
     state: chained?.state ?? routed.state,
     effects: routedEffects,
     emittedBy: "runtime-router",
@@ -80,7 +88,7 @@ export function dispatchRuntimeRequest(input: {
   const taskEffectSettlement =
     taskSettlement.effects.length === 0
       ? null
-      : settleRuntimeEffects({
+      : settleRuntimeDispatchEffects({
           state: taskSettlement.state,
           effects: taskSettlement.effects,
           emittedBy: "task-runtime",
@@ -154,8 +162,8 @@ export function dispatchRuntimeRequest(input: {
 
 function createRuntimeSettlementSummary(input: {
   routedSettlement: RuntimeResult["settlement"];
-  routedEffects: ReturnType<typeof settleRuntimeEffects>;
-  taskEffects: ReturnType<typeof settleRuntimeEffects> | null;
+  routedEffects: EffectSettlementResult;
+  taskEffects: EffectSettlementResult | null;
 }): RuntimeResult["settlement"] | undefined {
   const routedSettlementMetadata =
     input.routedSettlement != null && typeof input.routedSettlement === "object"
@@ -215,6 +223,51 @@ function createRuntimeSettlementSummary(input: {
   };
 
   return summary;
+}
+
+function settleRuntimeDispatchEffects(
+  input: EffectSettlementInput
+): EffectSettlementResult {
+  const translated = translateEffectsToSettlementCommands(input.effects);
+  const settled = settleRuntimeCommands({
+    state: input.state,
+    commands: translated.commandPairs.map(({ command }) => command),
+    ...(input.settlementInstances == null
+      ? {}
+      : { settlementInstances: input.settlementInstances }),
+    ...(input.settlementDefinitionsById == null
+      ? {}
+      : { settlementDefinitionsById: input.settlementDefinitionsById }),
+    emittedBy: input.emittedBy,
+    appliedBy: input.appliedBy,
+    ...(input.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: input.characterDefinitions }),
+    ...(input.characterStatusById == null
+      ? {}
+      : { characterStatusById: input.characterStatusById }),
+  });
+  const compatibility = mapCommandSettlementToEffects({
+    commandPairs: translated.commandPairs,
+    unsupportedEffects: translated.unsupportedEffects,
+    settledCommands: settled.settledCommands,
+    unsupportedCommands: settled.unsupportedCommands,
+    warnings: settled.warnings,
+    emittedBy: input.emittedBy,
+  });
+
+  return {
+    state: settled.state,
+    ...(settled.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: settled.characterDefinitions }),
+    ...(settled.characterStatusById == null
+      ? {}
+      : { characterStatusById: settled.characterStatusById }),
+    settledEffects: compatibility.settledEffects,
+    unsupportedEffects: compatibility.unsupportedEffects,
+    warnings: compatibility.warnings,
+  };
 }
 
 function omitRuntimeSettlementOwnership(

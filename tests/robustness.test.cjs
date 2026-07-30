@@ -16795,6 +16795,20 @@ test("runtime settlement applyEffects wrapper removal keeps only the live adapte
   assert.match(runtimeSettlementSource, /export function settleRuntimeCommands\(/);
 });
 
+test("runtime dispatch command settlement direct keeps core dispatch off the effect adapter", () => {
+  const runtimeDispatchSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    runtimeDispatchSource,
+    /import \{ settleRuntimeEffects \} from "\.\/runtime-settlement"/
+  );
+  assert.doesNotMatch(runtimeDispatchSource, /settleRuntimeEffects\(/);
+  assert.match(runtimeDispatchSource, /settleRuntimeCommands\(/);
+});
+
 test("runtime settlement effects fallback removal keeps state sync runtime command-only", () => {
   const stateSyncSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
