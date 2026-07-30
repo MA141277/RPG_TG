@@ -1263,6 +1263,14 @@
   bottom: 10px;
 }
 
+.c-story-chapter-title-overlay {
+  pointer-events: none;
+}
+
+.c-story-chapter-title-overlay .c-map-intro-overlay__title {
+  min-width: min(820px, calc(100vw - 80px));
+}
+
 @keyframes map-intro-title-fade {
   0% {
     opacity: 0;

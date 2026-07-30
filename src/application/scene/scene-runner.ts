@@ -196,6 +196,19 @@ export function runSceneUntilPause(
         characterDefinitions: nextCharacterDefinitions,
         textEntriesById: context.textEntriesById,
       });
+      if (callbackResult.pauseScene === true) {
+        return {
+          state: {
+            ...callbackResult.state,
+            scene: {
+              ...callbackResult.state.scene,
+              status: "playing",
+            },
+          },
+          characterDefinitions: callbackResult.characterDefinitions,
+          currentAction: null,
+        };
+      }
       nextState = incrementSceneCursor(callbackResult.state);
       nextCharacterDefinitions = callbackResult.characterDefinitions;
       continue;

@@ -127,6 +127,7 @@ import {
 } from "./application/audio/battle-sound";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
+import { resolveStorySceneHouseFollowUp } from "./application/runtime/transition/story-scene-house-follow-up";
 import { processMapReturnEffects } from "./application/runtime/transition/map-return-effect-transition";
 import {
   applyCouncilPriorityFollowUp,
@@ -318,6 +319,10 @@ import {
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
 } from "./domain/zhu-yuanzhang-story";
+import {
+  STORY_PRESENTATION_VARIABLE_KEYS,
+  readStoryChapterTitleText,
+} from "./domain/story-presentation";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
 import {
@@ -886,6 +891,7 @@ let initialCampaignMapDebugAnimationStartTime: number | null = null;
 let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
 let campaignMapZoomCloudResumeTimeoutId: number | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
+let storyChapterTitleAutoAdvanceTimeoutId: number | null = null;
 let pendingInitialCampaignMapIntroTerrainReady = false;
 let cityStageDomRuntimeHandle: {
   cityId: string;
@@ -1515,7 +1521,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
         currentHouseId: null,
         playerCharacterId,
         chapterId: "chapter.prototype",
-        year: 1567,
+        year: 1448,
         month: 1,
         day: 1,
         pinnedCharacterId: playerCharacterId,
@@ -2826,6 +2832,7 @@ function startMapAutoAdvance(input: {
   label: string;
   snapshots?: NonNullable<AppState["autoAdvanceState"]>["snapshots"];
   completion?: NonNullable<AppState["autoAdvanceState"]>["completion"];
+  statusPanel?: NonNullable<AppState["autoAdvanceState"]>["statusPanel"];
 }): void {
   stopMapAutoAdvance(input.intervalId);
   if (input.snapshots != null && input.snapshots.length === 0 && input.completion != null) {
@@ -2847,6 +2854,7 @@ function startMapAutoAdvance(input: {
       targetHouseId: input.targetHouseId,
       snapshots: input.snapshots ?? null,
       completion: input.completion ?? null,
+      statusPanel: input.statusPanel ?? null,
     },
     gameState: {
       ...appState.gameState,
@@ -2889,6 +2897,8 @@ function startMapAutoAdvance(input: {
         autoAdvanceState: {
           ...autoAdvanceState,
           snapshots: remainingSnapshots,
+          statusPanel:
+            nextSnapshot.statusPanel ?? autoAdvanceState.statusPanel ?? null,
         },
         gameState: {
           ...nextSnapshot.gameState,
@@ -2948,9 +2958,17 @@ function startMapAutoAdvance(input: {
 }
 
 function advanceCurrentStoryScene(): void {
+  const previousAppState = appState;
   mainRuntimeOrchestrator.execute({
     type: "advance-story-scene",
   });
+  const followUp = resolveStorySceneHouseFollowUp({
+    previousAppState,
+    nextAppState: appState,
+  });
+  if (followUp?.type === "reenter-house") {
+    houseRuntime.applyInteractiveFollowUp(followUp);
+  }
   renderApp();
 }
 
@@ -5651,6 +5669,15 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const dismissStoryChapterTitleAction = targetElement.closest<HTMLElement>(
+    "[data-action='dismiss-story-chapter-title']"
+  );
+  if (dismissStoryChapterTitleAction != null) {
+    clearStoryChapterTitle();
+    renderApp();
+    return;
+  }
+
   const closeOverlayButton = targetElement.closest<HTMLElement>(
     "[data-action='close-overlay'], [data-action='close-character-detail']"
   );
@@ -7729,6 +7756,7 @@ function renderAppFrame(
   syncCampaignTerrainStyleView();
   restoreCampaignMapScaleInputFocus(focusedScaleInput);
   syncMapIntroOverlay();
+  syncStoryChapterTitleOverlay();
   syncActivityQteLoop();
   if (appState.gameState.ui.currentView === "map") {
     syncCampaignTerrainWebGl(appRoot);
@@ -8232,6 +8260,52 @@ function syncMapIntroOverlay(): void {
       );
     }
   }
+}
+
+function clearStoryChapterTitle(): void {
+  if (storyChapterTitleAutoAdvanceTimeoutId != null) {
+    window.clearTimeout(storyChapterTitleAutoAdvanceTimeoutId);
+    storyChapterTitleAutoAdvanceTimeoutId = null;
+  }
+
+  if (readStoryChapterTitleText(appState.gameState).length === 0) {
+    return;
+  }
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      runtime: {
+        ...appState.gameState.runtime,
+        variables: {
+          ...appState.gameState.runtime.variables,
+          [STORY_PRESENTATION_VARIABLE_KEYS.chapterTitleText]: "",
+        },
+      },
+    },
+  };
+}
+
+function syncStoryChapterTitleOverlay(): void {
+  const chapterTitleText = readStoryChapterTitleText(appState.gameState);
+  if (chapterTitleText.length === 0) {
+    if (storyChapterTitleAutoAdvanceTimeoutId != null) {
+      window.clearTimeout(storyChapterTitleAutoAdvanceTimeoutId);
+      storyChapterTitleAutoAdvanceTimeoutId = null;
+    }
+    return;
+  }
+
+  if (storyChapterTitleAutoAdvanceTimeoutId != null) {
+    return;
+  }
+
+  storyChapterTitleAutoAdvanceTimeoutId = window.setTimeout(() => {
+    storyChapterTitleAutoAdvanceTimeoutId = null;
+    clearStoryChapterTitle();
+    advanceCurrentStoryScene();
+  }, 4000);
 }
 
 function zoomCampaignMapAtScreenCenter(nextScale: number): void {

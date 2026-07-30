@@ -59,7 +59,7 @@ function renderDialogueText(input: {
   portraitClassName?: string;
   clickable?: boolean;
 }): string {
-  const typewriterLines = renderDialogueTypewriterLines(input.lines);
+  const typewriterLines = renderDialogueTypewriterLines([...input.lines]);
   const clickable = input.clickable === true;
   const portraitClassName =
     input.portraitClassName == null ? "" : ` ${escapeHtml(input.portraitClassName)}`;

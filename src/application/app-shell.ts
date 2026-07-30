@@ -3,6 +3,7 @@ import type { CityBeggingPlayableState } from "../domain/city-begging-minigame";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
 import type {
   HouseMapAutoAdvanceCompletion,
+  HouseMapAutoAdvanceStatusPanel,
   MapAutoAdvanceSnapshot,
 } from "../domain/house-module";
 import type {
@@ -48,6 +49,8 @@ export type AppCityCardDrawTestState = {
   resultValue: number | null;
 };
 
+export type AutoAdvanceStatusPanel = HouseMapAutoAdvanceStatusPanel;
+
 export type AppState = {
   gameState: ReturnType<typeof createInitialState>;
   characterDefinitions: CharacterDefinition[];
@@ -83,6 +86,7 @@ export type AppState = {
         targetHouseId: string;
         snapshots: MapAutoAdvanceSnapshot[] | null;
         completion: HouseMapAutoAdvanceCompletion | null;
+        statusPanel?: AutoAdvanceStatusPanel | null;
       }
     | null;
   uiLayouts: UiLayoutByTargetId;

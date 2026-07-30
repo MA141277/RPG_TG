@@ -6,6 +6,7 @@ import {
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
 } from "../../domain/zhu-yuanzhang-story";
+import { STORY_PRESENTATION_VARIABLE_KEYS } from "../../domain/story-presentation";
 import {
   addDaysToCalendarDate,
   formatCouncilStatusText,
@@ -22,6 +23,10 @@ export type StoryCallbackRuntime = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
   textEntriesById?: Record<string, string> | undefined;
+};
+
+export type StoryCallbackResult = StoryCallbackRuntime & {
+  pauseScene?: boolean | undefined;
 };
 
 function getStoryCallbackText(
@@ -153,6 +158,7 @@ function runJoinGuoZixingCampCallback(
             ),
             clanId: "clan.guo",
             houseId: "house.kulan.keep",
+            portraitVariantId: "stage-25",
             biography: getStoryCallbackText(
               runtime,
               "runtime.zhu_yuanzhang.player.biography.guo_zixing_camp"
@@ -190,6 +196,7 @@ function runStartSundeyaRescueBattleCallback(
         battleIdVariableKey,
         resultVariableKey,
         enterHouseId: "house.kulan.keep",
+        returnBackgroundId: "junying",
         mainMissionText: getStoryCallbackText(
           runtime,
           "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review"
@@ -205,8 +212,29 @@ export function runStoryCallback(
   handlerId: string,
   payload: StoryCallbackPayload,
   runtime: StoryCallbackRuntime
-): StoryCallbackRuntime {
+): StoryCallbackResult {
   switch (handlerId) {
+    case "story.show-chapter-title": {
+      const titleText = readStringPayloadValue(payload, "titleText");
+      if (titleText == null || titleText.length === 0) {
+        return runtime;
+      }
+
+      return {
+        state: {
+          ...runtime.state,
+          runtime: {
+            ...runtime.state.runtime,
+            variables: {
+              ...runtime.state.runtime.variables,
+              [STORY_PRESENTATION_VARIABLE_KEYS.chapterTitleText]: titleText,
+            },
+          },
+        },
+        characterDefinitions: runtime.characterDefinitions,
+        pauseScene: true,
+      };
+    }
     case "story.placeholder-battle":
       return runPlaceholderBattleCallback(runtime, payload);
     case "story.zhu_yuanzhang.join-guo-zixing-camp":

@@ -53,7 +53,9 @@ function renderUnit(unit: StoryBattleUnit): string {
   `;
 }
 
-function renderBattleAction(session: NonNullable<ActiveStoryBattleSession>): string {
+function renderBattleAction(
+  session: NonNullable<ActiveStoryBattleSession>
+): string {
   if (session.phase === "embedded-running") {
     return "";
   }
@@ -69,7 +71,7 @@ function renderBattleAction(session: NonNullable<ActiveStoryBattleSession>): str
   if (session.phase === "npc-resolution") {
     return `
       <button type="button" class="c-button c-story-battle__primary-action" data-story-battle-action="npc-resolve" data-ui-click-sound="none">
-        观看友军合围解救
+        观看合围解救
       </button>
     `;
   }
@@ -131,7 +133,7 @@ export function renderStoryBattleView(
           <h2>战况</h2>
           ${session.summaryLines.map((line) => `<p>${line}</p>`).join("")}
           <div class="c-story-battle__control-note">
-            玩家只控制朱重八本队；郭子兴、汤和、徐达等友军由 NPC 自动行动。
+            玩家同时指挥朱重八本队与郭子兴中军；孙德崖残部仍由 NPC 按战场态势自行呼应。
           </div>
           ${formationPreviewMarkup}
           ${renderBattleAction(session)}

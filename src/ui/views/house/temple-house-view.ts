@@ -18,6 +18,7 @@ import {
   renderHouseReviewPolicyPanelOverlay,
   renderHouseStandbyRoster,
 } from "./house-shared-view";
+export { renderTempleAutoAdvanceStatusPanel } from "./temple-auto-advance-status-view";
 
 const templePopupOverlayAttribute =
   ' data-house-overlay-variant="temple-utility-popup"';

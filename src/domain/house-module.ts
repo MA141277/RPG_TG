@@ -74,6 +74,7 @@ export type HouseModuleSessionState<ModuleId extends HouseModuleId> =
 export type MapAutoAdvanceSnapshot = {
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
+  statusPanel?: HouseMapAutoAdvanceStatusPanel | null;
 };
 
 export type HouseMapAutoAdvanceCompletion =
@@ -86,6 +87,12 @@ export type HouseMapAutoAdvanceCompletion =
       houseId: string;
       houseSession: ActiveHouseModuleSession;
     };
+
+export type HouseMapAutoAdvanceStatusPanel = {
+  variant: "temple-review-rest";
+  title: string;
+  lines: string[];
+};
 
 export type HouseModuleSideEffect =
   | {
@@ -106,6 +113,7 @@ export type HouseModuleSideEffect =
       label: string;
       snapshots?: MapAutoAdvanceSnapshot[];
       completion?: HouseMapAutoAdvanceCompletion;
+      statusPanel?: HouseMapAutoAdvanceStatusPanel | null;
     }
   | {
       type: "stop-map-auto-advance";

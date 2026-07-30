@@ -2892,15 +2892,21 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
     ),
     true
   );
+  const firstReviewStayRule = houseAccessRefusalRules.find(
+    (rule) => rule.id === "rule.zhu_yuanzhang.temple.first_review_stay"
+  );
+  assert.ok(firstReviewStayRule);
   assert.equal(
-    houseAccessRefusalRules.some(
-      (rule) =>
-        rule.id === "rule.zhu_yuanzhang.temple.first_review_stay" &&
-        rule.excludedHouseModuleIds?.includes("grain-shop") === true &&
-        rule.excludedHouseModuleIds?.includes("tavern") === true &&
-        rule.excludedHouseModuleIds?.includes("market-house") === true
-    ),
-    true
+    firstReviewStayRule.excludedHouseModuleIds?.includes("grain-shop"),
+    false
+  );
+  assert.equal(
+    firstReviewStayRule.excludedHouseModuleIds?.includes("tavern"),
+    false
+  );
+  assert.equal(
+    firstReviewStayRule.excludedHouseModuleIds?.includes("market-house"),
+    false
   );
   assert.equal(cityPortraits["city.kulan"] != null, true);
 });
@@ -3623,8 +3629,8 @@ test("campaign map uses shoreamend visual renderer without legacy 2d structure s
   );
   assert.match(prototypeStyles, /\.c-campaign-marker__label\s*\{[\s\S]*max-width:\s*256px/);
   assert.match(prototypeStyles, /\.c-campaign-marker__label\s*\{[\s\S]*font-size:\s*14px/);
-  assert.doesNotMatch(prototypeStyles, /zhen\.png/);
-  assert.doesNotMatch(prototypeStyles, /cheng\.png/);
+  assert.doesNotMatch(prototypeStyles, /(?:^|[/\\])zhen\.png/);
+  assert.doesNotMatch(prototypeStyles, /(?:^|[/\\])cheng\.png/);
 });
 
 test("campaign map includes shoreamend settlement ground texture layers", () => {
@@ -9532,7 +9538,7 @@ test("story-stage access keeps leader residence entry visible in monk stage", ()
   );
 });
 
-test("house access refusal still blocks most houses before first review but temporarily allows grain shop tavern and market house", () => {
+test("house access refusal blocks outside houses before first review", () => {
   const monkState = createMonkStageState();
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
@@ -9580,13 +9586,22 @@ test("house access refusal still blocks most houses before first review but temp
     prototypeHouseAccessRefusalRules
   );
 
-  assert.equal(grainShopAccess.canEnter, true);
-  assert.equal(grainShopAccess.refusal, null);
+  assert.equal(grainShopAccess.canEnter, false);
+  assert.equal(
+    grainShopAccess.refusal?.text,
+    "既然答应了主持，就先不要离开寺院吧。"
+  );
   assert.equal(templeAccess.canEnter, true);
-  assert.equal(marketHouseAccess.canEnter, true);
-  assert.equal(marketHouseAccess.refusal, null);
-  assert.equal(tavernAccess.canEnter, true);
-  assert.equal(tavernAccess.refusal, null);
+  assert.equal(marketHouseAccess.canEnter, false);
+  assert.equal(
+    marketHouseAccess.refusal?.text,
+    "既然答应了主持，就先不要离开寺院吧。"
+  );
+  assert.equal(tavernAccess.canEnter, false);
+  assert.equal(
+    tavernAccess.refusal?.text,
+    "既然答应了主持，就先不要离开寺院吧。"
+  );
 });
 
 test("house access refusal shows guard dialogue for keep during monk stage", () => {
@@ -10405,8 +10420,10 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
     textEntriesById: begAlmsTextEntries,
   });
 
-  assert.equal(leaveResult.navigation, undefined);
-  assert.equal(leaveResult.sessionState, null);
+  assert.deepEqual(leaveResult.navigation, { type: "stay-in-house" });
+  assert.deepEqual(leaveResult.sessionState?.dialogueOverride?.textLines, [
+    "自定义离寺拦截。",
+  ]);
 });
 
 test("temple house rest summary resolves from text entries", () => {
@@ -10549,7 +10566,7 @@ test("temple and keep house content files no longer author pack task definitions
   assert.equal(templeContentSource.trim(), "export {};");
 });
 
-test("temple house temporarily allows leaving during first review for tavern debugging", () => {
+test("temple house blocks leaving during first review", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
   );
@@ -10585,11 +10602,13 @@ test("temple house temporarily allows leaving during first review for tavern deb
     },
   });
 
-  assert.equal(leaveResult.navigation, undefined);
-  assert.equal(leaveResult.sessionState, null);
+  assert.deepEqual(leaveResult.navigation, { type: "stay-in-house" });
+  assert.deepEqual(leaveResult.sessionState?.dialogueOverride?.textLines, [
+    "既然答应了主持，就先不要离开寺院吧。",
+  ]);
 });
 
-test("temple house temporarily allows leaving during the first tutorial work period", () => {
+test("temple house blocks leaving during the first tutorial work period", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
   );
@@ -10625,8 +10644,10 @@ test("temple house temporarily allows leaving during the first tutorial work per
     sessionState: firstWorkEnterResult.sessionState,
   });
 
-  assert.equal(blockedLeaveResult.navigation, undefined);
-  assert.equal(blockedLeaveResult.sessionState, null);
+  assert.deepEqual(blockedLeaveResult.navigation, { type: "stay-in-house" });
+  assert.deepEqual(blockedLeaveResult.sessionState?.dialogueOverride?.textLines, [
+    "既然答应了主持，就先不要离开寺院吧。",
+  ]);
 
   const nextReviewEnterResult = templeHouseHouseModule.enter({
     gameState: {
@@ -11695,7 +11716,7 @@ test("grain shop council-date refusal and sold-out copy resolve from text entrie
     "runtime.zhu_yuanzhang.grain_shop.sold_out.001": "自定义濠州断粮。",
     "runtime.zhu_yuanzhang.grain_shop.sold_out.002": "自定义去外地碰碰运气。",
   };
-  const soldOutState = {
+  const preBroadcastState = {
     ...createBaseState(),
     runtime: {
       ...createBaseState().runtime,
@@ -11703,6 +11724,37 @@ test("grain shop council-date refusal and sold-out copy resolve from text entrie
         ...createBaseState().runtime.variables,
         [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
           ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
+      },
+    },
+  };
+  const preBroadcastEnter = grainShopHouseModule.enter({
+    gameState: preBroadcastState,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    textEntriesById: soldOutEntries,
+  });
+  const preBroadcastResult = grainShopHouseModule.dispatch({
+    gameState: preBroadcastEnter.gameState,
+    characterDefinitions: preBroadcastEnter.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: preBroadcastEnter.sessionState,
+    request: { type: "action", actionId: "buy" },
+    textEntriesById: soldOutEntries,
+  });
+  assert.notEqual(
+    preBroadcastResult.sessionState?.overlay?.title,
+    "自定义今日无米可买"
+  );
+
+  const soldOutState = {
+    ...preBroadcastState,
+    runtime: {
+      ...preBroadcastState.runtime,
+      flags: {
+        ...preBroadcastState.runtime.flags,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.haozhouUprisingBroadcasted]: true,
       },
     },
   };
@@ -15353,7 +15405,28 @@ test("story battle rescue flow opens battle demo scenario and returns to keep re
   assert.equal(startedState.storyBattle?.demoScenarioId, "sundeya-rescue");
   assert.equal(
     startedState.storyBattle?.units.filter((unit) => unit.controller === "player").length,
-    1
+    2
+  );
+  assert.equal(
+    startedState.storyBattle?.units.some((unit) => unit.id === "unit.guo.center"),
+    true
+  );
+  assert.equal(
+    startedState.storyBattle?.units.find((unit) => unit.id === "unit.guo.center")
+      ?.controller,
+    "player"
+  );
+  assert.equal(
+    startedState.storyBattle?.units.some((unit) => unit.id === "unit.tanghe.left"),
+    false
+  );
+  assert.equal(
+    startedState.storyBattle?.units.some((unit) => unit.id === "unit.xuda.right"),
+    false
+  );
+  assert.equal(
+    startedState.storyBattle?.units.some((unit) => unit.id === "unit.yuan.south"),
+    false
   );
 
   const finishResult = dispatchStoryBattleAction(startedState, "embedded-victory");
@@ -19022,6 +19095,26 @@ test("child 32 medicine compounding settlement clears shared playable session an
   assert.equal(settledResult.gameState.runtime.playableSession, null);
 });
 
+function createActiveSundeyaReturnSceneState() {
+  const baseState = createBaseState();
+  return {
+    ...baseState,
+    scene: {
+      ...baseState.scene,
+      activeEventId: "event.story.zhu_yuanzhang.haozhou_return_encounter",
+      activeSceneId: "scene.story.zhu_yuanzhang.haozhou_return_encounter",
+      backgroundId: "junying",
+      returnView: "house",
+      cursor: 16,
+      status: "playing",
+    },
+    ui: {
+      ...baseState.ui,
+      currentView: "scene",
+    },
+  };
+}
+
 test("child 33 story callback launch writes shared playable session into runtime state", () => {
   const started = runStoryCallback(
     "story.zhu_yuanzhang.start-sundeya-rescue-battle",
@@ -19033,7 +19126,7 @@ test("child 33 story callback launch writes shared playable session into runtime
       resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
     },
     {
-      state: createBaseState(),
+      state: createActiveSundeyaReturnSceneState(),
       characterDefinitions: prototypeCharacters,
     }
   );
@@ -19057,7 +19150,7 @@ test("child 33 story callback launch writes shared playable session into runtime
   );
 });
 
-test("child 33 playable runtime settlement clears shared story-battle session and emits house reentry", () => {
+test("child 33 playable runtime settlement clears shared story-battle session and resumes the owning scene", () => {
   const { createPlayableActionRequest, runPlayableRuntime } = require(
     "../.test-dist/core/runtime/playable-runtime.js"
   );
@@ -19072,7 +19165,7 @@ test("child 33 playable runtime settlement clears shared story-battle session an
       resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
     },
     {
-      state: createBaseState(),
+      state: createActiveSundeyaReturnSceneState(),
       characterDefinitions: prototypeCharacters,
     }
   );
@@ -19093,13 +19186,17 @@ test("child 33 playable runtime settlement clears shared story-battle session an
   assert.equal(settled.handled, true);
   assert.equal(settled.state.core.storyBattle, null);
   assert.equal(settled.state.core.runtime.playableSession, null);
-  assert.deepEqual(settled.interactive, {
-    type: "reenter-house",
-    houseId: keepHouse.id,
-  });
+  assert.equal(settled.state.core.ui.currentView, "scene");
+  assert.equal(
+    settled.state.core.scene.activeSceneId,
+    "scene.story.zhu_yuanzhang.haozhou_return_encounter"
+  );
+  assert.equal(settled.state.core.scene.cursor, 16);
+  assert.deepEqual(settled.interactive, { type: "none" });
+  assert.deepEqual(settled.followUp, { type: "none" });
 });
 
-test("child 33 interactive runtime delegates story-battle compatibility actions through playable runtime", () => {
+test("child 33 interactive runtime delegates story-battle compatibility actions and keeps the owning scene active", () => {
   const {
     createInteractiveActionRequest,
     runInteractiveRuntime,
@@ -19115,7 +19212,7 @@ test("child 33 interactive runtime delegates story-battle compatibility actions 
       resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
     },
     {
-      state: createBaseState(),
+      state: createActiveSundeyaReturnSceneState(),
       characterDefinitions: prototypeCharacters,
     }
   );
@@ -19135,10 +19232,14 @@ test("child 33 interactive runtime delegates story-battle compatibility actions 
 
   assert.equal(settled.state.core.storyBattle, null);
   assert.equal(settled.state.core.runtime.playableSession, null);
-  assert.deepEqual(settled.interactive, {
-    type: "reenter-house",
-    houseId: keepHouse.id,
-  });
+  assert.equal(settled.state.core.ui.currentView, "scene");
+  assert.equal(
+    settled.state.core.scene.activeSceneId,
+    "scene.story.zhu_yuanzhang.haozhou_return_encounter"
+  );
+  assert.equal(settled.state.core.scene.cursor, 16);
+  assert.deepEqual(settled.interactive, { type: "none" });
+  assert.deepEqual(settled.followUp, { type: "none" });
 });
 
 test("child 34 package scripts expose playable scaffold and validation entry points", () => {

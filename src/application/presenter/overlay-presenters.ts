@@ -1,6 +1,7 @@
 import type { AppState } from "../app-shell";
 import type { CityDefinition } from "../../domain/city";
 import type { AppPresenterOverlayOutput } from "./presenter-output";
+import { readStoryChapterTitleText } from "../../domain/story-presentation";
 
 export type OverlayPresenterInput = {
   appState: AppState;
@@ -31,6 +32,7 @@ export function createOverlayPresenterOutput(
     overlayView: input.appState.gameState.ui.overlayView,
     shouldShowGlobalHud,
     locationText,
+    storyChapterTitleText: readStoryChapterTitleText(input.appState.gameState),
     campaignTravelState: input.appState.campaignTravelState,
     modalState: input.appState.modalState,
     locationDialogueState: input.appState.locationDialogueState,

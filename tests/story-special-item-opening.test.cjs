@@ -622,6 +622,132 @@ test("huangjue ordination continues to the first temple review after entering th
   );
 });
 
+test("grain procurement bridge uses an out-of-town uprising broadcast and revised temple review copy", () => {
+  const events = JSON.parse(
+    fs.readFileSync("src/content/scenario-packs/zhuyuanzhang/events.json", "utf8")
+  );
+  const scenes = JSON.parse(
+    fs.readFileSync("src/content/scenario-packs/zhuyuanzhang/scenes.json", "utf8")
+  );
+  const textEntries = JSON.parse(
+    fs.readFileSync("src/content/scenario-packs/zhuyuanzhang/text-entries.json", "utf8")
+  );
+  const broadcastEvent = events.find(
+    (event) => event.id === "event.story.zhu_yuanzhang.runing_broadcast"
+  );
+  const unlockScene = scenes.find(
+    (entry) => entry.id === "scene.story.zhu_yuanzhang.unlock_begging"
+  );
+  const broadcastScene = scenes.find(
+    (entry) => entry.id === "scene.story.zhu_yuanzhang.runing_broadcast"
+  );
+
+  assert.equal(broadcastEvent?.trigger?.timing, "city-enter");
+  assert.equal(broadcastEvent?.trigger?.scope, undefined);
+  assert.equal(
+    broadcastEvent?.conditions?.some(
+      (condition) =>
+        condition.type === "group" &&
+        condition.operator === "not" &&
+        condition.conditions?.[0]?.type === "location" &&
+        condition.conditions?.[0]?.cityId === "city.kulan"
+    ),
+    true
+  );
+  assert.equal(broadcastScene?.actions[0]?.type, "background");
+  assert.equal(broadcastScene?.actions[0]?.backgroundId, "bg.story.qiyi");
+  assert.equal(
+    textEntries["scene.story.zhu_yuanzhang.first_temple_review.001"],
+    "往后这段时日，寺里的方针以保全自身为主。"
+  );
+  assert.equal(
+    textEntries["scene.story.zhu_yuanzhang.first_temple_review.002"],
+    "你初来乍到，外面也兵荒马乱，姑且在寺内帮忙吧。"
+  );
+  assert.equal(
+    textEntries["scene.story.zhu_yuanzhang.unlock_begging.002"],
+    "这是500文，濠州近日断粮，你去附近的城市带回来吧，尽量多买也好施舍。"
+  );
+  assert.equal(
+    textEntries["scene.story.zhu_yuanzhang.runing_broadcast.001"],
+    "世界事件：濠州爆发红巾起义。繁荣度-2"
+  );
+  assert.equal(
+    textEntries["scene.story.zhu_yuanzhang.runing_broadcast.002"],
+    "不知寺内情况如何，买了粮食就回去吧。"
+  );
+  assert.equal(
+    unlockScene?.actions.some(
+      (action) =>
+        action.type === "effect" &&
+        action.effects?.some(
+          (effect) =>
+            effect.type === "modify-character-stat" &&
+            effect.characterId === "char.player" &&
+            effect.stat === "gold" &&
+            effect.delta === 500
+        )
+    ),
+    true
+  );
+});
+
+test("returning to Haozhou after the grain broadcast triggers the return encounter on week two", () => {
+  const events = JSON.parse(
+    fs.readFileSync("src/content/scenario-packs/zhuyuanzhang/events.json", "utf8")
+  );
+  const state = createMinimalGameState({
+    scene: {
+      activeEventId: null,
+      activeSceneId: null,
+      cursor: 0,
+      status: "idle",
+    },
+    world: {
+      ...createMinimalGameState().world,
+      currentCityId: "city.kulan",
+      currentHouseId: null,
+    },
+    runtime: {
+      ...createMinimalGameState().runtime,
+      flags: {
+        "flag.story.zhu_yuanzhang.begging_unlocked": true,
+        "flag.story.zhu_yuanzhang.haozhou_uprising_broadcasted": true,
+      },
+      variables: {
+        "var.story.zhu_yuanzhang.stage": "huangjue-begging-journey",
+        "var.story.zhu_yuanzhang.temple_week": 2,
+      },
+    },
+  });
+
+  const triggered = selectTriggeredEvents(
+    state,
+    events,
+    { timing: "city-enter", cityId: "city.kulan" },
+    {
+      isCharacterAvailable: () => true,
+      isCharacterInClan: () => false,
+      isCharacterInCity: () => false,
+      doesClanExist: () => false,
+      getClanRelation: () => null,
+      isCityOwnedByClan: () => false,
+      hasEventFired: () => false,
+      getEventFiredCount: () => 0,
+      getMonthsSinceEvent: () => null,
+      getMissionStatus: () => "inactive",
+      runCustomCondition: () => false,
+    }
+  );
+
+  assert.equal(
+    triggered.some(
+      (event) => event.id === "event.story.zhu_yuanzhang.haozhou_return_encounter"
+    ),
+    true
+  );
+});
+
 test("village elder letter dialogue is split and only uses the configured elder", () => {
   const scenes = JSON.parse(
     fs.readFileSync("src/content/scenario-packs/zhuyuanzhang/scenes.json", "utf8")
@@ -697,4 +823,11 @@ test("village elder letter reveals Haozhou and updates the temple objective afte
       ],
     },
   ]);
+});
+
+test("story qiyi cg is wired into dialogue background previews", () => {
+  const source = fs.readFileSync("src/ui/location-backgrounds.ts", "utf8");
+
+  assert.match(source, /qiyi\.png\?url/);
+  assert.match(source, /"bg\.story\.qiyi":\s*storyBackgroundQiyiUrl/);
 });

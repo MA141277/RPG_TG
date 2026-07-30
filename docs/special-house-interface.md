@@ -151,6 +151,7 @@ export type HouseModuleSideEffect =
       label: string;
       snapshots?: MapAutoAdvanceSnapshot[];
       completion?: HouseMapAutoAdvanceCompletion;
+      statusPanel?: HouseMapAutoAdvanceStatusPanel | null;
     }
   | {
       type: "stop-map-auto-advance";
@@ -166,6 +167,13 @@ export type HouseModuleSideEffect =
 export type MapAutoAdvanceSnapshot = {
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
+  statusPanel?: HouseMapAutoAdvanceStatusPanel | null;
+};
+
+export type HouseMapAutoAdvanceStatusPanel = {
+  variant: string;
+  title: string;
+  lines: string[];
 };
 
 export type HouseMapAutoAdvanceCompletion =
@@ -259,6 +267,7 @@ This path is for generic map-view time progression and automatic re-entry, not f
 If a module needs the player to visibly watch several days pass on the world map and then return to a house scene, it should supply:
 
 - `snapshots`: one entry per skipped day, so shared runtime can update HUD time and any daily state changes during playback
+- `statusPanel`: optional structured read-only panel data for the current auto-advance display; if the panel changes per day, attach the updated panel to each `MapAutoAdvanceSnapshot`
 - `completion: { type: "restore-house-session" }` when the target scene should resume a prepared house session after playback
 - `completion: { type: "enter-house" }` when playback should end by re-entering the target house and letting that module's `enter()` lifecycle decide the next flow, such as immediately starting a review meeting
 
@@ -267,6 +276,7 @@ Do not emulate this by:
 - mutating calendar inside `main.ts`
 - manually switching `currentView` in one concrete house branch
 - showing fake house-local rest results while world time is supposed to be advancing on the map
+- importing a concrete house status builder into `main.ts`; the house module must emit structured `statusPanel` data through the shared side effect/snapshot contract instead
 
 If a module completes one player activity and should consume shared world time,
 return `timeAdvanceCost` on `HouseModuleTransitionResult`.

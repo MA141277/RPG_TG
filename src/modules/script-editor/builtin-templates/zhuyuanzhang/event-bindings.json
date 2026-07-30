@@ -137,13 +137,12 @@
           "operator": "==",
           "value": "huangjue-begging-journey"
         },
-        {
-          "type": "variable",
-          "key": "var.story.zhu_yuanzhang.temple_week",
-          "operator": "==",
-          "value": 4
-        }
-      ]
+          {
+            "type": "flag",
+            "key": "flag.story.zhu_yuanzhang.haozhou_uprising_broadcasted",
+            "expected": true
+          }
+        ]
     },
     "priority": 155,
     "enabled": true

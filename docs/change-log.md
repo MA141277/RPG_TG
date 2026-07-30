@@ -2,6 +2,15 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-31 777 Branch Integration
+
+### Changed
+- `MapAutoAdvanceSnapshot` 与 `start-map-auto-advance` side effect 明确支持结构化 `statusPanel`，house 模块可以为每个自动推进日提供刷新后的只读状态面板。
+- `src/main.ts` 播放自动推进 snapshot 时只消费共享 `statusPanel` 数据，不直接 import concrete temple house status builder。
+
+### Impact
+- 寺庙 `休至评定日` 自动推进状态窗保留每日刷新能力，同时维持 special house module 边界。
+
 ## 2026-07-31 City Begging Default Dialogue Runtime
 
 ### Added
@@ -27,6 +36,29 @@
 
 ### Impact
 - 后续 runtime 接线可以直接消费 `src/content/playables` 下的结构化默认化缘内容，无需在运行时解析中文文案，也无需向 `src/main.ts` 添加化缘内容分支。
+
+## 2026-07-31 Zhu Yuanzhang Sundeya Victory Follow-up
+
+### Changed
+- 朱元璋“返濠州遇盗与入郭”在“孙德崖解围战”胜利后新增郭子兴、孙德崖、朱元璋三句续接对白，并在朱元璋这句时切到红巾军阶段立绘。
+- 新增通用 `story.show-chapter-title` 回调与共享章节标题遮罩，可由 scene callback 触发“第二章 濠州从戎”这类章节卡，不再把具体剧情文案写进 `src/main.ts`。
+- 该段剧情结尾接入现有 `reward` 弹窗类型，显示“感谢您的游玩，请关注 funloom 了解游戏最新进展。”
+
+### Impact
+- 朱元璋主线从“入郭”过渡到“濠州从戎”有了明确的战后收束节点，剧情节奏从战斗胜利自然落到下一章标题与试玩收尾提示。
+- 后续剧情如需复用章节卡，只需在 scene 数据中追加 `story.show-chapter-title` callback，无需新增主壳特判。
+
+## 2026-07-31 Zhu Yuanzhang Grain Procurement Bridge
+
+### Changed
+- 朱元璋皇觉寺前期桥接剧情改成更明确的“外出买粮”表述：首轮评定文案更收敛，第二轮由方丈直接发放 500 文，并要求玩家去附近城市买粮回寺。
+- “颍州街头风声”改成任意非濠州城市进入时触发的世界事件播报，并接入 `ui/cg/qiyi.png` 作为专用剧情背景；播报后主角会明确表示买到粮就立刻回濠州。
+- 濠州粮铺的断供判定不再在整个外出阶段一开始就生效，而是改成起义播报发生后才锁定，和剧情节奏对齐。
+- “返濠州遇盗与入郭”中的自述口径由“化缘归来”调整为“买粮归来”，与这一段桥接任务保持一致。
+
+### Impact
+- 第二周到返濠州入郭之间的剧情目标更清楚：先离寺带资外购，再在外城得知濠州起义，随后折返并衔接既有入营线。
+- 粮铺断供从静态阶段判定改成剧情节点判定，避免玩家刚接到差事时就立刻遭遇不合时序的濠州断粮提示。
 
 ## 2026-07-30 Unified Equipment Slot UI And Backpack Contract
 

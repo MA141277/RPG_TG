@@ -31,6 +31,7 @@ export type StoryBattleCompletion = {
   battleIdVariableKey: string;
   resultVariableKey: string;
   enterHouseId?: string;
+  returnBackgroundId?: string;
   mainMissionText?: string;
 };
 

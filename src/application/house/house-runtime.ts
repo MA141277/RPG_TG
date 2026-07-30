@@ -7,6 +7,7 @@ import type { GameState } from "../../domain/game-state";
 import type {
   ActiveHouseModuleSession,
   HouseMapAutoAdvanceCompletion,
+  HouseMapAutoAdvanceStatusPanel,
   HouseModuleId,
   HouseModuleSideEffect,
   MapAutoAdvanceSnapshot,
@@ -33,6 +34,7 @@ type HouseRuntimeDependencies = {
     label: string;
     snapshots?: MapAutoAdvanceSnapshot[];
     completion?: HouseMapAutoAdvanceCompletion;
+    statusPanel?: HouseMapAutoAdvanceStatusPanel | null;
   }): void;
   stopMapAutoAdvance(intervalId: string): void;
   houseDefinitions: HouseDefinition[];
@@ -180,6 +182,9 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
           ...(sideEffect.completion == null
             ? {}
             : { completion: sideEffect.completion }),
+          ...(sideEffect.statusPanel == null
+            ? {}
+            : { statusPanel: sideEffect.statusPanel }),
         });
         return;
       }

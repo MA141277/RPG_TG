@@ -212,13 +212,12 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
         operator: "==",
         value: ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
       },
-      {
-        type: "variable",
-        key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek,
-        operator: "==",
-        value: 4,
-      },
-    ],
+        {
+          type: "flag",
+          key: ZHU_YUANZHANG_STORY_FLAG_KEYS.haozhouUprisingBroadcasted,
+          expected: true,
+        },
+      ],
     entrySceneId: "scene.story.zhu_yuanzhang.haozhou_return_encounter",
     tags: ["main-story", "city-enter", "battle-hook", "join-guo-zixing"],
   },
@@ -554,6 +553,36 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
       {
         type: "narration",
         textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.015",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.kulan_lord",
+        side: "left",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.016",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.yuanmo.sun_deya",
+        side: "left",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.017",
+      },
+      {
+        type: "dialogue",
+        characterId: "char.player",
+        side: "right",
+        textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.018",
+      },
+      {
+        type: "callback",
+        handlerId: "story.show-chapter-title",
+        payload: {
+          titleText: "第二章 濠州从戎",
+        },
+      },
+      {
+        type: "reward",
+        title: "感谢您的游玩",
+        lines: ["请关注funloom了解游戏最新进展。"],
       },
     ],
   },
