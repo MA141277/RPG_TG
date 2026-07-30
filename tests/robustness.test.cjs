@@ -16809,6 +16809,19 @@ test("runtime dispatch command settlement direct keeps core dispatch off the eff
   assert.match(runtimeDispatchSource, /settleRuntimeCommands\(/);
 });
 
+test("runtime dispatch effect settlement contract removal keeps dispatch off the compat contract file", () => {
+  const runtimeDispatchSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    runtimeDispatchSource,
+    /from "\.\.\/contracts\/effect-settlement"/
+  );
+  assert.match(runtimeDispatchSource, /settleRuntimeCommands\(/);
+});
+
 test("runtime settlement effects fallback removal keeps state sync runtime command-only", () => {
   const stateSyncSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),

@@ -1,10 +1,6 @@
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
-import type {
-  EffectSettlementInput,
-  EffectSettlementResult,
-} from "../contracts/effect-settlement";
 import type { SettlementCommand } from "../contracts/settlement-command";
 import type {
   TaskAction,
@@ -24,6 +20,21 @@ import {
   applyTaskSignal,
   createEmptyTaskRuntimeState,
 } from "./task-runtime";
+
+type DispatchCommandSettlementInput = Parameters<typeof settleRuntimeCommands>[0];
+
+type DispatchEffectSettlementInput = Omit<
+  DispatchCommandSettlementInput,
+  "commands"
+> & {
+  effects: NonNullable<RuntimeResult["effects"]>;
+};
+
+type DispatchEffectSettlementResult = Pick<
+  ReturnType<typeof settleRuntimeCommands>,
+  "state" | "characterDefinitions" | "characterStatusById"
+> &
+  ReturnType<typeof mapCommandSettlementToEffects>;
 
 export function dispatchRuntimeRequest(input: {
   state: RuntimeState;
@@ -162,8 +173,8 @@ export function dispatchRuntimeRequest(input: {
 
 function createRuntimeSettlementSummary(input: {
   routedSettlement: RuntimeResult["settlement"];
-  routedEffects: EffectSettlementResult;
-  taskEffects: EffectSettlementResult | null;
+  routedEffects: DispatchEffectSettlementResult;
+  taskEffects: DispatchEffectSettlementResult | null;
 }): RuntimeResult["settlement"] | undefined {
   const routedSettlementMetadata =
     input.routedSettlement != null && typeof input.routedSettlement === "object"
@@ -226,8 +237,8 @@ function createRuntimeSettlementSummary(input: {
 }
 
 function settleRuntimeDispatchEffects(
-  input: EffectSettlementInput
-): EffectSettlementResult {
+  input: DispatchEffectSettlementInput
+): DispatchEffectSettlementResult {
   const translated = translateEffectsToSettlementCommands(input.effects);
   const settled = settleRuntimeCommands({
     state: input.state,
