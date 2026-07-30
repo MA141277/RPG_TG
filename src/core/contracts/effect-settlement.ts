@@ -1,4 +1,3 @@
-import type { Effect } from "./effect";
 import type { ProgressionSettlementInstance } from "./progression-runtime";
 import type { RuntimeState } from "./runtime-state";
 import type { SettlementCommand } from "./settlement-command";
@@ -48,18 +47,4 @@ export type SettlementRuntimeResult = {
   settledCommands: SettlementCommand[];
   unsupportedCommands: SettlementCommand[];
   warnings: string[];
-};
-
-export type EffectSettlementApplier = SettlementRuntimeApplier;
-
-export type EffectSettlementInput = Omit<SettlementRuntimeInput, "commands"> & {
-  effects: Effect[];
-};
-
-export type EffectSettlementResult = Omit<
-  SettlementRuntimeResult,
-  "settledCommands" | "unsupportedCommands"
-> & {
-  settledEffects: Effect[];
-  unsupportedEffects: Effect[];
 };

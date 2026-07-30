@@ -5,8 +5,9 @@ const {
   applySettlementContents,
   applySettlementDefinitionById,
   applySettlementInstances,
+  mapCommandSettlementToEffects,
   settleRuntimeCommands,
-  settleRuntimeEffects,
+  translateEffectsToSettlementCommands,
 } = require("../.test-dist/core/runtime/runtime-settlement.js");
 const {
   createInitialState,
@@ -266,9 +267,9 @@ test("applySettlementDefinitionById applies a named settlement definition to mix
 test("settleRuntimeEffects applies progression settlement instances to character definitions", () => {
   const characterDefinitions = [createCharacterDefinition()];
 
-  const result = settleRuntimeEffects({
+  const result = settleRuntimeCommands({
     state: createBaseRuntimeState(),
-    effects: [],
+    commands: [],
     settlementInstances: [
       {
         settlementId: "hero-tier-entry",
@@ -307,28 +308,36 @@ test("settleRuntimeEffects applies progression settlement instances to character
 });
 
 test("settleRuntimeEffects settles character numeric property mutations with status patches", () => {
-  const result = settleRuntimeEffects({
+  const effect = {
+    type: "mutateCharacterNumericProperty",
+    characterId: "hero",
+    propertyId: "stats.martial",
+    operation: "add",
+    value: 3,
+  };
+  const translated = translateEffectsToSettlementCommands([effect]);
+  const commandSettlement = settleRuntimeCommands({
     state: createBaseRuntimeState(),
-    effects: [
-      {
-        type: "mutateCharacterNumericProperty",
-        characterId: "hero",
-        propertyId: "stats.martial",
-        operation: "add",
-        value: 3,
-      },
-    ],
+    commands: translated.commandPairs.map(({ command }) => command),
     emittedBy: "event-runtime",
     appliedBy: "runtime-settlement",
     characterDefinitions: [createCharacterDefinition()],
   });
+  const compatibility = mapCommandSettlementToEffects({
+    commandPairs: translated.commandPairs,
+    unsupportedEffects: translated.unsupportedEffects,
+    settledCommands: commandSettlement.settledCommands,
+    unsupportedCommands: commandSettlement.unsupportedCommands,
+    warnings: commandSettlement.warnings,
+    emittedBy: "event-runtime",
+  });
 
-  assert.equal(result.characterDefinitions[0].stats.martial, 23);
-  assert.deepEqual(result.characterStatusById.hero.statPatch, {
+  assert.equal(commandSettlement.characterDefinitions[0].stats.martial, 23);
+  assert.deepEqual(commandSettlement.characterStatusById.hero.statPatch, {
     martial: 23,
   });
-  assert.equal(result.settledEffects.length, 1);
-  assert.deepEqual(result.unsupportedEffects, []);
+  assert.equal(compatibility.settledEffects.length, 1);
+  assert.deepEqual(compatibility.unsupportedEffects, []);
 });
 
 test("settleRuntimeEffects reports character mutation without character definitions as unsupported", () => {
@@ -340,16 +349,25 @@ test("settleRuntimeEffects reports character mutation without character definiti
     value: 3,
   };
 
-  const result = settleRuntimeEffects({
+  const translated = translateEffectsToSettlementCommands([effect]);
+  const commandSettlement = settleRuntimeCommands({
     state: createBaseRuntimeState(),
-    effects: [effect],
+    commands: translated.commandPairs.map(({ command }) => command),
     emittedBy: "event-runtime",
     appliedBy: "runtime-settlement",
   });
+  const compatibility = mapCommandSettlementToEffects({
+    commandPairs: translated.commandPairs,
+    unsupportedEffects: translated.unsupportedEffects,
+    settledCommands: commandSettlement.settledCommands,
+    unsupportedCommands: commandSettlement.unsupportedCommands,
+    warnings: commandSettlement.warnings,
+    emittedBy: "event-runtime",
+  });
 
-  assert.deepEqual(result.settledEffects, []);
-  assert.deepEqual(result.unsupportedEffects, [effect]);
-  assert.deepEqual(result.warnings, [
+  assert.deepEqual(compatibility.settledEffects, []);
+  assert.deepEqual(compatibility.unsupportedEffects, [effect]);
+  assert.deepEqual(compatibility.warnings, [
     "unsupported-effect:mutateCharacterNumericProperty:missing-character-definitions:emitted-by:event-runtime",
   ]);
 });
@@ -360,20 +378,29 @@ test("settleRuntimeEffects settles changeMoney through the shared settlement com
     amount: 25,
   };
 
-  const result = settleRuntimeEffects({
+  const translated = translateEffectsToSettlementCommands([effect]);
+  const commandSettlement = settleRuntimeCommands({
     state: createBaseRuntimeState(),
-    effects: [effect],
+    commands: translated.commandPairs.map(({ command }) => command),
     emittedBy: "event-runtime",
     appliedBy: "runtime-settlement",
     characterDefinitions: [createCharacterDefinition()],
   });
+  const compatibility = mapCommandSettlementToEffects({
+    commandPairs: translated.commandPairs,
+    unsupportedEffects: translated.unsupportedEffects,
+    settledCommands: commandSettlement.settledCommands,
+    unsupportedCommands: commandSettlement.unsupportedCommands,
+    warnings: commandSettlement.warnings,
+    emittedBy: "event-runtime",
+  });
 
-  assert.equal(result.characterDefinitions[0].stats.gold, 125);
-  assert.deepEqual(result.characterStatusById.hero.statPatch, {
+  assert.equal(commandSettlement.characterDefinitions[0].stats.gold, 125);
+  assert.deepEqual(commandSettlement.characterStatusById.hero.statPatch, {
     gold: 125,
   });
-  assert.deepEqual(result.settledEffects, [effect]);
-  assert.deepEqual(result.unsupportedEffects, []);
+  assert.deepEqual(compatibility.settledEffects, [effect]);
+  assert.deepEqual(compatibility.unsupportedEffects, []);
 });
 
 test("settleRuntimeCommands exposes the canonical command-level settlement entry", () => {
@@ -441,18 +468,24 @@ test(
     };
 
     try {
-      const { settleRuntimeEffects: settleRuntimeEffectsWithPatchedOwner } =
+      const {
+        translateEffectsToSettlementCommands:
+          translateEffectsToSettlementCommandsWithPatchedOwner,
+        settleRuntimeCommands: settleRuntimeCommandsWithPatchedOwner,
+      } =
         require(runtimeSettlementPath);
-
-      const result = settleRuntimeEffectsWithPatchedOwner({
-        state: createBaseRuntimeState(),
-        effects: [
+      const translated =
+        translateEffectsToSettlementCommandsWithPatchedOwner([
           {
             type: "setFlag",
             key: "event.test.delegated",
             value: true,
           },
-        ],
+        ]);
+
+      const result = settleRuntimeCommandsWithPatchedOwner({
+        state: createBaseRuntimeState(),
+        commands: translated.commandPairs.map(({ command }) => command),
         emittedBy: "event-runtime",
         appliedBy: "runtime-settlement",
       });

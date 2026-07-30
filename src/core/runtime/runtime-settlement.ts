@@ -2,8 +2,6 @@ import type { Effect } from "../contracts/effect";
 import type {
   SettlementRuntimeInput,
   SettlementRuntimeResult,
-  EffectSettlementInput,
-  EffectSettlementResult,
 } from "../contracts/effect-settlement";
 import type { SettlementCommand } from "../contracts/settlement-command";
 import type { ProgressionSettlementInstance } from "../contracts/progression-runtime";
@@ -323,53 +321,6 @@ function readSettlementTarget(
   return (state[collectionKey] ?? context[collectionKey])?.[content.targetId];
 }
 
-export function settleRuntimeEffects(
-  input: EffectSettlementInput
-): EffectSettlementResult {
-  const translated = translateEffectsToSettlementCommands(input.effects);
-
-  const commandSettlement = settleRuntimeCommands({
-    state: input.state,
-    commands: translated.commandPairs.map(({ command }) => command),
-    ...(input.settlementInstances == null
-      ? {}
-      : { settlementInstances: input.settlementInstances }),
-    ...(input.settlementDefinitionsById == null
-      ? {}
-      : { settlementDefinitionsById: input.settlementDefinitionsById }),
-    emittedBy: input.emittedBy,
-    appliedBy: input.appliedBy,
-    ...(input.characterDefinitions == null
-      ? {}
-      : { characterDefinitions: input.characterDefinitions }),
-    ...(input.characterStatusById == null
-      ? {}
-      : { characterStatusById: input.characterStatusById }),
-  });
-
-  const compatibility = mapCommandSettlementToEffects({
-    commandPairs: translated.commandPairs,
-    unsupportedEffects: translated.unsupportedEffects,
-    settledCommands: commandSettlement.settledCommands,
-    unsupportedCommands: commandSettlement.unsupportedCommands,
-    warnings: commandSettlement.warnings,
-    emittedBy: input.emittedBy,
-  });
-
-  return {
-    state: commandSettlement.state,
-    ...(commandSettlement.characterDefinitions == null
-      ? {}
-      : { characterDefinitions: commandSettlement.characterDefinitions }),
-    ...(commandSettlement.characterStatusById == null
-      ? {}
-      : { characterStatusById: commandSettlement.characterStatusById }),
-    settledEffects: compatibility.settledEffects,
-    unsupportedEffects: compatibility.unsupportedEffects,
-    warnings: compatibility.warnings,
-  };
-}
-
 export function translateEffectsToSettlementCommands(effects: Effect[]): {
   commandPairs: EffectSettlementCommandPair[];
   unsupportedEffects: Effect[];
@@ -399,11 +350,12 @@ export function mapCommandSettlementToEffects(input: {
   settledCommands: SettlementCommand[];
   unsupportedCommands: SettlementCommand[];
   warnings: string[];
-  emittedBy: EffectSettlementInput["emittedBy"];
-}): Pick<
-  EffectSettlementResult,
-  "settledEffects" | "unsupportedEffects" | "warnings"
-> {
+  emittedBy: SettlementRuntimeInput["emittedBy"];
+}): {
+  settledEffects: Effect[];
+  unsupportedEffects: Effect[];
+  warnings: string[];
+} {
   const settledEffects: Effect[] = [];
   const unsupportedEffects = [...input.unsupportedEffects];
   const effectByCommand = new Map(

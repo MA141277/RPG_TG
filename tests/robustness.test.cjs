@@ -16726,7 +16726,7 @@ test("child 16 covered indoor-screen-shown story handoff stays on the shared tri
   assert.doesNotMatch(source, /runSceneFromEvent\(/);
 });
 
-test("effect settlement contract exports emitter applier input and result seams", () => {
+test("effect settlement contract exports the command-native settlement seams", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/effect-settlement.ts"),
     "utf8"
@@ -16735,10 +16735,10 @@ test("effect settlement contract exports emitter applier input and result seams"
   assert.match(source, /export type EffectEmitter =/);
   assert.match(source, /export type SettlementRuntimeInput =/);
   assert.match(source, /export type SettlementRuntimeResult =/);
-  assert.match(source, /export type EffectSettlementApplier =/);
-  assert.match(source, /export type EffectSettlementInput =/);
-  assert.match(source, /export type EffectSettlementResult =/);
-  assert.match(source, /unsupportedEffects:/);
+  assert.doesNotMatch(source, /export type EffectSettlementApplier =/);
+  assert.doesNotMatch(source, /export type EffectSettlementInput =/);
+  assert.doesNotMatch(source, /export type EffectSettlementResult =/);
+  assert.match(source, /unsupportedCommands:/);
   assert.match(source, /warnings:/);
 });
 
@@ -16748,9 +16748,13 @@ test("runtime settlement uses explicit contract and reports unsupported effect k
     "utf8"
   );
 
-  assert.match(source, /import type \{[\s\S]*SettlementRuntimeInput[\s\S]*SettlementRuntimeResult[\s\S]*EffectSettlementInput[\s\S]*EffectSettlementResult[\s\S]*\}/);
+  assert.match(source, /import type \{[\s\S]*SettlementRuntimeInput[\s\S]*SettlementRuntimeResult[\s\S]*\}/);
+  assert.doesNotMatch(source, /EffectSettlementInput/);
+  assert.doesNotMatch(source, /EffectSettlementResult/);
   assert.match(source, /export function settleRuntimeCommands/);
-  assert.match(source, /export function settleRuntimeEffects/);
+  assert.doesNotMatch(source, /export function settleRuntimeEffects/);
+  assert.match(source, /export function translateEffectsToSettlementCommands/);
+  assert.match(source, /export function mapCommandSettlementToEffects/);
   assert.match(source, /applySettlementCommands/);
   assert.match(source, /unsupportedEffects/);
   assert.match(source, /warnings/);
@@ -16791,8 +16795,9 @@ test("runtime settlement applyEffects wrapper removal keeps only the live adapte
   );
 
   assert.doesNotMatch(runtimeSettlementSource, /export function applyEffects\(/);
-  assert.match(runtimeSettlementSource, /export function settleRuntimeEffects\(/);
   assert.match(runtimeSettlementSource, /export function settleRuntimeCommands\(/);
+  assert.match(runtimeSettlementSource, /export function translateEffectsToSettlementCommands\(/);
+  assert.match(runtimeSettlementSource, /export function mapCommandSettlementToEffects\(/);
 });
 
 test("runtime dispatch command settlement direct keeps core dispatch off the effect adapter", () => {
@@ -16820,6 +16825,25 @@ test("runtime dispatch effect settlement contract removal keeps dispatch off the
     /from "\.\.\/contracts\/effect-settlement"/
   );
   assert.match(runtimeDispatchSource, /settleRuntimeCommands\(/);
+});
+
+test("runtime settlement effect adapter removal keeps only explicit translation helpers above command settlement", () => {
+  const contractSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/effect-settlement.ts"),
+    "utf8"
+  );
+  const runtimeSettlementSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-settlement.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(contractSource, /export type EffectSettlementApplier =/);
+  assert.doesNotMatch(contractSource, /export type EffectSettlementInput =/);
+  assert.doesNotMatch(contractSource, /export type EffectSettlementResult =/);
+  assert.doesNotMatch(runtimeSettlementSource, /export function settleRuntimeEffects\(/);
+  assert.match(runtimeSettlementSource, /export function translateEffectsToSettlementCommands\(/);
+  assert.match(runtimeSettlementSource, /export function mapCommandSettlementToEffects\(/);
+  assert.match(runtimeSettlementSource, /export function settleRuntimeCommands\(/);
 });
 
 test("runtime settlement effects fallback removal keeps state sync runtime command-only", () => {
