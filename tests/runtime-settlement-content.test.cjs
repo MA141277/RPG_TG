@@ -5,6 +5,7 @@ const {
   applySettlementContents,
   applySettlementDefinitionById,
   applySettlementInstances,
+  settleRuntimeCommands,
   settleRuntimeEffects,
 } = require("../.test-dist/core/runtime/runtime-settlement.js");
 const {
@@ -373,6 +374,46 @@ test("settleRuntimeEffects settles changeMoney through the shared settlement com
   });
   assert.deepEqual(result.settledEffects, [effect]);
   assert.deepEqual(result.unsupportedEffects, []);
+});
+
+test("settleRuntimeCommands exposes the canonical command-level settlement entry", () => {
+  const command = {
+    type: "player.money.change",
+    amount: 25,
+  };
+
+  const result = settleRuntimeCommands({
+    state: createBaseRuntimeState(),
+    commands: [command],
+    emittedBy: "event-runtime",
+    appliedBy: "runtime-settlement",
+    characterDefinitions: [createCharacterDefinition()],
+  });
+
+  assert.equal(result.characterDefinitions[0].stats.gold, 125);
+  assert.deepEqual(result.settledCommands, [command]);
+  assert.deepEqual(result.unsupportedCommands, []);
+  assert.deepEqual(result.warnings, []);
+});
+
+test("settleRuntimeCommands reports unsupported command warnings directly", () => {
+  const command = {
+    type: "player.money.change",
+    amount: 25,
+  };
+
+  const result = settleRuntimeCommands({
+    state: createBaseRuntimeState(),
+    commands: [command],
+    emittedBy: "event-runtime",
+    appliedBy: "runtime-settlement",
+  });
+
+  assert.deepEqual(result.settledCommands, []);
+  assert.deepEqual(result.unsupportedCommands, [command]);
+  assert.deepEqual(result.warnings, [
+    "unsupported-command:player.money.change:missing-character-definitions:emitted-by:event-runtime",
+  ]);
 });
 
 test(

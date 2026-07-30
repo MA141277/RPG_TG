@@ -1,5 +1,7 @@
 import type { Effect } from "../contracts/effect";
 import type {
+  SettlementRuntimeInput,
+  SettlementRuntimeResult,
   EffectSettlementInput,
   EffectSettlementResult,
 } from "../contracts/effect-settlement";
@@ -332,11 +334,91 @@ function readSettlementTarget(
 export function settleRuntimeEffects(
   input: EffectSettlementInput
 ): EffectSettlementResult {
+  const commandPairs: Array<{
+    effect: Effect;
+    command: SettlementCommand;
+  }> = [];
+  const unsupportedEffects: Effect[] = [];
+
+  for (const effect of input.effects) {
+    const command = toSettlementCommand(effect);
+    if (command == null) {
+      unsupportedEffects.push(effect);
+      continue;
+    }
+
+    commandPairs.push({ effect, command });
+  }
+
+  const commandSettlement = settleRuntimeCommands({
+    state: input.state,
+    commands: commandPairs.map(({ command }) => command),
+    ...(input.settlementInstances == null
+      ? {}
+      : { settlementInstances: input.settlementInstances }),
+    ...(input.settlementDefinitionsById == null
+      ? {}
+      : { settlementDefinitionsById: input.settlementDefinitionsById }),
+    emittedBy: input.emittedBy,
+    appliedBy: input.appliedBy,
+    ...(input.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: input.characterDefinitions }),
+    ...(input.characterStatusById == null
+      ? {}
+      : { characterStatusById: input.characterStatusById }),
+  });
+
+  const settledEffects: Effect[] = [];
+  const effectByCommand = new Map(
+    commandPairs.map(({ effect, command }) => [command, effect] as const)
+  );
+  for (const command of commandSettlement.settledCommands) {
+    const effect = effectByCommand.get(command);
+    if (effect != null) {
+      settledEffects.push(effect);
+    }
+  }
+  for (const command of commandSettlement.unsupportedCommands) {
+    const effect = effectByCommand.get(command);
+    if (effect != null) {
+      unsupportedEffects.push(effect);
+    }
+  }
+
+  return {
+    state: commandSettlement.state,
+    ...(commandSettlement.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: commandSettlement.characterDefinitions }),
+    ...(commandSettlement.characterStatusById == null
+      ? {}
+      : { characterStatusById: commandSettlement.characterStatusById }),
+    settledEffects,
+    unsupportedEffects,
+    warnings: [
+      ...unsupportedEffects
+        .filter(
+          (effect) => toSettlementCommand(effect) == null
+        )
+        .map((effect) => `unsupported-effect:${effect.type}:emitted-by:${input.emittedBy}`),
+      ...commandSettlement.warnings.map((warning, index) => {
+        const command = commandSettlement.unsupportedCommands[index];
+        return toEffectWarning(
+          warning,
+          command == null ? undefined : effectByCommand.get(command)
+        );
+      }),
+    ],
+  };
+}
+
+export function settleRuntimeCommands(
+  input: SettlementRuntimeInput
+): SettlementRuntimeResult {
   let nextState = input.state;
   let nextCharacterDefinitions = input.characterDefinitions;
   let nextCharacterStatusById = input.characterStatusById;
-  const settledEffects: Effect[] = [];
-  const unsupportedEffects: Effect[] = [];
   const warnings: string[] = [];
 
   const settlementInstances = input.settlementInstances ?? [];
@@ -378,27 +460,9 @@ export function settleRuntimeEffects(
     }
   }
 
-  const commandPairs: Array<{
-    effect: Effect;
-    command: SettlementCommand;
-  }> = [];
-
-  for (const effect of input.effects) {
-    const command = toSettlementCommand(effect);
-    if (command == null) {
-      unsupportedEffects.push(effect);
-      warnings.push(
-        `unsupported-effect:${effect.type}:emitted-by:${input.emittedBy}`
-      );
-      continue;
-    }
-
-    commandPairs.push({ effect, command });
-  }
-
   const commandSettlement = applySettlementCommands({
     state: nextState,
-    commands: commandPairs.map(({ command }) => command),
+    commands: input.commands,
     ...(nextCharacterDefinitions == null
       ? {}
       : { characterDefinitions: nextCharacterDefinitions }),
@@ -410,29 +474,10 @@ export function settleRuntimeEffects(
   nextState = commandSettlement.state;
   nextCharacterDefinitions = commandSettlement.characterDefinitions;
   nextCharacterStatusById = commandSettlement.characterStatusById;
-  const effectByCommand = new Map(
-    commandPairs.map(({ effect, command }) => [command, effect] as const)
-  );
-  for (const command of commandSettlement.settledCommands) {
-    const effect = effectByCommand.get(command);
-    if (effect != null) {
-      settledEffects.push(effect);
-    }
-  }
-  for (const command of commandSettlement.unsupportedCommands) {
-    const effect = effectByCommand.get(command);
-    if (effect != null) {
-      unsupportedEffects.push(effect);
-    }
-  }
   warnings.push(
-    ...commandSettlement.warnings.map((warning, index) => {
-      const command = commandSettlement.unsupportedCommands[index];
-      return `${toEffectWarning(
-        warning,
-        command == null ? undefined : effectByCommand.get(command)
-      )}:emitted-by:${input.emittedBy}`;
-    })
+    ...commandSettlement.warnings.map(
+      (warning) => `${warning}:emitted-by:${input.emittedBy}`
+    )
   );
 
   return {
@@ -443,8 +488,8 @@ export function settleRuntimeEffects(
     ...(nextCharacterStatusById == null
       ? {}
       : { characterStatusById: nextCharacterStatusById }),
-    settledEffects,
-    unsupportedEffects,
+    settledCommands: commandSettlement.settledCommands,
+    unsupportedCommands: commandSettlement.unsupportedCommands,
     warnings,
   };
 }

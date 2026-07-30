@@ -1,6 +1,7 @@
 import type { Effect } from "./effect";
 import type { ProgressionSettlementInstance } from "./progression-runtime";
 import type { RuntimeState } from "./runtime-state";
+import type { SettlementCommand } from "./settlement-command";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CharacterStatusById } from "../../domain/character-status";
 
@@ -27,24 +28,38 @@ export type EffectEmitter =
   | "progression-runtime"
   | "unknown";
 
-export type EffectSettlementApplier = "runtime-settlement";
+export type SettlementRuntimeApplier = "runtime-settlement";
 
-export type EffectSettlementInput = {
+export type SettlementRuntimeInput = {
   state: RuntimeState;
-  effects: Effect[];
+  commands: SettlementCommand[];
   settlementInstances?: ProgressionSettlementInstance[];
   settlementDefinitionsById?: Record<string, SettlementDefinition | undefined>;
   emittedBy: EffectEmitter;
-  appliedBy: EffectSettlementApplier;
+  appliedBy: SettlementRuntimeApplier;
   characterDefinitions?: CharacterDefinition[];
   characterStatusById?: CharacterStatusById;
 };
 
-export type EffectSettlementResult = {
+export type SettlementRuntimeResult = {
   state: RuntimeState;
   characterDefinitions?: CharacterDefinition[];
   characterStatusById?: CharacterStatusById;
+  settledCommands: SettlementCommand[];
+  unsupportedCommands: SettlementCommand[];
+  warnings: string[];
+};
+
+export type EffectSettlementApplier = SettlementRuntimeApplier;
+
+export type EffectSettlementInput = Omit<SettlementRuntimeInput, "commands"> & {
+  effects: Effect[];
+};
+
+export type EffectSettlementResult = Omit<
+  SettlementRuntimeResult,
+  "settledCommands" | "unsupportedCommands"
+> & {
   settledEffects: Effect[];
   unsupportedEffects: Effect[];
-  warnings: string[];
 };

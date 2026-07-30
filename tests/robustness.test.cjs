@@ -16733,6 +16733,8 @@ test("effect settlement contract exports emitter applier input and result seams"
   );
 
   assert.match(source, /export type EffectEmitter =/);
+  assert.match(source, /export type SettlementRuntimeInput =/);
+  assert.match(source, /export type SettlementRuntimeResult =/);
   assert.match(source, /export type EffectSettlementApplier =/);
   assert.match(source, /export type EffectSettlementInput =/);
   assert.match(source, /export type EffectSettlementResult =/);
@@ -16746,7 +16748,8 @@ test("runtime settlement uses explicit contract and reports unsupported effect k
     "utf8"
   );
 
-  assert.match(source, /import type \{[\s\S]*EffectSettlementInput[\s\S]*EffectSettlementResult[\s\S]*\}/);
+  assert.match(source, /import type \{[\s\S]*SettlementRuntimeInput[\s\S]*SettlementRuntimeResult[\s\S]*EffectSettlementInput[\s\S]*EffectSettlementResult[\s\S]*\}/);
+  assert.match(source, /export function settleRuntimeCommands/);
   assert.match(source, /export function settleRuntimeEffects/);
   assert.match(source, /applySettlementCommands/);
   assert.match(source, /unsupportedEffects/);
