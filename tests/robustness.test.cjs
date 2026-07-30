@@ -8810,7 +8810,7 @@ test("character detail ability detail screen uses a standalone overlay panel lay
   assert.match(abilityDetailScreenBlock[0], /z-index:\s*4;/);
   assert.match(
     abilityDetailScreenBlock[0],
-    /background:\s*linear-gradient\(180deg,[^;]+rgb\(251 239 199 \/ 98%\)[^;]+rgb\(229 203 136 \/ 94%\)[^;]+\);/
+    /background:\s*linear-gradient\(\s*180deg,[^;]+rgb\(251 239 199 \/ 98%\)[^;]+rgb\(229 203 136 \/ 94%\)[^;]+\);/
   );
   assert.match(
     abilityDetailScreenBlock[0],
@@ -12327,16 +12327,18 @@ test("inventory filtering and equip logic preserve valid selection", () => {
     {
       items: prototypeValuables,
       selectedItemId: null,
-      equippedWeaponSet: {
-        swordId: null,
-        armorId: null,
+      equippedSlots: {
+        weapon: null,
+        armor: null,
+        accessory: null,
+        mount: null,
       },
     },
     prototypeValuables[0].id
   );
   assert.equal(equippedInventory.selectedItemId, prototypeValuables[0].id);
-  assert.equal(equippedInventory.equippedWeaponSet.swordId, prototypeValuables[0].id);
-  assert.equal(equippedInventory.equippedWeaponSet.armorId, null);
+  assert.equal(equippedInventory.equippedSlots.weapon, prototypeValuables[0].id);
+  assert.equal(equippedInventory.equippedSlots.armor, null);
 });
 
 test("city npc daily refresh picks weighted locations and stays stable within the same day", () => {

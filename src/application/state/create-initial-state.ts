@@ -37,7 +37,7 @@ export type InitialStateInput = {
   reviewDateText: string;
   mainHouseMissionText: string;
   cards: CardInventory;
-  valuables: InitialValuableInventoryInput;
+  valuables?: InitialValuableInventoryInput;
   activeEventId?: string | null;
   activeSceneId?: string | null;
   currentView?: GameState["ui"]["currentView"];
@@ -56,10 +56,10 @@ function createInitialTaskRuntimeState(): TaskRuntimeState {
 }
 
 function normalizeInitialValuables(
-  valuables: InitialValuableInventoryInput
+  valuables: InitialValuableInventoryInput | undefined
 ): ValuableItemInventory {
   const legacyLoadout =
-    valuables.equippedWeaponSet == null
+    valuables?.equippedWeaponSet == null
       ? null
       : {
           weapon: valuables.equippedWeaponSet.swordId,
@@ -67,10 +67,10 @@ function normalizeInitialValuables(
         };
 
   return {
-    items: valuables.items,
-    selectedItemId: valuables.selectedItemId,
+    items: valuables?.items ?? [],
+    selectedItemId: valuables?.selectedItemId ?? null,
     equippedSlots: normalizeEquipmentLoadout(
-      valuables.equippedSlots ?? legacyLoadout
+      valuables?.equippedSlots ?? legacyLoadout
     ),
   };
 }
