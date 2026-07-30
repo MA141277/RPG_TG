@@ -10,10 +10,10 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `running`
 - Last Updated: `2026-07-31`
-- Current Focus: `Plan created after user approved the design.`
-- Next Step: `Choose Subagent-Driven or Inline Execution, then start Task 1 with a failing data contract test.`
+- Current Focus: `Executing Task 1 using subagent-driven development in the current checkout.`
+- Next Step: `Start Task 1 with a failing data contract test.`
 - Verification: `npm run lint:plans passed for plan creation; implementation tests not run yet.`
 - Notes: `docs/superpowers/project-progress.md currently points at a separate completed-but-open map-renderer child, so this plan is not marked as canonical project-progress current work until the user explicitly promotes this child or accepts local execution outside that queue.`
 
@@ -23,6 +23,10 @@
   - Summary: `Created the implementation plan for the approved city begging default dialogue design.`
   - Verification: `npm run lint:plans`
   - Next: `Choose execution mode, then start Task 1 with a failing data contract test.`
+- 2026-07-31
+  - Summary: `User selected Subagent-Driven execution and declined a separate worktree; execution will proceed in the current local checkout.`
+  - Verification: `git worktree detection: normal checkout on branch 7/30main`
+  - Next: `Start Task 1 with a failing data contract test.`
 
 ---
 
