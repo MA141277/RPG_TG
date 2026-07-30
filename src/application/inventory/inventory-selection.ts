@@ -4,6 +4,7 @@ import type {
   ValuableItemId,
   ValuableItemInventory,
 } from "../../domain/valuable-item";
+import { defaultEquipmentLoadoutService } from "../../domain/equipment/equipment-loadout-service";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -71,18 +72,5 @@ export function equipValuableItem(
   );
   assertExists(selectedItem, `Valuable item not found for id "${valuableId}".`);
 
-  const nextWeaponSet = { ...inventory.equippedWeaponSet };
-  if (selectedItem.category === "weapon") {
-    nextWeaponSet.swordId = valuableId;
-  }
-
-  if (selectedItem.category === "armor") {
-    nextWeaponSet.armorId = valuableId;
-  }
-
-  return {
-    ...inventory,
-    selectedItemId: valuableId,
-    equippedWeaponSet: nextWeaponSet,
-  };
+  return defaultEquipmentLoadoutService.equipItem(inventory, selectedItem);
 }

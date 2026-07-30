@@ -1,4 +1,6 @@
-export type ValuableItemCategory = "weapon" | "armor";
+import type { EquipmentLoadout } from "./equipment/equipment-loadout-service";
+
+export type ValuableItemCategory = "weapon" | "armor" | "accessory" | "mount";
 export type ValuableItemType = "all" | ValuableItemCategory;
 
 export type ValuableItemId = string;
@@ -17,13 +19,8 @@ export type ValuableItemDefinition = {
   detailText?: string;
 };
 
-export type EquippedWeaponSet = {
-  swordId: ValuableItemId | null;
-  armorId: ValuableItemId | null;
-};
-
 export type ValuableItemInventory = {
   items: ValuableItemDefinition[];
   selectedItemId: ValuableItemId | null;
-  equippedWeaponSet: EquippedWeaponSet;
+  equippedSlots: EquipmentLoadout;
 };

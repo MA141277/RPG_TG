@@ -5,6 +5,7 @@ import {
   sampleEventsById,
   sampleScenesById,
 } from "../../content/sample-scenario";
+import { createDefaultEquipmentLoadout } from "../../domain/equipment/equipment-loadout-service";
 import { createInitialState } from "./create-initial-state";
 import { createGameStore } from "./game-store";
 
@@ -28,10 +29,7 @@ export function runSampleSceneFlow() {
     valuables: {
       items: [],
       selectedItemId: null,
-      equippedWeaponSet: {
-        swordId: null,
-        armorId: null,
-      },
+      equippedSlots: createDefaultEquipmentLoadout(),
     },
     activeEventId: sampleEvent.id,
     activeSceneId: sampleEvent.entrySceneId,
