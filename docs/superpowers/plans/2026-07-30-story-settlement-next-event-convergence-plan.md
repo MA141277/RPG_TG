@@ -12,8 +12,8 @@
 
 - Status: `completed-but-open`
 - Last Updated: `2026-07-30`
-- Current Focus: `The missing mod-first-dev story settlement nextEventId continuation is now restored on the converged direct-entry seam: settlement-authored follow-up events continue through resolveEventContinuation(...) + routeStoryDirectEntry(...), settlement contents still apply before continuation, and no local startEvent(...) path was reintroduced.`
-- Next Step: `Commit/push the story settlement next-event convergence checkpoint on codex/migration-hot-tasks, then keep the event system moving onto the next runtime-only slice instead of reopening this path.`
+- Current Focus: `The missing mod-first-dev story settlement nextEventId continuation is restored and pushed at 494de4a on codex/migration-hot-tasks: settlement-authored follow-up events continue through resolveEventContinuation(...) + routeStoryDirectEntry(...), settlement contents still apply before continuation, and no local startEvent(...) path was reintroduced.`
+- Next Step: `Treat this child as a pushed completed-but-open checkpoint, then continue directly into the next runtime-only event-system slice instead of reopening this settlement path.`
 - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test` passed. `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm exec node --test tests/event-continuation-runtime.test.cjs` passed 17/17. `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm exec node --test tests/story-settlement-continuation.test.cjs` passed 1/1. `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm exec node --test tests/robustness.test.cjs --test-name-pattern "story settlement next-event convergence|story source event continuation convergence|story choice event continuation convergence|story runtime activation seam convergence|scene fallback continuation seam convergence|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator"` passed 437/437. `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run typecheck` passed. `git diff --name-only -- src/main.ts src/ui src/components src/application/map src/application/backpack src/domain/backpack src/domain/map src/styles` returned empty output. `git diff --check` passed. `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run lint:plans` still fails only on unrelated pre-existing `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md` missing the required top-level title heading.`
 - Notes: `This child intentionally stops short of a global event-chain runtime. It only restores the already-proven story settlement follow-up path while preserving the branch's single direct-entry seam. docs/superpowers/project-progress.md remains intentionally unrelated.`
 
@@ -27,6 +27,10 @@
   - Summary: `Completed the runtime-only child: story settlement events now apply settlement contents, then continue through settlement.nextEventId on the shared direct-entry seam, restoring the missing mod-first-dev continuation path without introducing a new global chain owner.`
   - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test` passed. `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm exec node --test tests/event-continuation-runtime.test.cjs` passed 17/17. `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm exec node --test tests/story-settlement-continuation.test.cjs` passed 1/1. `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm exec node --test tests/robustness.test.cjs --test-name-pattern "story settlement next-event convergence|story source event continuation convergence|story choice event continuation convergence|story runtime activation seam convergence|scene fallback continuation seam convergence|child 25 narrow follow-up contract stays outside main.ts and main-runtime-orchestrator"` passed 437/437. `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run typecheck` passed. `git diff --check` passed.`
   - Next: `Commit/push this checkpoint, then open the next runtime-only event-system child.`
+- 2026-07-30
+  - Summary: `Committed and pushed the story settlement next-event convergence checkpoint as 494de4a on codex/migration-hot-tasks.`
+  - Verification: `git show --stat --oneline 494de4a`; `git push origin codex/migration-hot-tasks`
+  - Next: `Continue directly into the next runtime-only event-system child from the pushed checkpoint.`
 
 ---
 
@@ -195,6 +199,6 @@ Run the full verification set from `Verification Plan`, then update:
 - Next Required Action: `commit-push-and-continue`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-30-story-settlement-next-event-convergence-plan.md`
-- Push Status: `not-pushed`
-- Push Commit: `none`
-- Resume From: `Open this child plan, then review/push the settlement next-event convergence checkpoint or continue directly into the next runtime-only event-system child.`
+- Push Status: `success`
+- Push Commit: `494de4a`
+- Resume From: `Open this child plan, then continue directly into the next runtime-only event-system child from pushed checkpoint 494de4a.`
