@@ -7,7 +7,6 @@ import type {
 } from "../contracts/effect-settlement";
 import type { SettlementCommand } from "../contracts/settlement-command";
 import type { ProgressionSettlementInstance } from "../contracts/progression-runtime";
-import type { RuntimeState } from "../contracts/runtime-state";
 import type { CharacterDefinition } from "../../domain/character";
 import { applySettlementCommands } from "./settlement-command-runtime";
 
@@ -46,18 +45,6 @@ const SETTLEMENT_TARGET_COLLECTION_BY_FAMILY = {
   ExportedSettlementContent["targetFamily"],
   keyof SettlementRuntimeTargetState
 >;
-
-export function applyEffects(
-  state: RuntimeState,
-  effects: Effect[]
-): RuntimeState {
-  return settleRuntimeEffects({
-    state,
-    effects,
-    emittedBy: "runtime-router",
-    appliedBy: "runtime-settlement",
-  }).state;
-}
 
 export function applySettlementContents<
   TState extends SettlementRuntimeTargetState,

@@ -16784,6 +16784,17 @@ test("runtime settlement effects contract removal keeps settlement payload comma
   assert.match(runtimeDispatchSource, /commands:\s*pendingSettlementCommands/);
 });
 
+test("runtime settlement applyEffects wrapper removal keeps only the live adapter entrypoints", () => {
+  const runtimeSettlementSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-settlement.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(runtimeSettlementSource, /export function applyEffects\(/);
+  assert.match(runtimeSettlementSource, /export function settleRuntimeEffects\(/);
+  assert.match(runtimeSettlementSource, /export function settleRuntimeCommands\(/);
+});
+
 test("runtime settlement effects fallback removal keeps state sync runtime command-only", () => {
   const stateSyncSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
