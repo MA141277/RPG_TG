@@ -28,3 +28,23 @@ export type CityBeggingMiniGameState =
       variantId: "granary-escort";
       variantState: CityBeggingGranaryEscortState;
     };
+
+export type CityBeggingDefaultDialogueRuntimeState = {
+  mode: "default-dialogue";
+  phase:
+    | "location-select"
+    | "encounter"
+    | "fortune-draw"
+    | "thinking"
+    | "outcome"
+    | "completed";
+  selectedLocationId: string | null;
+  selectedOptionId: string | null;
+  fixedResult: "ji" | "xiong" | "ping" | null;
+  thinkingUntil: number | null;
+  settlementApplied: boolean;
+};
+
+export type CityBeggingPlayableState =
+  | CityBeggingMiniGameState
+  | CityBeggingDefaultDialogueRuntimeState;

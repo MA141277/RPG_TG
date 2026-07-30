@@ -1,7 +1,12 @@
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CharacterStatusById } from "../../../domain/character-status";
-import type { CityBeggingGameCompletionResult } from "../../../domain/city-begging-minigame";
+import type {
+  CityBeggingGameCompletionResult,
+  CityBeggingMiniGameState,
+  CityBeggingPlayableState,
+} from "../../../domain/city-begging-minigame";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
+import { createCityBeggingDefaultDialogueState } from "./city-begging-default-dialogue";
 import {
   applyCityBeggingMiniGameCompletion,
   createCityBeggingMiniGameState,
@@ -9,10 +14,22 @@ import {
   updateCityBeggingMiniGameState,
 } from "../../minigames/city-begging-minigame";
 
+function isCityBeggingMiniGameState(
+  state: CityBeggingPlayableState | null
+): state is CityBeggingMiniGameState {
+  return state != null && "variantId" in state;
+}
+
 export function launchCityBeggingPlayable(input: {
   state: RuntimeState;
   now: number;
+  mode?: "minigame" | "default-dialogue";
 }): RuntimeState {
+  const beggingState =
+    input.mode === "default-dialogue"
+      ? createCityBeggingDefaultDialogueState(input.now)
+      : createCityBeggingMiniGameState(input.now);
+
   return {
     ...input.state,
     core: {
@@ -35,7 +52,7 @@ export function launchCityBeggingPlayable(input: {
     },
     app: {
       ...input.state.app,
-      beggingMiniGameState: createCityBeggingMiniGameState(input.now),
+      beggingMiniGameState: beggingState,
     },
   };
 }
@@ -45,7 +62,7 @@ export function updateCityBeggingPointerPlayable(input: {
   pointerX: number;
 }): RuntimeState {
   const currentState = input.state.app.beggingMiniGameState;
-  if (currentState == null) {
+  if (!isCityBeggingMiniGameState(currentState)) {
     return input.state;
   }
 
@@ -66,7 +83,7 @@ export function tickCityBeggingPlayable(input: {
   now: number;
 }): RuntimeState {
   const currentState = input.state.app.beggingMiniGameState;
-  if (currentState == null) {
+  if (!isCityBeggingMiniGameState(currentState)) {
     return input.state;
   }
 

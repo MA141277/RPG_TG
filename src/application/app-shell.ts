@@ -1,5 +1,5 @@
 import type { CharacterDefinition } from "../domain/character";
-import type { CityBeggingMiniGameState } from "../domain/city-begging-minigame";
+import type { CityBeggingPlayableState } from "../domain/city-begging-minigame";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
 import type {
   HouseMapAutoAdvanceCompletion,
@@ -65,7 +65,7 @@ export type AppState = {
     | null;
   modalState: AppModalState;
   locationDialogueState: AppLocationDialogueState;
-  beggingMiniGameState: CityBeggingMiniGameState | null;
+  beggingMiniGameState: CityBeggingPlayableState | null;
   cityCardDrawTestState: AppCityCardDrawTestState | null;
   cityMenuState: CityMenuState | null;
   cityDirectoryState:

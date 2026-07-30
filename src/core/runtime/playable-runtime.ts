@@ -325,9 +325,11 @@ export function runPlayableRuntime(input: {
 
     if (resolvedRequest.launch.launch.playableId === "city-begging") {
       const now = resolvedRequest.launch.launch.payload?.now;
+      const mode = resolvedRequest.launch.launch.payload?.mode;
       const nextState = launchCityBeggingPlayable({
         state: input.state,
         now: typeof now === "number" ? now : performance.now(),
+        mode: mode === "default-dialogue" ? "default-dialogue" : "minigame",
       });
 
       return {
