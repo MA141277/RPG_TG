@@ -462,6 +462,16 @@ export function renderCityView(
       测试+10文
     </button>
   `;
+  const cityCardDrawTestButton = `
+    <button
+      type="button"
+      class="c-kulan-city__card-draw-test-action"
+      data-action="open-city-card-draw-test"
+      aria-label="\u6d4b\u8bd5\u62bd\u5361\u52a8\u753b"
+    >
+      \u62bd\u5361\u6d4b\u8bd5
+    </button>
+  `;
 
   return `
     <section class="view-city view-city--kulan">
@@ -474,6 +484,7 @@ export function renderCityView(
               houseDefinitions,
               cityEntries,
             })}
+            ${cityCardDrawTestButton}
             ${haozhouCoinTestButton}
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">
               返回地图

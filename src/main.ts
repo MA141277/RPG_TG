@@ -276,6 +276,10 @@ import { preloadInitialMapViewAssets } from "./ui/startup-asset-preloader";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import { createCoinRewardAnimator } from "./ui/animations/coin-reward-animation";
 import {
+  CardDrawAnimator,
+  formatCardDrawResultLabel,
+} from "./ui/animations/card-draw-animation";
+import {
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
   createCampaignTerrainCameraCenteredOnCoordinate,
   getCampaignTerrainCameraTiltRadiansForScale,
@@ -367,6 +371,14 @@ type CampaignMoveAnimationState = {
   to: GridCoordinate;
   durationMs: number;
   resolve: () => void;
+};
+
+type CityCardDrawOverlayRuntime = {
+  overlay: HTMLElement;
+  mount: HTMLElement;
+  sessionId: number;
+  animator: CardDrawAnimator;
+  hasStarted: boolean;
 };
 
 const appElement = document.querySelector<HTMLElement>("#app");
@@ -660,6 +672,8 @@ const coinRewardAnimator = {
     getCoinRewardAnimator().play(input);
   },
 };
+let nextCityCardDrawTestSessionId = 0;
+let cityCardDrawOverlayRuntime: CityCardDrawOverlayRuntime | null = null;
 let campaignMapDebugState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
@@ -802,6 +816,108 @@ function syncCoinRewardGoldDisplay(): void {
     coinRewardDisplayValue ??
     getPlayerCharacter(appState, currentPlayerCharacterId).stats.gold;
   goldValueElement.textContent = `银两 ${resolvedGoldValue}`;
+}
+
+function destroyCityCardDrawOverlayRuntime(): void {
+  if (cityCardDrawOverlayRuntime == null) {
+    return;
+  }
+
+  cityCardDrawOverlayRuntime.animator.destroy();
+  cityCardDrawOverlayRuntime = null;
+}
+
+function syncCityCardDrawTestOverlayView(
+  overlay: ParentNode,
+  resultValue: number | null
+): void {
+  const resultLabelElement = overlay.querySelector<HTMLElement>(
+    "[data-city-card-draw-result-label]"
+  );
+  if (resultLabelElement != null) {
+    resultLabelElement.textContent =
+      resultValue == null
+        ? "\u70b9\u51fb\u5361\u724c\u5f00\u59cb\u62bd\u53d6\uff0c\u8fd4\u56de 1-6 \u7684\u6d4b\u8bd5\u7ed3\u679c\u3002"
+        : `\u672c\u6b21\u7ed3\u679c\u4e3a ${formatCardDrawResultLabel(resultValue)} (${resultValue})`;
+  }
+
+  const confirmButton = overlay.querySelector<HTMLButtonElement>(
+    "[data-action='confirm-city-card-draw-test']"
+  );
+  if (confirmButton != null) {
+    confirmButton.hidden = resultValue == null;
+  }
+}
+
+function syncCityCardDrawTestOverlay(): void {
+  const overlay = appRoot.querySelector<HTMLElement>("[data-city-card-draw-overlay]");
+  const currentState = appState.cityCardDrawTestState;
+  if (overlay == null || currentState == null) {
+    destroyCityCardDrawOverlayRuntime();
+    return;
+  }
+
+  syncCityCardDrawTestOverlayView(overlay, currentState.resultValue);
+
+  const mount = overlay.querySelector<HTMLElement>("[data-city-card-draw-mount]");
+  assertExists(mount, "Missing city card draw overlay mount.");
+  const hasMatchingRuntime =
+    cityCardDrawOverlayRuntime != null &&
+    cityCardDrawOverlayRuntime.sessionId === currentState.sessionId &&
+    cityCardDrawOverlayRuntime.mount === mount &&
+    cityCardDrawOverlayRuntime.overlay === overlay;
+
+  if (currentState.resultValue != null) {
+    if (!hasMatchingRuntime) {
+      destroyCityCardDrawOverlayRuntime();
+    }
+    return;
+  }
+
+  if (!hasMatchingRuntime) {
+    destroyCityCardDrawOverlayRuntime();
+    mount.replaceChildren();
+    cityCardDrawOverlayRuntime = {
+      overlay,
+      mount,
+      sessionId: currentState.sessionId,
+      animator: new CardDrawAnimator({
+        host: mount,
+        stackCount: 5,
+        cardWidthPx: 146,
+        cardHeightPx: 192,
+        clickHintText: "\u70b9\u51fb\u62bd\u53d6",
+        busyHintText: "\u62bd\u53d6\u4e2d...",
+      }),
+      hasStarted: false,
+    };
+  }
+
+  const runtime = cityCardDrawOverlayRuntime;
+  if (runtime == null || runtime.hasStarted) {
+    return;
+  }
+
+  runtime.hasStarted = true;
+  const activeSessionId = currentState.sessionId;
+  void runtime.animator
+    .play()
+    .then((value) => {
+      const latestState = appState.cityCardDrawTestState;
+      if (latestState == null || latestState.sessionId !== activeSessionId) {
+        return;
+      }
+
+      appState = {
+        ...appState,
+        cityCardDrawTestState: {
+          ...latestState,
+          resultValue: value,
+        },
+      };
+      syncCityCardDrawTestOverlayView(overlay, value);
+    })
+    .catch(() => {});
 }
 
 function playCoinRewardFlight(input: {
@@ -1032,6 +1148,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     modalState: null,
     locationDialogueState: null,
     beggingMiniGameState: null,
+    cityCardDrawTestState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -1304,6 +1421,7 @@ function clearTransientUiForCouncilTrigger(): void {
     modalState: null,
     locationDialogueState: null,
     beggingMiniGameState: null,
+    cityCardDrawTestState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -2843,6 +2961,7 @@ function createScenarioPackAppState(
     modalState: null,
     locationDialogueState: null,
     beggingMiniGameState: null,
+    cityCardDrawTestState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -2933,6 +3052,7 @@ function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
     cityMenuState: null,
     cityDirectoryState: null,
     beggingMiniGameState: null,
+    cityCardDrawTestState: null,
     campaignTravelState: null,
   };
 
@@ -4541,6 +4661,46 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const openCityCardDrawTestButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-city-card-draw-test']"
+  );
+  if (openCityCardDrawTestButton != null) {
+    appState = {
+      ...closeCityMenu(closeCityDirectory(appState)),
+      locationDialogueState: null,
+      cityCardDrawTestState: {
+        sessionId: (nextCityCardDrawTestSessionId += 1),
+        resultValue: null,
+      },
+    };
+    renderApp();
+    return;
+  }
+
+  const closeCityCardDrawTestButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-city-card-draw-test']"
+  );
+  if (closeCityCardDrawTestButton != null) {
+    appState = {
+      ...appState,
+      cityCardDrawTestState: null,
+    };
+    renderApp();
+    return;
+  }
+
+  const confirmCityCardDrawTestButton = targetElement.closest<HTMLElement>(
+    "[data-action='confirm-city-card-draw-test']"
+  );
+  if (confirmCityCardDrawTestButton != null) {
+    appState = {
+      ...appState,
+      cityCardDrawTestState: null,
+    };
+    renderApp();
+    return;
+  }
+
   const modalAction = targetElement.closest<HTMLElement>("[data-modal-action]");
   if (modalAction != null && appState.modalState != null) {
     const actionType = modalAction.dataset.modalAction;
@@ -4955,6 +5115,7 @@ appElement.addEventListener("click", (event) => {
     appState = {
       ...appState,
       beggingMiniGameState: null,
+      cityCardDrawTestState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       locationDialogueState: null,
@@ -4991,6 +5152,7 @@ appElement.addEventListener("click", (event) => {
     houseRuntime.clearAllHouseIntervals();
     appState = {
       ...appState,
+      cityCardDrawTestState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       locationDialogueState: null,
@@ -5018,6 +5180,7 @@ appElement.addEventListener("click", (event) => {
   if (leaveCity3dButton != null) {
     appState = {
       ...appState,
+      cityCardDrawTestState: null,
       cityMenuState: null,
       gameState: {
         ...appState.gameState,
@@ -5138,6 +5301,7 @@ appElement.addEventListener("click", (event) => {
 
         appState = {
           ...closeCityDirectory(appState),
+          cityCardDrawTestState: null,
           gameState: {
           ...appState.gameState,
           runtime: {
@@ -5264,6 +5428,10 @@ appElement.addEventListener("click", (event) => {
         return;
       }
 
+      appState = {
+        ...appState,
+        cityCardDrawTestState: null,
+      };
       enterHouseThroughRuntime(houseRuntime, houseId);
     }
     return;
@@ -6267,6 +6435,24 @@ function captureCoinRewardLayer(root: ParentNode): HTMLElement | null {
   return layer;
 }
 
+function captureCityCardDrawOverlay(root: ParentNode): HTMLElement | null {
+  const state = appState.cityCardDrawTestState;
+  if (state == null) {
+    return null;
+  }
+
+  const overlay = root.querySelector<HTMLElement>("[data-city-card-draw-overlay]");
+  if (
+    overlay == null ||
+    overlay.dataset.cityCardDrawSessionId !== String(state.sessionId)
+  ) {
+    return null;
+  }
+
+  overlay.remove();
+  return overlay;
+}
+
 function syncPreservedCampaignMarkerAttributes(
   preservedElement: HTMLElement,
   replacementElement: HTMLElement
@@ -6338,6 +6524,24 @@ function restoreCoinRewardLayer(
   replacementLayer.replaceWith(preservedLayer);
 }
 
+function restoreCityCardDrawOverlay(
+  root: ParentNode,
+  preservedOverlay: HTMLElement | null
+): void {
+  if (preservedOverlay == null) {
+    return;
+  }
+
+  const replacementOverlay = root.querySelector<HTMLElement>(
+    "[data-city-card-draw-overlay]"
+  );
+  if (replacementOverlay == null) {
+    return;
+  }
+
+  replacementOverlay.replaceWith(preservedOverlay);
+}
+
 function renderApp() {
   if (syncRenderedFortuneBoardOverlay()) {
     return;
@@ -6398,6 +6602,7 @@ function renderAppFrame(
       ? captureCampaignMarkerElements(appRoot)
       : null;
   const preservedCoinRewardLayer = captureCoinRewardLayer(appRoot);
+  const preservedCityCardDrawOverlay = captureCityCardDrawOverlay(appRoot);
   const presenterOutput = createAppPresenterOutput({
     appState,
     playerCharacterId: currentPlayerCharacterId,
@@ -6446,6 +6651,7 @@ function renderAppFrame(
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   restoreCampaignMarkerElements(appRoot, preservedCampaignMarkers);
   restoreCoinRewardLayer(appRoot, preservedCoinRewardLayer);
+  restoreCityCardDrawOverlay(appRoot, preservedCityCardDrawOverlay);
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
@@ -6455,6 +6661,7 @@ function renderAppFrame(
   syncCampaignTerrainWebGl(appRoot);
   syncCampaignCloudWebGl(appRoot);
   syncCampaignCloudTextureScaleControl();
+  syncCityCardDrawTestOverlay();
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
   syncCityStageDomRuntime();
   syncCoinRewardAnimatorTarget();
