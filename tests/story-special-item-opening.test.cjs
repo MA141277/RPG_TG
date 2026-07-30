@@ -447,15 +447,22 @@ test("map-started story scene returns to map after its final action", () => {
 
 test("initial map chapter intro triggers game-start story after title fade", () => {
   const source = fs.readFileSync("src/main.ts", "utf8");
-  const animationCompletionBlock =
-    source.match(
-      /hasAppliedInitialCampaignMapDebug\s*=\s*true;[\s\S]*?initialCampaignMapDebugAnimationFrame\s*=\s*null;/,
-    )?.[0] ?? "";
 
-  assert.match(animationCompletionBlock, /hideMapIntroOverlay\(\);/);
   assert.match(
-    animationCompletionBlock,
-    /triggerGameStartStoryAfterInitialMapIntro\(\);/
+    source,
+    /const MAP_INTRO_OVERLAY_DURATION_MS = 4000;/
+  );
+  assert.match(
+    source,
+    /scheduleGameStartStoryAfterMapIntroFade\(elapsedMs\);/
+  );
+  assert.match(
+    source,
+    /const remainingIntroMs = Math\.max\(0, MAP_INTRO_OVERLAY_DURATION_MS - elapsedMs\);/
+  );
+  assert.match(
+    source,
+    /window\.setTimeout\(\(\) => \{[\s\S]*?hasAppliedInitialCampaignMapDebug\s*=\s*true;[\s\S]*?hideMapIntroOverlay\(\);[\s\S]*?triggerGameStartStoryAfterInitialMapIntro\(\);[\s\S]*?\}, remainingIntroMs\);/
   );
   assert.match(
     source,

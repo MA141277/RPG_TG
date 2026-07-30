@@ -377,6 +377,7 @@ const MAP_DEBUG_MIN_SCALE = 0.5;
 const MAP_DEBUG_MAX_SCALE = Number.POSITIVE_INFINITY;
 const MAP_DEBUG_SCALE_STEP_RATIO = 1.3;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 250;
+const MAP_INTRO_OVERLAY_DURATION_MS = 4000;
 const CAMPAIGN_MAP_ZOOM_ANIMATION_DURATION_MS = 220;
 const CAMPAIGN_MAP_ZOOM_CLOUD_IDLE_RESUME_DELAY_MS = 500;
 const CAMPAIGN_MAP_ZOOM_SETTLE_SCALE_EPSILON = 0.002;
@@ -888,6 +889,7 @@ let hasAppliedInitialCampaignMapDebug = false;
 let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
 let initialCampaignMapDebugAnimationStartTime: number | null = null;
+let initialMapIntroStoryTriggerTimeoutId: number | null = null;
 let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
 let campaignMapZoomCloudResumeTimeoutId: number | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
@@ -3865,8 +3867,13 @@ function resetMainGameRuntime(): void {
     window.cancelAnimationFrame(initialCampaignMapDebugAnimationFrame);
   }
 
+  if (initialMapIntroStoryTriggerTimeoutId != null) {
+    window.clearTimeout(initialMapIntroStoryTriggerTimeoutId);
+  }
+
   initialCampaignMapDebugAnimationFrame = null;
   initialCampaignMapDebugAnimationStartTime = null;
+  initialMapIntroStoryTriggerTimeoutId = null;
   activeMapIntroOverlay = null;
   pendingInitialCampaignMapIntroTerrainReady = false;
   cancelCampaignMapZoomAnimation();
@@ -8143,16 +8150,28 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
       return;
     }
 
-    hasAppliedInitialCampaignMapDebug = true;
     campaignMapDebugHomeState = {
       ...TARGET_CAMPAIGN_MAP_DEBUG_STATE,
     };
-    hideMapIntroOverlay();
-    triggerGameStartStoryAfterInitialMapIntro();
     initialCampaignMapDebugAnimationFrame = null;
+    scheduleGameStartStoryAfterMapIntroFade(elapsedMs);
   };
 
   initialCampaignMapDebugAnimationFrame = window.requestAnimationFrame(animate);
+}
+
+function scheduleGameStartStoryAfterMapIntroFade(elapsedMs: number): void {
+  if (initialMapIntroStoryTriggerTimeoutId != null) {
+    window.clearTimeout(initialMapIntroStoryTriggerTimeoutId);
+  }
+
+  const remainingIntroMs = Math.max(0, MAP_INTRO_OVERLAY_DURATION_MS - elapsedMs);
+  initialMapIntroStoryTriggerTimeoutId = window.setTimeout(() => {
+    initialMapIntroStoryTriggerTimeoutId = null;
+    hasAppliedInitialCampaignMapDebug = true;
+    hideMapIntroOverlay();
+    triggerGameStartStoryAfterInitialMapIntro();
+  }, remainingIntroMs);
 }
 
 function triggerGameStartStoryAfterInitialMapIntro(): void {
