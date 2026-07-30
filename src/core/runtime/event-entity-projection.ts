@@ -49,3 +49,12 @@ export function readRuntimeEventActions(
   const actions = event.payload.actions;
   return Array.isArray(actions) ? (actions as EventRuntimeAction[]) : [];
 }
+
+export function readRuntimeEventSettlementId(
+  event: RuntimeEventEntity | null | undefined
+): string | null {
+  const settlementId = event?.payload.settlementId;
+  return typeof settlementId === "string" && settlementId.trim().length > 0
+    ? settlementId.trim()
+    : null;
+}

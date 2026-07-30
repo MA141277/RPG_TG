@@ -29,15 +29,20 @@ export type StorySettlementContent = {
 export function applyStorySettlementEvent(
   runtime: StorySettlementRuntimeContext,
   content: StorySettlementContent,
-  eventDefinition: EventDefinition
+  eventDefinition: EventDefinition,
+  options: {
+    settlementId?: string | null;
+  } = {}
 ): StorySettlementRuntimeContext {
   if (eventDefinition.type !== "settlement") {
     return runtime;
   }
 
   const settlementId =
-    typeof eventDefinition.settlementId === "string"
-      ? eventDefinition.settlementId.trim()
+    typeof options.settlementId === "string" && options.settlementId.trim().length > 0
+      ? options.settlementId.trim()
+      : typeof eventDefinition.settlementId === "string"
+        ? eventDefinition.settlementId.trim()
       : "";
   if (settlementId.length === 0) {
     return runtime;

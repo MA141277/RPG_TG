@@ -212,6 +212,22 @@ test("runtime event action payload helper reads canonical actions from the route
   assert.deepEqual(actions, [{ type: "closeBuilding" }]);
 });
 
+test("runtime event settlement id payload helper reads canonical settlement ids from the routed event payload", () => {
+  const {
+    readRuntimeEventSettlementId,
+  } = require("../.test-dist/core/runtime/event-entity-projection.js");
+
+  const settlementId = readRuntimeEventSettlementId({
+    id: "event.settlement.payload",
+    kind: "settlement",
+    payload: {
+      settlementId: "settlement.payload.runtime",
+    },
+  });
+
+  assert.equal(settlementId, "settlement.payload.runtime");
+});
+
 test(
   "runStoryEventRuntime preserves authored emitEventIds on the routed runtime event entity",
   () => {

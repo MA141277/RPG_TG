@@ -15783,6 +15783,35 @@ test("runtime event action payload application keeps story-runtime direct-entry 
   );
 });
 
+test("runtime event settlement id payload consumption keeps story-runtime settlement continuation on the routed payload seam", () => {
+  const projectionSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-entity-projection.ts"),
+    "utf8"
+  );
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const storySettlementSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-settlement-continuation.ts"),
+    "utf8"
+  );
+  const applyTriggeredStoryEventBlock =
+    storyRuntimeSource.match(
+      /function applyTriggeredStoryEvent\([\s\S]*?\n}\n\nfunction readStorySettlement/
+    )?.[0] ?? "";
+
+  assert.match(projectionSource, /export function readRuntimeEventSettlementId\(/);
+  assert.match(projectionSource, /payload\.settlementId/);
+  assert.match(storyRuntimeSource, /readRuntimeEventSettlementId/);
+  assert.match(storySettlementSource, /settlementId\?: string \| null/);
+  assert.match(applyTriggeredStoryEventBlock, /settlementId:\s*readRuntimeEventSettlementId/);
+  assert.doesNotMatch(
+    applyTriggeredStoryEventBlock,
+    /const settlementId =\s*\n\s*typeof eventDefinition\.settlementId/
+  );
+});
+
 test("navigation enter-house convergence keeps on-enter event activation on the shared event-router seam", () => {
   const enterHouseSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/navigation/enter-house.ts"),

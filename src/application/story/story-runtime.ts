@@ -29,6 +29,7 @@ import { createEventRouteActivationHandlers } from "../../core/runtime/event-rou
 import {
   createRuntimeEventEntity,
   readRuntimeEventActions,
+  readRuntimeEventSettlementId,
   readRuntimeEventTaskInputs,
 } from "../../core/runtime/event-entity-projection";
 import { dispatchEventRoute } from "../../core/runtime/event-router";
@@ -224,6 +225,7 @@ function routeStoryDirectEntry(
     eventDefinition,
     {
       eventAlreadyStarted: true,
+      routedEvent: routed.event,
     }
   );
 }
@@ -234,6 +236,7 @@ function applyTriggeredStoryEvent(
   eventDefinition: EventDefinition,
   options: {
     eventAlreadyStarted?: boolean;
+    routedEvent?: RuntimeEventEntity | null | undefined;
     visitedEventIds?: Iterable<string> | undefined;
   } = {}
 ): StoryRuntimeContext {
@@ -248,7 +251,10 @@ function applyTriggeredStoryEvent(
   const settledRuntime = applyStorySettlementEvent(
     runtime,
     content,
-    eventDefinition
+    eventDefinition,
+    {
+      settlementId: readRuntimeEventSettlementId(options.routedEvent),
+    }
   );
   if (eventDefinition.type !== "settlement") {
     return settledRuntime;
@@ -258,7 +264,9 @@ function applyTriggeredStoryEvent(
     settledRuntime,
     content
   );
-  const settlement = readStorySettlement(content, eventDefinition);
+  const settlement = readStorySettlement(content, eventDefinition, {
+    settlementId: readRuntimeEventSettlementId(options.routedEvent),
+  });
   const continuation = resolveEventContinuation({
     state: progressedRuntime.state,
     eventDefinitionsById: content.eventDefinitionsById,
@@ -288,11 +296,16 @@ function applyTriggeredStoryEvent(
 
 function readStorySettlement(
   content: StoryContent,
-  eventDefinition: EventDefinition
+  eventDefinition: EventDefinition,
+  options: {
+    settlementId?: string | null;
+  } = {}
 ): StorySettlementDefinition | undefined {
   const settlementId =
-    typeof eventDefinition.settlementId === "string"
-      ? eventDefinition.settlementId.trim()
+    typeof options.settlementId === "string" && options.settlementId.trim().length > 0
+      ? options.settlementId.trim()
+      : typeof eventDefinition.settlementId === "string"
+        ? eventDefinition.settlementId.trim()
       : "";
   return settlementId.length === 0
     ? undefined
