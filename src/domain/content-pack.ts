@@ -18,7 +18,7 @@ import type { EventBinding } from "./event";
 import type { LocationAccessDefinition } from "./location-access";
 import type { MenuInstanceDefinition, MenuResourceDefinition } from "./menu";
 import type { FlowPlayableDefinition } from "./playables/flow";
-import type { SettlementDefinition } from "../core/contracts/effect-settlement";
+import type { SettlementDefinition } from "../core/contracts/settlement-runtime";
 import type {
   PlayableDefinition,
   PlayableIntegrationDefinition,

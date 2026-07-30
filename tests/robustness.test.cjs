@@ -16728,7 +16728,7 @@ test("child 16 covered indoor-screen-shown story handoff stays on the shared tri
 
 test("effect settlement contract exports the command-native settlement seams", () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/core/contracts/effect-settlement.ts"),
+    path.join(process.cwd(), "src/core/contracts/settlement-runtime.ts"),
     "utf8"
   );
 
@@ -16829,7 +16829,7 @@ test("runtime dispatch effect settlement contract removal keeps dispatch off the
 
 test("runtime settlement effect adapter removal keeps only explicit translation helpers above command settlement", () => {
   const contractSource = fs.readFileSync(
-    path.join(process.cwd(), "src/core/contracts/effect-settlement.ts"),
+    path.join(process.cwd(), "src/core/contracts/settlement-runtime.ts"),
     "utf8"
   );
   const runtimeSettlementSource = fs.readFileSync(
@@ -16844,6 +16844,31 @@ test("runtime settlement effect adapter removal keeps only explicit translation 
   assert.match(runtimeSettlementSource, /export function translateEffectsToSettlementCommands\(/);
   assert.match(runtimeSettlementSource, /export function mapCommandSettlementToEffects\(/);
   assert.match(runtimeSettlementSource, /export function settleRuntimeCommands\(/);
+});
+
+test("settlement runtime contract rename keeps live code off the legacy effect-settlement path", () => {
+  const runtimeSettlementSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-settlement.ts"),
+    "utf8"
+  );
+  const activeGameContentSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/content/active-game-content.ts"),
+    "utf8"
+  );
+  const contentPackSource = fs.readFileSync(
+    path.join(process.cwd(), "src/domain/content-pack.ts"),
+    "utf8"
+  );
+  const contractSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/settlement-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(runtimeSettlementSource, /effect-settlement/);
+  assert.doesNotMatch(activeGameContentSource, /effect-settlement/);
+  assert.doesNotMatch(contentPackSource, /effect-settlement/);
+  assert.match(contractSource, /export type SettlementRuntimeInput =/);
+  assert.match(contractSource, /export type SettlementRuntimeResult =/);
 });
 
 test("runtime settlement effects fallback removal keeps state sync runtime command-only", () => {

@@ -2,7 +2,7 @@ import type { Effect } from "../contracts/effect";
 import type {
   SettlementRuntimeInput,
   SettlementRuntimeResult,
-} from "../contracts/effect-settlement";
+} from "../contracts/settlement-runtime";
 import type { SettlementCommand } from "../contracts/settlement-command";
 import type { ProgressionSettlementInstance } from "../contracts/progression-runtime";
 import type { CharacterDefinition } from "../../domain/character";

@@ -9,7 +9,7 @@ import type { CityNpcPoolDefinition, CityNpcPoolRuntimeState } from "../../domai
 import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { ItemDefinition } from "../../domain/content-pack";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
-import type { SettlementDefinition } from "../../core/contracts/effect-settlement";
+import type { SettlementDefinition } from "../../core/contracts/settlement-runtime";
 import type { ModActivationResult } from "../../core/contracts/mod-runtime";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type {
