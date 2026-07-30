@@ -439,6 +439,14 @@ type CityCardDrawOverlayRuntime = {
   hasStarted: boolean;
 };
 
+type CityBeggingDefaultFortuneRuntime = {
+  overlay: HTMLElement;
+  mount: HTMLElement;
+  drawKey: string;
+  animator: CardDrawAnimator;
+  hasStarted: boolean;
+};
+
 const appElement = document.querySelector<HTMLElement>("#app");
 const uiOverlayElement = document.querySelector<HTMLElement>("#ui-overlay");
 
@@ -859,6 +867,7 @@ const coinRewardAnimator = {
 };
 let nextCityCardDrawTestSessionId = 0;
 let cityCardDrawOverlayRuntime: CityCardDrawOverlayRuntime | null = null;
+let cityBeggingDefaultFortuneRuntime: CityBeggingDefaultFortuneRuntime | null = null;
 let campaignMapDebugState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
@@ -1102,6 +1111,160 @@ function syncCityCardDrawTestOverlay(): void {
         },
       };
       syncCityCardDrawTestOverlayView(overlay, value);
+    })
+    .catch(() => {});
+}
+
+function destroyCityBeggingDefaultFortuneRuntime(): void {
+  if (cityBeggingDefaultFortuneRuntime == null) {
+    return;
+  }
+
+  cityBeggingDefaultFortuneRuntime.animator.destroy();
+  cityBeggingDefaultFortuneRuntime = null;
+}
+
+function getCityBeggingFortuneValue(result: string | null | undefined): number {
+  switch (result) {
+    case "ji":
+      return 2;
+    case "ping":
+      return 1;
+    case "xiong":
+      return 0;
+    default:
+      return 1;
+  }
+}
+
+function formatCityBeggingFortuneValue(value: number): string {
+  switch (value) {
+    case 2:
+      return "吉";
+    case 1:
+      return "平";
+    case 0:
+      return "凶";
+    default:
+      return "?";
+  }
+}
+
+function dispatchCityBeggingDefaultAction(
+  action: string,
+  payload?: Record<string, unknown>
+): void {
+  const sourceState = appState;
+  appState = commitRuntimeRequest({
+    state: sourceState,
+    request: createPlayableActionRequest("aibegging", action, payload),
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: sourceState.characterDefinitions,
+            playerCharacterId: currentPlayerCharacterId,
+          }),
+      },
+    },
+  }).state;
+}
+
+function scheduleCityBeggingDefaultThinkingTick(): void {
+  window.setTimeout(() => {
+    dispatchCityBeggingDefaultAction("tick", {
+      now: performance.now() + 3000,
+    });
+    renderApp();
+  }, 2400);
+}
+
+function syncCityBeggingDefaultDialogueOverlay(): void {
+  const overlay = appRoot.querySelector<HTMLElement>(
+    "[data-city-begging-default-overlay]"
+  );
+  const mount = overlay?.querySelector<HTMLElement>(
+    "[data-city-begging-fortune-mount]"
+  );
+  const currentState = appState.beggingMiniGameState;
+  const isFortuneDraw =
+    currentState != null &&
+    "mode" in currentState &&
+    currentState.mode === "default-dialogue" &&
+    currentState.phase === "fortune-draw" &&
+    currentState.fixedResult != null;
+
+  if (overlay == null || mount == null || !isFortuneDraw) {
+    destroyCityBeggingDefaultFortuneRuntime();
+    return;
+  }
+
+  const drawKey = [
+    currentState.selectedLocationId ?? "",
+    currentState.selectedOptionId ?? "",
+    currentState.fixedResult,
+  ].join(":");
+  const hasMatchingRuntime =
+    cityBeggingDefaultFortuneRuntime != null &&
+    cityBeggingDefaultFortuneRuntime.overlay === overlay &&
+    cityBeggingDefaultFortuneRuntime.mount === mount &&
+    cityBeggingDefaultFortuneRuntime.drawKey === drawKey;
+
+  if (!hasMatchingRuntime) {
+    destroyCityBeggingDefaultFortuneRuntime();
+    mount.replaceChildren();
+    cityBeggingDefaultFortuneRuntime = {
+      overlay,
+      mount,
+      drawKey,
+      animator: new CardDrawAnimator({
+        host: mount,
+        values: [0, 1, 2],
+        resolveValue: () => getCityBeggingFortuneValue(currentState.fixedResult),
+        resultFormatter: formatCityBeggingFortuneValue,
+        resultHintFormatter: (_value, label) => `本次结果：${label}`,
+        stackCount: 5,
+        cardWidthPx: 146,
+        cardHeightPx: 192,
+        clickHintText: "点击抽取吉凶平",
+        busyHintText: "抽取中...",
+      }),
+      hasStarted: false,
+    };
+  }
+
+  const runtime = cityBeggingDefaultFortuneRuntime;
+  if (runtime == null || runtime.hasStarted) {
+    return;
+  }
+
+  runtime.hasStarted = true;
+  void runtime.animator
+    .play({
+      values: [0, 1, 2],
+      resolveValue: () => getCityBeggingFortuneValue(currentState.fixedResult),
+      resultFormatter: formatCityBeggingFortuneValue,
+      resultHintFormatter: (_value, label) => `本次结果：${label}`,
+      questionLabel: "?",
+      clickHintText: "点击抽取吉凶平",
+      busyHintText: "抽取中...",
+    })
+    .then(() => {
+      const latestState = appState.beggingMiniGameState;
+      if (
+        latestState == null ||
+        !("mode" in latestState) ||
+        latestState.mode !== "default-dialogue" ||
+        latestState.phase !== "fortune-draw"
+      ) {
+        return;
+      }
+
+      dispatchCityBeggingDefaultAction("confirm-fortune");
+      renderApp();
+      scheduleCityBeggingDefaultThinkingTick();
     })
     .catch(() => {});
 }
@@ -1510,12 +1673,8 @@ function openCityMenuPanel(panelId: CityMenuPanelId): void {
     return;
   }
 
-  if (panelId === "begging" && !isPlayerMonkIdentity(playerCharacter)) {
-    return;
-  }
-
   if (panelId === "begging") {
-    openBeggingMiniGame();
+    openCityBeggingDefault();
     return;
   }
 
@@ -1988,6 +2147,33 @@ function openBeggingMiniGame(): void {
   }).state;
   renderApp();
   startCityBeggingMiniGameLoop();
+}
+
+function openCityBeggingDefault(): void {
+  stopCityBeggingMiniGameLoop();
+  destroyCityBeggingDefaultFortuneRuntime();
+  const launchState = {
+    ...closeCityMenu(closeCityDirectory(appState)),
+    locationDialogueState: null,
+  };
+  appState = commitRuntimeRequest({
+    state: launchState,
+    request: createLaunchPlayableRequest("aibegging", {
+      payload: { now: performance.now() },
+    }),
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: launchState.characterDefinitions,
+            playerCharacterId: currentPlayerCharacterId,
+          }),
+      },
+    },
+  }).state;
+  renderApp();
 }
 
 function createHouseRuntimeInstance(): HouseRuntimeBridge {
@@ -5219,6 +5405,83 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const startCityBeggingDefaultButton = targetElement.closest<HTMLElement>(
+    "[data-action='start-aibegging']"
+  );
+  if (startCityBeggingDefaultButton != null) {
+    openCityBeggingDefault();
+    return;
+  }
+
+  const cityBeggingDefaultState = appState.beggingMiniGameState;
+  const isCityBeggingDefaultDialogue =
+    cityBeggingDefaultState != null &&
+    "mode" in cityBeggingDefaultState &&
+    cityBeggingDefaultState.mode === "default-dialogue";
+  if (isCityBeggingDefaultDialogue) {
+    const sceneAdvanceElement = targetElement.closest<HTMLElement>(
+      "[data-scene-action='advance']"
+    );
+    if (sceneAdvanceElement != null) {
+      if (cityBeggingDefaultState.phase === "outcome") {
+        dispatchCityBeggingDefaultAction("confirm-outcome");
+        destroyCityBeggingDefaultFortuneRuntime();
+      } else {
+        dispatchCityBeggingDefaultAction("advance-dialogue", {
+          now: performance.now(),
+        });
+        scheduleCityBeggingDefaultThinkingTick();
+      }
+      renderApp();
+      return;
+    }
+
+    const sceneChoiceButton = targetElement.closest<HTMLElement>(
+      "[data-scene-choice-id]"
+    );
+    if (sceneChoiceButton != null) {
+      const choiceId = sceneChoiceButton.dataset.sceneChoiceId;
+      if (choiceId != null) {
+        if (cityBeggingDefaultState.phase === "location-options") {
+          dispatchCityBeggingDefaultAction("select-location", {
+            locationId: choiceId,
+          });
+        } else if (cityBeggingDefaultState.phase === "option-select") {
+          dispatchCityBeggingDefaultAction("select-option", {
+            optionId: choiceId,
+            now: performance.now(),
+          });
+        }
+        renderApp();
+      }
+      return;
+    }
+  }
+
+  const exitCityBeggingDefaultButton = targetElement.closest<HTMLElement>(
+    "[data-action='exit-city-begging-default']"
+  );
+  if (exitCityBeggingDefaultButton != null) {
+    destroyCityBeggingDefaultFortuneRuntime();
+    appState = commitRuntimeRequest({
+      state: appState,
+      request: createPlayableActionRequest("aibegging", "exit"),
+      context: {
+        router: {
+          route: ({ state, request }) =>
+            runInteractiveRuntime({
+              state,
+              request,
+              characterDefinitions: appState.characterDefinitions,
+              playerCharacterId: currentPlayerCharacterId,
+            }),
+        },
+      },
+    }).state;
+    renderApp();
+    return;
+  }
+
   if (appState.beggingMiniGameState != null) {
     if (targetElement.closest(".c-begging-game") != null) {
       return;
@@ -5669,7 +5932,7 @@ appElement.addEventListener("click", (event) => {
     "[data-action='start-begging-minigame']"
   );
   if (startBeggingMiniGameButton != null) {
-    openBeggingMiniGame();
+    openCityBeggingDefault();
     return;
   }
 
@@ -7466,6 +7729,7 @@ function renderAppFrame(
   }
   syncCampaignCloudTextureScaleControl();
   syncCityCardDrawTestOverlay();
+  syncCityBeggingDefaultDialogueOverlay();
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
   syncCityStageDomRuntime();
   syncCoinRewardAnimatorTarget();

@@ -3,6 +3,7 @@ import type { ActivePlayableSession, PlayableLaunchRequest } from "./playable-ru
 
 export type InteractiveRuntimeKind =
   | "activity-qte"
+  | "aibegging"
   | "city-begging"
   | "story-battle";
 

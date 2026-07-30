@@ -176,6 +176,8 @@
   "runtime.zhu_yuanzhang.temple.review.assignment.indoor.001": "这一轮评定，先以寺内帮忙为主。",
   "runtime.zhu_yuanzhang.temple.review.assignment.indoor.002": "评定到此为止，回到寺中事务里，再挑具体杂务去做。",
   "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title": "本轮差事已定",
+  "runtime.zhu_yuanzhang.temple.review.assignment.overlay.unlock_city_begging.title": "行为解锁",
+  "runtime.zhu_yuanzhang.temple.review.assignment.overlay.unlock_city_begging.001": "你现在可以在城市界面使用行为“化缘”",
   "runtime.zhu_yuanzhang.temple.review.assignment.overlay.indoor.001": "本轮方向已定为寺内帮忙。离开评定后，可在寺庙事务中选择抄经、扫院或挑水。",
   "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001": "本次寺中评定结束，下次评定倒计时已重置为 30 天。",
   "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.default.001": "这一轮既准你外出化缘，就别再把脚步困在院里了。",

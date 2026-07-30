@@ -33,7 +33,11 @@ export type CityBeggingDefaultDialogueRuntimeState = {
   mode: "default-dialogue";
   phase:
     | "location-select"
+    | "location-options-thinking"
+    | "location-options"
     | "encounter"
+    | "option-select-thinking"
+    | "option-select"
     | "fortune-draw"
     | "thinking"
     | "outcome"

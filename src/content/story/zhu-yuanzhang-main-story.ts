@@ -105,6 +105,7 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
       },
     ],
     entrySceneId: "scene.story.zhu_yuanzhang.ordination",
+    nextEventId: "event.story.zhu_yuanzhang.first_temple_review",
     tags: ["main-story", "temple-opening", "fictionalized-bridge"],
   },
   {

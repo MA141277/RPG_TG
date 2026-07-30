@@ -25,6 +25,12 @@ const builtinPlayableDefinitions: PlayableDefinition[] = [
     legacyInteractiveKind: "city-begging",
   },
   {
+    id: "aibegging",
+    family: "minigame",
+    commandPrefix: "playable.aibegging.",
+    legacyInteractiveKind: "aibegging",
+  },
+  {
     id: "grain-accounting",
     family: "minigame",
     commandPrefix: "playable.grain-accounting.",

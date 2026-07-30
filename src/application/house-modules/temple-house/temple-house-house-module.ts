@@ -2583,24 +2583,33 @@ function submitReviewWorkPlan(
       overlay: createAlertOverlay(
         resolveTempleText(
           input.textEntriesById,
-          "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title"
+          secondTempleWeekTransition
+            ? "runtime.zhu_yuanzhang.temple.review.assignment.overlay.unlock_city_begging.title"
+            : "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title"
         ),
-        [
-          resolveTempleText(
-            input.textEntriesById,
-            nextWorkPlan === "beg-alms"
-              ? thirdTempleWeekAssignment
-                ? "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.third_week.001"
-                : fourthTempleWeekAssignment
-                  ? "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.fourth_week.001"
-                  : "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.default.001"
-              : "runtime.zhu_yuanzhang.temple.review.assignment.overlay.indoor.001"
-          ),
-          resolveTempleText(
-            input.textEntriesById,
-            "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001"
-          ),
-        ],
+        secondTempleWeekTransition
+          ? [
+              resolveTempleText(
+                input.textEntriesById,
+                "runtime.zhu_yuanzhang.temple.review.assignment.overlay.unlock_city_begging.001"
+              ),
+            ]
+          : [
+              resolveTempleText(
+                input.textEntriesById,
+                nextWorkPlan === "beg-alms"
+                  ? thirdTempleWeekAssignment
+                    ? "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.third_week.001"
+                    : fourthTempleWeekAssignment
+                      ? "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.fourth_week.001"
+                      : "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.default.001"
+                  : "runtime.zhu_yuanzhang.temple.review.assignment.overlay.indoor.001"
+              ),
+              resolveTempleText(
+                input.textEntriesById,
+                "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001"
+              ),
+            ],
         "success"
       ),
     },

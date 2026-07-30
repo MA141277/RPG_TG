@@ -52,6 +52,7 @@ import { renderCardLibraryView } from "./views/cards/card-library-view";
 import { renderBackpackView } from "./views/inventory/backpack-view";
 import { renderCity3dView } from "./views/city/city-3d-view";
 import { renderCityView } from "./views/city/city-view";
+import { renderCityBeggingDefaultDialogueOverlay } from "./views/minigames/city-begging-default-dialogue-view";
 import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging-minigame-view";
 import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
@@ -781,6 +782,7 @@ export function renderApp(input: AppRenderInput): string {
                 }
               </div>
             </main>
+            ${renderCityBeggingDefaultDialogueOverlay(input.appState.beggingMiniGameState)}
             ${renderLocationDialogue(
               input.presenterOutput.overlay.locationDialogueState,
               input.appState.characterDefinitions

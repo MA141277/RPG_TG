@@ -9,6 +9,7 @@
       "temple-opening",
       "fictionalized-bridge"
     ],
+    "nextEventId": "event.story.zhu_yuanzhang.first_temple_review",
     "dialogueId": "scene.story.zhu_yuanzhang.ordination"
   },
   {

@@ -522,6 +522,109 @@
   transform: translateY(-2px);
 }
 
+.c-script-editor-dev-hub {
+  gap: var(--space-6);
+}
+
+.c-script-editor-dev-hub__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.c-script-editor-dev-hub__header > div {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.c-script-editor-dev-hub__sections {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.c-script-editor-dev-hub__section {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.c-script-editor-dev-hub__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 16%, transparent);
+  padding-bottom: var(--space-2);
+}
+
+.c-script-editor-dev-hub__section-header h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 20px;
+}
+
+.c-script-editor-dev-hub__section-header span {
+  color: color-mix(in srgb, var(--color-ink) 72%, transparent);
+  font-size: 13px;
+}
+
+.c-script-editor-dev-hub__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+.c-script-editor-dev-tool {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-3);
+  min-height: 190px;
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-border) 16%, transparent);
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--color-paper) 74%, white);
+}
+
+.c-script-editor-dev-tool__header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.c-script-editor-dev-tool__header h3 {
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: 18px;
+}
+
+.c-script-editor-dev-tool__status {
+  width: fit-content;
+  border: 1px solid color-mix(in srgb, var(--color-border) 22%, transparent);
+  padding: var(--space-1) var(--space-2);
+  color: color-mix(in srgb, var(--color-ink) 78%, transparent);
+  background: color-mix(in srgb, var(--color-paper) 72%, transparent);
+  font-size: 12px;
+}
+
+.c-script-editor-dev-tool p {
+  margin: 0;
+  color: color-mix(in srgb, var(--color-ink) 76%, transparent);
+  line-height: 1.65;
+}
+
+.c-script-editor-dev-tool button {
+  justify-self: start;
+}
+
+.c-script-editor-dev-tool button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.c-script-editor-dev-hub__project-return {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .c-script-editor-project-library {
   display: grid;
   gap: 18px;

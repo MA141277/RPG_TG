@@ -291,6 +291,127 @@ const SCRIPT_EDITOR_PROGRESS_TIER_REPEAT_POLICY_OPTIONS = [
   { value: "once-per-entry", label: "每次进入都触发" },
 ];
 
+const SCRIPT_EDITOR_DEVELOPMENT_HUB_SECTIONS = [
+  {
+    id: "content-authoring",
+    title: "内容制作",
+    tools: [
+      {
+        id: "script-editor",
+        title: "剧本编辑器",
+        description: "管理项目、人物、城市、建筑、对话、事件、菜单、玩法绑定与导出。",
+        action: "open-script-editor-projects",
+        status: "已接入",
+      },
+      {
+        id: "point-assembly-event-editor",
+        title: "点位组装事件编辑器",
+        description: "独立事件点位与组装流程验证页。",
+        url: "prototypes/point-assembly-event-editor.html",
+        status: "独立工具",
+      },
+      {
+        id: "city-map-building-editor",
+        title: "城市建筑 / 地块编辑器",
+        description: "编辑城市建筑 prefab、地块、标签按钮与点击区域。",
+        url: "tools/city-map-building-editor/index.html",
+        status: "独立工具",
+      },
+      {
+        id: "yuanmo-hex-editor",
+        title: "元末 Hex 地图编辑器",
+        description: "裁切、采样并编辑大地图 Hex 语义、聚落、区域和导出包。",
+        url: "prototypes/yuanmo-hex-editor/index.html",
+        status: "独立工具",
+      },
+    ],
+  },
+  {
+    id: "party-formation",
+    title: "队伍 / 编成",
+    tools: [
+      {
+        id: "troop-editor",
+        title: "队伍编辑",
+        description: "游戏内队伍总览、招募、组建、排序和解散流程。",
+        status: "应用内工具",
+      },
+      {
+        id: "troop-management",
+        title: "队伍管理",
+        description: "游戏内九宫格布阵、预备成员分配和战斗预览。",
+        status: "应用内工具",
+      },
+      {
+        id: "party-editor",
+        title: "Party 编队",
+        description: "编队卡、资源栏和队伍九宫格预览界面。",
+        status: "应用内工具",
+      },
+    ],
+  },
+  {
+    id: "spine-animation",
+    title: "动画 / 骨骼",
+    tools: [
+      {
+        id: "spine-node-timeline-editor",
+        title: "Spine 节点时间轴",
+        description: "编辑骨骼节点关键帧、绑定姿态、物块和骨骼绑定关系。",
+        url: "tools/spine-node-timeline-editor.html",
+        status: "独立工具",
+      },
+      {
+        id: "spine-node-timeline-editor-archer",
+        title: "Spine 弓兵变体",
+        description: "弓兵专用骨骼时间轴和动作验证工具。",
+        url: "tools/spine-node-timeline-editor-archer.html",
+        status: "独立工具",
+      },
+      {
+        id: "faxian-piece-spine-editor",
+        title: "Faxian Piece Spine",
+        description: "Faxian 物块骨骼编辑与绑定原型。",
+        url: "prototypes/faxian-leg-spine/index.html",
+        status: "独立工具",
+      },
+    ],
+  },
+  {
+    id: "visual-map-tools",
+    title: "图形 / 地图工具",
+    tools: [
+      {
+        id: "tilemap-editor",
+        title: "Tilemap Editor",
+        description: "HD2DEG tilemap 编辑与地图素材处理入口。",
+        url: "HD2DEG/tilemap-editor.html",
+        status: "独立工具",
+      },
+      {
+        id: "obj-mesh-decimator",
+        title: "OBJ Mesh Decimator",
+        description: "OBJ 降面和 mesh 验证页面。",
+        url: "prototypes/obj-mesh-decimator/index.html",
+        status: "独立工具",
+      },
+      {
+        id: "pixel-workflow",
+        title: "Pixel Workflow",
+        description: "像素资产生成和处理流程实验入口。",
+        url: "HD2DEG/pixel-workflow.html",
+        status: "独立工具",
+      },
+      {
+        id: "live-layout-editor",
+        title: "Live Layout",
+        description: "游戏内真实界面布局拖拽与参数复制工作流。",
+        status: "应用内工具",
+      },
+    ],
+  },
+];
+
 const SCRIPT_EDITOR_SETTLEMENT_PERSON_BASE_ATTRIBUTE_OPTIONS = [
   { value: "age", label: "年龄", attributeType: "number" },
   { value: "stamina", label: "体力", attributeType: "number" },
@@ -498,6 +619,11 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "restoreScriptEditorScrollPosition",
   "renderLegacyScriptEditorLanding",
   "renderScriptEditorLanding",
+  "renderScriptEditorDevelopmentHub",
+  "renderScriptEditorDevelopmentHubSection",
+  "renderScriptEditorDevelopmentHubTool",
+  "renderScriptEditorProjectLanding",
+  "openScriptEditorDevelopmentTool",
   "renderScriptEditorWorkspace",
   "renderRuntimePreviewOverlay",
   "renderRuntimePreviewSessionBanner",
@@ -867,6 +993,7 @@ export function installMainUiFlowScriptEditorModule(host, options) {
     host.scriptEditorProjectLibrary = [];
     host.scriptEditorProjectSource = "new";
     host.scriptEditorPendingDeleteProjectId = null;
+    host.scriptEditorLandingMode = "hub";
     host.scriptEditorAuxiliaryPanelOpen = false;
     host.scriptEditorPersonTab = "profile";
     host.scriptEditorLocationTab = "profile";
@@ -903,6 +1030,7 @@ export function installMainUiFlowScriptEditorModule(host, options) {
 
 class MainUiFlowScriptEditorModule {
   showScriptEditorLanding() {
+    this.scriptEditorLandingMode = "hub";
     this.setScreen("script-editor-landing");
   }
 
@@ -951,14 +1079,118 @@ class MainUiFlowScriptEditorModule {
   }
 
   renderScriptEditorLanding() {
+    if (this.scriptEditorLandingMode === "projects") {
+      return this.renderScriptEditorProjectLanding();
+    }
+
+    return this.renderScriptEditorDevelopmentHub();
+  }
+
+  renderScriptEditorDevelopmentHub() {
+    return `
+      <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="开发界面总入口">
+        <div class="c-script-editor-landing c-script-editor-dev-hub">
+          ${this.renderScriptEditorNotice()}
+
+          <header class="c-script-editor-dev-hub__header">
+            <div>
+              <p class="c-script-editor-landing__eyebrow">开发界面总入口</p>
+              <h1 class="c-script-editor-landing__title">编辑器工作台</h1>
+              <p class="c-script-editor-landing__description">
+                统一整理当前项目里的内容、地图、队伍、骨骼、图形和布局工具。剧本编辑器已经作为入口之一收纳在这里。
+              </p>
+            </div>
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-menu">
+              返回主菜单
+            </button>
+          </header>
+
+          <div class="c-script-editor-dev-hub__sections">
+            ${SCRIPT_EDITOR_DEVELOPMENT_HUB_SECTIONS.map((section) =>
+              this.renderScriptEditorDevelopmentHubSection(section)
+            ).join("")}
+          </div>
+
+          ${this.renderScriptEditorFileInputs()}
+        </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorDevelopmentHubSection(section) {
+    return `
+      <section class="c-script-editor-dev-hub__section" data-script-editor-tool-section="${escapeHtml(section.id)}">
+        <header class="c-script-editor-dev-hub__section-header">
+          <h2>${escapeHtml(section.title)}</h2>
+          <span>${escapeHtml(String(section.tools.length))}</span>
+        </header>
+        <div class="c-script-editor-dev-hub__grid">
+          ${section.tools.map((tool) => this.renderScriptEditorDevelopmentHubTool(tool)).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorDevelopmentHubTool(tool) {
+    const action = tool.action ?? (tool.url == null ? "" : "open-dev-tool");
+    const isDisabled = action === "";
+    const actionAttribute =
+      action === "" ? "" : ` data-script-editor-action="${escapeHtml(action)}"`;
+    const urlAttribute =
+      tool.url == null ? "" : ` data-script-editor-tool-url="${escapeHtml(tool.url)}"`;
+    const buttonLabel =
+      tool.action === "open-script-editor-projects"
+        ? "进入"
+        : tool.url == null
+          ? "随游戏进入"
+          : "打开";
+
+    return `
+      <article class="c-script-editor-dev-tool" data-script-editor-dev-tool-id="${escapeHtml(tool.id)}">
+        <header class="c-script-editor-dev-tool__header">
+          <span class="c-script-editor-dev-tool__status">${escapeHtml(tool.status)}</span>
+          <h3>${escapeHtml(tool.title)}</h3>
+        </header>
+        <p>${escapeHtml(tool.description)}</p>
+        <button
+          type="button"
+          class="c-main-ui-json-text-button${tool.action === "open-script-editor-projects" ? " c-main-ui-json-text-button--accent" : ""}"
+          ${actionAttribute}${urlAttribute}${isDisabled ? " disabled" : ""}
+        >
+          ${escapeHtml(buttonLabel)}
+        </button>
+      </article>
+    `;
+  }
+
+  renderScriptEditorProjectLanding() {
     const projectLibraryEntries = this.getScriptEditorProjectLibraryEntries();
 
     return renderEntryShellScriptEditorLanding({
       hasSession: false,
       noticeMarkup: this.renderScriptEditorNotice(),
-      projectLibraryMarkup: this.renderScriptEditorProjectLibrary(projectLibraryEntries),
+      projectLibraryMarkup: `
+        <div class="c-script-editor-dev-hub__project-return">
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-dev-hub">
+            返回开发入口
+          </button>
+        </div>
+        ${this.renderScriptEditorProjectLibrary(projectLibraryEntries)}
+      `,
       fileInputsMarkup: this.renderScriptEditorFileInputs(),
     });
+  }
+
+  openScriptEditorDevelopmentTool(url) {
+    const normalizedUrl = typeof url === "string" ? url.trim() : "";
+    if (normalizedUrl.length === 0) {
+      return;
+    }
+
+    const opener = globalThis.open;
+    if (typeof opener === "function") {
+      opener(normalizedUrl, "_blank", "noopener");
+    }
   }
 
   renderScriptEditorWorkspace() {
@@ -8192,6 +8424,25 @@ class MainUiFlowScriptEditorModule {
     const buildingId = actionElement?.dataset.scriptEditorBuildingId ?? null;
     const targetFamily = actionElement?.dataset.scriptEditorFamily ?? null;
     const targetEntityId = actionElement?.dataset.scriptEditorEntityId ?? null;
+    const devToolUrl = actionElement?.dataset.scriptEditorToolUrl ?? null;
+
+    if (action === "open-script-editor-projects") {
+      this.scriptEditorLandingMode = "projects";
+      this.render();
+      return;
+    }
+
+    if (action === "back-to-dev-hub") {
+      this.scriptEditorLandingMode = "hub";
+      this.scriptEditorPendingDeleteProjectId = null;
+      this.render();
+      return;
+    }
+
+    if (action === "open-dev-tool") {
+      this.openScriptEditorDevelopmentTool(devToolUrl);
+      return;
+    }
 
     if (action === "new-project") {
       try {
@@ -8277,7 +8528,8 @@ class MainUiFlowScriptEditorModule {
     }
 
     if (action === "back-to-landing") {
-      this.showScriptEditorLanding();
+      this.scriptEditorLandingMode = "projects";
+      this.setScreen("script-editor-landing");
       return;
     }
 

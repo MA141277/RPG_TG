@@ -65,6 +65,7 @@ export function runInteractiveRuntime(input: {
 
   if (
     request.kind === "activity-qte" ||
+    request.kind === "aibegging" ||
     request.kind === "city-begging" ||
     request.kind === "story-battle"
   ) {
@@ -189,6 +190,10 @@ function resolveLaunchKind(
     return "activity-qte";
   }
 
+  if (interactiveKind === "aibegging") {
+    return "aibegging";
+  }
+
   if (interactiveKind === "story-battle") {
     return "story-battle";
   }
@@ -200,6 +205,10 @@ function resolveActionKind(actionId: string): InteractiveRuntimeKind | null {
   const definition = builtinPlayableDefinitionRegistry.matchActionId(actionId);
   if (definition?.legacyInteractiveKind === "activity-qte") {
     return "activity-qte";
+  }
+
+  if (definition?.legacyInteractiveKind === "aibegging") {
+    return "aibegging";
   }
 
   if (definition?.legacyInteractiveKind === "city-begging") {
@@ -255,6 +264,30 @@ function getActiveInteractiveSession(
         sessionId: "playable.city-begging",
         playableId: "city-begging",
         integrationId: "playable.city-begging.external.default",
+        family: "minigame",
+        ownerContext: {
+          ownerKind: "external",
+          ownerId: null,
+          returnPolicy: "close-only",
+        },
+        status: "active",
+      },
+    };
+  }
+
+  if (kind === "aibegging" && state.app.beggingMiniGameState != null) {
+    const source = {
+      type: "external" as const,
+      id: "playable.aibegging.launch",
+    };
+    return {
+      kind,
+      sessionId: createInteractiveSessionId(kind),
+      source,
+      playable: state.core.runtime.playableSession ?? {
+        sessionId: "playable.aibegging",
+        playableId: "aibegging",
+        integrationId: "playable.aibegging.external.default",
         family: "minigame",
         ownerContext: {
           ownerKind: "external",
@@ -334,6 +367,23 @@ function exitInteractiveState(
   if (kind === "city-begging") {
     return {
       ...state,
+      app: {
+        ...state.app,
+        beggingMiniGameState: null,
+      },
+    };
+  }
+
+  if (kind === "aibegging") {
+    return {
+      ...state,
+      core: {
+        ...state.core,
+        runtime: {
+          ...state.core.runtime,
+          playableSession: null,
+        },
+      },
       app: {
         ...state.app,
         beggingMiniGameState: null,

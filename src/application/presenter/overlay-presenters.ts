@@ -14,7 +14,9 @@ export function createOverlayPresenterOutput(
   const isSceneActive =
     input.appState.gameState.ui.currentView === "scene" ||
     input.appState.gameState.scene.activeSceneId != null;
-  const isBeggingMiniGameActive = input.appState.beggingMiniGameState != null;
+  const isBeggingMiniGameActive =
+    input.appState.beggingMiniGameState != null &&
+    "variantId" in input.appState.beggingMiniGameState;
   const shouldShowGlobalHud =
     input.appState.gameState.ui.currentView !== "troop-editor" &&
     input.appState.gameState.ui.currentView !== "troop-management" &&

@@ -5,7 +5,11 @@ import {
 
 export type CityBeggingDefaultDialoguePhase =
   | "location-select"
+  | "location-options-thinking"
+  | "location-options"
   | "encounter"
+  | "option-select-thinking"
+  | "option-select"
   | "fortune-draw"
   | "thinking"
   | "outcome"
@@ -37,12 +41,35 @@ export function createCityBeggingDefaultDialogueState(
   };
 }
 
+export function advanceCityBeggingDefaultDialogue(
+  state: CityBeggingDefaultDialogueState,
+  now: number
+): CityBeggingDefaultDialogueState {
+  if (state.phase === "location-select") {
+    return {
+      ...state,
+      phase: "location-options-thinking",
+      thinkingUntil: now + DEFAULT_THINKING_DELAY_MS,
+    };
+  }
+
+  if (state.phase === "encounter") {
+    return {
+      ...state,
+      phase: "option-select-thinking",
+      thinkingUntil: now + DEFAULT_THINKING_DELAY_MS,
+    };
+  }
+
+  return state;
+}
+
 export function selectCityBeggingDefaultLocation(
   state: CityBeggingDefaultDialogueState,
   locationId: string
 ): CityBeggingDefaultDialogueState {
   if (
-    state.phase !== "location-select" ||
+    state.phase !== "location-options" ||
     state.selectedLocationId != null ||
     state.selectedOptionId != null ||
     state.fixedResult != null ||
@@ -68,7 +95,7 @@ export function selectCityBeggingDefaultOption(
   now: number
 ): CityBeggingDefaultDialogueState {
   if (
-    state.phase !== "encounter" ||
+    state.phase !== "option-select" ||
     state.selectedLocationId == null ||
     state.selectedOptionId != null ||
     state.fixedResult != null
@@ -102,7 +129,11 @@ export function advanceCityBeggingDefaultThinking(
 ): CityBeggingDefaultDialogueState {
   if (
     state.thinkingUntil == null ||
-    state.phase !== "thinking" ||
+    !(
+      state.phase === "location-options-thinking" ||
+      state.phase === "option-select-thinking" ||
+      state.phase === "thinking"
+    ) ||
     now < state.thinkingUntil
   ) {
     return state;
@@ -110,7 +141,12 @@ export function advanceCityBeggingDefaultThinking(
 
   return {
     ...state,
-    phase: "outcome",
+    phase:
+      state.phase === "location-options-thinking"
+        ? "location-options"
+        : state.phase === "option-select-thinking"
+          ? "option-select"
+          : "outcome",
     thinkingUntil: null,
   };
 }

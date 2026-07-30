@@ -10330,6 +10330,10 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
     "runtime.zhu_yuanzhang.temple.review.intro.001": "自定义寺评开场甲。",
     "runtime.zhu_yuanzhang.temple.review.intro.002": "自定义寺评开场乙。",
     "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title": "自定义化缘安排",
+    "runtime.zhu_yuanzhang.temple.review.assignment.overlay.unlock_city_begging.title":
+      "自定义行为解锁",
+    "runtime.zhu_yuanzhang.temple.review.assignment.overlay.unlock_city_begging.001":
+      "自定义城市化缘行为提示。",
     "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001": "自定义评定结束提示。",
     "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.default.001":
       "自定义化缘说明一。",
@@ -10387,10 +10391,9 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
     "自定义化缘说明一。",
     "自定义化缘说明二。",
   ]);
-  assert.equal(assignedResult.sessionState?.overlay?.title, "自定义化缘安排");
+  assert.equal(assignedResult.sessionState?.overlay?.title, "自定义行为解锁");
   assert.deepEqual(assignedResult.sessionState?.overlay?.paragraphs, [
-    "自定义化缘总结。",
-    "自定义评定结束提示。",
+    "自定义城市化缘行为提示。",
   ]);
 
   const leaveResult = templeHouseHouseModule.leave({

@@ -7,6 +7,7 @@ import type {
 } from "../../../domain/city-begging-minigame";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
 import {
+  advanceCityBeggingDefaultDialogue,
   advanceCityBeggingDefaultThinking,
   confirmCityBeggingDefaultFortune,
   createCityBeggingDefaultDialogueState,
@@ -71,6 +72,37 @@ export function launchCityBeggingPlayable(input: {
   };
 }
 
+export function launchAiBeggingPlayable(input: {
+  state: RuntimeState;
+  now: number;
+}): RuntimeState {
+  return {
+    ...input.state,
+    core: {
+      ...input.state.core,
+      runtime: {
+        ...input.state.core.runtime,
+        playableSession: {
+          sessionId: "playable.aibegging",
+          playableId: "aibegging",
+          integrationId: "playable.aibegging.external.default",
+          family: "minigame",
+          ownerContext: {
+            ownerKind: "external",
+            ownerId: null,
+            returnPolicy: "close-only",
+          },
+          status: "active",
+        },
+      },
+    },
+    app: {
+      ...input.state.app,
+      beggingMiniGameState: createCityBeggingDefaultDialogueState(input.now),
+    },
+  };
+}
+
 export function updateCityBeggingPointerPlayable(input: {
   state: RuntimeState;
   pointerX: number;
@@ -126,6 +158,27 @@ export function selectCityBeggingDefaultLocationPlayable(input: {
       beggingMiniGameState: selectCityBeggingDefaultLocation(
         currentState,
         input.locationId
+      ),
+    },
+  };
+}
+
+export function advanceCityBeggingDefaultDialoguePlayable(input: {
+  state: RuntimeState;
+  now: number;
+}): RuntimeState {
+  const currentState = input.state.app.beggingMiniGameState;
+  if (!isCityBeggingDefaultDialogueState(currentState)) {
+    return input.state;
+  }
+
+  return {
+    ...input.state,
+    app: {
+      ...input.state.app,
+      beggingMiniGameState: advanceCityBeggingDefaultDialogue(
+        currentState,
+        input.now
       ),
     },
   };

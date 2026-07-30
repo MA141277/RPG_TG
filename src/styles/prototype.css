@@ -2651,6 +2651,105 @@
   background-clip: padding-box;
 }
 
+.c-city-begging-default {
+  position: fixed;
+  inset: 0;
+  z-index: 36;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  --scene-background-image: url("../../ui/background/chengzhen.png");
+}
+
+.c-city-begging-default--liangpu {
+  --scene-background-image: url("../../ui/background/lianghang.png");
+}
+
+.c-city-begging-default--temple {
+  --scene-background-image: url("../../ui/background/temple.jpg");
+}
+
+.c-city-begging-default__choice-layer {
+  z-index: 6;
+}
+
+.c-city-begging-default__choices {
+  width: min(42vw, 420px);
+}
+
+.c-city-begging-default__copy,
+.c-city-begging-default__result {
+  margin: 0;
+  color: #3c2a19;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.c-city-begging-default__result {
+  color: #6d2f20;
+  font-weight: 700;
+}
+
+.c-city-begging-default__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.c-city-begging-default__fortune {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+}
+
+.c-city-begging-default__thinking-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  background: rgb(5 4 3 / 58%);
+  backdrop-filter: blur(3px);
+}
+
+.c-city-begging-default__thinking {
+  display: inline-flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 0 8px;
+}
+
+.c-city-begging-default__thinking span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #7a5030;
+  animation: city-begging-thinking-pulse 900ms ease-in-out infinite;
+}
+
+.c-city-begging-default__thinking span:nth-child(2) {
+  animation-delay: 140ms;
+}
+
+.c-city-begging-default__thinking span:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+@keyframes city-begging-thinking-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+}
+
 .c-city-directory__list {
   display: grid;
   gap: 8px;
@@ -4574,6 +4673,7 @@
   width: clamp(156px, 14vw, 218px);
   max-height: calc(100% - 228px);
   overflow: visible;
+  pointer-events: auto;
 }
 
 .c-city-menu__button {
@@ -4595,6 +4695,7 @@
   background: transparent;
   text-shadow: 0 1px 2px rgb(55 28 10 / 74%);
   cursor: pointer;
+  pointer-events: auto;
   transition:
     transform var(--duration-fast) ease,
     filter var(--duration-fast) ease;
@@ -4652,6 +4753,7 @@
 .c-city-menu__item {
   display: grid;
   gap: 0;
+  pointer-events: auto;
 }
 
 .c-city-menu__subnav {

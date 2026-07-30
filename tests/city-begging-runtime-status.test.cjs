@@ -109,3 +109,27 @@ test("city-begging completion returns character status patches for runtime commi
     stamina: Math.max(0, playerBefore.stamina - ACTIVITY_COMPLETION_STAMINA_COST),
   });
 });
+
+test("city-begging default dialogue state is not treated as active minigame state", async () => {
+  const {
+    createCityBeggingDefaultDialogueState,
+  } = await import(
+    "../.test-dist/application/playables/city-begging/city-begging-default-dialogue.js"
+  );
+  const {
+    getCityBeggingMiniGameCompletionResult,
+    getCityBeggingMiniGameStatus,
+    isCityBeggingMiniGamePlaying,
+  } = await import(
+    "../.test-dist/application/minigames/city-begging-minigame.js"
+  );
+
+  const defaultDialogueState = createCityBeggingDefaultDialogueState(1000);
+
+  assert.equal(isCityBeggingMiniGamePlaying(defaultDialogueState), false);
+  assert.equal(getCityBeggingMiniGameStatus(defaultDialogueState), null);
+  assert.equal(
+    getCityBeggingMiniGameCompletionResult(defaultDialogueState),
+    null
+  );
+});

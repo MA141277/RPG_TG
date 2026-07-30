@@ -378,10 +378,13 @@ test("map return reveal scheduling stays in the transition layer", () => {
 
   assert.match(mainSource, /processMapReturnEffects/);
   assert.match(mainSource, /mapReturnEffectTimeoutId/);
+  assert.doesNotMatch(mainSource, /dispatchMapReturnAction/);
+  assert.doesNotMatch(transitionSource, /MapReturnAction/);
   assert.doesNotMatch(
     mainSource,
     /story\.zhu_yuanzhang\.opening\.reveal-haozhou/
   );
+  assert.doesNotMatch(mainSource, /house\.kulan\.temple/);
   assert.doesNotMatch(transitionSource, /document\.querySelector/);
   assert.doesNotMatch(transitionSource, /window\.addEventListener/);
   assert.doesNotMatch(transitionSource, /innerHTML\s*=/);
@@ -601,6 +604,22 @@ test("village elder letter opening is independent from the huangjue ordination e
 
   assert.equal(villageLetterEvent?.entrySceneId, "scene.story.zhu_yuanzhang.village_elder_letter");
   assert.equal(villageLetterEvent?.nextEventId, undefined);
+});
+
+test("huangjue ordination continues to the first temple review after entering the temple", () => {
+  const events = JSON.parse(
+    fs.readFileSync("src/content/scenario-packs/zhuyuanzhang/events.json", "utf8")
+  );
+  const ordinationEvent = events.find(
+    (event) => event.id === "event.story.zhu_yuanzhang.ordination"
+  );
+
+  assert.equal(ordinationEvent?.trigger?.timing, "house-enter");
+  assert.equal(ordinationEvent?.trigger?.scope?.houseId, "house.kulan.temple");
+  assert.equal(
+    ordinationEvent?.nextEventId,
+    "event.story.zhu_yuanzhang.first_temple_review"
+  );
 });
 
 test("village elder letter dialogue is split and only uses the configured elder", () => {

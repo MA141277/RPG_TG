@@ -28,6 +28,21 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
     outcomeConfig: {},
   },
   {
+    integrationId: "playable.aibegging.external.default",
+    playableId: "aibegging",
+    ownerDefaults: {
+      ownerKind: "external",
+      ownerId: null,
+      returnPolicy: "close-only",
+    },
+    trigger: {
+      triggerId: "trigger.playable.aibegging.external.default",
+      ownerKind: "external",
+      trigger: "manual-launch",
+    },
+    outcomeConfig: {},
+  },
+  {
     integrationId: "playable.activity-qte.scene.default",
     playableId: "activity-qte",
     ownerDefaults: {

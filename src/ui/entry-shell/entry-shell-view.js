@@ -36,7 +36,7 @@ export function renderEntryShellMainMenu() {
               class="c-main-ui-json-button c-main-ui-json-button--script-editor"
               data-main-ui-action="open-script-editor"
             >
-              剧本编辑
+              编辑器工作台
             </button>
           </div>
         </div>

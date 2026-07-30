@@ -167,6 +167,7 @@ function renderCityMenuButtons(input: {
     { id: "intel", label: "情报" },
     { id: "management", label: "管理" },
     { id: "locations", label: "地点" },
+    { id: "begging", label: "化缘" },
   ];
   const visibleHouseDefinitions = input.houseDefinitions.filter(
     (houseDefinition) => houseDefinition.moduleId !== "leader-residence"
@@ -190,7 +191,9 @@ function renderCityMenuButtons(input: {
                 ${
                   button.id === "locations"
                     ? 'aria-expanded="true"'
-                    : `data-city-menu-open="${button.id}"`
+                    : button.id === "begging"
+                      ? 'data-action="start-aibegging"'
+                      : `data-city-menu-open="${button.id}"`
                 }
                 data-button-sound="light"
               >
@@ -398,7 +401,7 @@ function renderCityMenuPanel(input: {
             ${renderCityChoiceSkin()}
             <strong class="c-city-menu-panel__lock-title">开始一次化缘</strong>
             <p class="c-city-menu-panel__hint">在城中接取粮食与钱物，小游戏结束后结算收益。</p>
-            <button type="button" class="c-city-menu-panel__primary-action" data-action="start-begging-minigame" data-button-sound="light">
+            <button type="button" class="c-city-menu-panel__primary-action" data-action="start-aibegging" data-button-sound="light">
               开始化缘
             </button>
           </div>

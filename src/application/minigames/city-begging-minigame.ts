@@ -2,6 +2,7 @@ import type {
   CityBeggingGameCompletionResult,
   CityBeggingMiniGameState,
   CityBeggingMiniGameVariantId,
+  CityBeggingPlayableState,
 } from "../../domain/city-begging-minigame";
 import { CITY_BEGGING_RUNTIME_KEYS } from "../../domain/city-begging-minigame";
 import type { CharacterDefinition } from "../../domain/character";
@@ -94,22 +95,32 @@ export function updateCityBeggingMiniGameState(
   };
 }
 
+function isCityBeggingMiniGameState(
+  state: CityBeggingPlayableState | null
+): state is CityBeggingMiniGameState {
+  return state != null && "variantId" in state && "variantState" in state;
+}
+
 export function getCityBeggingMiniGameStatus(
-  state: CityBeggingMiniGameState
-): "playing" | "result" {
+  state: CityBeggingPlayableState | null
+): "playing" | "result" | null {
+  if (!isCityBeggingMiniGameState(state)) {
+    return null;
+  }
+
   return state.variantState.status;
 }
 
 export function isCityBeggingMiniGamePlaying(
-  state: CityBeggingMiniGameState | null
-): boolean {
-  return state?.variantState.status === "playing";
+  state: CityBeggingPlayableState | null
+): state is CityBeggingMiniGameState {
+  return getCityBeggingMiniGameStatus(state) === "playing";
 }
 
 export function getCityBeggingMiniGameCompletionResult(
-  state: CityBeggingMiniGameState | null
+  state: CityBeggingPlayableState | null
 ): CityBeggingGameCompletionResult | null {
-  if (state == null || state.variantState.status !== "result") {
+  if (!isCityBeggingMiniGameState(state) || state.variantState.status !== "result") {
     return null;
   }
 

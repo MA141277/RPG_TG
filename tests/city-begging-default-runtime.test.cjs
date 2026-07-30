@@ -72,6 +72,8 @@ function createRuntimeState() {
 
 test("city begging default dialogue selects a location and locks a fixed option result", async () => {
   const {
+    advanceCityBeggingDefaultDialogue,
+    advanceCityBeggingDefaultThinking,
     createCityBeggingDefaultDialogueState,
     selectCityBeggingDefaultLocation,
     selectCityBeggingDefaultOption,
@@ -83,15 +85,33 @@ test("city begging default dialogue selects a location and locks a fixed option 
   assert.equal(launched.mode, "default-dialogue");
   assert.equal(launched.phase, "location-select");
 
+  const atLocationLoading = advanceCityBeggingDefaultDialogue(launched, 1100);
+  assert.equal(atLocationLoading.phase, "location-options-thinking");
+
+  const atLocationChoices = advanceCityBeggingDefaultThinking(
+    atLocationLoading,
+    3500
+  );
+  assert.equal(atLocationChoices.phase, "location-options");
+
   const atLocation = selectCityBeggingDefaultLocation(
-    launched,
+    atLocationChoices,
     "xicheng_guanyin"
   );
   assert.equal(atLocation.phase, "encounter");
   assert.equal(atLocation.selectedLocationId, "xicheng_guanyin");
 
+  const atOptionLoading = advanceCityBeggingDefaultDialogue(atLocation, 3600);
+  assert.equal(atOptionLoading.phase, "option-select-thinking");
+
+  const atOptionChoices = advanceCityBeggingDefaultThinking(
+    atOptionLoading,
+    6000
+  );
+  assert.equal(atOptionChoices.phase, "option-select");
+
   const afterOption = selectCityBeggingDefaultOption(
-    atLocation,
+    atOptionChoices,
     "help_mend_net",
     1200
   );
@@ -103,6 +123,8 @@ test("city begging default dialogue selects a location and locks a fixed option 
 
 test("city begging default dialogue ignores invalid and duplicate option selection", async () => {
   const {
+    advanceCityBeggingDefaultDialogue,
+    advanceCityBeggingDefaultThinking,
     createCityBeggingDefaultDialogueState,
     selectCityBeggingDefaultLocation,
     selectCityBeggingDefaultOption,
@@ -111,23 +133,31 @@ test("city begging default dialogue ignores invalid and duplicate option selecti
   );
 
   const launched = createCityBeggingDefaultDialogueState(1000);
+  const atLocationChoices = advanceCityBeggingDefaultThinking(
+    advanceCityBeggingDefaultDialogue(launched, 1100),
+    3500
+  );
   const atLocation = selectCityBeggingDefaultLocation(
-    launched,
+    atLocationChoices,
     "xicheng_guanyin"
+  );
+  const atOptionChoices = advanceCityBeggingDefaultThinking(
+    advanceCityBeggingDefaultDialogue(atLocation, 3600),
+    6000
   );
 
   const afterInvalidOption = selectCityBeggingDefaultOption(
-    atLocation,
+    atOptionChoices,
     "not_a_real_option",
     1100
   );
-  assert.strictEqual(afterInvalidOption, atLocation);
-  assert.equal(afterInvalidOption.phase, "encounter");
+  assert.strictEqual(afterInvalidOption, atOptionChoices);
+  assert.equal(afterInvalidOption.phase, "option-select");
   assert.equal(afterInvalidOption.selectedOptionId, null);
   assert.equal(afterInvalidOption.fixedResult, null);
 
   const afterOption = selectCityBeggingDefaultOption(
-    atLocation,
+    atOptionChoices,
     "help_mend_net",
     1200
   );
@@ -154,6 +184,8 @@ test("city begging default dialogue ignores invalid and duplicate option selecti
 
 test("city begging default dialogue does not clear a locked result by reselecting location", async () => {
   const {
+    advanceCityBeggingDefaultDialogue,
+    advanceCityBeggingDefaultThinking,
     createCityBeggingDefaultDialogueState,
     selectCityBeggingDefaultLocation,
     selectCityBeggingDefaultOption,
@@ -162,12 +194,20 @@ test("city begging default dialogue does not clear a locked result by reselectin
   );
 
   const launched = createCityBeggingDefaultDialogueState(1000);
+  const atLocationChoices = advanceCityBeggingDefaultThinking(
+    advanceCityBeggingDefaultDialogue(launched, 1100),
+    3500
+  );
   const atLocation = selectCityBeggingDefaultLocation(
-    launched,
+    atLocationChoices,
     "xicheng_guanyin"
   );
+  const atOptionChoices = advanceCityBeggingDefaultThinking(
+    advanceCityBeggingDefaultDialogue(atLocation, 3600),
+    6000
+  );
   const afterOption = selectCityBeggingDefaultOption(
-    atLocation,
+    atOptionChoices,
     "help_mend_net",
     1200
   );
@@ -201,6 +241,100 @@ test("city begging launch payload can start the default dialogue mode", () => {
   );
 });
 
+test("ai begging launch uses its own playable id and default dialogue actions", () => {
+  let runtimeState = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("aibegging", {
+      payload: { now: 1000 },
+    }),
+  }).state;
+
+  assert.equal(runtimeState.core.runtime.playableSession?.playableId, "aibegging");
+  assert.equal(runtimeState.app.beggingMiniGameState?.mode, "default-dialogue");
+  assert.equal(runtimeState.app.beggingMiniGameState?.phase, "location-select");
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("aibegging", "advance-dialogue", {
+      now: 1200,
+    }),
+  }).state;
+
+  assert.equal(
+    runtimeState.app.beggingMiniGameState?.phase,
+    "location-options-thinking"
+  );
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("aibegging", "tick", {
+      now: 3600,
+    }),
+  }).state;
+
+  assert.equal(runtimeState.app.beggingMiniGameState?.phase, "location-options");
+});
+
+test("city begging default runtime advances dialogue before showing choices", () => {
+  let runtimeState = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("city-begging", {
+      payload: { mode: "default-dialogue", now: 1000 },
+    }),
+  }).state;
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "advance-dialogue", {
+      now: 1200,
+    }),
+  }).state;
+
+  assert.equal(
+    runtimeState.app.beggingMiniGameState?.phase,
+    "location-options-thinking"
+  );
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "tick", {
+      now: 3600,
+    }),
+  }).state;
+
+  assert.equal(runtimeState.app.beggingMiniGameState?.phase, "location-options");
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "select-location", {
+      locationId: "xicheng_guanyin",
+    }),
+  }).state;
+
+  assert.equal(runtimeState.app.beggingMiniGameState?.phase, "encounter");
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "advance-dialogue", {
+      now: 3700,
+    }),
+  }).state;
+
+  assert.equal(
+    runtimeState.app.beggingMiniGameState?.phase,
+    "option-select-thinking"
+  );
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "tick", {
+      now: 6100,
+    }),
+  }).state;
+
+  assert.equal(runtimeState.app.beggingMiniGameState?.phase, "option-select");
+});
+
 test("city begging default runtime applies outcome effects once", () => {
   let characterDefinitions = prototypeCharacters;
   let runtimeState = runPlayableRuntime({
@@ -214,8 +348,44 @@ test("city begging default runtime applies outcome effects once", () => {
 
   runtimeState = runPlayableRuntime({
     state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "advance-dialogue", {
+      now: 1200,
+    }),
+    characterDefinitions,
+    playerCharacterId,
+  }).state;
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "tick", {
+      now: 3600,
+    }),
+    characterDefinitions,
+    playerCharacterId,
+  }).state;
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
     request: createPlayableActionRequest("city-begging", "select-location", {
       locationId: "xicheng_guanyin",
+    }),
+    characterDefinitions,
+    playerCharacterId,
+  }).state;
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "advance-dialogue", {
+      now: 3700,
+    }),
+    characterDefinitions,
+    playerCharacterId,
+  }).state;
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "tick", {
+      now: 6100,
     }),
     characterDefinitions,
     playerCharacterId,
@@ -294,6 +464,24 @@ test("city begging default runtime ignores early outcome confirmation", () => {
     state: createRuntimeState(),
     request: createLaunchPlayableRequest("city-begging", {
       payload: { mode: "default-dialogue", now: 1000 },
+    }),
+    characterDefinitions,
+    playerCharacterId,
+  }).state;
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "advance-dialogue", {
+      now: 1200,
+    }),
+    characterDefinitions,
+    playerCharacterId,
+  }).state;
+
+  runtimeState = runPlayableRuntime({
+    state: runtimeState,
+    request: createPlayableActionRequest("city-begging", "tick", {
+      now: 3600,
     }),
     characterDefinitions,
     playerCharacterId,

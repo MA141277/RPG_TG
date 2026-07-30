@@ -3459,6 +3459,7 @@
     let playerCamp = null, enemyCamp = null;
     let droppedSupplies = [];
     const battleSpineRendererPromises = new Map();
+    let battleSpinePreloadPromise = null;
     let battleSpineIdleRaf = 0;
     let battleSpineLastIdleRender = 0;
     function formatFpsReadout(fpsValue) {
@@ -6043,6 +6044,13 @@
         attackEffectFrame: 30,
       },
     };
+    const BATTLE_SPINE_PRELOAD_TROOP_TYPES = Object.freeze([
+      'infantry',
+      'archer',
+      'spear',
+      'cavalry',
+      'gunpowder',
+    ]);
 
     function getBattleSpineTroopAsset(troopType) {
       if (troopType === 'cavalry') {
@@ -6580,7 +6588,7 @@
       static async load(config = {}) {
         let project = null;
         if (window.location.protocol !== 'file:' && config.projectUrl) {
-          const response = await fetch(config.projectUrl, { cache: 'no-store' });
+          const response = await fetch(config.projectUrl, { cache: 'force-cache' });
           project = await response.json();
         }
         project ||= config.fallbackProject || window.RECOVERED_SPINE_PROJECT || null;
@@ -9002,11 +9010,20 @@
     }
 
     function clearBattleSpineRendererCache(cacheKey = null) {
+      battleSpinePreloadPromise = null;
       if (!cacheKey) {
         battleSpineRendererPromises.clear();
         return;
       }
       battleSpineRendererPromises.delete(String(cacheKey));
+    }
+
+    function preloadBattleSpineRenderers(troopTypes = BATTLE_SPINE_PRELOAD_TROOP_TYPES) {
+      if (battleSpinePreloadPromise) return battleSpinePreloadPromise;
+      battleSpinePreloadPromise = Promise.allSettled(
+        troopTypes.map(troopType => getBattleSpineRenderer(troopType))
+      ).then(() => undefined);
+      return battleSpinePreloadPromise;
     }
 
     function startBattleSpineIdleLoop() {
@@ -11567,7 +11584,6 @@
 
     function showFormationBattleOverlay(report) {
       stopBattleSpineIdleLoop();
-      clearBattleSpineRendererCache();
       clearBattleFormationProxyState();
       ensureBattleFormationViews();
       if (activeBattleOverlayResolve) {
@@ -11592,7 +11608,6 @@
 
     function closeFormationBattleOverlay() {
       stopBattleSpineIdleLoop();
-      clearBattleSpineRendererCache();
       clearBattleFormationProxyState();
       document.getElementById('formation-battle').classList.add('hidden');
       if (activeBattleOverlayResolve) {
@@ -12408,6 +12423,7 @@
         log(`本局需守住${getDefenseZoneLabel()}：至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 支未溃逃部队驻守，且敌军不得踏入，连续 ${DEFENSE_HOLD_REQUIRED} 回合。`, 'system');
       }
       updateUI();
+      preloadBattleSpineRenderers();
       if (battleConfig.scenario?.autoDeployment) {
         log('剧情战役已载入：玩家只可操控朱重八本队，其余友军由 NPC 自动行动。', 'system');
         renderBoard();

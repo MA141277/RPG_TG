@@ -1,4 +1,7 @@
-import type { CityBeggingMiniGameState } from "../../../domain/city-begging-minigame";
+import type {
+  CityBeggingMiniGameState,
+  CityBeggingPlayableState,
+} from "../../../domain/city-begging-minigame";
 import type { CityBeggingGranaryEscortPlayingState } from "../../../domain/minigames/city-begging-granary-escort";
 import type {
   CityBeggingVillageFeedbackState,
@@ -363,9 +366,9 @@ function renderVillageCatchingOverlay(state: CityBeggingMiniGameState): string {
 }
 
 export function renderCityBeggingMiniGameOverlay(
-  state: CityBeggingMiniGameState | null
+  state: CityBeggingPlayableState | null
 ): string {
-  if (state == null) {
+  if (state == null || !("variantId" in state)) {
     return "";
   }
 
@@ -562,9 +565,9 @@ function drawVillageScene(
 
 export function syncCityBeggingMiniGameOverlay(
   root: ParentNode,
-  state: CityBeggingMiniGameState | null
+  state: CityBeggingPlayableState | null
 ): void {
-  if (state == null || state.variantState.status !== "playing") {
+  if (state == null || !("variantId" in state) || state.variantState.status !== "playing") {
     return;
   }
 
