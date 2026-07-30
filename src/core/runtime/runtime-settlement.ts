@@ -3,12 +3,11 @@ import type {
   EffectSettlementInput,
   EffectSettlementResult,
 } from "../contracts/effect-settlement";
+import type { SettlementCommand } from "../contracts/settlement-command";
 import type { ProgressionSettlementInstance } from "../contracts/progression-runtime";
 import type { RuntimeState } from "../contracts/runtime-state";
 import type { CharacterDefinition } from "../../domain/character";
-import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
-import { mutateCharacterNumericProperty } from "../../application/character/runtime-property-mutation";
-import { advanceGameStateTimeSegments } from "../../application/time/time-progression";
+import { applySettlementCommands } from "./settlement-command-runtime";
 
 export type ExportedSettlementContent = {
   targetFamily: "person" | "city" | "building";
@@ -379,100 +378,62 @@ export function settleRuntimeEffects(
     }
   }
 
+  const commandPairs: Array<{
+    effect: Effect;
+    command: SettlementCommand;
+  }> = [];
+
   for (const effect of input.effects) {
-    if (effect.type === "setFlag") {
-      nextState = {
-        ...nextState,
-        core: {
-          ...nextState.core,
-          runtime: {
-            ...nextState.core.runtime,
-            flags: {
-              ...nextState.core.runtime.flags,
-              [effect.key]: effect.value,
-            },
-          },
-        },
-      };
-      settledEffects.push(effect);
+    const command = toSettlementCommand(effect);
+    if (command == null) {
+      unsupportedEffects.push(effect);
+      warnings.push(
+        `unsupported-effect:${effect.type}:emitted-by:${input.emittedBy}`
+      );
       continue;
     }
 
-    if (effect.type === "setVariable") {
-      nextState = {
-        ...nextState,
-        core: {
-          ...nextState.core,
-          runtime: {
-            ...nextState.core.runtime,
-            variables: {
-              ...nextState.core.runtime.variables,
-              [effect.key]: effect.value,
-            },
-          },
-        },
-      };
-      settledEffects.push(effect);
-      continue;
-    }
-
-    if (effect.type === "advanceTime") {
-      const totalSegments =
-        Math.max(0, Math.floor(effect.days ?? 0)) *
-          HOUSE_ACTIVITY_SEGMENTS_PER_DAY +
-        Math.max(0, Math.floor(effect.hours ?? 0));
-      nextState = {
-        ...nextState,
-        core: advanceGameStateTimeSegments(nextState.core, totalSegments),
-      };
-      settledEffects.push(effect);
-      continue;
-    }
-
-    if (effect.type === "mutateCharacterNumericProperty") {
-      if (nextCharacterDefinitions == null) {
-        unsupportedEffects.push(effect);
-        warnings.push(
-          `unsupported-effect:${effect.type}:missing-character-definitions:emitted-by:${input.emittedBy}`
-        );
-        continue;
-      }
-
-      try {
-        const mutation = mutateCharacterNumericProperty({
-          state: nextState.core,
-          characterDefinitions: nextCharacterDefinitions,
-          characterId: effect.characterId,
-          propertyId: effect.propertyId,
-          operation: effect.operation,
-          value: effect.value,
-          ...(nextCharacterStatusById == null
-            ? {}
-            : { characterStatusById: nextCharacterStatusById }),
-        });
-        nextState = {
-          ...nextState,
-          core: mutation.state,
-        };
-        nextCharacterDefinitions = mutation.characterDefinitions;
-        nextCharacterStatusById = mutation.characterStatusById;
-        settledEffects.push(effect);
-      } catch (error) {
-        unsupportedEffects.push(effect);
-        warnings.push(
-          `unsupported-effect:${effect.type}:${
-            error instanceof Error ? error.message : "unknown-error"
-          }:emitted-by:${input.emittedBy}`
-        );
-      }
-      continue;
-    }
-
-    unsupportedEffects.push(effect);
-    warnings.push(
-      `unsupported-effect:${effect.type}:emitted-by:${input.emittedBy}`
-    );
+    commandPairs.push({ effect, command });
   }
+
+  const commandSettlement = applySettlementCommands({
+    state: nextState,
+    commands: commandPairs.map(({ command }) => command),
+    ...(nextCharacterDefinitions == null
+      ? {}
+      : { characterDefinitions: nextCharacterDefinitions }),
+    ...(nextCharacterStatusById == null
+      ? {}
+      : { characterStatusById: nextCharacterStatusById }),
+  });
+
+  nextState = commandSettlement.state;
+  nextCharacterDefinitions = commandSettlement.characterDefinitions;
+  nextCharacterStatusById = commandSettlement.characterStatusById;
+  const effectByCommand = new Map(
+    commandPairs.map(({ effect, command }) => [command, effect] as const)
+  );
+  for (const command of commandSettlement.settledCommands) {
+    const effect = effectByCommand.get(command);
+    if (effect != null) {
+      settledEffects.push(effect);
+    }
+  }
+  for (const command of commandSettlement.unsupportedCommands) {
+    const effect = effectByCommand.get(command);
+    if (effect != null) {
+      unsupportedEffects.push(effect);
+    }
+  }
+  warnings.push(
+    ...commandSettlement.warnings.map((warning, index) => {
+      const command = commandSettlement.unsupportedCommands[index];
+      return `${toEffectWarning(
+        warning,
+        command == null ? undefined : effectByCommand.get(command)
+      )}:emitted-by:${input.emittedBy}`;
+    })
+  );
 
   return {
     state: nextState,
@@ -486,4 +447,55 @@ export function settleRuntimeEffects(
     unsupportedEffects,
     warnings,
   };
+}
+
+function toSettlementCommand(effect: Effect): SettlementCommand | null {
+  if (effect.type === "setFlag") {
+    return {
+      type: "flag.set",
+      key: effect.key,
+      value: effect.value,
+    };
+  }
+
+  if (effect.type === "setVariable") {
+    return {
+      type: "variable.set",
+      key: effect.key,
+      value: effect.value,
+    };
+  }
+
+  if (effect.type === "advanceTime") {
+    return {
+      type: "time.advance",
+      ...(effect.hours == null ? {} : { hours: effect.hours }),
+      ...(effect.days == null ? {} : { days: effect.days }),
+    };
+  }
+
+  if (effect.type === "mutateCharacterNumericProperty") {
+    return {
+      type: "character.numeric-property.mutate",
+      characterId: effect.characterId,
+      propertyId: effect.propertyId,
+      operation: effect.operation,
+      value: effect.value,
+    };
+  }
+
+  return null;
+}
+
+function toEffectWarning(warning: string, effect: Effect | undefined): string {
+  if (effect == null) {
+    return warning;
+  }
+  if (warning.startsWith("unsupported-command:")) {
+    return warning.replace(
+      /^unsupported-command:[^:]+:/,
+      `unsupported-effect:${effect.type}:`
+    );
+  }
+  return warning;
 }

@@ -352,3 +352,58 @@ test("settleRuntimeEffects reports character mutation without character definiti
     "unsupported-effect:mutateCharacterNumericProperty:missing-character-definitions:emitted-by:event-runtime",
   ]);
 });
+
+test(
+  "settleRuntimeEffects delegates covered concrete mutation execution to settlement-command-runtime",
+  { concurrency: false },
+  () => {
+    const commandRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/settlement-command-runtime.js"
+    );
+    const runtimeSettlementPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-settlement.js"
+    );
+
+    delete require.cache[commandRuntimePath];
+    delete require.cache[runtimeSettlementPath];
+
+    const commandRuntimeModule = require(commandRuntimePath);
+    const originalApplySettlementCommands =
+      commandRuntimeModule.applySettlementCommands;
+    let applySettlementCommandsCalls = 0;
+
+    commandRuntimeModule.applySettlementCommands = (...args) => {
+      applySettlementCommandsCalls += 1;
+      return originalApplySettlementCommands(...args);
+    };
+
+    try {
+      const { settleRuntimeEffects: settleRuntimeEffectsWithPatchedOwner } =
+        require(runtimeSettlementPath);
+
+      const result = settleRuntimeEffectsWithPatchedOwner({
+        state: createBaseRuntimeState(),
+        effects: [
+          {
+            type: "setFlag",
+            key: "event.test.delegated",
+            value: true,
+          },
+        ],
+        emittedBy: "event-runtime",
+        appliedBy: "runtime-settlement",
+      });
+
+      assert.equal(result.state.core.runtime.flags["event.test.delegated"], true);
+      assert.ok(
+        applySettlementCommandsCalls > 0,
+        "runtime-settlement should delegate covered mutation execution to applySettlementCommands"
+      );
+    } finally {
+      commandRuntimeModule.applySettlementCommands =
+        originalApplySettlementCommands;
+      delete require.cache[commandRuntimePath];
+      delete require.cache[runtimeSettlementPath];
+    }
+  }
+);

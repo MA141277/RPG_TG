@@ -16748,9 +16748,30 @@ test("runtime settlement uses explicit contract and reports unsupported effect k
 
   assert.match(source, /import type \{[\s\S]*EffectSettlementInput[\s\S]*EffectSettlementResult[\s\S]*\}/);
   assert.match(source, /export function settleRuntimeEffects/);
+  assert.match(source, /applySettlementCommands/);
   assert.match(source, /unsupportedEffects/);
   assert.match(source, /warnings/);
   assert.doesNotMatch(source, /runTask|activateEvent|renderApp|writeSave/);
+});
+
+test("settlement command runtime owns the covered concrete mutation families", () => {
+  const contractSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/settlement-command.ts"),
+    "utf8"
+  );
+  const runtimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/settlement-command-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(contractSource, /export type SettlementCommand =/);
+  assert.match(contractSource, /"flag\.set"/);
+  assert.match(contractSource, /"variable\.set"/);
+  assert.match(contractSource, /"time\.advance"/);
+  assert.match(contractSource, /"character\.numeric-property\.mutate"/);
+  assert.match(runtimeSource, /export function applySettlementCommands/);
+  assert.match(runtimeSource, /mutateCharacterNumericProperty/);
+  assert.doesNotMatch(runtimeSource, /dispatchRuntimeRequest|routeStoryDirectEntry|renderApp/);
 });
 
 test("runtime spine commit helper is exported from state sync runtime", () => {
