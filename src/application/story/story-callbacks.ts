@@ -25,6 +25,10 @@ export type StoryCallbackRuntime = {
   textEntriesById?: Record<string, string> | undefined;
 };
 
+export type StoryCallbackResult = StoryCallbackRuntime & {
+  pauseScene?: boolean | undefined;
+};
+
 function getStoryCallbackText(
   runtime: StoryCallbackRuntime,
   textId: string | undefined,
@@ -192,6 +196,7 @@ function runStartSundeyaRescueBattleCallback(
         battleIdVariableKey,
         resultVariableKey,
         enterHouseId: "house.kulan.keep",
+        returnBackgroundId: "junying",
         mainMissionText: getStoryCallbackText(
           runtime,
           "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review"
@@ -207,7 +212,7 @@ export function runStoryCallback(
   handlerId: string,
   payload: StoryCallbackPayload,
   runtime: StoryCallbackRuntime
-): StoryCallbackRuntime {
+): StoryCallbackResult {
   switch (handlerId) {
     case "story.show-chapter-title": {
       const titleText = readStringPayloadValue(payload, "titleText");
@@ -227,6 +232,7 @@ export function runStoryCallback(
           },
         },
         characterDefinitions: runtime.characterDefinitions,
+        pauseScene: true,
       };
     }
     case "story.placeholder-battle":

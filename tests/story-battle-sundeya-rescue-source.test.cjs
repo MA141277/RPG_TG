@@ -51,6 +51,6 @@ test("sundeya rescue return scene appends the requested victory follow-up, chapt
   );
   assert.match(
     textEntries,
-    /"scene\.story\.zhu_yuanzhang\.haozhou_return_encounter\.018": "看来城中义军将帅并非传闻啊"/
+    /"scene\.story\.zhu_yuanzhang\.haozhou_return_encounter\.018": "看来城中义军将帅不和并非传闻啊"/
   );
 });

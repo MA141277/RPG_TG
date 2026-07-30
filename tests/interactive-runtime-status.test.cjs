@@ -199,6 +199,7 @@ test("story battle playable runtime resumes the owning scene after embedded vict
     "scene.story.zhu_yuanzhang.haozhou_return_encounter"
   );
   assert.equal(settled.state.core.scene.cursor, 16);
+  assert.equal(settled.state.core.scene.backgroundId, "junying");
   assert.deepEqual(settled.interactive, { type: "none" });
   assert.deepEqual(settled.followUp, { type: "none" });
 });
@@ -220,6 +221,7 @@ test("interactive runtime keeps the return-to-haozhou story scene active after e
     "scene.story.zhu_yuanzhang.haozhou_return_encounter"
   );
   assert.equal(settled.state.core.scene.cursor, 16);
+  assert.equal(settled.state.core.scene.backgroundId, "junying");
   assert.deepEqual(settled.interactive, { type: "none" });
   assert.deepEqual(settled.followUp, { type: "none" });
 });

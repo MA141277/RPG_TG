@@ -45,19 +45,21 @@ test("story show chapter title callback writes the requested title text into run
     result.state.runtime.variables[STORY_PRESENTATION_VARIABLE_KEYS.chapterTitleText],
     "第二章 濠州从戎"
   );
+  assert.equal(result.pauseScene, true);
 });
 
-test("story chapter title overlay renderer emits the shared overlay hook and copy", () => {
+test("story chapter title overlay renderer emits the shared overlay hook and copy without a dismiss button", () => {
   const markup = renderStoryChapterTitleOverlay("第二章 濠州从戎");
 
   assert.match(markup, /data-story-chapter-title-overlay/);
   assert.match(markup, /第二章 濠州从戎/);
+  assert.doesNotMatch(markup, /dismiss-story-chapter-title/);
 });
 
-test("main keeps chapter title dismissal generic instead of hardcoding the new title copy", () => {
+test("main keeps chapter title clear logic generic instead of hardcoding the new title copy", () => {
   const source = fs.readFileSync("src/main.ts", "utf8");
 
-  assert.match(source, /dismiss-story-chapter-title|clearStoryChapterTitle/);
+  assert.match(source, /clearStoryChapterTitle/);
   assert.doesNotMatch(source, /第二章 濠州从戎/);
   assert.doesNotMatch(source, /story\.show-chapter-title/);
 });

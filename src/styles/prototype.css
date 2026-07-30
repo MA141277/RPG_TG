@@ -1264,26 +1264,11 @@
 }
 
 .c-story-chapter-title-overlay {
-  pointer-events: auto;
-  animation: none;
-  background: var(--color-mask);
-}
-
-.c-story-chapter-title-overlay__panel {
-  display: grid;
-  justify-items: center;
-  gap: var(--space-5);
-  padding: var(--space-6);
+  pointer-events: none;
 }
 
 .c-story-chapter-title-overlay .c-map-intro-overlay__title {
-  animation: none;
-  opacity: 1;
-  transform: none;
-}
-
-.c-story-chapter-title-overlay__dismiss {
-  min-width: 11rem;
+  min-width: min(820px, calc(100vw - 80px));
 }
 
 @keyframes map-intro-title-fade {

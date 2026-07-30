@@ -248,6 +248,12 @@ export function dispatchStoryBattleAction(
           ),
         reviewDateText: formatCouncilStatusText(0),
       },
+      scene: {
+        ...state.scene,
+        ...(shouldResumeScene && completion.returnBackgroundId != null
+          ? { backgroundId: completion.returnBackgroundId }
+          : {}),
+      },
       runtime: {
         ...state.runtime,
         flags: {

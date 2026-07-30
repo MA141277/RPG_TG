@@ -320,7 +320,10 @@ import {
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
 } from "./domain/zhu-yuanzhang-story";
-import { STORY_PRESENTATION_VARIABLE_KEYS } from "./domain/story-presentation";
+import {
+  STORY_PRESENTATION_VARIABLE_KEYS,
+  readStoryChapterTitleText,
+} from "./domain/story-presentation";
 import { assertExists } from "./shared/assert";
 import { renderApp as renderAppMarkup } from "./ui/app-render";
 import {
@@ -880,6 +883,7 @@ let initialCampaignMapDebugAnimationStartTime: number | null = null;
 let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
 let campaignMapZoomCloudResumeTimeoutId: number | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
+let storyChapterTitleAutoAdvanceTimeoutId: number | null = null;
 let pendingInitialCampaignMapIntroTerrainReady = false;
 let cityStageDomRuntimeHandle: {
   cityId: string;
@@ -5398,19 +5402,7 @@ appElement.addEventListener("click", (event) => {
     "[data-action='dismiss-story-chapter-title']"
   );
   if (dismissStoryChapterTitleAction != null) {
-    appState = {
-      ...appState,
-      gameState: {
-        ...appState.gameState,
-        runtime: {
-          ...appState.gameState.runtime,
-          variables: {
-            ...appState.gameState.runtime.variables,
-            [STORY_PRESENTATION_VARIABLE_KEYS.chapterTitleText]: "",
-          },
-        },
-      },
-    };
+    clearStoryChapterTitle();
     renderApp();
     return;
   }
@@ -7493,6 +7485,7 @@ function renderAppFrame(
   syncCampaignTerrainStyleView();
   restoreCampaignMapScaleInputFocus(focusedScaleInput);
   syncMapIntroOverlay();
+  syncStoryChapterTitleOverlay();
   syncActivityQteLoop();
   if (appState.gameState.ui.currentView === "map") {
     syncCampaignTerrainWebGl(appRoot);
@@ -7995,6 +7988,52 @@ function syncMapIntroOverlay(): void {
       );
     }
   }
+}
+
+function clearStoryChapterTitle(): void {
+  if (storyChapterTitleAutoAdvanceTimeoutId != null) {
+    window.clearTimeout(storyChapterTitleAutoAdvanceTimeoutId);
+    storyChapterTitleAutoAdvanceTimeoutId = null;
+  }
+
+  if (readStoryChapterTitleText(appState.gameState).length === 0) {
+    return;
+  }
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      runtime: {
+        ...appState.gameState.runtime,
+        variables: {
+          ...appState.gameState.runtime.variables,
+          [STORY_PRESENTATION_VARIABLE_KEYS.chapterTitleText]: "",
+        },
+      },
+    },
+  };
+}
+
+function syncStoryChapterTitleOverlay(): void {
+  const chapterTitleText = readStoryChapterTitleText(appState.gameState);
+  if (chapterTitleText.length === 0) {
+    if (storyChapterTitleAutoAdvanceTimeoutId != null) {
+      window.clearTimeout(storyChapterTitleAutoAdvanceTimeoutId);
+      storyChapterTitleAutoAdvanceTimeoutId = null;
+    }
+    return;
+  }
+
+  if (storyChapterTitleAutoAdvanceTimeoutId != null) {
+    return;
+  }
+
+  storyChapterTitleAutoAdvanceTimeoutId = window.setTimeout(() => {
+    storyChapterTitleAutoAdvanceTimeoutId = null;
+    clearStoryChapterTitle();
+    advanceCurrentStoryScene();
+  }, 4000);
 }
 
 function zoomCampaignMapAtScreenCenter(nextScale: number): void {
