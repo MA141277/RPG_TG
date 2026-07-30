@@ -964,6 +964,139 @@ test(
 );
 
 test(
+  "continueStoryFromSourceEvent applies settlement nextEventId continuation through the shared router seam",
+  { concurrency: false },
+  () => {
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
+    );
+    const storyRuntimePath = require.resolve(
+      "../.test-dist/application/story/story-runtime.js"
+    );
+
+    delete require.cache[storyRuntimePath];
+    delete require.cache[runtimeDispatchPath];
+
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const {
+        continueStoryFromSourceEvent: continueStoryFromSourceEventWithPatchedDispatch,
+      } = require(storyRuntimePath);
+      const content = {
+        eventDefinitionsById: {
+          "event.playable.source": createEvent(
+            "event.playable.source",
+            "scene.playable.source",
+            "event.playable.settlement"
+          ),
+          "event.playable.settlement": {
+            ...createEvent(
+              "event.playable.settlement",
+              "scene.playable.settlement"
+            ),
+            type: "settlement",
+            settlementId: "settlement.playable.reward",
+          },
+          "event.playable.settlement-followup": createEvent(
+            "event.playable.settlement-followup",
+            "scene.playable.settlement-followup"
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.playable.source": {
+            id: "scene.playable.source",
+            name: "Playable Source",
+            actions: [],
+          },
+          "scene.playable.settlement": {
+            id: "scene.playable.settlement",
+            name: "Playable Settlement",
+            actions: [],
+          },
+          "scene.playable.settlement-followup": {
+            id: "scene.playable.settlement-followup",
+            name: "Playable Settlement Follow-up",
+            actions: [],
+          },
+        },
+        settlementDefinitionsById: {
+          "settlement.playable.reward": {
+            id: "settlement.playable.reward",
+            title: "Playable Reward",
+            nextEventId: "event.playable.settlement-followup",
+            contents: [
+              {
+                targetFamily: "person",
+                targetId: "char.player",
+                attributeKey: "stamina",
+                attributeType: "number",
+                operation: "add",
+                value: 10,
+              },
+            ],
+          },
+        },
+      };
+
+      const characterDefinitions = prototypeCharacters.map((character) =>
+        character.id === "char.player"
+          ? {
+              ...character,
+              stamina: 100,
+            }
+          : character
+      );
+
+      const continued = continueStoryFromSourceEventWithPatchedDispatch(
+        {
+          state: createBaseState(),
+          characterDefinitions,
+        },
+        content,
+        "event.playable.source"
+      );
+
+      assert.ok(continued, "Expected settlement source continuation to succeed.");
+      assert.equal(
+        continued.characterDefinitions.find(
+          (character) => character.id === "char.player"
+        )?.stamina,
+        110
+      );
+      assert.equal(
+        continued.state.runtime.eventHistory["event.playable.settlement"]
+          ?.firedCount,
+        1
+      );
+      assert.equal(
+        continued.state.runtime.eventHistory[
+          "event.playable.settlement-followup"
+        ]?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchRuntimeRequestCalls > 1,
+        "continueStoryFromSourceEvent should route settlement follow-up through dispatchRuntimeRequest instead of stopping after the settlement event"
+      );
+    } finally {
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
+      delete require.cache[storyRuntimePath];
+      delete require.cache[runtimeDispatchPath];
+    }
+  }
+);
+
+test(
   "event-owned playable completion continues the source event through story continuation seam",
   () => {
     assert.equal(

@@ -15497,6 +15497,23 @@ test("story source event continuation convergence keeps continueStoryFromSourceE
   );
 });
 
+test("story settlement next-event convergence keeps settlement follow-up on the shared router seam", () => {
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const applyTriggeredStoryEventBlock =
+    storyRuntimeSource.match(
+      /function applyTriggeredStoryEvent\([\s\S]*?\n}\n\nfunction createScopedTriggerContext/
+    )?.[0] ?? "";
+
+  assert.match(applyTriggeredStoryEventBlock, /\breadStorySettlement\s*\(/);
+  assert.match(applyTriggeredStoryEventBlock, /\bresolveEventContinuation\s*\(/);
+  assert.match(applyTriggeredStoryEventBlock, /\brouteStoryDirectEntry\s*\(/);
+  assert.doesNotMatch(applyTriggeredStoryEventBlock, /\bcontinueToEvent\s*\(/);
+  assert.doesNotMatch(applyTriggeredStoryEventBlock, /\bstartEvent\s*\(/);
+});
+
 test("story choice event continuation convergence keeps chooseStorySceneOption nextEvent on the shared router seam", () => {
   const storyRuntimeSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/story/story-runtime.ts"),

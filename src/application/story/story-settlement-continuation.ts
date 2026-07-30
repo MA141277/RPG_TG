@@ -10,6 +10,7 @@ import {
 
 export type StorySettlementDefinition = ExportedSettlement & {
   id: string;
+  nextEventId?: string | undefined;
 };
 
 export type StorySettlementRuntimeContext = {

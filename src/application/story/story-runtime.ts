@@ -28,7 +28,10 @@ import { createEventRouteActivationHandlers } from "../../core/runtime/event-rou
 import { dispatchEventRoute } from "../../core/runtime/event-router";
 import { runProgressionRuntime } from "../../core/runtime/progression-runtime";
 import { dispatchRuntimeRequest } from "../../core/runtime/runtime-dispatch";
-import { resolveEventContinuation } from "../events/event-continuation";
+import {
+  createEventContinuationTracker,
+  resolveEventContinuation,
+} from "../events/event-continuation";
 import { applyEffects } from "../effects/effect-applier";
 import {
   applyStorySettlementEvent,
@@ -230,7 +233,10 @@ function applyTriggeredStoryEvent(
   runtime: StoryRuntimeContext,
   content: StoryContent,
   eventDefinition: EventDefinition,
-  options: { eventAlreadyStarted?: boolean } = {}
+  options: {
+    eventAlreadyStarted?: boolean;
+    visitedEventIds?: Iterable<string> | undefined;
+  } = {}
 ): StoryRuntimeContext {
   if (options.eventAlreadyStarted !== true) {
     return routeStoryDirectEntry(runtime, content, {
@@ -245,9 +251,53 @@ function applyTriggeredStoryEvent(
     content,
     eventDefinition
   );
-  return eventDefinition.type === "settlement"
-    ? applyStoryProgressionAfterSettlement(settledRuntime, content)
-    : settledRuntime;
+  if (eventDefinition.type !== "settlement") {
+    return settledRuntime;
+  }
+
+  const progressedRuntime = applyStoryProgressionAfterSettlement(
+    settledRuntime,
+    content
+  );
+  const settlement = readStorySettlement(content, eventDefinition);
+  const continuation = resolveEventContinuation({
+    state: progressedRuntime.state,
+    eventDefinitionsById: content.eventDefinitionsById,
+    sourceEventId: eventDefinition.id,
+    targetEventId: settlement?.nextEventId,
+    visitedEventIds: createEventContinuationTracker(
+      options.visitedEventIds ?? [eventDefinition.id]
+    ),
+  });
+  if (continuation == null) {
+    return progressedRuntime;
+  }
+
+  return applyTriggeredStoryEvent(
+    routeStoryDirectEntry(progressedRuntime, content, {
+      eventId: continuation.eventDefinition.id,
+      eventDefinition: continuation.eventDefinition,
+    }),
+    content,
+    continuation.eventDefinition,
+    {
+      eventAlreadyStarted: true,
+      visitedEventIds: continuation.visitedEventIds,
+    }
+  );
+}
+
+function readStorySettlement(
+  content: StoryContent,
+  eventDefinition: EventDefinition
+): StorySettlementDefinition | undefined {
+  const settlementId =
+    typeof eventDefinition.settlementId === "string"
+      ? eventDefinition.settlementId.trim()
+      : "";
+  return settlementId.length === 0
+    ? undefined
+    : content.settlementDefinitionsById?.[settlementId];
 }
 
 function createScopedTriggerContext(
