@@ -606,19 +606,34 @@ test("village elder letter opening is independent from the huangjue ordination e
   assert.equal(villageLetterEvent?.nextEventId, undefined);
 });
 
-test("huangjue ordination continues to the first temple review after entering the temple", () => {
+test("huangjue ordination returns to temple house instead of chaining the review scene", () => {
   const events = JSON.parse(
     fs.readFileSync("src/content/scenario-packs/zhuyuanzhang/events.json", "utf8")
   );
+  const storySource = fs.readFileSync(
+    "src/content/story/zhu-yuanzhang-main-story.ts",
+    "utf8"
+  );
+  const scriptEditorEvents = JSON.parse(
+    fs.readFileSync(
+      "src/modules/script-editor/builtin-templates/zhuyuanzhang/events.json",
+      "utf8"
+    )
+  );
   const ordinationEvent = events.find(
+    (event) => event.id === "event.story.zhu_yuanzhang.ordination"
+  );
+  const scriptEditorOrdinationEvent = scriptEditorEvents.find(
     (event) => event.id === "event.story.zhu_yuanzhang.ordination"
   );
 
   assert.equal(ordinationEvent?.trigger?.timing, "house-enter");
   assert.equal(ordinationEvent?.trigger?.scope?.houseId, "house.kulan.temple");
-  assert.equal(
-    ordinationEvent?.nextEventId,
-    "event.story.zhu_yuanzhang.first_temple_review"
+  assert.equal(ordinationEvent?.nextEventId, undefined);
+  assert.equal(scriptEditorOrdinationEvent?.nextEventId, undefined);
+  assert.doesNotMatch(
+    storySource,
+    /id:\s*"event\.story\.zhu_yuanzhang\.ordination"[\s\S]*?nextEventId:\s*"event\.story\.zhu_yuanzhang\.first_temple_review"/
   );
 });
 
