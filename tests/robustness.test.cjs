@@ -16732,7 +16732,7 @@ test("effect settlement contract exports the command-native settlement seams", (
     "utf8"
   );
 
-  assert.match(source, /export type EffectEmitter =/);
+  assert.match(source, /export type SettlementEmitter =/);
   assert.match(source, /export type SettlementRuntimeInput =/);
   assert.match(source, /export type SettlementRuntimeResult =/);
   assert.doesNotMatch(source, /export type EffectSettlementApplier =/);
@@ -16869,6 +16869,17 @@ test("settlement runtime contract rename keeps live code off the legacy effect-s
   assert.doesNotMatch(contentPackSource, /effect-settlement/);
   assert.match(contractSource, /export type SettlementRuntimeInput =/);
   assert.match(contractSource, /export type SettlementRuntimeResult =/);
+});
+
+test("settlement emitter rename keeps the command-native contract off the effect-era emitter name", () => {
+  const contractSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/settlement-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(contractSource, /export type SettlementEmitter =/);
+  assert.doesNotMatch(contractSource, /export type EffectEmitter =/);
+  assert.match(contractSource, /emittedBy: SettlementEmitter;/);
 });
 
 test("runtime settlement effects fallback removal keeps state sync runtime command-only", () => {

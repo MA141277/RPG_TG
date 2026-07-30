@@ -17,7 +17,7 @@ export type SettlementDefinition = {
   contents?: readonly SettlementContentDefinition[];
 };
 
-export type EffectEmitter =
+export type SettlementEmitter =
   | "runtime-router"
   | "interactive-runtime"
   | "house-runtime"
@@ -34,7 +34,7 @@ export type SettlementRuntimeInput = {
   commands: SettlementCommand[];
   settlementInstances?: ProgressionSettlementInstance[];
   settlementDefinitionsById?: Record<string, SettlementDefinition | undefined>;
-  emittedBy: EffectEmitter;
+  emittedBy: SettlementEmitter;
   appliedBy: SettlementRuntimeApplier;
   characterDefinitions?: CharacterDefinition[];
   characterStatusById?: CharacterStatusById;
