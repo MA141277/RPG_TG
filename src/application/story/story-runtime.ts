@@ -345,24 +345,11 @@ export function continueStoryFromSourceEvent(
   if (continuation == null) {
     return null;
   }
-
-  const settledRuntime = applyStorySettlementEvent(
-    {
-      state: continuation.state,
-      characterDefinitions: runtime.characterDefinitions,
-      ...(runtime.cityDefinitions == null
-        ? {}
-        : { cityDefinitions: runtime.cityDefinitions }),
-      ...(runtime.houseDefinitions == null
-        ? {}
-        : { houseDefinitions: runtime.houseDefinitions }),
-    },
-    content,
-    continuation.eventDefinition
-  );
-
   return syncStoryScene(
-    settledRuntime,
+    routeStoryDirectEntry(runtime, content, {
+      eventId: continuation.eventDefinition.id,
+      eventDefinition: continuation.eventDefinition,
+    }),
     content
   );
 }

@@ -15476,6 +15476,27 @@ test("story direct event entry convergence keeps direct callers on the shared ro
   );
 });
 
+test("story source event continuation convergence keeps continueStoryFromSourceEvent on the shared router seam", () => {
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const continueStoryFromSourceEventBlock =
+    storyRuntimeSource.match(
+      /export function continueStoryFromSourceEvent\([\s\S]*?\r?\n}\r?\n\r?\nexport function triggerStoryEvents/
+    )?.[0] ?? "";
+
+  assert.match(continueStoryFromSourceEventBlock, /\brouteStoryDirectEntry\s*\(/);
+  assert.doesNotMatch(
+    continueStoryFromSourceEventBlock,
+    /\bapplyStorySettlementEvent\s*\(/
+  );
+  assert.doesNotMatch(
+    continueStoryFromSourceEventBlock,
+    /\bcontinuation\.state\b/
+  );
+});
+
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),

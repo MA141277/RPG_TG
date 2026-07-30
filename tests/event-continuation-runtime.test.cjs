@@ -392,6 +392,88 @@ test(
 );
 
 test(
+  "continueStoryFromSourceEvent routes the follow-up target through the shared router seam",
+  { concurrency: false },
+  () => {
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
+    );
+    const storyRuntimePath = require.resolve(
+      "../.test-dist/application/story/story-runtime.js"
+    );
+
+    delete require.cache[storyRuntimePath];
+    delete require.cache[runtimeDispatchPath];
+
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const {
+        continueStoryFromSourceEvent: continueStoryFromSourceEventWithPatchedDispatch,
+      } = require(storyRuntimePath);
+      const content = {
+        eventDefinitionsById: {
+          "event.playable.source": createEvent(
+            "event.playable.source",
+            "scene.playable.source",
+            "event.playable.followup"
+          ),
+          "event.playable.followup": createEvent(
+            "event.playable.followup",
+            "scene.playable.followup"
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.playable.source": {
+            id: "scene.playable.source",
+            name: "Playable Source",
+            actions: [],
+          },
+          "scene.playable.followup": {
+            id: "scene.playable.followup",
+            name: "Playable Follow-up",
+            actions: [],
+          },
+        },
+      };
+
+      const continued = continueStoryFromSourceEventWithPatchedDispatch(
+        {
+          state: createBaseState(),
+          characterDefinitions: prototypeCharacters,
+        },
+        content,
+        "event.playable.source"
+      );
+
+      assert.ok(continued, "Expected source event continuation to succeed.");
+      assert.equal(
+        continued.state.runtime.eventHistory["event.playable.followup"]
+          ?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "continueStoryFromSourceEvent should route the continuation target through dispatchRuntimeRequest instead of starting it locally"
+      );
+    } finally {
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
+      delete require.cache[storyRuntimePath];
+      delete require.cache[runtimeDispatchPath];
+    }
+  }
+);
+
+test(
   "event-owned playable completion continues the source event through story continuation seam",
   () => {
     assert.equal(
