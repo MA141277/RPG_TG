@@ -19,6 +19,7 @@ import type {
   MenuInstanceDefinition,
   MenuResourceDefinition,
 } from "../../domain/menu";
+import type { PlayableIntegrationDefinition } from "../../core/contracts/playable-runtime";
 import { materializeBuildingDefinitions } from "../../domain/building-status";
 import { materializeCityDefinitions } from "../../domain/city-status";
 import type { AppPresenterStageOutput } from "./presenter-output";
@@ -34,6 +35,14 @@ export type StagePresenterInput = {
   playerCharacterId: string;
   menuResourcesById: Record<string, MenuResourceDefinition>;
   menuInstancesById: Record<string, MenuInstanceDefinition>;
+  playableIntegrationsByEditorRecordId?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined;
+  playableIntegrationsById?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined;
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
@@ -79,6 +88,9 @@ export function createStagePresenterOutput(
         cityEntries: input.cityEntries,
         menuResourcesById: input.menuResourcesById,
         menuInstancesById: input.menuInstancesById,
+        playableIntegrationsByEditorRecordId:
+          input.playableIntegrationsByEditorRecordId,
+        playableIntegrationsById: input.playableIntegrationsById,
         citySceneMapping,
       });
   }
@@ -147,6 +159,9 @@ export function createStagePresenterOutput(
         cityEntries: input.cityEntries,
         menuResourcesById: input.menuResourcesById,
         menuInstancesById: input.menuInstancesById,
+        playableIntegrationsByEditorRecordId:
+          input.playableIntegrationsByEditorRecordId,
+        playableIntegrationsById: input.playableIntegrationsById,
         citySceneMapping,
       });
     }
@@ -164,6 +179,9 @@ export function createStagePresenterOutput(
             cityEntries: input.cityEntries,
             menuResourcesById: input.menuResourcesById,
             menuInstancesById: input.menuInstancesById,
+            playableIntegrationsByEditorRecordId:
+              input.playableIntegrationsByEditorRecordId,
+            playableIntegrationsById: input.playableIntegrationsById,
             citySceneMapping,
           })
         : undefined;

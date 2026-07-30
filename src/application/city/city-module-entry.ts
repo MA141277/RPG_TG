@@ -13,6 +13,7 @@ import type {
   MenuInstanceDefinition,
   MenuResourceDefinition,
 } from "../../domain/menu";
+import type { PlayableIntegrationDefinition } from "../../core/contracts/playable-runtime";
 import type { AppPresenterStageOutput } from "../presenter/presenter-output";
 
 export type CityModuleEntryInput = {
@@ -23,6 +24,14 @@ export type CityModuleEntryInput = {
   cityEntries: CityEntryDefinition[];
   menuResourcesById: Record<string, MenuResourceDefinition>;
   menuInstancesById: Record<string, MenuInstanceDefinition>;
+  playableIntegrationsByEditorRecordId?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined;
+  playableIntegrationsById?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined;
   citySceneMapping: CitySceneMapping | null;
 };
 
@@ -65,6 +74,9 @@ export function selectCityModuleUnderlay(
       playerCharacter: input.playerCharacter,
       menuResourcesById: input.menuResourcesById,
       menuInstancesById: input.menuInstancesById,
+      playableIntegrationsByEditorRecordId:
+        input.playableIntegrationsByEditorRecordId,
+      playableIntegrationsById: input.playableIntegrationsById,
     }),
     citySceneMapping: input.citySceneMapping,
   };

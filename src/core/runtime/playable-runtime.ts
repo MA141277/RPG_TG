@@ -222,7 +222,24 @@ export function resolvePlayableLaunch(input: {
       integrationId: integration.integrationId,
       family: definition.family,
       ownerContext,
-      ...(input.launch.payload == null ? {} : { payload: input.launch.payload }),
+      ...mergeLaunchPayloadDefaults(integration, input.launch.payload),
+    },
+  };
+}
+
+function mergeLaunchPayloadDefaults(
+  integration: PlayableIntegrationDefinition,
+  payload: Record<string, unknown> | undefined
+): { payload?: Record<string, unknown> | undefined } {
+  const triggerPayload = integration.trigger.launchPayload;
+  if (triggerPayload == null && payload == null) {
+    return {};
+  }
+
+  return {
+    payload: {
+      ...(triggerPayload ?? {}),
+      ...(payload ?? {}),
     },
   };
 }

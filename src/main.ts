@@ -23,6 +23,7 @@ import {
   createCityMenuState,
   resolveCityMenuEntries,
 } from "./application/city-menu/city-menu";
+import { launchCityMenuPlayable } from "./application/city-menu/city-menu-playable-launch";
 import { createAppRenderCoordinator } from "./application/presenter/app-render-coordinator";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
 import {
@@ -231,17 +232,6 @@ declare global {
     onBeggingGameComplete?: (
       result: CityBeggingGameCompletionResult
     ) => void;
-    __RPG_TG_DEBUG__?: {
-      getAppState(): AppState;
-      getActiveContentContext(): ActiveGameContentContext;
-      getPresenterStageSummary(): {
-        currentView: AppState["gameState"]["ui"]["currentView"];
-        currentCityId: string | null;
-        currentHouseId: string | null;
-        buildingArrangementCount: number;
-        stageType: string;
-      };
-    };
   }
 }
 
@@ -772,6 +762,10 @@ function getCurrentCityUiContext(): {
           playerCharacter,
           menuResourcesById: activeContentContext.gameContent.menuResourcesById,
           menuInstancesById: activeContentContext.gameContent.menuInstancesById,
+          playableIntegrationsByEditorRecordId:
+            activeContentContext.gameContent.playableIntegrationsByEditorRecordId,
+          playableIntegrationsById:
+            activeContentContext.gameContent.playableIntegrationsById,
         });
 
   return {
@@ -799,6 +793,19 @@ function openCityMenuEntry(entryId: string | undefined): void {
   if (menuEntry.action.type === "minigame") {
     if (menuEntry.action.minigameId === "city-begging") {
       openBeggingMiniGame();
+      return;
+    }
+    const launchResult = launchCityMenuPlayable({
+      state: appState,
+      action: menuEntry.action,
+      characterDefinitions: appState.characterDefinitions,
+      playerCharacterId: currentPlayerCharacterId,
+      activityDefinitionsById:
+        activeContentContext.gameContent.activityDefinitionsById,
+    });
+    if (launchResult.handled) {
+      appState = launchResult.state;
+      renderApp();
     }
     return;
   }
@@ -2123,6 +2130,9 @@ async function prepareScenarioPackCharacterSelection(
     throw new Error(activationResult.failure.message);
   }
 
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+    activationResult.activatedMod
+  );
   setActiveContentContext(
     entryShellBootstrapState.createStartupContentContext(activationResult)
   );

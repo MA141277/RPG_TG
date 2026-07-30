@@ -188,7 +188,7 @@ const TREE_GROUPS: Array<{
   {
     id: "narrative",
     label: "剧情与文本",
-    families: ["storyNodes", "dialogues", "minigames", "settlements"],
+    families: ["dialogues", "minigames", "settlements"],
   },
   {
     id: "gameplay",

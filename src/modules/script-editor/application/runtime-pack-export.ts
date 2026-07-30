@@ -211,6 +211,7 @@ export function validateScriptEditorProjectForRuntimeExport(
   const sharedRuleDiagnostics: ScriptEditorSharedRuleDiagnostic[] = [];
   const exportedTasks = compileScriptEditorProjectTasks(project, sharedRuleDiagnostics);
   appendSharedRuleDiagnostics(sharedRuleDiagnostics, diagnostics);
+  const exportedMenuResources = materializeRuntimeMenuResources(project);
 
   if (
     diagnostics.length > 0 ||
@@ -244,7 +245,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       eventBindings: exportedEventBindings,
       progressTracks: project.progressTracks ?? [],
       progressTrackBindings: project.progressTrackBindings ?? [],
-      menuResources: project.menuResources,
+      menuResources: exportedMenuResources,
       menuInstances: project.menuInstances,
       dialogues: exportedDialogues,
       activities: project.activities,
@@ -918,6 +919,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     project,
     []
   );
+  const exportedMenuResources = materializeRuntimeMenuResources(project);
   if (
     scenarioProfile == null ||
     exportedTextEntries == null ||
@@ -987,7 +989,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.progressTrackBindings)]:
       stringifyJson(project.progressTrackBindings ?? []),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.menuResources)]: stringifyJson(
-      project.menuResources
+      exportedMenuResources
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.menuInstances)]: stringifyJson(
       project.menuInstances
@@ -1060,6 +1062,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
   const playablesById = new Map<string, PlayableDefinition>();
   const playableIntegrations: PlayableIntegrationDefinition[] = [];
   const integrationIds = new Set<string>();
+  const menuLaunchedMinigameIds = collectMenuLaunchedMinigameIds(project);
 
   for (const [index, minigame] of project.minigames.entries()) {
     const fieldPath = `project.minigames[${index}]`;
@@ -1134,7 +1137,21 @@ function materializeScriptEditorPlayableRuntimeFamilies(
       continue;
     }
 
-    if (ownerKind !== "external" && (minigame.ownerId == null || minigame.ownerId.trim().length === 0)) {
+    const ownerId = typeof minigame.ownerId === "string" ? minigame.ownerId.trim() : "";
+    const shouldUseExternalMenuOwner =
+      ownerKind !== "external" &&
+      ownerId.length === 0 &&
+      menuLaunchedMinigameIds.has(minigame.id);
+    const runtimeOwnerKind = shouldUseExternalMenuOwner ? "external" : ownerKind;
+    const runtimeOwnerId =
+      runtimeOwnerKind === "external" ? null : ownerId;
+    const runtimeReturnPolicy =
+      shouldUseExternalMenuOwner ? "close-only" : returnPolicy;
+
+    if (
+      runtimeOwnerKind !== "external" &&
+      (runtimeOwnerId == null || runtimeOwnerId.length === 0)
+    ) {
       diagnostics.push({
         code: "missing-field",
         fieldPath: `${fieldPath}.ownerId`,
@@ -1167,21 +1184,26 @@ function materializeScriptEditorPlayableRuntimeFamilies(
       family: definition.family,
       commandPrefix: definition.commandPrefix,
     });
+    const launchPayload = materializeMinigameLaunchPayload({
+      minigame,
+      project,
+      isMenuLaunched: menuLaunchedMinigameIds.has(minigame.id),
+    });
+
     playableIntegrations.push({
       editorRecordId: minigame.id,
       integrationId,
       playableId,
       ownerDefaults: {
-        ownerKind,
-        ownerId:
-          ownerKind === "external" ? null : minigame.ownerId?.trim() ?? null,
-        returnPolicy,
+        ownerKind: runtimeOwnerKind,
+        ownerId: runtimeOwnerId,
+        returnPolicy: runtimeReturnPolicy,
       },
       trigger: {
         triggerId,
-        ownerKind,
+        ownerKind: runtimeOwnerKind,
         trigger: triggerEvent,
-        ...materializeLaunchPayload(minigame.launchPayload),
+        ...launchPayload,
       },
       outcomeConfig,
     } as PlayableIntegrationDefinition & { editorRecordId: string });
@@ -1193,6 +1215,57 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     playableIntegrations,
     flowPlayables,
   };
+}
+
+function materializeRuntimeMenuResources(
+  project: ScriptEditorProjectDefinition
+): ScriptEditorProjectDefinition["menuResources"] {
+  const integrationIdByMinigameId = new Map(
+    project.minigames.flatMap((minigame) => {
+      const minigameId = typeof minigame.id === "string" ? minigame.id : "";
+      const integrationId =
+        typeof minigame.integrationId === "string"
+          ? minigame.integrationId.trim()
+          : "";
+      return minigameId.length > 0 && integrationId.length > 0
+        ? [[minigameId, integrationId] as const]
+        : [];
+    })
+  );
+
+  return project.menuResources.map((resource) => ({
+    ...resource,
+    entries: resource.entries.map((entry) => {
+      if (entry.targetFamily !== "minigame") {
+        return entry;
+      }
+      const runtimeTargetId =
+        integrationIdByMinigameId.get(entry.targetId) ?? entry.targetId;
+      return {
+        ...entry,
+        targetId: runtimeTargetId,
+      };
+    }),
+  }));
+}
+
+function collectMenuLaunchedMinigameIds(
+  project: ScriptEditorProjectDefinition
+): Set<string> {
+  const minigameIds = new Set<string>();
+  for (const resource of project.menuResources ?? []) {
+    for (const entry of resource.entries ?? []) {
+      if (entry.targetFamily !== "minigame") {
+        continue;
+      }
+      const targetId =
+        typeof entry.targetId === "string" ? entry.targetId.trim() : "";
+      if (targetId.length > 0) {
+        minigameIds.add(targetId);
+      }
+    }
+  }
+  return minigameIds;
 }
 
 function materializeRuntimeFlowDefinitions(
@@ -1303,10 +1376,49 @@ function materializeLaunchPayload(
 ): Pick<PlayableIntegrationDefinition["trigger"], "launchPayload"> {
   const launchPayload = Object.fromEntries(
     (entries ?? [])
-      .filter((entry) => entry.key.trim().length > 0)
+      .filter((entry) => isMeaningfulLaunchPayloadEntry(entry))
       .map((entry) => [entry.key.trim(), entry.value])
   );
   return Object.keys(launchPayload).length === 0 ? {} : { launchPayload };
+}
+
+function materializeMinigameLaunchPayload(input: {
+  minigame: ScriptEditorProjectDefinition["minigames"][number];
+  project: ScriptEditorProjectDefinition;
+  isMenuLaunched: boolean;
+}): Pick<PlayableIntegrationDefinition["trigger"], "launchPayload"> {
+  const materialized = materializeLaunchPayload(input.minigame.launchPayload);
+  if (
+    !input.isMenuLaunched ||
+    input.minigame.playableId !== "activity-qte" ||
+    materialized.launchPayload?.activityId != null
+  ) {
+    return materialized;
+  }
+
+  const fallbackActivityId = input.project.activities[0]?.id;
+  if (fallbackActivityId == null || fallbackActivityId.length === 0) {
+    return materialized;
+  }
+
+  return {
+    launchPayload: {
+      ...(materialized.launchPayload ?? {}),
+      activityId: fallbackActivityId,
+    },
+  };
+}
+
+function isMeaningfulLaunchPayloadEntry(
+  entry: NonNullable<
+    ScriptEditorProjectDefinition["minigames"][number]["launchPayload"]
+  >[number]
+): boolean {
+  const key = entry.key.trim();
+  if (key.length === 0) {
+    return false;
+  }
+  return !(entry.value === "" && /^payloadKey\d+$/.test(key));
 }
 
 function readRequiredTrimmedString(

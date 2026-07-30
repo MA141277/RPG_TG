@@ -449,13 +449,17 @@ function renderStage(
   }
 
   if (stage.type === "city") {
-    return renderCityModuleView({
+    const cityMarkup = renderCityModuleView({
       stage,
       playerCharacter,
       cityMenuState: input.appState.cityMenuState,
       cityDirectoryState: input.appState.cityDirectoryState,
       citySceneMapping: stage.citySceneMapping,
     });
+    const activityOverlay = renderActivityOverlay(
+      input.appState.gameState.runtime.activitySession
+    );
+    return `${cityMarkup}${activityOverlay}`;
   }
 
   if (stage.type === "city-3d") {

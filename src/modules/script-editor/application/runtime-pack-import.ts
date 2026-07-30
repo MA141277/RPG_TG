@@ -285,7 +285,7 @@ export function importScenarioPackToScriptEditorProject(
     eventBindings: mapImportedEventBindings(rawPack),
     progressTracks: readProgressTrackFamily(rawPack),
     progressTrackBindings: readProgressTrackBindingFamily(rawPack),
-    menuResources: readMenuResourceFamily(rawPack),
+    menuResources: mapImportedMenuResources(rawPack, importedMinigames),
     menuInstances: readMenuInstanceFamily(rawPack),
     dialogues: mapImportedRuntimeDialogues(rawPack),
     quests: pack.tasks ?? [],
@@ -509,6 +509,36 @@ function mapImportedEvents(
       },
     };
   });
+}
+
+function mapImportedMenuResources(
+  rawPack: Record<string, unknown>,
+  importedMinigames: ScriptEditorProjectDefinition["minigames"]
+): ScriptEditorProjectDefinition["menuResources"] {
+  const importedMinigameIdByIntegrationId = new Map(
+    importedMinigames
+      .filter(
+        (minigame) =>
+          typeof minigame.integrationId === "string" &&
+          minigame.integrationId.length > 0
+      )
+      .map((minigame) => [minigame.integrationId as string, minigame.id] as const)
+  );
+
+  return readMenuResourceFamily(rawPack).map((resource) => ({
+    ...resource,
+    entries: resource.entries.map((entry) => {
+      if (entry.targetFamily !== "minigame") {
+        return entry;
+      }
+      return {
+        ...entry,
+        targetId:
+          importedMinigameIdByIntegrationId.get(entry.targetId) ??
+          entry.targetId,
+      };
+    }),
+  }));
 }
 
 function mapImportedEventBindings(

@@ -686,6 +686,6 @@ function removeDialogueEventFollowUps(
 
 export function getScriptEditorWorkflowVisibleFamilies(): readonly ScriptEditorProjectFileKey[] {
   return SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES.filter(
-    (family) => family !== "flows"
+    (family) => family !== "flows" && family !== "storyNodes"
   ) as readonly ScriptEditorProjectFileKey[];
 }

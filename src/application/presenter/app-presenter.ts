@@ -10,6 +10,7 @@ import type {
   MenuInstanceDefinition,
   MenuResourceDefinition,
 } from "../../domain/menu";
+import type { PlayableIntegrationDefinition } from "../../core/contracts/playable-runtime";
 import { createOverlayPresenterOutput } from "./overlay-presenters";
 import type { AppPresenterOutput } from "./presenter-output";
 import { createStagePresenterOutput } from "./stage-presenters";
@@ -26,6 +27,14 @@ export type AppPresenterInput = {
   cityNameById: Record<string, string>;
   menuResourcesById: Record<string, MenuResourceDefinition>;
   menuInstancesById: Record<string, MenuInstanceDefinition>;
+  playableIntegrationsByEditorRecordId?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined;
+  playableIntegrationsById?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined;
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;

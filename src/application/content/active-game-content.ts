@@ -37,6 +37,7 @@ import {
   type MapLocationProvider,
 } from "../map/map-location-provider";
 import type { TaskDefinition } from "../../core/contracts/task-runtime";
+import type { PlayableIntegrationDefinition } from "../../core/contracts/playable-runtime";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import type { ValuableItemDefinition } from "../../domain/valuable-item";
 import {
@@ -89,6 +90,12 @@ export type ActiveGameContent = {
   taskDefinitionsById: Record<string, TaskDefinition>;
   activityDefinitions: ActivityDefinition[];
   activityDefinitionsById: Record<string, ActivityDefinition>;
+  playableIntegrations: PlayableIntegrationDefinition[];
+  playableIntegrationsById: Record<string, PlayableIntegrationDefinition>;
+  playableIntegrationsByEditorRecordId: Record<
+    string,
+    PlayableIntegrationDefinition
+  >;
   flowPlayables: FlowPlayableDefinition[];
   flowPlayablesById: Record<string, FlowPlayableDefinition>;
   cards: CardDefinition[];
@@ -136,6 +143,10 @@ export type ActiveGameContentContext = {
   characterNameById: Record<string, string>;
   characterManager: CharacterManager;
   taskDefinitionsById: Record<string, TaskDefinition>;
+  playableIntegrationsByEditorRecordId: Record<
+    string,
+    PlayableIntegrationDefinition
+  >;
   flowPlayablesById: Record<string, FlowPlayableDefinition>;
     storyContent: {
       eventDefinitionsById: Record<string, EventDefinition>;
@@ -176,6 +187,7 @@ export function createActiveGameContent(
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
   const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
+  const playableIntegrations = resolvedPack.playableIntegrations ?? [];
   const flowPlayables = resolvedPack.flowPlayables ?? [];
   const cards = resolvedPack.cards ?? [];
   const valuables = resolvedPack.valuables ?? [];
@@ -275,6 +287,15 @@ export function createActiveGameContent(
     activityDefinitionsById: Object.fromEntries(
       activityDefinitions.map((activityDefinition) => [activityDefinition.id, activityDefinition])
     ),
+    playableIntegrations,
+    playableIntegrationsById: Object.fromEntries(
+      playableIntegrations.map((integration) => [
+        integration.integrationId,
+        integration,
+      ])
+    ),
+    playableIntegrationsByEditorRecordId:
+      createPlayableIntegrationsByEditorRecordId(playableIntegrations),
     flowPlayables,
     flowPlayablesById: Object.fromEntries(
       flowPlayables.map((flowPlayable) => [flowPlayable.id, flowPlayable])
@@ -339,6 +360,8 @@ export function createActiveGameContentContext(
     characterNameById: gameContent.characterNameById,
     characterManager: gameContent.characterManager,
     taskDefinitionsById: gameContent.taskDefinitionsById,
+    playableIntegrationsByEditorRecordId:
+      gameContent.playableIntegrationsByEditorRecordId,
     flowPlayablesById: gameContent.flowPlayablesById,
     storyContent: {
       eventDefinitionsById: gameContent.eventDefinitionsById,
@@ -432,6 +455,10 @@ export function mergeContentPacks(
     dialogues: mergeById(basePack.dialogues ?? [], overridePack.dialogues ?? []),
     tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
+    playableIntegrations: mergeByIntegrationId(
+      basePack.playableIntegrations ?? [],
+      overridePack.playableIntegrations ?? []
+    ),
     flowPlayables: mergeById(
       basePack.flowPlayables ?? [],
       overridePack.flowPlayables ?? []
@@ -496,6 +523,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     dialogues: pack.dialogues ?? [],
     tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],
+    playableIntegrations: pack.playableIntegrations ?? [],
     flowPlayables: pack.flowPlayables ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
@@ -549,6 +577,34 @@ function mergeById<T extends Identified>(base: T[], override: T[]): T[] {
 
   const overrideIds = new Set(override.map((entry) => entry.id));
   return [...base.filter((entry) => !overrideIds.has(entry.id)), ...override];
+}
+
+function mergeByIntegrationId(
+  base: PlayableIntegrationDefinition[],
+  override: PlayableIntegrationDefinition[]
+): PlayableIntegrationDefinition[] {
+  if (override.length === 0) {
+    return base;
+  }
+
+  const overrideIds = new Set(
+    override.map((entry) => entry.integrationId)
+  );
+  return [...base.filter((entry) => !overrideIds.has(entry.integrationId)), ...override];
+}
+
+function createPlayableIntegrationsByEditorRecordId(
+  integrations: PlayableIntegrationDefinition[]
+): Record<string, PlayableIntegrationDefinition> {
+  return Object.fromEntries(
+    integrations.flatMap((integration) => {
+      const editorRecordId = (integration as { editorRecordId?: unknown })
+        .editorRecordId;
+      return typeof editorRecordId === "string" && editorRecordId.length > 0
+        ? [[editorRecordId, integration] as const]
+        : [];
+    })
+  );
 }
 
 function materializeCharactersWithPortraitResources(

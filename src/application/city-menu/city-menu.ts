@@ -3,6 +3,7 @@ import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { HouseDefinition } from "../../domain/house";
+import type { PlayableIntegrationDefinition } from "../../core/contracts/playable-runtime";
 import type {
   MenuInstanceDefinition,
   MenuResourceDefinition,
@@ -28,6 +29,7 @@ export type CityMenuEntryAction =
   | {
       type: "minigame";
       minigameId: string;
+      integrationId?: string | undefined;
     }
   | {
       type: "unsupported";
@@ -256,6 +258,14 @@ export function resolveCityMenuEntries(input: {
   playerCharacter: CharacterDefinition;
   menuResourcesById: Record<string, MenuResourceDefinition>;
   menuInstancesById: Record<string, MenuInstanceDefinition>;
+  playableIntegrationsByEditorRecordId?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined;
+  playableIntegrationsById?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined;
 }): CityMenuEntryViewModel[] {
   return readTrimmedStringArray(input.cityDefinition.menuInstanceIds).flatMap(
     (menuInstanceId) => {
@@ -281,7 +291,9 @@ export function resolveCityMenuEntries(input: {
           const action = resolveCityMenuEntryAction(
             entry.menuFamily,
             entry.targetFamily,
-            entry.targetId
+            entry.targetId,
+            input.playableIntegrationsByEditorRecordId,
+            input.playableIntegrationsById
           );
           const isUnsupported = action.type === "unsupported";
 
@@ -373,24 +385,50 @@ function normalizeLegacyCityMenuPanelId(
 function resolveCityMenuEntryAction(
   menuFamily: string,
   targetFamily: MenuTargetFamily,
-  targetId: string
+  targetId: string,
+  playableIntegrationsByEditorRecordId?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined,
+  playableIntegrationsById?: Record<
+    string,
+    PlayableIntegrationDefinition
+  > | undefined
 ): CityMenuEntryAction {
+  if (targetFamily === "minigame") {
+    const trimmedTargetId = targetId.trim();
+    const playableIntegration =
+      playableIntegrationsByEditorRecordId?.[trimmedTargetId] ??
+      playableIntegrationsById?.[trimmedTargetId] ??
+      null;
+    if (playableIntegration != null) {
+      return {
+        type: "minigame",
+        minigameId: playableIntegration.playableId,
+        integrationId: playableIntegration.integrationId,
+      };
+    }
+    if (
+      normalizeMenuKey(trimmedTargetId) === "city-begging" ||
+      (trimmedTargetId.length === 0 && isBeggingMenuFamily(menuFamily))
+    ) {
+      return {
+        type: "minigame",
+        minigameId: "city-begging",
+      };
+    }
+    return {
+      type: "unsupported",
+      targetFamily,
+      targetId,
+    };
+  }
+
   const panelId = resolveCityMenuPanelId(targetId, menuFamily);
   if (panelId != null) {
     return {
       type: "panel",
       panelId,
-    };
-  }
-
-  if (
-    targetFamily === "minigame" &&
-    (normalizeMenuKey(targetId) === "city-begging" ||
-      isBeggingMenuFamily(menuFamily))
-  ) {
-    return {
-      type: "minigame",
-      minigameId: targetId.trim().length > 0 ? targetId : "city-begging",
     };
   }
 

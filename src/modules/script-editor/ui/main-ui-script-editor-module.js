@@ -444,6 +444,7 @@ const characterSelectLayoutBindings = [
 ];
 
 const SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE = 6;
+const SCRIPT_EDITOR_LOCATION_MENU_ENTRY_PAGE_SIZE = 3;
 const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE = 6;
 const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE = 12;
 const SCRIPT_EDITOR_STAGE_CONFIGURATION_FAMILY = "stageConfiguration";
@@ -511,6 +512,12 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "setScriptEditorCityMountedBuildingUiState",
   "setScriptEditorCityMountedBuildingExpanded",
   "setScriptEditorCityMountedBuildingSearchValue",
+  "getScriptEditorLocationMenuPageKey",
+  "getScriptEditorLocationMenuPage",
+  "setScriptEditorLocationMenuPage",
+  "getScriptEditorLocationMenuPageState",
+  "changeScriptEditorLocationMenuPage",
+  "renderScriptEditorLocationMenuPagination",
   "getFilteredScriptEditorCityMountedBuildingNpcEntries",
   "getScriptEditorCityMountedBuildingNpcPageState",
   "getScriptEditorCityMountedBuildingListPageState",
@@ -644,11 +651,6 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "renderScriptEditorOverviewCard",
   "describeScriptEditorProjectRisk",
   "countScriptEditorCompatibilityResidue",
-  "describeScriptEditorPersonListSummary",
-  "describeScriptEditorLocationListSummary",
-  "describeScriptEditorStoryNodeListSummary",
-  "describeScriptEditorDialogueListSummary",
-  "describeScriptEditorMinigameListSummary",
   "renderScriptEditorNotice",
   "renderScriptEditorNoticeTimeline",
   "resetScriptEditorNoticeTimeline",
@@ -846,6 +848,7 @@ export function installMainUiFlowScriptEditorModule(host, options) {
     host.scriptEditorNotice = null;
     host.scriptEditorNoticeEntries = [];
     host.scriptEditorNoticeSequence = 0;
+    host.scriptEditorNoticeDismissTimer = null;
     host.scriptEditorProjectDirectoryHandle = null;
     host.scriptEditorExportDirectoryHandle = null;
     host.scriptEditorProjectLibrary = [];
@@ -874,6 +877,7 @@ export function installMainUiFlowScriptEditorModule(host, options) {
       progressTrackBindings: "",
     };
     host.scriptEditorCityMountedBuildingUiState = {};
+    host.scriptEditorLocationMenuPages = {};
     host.scriptEditorScrollTop = 0;
     host.scriptEditorRuntimePreviewSession = null;
     host.scriptEditorStageConfigurationHelpOpen = false;
@@ -962,10 +966,10 @@ class MainUiFlowScriptEditorModule {
     return `
       <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器工作流">
         ${this.renderScriptEditorFileInputs()}
-        ${this.renderScriptEditorNotice()}
         ${renderScriptEditorWorkspaceView(
           workspace,
-          this.renderScriptEditorEditorPanel()
+          this.renderScriptEditorEditorPanel(),
+          this.renderScriptEditorNotice()
         )}
       </section>
     `;
@@ -1033,78 +1037,34 @@ class MainUiFlowScriptEditorModule {
         .map(createRecordOption);
       const cityOptions = this.scriptEditorProject.cities.map(createRecordOption);
       const buildingOptions = this.scriptEditorProject.buildings.map(createRecordOption);
-      const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(
-        this.scriptEditorProject
-      );
-      const compatibilityResidueCount = this.countScriptEditorCompatibilityResidue();
 
       return `
-        <div class="c-script-editor-editor-card">
+        <div class="c-script-editor-editor-card" data-script-editor-skip-inspector>
           <header class="c-script-editor-editor-card__header">
             <div>
-              <p class="c-script-editor-editor-card__eyebrow">项目总览</p>
               <h2 class="c-script-editor-editor-card__title">项目根信息</h2>
             </div>
-            <div class="c-script-editor-editor-card__actions">
-              <button
-                type="button"
-                class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
-                data-script-editor-action="save"
-              >
-                保存项目
-              </button>
-            </div>
           </header>
-          <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
-          <div class="c-script-editor-shell__cards c-script-editor-editor-card__overview">
-            ${this.renderScriptEditorOverviewCard(
-              "项目状态",
-              `当前项目 ${this.scriptEditorProject.id} 以 ${scenarioProfile.id ?? "未设置"} 作为开场场景，默认主角为 ${scenarioProfile.playerCharacterId ?? "未设置"}。`,
-              "success"
-            )}
-            ${this.renderScriptEditorOverviewCard(
-              "创作进度",
-              `当前已收录人物 ${this.scriptEditorProject.people.length} 条、文本 ${this.scriptEditorProject.textEntries.length} 条、剧情节点 ${this.scriptEditorProject.storyNodes.length} 条、事件 ${this.scriptEditorProject.events.length} 条。`,
-              "neutral"
-            )}
-            ${this.renderScriptEditorOverviewCard(
-              "风险与阻塞",
-              this.describeScriptEditorProjectRisk(exportDiagnostics, compatibilityResidueCount),
-              exportDiagnostics.length === 0 && compatibilityResidueCount === 0 ? "success" : "warning"
-            )}
-            ${this.renderScriptEditorOverviewCard(
-              "下一步建议",
-              "继续从左侧对象导航进入正式作者面；当前优先推进人物作者面与关系入口，城市、建筑、菜单和更深剧情编辑保持后续队列承接。",
-              "neutral"
-            )}
-          </div>
           <div class="c-script-editor-form-grid">
             ${this.renderScriptEditorField("project.title", "项目标题", this.scriptEditorProject.title)}
-            ${this.renderScriptEditorField("project.description", "项目说明", this.scriptEditorProject.description ?? "")}
             ${this.renderScriptEditorField("storyPack.title", "剧本包标题", storyPack.title)}
-            ${this.renderScriptEditorField("storyPack.description", "剧本包说明", storyPack.description ?? "")}
             ${this.renderScriptEditorField("scenarioProfile.title", "开场场景标题", scenarioProfile.title ?? "")}
             ${this.renderScriptEditorStartupSelect("initialView", "开局视图", initialViewOptions, launchPolicy.initialView ?? initialLocation.view ?? "", "未设置开局视图")}
             ${this.renderScriptEditorStartupSelect("cityId", "开局城市", cityOptions, initialLocation.cityId ?? "", "未设置开局城市")}
             ${this.renderScriptEditorStartupSelect("houseId", "开局建筑", buildingOptions, initialLocation.houseId ?? "", "未设置开局建筑")}
-            ${this.renderScriptEditorField("scenarioProfile.entryEventId", "入口事件 ID", scenarioProfile.entryEventId ?? "")}
             ${this.renderScriptEditorStartupSelect("characterSelection", "角色选择策略", characterSelectionOptions, launchPolicy.characterSelection ?? "", "未设置角色选择策略")}
             ${this.renderScriptEditorStartupSelect("playerCharacterId", "默认角色", defaultRoleOptions, scenarioProfile.playerCharacterId ?? "", "未设置默认角色")}
             ${this.renderScriptEditorField("scenarioProfile.launchPolicy.entryEventTiming", "入口事件时机", launchPolicy.entryEventTiming ?? "")}
           </div>
-          ${this.renderScriptEditorSystemDetails(
-            "高级设置与系统信息",
-            "项目标识、开场目标和底层定位字段默认折叠，避免首屏被工程字段占满。",
-            `
-              <div class="c-script-editor-form-grid">
-                ${this.renderScriptEditorField("project.id", "项目 ID", this.scriptEditorProject.id)}
-                ${this.renderScriptEditorField("storyPack.id", "剧本包 ID", storyPack.id)}
-                ${this.renderScriptEditorField("scenarioProfile.id", "开场场景 ID", scenarioProfile.id ?? "")}
-                ${this.renderScriptEditorField("scenarioProfile.chapterId", "章节 ID", scenarioProfile.chapterId ?? "")}
-                ${this.renderScriptEditorField("scenarioProfile.initialLocation.mapId", "初始地图 ID", initialLocation.mapId ?? "")}
-              </div>
-            `
-          )}
+          <div class="c-script-editor-editor-card__actions c-script-editor-editor-card__actions--center">
+            <button
+              type="button"
+              class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+              data-script-editor-action="save"
+            >
+              保存项目
+            </button>
+          </div>
         </div>
       `;
     }
@@ -1233,7 +1193,6 @@ class MainUiFlowScriptEditorModule {
                 data-script-editor-record-id="${escapeHtml(record.id)}"
               >
                 <strong>${escapeHtml(this.getScriptEditorRecordLabel(record))}</strong>
-                <span>${escapeHtml(record.id)}</span>
               </button>
             `,
           })}
@@ -1515,6 +1474,130 @@ class MainUiFlowScriptEditorModule {
     this.render();
   }
 
+  getScriptEditorLocationMenuPageKey(instanceId) {
+    if (
+      (this.scriptEditorSelection.family !== "cities" &&
+        this.scriptEditorSelection.family !== "buildings") ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return null;
+    }
+
+    return `${this.scriptEditorSelection.family}:${this.scriptEditorSelection.entityId}:${instanceId}`;
+  }
+
+  getScriptEditorLocationMenuPage(instanceId) {
+    const key = this.getScriptEditorLocationMenuPageKey(instanceId);
+    if (key == null) {
+      return 1;
+    }
+
+    return this.scriptEditorLocationMenuPages[key] ?? 1;
+  }
+
+  setScriptEditorLocationMenuPage(instanceId, nextPage, entryCount = null) {
+    const key = this.getScriptEditorLocationMenuPageKey(instanceId);
+    if (key == null) {
+      return 1;
+    }
+
+    const totalPages = Math.max(
+      1,
+      Math.ceil((entryCount ?? 0) / SCRIPT_EDITOR_LOCATION_MENU_ENTRY_PAGE_SIZE)
+    );
+    const resolvedPage = Math.min(
+      Math.max(Number.isInteger(nextPage) ? nextPage : 1, 1),
+      totalPages
+    );
+
+    this.scriptEditorLocationMenuPages = {
+      ...this.scriptEditorLocationMenuPages,
+      [key]: resolvedPage,
+    };
+
+    return resolvedPage;
+  }
+
+  getScriptEditorLocationMenuPageState(instanceId, entries) {
+    const normalizedEntries = Array.isArray(entries) ? entries : [];
+    if (
+      this.scriptEditorSelection.family !== "cities" &&
+      this.scriptEditorSelection.family !== "buildings"
+    ) {
+      return {
+        currentPage: 1,
+        totalPages: 1,
+        totalEntries: normalizedEntries.length,
+        visibleEntries: normalizedEntries.map((entry, menuEntryIndex) => ({
+          entry,
+          menuEntryIndex,
+        })),
+      };
+    }
+
+    const totalPages = Math.max(
+      1,
+      Math.ceil(normalizedEntries.length / SCRIPT_EDITOR_LOCATION_MENU_ENTRY_PAGE_SIZE)
+    );
+    const currentPage = Math.min(
+      Math.max(this.getScriptEditorLocationMenuPage(instanceId), 1),
+      totalPages
+    );
+    const startIndex = (currentPage - 1) * SCRIPT_EDITOR_LOCATION_MENU_ENTRY_PAGE_SIZE;
+
+    if (this.getScriptEditorLocationMenuPage(instanceId) !== currentPage) {
+      this.setScriptEditorLocationMenuPage(
+        instanceId,
+        currentPage,
+        normalizedEntries.length
+      );
+    }
+
+    return {
+      currentPage,
+      totalPages,
+      totalEntries: normalizedEntries.length,
+      visibleEntries: normalizedEntries
+        .slice(startIndex, startIndex + SCRIPT_EDITOR_LOCATION_MENU_ENTRY_PAGE_SIZE)
+        .map((entry, offset) => ({
+          entry,
+          menuEntryIndex: startIndex + offset,
+        })),
+    };
+  }
+
+  changeScriptEditorLocationMenuPage(instanceId, delta) {
+    if (
+      this.scriptEditorSelection.family !== "cities" &&
+      this.scriptEditorSelection.family !== "buildings"
+    ) {
+      return;
+    }
+
+    const location = this.getSelectedScriptEditorLocation();
+    if (location == null) {
+      return;
+    }
+
+    const bundle = this
+      .getScriptEditorLocationMenuBundles(this.scriptEditorSelection.family, location.id)
+      .find((candidate) => candidate.instanceId === instanceId);
+    if (bundle == null) {
+      return;
+    }
+
+    const { currentPage } = this.getScriptEditorLocationMenuPageState(
+      instanceId,
+      bundle.entries
+    );
+    this.setScriptEditorLocationMenuPage(
+      instanceId,
+      currentPage + delta,
+      bundle.entries.length
+    );
+    this.render();
+  }
+
   getFilteredScriptEditorCityMountedBuildingNpcEntries(entry, searchValue) {
     const npcOptionsById = new Map(
       (this.scriptEditorProject?.people ?? [])
@@ -1687,10 +1770,10 @@ class MainUiFlowScriptEditorModule {
 
     return `
       <label class="c-script-editor-record-list__search">
-        <span>${escapeHtml(label)}</span>
         <input
           class="c-script-editor-form-field__input"
           type="search"
+          aria-label="${escapeHtml(label)}"
           value="${escapeHtml(this.getScriptEditorRecordSearchValue(family))}"
           placeholder="${escapeHtml(placeholder)}"
           ${familyAttribute}
@@ -1728,10 +1811,6 @@ class MainUiFlowScriptEditorModule {
   }
 
   renderScriptEditorRecordPagination(family, currentPage, totalPages) {
-    if (totalPages <= 1) {
-      return "";
-    }
-
     return `
       <nav class="c-script-editor-record-pagination" aria-label="${escapeHtml(this.getScriptEditorFamilyLabel(family))} 分页">
         <button
@@ -1821,7 +1900,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedPerson.name)}</strong>
-                  <span>${escapeHtml(this.describeScriptEditorPersonListSummary(normalizedPerson))}</span>
                 </button>
               `;
             },
@@ -1867,10 +1945,7 @@ class MainUiFlowScriptEditorModule {
   renderScriptEditorUnusedLegacyPersonTabList() {
     return `
       <div class="c-script-editor-person-editor__tabs" role="tablist" aria-label="人物详情分栏">
-        ${this.renderScriptEditorPersonTabButton("profile", "属性")}
-        ${this.renderScriptEditorPersonTabButton("dialogues", "对话")}
-        ${this.renderScriptEditorPersonTabButton("trade", "交易")}
-        ${this.renderScriptEditorPersonTabButton("events", "事件")}
+        ${this.renderScriptEditorPersonTabButton("profile", "基础")}
       </div>
     `;
   }
@@ -2668,10 +2743,8 @@ class MainUiFlowScriptEditorModule {
   renderScriptEditorPersonTabList() {
     return `
       <div class="c-script-editor-person-editor__tabs" role="tablist" aria-label="人物详情分栏">
-        ${this.renderScriptEditorPersonTabButton("profile", "属性")}
+        ${this.renderScriptEditorPersonTabButton("profile", "基础")}
         ${this.renderScriptEditorPersonTabButton("attribute-group", "属性组")}
-        ${this.renderScriptEditorPersonTabButton("dialogues", "对话")}
-        ${this.renderScriptEditorPersonTabButton("events", "事件")}
       </div>
     `;
   }
@@ -3344,7 +3417,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${record.id}"
                 >
                   <strong>${escapeHtml(normalizedRecord.label || normalizedRecord.id)}</strong>
-                  <span>${escapeHtml(normalizedRecord.id)}</span>
                 </button>
               `;
             },
@@ -3421,7 +3493,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${record.id}"
                 >
                   <strong>${escapeHtml(normalizedRecord.label || normalizedRecord.id)}</strong>
-                  <span>${escapeHtml(normalizedRecord.id)}</span>
                 </button>
               `;
             },
@@ -3509,7 +3580,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedRecord.name)}</strong>
-                  <span class="c-script-editor-record-list__summary ${isCityFamily ? "is-hidden" : ""}">${escapeHtml(this.describeScriptEditorLocationListSummary(family, normalizedRecord))}</span>
                 </button>
               `;
             },
@@ -4799,17 +4869,10 @@ class MainUiFlowScriptEditorModule {
     return `
       <section class="c-script-editor-location-panel" aria-label="${isCityFamily ? "城市菜单分栏" : "建筑菜单分栏"}">
         <div class="c-script-editor-location-menu__header">
-          <div>
-            <p class="c-script-editor-editor-card__eyebrow">${isCityFamily ? "城市菜单" : "建筑菜单"}</p>
-            <h3 class="c-script-editor-editor-card__title">${isCityFamily ? "当前城市挂载的菜单内容" : "当前建筑挂载的菜单内容"}</h3>
-          </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-location-menu-entry">
             新增菜单项
           </button>
         </div>
-        <p class="c-script-editor-editor-card__hint">
-          这里编辑作者视角下的菜单名称、用途和跳转对象。运行时资源与实例仍会在内部维护，但不会直接暴露为创作字段。
-        </p>
         <div class="c-script-editor-location-menu__list">
           ${
             menuBundles.length === 0 && unresolvedInstanceIds.length === 0
@@ -4834,32 +4897,30 @@ class MainUiFlowScriptEditorModule {
               : ""
           }
           ${menuBundles
-            .map(
-              (bundle) => `
-                <article class="c-script-editor-location-menu__item" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
-                  <div class="c-script-editor-form-grid">
-                    <label class="c-script-editor-form-field">
-                      <span>菜单分组标题</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.instanceTitle)}" data-script-editor-location-menu-instance-field="title" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
-                    </label>
-                    <label class="c-script-editor-form-field">
-                      <span>菜单内容标题</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(bundle.resourceTitle)}" data-script-editor-location-menu-resource-field="title" data-script-editor-location-menu-resource-id="${escapeHtml(bundle.resourceId)}" />
-                    </label>
-                  </div>
-                  <div class="c-script-editor-location-menu__list">
-                    ${bundle.entries
+            .map((bundle) => {
+              const menuPageState = this.getScriptEditorLocationMenuPageState(
+                bundle.instanceId,
+                bundle.entries
+              );
+
+              return `
+                <article class="c-script-editor-location-menu__item c-script-editor-location-menu__bundle" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
+                  <div class="c-script-editor-location-menu__list c-script-editor-location-menu__paged-list">
+                    ${menuPageState.visibleEntries
                       .map(
-                        (entry, index) => `
-                          <article class="c-script-editor-location-menu__item">
+                        ({ entry, menuEntryIndex }) => `
+                          <article class="c-script-editor-location-menu__item c-script-editor-location-menu__entry">
+                            <button type="button" class="c-script-editor-location-menu__remove" aria-label="Remove menu entry" data-script-editor-action="remove-location-menu-entry" data-script-editor-location-menu-index="${menuEntryIndex}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
+                              <span aria-hidden="true">X</span>
+                            </button>
                   <div class="c-script-editor-form-grid">
                     <label class="c-script-editor-form-field">
                       <span>菜单名称</span>
-                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.label)}" data-script-editor-location-menu-field="label" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
+                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.label)}" data-script-editor-location-menu-field="label" data-script-editor-location-menu-index="${menuEntryIndex}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
                     </label>
                     <label class="c-script-editor-form-field">
                       <span>菜单用途</span>
-                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="menuFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
+                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="menuFamily" data-script-editor-location-menu-index="${menuEntryIndex}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
                         ${this.renderScriptEditorSelectOptions(
                           this.getScriptEditorLocationMenuPurposeOptions(family, entry.menuFamily),
                           entry.menuFamily,
@@ -4869,7 +4930,7 @@ class MainUiFlowScriptEditorModule {
                     </label>
                     <label class="c-script-editor-form-field">
                       <span>跳转类型</span>
-                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetFamily" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
+                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetFamily" data-script-editor-location-menu-index="${menuEntryIndex}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
                         ${this.renderScriptEditorSelectOptions(
                           this.getScriptEditorLocationMenuTargetFamilyOptions(entry.targetFamily),
                           entry.targetFamily,
@@ -4879,7 +4940,7 @@ class MainUiFlowScriptEditorModule {
                     </label>
                     <label class="c-script-editor-form-field">
                       <span>跳转对象</span>
-                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetId" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
+                            <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetId" data-script-editor-location-menu-index="${menuEntryIndex}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
                         ${this.renderScriptEditorSelectOptions(
                           this.getScriptEditorLocationMenuTargetOptions(
                             entry.targetFamily,
@@ -4890,35 +4951,57 @@ class MainUiFlowScriptEditorModule {
                         )}
                       </select>
                     </label>
-                    <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-                      <span>不可用提示</span>
-                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.disabledHint)}" data-script-editor-location-menu-field="disabledHint" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" />
-                    </label>
-                  </div>
-                  <div class="c-script-editor-location-menu__toggles">
-                    <label class="c-script-editor-person-editor__toggle">
-                            <input type="checkbox" data-script-editor-location-menu-flag="isVisible" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" ${entry.isVisible ? "checked" : ""} />
-                      <span>显示</span>
-                    </label>
-                    <label class="c-script-editor-person-editor__toggle">
-                            <input type="checkbox" data-script-editor-location-menu-flag="isEnabled" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}" ${entry.isEnabled ? "checked" : ""} />
-                      <span>可用</span>
-                    </label>
-                            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-location-menu-entry" data-script-editor-location-menu-index="${index}" data-script-editor-location-menu-instance-id="${escapeHtml(bundle.instanceId)}">
-                      删除菜单项
-                    </button>
                   </div>
                 </article>
                         `
                       )
                       .join("")}
                   </div>
+                  ${this.renderScriptEditorLocationMenuPagination(
+                    bundle.instanceId,
+                    menuPageState.currentPage,
+                    menuPageState.totalPages,
+                    menuPageState.totalEntries
+                  )}
                 </article>
-              `
-            )
+              `;
+            })
             .join("")}
         </div>
       </section>
+    `;
+  }
+
+  renderScriptEditorLocationMenuPagination(
+    instanceId,
+    currentPage,
+    totalPages,
+    totalEntries
+  ) {
+    return `
+      <nav class="c-script-editor-record-pagination c-script-editor-location-menu__pagination" aria-label="菜单分页">
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="location-menu-page-prev"
+          data-script-editor-location-menu-instance-id="${escapeHtml(instanceId)}"
+          aria-label="上一页"
+          ${currentPage <= 1 ? "disabled" : ""}
+        >
+          ‹
+        </button>
+        <span class="c-script-editor-record-pagination__status">第 ${currentPage} / ${totalPages} 页 · 共 ${totalEntries} 项</span>
+        <button
+          type="button"
+          class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+          data-script-editor-action="location-menu-page-next"
+          data-script-editor-location-menu-instance-id="${escapeHtml(instanceId)}"
+          aria-label="下一页"
+          ${currentPage >= totalPages ? "disabled" : ""}
+        >
+          ›
+        </button>
+      </nav>
     `;
   }
 
@@ -5218,7 +5301,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                  <span>${escapeHtml(this.describeScriptEditorStoryNodeListSummary(normalizedRecord))}</span>
                 </button>
               `;
             },
@@ -5285,7 +5367,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                  <span>${escapeHtml(this.describeScriptEditorDialogueListSummary(normalizedRecord))}</span>
                 </button>
               `;
             },
@@ -5608,7 +5689,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                  <span>${escapeHtml(this.getScriptEditorProgressOwnerKindLabel(normalizedRecord.hostFamily))} / ${escapeHtml(normalizedRecord.metricLabel)}</span>
                 </button>
               `;
             },
@@ -5753,7 +5833,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(this.getScriptEditorProgressBindingLabel(normalizedRecord))}</strong>
-                  <span>${escapeHtml(normalizedRecord.trackId || "未绑定阶段轨道")}</span>
                 </button>
               `;
             },
@@ -5879,7 +5958,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(ownerDisplay)}</strong>
-                  <span>${escapeHtml(trackTitle || "未绑定规则")}</span>
                 </button>
               `;
             },
@@ -7156,7 +7234,6 @@ class MainUiFlowScriptEditorModule {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedBinding.id)}</strong>
-                  <span>${escapeHtml(this.getScriptEditorEventBindingOwnerFamilyLabel(normalizedBinding.owner.family))} / ${escapeHtml(normalizedBinding.owner.id ?? "未设置")} / ${escapeHtml(normalizedBinding.eventId || "未选择事件")}</span>
                 </button>
               `;
             },
@@ -7611,50 +7688,6 @@ class MainUiFlowScriptEditorModule {
     return 0;
   }
 
-  describeScriptEditorPersonListSummary(person) {
-    return (
-      [person.personType, person.title, person.occupation]
-        .filter((value) => typeof value === "string" && value.trim().length > 0)
-        .slice(0, 2)
-        .join(" / ") || "待补人物设定"
-    );
-  }
-
-  describeScriptEditorLocationListSummary(family, location) {
-    if (family === "cities") {
-      const description = String(location.description ?? "").trim();
-      return description.length > 0
-        ? description.slice(0, 20)
-        : `菜单 ${this.getScriptEditorLocationMenuEntryCount(family, location.id)} 项`;
-    }
-
-    const summary = [
-      String(location.cityId ?? "").trim(),
-      (location.description ?? "").trim(),
-    ].filter((value) => value.length > 0)[0];
-    return summary?.slice(0, 20) || `入口 ${location.entryBinding ? "已配置" : "待补齐"}`;
-  }
-
-  describeScriptEditorStoryNodeListSummary(storyNode) {
-    return (
-      [storyNode.chapterId, storyNode.progressMode]
-        .filter((value) => typeof value === "string" && value.trim().length > 0)
-        .join(" / ") || "待补剧情组织信息"
-    );
-  }
-
-  describeScriptEditorDialogueListSummary(dialogue) {
-    return `参与人物 ${dialogue.participantPersonIds?.length ?? 0} / 节点 ${dialogue.nodes?.length ?? 0}`;
-  }
-
-  describeScriptEditorMinigameListSummary(minigame) {
-    return (
-      [minigame.playableId, minigame.triggerSource]
-        .filter((value) => typeof value === "string" && value.trim().length > 0)
-        .join(" / ") || "待补玩法绑定信息"
-    );
-  }
-
   renderScriptEditorNotice() {
     if (this.scriptEditorNotice == null) {
       return "";
@@ -7705,15 +7738,35 @@ class MainUiFlowScriptEditorModule {
   }
 
   resetScriptEditorNoticeTimeline() {
+    if (this.scriptEditorNoticeDismissTimer != null) {
+      clearTimeout(this.scriptEditorNoticeDismissTimer);
+      this.scriptEditorNoticeDismissTimer = null;
+    }
     this.scriptEditorNotice = null;
     this.scriptEditorNoticeEntries = [];
   }
 
   recordScriptEditorNotice(notice) {
+    if (this.scriptEditorNoticeDismissTimer != null) {
+      clearTimeout(this.scriptEditorNoticeDismissTimer);
+      this.scriptEditorNoticeDismissTimer = null;
+    }
+
     this.scriptEditorNotice = notice;
     if (notice == null) {
       return;
     }
+
+    const activeNotice = notice;
+    this.scriptEditorNoticeDismissTimer = setTimeout(() => {
+      if (this.scriptEditorNotice !== activeNotice) {
+        return;
+      }
+
+      this.scriptEditorNotice = null;
+      this.scriptEditorNoticeDismissTimer = null;
+      this.render();
+    }, 3000);
 
     const createdAt = new Date();
     this.scriptEditorNoticeEntries = [
@@ -8290,6 +8343,24 @@ class MainUiFlowScriptEditorModule {
         actionElement?.dataset.scriptEditorLocationMenuInstanceId ?? "";
       if (Number.isInteger(locationMenuIndex) && locationMenuIndex >= 0) {
         this.removeScriptEditorLocationMenuEntry(instanceId, locationMenuIndex);
+      }
+      return;
+    }
+
+    if (action === "location-menu-page-prev") {
+      const instanceId =
+        actionElement?.dataset.scriptEditorLocationMenuInstanceId ?? "";
+      if (instanceId.length > 0) {
+        this.changeScriptEditorLocationMenuPage(instanceId, -1);
+      }
+      return;
+    }
+
+    if (action === "location-menu-page-next") {
+      const instanceId =
+        actionElement?.dataset.scriptEditorLocationMenuInstanceId ?? "";
+      if (instanceId.length > 0) {
+        this.changeScriptEditorLocationMenuPage(instanceId, 1);
       }
       return;
     }
@@ -8875,7 +8946,7 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    if (!["profile", "attribute-group", "dialogues", "events"].includes(tab)) {
+    if (!["profile", "attribute-group"].includes(tab)) {
       return;
     }
 
@@ -10950,8 +11021,6 @@ class MainUiFlowScriptEditorModule {
     this.scriptEditorPersonTab = [
       "profile",
       "attribute-group",
-      "dialogues",
-      "events",
     ].includes(returnContext.personTab)
       ? returnContext.personTab
       : "profile";

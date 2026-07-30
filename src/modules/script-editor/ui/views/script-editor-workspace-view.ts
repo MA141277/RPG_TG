@@ -7,7 +7,8 @@ import type {
 
 export function renderScriptEditorWorkspaceView(
   model: ScriptEditorWorkspaceViewModel,
-  editorMarkup = ""
+  editorMarkup = "",
+  noticeMarkup = ""
 ): string {
   const sidebarGroups = splitWorkspaceTreeGroups(model.objectTreeGroups);
   const embeddedInspector = editorMarkup.includes("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->");
@@ -18,6 +19,7 @@ export function renderScriptEditorWorkspaceView(
   const suppressInspectorText = editorMarkup.includes(
     "<!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->"
   );
+  const skipInspector = editorMarkup.includes("data-script-editor-skip-inspector");
   const sanitizedEditorMarkup = editorMarkup
     .replace("<!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->", "")
     .replace(inspectorHeaderSlot.fullMatch, "");
@@ -26,13 +28,18 @@ export function renderScriptEditorWorkspaceView(
     headerSlot: inspectorHeaderSlot.content,
     hideHeaderText: suppressInspectorText,
   });
-  const stageContent = sanitizedEditorMarkup.includes("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->")
-    ? sanitizedEditorMarkup.replace("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->", inspectorMarkup)
-    : `${inspectorMarkup}${sanitizedEditorMarkup}`;
+  const stageContent = skipInspector
+    ? sanitizedEditorMarkup
+    : sanitizedEditorMarkup.includes("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->")
+      ? sanitizedEditorMarkup.replace("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->", inspectorMarkup)
+      : `${inspectorMarkup}${sanitizedEditorMarkup}`;
 
   return `
     <section class="c-script-editor-shell">
       <header class="c-script-editor-shell__header">
+        <div class="c-script-editor-shell__notice-slot">
+          ${noticeMarkup}
+        </div>
         <div class="c-script-editor-shell__toolbar">
           <button
             type="button"
@@ -108,9 +115,6 @@ function renderToolbarButtons(model: ScriptEditorWorkspaceViewModel): string {
 function renderTreeGroup(group: ScriptEditorWorkspaceTreeGroup): string {
   return `
     <section class="c-script-editor-tree-group">
-      <header class="c-script-editor-tree-group__header">
-        <h2>${escapeHtml(group.label)}</h2>
-      </header>
       <div class="c-script-editor-tree-group__nodes">
         ${group.nodes.map(renderTreeNode).join("")}
       </div>

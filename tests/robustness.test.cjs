@@ -550,7 +550,7 @@ function createSampleScriptEditorProjectDefinition() {
       title: "Test Story Pack",
       description: "Authoring-side project root.",
     },
-    maps: [{ id: "map.test.script-editor", name: "Test Map" }],
+    maps: [{ id: "map.test.script-editor", name: "Test Map", nodes: [] }],
     people: [
       {
         id: "person.hero",
@@ -4380,7 +4380,10 @@ test("script editor workspace renders the runtime export toolbar action", () => 
 
 test("script editor save records durable directory location and blocks stale continue entries", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
   const moduleSource = fs.readFileSync(
@@ -4650,7 +4653,10 @@ test("runtime preview strips deferred city-entry story bootstrap from scenario p
 
 test("script editor settlement authoring syncs creator inputs before preview export", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
   const onInputBlock = mainUiSource.slice(
@@ -7640,13 +7646,15 @@ test("script editor project form exposes scenario launch policy fields", () => {
     "utf8"
   );
 
-  for (const field of [
-    "scenarioProfile.entryEventId",
-    "scenarioProfile.launchPolicy.entryEventTiming",
-  ]) {
+  for (const field of ["scenarioProfile.launchPolicy.entryEventTiming"]) {
     assert.match(moduleSource, new RegExp(`renderScriptEditorField\\("${field}"`));
     assert.match(moduleSource, new RegExp(`case "${field}"`));
   }
+  assert.doesNotMatch(
+    moduleSource,
+    /renderScriptEditorField\("scenarioProfile\.entryEventId"/
+  );
+  assert.match(moduleSource, /case "scenarioProfile\.entryEventId"/);
   assert.match(moduleSource, /renderScriptEditorStartupSelect\("characterSelection"/);
   assert.match(moduleSource, /renderScriptEditorStartupSelect\("initialView"/);
   assert.match(moduleSource, /characterSelection:\s*normalizedValue/);
@@ -11847,7 +11855,10 @@ test("script editor workspace labels save and runtime export actions without mix
     "utf8"
   );
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
   const scriptEditorCssSource = fs.readFileSync(
@@ -12388,6 +12399,125 @@ test("script editor workspace shell surfaces creator-facing minigame owner hints
   );
 });
 
+test("script editor runtime export allows city menu launched minigame bindings without dialogue owners", () => {
+  const {
+    createDefaultScriptEditorMinigameRecord,
+  } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  const minigame = createDefaultScriptEditorMinigameRecord(0);
+  project.activities = [
+    {
+      id: "activity.menu.training",
+      label: "Menu Training",
+      handlerId: "generic.qte",
+    },
+  ];
+  project.minigames = [minigame];
+  project.menuResources = [
+    {
+      id: "menu-resource.city.start",
+      title: "City Menu",
+      entries: [
+        {
+          id: "menu-entry.city.start.minigame",
+          label: "概况",
+          menuFamily: "other",
+          targetFamily: "minigame",
+          targetId: minigame.id,
+          isVisible: true,
+          isEnabled: true,
+          disabledHint: "",
+        },
+      ],
+    },
+  ];
+  project.menuInstances = [
+    {
+      id: "menu-instance.city.start",
+      title: "City Menu Instance",
+      resourceId: "menu-resource.city.start",
+    },
+  ];
+  project.cities[0].menuInstanceIds = ["menu-instance.city.start"];
+
+  const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+  const expectedBlockedMessage = "玩法绑定需要填写所属对话，才能运行预览或导出剧本。";
+
+  assert.equal(
+    exportDiagnostics.some((diagnostic) => diagnostic.message === expectedBlockedMessage),
+    false
+  );
+  assert.equal(
+    workspace.toolbarActions.find((action) => action.id === "preview-runtime")?.status,
+    "ready"
+  );
+  assert.equal(
+    workspace.toolbarActions.find((action) => action.id === "export")?.status,
+    "ready"
+  );
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const menuResources = JSON.parse(files["menu-resources.json"]);
+  const playableIntegrations = JSON.parse(files["playable-integrations.json"]);
+  assert.equal(menuResources[0]?.entries[0]?.targetId, minigame.integrationId);
+  assert.equal(playableIntegrations[0]?.ownerDefaults.ownerKind, "external");
+  assert.equal(playableIntegrations[0]?.ownerDefaults.ownerId, null);
+  assert.equal(playableIntegrations[0]?.trigger.ownerKind, "external");
+  assert.deepEqual(playableIntegrations[0]?.trigger.launchPayload, {
+    activityId: "activity.menu.training",
+  });
+
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const {
+    createActiveGameContentContext,
+  } = require("../.test-dist/application/content/active-game-content.js");
+  const {
+    resolveCityMenuEntries,
+  } = require("../.test-dist/application/city-menu/city-menu.js");
+  return loadScenarioPackFromFiles(
+    createImportedFilesFromSerializedJsonRecord(files, "city-menu-minigame-runtime-pack")
+  ).then(async (runtimePack) => {
+    const activeContentContext = createActiveGameContentContext(runtimePack);
+    const cityMenuEntries = resolveCityMenuEntries({
+      cityDefinition: activeContentContext.cities[0],
+      playerCharacter: activeContentContext.gameContent.characters[0],
+      menuResourcesById: activeContentContext.gameContent.menuResourcesById,
+      menuInstancesById: activeContentContext.gameContent.menuInstancesById,
+      playableIntegrationsById:
+        activeContentContext.gameContent.playableIntegrationsById,
+      playableIntegrationsByEditorRecordId:
+        activeContentContext.gameContent.playableIntegrationsByEditorRecordId,
+    });
+
+    assert.deepEqual(cityMenuEntries[0]?.action, {
+      type: "minigame",
+      minigameId: "activity-qte",
+      integrationId: minigame.integrationId,
+    });
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(files, "city-menu-minigame-pack")
+    );
+    assert.equal(
+      importedProject.menuResources[0]?.entries[0]?.targetId,
+      minigame.id
+    );
+  });
+});
+
 test("script editor workspace shell accepts settlement events with existing settlement records", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
@@ -12613,13 +12743,60 @@ test("script editor visual alignment queue keeps the editor panel inside the cen
 
 test("script editor PRD project overview panel replaces the old Project scaffold copy", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+  const workspaceViewSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/views/script-editor-workspace-view.ts"
+    ),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
     "utf8"
   );
 
-  assert.match(mainUiSource, /项目总览/);
-  assert.match(mainUiSource, /项目状态/);
-  assert.match(mainUiSource, /下一步建议/);
+  const projectRootInfoPanelSource =
+    mainUiSource.match(
+      /<div class="c-script-editor-editor-card" data-script-editor-skip-inspector>[\s\S]*?<\/div>\s*`;\s*\}/
+    )?.[0] ?? "";
+  assert.match(projectRootInfoPanelSource, /data-script-editor-skip-inspector/);
+  assert.match(workspaceViewSource, /data-script-editor-skip-inspector/);
+  assert.match(scriptEditorCssSource, /c-script-editor-editor-card__actions--center[\s\S]*justify-content:\s*center/);
+  assert.doesNotMatch(projectRootInfoPanelSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+  assert.doesNotMatch(projectRootInfoPanelSource, /SCRIPT_EDITOR_INSPECTOR_SLOT/);
+  assert.match(
+    projectRootInfoPanelSource,
+    /c-script-editor-editor-card__actions c-script-editor-editor-card__actions--center[\s\S]*data-script-editor-action="save"/
+  );
+  assert.doesNotMatch(projectRootInfoPanelSource, /c-script-editor-editor-card__eyebrow/);
+  assert.doesNotMatch(projectRootInfoPanelSource, /项目总览/);
+  assert.doesNotMatch(
+    projectRootInfoPanelSource,
+    /renderScriptEditorField\("project\.description"/
+  );
+  assert.doesNotMatch(
+    projectRootInfoPanelSource,
+    /renderScriptEditorField\("storyPack\.description"/
+  );
+  assert.doesNotMatch(
+    projectRootInfoPanelSource,
+    /renderScriptEditorField\("scenarioProfile\.entryEventId"/
+  );
+  assert.doesNotMatch(projectRootInfoPanelSource, /高级设置与系统信息/);
+  assert.doesNotMatch(projectRootInfoPanelSource, /项目状态/);
+  assert.doesNotMatch(projectRootInfoPanelSource, /创作进度/);
+  assert.doesNotMatch(projectRootInfoPanelSource, /风险与阻塞/);
+  assert.doesNotMatch(projectRootInfoPanelSource, /下一步建议/);
+  assert.doesNotMatch(
+    projectRootInfoPanelSource,
+    /c-script-editor-editor-card__overview/
+  );
   assert.doesNotMatch(
     mainUiSource,
     /<p class="c-script-editor-editor-card__eyebrow">Project<\/p>/
@@ -12649,7 +12826,10 @@ test("script editor project selection queue exposes dedicated project list and d
 
 test("script editor person authoring queue exposes dedicated person detail tabs and bounded relation entrypoints", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
   const workspaceViewSource = fs.readFileSync(
@@ -12669,10 +12849,11 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
     mainUiSource,
     /<h2 class="c-script-editor-editor-card__title">人物详情<\/h2>/
   );
-  assert.match(mainUiSource, /属性/);
-  assert.match(mainUiSource, /对话/);
-  assert.match(mainUiSource, /交易/);
-  assert.match(mainUiSource, /事件/);
+  assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("profile", "基础"\)/);
+  assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("attribute-group", "属性组"\)/);
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorPersonTabButton\("dialogues"/);
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorPersonTabButton\("events"/);
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorPersonTabButton\("trade"/);
   assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("attribute-group"/);
   assert.match(mainUiSource, /data-script-editor-action="select-person-tab"/);
   assert.match(mainUiSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
@@ -12680,12 +12861,9 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
   assert.match(mainUiSource, /renderScriptEditorPersonTabList\(\)/);
   assert.match(workspaceViewSource, /extractTemplateSlot/);
   assert.match(workspaceViewSource, /hideHeaderText/);
-  assert.match(mainUiSource, /"add-person-dialogue-link"/);
-  assert.match(mainUiSource, /"add-person-event-link"/);
   assert.match(mainUiSource, /renderScriptEditorPersonRelationSelect/);
   assert.match(mainUiSource, /createScriptEditorDialogueReferenceOptions/);
   assert.match(mainUiSource, /createScriptEditorEventReferenceOptions/);
-  assert.match(mainUiSource, /createScriptEditorTradeBindingReferenceOptions/);
   assert.match(mainUiSource, /this\.scriptEditorProject\?\.dialogues/);
   assert.match(mainUiSource, /this\.scriptEditorProject\?\.events/);
   assert.match(mainUiSource, /this\.scriptEditorProject\?\.buildings/);
@@ -12843,9 +13021,12 @@ test("script editor people search preserves IME composition until composition en
   );
 });
 
-test("script editor text entry authoring hides ids from creators and clamps list summaries to two lines", () => {
+test("script editor text entry authoring hides ids from creators and keeps list rows single-line", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
   const scriptEditorCssSource = fs.readFileSync(
@@ -12893,7 +13074,7 @@ test("script editor text entry authoring hides ids from creators and clamps list
     /upsertScriptEditorWorkflowRecord\(this\.scriptEditorProject, "textEntries", nextRecord\)/
   );
   assert.match(scriptEditorCssSource, /c-script-editor-record-list__title--clamp-2/);
-  assert.match(scriptEditorCssSource, /-webkit-line-clamp:\s*2/);
+  assert.match(scriptEditorCssSource, /-webkit-line-clamp:\s*1/);
 });
 
 test("script editor person authoring queue removes the advanced system details foldout from the profile form", () => {
@@ -12953,16 +13134,24 @@ test("script editor visual alignment queue preserves workspace scroll position a
 
 test("script editor visual alignment queue paginates secondary record lists at six items per page", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
   const scriptEditorCssSource = fs.readFileSync(
     path.join(process.cwd(), "src/styles/script-editor.css"),
     "utf8"
   );
+  const recordPaginationSource =
+    mainUiSource.match(
+      /renderScriptEditorRecordPagination\(family, currentPage, totalPages\) \{[\s\S]*?\n  \}/
+    )?.[0] ?? "";
 
   assert.match(mainUiSource, /SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE\s*=\s*6/);
   assert.match(mainUiSource, /renderScriptEditorPaginatedRecordList/);
+  assert.doesNotMatch(recordPaginationSource, /if \(totalPages <= 1\) \{\s*return "";\s*\}/);
   assert.match(mainUiSource, /data-script-editor-action="record-page-prev"/);
   assert.match(mainUiSource, /data-script-editor-action="record-page-next"/);
   assert.match(mainUiSource, /aria-label="上一页"[\s\S]*‹/);
@@ -12970,16 +13159,25 @@ test("script editor visual alignment queue paginates secondary record lists at s
   assert.match(mainUiSource, /changeScriptEditorRecordListPage\(delta\)/);
   assert.match(scriptEditorCssSource, /c-script-editor-record-pagination/);
   assert.match(scriptEditorCssSource, /c-script-editor-record-pagination__status/);
-  assert.match(scriptEditorCssSource, /c-script-editor-record-list[\s\S]*min-height:\s*580px/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list[\s\S]*height:\s*100%/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list[\s\S]*min-height:\s*0/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list__item[\s\S]*height:\s*48px/);
   assert.match(scriptEditorCssSource, /c-script-editor-record-pagination[\s\S]*margin-top:\s*auto/);
   assert.match(scriptEditorCssSource, /c-script-editor-record-pagination__status[\s\S]*white-space:\s*nowrap/);
 });
 
 test("script editor secondary list UX queue exposes search controls for all authoring secondary lists", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
+  const recordListSearchSource =
+    mainUiSource.match(
+      /renderScriptEditorRecordListSearch\(family, label, placeholder\) \{[\s\S]*?\n  \}/
+    )?.[0] ?? "";
 
   for (const family of [
     "people",
@@ -12996,11 +13194,17 @@ test("script editor secondary list UX queue exposes search controls for all auth
       new RegExp(`data-script-editor-record-search-family="${family}"`)
     );
   }
+  assert.doesNotMatch(recordListSearchSource, /<span>\$\{escapeHtml\(label\)\}<\/span>/);
+  assert.match(recordListSearchSource, /aria-label="\$\{escapeHtml\(label\)\}"/);
+  assert.match(recordListSearchSource, /placeholder="\$\{escapeHtml\(placeholder\)\}"/);
 });
 
 test("script editor secondary list UX queue clears current search when adding a record", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
 
@@ -13111,7 +13315,7 @@ test(
     assert.equal(visibleFamilies.includes("minigames"), true);
     assert.equal(visibleFamilies.includes("settlements"), true);
     assert.equal(visibleFamilies.includes("flows"), false);
-    assert.equal(visibleFamilies.includes("storyNodes"), true);
+    assert.equal(visibleFamilies.includes("storyNodes"), false);
     assert.equal(visibleFamilies.includes("events"), true);
   }
 );
@@ -13845,7 +14049,10 @@ test("script editor person attribute rerenders preserve the horizontal card scro
 test(
   "script editor city/building queue exposes dedicated city and building detail tabs, base background, and gate entrypoints",
   () => {
-    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const source = fs.readFileSync(
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+      "utf8"
+    );
     const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
     const mainUiStyles = fs.readFileSync("src/styles/main-ui.css", "utf8");
 
@@ -13868,7 +14075,7 @@ test(
     assert.match(source, /data-script-editor-location-access-field="blockedDialogueId"/);
     assert.match(source, /data-script-editor-location-access-condition-action/);
     assert.match(source, /data-script-editor-building-entry-field/);
-    assert.match(source, /c-script-editor-record-list__summary/);
+    assert.doesNotMatch(source, /c-script-editor-record-list__summary/);
     assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
     assert.match(source, /data-script-editor-inspector-header-slot/);
     assert.doesNotMatch(source, /SCRIPT_EDITOR_ACCESS_STATES/);
@@ -13876,8 +14083,58 @@ test(
     assert.match(source, /conditionExpression/);
     assert.match(cssSource, /\.c-script-editor-location-editor/);
     assert.match(cssSource, /\.c-script-editor-location-menu__item/);
-    assert.match(cssSource, /\.c-script-editor-record-list__summary\.is-hidden/);
+    assert.doesNotMatch(cssSource, /\.c-script-editor-record-list__summary\.is-hidden/);
     assert.doesNotMatch(mainUiStyles, /\.c-main-ui-runtime-preview-frame/);
+  }
+);
+
+test(
+  "script editor location menu tab removes advanced menu instance chrome from creator form",
+  () => {
+    const source = fs.readFileSync(
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+      "utf8"
+    );
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+    const locationMenuPanelSource =
+      source.match(
+        /renderScriptEditorLocationMenuPanel\(family, location\) \{[\s\S]*?\n  renderScriptEditorLocationAccessPanel/
+      )?.[0] ?? "";
+    const locationRecordListSource =
+      source.match(
+        /renderScriptEditorLocationEditor\(family, records, selectedRecord\) \{[\s\S]*?\n  renderScriptEditorLocationProfilePanel/
+      )?.[0] ?? "";
+
+    assert.match(locationMenuPanelSource, /const isCityFamily = family === "cities";/);
+    assert.doesNotMatch(locationMenuPanelSource, /data-script-editor-location-menu-instance-field="title"/);
+    assert.doesNotMatch(locationMenuPanelSource, /data-script-editor-location-menu-resource-field="title"/);
+    assert.doesNotMatch(locationMenuPanelSource, /data-script-editor-location-menu-field="disabledHint"/);
+    assert.doesNotMatch(locationMenuPanelSource, /data-script-editor-location-menu-flag="isVisible"/);
+    assert.doesNotMatch(locationMenuPanelSource, /data-script-editor-location-menu-flag="isEnabled"/);
+    assert.doesNotMatch(locationMenuPanelSource, /当前城市挂载的菜单内容/);
+    assert.doesNotMatch(locationMenuPanelSource, /当前建筑挂载的菜单内容/);
+    assert.doesNotMatch(locationMenuPanelSource, /这里编辑作者视角下的菜单名称/);
+    assert.match(locationMenuPanelSource, /c-script-editor-location-menu__remove/);
+    assert.match(locationMenuPanelSource, /remove-location-menu-entry/);
+    assert.match(source, /const SCRIPT_EDITOR_LOCATION_MENU_ENTRY_PAGE_SIZE = 3;/);
+    assert.match(locationMenuPanelSource, /menuPageState\.visibleEntries/);
+    assert.match(locationMenuPanelSource, /renderScriptEditorLocationMenuPagination/);
+    assert.match(source, /location-menu-page-prev/);
+    assert.match(source, /location-menu-page-next/);
+    assert.match(cssSource, /\.c-script-editor-location-menu__bundle[\s\S]*height: 636px;/);
+    assert.match(cssSource, /\.c-script-editor-location-menu__pagination[\s\S]*margin-top: auto;/);
+    assert.match(cssSource, /\.c-main-ui-screen--script-editor-flow[\s\S]*height: 100vh;[\s\S]*overflow: hidden;/);
+    assert.match(cssSource, /\.c-script-editor-shell[\s\S]*height: 100%;[\s\S]*overflow: hidden;/);
+    assert.match(cssSource, /\.c-script-editor-shell__header[\s\S]*grid-template-columns: minmax\(0, 1fr\) auto;[\s\S]*height: 60px;[\s\S]*overflow: hidden;/);
+    assert.match(cssSource, /\.c-script-editor-workflow__notice[\s\S]*max-height: 36px;[\s\S]*white-space: nowrap;/);
+    assert.match(cssSource, /\.c-script-editor-shell__body[\s\S]*flex: 1;[\s\S]*overflow: hidden;/);
+    assert.match(cssSource, /\.c-script-editor-shell__editor-stage[\s\S]*height: 100%;[\s\S]*overflow: hidden;/);
+    assert.match(cssSource, /\.c-script-editor-editor-card[\s\S]*padding: 0;[\s\S]*border: 0;[\s\S]*background: transparent;[\s\S]*box-shadow: none;/);
+    assert.match(cssSource, /\.c-script-editor-editor-card:has\(\.c-script-editor-record-layout--location\)[\s\S]*height: 100%;/);
+    assert.match(cssSource, /\.c-script-editor-record-layout--location[\s\S]*height: 100%;[\s\S]*align-items: stretch;/);
+    assert.match(cssSource, /\.c-script-editor-record-list--location[\s\S]*height: 100%;[\s\S]*min-height: 0;/);
+    assert.doesNotMatch(locationRecordListSource, /c-script-editor-record-list__summary/);
+    assert.match(cssSource, /\.c-script-editor-location-menu__remove/);
   }
 );
 
@@ -14077,7 +14334,10 @@ test(
 test(
   "script editor city mounted building authoring paginates building cards in fixed six-card pages and adds new buildings collapsed",
   () => {
-    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const source = fs.readFileSync(
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+      "utf8"
+    );
     const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
     const mountedPanelSource =
       source.match(
@@ -18316,6 +18576,421 @@ test("city menu runtime resolves formal menu resource and instance chains into r
   );
 });
 
+test("city menu runtime resolves script editor minigame bindings through playable integrations", () => {
+  const {
+    resolveCityMenuEntries,
+  } = require("../.test-dist/application/city-menu/city-menu.js");
+
+  const entries = resolveCityMenuEntries({
+    cityDefinition: {
+      id: "city.start",
+      name: "Start City",
+      regionId: "region.default",
+      mapNodeId: "city.start",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 10,
+      specialDemand: [],
+      menuInstanceIds: ["menu-instance.city.start"],
+    },
+    playerCharacter: {
+      id: "person.player",
+      name: "Player Monk",
+      attributeMappings: [
+        { key: "1", keyName: "身份", type: "string", semanticKey: "title" },
+      ],
+      attributeValues: [{ key: "1", value: "Monk" }],
+    },
+    menuResourcesById: {
+      "menu-resource.city.start": {
+        id: "menu-resource.city.start",
+        title: "City Menu",
+        entries: [
+          {
+            id: "menu-entry.city.start.training",
+            label: "Training",
+            menuFamily: "other",
+            targetFamily: "minigame",
+            targetId: "420001",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
+        ],
+      },
+    },
+    menuInstancesById: {
+      "menu-instance.city.start": {
+        id: "menu-instance.city.start",
+        title: "Start City Menu",
+        resourceId: "menu-resource.city.start",
+      },
+    },
+    playableIntegrationsByEditorRecordId: {
+      "420001": {
+        editorRecordId: "420001",
+        integrationId: "playable.activity-qte.external.menu",
+        playableId: "activity-qte",
+        ownerDefaults: {
+          ownerKind: "external",
+          ownerId: null,
+          returnPolicy: "close-only",
+        },
+        trigger: {
+          triggerId: "trigger.playable.activity-qte.external.menu",
+          ownerKind: "external",
+          trigger: "location-menu",
+          launchPayload: {
+            activityId: "activity.menu.training",
+          },
+        },
+        outcomeConfig: {},
+      },
+    },
+  });
+
+  assert.equal(entries[0]?.isEnabled, true);
+  assert.deepEqual(entries[0]?.action, {
+    type: "minigame",
+    minigameId: "activity-qte",
+    integrationId: "playable.activity-qte.external.menu",
+  });
+});
+
+test("city menu runtime lets explicit minigame targets override stale panel targets", () => {
+  const {
+    resolveCityMenuEntries,
+  } = require("../.test-dist/application/city-menu/city-menu.js");
+
+  const entries = resolveCityMenuEntries({
+    cityDefinition: {
+      id: "city.start",
+      name: "Start City",
+      regionId: "region.default",
+      mapNodeId: "city.start",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 10,
+      specialDemand: [],
+      menuInstanceIds: ["menu-instance.city.start"],
+    },
+    playerCharacter: {
+      id: "person.player",
+      name: "Player Monk",
+      attributeMappings: [],
+      attributeValues: [],
+    },
+    menuResourcesById: {
+      "menu-resource.city.start": {
+        id: "menu-resource.city.start",
+        title: "City Menu",
+        entries: [
+          {
+            id: "menu-entry.city.start.overview",
+            label: "概况",
+            menuFamily: "overview",
+            targetFamily: "minigame",
+            targetId: "city-panel.overview",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
+        ],
+      },
+    },
+    menuInstancesById: {
+      "menu-instance.city.start": {
+        id: "menu-instance.city.start",
+        title: "Start City Menu",
+        resourceId: "menu-resource.city.start",
+      },
+    },
+    playableIntegrationsById: {
+      "playable.activity-qte.external.menu": {
+        integrationId: "playable.activity-qte.external.menu",
+        playableId: "activity-qte",
+        ownerDefaults: {
+          ownerKind: "external",
+          ownerId: null,
+          returnPolicy: "close-only",
+        },
+        trigger: {
+          triggerId: "trigger.playable.activity-qte.external.menu",
+          ownerKind: "external",
+          trigger: "location-menu",
+          launchPayload: {
+            activityId: "activity.menu.training",
+          },
+        },
+        outcomeConfig: {},
+      },
+    },
+  });
+
+  assert.equal(entries[0]?.isEnabled, false);
+  assert.deepEqual(entries[0]?.action, {
+    type: "unsupported",
+    targetFamily: "minigame",
+    targetId: "city-panel.overview",
+  });
+});
+
+test("city module stage resolves minigame menu targets with active playable integrations", () => {
+  const {
+    selectCityModuleStage,
+  } = require("../.test-dist/application/city/city-module-entry.js");
+  const {
+    createInitialState,
+  } = require("../.test-dist/application/state/create-initial-state.js");
+  const appState = {
+    gameState: createInitialState({
+      currentView: "city",
+      currentCityId: "city.start",
+      playerCharacterId: "person.player",
+    }),
+    characterDefinitions: [
+      {
+        id: "person.player",
+        name: "Player",
+        attributeMappings: [],
+        attributeValues: [],
+      },
+    ],
+  };
+
+  const stage = selectCityModuleStage({
+    appState,
+    activeCityDefinition: {
+      id: "city.start",
+      name: "Start City",
+      regionId: "region.default",
+      mapNodeId: "city.start",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 10,
+      specialDemand: [],
+      menuInstanceIds: ["menu-instance.city.start"],
+    },
+    playerCharacter: appState.characterDefinitions[0],
+    houseDefinitions: [],
+    cityEntries: [],
+    menuResourcesById: {
+      "menu-resource.city.start": {
+        id: "menu-resource.city.start",
+        title: "City Menu",
+        entries: [
+          {
+            id: "menu-entry.city.start.training",
+            label: "概况",
+            menuFamily: "overview",
+            targetFamily: "minigame",
+            targetId: "playable.activity-qte.external.menu",
+            isVisible: true,
+            isEnabled: true,
+            disabledHint: "",
+          },
+        ],
+      },
+    },
+    menuInstancesById: {
+      "menu-instance.city.start": {
+        id: "menu-instance.city.start",
+        title: "Start City Menu",
+        resourceId: "menu-resource.city.start",
+      },
+    },
+    citySceneMapping: null,
+    playableIntegrationsById: {
+      "playable.activity-qte.external.menu": {
+        integrationId: "playable.activity-qte.external.menu",
+        playableId: "activity-qte",
+        ownerDefaults: {
+          ownerKind: "external",
+          ownerId: null,
+          returnPolicy: "close-only",
+        },
+        trigger: {
+          triggerId: "trigger.playable.activity-qte.external.menu",
+          ownerKind: "external",
+          trigger: "location-menu",
+          launchPayload: {
+            activityId: "activity.menu.training",
+          },
+        },
+        outcomeConfig: {},
+      },
+    },
+  });
+
+  assert.equal(stage.type, "city");
+  assert.equal(stage.activeCityMenuEntries[0]?.isEnabled, true);
+  assert.deepEqual(stage.activeCityMenuEntries[0]?.action, {
+    type: "minigame",
+    minigameId: "activity-qte",
+    integrationId: "playable.activity-qte.external.menu",
+  });
+});
+
+test("city menu playable launcher starts runtime playables from menu integration targets", async () => {
+  const {
+    launchCityMenuPlayable,
+  } = require("../.test-dist/application/city-menu/city-menu-playable-launch.js");
+  const {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+    resetDefaultPlayableRuntimeRegistries,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const {
+    createLoadedModFromManifest,
+    createEmptyModRuntimeState,
+    runModRuntime,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+  const {
+    createInitialState,
+  } = require("../.test-dist/application/state/create-initial-state.js");
+
+  const activityDefinition = {
+    id: "activity.menu.training",
+    label: "Menu Training",
+    handlerId: "generic.qte",
+  };
+  const loadedMod = createLoadedModFromManifest({
+    source: { kind: "builtin", modId: "mod.test.city-menu-playable" },
+    manifest: {
+      id: "mod.test.city-menu-playable",
+      schemaVersion: "1",
+      version: "1.0.0",
+      title: "City Menu Playable Test",
+      entryContentPackIds: ["pack.test.city-menu-playable"],
+      gameplayContributions: {
+        playableIntegrations: ["playable.activity-qte.external.menu"],
+      },
+    },
+    rawContent: {
+      id: "pack.test.city-menu-playable",
+      title: "City Menu Playable Test Pack",
+      playableIntegrations: [
+        {
+          integrationId: "playable.activity-qte.external.menu",
+          playableId: "activity-qte",
+          ownerDefaults: {
+            ownerKind: "external",
+            ownerId: null,
+            returnPolicy: "close-only",
+          },
+          trigger: {
+            triggerId: "trigger.playable.activity-qte.external.menu",
+            ownerKind: "external",
+            trigger: "location-menu",
+            launchPayload: {
+              activityId: activityDefinition.id,
+            },
+          },
+          outcomeConfig: {},
+        },
+      ],
+    },
+  });
+  const activationResult = await runModRuntime({
+    state: createEmptyModRuntimeState(),
+    request: {
+      type: "mod.activate-loaded",
+      requestId: "test:city-menu-playable",
+      loadedMod,
+    },
+    context: {
+      allowedCapabilities: [],
+    },
+  });
+  assert.equal(activationResult.ok, true);
+  if (!activationResult.ok) {
+    return;
+  }
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+    activationResult.activatedMod
+  );
+
+  try {
+    const state = {
+      gameState: createInitialState({
+        currentView: "city",
+        playerCharacterId: "person.player",
+      }),
+      characterDefinitions: [
+        {
+          id: "person.player",
+          name: "Player",
+          attributeMappings: [],
+          attributeValues: [],
+        },
+      ],
+      playerCoordinate: { x: 0, y: 0 },
+      campaignActorState: { facingDegrees: 0, isMoving: false },
+      campaignTravelState: null,
+      modalState: null,
+      locationDialogueState: null,
+      beggingMiniGameState: null,
+      cityMenuState: null,
+      cityDirectoryState: null,
+      autoAdvanceState: null,
+      uiLayouts: {},
+    };
+
+    const result = launchCityMenuPlayable({
+      state,
+      action: {
+        type: "minigame",
+        minigameId: "activity-qte",
+        integrationId: "playable.activity-qte.external.menu",
+      },
+      characterDefinitions: state.characterDefinitions,
+      playerCharacterId: "person.player",
+      activityDefinitionsById: {
+        [activityDefinition.id]: activityDefinition,
+      },
+    });
+
+    assert.equal(result.handled, true);
+    assert.equal(result.state.gameState.ui.currentView, "minigame");
+    assert.equal(
+      result.state.gameState.runtime.playableSession?.integrationId,
+      "playable.activity-qte.external.menu"
+    );
+    assert.equal(
+      result.state.gameState.runtime.activitySession?.activityId,
+      activityDefinition.id
+    );
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
+});
+
+test("city stage app render mounts activity overlay for city-menu launched activity playables", () => {
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "app-render.ts"),
+    "utf8"
+  );
+  const cityStageBlock =
+    appRenderSource.match(/if \(stage\.type === "city"\) \{[\s\S]*?\n  \}/)?.[0] ??
+    "";
+
+  assert.match(cityStageBlock, /renderCityModuleView/);
+  assert.match(cityStageBlock, /renderActivityOverlay/);
+  assert.match(
+    cityStageBlock,
+    /input\.appState\.gameState\.runtime\.activitySession/
+  );
+  assert.match(cityStageBlock, /return `\$\{cityMarkup\}\$\{activityOverlay\}`;/);
+});
+
 test("city menu runtime localizes default panel labels when menu entries omit custom copy", () => {
   const {
     resolveCityMenuEntries,
@@ -18633,7 +19308,7 @@ test("script editor owner-local event binding authoring is routed through event 
 
   assert.match(source, /renderScriptEditorOwnerLocalEventBindingsPanel/);
   assert.match(source, /data-script-editor-owner-local-event-bindings/);
-  assert.match(source, /renderScriptEditorPersonTabButton\("events", "事件"\)/);
+  assert.doesNotMatch(source, /renderScriptEditorPersonTabButton\("events", "事件"\)/);
   assert.match(source, /renderScriptEditorLocationTabButton\("events", "事件"\)/);
   assert.match(source, /renderScriptEditorNarrativeTabButton\("events", "事件"\)/);
   assert.match(source, /renderScriptEditorMinigameTabButton\("events", "事件"\)/);
@@ -18840,7 +19515,7 @@ test("script editor settlement authoring exposes settlement module and event set
   assert.match(source, /data-script-editor-event-field="settlementId"/);
   assert.match(source, /data-script-editor-event-field="nextEventId"/);
   assert.match(source, /getScriptEditorProjectRecordOptions\("settlements"\)/);
-  assert.match(workspaceSource, /families: \["storyNodes", "dialogues", "minigames", "settlements"\]/);
+  assert.match(workspaceSource, /families: \["dialogues", "minigames", "settlements"\]/);
   assert.match(workspaceSource, /settlements: ".*?"/);
 });
 
@@ -19370,7 +20045,7 @@ test("script editor workspace groups creator navigation using current world, nar
     [
       { id: "project", families: ["storyPack"] },
       { id: "world", families: ["people", "cities", "buildings"] },
-      { id: "narrative", families: ["storyNodes", "dialogues", "minigames", "settlements"] },
+      { id: "narrative", families: ["dialogues", "minigames", "settlements"] },
       {
         id: "gameplay",
         families: ["events", "stageConfiguration"],
@@ -19378,6 +20053,30 @@ test("script editor workspace groups creator navigation using current world, nar
       { id: "library", families: ["portraits", "portraitVariants", "textEntries"] },
     ]
   );
+});
+
+test("script editor workspace sidebar hides creator-facing group labels and story node entry", () => {
+  const workspaceViewSource = fs.readFileSync(
+    "src/modules/script-editor/ui/views/script-editor-workspace-view.ts",
+    "utf8"
+  );
+  const minimalWorkflowSource = fs.readFileSync(
+    "src/modules/script-editor/application/minimal-workflow.ts",
+    "utf8"
+  );
+  const workspaceShellSource = fs.readFileSync(
+    "src/modules/script-editor/application/workspace-shell.ts",
+    "utf8"
+  );
+  const renderTreeGroupSource =
+    workspaceViewSource.match(
+      /function renderTreeGroup\(group: ScriptEditorWorkspaceTreeGroup\): string \{[\s\S]*?\n\}/
+    )?.[0] ?? "";
+
+  assert.doesNotMatch(renderTreeGroupSource, /c-script-editor-tree-group__header/);
+  assert.doesNotMatch(renderTreeGroupSource, /escapeHtml\(group\.label\)/);
+  assert.match(minimalWorkflowSource, /family !== "flows" && family !== "storyNodes"/);
+  assert.match(workspaceShellSource, /families: \["dialogues", "minigames", "settlements"\]/);
 });
 
 test("script editor workspace shell surfaces missing formal menu instance and resource references", () => {
@@ -35095,6 +35794,68 @@ test("child 30 playable launch normalization resolves city-begging by playable i
   assert.equal(resolution.launch.ownerContext.ownerKind, "external");
   assert.equal(resolution.launch.ownerContext.returnPolicy, "close-only");
   assert.deepEqual(resolution.launch.payload, { now: 123 });
+});
+
+test("playable launch normalization merges integration launch payload defaults", () => {
+  const {
+    resolvePlayableLaunch,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const {
+    createPlayableDefinitionRegistry,
+  } = require("../.test-dist/core/registry/playable-definition-registry.js");
+  const {
+    createPlayableIntegrationRegistry,
+  } = require("../.test-dist/core/registry/playable-integration-registry.js");
+
+  const definitions = createPlayableDefinitionRegistry([
+    {
+      id: "activity-qte",
+      family: "minigame",
+      commandPrefix: "interactive.activity-qte.",
+    },
+  ]);
+  const integrations = createPlayableIntegrationRegistry([
+    {
+      integrationId: "playable.activity-qte.external.menu",
+      playableId: "activity-qte",
+      ownerDefaults: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+      trigger: {
+        triggerId: "trigger.playable.activity-qte.external.menu",
+        ownerKind: "external",
+        trigger: "location-menu",
+        launchPayload: {
+          activityId: "activity.menu.training",
+          difficulty: "normal",
+        },
+      },
+      outcomeConfig: {},
+    },
+  ]);
+
+  const resolution = resolvePlayableLaunch({
+    launch: {
+      integrationId: "playable.activity-qte.external.menu",
+      payload: {
+        difficulty: "hard",
+      },
+    },
+    definitions,
+    integrations,
+  });
+
+  assert.equal(resolution.ok, true);
+  if (!resolution.ok) {
+    return;
+  }
+
+  assert.deepEqual(resolution.launch.payload, {
+    activityId: "activity.menu.training",
+    difficulty: "hard",
+  });
 });
 
 test("playable runtime can configure default registries from activated mod playable contributions", async () => {
