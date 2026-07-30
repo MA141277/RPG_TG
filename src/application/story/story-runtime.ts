@@ -875,11 +875,10 @@ function applyStorySettlementState(
 }
 
 function createStoryProgressionOccurredAt(state: GameState): string {
-  return [
-    state.calendar.year,
-    String(state.calendar.month).padStart(2, "0"),
-    String(state.calendar.day).padStart(2, "0"),
-  ].join("-");
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${String(state.calendar.year).padStart(4, "0")}-${pad(
+    state.calendar.month
+  )}-${pad(state.calendar.day)}T00:00:00.000Z`;
 }
 
 function readStoryProgressionMetricValue(
