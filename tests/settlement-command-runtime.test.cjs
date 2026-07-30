@@ -95,6 +95,25 @@ test("applySettlementCommands executes phase-one shared settlement commands", ()
   assert.deepEqual(result.unsupportedCommands, []);
 });
 
+test("applySettlementCommands executes player money changes through the shared settlement command owner", () => {
+  const { applySettlementCommands } = require("../.test-dist/core/runtime/settlement-command-runtime.js");
+
+  const result = applySettlementCommands({
+    state: createBaseRuntimeState(),
+    commands: [{ type: "player.money.change", amount: 25 }],
+    characterDefinitions: [createCharacterDefinition()],
+  });
+
+  assert.equal(result.characterDefinitions[0].stats.gold, 125);
+  assert.deepEqual(result.characterStatusById.hero.statPatch, {
+    gold: 125,
+  });
+  assert.deepEqual(result.settledCommands, [
+    { type: "player.money.change", amount: 25 },
+  ]);
+  assert.deepEqual(result.unsupportedCommands, []);
+});
+
 test("applySettlementCommands fails closed when character mutation lacks character definitions", () => {
   const { applySettlementCommands } = require("../.test-dist/core/runtime/settlement-command-runtime.js");
   const command = {
@@ -114,5 +133,24 @@ test("applySettlementCommands fails closed when character mutation lacks charact
   assert.deepEqual(result.unsupportedCommands, [command]);
   assert.deepEqual(result.warnings, [
     "unsupported-command:character.numeric-property.mutate:missing-character-definitions",
+  ]);
+});
+
+test("applySettlementCommands fails closed when player money change lacks character definitions", () => {
+  const { applySettlementCommands } = require("../.test-dist/core/runtime/settlement-command-runtime.js");
+  const command = {
+    type: "player.money.change",
+    amount: 25,
+  };
+
+  const result = applySettlementCommands({
+    state: createBaseRuntimeState(),
+    commands: [command],
+  });
+
+  assert.deepEqual(result.settledCommands, []);
+  assert.deepEqual(result.unsupportedCommands, [command]);
+  assert.deepEqual(result.warnings, [
+    "unsupported-command:player.money.change:missing-character-definitions",
   ]);
 });

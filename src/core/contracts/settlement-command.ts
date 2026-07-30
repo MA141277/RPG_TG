@@ -5,6 +5,7 @@ import type { RuntimeState } from "./runtime-state";
 export type SettlementCommand =
   | { type: "flag.set"; key: string; value: boolean }
   | { type: "variable.set"; key: string; value: string | number }
+  | { type: "player.money.change"; amount: number }
   | { type: "time.advance"; hours?: number; days?: number }
   | {
       type: "character.numeric-property.mutate";

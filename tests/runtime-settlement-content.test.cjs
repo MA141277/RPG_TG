@@ -353,6 +353,28 @@ test("settleRuntimeEffects reports character mutation without character definiti
   ]);
 });
 
+test("settleRuntimeEffects settles changeMoney through the shared settlement command runtime", () => {
+  const effect = {
+    type: "changeMoney",
+    amount: 25,
+  };
+
+  const result = settleRuntimeEffects({
+    state: createBaseRuntimeState(),
+    effects: [effect],
+    emittedBy: "event-runtime",
+    appliedBy: "runtime-settlement",
+    characterDefinitions: [createCharacterDefinition()],
+  });
+
+  assert.equal(result.characterDefinitions[0].stats.gold, 125);
+  assert.deepEqual(result.characterStatusById.hero.statPatch, {
+    gold: 125,
+  });
+  assert.deepEqual(result.settledEffects, [effect]);
+  assert.deepEqual(result.unsupportedEffects, []);
+});
+
 test(
   "settleRuntimeEffects delegates covered concrete mutation execution to settlement-command-runtime",
   { concurrency: false },

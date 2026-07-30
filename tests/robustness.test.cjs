@@ -16767,6 +16767,7 @@ test("settlement command runtime owns the covered concrete mutation families", (
   assert.match(contractSource, /export type SettlementCommand =/);
   assert.match(contractSource, /"flag\.set"/);
   assert.match(contractSource, /"variable\.set"/);
+  assert.match(contractSource, /"player\.money\.change"/);
   assert.match(contractSource, /"time\.advance"/);
   assert.match(contractSource, /"character\.numeric-property\.mutate"/);
   assert.match(runtimeSource, /export function applySettlementCommands/);

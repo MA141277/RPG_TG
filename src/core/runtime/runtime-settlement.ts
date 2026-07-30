@@ -466,6 +466,13 @@ function toSettlementCommand(effect: Effect): SettlementCommand | null {
     };
   }
 
+  if (effect.type === "changeMoney") {
+    return {
+      type: "player.money.change",
+      amount: effect.amount,
+    };
+  }
+
   if (effect.type === "advanceTime") {
     return {
       type: "time.advance",

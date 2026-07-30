@@ -54,6 +54,54 @@ export function applySettlementCommands(
       continue;
     }
 
+    if (command.type === "player.money.change") {
+      if (nextCharacterDefinitions == null) {
+        unsupportedCommands.push(command);
+        warnings.push(
+          "unsupported-command:player.money.change:missing-character-definitions"
+        );
+        continue;
+      }
+
+      const playerCharacterId = nextState.core.player.characterId;
+      if (typeof playerCharacterId !== "string" || playerCharacterId.length === 0) {
+        unsupportedCommands.push(command);
+        warnings.push(
+          "unsupported-command:player.money.change:missing-player-character-id"
+        );
+        continue;
+      }
+
+      try {
+        const mutation = mutateCharacterNumericProperty({
+          state: nextState.core,
+          characterDefinitions: nextCharacterDefinitions,
+          characterId: playerCharacterId,
+          propertyId: "stats.gold",
+          operation: "add",
+          value: command.amount,
+          ...(nextCharacterStatusById == null
+            ? {}
+            : { characterStatusById: nextCharacterStatusById }),
+        });
+        nextState = {
+          ...nextState,
+          core: mutation.state,
+        };
+        nextCharacterDefinitions = mutation.characterDefinitions;
+        nextCharacterStatusById = mutation.characterStatusById;
+        settledCommands.push(command);
+      } catch (error) {
+        unsupportedCommands.push(command);
+        warnings.push(
+          `unsupported-command:player.money.change:${
+            error instanceof Error ? error.message : "unknown-error"
+          }`
+        );
+      }
+      continue;
+    }
+
     if (command.type === "time.advance") {
       const totalSegments =
         Math.max(0, Math.floor(command.days ?? 0)) *
