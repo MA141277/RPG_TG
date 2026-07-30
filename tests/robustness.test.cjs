@@ -15547,6 +15547,27 @@ test("story settlement next-event convergence keeps settlement follow-up on the 
   assert.doesNotMatch(applyTriggeredStoryEventBlock, /\bstartEvent\s*\(/);
 });
 
+test("story settlement runtime owner convergence keeps the story adapter on shared runtime-settlement ownership", () => {
+  const storySettlementSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/story/story-settlement-continuation.ts"
+    ),
+    "utf8"
+  );
+  const runtimeSettlementSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-settlement.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    runtimeSettlementSource,
+    /export function applySettlementDefinitionById/
+  );
+  assert.match(storySettlementSource, /applySettlementDefinitionById/);
+  assert.doesNotMatch(storySettlementSource, /\bapplySettlementContents\s*\(/);
+});
+
 test("story choice event continuation convergence keeps chooseStorySceneOption nextEvent on the shared router seam", () => {
   const storyRuntimeSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/story/story-runtime.ts"),

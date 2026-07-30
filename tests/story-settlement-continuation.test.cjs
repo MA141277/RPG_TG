@@ -118,3 +118,96 @@ test("applyStorySettlementEvent applies person city and building settlement targ
     2
   );
 });
+
+test(
+  "applyStorySettlementEvent delegates settlement-definition application to shared runtime-settlement ownership",
+  { concurrency: false },
+  () => {
+    const runtimeSettlementPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-settlement.js"
+    );
+    const storySettlementPath = require.resolve(
+      "../.test-dist/application/story/story-settlement-continuation.js"
+    );
+
+    delete require.cache[runtimeSettlementPath];
+    delete require.cache[storySettlementPath];
+
+    const runtimeSettlementModule = require(runtimeSettlementPath);
+    const originalApplySettlementDefinitionById =
+      runtimeSettlementModule.applySettlementDefinitionById;
+    let applySettlementDefinitionByIdCalls = 0;
+
+    runtimeSettlementModule.applySettlementDefinitionById = (...args) => {
+      applySettlementDefinitionByIdCalls += 1;
+      return originalApplySettlementDefinitionById(...args);
+    };
+
+    try {
+      const {
+        applyStorySettlementEvent: applyStorySettlementEventWithPatchedOwner,
+      } = require(storySettlementPath);
+
+      const result = applyStorySettlementEventWithPatchedOwner(
+        {
+          state: createBaseState(),
+          characterDefinitions: prototypeCharacters.map((character) =>
+            character.id === "char.player"
+              ? {
+                  ...character,
+                  stamina: 100,
+                }
+              : character
+          ),
+          cityDefinitions: prototypeCities,
+          houseDefinitions: prototypeHouses,
+        },
+        {
+          settlementDefinitionsById: {
+            "settlement.shared.reward": {
+              id: "settlement.shared.reward",
+              title: "Shared Reward",
+              contents: [
+                {
+                  targetFamily: "person",
+                  targetId: "char.player",
+                  attributeKey: "stamina",
+                  attributeType: "number",
+                  operation: "add",
+                  value: 10,
+                },
+              ],
+            },
+          },
+        },
+        {
+          id: "event.settlement.shared",
+          chapterId: "chapter.prototype",
+          name: "Settlement",
+          occurrence: "repeatable",
+          trigger: { timing: "manual" },
+          conditions: [],
+          entrySceneId: "scene.settlement.shared",
+          type: "settlement",
+          settlementId: "settlement.shared.reward",
+        }
+      );
+
+      assert.equal(
+        result.characterDefinitions.find(
+          (character) => character.id === "char.player"
+        )?.stamina,
+        110
+      );
+      assert.ok(
+        applySettlementDefinitionByIdCalls > 0,
+        "story settlement continuation should reuse applySettlementDefinitionById instead of applying settlement contents locally"
+      );
+    } finally {
+      runtimeSettlementModule.applySettlementDefinitionById =
+        originalApplySettlementDefinitionById;
+      delete require.cache[runtimeSettlementPath];
+      delete require.cache[storySettlementPath];
+    }
+  }
+);

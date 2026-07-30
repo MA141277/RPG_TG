@@ -74,6 +74,45 @@ export function applySettlementContents<
   return nextState as TState;
 }
 
+export function applySettlementDefinitionById<
+  TState extends SettlementRuntimeTargetState,
+>(
+  gameState: TState,
+  input: {
+    settlementId: string;
+    settlementDefinitionsById?: Record<string, ExportedSettlement | undefined>;
+    context?: SettlementRuntimeContext;
+  }
+): {
+  state: TState;
+  warnings: string[];
+} {
+  const settlementId = input.settlementId.trim();
+  if (settlementId.length === 0) {
+    return {
+      state: gameState,
+      warnings: [],
+    };
+  }
+
+  const settlement = input.settlementDefinitionsById?.[settlementId];
+  if (settlement == null) {
+    return {
+      state: gameState,
+      warnings: [`missing-settlement-definition:${settlementId}`],
+    };
+  }
+
+  return {
+    state: applySettlementContents(
+      gameState,
+      settlement,
+      input.context
+    ),
+    warnings: [],
+  };
+}
+
 export function applySettlementInstances<
   TState extends SettlementRuntimeTargetState,
 >(
@@ -91,16 +130,22 @@ export function applySettlementInstances<
   const warnings: string[] = [];
 
   for (const settlementInstance of input.settlementInstances) {
-    const settlement =
-      input.settlementDefinitionsById?.[settlementInstance.settlementId];
-    if (settlement == null) {
-      warnings.push(
-        `missing-progression-settlement:${settlementInstance.settlementId}`
-      );
-      continue;
-    }
-
-    nextState = applySettlementContents(nextState, settlement, input.context);
+    const applied = applySettlementDefinitionById(nextState, {
+      settlementId: settlementInstance.settlementId,
+      ...(input.settlementDefinitionsById == null
+        ? {}
+        : { settlementDefinitionsById: input.settlementDefinitionsById }),
+      ...(input.context == null ? {} : { context: input.context }),
+    });
+    nextState = applied.state;
+    warnings.push(
+      ...applied.warnings.map((warning) =>
+        warning ===
+        `missing-settlement-definition:${settlementInstance.settlementId}`
+          ? `missing-progression-settlement:${settlementInstance.settlementId}`
+          : warning
+      )
+    );
   }
 
   return {

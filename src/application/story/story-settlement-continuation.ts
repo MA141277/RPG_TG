@@ -4,7 +4,7 @@ import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
 import {
-  applySettlementContents,
+  applySettlementDefinitionById,
   type ExportedSettlement,
 } from "../../core/runtime/runtime-settlement";
 
@@ -39,11 +39,7 @@ export function applyStorySettlementEvent(
     typeof eventDefinition.settlementId === "string"
       ? eventDefinition.settlementId.trim()
       : "";
-  const settlement =
-    settlementId.length === 0
-      ? undefined
-      : content.settlementDefinitionsById?.[settlementId];
-  if (settlement == null) {
+  if (settlementId.length === 0) {
     return runtime;
   }
 
@@ -71,25 +67,33 @@ export function applyStorySettlementEvent(
             house as unknown as Record<string, unknown>,
           ])
         );
-  const settlementState = applySettlementContents(
+  const settlementState = applySettlementDefinitionById(
     {
       people,
       ...(cities == null ? {} : { cities }),
       ...(buildings == null ? {} : { buildings }),
     },
-    settlement,
     {
-      people,
-      ...(cities == null ? {} : { cities }),
-      ...(buildings == null ? {} : { buildings }),
+      settlementId,
+      ...(content.settlementDefinitionsById == null
+        ? {}
+        : { settlementDefinitionsById: content.settlementDefinitionsById }),
+      context: {
+        people,
+        ...(cities == null ? {} : { cities }),
+        ...(buildings == null ? {} : { buildings }),
+      },
     }
   );
+  if (settlementState.warnings.length > 0) {
+    return runtime;
+  }
 
   return {
     ...runtime,
     characterDefinitions: runtime.characterDefinitions.map(
       (character) =>
-        (settlementState.people?.[character.id] as
+        (settlementState.state.people?.[character.id] as
           | CharacterDefinition
           | undefined) ?? character
     ),
@@ -98,7 +102,7 @@ export function applyStorySettlementEvent(
       : {
           cityDefinitions: runtime.cityDefinitions.map(
             (city) =>
-              (settlementState.cities?.[city.id] as
+              (settlementState.state.cities?.[city.id] as
                 | CityDefinition
                 | undefined) ?? city
           ),
@@ -108,7 +112,7 @@ export function applyStorySettlementEvent(
       : {
           houseDefinitions: runtime.houseDefinitions.map(
             (house) =>
-              (settlementState.buildings?.[house.id] as
+              (settlementState.state.buildings?.[house.id] as
                 | HouseDefinition
                 | undefined) ?? house
           ),

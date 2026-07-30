@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   applySettlementContents,
+  applySettlementDefinitionById,
   applySettlementInstances,
   settleRuntimeEffects,
 } = require("../.test-dist/core/runtime/runtime-settlement.js");
@@ -199,6 +200,66 @@ test("applySettlementInstances reports missing settlement definitions", () => {
   assert.deepEqual(result.warnings, [
     "missing-progression-settlement:missing-settlement",
   ]);
+});
+
+test("applySettlementDefinitionById applies a named settlement definition to mixed target collections", () => {
+  const result = applySettlementDefinitionById(
+    {
+      people: {
+        hero: {
+          stamina: 100,
+        },
+      },
+      cities: {
+        haozhou: {
+          prosperity: 20,
+        },
+      },
+      buildings: {
+        temple: {
+          outputMultiplier: 1,
+        },
+      },
+    },
+    {
+      settlementId: "settlement.shared.reward",
+      settlementDefinitionsById: {
+        "settlement.shared.reward": {
+          contents: [
+            {
+              targetFamily: "person",
+              targetId: "hero",
+              attributeKey: "stamina",
+              attributeType: "number",
+              operation: "add",
+              value: 10,
+            },
+            {
+              targetFamily: "city",
+              targetId: "haozhou",
+              attributeKey: "prosperity",
+              attributeType: "number",
+              operation: "add",
+              value: 5,
+            },
+            {
+              targetFamily: "building",
+              targetId: "temple",
+              attributeKey: "outputMultiplier",
+              attributeType: "number",
+              operation: "set",
+              value: 2,
+            },
+          ],
+        },
+      },
+    }
+  );
+
+  assert.equal(result.state.people.hero.stamina, 110);
+  assert.equal(result.state.cities.haozhou.prosperity, 25);
+  assert.equal(result.state.buildings.temple.outputMultiplier, 2);
+  assert.deepEqual(result.warnings, []);
 });
 
 test("settleRuntimeEffects applies progression settlement instances to character definitions", () => {
