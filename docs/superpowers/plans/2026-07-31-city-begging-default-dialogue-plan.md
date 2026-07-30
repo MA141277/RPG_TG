@@ -12,9 +12,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-31`
-- Current Focus: `Executing Task 2 using subagent-driven development in the current checkout.`
-- Next Step: `Start Task 2 with a failing default dialogue reducer test.`
-- Verification: `Task 1 focused content test passed after review fixes; npm run lint:plans passed for plan creation.`
+- Current Focus: `Executing Task 3 using subagent-driven development in the current checkout.`
+- Next Step: `Start Task 3 with a failing runtime action and settlement test.`
+- Verification: `Task 2 targeted runtime tests passed after reducer lock review fixes.`
 - Notes: `docs/superpowers/project-progress.md currently points at a separate completed-but-open map-renderer child, so this plan is not marked as canonical project-progress current work until the user explicitly promotes this child or accepts local execution outside that queue.`
 
 ## Progress Log
@@ -31,6 +31,10 @@
   - Summary: `Task 1 default content contract completed after review fixes for changelog coverage, exact Chinese copy, settlement text, and location getter coverage.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/city-begging-default-content.test.cjs }`
   - Next: `Start Task 2 with a failing default dialogue reducer test.`
+- 2026-07-31
+  - Summary: `Task 2 default dialogue reducer completed after review fixes for option/result lock, location reselection lock, changelog coverage, and regression tests.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/city-begging-default-runtime.test.cjs tests/city-begging-runtime-status.test.cjs tests/interactive-runtime-status.test.cjs }`
+  - Next: `Start Task 3 with a failing runtime action and settlement test.`
 
 ---
 
@@ -287,7 +291,7 @@ Expected:
   - `selectCityBeggingDefaultOption(state, optionId, now): CityBeggingDefaultDialogueState`
   - `advanceCityBeggingDefaultThinking(state, now): CityBeggingDefaultDialogueState`
 
-- [ ] **Step 1: Write the failing reducer test**
+- [x] **Step 1: Write the failing reducer test**
 
 Add a test that creates the default state, selects `xicheng_guanyin`, then selects the `help_mend_net` option and asserts `fixedResult === "ji"` and `phase === "fortune-draw"`.
 
@@ -315,7 +319,7 @@ test("city begging default dialogue selects a location and locks a fixed option 
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 
@@ -327,7 +331,7 @@ Expected:
 
 - Missing module or missing exported functions.
 
-- [ ] **Step 3: Implement the reducer**
+- [x] **Step 3: Implement the reducer**
 
 Create the reducer with immutable state transitions. Use a deterministic 2400 ms thinking delay unless a caller supplies a different timestamp.
 
@@ -351,11 +355,11 @@ export type CityBeggingDefaultDialogueState = {
 };
 ```
 
-- [ ] **Step 4: Update the playable launch path**
+- [x] **Step 4: Update the playable launch path**
 
 Modify `launchCityBeggingPlayable()` so city launches can pass `mode: "default-dialogue"` in payload later. Keep legacy minigame launch available for tests that still use it.
 
-- [ ] **Step 5: Run targeted runtime tests**
+- [x] **Step 5: Run targeted runtime tests**
 
 Run:
 
