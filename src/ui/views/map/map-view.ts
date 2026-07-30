@@ -17,11 +17,6 @@ import type {
   MapStats,
 } from "../../../domain/map";
 import {
-  campaignMapCoordinateToHex,
-  getCampaignHexCellKey,
-  getCampaignHexDisc,
-} from "../../../domain/campaign-hex";
-import {
   resolveCampaignStructureVisualProfile,
   type CampaignStructureVisualProfile,
 } from "../../../content/campaign-structure-visual-profiles";
@@ -86,7 +81,6 @@ export type MapViewModel = {
   cloudNoiseTextureImageUrl: string | null;
   revealedHexKeys: string[];
   campaignStructureProfile: CampaignStructureVisualProfile | null;
-  cloudClearHexKeys: string[];
   campaignMarkers: CampaignMarker[];
   layers: MapLayer[];
   stats: MapStats | null;
@@ -97,7 +91,6 @@ export function createMapViewModel(input: {
   playerCoordinate: GridCoordinate;
   playerFacingDegrees?: number;
   playerIsMoving?: boolean;
-  revealedHexKeys?: string[];
   cityDefinitions: CityDefinition[];
   cityCoordinatesById: Record<string, GridCoordinate>;
   historicalCharacters?: HistoricalCharacterRecord[];
@@ -115,18 +108,6 @@ export function createMapViewModel(input: {
   };
   const campaignStructureProfile = resolveCampaignStructureVisualProfile(
     input.mapDefinition.campaignStructureProfileId
-  );
-  const playerHex = campaignMapCoordinateToHex(
-    input.playerCoordinate,
-    coordinateSpace
-  );
-  const cloudClearHexKeys = Array.from(
-    new Set([
-      ...(input.revealedHexKeys ?? []),
-      ...getCampaignHexDisc(playerHex, 1).map((cell) =>
-        getCampaignHexCellKey(cell.x, cell.y)
-      ),
-    ])
   );
   const historicalCharacterNameById = Object.fromEntries(
     (input.historicalCharacters ?? []).map((characterRecord) => [
@@ -223,7 +204,6 @@ export function createMapViewModel(input: {
       new Set(input.mapExplorationState?.revealedHexKeys ?? [])
     ).sort(),
     campaignStructureProfile,
-    cloudClearHexKeys,
     campaignMarkers: input.mapDefinition.nodes
       .map((node, index) => {
         const nodeId = node.id ?? node.cityId ?? `map-node.${index}`;

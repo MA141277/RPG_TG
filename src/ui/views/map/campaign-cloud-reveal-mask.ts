@@ -2,7 +2,12 @@ import {
   hexToCoordinatePolygon,
   type CoordinateSpace,
   type HexCoordinate,
+  type HexCoordinateSystem,
 } from "../../../application/navigation/travel-to-coordinate";
+import {
+  getCampaignTerrainHexCoordinateSystem,
+  getCampaignTerrainRevealUvPolygon,
+} from "./campaign-terrain-webgl";
 
 const CLOUD_REVEAL_MASK_MAX_TEXTURE_SIZE = 1024;
 
@@ -17,6 +22,7 @@ const CLOUD_REVEAL_FIELD_MAX_DISTANCE_PX = 512;
 
 export type CloudRevealMaskDescriptor = {
   coordinateSpace: CoordinateSpace;
+  coordinateSystem: HexCoordinateSystem | null;
   revealedHexes: HexCoordinate[];
   revealedHexSignature: string;
   maskWidth: number;
@@ -36,7 +42,7 @@ type RevealMaskPolygon = {
 
 export function readCloudRevealMaskDescriptor(
   canvas: HTMLCanvasElement,
-  _projectionRoot: ParentNode
+  projectionRoot: ParentNode
 ): CloudRevealMaskDescriptor {
   const coordinateWidth = Number.parseFloat(canvas.dataset.mapCoordinateWidth ?? "");
   const coordinateHeight = Number.parseFloat(canvas.dataset.mapCoordinateHeight ?? "");
@@ -52,12 +58,24 @@ export function readCloudRevealMaskDescriptor(
     .map(parseHexKey)
     .filter((hex): hex is HexCoordinate => hex != null);
   const maskSize = resolveRevealMaskTextureSize(coordinateSpace);
+  const coordinateSystem = getCampaignTerrainHexCoordinateSystem(projectionRoot);
+  const hexPointBounds = coordinateSystem?.hexPointBounds ?? null;
+  const hexPointBoundsSignature =
+    hexPointBounds == null
+      ? "default"
+      : [
+          hexPointBounds.minX.toFixed(6),
+          hexPointBounds.maxX.toFixed(6),
+          hexPointBounds.minY.toFixed(6),
+          hexPointBounds.maxY.toFixed(6),
+        ].join(",");
   const revealedHexSignature = revealedHexes
     .map((hex) => `${hex.x},${hex.y}`)
     .join("|");
   const signature = [
     coordinateSpace.width.toFixed(3),
     coordinateSpace.height.toFixed(3),
+    hexPointBoundsSignature,
     maskSize.width,
     maskSize.height,
     revealedHexSignature,
@@ -65,6 +83,7 @@ export function readCloudRevealMaskDescriptor(
 
   return {
     coordinateSpace,
+    coordinateSystem,
     revealedHexes,
     revealedHexSignature,
     maskWidth: maskSize.width,
@@ -198,17 +217,25 @@ function buildRevealMaskPolygons(input: {
 }): RevealMaskPolygon[] {
   const polygons: RevealMaskPolygon[] = [];
   for (const hex of input.descriptor.revealedHexes) {
-    const polygon = hexToCoordinatePolygon({
-      hex,
-      coordinateSpace: input.descriptor.coordinateSpace,
-      radiusScale: input.radiusScale,
-    });
+    const polygon =
+      input.descriptor.coordinateSystem == null
+        ? hexToDefaultRevealUvPolygon({
+            hex,
+            coordinateSpace: input.descriptor.coordinateSpace,
+            radiusScale: input.radiusScale,
+          })
+        : getCampaignTerrainRevealUvPolygon({
+            hex,
+            coordinateSystem: input.descriptor.coordinateSystem,
+            radiusScale: input.radiusScale,
+          });
     const points = polygon
       .map((point) =>
-        projectCoordinateToRevealMaskPoint({
+        projectRevealUvToRevealMaskPoint({
           canvas: input.canvas,
           descriptor: input.descriptor,
-          coordinate: point,
+          u: point.u,
+          v: point.v,
         })
       )
       .filter((point): point is RevealMaskPoint => point != null);
@@ -364,15 +391,14 @@ function drawRevealMaskPolygon(
   context.fill();
 }
 
-function projectCoordinateToRevealMaskPoint(input: {
+function projectRevealUvToRevealMaskPoint(input: {
   canvas: HTMLCanvasElement;
   descriptor: CloudRevealMaskDescriptor;
-  coordinate: { x: number; y: number };
+  u: number;
+  v: number;
 }): { x: number; y: number } | null {
-  const u =
-    input.coordinate.x / Math.max(input.descriptor.coordinateSpace.width, 1);
-  const v =
-    1 - input.coordinate.y / Math.max(input.descriptor.coordinateSpace.height, 1);
+  const u = input.u;
+  const v = input.v;
   if (!Number.isFinite(u) || !Number.isFinite(v)) {
     return null;
   }
@@ -381,6 +407,21 @@ function projectCoordinateToRevealMaskPoint(input: {
     x: u * input.descriptor.maskWidth,
     y: v * input.descriptor.maskHeight,
   };
+}
+
+function hexToDefaultRevealUvPolygon(input: {
+  hex: HexCoordinate;
+  coordinateSpace: CoordinateSpace;
+  radiusScale: number;
+}): { u: number; v: number }[] {
+  return hexToCoordinatePolygon({
+    hex: input.hex,
+    coordinateSpace: input.coordinateSpace,
+    radiusScale: input.radiusScale,
+  }).map((coordinate) => ({
+    u: coordinate.x / Math.max(input.coordinateSpace.width, 1),
+    v: 1 - coordinate.y / Math.max(input.coordinateSpace.height, 1),
+  }));
 }
 
 function parseHexKey(hexKey: string): HexCoordinate | null {

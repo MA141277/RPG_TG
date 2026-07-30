@@ -67,7 +67,8 @@ const terrainOverrides = readOptionalJson(path.join(editorPackageDir, "hex-overr
 const environmentOverrides = readOptionalJson(
   path.join(editorPackageDir, "hex-overrides.environment.json")
 );
-const settlementAnchors = readOptionalJson(path.join(editorPackageDir, "settlements.json"))
+const structureOverlays = readOptionalJson(path.join(editorPackageDir, "structure-overlays.json"));
+const editorSettlementAnchors = readOptionalJson(path.join(editorPackageDir, "settlements.json"))
   .filter((settlement) => settlement?.mapPosition != null)
   .map((settlement) => ({
     id: settlement.id,
@@ -76,12 +77,17 @@ const settlementAnchors = readOptionalJson(path.join(editorPackageDir, "settleme
     mapPosition: settlement.mapPosition,
     hexCell: settlement.hexCell,
   }));
+const settlementAnchors = mergeSettlementAnchors([
+  ...editorSettlementAnchors,
+  ...readRuntimeMapNodeAnchors(mapsPath, editorGenerated.mapId),
+]);
 const exportedGrid = createOneToOneRuntimeCampaignHexGridFromEditorPackage({
   runtimeGrid,
   editorGenerated,
   waterLandOverrides,
   terrainOverrides,
   environmentOverrides,
+  structureOverlays,
   settlementAnchors,
 });
 const waterLandOverrideStats = countProjectedOverrides({
@@ -112,7 +118,7 @@ syncMapNodesFromEditorSettlements({
   citiesPath,
   mapId: exportedGrid.mapId,
   editorPackageLabel,
-  settlements: settlementAnchors,
+  settlements: editorSettlementAnchors,
   runtimeGrid: exportedGrid,
   projectionRuntimeGrid: runtimeGrid,
   sourceCrop: editorGenerated.generation?.sourceCrop,
@@ -224,6 +230,52 @@ function readOptionalJson(filePath) {
     return [];
   }
   return readJson(filePath);
+}
+
+function readRuntimeMapNodeAnchors(filePath, mapId) {
+  const maps = readJson(filePath);
+  const mapDefinition = maps.find((map) => map.id === mapId);
+  if (mapDefinition == null || !Array.isArray(mapDefinition.nodes)) {
+    return [];
+  }
+
+  return mapDefinition.nodes
+    .filter((node) => {
+      if (node == null || typeof node.x !== "number" || typeof node.y !== "number") {
+        return false;
+      }
+      return (
+        node.kind === "city" ||
+        node.kind === "settlement" ||
+        typeof node.cityId === "string"
+      );
+    })
+    .map((node) => ({
+      id: node.id ?? `runtime-node:${node.x},${node.y}`,
+      name: node.label,
+      type: node.kind,
+      mapPosition: { x: node.x, y: node.y },
+    }));
+}
+
+function mergeSettlementAnchors(anchors) {
+  const merged = [];
+  const seen = new Set();
+  for (const anchor of anchors) {
+    if (anchor?.mapPosition == null) {
+      continue;
+    }
+    const key =
+      typeof anchor.id === "string"
+        ? anchor.id
+        : `${anchor.mapPosition.x},${anchor.mapPosition.y}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    merged.push(anchor);
+  }
+  return merged;
 }
 
 function countProjectedOverrides(input) {

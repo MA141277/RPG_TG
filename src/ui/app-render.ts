@@ -13,7 +13,6 @@ import {
   renderDialogueTypewriterLines,
 } from "./dialogue-typewriter";
 import type { GridCoordinate } from "../application/navigation/travel-to-coordinate";
-import { getRevealedCampaignHexKeys } from "../application/map/campaign-map-exploration";
 import type { CardDefinition } from "../domain/card";
 import type { CharacterDefinition } from "../domain/character";
 import type { CityDefinition } from "../domain/city";
@@ -519,10 +518,6 @@ function renderStage(
       playerCoordinate: input.appState.playerCoordinate,
       playerFacingDegrees: input.appState.campaignActorState.facingDegrees,
       playerIsMoving: input.appState.campaignActorState.isMoving,
-      revealedHexKeys: getRevealedCampaignHexKeys(
-        input.appState.gameState,
-        input.mapDefinition.id
-      ),
       cityDefinitions: stage.cityDefinitions,
       cityCoordinatesById: input.cityCoordinatesById,
       ...(input.historicalCharacters == null
@@ -548,8 +543,7 @@ function renderStage(
       stage.activeCityHouseDefinitions,
       stage.activeCityEntries,
       input.appState.cityMenuState,
-      input.appState.cityDirectoryState,
-      stage.citySceneMapping
+      input.appState.cityDirectoryState
     );
   }
 

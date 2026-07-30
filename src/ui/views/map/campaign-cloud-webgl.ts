@@ -235,6 +235,7 @@ function initCampaignCloudWebGl(
   const resolutionLocation = gl.getUniformLocation(program, "uResolution");
   const timeSecondsLocation = gl.getUniformLocation(program, "uTimeSeconds");
   const cloudProjectionLocation = gl.getUniformLocation(program, "uCloudProjection");
+  const terrainWorldScaleLocation = gl.getUniformLocation(program, "uTerrainWorldScale");
   const cloudInverseTerrainMatrixLocation = gl.getUniformLocation(
     program,
     "uCloudInverseTerrainMatrix"
@@ -262,6 +263,7 @@ function initCampaignCloudWebGl(
     resolutionLocation == null ? "uResolution" : null,
     timeSecondsLocation == null ? "uTimeSeconds" : null,
     cloudProjectionLocation == null ? "uCloudProjection" : null,
+    terrainWorldScaleLocation == null ? "uTerrainWorldScale" : null,
     cloudInverseTerrainMatrixLocation == null ? "uCloudInverseTerrainMatrix" : null,
     noiseTextureLocation == null ? "uNoiseTexture" : null,
     revealTextureLocation == null ? "uRevealTexture" : null,
@@ -492,6 +494,11 @@ function initCampaignCloudWebGl(
         cloudProjection.terrainScale,
         cloudProjection.heightScale,
         cloudProjection.cameraScaleRatio
+      );
+      gl.uniform2f(
+        terrainWorldScaleLocation,
+        cloudProjection.terrainWorldScale.x,
+        cloudProjection.terrainWorldScale.y
       );
       gl.uniformMatrix4fv(
         cloudInverseTerrainMatrixLocation,

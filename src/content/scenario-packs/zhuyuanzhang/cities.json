@@ -561,7 +561,7 @@
   },
   {
     "id": "city.kaifeng",
-    "name": "定远",
+    "name": "汴梁路★开封",
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.kaifeng_province",
     "houseIds": [
@@ -651,5 +651,22 @@
       "grain",
       "iron"
     ]
+  },
+  {
+    "id": "city.huangcun",
+    "name": "荒村",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.huangcun",
+    "houseIds": [],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "village",
+      "abandoned",
+      "rural"
+    ],
+    "prosperity": 8,
+    "danger": 36,
+    "specialDemand": []
   }
 ]

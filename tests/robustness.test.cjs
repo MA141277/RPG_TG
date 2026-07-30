@@ -2007,14 +2007,79 @@ test("startup loading waits for initial map view assets before hiding loading sc
   for (const functionName of startupFunctions) {
     const match = mainSource.match(
       new RegExp(
-        `function ${functionName}[\\s\\S]*?applyActivatedModSession\\(startupSession\\);[\\s\\S]*?await preloadInitialMapViewAssets\\(\\s*appRoot,[\\s\\S]*?endLoadingScreen\\(requestId\\);`
+        `function ${functionName}[\\s\\S]*?applyActivatedModSession\\(startupSession\\);[\\s\\S]*?await waitForInitialMapReadyWithLoading\\(requestId\\);[\\s\\S]*?endLoadingScreen\\(requestId\\);`
       )
     );
     assert.ok(
       match,
-      `Expected ${functionName} to preload initial map view assets after rendering and before ending the loading screen.`
+      `Expected ${functionName} to wait for initial map readiness after rendering and before ending the loading screen.`
     );
   }
+
+  assert.match(
+    mainSource,
+    /async function waitForInitialMapReadyWithLoading\(requestId: number\): Promise<void> \{[\s\S]*?await preloadInitialMapViewAssets\(\s*appRoot,\s*createStartupPreloadProgressHandler\(requestId\)\s*\);/s,
+    "Expected the shared initial map readiness helper to include DOM asset preloading."
+  );
+});
+
+test("startup loading waits for campaign terrain chunks before hiding loading screen", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const terrainRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    terrainRendererSource,
+    /export function waitForCampaignTerrainReady\(/,
+    "Expected terrain renderer to expose a startup wait contract for chunk readiness."
+  );
+  assert.match(
+    terrainRendererSource,
+    /CAMPAIGN_TERRAIN_STARTUP_READY_CHUNK_COUNT/,
+    "Expected startup terrain readiness to end after an initial visible chunk batch, not after full-map chunk generation."
+  );
+  assert.match(
+    terrainRendererSource,
+    /getCampaignTerrainStartupChunkKeys\(\s*allChunkKeys,\s*materialSemanticModel\.terrainCoordinates,\s*materialSemanticModel\.worldScale\s*\)/,
+    "Expected startup terrain readiness to target the current camera chunk batch instead of arbitrary full-map chunks."
+  );
+  assert.match(
+    terrainRendererSource,
+    /startupChunkKeys\.every\(\s*\(chunkKey\) =>\s*chunkResourcesByKey\.has\(chunkKey\) \|\|\s*failedChunkKeys\.has\(chunkKey\)\s*\)/,
+    "Expected loading progress readiness to wait for the prioritized startup chunks before entering the map."
+  );
+  assert.match(
+    terrainRendererSource,
+    /sortCampaignTerrainChunkKeysByCameraFocus\(\s*getCampaignTerrainChunkKeysForCells\(materialSemanticModel\.cells\),\s*materialSemanticModel\.terrainCoordinates,\s*materialSemanticModel\.worldScale\s*\)/,
+    "Expected initial chunk requests to prioritize chunks near the current camera focus."
+  );
+  assert.match(
+    mainSource,
+    /waitForCampaignTerrainReady\(\s*appRoot,\s*createStartupTerrainProgressHandler\(requestId\)\s*\)/,
+    "Expected startup loading to wait for campaign terrain chunks before ending."
+  );
+  assert.match(
+    mainSource,
+    /scheduleMapIntroOverlayAfterTerrainReady\(/,
+    "Expected map intro to be scheduled after terrain readiness instead of starting immediately."
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /startInitialCampaignMapDebugAnimationIfNeeded\(\);\s*\n\s*syncCampaignMapDebugView\(\);/,
+    "Expected render to avoid starting the initial map intro before terrain chunks are ready."
+  );
 });
 
 test("startup asset preloader gathers first-screen map webgl and image assets", () => {
@@ -5268,13 +5333,166 @@ test("campaign cloud reveal mask is stable map-space data during map interaction
   );
   assert.match(
     revealMaskSource,
-    /function projectCoordinateToRevealMaskPoint[\s\S]*?x: u \* input\.descriptor\.maskWidth,[\s\S]*?y: v \* input\.descriptor\.maskHeight,/s,
+    /function projectRevealUvToRevealMaskPoint[\s\S]*?x: u \* input\.descriptor\.maskWidth,[\s\S]*?y: v \* input\.descriptor\.maskHeight,/s,
     "Reveal polygons should be rasterized directly in map coordinate/terrain UV space."
   );
   assert.match(
     cloudRendererSource,
     /if \(!isRendering\) \{\s*requestRender\(\);\s*\}/,
     "Expected reveal texture updates inside render not to schedule an immediate redundant render frame."
+  );
+});
+
+test("campaign cloud reveal canvas uses runtime exploration instead of stale view-time hex conversion", () => {
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    mapViewSource,
+    /data-map-revealed-hex-keys="\$\{escapeHtml\(model\.cloudClearHexKeys\.join\(" "\)\)\}"/,
+    "Cloud reveal must not use view-time hex conversion because it can run before terrain hexPointBounds are ready."
+  );
+  assert.match(
+    mapViewSource,
+    /data-map-revealed-hex-keys="\$\{escapeHtml\(model\.revealedHexKeys\.join\(" "\)\)\}"/,
+    "Expected the cloud canvas to consume runtime exploration keys populated after the terrain coordinate system is available."
+  );
+  assert.match(
+    mapViewSource,
+    /revealedHexKeys:\s*Array\.from\(\s*new Set\(input\.mapExplorationState\?\.revealedHexKeys \?\? \[\]\)\s*\)\.sort\(\)/,
+    "Expected revealedHexKeys to come from the current runtime mapExplorationByMapId structure."
+  );
+});
+
+test("campaign cloud reveal mask draws runtime hexes with terrain hex bounds", () => {
+  const revealMaskSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-reveal-mask.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    revealMaskSource,
+    /getCampaignTerrainHexCoordinateSystem/,
+    "Cloud reveal mask should read the terrain renderer hex coordinate system, not the default grid."
+  );
+  assert.match(
+    revealMaskSource,
+    /coordinateSystem:\s*input\.descriptor\.coordinateSystem/,
+    "Reveal polygons must be rasterized with the same hexPointBounds used by terrain and runtime exploration."
+  );
+  assert.match(
+    revealMaskSource,
+    /hexPointBoundsSignature/,
+    "Reveal mask signatures should include terrain hex bounds so the mask rebuilds after terrain readiness."
+  );
+});
+
+test("campaign cloud reveal shader samples reveal texture in terrain uv space", () => {
+  const shaderSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "shaders",
+      "campaign-cloud.frag.glsl"
+    ),
+    "utf8"
+  );
+  const cloudRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-webgl.ts"
+    ),
+    "utf8"
+  );
+  const terrainRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(shaderSource, /uniform vec2 uTerrainWorldScale;/);
+  assert.match(
+    shaderSource,
+    /groundPoint\.x\s*\/\s*\(2\.0 \* safeWorldScale\.x\) \+ 0\.5/
+  );
+  assert.match(
+    shaderSource,
+    /0\.5 - groundPoint\.y\s*\/\s*\(2\.0 \* safeWorldScale\.y\)/
+  );
+  assert.match(cloudRendererSource, /"uTerrainWorldScale"/);
+  assert.match(
+    cloudRendererSource,
+    /cloudProjection\.terrainWorldScale\.x,[\s\S]*?cloudProjection\.terrainWorldScale\.y/
+  );
+  assert.match(
+    terrainRendererSource,
+    /terrainWorldScale:[\s\S]*?renderer\?\.projectionInput\.materialSemanticModel\.worldScale/
+  );
+});
+
+test("campaign map render syncs opening reveal after terrain coordinate system is ready", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src", "main.ts"), "utf8");
+  const renderFrameMatch = mainSource.match(
+    /function renderAppFrame\([^)]*\)\s*\{[\s\S]*?syncCampaignCloudTextureScaleControl\(\);/
+  );
+
+  assert.ok(renderFrameMatch, "Expected renderAppFrame body to include map WebGL sync.");
+  assert.match(
+    renderFrameMatch[0],
+    /syncCampaignTerrainWebGl\(appRoot\);[\s\S]*?ensureCurrentCampaignRevealForCoordinateSystem\(getCurrentCampaignHexCoordinateSystem\(\)\);[\s\S]*?syncCampaignCloudWebGl\(appRoot\);/,
+    "Initial map render should reveal around the current player after terrain exposes its hex coordinate system and before cloud mask sync."
+  );
+});
+
+test("campaign startup does not seed opening reveal with the default hex coordinate system", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src", "main.ts"), "utf8");
+
+  assert.doesNotMatch(
+    mainSource,
+    /return revealCampaignMapAroundAppCoordinate\(\s*nextAppState,\s*nextAppState\.playerCoordinate,\s*\{\s*animateNewHexes: false,\s*\}\s*\);/s,
+    "Startup must wait for terrain hexPointBounds before writing runtime mapExplorationByMapId."
+  );
+  assert.match(
+    mainSource,
+    /function realignCurrentCampaignOpeningRevealSeed\([\s\S]*?defaultKeys[\s\S]*?actualKeys[\s\S]*?nextKeys\.delete\(key\)/,
+    "Expected terrain-ready render sync to remove stale default-coordinate reveal seeds."
+  );
+});
+
+test("campaign opening reveal retries until terrain hex coordinate system is ready", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src", "main.ts"), "utf8");
+
+  assert.match(
+    mainSource,
+    /function scheduleCampaignOpeningRevealRetry\([\s\S]*?window\.setTimeout\([\s\S]*?renderApp\(\);[\s\S]*?CAMPAIGN_OPENING_REVEAL_RETRY_INTERVAL_MS/,
+    "Map render should retry after terrain async loading so opening reveal does not wait for player movement."
+  );
+  assert.match(
+    mainSource,
+    /const campaignCoordinateSystem = getCurrentCampaignHexCoordinateSystem\(\);[\s\S]*?if \(campaignCoordinateSystem == null\) \{[\s\S]*?scheduleCampaignOpeningRevealRetry\(\);[\s\S]*?syncCampaignCloudWebGl\(appRoot\);[\s\S]*?return;/,
+    "Map render should schedule the retry immediately when terrain has not exposed hexPointBounds yet."
   );
 });
 
@@ -5441,6 +5659,31 @@ test("campaign actor model scale follows terrain zoom instead of cancelling it",
     terrainSource,
     /function getCampaignActorModelWorldScale[\s\S]*?ACTOR_REFERENCE_CAMERA_SCALE \/ Math\.max\(currentCamera\.scale/s,
     "Actor model scale must not cancel terrain zoom with referenceScale/currentScale compensation."
+  );
+});
+
+test("campaign rigged actor models use the enlarged shared base scale", () => {
+  const terrainSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    terrainSource,
+    /const ACTOR_MODEL_BASE_SCALE = 0\.016;/,
+    "Expected all rigged campaign actor models to render larger through the shared base scale."
+  );
+  assert.match(
+    terrainSource,
+    /function getCampaignActorModelWorldScale\(model: ActorModelAsset\): number \{[\s\S]*?return ACTOR_MODEL_BASE_SCALE \* model\.scale;[\s\S]*?\}/,
+    "Expected per-model scale to continue multiplying the shared actor base scale."
   );
 });
 
@@ -5986,10 +6229,12 @@ test("map3 runtime export keeps gameplay hex size and one-to-one cells", () => {
     new Set(yuanmoMap.nodes.map((node) => node.id)),
     new Set(settlements.map((settlement) => settlement.id))
   );
-  const haozhouNode = yuanmoMap.nodes.find((node) => node.id === "settlement.fenyang_province");
-  assert.equal(haozhouNode?.label, "濠州");
-  assert.equal(yuanmoMap.initialPlayerCoordinate.x, haozhouNode.x);
-  assert.equal(yuanmoMap.initialPlayerCoordinate.y, haozhouNode.y);
+  const openingCell = runtimeCellsByKey.get("3,-14");
+  assert.deepEqual(yuanmoMap.initialPlayerCoordinate, {
+    x: 239.4025425908469,
+    y: 280.2456647398844,
+  });
+  assert.equal(openingCell?.land, true);
 });
 
 test("campaign terrain chunk cache changes when hex grid content changes", () => {
@@ -6019,7 +6264,7 @@ test("campaign terrain chunk cache changes when hex grid content changes", () =>
   );
 });
 
-test("campaign terrain renderer requests full hex grid chunks instead of focus-radius chunks", () => {
+test("campaign terrain renderer requests full hex grid chunks with camera-prioritized startup chunks", () => {
   const terrainRendererSource = fs.readFileSync(
     path.join(
       process.cwd(),
@@ -6038,7 +6283,7 @@ test("campaign terrain renderer requests full hex grid chunks instead of focus-r
   );
   assert.match(
     terrainRendererSource,
-    /const ensureAllCampaignTerrainChunks = \(\): void => \{\s*ensureCampaignTerrainChunkKeys\(\s*getCampaignTerrainChunkKeysForCells\(materialSemanticModel\.cells\)\s*\);\s*\}/s
+    /const ensureAllCampaignTerrainChunks = \(\): void => \{\s*ensureCampaignTerrainChunkKeys\(\s*sortCampaignTerrainChunkKeysByCameraFocus\(\s*getCampaignTerrainChunkKeysForCells\(materialSemanticModel\.cells\),\s*materialSemanticModel\.terrainCoordinates,\s*materialSemanticModel\.worldScale\s*\)\s*\);\s*\}/s
   );
   assert.match(
     terrainRendererSource,

@@ -65,3 +65,18 @@ test("default script editor template map asset references resolve to packaged fi
     }
   }
 });
+
+test("default script editor template pins the campaign opening actor coordinate", () => {
+  const profile = readJson(
+    "public/script-editor-templates/zhuyuanzhang/scenario-profile.json"
+  );
+  const maps = readJson("public/script-editor-templates/zhuyuanzhang/maps.json");
+  const campaignMap = maps.find((mapDefinition) => mapDefinition.id === "map.yuanmo_campaign");
+  const expectedCoordinate = {
+    x: 239.4025425908469,
+    y: 280.2456647398844,
+  };
+
+  assert.deepEqual(profile.initialPlayerCoordinate, expectedCoordinate);
+  assert.deepEqual(campaignMap.initialPlayerCoordinate, expectedCoordinate);
+});

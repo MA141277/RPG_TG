@@ -13,6 +13,7 @@ import {
   regenerateEditorState,
   type YuanmoHexEditorState,
 } from "./editor-state";
+import { createPerlinForestEnvironmentOverrides } from "./forest-noise";
 import { countHexInnerSamplePoints, generateBaselineHexGrid } from "./generator";
 import {
   exportEditorPackage,
@@ -32,6 +33,7 @@ import type {
   YuanmoHexRasterSource,
   YuanmoHexSamplingConfig,
 } from "./model";
+import { YUANMO_FOREST_ENVIRONMENT } from "./model";
 import {
   createNextSettlementId,
   createNextStructureOverlayId,
@@ -90,6 +92,10 @@ type EditorSession = {
   activeStructureOverlayId: string | null;
   structureDraftId: string;
   structureDraftCategory: StructureOverlayCategory;
+  forestDensity: number;
+  forestScale: number;
+  forestSeed: string;
+  forestLandOnly: boolean;
   packageFiles: Record<string, string>;
   selectedPackageFile: string;
   statusText: string;
@@ -156,6 +162,10 @@ const session: EditorSession = {
   activeStructureOverlayId: null,
   structureDraftId: "structure.city-ground",
   structureDraftCategory: "city-ground",
+  forestDensity: 0.45,
+  forestScale: 1.4,
+  forestSeed: "yuanmo-forest",
+  forestLandOnly: true,
   packageFiles: {},
   selectedPackageFile: YUANMO_HEX_EDITOR_PACKAGE_FILES.project,
   statusText: "已就绪。",
@@ -336,6 +346,29 @@ rootElement.innerHTML = `
             </select>
           </label>
           <p>左键写入地貌覆盖，右键移除地貌覆盖。</p>
+          <div class="yuanmo-hex-editor__forest-generator">
+            <h4>柏林森林</h4>
+            <label>
+              <span>密度</span>
+              <input type="number" step="0.05" min="0" max="1" data-forest-density />
+            </label>
+            <label>
+              <span>噪声尺度</span>
+              <input type="number" step="0.1" min="0.1" data-forest-scale />
+            </label>
+            <label>
+              <span>种子</span>
+              <input type="text" data-forest-seed maxlength="64" />
+            </label>
+            <label class="yuanmo-hex-editor__checkbox-row">
+              <input type="checkbox" data-forest-land-only />
+              <span>只作用陆地</span>
+            </label>
+            <div class="yuanmo-hex-editor__inline-actions">
+              <button type="button" data-action="generate-perlin-forest">生成森林</button>
+              <button type="button" data-action="clear-forest-overrides">清除森林覆盖</button>
+            </div>
+          </div>
         </section>
 
         <section class="yuanmo-hex-editor__tool-panel" data-tool-panel="settlement">
@@ -480,6 +513,10 @@ const sourceLayerSelect = requireElement<HTMLSelectElement>("[data-source-layer]
 const samplingDirtyText = requireElement<HTMLElement>("[data-sampling-dirty]");
 const terrainSelect = requireElement<HTMLSelectElement>("[data-terrain-value]");
 const environmentSelect = requireElement<HTMLSelectElement>("[data-environment-value]");
+const forestDensityInput = requireElement<HTMLInputElement>("[data-forest-density]");
+const forestScaleInput = requireElement<HTMLInputElement>("[data-forest-scale]");
+const forestSeedInput = requireElement<HTMLInputElement>("[data-forest-seed]");
+const forestLandOnlyInput = requireElement<HTMLInputElement>("[data-forest-land-only]");
 const settlementNameInput = requireElement<HTMLInputElement>("[data-settlement-name]");
 const settlementTypeSelect = requireElement<HTMLSelectElement>("[data-settlement-type]");
 const settlementVisualSelect = requireElement<HTMLSelectElement>("[data-settlement-visual]");
@@ -641,6 +678,26 @@ environmentSelect.addEventListener("change", () => {
   render();
 });
 
+forestDensityInput.addEventListener("input", () => {
+  session.forestDensity = clampNumber(Number(forestDensityInput.value), 0, 1, session.forestDensity);
+  render();
+});
+
+forestScaleInput.addEventListener("input", () => {
+  session.forestScale = clampNumber(Number(forestScaleInput.value), 0.1, 100, session.forestScale);
+  render();
+});
+
+forestSeedInput.addEventListener("input", () => {
+  session.forestSeed = forestSeedInput.value;
+  render();
+});
+
+forestLandOnlyInput.addEventListener("change", () => {
+  session.forestLandOnly = forestLandOnlyInput.checked;
+  render();
+});
+
 settlementNameInput.addEventListener("input", () => {
   session.settlementDraftName = settlementNameInput.value;
   const selectedSettlement = getSelectedSettlement();
@@ -768,6 +825,14 @@ wireAction("confirm-crop", () => {
 
 wireAction("confirm-sampling", () => {
   confirmSamplingStep();
+});
+
+wireAction("generate-perlin-forest", () => {
+  applyPerlinForestOverrides();
+});
+
+wireAction("clear-forest-overrides", () => {
+  clearForestEnvironmentOverrides();
 });
 
 wireAction("toggle-validation", () => {
@@ -1095,6 +1160,10 @@ function render(): void {
   settlementVisualSelect.value = session.settlementDraftCustomVisualKind;
   structureIdInput.value = session.structureDraftId;
   structureCategorySelect.value = session.structureDraftCategory;
+  forestDensityInput.value = `${session.forestDensity}`;
+  forestScaleInput.value = `${session.forestScale}`;
+  forestSeedInput.value = session.forestSeed;
+  forestLandOnlyInput.checked = session.forestLandOnly;
 
   const activeToolDefinition = getEditorToolDefinition(
     session.state.project.uiState.activeToolId as EditorToolId
@@ -1320,6 +1389,38 @@ function handleCanvasInteraction(clientX: number, clientY: number, removeMode: b
       render();
       break;
   }
+}
+
+function applyPerlinForestOverrides(): void {
+  if (session.activeStep !== "edit") {
+    session.statusText = "请先确认采样并进入微调，再生成森林分布。";
+    render();
+    return;
+  }
+
+  const preview = createPerlinForestEnvironmentOverrides({
+    generated: session.state.generated,
+    existingOverrides: session.state.environmentOverrides,
+    density: session.forestDensity,
+    scale: session.forestScale,
+    seed: session.forestSeed,
+    landOnly: session.forestLandOnly,
+  });
+
+  rebuildState({ environmentOverrides: preview.generatedOverrides });
+  session.statusText = `已按柏林噪声生成 ${preview.forestCells}/${preview.candidateCells} 个森林地块，密度 ${session.forestDensity}，尺度 ${session.forestScale}。`;
+  render();
+}
+
+function clearForestEnvironmentOverrides(): void {
+  const nextOverrides = session.state.environmentOverrides.filter(
+    (override) => override.environment !== YUANMO_FOREST_ENVIRONMENT
+  );
+  const removedCount = session.state.environmentOverrides.length - nextOverrides.length;
+
+  rebuildState({ environmentOverrides: nextOverrides });
+  session.statusText = `已清除 ${removedCount} 个森林地貌覆盖。`;
+  render();
 }
 
 function setWaterLandOverride(x: number, y: number, land: boolean): void {
@@ -1984,6 +2085,13 @@ function firstPackageFileName(files: Record<string, string>): string {
 
 function normalizeOrderIndex(index: number): number {
   return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+function clampNumber(value: number, min: number, max: number, fallback: number): number {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, value));
 }
 
 function downloadTextFile(fileName: string, content: string): void {

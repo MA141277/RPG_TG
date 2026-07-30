@@ -413,6 +413,34 @@ function renderEntityLabel(metrics: CityStageRenderMetrics): string {
   `;
 }
 
+function renderStageBackgroundImage(layout: CityStageLayout): string {
+  if (layout.map.backgroundImage.trim().length === 0) {
+    return "";
+  }
+
+  return `
+    <img
+      class="c-city-map-stage__base"
+      src="${resolveAssetUrl(layout.map.backgroundImage)}"
+      alt=""
+    />
+  `;
+}
+
+function renderStageForegroundImage(layout: CityStageLayout): string {
+  if (layout.map.foregroundImage.trim().length === 0) {
+    return "";
+  }
+
+  return `
+    <img
+      class="c-city-map-stage__foreground-wall"
+      src="${resolveAssetUrl(layout.map.foregroundImage)}"
+      alt=""
+    />
+  `;
+}
+
 function composeLayoutForCity(cityDefinition: CityDefinition): CityStageLayout | null {
   const bundle = getCityStageBundleForCity(cityDefinition.id);
   if (bundle == null) {
@@ -481,11 +509,7 @@ export function renderCityStageScene(input: {
           data-city-stage-base-space
           style="--base-space-top:${baseTopPercent}; --base-space-left:${baseLeftPercent}; --base-space-width:${baseWidthPercent}; --base-space-height:${baseHeightPercent};"
         >
-          <img
-            class="c-city-map-stage__base"
-            src="${resolveAssetUrl(layout.map.backgroundImage)}"
-            alt=""
-          />
+          ${renderStageBackgroundImage(layout)}
           <div class="c-city-map-stage__ground-decorations">
             ${groundEntities.map(renderEntity).join("")}
           </div>
@@ -493,11 +517,7 @@ export function renderCityStageScene(input: {
             ${visualEntities.map(renderEntity).join("")}
           </div>
         </div>
-        <img
-          class="c-city-map-stage__foreground-wall"
-          src="${resolveAssetUrl(layout.map.foregroundImage)}"
-          alt=""
-        />
+        ${renderStageForegroundImage(layout)}
         <div
           class="c-city-map-stage__labels"
           style="--base-space-top:${baseTopPercent}; --base-space-left:${baseLeftPercent}; --base-space-width:${baseWidthPercent}; --base-space-height:${baseHeightPercent};"

@@ -56,10 +56,16 @@ function coordinateToRoundedHex(coordinate) {
 function coordinateToRoundedHexWithSystem(coordinate, coordinateSystem) {
   const u = coordinate.x / coordinateSystem.coordinateSpace.width;
   const terrainV = 1 - coordinate.y / coordinateSystem.coordinateSpace.height;
+  const bounds = coordinateSystem.hexPointBounds ?? {
+    minX: -coordinateSystem.hexMapAspect * coordinateSystem.hexTerrainScale * 0.5,
+    maxX: coordinateSystem.hexMapAspect * coordinateSystem.hexTerrainScale * 0.5,
+    minY: -coordinateSystem.hexTerrainScale * 0.5,
+    maxY: coordinateSystem.hexTerrainScale * 0.5,
+  };
 
   return pixelToRoundedHex(
-    (u - 0.5) * coordinateSystem.hexMapAspect * coordinateSystem.hexTerrainScale,
-    (terrainV - 0.5) * coordinateSystem.hexTerrainScale
+    bounds.minX + Math.min(Math.max(u, 0), 1) * (bounds.maxX - bounds.minX),
+    bounds.minY + Math.min(Math.max(terrainV, 0), 1) * (bounds.maxY - bounds.minY)
   );
 }
 
@@ -72,11 +78,20 @@ function hexToCoordinate(hex, coordinateSystem = {
     x: Math.sqrt(3) * (hex.x + hex.y * 0.5),
     y: 1.5 * hex.y,
   };
+  const bounds = coordinateSystem.hexPointBounds ?? {
+    minX: -coordinateSystem.hexMapAspect * coordinateSystem.hexTerrainScale * 0.5,
+    maxX: coordinateSystem.hexMapAspect * coordinateSystem.hexTerrainScale * 0.5,
+    minY: -coordinateSystem.hexTerrainScale * 0.5,
+    maxY: coordinateSystem.hexTerrainScale * 0.5,
+  };
   const u = Math.min(
-    Math.max(point.x / (coordinateSystem.hexMapAspect * coordinateSystem.hexTerrainScale) + 0.5, 0),
+    Math.max((point.x - bounds.minX) / Math.max(bounds.maxX - bounds.minX, 1), 0),
     1
   );
-  const terrainV = Math.min(Math.max(point.y / coordinateSystem.hexTerrainScale + 0.5, 0), 1);
+  const terrainV = Math.min(
+    Math.max((point.y - bounds.minY) / Math.max(bounds.maxY - bounds.minY, 1), 0),
+    1
+  );
 
   return {
     x: u * coordinateSystem.coordinateSpace.width,
@@ -129,7 +144,12 @@ test("yuanmo campaign keeps a runtime-compatible full hex grid and keeps Haozhou
   );
 });
 
-test("yuanmo campaign starts the player on the Haozhou land hex", () => {
+const STORY_OPENING_PLAYER_COORDINATE = {
+  x: 239.4025425908469,
+  y: 280.2456647398844,
+};
+
+test("yuanmo campaign starts the player on the story opening reveal land hex", () => {
   const maps = JSON.parse(fs.readFileSync(path.join(packRoot, "maps.json"), "utf8"));
   const grid = JSON.parse(
     fs.readFileSync(
@@ -138,64 +158,53 @@ test("yuanmo campaign starts the player on the Haozhou land hex", () => {
     )
   );
   const yuanmoMap = maps.find((map) => map.id === "map.yuanmo_campaign");
-  const haozhouNode = yuanmoMap?.nodes.find((node) => node.id === "settlement.fenyang_province");
   const cellsByKey = new Map(grid.cells.map((cell) => [`${cell.x},${cell.y}`, cell]));
 
   assert.ok(yuanmoMap);
-  assert.ok(haozhouNode);
-  assert.deepEqual(yuanmoMap.initialPlayerCoordinate, {
-    x: haozhouNode.x,
-    y: haozhouNode.y,
-  });
+  assert.deepEqual(yuanmoMap.initialPlayerCoordinate, STORY_OPENING_PLAYER_COORDINATE);
 
   const startHex = coordinateToRoundedHexWithSystem(
     yuanmoMap.initialPlayerCoordinate,
     grid.coordinateSystem
   );
-  const haozhouHex = coordinateToRoundedHexWithSystem(haozhouNode, grid.coordinateSystem);
 
-  assert.deepEqual(startHex, haozhouHex);
+  assert.deepEqual(startHex, { x: 3, y: -14 });
   assert.equal(cellsByKey.get(`${startHex.x},${startHex.y}`)?.land, true);
 });
 
-test("map2 settlement coordinates are projected from editor crop into campaign map nodes", () => {
+test("yuanmo runtime map nodes keep runtime-priority environments", () => {
   const maps = JSON.parse(fs.readFileSync(path.join(packRoot, "maps.json"), "utf8"));
-  const project = JSON.parse(fs.readFileSync(path.join(repoRoot, "map2", "project.json"), "utf8"));
-  const settlements = JSON.parse(fs.readFileSync(path.join(repoRoot, "map2", "settlements.json"), "utf8"));
   const grid = JSON.parse(fs.readFileSync(runtimeGridOutputPath, "utf8"));
   const yuanmoMap = maps.find((map) => map.id === "map.yuanmo_campaign");
-  const haozhouSettlement = settlements.find((settlement) => settlement.id === "settlement.fenyang_province");
-  const haozhouNode = yuanmoMap?.nodes.find((node) => node.id === "settlement.fenyang_province");
-
-  assert.ok(project.sampling.sourceCrop);
-  assert.ok(haozhouSettlement);
-  assert.ok(haozhouNode);
-
-  const projectedHex = mapEditorGameCoordinateToRuntimeHex(
-    haozhouSettlement.mapPosition,
-    project.sampling.sourceCrop,
-    grid.coordinateSystem
+  const cellsByKey = new Map(grid.cells.map((cell) => [`${cell.x},${cell.y}`, cell]));
+  const runtimePriorityNodes = yuanmoMap?.nodes.filter(
+    (node) => node.kind === "city" || node.kind === "settlement" || typeof node.cityId === "string"
   );
-  const expectedCoordinate = hexToCoordinate(projectedHex, grid.coordinateSystem);
-
-  assert.deepEqual(projectedHex, coordinateToRoundedHexWithSystem(expectedCoordinate, grid.coordinateSystem));
-  assert.deepEqual(
-    { x: haozhouNode.x, y: haozhouNode.y },
-    expectedCoordinate
-  );
-  assert.deepEqual(yuanmoMap.initialPlayerCoordinate, expectedCoordinate);
-});
-
-test("map2 campaign map nodes contain only the editor package settlements", () => {
-  const maps = JSON.parse(fs.readFileSync(path.join(packRoot, "maps.json"), "utf8"));
-  const settlements = JSON.parse(fs.readFileSync(path.join(repoRoot, "map2", "settlements.json"), "utf8"));
-  const yuanmoMap = maps.find((map) => map.id === "map.yuanmo_campaign");
-  const settlementIds = new Set(settlements.map((settlement) => settlement.id));
-  const nodeIds = new Set(yuanmoMap?.nodes.map((node) => node.id));
 
   assert.ok(yuanmoMap);
-  assert.equal(yuanmoMap.nodes.length, settlementIds.size);
-  assert.deepEqual(nodeIds, settlementIds);
+  assert.ok(runtimePriorityNodes.length > 0);
+
+  const forestHits = runtimePriorityNodes
+    .map((node) => ({
+      id: node.id,
+      hex: coordinateToRoundedHexWithSystem({ x: node.x, y: node.y }, grid.coordinateSystem),
+    }))
+    .filter(({ hex }) => cellsByKey.get(`${hex.x},${hex.y}`)?.environment === "\u68ee\u6797");
+
+  assert.deepEqual(forestHits, []);
+});
+
+test("yuanmo campaign map keeps runtime nodes beyond the map3 editor package", () => {
+  const maps = JSON.parse(fs.readFileSync(path.join(packRoot, "maps.json"), "utf8"));
+  const settlements = JSON.parse(fs.readFileSync(path.join(repoRoot, "map3", "settlements.json"), "utf8"));
+  const yuanmoMap = maps.find((map) => map.id === "map.yuanmo_campaign");
+  const huangcunNode = yuanmoMap?.nodes.find((node) => node.id === "settlement.huangcun");
+
+  assert.ok(yuanmoMap);
+  assert.equal(settlements.some((settlement) => settlement.id === "settlement.huangcun"), false);
+  assert.ok(yuanmoMap.nodes.length > settlements.length);
+  assert.equal(huangcunNode?.label, "\u8352\u6751");
+  assert.equal(huangcunNode?.cityId, "city.huangcun");
   assert.equal(yuanmoMap.nodes.some((node) => node.kind === "fort"), false);
   assert.equal(yuanmoMap.nodes.some((node) => node.kind === "landmark"), false);
 });
@@ -204,6 +213,7 @@ test("yuanmo runtime grid builder accepts an explicit editor package directory",
   const tempRoot = fs.mkdtempSync(path.join(repoRoot, ".tmp-map-builder-"));
   const tempPackageDir = path.join(tempRoot, "editor-package");
   const mapsBackup = fs.readFileSync(mapsPath, "utf8");
+  const citiesBackup = fs.readFileSync(path.join(packRoot, "cities.json"), "utf8");
   const runtimeBackup = fs.readFileSync(runtimeGridOutputPath, "utf8");
 
   try {
@@ -222,12 +232,13 @@ test("yuanmo runtime grid builder accepts an explicit editor package directory",
     assert.match(stdout, /rebuilt \d+ map nodes from .*editor-package settlements/);
   } finally {
     fs.writeFileSync(mapsPath, mapsBackup, "utf8");
+    fs.writeFileSync(path.join(packRoot, "cities.json"), citiesBackup, "utf8");
     fs.writeFileSync(runtimeGridOutputPath, runtimeBackup, "utf8");
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }
 });
 
-test("map2 yuanmo campaign runtime export keeps the editor hex grid coordinate space", () => {
+test("map3 yuanmo campaign runtime export keeps the one-to-one editor hex grid coordinate space", () => {
   const gridPath = path.join(
     packRoot,
     "assets",
@@ -240,18 +251,20 @@ test("map2 yuanmo campaign runtime export keeps the editor hex grid coordinate s
   assert.equal(grid.format, "campaign-hex-grid-v1");
   assert.equal(grid.mapId, "map.yuanmo_campaign");
   assert.deepEqual(grid.bounds, {
-    minX: -231,
-    maxX: 231,
-    minY: -153,
-    maxY: 152,
+    minX: -87,
+    maxX: 86,
+    minY: -57,
+    maxY: 57,
   });
-  assert.equal(grid.coordinateSystem.hexTerrainScale, 460);
-  assert.equal(Number(grid.coordinateSystem.hexMapAspect.toFixed(6)), Number((200 / 169).toFixed(6)));
+  assert.equal(grid.coordinateSystem.hexTerrainScale, 138);
+  assert.equal(Number(grid.coordinateSystem.hexMapAspect.toFixed(6)), Number(BASE_HEX_MAP_ASPECT.toFixed(6)));
   assert.equal(grid.cells.length, 13512);
   assert.equal(grid.counts.cells, grid.cells.length);
+  assert.equal(grid.counts.environments["\u68ee\u6797"], 2197);
   assert.equal(grid.source.editorOverlay.source, "yuanmo-hex-editor");
-  assert.equal(grid.source.editorOverlay.projection, "editor-grid-exact-runtime-hex");
+  assert.equal(grid.source.editorOverlay.projection, "editor-grid-one-to-one-runtime-hex");
   assert.equal(grid.source.editorOverlay.editorCellsApplied, 13512);
+  assert.equal(grid.source.editorOverlay.settlementCellsApplied, 97);
   assert.equal(grid.source.editorOverlay.runtimeCellsChanged > 0, true);
   assert.equal(grid.source.editorOverlay.runtimeCellsChanged, 13512);
   assert.equal(

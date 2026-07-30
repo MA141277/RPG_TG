@@ -9,6 +9,10 @@
     "houseId": "house.kulan.temple",
     "view": "house"
   },
+  "initialPlayerCoordinate": {
+    "x": 239.4025425908469,
+    "y": 280.2456647398844
+  },
   "initialRuntime": {
     "variables": {
       "var.story.zhu_yuanzhang.stage": "huangjue-temple"

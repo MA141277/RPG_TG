@@ -233,6 +233,102 @@ test("yuanmo editor runtime export applies manual water-land overrides as hard r
   assert.equal(runtimeCell.referenceHeight, 0);
 });
 
+test("yuanmo one-to-one runtime export applies map3 forests without overriding settlement or farmland cells", () => {
+  const { createOneToOneRuntimeCampaignHexGridFromEditorPackage } = loadRepoModule(
+    "./../src/yuanmo-hex-editor/runtime-grid-export"
+  );
+  const generated = {
+    mapId: "map.yuanmo_campaign",
+    generation: {
+      scale: 1,
+      step: 1,
+      offsetX: 0,
+      offsetY: 0,
+      sourceCrop: { x: 0, y: 0, width: 100, height: 100 },
+    },
+    bounds: { minX: 0, maxX: 2, minY: 0, maxY: 0 },
+    counts: {
+      cells: 3,
+      landCells: 3,
+      waterCells: 0,
+      terrains: { "平原": 3 },
+      environments: { "草地": 3, "森林": 0 },
+    },
+    cells: [
+      { x: 0, y: 0, land: true, referenceHeight: 0.2, terrain: "平原", environment: "草地" },
+      { x: 1, y: 0, land: true, referenceHeight: 0.2, terrain: "平原", environment: "草地" },
+      { x: 2, y: 0, land: true, referenceHeight: 0.2, terrain: "平原", environment: "草地" },
+    ],
+  };
+  const runtimeGrid = {
+    schemaVersion: 1,
+    format: "campaign-hex-grid-v1",
+    mapId: "map.yuanmo_campaign",
+    defaults: { terrain: "平原", environment: "草地" },
+    coordinateSystem: {
+      hexTerrainScale: 138,
+      hexMapAspect: 1,
+      coordinateSpace: { width: 100, height: 100 },
+    },
+    source: {
+      kind: "sampled-raster-layer",
+      sourceLayerId: "test",
+      sourceImage: { path: "test.png", width: 100, height: 100 },
+      sampler: {
+        method: "hex-center-nearest-pixel",
+        hexCellSource: "test",
+        terrainUvFormula: "test",
+        pixelFormula: "test",
+        waterMaterialRule: "test",
+        landRule: "test",
+      },
+    },
+    bounds: { minX: -1, maxX: 1, minY: 0, maxY: 0 },
+    counts: {
+      cells: 3,
+      landCells: 3,
+      waterCells: 0,
+      terrains: { "平原": 3 },
+      environments: { "草地": 3 },
+    },
+    cells: [
+      { x: -1, y: 0, land: true, referenceHeight: 0.2, terrain: "平原", environment: "草地" },
+      { x: 0, y: 0, land: true, referenceHeight: 0.2, terrain: "平原", environment: "森林" },
+      { x: 1, y: 0, land: true, referenceHeight: 0.2, terrain: "平原", environment: "森林" },
+    ],
+  };
+
+  const exported = createOneToOneRuntimeCampaignHexGridFromEditorPackage({
+    runtimeGrid,
+    editorGenerated: generated,
+    environmentOverrides: [
+      { x: 0, y: 0, environment: "森林" },
+      { x: 1, y: 0, environment: "森林" },
+      { x: 2, y: 0, environment: "森林" },
+    ],
+    settlementAnchors: [
+      {
+        id: "settlement.city",
+        type: "city",
+        mapPosition: { x: 50, y: 50 },
+        hexCell: { x: 1, y: 0 },
+      },
+    ],
+    structureOverlays: [
+      {
+        id: "structure.farm",
+        category: "farmland",
+        cells: [{ x: 2, y: 0 }],
+      },
+    ],
+  });
+  const cellByKey = new Map(exported.cells.map((cell) => [`${cell.x},${cell.y}`, cell]));
+
+  assert.equal(cellByKey.get("-1,0")?.environment, "森林");
+  assert.equal(cellByKey.get("0,0")?.environment, "草地");
+  assert.equal(cellByKey.get("1,0")?.environment, "草地");
+});
+
 test("yuanmo hex editor sampling scale changes generated map density", async () => {
   const { generateBaselineHexGrid } = loadRepoModule("./../src/yuanmo-hex-editor/generator");
 
@@ -421,6 +517,66 @@ test("yuanmo hex editor generator samples supplied source raster pixels", async 
   );
 });
 
+test("yuanmo hex editor Perlin forest generator creates deterministic land-only environment overrides", async () => {
+  const { applyPerlinForestEnvironmentOverrides } = loadRepoModule(
+    "./../src/yuanmo-hex-editor/forest-noise"
+  );
+  const generated = {
+    cells: [
+      { x: 0, y: 0, land: true, environment: "草地" },
+      { x: 1, y: 0, land: true, environment: "草地" },
+      { x: 2, y: 0, land: true, environment: "森林" },
+      { x: 0, y: 1, land: false, environment: "草地" },
+      { x: 1, y: 1, land: true, environment: "草地" },
+      { x: 2, y: 1, land: true, environment: "草地" },
+      { x: 0, y: 2, land: true, environment: "草地" },
+      { x: 1, y: 2, land: true, environment: "草地" },
+      { x: 2, y: 2, land: true, environment: "草地" },
+    ],
+  };
+  const existingOverrides = [{ x: 8, y: 8, environment: "森林" }];
+
+  const sparse = applyPerlinForestEnvironmentOverrides({
+    generated,
+    existingOverrides,
+    density: 0.25,
+    scale: 1.1,
+    seed: "forest-seed",
+    landOnly: true,
+  });
+  const sparseAgain = applyPerlinForestEnvironmentOverrides({
+    generated,
+    existingOverrides,
+    density: 0.25,
+    scale: 1.1,
+    seed: "forest-seed",
+    landOnly: true,
+  });
+  const dense = applyPerlinForestEnvironmentOverrides({
+    generated,
+    existingOverrides,
+    density: 0.75,
+    scale: 1.1,
+    seed: "forest-seed",
+    landOnly: true,
+  });
+
+  assert.deepEqual(sparse, sparseAgain);
+  assert.equal(sparse.some((override) => override.x === 0 && override.y === 1), false);
+  assert.equal(sparse.some((override) => override.x === 8 && override.y === 8), false);
+  assert.ok(
+    dense.length > sparse.length,
+    `Expected higher density to produce more forest overrides, got sparse=${sparse.length}, dense=${dense.length}.`
+  );
+  assert.equal(
+    dense.every((override) =>
+      generated.cells.some((cell) => cell.x === override.x && cell.y === override.y && cell.land)
+    ),
+    true
+  );
+  assert.equal(dense.every((override) => override.environment === "森林"), true);
+});
+
 test("yuanmo hex editor sampling step is not hidden behind a radius floor", async () => {
   const source = fs.readFileSync(
     path.join(repoRoot, "src", "yuanmo-hex-editor", "generator.ts"),
@@ -514,6 +670,21 @@ test("yuanmo hex editor exposes an edit-step region overlay toggle", async () =>
 
   assert.match(source, /data-region-overlay-toggle/);
   assert.match(source, /showRegionOverlay/);
+});
+
+test("yuanmo hex editor exposes Perlin forest generation controls in the environment tool", async () => {
+  const source = fs.readFileSync(
+    path.join(repoRoot, "src", "yuanmo-hex-editor", "main.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /data-forest-density/);
+  assert.match(source, /data-forest-scale/);
+  assert.match(source, /data-forest-seed/);
+  assert.match(source, /data-forest-land-only/);
+  assert.match(source, /data-action="generate-perlin-forest"/);
+  assert.match(source, /data-action="clear-forest-overrides"/);
+  assert.match(source, /createPerlinForestEnvironmentOverrides/);
 });
 
 test("yuanmo hex editor canvas draws sampled region overlays and labels", async () => {

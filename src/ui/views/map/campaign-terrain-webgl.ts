@@ -1,6 +1,7 @@
 import type {
   CoordinateSpace,
   GridCoordinate,
+  HexCoordinate,
   HexCoordinateSystem,
   HexTravelGrid,
 } from "../../../application/navigation/travel-to-coordinate";
@@ -387,7 +388,7 @@ const CAMERA_BASE_DISTANCE = 20;
 const CAMERA_OFFSET_UNIT = 0.0032;
 const CAMERA_REFERENCE_SCALE = 15;
 const FOV_RADIANS = 24 * Math.PI / 180;
-const ACTOR_MODEL_BASE_SCALE = 0.011;
+const ACTOR_MODEL_BASE_SCALE = 0.016;
 const ACTOR_MODEL_FACING_OFFSET_RADIANS = Math.PI / 2;
 const ACTOR_ANIMATION_BLEND_DURATION_MS = 180;
 const HEX_TERRAIN_SCALE = 138;
@@ -397,6 +398,7 @@ let currentTerrainWorldScale: CampaignTerrainWorldScale = DEFAULT_TERRAIN_WORLD_
 const SMOOTH_TERRAIN_MESH_STEP = 1;
 const CAMPAIGN_TERRAIN_CHUNK_HEX_SIZE = 8;
 const CAMPAIGN_TERRAIN_MAX_PENDING_CHUNKS = 12;
+const CAMPAIGN_TERRAIN_STARTUP_READY_CHUNK_COUNT = 9;
 const CAMPAIGN_TERRAIN_CHUNK_PADDING_HEX = 2;
 const CAMPAIGN_TERRAIN_CHUNK_MIN_COLUMNS = 32;
 const CAMPAIGN_TERRAIN_CHUNK_MIN_ROWS = 32;
@@ -544,6 +546,14 @@ export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
   shadeMax: 1.0,
 };
 const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
+const REVEAL_HEX_CORNER_OFFSETS = [
+  { x: 0, y: -1 },
+  { x: Math.sqrt(3) / 2, y: -0.5 },
+  { x: Math.sqrt(3) / 2, y: 0.5 },
+  { x: 0, y: 1 },
+  { x: -Math.sqrt(3) / 2, y: 0.5 },
+  { x: -Math.sqrt(3) / 2, y: -0.5 },
+] as const;
 
 export type CampaignTerrainCamera = {
   scale: number;
@@ -556,6 +566,7 @@ export type CampaignTerrainCloudProjectionUniforms = {
   viewportAspectRatio: number;
   terrainScale: number;
   heightScale: number;
+  terrainWorldScale: CampaignTerrainWorldScale;
   cameraScaleRatio: number;
   cameraReferenceScale: number;
   cameraBaseDistance: number;
@@ -608,11 +619,19 @@ type CampaignTerrainRenderer = {
   dispose: () => void;
   render: () => void;
   requestRender: (reason?: "static" | "dynamic") => void;
+  getLoadingProgress: () => CampaignTerrainLoadingProgress;
   hasActorAsset: boolean;
   inputSignature: string;
   projectionInput: CampaignTerrainProjectionInput;
   travelGrid: HexTravelGrid;
   sampleHeightAtUv: (u: number, v: number) => number;
+};
+
+export type CampaignTerrainLoadingProgress = {
+  loaded: number;
+  total: number;
+  pending: number;
+  ready: boolean;
 };
 
 type CampaignActorData = {
@@ -947,6 +966,8 @@ export function getCampaignTerrainCloudProjectionUniforms(
   root: ParentNode
 ): CampaignTerrainCloudProjectionUniforms {
   const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  const renderer =
+    terrainCanvas == null ? null : activeRenderers.get(terrainCanvas) ?? null;
   const viewportAspectRatio =
     terrainCanvas == null
       ? 1
@@ -958,11 +979,34 @@ export function getCampaignTerrainCloudProjectionUniforms(
     viewportAspectRatio,
     terrainScale: TERRAIN_SCALE,
     heightScale: HEIGHT_SCALE,
+    terrainWorldScale:
+      renderer?.projectionInput.materialSemanticModel.worldScale ??
+      DEFAULT_TERRAIN_WORLD_SCALE,
     cameraScaleRatio: currentCamera.scale / CAMERA_REFERENCE_SCALE,
     cameraReferenceScale: CAMERA_REFERENCE_SCALE,
     cameraBaseDistance: CAMERA_BASE_DISTANCE,
     fovRadians: FOV_RADIANS,
   };
+}
+
+export function getCampaignTerrainRevealUvPolygon(input: {
+  hex: HexCoordinate;
+  coordinateSystem: HexCoordinateSystem;
+  radiusScale?: number;
+}): { u: number; v: number }[] {
+  const center = hexToPixel(input.hex.x, input.hex.y);
+  const radiusScale = input.radiusScale ?? 1;
+
+  return REVEAL_HEX_CORNER_OFFSETS.map((corner) => ({
+    u: hexPointToTerrainU(
+      center.x + corner.x * radiusScale,
+      input.coordinateSystem
+    ),
+    v: hexPointToTerrainV(
+      center.y + corner.y * radiusScale,
+      input.coordinateSystem
+    ),
+  }));
 }
 
 function getCampaignTerrainCameraTiltRadians(
@@ -1274,6 +1318,74 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
       pendingRendererCanvases.delete(canvas);
     });
   }
+}
+
+export function getCampaignTerrainLoadingProgress(
+  root: ParentNode
+): CampaignTerrainLoadingProgress {
+  const canvases = Array.from(
+    root.querySelectorAll<HTMLCanvasElement>("[data-campaign-map-terrain]")
+  );
+
+  if (canvases.length === 0) {
+    return {
+      loaded: 1,
+      total: 1,
+      pending: 0,
+      ready: true,
+    };
+  }
+
+  let loaded = 0;
+  let total = 0;
+  let pending = 0;
+  let ready = true;
+
+  for (const canvas of canvases) {
+    const renderer = activeRenderers.get(canvas);
+    if (renderer == null) {
+      total += 1;
+      if (pendingRendererCanvases.has(canvas)) {
+        pending += 1;
+      }
+      ready = false;
+      continue;
+    }
+
+    const progress = renderer.getLoadingProgress();
+    loaded += progress.loaded;
+    total += progress.total;
+    pending += progress.pending;
+    ready = ready && progress.ready;
+  }
+
+  return {
+    loaded,
+    total: Math.max(total, 1),
+    pending,
+    ready,
+  };
+}
+
+export function waitForCampaignTerrainReady(
+  root: ParentNode,
+  onProgress?: (progress: CampaignTerrainLoadingProgress) => void
+): Promise<void> {
+  return new Promise((resolve) => {
+    const tick = (): void => {
+      const progress = getCampaignTerrainLoadingProgress(root);
+      onProgress?.(progress);
+
+      if (progress.ready) {
+        resolve();
+        return;
+      }
+
+      window.requestAnimationFrame(tick);
+    };
+
+    tick();
+  });
 }
 
 async function initCampaignTerrainWebGl(
@@ -2108,8 +2220,47 @@ async function initCampaignTerrainWebGl(
   const chunkDataByKey = new Map<string, CampaignTerrainChunkData>();
   const chunkResourcesByKey = new Map<string, CampaignTerrainChunkRenderResource>();
   const pendingChunkKeys = new Set<string>();
+  const failedChunkKeys = new Set<string>();
   const deferredChunkUploadsByKey = new Map<string, CampaignTerrainChunkData>();
   let deferredChunkUploadTimeoutId: number | null = null;
+  const getRendererLoadingProgress = (): CampaignTerrainLoadingProgress => {
+    if (!renderTerrain) {
+      return {
+        loaded: 1,
+        total: 1,
+        pending: pendingChunkKeys.size,
+        ready: true,
+      };
+    }
+
+    const allChunkKeys = sortCampaignTerrainChunkKeysByCameraFocus(
+      getCampaignTerrainChunkKeysForCells(materialSemanticModel.cells),
+      materialSemanticModel.terrainCoordinates,
+      materialSemanticModel.worldScale
+    );
+    const startupChunkKeys = getCampaignTerrainStartupChunkKeys(
+      allChunkKeys,
+      materialSemanticModel.terrainCoordinates,
+      materialSemanticModel.worldScale
+    );
+    const loaded = allChunkKeys.filter(
+      (chunkKey) =>
+        chunkResourcesByKey.has(chunkKey) ||
+        failedChunkKeys.has(chunkKey)
+    ).length;
+    const total = Math.max(allChunkKeys.length, 1);
+
+    return {
+      loaded,
+      total,
+      pending: pendingChunkKeys.size + deferredChunkUploadsByKey.size,
+      ready: startupChunkKeys.every(
+        (chunkKey) =>
+          chunkResourcesByKey.has(chunkKey) ||
+          failedChunkKeys.has(chunkKey)
+      ),
+    };
+  };
   const sampleHeightAtUv = (u: number, v: number): number =>
     sampleHeightFromCampaignTerrainChunks({
       materialSemanticModel,
@@ -2532,6 +2683,7 @@ async function initCampaignTerrainWebGl(
         beachTuning: terrainBeachTuning,
       }).then((chunk) => {
         pendingChunkKeys.delete(chunkKey);
+        failedChunkKeys.delete(chunkKey);
         if (isCampaignTerrainChunkLoadingDeferred()) {
           deferredChunkUploadsByKey.set(chunk.key, chunk);
           scheduleDeferredChunkUploadFlush();
@@ -2542,13 +2694,19 @@ async function initCampaignTerrainWebGl(
         requestRender("static");
       }).catch((error: unknown) => {
         pendingChunkKeys.delete(chunkKey);
+        failedChunkKeys.add(chunkKey);
         console.error("Failed to build campaign terrain chunk.", error);
+        requestRender("static");
       });
     }
   };
   const ensureAllCampaignTerrainChunks = (): void => {
     ensureCampaignTerrainChunkKeys(
-      getCampaignTerrainChunkKeysForCells(materialSemanticModel.cells)
+      sortCampaignTerrainChunkKeysByCameraFocus(
+        getCampaignTerrainChunkKeysForCells(materialSemanticModel.cells),
+        materialSemanticModel.terrainCoordinates,
+        materialSemanticModel.worldScale
+      )
     );
   };
   if (renderTerrain) {
@@ -2597,6 +2755,7 @@ async function initCampaignTerrainWebGl(
       }
       chunkResourcesByKey.clear();
       chunkDataByKey.clear();
+      failedChunkKeys.clear();
       lastChunkShorelineSignature = chunkShorelineSignature;
       lastVegetationMeshSignature = "";
       clearCampaignStructureBuildingCache();
@@ -3568,6 +3727,7 @@ async function initCampaignTerrainWebGl(
     canvas: input.canvas,
     render,
     requestRender,
+    getLoadingProgress: getRendererLoadingProgress,
     hasActorAsset: actorAsset != null && actorTexture != null,
     inputSignature: getCampaignTerrainInputSignature(input),
     projectionInput,
@@ -3883,7 +4043,7 @@ function getCampaignTerrainChunkForHexCell(cell: GridCoordinate): CampaignTerrai
 function getCampaignTerrainHexCellAtUv(
   u: number,
   v: number,
-  coordinateSystem: CampaignHexGridAsset["coordinateSystem"]
+  coordinateSystem: CampaignTerrainCoordinateSystem | CampaignHexGridAsset["coordinateSystem"]
 ): GridCoordinate {
   const point = terrainUvToHexPoint(u, v, coordinateSystem);
   return pixelToRoundedHex(point.x, point.y);
@@ -3892,7 +4052,7 @@ function getCampaignTerrainHexCellAtUv(
 function getCampaignTerrainChunkForUv(
   u: number,
   v: number,
-  coordinateSystem: CampaignHexGridAsset["coordinateSystem"]
+  coordinateSystem: CampaignTerrainCoordinateSystem | CampaignHexGridAsset["coordinateSystem"]
 ): CampaignTerrainChunkCoordinate {
   return getCampaignTerrainChunkForHexCell(getCampaignTerrainHexCellAtUv(u, v, coordinateSystem));
 }
@@ -3905,6 +4065,68 @@ function getCampaignTerrainChunkKeysForCells(cells: GridCoordinate[]): string[] 
   }
 
   return [...keys].sort();
+}
+
+function getCampaignTerrainCameraFocusUv(
+  worldScale: CampaignTerrainWorldScale
+): { u: number; v: number } {
+  const safeScale = Math.max(currentCamera.scale, 0.1);
+  const tiltCos = Math.cos(getCampaignTerrainCameraTiltRadians(currentCamera));
+  const safeTiltCos = Math.abs(tiltCos) < 0.0001 ? 1 : tiltCos;
+  const worldX =
+    -currentCamera.offsetX * CAMERA_OFFSET_UNIT /
+    safeScale /
+    TERRAIN_SCALE;
+  const worldY =
+    currentCamera.offsetY * CAMERA_OFFSET_UNIT /
+    safeScale /
+    safeTiltCos /
+    TERRAIN_SCALE;
+
+  return {
+    u: clamp(worldX / Math.max(2 * worldScale.x, 0.000001) + 0.5, 0, 1),
+    v: clamp(0.5 - worldY / Math.max(2 * worldScale.y, 0.000001), 0, 1),
+  };
+}
+
+function sortCampaignTerrainChunkKeysByCameraFocus(
+  chunkKeys: string[],
+  coordinateSystem: CampaignTerrainCoordinateSystem | CampaignHexGridAsset["coordinateSystem"],
+  worldScale: CampaignTerrainWorldScale
+): string[] {
+  const focusUv = getCampaignTerrainCameraFocusUv(worldScale);
+  const focusChunk = getCampaignTerrainChunkForUv(
+    focusUv.u,
+    focusUv.v,
+    coordinateSystem
+  );
+
+  return [...chunkKeys].sort((leftKey, rightKey) => {
+    const left = parseCampaignTerrainChunkKey(leftKey);
+    const right = parseCampaignTerrainChunkKey(rightKey);
+    const leftDistance =
+      (left.x - focusChunk.x) ** 2 + (left.y - focusChunk.y) ** 2;
+    const rightDistance =
+      (right.x - focusChunk.x) ** 2 + (right.y - focusChunk.y) ** 2;
+
+    if (leftDistance !== rightDistance) {
+      return leftDistance - rightDistance;
+    }
+
+    return leftKey.localeCompare(rightKey);
+  });
+}
+
+function getCampaignTerrainStartupChunkKeys(
+  allChunkKeys: string[],
+  coordinateSystem: CampaignTerrainCoordinateSystem | CampaignHexGridAsset["coordinateSystem"],
+  worldScale: CampaignTerrainWorldScale
+): string[] {
+  return sortCampaignTerrainChunkKeysByCameraFocus(
+    allChunkKeys,
+    coordinateSystem,
+    worldScale
+  ).slice(0, CAMPAIGN_TERRAIN_STARTUP_READY_CHUNK_COUNT);
 }
 
 function parseCampaignTerrainChunkKey(key: string): CampaignTerrainChunkCoordinate {

@@ -9,7 +9,6 @@ import type {
   CityEntryDefinition,
   CityEntryOption,
 } from "../../../domain/city-entry";
-import type { CitySceneMapping } from "../../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../../domain/house";
 import { renderCityStageScene } from "./city-stage-layout";
 import haozhouCityBackgroundUrl from "../../../../ui/background/upload_1784207698799091496 (1).png?url";
@@ -442,23 +441,8 @@ export function renderCityView(
         title: string;
         options: CityEntryOption[];
       }
-    | null,
-  citySceneMapping: CitySceneMapping | null = null
+    | null
 ): string {
-  const city3dButton =
-    citySceneMapping == null
-      ? ""
-      : `
-        <button
-          type="button"
-          class="c-kulan-city__three-d-action"
-          data-action="enter-city-3d"
-          data-button-sound="light"
-          aria-label="进入 3D 城市场景"
-        >
-          3D
-        </button>
-      `;
   const haozhouCoinTestButton = `
     <button
       type="button"
@@ -485,7 +469,6 @@ export function renderCityView(
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city" data-button-sound="light">
               返回地图
             </button>
-            ${city3dButton}
             ${renderCityMenuButtons({
               houseDefinitions,
               cityEntries,

@@ -3,6 +3,7 @@ import {
   campaignHexPointToTerrainU,
   campaignHexPointToTerrainV,
   campaignHexToPixel,
+  campaignPixelToRoundedHex,
   getCampaignHexCellKey,
   type CampaignCoordinateSpace,
   type CampaignHexCoordinate,
@@ -13,6 +14,7 @@ import type {
   EnvironmentOverride,
   GeneratedHexCell,
   GeneratedHexGrid,
+  StructureOverlayRecord,
   TerrainOverride,
   WaterLandOverride,
 } from "./model";
@@ -39,6 +41,7 @@ export type RuntimeGridExportInput = {
   terrainOverrides?: TerrainOverride[];
   environmentOverrides?: EnvironmentOverride[];
   settlementAnchors?: RuntimeSettlementAnchor[];
+  structureOverlays?: StructureOverlayRecord[];
 };
 
 export type RuntimeSettlementAnchor = {
@@ -152,18 +155,35 @@ export function createOneToOneRuntimeCampaignHexGridFromEditorPackage(
     transform
   );
   const resolvedEditorCells = resolveEditorCells(input);
+  const baseEditorCellsByKey = new Map(
+    input.editorGenerated.cells.map((cell) => [
+      getCampaignHexCellKey(cell.x, cell.y),
+      cell,
+    ] as const)
+  );
   const cellsByRuntimeKey = new Map<string, CampaignHexGridCell>();
+  const protectedRuntimeCellKeys = createOneToOneProtectedRuntimeCellKeys(
+    input,
+    transform,
+    coordinateSystem
+  );
   let editorCellsApplied = 0;
 
   for (const editorCell of resolvedEditorCells) {
     const runtimeHex = mapEditorCellToOneToOneRuntimeHex(editorCell, transform);
-    cellsByRuntimeKey.set(getCampaignHexCellKey(runtimeHex.x, runtimeHex.y), {
+    const runtimeKey = getCampaignHexCellKey(runtimeHex.x, runtimeHex.y);
+    const editorKey = getCampaignHexCellKey(editorCell.x, editorCell.y);
+    const baseEditorCell = baseEditorCellsByKey.get(editorKey);
+    const environment = protectedRuntimeCellKeys.has(runtimeKey)
+      ? baseEditorCell?.environment ?? input.runtimeGrid.defaults.environment
+      : editorCell.environment;
+    cellsByRuntimeKey.set(runtimeKey, {
       x: runtimeHex.x,
       y: runtimeHex.y,
       land: editorCell.land,
       referenceHeight: editorCell.land ? editorCell.referenceHeight : 0,
       terrain: editorCell.terrain,
-      environment: editorCell.environment,
+      environment,
     });
     editorCellsApplied += 1;
   }
@@ -667,6 +687,77 @@ function resolveEditorCells(input: RuntimeGridExportInput): GeneratedHexCell[] {
         : YUANMO_GRASS_ENVIRONMENT,
     };
   });
+}
+
+function createOneToOneProtectedRuntimeCellKeys(
+  input: RuntimeGridExportInput,
+  transform: OneToOneRuntimeGridTransform,
+  coordinateSystem: CampaignHexGridDefinition["coordinateSystem"]
+): Set<string> {
+  const keys = new Set<string>();
+
+  for (const settlement of input.settlementAnchors ?? []) {
+    const runtimeHex =
+      settlement.hexCell == null
+        ? mapEditorGameCoordinateToOneToOneRuntimeHex(
+            settlement.mapPosition,
+            input.editorGenerated,
+            input.runtimeGrid,
+            transform
+          )
+        : mapEditorHexCellToOneToOneRuntimeHex(
+            settlement.hexCell,
+            input.editorGenerated,
+            transform
+          );
+    keys.add(getCampaignHexCellKey(runtimeHex.x, runtimeHex.y));
+    const runtimeMapHex = mapGameCoordinateToOneToOneRuntimeGridHex(
+      settlement.mapPosition,
+      coordinateSystem
+    );
+    keys.add(getCampaignHexCellKey(runtimeMapHex.x, runtimeMapHex.y));
+  }
+
+  for (const overlay of input.structureOverlays ?? []) {
+    if (!isRuntimePriorityStructureOverlay(overlay.category)) {
+      continue;
+    }
+
+    for (const cell of overlay.cells) {
+      const runtimeHex = mapEditorHexCellToOneToOneRuntimeHex(
+        cell,
+        input.editorGenerated,
+        transform
+      );
+      keys.add(getCampaignHexCellKey(runtimeHex.x, runtimeHex.y));
+    }
+  }
+
+  return keys;
+}
+
+function isRuntimePriorityStructureOverlay(category: StructureOverlayRecord["category"]): boolean {
+  return category === "city-ground" || category === "village-ground" || category === "farmland";
+}
+
+function mapGameCoordinateToOneToOneRuntimeGridHex(
+  coordinate: CampaignMapCoordinate,
+  coordinateSystem: CampaignHexGridDefinition["coordinateSystem"]
+): CampaignHexCoordinate {
+  const coordinateSpace = coordinateSystem.coordinateSpace;
+  const u = clamp01(coordinate.x / Math.max(coordinateSpace.width, 1));
+  const terrainV = clamp01(1 - coordinate.y / Math.max(coordinateSpace.height, 1));
+  const bounds = coordinateSystem.hexPointBounds ?? {
+    minX: -coordinateSystem.hexMapAspect * coordinateSystem.hexTerrainScale * 0.5,
+    maxX: coordinateSystem.hexMapAspect * coordinateSystem.hexTerrainScale * 0.5,
+    minY: -coordinateSystem.hexTerrainScale * 0.5,
+    maxY: coordinateSystem.hexTerrainScale * 0.5,
+  };
+
+  return campaignPixelToRoundedHex(
+    bounds.minX + u * (bounds.maxX - bounds.minX),
+    bounds.minY + terrainV * (bounds.maxY - bounds.minY)
+  );
 }
 
 function mergeEditorBucketIntoRuntimeCell(

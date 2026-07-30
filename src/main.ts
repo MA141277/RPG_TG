@@ -155,15 +155,19 @@ import {
 import {
   coordinateToRoundedHex,
   createPassableHexTravelPath,
+  getHexKey,
+  getHexNeighbors,
   hexToCoordinatePolygon,
   snapCoordinateToHexCenter,
   travelToCoordinate,
+  type CoordinateSpace,
   type GridCoordinate,
   type HexCoordinateSystem,
 } from "./application/navigation/travel-to-coordinate";
 import {
   revealCampaignMapHexesForCoordinate,
 } from "./application/map/campaign-map-exploration";
+import { resolveCampaignMapNodeAtCoordinate } from "./application/map/campaign-map-node-hit";
 import {
   isCampaignMapCoordinateClickable,
   revealCampaignMapAroundCoordinate,
@@ -338,6 +342,7 @@ import {
   requestCampaignTerrainRender,
   setCampaignTerrainCamera,
   syncCampaignTerrainWebGl,
+  waitForCampaignTerrainReady,
   type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
 import {
@@ -369,6 +374,8 @@ const CAMPAIGN_MAP_ZOOM_SETTLE_SCALE_EPSILON = 0.002;
 const CAMPAIGN_MAP_ZOOM_SETTLE_OFFSET_EPSILON_PX = 1;
 const LOADING_SCREEN_SIMULATION_DURATION_MS = 350;
 const STARTUP_LOADING_SIMULATED_PROGRESS_CAP = 0.7;
+const STARTUP_LOADING_ASSET_PROGRESS_CAP = 0.82;
+const STARTUP_LOADING_COMPLETION_ANIMATION_MS = 260;
 const CAMPAIGN_TRAVEL_SPEED_SCALE = 0.6;
 const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
@@ -556,13 +563,102 @@ function getCurrentCampaignHexCoordinateSystem(): HexCoordinateSystem | null {
   return getCampaignTerrainHexCoordinateSystem(mapViewport);
 }
 
-function ensureCurrentCampaignRevealForCoordinateSystem(
-  coordinateSystem: HexCoordinateSystem | null
-): void {
-  if (coordinateSystem == null) {
-    return;
+const realignedCampaignOpeningRevealMapIds = new Set<string>();
+
+function getCampaignRevealNeighborhoodKeys(input: {
+  coordinate: GridCoordinate;
+  coordinateSpace: CoordinateSpace;
+  coordinateSystem?: HexCoordinateSystem;
+}): Set<string> {
+  const centerHex = coordinateToRoundedHex(
+    input.coordinate,
+    input.coordinateSpace,
+    input.coordinateSystem
+  );
+  return new Set(
+    [centerHex, ...getHexNeighbors(centerHex)].map((hex) => getHexKey(hex))
+  );
+}
+
+function realignCurrentCampaignOpeningRevealSeed(
+  coordinateSystem: HexCoordinateSystem
+): boolean {
+  const mapDefinition = getCurrentMapDefinition();
+  if (
+    mapDefinition?.mode !== "campaign" ||
+    mapDefinition.coordinateSpace == null ||
+    realignedCampaignOpeningRevealMapIds.has(mapDefinition.id)
+  ) {
+    return false;
   }
 
+  const explorationState =
+    appState.gameState.runtime.mapExplorationByMapId?.[mapDefinition.id] ?? null;
+  if (explorationState == null) {
+    realignedCampaignOpeningRevealMapIds.add(mapDefinition.id);
+    return false;
+  }
+
+  const defaultKeys = getCampaignRevealNeighborhoodKeys({
+    coordinate: appState.playerCoordinate,
+    coordinateSpace: mapDefinition.coordinateSpace,
+  });
+  const actualKeys = getCampaignRevealNeighborhoodKeys({
+    coordinate: appState.playerCoordinate,
+    coordinateSpace: mapDefinition.coordinateSpace,
+    coordinateSystem,
+  });
+  const existingKeys = new Set(explorationState.revealedHexKeys);
+  const hasDefaultOnlySeed = Array.from(defaultKeys).some(
+    (key) => !actualKeys.has(key) && existingKeys.has(key)
+  );
+  realignedCampaignOpeningRevealMapIds.add(mapDefinition.id);
+  if (!hasDefaultOnlySeed) {
+    return false;
+  }
+
+  const nextKeys = new Set(existingKeys);
+  for (const key of defaultKeys) {
+    if (!actualKeys.has(key)) {
+      nextKeys.delete(key);
+    }
+  }
+  for (const key of actualKeys) {
+    nextKeys.add(key);
+  }
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      runtime: {
+        ...appState.gameState.runtime,
+        mapExplorationByMapId: {
+          ...(appState.gameState.runtime.mapExplorationByMapId ?? {}),
+          [mapDefinition.id]: {
+            revealedHexKeys: Array.from(nextKeys).sort(),
+            revealingHexStartedAtMsByKey: Object.fromEntries(
+              Object.entries(explorationState.revealingHexStartedAtMsByKey).filter(
+                ([key]) => nextKeys.has(key)
+              )
+            ),
+          },
+        },
+      },
+    },
+  };
+  return true;
+}
+
+function ensureCurrentCampaignRevealForCoordinateSystem(
+  coordinateSystem: HexCoordinateSystem | null
+): boolean {
+  if (coordinateSystem == null) {
+    return false;
+  }
+
+  const didRealignOpeningReveal =
+    realignCurrentCampaignOpeningRevealSeed(coordinateSystem);
   const nextAppState = revealCampaignMapAroundAppCoordinate(
     appState,
     appState.playerCoordinate,
@@ -573,7 +669,10 @@ function ensureCurrentCampaignRevealForCoordinateSystem(
   );
   if (nextAppState !== appState) {
     appState = nextAppState;
+    return true;
   }
+
+  return didRealignOpeningReveal;
 }
 
 function getRuntimeText(textId: string, fallback?: string): string {
@@ -764,6 +863,7 @@ let initialCampaignMapDebugAnimationStartTime: number | null = null;
 let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
 let campaignMapZoomCloudResumeTimeoutId: number | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
+let pendingInitialCampaignMapIntroTerrainReady = false;
 let cityStageDomRuntimeHandle: {
   cityId: string;
   attach(root: HTMLElement): void;
@@ -1192,13 +1292,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     },
   };
 
-  return revealCampaignMapAroundAppCoordinate(
-    nextAppState,
-    nextAppState.playerCoordinate,
-    {
-      animateNewHexes: false,
-    }
-  );
+  return nextAppState;
 }
 
 function getCurrentPlayerCharacter(): CharacterDefinition | null {
@@ -2315,6 +2409,61 @@ function closeCurrentActivityResult(): void {
   renderApp();
 }
 
+function applyCampaignMapReturnState(): void {
+  houseRuntime.clearAllHouseIntervals();
+  stopCityBeggingMiniGameLoop();
+  appState = {
+    ...appState,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    locationDialogueState: null,
+    gameState: {
+      ...appState.gameState,
+      world: {
+        ...appState.gameState.world,
+        currentHouseId: null,
+      },
+      ui: {
+        ...appState.gameState.ui,
+        currentView: "map",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+  };
+}
+
+function returnToCampaignMapWithLoading(): void {
+  const requestId = beginLoadingScreen();
+
+  simulateLoadingProgress((progress) => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
+  })
+    .then(async () => {
+      if (requestId !== loadingScreenRequestId) {
+        return;
+      }
+
+      applyCampaignMapReturnState();
+      renderApp();
+      setGameVisibility(true);
+      await waitForInitialMapReadyWithLoading(requestId);
+      endLoadingScreen(requestId);
+    })
+    .catch((error: unknown) => {
+      endLoadingScreen(requestId);
+      window.console.error("[Loading] failed to return to campaign map:", error);
+      applyCampaignMapReturnState();
+      renderApp();
+      setGameVisibility(true);
+    });
+}
+
 function startMapAutoAdvance(input: {
   intervalId: string;
   everyMs: number;
@@ -2793,10 +2942,7 @@ function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): v
         )
       );
       applyActivatedModSession(startupSession);
-      await preloadInitialMapViewAssets(
-        appRoot,
-        createStartupPreloadProgressHandler(requestId)
-      );
+      await waitForInitialMapReadyWithLoading(requestId);
       endLoadingScreen(requestId);
     })
     .catch((error: unknown) => {
@@ -2834,10 +2980,7 @@ function startRestoredGameWithLoading(
         )
       );
       applyActivatedModSession(startupSession);
-      await preloadInitialMapViewAssets(
-        appRoot,
-        createStartupPreloadProgressHandler(requestId)
-      );
+      await waitForInitialMapReadyWithLoading(requestId);
       endLoadingScreen(requestId);
     })
     .catch((error: unknown) => {
@@ -2874,10 +3017,7 @@ function startMainGameWithLoading(
       )
     );
     applyActivatedModSession(startupSession);
-    await preloadInitialMapViewAssets(
-      appRoot,
-      createStartupPreloadProgressHandler(requestId)
-    );
+    await waitForInitialMapReadyWithLoading(requestId);
     endLoadingScreen(requestId);
   }).catch((error: unknown) => {
     endLoadingScreen(requestId);
@@ -2907,10 +3047,7 @@ function runScenarioPackStartupRequestWithLoading(
       await runStartupSessionCoordinator(request, startupSessionCoordinatorDeps)
     );
     applyActivatedModSession(startupSession);
-    await preloadInitialMapViewAssets(
-      appRoot,
-      createStartupPreloadProgressHandler(requestId)
-    );
+    await waitForInitialMapReadyWithLoading(requestId);
     endLoadingScreen(requestId);
   }).catch((error) => {
     endLoadingScreen(requestId);
@@ -3095,13 +3232,7 @@ function createScenarioPackAppState(
     },
   };
 
-  return revealCampaignMapAroundAppCoordinate(
-    nextAppState,
-    nextAppState.playerCoordinate,
-    {
-      animateNewHexes: false,
-    }
-  );
+  return nextAppState;
 }
 
 function mergeCharacterDefinitions(
@@ -3194,9 +3325,98 @@ function createStartupPreloadProgressHandler(
     const preloadProgress = total === 0 ? 1 : loaded / total;
     const progress =
       STARTUP_LOADING_SIMULATED_PROGRESS_CAP +
-      (1 - STARTUP_LOADING_SIMULATED_PROGRESS_CAP) * preloadProgress;
+      (STARTUP_LOADING_ASSET_PROGRESS_CAP -
+        STARTUP_LOADING_SIMULATED_PROGRESS_CAP) *
+        preloadProgress;
     setActiveLoadingProgress(progress);
   };
+}
+
+function createStartupTerrainProgressHandler(
+  requestId: number
+): Parameters<typeof waitForCampaignTerrainReady>[1] {
+  return ({ loaded, total }) => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    const terrainProgress = total === 0 ? 1 : loaded / total;
+    const progress =
+      STARTUP_LOADING_ASSET_PROGRESS_CAP +
+      (1 - STARTUP_LOADING_ASSET_PROGRESS_CAP) * terrainProgress;
+    setActiveLoadingProgress(progress);
+  };
+}
+
+async function waitForInitialMapReadyWithLoading(requestId: number): Promise<void> {
+  await preloadInitialMapViewAssets(
+    appRoot,
+    createStartupPreloadProgressHandler(requestId)
+  );
+  await waitForCampaignTerrainReady(
+    appRoot,
+    createStartupTerrainProgressHandler(requestId)
+  );
+  await animateActiveLoadingProgressTo(
+    1,
+    requestId,
+    STARTUP_LOADING_COMPLETION_ANIMATION_MS
+  );
+}
+
+function animateActiveLoadingProgressTo(
+  targetProgress: number,
+  requestId: number,
+  durationMs: number
+): Promise<void> {
+  if (requestId !== loadingScreenRequestId) {
+    return Promise.resolve();
+  }
+
+  const loadingElement = activeLoadingScreenElement;
+  if (loadingElement == null) {
+    return Promise.resolve();
+  }
+
+  const currentProgress = Number.parseFloat(
+    loadingElement.style.getPropertyValue("--loading-progress") || "0"
+  );
+  const startProgress = Number.isFinite(currentProgress) ? currentProgress : 0;
+  const clampedTargetProgress = clamp(targetProgress, 0, 1);
+  if (
+    durationMs <= 0 ||
+    Math.abs(clampedTargetProgress - startProgress) < 0.001
+  ) {
+    setActiveLoadingProgress(clampedTargetProgress);
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const startedAtMs = performance.now();
+    const tick = (timestamp: number): void => {
+      if (requestId !== loadingScreenRequestId) {
+        resolve();
+        return;
+      }
+
+      const progress = clamp((timestamp - startedAtMs) / durationMs, 0, 1);
+      const easedProgress = 1 - (1 - progress) ** 3;
+      setActiveLoadingProgress(
+        startProgress +
+          (clampedTargetProgress - startProgress) * easedProgress
+      );
+
+      if (progress < 1) {
+        loadingScreenAnimationFrameId = window.requestAnimationFrame(tick);
+        return;
+      }
+
+      loadingScreenAnimationFrameId = null;
+      resolve();
+    };
+
+    loadingScreenAnimationFrameId = window.requestAnimationFrame(tick);
+  });
 }
 
 function endLoadingScreen(requestId: number): void {
@@ -3267,6 +3487,8 @@ function resetMainGameRuntime(): void {
 
   initialCampaignMapDebugAnimationFrame = null;
   initialCampaignMapDebugAnimationStartTime = null;
+  activeMapIntroOverlay = null;
+  pendingInitialCampaignMapIntroTerrainReady = false;
   cancelCampaignMapZoomAnimation();
   hasAppliedInitialCampaignMapDebug = false;
   hasStartedInitialCampaignMapDebugAnimation = false;
@@ -5321,29 +5543,7 @@ appElement.addEventListener("click", (event) => {
     "[data-action='leave-city']"
   );
   if (leaveCityButton != null) {
-    houseRuntime.clearAllHouseIntervals();
-    stopCityBeggingMiniGameLoop();
-    appState = {
-      ...appState,
-      beggingMiniGameState: null,
-      cityMenuState: null,
-      cityDirectoryState: null,
-      locationDialogueState: null,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "map",
-          overlayView: null,
-          houseSession: null,
-        },
-      },
-    };
-    renderApp();
+    returnToCampaignMapWithLoading();
     return;
   }
 
@@ -5709,10 +5909,12 @@ appElement.addEventListener("click", (event) => {
       event.clientX,
       event.clientY
     );
-    const coordinateSpace = getCurrentMapDefinition()?.coordinateSpace;
-    if (clickTarget == null || coordinateSpace == null) {
+    const currentMapDefinition = getCurrentMapDefinition();
+    const coordinateSpace = currentMapDefinition?.coordinateSpace;
+    if (clickTarget == null || currentMapDefinition == null || coordinateSpace == null) {
       debugCampaignMapClick("viewport:blocked-no-uv-or-coordinate-space", {
         hasClickTarget: clickTarget != null,
+        hasMapDefinition: currentMapDefinition != null,
         hasCoordinateSpace: coordinateSpace != null,
       });
       return;
@@ -5721,31 +5923,60 @@ appElement.addEventListener("click", (event) => {
       x: clickTarget.u * coordinateSpace.width,
       y: (1 - clickTarget.v) * coordinateSpace.height,
     };
-    if (!isCurrentCampaignCoordinateClickable(targetCoordinate)) {
+    const campaignCoordinateSystem = getCurrentCampaignHexCoordinateSystem();
+    const snappedTargetCoordinate = snapCoordinateToHexCenter(
+      targetCoordinate,
+      coordinateSpace,
+      campaignCoordinateSystem ?? undefined
+    );
+    const snappedTargetU = snappedTargetCoordinate.x / coordinateSpace.width;
+    const snappedTargetV = 1 - snappedTargetCoordinate.y / coordinateSpace.height;
+    if (!isCurrentCampaignCoordinateClickable(snappedTargetCoordinate)) {
       debugCampaignMapClick("viewport:blocked-unrevealed", {
         clickTarget,
         targetCoordinate,
+        snappedTargetCoordinate,
       });
       return;
     }
     if (
-      isCampaignTerrainUvPassable(campaignMap, clickTarget.u, clickTarget.v) !== true
+      isCampaignTerrainUvPassable(campaignMap, snappedTargetU, snappedTargetV) !== true
     ) {
       debugCampaignMapClick("viewport:blocked-impassable", {
         clickTarget,
         targetCoordinate,
+        snappedTargetCoordinate,
       });
       return;
     }
 
+    const targetMapNode = resolveCampaignMapNodeAtCoordinate({
+      mapDefinition: currentMapDefinition,
+      coordinate: snappedTargetCoordinate,
+      ...(campaignCoordinateSystem == null
+        ? {}
+        : { coordinateSystem: campaignCoordinateSystem }),
+    });
+    const cityId = targetMapNode?.cityId ?? null;
+    const cityName =
+      cityId == null
+        ? targetMapNode?.label ?? null
+        : activeContentContext.cityNameById[cityId] ??
+          targetMapNode?.label ??
+          null;
+
     debugCampaignMapClick("viewport:start-travel", {
       clickTarget,
       targetCoordinate,
+      snappedTargetCoordinate,
+      cityId,
+      cityName,
+      nodeId: targetMapNode?.id ?? null,
     });
     startCampaignTravel(
-      targetCoordinate,
-      null,
-      null
+      snappedTargetCoordinate,
+      cityId,
+      cityName
     );
   }
 });
@@ -6578,6 +6809,50 @@ function captureCampaignTerrainCanvases(
   return canvases.length === 0 ? null : canvases;
 }
 
+let cachedCampaignTerrainCanvases: HTMLCanvasElement[] | null = null;
+let cachedCampaignMarkers: Map<string, HTMLElement> | null = null;
+const CAMPAIGN_OPENING_REVEAL_RETRY_INTERVAL_MS = 120;
+const CAMPAIGN_OPENING_REVEAL_MAX_RETRIES = 50;
+let campaignOpeningRevealRetryTimeoutId: number | null = null;
+let campaignOpeningRevealRetryCount = 0;
+
+function shouldKeepCampaignMapStageAlive(
+  view: AppState["gameState"]["ui"]["currentView"]
+): boolean {
+  return (
+    view === "map" ||
+    view === "troop-editor" ||
+    view === "troop-management"
+  );
+}
+
+function clearCampaignOpeningRevealRetry(): void {
+  campaignOpeningRevealRetryCount = 0;
+  if (campaignOpeningRevealRetryTimeoutId == null) {
+    return;
+  }
+
+  window.clearTimeout(campaignOpeningRevealRetryTimeoutId);
+  campaignOpeningRevealRetryTimeoutId = null;
+}
+
+function scheduleCampaignOpeningRevealRetry(): void {
+  if (
+    campaignOpeningRevealRetryTimeoutId != null ||
+    campaignOpeningRevealRetryCount >= CAMPAIGN_OPENING_REVEAL_MAX_RETRIES
+  ) {
+    return;
+  }
+
+  campaignOpeningRevealRetryCount += 1;
+  campaignOpeningRevealRetryTimeoutId = window.setTimeout(() => {
+    campaignOpeningRevealRetryTimeoutId = null;
+    if (appState.gameState.ui.currentView === "map") {
+      renderApp();
+    }
+  }, CAMPAIGN_OPENING_REVEAL_RETRY_INTERVAL_MS);
+}
+
 function syncPreservedCanvasAttributes(
   preservedCanvas: HTMLCanvasElement,
   replacementCanvas: HTMLCanvasElement
@@ -6797,14 +7072,30 @@ function renderAppFrame(
     null;
   assertExists(currentMapDefinition, "Missing active map definition for render.");
   assertExists(currentCityDefinition, "Missing active city definition for render.");
-  const preservedTerrainCanvases =
-    appState.gameState.ui.currentView === "map"
-      ? captureCampaignTerrainCanvases(appRoot)
-      : null;
-  const preservedCampaignMarkers =
-    appState.gameState.ui.currentView === "map"
-      ? captureCampaignMarkerElements(appRoot)
-      : null;
+  if (shouldKeepCampaignMapStageAlive(appState.gameState.ui.currentView)) {
+    const capturedTerrainCanvases = captureCampaignTerrainCanvases(appRoot);
+    if (capturedTerrainCanvases != null) {
+      cachedCampaignTerrainCanvases = capturedTerrainCanvases;
+    }
+
+    const capturedCampaignMarkers = captureCampaignMarkerElements(appRoot);
+    if (capturedCampaignMarkers != null) {
+      cachedCampaignMarkers = capturedCampaignMarkers;
+    }
+  } else {
+    cachedCampaignTerrainCanvases = null;
+    cachedCampaignMarkers = null;
+  }
+  const preservedTerrainCanvases = shouldKeepCampaignMapStageAlive(
+    appState.gameState.ui.currentView
+  )
+    ? cachedCampaignTerrainCanvases
+    : null;
+  const preservedCampaignMarkers = shouldKeepCampaignMapStageAlive(
+    appState.gameState.ui.currentView
+  )
+    ? cachedCampaignMarkers
+    : null;
   const preservedCoinRewardLayer = captureCoinRewardLayer(appRoot);
   const presenterOutput = createAppPresenterOutput({
     appState,
@@ -6852,14 +7143,39 @@ function renderAppFrame(
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   restoreCampaignMarkerElements(appRoot, preservedCampaignMarkers);
   restoreCoinRewardLayer(appRoot, preservedCoinRewardLayer);
-  startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
   restoreCampaignMapScaleInputFocus(focusedScaleInput);
   syncMapIntroOverlay();
   syncActivityQteLoop();
-  syncCampaignTerrainWebGl(appRoot);
-  syncCampaignCloudWebGl(appRoot);
+  if (appState.gameState.ui.currentView === "map") {
+    syncCampaignTerrainWebGl(appRoot);
+    const campaignCoordinateSystem = getCurrentCampaignHexCoordinateSystem();
+    if (campaignCoordinateSystem == null) {
+      scheduleCampaignOpeningRevealRetry();
+      syncCampaignCloudWebGl(appRoot);
+      return;
+    }
+    clearCampaignOpeningRevealRetry();
+    const didRevealCurrentCampaignHexes =
+      ensureCurrentCampaignRevealForCoordinateSystem(campaignCoordinateSystem);
+    if (didRevealCurrentCampaignHexes) {
+      renderAppFrame(focusedScaleInput);
+      return;
+    }
+    syncCampaignCloudWebGl(appRoot);
+    scheduleMapIntroOverlayAfterTerrainReady();
+  } else if (!shouldKeepCampaignMapStageAlive(appState.gameState.ui.currentView)) {
+    clearCampaignOpeningRevealRetry();
+    syncCampaignTerrainWebGl(appRoot);
+    const didRevealCurrentCampaignHexes =
+      ensureCurrentCampaignRevealForCoordinateSystem(getCurrentCampaignHexCoordinateSystem());
+    if (didRevealCurrentCampaignHexes) {
+      renderAppFrame(focusedScaleInput);
+      return;
+    }
+    syncCampaignCloudWebGl(appRoot);
+  }
   syncCampaignCloudTextureScaleControl();
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
   syncCityStageDomRuntime();
@@ -7221,6 +7537,27 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
   initialCampaignMapDebugAnimationFrame = window.requestAnimationFrame(animate);
 }
 
+function scheduleMapIntroOverlayAfterTerrainReady(): void {
+  if (
+    pendingInitialCampaignMapIntroTerrainReady ||
+    hasStartedInitialCampaignMapDebugAnimation ||
+    hasAppliedInitialCampaignMapDebug ||
+    appState.gameState.ui.currentView !== "map"
+  ) {
+    return;
+  }
+
+  pendingInitialCampaignMapIntroTerrainReady = true;
+  void waitForCampaignTerrainReady(appRoot).then(() => {
+    pendingInitialCampaignMapIntroTerrainReady = false;
+    if (appState.gameState.ui.currentView !== "map") {
+      return;
+    }
+
+    startInitialCampaignMapDebugAnimationIfNeeded();
+  });
+}
+
 function interpolateCampaignMapDebugState(progress: number): CampaignMapDebugState {
   void progress;
   return {
@@ -7282,6 +7619,7 @@ function showMapIntroOverlay(title: string): void {
 
 function hideMapIntroOverlay(): void {
   activeMapIntroOverlay = null;
+  pendingInitialCampaignMapIntroTerrainReady = false;
 }
 
 function syncMapIntroOverlay(): void {

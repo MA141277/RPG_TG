@@ -5,6 +5,7 @@ varying vec2 vUv;
 uniform vec2 uResolution;
 uniform float uTimeSeconds;
 uniform vec4 uCloudProjection;
+uniform vec2 uTerrainWorldScale;
 uniform mat4 uCloudInverseTerrainMatrix;
 uniform sampler2D uNoiseTexture;
 uniform sampler2D uRevealTexture;
@@ -237,7 +238,15 @@ vec2 getMapSpaceCloudRayGroundPoint(MapSpaceCloudRay ray) {
 }
 
 vec2 mapSpaceGroundPointToTerrainUv(vec2 groundPoint) {
-  return clamp(vec2(groundPoint.x * 0.5 + 0.5, 0.5 - groundPoint.y * 0.5), vec2(0.0), vec2(1.0));
+  vec2 safeWorldScale = max(abs(uTerrainWorldScale), vec2(0.0001));
+  return clamp(
+    vec2(
+      groundPoint.x / (2.0 * safeWorldScale.x) + 0.5,
+      0.5 - groundPoint.y / (2.0 * safeWorldScale.y)
+    ),
+    vec2(0.0),
+    vec2(1.0)
+  );
 }
 
 vec2 getMapSpaceCloudRevealUv(MapSpaceCloudRay ray) {

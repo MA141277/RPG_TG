@@ -1,0 +1,277 @@
+{
+  "prefabs": [
+    {
+      "id": "ruined-house-01",
+      "name": "破房 01",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/1.png",
+        "naturalWidth": 1065,
+        "naturalHeight": 668,
+        "scale": 0.197,
+        "offsetX": -2,
+        "offsetY": 3,
+        "rotation": 0,
+        "anchor": "bottom-center"
+      },
+      "footprint": {
+        "cols": 5,
+        "rows": 5
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -118,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 118,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "ruined-house-02",
+      "name": "破房 02",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/3.png",
+        "naturalWidth": 701,
+        "naturalHeight": 592,
+        "scale": 0.271,
+        "offsetX": 0,
+        "offsetY": 0,
+        "rotation": 0,
+        "anchor": "bottom-center"
+      },
+      "footprint": {
+        "cols": 5,
+        "rows": 5
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -112,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 112,
+          "height": 46
+        }
+      }
+    },
+    {
+      "id": "ruined-house-03",
+      "name": "破房 03",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/2.png",
+        "naturalWidth": 1003,
+        "naturalHeight": 648,
+        "scale": 0.28,
+        "offsetX": 0,
+        "offsetY": 0,
+        "rotation": 0,
+        "anchor": "bottom-center"
+      },
+      "footprint": {
+        "cols": 7,
+        "rows": 7
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -116,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 116,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "ruined-house-04",
+      "name": "破房 04",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/3.png",
+        "naturalWidth": 701,
+        "naturalHeight": 592,
+        "scale": 0.268,
+        "offsetX": 5,
+        "offsetY": 8,
+        "rotation": 0,
+        "anchor": "bottom-center"
+      },
+      "footprint": {
+        "cols": 5,
+        "rows": 4
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -112,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 112,
+          "height": 46
+        }
+      }
+    },
+    {
+      "id": "grass-01",
+      "name": "grass 01",
+      "category": "ground-decoration",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/grass.png",
+        "naturalWidth": 1356,
+        "naturalHeight": 726,
+        "scale": 0.184,
+        "offsetX": 0,
+        "offsetY": 0,
+        "rotation": 0,
+        "anchor": "bottom-center"
+      },
+      "footprint": {
+        "cols": 7,
+        "rows": 6
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -70,
+          "width": 80,
+          "height": 28
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 120,
+          "height": 44
+        }
+      }
+    },
+    {
+      "id": "grass-02",
+      "name": "grass 02",
+      "category": "ground-decoration",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/grass2.png",
+        "naturalWidth": 1525,
+        "naturalHeight": 718,
+        "scale": 0.177,
+        "offsetX": 2,
+        "offsetY": -2,
+        "rotation": 0,
+        "anchor": "bottom-center"
+      },
+      "footprint": {
+        "cols": 7,
+        "rows": 6
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -70,
+          "width": 80,
+          "height": 28
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 120,
+          "height": 44
+        }
+      }
+    },
+    {
+      "id": "grass-03",
+      "name": "grass 03",
+      "category": "ground-decoration",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/grass.png",
+        "naturalWidth": 1356,
+        "naturalHeight": 726,
+        "scale": 0.181,
+        "offsetX": -2,
+        "offsetY": -3,
+        "rotation": 0,
+        "anchor": "bottom-center"
+      },
+      "footprint": {
+        "cols": 7,
+        "rows": 7
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": -101,
+          "offsetY": -136,
+          "width": 80,
+          "height": 28
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 120,
+          "height": 44
+        }
+      }
+    }
+  ]
+}

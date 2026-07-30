@@ -1,0 +1,321 @@
+{
+  "version": 2,
+  "map": {
+    "id": "huangcun",
+    "name": "荒村",
+    "stageWidth": 2048,
+    "stageHeight": 1152,
+    "baseSpace": {
+      "x": 139,
+      "y": 88,
+      "width": 1771,
+      "height": 976
+    },
+    "backgroundImage": "",
+    "foregroundImage": "",
+    "referenceMask": []
+  },
+  "grid": {
+    "type": "isometric-board",
+    "cols": 40,
+    "rows": 40,
+    "cellWidth": 40,
+    "cellHeight": 20,
+    "originX": 885,
+    "originY": 110,
+    "snap": true,
+    "visible": true,
+    "showCoordinates": false,
+    "showOutline": false
+  },
+  "instances": [
+    {
+      "id": "instance.grass.01",
+      "prefabId": "grass-01",
+      "gridX": 2,
+      "gridY": 2,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.02",
+      "prefabId": "grass-02",
+      "gridX": 10,
+      "gridY": 1,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.03",
+      "prefabId": "grass-03",
+      "gridX": 18,
+      "gridY": 2,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.04",
+      "prefabId": "grass-01",
+      "gridX": 27,
+      "gridY": 1,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.05",
+      "prefabId": "grass-02",
+      "gridX": 3,
+      "gridY": 9,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.06",
+      "prefabId": "grass-03",
+      "gridX": 11,
+      "gridY": 8,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.07",
+      "prefabId": "grass-01",
+      "gridX": 20,
+      "gridY": 9,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.08",
+      "prefabId": "grass-02",
+      "gridX": 29,
+      "gridY": 8,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.09",
+      "prefabId": "grass-03",
+      "gridX": 1,
+      "gridY": 17,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.10",
+      "prefabId": "grass-01",
+      "gridX": 10,
+      "gridY": 17,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.11",
+      "prefabId": "grass-02",
+      "gridX": 19,
+      "gridY": 17,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.12",
+      "prefabId": "grass-03",
+      "gridX": 28,
+      "gridY": 17,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.13",
+      "prefabId": "grass-01",
+      "gridX": 4,
+      "gridY": 25,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.14",
+      "prefabId": "grass-02",
+      "gridX": 13,
+      "gridY": 25,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.15",
+      "prefabId": "grass-03",
+      "gridX": 22,
+      "gridY": 25,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.16",
+      "prefabId": "grass-01",
+      "gridX": 31,
+      "gridY": 25,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.17",
+      "prefabId": "grass-02",
+      "gridX": 7,
+      "gridY": 33,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.18",
+      "prefabId": "grass-03",
+      "gridX": 16,
+      "gridY": 32,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.19",
+      "prefabId": "grass-01",
+      "gridX": 25,
+      "gridY": 33,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass.20",
+      "prefabId": "grass-02",
+      "gridX": 33,
+      "gridY": 32,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.ruined-house.01",
+      "prefabId": "ruined-house-01",
+      "gridX": 12,
+      "gridY": 14,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.ruined-house.02",
+      "prefabId": "ruined-house-02",
+      "gridX": 22,
+      "gridY": 13,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.ruined-house.03",
+      "prefabId": "ruined-house-03",
+      "gridX": 16,
+      "gridY": 22,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.ruined-house.04",
+      "prefabId": "ruined-house-04",
+      "gridX": 25,
+      "gridY": 23,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    }
+  ]
+}

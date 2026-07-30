@@ -34,6 +34,18 @@ test("city-stage registry source auto-discovers layout and prefab pairs", () => 
   assert.match(source, /city-prefabs/);
 });
 
+test("city-stage registry preserves the old Haozhou stage mapping after adding Huangcun", () => {
+  const source = readText(registryPath);
+
+  assert.match(source, /cityStageSlugByCityId/);
+  assert.match(source, /"city\.kulan": "haozhou"/);
+  assert.match(source, /const mappedCitySlug = cityStageSlugByCityId\[cityId\]/);
+  assert.match(
+    source,
+    /findBundleByNormalizedKey\(\s*normalizeCityLookupKey\(mappedCitySlug\)\s*\)/
+  );
+});
+
 test("city-stage renderer no longer hardcodes Haozhou JSON imports", () => {
   const source = readText(layoutPath);
 

@@ -28,7 +28,7 @@ test("city utility buttons declare the light button sound centrally", () => {
 
   assert.match(cityViewSource, /class="c-city-menu__button[\s\S]*data-button-sound="light"/);
   assert.match(cityViewSource, /data-action="leave-city"[\s\S]*data-button-sound="light"/);
-  assert.match(cityViewSource, /data-action="enter-city-3d"[\s\S]*data-button-sound="light"/);
+  assert.doesNotMatch(cityViewSource, /data-action="enter-city-3d"/);
   assert.match(
     cityViewSource,
     /data-action="close-city-menu"[\s\S]*data-button-sound="light"/

@@ -113,6 +113,10 @@ function normalizeCityLookupKey(value: string): string {
   return value.trim().toLowerCase().replace(/[_\s.]+/g, "-");
 }
 
+const cityStageSlugByCityId: Record<string, string> = {
+  "city.kulan": "haozhou",
+};
+
 function collectCityStageModules<T>(
   moduleGroups: Array<Record<string, unknown>>,
   kind: "layout" | "prefabs" | "npc-pool"
@@ -188,6 +192,16 @@ function findBundleByNormalizedKey(normalizedKey: string): CityStageBundle | nul
 export function getCityStageBundleForCity(cityId: string): CityStageBundle | null {
   if (discoveredCityStageBundles.size === 0) {
     return null;
+  }
+
+  const mappedCitySlug = cityStageSlugByCityId[cityId];
+  if (mappedCitySlug != null) {
+    const mappedMatch = findBundleByNormalizedKey(
+      normalizeCityLookupKey(mappedCitySlug)
+    );
+    if (mappedMatch != null) {
+      return mappedMatch;
+    }
   }
 
   const normalizedCityId = normalizeCityLookupKey(cityId);

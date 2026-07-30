@@ -7,22 +7,22 @@
   "seed": "hex-cell-and-instance-v1",
   "density": {
     "far": {
-      "min": 2,
-      "max": 4
+      "min": 0,
+      "max": 1
     },
     "medium": {
-      "min": 12,
-      "max": 24
+      "min": 3,
+      "max": 6
     },
     "near": {
-      "min": 48,
-      "max": 64
+      "min": 10,
+      "max": 18
     }
   },
   "lod": {
     "mediumMinScale": 22,
     "nearMinScale": 80,
-    "maxVisibleInstances": 840
+    "maxVisibleInstances": 260
   },
   "altitude": {
     "maxTerrainHeight": 0.2

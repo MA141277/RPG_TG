@@ -95,8 +95,8 @@ const map3CoordinateSystem = {
 
 test("campaign runtime coordinate system maps coordinates through loaded hexPointBounds", () => {
   const haozhouCoordinate = {
-    x: 245.87288158317762,
-    y: 291.97687861271675,
+    x: 239.4025425908469,
+    y: 280.2456647398844,
   };
 
   assert.deepEqual(
@@ -105,24 +105,24 @@ test("campaign runtime coordinate system maps coordinates through loaded hexPoin
       map3CoordinateSystem.coordinateSpace,
       map3CoordinateSystem
     ),
-    { x: 6, y: -17 }
+    { x: 3, y: -14 }
   );
 });
 
 test("campaign runtime coordinate system converts runtime hex centers back to map coordinates", () => {
   const coordinate = hexToCoordinate(
-    { x: 6, y: -17 },
+    { x: 3, y: -14 },
     map3CoordinateSystem.coordinateSpace,
     map3CoordinateSystem
   );
 
-  assert.ok(Math.abs(coordinate.x - 245.87288158317762) < 0.000001);
-  assert.ok(Math.abs(coordinate.y - 291.97687861271675) < 0.000001);
+  assert.ok(Math.abs(coordinate.x - 239.4025425908469) < 0.000001);
+  assert.ok(Math.abs(coordinate.y - 280.2456647398844) < 0.000001);
 });
 
 test("campaign runtime coordinate system sizes hover polygons from loaded hexPointBounds", () => {
   const polygon = hexToCoordinatePolygon({
-    hex: { x: 6, y: -17 },
+    hex: { x: 3, y: -14 },
     coordinateSpace: map3CoordinateSystem.coordinateSpace,
     coordinateSystem: map3CoordinateSystem,
   });

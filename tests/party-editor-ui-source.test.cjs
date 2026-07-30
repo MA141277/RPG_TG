@@ -397,3 +397,28 @@ test("main wires the troop-editor entry and exit actions", () => {
   assert.match(source, /\[data-action='close-troop-management'\]/);
   assert.match(source, /appState = closeTroopManagement\(appState\);/);
 });
+
+test("troop-editor stage changes preserve campaign map WebGL canvases", () => {
+  const source = fs.readFileSync("src/main.ts", "utf8");
+
+  assert.match(
+    source,
+    /let cachedCampaignTerrainCanvases: HTMLCanvasElement\[\] \| null = null;/
+  );
+  assert.match(
+    source,
+    /function shouldKeepCampaignMapStageAlive\(\s*view: AppState\["gameState"\]\["ui"\]\["currentView"\]\s*\): boolean \{[\s\S]*?view === "map"[\s\S]*?view === "troop-editor"[\s\S]*?view === "troop-management"[\s\S]*?\}/
+  );
+  assert.match(
+    source,
+    /if \(shouldKeepCampaignMapStageAlive\(appState\.gameState\.ui\.currentView\)\) \{[\s\S]*?cachedCampaignTerrainCanvases = capturedTerrainCanvases;[\s\S]*?\}/
+  );
+  assert.match(
+    source,
+    /const preservedTerrainCanvases = shouldKeepCampaignMapStageAlive\(\s*appState\.gameState\.ui\.currentView\s*\)\s*\?\s*cachedCampaignTerrainCanvases\s*:\s*null;/
+  );
+  assert.match(
+    source,
+    /if \(appState\.gameState\.ui\.currentView === "map"\) \{[\s\S]*?syncCampaignTerrainWebGl\(appRoot\);[\s\S]*?syncCampaignCloudWebGl\(appRoot\);[\s\S]*?\}/
+  );
+});

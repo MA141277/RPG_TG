@@ -18,7 +18,7 @@
     "environmentSourceImagePath": "yuanmo-map-climates.png"
   },
   "uiState": {
-    "activeToolId": "settlement",
+    "activeToolId": "environment",
     "selectedSettlementId": "settlement.city.city.7",
     "selectedHexCell": {
       "x": 236,
