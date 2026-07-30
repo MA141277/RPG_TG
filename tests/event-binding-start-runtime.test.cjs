@@ -246,3 +246,71 @@ test(
     }
   }
 );
+
+test(
+  "event binding runtime action application consumes the payload action seam",
+  { concurrency: false },
+  () => {
+    const projectionPath = require.resolve(
+      "../.test-dist/core/runtime/event-entity-projection.js"
+    );
+    const eventBindingRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/event-binding-runtime.js"
+    );
+
+    delete require.cache[projectionPath];
+    delete require.cache[eventBindingRuntimePath];
+
+    const projectionModule = require(projectionPath);
+    const originalReadRuntimeEventActions =
+      projectionModule.readRuntimeEventActions;
+
+    projectionModule.readRuntimeEventActions = (event) =>
+      event?.id === "event.close.building" ? [{ type: "closeBuilding" }] : [];
+
+    try {
+      const {
+        runEventBindingRuntime: runEventBindingRuntimeWithPatchedProjection,
+      } = require(eventBindingRuntimePath);
+      const state = createBaseState({
+        ui: {
+          ...createBaseState().ui,
+          currentView: "house",
+          overlayView: "detail",
+          houseSession: { moduleId: "module.test", state: {} },
+        },
+      });
+      const result = runEventBindingRuntimeWithPatchedProjection({
+        state,
+        eventDefinitionsById: {
+          "event.close.building": createEventDefinition("event.close.building"),
+        },
+        eventBindings: [
+          {
+            id: "binding.close.building",
+            eventId: "event.close.building",
+            owner: { family: "building", id: "building.temple" },
+            trigger: { timing: "after", action: "building-exit" },
+          },
+        ],
+        triggerContext: {
+          timing: "after",
+          action: "building-exit",
+          owner: { family: "building", id: "building.temple" },
+        },
+      });
+
+      assert.equal(result.activation.activeEventId, "event.close.building");
+      assert.equal(result.state.world.currentHouseId, null);
+      assert.equal(result.state.ui.currentView, "city");
+      assert.equal(result.state.ui.overlayView, null);
+      assert.equal(result.state.ui.houseSession, null);
+      assert.equal(result.state.scene.activeEventId, null);
+      assert.equal(result.state.scene.activeSceneId, null);
+    } finally {
+      projectionModule.readRuntimeEventActions = originalReadRuntimeEventActions;
+      delete require.cache[projectionPath];
+      delete require.cache[eventBindingRuntimePath];
+    }
+  }
+);

@@ -181,7 +181,8 @@ export function applyEventRuntimeActions(
   state: GameState,
   eventDefinition: EventDefinition
 ): GameState {
-  return applyRuntimeActions(state, eventDefinition.actions ?? []);
+  const runtimeEvent = createRuntimeEventEntity(eventDefinition);
+  return applyRuntimeActions(state, readRuntimeEventActions(runtimeEvent));
 }
 
 export function applyRuntimeActions(

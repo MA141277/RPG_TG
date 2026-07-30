@@ -15842,6 +15842,21 @@ test("runtime event dialogue id payload consumption keeps state-only classificat
   assert.doesNotMatch(bindingStateOnlyBlock, /eventDefinition\.dialogueId/);
 });
 
+test("runtime event binding action payload consumption keeps binding-owned action application on the routed payload seam", () => {
+  const eventBindingRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/event-binding-runtime.ts"),
+    "utf8"
+  );
+  const applyEventRuntimeActionsBlock =
+    eventBindingRuntimeSource.match(
+      /export function applyEventRuntimeActions\([\s\S]*?\n}\n\nexport function applyRuntimeActions/
+    )?.[0] ?? "";
+
+  assert.match(applyEventRuntimeActionsBlock, /createRuntimeEventEntity/);
+  assert.match(applyEventRuntimeActionsBlock, /readRuntimeEventActions/);
+  assert.doesNotMatch(applyEventRuntimeActionsBlock, /eventDefinition\.actions/);
+});
+
 test("navigation enter-house convergence keeps on-enter event activation on the shared event-router seam", () => {
   const enterHouseSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/navigation/enter-house.ts"),
