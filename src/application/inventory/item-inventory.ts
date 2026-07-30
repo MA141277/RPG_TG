@@ -16,6 +16,12 @@ import type {
   ValuableItemInventory,
 } from "../../domain/valuable-item";
 import {
+  defaultEquipmentLoadoutService,
+} from "../../domain/equipment/equipment-loadout-service";
+import {
+  defaultEquipmentSlotRegistry,
+} from "../../domain/equipment/equipment-slot-registry";
+import {
   TEMPLE_TOP_RANK_REWARD,
   readRuntimeItemQuantity,
 } from "../review/faction-review";
@@ -45,8 +51,56 @@ function compactTypes(types: string[]): string[] {
   return types.filter((type, index) => type.length > 0 && types.indexOf(type) === index);
 }
 
-function projectValuableItem(item: ValuableItemDefinition): BackpackItemDefinition {
-  const isWeapon = item.category === "weapon";
+function compareEquipmentItems(
+  inventory: ValuableItemInventory,
+  left: ValuableItemDefinition,
+  right: ValuableItemDefinition
+): number {
+  const leftEquipped = defaultEquipmentLoadoutService.isItemEquipped(
+    inventory,
+    left.id
+  );
+  const rightEquipped = defaultEquipmentLoadoutService.isItemEquipped(
+    inventory,
+    right.id
+  );
+  if (leftEquipped !== rightEquipped) {
+    return leftEquipped ? -1 : 1;
+  }
+
+  const leftSlot = defaultEquipmentSlotRegistry.getSlotForCategory(
+    left.category
+  );
+  const rightSlot = defaultEquipmentSlotRegistry.getSlotForCategory(
+    right.category
+  );
+  const slotOrder =
+    (leftSlot?.sortOrder ?? Number.MAX_SAFE_INTEGER) -
+    (rightSlot?.sortOrder ?? Number.MAX_SAFE_INTEGER);
+  if (slotOrder !== 0) {
+    return slotOrder;
+  }
+
+  const sortWeight = (left.sortWeight ?? 0) - (right.sortWeight ?? 0);
+  if (sortWeight !== 0) {
+    return sortWeight;
+  }
+
+  return (
+    left.name.localeCompare(right.name, "zh-Hans") ||
+    left.id.localeCompare(right.id)
+  );
+}
+
+function projectValuableItem(
+  item: ValuableItemDefinition,
+  inventory: ValuableItemInventory
+): BackpackItemDefinition {
+  const slot = defaultEquipmentSlotRegistry.getSlotForCategory(item.category);
+  const isEquipped = defaultEquipmentLoadoutService.isItemEquipped(
+    inventory,
+    item.id
+  );
   return {
     id: item.id,
     name: item.name,
@@ -60,9 +114,17 @@ function projectValuableItem(item: ValuableItemDefinition): BackpackItemDefiniti
     count: item.ownedCount,
     description: item.description,
     ...(item.detailText == null ? {} : { detailText: item.detailText }),
+    ...(slot == null
+      ? {}
+      : {
+          equipSlotId: slot.slotId,
+          isEquipped,
+          equippedLabel: isEquipped ? "已装备" : "",
+          canEquip: true,
+        }),
     actions: [
       {
-        id: isWeapon ? "equip.weapon" : "equip.armor",
+        id: "equip.valuable",
         label: "装备",
       },
     ],
@@ -206,7 +268,11 @@ export function projectBackpackItems(
 ): BackpackItemDefinition[] {
   const grainItem = projectGrainItem(input.gameState);
   return [
-    ...input.valuableInventory.items.map(projectValuableItem),
+    ...[...input.valuableInventory.items]
+      .sort((left, right) =>
+        compareEquipmentItems(input.valuableInventory, left, right)
+      )
+      .map((item) => projectValuableItem(item, input.valuableInventory)),
     ...(grainItem == null ? [] : [grainItem]),
     ...projectReviewRuntimeItems(input.gameState),
     ...projectPreparedMedicineItems(input.gameState),
@@ -241,14 +307,13 @@ export function resolveSelectedBackpackItemId<T extends { id: string }>(
 export function applyBackpackItemAction(
   input: ApplyBackpackItemActionInput
 ): ApplyBackpackItemActionResult {
-  if (input.actionId === "equip.weapon" || input.actionId === "equip.armor") {
+  if (input.actionId === "equip.valuable") {
     const matchedItem = input.valuableInventory.items.find(
       (item) => item.id === input.itemId
     );
     if (
       matchedItem != null &&
-      ((input.actionId === "equip.weapon" && matchedItem.category === "weapon") ||
-        (input.actionId === "equip.armor" && matchedItem.category === "armor"))
+      defaultEquipmentSlotRegistry.getSlotForCategory(matchedItem.category) != null
     ) {
       return {
         valuableInventory: equipValuableItem(input.valuableInventory, input.itemId),

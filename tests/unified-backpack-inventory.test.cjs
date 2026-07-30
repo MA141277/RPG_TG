@@ -8,6 +8,9 @@ const {
   resolveSelectedBackpackItemId,
 } = require("../.test-dist/application/inventory/item-inventory.js");
 const {
+  getVisibleValuables,
+} = require("../.test-dist/application/inventory/inventory-selection.js");
+const {
   TEMPLE_TOP_RANK_REWARD,
   getRuntimeItemQuantityKey,
 } = require("../.test-dist/application/review/faction-review.js");
@@ -51,9 +54,11 @@ function createValuableInventory() {
       },
     ],
     selectedItemId: "valuable.rusty-sword",
-    equippedWeaponSet: {
-      swordId: null,
-      armorId: null,
+    equippedSlots: {
+      weapon: null,
+      armor: null,
+      accessory: null,
+      mount: null,
     },
   };
 }
@@ -64,6 +69,64 @@ function createGameStateWithGrain(grainDou) {
       variables: {
         [PLAYER_GRAIN_RUNTIME_KEYS.quantityDou]: grainDou,
       },
+    },
+  };
+}
+
+function createFourSlotValuableInventory() {
+  return {
+    items: [
+      {
+        id: "valuable.mount",
+        name: "黄骠马",
+        category: "mount",
+        price: 20,
+        ownedCount: 1,
+        sortWeight: 1,
+        kindText: "坐骑",
+        itemImageId: "",
+        description: "test mount",
+      },
+      {
+        id: "valuable.accessory",
+        name: "香囊",
+        category: "accessory",
+        price: 4,
+        ownedCount: 1,
+        sortWeight: 1,
+        kindText: "饰品",
+        itemImageId: "",
+        description: "test accessory",
+      },
+      {
+        id: "valuable.armor",
+        name: "旧甲",
+        category: "armor",
+        price: 12,
+        ownedCount: 1,
+        sortWeight: 1,
+        kindText: "防具",
+        itemImageId: "",
+        description: "test armor",
+      },
+      {
+        id: "valuable.sword",
+        name: "铁刀",
+        category: "weapon",
+        price: 8,
+        ownedCount: 1,
+        sortWeight: 2,
+        kindText: "武器",
+        itemImageId: "",
+        description: "test weapon",
+      },
+    ],
+    selectedItemId: "valuable.sword",
+    equippedSlots: {
+      weapon: "valuable.sword",
+      armor: null,
+      accessory: "valuable.accessory",
+      mount: null,
     },
   };
 }
@@ -92,7 +155,7 @@ test("projects legacy valuables and shared grain into unified backpack rows", ()
         value: 8,
         types: ["equipment", "weapon", "刀剑"],
         count: 1,
-        actionIds: ["equip.weapon"],
+        actionIds: ["equip.valuable"],
       },
       {
         id: "valuable.old-armor",
@@ -101,7 +164,7 @@ test("projects legacy valuables and shared grain into unified backpack rows", ()
         value: 12,
         types: ["equipment", "armor", "铠甲"],
         count: 1,
-        actionIds: ["equip.armor"],
+        actionIds: ["equip.valuable"],
       },
       {
         id: "item.grain",
@@ -121,7 +184,7 @@ test("projects review runtime items into unified backpack rows", () => {
     valuableInventory: {
       items: [],
       selectedItemId: null,
-      equippedWeaponSet: { swordId: null, armorId: null },
+      equippedSlots: { weapon: null, armor: null, accessory: null, mount: null },
     },
     gameState: {
       runtime: {
@@ -303,29 +366,105 @@ test("resolves selected backpack item to the current visible item or first fallb
 });
 
 test("dispatches declared equipment item actions through safe handlers", () => {
-  const weaponResult = applyBackpackItemAction({
-    valuableInventory: createValuableInventory(),
-    itemId: "valuable.rusty-sword",
-    actionId: "equip.weapon",
-  });
+  const inventory = createFourSlotValuableInventory();
 
-  assert.equal(
-    weaponResult.valuableInventory.equippedWeaponSet.swordId,
-    "valuable.rusty-sword"
+  for (const [itemId, slotId] of [
+    ["valuable.sword", "weapon"],
+    ["valuable.armor", "armor"],
+    ["valuable.accessory", "accessory"],
+    ["valuable.mount", "mount"],
+  ]) {
+    const result = applyBackpackItemAction({
+      valuableInventory: inventory,
+      itemId,
+      actionId: "equip.valuable",
+    });
+
+    assert.equal(result.valuableInventory.equippedSlots[slotId], itemId);
+    assert.equal(result.status, "applied");
+  }
+});
+
+test("valuable equipment filtering includes accessory and mount items", () => {
+  const visibleItems = getVisibleValuables(
+    createFourSlotValuableInventory().items,
+    "equipment"
   );
-  assert.equal(weaponResult.status, "applied");
 
-  const armorResult = applyBackpackItemAction({
-    valuableInventory: weaponResult.valuableInventory,
-    itemId: "valuable.old-armor",
-    actionId: "equip.armor",
-  });
-
-  assert.equal(
-    armorResult.valuableInventory.equippedWeaponSet.armorId,
-    "valuable.old-armor"
+  assert.deepEqual(
+    visibleItems.map((item) => item.category),
+    ["mount", "accessory", "armor", "weapon"]
   );
-  assert.equal(armorResult.status, "applied");
+});
+
+test("projects equipment rows with slot metadata and equipped-first ordering", () => {
+  const items = filterBackpackItems(
+    projectBackpackItems({
+      valuableInventory: createFourSlotValuableInventory(),
+      gameState: createGameStateWithGrain(0),
+    }),
+    "equipment"
+  );
+
+  assert.deepEqual(
+    items.map((item) => item.id),
+    [
+      "valuable.sword",
+      "valuable.accessory",
+      "valuable.armor",
+      "valuable.mount",
+    ]
+  );
+
+  assert.deepEqual(
+    items.map((item) => ({
+      id: item.id,
+      actionIds: item.actions.map((action) => action.id),
+      actionLabels: item.actions.map((action) => action.label),
+      equipSlotId: item.equipSlotId,
+      isEquipped: item.isEquipped,
+      equippedLabel: item.equippedLabel,
+      canEquip: item.canEquip,
+    })),
+    [
+      {
+        id: "valuable.sword",
+        actionIds: ["equip.valuable"],
+        actionLabels: ["装备"],
+        equipSlotId: "weapon",
+        isEquipped: true,
+        equippedLabel: "已装备",
+        canEquip: true,
+      },
+      {
+        id: "valuable.accessory",
+        actionIds: ["equip.valuable"],
+        actionLabels: ["装备"],
+        equipSlotId: "accessory",
+        isEquipped: true,
+        equippedLabel: "已装备",
+        canEquip: true,
+      },
+      {
+        id: "valuable.armor",
+        actionIds: ["equip.valuable"],
+        actionLabels: ["装备"],
+        equipSlotId: "armor",
+        isEquipped: false,
+        equippedLabel: "",
+        canEquip: true,
+      },
+      {
+        id: "valuable.mount",
+        actionIds: ["equip.valuable"],
+        actionLabels: ["装备"],
+        equipSlotId: "mount",
+        isEquipped: false,
+        equippedLabel: "",
+        canEquip: true,
+      },
+    ]
+  );
 });
 
 test("does not execute unsupported item actions", () => {

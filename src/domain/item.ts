@@ -1,10 +1,11 @@
+import type { EquipmentSlotId } from "./equipment/equipment-slot-registry";
+
 export type BackpackItemCategoryFilter = "all" | "equipment" | "food" | "other";
 
 export type BackpackItemSortKey = "name" | "value" | "count" | "type";
 
 export type ItemActionId =
-  | "equip.weapon"
-  | "equip.armor"
+  | "equip.valuable"
   | "consume.food"
   | "consume.medicine"
   | "submit.quest"
@@ -25,6 +26,10 @@ export type BackpackItemDefinition = {
   count: number;
   description: string;
   detailText?: string;
+  equipSlotId?: EquipmentSlotId;
+  isEquipped?: boolean;
+  equippedLabel?: string;
+  canEquip?: boolean;
   actions: ItemActionDefinition[];
 };
 

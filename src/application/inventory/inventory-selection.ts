@@ -5,6 +5,7 @@ import type {
   ValuableItemInventory,
 } from "../../domain/valuable-item";
 import { defaultEquipmentLoadoutService } from "../../domain/equipment/equipment-loadout-service";
+import { defaultEquipmentSlotRegistry } from "../../domain/equipment/equipment-slot-registry";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -48,7 +49,8 @@ export function getVisibleValuables(
 
   return items.filter(
     (itemDefinition) =>
-      itemDefinition.category === "weapon" || itemDefinition.category === "armor"
+      defaultEquipmentSlotRegistry.getSlotForCategory(itemDefinition.category) !=
+      null
   );
 }
 
