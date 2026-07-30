@@ -212,7 +212,6 @@ test("playable runtime launches and reduces flow playables", () => {
         ownerKind: "dialogue",
         ownerId: "dialogue.test.flow",
       },
-      effects: [],
     });
   } finally {
     resetDefaultPlayableRuntimeRegistries();

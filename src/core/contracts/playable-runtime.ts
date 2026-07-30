@@ -122,7 +122,7 @@ export type PlayableSettlement = {
     ownerId: string | null;
     sessionToken?: string | undefined;
   };
-  effects: Effect[];
+  effects?: Effect[];
 };
 
 export type PlayableResult = PlayableSettlement;

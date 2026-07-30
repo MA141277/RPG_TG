@@ -1127,7 +1127,7 @@ export function createPlayableSettlementShell(input: {
         ? {}
         : { sessionToken: input.session.ownerContext.sessionToken }),
     },
-    effects: input.effects ?? [],
+    ...(input.effects == null ? {} : { effects: input.effects }),
   };
 }
 

@@ -16801,6 +16801,21 @@ test("runtime settlement effects fallback removal keeps state sync runtime comma
   assert.match(stateSyncSource, /settleRuntimeCommands\(/);
 });
 
+test("playable settlement effects compatibility optional removes default empty-array emission", () => {
+  const playableContractSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/playable-runtime.ts"),
+    "utf8"
+  );
+  const playableRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(playableContractSource, /export type PlayableSettlement =/);
+  assert.match(playableContractSource, /effects\?: Effect\[\]/);
+  assert.doesNotMatch(playableRuntimeSource, /effects:\s*input\.effects\s*\?\?\s*\[\]/);
+});
+
 test("settlement command runtime owns the covered concrete mutation families", () => {
   const contractSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/settlement-command.ts"),
