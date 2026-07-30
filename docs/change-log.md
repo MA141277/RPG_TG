@@ -2,6 +2,30 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+<<<<<<< Updated upstream
+=======
+## 2026-07-30 Campaign Terrain Local Chunk Loading
+
+### Changed
+- Campaign terrain WebGL renderer 现在只请求、保留和绘制当前相机附近的 active terrain chunks，不再在进入地图后继续排队加载全图 chunk。
+- 森林 vegetation mesh 只从 active chunk 中已加载的森林 cell 派生；远处未加载 chunk 不生成树实例。
+- Startup readiness 仍等待相机优先的首批 chunk，但后续后台工作被限制在本地 active 半径内，减少加载完成后继续卡顿。
+
+### Impact
+- 全图 Hex 语义层仍用于通行、点击、探索和寻路；本次只限制视觉派生层的 terrain chunk、树和结构绘制范围。
+- 移动或缩放到新区域时会按当前相机焦点加载附近 chunk，并释放离开 active 范围的 GPU chunk 资源。
+
+## 2026-07-30 NQS To MMZ Minigame Branch Merge
+
+### Added
+- Merged `origin/nqs-to-mmz-minigame` into a local integration branch, bringing in tavern short gambling domain/runtime support, grain shop paid grain intel, unified player item inventory projection, city card-draw test overlay, dialogue typewriter runtime helpers, and faster battle-demo timing.
+- House-facing additions remain under typed module/session/view-model contracts; concrete tavern or grain-shop business branches should stay out of `src/main.ts`.
+
+### Impact
+- Tavern, grain, market, medicine inventory, and minigame behavior should continue through the shared house module lifecycle and unified runtime item variables.
+- Verification for this merge should focus on typecheck, tavern short gamble tests, grain intel tests, unified backpack projection tests, card draw tests, dialogue typewriter runtime tests, and the relevant robustness guards.
+
+>>>>>>> Stashed changes
 ## 2026-07-29 Story Runtime Event Binding And Progression Slice
 
 ### Added

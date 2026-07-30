@@ -399,6 +399,7 @@ const SMOOTH_TERRAIN_MESH_STEP = 1;
 const CAMPAIGN_TERRAIN_CHUNK_HEX_SIZE = 8;
 const CAMPAIGN_TERRAIN_MAX_PENDING_CHUNKS = 12;
 const CAMPAIGN_TERRAIN_STARTUP_READY_CHUNK_COUNT = 9;
+const CAMPAIGN_TERRAIN_ACTIVE_CHUNK_RADIUS = 2;
 const CAMPAIGN_TERRAIN_CHUNK_PADDING_HEX = 2;
 const CAMPAIGN_TERRAIN_CHUNK_MIN_COLUMNS = 32;
 const CAMPAIGN_TERRAIN_CHUNK_MIN_ROWS = 32;
@@ -2223,6 +2224,7 @@ async function initCampaignTerrainWebGl(
   const failedChunkKeys = new Set<string>();
   const deferredChunkUploadsByKey = new Map<string, CampaignTerrainChunkData>();
   let deferredChunkUploadTimeoutId: number | null = null;
+  const allChunkKeys = getCampaignTerrainChunkKeysForCells(materialSemanticModel.cells);
   const getRendererLoadingProgress = (): CampaignTerrainLoadingProgress => {
     if (!renderTerrain) {
       return {
@@ -2233,8 +2235,8 @@ async function initCampaignTerrainWebGl(
       };
     }
 
-    const allChunkKeys = sortCampaignTerrainChunkKeysByCameraFocus(
-      getCampaignTerrainChunkKeysForCells(materialSemanticModel.cells),
+    const activeChunkKeys = getCampaignTerrainActiveChunkKeys(
+      allChunkKeys,
       materialSemanticModel.terrainCoordinates,
       materialSemanticModel.worldScale
     );
@@ -2243,12 +2245,12 @@ async function initCampaignTerrainWebGl(
       materialSemanticModel.terrainCoordinates,
       materialSemanticModel.worldScale
     );
-    const loaded = allChunkKeys.filter(
+    const loaded = activeChunkKeys.filter(
       (chunkKey) =>
         chunkResourcesByKey.has(chunkKey) ||
         failedChunkKeys.has(chunkKey)
     ).length;
-    const total = Math.max(allChunkKeys.length, 1);
+    const total = Math.max(activeChunkKeys.length, 1);
 
     return {
       loaded,
@@ -2700,24 +2702,44 @@ async function initCampaignTerrainWebGl(
       });
     }
   };
-  const ensureAllCampaignTerrainChunks = (): void => {
+  const ensureActiveCampaignTerrainChunks = (): void => {
     ensureCampaignTerrainChunkKeys(
-      sortCampaignTerrainChunkKeysByCameraFocus(
-        getCampaignTerrainChunkKeysForCells(materialSemanticModel.cells),
+      getCampaignTerrainActiveChunkKeys(
+        allChunkKeys,
         materialSemanticModel.terrainCoordinates,
         materialSemanticModel.worldScale
       )
     );
   };
+  const disposeInactiveCampaignTerrainChunks = (activeChunkKeys: Set<string>): void => {
+    for (const [chunkKey, chunkResource] of chunkResourcesByKey.entries()) {
+      if (activeChunkKeys.has(chunkKey)) {
+        continue;
+      }
+
+      gl.deleteBuffer(chunkResource.vertexBuffer);
+      gl.deleteBuffer(chunkResource.indexBuffer);
+      gl.deleteTexture(chunkResource.shorelineTexture);
+      chunkResourcesByKey.delete(chunkKey);
+      chunkDataByKey.delete(chunkKey);
+      deferredChunkUploadsByKey.delete(chunkKey);
+      failedChunkKeys.delete(chunkKey);
+      projectedPointsNeedSync = true;
+      lastVegetationMeshSignature = "";
+      clearCampaignStructureRenderModels();
+      lastFortWallMeshSignature = "";
+      fortWallMesh = null;
+    }
+  };
   if (renderTerrain) {
-    ensureAllCampaignTerrainChunks();
+    ensureActiveCampaignTerrainChunks();
     window.setTimeout(() => {
       if (!isDisposed) {
-        ensureAllCampaignTerrainChunks();
+        ensureActiveCampaignTerrainChunks();
       }
     }, 0);
   } else {
-    ensureAllCampaignTerrainChunks();
+    ensureActiveCampaignTerrainChunks();
   }
   const render = () => {
     if (isDisposed) {
@@ -2742,9 +2764,17 @@ async function initCampaignTerrainWebGl(
     const currentTerrainMatrix = createTerrainMatrix(
       input.canvas.width / Math.max(input.canvas.height, 1)
     );
-    ensureAllCampaignTerrainChunks();
+    const activeChunkKeys = new Set(
+      getCampaignTerrainActiveChunkKeys(
+        allChunkKeys,
+        materialSemanticModel.terrainCoordinates,
+        materialSemanticModel.worldScale
+      )
+    );
+    disposeInactiveCampaignTerrainChunks(activeChunkKeys);
+    ensureActiveCampaignTerrainChunks();
     if (renderTerrain) {
-      ensureAllCampaignTerrainChunks();
+      ensureActiveCampaignTerrainChunks();
     }
     const chunkShorelineSignature = getShorelineDistanceTextureSignature(terrainBeachTuning);
     if (renderTerrain && chunkShorelineSignature !== lastChunkShorelineSignature) {
@@ -2778,7 +2808,16 @@ async function initCampaignTerrainWebGl(
       }
     }
 
-    const loadedChunkKeys = new Set(chunkResourcesByKey.keys());
+    const loadedChunkKeys = new Set(
+      [...chunkResourcesByKey.keys()].filter((chunkKey) =>
+        activeChunkKeys.has(chunkKey)
+      )
+    );
+    const activeChunkDataByKey = new Map(
+      [...chunkDataByKey.entries()].filter(([chunkKey]) =>
+        activeChunkKeys.has(chunkKey)
+      )
+    );
     const fortInstances = renderTerrain
       ? readCampaignFortWallInstances(
         input.canvas,
@@ -3048,7 +3087,7 @@ async function initCampaignTerrainWebGl(
         vegetationMesh = createCampaignVegetationMesh({
           cells: getCampaignVegetationCellsForChunks(
             vegetationCells,
-            chunkDataByKey
+            activeChunkDataByKey
           ),
           asset: vegetationAsset,
           sampleHeightAtUv,
@@ -4089,17 +4128,25 @@ function getCampaignTerrainCameraFocusUv(
   };
 }
 
+function getCampaignTerrainCameraFocusChunk(
+  coordinateSystem: CampaignTerrainCoordinateSystem | CampaignHexGridAsset["coordinateSystem"],
+  worldScale: CampaignTerrainWorldScale
+): CampaignTerrainChunkCoordinate {
+  const focusUv = getCampaignTerrainCameraFocusUv(worldScale);
+
+  return getCampaignTerrainChunkForUv(
+    focusUv.u,
+    focusUv.v,
+    coordinateSystem
+  );
+}
+
 function sortCampaignTerrainChunkKeysByCameraFocus(
   chunkKeys: string[],
   coordinateSystem: CampaignTerrainCoordinateSystem | CampaignHexGridAsset["coordinateSystem"],
   worldScale: CampaignTerrainWorldScale
 ): string[] {
-  const focusUv = getCampaignTerrainCameraFocusUv(worldScale);
-  const focusChunk = getCampaignTerrainChunkForUv(
-    focusUv.u,
-    focusUv.v,
-    coordinateSystem
-  );
+  const focusChunk = getCampaignTerrainCameraFocusChunk(coordinateSystem, worldScale);
 
   return [...chunkKeys].sort((leftKey, rightKey) => {
     const left = parseCampaignTerrainChunkKey(leftKey);
@@ -4117,12 +4164,43 @@ function sortCampaignTerrainChunkKeysByCameraFocus(
   });
 }
 
+function getCampaignTerrainActiveChunkKeys(
+  allChunkKeys: string[],
+  coordinateSystem: CampaignTerrainCoordinateSystem | CampaignHexGridAsset["coordinateSystem"],
+  worldScale: CampaignTerrainWorldScale
+): string[] {
+  const focusChunk = getCampaignTerrainCameraFocusChunk(coordinateSystem, worldScale);
+  const localChunkKeys = allChunkKeys.filter((chunkKey) => {
+    const chunk = parseCampaignTerrainChunkKey(chunkKey);
+
+    return (
+      Math.abs(chunk.x - focusChunk.x) <= CAMPAIGN_TERRAIN_ACTIVE_CHUNK_RADIUS &&
+      Math.abs(chunk.y - focusChunk.y) <= CAMPAIGN_TERRAIN_ACTIVE_CHUNK_RADIUS
+    );
+  });
+  const sortedLocalChunkKeys = sortCampaignTerrainChunkKeysByCameraFocus(
+    localChunkKeys,
+    coordinateSystem,
+    worldScale
+  );
+
+  if (sortedLocalChunkKeys.length >= CAMPAIGN_TERRAIN_STARTUP_READY_CHUNK_COUNT) {
+    return sortedLocalChunkKeys;
+  }
+
+  return sortCampaignTerrainChunkKeysByCameraFocus(
+    allChunkKeys,
+    coordinateSystem,
+    worldScale
+  ).slice(0, CAMPAIGN_TERRAIN_STARTUP_READY_CHUNK_COUNT);
+}
+
 function getCampaignTerrainStartupChunkKeys(
   allChunkKeys: string[],
   coordinateSystem: CampaignTerrainCoordinateSystem | CampaignHexGridAsset["coordinateSystem"],
   worldScale: CampaignTerrainWorldScale
 ): string[] {
-  return sortCampaignTerrainChunkKeysByCameraFocus(
+  return getCampaignTerrainActiveChunkKeys(
     allChunkKeys,
     coordinateSystem,
     worldScale

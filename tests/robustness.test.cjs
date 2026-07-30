@@ -2062,7 +2062,7 @@ test("startup loading waits for campaign terrain chunks before hiding loading sc
   );
   assert.match(
     terrainRendererSource,
-    /sortCampaignTerrainChunkKeysByCameraFocus\(\s*getCampaignTerrainChunkKeysForCells\(materialSemanticModel\.cells\),\s*materialSemanticModel\.terrainCoordinates,\s*materialSemanticModel\.worldScale\s*\)/,
+    /getCampaignTerrainActiveChunkKeys\(\s*allChunkKeys,\s*materialSemanticModel\.terrainCoordinates,\s*materialSemanticModel\.worldScale\s*\)/,
     "Expected initial chunk requests to prioritize chunks near the current camera focus."
   );
   assert.match(
@@ -6264,7 +6264,7 @@ test("campaign terrain chunk cache changes when hex grid content changes", () =>
   );
 });
 
-test("campaign terrain renderer requests full hex grid chunks with camera-prioritized startup chunks", () => {
+test("campaign terrain renderer requests only camera-local chunks with camera-prioritized startup chunks", () => {
   const terrainRendererSource = fs.readFileSync(
     path.join(
       process.cwd(),
@@ -6283,7 +6283,19 @@ test("campaign terrain renderer requests full hex grid chunks with camera-priori
   );
   assert.match(
     terrainRendererSource,
-    /const ensureAllCampaignTerrainChunks = \(\): void => \{\s*ensureCampaignTerrainChunkKeys\(\s*sortCampaignTerrainChunkKeysByCameraFocus\(\s*getCampaignTerrainChunkKeysForCells\(materialSemanticModel\.cells\),\s*materialSemanticModel\.terrainCoordinates,\s*materialSemanticModel\.worldScale\s*\)\s*\);\s*\}/s
+    /const ensureActiveCampaignTerrainChunks = \(\): void => \{\s*ensureCampaignTerrainChunkKeys\(\s*getCampaignTerrainActiveChunkKeys\(\s*allChunkKeys,\s*materialSemanticModel\.terrainCoordinates,\s*materialSemanticModel\.worldScale\s*\)\s*\);\s*\}/s
+  );
+  assert.match(
+    terrainRendererSource,
+    /const CAMPAIGN_TERRAIN_ACTIVE_CHUNK_RADIUS = 2;/
+  );
+  assert.match(
+    terrainRendererSource,
+    /function getCampaignTerrainActiveChunkKeys\(\s*allChunkKeys: string\[\],/
+  );
+  assert.doesNotMatch(
+    terrainRendererSource,
+    /const ensureAllCampaignTerrainChunks/
   );
   assert.match(
     terrainRendererSource,
@@ -6295,7 +6307,7 @@ test("campaign terrain renderer requests full hex grid chunks with camera-priori
   );
   assert.doesNotMatch(
     terrainRendererSource,
-    /ensureCampaignTerrainChunks\(CAMPAIGN_TERRAIN_(?:INITIAL|PREFETCH)_RADIUS_HEX\)/
+    /ensureCampaignTerrainChunkKeys\(\s*sortCampaignTerrainChunkKeysByCameraFocus\(\s*getCampaignTerrainChunkKeysForCells\(materialSemanticModel\.cells\)/
   );
 });
 
