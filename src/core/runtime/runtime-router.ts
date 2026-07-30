@@ -1,4 +1,5 @@
 import type { RuntimeRequest } from "../contracts/runtime-request";
+import type { RuntimeEventRouteResult } from "../contracts/event-router";
 import type {
   RuntimeFollowUp,
   RuntimeFollowUpOutcome,
@@ -16,6 +17,7 @@ export type RuntimeRouteInput = {
 };
 
 export type RuntimeRouteResult = RuntimeResult;
+export type CanonicalRuntimeEventRouteResult = RuntimeEventRouteResult;
 
 export type RuntimeInteractiveFollowUpInput = {
   state: RuntimeState;

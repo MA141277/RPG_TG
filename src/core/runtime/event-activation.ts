@@ -2,6 +2,7 @@ import type { EventRuntimeCandidate } from "../contracts/event-runtime";
 import type { RuntimeTaskInput } from "../contracts/runtime-result";
 
 export type ActivatedEvent = {
+  eventId: string;
   activeEventId: string;
   sceneId: string | null;
   taskInputs: RuntimeTaskInput[];
@@ -15,6 +16,7 @@ export function activateEvent(
   }
 
   return {
+    eventId: candidate.eventId,
     activeEventId: candidate.eventId,
     sceneId: candidate.sceneId ?? null,
     taskInputs: candidate.taskInputs ?? [],

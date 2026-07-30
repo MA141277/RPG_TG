@@ -46,48 +46,59 @@ export type EventBindingRuntimeResult = {
   candidate: EventBindingRuntimeCandidate | null;
 };
 
+export type EventBindingSelectionResult = {
+  activation: ActivatedEvent | null;
+  candidate: EventBindingRuntimeCandidate | null;
+  eventDefinition: EventDefinition | null;
+};
+
 export function runEventBindingRuntime(
   input: EventBindingRuntimeInput
 ): EventBindingRuntimeResult {
-  const selected = selectModFirstEventBindingCandidate(input);
-  const candidate =
-    selected == null
-      ? null
-      : toEventBindingRuntimeCandidate(
-          selected,
-          input.eventDefinitionsById[selected.eventId]
-        );
-  const activation = activateEvent(candidate);
-  if (activation == null) {
+  const selection = selectEventBindingActivation(input);
+  if (selection.activation == null || selection.eventDefinition == null) {
     return {
       state: input.state,
-      activation: null,
-      candidate,
+      activation:
+        selection.eventDefinition == null ? null : selection.activation,
+      candidate: selection.candidate,
     };
   }
 
-  const eventDefinition = input.eventDefinitionsById[activation.activeEventId];
-  if (eventDefinition == null) {
-    return {
-      state: input.state,
-      activation: null,
-      candidate,
-    };
-  }
-
-  const actionState = applyEventRuntimeActions(input.state, eventDefinition);
-  if (hasOnlyStateRuntimeActions(eventDefinition)) {
+  const actionState = applyEventRuntimeActions(
+    input.state,
+    selection.eventDefinition
+  );
+  if (hasOnlyStateRuntimeActions(selection.eventDefinition)) {
     return {
       state: actionState,
-      activation,
-      candidate,
+      activation: selection.activation,
+      candidate: selection.candidate,
     };
   }
 
   return {
-    state: startEvent(actionState, eventDefinition),
-    activation,
+    state: startEvent(actionState, selection.eventDefinition),
+    activation: selection.activation,
+    candidate: selection.candidate,
+  };
+}
+
+export function selectEventBindingActivation(
+  input: EventBindingRuntimeInput
+): EventBindingSelectionResult {
+  const selected = selectModFirstEventBindingCandidate(input);
+  const eventDefinition =
+    selected == null ? null : input.eventDefinitionsById[selected.eventId] ?? null;
+  const candidate =
+    selected == null
+      ? null
+      : toEventBindingRuntimeCandidate(selected, eventDefinition ?? undefined);
+
+  return {
+    activation: activateEvent(candidate),
     candidate,
+    eventDefinition,
   };
 }
 
@@ -101,7 +112,7 @@ function toEventBindingRuntimeCandidate(
   };
 }
 
-function applyEventRuntimeActions(
+export function applyEventRuntimeActions(
   state: GameState,
   eventDefinition: EventDefinition
 ): GameState {

@@ -13,15 +13,20 @@ import type {
   ProgressTrackBinding,
   ProgressTrackDefinition,
 } from "../../core/contracts/progression-runtime";
+import type { RuntimeEventEntity } from "../../core/contracts/event-router";
+import type { RuntimeState } from "../../core/contracts/runtime-state";
 import {
   applySettlementInstances,
   type SettlementRuntimeTargetState,
 } from "../../core/runtime/runtime-settlement";
 import {
+  applyEventRuntimeActions,
   createRuntimeTriggerContext,
   runEventBindingRuntime,
 } from "../../core/runtime/event-binding-runtime";
+import { dispatchEventRoute } from "../../core/runtime/event-router";
 import { runProgressionRuntime } from "../../core/runtime/progression-runtime";
+import { dispatchRuntimeRequest } from "../../core/runtime/runtime-dispatch";
 import { continueToEvent } from "../events/event-continuation";
 import { startEvent } from "../events/event-runner";
 import {
@@ -63,6 +68,16 @@ type StoryRuntimeContext = {
 
 type StoryRuntimeResult = StoryRuntimeContext;
 
+const EMPTY_STORY_RUNTIME_APP_STATE: RuntimeState["app"] = {
+  beggingMiniGameState: null,
+  autoAdvanceState: null,
+  campaignTravelState: null,
+  cityDirectoryState: null,
+  cityMenuState: null,
+  locationDialogueState: null,
+  modalState: null,
+};
+
 function createRuntimeWorldDefinitionContext(runtime: StoryRuntimeContext) {
   return {
     ...(runtime.cityDefinitions == null
@@ -72,6 +87,132 @@ function createRuntimeWorldDefinitionContext(runtime: StoryRuntimeContext) {
       ? {}
       : { houseDefinitions: runtime.houseDefinitions }),
   };
+}
+
+function toStoryRuntimeState(state: GameState): RuntimeState {
+  return {
+    core: state,
+    app: EMPTY_STORY_RUNTIME_APP_STATE,
+    view: {},
+  };
+}
+
+function toStoryRuntimeEventEntity(
+  eventDefinition: EventDefinition
+): RuntimeEventEntity {
+  return {
+    id: eventDefinition.id,
+    kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
+    payload: {},
+    ...(eventDefinition.nextEventId == null
+      ? {}
+      : { nextEventId: eventDefinition.nextEventId }),
+    metadata: {
+      title: eventDefinition.name,
+      ...(eventDefinition.tags == null ? {} : { tags: eventDefinition.tags }),
+    },
+  };
+}
+
+function routeStoryEvent(
+  state: RuntimeState,
+  eventDefinition: EventDefinition
+): RuntimeState {
+  return {
+    ...state,
+    core: startEvent(
+      applyEventRuntimeActions(state.core, eventDefinition),
+      eventDefinition
+    ),
+  };
+}
+
+function routeStoryDirectEntry(
+  runtime: StoryRuntimeContext,
+  content: StoryContent,
+  input: {
+    eventId: string;
+    eventDefinition?: EventDefinition | undefined;
+  }
+): StoryRuntimeContext {
+  const fallbackEventDefinition =
+    input.eventDefinition ?? content.eventDefinitionsById[input.eventId];
+  if (fallbackEventDefinition == null) {
+    return runtime;
+  }
+
+  const eventId = fallbackEventDefinition.id;
+  const routed = dispatchRuntimeRequest({
+    state: toStoryRuntimeState(runtime.state),
+    request: {
+      family: "external",
+      type: "external",
+      eventId,
+    },
+    context: {
+      router: {
+        route: ({ state }) =>
+          dispatchEventRoute({
+            state,
+            eventId,
+            context: {
+              repository: {
+                resolveById: (eventId) => {
+                  const eventDefinition = content.eventDefinitionsById[eventId];
+                  return eventDefinition == null
+                    ? null
+                    : toStoryRuntimeEventEntity(eventDefinition);
+                },
+              },
+              handlers: {
+                dialogue: ({ state, event }) => {
+                  const eventDefinition = content.eventDefinitionsById[event.id];
+                  return eventDefinition == null
+                    ? {
+                        state,
+                        effects: [],
+                      }
+                    : {
+                        state: routeStoryEvent(state, eventDefinition),
+                        effects: [],
+                        taskInputs: eventDefinition.taskInputs ?? [],
+                      };
+                },
+                settlement: ({ state, event }) => {
+                  const eventDefinition = content.eventDefinitionsById[event.id];
+                  return eventDefinition == null
+                    ? {
+                        state,
+                        effects: [],
+                      }
+                    : {
+                        state: routeStoryEvent(state, eventDefinition),
+                        effects: [],
+                        taskInputs: eventDefinition.taskInputs ?? [],
+                      };
+                },
+              },
+            },
+          }),
+      },
+    },
+  });
+
+  const eventDefinition =
+    content.eventDefinitionsById[routed.event?.id ?? eventId] ??
+    fallbackEventDefinition;
+
+  return applyTriggeredStoryEvent(
+    {
+      ...runtime,
+      state: routed.state.core,
+    },
+    content,
+    eventDefinition,
+    {
+      eventAlreadyStarted: true,
+    }
+  );
 }
 
 function applyTriggeredStoryEvent(
@@ -179,7 +320,13 @@ export function startStoryEventById(
     return runtime;
   }
 
-  return syncStoryScene(applyTriggeredStoryEvent(runtime, content, eventDefinition), content);
+  return syncStoryScene(
+    routeStoryDirectEntry(runtime, content, {
+      eventId,
+      eventDefinition,
+    }),
+    content
+  );
 }
 
 export function continueStoryFromSourceEvent(
@@ -241,7 +388,13 @@ export function triggerStoryEvents(
     return runtime;
   }
 
-  return syncStoryScene(applyTriggeredStoryEvent(runtime, content, targetEvent), content);
+  return syncStoryScene(
+    routeStoryDirectEntry(runtime, content, {
+      eventId: targetEvent.id,
+      eventDefinition: targetEvent,
+    }),
+    content
+  );
 }
 
 export function advanceStorySceneStep(
@@ -353,7 +506,6 @@ function triggerStoryEventBindings(
   if (bindingResult.activation == null) {
     return null;
   }
-
   const eventDefinition =
     content.eventDefinitionsById[bindingResult.activation.activeEventId];
   if (eventDefinition == null) {

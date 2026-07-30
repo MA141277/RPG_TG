@@ -43,21 +43,11 @@ export function dispatchRuntimeRequest(input: {
   const taskSettlement = settleRuntimeTasks({
     state: effectSettlement.state,
     taskInputs: routed.taskInputs,
-    taskActions: routed.taskActions,
-    taskSignals: routed.taskSignals,
     taskDefinitionsById: input.context.taskDefinitionsById,
   });
-  const settlement =
+  const taskEffectSettlement =
     taskSettlement.effects.length === 0
-      ? {
-          state: taskSettlement.state,
-          ...(effectSettlement.characterDefinitions == null
-            ? {}
-            : { characterDefinitions: effectSettlement.characterDefinitions }),
-          ...(effectSettlement.characterStatusById == null
-            ? {}
-            : { characterStatusById: effectSettlement.characterStatusById }),
-        }
+      ? null
       : settleRuntimeEffects({
           state: taskSettlement.state,
           effects: taskSettlement.effects,
@@ -70,6 +60,22 @@ export function dispatchRuntimeRequest(input: {
             ? {}
             : { characterStatusById: effectSettlement.characterStatusById }),
         });
+  const settlement =
+    taskEffectSettlement ??
+    {
+      state: taskSettlement.state,
+      ...(effectSettlement.characterDefinitions == null
+        ? {}
+        : { characterDefinitions: effectSettlement.characterDefinitions }),
+      ...(effectSettlement.characterStatusById == null
+        ? {}
+        : { characterStatusById: effectSettlement.characterStatusById }),
+    };
+  const runtimeSettlement = createRuntimeSettlementSummary({
+    routedSettlement: routed.settlement,
+    routedEffects: effectSettlement,
+    taskEffects: taskEffectSettlement,
+  });
   const followUp = settleRuntimeFollowUp({
     state: settlement.state,
     followUp: routed.followUp,
@@ -104,6 +110,7 @@ export function dispatchRuntimeRequest(input: {
     ...(followUp.buildingStatusById === undefined
       ? {}
       : { buildingStatusById: followUp.buildingStatusById }),
+    ...(runtimeSettlement === undefined ? {} : { settlement: runtimeSettlement }),
     state: followUp.state,
     ...(followUp.outcome === undefined ? {} : { outcome: followUp.outcome }),
     ...(followUp.followUp === undefined ? {} : { followUp: followUp.followUp }),
@@ -113,11 +120,80 @@ export function dispatchRuntimeRequest(input: {
   };
 }
 
+function createRuntimeSettlementSummary(input: {
+  routedSettlement: RuntimeResult["settlement"];
+  routedEffects: ReturnType<typeof settleRuntimeEffects>;
+  taskEffects: ReturnType<typeof settleRuntimeEffects> | null;
+}): RuntimeResult["settlement"] | undefined {
+  const settledEffects = [
+    ...input.routedEffects.settledEffects,
+    ...(input.taskEffects?.settledEffects ?? []),
+  ];
+  const unsupportedEffects = [
+    ...input.routedEffects.unsupportedEffects,
+    ...(input.taskEffects?.unsupportedEffects ?? []),
+  ];
+  const warnings = [
+    ...input.routedEffects.warnings,
+    ...(input.taskEffects?.warnings ?? []),
+  ];
+
+  if (
+    settledEffects.length === 0 &&
+    unsupportedEffects.length === 0 &&
+    warnings.length === 0
+  ) {
+    return input.routedSettlement;
+  }
+
+  const routedSettlementMetadata =
+    input.routedSettlement != null && typeof input.routedSettlement === "object"
+      ? input.routedSettlement
+      : null;
+  const pendingSettlementEffects =
+    routedSettlementMetadata != null &&
+    Array.isArray(routedSettlementMetadata.effects)
+      ? routedSettlementMetadata.effects
+      : [];
+  const summary = {
+    ...(routedSettlementMetadata == null
+      ? {}
+      : omitRuntimeSettlementOwnership(routedSettlementMetadata)),
+    effects: pendingSettlementEffects,
+    appliedBy: "runtime-settlement",
+    emittedBy:
+      input.routedEffects.settledEffects.length > 0 ||
+      input.routedEffects.unsupportedEffects.length > 0 ||
+      input.routedEffects.warnings.length > 0
+        ? "runtime-router"
+        : "task-runtime",
+    settledEffects,
+    unsupportedEffects,
+    warnings,
+  };
+
+  return summary;
+}
+
+function omitRuntimeSettlementOwnership(
+  settlement: NonNullable<RuntimeResult["settlement"]>
+): Record<string, unknown> {
+  const {
+    appliedBy: _appliedBy,
+    emittedBy: _emittedBy,
+    settledEffects: _settledEffects,
+    unsupportedEffects: _unsupportedEffects,
+    warnings: _warnings,
+    effects: _effects,
+    ...rest
+  } = settlement as Record<string, unknown>;
+
+  return rest;
+}
+
 function settleRuntimeTasks(input: {
   state: RuntimeState;
   taskInputs: RuntimeResult["taskInputs"];
-  taskActions: RuntimeResult["taskActions"];
-  taskSignals: RuntimeResult["taskSignals"];
   taskDefinitionsById: Record<string, TaskDefinition> | undefined;
 }): {
   state: RuntimeState;
@@ -136,9 +212,8 @@ function settleRuntimeTasks(input: {
     input.state.core.runtime.tasks ?? createEmptyTaskRuntimeState("");
   const taskUpdates: NonNullable<RuntimeResult["taskUpdates"]> = [];
   const effects: RuntimeResult["effects"] = [];
-  const taskInputs = selectRuntimeTaskInputs(input);
 
-  for (const taskInput of taskInputs) {
+  for (const taskInput of input.taskInputs ?? []) {
     if (isTaskRuntimeAction(taskInput)) {
       const result = applyTaskAction({
         state: nextTaskState,
@@ -185,18 +260,6 @@ function settleRuntimeTasks(input: {
     taskUpdates,
     effects,
   };
-}
-
-function selectRuntimeTaskInputs(input: {
-  taskInputs: RuntimeResult["taskInputs"];
-  taskActions: RuntimeResult["taskActions"];
-  taskSignals: RuntimeResult["taskSignals"];
-}): NonNullable<RuntimeResult["taskInputs"]> {
-  if ((input.taskInputs?.length ?? 0) > 0) {
-    return input.taskInputs ?? [];
-  }
-
-  return [...(input.taskActions ?? []), ...(input.taskSignals ?? [])];
 }
 
 function isTaskRuntimeAction(value: unknown): value is TaskAction {
