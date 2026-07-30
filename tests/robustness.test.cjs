@@ -15607,6 +15607,28 @@ test("navigation enter-house convergence keeps on-enter event activation on the 
   assert.match(routeHouseEnterEventBlock, /\bdispatchEventRoute\s*\(/);
 });
 
+test("story runtime state-only binding route convergence keeps applyTriggeredStoryEvent on the shared direct-entry seam", () => {
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const applyTriggeredStoryEventBlock =
+    storyRuntimeSource.match(
+      /function applyTriggeredStoryEvent\([\s\S]*?\n}\n\nfunction createScopedTriggerContext/
+    )?.[0] ?? "";
+  const routeStoryDirectEntryBlock =
+    storyRuntimeSource.match(
+      /function routeStoryDirectEntry\([\s\S]*?\n}\n\nfunction applyTriggeredStoryEvent/
+    )?.[0] ?? "";
+
+  assert.match(applyTriggeredStoryEventBlock, /\brouteStoryDirectEntry\s*\(/);
+  assert.match(routeStoryDirectEntryBlock, /actionsAlreadyApplied\?: boolean/);
+  assert.doesNotMatch(
+    applyTriggeredStoryEventBlock,
+    /\bstate:\s*startEvent\(/
+  );
+});
+
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),

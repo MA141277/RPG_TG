@@ -78,6 +78,21 @@ function createStoryEvent(id, entrySceneId, trigger) {
   };
 }
 
+function createStoryHouse(id = "house.router.runtime") {
+  return {
+    id,
+    cityId: "city.kulan",
+    name: "Router Runtime House",
+    type: "custom",
+    characterIds: [],
+    outputMultiplier: 1,
+    backAction: {
+      label: "Back",
+      targetView: "city",
+    },
+  };
+}
+
 test("event router contract defines a canonical event entity and routed result seam", () => {
   const contractPath = path.join(
     process.cwd(),
@@ -409,6 +424,112 @@ test(
         dispatchRuntimeRequestCalls,
         0,
         "triggerStoryEventBindings should keep its existing binding-owned runtime path"
+      );
+    } finally {
+      runtimeDispatch.dispatchRuntimeRequest = originalDispatchRuntimeRequest;
+    }
+  }
+);
+
+test(
+  "triggerStoryEvents routes state-only binding continuation through the shared story direct-entry seam",
+  { concurrency: false },
+  () => {
+    const runtimeDispatch = require("../.test-dist/core/runtime/runtime-dispatch.js");
+    const originalDispatchRuntimeRequest =
+      runtimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    runtimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const runtimeHouse = createStoryHouse();
+      const baseState = createBaseStoryState();
+      const started = triggerStoryEvents(
+        {
+          state: {
+            ...baseState,
+            world: {
+              ...baseState.world,
+              currentHouseId: runtimeHouse.id,
+            },
+            ui: {
+              ...baseState.ui,
+              currentView: "house",
+            },
+          },
+          characterDefinitions: prototypeCharacters,
+          cityDefinitions: prototypeCities,
+          houseDefinitions: [...prototypeHouses, runtimeHouse],
+        },
+        {
+          eventDefinitionsById: {
+            "event.binding.state-only": {
+              ...createStoryEvent(
+                "event.binding.state-only",
+                "scene.binding.state-only",
+                { timing: "manual" }
+              ),
+              type: "settlement",
+              settlementId: "settlement.binding.state-only",
+              actions: [{ type: "closeBuilding" }],
+            },
+          },
+          sceneDefinitionsById: {
+            "scene.binding.state-only": {
+              id: "scene.binding.state-only",
+              name: "Binding State Only",
+              actions: [],
+            },
+          },
+          eventBindingsById: {
+            "binding.state-only": {
+              id: "binding.state-only",
+              eventId: "event.binding.state-only",
+              owner: {
+                family: "building",
+                id: runtimeHouse.id,
+              },
+              trigger: {
+                timing: "after",
+                action: "building-enter",
+              },
+            },
+          },
+          settlementDefinitionsById: {
+            "settlement.binding.state-only": {
+              id: "settlement.binding.state-only",
+              title: "Binding State Only Settlement",
+              contents: [],
+            },
+          },
+          cityDefinitionsById: {
+            "city.kulan": prototypeCities.find((city) => city.id === "city.kulan"),
+          },
+          houseDefinitionsById: {
+            [runtimeHouse.id]: runtimeHouse,
+          },
+        },
+        {
+          timing: "house-enter",
+          houseId: runtimeHouse.id,
+        }
+      );
+
+      assert.equal(
+        started.state.runtime.eventHistory["event.binding.state-only"]
+          ?.firedCount,
+        1
+      );
+      assert.equal(started.state.world.currentHouseId, null);
+      assert.equal(started.state.ui.currentView, "city");
+      assert.equal(started.state.scene.activeEventId, null);
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "state-only binding continuation should reuse routeStoryDirectEntry through dispatchRuntimeRequest instead of starting the event locally"
       );
     } finally {
       runtimeDispatch.dispatchRuntimeRequest = originalDispatchRuntimeRequest;

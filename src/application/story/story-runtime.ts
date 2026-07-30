@@ -121,14 +121,16 @@ function toStoryRuntimeEventEntity(
 
 function routeStoryEvent(
   state: RuntimeState,
-  eventDefinition: EventDefinition
+  eventDefinition: EventDefinition,
+  options: { actionsAlreadyApplied?: boolean } = {}
 ): RuntimeState {
+  const coreState =
+    options.actionsAlreadyApplied === true
+      ? state.core
+      : applyEventRuntimeActions(state.core, eventDefinition);
   return {
     ...state,
-    core: startEvent(
-      applyEventRuntimeActions(state.core, eventDefinition),
-      eventDefinition
-    ),
+    core: startEvent(coreState, eventDefinition),
   };
 }
 
@@ -138,6 +140,7 @@ function routeStoryDirectEntry(
   input: {
     eventId: string;
     eventDefinition?: EventDefinition | undefined;
+    actionsAlreadyApplied?: boolean | undefined;
   }
 ): StoryRuntimeContext {
   const fallbackEventDefinition =
@@ -178,7 +181,10 @@ function routeStoryDirectEntry(
                         effects: [],
                       }
                     : {
-                        state: routeStoryEvent(state, eventDefinition),
+                        state: routeStoryEvent(state, eventDefinition, {
+                          actionsAlreadyApplied:
+                            input.actionsAlreadyApplied === true,
+                        }),
                         effects: [],
                         taskInputs: eventDefinition.taskInputs ?? [],
                       };
@@ -191,7 +197,10 @@ function routeStoryDirectEntry(
                         effects: [],
                       }
                     : {
-                        state: routeStoryEvent(state, eventDefinition),
+                        state: routeStoryEvent(state, eventDefinition, {
+                          actionsAlreadyApplied:
+                            input.actionsAlreadyApplied === true,
+                        }),
                         effects: [],
                         taskInputs: eventDefinition.taskInputs ?? [],
                       };
@@ -226,16 +235,16 @@ function applyTriggeredStoryEvent(
   eventDefinition: EventDefinition,
   options: { eventAlreadyStarted?: boolean } = {}
 ): StoryRuntimeContext {
-  const activeRuntime =
-    options.eventAlreadyStarted === true
-      ? runtime
-      : {
-          state: startEvent(runtime.state, eventDefinition),
-          characterDefinitions: runtime.characterDefinitions,
-          ...createRuntimeWorldDefinitionContext(runtime),
-        };
+  if (options.eventAlreadyStarted !== true) {
+    return routeStoryDirectEntry(runtime, content, {
+      eventId: eventDefinition.id,
+      eventDefinition,
+      actionsAlreadyApplied: true,
+    });
+  }
+
   const settledRuntime = applyStorySettlementEvent(
-    activeRuntime,
+    runtime,
     content,
     eventDefinition
   );
