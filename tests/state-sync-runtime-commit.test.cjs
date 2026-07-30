@@ -80,7 +80,7 @@ test("commitRuntimeRequest applies runtime status patches through the state sync
   });
 });
 
-test("commitRuntimeRequest settles playable settlement effects before app state write-back", () => {
+test("commitRuntimeRequest no longer settles legacy playable settlement effects through runtime commit flow", () => {
   const result = commitRuntimeRequest({
     state: createAppState(),
     request: {
@@ -115,7 +115,7 @@ test("commitRuntimeRequest settles playable settlement effects before app state 
     },
   });
 
-  assert.equal(result.state.gameState.runtime.flags["playable.settled"], true);
+  assert.equal(result.state.gameState.runtime.flags["playable.settled"], undefined);
   assert.deepEqual(result.runtimeResult.settlement.effects, [
     {
       type: "setFlag",

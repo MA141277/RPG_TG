@@ -16789,6 +16789,18 @@ test("runtime settlement effects compatibility optional keeps effects off the ca
   );
 });
 
+test("runtime settlement effects fallback removal keeps state sync runtime command-only", () => {
+  const stateSyncSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(stateSyncSource, /const settlementEffects = runtimeResult\.settlement\?\.effects/);
+  assert.doesNotMatch(stateSyncSource, /settleRuntimeEffects\(/);
+  assert.match(stateSyncSource, /const settlementCommands = runtimeResult\.settlement\?\.commands \?\? \[\]/);
+  assert.match(stateSyncSource, /settleRuntimeCommands\(/);
+});
+
 test("settlement command runtime owns the covered concrete mutation families", () => {
   const contractSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/settlement-command.ts"),
