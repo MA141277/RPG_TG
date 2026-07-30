@@ -24,11 +24,11 @@ import {
   createRuntimeTriggerContext,
   runEventBindingRuntime,
 } from "../../core/runtime/event-binding-runtime";
+import { createEventRouteActivationHandlers } from "../../core/runtime/event-route-activation";
 import { dispatchEventRoute } from "../../core/runtime/event-router";
 import { runProgressionRuntime } from "../../core/runtime/progression-runtime";
 import { dispatchRuntimeRequest } from "../../core/runtime/runtime-dispatch";
 import { resolveEventContinuation } from "../events/event-continuation";
-import { startEvent } from "../events/event-runner";
 import { applyEffects } from "../effects/effect-applier";
 import {
   applyStorySettlementEvent,
@@ -119,21 +119,6 @@ function toStoryRuntimeEventEntity(
   };
 }
 
-function routeStoryEvent(
-  state: RuntimeState,
-  eventDefinition: EventDefinition,
-  options: { actionsAlreadyApplied?: boolean } = {}
-): RuntimeState {
-  const coreState =
-    options.actionsAlreadyApplied === true
-      ? state.core
-      : applyEventRuntimeActions(state.core, eventDefinition);
-  return {
-    ...state,
-    core: startEvent(coreState, eventDefinition),
-  };
-}
-
 function routeStoryDirectEntry(
   runtime: StoryRuntimeContext,
   content: StoryContent,
@@ -150,6 +135,14 @@ function routeStoryDirectEntry(
   }
 
   const eventId = fallbackEventDefinition.id;
+  const activationHandlers = createEventRouteActivationHandlers({
+    eventDefinitionsById: content.eventDefinitionsById,
+    fallbackEventDefinition,
+    prepareCoreState: ({ coreState, eventDefinition }) =>
+      input.actionsAlreadyApplied === true
+        ? coreState
+        : applyEventRuntimeActions(coreState, eventDefinition),
+  });
   const routed = dispatchRuntimeRequest({
     state: toStoryRuntimeState(runtime.state),
     request: {
@@ -181,11 +174,13 @@ function routeStoryDirectEntry(
                         effects: [],
                       }
                     : {
-                        state: routeStoryEvent(state, eventDefinition, {
-                          actionsAlreadyApplied:
-                            input.actionsAlreadyApplied === true,
+                        ...(activationHandlers.dialogue?.({
+                          state,
+                          event,
+                        }) ?? {
+                          state,
+                          effects: [],
                         }),
-                        effects: [],
                         taskInputs: eventDefinition.taskInputs ?? [],
                       };
                 },
@@ -197,11 +192,13 @@ function routeStoryDirectEntry(
                         effects: [],
                       }
                     : {
-                        state: routeStoryEvent(state, eventDefinition, {
-                          actionsAlreadyApplied:
-                            input.actionsAlreadyApplied === true,
+                        ...(activationHandlers.settlement?.({
+                          state,
+                          event,
+                        }) ?? {
+                          state,
+                          effects: [],
                         }),
-                        effects: [],
                         taskInputs: eventDefinition.taskInputs ?? [],
                       };
                 },

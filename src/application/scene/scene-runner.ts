@@ -6,10 +6,10 @@ import type { GameState } from "../../domain/game-state";
 import { runActivity } from "../activity/activity-runner";
 import { applyEffects } from "../effects/effect-applier";
 import {
+  continueToEvent,
   createEventContinuationTracker,
   resolveEventContinuation,
 } from "../events/event-continuation";
-import { startEvent } from "../events/event-runner";
 import { runEventPlayableRuntime } from "../events/event-playable-runtime";
 import { runStoryCallback } from "../story/story-callbacks";
 
@@ -159,16 +159,21 @@ export function runSceneUntilPause(
     }
 
     if (currentAction.type === "start-event") {
-      const continuation = resolveEventContinuation({
-        state: nextState,
-        eventDefinitionsById: context.eventDefinitionsById,
-        sourceEventId: nextState.scene.activeEventId,
-        targetEventId: currentAction.eventId,
-        visitedEventIds: continuationVisitedEventIds,
-      });
-      if (continuation == null) {
-        nextState = incrementSceneCursor(nextState);
-      } else if (context.continueFromSceneEvent != null) {
+      if (context.continueFromSceneEvent != null) {
+        const continuation = resolveEventContinuation({
+          state: nextState,
+          eventDefinitionsById: context.eventDefinitionsById,
+          sourceEventId: nextState.scene.activeEventId,
+          targetEventId: currentAction.eventId,
+          visitedEventIds: continuationVisitedEventIds,
+        });
+        if (continuation == null) {
+          nextState = incrementSceneCursor(nextState);
+          continuationVisitedEventIds = createEventContinuationTracker([
+            nextState.scene.activeEventId,
+          ]);
+          continue;
+        }
         const continuedRuntime = context.continueFromSceneEvent({
           state: nextState,
           characterDefinitions: nextCharacterDefinitions,
@@ -177,12 +182,25 @@ export function runSceneUntilPause(
         });
         nextState = continuedRuntime.state;
         nextCharacterDefinitions = continuedRuntime.characterDefinitions;
+        continuationVisitedEventIds = continuation.visitedEventIds;
       } else {
-        nextState = startEvent(nextState, continuation.eventDefinition);
+        const continuation = continueToEvent({
+          state: nextState,
+          eventDefinitionsById: context.eventDefinitionsById,
+          sourceEventId: nextState.scene.activeEventId,
+          targetEventId: currentAction.eventId,
+          visitedEventIds: continuationVisitedEventIds,
+        });
+        if (continuation == null) {
+          nextState = incrementSceneCursor(nextState);
+          continuationVisitedEventIds = createEventContinuationTracker([
+            nextState.scene.activeEventId,
+          ]);
+          continue;
+        }
+        nextState = continuation.state;
+        continuationVisitedEventIds = continuation.visitedEventIds;
       }
-      continuationVisitedEventIds =
-        continuation?.visitedEventIds ??
-        createEventContinuationTracker([nextState.scene.activeEventId]);
       continue;
     }
 
@@ -275,18 +293,17 @@ function continueSceneEvent(
     activeEventId == null
       ? undefined
       : context.eventDefinitionsById[activeEventId]?.nextEventId;
-  const continuation = resolveEventContinuation({
-    state,
-    eventDefinitionsById: context.eventDefinitionsById,
-    sourceEventId: activeEventId,
-    targetEventId: nextEventId,
-    visitedEventIds,
-  });
-  if (continuation == null) {
-    return null;
-  }
-
   if (context.continueFromSceneEvent != null) {
+    const continuation = resolveEventContinuation({
+      state,
+      eventDefinitionsById: context.eventDefinitionsById,
+      sourceEventId: activeEventId,
+      targetEventId: nextEventId,
+      visitedEventIds,
+    });
+    if (continuation == null) {
+      return null;
+    }
     const continuedRuntime = context.continueFromSceneEvent({
       state,
       characterDefinitions,
@@ -300,8 +317,19 @@ function continueSceneEvent(
     };
   }
 
+  const continuation = continueToEvent({
+    state,
+    eventDefinitionsById: context.eventDefinitionsById,
+    sourceEventId: activeEventId,
+    targetEventId: nextEventId,
+    visitedEventIds,
+  });
+  if (continuation == null) {
+    return null;
+  }
+
   return {
-    state: startEvent(state, continuation.eventDefinition),
+    state: continuation.state,
     characterDefinitions,
     visitedEventIds: continuation.visitedEventIds,
   };

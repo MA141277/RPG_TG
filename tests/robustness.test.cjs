@@ -15526,7 +15526,8 @@ test("scene runner start event convergence keeps start-event actions on the shar
 
   assert.match(startEventBlock, /context\.continueFromSceneEvent/);
   assert.match(startEventBlock, /resolveEventContinuation\(/);
-  assert.match(startEventBlock, /startEvent\(/);
+  assert.match(startEventBlock, /continueToEvent\(/);
+  assert.doesNotMatch(startEventBlock, /startEvent\(/);
 });
 
 test("scene runner scene-end continuation convergence keeps one shared continuation seam", () => {
@@ -15725,6 +15726,42 @@ test("runtime route activation seam convergence keeps owner runtimes on shared a
   assert.doesNotMatch(navigationRuntimeSource, /\bstartEvent\s*\(/);
   assert.doesNotMatch(sceneRuntimeSource, /\bstartEvent\s*\(/);
 });
+
+test("story runtime activation seam convergence keeps direct entry on shared activation handlers", () => {
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const routeStoryDirectEntryBlock =
+    storyRuntimeSource.match(
+      /function routeStoryDirectEntry\([\s\S]*?\n}\n\nfunction applyTriggeredStoryEvent/
+    )?.[0] ?? "";
+
+  assert.match(storyRuntimeSource, /\bcreateEventRouteActivationHandlers\s*\(/);
+  assert.doesNotMatch(storyRuntimeSource, /\bfunction routeStoryEvent\b/);
+  assert.doesNotMatch(routeStoryDirectEntryBlock, /\bstartEvent\s*\(/);
+});
+
+test("scene fallback continuation seam convergence keeps local non-owner starts on continueToEvent", () => {
+  const sceneRunnerSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/scene/scene-runner.ts"),
+    "utf8"
+  );
+  const choiceResolverSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/scene/choice-resolver.ts"),
+    "utf8"
+  );
+  const continueSceneEventBlock =
+    sceneRunnerSource.match(
+      /function continueSceneEvent\([\s\S]*?\n}\n/
+    )?.[0] ?? "";
+
+  assert.match(sceneRunnerSource, /\bcontinueToEvent\s*\(/);
+  assert.doesNotMatch(continueSceneEventBlock, /\bstartEvent\s*\(/);
+  assert.match(choiceResolverSource, /\bcontinueToEvent\s*\(/);
+  assert.doesNotMatch(choiceResolverSource, /\bstartEvent\s*\(/);
+});
+
 
 test("shared dispatch consumes the hardened runtime router contract", () => {
   const source = fs.readFileSync(

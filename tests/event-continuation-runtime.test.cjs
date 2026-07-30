@@ -5,6 +5,7 @@ const {
   runSceneUntilPause,
 } = require("../.test-dist/application/scene/scene-runner.js");
 const {
+  continueToEvent,
   resolveEventContinuation,
 } = require("../.test-dist/application/events/event-continuation.js");
 const {
@@ -610,6 +611,166 @@ test(
     assert.equal(continued.state.scene.activeEventId, null);
     assert.equal(continued.state.scene.activeSceneId, null);
     assert.equal(continued.state.scene.status, "idle");
+  }
+);
+
+test(
+  "scene runner non-owner start-event fallback reuses continueToEvent compatibility seam",
+  { concurrency: false },
+  () => {
+    const continuationPath = require.resolve(
+      "../.test-dist/application/events/event-continuation.js"
+    );
+    const sceneRunnerPath = require.resolve(
+      "../.test-dist/application/scene/scene-runner.js"
+    );
+
+    delete require.cache[sceneRunnerPath];
+    delete require.cache[continuationPath];
+
+    const continuationModule = require(continuationPath);
+    const originalContinueToEvent = continuationModule.continueToEvent;
+    let continueToEventCalls = 0;
+
+    continuationModule.continueToEvent = (...args) => {
+      continueToEventCalls += 1;
+      return originalContinueToEvent(...args);
+    };
+
+    try {
+      const { runSceneUntilPause: runSceneUntilPauseWithPatchedContinuation } =
+        require(sceneRunnerPath);
+      const state = startEvent(
+        createBaseState(),
+        createEvent("event.scene.owner", "scene.scene.owner")
+      );
+      const result = runSceneUntilPauseWithPatchedContinuation(state, {
+        sceneDefinitionsById: {
+          "scene.scene.owner": {
+            id: "scene.scene.owner",
+            name: "Scene Owner",
+            actions: [
+              {
+                type: "start-event",
+                eventId: "event.scene.followup",
+              },
+            ],
+          },
+          "scene.scene.followup": {
+            id: "scene.scene.followup",
+            name: "Scene Follow-up",
+            actions: [],
+          },
+        },
+        eventDefinitionsById: {
+          "event.scene.owner": createEvent(
+            "event.scene.owner",
+            "scene.scene.owner"
+          ),
+          "event.scene.followup": createEvent(
+            "event.scene.followup",
+            "scene.scene.followup"
+          ),
+        },
+        characterDefinitions: prototypeCharacters,
+      });
+
+      assert.equal(
+        result.state.runtime.eventHistory["event.scene.followup"]?.firedCount,
+        1
+      );
+      assert.ok(
+        continueToEventCalls > 0,
+        "scene-runner fallback should reuse continueToEvent instead of locally starting follow-up events"
+      );
+    } finally {
+      continuationModule.continueToEvent = originalContinueToEvent;
+      delete require.cache[sceneRunnerPath];
+      delete require.cache[continuationPath];
+    }
+  }
+);
+
+test(
+  "choice resolver nextEvent fallback reuses continueToEvent compatibility seam",
+  { concurrency: false },
+  () => {
+    const continuationPath = require.resolve(
+      "../.test-dist/application/events/event-continuation.js"
+    );
+    const choiceResolverPath = require.resolve(
+      "../.test-dist/application/scene/choice-resolver.js"
+    );
+
+    delete require.cache[choiceResolverPath];
+    delete require.cache[continuationPath];
+
+    const continuationModule = require(continuationPath);
+    const originalContinueToEvent = continuationModule.continueToEvent;
+    let continueToEventCalls = 0;
+
+    continuationModule.continueToEvent = (...args) => {
+      continueToEventCalls += 1;
+      return originalContinueToEvent(...args);
+    };
+
+    try {
+      const { resolveChoiceOption: resolveChoiceOptionWithPatchedContinuation } =
+        require(choiceResolverPath);
+      const state = startEvent(
+        createBaseState(),
+        createEvent("event.choice.owner", "scene.choice.owner")
+      );
+      const result = resolveChoiceOptionWithPatchedContinuation(
+        {
+          ...state,
+          scene: {
+            ...state.scene,
+            status: "waiting-choice",
+          },
+        },
+        {
+          id: "option.choice.followup",
+          label: "Follow-up",
+          nextEventId: "event.choice.followup",
+        },
+        {
+          sceneDefinitionsById: {
+            "scene.choice.owner": {
+              id: "scene.choice.owner",
+              name: "Choice Owner",
+              actions: [],
+            },
+            "scene.choice.followup": {
+              id: "scene.choice.followup",
+              name: "Choice Follow-up",
+              actions: [],
+            },
+          },
+          eventDefinitionsById: {
+            "event.choice.owner": createEvent(
+              "event.choice.owner",
+              "scene.choice.owner"
+            ),
+            "event.choice.followup": createEvent(
+              "event.choice.followup",
+              "scene.choice.followup"
+            ),
+          },
+          characterDefinitions: prototypeCharacters,
+        }
+      );
+
+      assert.equal(result.state.scene.activeEventId, "event.choice.followup");
+      assert.ok(
+        continueToEventCalls > 0,
+        "choice-resolver fallback should reuse continueToEvent instead of locally starting the follow-up event"
+      );
+    } finally {
+      continuationModule.continueToEvent = originalContinueToEvent;
+      delete require.cache[choiceResolverPath];
+      delete require.cache[continuationPath];
+    }
   }
 );
 

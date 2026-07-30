@@ -267,6 +267,79 @@ test("event route activation handlers share one canonical event-start seam", () 
 });
 
 test(
+  "startStoryEventById routes direct story entry through the shared activation seam",
+  { concurrency: false },
+  () => {
+    const activationPath = require.resolve(
+      "../.test-dist/core/runtime/event-route-activation.js"
+    );
+    const storyRuntimePath = require.resolve(
+      "../.test-dist/application/story/story-runtime.js"
+    );
+
+    delete require.cache[storyRuntimePath];
+    delete require.cache[activationPath];
+
+    const activationModule = require(activationPath);
+    const originalCreateHandlers =
+      activationModule.createEventRouteActivationHandlers;
+    let createHandlersCalls = 0;
+
+    activationModule.createEventRouteActivationHandlers = (...args) => {
+      createHandlersCalls += 1;
+      return originalCreateHandlers(...args);
+    };
+
+    try {
+      const {
+        startStoryEventById: startStoryEventByIdWithPatchedActivation,
+      } = require(storyRuntimePath);
+      const content = {
+        eventDefinitionsById: {
+          "event.story.activation": createStoryEvent(
+            "event.story.activation",
+            "scene.story.activation",
+            { timing: "manual" }
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.story.activation": {
+            id: "scene.story.activation",
+            name: "Story Activation",
+            actions: [],
+          },
+        },
+      };
+
+      const started = startStoryEventByIdWithPatchedActivation(
+        {
+          state: createBaseStoryState(),
+          characterDefinitions: prototypeCharacters,
+          cityDefinitions: prototypeCities,
+          houseDefinitions: prototypeHouses,
+        },
+        content,
+        "event.story.activation"
+      );
+
+      assert.equal(
+        started.state.runtime.eventHistory["event.story.activation"]?.firedCount,
+        1
+      );
+      assert.ok(
+        createHandlersCalls > 0,
+        "story direct entry should reuse createEventRouteActivationHandlers instead of locally starting the event"
+      );
+    } finally {
+      activationModule.createEventRouteActivationHandlers =
+        originalCreateHandlers;
+      delete require.cache[storyRuntimePath];
+      delete require.cache[activationPath];
+    }
+  }
+);
+
+test(
   "runStoryEventRuntime routes activated trigger events through the shared event-router seam",
   { concurrency: false },
   () => {
