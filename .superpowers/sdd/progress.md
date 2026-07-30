@@ -28,3 +28,4 @@
 - 2026-07-28: Campaign Hex Runtime Grid Architecture Task 4 complete locally (no git commits; regenerated map3 runtime data; targeted grid/renderer tests, typecheck, build:test, build, and browser runtime verification passed; final review still pending).
 - 2026-07-28: Campaign Hex Runtime Grid Architecture final review fixes applied locally (no git commits; cache signature/algorithm version and shader bounds-size sampling fixed; targeted grid/renderer tests, typecheck, build:test, build, lint:plans, and browser smoke passed; final re-review pending).
 - 2026-07-28: Campaign Hex Runtime Grid Architecture final re-review complete (no Critical/Important findings; reviewer reran targeted robustness subset with 5 pass, 0 fail; push still pending because local git tooling is unavailable).
+- 2026-07-31: City Begging Default Dialogue Task 1 complete (commits baec117e..dc2854f9, review clean after exact-copy/changelog/getter coverage fixes).

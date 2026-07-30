@@ -12,9 +12,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-31`
-- Current Focus: `Executing Task 1 using subagent-driven development in the current checkout.`
-- Next Step: `Start Task 1 with a failing data contract test.`
-- Verification: `npm run lint:plans passed for plan creation; implementation tests not run yet.`
+- Current Focus: `Executing Task 2 using subagent-driven development in the current checkout.`
+- Next Step: `Start Task 2 with a failing default dialogue reducer test.`
+- Verification: `Task 1 focused content test passed after review fixes; npm run lint:plans passed for plan creation.`
 - Notes: `docs/superpowers/project-progress.md currently points at a separate completed-but-open map-renderer child, so this plan is not marked as canonical project-progress current work until the user explicitly promotes this child or accepts local execution outside that queue.`
 
 ## Progress Log
@@ -27,6 +27,10 @@
   - Summary: `User selected Subagent-Driven execution and declined a separate worktree; execution will proceed in the current local checkout.`
   - Verification: `git worktree detection: normal checkout on branch 7/30main`
   - Next: `Start Task 1 with a failing data contract test.`
+- 2026-07-31
+  - Summary: `Task 1 default content contract completed after review fixes for changelog coverage, exact Chinese copy, settlement text, and location getter coverage.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/city-begging-default-content.test.cjs }`
+  - Next: `Start Task 2 with a failing default dialogue reducer test.`
 
 ---
 
@@ -149,7 +153,7 @@
   - `type CityBeggingDefaultEffect = { type: string; [key: string]: unknown }`
   - `getCityBeggingDefaultLocation(locationId: string): CityBeggingDefaultLocation | null`
 
-- [ ] **Step 1: Write the failing content contract test**
+- [x] **Step 1: Write the failing content contract test**
 
 Add this shape to `tests/city-begging-default-content.test.cjs`:
 
@@ -200,7 +204,7 @@ test("city begging default options lock the requested fixed fortune table", asyn
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 
@@ -212,7 +216,7 @@ Expected:
 
 - `ERR_MODULE_NOT_FOUND` or export-not-found for `city-begging-default-content.ts`.
 
-- [ ] **Step 3: Implement the content table**
+- [x] **Step 3: Implement the content table**
 
 Create `src/content/playables/city-begging-default-content.ts` with the typed location records. Preserve the exact Chinese copy from the user request. Use these result keys:
 
@@ -253,7 +257,7 @@ export type CityBeggingDefaultLocation = {
 };
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run:
 
