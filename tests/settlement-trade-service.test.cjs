@@ -11,6 +11,9 @@ const {
   SettlementTradeService,
 } = require("../.test-dist/application/markets/settlement-trade-service.js");
 const {
+  settlementTradeCityProfilesByCityId,
+} = require("../.test-dist/content/markets/settlement-trade-city-profiles.js");
+const {
   getTradeInventoryQuantityVariableKey,
 } = require("../.test-dist/domain/market-house.js");
 const {
@@ -28,8 +31,21 @@ function getMarketCityIds() {
     .map((city) => city.id);
 }
 
-function createBaseState(cityId = "city.yingtian") {
-  defaultRuntimeContent.cities = prototypeCities;
+function withMockedMathRandom(sequence, run) {
+  const originalRandom = Math.random;
+  const values = Array.isArray(sequence) ? [...sequence] : [sequence];
+  let index = 0;
+  Math.random = () => values[Math.min(index++, values.length - 1)] ?? 0;
+
+  try {
+    return run();
+  } finally {
+    Math.random = originalRandom;
+  }
+}
+
+function createBaseState(cityId = "city.yingtian", runtimeCities = prototypeCities) {
+  defaultRuntimeContent.cities = runtimeCities;
   return createInitialState({
     currentMapId: prototypeMap.id,
     currentCityId: cityId,
@@ -55,6 +71,152 @@ function createBaseState(cityId = "city.yingtian") {
   });
 }
 
+test("settlement trade prepare snapshot creates the first city assortment from tier odds", () => {
+  const service = new SettlementTradeService();
+  const prepared = withMockedMathRandom([0.9, 0.1, 0.59], () =>
+    service.prepareSnapshot({
+      state: createBaseState("city.yingtian"),
+      cityId: "city.yingtian",
+      currentDay: 1,
+    })
+  );
+
+  assert.deepEqual(
+    prepared.snapshot.rows.map((row) => row.goodsId),
+    ["silk_textiles", "wine", "salt"]
+  );
+  assert.equal(prepared.snapshot.nextRefreshDay, 11);
+  assert.deepEqual(prepared.mutations, [
+    {
+      type: "set-settlement-trade-city-assortment",
+      cityId: "city.yingtian",
+      visibleGoodsIds: ["silk_textiles", "wine", "salt"],
+      refreshedDay: 1,
+    },
+  ]);
+});
+
+test("settlement trade prepare snapshot keeps the current city assortment within 10 days", () => {
+  const state = createBaseState("city.yingtian");
+  state.runtime.settlementTrade["city.yingtian"] = {
+    __meta: {
+      visibleGoodsIds: ["silk_textiles", "paper_brush"],
+      lastRefreshedDay: 1,
+    },
+  };
+
+  const service = new SettlementTradeService();
+  const prepared = withMockedMathRandom(0, () =>
+    service.prepareSnapshot({
+      state,
+      cityId: "city.yingtian",
+      currentDay: 10,
+    })
+  );
+
+  assert.deepEqual(
+    prepared.snapshot.rows.map((row) => row.goodsId),
+    ["silk_textiles", "paper_brush"]
+  );
+  assert.equal(prepared.snapshot.nextRefreshDay, 11);
+  assert.deepEqual(prepared.mutations, []);
+});
+
+test("settlement trade prepare snapshot rerolls the city assortment after 10 days", () => {
+  const state = createBaseState("city.yingtian");
+  state.runtime.settlementTrade["city.yingtian"] = {
+    __meta: {
+      visibleGoodsIds: ["silk_textiles", "paper_brush", "wine", "salt"],
+      lastRefreshedDay: 1,
+    },
+  };
+
+  const service = new SettlementTradeService();
+  const prepared = withMockedMathRandom([0.95, 0.95, 0.95], () =>
+    service.prepareSnapshot({
+      state,
+      cityId: "city.yingtian",
+      currentDay: 11,
+    })
+  );
+
+  assert.deepEqual(
+    prepared.snapshot.rows.map((row) => row.goodsId),
+    ["silk_textiles"]
+  );
+  assert.equal(prepared.snapshot.nextRefreshDay, 21);
+  assert.deepEqual(prepared.mutations, [
+    {
+      type: "set-settlement-trade-city-assortment",
+      cityId: "city.yingtian",
+      visibleGoodsIds: ["silk_textiles"],
+      refreshedDay: 11,
+    },
+  ]);
+});
+
+test("settlement trade prepare snapshot already supports future extreme-scarce goods odds", () => {
+  const customCityId = "city.probability_test";
+  const runtimeCities = [
+    ...prototypeCities,
+    {
+      ...prototypeCities[0],
+      id: customCityId,
+      name: "Probability Test",
+    },
+  ];
+
+  settlementTradeCityProfilesByCityId[customCityId] = {
+    cityId: customCityId,
+    cityName: "Probability Test",
+    goods: {
+      silk_textiles: {
+        tier: "abundant",
+        initialStock: 16,
+      },
+      paper_brush: {
+        tier: "local",
+        initialStock: 12,
+      },
+      salt: {
+        tier: "scarce",
+        initialStock: 10,
+      },
+      tea: {
+        tier: "extreme-scarce",
+        initialStock: 8,
+      },
+    },
+  };
+
+  try {
+    const service = new SettlementTradeService();
+    const prepared = withMockedMathRandom([0.81, 0.59, 0.39], () =>
+      service.prepareSnapshot({
+        state: createBaseState(customCityId, runtimeCities),
+        cityId: customCityId,
+        currentDay: 1,
+      })
+    );
+
+    assert.deepEqual(
+      prepared.snapshot.rows.map((row) => row.goodsId),
+      ["silk_textiles", "salt", "tea"]
+    );
+    assert.deepEqual(prepared.mutations, [
+      {
+        type: "set-settlement-trade-city-assortment",
+        cityId: customCityId,
+        visibleGoodsIds: ["silk_textiles", "salt", "tea"],
+        refreshedDay: 1,
+      },
+    ]);
+  } finally {
+    delete settlementTradeCityProfilesByCityId[customCityId];
+    defaultRuntimeContent.cities = prototypeCities;
+  }
+});
+
 test("settlement trade snapshot reads content defaults for supported cities", () => {
   const service = new SettlementTradeService();
   const snapshot = service.createSnapshot({
@@ -68,6 +230,40 @@ test("settlement trade snapshot reads content defaults for supported cities", ()
   assert.equal(snapshot.rows.every((row) => row.priceMultiplier === 1), true);
   assert.equal(snapshot.rows.every((row) => row.progressUnits === 0), true);
   assert.equal(snapshot.rows.every((row) => row.daysUntilReset === 30), true);
+});
+
+test("settlement trade snapshot applies the configured tier price multipliers", () => {
+  const service = new SettlementTradeService();
+  const rowsByGoodsId = Object.fromEntries(
+    service
+      .createSnapshot({
+        state: createBaseState("city.yingtian"),
+        cityId: "city.yingtian",
+        currentDay: 1,
+      })
+      .rows.map((row) => [row.goodsId, row])
+  );
+
+  assert.equal(rowsByGoodsId.silk_textiles?.staticReferencePrice, 180);
+  assert.equal(rowsByGoodsId.paper_brush?.staticReferencePrice, 179);
+  assert.equal(rowsByGoodsId.wine?.staticReferencePrice, 204);
+  assert.equal(rowsByGoodsId.salt?.staticReferencePrice, 185);
+});
+
+test("settlement trade snapshot uses localized specialty labels for the current runtime pack", () => {
+  const service = new SettlementTradeService();
+  const row = service
+    .createSnapshot({
+      state: createBaseState("city.yingtian"),
+      cityId: "city.yingtian",
+      currentDay: 1,
+    })
+    .rows.find((candidate) => candidate.goodsId === "silk_textiles");
+
+  assert.notEqual(row, undefined);
+  assert.equal(row?.name, "丝绸");
+  assert.equal(row?.categoryLabel, "织品");
+  assert.equal(row?.unit, "匹");
 });
 
 test("settlement trade snapshot supports every runtime city that has a market house", () => {
@@ -130,7 +326,38 @@ test("settlement trade snapshot rejects cities without a specialty profile", () 
 
   assert.equal(snapshot.supported, false);
   assert.deepEqual(snapshot.rows, []);
-  assert.match(snapshot.helperLines[0] ?? "", /not available/i);
+  assert.match(snapshot.helperLines[0] ?? "", /尚未开通|未开通/u);
+});
+
+test("settlement trade helper and validation copy stay localized in Chinese", () => {
+  const service = new SettlementTradeService();
+  const supportedSnapshot = service.createSnapshot({
+    state: createBaseState("city.yingtian"),
+    cityId: "city.yingtian",
+    currentDay: 1,
+  });
+  const unsupportedResolution = service.resolveTrade({
+    state: createBaseState("city.unsupported"),
+    cityId: "city.unsupported",
+    currentDay: 1,
+    goodsId: "silk_textiles",
+    mode: "buy",
+    quantity: 1,
+    playerGold: 1000,
+  });
+
+  assert.match(supportedSnapshot.helperLines[0] ?? "", /买入价|卖出价/u);
+  assert.match(supportedSnapshot.helperLines[1] ?? "", /每买卖 10 个/u);
+  assert.equal(unsupportedResolution.ok, false);
+  if (unsupportedResolution.ok) {
+    return;
+  }
+
+  assert.match(unsupportedResolution.title, /特产/u);
+  assert.doesNotMatch(
+    [unsupportedResolution.title, ...unsupportedResolution.paragraphs].join("\n"),
+    /Specialty market unavailable|This city does not have a specialty market/i
+  );
 });
 
 test("settlement trade investigation summary is derived from the snapshot rows", () => {

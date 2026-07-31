@@ -59,14 +59,6 @@ export function applyHouseOverlayButtonSoundPolicy(
         incrementButtonSound: "light",
         confirmButtonSound: "heavy",
       };
-    case "settlement-trade":
-      return {
-        ...overlay,
-        cancelButtonSound: "light",
-        decrementButtonSound: "light",
-        incrementButtonSound: "light",
-        confirmButtonSound: "heavy",
-      };
     case "medicine-buy":
       return {
         ...overlay,
@@ -209,29 +201,6 @@ export function applyHouseOverlayButtonSoundMarkup(
       );
     }
     case "market-trade": {
-      let nextMarkup = injectHouseActionButtonSound(
-        markup,
-        overlay.cancelActionId,
-        overlay.cancelButtonSound
-      );
-      nextMarkup = injectHouseActionButtonSound(
-        nextMarkup,
-        overlay.decrementActionId,
-        overlay.decrementButtonSound
-      );
-      nextMarkup = injectHouseActionButtonSound(
-        nextMarkup,
-        overlay.incrementActionId,
-        overlay.incrementButtonSound
-      );
-
-      return injectHouseActionButtonSound(
-        nextMarkup,
-        overlay.confirmActionId,
-        overlay.confirmButtonSound
-      );
-    }
-    case "settlement-trade": {
       let nextMarkup = injectHouseActionButtonSound(
         markup,
         overlay.cancelActionId,

@@ -504,54 +504,6 @@ export type HouseOverlayViewModel =
       incrementButtonSound?: "light" | "heavy";
     }
   | {
-      type: "settlement-trade";
-      title: string;
-      mode: "buy" | "sell";
-      quantity: number;
-      quantityFieldId: string;
-      decrementActionId: string;
-      incrementActionId: string;
-      confirmActionId: string;
-      confirmLabel: string;
-      cancelActionId: string;
-      cancelLabel: string;
-      rows: Array<{
-        goodsId: string;
-        name: string;
-        categoryLabel: string;
-        unit: string;
-        tierLabel: string;
-        buyPrice: number;
-        sellPrice: number;
-        basePrice: number;
-        priceMultiplier: number;
-        stockQuantity: number;
-        ownedQuantity: number;
-        daysUntilReset: number;
-        priceTone: "low" | "high" | "neutral";
-        isSelected: boolean;
-      }>;
-      selectedSummary: {
-        goodsId: string;
-        name: string;
-        unit: string;
-        tierLabel: string;
-        buyPrice: number;
-        sellPrice: number;
-        stockQuantity: number;
-        ownedQuantity: number;
-        tradeTotal: number;
-        daysUntilReset: number;
-        nextStepHint: string;
-        supplyHint: string;
-      } | null;
-      helperLines: string[];
-      confirmButtonSound?: "light" | "heavy";
-      cancelButtonSound?: "light" | "heavy";
-      decrementButtonSound?: "light" | "heavy";
-      incrementButtonSound?: "light" | "heavy";
-    }
-  | {
       type: "grain-price-report";
       title: string;
       subtitle: string;

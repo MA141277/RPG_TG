@@ -3,6 +3,28 @@
     "runtime.zhu_yuanzhang.market_house.boss_open.001",
     "runtime.zhu_yuanzhang.market_house.boss_open.002"
   ],
+  "marketHouseShopkeeperRouteTemplateTextIds": [
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.001",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.002",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.003",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.004",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.005",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.006",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.007",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.008",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.009",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.010",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.011",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.012",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.013",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.014",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.015",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.016",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.017",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.018",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.019",
+    "runtime.zhu_yuanzhang.market_house.investigate.route_template.020"
+  ],
   "marketHouseFixedBoss": {
     "id": "shopkeeper_qian",
     "name": "钱掌柜",

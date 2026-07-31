@@ -16,6 +16,7 @@ type MarketHouseContent = {
   marketHouseRandomNpcPool: MarketHouseActorContent[];
   marketHouseGreetingTextIds: string[];
   marketHouseBossOpenTextIds: string[];
+  marketHouseShopkeeperRouteTemplateTextIds: string[];
   marketHouseGuestOpenTextIdsByActorId: Record<string, string[]>;
   marketHouseSmallTalkTextIds: string[];
   marketHouseRumorTextIdsByCategory: Partial<Record<TradeGoodCategory, string[]>>;
@@ -30,6 +31,8 @@ export const marketHouseFixedBoss = marketHouseContent.marketHouseFixedBoss;
 export const marketHouseRandomNpcPool = marketHouseContent.marketHouseRandomNpcPool;
 export const marketHouseGreetingTextIds = marketHouseContent.marketHouseGreetingTextIds;
 export const marketHouseBossOpenTextIds = marketHouseContent.marketHouseBossOpenTextIds;
+export const marketHouseShopkeeperRouteTemplateTextIds =
+  marketHouseContent.marketHouseShopkeeperRouteTemplateTextIds;
 export const marketHouseGuestOpenTextIdsByActorId =
   marketHouseContent.marketHouseGuestOpenTextIdsByActorId;
 export const marketHouseSmallTalkTextIds = marketHouseContent.marketHouseSmallTalkTextIds;

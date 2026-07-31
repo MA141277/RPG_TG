@@ -645,28 +645,33 @@ Rules:
 
 ## 13. Integration With `market-house`
 
-### 13.1 New Host Actions
+### 13.1 Shared Host Actions
 
-Add host actions such as:
+Reuse the existing host actions such as:
 
-- `open-settlement-trade-buy`
-- `open-settlement-trade-sell`
-- `select-settlement-trade-goods:<goodsId>`
-- `confirm-settlement-trade`
+- `buy-goods`
+- `sell-goods`
+- `select-market-goods:<goodsId>`
+- `confirm-trade`
 - quantity increment/decrement and field actions
 
-The exact action ids may differ, but they must remain `market-house` host actions, not `main.ts` actions.
+Rules:
+
+- do not add a second pair of dedicated `特产买入 / 特产卖出` buttons in the host menu
+- these remain `market-house` host actions, not `main.ts` actions
+- settlement-trade goods should plug into the same typed `market-trade` overlay contract already used by the host
 
 ### 13.2 Coexistence With Ordinary Market Flow
 
-Do not delete the existing ordinary market buy/sell flow in this batch.
+Do not delete the existing ordinary market compatibility code in this batch.
 
-This feature should coexist as a dedicated city-specialty market path inside `market-house`.
+This feature should coexist with that compatibility layer inside `market-house`, but the current shared buy/sell UI should surface settlement-trade goods only.
 
 Reason:
 
 - the user requested a new city-specialty market feature
 - replacing all existing ordinary market behavior would enlarge scope and muddle regression ownership
+- keeping the legacy path explicitly marked but hidden from the shared overlay preserves future refactor space without leaving duplicate visible trade entries
 
 ### 13.3 Unsupported City Behavior
 
@@ -700,6 +705,9 @@ Rules:
 
 - route hints must come from current supported city profiles, not from a separate ad hoc dialogue table
 - visible route guidance must not disagree with the trade overlay's price tiers or demand model
+- the fixed host `调查行情` presentation may collapse into one randomized shopkeeper route line, but that line must still be rendered from content-owned templates plus the same resolved specialty-summary data
+- when route guidance names a destination city, player-facing text should display the compact/final city name (`合肥`) rather than legacy composite names like `庐州路※合肥` or bare historical route prefixes like `庐州路`
+- guest-merchant inquiry may keep a separate presentation contract as long as it reads the same shared summary owner and does not reintroduce a second settlement rule path
 
 ## 15. Testing Strategy
 

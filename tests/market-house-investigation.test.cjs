@@ -36,6 +36,33 @@ const marketHouse = prototypeHouses.find(
 
 assert.ok(marketHouse, "Expected prototype market house to exist.");
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function createOtherCityNamePattern(currentCityId) {
+  return new RegExp(
+    prototypeCities
+      .filter((cityDefinition) => cityDefinition.id !== currentCityId)
+      .map((cityDefinition) => escapeRegex(cityDefinition.name))
+      .join("|"),
+    "u"
+  );
+}
+
+function withMockedMathRandom(sequence, run) {
+  const originalRandom = Math.random;
+  const values = Array.isArray(sequence) ? [...sequence] : [sequence];
+  let index = 0;
+  Math.random = () => values[Math.min(index++, values.length - 1)] ?? 0;
+
+  try {
+    return run();
+  } finally {
+    Math.random = originalRandom;
+  }
+}
+
 function createBaseState(houseDefinition) {
   return createInitialState({
     currentMapId: prototypeMap.id,
@@ -79,8 +106,15 @@ function createCityMarketHouse(cityId) {
   };
 }
 
-async function openMarketHouse(houseDefinition = marketHouse) {
-  defaultRuntimeContent.cities = prototypeCities;
+function createRuntimeCitiesWithNameOverrides(nameOverrides) {
+  return prototypeCities.map((cityDefinition) => ({
+    ...cityDefinition,
+    name: nameOverrides[cityDefinition.id] ?? cityDefinition.name,
+  }));
+}
+
+async function openMarketHouse(houseDefinition = marketHouse, options = {}) {
+  defaultRuntimeContent.cities = options.runtimeCities ?? prototypeCities;
   defaultRuntimeContent.textEntriesById = defaultPackTextEntries;
   const state = ensureCityNpcPoolsForCurrentDay(
     createBaseState(houseDefinition),
@@ -216,14 +250,17 @@ test("market house only exposes investigate market on the fixed shopkeeper", asy
 test("market house investigate market enters shopkeeper report dialogue and hides actions", async () => {
   const yingtianHouse = createCityMarketHouse("city.yingtian");
   const { openResult } = await openMarketHouse(yingtianHouse);
-  const reportResult = investigateMarket(openResult, yingtianHouse);
+  const reportResult = withMockedMathRandom(0, () =>
+    investigateMarket(openResult, yingtianHouse)
+  );
   const reportViewModel = selectViewModel(reportResult, yingtianHouse);
   const reportMarkup = renderMarketHouseView(reportViewModel);
+  const reportLine = reportResult.sessionState?.dialogueLines[0] ?? "";
 
   assert.equal(reportResult.timeAdvanceCost, 1);
   assert.equal(reportResult.sessionState?.overlay, null);
   assert.equal(reportResult.sessionState?.dialoguePhase, "investigation-report");
-  assert.equal(reportResult.sessionState?.dialogueLines.length, 3);
+  assert.equal(reportResult.sessionState?.dialogueLines.length, 1);
   assert.equal(reportViewModel.actionContainer, null);
   assert.equal(
     reportViewModel.dialogue?.advanceActionId,
@@ -240,23 +277,95 @@ test("market house investigate market enters shopkeeper report dialogue and hide
     ),
     true
   );
-  assert.doesNotMatch(
-    reportResult.sessionState?.dialogueLines[0] ?? "",
-    /^Local specialty:/
-  );
-  assert.doesNotMatch(
-    reportResult.sessionState?.dialogueLines[1] ?? "",
-    /^Featured route:/
-  );
-  assert.doesNotMatch(
-    reportResult.sessionState?.dialogueLines[2] ?? "",
-    /^Shopkeeper tip:/
-  );
-  assert.match(reportResult.sessionState?.dialogueLines[0] ?? "", /\*\*[^*]+\*\*/);
-  assert.match(reportResult.sessionState?.dialogueLines[1] ?? "", /\*\*[^*]+\*\*/);
-  assert.match(reportResult.sessionState?.dialogueLines[2] ?? "", /0\.01|30/u);
+  assert.doesNotMatch(reportLine, /^Local specialty:/);
+  assert.doesNotMatch(reportLine, /^Featured route:/);
+  assert.doesNotMatch(reportLine, /^Shopkeeper tip:/);
+  assert.doesNotMatch(reportLine, /^本地特产：/u);
+  assert.doesNotMatch(reportLine, /^紧缺地区：/u);
+  assert.doesNotMatch(reportLine, /^掌柜口风：/u);
+  assert.match(reportLine, /\*\*[^*]+\*\*/);
+  assert.match(reportLine, /丝绸|纸笔/u);
+  assert.match(reportLine, createOtherCityNamePattern(yingtianHouse.cityId));
   assert.match(reportMarkup, /c-dialogue-typewriter__strong/);
   assert.doesNotMatch(reportMarkup, /\*\*[^*]+\*\*/);
+});
+
+test("market house investigate market reports specialty intel in Chinese", async () => {
+  const yingtianHouse = createCityMarketHouse("city.yingtian");
+  const { openResult } = await openMarketHouse(yingtianHouse);
+  const reportResult = withMockedMathRandom(0, () =>
+    investigateMarket(openResult, yingtianHouse)
+  );
+  const reportLines = reportResult.sessionState?.dialogueLines ?? [];
+  const reportLine = reportLines[0] ?? "";
+
+  assert.equal(reportLines.length, 1);
+  assert.doesNotMatch(reportLine, /^本地特产：/u);
+  assert.doesNotMatch(reportLine, /^紧缺地区：/u);
+  assert.doesNotMatch(reportLine, /^掌柜口风：/u);
+  assert.match(reportLine, /丝绸|纸笔/u);
+  assert.match(reportLine, createOtherCityNamePattern(yingtianHouse.cityId));
+  assert.doesNotMatch(
+    reportLines.join("\n"),
+    /Silk Textiles|Paper and Brush|Yingtian|Haozhou|Luzhou/u
+  );
+});
+
+test("market house investigate market shows compact destination city names", async () => {
+  const kulanHouse = createCityMarketHouse("city.kulan");
+  const runtimeCities = createRuntimeCitiesWithNameOverrides({
+    "city.luzhou": "庐州路※合肥",
+  });
+  const { openResult } = await openMarketHouse(kulanHouse, { runtimeCities });
+  const reportResult = withMockedMathRandom(0, () =>
+    investigateMarket(openResult, kulanHouse)
+  );
+  const reportLine = reportResult.sessionState?.dialogueLines[0] ?? "";
+  const emphasizedTokens = [...reportLine.matchAll(/\*\*([^*]+)\*\*/g)].map(
+    (match) => match[1]
+  );
+
+  assert.equal(emphasizedTokens.at(-1), "合肥");
+  assert.doesNotMatch(reportLine, /庐州路/u);
+  assert.doesNotMatch(reportLine, /※/u);
+});
+
+test("market house investigate market randomizes the shopkeeper route wording", async () => {
+  const yingtianHouse = createCityMarketHouse("city.yingtian");
+  const { openResult } = await openMarketHouse(yingtianHouse);
+  const firstResult = withMockedMathRandom(0, () =>
+    investigateMarket(openResult, yingtianHouse)
+  );
+  const secondResult = withMockedMathRandom(0.999, () =>
+    investigateMarket(openResult, yingtianHouse)
+  );
+  const firstLine = firstResult.sessionState?.dialogueLines[0] ?? "";
+  const secondLine = secondResult.sessionState?.dialogueLines[0] ?? "";
+
+  assert.equal(firstResult.sessionState?.dialogueLines.length, 1);
+  assert.equal(secondResult.sessionState?.dialogueLines.length, 1);
+  assert.notEqual(firstLine, secondLine);
+  assert.match(firstLine, /丝绸|纸笔/u);
+  assert.match(secondLine, /丝绸|纸笔/u);
+  assert.match(firstLine, createOtherCityNamePattern(yingtianHouse.cityId));
+  assert.match(secondLine, createOtherCityNamePattern(yingtianHouse.cityId));
+});
+
+test("market house guest inquiry only reports specialty intel in Chinese", async () => {
+  const yingtianHouse = createCityMarketHouse("city.yingtian");
+  const { openResult } = await openMarketHouse(yingtianHouse);
+  const guestResult = selectGuestActor(openResult, yingtianHouse);
+  const reportLines = guestResult.sessionState?.dialogueLines ?? [];
+
+  assert.equal(reportLines.length, 3);
+  assert.match(reportLines[0] ?? "", /^特产门路：/u);
+  assert.match(reportLines[1] ?? "", /^可去城路：/u);
+  assert.match(reportLines[2] ?? "", /^客商口风：/u);
+  assert.match(reportLines[0] ?? "", /丝绸|纸笔/u);
+  assert.doesNotMatch(
+    reportLines.join("\n"),
+    /Silk Textiles|Paper and Brush|Yingtian|Haozhou|Luzhou/u
+  );
 });
 
 test("market house investigate report restores normal buttons after advance", async () => {
@@ -288,18 +397,18 @@ test("market house investigate report restores normal buttons after advance", as
 test("market house investigate market gives different shopkeeper report lines by city", async () => {
   const yingtianHouse = createCityMarketHouse("city.yingtian");
   const wenzhouHouse = createCityMarketHouse("city.wenzhou");
+  const yingtianOpenResult = (await openMarketHouse(yingtianHouse)).openResult;
+  const wenzhouOpenResult = (await openMarketHouse(wenzhouHouse)).openResult;
 
-  const yingtianInvestigate = investigateMarket(
-    (await openMarketHouse(yingtianHouse)).openResult,
-    yingtianHouse
+  const yingtianInvestigate = withMockedMathRandom(0, () =>
+    investigateMarket(yingtianOpenResult, yingtianHouse)
   );
-  const wenzhouInvestigate = investigateMarket(
-    (await openMarketHouse(wenzhouHouse)).openResult,
-    wenzhouHouse
+  const wenzhouInvestigate = withMockedMathRandom(0, () =>
+    investigateMarket(wenzhouOpenResult, wenzhouHouse)
   );
 
-  assert.equal(yingtianInvestigate.sessionState?.dialogueLines.length, 3);
-  assert.equal(wenzhouInvestigate.sessionState?.dialogueLines.length, 3);
+  assert.equal(yingtianInvestigate.sessionState?.dialogueLines.length, 1);
+  assert.equal(wenzhouInvestigate.sessionState?.dialogueLines.length, 1);
   assert.notEqual(
     yingtianInvestigate.sessionState?.dialogueLines.join("\n"),
     wenzhouInvestigate.sessionState?.dialogueLines.join("\n")
@@ -316,27 +425,59 @@ test("market house investigation and specialty overlay derive from the same serv
     houseDefinition: yingtianHouse,
     playerCharacterId,
     sessionState: openResult.sessionState,
-    request: { type: "action", actionId: "open-settlement-trade-buy" },
+    request: { type: "action", actionId: "buy-goods" },
   });
 
-  const overlayViewModel = marketHouseHouseModule.selectViewModel({
+  const openedOverlayViewModel = marketHouseHouseModule.selectViewModel({
     gameState: overlayResult.gameState,
     characterDefinitions: overlayResult.characterDefinitions,
     houseDefinition: yingtianHouse,
     playerCharacterId,
     sessionState: overlayResult.sessionState,
   });
+  assert.equal(openedOverlayViewModel.overlay?.type, "market-trade");
+  if (openedOverlayViewModel.overlay?.type !== "market-trade") {
+    return;
+  }
 
-  assert.equal(overlayViewModel.overlay?.type, "settlement-trade");
-  if (overlayViewModel.overlay?.type !== "settlement-trade") {
+  const specialtyRow =
+    openedOverlayViewModel.overlay.rows.find(
+      (row) => row.goodsId === "silk_textiles" || row.goodsId === "paper_brush"
+    ) ?? null;
+
+  assert.ok(specialtyRow);
+
+  const selectedOverlayResult = marketHouseHouseModule.dispatch({
+    gameState: overlayResult.gameState,
+    characterDefinitions: overlayResult.characterDefinitions,
+    houseDefinition: yingtianHouse,
+    playerCharacterId,
+    sessionState: overlayResult.sessionState,
+    request: {
+      type: "action",
+      actionId: `select-market-goods:${specialtyRow.goodsId}`,
+    },
+  });
+  const overlayViewModel = marketHouseHouseModule.selectViewModel({
+    gameState: selectedOverlayResult.gameState,
+    characterDefinitions: selectedOverlayResult.characterDefinitions,
+    houseDefinition: yingtianHouse,
+    playerCharacterId,
+    sessionState: selectedOverlayResult.sessionState,
+  });
+
+  assert.equal(overlayViewModel.overlay?.type, "market-trade");
+  if (overlayViewModel.overlay?.type !== "market-trade") {
     return;
   }
 
   const selectedName = overlayViewModel.overlay.selectedSummary?.name ?? "";
+  const reportLine = reportResult.sessionState?.dialogueLines[0] ?? "";
   assert.equal(
-    (reportResult.sessionState?.dialogueLines.join("\n") ?? "").includes(
-      selectedName
-    ),
+    reportLine.includes(selectedName) ||
+      reportLine.includes("丝绸") ||
+      reportLine.includes("纸笔"),
     true
   );
+  assert.match(reportLine, createOtherCityNamePattern(yingtianHouse.cityId));
 });

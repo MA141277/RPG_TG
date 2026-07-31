@@ -54,9 +54,16 @@ export type SettlementTradeGoodRuntimeState = {
   lastTradedDay: number | null;
 };
 
+export type SettlementTradeCityRuntimeMeta = {
+  visibleGoodsIds: SettlementTradeGoodId[];
+  lastRefreshedDay: number | null;
+};
+
 export type SettlementTradeCityRuntimeState = Partial<
   Record<SettlementTradeGoodId, SettlementTradeGoodRuntimeState>
->;
+> & {
+  __meta?: SettlementTradeCityRuntimeMeta;
+};
 
 export type SettlementTradeRuntimeState = Partial<
   Record<CityId, SettlementTradeCityRuntimeState>
@@ -87,6 +94,8 @@ export type SettlementTradeSnapshot = {
   supported: boolean;
   rows: SettlementTradeSnapshotRow[];
   helperLines: string[];
+  lastRefreshedDay: number | null;
+  nextRefreshDay: number | null;
 };
 
 export type SettlementTradeHighlightedDestination = {
@@ -132,7 +141,18 @@ export type SettlementTradeMutation =
       cityId: CityId;
       goodsId: SettlementTradeGoodId;
       dayNumber: number;
+    }
+  | {
+      type: "set-settlement-trade-city-assortment";
+      cityId: CityId;
+      visibleGoodsIds: SettlementTradeGoodId[];
+      refreshedDay: number;
     };
+
+export type SettlementTradePreparedSnapshot = {
+  snapshot: SettlementTradeSnapshot;
+  mutations: SettlementTradeMutation[];
+};
 
 export type SettlementTradeResolution =
   | {

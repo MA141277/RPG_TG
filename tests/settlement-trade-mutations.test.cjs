@@ -5,6 +5,7 @@ const {
   createInitialState,
 } = require("../.test-dist/application/state/create-initial-state.js");
 const {
+  applySettlementTradeStateMutations,
   applySettlementTradeMutations,
 } = require("../.test-dist/application/markets/apply-settlement-trade-mutations.js");
 const {
@@ -135,6 +136,67 @@ test("apply settlement trade mutations updates gold, items, stock, multiplier, p
       priceMultiplier: 1.01,
       progressUnits: 0,
       lastTradedDay: 12,
+    },
+  });
+});
+
+test("apply settlement trade mutations stores city assortment metadata under the reserved runtime key", () => {
+  const state = createBaseState("city.yingtian");
+  state.runtime.settlementTrade = {
+    "city.yingtian": {
+      silk_textiles: {
+        stockQuantity: 8,
+        priceMultiplier: 1,
+        progressUnits: 2,
+        lastTradedDay: 1,
+      },
+    },
+  };
+
+  const result = applySettlementTradeMutations({
+    state,
+    characterDefinitions: createCharacters(5000),
+    playerCharacterId,
+    mutations: [
+      {
+        type: "set-settlement-trade-city-assortment",
+        cityId: "city.yingtian",
+        visibleGoodsIds: ["silk_textiles", "paper_brush"],
+        refreshedDay: 11,
+      },
+    ],
+  });
+
+  assert.deepEqual(result.state.runtime.settlementTrade["city.yingtian"], {
+    silk_textiles: {
+      stockQuantity: 8,
+      priceMultiplier: 1,
+      progressUnits: 2,
+      lastTradedDay: 1,
+    },
+    __meta: {
+      visibleGoodsIds: ["silk_textiles", "paper_brush"],
+      lastRefreshedDay: 11,
+    },
+  });
+});
+
+test("apply settlement trade state mutations can materialize assortment metadata without character context", () => {
+  const state = createBaseState("city.yingtian");
+
+  const nextState = applySettlementTradeStateMutations(state, [
+    {
+      type: "set-settlement-trade-city-assortment",
+      cityId: "city.yingtian",
+      visibleGoodsIds: ["silk_textiles", "salt"],
+      refreshedDay: 7,
+    },
+  ]);
+
+  assert.deepEqual(nextState.runtime.settlementTrade["city.yingtian"], {
+    __meta: {
+      visibleGoodsIds: ["silk_textiles", "salt"],
+      lastRefreshedDay: 7,
     },
   });
 });

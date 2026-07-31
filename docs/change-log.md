@@ -12,7 +12,9 @@
 - 城市特产交易现在约束为 typed mutation 流：玩家金币与背包货物通过共享 inventory/character 路径结算，商圈 runtime 通过 `set-settlement-trade-stock`、`set-settlement-trade-multiplier`、`set-settlement-trade-progress`、`set-settlement-trade-last-traded-day` 等结构化写入更新。
 - 特产库存写入改为“交易后绝对库存”而非相对 delta，避免首次交易时因为 runtime 还未物化而丢失 authored `initialStock` 基线。
 - 玩家持有的特产货物继续归并到 `var.player_inventory.item.<itemId>`；旧 `market-house` 交易库存变量只保留在共享迁移兼容边界，不再作为新的长期拥有态来源。
-- `market-house` 现通过专属 `settlement-trade` overlay host 城市特产商圈；买卖价格压力、30 日重置、调查提示与结算都统一走共享 `SettlementTradeService` 与 typed mutation 路径，不再向 `src/main.ts` 增加药房、米铺、货栈式业务分支。
+- `market-house` 现把特产并入共享 `market-trade` 货物流：掌柜菜单只保留 `买入货物 / 卖出货物`，其中买入列表只显示当前城市 `headlineGoodsIds` 对应的本城特产，卖出列表只显示玩家当前持有的 settlement-trade 货物；旧普通货物路径继续保留在 `market-house` 的 legacy compatibility 边界中，但不再出现在当前共享 trade overlay。价格压力、30 日重置与 typed mutation 结算仍统一走共享 `SettlementTradeService` 路径，不再向 `src/main.ts` 增加药房、米铺、货栈式业务分支。
+- 钱掌柜的 `调查行情` 现改为 content-owned 随机门路话：每次从 20 条模板里随机抽 1 条，再动态填入当前城市的推荐特产和去城，不再输出三段报表式的 `本地特产 / 紧缺地区 / 掌柜口风` 文案；客商询问口径保持原样。
+- 钱掌柜 `调查行情` 的推荐去城现在会先走共享 `compact city display` 规整：当前 runtime 若仍使用 `庐州路※合肥` 这类旧复合名，则展示时优先落到最终城名 `合肥`；若只剩 legacy profile fallback，也至少去掉末尾旧 `路/府` 后缀。该规整 helper 同时复用于 campaign 地图 marker 文本，避免多处各写一套旧名裁剪逻辑。
 
 ### Impact
 - 后续把城市特产商圈接入 `market-house` 时，可以只做 host 适配与会话/UI wiring，而不需要在 `src/main.ts` 或 house host 中重写交易业务规则。

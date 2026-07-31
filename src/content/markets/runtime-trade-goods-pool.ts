@@ -3,6 +3,8 @@ import type {
   TradeGoodDefinition,
   TradeGoodRarity,
 } from "../../domain/trade-good";
+import type { SettlementTradeGoodId } from "../../domain/settlement-trade";
+import { settlementTradeGoodsById } from "./settlement-trade-goods";
 import {
   settlementTradeGoodsCatalog,
   type SettlementTradeGoodsDraft,
@@ -15,6 +17,29 @@ type SettlementDraftRuntimeTradeGoodSpec = {
   unit: string;
   description: string;
 };
+
+type SettlementRuntimeTradeGoodSpec = {
+  category: TradeGoodCategory;
+  rarity: TradeGoodRarity;
+};
+
+const settlementRuntimeTradeGoodSpecs = {
+  silk_textiles: { category: "silk", rarity: "rare" },
+  ramie_cloth: { category: "silk", rarity: "common" },
+  cotton_cloth: { category: "silk", rarity: "common" },
+  tea: { category: "misc", rarity: "uncommon" },
+  wine: { category: "misc", rarity: "uncommon" },
+  ceramics: { category: "special", rarity: "uncommon" },
+  copperware: { category: "industrial", rarity: "uncommon" },
+  ironware: { category: "industrial", rarity: "common" },
+  salt: { category: "misc", rarity: "common" },
+  paper_brush: { category: "misc", rarity: "uncommon" },
+  bamboo_woodware: { category: "special", rarity: "common" },
+  woven_goods: { category: "special", rarity: "uncommon" },
+  lacquer_oil: { category: "industrial", rarity: "rare" },
+  stone_goods: { category: "industrial", rarity: "common" },
+  hides: { category: "misc", rarity: "common" },
+} as const satisfies Record<SettlementTradeGoodId, SettlementRuntimeTradeGoodSpec>;
 
 const settlementDraftRuntimeTradeGoodSpecs = {
   fish_goods: {
@@ -111,6 +136,34 @@ function createSettlementDraftRuntimeTradeGood(
   };
 }
 
+function createSettlementRuntimeTradeGood(
+  goodsId: SettlementTradeGoodId
+): TradeGoodDefinition {
+  const goodsDefinition = settlementTradeGoodsById[goodsId];
+  const runtimeSpec = settlementRuntimeTradeGoodSpecs[goodsId];
+  const priceBand = createPriceBand(goodsDefinition.basePrice);
+
+  return {
+    id: goodsId,
+    name: goodsDefinition.name,
+    category: runtimeSpec.category,
+    shopType: "settlement-trade",
+    rarity: runtimeSpec.rarity,
+    basePrice: goodsDefinition.basePrice,
+    minPrice: priceBand.minPrice,
+    maxPrice: priceBand.maxPrice,
+    unit: goodsDefinition.unit,
+    originTags: [],
+    demandTags: [],
+    description: goodsDefinition.description,
+  };
+}
+
+export const settlementRuntimeTradeGoodsPool: TradeGoodDefinition[] =
+  Object.keys(settlementRuntimeTradeGoodSpecs).map((goodsId) =>
+    createSettlementRuntimeTradeGood(goodsId as SettlementTradeGoodId)
+  );
+
 export const settlementDraftRuntimeTradeGoodsPool: TradeGoodDefinition[] =
   Object.keys(settlementDraftRuntimeTradeGoodSpecs).map((goodsId) =>
     createSettlementDraftRuntimeTradeGood(
@@ -120,6 +173,7 @@ export const settlementDraftRuntimeTradeGoodsPool: TradeGoodDefinition[] =
 
 export const runtimeTradeGoodsPool: TradeGoodDefinition[] = [
   ...globalGoodsPool,
+  ...settlementRuntimeTradeGoodsPool,
   ...settlementDraftRuntimeTradeGoodsPool,
 ];
 

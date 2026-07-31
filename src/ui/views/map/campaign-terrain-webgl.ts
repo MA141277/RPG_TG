@@ -41,6 +41,7 @@ import {
   smoothstep,
   type Mat4,
 } from "./campaign-terrain-math";
+import { getCompactCityDisplayName } from "../../../shared/city-display-name";
 
 type CampaignTerrainInput = {
   canvas: HTMLCanvasElement;
@@ -6498,16 +6499,7 @@ function getCampaignMarkerClass(kind: CampaignRuntimeMarker["kind"]): string {
 }
 
 function getCampaignMarkerDisplayName(name: string): string {
-  const markerIndex = Math.max(
-    name.lastIndexOf("\u2605"),
-    name.lastIndexOf("\u203b"),
-    name.lastIndexOf("\u25cf")
-  );
-  if (markerIndex >= 0) {
-    return name.slice(markerIndex + 1).trim();
-  }
-
-  return name.replace(/^\u3010(.+)\u3011$/, "$1");
+  return getCompactCityDisplayName(name);
 }
 
 function renderCampaignRuntimeMarkerHistoricalCharacters(
