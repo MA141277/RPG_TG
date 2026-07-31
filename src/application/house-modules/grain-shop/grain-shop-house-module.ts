@@ -33,6 +33,7 @@ import {
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
 import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
+import { createCouncilInsufficientTimeDialogueOverride } from "../../time/council-insufficient-time-dialogue";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
@@ -152,6 +153,7 @@ function withDialoguePhase(
     sessionState: {
       ...sessionState,
       dialoguePhase,
+      dialogueOverride: null,
       ...(dialogueLines == null ? {} : { dialogueLines }),
     },
   };
@@ -181,8 +183,38 @@ function withOverlay(
     sessionState: {
       ...sessionState,
       overlay,
+      ...(overlay == null ? {} : { dialogueOverride: null }),
     },
     ...(sideEffects == null ? {} : { sideEffects }),
+  };
+}
+
+function withCouncilInsufficientTimeDialogue(
+  input: Pick<
+    HouseModuleDispatchInput<"grain-shop">,
+    "gameState" | "characterDefinitions" | "playerCharacterId"
+  >,
+  sessionState: GrainShopSessionState | null
+): HouseModuleTransitionResult<"grain-shop"> {
+  if (sessionState == null) {
+    return {
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+      sessionState,
+    };
+  }
+
+  return {
+    gameState: input.gameState,
+    characterDefinitions: input.characterDefinitions,
+    sessionState: {
+      ...sessionState,
+      dialoguePhase: "open",
+      dialogueOverride: createCouncilInsufficientTimeDialogueOverride(
+        input.playerCharacterId
+      ),
+      overlay: null,
+    },
   };
 }
 
@@ -449,52 +481,6 @@ function createActivityConfirmOverlay(
   };
 }
 
-function createCouncilTimeInsufficientOverlay(
-  textEntriesById: Record<string, string> | undefined,
-  durationDays: number,
-  remainingDays: number
-): GrainShopSessionState["overlay"] {
-  const entries = getGrainShopTextEntries(textEntriesById);
-  return toAlertOverlay(
-    resolveGrainShopText(
-      entries,
-      "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.title"
-    ),
-    remainingDays <= 0
-      ? [
-          resolveGrainShopText(
-            entries,
-            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.expired.001"
-          ),
-          resolveGrainShopTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.expired.002",
-            { durationDays }
-          ),
-          resolveGrainShopText(
-            entries,
-            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.expired.003"
-          ),
-        ]
-      : [
-          resolveGrainShopText(
-            entries,
-            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.soon.001"
-          ),
-          resolveGrainShopTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.soon.002",
-            { remainingDays, durationDays }
-          ),
-          resolveGrainShopText(
-            entries,
-            "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.soon.003"
-          ),
-        ],
-    "warning"
-  );
-}
-
 function createGrainSoldOutOverlay(
   textEntriesById?: Record<string, string>
 ): GrainShopSessionState["overlay"] {
@@ -545,15 +531,7 @@ function startAccountingMinigame(
     durationDays
   );
   if (remainingDays != null) {
-    return withOverlay(
-      input,
-      sessionState,
-      createCouncilTimeInsufficientOverlay(
-        input.textEntriesById,
-        durationDays,
-        remainingDays
-      )
-    );
+    return withCouncilInsufficientTimeDialogue(input, sessionState);
   }
 
   return runGrainAccountingPlayableRequest(
@@ -776,15 +754,7 @@ function handleAction(
         durationDays
       );
       if (remainingDays != null) {
-        return withOverlay(
-          input,
-          sessionState,
-          createCouncilTimeInsufficientOverlay(
-            input.textEntriesById,
-            durationDays,
-            remainingDays
-          )
-        );
+        return withCouncilInsufficientTimeDialogue(input, sessionState);
       }
 
       return withOverlay(
@@ -1037,6 +1007,16 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
             ],
     });
 
+    const dialogueOverrideSpeaker =
+      sessionState.dialogueOverride == null
+        ? null
+        : input.characterDefinitions.find(
+            (characterDefinition) =>
+              characterDefinition.id ===
+              sessionState.dialogueOverride?.speakerCharacterId
+          ) ?? null;
+    const dialogueSpeaker = dialogueOverrideSpeaker ?? npc;
+
     return {
       moduleId: "grain-shop",
       houseId: input.houseDefinition.id,
@@ -1044,25 +1024,28 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
       sceneSubtitle: "陈记粮行 / 南北通商",
       standbyRoster,
       dialogue:
-        isIdle || npc == null
+        isIdle || dialogueSpeaker == null
           ? null
           : {
               mode: "character",
-              speakerName: npc.name,
-              characterId: npc.id,
+              speakerName: dialogueSpeaker.name,
+              characterId: dialogueSpeaker.id,
               position: "right",
               textLines:
-                sessionState.dialogueLines.length > 0
+                sessionState.dialogueOverride?.textLines ??
+                (sessionState.dialogueLines.length > 0
                   ? sessionState.dialogueLines
-                  : [isGreeting ? sessionState.npcGreeting : sessionState.npcDefaultLine],
+                  : [isGreeting ? sessionState.npcGreeting : sessionState.npcDefaultLine]),
               advanceActionId:
-                isGreeting
+                sessionState.dialogueOverride?.advanceActionId ??
+                (isGreeting
                   ? "advance-greeting"
                   : isInvestigationReport
                     ? ADVANCE_GRAIN_INTEL_REPORT_ACTION_ID
-                    : null,
+                    : null),
               advanceHintText:
-                isGreeting || isInvestigationReport ? "点击继续" : null,
+                sessionState.dialogueOverride?.advanceHintText ??
+                (isGreeting || isInvestigationReport ? "点击继续" : null),
             },
       actionContainer: isOpen
         ? {

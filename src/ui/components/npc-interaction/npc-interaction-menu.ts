@@ -1,5 +1,6 @@
 import type { NpcInteractionMenuViewModel } from "../../../domain/npc-interaction";
 import type { NpcInteractionSession } from "../../../domain/npc-interaction";
+import { NPC_INTERACTION_TALK_SUB_OPTIONS } from "../../../domain/npc-interaction";
 
 function escapeHtml(value: string): string {
   return value
@@ -91,6 +92,7 @@ export function renderNpcInteractionDialogue(input: {
   targetName: string | null;
   portraitImageUrl?: string | null;
   portraitArtClassName?: string | null;
+  giftDisabled?: boolean;
 }): string {
   if (
     input.session == null ||
@@ -101,13 +103,35 @@ export function renderNpcInteractionDialogue(input: {
   }
 
   const targetName = escapeHtml(input.targetName);
-  const greetingText = escapeHtml(`你与 ${input.targetName} 简短交谈。`);
-  const portraitImageUrl =
-    input.portraitImageUrl == null ? null : escapeHtml(input.portraitImageUrl);
-  const portraitArtClassName =
-    input.portraitArtClassName == null
-      ? ""
-      : ` ${escapeHtml(input.portraitArtClassName)}`;
+  const targetCharacterId = escapeHtml(input.session.targetCharacterId);
+  const subChoiceActions = NPC_INTERACTION_TALK_SUB_OPTIONS.map((option) => {
+    const buttonTone =
+      option.tone === "accent"
+        ? "c-grain-shop-button--gold"
+        : "c-grain-shop-button--paper";
+    const disabled =
+      option.disabled === true ||
+      (option.kind === "gift" && input.giftDisabled !== false);
+    const optionKind = escapeHtml(option.kind);
+    const optionLabel = escapeHtml(option.label);
+    const buttonSoundAttribute =
+      option.buttonSound == null
+        ? ""
+        : ` data-button-sound="${option.buttonSound}"`;
+
+    return `
+          <button
+            type="button"
+            class="c-button c-grain-shop-button ${buttonTone}"
+            data-npc-action="${optionKind}"
+            data-character-id="${targetCharacterId}"
+            ${buttonSoundAttribute}
+            ${disabled ? "disabled" : ""}
+          >
+            ${optionLabel}
+          </button>
+    `;
+  }).join("");
 
   return `
     <div
@@ -118,31 +142,8 @@ export function renderNpcInteractionDialogue(input: {
       aria-label="${targetName} 谈话"
     >
       <div class="c-npc-interaction-stack">
-        <div class="c-grain-shop-dialogue__text c-grain-shop-skin-card c-npc-interaction-dialogue-text">
-          <p class="c-grain-shop-dialogue__speaker">${targetName}</p>
-          <p class="c-grain-shop-dialogue__line">${greetingText}</p>
-        </div>
-        <div class="c-grain-shop-dialogue__npc c-npc-interaction-dialogue-npc">
-          <div class="c-grain-shop-portrait" aria-hidden="true">
-            ${
-              portraitImageUrl == null
-                ? `<span class="c-grain-shop-portrait__art${portraitArtClassName}"></span>`
-                : `<img class="c-grain-shop-portrait__image" src="${portraitImageUrl}" alt="">`
-            }
-          </div>
-          <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-            ${targetName}
-          </p>
-        </div>
         <nav class="c-grain-shop-actions c-npc-interaction-actions" aria-label="${targetName} 谈话选项">
-          <button
-            type="button"
-            class="c-button c-grain-shop-button c-grain-shop-button--gold"
-            data-npc-action="continue"
-            data-ui-click-sound="none"
-          >
-            继续
-          </button>
+          ${subChoiceActions}
           <button
             type="button"
             class="c-button c-grain-shop-button c-grain-shop-button--paper c-npc-interaction-dismiss"

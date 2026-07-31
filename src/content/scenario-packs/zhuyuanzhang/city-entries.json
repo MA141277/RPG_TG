@@ -152,6 +152,14 @@
     "artworkId": "leader-residence"
   },
   {
+    "id": "city-entry.dingyuan.leader-residence",
+    "cityId": "city.dingyuan",
+    "name": "将领府邸",
+    "directoryType": "leader-residence",
+    "targetHouseId": "house.dingyuan.leader_residence",
+    "artworkId": "leader-residence"
+  },
+  {
     "id": "city-entry.gongchang.leader-residence",
     "cityId": "city.gongchang",
     "name": "将领府邸",

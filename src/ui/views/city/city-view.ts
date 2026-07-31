@@ -1,6 +1,5 @@
 import {
   createCityCultureViewModel,
-  createCityManagementViewModel,
   type CityMenuState,
 } from "../../../application/city-menu/city-menu";
 import type { CharacterDefinition } from "../../../domain/character";
@@ -318,7 +317,6 @@ function renderCityMenuPanel(input: {
   }
 
   const cultureViewModel = createCityCultureViewModel(input.cityDefinition);
-  const managementViewModel = createCityManagementViewModel();
   let eyebrow = "城市菜单";
   let title = "城市功能";
   let bodyMarkup = "";
@@ -342,13 +340,6 @@ function renderCityMenuPanel(input: {
             <strong class="c-city-menu-panel__economy-level">${cultureViewModel.economyLevel}</strong>
             <span class="c-city-menu-panel__economy-value">economyValue: ${cultureViewModel.economyValue}</span>
           </div>
-        </section>
-        <section class="c-city-menu-panel__section">
-          <h3 class="c-city-menu-panel__section-title">预留字段</h3>
-          <dl class="c-city-menu-panel__meta">
-            <div><dt>population</dt><dd>${cultureViewModel.population ?? "待接入"}</dd></div>
-            <div><dt>security</dt><dd>${cultureViewModel.security ?? "待接入"}</dd></div>
-          </dl>
         </section>
       `;
       break;
@@ -381,14 +372,8 @@ function renderCityMenuPanel(input: {
           <div class="c-city-menu-panel__lock">
             ${renderCityChoiceSkin()}
             <strong class="c-city-menu-panel__lock-title">需要成为城主或势力领袖后解锁。</strong>
-            <p class="c-city-menu-panel__hint">当前版本仅保留接口，不实现建设、升级、税率与治安功能。</p>
+            <p class="c-city-menu-panel__hint">成为城主后，可以调整建筑布局，新建/更换/升级/拆除建筑，提升城市等级。</p>
           </div>
-          <dl class="c-city-menu-panel__meta">
-            <div><dt>canManageTown</dt><dd>${managementViewModel.canManageTown ? "true" : "false"}</dd></div>
-            <div><dt>townLevel</dt><dd>${managementViewModel.townLevel ?? "待接入"}</dd></div>
-            <div><dt>buildingList</dt><dd>${managementViewModel.buildingList.length === 0 ? "待接入" : managementViewModel.buildingList.join("、")}</dd></div>
-            <div><dt>taxRate</dt><dd>${managementViewModel.taxRate ?? "待接入"}</dd></div>
-          </dl>
         </section>
       `;
       break;
@@ -456,17 +441,6 @@ export function renderCityView(
       测试+10文
     </button>
   `;
-  const cityCardDrawTestButton = `
-    <button
-      type="button"
-      class="c-kulan-city__card-draw-test-action"
-      data-action="open-city-card-draw-test"
-      aria-label="\u6d4b\u8bd5\u62bd\u5361\u52a8\u753b"
-    >
-      \u62bd\u5361\u6d4b\u8bd5
-    </button>
-  `;
-
   return `
     <section class="view-city view-city--kulan">
       <div class="c-kulan-city">
@@ -478,7 +452,6 @@ export function renderCityView(
               houseDefinitions,
               cityEntries,
             })}
-            ${cityCardDrawTestButton}
             ${haozhouCoinTestButton}
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city" data-button-sound="light">
               返回地图

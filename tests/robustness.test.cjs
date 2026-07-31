@@ -2663,6 +2663,41 @@ test("vite scenario-pack publisher stages zhuyuanzhang manifest content to the b
   );
 });
 
+test("vite static runtime asset publisher stages ui and troop texture roots to dist", () => {
+  const { publishStaticRuntimeAssetsToDir } = loadCurrentViteConfigModule();
+  const outputRoot = fs.mkdtempSync(
+    path.join(require("node:os").tmpdir(), "rpg-tg-static-assets-")
+  );
+
+  publishStaticRuntimeAssetsToDir(process.cwd(), outputRoot);
+
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "ui", "yuansu", "属性栏", "20260707-201706.png")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        outputRoot,
+        "ui",
+        "yuansu",
+        "编队详细",
+        "兵种",
+        "upload_1784703206372190622.png"
+      )
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "src", "faxian", "leg", "spearman", "project.json")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "src", "faxian", "leg", "cavalry", "project.json")),
+    true
+  );
+});
+
 test("yuanmo hex map editor has a standalone vite entry", () => {
   const viteConfig = fs.readFileSync(path.join(process.cwd(), "vite.config.ts"), "utf8");
   const htmlPath = path.join(process.cwd(), "prototypes", "yuanmo-hex-editor", "index.html");
@@ -4777,24 +4812,19 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
   );
 });
 
-test("campaign cloud texture scale has a dedicated runtime slider", () => {
+test("campaign cloud texture scale runtime stays wired while the player-facing slider is hidden", () => {
   const mapViewSource = readSource("src/ui/views/map/map-view.ts");
   const mainSource = readSource("src/main.ts");
 
-  assert.match(
+  assert.doesNotMatch(
     mapViewSource,
     /data-campaign-cloud-texture-scale-input/,
-    "Expected campaign map view to expose a cloud texture scale slider."
+    "Expected campaign map view to hide the temporary cloud texture scale slider."
   );
-  assert.match(
+  assert.doesNotMatch(
     mapViewSource,
-    /type="range"[\s\S]*data-campaign-cloud-texture-scale-input/,
-    "Expected cloud texture scale control to be a slider."
-  );
-  assert.match(
-    mapViewSource,
-    /max="50"/,
-    "Expected cloud texture scale slider to support up to 50x."
+    /云纹理|c-campaign-cloud-control/,
+    "Expected campaign map view to hide the cloud texture control label."
   );
   assert.match(
     mainSource,
@@ -4811,16 +4841,6 @@ test("campaign cloud texture scale has a dedicated runtime slider", () => {
     cloudSource,
     /export const MAX_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST = 50;/,
     "Expected cloud texture scale runtime clamp to support up to 50x."
-  );
-  assert.match(
-    mapViewSource,
-    /value="2\.72"[\s\S]*data-campaign-cloud-texture-scale-input="true"/,
-    "Expected the cloud texture scale slider initial value to match the 2.72x runtime default."
-  );
-  assert.match(
-    mapViewSource,
-    /data-campaign-cloud-texture-scale-value="true">2\.72x<\/strong>/,
-    "Expected the cloud texture scale label to match the 2.72x runtime default."
   );
   assert.match(
     mainSource,
@@ -7419,18 +7439,16 @@ test("global NPC interaction menu keeps special actions above default actions", 
     [
       "tea:ask-intel",
       "tea:debate",
-      NPC_INTERACTION_DEFAULT_OPTION_IDS.profile,
       NPC_INTERACTION_DEFAULT_OPTION_IDS.talk,
-      NPC_INTERACTION_DEFAULT_OPTION_IDS.gift,
     ]
   );
   assert.deepEqual(
-    menu.options.slice(-3).map((option) => option.label),
-    ["角色情报", "谈话", "送礼"]
+    menu.options.slice(-1).map((option) => option.label),
+    ["谈话"]
   );
 });
 
-test("global NPC gift default is safe when no giftable items exist", () => {
+test("global NPC gift subchoice is safe when no giftable items exist", () => {
   const session = createNpcInteractionSession(
     { type: "house", houseId: "house.test", moduleId: "leader-residence" },
     "char.leader"
@@ -7441,15 +7459,25 @@ test("global NPC gift default is safe when no giftable items exist", () => {
     specialActions: [],
     giftDisabled: true,
   });
-  const gift = menu.options.find(
-    (option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift
-  );
+  const {
+    renderNpcInteractionDialogue,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const html = renderNpcInteractionDialogue({
+    session: { ...session, mode: "dialogue" },
+    targetName: "将领",
+    giftDisabled: true,
+  });
 
-  assert.equal(gift.label, "送礼");
-  assert.equal(gift.disabled, true);
+  assert.equal(
+    menu.options.some((option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift),
+    false
+  );
+  assert.match(html, /data-npc-action="gift"/);
+  assert.match(html, /送礼/);
+  assert.match(html, /disabled/);
 });
 
-test("global NPC gift default fails closed without an enabled gift inventory path", () => {
+test("global NPC gift subchoice fails closed without an enabled gift inventory path", () => {
   const session = createNpcInteractionSession(
     { type: "house", houseId: "house.test", moduleId: "leader-residence" },
     "char.leader"
@@ -7459,11 +7487,19 @@ test("global NPC gift default fails closed without an enabled gift inventory pat
     targetName: "将领",
     specialActions: [],
   });
-  const gift = menu.options.find(
-    (option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift
-  );
+  const {
+    renderNpcInteractionDialogue,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const html = renderNpcInteractionDialogue({
+    session: { ...session, mode: "dialogue" },
+    targetName: "将领",
+  });
 
-  assert.equal(gift.disabled, true);
+  assert.equal(
+    menu.options.some((option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift),
+    false
+  );
+  assert.match(html, /data-npc-action="gift"[\s\S]*disabled/);
 });
 
 test("global NPC interaction blocks roster clicks while overlays or dialogue own input", () => {
@@ -7836,12 +7872,12 @@ test("global NPC interaction house action panel appends default NPC choices", ()
 
   assert.ok(actionPanel, "Expected house action panel to render.");
   assert.match(actionPanel, /data-house-action="serve-tea"/);
-  assert.match(actionPanel, /data-npc-action="profile"/);
   assert.match(actionPanel, /data-npc-action="talk"/);
-  assert.match(actionPanel, /data-npc-action="gift"/);
+  assert.doesNotMatch(actionPanel, /data-npc-action="profile"/);
+  assert.doesNotMatch(actionPanel, /data-npc-action="gift"/);
   assert.ok(
     actionPanel.indexOf('data-house-action="serve-tea"') <
-      actionPanel.indexOf('data-npc-action="profile"'),
+      actionPanel.indexOf('data-npc-action="talk"'),
     "Special house actions should appear before default NPC actions."
   );
 });
@@ -7889,11 +7925,11 @@ test("global NPC interaction house action panel keeps dismiss actions below defa
 
   assert.ok(
     html.indexOf('data-house-action="serve-tea"') <
-      html.indexOf('data-npc-action="profile"'),
+      html.indexOf('data-npc-action="talk"'),
     "Business special actions should stay above default NPC choices."
   );
   assert.ok(
-    html.indexOf('data-npc-action="gift"') <
+    html.indexOf('data-npc-action="talk"') <
       html.indexOf('data-house-action="dismiss-dialogue"'),
     "Dismiss house actions should stay below default NPC choices."
   );
@@ -8068,7 +8104,7 @@ test("global NPC interaction temple abbot click exposes the same dialogue action
     menu.options.slice(0, 3).map((option) => option.id),
     ["open-temple-work-menu", "open-temple-rest-menu", "open-donate"]
   );
-  assert.equal(menu.options[3].id, NPC_INTERACTION_DEFAULT_OPTION_IDS.profile);
+  assert.equal(menu.options[3].id, NPC_INTERACTION_DEFAULT_OPTION_IDS.talk);
   assert.equal(
     menu.options.some((option) => option.id === "ask-fortune"),
     false
@@ -8086,14 +8122,7 @@ test("global NPC interaction renderer emits generic menu actions", () => {
     targetName: "茶博士",
     options: [
       { id: "tea:ask-intel", label: "打听", kind: "special" },
-      { id: "npc-interaction:profile", label: "角色情报", kind: "profile" },
       { id: "npc-interaction:talk", label: "谈话", kind: "talk" },
-      {
-        id: "npc-interaction:gift",
-        label: "送礼",
-        kind: "gift",
-        disabled: true,
-      },
     ],
   };
   const html = renderNpcInteractionMenu(menu);
@@ -8104,11 +8133,12 @@ test("global NPC interaction renderer emits generic menu actions", () => {
   assert.doesNotMatch(html, /c-npc-interaction-menu/);
   assert.match(html, /data-npc-action="special"/);
   assert.match(html, /data-house-action="tea:ask-intel"/);
-  assert.match(html, /data-npc-action="profile"/);
+  assert.match(html, /data-npc-action="talk"/);
   assert.match(html, /data-character-id="char\.tea"/);
-  assert.match(html, /disabled/);
+  assert.doesNotMatch(html, /data-npc-action="profile"/);
+  assert.doesNotMatch(html, /data-npc-action="gift"/);
   assert.ok(
-    html.indexOf('data-npc-action="gift"') < html.indexOf('data-npc-action="close"'),
+    html.indexOf('data-npc-action="talk"') < html.indexOf('data-npc-action="close"'),
     "Dismiss actions should stay below the main NPC choices."
   );
 });
@@ -8150,8 +8180,15 @@ test("global NPC default talk renders visible dialogue and close clears the sess
   assert.match(html, /c-test-portrait/);
   assert.match(html, /data-npc-action="close"/);
   assert.match(html, /data-npc-action="continue"/);
+  assert.match(html, /data-npc-action="gift"/);
+  assert.match(html, /data-npc-action="profile"/);
   assert.ok(
-    html.indexOf('data-npc-action="continue"') < html.indexOf('data-npc-action="close"'),
+    html.indexOf('data-npc-action="continue"') <
+      html.indexOf('data-npc-action="gift"') &&
+      html.indexOf('data-npc-action="gift"') <
+        html.indexOf('data-npc-action="profile"') &&
+      html.indexOf('data-npc-action="profile"') <
+        html.indexOf('data-npc-action="close"'),
     "Close should be the bottom-most default talk action."
   );
   assert.equal(closed.gameState.ui.npcInteractionSession, null);
@@ -8402,7 +8439,7 @@ test("global NPC interaction tavern actor contributes service special actions ab
     menu.options.slice(0, 3).map((option) => option.label),
     ["工作", "喝酒", "赌博"]
   );
-  assert.equal(menu.options[3].id, NPC_INTERACTION_DEFAULT_OPTION_IDS.profile);
+  assert.equal(menu.options[3].id, NPC_INTERACTION_DEFAULT_OPTION_IDS.talk);
 });
 
 test("primary house actor appears first in temple daily roster during greeting", () => {

@@ -1,4 +1,5 @@
 import type { HouseActivityConfirmOverlayState } from "../house-activity";
+import type { HouseDialogueOverrideState } from "../house-module";
 import type {
   TeaHouseDebateSummary,
   TeaHouseDebateWinner,
@@ -50,6 +51,7 @@ export type TeaHouseSessionState = {
   guestNpcIds: string[];
   selectedActorId: string | null;
   dialogueLines: string[];
+  dialogueOverride?: HouseDialogueOverrideState | null;
   dialoguePhase: TeaHouseDialoguePhase;
   overlay: TeaHouseOverlayState;
 };

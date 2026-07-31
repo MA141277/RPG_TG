@@ -1,4 +1,5 @@
 import type { HouseActivityConfirmOverlayState } from "../house-activity";
+import type { HouseDialogueOverrideState } from "../house-module";
 import type {
   AccountingGrade,
   AccountingGradeReward,
@@ -74,6 +75,7 @@ export type GrainShopSessionState = {
   npcGreeting: string;
   npcDefaultLine: string;
   dialogueLines: string[];
+  dialogueOverride?: HouseDialogueOverrideState | null;
   dialoguePhase: GrainShopDialoguePhase;
   overlay: GrainShopOverlayState;
 };

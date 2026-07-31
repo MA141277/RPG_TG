@@ -168,6 +168,13 @@ export type HouseDialogueViewModel = {
   advanceHintText?: string | null;
 };
 
+export type HouseDialogueOverrideState = {
+  speakerCharacterId: CharacterId;
+  textLines: string[];
+  advanceActionId?: string;
+  advanceHintText?: string;
+};
+
 export type HouseStatusMetricViewModel = {
   label: string;
   value: string;

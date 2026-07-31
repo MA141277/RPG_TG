@@ -65,6 +65,7 @@ import {
   readHousePlayableSessionState,
 } from "../../playables/house-playable-runtime-bridge";
 import { getMedicineCompoundingTimeAdvanceCost } from "../../playables/medicine-compounding/medicine-compounding-definition";
+import { createCouncilInsufficientTimeDialogueOverride } from "../../time/council-insufficient-time-dialogue";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialMedicineHouseSessionState } from "./medicine-house-session-state";
 
@@ -151,6 +152,22 @@ function withSessionState(
   };
 }
 
+function withCouncilInsufficientTimeDialogue(
+  input: Pick<
+    HouseModuleDispatchInput<"medicine-house">,
+    "gameState" | "characterDefinitions" | "playerCharacterId"
+  >,
+  sessionState: MedicineHouseSessionState | null
+): HouseModuleTransitionResult<"medicine-house"> {
+  return withSessionState(input, sessionState, {
+    dialoguePhase: "open",
+    dialogueOverride: createCouncilInsufficientTimeDialogueOverride(
+      input.playerCharacterId
+    ),
+    overlay: null,
+  });
+}
+
 function runMedicineCompoundingPlayableRequest(
   input: HouseModuleDispatchInput<"medicine-house">,
   sessionState: MedicineHouseSessionState | null,
@@ -213,7 +230,10 @@ function withDialoguePhase(
   sessionState: MedicineHouseSessionState | null,
   dialoguePhase: MedicineHouseDialoguePhase
 ): HouseModuleTransitionResult<"medicine-house"> {
-  return withSessionState(input, sessionState, { dialoguePhase });
+  return withSessionState(input, sessionState, {
+    dialoguePhase,
+    dialogueOverride: null,
+  });
 }
 
 function createAlertOverlay(
@@ -349,44 +369,6 @@ function createActivityConfirmOverlay(
     cancelLabel: "稍后再来",
     tone: "info",
   };
-}
-
-function createCouncilTimeInsufficientOverlay(
-  textEntriesById: Record<string, string> | undefined,
-  durationDays: number,
-  remainingDays: number
-): MedicineHouseOverlayState {
-  const entries = getMedicineHouseTextEntries(textEntriesById);
-  return createAlertOverlay(
-    resolveMedicineHouseText(
-      entries,
-      "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.title"
-    ),
-    remainingDays <= 0
-      ? [
-          resolveMedicineHouseTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.expired.001",
-            { durationDays }
-          ),
-          resolveMedicineHouseText(
-            entries,
-            "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.expired.002"
-          ),
-        ]
-      : [
-          resolveMedicineHouseTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.soon.001",
-            { remainingDays, durationDays }
-          ),
-          resolveMedicineHouseText(
-            entries,
-            "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.soon.002"
-          ),
-        ],
-    "warning"
-  );
 }
 
 function getPlayerMedicineSkill(playerCharacter: CharacterDefinition): number {
@@ -682,13 +664,7 @@ function handleAction(
         durationDays
       );
       if (remainingDays != null) {
-        return withSessionState(input, sessionState, {
-          overlay: createCouncilTimeInsufficientOverlay(
-            input.textEntriesById,
-            durationDays,
-            remainingDays
-          ),
-        });
+        return withCouncilInsufficientTimeDialogue(input, sessionState);
       }
 
       return withSessionState(input, sessionState, {
@@ -706,13 +682,7 @@ function handleAction(
         durationDays
       );
       if (remainingDays != null) {
-        return withSessionState(input, sessionState, {
-          overlay: createCouncilTimeInsufficientOverlay(
-            input.textEntriesById,
-            durationDays,
-            remainingDays
-          ),
-        });
+        return withCouncilInsufficientTimeDialogue(input, sessionState);
       }
 
       return runMedicineCompoundingPlayableRequest(
@@ -1031,6 +1001,15 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
     const hasOverlay = sessionState.overlay != null;
+    const dialogueOverrideSpeaker =
+      sessionState.dialogueOverride == null
+        ? null
+        : input.characterDefinitions.find(
+            (characterDefinition) =>
+              characterDefinition.id ===
+              sessionState.dialogueOverride?.speakerCharacterId
+          ) ?? null;
+    const dialogueSpeaker = dialogueOverrideSpeaker ?? npc;
     const standbyRoster = orderHouseStandbyRoster({
       primaryCharacterId: input.houseDefinition.defaultCharacterId,
       actors:
@@ -1072,14 +1051,14 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
       sceneSubtitle: "陈记药铺 / 坐堂问诊",
       standbyRoster,
       dialogue:
-        isIdle || npc == null
+        isIdle || dialogueSpeaker == null
           ? null
           : {
               mode: "character",
-              speakerName: npc.name,
-              characterId: npc.id,
+              speakerName: dialogueSpeaker.name,
+              characterId: dialogueSpeaker.id,
               position: "right",
-              textLines: [
+              textLines: sessionState.dialogueOverride?.textLines ?? [
                 isGreeting
                   ? sessionState.npcGreeting
                   : pickRandomResolvedMedicineHouseText(
@@ -1087,8 +1066,12 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
                       medicineHouseOpenTextIds
                     ),
               ],
-              advanceActionId: isGreeting ? "advance-greeting" : null,
-              advanceHintText: isGreeting ? "点击继续" : null,
+              advanceActionId:
+                sessionState.dialogueOverride?.advanceActionId ??
+                (isGreeting ? "advance-greeting" : null),
+              advanceHintText:
+                sessionState.dialogueOverride?.advanceHintText ??
+                (isGreeting ? "点击继续" : null),
             },
       actionContainer:
         isOpen && !hasOverlay

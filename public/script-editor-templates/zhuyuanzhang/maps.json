@@ -976,11 +976,16 @@
       },
       {
         "id": "settlement.kaifeng_province",
-        "label": "汴梁路★开封",
+        "label": "定远",
         "x": 318,
         "y": 327,
-        "kind": "settlement",
-        "summary": "剧情: 河南元军重镇 | 阵营: 元廷/扩廓帖木儿系 | 所有者: 元廷河南势力 | 相关NPC: 扩廓帖木儿、脱因帖木儿、阎思孝、陈秉直 | 注记: 朱元璋早期北方强敌"
+        "kind": "city",
+        "summary": "剧情: 淮西早年活动地，连接濠州与钟离一带 | 阵营: 元廷地方控制 | 所有者: 定远地方势力 | 相关NPC: 朱元璋早年乡里人物 | 注记: 早年主线外出与落脚节点",
+        "cityId": "city.dingyuan",
+        "visualKind": "structure",
+        "structureVisual": {
+          "kind": "settlement-building"
+        }
       },
       {
         "id": "settlement.henan_province",

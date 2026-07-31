@@ -14,6 +14,7 @@
     "validate:playables": "node tools/validate-playables.mjs",
     "desktop:dir": "npm run build && electron-builder --dir",
     "desktop:build": "npm run build && electron-builder --win portable",
+    "package:web": "node scripts/package-web-standalone.mjs",
     "kb:history:build": "node tools/build-history-kb.mjs",
     "kb:history:search": "node tools/search-history-kb.mjs",
     "kb:yuanmo-person-pool:build": "node tools/build-yuanmo-person-pool.mjs",

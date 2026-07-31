@@ -1,4 +1,5 @@
 import type { HouseActivityConfirmOverlayState } from "../house-activity";
+import type { HouseDialogueOverrideState } from "../house-module";
 import type {
   CompoundingHerbSelection,
   CompoundingSessionTarget,
@@ -46,6 +47,7 @@ export type MedicineHouseDialoguePhase = "greeting" | "open" | "idle";
 
 export type MedicineHouseSessionState = {
   npcGreeting: string;
+  dialogueOverride?: HouseDialogueOverrideState | null;
   dialoguePhase: MedicineHouseDialoguePhase;
   overlay: MedicineHouseOverlayState;
 };

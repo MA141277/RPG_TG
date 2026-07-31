@@ -543,18 +543,6 @@ function renderCampaignMap(model: MapViewModel): string {
         <div class="c-campaign-map__vignette" aria-hidden="true"></div>
       </div>
       <div class="c-campaign-map-actions" aria-label="主地图操作">
-        <label class="c-campaign-cloud-control">
-          <span>云纹理</span>
-          <input
-            type="range"
-            min="0.5"
-            max="50"
-            step="0.01"
-            value="2.72"
-            data-campaign-cloud-texture-scale-input="true"
-          >
-          <strong data-campaign-cloud-texture-scale-value="true">2.72x</strong>
-        </label>
         <button
           class="c-campaign-map-actions__button"
           type="button"

@@ -64,6 +64,7 @@ import {
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
 import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
+import { createCouncilInsufficientTimeDialogueOverride } from "../../time/council-insufficient-time-dialogue";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
 
@@ -178,9 +179,26 @@ function withDialoguePhase(
     sessionState: {
       ...sessionState,
       dialoguePhase,
+      dialogueOverride: null,
       ...(dialogueLines == null ? {} : { dialogueLines }),
     },
   };
+}
+
+function withCouncilInsufficientTimeDialogue(
+  input: Pick<
+    HouseModuleDispatchInput<"tea-house">,
+    "gameState" | "characterDefinitions" | "playerCharacterId"
+  >,
+  sessionState: TeaHouseSessionState | null
+): HouseModuleTransitionResult<"tea-house"> {
+  return withSessionState(input, sessionState, {
+    dialoguePhase: "open",
+    dialogueOverride: createCouncilInsufficientTimeDialogueOverride(
+      input.playerCharacterId
+    ),
+    overlay: null,
+  });
 }
 
 function createTeaHouseActors(
@@ -475,44 +493,6 @@ function createActivityConfirmOverlay(
     cancelLabel: "改日再论",
     tone: "info",
   };
-}
-
-function createCouncilTimeInsufficientOverlay(
-  durationDays: number,
-  remainingDays: number,
-  textEntriesById?: Record<string, string>
-): TeaHouseOverlayState {
-  const entries = getTeaHouseTextEntries(textEntriesById);
-  return createAlertOverlay(
-    resolveTeaHouseText(
-      entries,
-      "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.title"
-    ),
-    remainingDays <= 0
-      ? [
-          resolveTeaHouseTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.arrived.001",
-            { durationDays }
-          ),
-          resolveTeaHouseText(
-            entries,
-            "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.arrived.002"
-          ),
-        ]
-      : [
-          resolveTeaHouseTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.remaining.001",
-            { durationDays, remainingDays }
-          ),
-          resolveTeaHouseText(
-            entries,
-            "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.remaining.002"
-          ),
-        ],
-    "warning"
-  );
 }
 
 function parseActorActionId(actionId: string): string | null {
@@ -846,13 +826,7 @@ function handleActorAction(
       durationDays
     );
     if (remainingDays != null) {
-      return withSessionState(input, sessionState, {
-        overlay: createCouncilTimeInsufficientOverlay(
-          durationDays,
-          remainingDays,
-          input.textEntriesById
-        ),
-      });
+      return withCouncilInsufficientTimeDialogue(input, sessionState);
     }
 
     return withSessionState(
@@ -1054,13 +1028,7 @@ function handleActorAction(
         durationDays
       );
       if (remainingDays != null) {
-        return withSessionState(input, sessionState, {
-          overlay: createCouncilTimeInsufficientOverlay(
-            durationDays,
-            remainingDays,
-            input.textEntriesById
-          ),
-        });
+        return withCouncilInsufficientTimeDialogue(input, sessionState);
       }
 
       return withSessionState(input, sessionState, {
@@ -1220,6 +1188,15 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
     const isDebate = sessionState.overlay?.type === "debate";
+    const dialogueOverrideSpeaker =
+      sessionState.dialogueOverride == null
+        ? null
+        : input.characterDefinitions.find(
+            (characterDefinition) =>
+              characterDefinition.id ===
+              sessionState.dialogueOverride?.speakerCharacterId
+          ) ?? null;
+    const dialogueSpeaker = dialogueOverrideSpeaker ?? selectedActor;
     const standbyRoster = orderHouseStandbyRoster({
       primaryCharacterId: input.houseDefinition.defaultCharacterId,
       actors: actors.map((actor) => ({
@@ -1260,19 +1237,24 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
       sceneSubtitle: "一壶清茶 / 四方传闻",
       standbyRoster,
       dialogue:
-        isIdle || selectedActor == null
+        isIdle || dialogueSpeaker == null
           ? null
           : {
               mode: "character",
-              speakerName: selectedActor.name,
-              characterId: selectedActor.id,
+              speakerName: dialogueSpeaker.name,
+              characterId: dialogueSpeaker.id,
               position: "right",
               textLines:
-                sessionState.dialogueLines.length > 0
+                sessionState.dialogueOverride?.textLines ??
+                (sessionState.dialogueLines.length > 0
                   ? sessionState.dialogueLines
-                  : ["（正端详着你的神色）"],
-              advanceActionId: isGreeting ? "advance-greeting" : null,
-              advanceHintText: isGreeting ? "点击继续" : null,
+                  : ["（正端详着你的神色）"]),
+              advanceActionId:
+                sessionState.dialogueOverride?.advanceActionId ??
+                (isGreeting ? "advance-greeting" : null),
+              advanceHintText:
+                sessionState.dialogueOverride?.advanceHintText ??
+                (isGreeting ? "点击继续" : null),
             },
       actionContainer:
         selectedActor == null || isDebate || !isOpen

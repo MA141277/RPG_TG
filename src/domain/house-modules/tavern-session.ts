@@ -1,4 +1,5 @@
 import type { HouseActivityConfirmOverlayState } from "../house-activity";
+import type { HouseDialogueOverrideState } from "../house-module";
 import type { TavernWorkOffer } from "../tavern";
 import type { TavernGambleSession, TavernGambleVariant } from "../tavern-gambling";
 import type { TavernShortHandState } from "../tavern-short-gambling";
@@ -152,6 +153,7 @@ export type TavernSessionState = {
   selectedSubmitOfferId: string | null;
   selectedActorId: string | null;
   dialogueLines: string[];
+  dialogueOverride?: HouseDialogueOverrideState | null;
   dialoguePhase: TavernDialoguePhase;
   workPanelMode: TavernWorkPanelMode;
   overlay: TavernOverlayState;

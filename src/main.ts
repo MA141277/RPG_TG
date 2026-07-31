@@ -144,6 +144,9 @@ import {
   readCalendarDateNumber,
 } from "./application/time/time-progression";
 import {
+  COUNCIL_INSUFFICIENT_TIME_DIALOGUE_TEXT,
+} from "./application/time/council-insufficient-time-dialogue";
+import {
   getInsufficientDaysForTimedActivity,
   getCouncilPriorityHouseModuleId,
   hasReachedCouncilDate,
@@ -1868,67 +1871,15 @@ function showCouncilPriorityRefusal(): void {
   renderApp();
 }
 
-function showCouncilInsufficientTimeRefusal(
-  activityLabel: string,
-  durationDays: number,
-  remainingDays: number
-): void {
-  const priorityHouse = getCouncilPriorityHouseDefinition();
-  const isTempleReview = priorityHouse?.moduleId === "temple-house";
-  const targetName = priorityHouse?.name ?? (isTempleReview ? "皇觉寺" : "帅府");
-
+function showCouncilInsufficientTimeDialogue(): void {
   appState = {
     ...closeCityMenu(closeCityDirectory(appState)),
     beggingMiniGameState: null,
     locationDialogueState: {
       type: "house-access-refusal",
-      speakerCharacterId:
-        priorityHouse?.defaultCharacterId ??
-        (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
-      textLines: isTempleReview
-        ? remainingDays <= 0
-          ? [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.001",
-                { activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-          : [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.001",
-                { remainingDays, activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-        : remainingDays <= 0
-          ? [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.001",
-                { activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-          : [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.001",
-                { remainingDays, activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.002",
-                { targetHouseName: targetName }
-              ),
-            ],
-      advanceHintText: "知道了",
+      speakerCharacterId: appState.gameState.player.characterId,
+      textLines: [COUNCIL_INSUFFICIENT_TIME_DIALOGUE_TEXT],
+      advanceHintText: "返回评定地点",
     },
   };
   renderApp();
@@ -2128,7 +2079,7 @@ function openBeggingMiniGame(): void {
   );
   if (remainingDays != null) {
     stopCityBeggingMiniGameLoop();
-    showCouncilInsufficientTimeRefusal("化缘", CITY_BEGGING_DURATION_DAYS, remainingDays);
+    showCouncilInsufficientTimeDialogue();
     return;
   }
 

@@ -47,21 +47,24 @@ export const NPC_INTERACTION_DEFAULT_OPTION_IDS = {
 
 export const NPC_INTERACTION_DEFAULT_OPTIONS: readonly NpcInteractionOptionViewModel[] = [
   {
-    id: NPC_INTERACTION_DEFAULT_OPTION_IDS.profile,
-    label: "角色情报",
-    kind: "profile",
-    buttonSound: "light",
-  },
-  {
     id: NPC_INTERACTION_DEFAULT_OPTION_IDS.talk,
     label: "谈话",
     kind: "talk",
     buttonSound: "light",
   },
+] as const;
+
+export const NPC_INTERACTION_TALK_SUB_OPTIONS: readonly NpcInteractionOptionViewModel[] = [
   {
     id: NPC_INTERACTION_DEFAULT_OPTION_IDS.gift,
     label: "送礼",
     kind: "gift",
+    buttonSound: "light",
+  },
+  {
+    id: NPC_INTERACTION_DEFAULT_OPTION_IDS.profile,
+    label: "角色情报",
+    kind: "profile",
     buttonSound: "light",
   },
 ] as const;

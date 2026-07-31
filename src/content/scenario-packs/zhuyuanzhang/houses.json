@@ -2569,6 +2569,120 @@
     }
   },
   {
+    "id": "house.dingyuan.inn",
+    "cityId": "city.dingyuan",
+    "name": "客栈",
+    "type": "inn",
+    "moduleId": "tavern",
+    "characterIds": [],
+    "defaultCharacterId": null,
+    "activityLocationId": "tavern",
+    "backAction": {
+      "label": "返回定远",
+      "targetView": "city"
+    }
+  },
+  {
+    "id": "house.dingyuan.medicine_house",
+    "cityId": "city.dingyuan",
+    "name": "药铺",
+    "type": "medicine-house",
+    "moduleId": "medicine-house",
+    "characterIds": [],
+    "defaultCharacterId": null,
+    "backAction": {
+      "label": "返回定远",
+      "targetView": "city"
+    }
+  },
+  {
+    "id": "house.dingyuan.grain_shop",
+    "cityId": "city.dingyuan",
+    "name": "粮铺",
+    "type": "merchant",
+    "moduleId": "grain-shop",
+    "characterIds": [],
+    "defaultCharacterId": null,
+    "backAction": {
+      "label": "返回定远",
+      "targetView": "city"
+    }
+  },
+  {
+    "id": "house.dingyuan.market",
+    "cityId": "city.dingyuan",
+    "name": "货栈",
+    "type": "merchant",
+    "moduleId": "market-house",
+    "characterIds": [],
+    "defaultCharacterId": null,
+    "activityLocationId": "market",
+    "backAction": {
+      "label": "返回定远",
+      "targetView": "city"
+    }
+  },
+  {
+    "id": "house.dingyuan.tea_house",
+    "cityId": "city.dingyuan",
+    "name": "茶馆",
+    "type": "tea-house",
+    "moduleId": "tea-house",
+    "characterIds": [],
+    "defaultCharacterId": null,
+    "activityLocationId": "tea-house",
+    "backAction": {
+      "label": "返回定远",
+      "targetView": "city"
+    }
+  },
+  {
+    "id": "house.dingyuan.keep",
+    "cityId": "city.dingyuan",
+    "name": "帅府",
+    "type": "castle",
+    "moduleId": "keep-house",
+    "characterIds": [],
+    "defaultCharacterId": null,
+    "backAction": {
+      "label": "返回定远",
+      "targetView": "city"
+    }
+  },
+  {
+    "id": "home.dingyuan",
+    "cityId": "city.dingyuan",
+    "name": "自宅",
+    "type": "residence",
+    "moduleId": "home-house",
+    "visibleStoryStages": [
+      "guo-zixing-camp"
+    ],
+    "enterableStoryStages": [
+      "guo-zixing-camp"
+    ],
+    "requiresPlayerCurrentCityMatch": true,
+    "characterIds": [],
+    "defaultCharacterId": null,
+    "backAction": {
+      "label": "返回定远",
+      "targetView": "city"
+    }
+  },
+  {
+    "id": "house.dingyuan.leader_residence",
+    "cityId": "city.dingyuan",
+    "name": "将领府邸",
+    "type": "residence",
+    "moduleId": "leader-residence",
+    "characterIds": [],
+    "defaultCharacterId": null,
+    "backAction": {
+      "label": "返回定远",
+      "targetView": "city"
+    }
+  },
+  {
     "id": "house.gongchang.leader_residence",
     "cityId": "city.gongchang",
     "name": "将领府邸",

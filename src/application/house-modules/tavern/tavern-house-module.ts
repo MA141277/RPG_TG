@@ -100,6 +100,7 @@ import {
   formatHouseActivityCostLine,
   getHouseWorkDurationDays,
 } from "../../house/house-activity-costs";
+import { createCouncilInsufficientTimeDialogueOverride } from "../../time/council-insufficient-time-dialogue";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialTavernSessionState } from "./tavern-session-state";
 import {
@@ -161,6 +162,23 @@ function createAlertOverlay(
     paragraphs,
     ...(tone == null ? {} : { tone }),
   };
+}
+
+function withCouncilInsufficientTimeDialogue(
+  input: Pick<
+    HouseModuleDispatchInput<"tavern">,
+    "gameState" | "characterDefinitions" | "playerCharacterId"
+  >,
+  sessionState: TavernSessionState | null
+): HouseModuleTransitionResult<"tavern"> {
+  return withSessionState(input, sessionState, {
+    dialoguePhase: "open",
+    dialogueOverride: createCouncilInsufficientTimeDialogueOverride(
+      input.playerCharacterId
+    ),
+    overlay: null,
+    workPanelMode: "closed",
+  });
 }
 
 function getTavernTextEntries(
@@ -610,14 +628,7 @@ function beginAcceptedWorkOffer(
     durationDays
   );
   if (remainingDays != null) {
-    return withSessionState(input, sessionState, {
-      overlay: createCouncilTimeInsufficientOverlay(
-        input.textEntriesById,
-        offer.title,
-        durationDays,
-        remainingDays
-      ),
-    });
+    return withCouncilInsufficientTimeDialogue(input, sessionState);
   }
 
   const nextState = acceptTavernWork(input.gameState, input.houseDefinition.id, offer.id);
@@ -668,47 +679,6 @@ function createActivityConfirmOverlay(
     cancelLabel: "再看看",
     tone: "info",
   };
-}
-
-function createCouncilTimeInsufficientOverlay(
-  textEntriesById: Record<string, string> | undefined,
-  offerTitle: string,
-  durationDays: number,
-  remainingDays: number
-): TavernOverlayState {
-  const entries = getTavernTextEntries(textEntriesById);
-  return createAlertOverlay(
-    resolveTavernText(
-      entries,
-      "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.title"
-    ),
-    remainingDays <= 0
-      ? [
-          resolveTavernTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.expired.001",
-            { offerTitle, durationDays }
-          ),
-          resolveTavernTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.expired.002",
-            { offerTitle, durationDays }
-          ),
-        ]
-      : [
-          resolveTavernTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.soon.001",
-            { offerTitle, durationDays, remainingDays }
-          ),
-          resolveTavernTemplateText(
-            entries,
-            "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.soon.002",
-            { offerTitle, durationDays, remainingDays }
-          ),
-        ],
-    "warning"
-  );
 }
 
 function handleWorkAction(
@@ -853,14 +823,7 @@ function handleWorkAction(
       durationDays
     );
     if (remainingDays != null) {
-      return withSessionState(input, sessionState, {
-        overlay: createCouncilTimeInsufficientOverlay(
-          input.textEntriesById,
-          offer.title,
-          durationDays,
-          remainingDays
-        ),
-      });
+      return withCouncilInsufficientTimeDialogue(input, sessionState);
     }
 
     return withSessionState(input, sessionState, {
@@ -1819,12 +1782,6 @@ function handleGambleAction(
         title: "选择牌局",
         options: [
           {
-            id: "long",
-            label: "长牌",
-            description: "5 暗牌 + 9 公共牌，按轮下注，再进入传统麻将摸打。",
-            actionId: `${SELECT_GAMBLE_VARIANT_ACTION_PREFIX}long`,
-          },
-          {
             id: "short",
             label: "短牌",
             description: "5 手牌 + 2 公共牌，下注沿用德州，弃牌可被吃碰杠抢走。",
@@ -2552,6 +2509,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     if (input.request.actionId === "advance-greeting") {
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "open",
+        dialogueOverride: null,
         dialogueLines: [
           resolveTavernText(
             getTavernTextEntries(input.textEntriesById),
@@ -2564,6 +2522,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     if (input.request.actionId === "dismiss-dialogue") {
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "idle",
+        dialogueOverride: null,
         workPanelMode: "closed",
         overlay: null,
       });
@@ -2572,6 +2531,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     if (input.request.actionId === "open-boss-dialogue") {
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "open",
+        dialogueOverride: null,
         workPanelMode: "closed",
         dialogueLines: [
           resolveTavernText(
@@ -2705,6 +2665,18 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     const firstAvailableOffer = lists.availableOffers[0] ?? null;
     const tavernPrimaryActorId =
       input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId;
+    const dialogueOverrideSpeaker =
+      sessionState.dialogueOverride == null
+        ? null
+        : input.characterDefinitions.find(
+            (characterDefinition) =>
+              characterDefinition.id ===
+              sessionState.dialogueOverride?.speakerCharacterId
+          ) ?? null;
+    const dialogueSpeaker = dialogueOverrideSpeaker ?? {
+      id: tavernPrimaryActorId,
+      name: tavernBossProfile.name,
+    };
     const tavernBossActor = {
       characterId: tavernPrimaryActorId,
       name: tavernBossProfile.name,
@@ -2750,12 +2722,18 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
           ? null
           : {
               mode: "character",
-              speakerName: tavernBossProfile.name,
-              characterId: tavernPrimaryActorId,
+              speakerName: dialogueSpeaker.name,
+              characterId: dialogueSpeaker.id,
               position: "right",
-              textLines: sessionState.dialogueLines,
-              advanceActionId: isGreeting ? "advance-greeting" : null,
-              advanceHintText: isGreeting ? "点击继续" : null,
+              textLines:
+                sessionState.dialogueOverride?.textLines ??
+                sessionState.dialogueLines,
+              advanceActionId:
+                sessionState.dialogueOverride?.advanceActionId ??
+                (isGreeting ? "advance-greeting" : null),
+              advanceHintText:
+                sessionState.dialogueOverride?.advanceHintText ??
+                (isGreeting ? "点击继续" : null),
             },
       actionContainer: !isOpen
         ? null

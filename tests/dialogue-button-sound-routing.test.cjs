@@ -3,6 +3,19 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
+function extractButtonByNpcAction(html, action) {
+  const actionIndex = html.indexOf(`data-npc-action="${action}"`);
+  if (actionIndex < 0) {
+    return "";
+  }
+  const buttonStart = html.lastIndexOf("<button", actionIndex);
+  const buttonEnd = html.indexOf("</button>", actionIndex);
+  if (buttonStart < 0 || buttonEnd < 0) {
+    return "";
+  }
+  return html.slice(buttonStart, buttonEnd + "</button>".length);
+}
+
 test("story dialogue advance surfaces no longer declare a page-turn button sound", () => {
   const html = fs.readFileSync(
     path.join(process.cwd(), "src/ui/views/scene/scene-view.ts"),
@@ -66,7 +79,7 @@ test("location dialogue advance surfaces no longer declare a page-turn button so
   );
 });
 
-test("npc dialogue actions stay silent instead of falling back to the generic ui click cue", () => {
+test("npc talk branch close action stays silent instead of falling back to the generic ui click cue", () => {
   const {
     renderNpcInteractionDialogue,
   } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
@@ -75,17 +88,10 @@ test("npc dialogue actions stay silent instead of falling back to the generic ui
     session: { mode: "dialogue", targetCharacterId: "character.test" },
     targetName: "测试人物",
   });
+  const continueButton = extractButtonByNpcAction(html, "continue");
+  const closeButton = extractButtonByNpcAction(html, "close");
 
-  assert.doesNotMatch(
-    html,
-    /data-npc-action="continue"[\s\S]*data-button-sound=/
-  );
-  assert.match(
-    html,
-    /data-npc-action="continue"[\s\S]*data-ui-click-sound="none"/
-  );
-  assert.match(
-    html,
-    /data-npc-action="close"[\s\S]*data-ui-click-sound="none"/
-  );
+  assert.equal(continueButton, "");
+  assert.doesNotMatch(closeButton, /data-button-sound=/);
+  assert.match(closeButton, /data-ui-click-sound="none"/);
 });

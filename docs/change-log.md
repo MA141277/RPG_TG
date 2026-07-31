@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-31 Web Dist Runtime Asset Publishing
+
+### Added
+- Vite 构建现在会把 `ui/yuansu` 发布到 `dist/ui/yuansu`，并把 Spine 兵种运行时资源 `src/faxian/leg` 发布到 `dist/src/faxian/leg`，覆盖仍通过裸静态路径访问的属性栏、编队兵种图标和战斗兵种贴图。
+- `package:web` 在复制 `dist` 前会校验属性栏贴图、编队兵种贴图和关键 Spine 兵种工程文件存在；缺失时直接失败并提示先运行 `npm run build`。
+- 新增回归测试锁定 Vite 静态运行时资源发布和 web 独立包缺资源失败路径。
+
+### Impact
+- 下次打包不会再只带 Vite 哈希资源而漏掉运行时裸路径资源；若构建产物不完整，打包会在生成发布包前中断。
+
 ## 2026-07-31 777 Branch Integration
 
 ### Changed

@@ -353,6 +353,7 @@ function renderNpcInteractionOverlay(input: AppRenderInput): string {
       targetName,
       portraitImageUrl: targetPortraitImageUrl,
       portraitArtClassName: targetPortraitArtClassName,
+      giftDisabled: true,
     })
   );
 }

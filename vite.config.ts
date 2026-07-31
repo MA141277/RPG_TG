@@ -4,6 +4,16 @@ import { defineConfig } from "vite";
 
 export const SCENARIO_PACK_SOURCE_ROOT = "src/content/scenario-packs";
 export const SCENARIO_PACK_PUBLIC_ROOT = "/scenario-packs";
+export const STATIC_RUNTIME_ASSET_ROUTES = [
+  {
+    sourceRoot: "ui/yuansu",
+    publicRoot: "/ui/yuansu",
+  },
+  {
+    sourceRoot: "src/faxian/leg",
+    publicRoot: "/src/faxian/leg",
+  },
+] as const;
 
 export function publishScenarioPacksToDir(
   workspaceRoot: string,
@@ -20,6 +30,27 @@ export function publishScenarioPacksToDir(
     recursive: true,
     force: true,
   });
+}
+
+export function publishStaticRuntimeAssetsToDir(
+  workspaceRoot: string,
+  outputRoot: string
+): void {
+  mkdirSync(outputRoot, { recursive: true });
+
+  for (const route of STATIC_RUNTIME_ASSET_ROUTES) {
+    const sourceRoot = resolve(workspaceRoot, route.sourceRoot);
+    const publishedRoot = resolve(outputRoot, route.publicRoot.replace(/^\//, ""));
+
+    if (!existsSync(sourceRoot)) {
+      throw new Error(`Missing static runtime asset root: ${sourceRoot}`);
+    }
+
+    cpSync(sourceRoot, publishedRoot, {
+      recursive: true,
+      force: true,
+    });
+  }
 }
 
 export function createScenarioPackPublishPlugin(workspaceRoot = __dirname) {
@@ -67,6 +98,15 @@ export function createScenarioPackPublishPlugin(workspaceRoot = __dirname) {
     },
     closeBundle() {
       publishScenarioPacksToDir(workspaceRoot, resolve(workspaceRoot, "dist"));
+    },
+  };
+}
+
+export function createStaticRuntimeAssetPublishPlugin(workspaceRoot = __dirname) {
+  return {
+    name: "static-runtime-asset-publisher",
+    closeBundle() {
+      publishStaticRuntimeAssetsToDir(workspaceRoot, resolve(workspaceRoot, "dist"));
     },
   };
 }
@@ -119,6 +159,7 @@ export default defineConfig({
   },
   plugins: [
     createScenarioPackPublishPlugin(),
+    createStaticRuntimeAssetPublishPlugin(),
     {
       name: "spine-editor-json-save",
       configureServer(server) {

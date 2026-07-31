@@ -1746,6 +1746,88 @@
     ]
   },
   {
+    "id": "city.dingyuan",
+    "name": "定远",
+    "regionId": "region.yuanmo_china",
+    "mapNodeId": "settlement.kaifeng_province",
+    "houseIds": [
+      "house.template.leader_residence",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
+    ],
+    "neighbourCityIds": [],
+    "travelCost": 1,
+    "tags": [
+      "huai-west",
+      "yuan-garrison",
+      "small-city"
+    ],
+    "prosperity": 42,
+    "danger": 36,
+    "specialDemand": [
+      "grain",
+      "medicine"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.template.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.template",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.template.inn",
+        "npcIds": [],
+        "primaryNpcId": null
+      }
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.kaifeng_province",
+      "x": 318,
+      "y": 327,
+      "kind": "settlement",
+      "label": "定远",
+      "summary": "剧情: 淮西早年活动地，连接濠州与钟离一带 | 阵营: 元廷地方控制 | 所有者: 定远地方势力 | 相关NPC: 朱元璋早年乡里人物 | 注记: 早年主线外出与落脚节点"
+    },
+    "menuInstanceIds": [
+      "menu-instance.city.default"
+    ]
+  },
+  {
     "id": "city.kaifeng",
     "name": "汴梁路",
     "regionId": "region.yuanmo_china",

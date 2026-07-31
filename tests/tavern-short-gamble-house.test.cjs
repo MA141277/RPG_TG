@@ -117,6 +117,27 @@ function openShortTable(baseState, characters, buyInGold, enableDebugPreset = fa
   });
 }
 
+test("tavern gamble choice hides the long-card entry", () => {
+  const entered = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const opened = tavernHouseModule.dispatch({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+    request: { type: "action", actionId: "open-gamble" },
+  });
+
+  assert.equal(opened.sessionState?.overlay?.type, "gamble-choice");
+  const optionActionIds = opened.sessionState.overlay.options.map((option) => option.actionId);
+  assert.deepEqual(optionActionIds, ["select-gamble-variant:short"]);
+});
+
 function advanceShortHandToHumanClaimWindow(hand) {
   let nextHand = hand;
   for (let step = 0; step < 32; step += 1) {

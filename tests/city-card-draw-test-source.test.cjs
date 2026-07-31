@@ -11,20 +11,14 @@ function includesLiteralOrEscape(source, escapedValue) {
   return source.includes(literalValue) || source.includes(escapedValue);
 }
 
-test("city view declares the temporary card draw test button in player-facing city markup", () => {
+test("city view hides the temporary card draw test button from player-facing markup", () => {
   const cityViewSource = fs.readFileSync("src/ui/views/city/city-view.ts", "utf8");
-  const prototypeCssSource = fs.readFileSync("src/styles/prototype.css", "utf8");
 
-  assert.match(cityViewSource, /data-action="open-city-card-draw-test"/);
-  assert.match(cityViewSource, /c-kulan-city__card-draw-test-action/);
-  assert.match(prototypeCssSource, /\.c-kulan-city__card-draw-test-action/);
-  assert.match(
-    prototypeCssSource,
-    /\.c-kulan-city__card-draw-test-action\s*\{[\s\S]*?bottom:\s*68px;/
-  );
+  assert.doesNotMatch(cityViewSource, /data-action="open-city-card-draw-test"/);
+  assert.doesNotMatch(cityViewSource, /c-kulan-city__card-draw-test-action/);
 });
 
-test("city card draw test button stays in renderCityView instead of shared choice skin", () => {
+test("city card draw test button stays out of city markup and shared choice skin", () => {
   const cityViewSource = fs.readFileSync("src/ui/views/city/city-view.ts", "utf8");
   const choiceSkinMatch = cityViewSource.match(
     /function renderCityChoiceSkin\(\): string \{([\s\S]*?)^\}/m
@@ -36,7 +30,7 @@ test("city card draw test button stays in renderCityView instead of shared choic
   assert.ok(choiceSkinMatch, "Expected renderCityChoiceSkin source.");
   assert.ok(cityViewMatch, "Expected renderCityView source.");
   assert.doesNotMatch(choiceSkinMatch[1], /open-city-card-draw-test/);
-  assert.match(cityViewMatch[1], /open-city-card-draw-test/);
+  assert.doesNotMatch(cityViewMatch[1], /open-city-card-draw-test/);
 });
 
 test("main render path and runtime wire the temporary city card draw overlay", () => {
@@ -57,8 +51,6 @@ test("city card draw test copy is stored as readable chinese instead of mojibake
   const appRenderSource = fs.readFileSync("src/ui/app-render.ts", "utf8");
   const mainSource = fs.readFileSync("src/main.ts", "utf8");
 
-  assert.ok(includesLiteralOrEscape(cityViewSource, "\\u62bd\\u5361\\u6d4b\\u8bd5"));
-  assert.ok(includesLiteralOrEscape(cityViewSource, "\\u6d4b\\u8bd5\\u62bd\\u5361\\u52a8\\u753b"));
   assert.ok(includesLiteralOrEscape(appRenderSource, "\\u4e34\\u65f6\\u6d4b\\u8bd5"));
   assert.ok(includesLiteralOrEscape(appRenderSource, "\\u62bd\\u5361\\u52a8\\u753b"));
   assert.ok(includesLiteralOrEscape(appRenderSource, "\\u5173\\u95ed\\u62bd\\u5361\\u6d4b\\u8bd5"));

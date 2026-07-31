@@ -1,0 +1,409 @@
+{
+  "version": 2,
+  "map": {
+    "id": "dingyuan",
+    "name": "定远",
+    "stageWidth": 2048,
+    "stageHeight": 1152,
+    "baseSpace": {
+      "x": 139,
+      "y": 88,
+      "width": 1771,
+      "height": 976
+    },
+    "backgroundImage": "ui/yuansu/菱形格子/20260716-111958.png",
+    "foregroundImage": "ui/yuansu/菱形格子/20260716-141239.png",
+    "referenceMask": []
+  },
+  "grid": {
+    "type": "isometric-board",
+    "cols": 40,
+    "rows": 40,
+    "cellWidth": 40,
+    "cellHeight": 20,
+    "originX": 885,
+    "originY": 110,
+    "snap": true,
+    "visible": true,
+    "showCoordinates": false,
+    "showOutline": false
+  },
+  "entities": [
+    {
+      "id": "dingyuan.keep",
+      "name": "帅府",
+      "category": "house",
+      "entry": {
+        "type": "house",
+        "houseId": "house.dingyuan.keep"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/shuaifu.png",
+        "naturalWidth": 1333,
+        "naturalHeight": 710,
+        "scale": 0.2,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "gridX": 16,
+        "gridY": 6,
+        "cols": 8,
+        "rows": 6
+      },
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "帅府",
+          "offsetX": 0,
+          "offsetY": -142,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 132,
+          "height": 52
+        }
+      }
+    },
+    {
+      "id": "dingyuan.leader-residence",
+      "name": "将领府邸",
+      "category": "house",
+      "entry": {
+        "type": "house",
+        "houseId": "house.dingyuan.leader_residence"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/huozhai.png",
+        "naturalWidth": 975,
+        "naturalHeight": 722,
+        "scale": 0.19,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "gridX": 8,
+        "gridY": 10,
+        "cols": 6,
+        "rows": 5
+      },
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "将领府邸",
+          "offsetX": 0,
+          "offsetY": -124,
+          "width": 112,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 120,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "dingyuan.market",
+      "name": "货栈",
+      "category": "house",
+      "entry": {
+        "type": "house",
+        "houseId": "house.dingyuan.market"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/1.png",
+        "naturalWidth": 1065,
+        "naturalHeight": 668,
+        "scale": 0.22,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "gridX": 12,
+        "gridY": 18,
+        "cols": 6,
+        "rows": 5
+      },
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "货栈",
+          "offsetX": 0,
+          "offsetY": -116,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 118,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "dingyuan.tea-house",
+      "name": "茶馆",
+      "category": "house",
+      "entry": {
+        "type": "house",
+        "houseId": "house.dingyuan.tea_house"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/chaguan.png",
+        "naturalWidth": 1003,
+        "naturalHeight": 770,
+        "scale": 0.19,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "gridX": 21,
+        "gridY": 18,
+        "cols": 6,
+        "rows": 5
+      },
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "茶馆",
+          "offsetX": 0,
+          "offsetY": -126,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 118,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "dingyuan.inn",
+      "name": "客栈",
+      "category": "house",
+      "entry": {
+        "type": "house",
+        "houseId": "house.dingyuan.inn"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/kezhan.png",
+        "naturalWidth": 909,
+        "naturalHeight": 829,
+        "scale": 0.17,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "gridX": 4,
+        "gridY": 21,
+        "cols": 6,
+        "rows": 5
+      },
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "客栈",
+          "offsetX": 0,
+          "offsetY": -128,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 118,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "dingyuan.grain-shop",
+      "name": "粮铺",
+      "category": "house",
+      "entry": {
+        "type": "house",
+        "houseId": "house.dingyuan.grain_shop"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/liangpu.png",
+        "naturalWidth": 1054,
+        "naturalHeight": 804,
+        "scale": 0.17,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "gridX": 29,
+        "gridY": 21,
+        "cols": 6,
+        "rows": 5
+      },
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "粮铺",
+          "offsetX": 0,
+          "offsetY": -122,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 118,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "dingyuan.medicine-house",
+      "name": "药铺",
+      "category": "house",
+      "entry": {
+        "type": "house",
+        "houseId": "house.dingyuan.medicine_house"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/yaopu.png",
+        "naturalWidth": 1068,
+        "naturalHeight": 710,
+        "scale": 0.19,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "gridX": 10,
+        "gridY": 29,
+        "cols": 6,
+        "rows": 5
+      },
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "药铺",
+          "offsetX": 0,
+          "offsetY": -118,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 118,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "dingyuan.home",
+      "name": "自宅",
+      "category": "house",
+      "entry": {
+        "type": "house",
+        "houseId": "home.dingyuan"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/2.png",
+        "naturalWidth": 1003,
+        "naturalHeight": 648,
+        "scale": 0.21,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "gridX": 23,
+        "gridY": 29,
+        "cols": 6,
+        "rows": 5
+      },
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "自宅",
+          "offsetX": 0,
+          "offsetY": -116,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 118,
+          "height": 48
+        }
+      }
+    }
+  ]
+}

@@ -86,6 +86,9 @@ import {
   resolveLateCouncilAttendance,
 } from "../../time/council-attendance";
 import {
+  createCouncilInsufficientTimeDialogueOverride,
+} from "../../time/council-insufficient-time-dialogue";
+import {
   getInsufficientDaysForTimedActivity,
   hasReachedCouncilDate,
 } from "../../time/council-priority";
@@ -1535,19 +1538,11 @@ function createTempleInsufficientTimeResult(
     },
     sessionState,
     {
-      overlay: createAlertOverlay(
-        "时日不够",
-        remainingDays <= 0
-          ? [
-              `（合十）评定日期已到，这轮${activityLabel}少说也要 ${durationDays} 天，眼下已经来不及了。`,
-              "先去前殿把评定应下，等过了这桩大事，再回来继续。",
-            ]
-          : [
-              `（合十）离评定只剩 ${remainingDays} 天，这轮${activityLabel}少说也要 ${durationDays} 天，眼下已经来不及了。`,
-              "先去前殿把评定应下，等过了这桩大事，再回来继续。",
-            ],
-        "warning"
+      dialoguePhase: "open",
+      dialogueOverride: createCouncilInsufficientTimeDialogueOverride(
+        input.playerCharacterId
       ),
+      overlay: null,
     }
   );
 }
