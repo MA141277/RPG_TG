@@ -26,10 +26,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-31`
-- Current Focus: `Task 1 complete; Task 2 trade resolution and mutation-path TDD is next.`
-- Next Step: `Write the failing trade-resolution and mutation tests for Task 2, then implement the typed settlement-trade mutation path.`
+- Current Focus: `Task 2 complete; Task 3 shared settlement-trade mutation applier TDD is next.`
+- Next Step: `Write the failing settlement-trade mutation-applier tests for Task 3, then implement the shared applier.`
 - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
-- Notes: `Canonical project-progress now points to this child; Task 1 delivered the dedicated settlementTrade runtime owner, specialty goods/profile content, and snapshot/investigation service only.`
+- Notes: `Task 2 added typed trade resolutions and dynamic price pressure while preserving signed progress and legacy market-inventory compatibility; host-layer wiring remains out of scope until later tasks.`
 
 ## Progress Log
 
@@ -41,6 +41,10 @@
   - Summary: `Completed Task 1 by promoting this child to the canonical progress entry, adding the dedicated settlementTrade runtime/content contracts, and shipping the snapshot/investigation service with focused RED-to-GREEN coverage.`
   - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
   - Next: `Start Task 2 with failing trade-resolution and mutation tests before adding settlement-trade mutation code.`
+- 2026-07-31
+  - Summary: `Completed Task 2 with typed settlement-trade resolutions, dynamic price pressure, 30-day reset coverage, and structured validation while preserving signed progress and legacy inventory compatibility.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
+  - Next: `Start Task 3 with failing settlement-trade mutation-applier tests before writing the shared applier.`
 
 ## Based On Spec
 
@@ -638,7 +642,7 @@ Expected:
 
 - `PASS` for the supported-city snapshot defaults, unsupported-city rejection, and investigation-summary data-path tests.
 
-- [ ] **Step 6: Commit the contract and snapshot task**
+- [x] **Step 6: Commit the contract and snapshot task**
 
 Run:
 
@@ -662,7 +666,7 @@ git commit -m "feat: scaffold city specialty market runtime"
 - Produces: `SettlementTradeResolution`
 - Produces: `SettlementTradeService.resolveTrade(input: { state: GameState; cityId: CityId; currentDay: number; goodsId: SettlementTradeGoodId; mode: "buy" | "sell"; quantity: number; playerGold: number }): SettlementTradeResolution`
 
-- [ ] **Step 1: Write the failing pricing and validation tests**
+- [x] **Step 1: Write the failing pricing and validation tests**
 
 Extend `tests/settlement-trade-service.test.cjs` with:
 
@@ -714,8 +718,8 @@ test("settlement trade buy pressure adds 0.01 for each 10 bought units and keeps
   assert.equal(
     result.mutations.some(
       (mutation) =>
-        mutation.type === "change-settlement-trade-multiplier" &&
-        mutation.delta === 0.02
+        mutation.type === "set-settlement-trade-multiplier" &&
+        mutation.priceMultiplier === 1.02
     ),
     true
   );
@@ -758,7 +762,7 @@ test("settlement trade keeps buy price at round(sell price * 1.2) and rejects in
 });
 ```
 
-- [ ] **Step 2: Run the pricing tests to verify RED**
+- [x] **Step 2: Run the pricing tests to verify RED**
 
 Run:
 
@@ -770,7 +774,7 @@ Expected:
 
 - `FAIL` because `createSnapshot()` does not normalize expired runtime entries yet and `resolveTrade()` plus the mutation union are not implemented.
 
-- [ ] **Step 3: Implement the trade algorithm, reset logic, and typed mutation output**
+- [x] **Step 3: Implement the trade algorithm, reset logic, and typed mutation output**
 
 Extend `src/domain/settlement-trade.ts` with the mutation and resolution unions:
 
@@ -779,7 +783,7 @@ export type SettlementTradeMutation =
   | { type: "change-player-gold"; amount: number }
   | { type: "change-player-item"; itemId: SettlementTradeGoodId; delta: number }
   | { type: "change-settlement-trade-stock"; cityId: CityId; goodsId: SettlementTradeGoodId; delta: number }
-  | { type: "change-settlement-trade-multiplier"; cityId: CityId; goodsId: SettlementTradeGoodId; delta: number }
+  | { type: "set-settlement-trade-multiplier"; cityId: CityId; goodsId: SettlementTradeGoodId; priceMultiplier: number }
   | { type: "set-settlement-trade-progress"; cityId: CityId; goodsId: SettlementTradeGoodId; progressUnits: number }
   | { type: "set-settlement-trade-last-traded-day"; cityId: CityId; goodsId: SettlementTradeGoodId; dayNumber: number };
 
@@ -937,10 +941,10 @@ resolveTrade(input: {
         delta: input.mode === "buy" ? -input.quantity : input.quantity,
       },
       {
-        type: "change-settlement-trade-multiplier",
+        type: "set-settlement-trade-multiplier",
         cityId: input.cityId,
         goodsId: input.goodsId,
-        delta: Number((nextPressure.priceMultiplier - row.priceMultiplier).toFixed(2)),
+        priceMultiplier: nextPressure.priceMultiplier,
       },
       {
         type: "set-settlement-trade-progress",
@@ -959,7 +963,7 @@ resolveTrade(input: {
 }
 ```
 
-- [ ] **Step 4: Run the pricing tests to verify GREEN**
+- [x] **Step 4: Run the pricing tests to verify GREEN**
 
 Run:
 
@@ -971,7 +975,7 @@ Expected:
 
 - `PASS` for the 30-day reset behavior, `0.01` per 10 units rule, residual progress carry, `0.5` to `2.0` clamp behavior, `buyPrice === round(sellPrice * 1.2)`, and structured validation failures.
 
-- [ ] **Step 5: Commit the pricing task**
+- [x] **Step 5: Commit the pricing task**
 
 Run:
 
@@ -1080,7 +1084,7 @@ test("apply settlement trade mutations updates gold, items, stock, multiplier, p
       { type: "change-player-gold", amount: -240 },
       { type: "change-player-item", itemId: "silk_textiles", delta: 2 },
       { type: "change-settlement-trade-stock", cityId: "city.yingtian", goodsId: "silk_textiles", delta: -2 },
-      { type: "change-settlement-trade-multiplier", cityId: "city.yingtian", goodsId: "silk_textiles", delta: 0.01 },
+      { type: "set-settlement-trade-multiplier", cityId: "city.yingtian", goodsId: "silk_textiles", priceMultiplier: 1.01 },
       { type: "set-settlement-trade-progress", cityId: "city.yingtian", goodsId: "silk_textiles", progressUnits: 0 },
       { type: "set-settlement-trade-last-traded-day", cityId: "city.yingtian", goodsId: "silk_textiles", dayNumber: 12 },
     ],
@@ -1192,12 +1196,10 @@ export function applySettlementTradeMutations(input: {
         const nextEntry =
           mutation.type === "change-settlement-trade-stock"
             ? { ...current, stockQuantity: current.stockQuantity + mutation.delta }
-            : mutation.type === "change-settlement-trade-multiplier"
+            : mutation.type === "set-settlement-trade-multiplier"
               ? {
                   ...current,
-                  priceMultiplier: Number(
-                    (current.priceMultiplier + mutation.delta).toFixed(2)
-                  ),
+                  priceMultiplier: mutation.priceMultiplier,
                 }
               : mutation.type === "set-settlement-trade-progress"
                 ? { ...current, progressUnits: mutation.progressUnits }

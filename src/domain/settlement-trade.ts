@@ -101,3 +101,58 @@ export type SettlementTradeInvestigationSummary = {
   highlightedDestinations: SettlementTradeHighlightedDestination[];
   voiceLines: string[];
 };
+
+export type SettlementTradeMutation =
+  | { type: "change-player-gold"; amount: number }
+  | {
+      type: "change-player-item";
+      itemId: SettlementTradeGoodId;
+      delta: number;
+    }
+  | {
+      type: "change-settlement-trade-stock";
+      cityId: CityId;
+      goodsId: SettlementTradeGoodId;
+      delta: number;
+    }
+  | {
+      type: "set-settlement-trade-multiplier";
+      cityId: CityId;
+      goodsId: SettlementTradeGoodId;
+      priceMultiplier: number;
+    }
+  | {
+      type: "set-settlement-trade-progress";
+      cityId: CityId;
+      goodsId: SettlementTradeGoodId;
+      progressUnits: number;
+    }
+  | {
+      type: "set-settlement-trade-last-traded-day";
+      cityId: CityId;
+      goodsId: SettlementTradeGoodId;
+      dayNumber: number;
+    };
+
+export type SettlementTradeResolution =
+  | {
+      ok: true;
+      mode: "buy" | "sell";
+      goodsId: SettlementTradeGoodId;
+      quantity: number;
+      totalPrice: number;
+      summaryLines: string[];
+      mutations: SettlementTradeMutation[];
+    }
+  | {
+      ok: false;
+      code:
+        | "unsupported-city"
+        | "unknown-goods"
+        | "invalid-quantity"
+        | "insufficient-gold"
+        | "insufficient-stock"
+        | "insufficient-owned-quantity";
+      title: string;
+      paragraphs: string[];
+    };

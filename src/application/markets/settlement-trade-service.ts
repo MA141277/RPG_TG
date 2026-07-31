@@ -8,6 +8,7 @@ import type {
   SettlementTradeGoodId,
   SettlementTradeGoodRuntimeState,
   SettlementTradeInvestigationSummary,
+  SettlementTradeResolution,
   SettlementTradeSnapshot,
   SettlementTradeSnapshotRow,
   SettlementTradeTier,
@@ -21,6 +22,9 @@ import { settlementTradeGoodsById } from "../../content/markets/settlement-trade
 
 const RESET_DAYS = 30;
 const BUY_PRICE_MULTIPLIER = 1.2;
+const TRADE_PRESSURE_UNITS_PER_STEP = 10;
+const MIN_PRICE_MULTIPLIER = 0.5;
+const MAX_PRICE_MULTIPLIER = 2;
 
 function getTierLabel(tier: SettlementTradeTier): string {
   switch (tier) {
@@ -219,6 +223,38 @@ function createVoiceLines(snapshot: SettlementTradeSnapshot): string[] {
   ];
 }
 
+function advanceTradePressure(input: {
+  currentMultiplier: number;
+  currentProgressUnits: number;
+  signedQuantity: number;
+}): { priceMultiplier: number; progressUnits: number } {
+  let nextMultiplier = input.currentMultiplier;
+  let nextProgressUnits = input.currentProgressUnits + input.signedQuantity;
+
+  while (Math.abs(nextProgressUnits) >= TRADE_PRESSURE_UNITS_PER_STEP) {
+    const direction = nextProgressUnits > 0 ? 1 : -1;
+    const candidateMultiplier = Number(
+      (nextMultiplier + direction * 0.01).toFixed(2)
+    );
+    const clampedMultiplier = Math.max(
+      MIN_PRICE_MULTIPLIER,
+      Math.min(MAX_PRICE_MULTIPLIER, candidateMultiplier)
+    );
+
+    if (clampedMultiplier === nextMultiplier) {
+      return { priceMultiplier: nextMultiplier, progressUnits: 0 };
+    }
+
+    nextMultiplier = clampedMultiplier;
+    nextProgressUnits -= direction * TRADE_PRESSURE_UNITS_PER_STEP;
+  }
+
+  return {
+    priceMultiplier: nextMultiplier,
+    progressUnits: nextProgressUnits,
+  };
+}
+
 export class SettlementTradeService {
   createSnapshot(input: {
     state: GameState;
@@ -248,6 +284,7 @@ export class SettlementTradeService {
       helperLines: [
         "Buy price is 120% of the current local sell price.",
         "Every 10 traded units moves the dynamic multiplier by 0.01.",
+        "Trade pressure resets after 30 quiet days.",
       ],
     };
   }
@@ -267,6 +304,139 @@ export class SettlementTradeService {
         rows: snapshot.rows,
       }),
       voiceLines: createVoiceLines(snapshot),
+    };
+  }
+
+  resolveTrade(input: {
+    state: GameState;
+    cityId: CityId;
+    currentDay: number;
+    goodsId: SettlementTradeGoodId;
+    mode: "buy" | "sell";
+    quantity: number;
+    playerGold: number;
+  }): SettlementTradeResolution {
+    const snapshot = this.createSnapshot({
+      state: input.state,
+      cityId: input.cityId,
+      currentDay: input.currentDay,
+    });
+
+    if (!snapshot.supported) {
+      return {
+        ok: false,
+        code: "unsupported-city",
+        title: "Specialty market unavailable",
+        paragraphs: [
+          "This city does not have a specialty market profile in the current runtime.",
+        ],
+      };
+    }
+
+    const row = snapshot.rows.find((candidate) => candidate.goodsId === input.goodsId);
+    if (row == null) {
+      return {
+        ok: false,
+        code: "unknown-goods",
+        title: "Unknown goods",
+        paragraphs: ["The selected specialty good is not available in this city."],
+      };
+    }
+
+    if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
+      return {
+        ok: false,
+        code: "invalid-quantity",
+        title: "Invalid quantity",
+        paragraphs: ["Quantity must be a positive integer."],
+      };
+    }
+
+    if (input.mode === "buy" && row.stockQuantity < input.quantity) {
+      return {
+        ok: false,
+        code: "insufficient-stock",
+        title: "Insufficient stock",
+        paragraphs: [
+          "The city specialty market does not have enough stock for this trade.",
+        ],
+      };
+    }
+
+    if (input.mode === "sell" && row.ownedQuantity < input.quantity) {
+      return {
+        ok: false,
+        code: "insufficient-owned-quantity",
+        title: "Insufficient goods",
+        paragraphs: [
+          "The player does not own enough of this specialty good to sell it.",
+        ],
+      };
+    }
+
+    const unitPrice =
+      input.mode === "buy" ? row.currentBuyPrice : row.currentSellPrice;
+    const totalPrice = unitPrice * input.quantity;
+    if (input.mode === "buy" && input.playerGold < totalPrice) {
+      return {
+        ok: false,
+        code: "insufficient-gold",
+        title: "Insufficient gold",
+        paragraphs: ["The player does not have enough gold for this purchase."],
+      };
+    }
+
+    const nextPressure = advanceTradePressure({
+      currentMultiplier: row.priceMultiplier,
+      currentProgressUnits: row.progressUnits,
+      signedQuantity: input.mode === "buy" ? input.quantity : -input.quantity,
+    });
+
+    return {
+      ok: true,
+      mode: input.mode,
+      goodsId: input.goodsId,
+      quantity: input.quantity,
+      totalPrice,
+      summaryLines: [
+        `${input.mode === "buy" ? "Bought" : "Sold"} ${input.quantity} ${row.unit} ${row.name}.`,
+        `Total price: ${totalPrice}.`,
+      ],
+      mutations: [
+        {
+          type: "change-player-gold",
+          amount: input.mode === "buy" ? -totalPrice : totalPrice,
+        },
+        {
+          type: "change-player-item",
+          itemId: input.goodsId,
+          delta: input.mode === "buy" ? input.quantity : -input.quantity,
+        },
+        {
+          type: "change-settlement-trade-stock",
+          cityId: input.cityId,
+          goodsId: input.goodsId,
+          delta: input.mode === "buy" ? -input.quantity : input.quantity,
+        },
+        {
+          type: "set-settlement-trade-multiplier",
+          cityId: input.cityId,
+          goodsId: input.goodsId,
+          priceMultiplier: nextPressure.priceMultiplier,
+        },
+        {
+          type: "set-settlement-trade-progress",
+          cityId: input.cityId,
+          goodsId: input.goodsId,
+          progressUnits: nextPressure.progressUnits,
+        },
+        {
+          type: "set-settlement-trade-last-traded-day",
+          cityId: input.cityId,
+          goodsId: input.goodsId,
+          dayNumber: input.currentDay,
+        },
+      ],
     };
   }
 }

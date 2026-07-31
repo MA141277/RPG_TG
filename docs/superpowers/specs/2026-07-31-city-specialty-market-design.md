@@ -564,10 +564,10 @@ export type SettlementTradeMutation =
       delta: number;
     }
   | {
-      type: "change-settlement-trade-multiplier";
+      type: "set-settlement-trade-multiplier";
       cityId: CityId;
       goodsId: SettlementTradeGoodId;
-      delta: number;
+      priceMultiplier: number;
     }
   | {
       type: "set-settlement-trade-progress";

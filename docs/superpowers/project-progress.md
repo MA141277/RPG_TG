@@ -10,13 +10,13 @@
 - Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-city-specialty-market-task-2`
+- Next Required Action: `execute-city-specialty-market-task-3`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 2.`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 3.`
 
 ## Progress Log
 
@@ -101,6 +101,10 @@
   - Summary: `Switched canonical progress to the City Specialty Market child and completed Task 1 with a dedicated settlementTrade runtime owner, specialty goods/city profile content, and a shared snapshot/investigation service.`
   - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
   - Next: `Continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 2.`
+- 2026-07-31
+  - Summary: `Completed City Specialty Market Task 2 with typed trade resolutions, dynamic price pressure, 30-day reset coverage, and structured validation in the shared settlement-trade service.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
+  - Next: `Continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 3.`
 
 ## Latest Closeout
 
