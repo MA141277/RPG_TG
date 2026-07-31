@@ -12103,6 +12103,15 @@ test("market house can open trade overlay and execute buy flow", () => {
   );
 });
 
+test("market house specialty trade integration keeps src/main.ts free of settlement trade host branches", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.doesNotMatch(source, /open-settlement-trade/u);
+  assert.doesNotMatch(source, /confirm-settlement-trade/u);
+  assert.doesNotMatch(source, /SettlementTradeService/u);
+  assert.doesNotMatch(source, /applySettlementTradeMutations/u);
+});
+
 test("market house can sell legacy-only goods through normalized player item inventory", () => {
   const baseState = createBaseState();
   const state = ensureCityNpcPoolsForCurrentDay(

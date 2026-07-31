@@ -94,6 +94,87 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
     `;
   }
 
+  if (overlay.type === "settlement-trade") {
+    return `
+      <div class="c-grain-shop-overlay" data-house-overlay="settlement-trade">
+        <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel c-house-trade-popup" role="dialog" aria-modal="true">
+          <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
+          <div class="c-grain-shop-modal__body c-house-trade-popup__body c-house-trade-popup__body--market">
+            <div
+              class="c-market-house-trade-list"
+              data-preserve-scroll-key="house.settlement-trade.rows"
+            >
+              ${overlay.rows
+                .map(
+                  (row) => `
+                    <button
+                      type="button"
+                      class="c-market-house-trade-row${row.isSelected ? " is-selected" : ""}"
+                      data-house-action="select-settlement-trade-goods:${row.goodsId}"
+                    >
+                      <span class="c-market-house-trade-row__head">
+                        <strong>${row.name}</strong>
+                        <span>${row.categoryLabel} / ${row.tierLabel}</span>
+                      </span>
+                      <span class="c-market-house-trade-row__price c-market-house-trade-row__price--${row.priceTone}">
+                        ${overlay.mode === "buy" ? "Buy" : "Sell"} ${overlay.mode === "buy" ? row.buyPrice : row.sellPrice}
+                      </span>
+                      <span class="c-market-house-trade-row__meta">
+                        Base ${row.basePrice} / Stock ${row.stockQuantity}${row.unit} / Owned ${row.ownedQuantity}${row.unit}
+                      </span>
+                    </button>
+                  `
+                )
+                .join("")}
+            </div>
+            ${
+              overlay.selectedSummary == null
+                ? ""
+                : `
+                  <div class="c-grain-shop-ledger c-grain-shop-skin-card">
+                    <p>${overlay.selectedSummary.name}</p>
+                    <p>Tier: ${overlay.selectedSummary.tierLabel}</p>
+                    <p>Buy ${overlay.selectedSummary.buyPrice} / Sell ${overlay.selectedSummary.sellPrice}</p>
+                    <p>Stock ${overlay.selectedSummary.stockQuantity}${overlay.selectedSummary.unit} / Owned ${overlay.selectedSummary.ownedQuantity}${overlay.selectedSummary.unit}</p>
+                    <p>Reset in ${overlay.selectedSummary.daysUntilReset} days</p>
+                    <p>${overlay.selectedSummary.nextStepHint}</p>
+                    <p>${overlay.selectedSummary.supplyHint}</p>
+                  </div>
+                `
+            }
+          </div>
+          <label class="c-grain-shop-trade__label" for="${overlay.quantityFieldId}">
+            Quantity (${overlay.selectedSummary?.unit ?? "unit"})
+          </label>
+          <div class="c-grain-shop-trade__quantity">
+            <button type="button" class="c-grain-shop-qty-btn" data-house-action="${overlay.decrementActionId}" aria-label="Decrease">-</button>
+            <input
+              id="${overlay.quantityFieldId}"
+              class="c-grain-shop-trade__input"
+              type="number"
+              min="1"
+              value="${overlay.quantity}"
+              data-house-field="${overlay.quantityFieldId}"
+            />
+            <button type="button" class="c-grain-shop-qty-btn" data-house-action="${overlay.incrementActionId}" aria-label="Increase">+</button>
+          </div>
+          <p class="c-grain-shop-trade__total">Total: ${overlay.selectedSummary?.tradeTotal ?? 0}</p>
+          <div class="c-grain-shop-modal__body c-house-trade-popup__body">
+            ${overlay.helperLines.map((line) => `<p class="c-grain-shop-price-hint">${line}</p>`).join("")}
+          </div>
+          <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+              ${overlay.cancelLabel}
+            </button>
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+              ${overlay.confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   if (overlay.type === "alert") {
     return renderHouseAlertOverlay(overlay);
   }

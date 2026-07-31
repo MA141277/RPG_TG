@@ -1,3 +1,5 @@
+import type { SettlementTradeGoodId } from "../settlement-trade";
+
 export type MarketHouseAlertOverlayState = {
   type: "alert";
   title: string;
@@ -12,9 +14,17 @@ export type MarketHouseTradeOverlayState = {
   quantity: number;
 };
 
+export type MarketHouseSettlementTradeOverlayState = {
+  type: "settlement-trade";
+  mode: "buy" | "sell";
+  selectedGoodsId: SettlementTradeGoodId | null;
+  quantity: number;
+};
+
 export type MarketHouseOverlayState =
   | MarketHouseAlertOverlayState
   | MarketHouseTradeOverlayState
+  | MarketHouseSettlementTradeOverlayState
   | null;
 
 export type MarketHouseDialoguePhase =

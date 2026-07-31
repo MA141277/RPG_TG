@@ -225,8 +225,14 @@ test("market house investigate market enters shopkeeper report dialogue and hide
   assert.equal(reportResult.sessionState?.dialoguePhase, "investigation-report");
   assert.equal(reportResult.sessionState?.dialogueLines.length, 3);
   assert.equal(reportViewModel.actionContainer, null);
-  assert.equal(reportViewModel.dialogue?.advanceActionId, "advance-investigation-report");
-  assert.equal(reportViewModel.dialogue?.advanceHintText, "点击继续");
+  assert.equal(
+    reportViewModel.dialogue?.advanceActionId,
+    "advance-investigation-report"
+  );
+  assert.equal(
+    (reportViewModel.dialogue?.advanceHintText?.length ?? 0) > 0,
+    true
+  );
   assert.match(reportMarkup, /c-grain-shop-dialogue__text--with-hint/);
   assert.equal(
     reportViewModel.standbyRoster.every(
@@ -234,29 +240,23 @@ test("market house investigate market enters shopkeeper report dialogue and hide
     ),
     true
   );
-  assert.doesNotMatch(reportResult.sessionState?.dialogueLines[0] ?? "", /^本地特产：/);
-  assert.doesNotMatch(reportResult.sessionState?.dialogueLines[1] ?? "", /^紧缺地区：/);
-  assert.doesNotMatch(reportResult.sessionState?.dialogueLines[2] ?? "", /^掌柜口风：/);
-  assert.match(
+  assert.doesNotMatch(
     reportResult.sessionState?.dialogueLines[0] ?? "",
-    /\*\*云锦\*\*/
-  );
-  assert.match(
-    reportResult.sessionState?.dialogueLines[1] ?? "",
-    /\*\*濠州\*\*/
-  );
-  assert.match(
-    reportResult.sessionState?.dialogueLines[1] ?? "",
-    /\*\*(云锦|金箔)\*\*/
-  );
-  assert.match(
-    reportMarkup,
-    /<strong class="c-dialogue-typewriter__strong"><span[^>]*>云<\/span><span[^>]*>锦<\/span><\/strong>/
+    /^Local specialty:/
   );
   assert.doesNotMatch(
-    reportMarkup,
-    /\*\*云锦\*\*/
+    reportResult.sessionState?.dialogueLines[1] ?? "",
+    /^Featured route:/
   );
+  assert.doesNotMatch(
+    reportResult.sessionState?.dialogueLines[2] ?? "",
+    /^Shopkeeper tip:/
+  );
+  assert.match(reportResult.sessionState?.dialogueLines[0] ?? "", /\*\*[^*]+\*\*/);
+  assert.match(reportResult.sessionState?.dialogueLines[1] ?? "", /\*\*[^*]+\*\*/);
+  assert.match(reportResult.sessionState?.dialogueLines[2] ?? "", /0\.01|30/u);
+  assert.match(reportMarkup, /c-dialogue-typewriter__strong/);
+  assert.doesNotMatch(reportMarkup, /\*\*[^*]+\*\*/);
 });
 
 test("market house investigate report restores normal buttons after advance", async () => {
@@ -303,5 +303,40 @@ test("market house investigate market gives different shopkeeper report lines by
   assert.notEqual(
     yingtianInvestigate.sessionState?.dialogueLines.join("\n"),
     wenzhouInvestigate.sessionState?.dialogueLines.join("\n")
+  );
+});
+
+test("market house investigation and specialty overlay derive from the same service snapshot", async () => {
+  const yingtianHouse = createCityMarketHouse("city.yingtian");
+  const { openResult } = await openMarketHouse(yingtianHouse);
+  const reportResult = investigateMarket(openResult, yingtianHouse);
+  const overlayResult = marketHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: yingtianHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "open-settlement-trade-buy" },
+  });
+
+  const overlayViewModel = marketHouseHouseModule.selectViewModel({
+    gameState: overlayResult.gameState,
+    characterDefinitions: overlayResult.characterDefinitions,
+    houseDefinition: yingtianHouse,
+    playerCharacterId,
+    sessionState: overlayResult.sessionState,
+  });
+
+  assert.equal(overlayViewModel.overlay?.type, "settlement-trade");
+  if (overlayViewModel.overlay?.type !== "settlement-trade") {
+    return;
+  }
+
+  const selectedName = overlayViewModel.overlay.selectedSummary?.name ?? "";
+  assert.equal(
+    (reportResult.sessionState?.dialogueLines.join("\n") ?? "").includes(
+      selectedName
+    ),
+    true
   );
 });

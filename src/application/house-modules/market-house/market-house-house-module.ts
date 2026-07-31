@@ -52,8 +52,13 @@ import {
   applyPlayerItemMutations,
   readPlayerItemQuantity,
 } from "../../inventory/player-item-inventory";
+import { applySettlementTradeMutations } from "../../markets/apply-settlement-trade-mutations";
 import { ensureShopMarketData, readShopMarketData } from "../../markets/market-refresh-system";
 import { defaultMarketHouseInvestigationDialogue } from "./market-house-investigation";
+import {
+  createMarketHouseSettlementTradeOverlay,
+  marketHouseSettlementTradeService,
+} from "./market-house-settlement-trade";
 import { createInitialMarketHouseSessionState } from "./market-house-session-state";
 
 const AVAILABLE_MARKET_SHOPS: MarketShopType[] = [
@@ -63,7 +68,6 @@ const AVAILABLE_MARKET_SHOPS: MarketShopType[] = [
   "smithy",
   "horse-market",
   "general-store",
-  "settlement-trade",
 ];
 
 const MARKET_HOUSE_SOURCE_SHOPS: MarketShopType[] = [
@@ -71,12 +75,14 @@ const MARKET_HOUSE_SOURCE_SHOPS: MarketShopType[] = [
   "silk-shop",
   "smithy",
   "general-store",
-  "settlement-trade",
 ];
 
 const SELECT_ACTOR_ACTION_PREFIX = "select-market-actor:";
 const SELECT_TRADE_GOODS_ACTION_PREFIX = "select-market-goods:";
+const SELECT_SETTLEMENT_TRADE_GOODS_ACTION_PREFIX =
+  "select-settlement-trade-goods:";
 const TRADE_QUANTITY_FIELD_ID = "market-house-trade-quantity";
+const SETTLEMENT_TRADE_QUANTITY_FIELD_ID = "settlement-trade-quantity";
 
 type MarketHouseActor = MarketHouseActorContent & {
   favorability: number;
@@ -99,6 +105,7 @@ type MarketHouseViewSnapshot = {
   bossFavorability: number;
   displayedGoods: MarketHouseGoodsSnapshot[];
   sellableGoods: MarketHouseGoodsSnapshot[];
+  settlementTradeSupported: boolean;
   refreshAfterDay: number;
   totalOwnedGoods: number;
 };
@@ -555,6 +562,10 @@ function createViewSnapshot(
     bossFavorability,
     displayedGoods,
     sellableGoods,
+    settlementTradeSupported: isSettlementTradeSupported(
+      runtime.state,
+      runtime.cityDefinition
+    ),
     refreshAfterDay: runtime.refreshAfterDay,
     totalOwnedGoods: sellableGoods.reduce((sum, snapshot) => sum + snapshot.ownedQuantity, 0),
   };
@@ -655,6 +666,12 @@ function parseSelectedGoodsId(actionId: string): string | null {
     : null;
 }
 
+function parseSelectedSettlementTradeGoodsId(actionId: string): string | null {
+  return actionId.startsWith(SELECT_SETTLEMENT_TRADE_GOODS_ACTION_PREFIX)
+    ? actionId.slice(SELECT_SETTLEMENT_TRADE_GOODS_ACTION_PREFIX.length)
+    : null;
+}
+
 function createTradeOverlay(
   mode: MarketHouseTradeMode,
   goodsSnapshots: MarketHouseGoodsSnapshot[],
@@ -679,7 +696,10 @@ function updateTradeOverlayQuantity(
   quantity: number
 ): HouseModuleTransitionResult<"market-house"> {
   const overlay = sessionState?.overlay;
-  if (overlay?.type !== "market-trade") {
+  if (
+    overlay == null ||
+    (overlay.type !== "market-trade" && overlay.type !== "settlement-trade")
+  ) {
     return {
       gameState: input.gameState,
       characterDefinitions: input.characterDefinitions,
@@ -852,8 +872,26 @@ function applyActionOutcome(
   };
 }
 
-function pickInvestigationDialogueLines(cityDefinition: CityDefinition): string[] {
-  return defaultMarketHouseInvestigationDialogue.createDialogueLines(cityDefinition.id);
+function isSettlementTradeSupported(
+  state: GameState,
+  cityDefinition: CityDefinition
+): boolean {
+  return marketHouseSettlementTradeService.createSnapshot({
+    state,
+    cityId: cityDefinition.id,
+    currentDay: getCalendarDayNumber(state),
+  }).supported;
+}
+
+function pickInvestigationDialogueLines(
+  state: GameState,
+  cityDefinition: CityDefinition
+): string[] {
+  return defaultMarketHouseInvestigationDialogue.createDialogueLines({
+    state,
+    cityId: cityDefinition.id,
+    currentDay: getCalendarDayNumber(state),
+  });
 }
 
 function createPriceTone(price: number, referencePrice: number): "low" | "high" | "neutral" {
@@ -883,6 +921,15 @@ function selectOverlayViewModel(
       confirmActionId: "close-alert",
       confirmLabel: "知道了",
     };
+  }
+
+  if (overlay.type === "settlement-trade") {
+    return createMarketHouseSettlementTradeOverlay({
+      state: snapshot.state,
+      cityId: snapshot.cityDefinition.id,
+      currentDay: getCalendarDayNumber(snapshot.state),
+      overlay,
+    });
   }
 
   const rowsSource = overlay.mode === "buy" ? snapshot.displayedGoods : snapshot.sellableGoods;
@@ -972,7 +1019,10 @@ function handleField(
     return createTransitionResult(input);
   }
 
-  if (input.request.fieldId !== TRADE_QUANTITY_FIELD_ID) {
+  if (
+    input.request.fieldId !== TRADE_QUANTITY_FIELD_ID &&
+    input.request.fieldId !== SETTLEMENT_TRADE_QUANTITY_FIELD_ID
+  ) {
     return createTransitionResult(input);
   }
 
@@ -1051,7 +1101,11 @@ function handleAction(
     );
   }
 
-  if (input.request.actionId === "close-alert" || input.request.actionId === "close-trade") {
+  if (
+    input.request.actionId === "close-alert" ||
+    input.request.actionId === "close-trade" ||
+    input.request.actionId === "close-settlement-trade"
+  ) {
     return withSessionState(
       {
         gameState: snapshot.state,
@@ -1153,7 +1207,10 @@ function handleAction(
       inventoryChange: [],
       relationshipChange: 0,
       timeCost: 1,
-      marketMessage: pickInvestigationDialogueLines(snapshot.cityDefinition).join("\n"),
+      marketMessage: pickInvestigationDialogueLines(
+        snapshot.state,
+        snapshot.cityDefinition
+      ).join("\n"),
     };
     const mutation = applyActionOutcome(input, selectedActor, outcome);
 
@@ -1253,6 +1310,70 @@ function handleAction(
     );
   }
 
+  if (
+    input.request.actionId === "open-settlement-trade-buy" ||
+    input.request.actionId === "open-settlement-trade-sell"
+  ) {
+    if (!selectedActor.isFixedHost) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "Cannot trade specialty goods",
+            ["Only the head shopkeeper can settle city specialty trades."],
+            "warning"
+          ),
+        }
+      );
+    }
+
+    const settlementSnapshot = marketHouseSettlementTradeService.createSnapshot({
+      state: snapshot.state,
+      cityId: snapshot.cityDefinition.id,
+      currentDay: getCalendarDayNumber(snapshot.state),
+    });
+
+    if (!settlementSnapshot.supported || settlementSnapshot.rows.length === 0) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "Specialty market unavailable",
+            ["This city does not currently support a specialty market overlay."],
+            "warning"
+          ),
+        }
+      );
+    }
+
+    return withSessionState(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: {
+          type: "settlement-trade",
+          mode:
+            input.request.actionId === "open-settlement-trade-buy"
+              ? "buy"
+              : "sell",
+          selectedGoodsId: settlementSnapshot.rows[0]?.goodsId ?? null,
+          quantity: 1,
+        },
+      }
+    );
+  }
+
   const selectedGoodsId = parseSelectedGoodsId(input.request.actionId);
   if (selectedGoodsId != null && currentOverlay?.type === "market-trade") {
     return withSessionState(
@@ -1269,6 +1390,30 @@ function handleAction(
         },
       }
     );
+  }
+
+  const selectedSettlementTradeGoodsId = parseSelectedSettlementTradeGoodsId(
+    input.request.actionId
+  );
+  if (
+    selectedSettlementTradeGoodsId != null &&
+    currentOverlay?.type === "settlement-trade"
+  ) {
+    return withSessionState(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+        {
+          overlay: {
+            ...currentOverlay,
+            selectedGoodsId:
+              selectedSettlementTradeGoodsId as typeof currentOverlay.selectedGoodsId,
+            quantity: 1,
+          },
+        }
+      );
   }
 
   if (input.request.actionId === "trade-qty-minus" && currentOverlay?.type === "market-trade") {
@@ -1291,6 +1436,129 @@ function handleAction(
       sessionState,
       currentOverlay.quantity + 1
     );
+  }
+
+  if (
+    input.request.actionId === "settlement-trade-qty-minus" &&
+    currentOverlay?.type === "settlement-trade"
+  ) {
+    return updateTradeOverlayQuantity(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      currentOverlay.quantity - 1
+    );
+  }
+
+  if (
+    input.request.actionId === "settlement-trade-qty-plus" &&
+    currentOverlay?.type === "settlement-trade"
+  ) {
+    return updateTradeOverlayQuantity(
+      {
+        gameState: snapshot.state,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      currentOverlay.quantity + 1
+    );
+  }
+
+  if (
+    input.request.actionId === "confirm-settlement-trade" &&
+    currentOverlay?.type === "settlement-trade"
+  ) {
+    if (!selectedActor.isFixedHost) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "Cannot trade specialty goods",
+            ["Only the head shopkeeper can settle city specialty trades."],
+            "warning"
+          ),
+        }
+      );
+    }
+
+    if (currentOverlay.selectedGoodsId == null) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "No goods selected",
+            ["Select a specialty good before confirming the trade."],
+            "warning"
+          ),
+        }
+      );
+    }
+
+    const playerCharacter = getPlayerCharacter(
+      input.characterDefinitions,
+      input.playerCharacterId
+    );
+    const resolution = marketHouseSettlementTradeService.resolveTrade({
+      state: snapshot.state,
+      cityId: snapshot.cityDefinition.id,
+      currentDay: getCalendarDayNumber(snapshot.state),
+      goodsId: currentOverlay.selectedGoodsId,
+      mode: currentOverlay.mode,
+      quantity: currentOverlay.quantity,
+      playerGold: playerCharacter.stats.gold,
+    });
+
+    if (!resolution.ok) {
+      return withSessionState(
+        {
+          gameState: snapshot.state,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            resolution.title,
+            resolution.paragraphs,
+            "warning"
+          ),
+        }
+      );
+    }
+
+    const mutationResult = applySettlementTradeMutations({
+      state: snapshot.state,
+      characterDefinitions: input.characterDefinitions,
+      playerCharacterId: input.playerCharacterId,
+      mutations: resolution.mutations,
+    });
+
+    return {
+      ...withSessionState(
+        {
+          gameState: mutationResult.state,
+          characterDefinitions: mutationResult.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "Trade completed",
+            resolution.summaryLines,
+            "success"
+          ),
+        }
+      ),
+      timeAdvanceCost: 1,
+    };
   }
 
   if (input.request.actionId === "confirm-trade" && currentOverlay?.type === "market-trade") {
@@ -1503,6 +1771,22 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
                 kind: "special",
                 disabled: !actor.isFixedHost,
               },
+              ...(snapshot.settlementTradeSupported
+                ? [
+                    {
+                      id: "open-settlement-trade-buy",
+                      label: "特产买入",
+                      kind: "special" as const,
+                      disabled: !actor.isFixedHost,
+                    },
+                    {
+                      id: "open-settlement-trade-sell",
+                      label: "特产卖出",
+                      kind: "special" as const,
+                      disabled: !actor.isFixedHost,
+                    },
+                  ]
+                : []),
               {
                 id: "sell-goods",
                 label: "卖出",
@@ -1553,6 +1837,18 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
                       { id: "buy-goods", label: "买入商品" },
                       { id: "sell-goods", label: "出售商品" },
                       { id: "investigate-market", label: "调查行情" },
+                      ...(snapshot.settlementTradeSupported
+                        ? ([
+                            {
+                              id: "open-settlement-trade-buy",
+                              label: "买入特产",
+                            },
+                            {
+                              id: "open-settlement-trade-sell",
+                              label: "卖出特产",
+                            },
+                          ] satisfies HouseActionViewModel[])
+                        : []),
                     ] satisfies HouseActionViewModel[])
                   : []),
                 { id: "dismiss-dialogue", label: "关闭" },

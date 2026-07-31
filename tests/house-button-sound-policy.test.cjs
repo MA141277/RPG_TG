@@ -376,6 +376,74 @@ test("house module render defaults market trade overlays to light adjust and can
   );
 });
 
+test("house module render defaults settlement trade overlays to light adjust and cancel sounds plus heavy confirm sounds", () => {
+  const html = renderRegisteredHouseView("market-house", {
+      overlay: {
+      type: "settlement-trade",
+      title: "City Specialty Trade",
+      mode: "buy",
+      quantity: 2,
+      quantityFieldId: "settlement-trade-quantity",
+      decrementActionId: "settlement-trade-qty-minus",
+      incrementActionId: "settlement-trade-qty-plus",
+      confirmActionId: "confirm-settlement-trade",
+      confirmLabel: "Buy Goods",
+      cancelActionId: "close-settlement-trade",
+      cancelLabel: "Come Back Later",
+      rows: [
+        {
+          goodsId: "silk_textiles",
+          name: "Silk Textiles",
+          categoryLabel: "Textiles",
+          unit: "bolt",
+          tierLabel: "Abundant",
+          buyPrice: 120,
+          sellPrice: 100,
+          basePrice: 100,
+          priceMultiplier: 1,
+          stockQuantity: 6,
+          ownedQuantity: 0,
+          daysUntilReset: 30,
+          priceTone: "neutral",
+          isSelected: true,
+        },
+      ],
+      selectedSummary: {
+        goodsId: "silk_textiles",
+        name: "Silk Textiles",
+        unit: "bolt",
+        tierLabel: "Abundant",
+        buyPrice: 120,
+        sellPrice: 100,
+        stockQuantity: 6,
+        ownedQuantity: 0,
+        tradeTotal: 240,
+        daysUntilReset: 30,
+        nextStepHint: "Ship it north.",
+        supplyHint: "Local craft guilds keep this stocked.",
+      },
+      helperLines: ["Trade pressure moves by 0.01 per 10 units."],
+      },
+    });
+
+  assert.match(
+    html,
+    /data-house-action="settlement-trade-qty-minus"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-house-action="settlement-trade-qty-plus"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-house-action="close-settlement-trade"[\s\S]*data-button-sound="light"/
+  );
+  assert.match(
+    html,
+    /data-house-action="confirm-settlement-trade"[\s\S]*data-button-sound="heavy"/
+  );
+});
+
 test("house module render defaults medicine buy overlays to light cancel and heavy confirm sounds", () => {
   const html = renderRegisteredHouseView("medicine-house", {
       overlay: {
