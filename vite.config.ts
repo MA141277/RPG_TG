@@ -1,9 +1,32 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, extname, isAbsolute, relative, resolve } from "node:path";
 import { defineConfig } from "vite";
 
 export const SCENARIO_PACK_SOURCE_ROOT = "src/content/scenario-packs";
 export const SCENARIO_PACK_PUBLIC_ROOT = "/scenario-packs";
+
+function copyDirectoryRecursive(sourceRoot: string, targetRoot: string): void {
+  mkdirSync(targetRoot, { recursive: true });
+  for (const entry of readdirSync(sourceRoot, { withFileTypes: true })) {
+    const sourcePath = resolve(sourceRoot, entry.name);
+    const targetPath = resolve(targetRoot, entry.name);
+    if (entry.isDirectory()) {
+      copyDirectoryRecursive(sourcePath, targetPath);
+      continue;
+    }
+    if (entry.isFile()) {
+      copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
 
 export function publishScenarioPacksToDir(
   workspaceRoot: string,
@@ -16,10 +39,7 @@ export function publishScenarioPacksToDir(
   );
 
   mkdirSync(outputRoot, { recursive: true });
-  cpSync(sourceRoot, publishedRoot, {
-    recursive: true,
-    force: true,
-  });
+  copyDirectoryRecursive(sourceRoot, publishedRoot);
 }
 
 export function createScenarioPackPublishPlugin(workspaceRoot = __dirname) {
