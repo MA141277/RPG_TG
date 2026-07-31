@@ -24,12 +24,12 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `running`
 - Last Updated: `2026-07-31`
-- Current Focus: `Waiting for execution-mode choice and canonical project-progress promotion.`
-- Next Step: `Open docs/superpowers/project-progress.md, promote this child, then start Task 1 with failing snapshot tests before touching production code.`
-- Verification: `npm run lint:plans`
-- Notes: `docs/superpowers/project-progress.md currently points at an unrelated campaign child, so do not implement from this plan until the canonical entry is intentionally switched here.`
+- Current Focus: `Task 1 complete; Task 2 trade resolution and mutation-path TDD is next.`
+- Next Step: `Write the failing trade-resolution and mutation tests for Task 2, then implement the typed settlement-trade mutation path.`
+- Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
+- Notes: `Canonical project-progress now points to this child; Task 1 delivered the dedicated settlementTrade runtime owner, specialty goods/profile content, and snapshot/investigation service only.`
 
 ## Progress Log
 
@@ -37,6 +37,10 @@
   - Summary: `Created the city specialty market implementation plan from the approved design spec and locked the file/task decomposition before execution.`
   - Verification: `npm run lint:plans`
   - Next: `Wait for the user to choose Subagent-Driven or Inline execution, then promote this child in docs/superpowers/project-progress.md before code changes start.`
+- 2026-07-31
+  - Summary: `Completed Task 1 by promoting this child to the canonical progress entry, adding the dedicated settlementTrade runtime/content contracts, and shipping the snapshot/investigation service with focused RED-to-GREEN coverage.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
+  - Next: `Start Task 2 with failing trade-resolution and mutation tests before adding settlement-trade mutation code.`
 
 ## Based On Spec
 
@@ -181,7 +185,7 @@
 - Produces: `SettlementTradeInvestigationSummary = { cityId: CityId; headlineGoodsIds: SettlementTradeGoodId[]; highlightedDestinations: Array<{ cityId: CityId; cityName: string; demandedGoodsIds: SettlementTradeGoodId[] }>; voiceLines: string[] }`
 - Produces: `class SettlementTradeService { createSnapshot(input: { state: GameState; cityId: CityId; currentDay: number }): SettlementTradeSnapshot; createInvestigationSummary(input: { state: GameState; cityId: CityId; currentDay: number }): SettlementTradeInvestigationSummary; }`
 
-- [ ] **Step 1: Promote this child into the canonical progress entry before code changes start**
+- [x] **Step 1: Promote this child into the canonical progress entry before code changes start**
 
 Replace the `## Current State` block in `docs/superpowers/project-progress.md` with:
 
@@ -203,7 +207,7 @@ Replace the `## Current State` block in `docs/superpowers/project-progress.md` w
 - Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 1.`
 ```
 
-- [ ] **Step 2: Write the failing snapshot and supported-city tests**
+- [x] **Step 2: Write the failing snapshot and supported-city tests**
 
 Create `tests/settlement-trade-service.test.cjs` with:
 
@@ -305,7 +309,7 @@ test("settlement trade investigation summary is derived from the snapshot rows",
 });
 ```
 
-- [ ] **Step 3: Run the snapshot tests to verify RED**
+- [x] **Step 3: Run the snapshot tests to verify RED**
 
 Run:
 
@@ -317,7 +321,7 @@ Expected:
 
 - `FAIL` because the settlement-trade domain/content/service modules do not exist yet and `GameState.runtime` has no `settlementTrade` owner.
 
-- [ ] **Step 4: Implement the minimal domain/content/runtime/service slice**
+- [x] **Step 4: Implement the minimal domain/content/runtime/service slice**
 
 Create `src/domain/settlement-trade.ts` with the core contracts:
 
@@ -622,7 +626,7 @@ export class SettlementTradeService {
 }
 ```
 
-- [ ] **Step 5: Run the snapshot tests to verify GREEN**
+- [x] **Step 5: Run the snapshot tests to verify GREEN**
 
 Run:
 

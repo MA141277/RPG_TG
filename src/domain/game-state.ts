@@ -15,6 +15,7 @@ import type { GlobalUIState } from "./global-ui";
 import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
 import type { TroopRuntimeState } from "./troop-editor";
+import type { SettlementTradeRuntimeState } from "./settlement-trade";
 import type { TaskRuntimeState } from "../core/contracts/task-runtime";
 import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
 import type { CampaignMapExplorationState } from "./map-exploration";
@@ -103,6 +104,7 @@ export type GameState = {
     playableSession: ActivePlayableSession | null;
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
     cityMarkets: Record<CityId, CityMarketData>;
+    settlementTrade: SettlementTradeRuntimeState;
     mapExplorationByMapId: Record<MapId, MapExplorationState>;
     activitySession: ActiveActivitySession;
     troops: TroopRuntimeState;

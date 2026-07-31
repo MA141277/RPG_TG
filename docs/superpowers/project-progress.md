@@ -2,21 +2,21 @@
 
 ## Current State
 
-- Current Stage: `Map Renderer Architecture`
+- Current Stage: `House Local Gameplay`
 - Current Stage Status: `running`
-- Current Task: `Campaign Hex Runtime Grid Architecture`
-- Current Task Status: `completed-but-open`
-- Current Child: `Campaign Hex Runtime Grid Architecture`
-- Current Child Status: `completed-but-open`
+- Current Task: `City Specialty Market`
+- Current Task Status: `running`
+- Current Child: `City Specialty Market`
+- Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-and-push-campaign-hex-runtime-grid-architecture`
+- Next Required Action: `execute-city-specialty-market-task-2`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-28-campaign-hex-runtime-grid-architecture-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-28-campaign-hex-runtime-grid-architecture-plan.md; do not close until final review and push succeed.`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 2.`
 
 ## Progress Log
 
@@ -96,6 +96,11 @@
   - Summary: `Resolved final review findings for the campaign hex runtime grid architecture child: chunk cache signatures include coordinate-system bounds, shader soft shoreline sampling uses hexPointBounds size, and override tests assert exact one-to-one runtime cells. Final re-review found no Critical or Important issues.`
   - Verification: `node --test --test-name-pattern "map3 runtime export keeps gameplay hex size|campaign terrain renderer uses loaded hex point bounds|runtime grid paths do not use default hex conversion|dynamic shoreline|loaded hex grid coordinate system" tests\robustness.test.cjs`; `npm run typecheck --silent`; `npm run build:test --silent`; `npm run build`; `npm run lint:plans`; browser smoke reached 濠州 with terrain visible and no console errors; final re-review reran targeted robustness subset with 5 pass, 0 fail.
   - Next: `Push/review before child closeout; do not close while remote push is absent.`
+
+- 2026-07-31
+  - Summary: `Switched canonical progress to the City Specialty Market child and completed Task 1 with a dedicated settlementTrade runtime owner, specialty goods/city profile content, and a shared snapshot/investigation service.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
+  - Next: `Continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 2.`
 
 ## Latest Closeout
 
