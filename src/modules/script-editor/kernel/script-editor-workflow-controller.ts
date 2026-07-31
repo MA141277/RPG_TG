@@ -223,7 +223,7 @@ export class ScriptEditorWorkflowController {
         message:
           error instanceof Error ? error.message : "Failed to open script editor project.",
       });
-      this.environment.setScreen("script-editor-workspace");
+      this.environment.setScreen("script-editor-landing");
     }
   }
 
@@ -252,7 +252,7 @@ export class ScriptEditorWorkflowController {
         message:
           error instanceof Error ? error.message : "打开剧本项目失败。",
       });
-      this.environment.setScreen("script-editor-workspace");
+      this.environment.setScreen("script-editor-landing");
     }
   }
 
@@ -281,7 +281,7 @@ export class ScriptEditorWorkflowController {
         message:
           error instanceof Error ? error.message : "导入运行时剧本包失败。",
       });
-      this.environment.setScreen("script-editor-workspace");
+      this.environment.setScreen("script-editor-landing");
     }
   }
 

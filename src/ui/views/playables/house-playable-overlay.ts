@@ -1,4 +1,5 @@
 import type { ActivePlayableSession } from "../../../core/contracts/playable-runtime";
+import { GRAIN_ACCOUNTING_TEXT } from "../../../application/playables/builtin/grain-accounting";
 
 type HouseSession = {
   moduleId: string;
@@ -60,19 +61,19 @@ function renderGrainAccountingBody(overlay: Record<string, unknown>): string {
   return `
     <div class="c-stage-header">
       <div>
-        <p class="c-stage-header__eyebrow">玩法</p>
-        <h1 class="c-stage-header__title">粮账核算</h1>
+        <p class="c-stage-header__eyebrow">${GRAIN_ACCOUNTING_TEXT.eyebrow}</p>
+        <h1 class="c-stage-header__title">${GRAIN_ACCOUNTING_TEXT.title}</h1>
       </div>
     </div>
     <div class="c-house-interior">
       <div class="c-panel">
-        <p>买入 ${formatValue(question.bought)} 石，卖出 ${formatValue(question.sold)} 石。</p>
-        <p>账面余粮 ${formatValue(question.displayedStock)} 石。</p>
-        <p>得分 ${formatValue(overlay.score)} / 错误 ${formatValue(overlay.wrongCount)} / 剩余 ${formatValue(overlay.secondsLeft)} 秒</p>
+        <p>${GRAIN_ACCOUNTING_TEXT.describeTrade(question)}</p>
+        <p>${GRAIN_ACCOUNTING_TEXT.describeDisplayedStock(question)}</p>
+        <p>${GRAIN_ACCOUNTING_TEXT.describeScore(overlay)}</p>
       </div>
       <div class="c-house-roster">
-        <button class="c-button" data-playable-id="grain-accounting" data-playable-action="answer-correct">账目正确</button>
-        <button class="c-button" data-playable-id="grain-accounting" data-playable-action="answer-wrong">账目有误</button>
+        <button class="c-button" data-playable-id="grain-accounting" data-playable-action="answer-correct">${GRAIN_ACCOUNTING_TEXT.answerCorrect}</button>
+        <button class="c-button" data-playable-id="grain-accounting" data-playable-action="answer-wrong">${GRAIN_ACCOUNTING_TEXT.answerWrong}</button>
       </div>
     </div>
   `;

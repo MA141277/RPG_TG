@@ -638,10 +638,48 @@ export type ScriptEditorMinigameOutcomeRoute = {
   effectHint: string;
 };
 
+export type ScriptEditorPlayableConfigValueType =
+  | "number"
+  | "text"
+  | "boolean"
+  | "enum";
+
+export type ScriptEditorPlayableConfigEntry = {
+  id: string;
+  label: string;
+  valueType: ScriptEditorPlayableConfigValueType;
+  value: string | number | boolean | null;
+  notes?: string;
+  enumOptions?: Array<{ value: string; label: string }>;
+};
+
+export type ScriptEditorPlayableMetricRule = {
+  metricKey: string;
+  operator: ">" | ">=" | "<" | "<=" | "=";
+  value: string | number | boolean;
+};
+
+export type ScriptEditorPlayableSettlementRouteConditions = {
+  outcomeIn?: ScriptEditorMinigameOutcome[];
+  scoreMin?: number;
+  scoreMax?: number;
+  metricRules?: ScriptEditorPlayableMetricRule[];
+};
+
+export type ScriptEditorPlayableSettlementRoute = {
+  id: string;
+  title: string;
+  enabled: boolean;
+  targetEventId: string;
+  conditions: ScriptEditorPlayableSettlementRouteConditions;
+};
+
 export type ScriptEditorMinigameRecord = ScriptEditorEntityRecord & {
   title: string;
   description?: string;
   playableId?: string;
+  configEntries?: ScriptEditorPlayableConfigEntry[];
+  settlementRoutes?: ScriptEditorPlayableSettlementRoute[];
   integrationId?: string;
   settlementId?: string;
   ownerKind?: ScriptEditorMinigameOwnerKind;

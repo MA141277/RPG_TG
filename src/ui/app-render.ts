@@ -23,6 +23,7 @@ import type {
 import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
 import type { FlowPlayableDefinition } from "../domain/playables/flow";
+import { materializeCharacterDefinition } from "../domain/character-status";
 import { assertExists } from "../shared/assert";
 import { renderSharedDialog } from "./components/dialog/shared-dialog";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
@@ -37,7 +38,7 @@ import { renderCharacterDetailView } from "./views/character/character-detail-vi
 import { renderCardLibraryView } from "./views/cards/card-library-view";
 import { renderCity3dView } from "./views/city/city-3d-view";
 import { renderCityModuleView } from "./views/city/city-module-view";
-import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging-minigame-view";
+import { renderCityBeggingMiniGameOverlay } from "../application/playables/builtin/city-begging/city-begging-minigame-view";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import {
   renderActivityOverlay,
@@ -88,7 +89,10 @@ function getPlayerCharacter(
     playerCharacter,
     `Player character not found for id "${playerCharacterId}".`
   );
-  return playerCharacter;
+  return materializeCharacterDefinition(
+    playerCharacter,
+    appState.characterStatusById?.[playerCharacterId]
+  );
 }
 
 function resolveEquippedItemName(

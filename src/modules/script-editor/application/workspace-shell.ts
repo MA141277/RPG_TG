@@ -745,7 +745,7 @@ function describeSelectionLinkPreview(
   entityId: string | null
 ): string {
   if (family === "storyPack") {
-    return `项目当前收录人物 ${project.people.length}、城市 ${project.cities.length}、事件 ${project.events.length}、玩法绑定 ${project.minigames.length}。`;
+    return `项目当前收录人物 ${project.people.length}、城市 ${project.cities.length}、事件 ${project.events.length}、玩法实例 ${project.minigames.length}。`;
   }
 
   if (family === STAGE_CONFIGURATION_FAMILY && entityId === "__stage_config_link__") {
@@ -803,7 +803,7 @@ function describeSelectionLinkPreview(
 
   if (family === "minigames") {
     const minigame = project.minigames.find((record) => record.id === entityId);
-    return `玩法绑定 outcome ${(minigame?.outcomeRoutes ?? []).length} 条，launch payload ${(minigame?.launchPayload ?? []).length} 条。`;
+    return `玩法实例配置 ${(minigame?.configEntries ?? []).length} 条，结算路由 ${(minigame?.settlementRoutes ?? []).length} 条。`;
   }
 
   if (family === "storyNodes") {
@@ -855,7 +855,7 @@ function describeSelectionExportPreview(
   }
 
   if (family === "minigames") {
-    return "玩法绑定采用下沉导出原则，后续需挂到事件、对话或菜单的正式可调用结构，而不是独立新分表。";
+    return "玩法实例会下沉为 runtime playable integration，并由事件或菜单引用该导出标识。";
   }
 
   if (family === "storyNodes") {
@@ -1198,25 +1198,6 @@ function collectLinkedValidationIssues(
     }
   }
 
-  for (const minigame of project.minigames) {
-    if (
-      minigame.ownerKind === "house" &&
-      typeof minigame.ownerId === "string" &&
-      minigame.ownerId.length > 0 &&
-      !hasRecord(project, "buildings", minigame.ownerId)
-    ) {
-      addMissingReferenceIssue({
-        id: `linked.minigames.owner.${minigame.id}`,
-        severity: "attention",
-        title: "玩法宿主缺失",
-        message: `玩法绑定 ${minigame.id} 指向的宿主建筑 ${minigame.ownerId} 不存在。`,
-        targetFamily: "minigames",
-        targetEntityId: minigame.id,
-        targetTab: "basics",
-      });
-    }
-  }
-
   return issues;
 }
 
@@ -1420,10 +1401,10 @@ function resolveIssueTab(
   }
 
   if (family === "minigames") {
-    if (remainder.startsWith("launchPayload")) {
-      return "launch";
+    if (remainder.startsWith("configEntries")) {
+      return "config";
     }
-    if (remainder.startsWith("outcomeRoutes")) {
+    if (remainder.startsWith("settlementRoutes")) {
       return "settlement";
     }
     return "basics";
@@ -1593,9 +1574,9 @@ function createExportTargets(
       return [
         buildTarget(
           "export.minigames",
-          "玩法调用落点",
-          "events / dialogues / menu bindings",
-          "玩法绑定采用下沉导出，不会生成新的独立 runtime 分表。",
+          "玩法导出落点",
+          "playable integrations",
+          "玩法实例会派生为 runtime playable integration，并由事件或菜单引用该导出标识。",
           "deferred"
         ),
       ];

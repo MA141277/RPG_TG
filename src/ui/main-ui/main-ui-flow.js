@@ -1063,23 +1063,11 @@ export class MainUiFlow {
           "title",
           "description",
           "playableId",
-          "integrationId",
-          "ownerKind",
-          "ownerId",
-          "returnPolicy",
-          "triggerId",
-          "triggerSource",
-          "triggerEvent",
           "notes",
         ].includes(field ?? "")
       ) {
         this.applyScriptEditorMinigameField(field, target.value);
       }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-minigame-integration]")) {
-      this.applyScriptEditorMinigameIntegration(target.value);
       return;
     }
 
@@ -1091,32 +1079,54 @@ export class MainUiFlow {
       return;
     }
 
-    if (target.matches("[data-script-editor-minigame-launch-field]")) {
-      const field = target.dataset.scriptEditorMinigameLaunchField;
+    if (target.matches("[data-script-editor-minigame-config-field]")) {
+      const field = target.dataset.scriptEditorMinigameConfigField;
       const index = Number.parseInt(
-        target.dataset.scriptEditorMinigameLaunchIndex ?? "-1",
+        target.dataset.scriptEditorMinigameConfigIndex ?? "-1",
         10
       );
-      if ((field === "key" || field === "value") && Number.isInteger(index) && index >= 0) {
-        this.applyScriptEditorMinigameLaunchField(index, field, target.value);
+      if (
+        ["id", "label", "valueType", "value", "notes"].includes(field ?? "") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorMinigameConfigField(index, field, target.value);
       }
       return;
     }
 
-    if (target.matches("[data-script-editor-minigame-outcome-field]")) {
-      const field = target.dataset.scriptEditorMinigameOutcomeField;
+    if (target.matches("[data-script-editor-minigame-settlement-field]")) {
+      const field = target.dataset.scriptEditorMinigameSettlementField;
       const index = Number.parseInt(
-        target.dataset.scriptEditorMinigameOutcomeIndex ?? "-1",
+        target.dataset.scriptEditorMinigameSettlementIndex ?? "-1",
         10
       );
       if (
-        ["id", "outcome", "handoffPolicy", "summary", "effectHint"].includes(
+        ["id", "title", "targetEventId", "outcomeIn", "scoreMin", "scoreMax"].includes(
           field ?? ""
         ) &&
         Number.isInteger(index) &&
         index >= 0
       ) {
-        this.applyScriptEditorMinigameOutcomeField(index, field, target.value);
+        this.applyScriptEditorMinigameSettlementField(index, field, target.value);
+      }
+      return;
+    }
+
+    if (
+      target instanceof globalThis.HTMLInputElement &&
+      target.matches("[data-script-editor-minigame-settlement-enabled]")
+    ) {
+      const index = Number.parseInt(
+        target.dataset.scriptEditorMinigameSettlementIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(index) && index >= 0) {
+        this.applyScriptEditorMinigameSettlementField(
+          index,
+          "enabled",
+          target.checked ? "true" : "false"
+        );
       }
       return;
     }
@@ -2696,4 +2706,3 @@ function escapeHtml(value) {
 function formatStatValue(value) {
   return typeof value === "number" ? String(value) : "0";
 }
-

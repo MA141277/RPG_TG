@@ -146,22 +146,27 @@ export function applyEventOwnedPlayableCompletion(input: {
     | undefined;
 }): EventOwnedPlayableCompletionResult {
   const sourceEventId = readEventOwnedSourceEventId(input.previousPlayableSession);
+  const routedEventId = readPlayableFollowUpEventId(input.settlement);
   const followUp =
     input.followUp == null || input.followUp.type === "none"
       ? null
       : input.followUp;
-  if (sourceEventId == null || (input.settlement == null && followUp == null)) {
+  if (
+    sourceEventId == null ||
+    (input.settlement == null && followUp == null)
+  ) {
     return {
       state: input.state,
       characterDefinitions: input.characterDefinitions,
       handled: false,
     };
   }
+  const continuationEventId = routedEventId ?? sourceEventId;
 
   const continuationInput: EventOwnedPlayableContinuationResult & {
     sourceEventId: string;
   } = {
-    sourceEventId,
+    sourceEventId: continuationEventId,
     state: input.state,
     characterDefinitions: input.characterDefinitions,
   };
@@ -199,5 +204,14 @@ function readEventOwnedSourceEventId(
   const sourceEventId = session?.ownerContext.sessionToken;
   return typeof sourceEventId === "string" && sourceEventId.trim().length > 0
     ? sourceEventId.trim()
+    : null;
+}
+
+function readPlayableFollowUpEventId(
+  settlement: PlayableResult | null | undefined
+): string | null {
+  const followUpEventId = settlement?.followUpEventId;
+  return typeof followUpEventId === "string" && followUpEventId.trim().length > 0
+    ? followUpEventId.trim()
     : null;
 }

@@ -4,7 +4,8 @@ import { isPlayerMonkIdentity } from "../city-menu/city-menu";
 import {
   CITY_BEGGING_DURATION_DAYS,
   getCityBeggingMiniGameCompletionResult,
-} from "../minigames/city-begging-minigame";
+} from "../playables/builtin/city-begging/city-begging-minigame";
+import { readCityBeggingDetachedCompletionResult } from "../playables/builtin/city-begging/city-begging-runtime-controller";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
   canAffordActivityCost,
@@ -165,7 +166,9 @@ export function createCouncilPriorityCityBeggingCoordinator(
 
   function confirmBeggingMiniGameResult(): void {
     const result = dependencies.getAppState().beggingMiniGameState;
-    const completionResult = getCityBeggingMiniGameCompletionResult(result);
+    const completionResult =
+      getCityBeggingMiniGameCompletionResult(result) ??
+      readCityBeggingDetachedCompletionResult();
     if (completionResult == null) {
       return;
     }
@@ -262,7 +265,6 @@ export function createCouncilPriorityCityBeggingCoordinator(
       dependencies.launchCityBeggingPlayable(launchState, dependencies.now())
     );
     dependencies.renderApp();
-    dependencies.startCityBeggingMiniGameLoop();
   }
 
   return {

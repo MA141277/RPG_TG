@@ -3076,19 +3076,19 @@
 }
 
 .c-begging-game--village {
-  --begging-village-stage-bg: url("../../ui/化缘UI/背景图.png");
-  --begging-village-top-border: url("../../ui/化缘UI/material-202606031548-003.png");
-  --begging-village-floor-trim: url("../../ui/化缘UI/material-202606031548-010.png");
-  --begging-village-card-base: url("../../ui/化缘UI/material-202606031551-012.png");
-  --begging-village-card-score: url("../../ui/化缘UI/material-202606031551-011.png");
-  --begging-village-card-food: url("../../ui/化缘UI/material-202606031551-013.png");
-  --begging-village-combo-ring: url("../../ui/化缘UI/material-202606031551-009.png");
-  --begging-village-combo-toast: url("../../ui/化缘UI/material-202606031551-010.png");
-  --begging-village-timer-dial: url("../../ui/化缘UI/material-202606031551-014.png");
-  --begging-village-event-scroll: url("../../ui/化缘UI/material-202606031551-008.png");
-  --begging-village-control: url("../../ui/化缘UI/material-202606031548-015.png");
-  --begging-village-food-bag: url("../../ui/化缘UI/material-202606031551-019.png");
-  --begging-village-gold-bead: url("../../ui/化缘UI/material-202606031551-041.png");
+  --begging-village-stage-bg: url("../application/playables/builtin/city-begging/assets/背景图.png");
+  --begging-village-top-border: url("../application/playables/builtin/city-begging/assets/material-202606031548-003.png");
+  --begging-village-floor-trim: url("../application/playables/builtin/city-begging/assets/material-202606031548-010.png");
+  --begging-village-card-base: url("../application/playables/builtin/city-begging/assets/material-202606031551-012.png");
+  --begging-village-card-score: url("../application/playables/builtin/city-begging/assets/material-202606031551-011.png");
+  --begging-village-card-food: url("../application/playables/builtin/city-begging/assets/material-202606031551-013.png");
+  --begging-village-combo-ring: url("../application/playables/builtin/city-begging/assets/material-202606031551-009.png");
+  --begging-village-combo-toast: url("../application/playables/builtin/city-begging/assets/material-202606031551-010.png");
+  --begging-village-timer-dial: url("../application/playables/builtin/city-begging/assets/material-202606031551-014.png");
+  --begging-village-event-scroll: url("../application/playables/builtin/city-begging/assets/material-202606031551-008.png");
+  --begging-village-control: url("../application/playables/builtin/city-begging/assets/material-202606031548-015.png");
+  --begging-village-food-bag: url("../application/playables/builtin/city-begging/assets/material-202606031551-019.png");
+  --begging-village-gold-bead: url("../application/playables/builtin/city-begging/assets/material-202606031551-041.png");
   padding: 0;
 }
 

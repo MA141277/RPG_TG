@@ -8,6 +8,7 @@ import type { RuntimeState } from "../contracts/runtime-state";
 import type { CharacterDefinition } from "../../domain/character";
 import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
 import { mutateCharacterNumericProperty } from "../../application/character/runtime-property-mutation";
+import { mutateCharacterNumericAttributeBySemanticKey } from "../../application/character/runtime-property-mutation";
 import { advanceGameStateTimeSegments } from "../../application/time/time-progression";
 
 export type ExportedSettlementContent = {
@@ -395,6 +396,43 @@ export function settleRuntimeEffects(
           characterDefinitions: nextCharacterDefinitions,
           characterId: effect.characterId,
           propertyId: effect.propertyId,
+          operation: effect.operation,
+          value: effect.value,
+          ...(nextCharacterStatusById == null
+            ? {}
+            : { characterStatusById: nextCharacterStatusById }),
+        });
+        nextState = {
+          ...nextState,
+          core: mutation.state,
+        };
+        nextCharacterDefinitions = mutation.characterDefinitions;
+        nextCharacterStatusById = mutation.characterStatusById;
+        settledEffects.push(effect);
+      } catch (error) {
+        unsupportedEffects.push(effect);
+        warnings.push(
+          `unsupported-effect:${effect.type}:${error instanceof Error ? error.message : "unknown-error"}:emitted-by:${input.emittedBy}`
+        );
+      }
+      continue;
+    }
+
+    if (effect.type === "mutateCharacterNumericAttribute") {
+      if (nextCharacterDefinitions == null) {
+        unsupportedEffects.push(effect);
+        warnings.push(
+          `unsupported-effect:${effect.type}:missing-character-definitions:emitted-by:${input.emittedBy}`
+        );
+        continue;
+      }
+
+      try {
+        const mutation = mutateCharacterNumericAttributeBySemanticKey({
+          state: nextState.core,
+          characterDefinitions: nextCharacterDefinitions,
+          characterId: effect.characterId,
+          semanticKey: effect.semanticKey,
           operation: effect.operation,
           value: effect.value,
           ...(nextCharacterStatusById == null

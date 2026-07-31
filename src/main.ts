@@ -18,7 +18,7 @@ import type { AppState } from "./application/app-shell";
 import {
   getCityBeggingMiniGameStatus,
   isCityBeggingMiniGamePlaying,
-} from "./application/minigames/city-begging-minigame";
+} from "./application/playables/builtin/city-begging/city-begging-minigame";
 import {
   createCityMenuState,
   resolveCityMenuEntries,
@@ -194,7 +194,7 @@ import {
   type CampaignCityDepthMeshTransform,
   type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
-import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
+import { syncCityBeggingMiniGameOverlay } from "./application/playables/builtin/city-begging/city-begging-minigame-view";
 
 const GAME_VIEWPORT_WIDTH = 1600;
 const GAME_VIEWPORT_HEIGHT = 900;

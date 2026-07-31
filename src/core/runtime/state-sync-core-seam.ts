@@ -5,7 +5,9 @@ import type {
   SaveState,
 } from "../contracts/state-sync-runtime";
 import type { RuntimeState as LegacyBridgeRuntimeState } from "../contracts/runtime-state";
+import type { CharacterDefinition } from "../../domain/character";
 import {
+  materializeCharacterDefinitions,
   mergeCharacterStatusMaps,
   type CharacterStatusById,
 } from "../../domain/character-status";
@@ -82,6 +84,15 @@ function applyRuntimeStateToAppState<TAppState extends RuntimeAppStateInput>(
           state.buildingStatusById ?? {},
           buildingStatusPatchById
         );
+  const nextCharacterDefinitionsSource =
+    characterDefinitions ?? state.characterDefinitions;
+  const nextCharacterDefinitions =
+    nextCharacterDefinitionsSource == null
+      ? undefined
+      : materializeCharacterDefinitions(
+          nextCharacterDefinitionsSource as CharacterDefinition[],
+          characterStatusById ?? {}
+        );
 
   return {
     ...state,
@@ -93,9 +104,9 @@ function applyRuntimeStateToAppState<TAppState extends RuntimeAppStateInput>(
     cityMenuState: runtimeState.app.cityMenuState,
     locationDialogueState: runtimeState.app.locationDialogueState,
     modalState: runtimeState.app.modalState,
-    ...(characterDefinitions == null
+    ...(nextCharacterDefinitions == null
       ? {}
-      : { characterDefinitions }),
+      : { characterDefinitions: nextCharacterDefinitions }),
     ...(characterStatusById == null
       ? {}
       : { characterStatusById }),

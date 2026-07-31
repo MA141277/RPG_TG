@@ -11,6 +11,9 @@ import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import {
   normalizeScriptEditorEventBindingRecord,
 } from "./story-dialogue-event-authoring";
+import {
+  createDefaultScriptEditorMinigameRecord,
+} from "./minigame-binding-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
@@ -24,10 +27,6 @@ import {
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
   type ScriptEditorKeyValueEntry,
-  type ScriptEditorMinigameOutcome,
-  type ScriptEditorMinigameOutcomeRoute,
-  type ScriptEditorMinigameOwnerKind,
-  type ScriptEditorMinigameReturnPolicy,
   type ScriptEditorProjectDefinition,
   type ScriptEditorPersonSemanticBinding,
   type ScriptEditorRuntimePackSchemaVersion,
@@ -427,15 +426,8 @@ function mapImportedEvents(
   events: EventDefinition[],
   importedMinigames: ScriptEditorProjectDefinition["minigames"]
 ): ScriptEditorEventRecord[] {
-  const importedMinigameIdByIntegrationId = new Map(
-    importedMinigames
-      .filter(
-        (minigame) =>
-          typeof minigame.integrationId === "string" &&
-          minigame.integrationId.length > 0
-      )
-      .map((minigame) => [minigame.integrationId as string, minigame.id] as const)
-  );
+  const importedMinigameIdByIntegrationId =
+    createImportedMinigameIdByIntegrationId(importedMinigames);
   return events.map((eventDefinition) => {
     const importedEvent = eventDefinition as EventDefinition & {
       title?: string;
@@ -515,15 +507,8 @@ function mapImportedMenuResources(
   rawPack: Record<string, unknown>,
   importedMinigames: ScriptEditorProjectDefinition["minigames"]
 ): ScriptEditorProjectDefinition["menuResources"] {
-  const importedMinigameIdByIntegrationId = new Map(
-    importedMinigames
-      .filter(
-        (minigame) =>
-          typeof minigame.integrationId === "string" &&
-          minigame.integrationId.length > 0
-      )
-      .map((minigame) => [minigame.integrationId as string, minigame.id] as const)
-  );
+  const importedMinigameIdByIntegrationId =
+    createImportedMinigameIdByIntegrationId(importedMinigames);
 
   return readMenuResourceFamily(rawPack).map((resource) => ({
     ...resource,
@@ -1091,45 +1076,22 @@ function mapImportedPlayableIntegrations(
       return [];
     }
 
-    const ownerDefaults = integration.ownerDefaults ?? {};
     const trigger = integration.trigger;
-    const ownerKind =
-      typeof ownerDefaults.ownerKind === "string"
-        ? ownerDefaults.ownerKind
-        : typeof trigger?.ownerKind === "string"
-          ? trigger.ownerKind
-          : "external";
-    if (!isSupportedImportedMinigameOwnerKind(ownerKind)) {
-      throw new Error(
-        `Imported playable integration "${integration.integrationId}" uses retired ownerKind "${ownerKind}".`
-      );
-    }
-    const returnPolicy =
-      typeof ownerDefaults.returnPolicy === "string"
-        ? ownerDefaults.returnPolicy
-        : "close-only";
+    const defaultRecord = createDefaultScriptEditorMinigameRecord(
+      typeof integration.editorRecordId === "string" &&
+        integration.editorRecordId.length > 0
+        ? integration.editorRecordId
+        : `minigame.imported.${index + 1}`
+    );
 
     return [
       {
-        id:
-          typeof integration.editorRecordId === "string" &&
-          integration.editorRecordId.length > 0
-            ? integration.editorRecordId
-            : `minigame.imported.${index + 1}`,
+        ...defaultRecord,
         title: integration.integrationId,
         description: "",
         playableId: integration.playableId,
-        integrationId: integration.integrationId,
-        settlementId: "",
-        ownerKind,
-        ownerId:
-          typeof ownerDefaults.ownerId === "string" ? ownerDefaults.ownerId : "",
-        returnPolicy: normalizeImportedReturnPolicy(returnPolicy),
-        triggerId: typeof trigger?.triggerId === "string" ? trigger.triggerId : "",
-        triggerSource: "manual",
-        triggerEvent: typeof trigger?.trigger === "string" ? trigger.trigger : "",
-        launchPayload: mapImportedLaunchPayload(trigger?.launchPayload),
-        outcomeRoutes: mapImportedOutcomeRoutes(integration.outcomeConfig),
+        configEntries: mapImportedLaunchPayload(trigger?.launchPayload),
+        settlementRoutes: mapImportedSettlementRoutes(integration.outcomeConfig),
         notes: "Imported from runtime playable integration.",
       },
     ];
@@ -1138,52 +1100,133 @@ function mapImportedPlayableIntegrations(
 
 function mapImportedLaunchPayload(
   launchPayload: Record<string, unknown> | undefined
-): ScriptEditorKeyValueEntry[] {
+): NonNullable<ScriptEditorProjectDefinition["minigames"][number]["configEntries"]> {
   return Object.entries(launchPayload ?? {}).map(([key, value]) => ({
-    key,
-    value: typeof value === "string" ? value : JSON.stringify(value),
+    id: key,
+    label: key,
+    valueType: normalizeImportedConfigValueType(value),
+    value: normalizeImportedConfigValue(value),
   }));
 }
 
-function mapImportedOutcomeRoutes(
+function mapImportedSettlementRoutes(
   outcomeConfig: PlayableIntegrationDefinition["outcomeConfig"] | undefined
-): ScriptEditorMinigameOutcomeRoute[] {
-  return Object.entries(outcomeConfig?.handoffByOutcome ?? {}).map(
-    ([outcome, handoffPolicy], index) => ({
-      id: `outcome-route.${index + 1}`,
-      outcome: normalizeImportedOutcome(outcome),
-      handoffPolicy: normalizeImportedReturnPolicy(handoffPolicy),
-      summary: "",
-      effectHint: "",
+): NonNullable<ScriptEditorProjectDefinition["minigames"][number]["settlementRoutes"]> {
+  return (outcomeConfig?.settlementRoutes ?? []).map((route, index) => ({
+    id:
+      typeof route.id === "string" && route.id.length > 0
+        ? route.id
+        : `settlement-route.${index + 1}`,
+    title:
+      typeof route.title === "string" && route.title.length > 0
+        ? route.title
+        : `结算路由 ${index + 1}`,
+    enabled: route.enabled !== false,
+    targetEventId:
+      typeof route.targetEventId === "string" ? route.targetEventId : "",
+    conditions: {
+      ...(Array.isArray(route.conditions?.outcomeIn)
+        ? {
+            outcomeIn: route.conditions.outcomeIn.filter(
+              (value) =>
+                value === "success" || value === "failure" || value === "cancelled"
+            ),
+          }
+        : {}),
+      ...(typeof route.conditions?.scoreMin === "number"
+        ? { scoreMin: route.conditions.scoreMin }
+        : {}),
+      ...(typeof route.conditions?.scoreMax === "number"
+        ? { scoreMax: route.conditions.scoreMax }
+        : {}),
+      ...(Array.isArray(route.conditions?.metricRules)
+        ? {
+            metricRules: route.conditions.metricRules.flatMap((metricRule) => {
+              const metricKey =
+                typeof metricRule.metricKey === "string"
+                  ? metricRule.metricKey.trim()
+                  : "";
+              if (metricKey.length === 0) {
+                return [];
+              }
+              if (
+                metricRule.operator !== ">" &&
+                metricRule.operator !== ">=" &&
+                metricRule.operator !== "<" &&
+                metricRule.operator !== "<=" &&
+                metricRule.operator !== "="
+              ) {
+                return [];
+              }
+              return [
+                {
+                  metricKey,
+                  operator: metricRule.operator,
+                  value: normalizeImportedMetricRuleValue(metricRule.value),
+                },
+              ];
+            }),
+          }
+        : {}),
+    },
+  }));
+}
+
+function createImportedMinigameIdByIntegrationId(
+  importedMinigames: ScriptEditorProjectDefinition["minigames"]
+): Map<string, string> {
+  return new Map(
+    importedMinigames.flatMap((minigame) => {
+      const minigameId = typeof minigame.id === "string" ? minigame.id : "";
+      const playableId =
+        typeof minigame.playableId === "string" ? minigame.playableId.trim() : "";
+      const integrationId =
+        minigameId.length > 0 && playableId.length > 0
+          ? createDerivedMinigameIntegrationId(minigameId, playableId)
+          : "";
+      return integrationId.length > 0 ? [[integrationId, minigameId] as const] : [];
     })
   );
 }
 
-function isSupportedImportedMinigameOwnerKind(
-  value: string
-): value is ScriptEditorMinigameOwnerKind {
-  return (
-    value === "house" ||
-    value === "dialogue" ||
-    value === "task" ||
-    value === "external"
-  );
-}
-
-function normalizeImportedReturnPolicy(
+function normalizeImportedConfigValueType(
   value: unknown
-): ScriptEditorMinigameReturnPolicy {
-  return value === "resume-owner" || value === "reenter-owner" || value === "close-only"
-    ? value
-    : "close-only";
+): "number" | "text" | "boolean" {
+  if (typeof value === "number") {
+    return "number";
+  }
+  if (typeof value === "boolean") {
+    return "boolean";
+  }
+  return "text";
 }
 
-function normalizeImportedOutcome(
-  value: string
-): ScriptEditorMinigameOutcome {
-  return value === "success" || value === "failure" || value === "cancelled"
-    ? value
-    : "success";
+function normalizeImportedConfigValue(
+  value: unknown
+): string | number | boolean | null {
+  if (typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+  if (value == null) {
+    return null;
+  }
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function normalizeImportedMetricRuleValue(
+  value: unknown
+): string | number | boolean {
+  if (typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function createDerivedMinigameIntegrationId(
+  minigameId: string,
+  playableId: string
+): string {
+  return `playable.${playableId}.instance.${minigameId}`;
 }
 
 function readArrayFamily(

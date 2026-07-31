@@ -4,6 +4,13 @@ export type Effect =
   | { type: "changeMoney"; amount: number }
   | { type: "advanceTime"; hours?: number; days?: number }
   | {
+      type: "mutateCharacterNumericAttribute";
+      characterId: string;
+      semanticKey: string;
+      operation: "set" | "add" | "subtract";
+      value: number;
+    }
+  | {
       type: "mutateCharacterNumericProperty";
       characterId: string;
       propertyId: string;

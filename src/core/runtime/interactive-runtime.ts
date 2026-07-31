@@ -91,6 +91,9 @@ export function runInteractiveRuntime(input: {
       ...(playableResult.characterStatusById == null
         ? {}
         : { characterStatusById: playableResult.characterStatusById }),
+      ...(playableResult.settlement == null
+        ? {}
+        : { settlement: playableResult.settlement }),
       effects: playableResult.effects,
       session:
         playableResult.session == null

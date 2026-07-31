@@ -40,13 +40,14 @@ import {
   launchCityBeggingPlayable,
   tickCityBeggingPlayable,
   updateCityBeggingPointerPlayable,
-} from "../../application/playables/city-begging/city-begging-definition";
+} from "../../application/playables/builtin/city-begging/city-begging-definition";
+import { CITY_BEGGING_DURATION_DAYS } from "../../application/playables/builtin/city-begging/city-begging-minigame";
 import {
   answerGrainAccountingPlayable,
   exitGrainAccountingPlayable,
   launchGrainAccountingPlayable,
   tickGrainAccountingPlayable,
-} from "../../application/playables/grain-accounting/grain-accounting-definition";
+} from "../../application/playables/builtin/grain-accounting/grain-accounting-definition";
 import {
   clearMedicineCompoundingPlayable,
   exitMedicineCompoundingPlayable,
@@ -60,7 +61,6 @@ import {
   exitStoryBattlePlayable,
   launchStoryBattlePlayable,
 } from "../../application/playables/story-battle/story-battle-definition";
-import { CITY_BEGGING_DURATION_DAYS } from "../../application/minigames/city-begging-minigame";
 import { convertHouseActivityDaysToSegments } from "../../application/house/house-activity-costs";
 import { type PlayableDefinitionRegistry } from "../registry/playable-definition-registry";
 import { type PlayableIntegrationRegistry } from "../registry/playable-integration-registry";
@@ -70,7 +70,10 @@ import {
   readDefaultPlayableIntegrationRegistry,
   resetDefaultPlayableRuntimeRegistries,
 } from "./playable-runtime-registries";
-import { settleRuntimeEffects } from "./runtime-settlement";
+import {
+  createPlayableResultShell,
+  resolvePlayableResultRouting,
+} from "./playable-result-routing";
 
 export const PLAYABLE_LAUNCH_EVENT_ID = "playable.launch";
 
@@ -869,37 +872,64 @@ export function runPlayableRuntime(input: {
         characterDefinitions: input.characterDefinitions,
         result: result as CityBeggingGameCompletionResult,
       });
-      const settledState = settleRuntimeEffects({
-        state: completion.state,
-        effects: [
-          {
-            type: "advanceTime",
-            days:
-              convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS) === 0
-                ? 0
-                : CITY_BEGGING_DURATION_DAYS,
-          },
-        ],
-        emittedBy: "interactive-runtime",
-        appliedBy: "runtime-settlement",
-      }).state;
+      const completionResult = result as CityBeggingGameCompletionResult;
+      const session =
+        getActivePlayableSession(completion.state, "city-begging") ??
+        getActivePlayableSession(input.state, "city-begging");
+      const settlement =
+        session == null
+          ? null
+          : resolvePlayableResultRouting({
+              session,
+              outcome: completionResult.success === true ? "success" : "failure",
+              factResult: {
+                status:
+                  completionResult.success === true ? "completed" : "failed",
+                metrics: {
+                  foodGain:
+                    typeof completionResult.foodGain === "number"
+                      ? completionResult.foodGain
+                      : 0,
+                  goldGain:
+                    typeof completionResult.goldGain === "number"
+                      ? completionResult.goldGain
+                      : 0,
+                  maxCombo:
+                    typeof completionResult.maxCombo === "number"
+                      ? completionResult.maxCombo
+                      : 0,
+                },
+                detail: completionResult as Record<string, unknown>,
+              },
+              settlementEffects: [
+                ...completion.effects,
+                {
+                  type: "advanceTime",
+                  days:
+                    convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS) === 0
+                      ? 0
+                      : CITY_BEGGING_DURATION_DAYS,
+                },
+              ],
+            });
 
       return {
         state: {
-          ...settledState,
+          ...completion.state,
           core: {
-            ...settledState.core,
+            ...completion.state.core,
             runtime: {
-              ...settledState.core.runtime,
+              ...completion.state.core.runtime,
               playableSession: null,
             },
           },
         },
-        characterDefinitions: completion.characterDefinitions,
+        characterDefinitions: input.characterDefinitions,
         characterStatusById: completion.characterStatusById,
         effects: [],
         handled: true,
         session: null,
+        ...(settlement == null ? {} : { settlement }),
       };
     }
   }
@@ -920,12 +950,41 @@ export function runPlayableRuntime(input: {
         characterDefinitions: input.characterDefinitions,
         playerCharacterId: input.playerCharacterId,
       });
+      const session =
+        getActivePlayableSession(completion.state, "grain-accounting") ??
+        getActivePlayableSession(input.state, "grain-accounting");
+      const settlement =
+        completion.settlement == null || session == null
+          ? null
+          : resolvePlayableResultRouting({
+              session,
+              outcome: completion.settlement.outcome,
+              factResult: {
+                status: completion.settlement.factStatus,
+                metrics: {
+                  score: completion.settlement.score,
+                  durationDays: completion.settlement.durationDays,
+                  rewardMoney: completion.settlement.reward.money,
+                  rewardMath: completion.settlement.reward.math,
+                  rewardRelationship: completion.settlement.reward.relationship,
+                },
+                detail: {
+                  grade: completion.settlement.grade,
+                  reward: completion.settlement.reward,
+                },
+              },
+              settlementEffects: completion.settlement.effects,
+            });
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.settlement == null
+          ? {}
+          : { characterStatusById: completion.settlement.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(completion.state, "grain-accounting"),
+        ...(settlement == null ? {} : { settlement }),
       };
     }
 
@@ -946,12 +1005,41 @@ export function runPlayableRuntime(input: {
         playerCharacterId: input.playerCharacterId,
         playerSaysCorrect,
       });
+      const session =
+        getActivePlayableSession(completion.state, "grain-accounting") ??
+        getActivePlayableSession(input.state, "grain-accounting");
+      const settlement =
+        completion.settlement == null || session == null
+          ? null
+          : resolvePlayableResultRouting({
+              session,
+              outcome: completion.settlement.outcome,
+              factResult: {
+                status: completion.settlement.factStatus,
+                metrics: {
+                  score: completion.settlement.score,
+                  durationDays: completion.settlement.durationDays,
+                  rewardMoney: completion.settlement.reward.money,
+                  rewardMath: completion.settlement.reward.math,
+                  rewardRelationship: completion.settlement.reward.relationship,
+                },
+                detail: {
+                  grade: completion.settlement.grade,
+                  reward: completion.settlement.reward,
+                },
+              },
+              settlementEffects: completion.settlement.effects,
+            });
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.settlement == null
+          ? {}
+          : { characterStatusById: completion.settlement.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(completion.state, "grain-accounting"),
+        ...(settlement == null ? {} : { settlement }),
       };
     }
   }
@@ -1126,28 +1214,6 @@ export function createInteractivePlayableSession(input: {
     family: definition.family,
     ownerContext,
   });
-}
-
-export function createPlayableResultShell(input: {
-  session: ActivePlayableSession;
-  outcome: PlayableResult["outcome"];
-  factResult: PlayableResult["factResult"];
-  effects?: PlayableResult["effects"] | undefined;
-}): PlayableResult {
-  return {
-    integrationId: input.session.integrationId,
-    outcome: input.outcome,
-    factResult: input.factResult,
-    handoff: {
-      type: input.session.ownerContext.returnPolicy,
-      ownerKind: input.session.ownerContext.ownerKind,
-      ownerId: input.session.ownerContext.ownerId,
-      ...(input.session.ownerContext.sessionToken == null
-        ? {}
-        : { sessionToken: input.session.ownerContext.sessionToken }),
-    },
-    effects: input.effects ?? [],
-  };
 }
 
 function tryLaunchPlayableFromFlowCompletion(input: {

@@ -4616,6 +4616,68 @@ test("script editor runtime preview keeps failures in the editor and exposes exi
   assert.match(mainUiStyles, /pointer-events:\s*auto/);
 });
 
+test("script editor project entry failures return to landing instead of blanking the workspace", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+  const workflowControllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
+    "utf8"
+  );
+  const openMethod = workflowControllerSource.slice(
+    workflowControllerSource.indexOf("async openProjectFromDirectory()"),
+    workflowControllerSource.indexOf("async importProjectFiles(")
+  );
+  const importProjectMethod = workflowControllerSource.slice(
+    workflowControllerSource.indexOf("async importProjectFiles("),
+    workflowControllerSource.indexOf("async importTemplateProject()")
+  );
+  const importTemplateMethod = workflowControllerSource.slice(
+    workflowControllerSource.indexOf("async importTemplateProject()"),
+    workflowControllerSource.indexOf("enterRuntimePreviewSession(): void")
+  );
+  const openCatchBlock = openMethod.slice(openMethod.indexOf("catch (error)"));
+  const importProjectCatchBlock = importProjectMethod.slice(
+    importProjectMethod.indexOf("catch (error)")
+  );
+  const importTemplateCatchBlock = importTemplateMethod.slice(
+    importTemplateMethod.indexOf("catch (error)")
+  );
+
+  assert.match(
+    moduleSource,
+    /renderScriptEditorWorkspace\(\)\s*{\s*if \(this\.scriptEditorProject == null\) \{\s*return this\.renderScriptEditorLanding\(\);\s*\}/
+  );
+  assert.match(openCatchBlock, /this\.environment\.setScreen\("script-editor-landing"\)/);
+  assert.match(
+    importProjectCatchBlock,
+    /this\.environment\.setScreen\("script-editor-landing"\)/
+  );
+  assert.match(
+    importTemplateCatchBlock,
+    /this\.environment\.setScreen\("script-editor-landing"\)/
+  );
+  assert.doesNotMatch(
+    openCatchBlock,
+    /this\.environment\.setScreen\("script-editor-workspace"\)/
+  );
+  assert.doesNotMatch(
+    importProjectCatchBlock,
+    /this\.environment\.setScreen\("script-editor-workspace"\)/
+  );
+  assert.doesNotMatch(
+    importTemplateCatchBlock,
+    /this\.environment\.setScreen\("script-editor-workspace"\)/
+  );
+});
+
 test("runtime preview strips deferred city-entry story bootstrap from scenario packs", () => {
   const {
     sanitizeScenarioPackForRuntimePreview,
@@ -4724,6 +4786,7 @@ test(
       ),
       "utf8"
     );
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
     const locationAccessPanelSource = moduleSource.slice(
       moduleSource.indexOf("renderScriptEditorLocationAccessPanel(location) {"),
       moduleSource.indexOf(
@@ -4755,6 +4818,7 @@ test(
 
     assert.match(locationAccessPanelSource, /拒绝提示/);
     assert.match(locationAccessPanelSource, /进入条件/);
+    assert.match(locationAccessPanelSource, /c-script-editor-location-panel--access/);
     assert.match(
       locationAccessPanelSource,
       /c-script-editor-location-access-section[\s\S]*拒绝提示[\s\S]*c-script-editor-location-access-section[\s\S]*进入条件/
@@ -4770,6 +4834,18 @@ test(
     assert.match(personConditionSource, /未选择人物/);
     assert.match(personFieldSource, /基础属性/);
     assert.match(personFieldSource, /自定义属性/);
+    assert.match(
+      cssSource,
+      /\.c-script-editor-location-editor:has\(\.c-script-editor-location-panel--access\)[\s\S]*grid-template-rows:\s*auto minmax\(0, 1fr\);/
+    );
+    assert.match(
+      cssSource,
+      /\.c-script-editor-location-panel--access\s*\{[\s\S]*align-self:\s*start;[\s\S]*grid-template-rows:\s*auto auto auto auto;/
+    );
+    assert.match(
+      cssSource,
+      /\.c-script-editor-location-access-section,\s*\.c-script-editor-location-access-condition\s*\{[\s\S]*display:\s*grid;[\s\S]*align-content:\s*start;/
+    );
     assert.doesNotMatch(locationAccessPanelSource, /\?\?\?\?/);
     assert.doesNotMatch(conditionEditorSource, /\?\?\?\?/);
   }
@@ -5365,8 +5441,11 @@ test("runtime commit does not create CharacterStatus records when no patch is em
 
 test("city begging completion emits combined gold and stamina CharacterStatus patches", () => {
   const {
-    applyCityBeggingMiniGameCompletion,
+    resolveCityBeggingMiniGameCompletion,
   } = require("../.test-dist/application/minigames/city-begging-minigame.js");
+  const {
+    settleRuntimeEffects,
+  } = require("../.test-dist/core/runtime/runtime-settlement.js");
   const player = {
     ...prototypeCharacters[0],
     id: "char.status.city-begging",
@@ -5377,19 +5456,27 @@ test("city begging completion emits combined gold and stamina CharacterStatus pa
     },
   };
 
-  const result = applyCityBeggingMiniGameCompletion(
-    createBaseState(),
-    [player],
-    player.id,
-    {
+  const completion = resolveCityBeggingMiniGameCompletion({
+    state: createBaseState(),
+    characterDefinitions: [player],
+    playerCharacterId: player.id,
+    result: {
       foodGain: 3,
       goldGain: 7,
       maxCombo: 5,
       success: true,
-    }
-  );
+    },
+  });
+  const settled = settleRuntimeEffects({
+    state: createRuntimeState(createBaseState()),
+    effects: completion.effects,
+    emittedBy: "test",
+    appliedBy: "test",
+    characterDefinitions: [player],
+    characterStatusById: completion.characterStatusById,
+  });
 
-  assert.deepEqual(result.characterStatusById[player.id], {
+  assert.deepEqual(settled.characterStatusById[player.id], {
     attributeValuePatch: { "102": 127 },
     stamina: 65,
   });
@@ -5402,6 +5489,7 @@ test("city begging playable completion persists its CharacterStatus through runt
     commitRuntimeRequest,
   } = require("../.test-dist/core/runtime/state-sync-runtime.js");
   const {
+    createLaunchPlayableRequest,
     createPlayableActionRequest,
     runPlayableRuntime,
   } = require("../.test-dist/core/runtime/playable-runtime.js");
@@ -5436,10 +5524,11 @@ test("city begging playable completion persists its CharacterStatus through runt
       success: true,
     },
   });
-
-  const result = commitRuntimeRequest({
+  const launched = commitRuntimeRequest({
     state,
-    request,
+    request: createLaunchPlayableRequest("city-begging", {
+      payload: { now: 0 },
+    }),
     context: {
       router: {
         route: ({ state: runtimeState, request: runtimeRequest }) =>
@@ -5447,6 +5536,22 @@ test("city begging playable completion persists its CharacterStatus through runt
             state: runtimeState,
             request: runtimeRequest,
             characterDefinitions: state.characterDefinitions,
+            playerCharacterId: player.id,
+          }),
+      },
+    },
+  });
+
+  const result = commitRuntimeRequest({
+    state: launched.state,
+    request,
+    context: {
+      router: {
+        route: ({ state: runtimeState, request: runtimeRequest }) =>
+          runPlayableRuntime({
+            state: runtimeState,
+            request: runtimeRequest,
+            characterDefinitions: launched.state.characterDefinitions,
             playerCharacterId: player.id,
           }),
       },
@@ -12546,12 +12651,14 @@ test("script editor runtime export launches city menu minigames through event-bo
   project.minigames = [
     {
       ...minigame,
-      ownerKind: "external",
-      ownerId: "",
-      returnPolicy: "close-only",
-      triggerSource: "event-destination",
-      triggerEvent: menuEventId,
-      launchPayload: [{ key: "activityId", value: "activity.menu.training" }],
+      configEntries: [
+        {
+          id: "activityId",
+          label: "活动 ID",
+          valueType: "text",
+          value: "activity.menu.training",
+        },
+      ],
     },
   ];
   project.events = [
@@ -12618,7 +12725,7 @@ test("script editor runtime export launches city menu minigames through event-bo
   assert.deepEqual(events[0]?.actions[0], {
     type: "launchPlayable",
     playableId: minigame.playableId,
-    integrationId: minigame.integrationId,
+    integrationId: `playable.${minigame.playableId}.instance.${minigame.id}`,
     ownerContext: {
       ownerKind: "external",
       ownerId: null,
@@ -12631,6 +12738,10 @@ test("script editor runtime export launches city menu minigames through event-bo
   assert.deepEqual(playableIntegrations[0]?.trigger.launchPayload, {
     activityId: "activity.menu.training",
   });
+  assert.equal(
+    playableIntegrations[0]?.integrationId,
+    `playable.${minigame.playableId}.instance.${minigame.id}`
+  );
 
 });
 
@@ -13210,6 +13321,23 @@ test("script editor workspace view omits the top project pill text block", () =>
   assert.doesNotMatch(workspaceStyleSource, /c-script-editor-shell__project-strip/);
 });
 
+test(
+  "script editor workspace view removes the top inspector summary band for authoring modules",
+  () => {
+    const source = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/ui/views/script-editor-workspace-view.ts"
+      ),
+      "utf8"
+    );
+
+    assert.doesNotMatch(source, /c-script-editor-shell__stats/);
+    assert.doesNotMatch(source, /c-script-editor-shell__cards/);
+    assert.doesNotMatch(source, /renderInspectorCard/);
+  }
+);
+
 test("script editor preview queue exposes a unified auxiliary panel with linked issue routing", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
@@ -13391,6 +13519,17 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
     path.join(process.cwd(), "src/styles/script-editor.css"),
     "utf8"
   );
+  const personEditorStart = mainUiSource.indexOf(
+    "  renderScriptEditorPeopleEditor(records, selectedRecord) {"
+  );
+  const personEditorEnd = mainUiSource.indexOf(
+    "  renderScriptEditorPersonTabButton(tab, label) {",
+    personEditorStart
+  );
+  const personEditorSource =
+    personEditorStart >= 0 && personEditorEnd > personEditorStart
+      ? mainUiSource.slice(personEditorStart, personEditorEnd)
+      : "";
 
   assert.doesNotMatch(
     mainUiSource,
@@ -13407,6 +13546,8 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
   assert.doesNotMatch(mainUiSource, /renderScriptEditorPersonTabButton\("trade"/);
   assert.match(mainUiSource, /renderScriptEditorPersonTabButton\("attribute-group"/);
   assert.match(mainUiSource, /data-script-editor-action="select-person-tab"/);
+  assert.match(personEditorSource, /SCRIPT_EDITOR_INSPECTOR_SLOT/);
+  assert.doesNotMatch(personEditorSource, /data-script-editor-skip-inspector/);
   assert.match(mainUiSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
   assert.match(mainUiSource, /data-script-editor-inspector-header-slot/);
   assert.match(mainUiSource, /renderScriptEditorPersonTabList\(\)/);
@@ -13699,14 +13840,24 @@ test("script editor text entry authoring hides ids from creators and keeps list 
   assert.match(mainUiSource, /family === "textEntries"[\s\S]*?renderScriptEditorTextEntryEditor\(records, selectedRecord\)/);
   assert.match(textEntryEditorSource, /data-script-editor-action="apply-text-entry-text"/);
   assert.match(textEntryEditorSource, /data-script-editor-text-entry-text/);
-  assert.match(textEntryEditorSource, /SCRIPT_EDITOR_INSPECTOR_SLOT/);
-  assert.match(textEntryEditorSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
-  assert.match(textEntryEditorSource, /data-script-editor-inspector-header-slot/);
+  assert.match(textEntryEditorSource, /data-script-editor-skip-inspector/);
   assert.match(textEntryEditorSource, /c-script-editor-editor-card__actions--end/);
   assert.match(scriptEditorCssSource, /\.c-script-editor-editor-card__actions--end[\s\S]*justify-content:\s*flex-end/);
   assert.match(textEntryEditorSource, /placeholder="请输入文本内容"/);
   assert.match(textEntryEditorSource, /c-script-editor-record-list__item--text-entry/);
   assert.match(textEntryEditorSource, /c-script-editor-record-list__title--clamp-2/);
+  assert.doesNotMatch(
+    textEntryEditorSource,
+    /SCRIPT_EDITOR_INSPECTOR_SLOT/
+  );
+  assert.doesNotMatch(
+    textEntryEditorSource,
+    /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/
+  );
+  assert.doesNotMatch(
+    textEntryEditorSource,
+    /data-script-editor-inspector-header-slot/
+  );
   assert.doesNotMatch(
     textEntryEditorSource,
     /c-script-editor-editor-card__title">文本/
@@ -13726,6 +13877,64 @@ test("script editor text entry authoring hides ids from creators and keeps list 
   );
   assert.match(scriptEditorCssSource, /c-script-editor-record-list__title--clamp-2/);
   assert.match(scriptEditorCssSource, /-webkit-line-clamp:\s*1/);
+});
+
+test("script editor portrait and menu authoring skip the shared workspace inspector band", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+  const portraitEditorStart = mainUiSource.indexOf(
+    "  renderScriptEditorPortraitEditor(records, selectedRecord)"
+  );
+  const portraitEditorEnd = mainUiSource.indexOf(
+    "  renderScriptEditorPortraitVariantEditor(records, selectedRecord)",
+    portraitEditorStart
+  );
+  const portraitEditorSource =
+    portraitEditorStart >= 0 && portraitEditorEnd > portraitEditorStart
+      ? mainUiSource.slice(portraitEditorStart, portraitEditorEnd)
+      : "";
+  const portraitVariantEditorStart = mainUiSource.indexOf(
+    "  renderScriptEditorPortraitVariantEditor(records, selectedRecord)"
+  );
+  const portraitVariantEditorEnd = mainUiSource.indexOf(
+    "  renderScriptEditorLocationEditor(family, records, selectedRecord)",
+    portraitVariantEditorStart
+  );
+  const portraitVariantEditorSource =
+    portraitVariantEditorStart >= 0 &&
+    portraitVariantEditorEnd > portraitVariantEditorStart
+      ? mainUiSource.slice(portraitVariantEditorStart, portraitVariantEditorEnd)
+      : "";
+  const menuEditorStart = mainUiSource.indexOf("  renderScriptEditorMenuItemEditor()");
+  const menuEditorEnd = mainUiSource.indexOf(
+    "  getScriptEditorMenuItemRecords()",
+    menuEditorStart
+  );
+  const menuEditorSource =
+    menuEditorStart >= 0 && menuEditorEnd > menuEditorStart
+      ? mainUiSource.slice(menuEditorStart, menuEditorEnd)
+      : "";
+
+  assert.match(portraitEditorSource, /data-script-editor-skip-inspector/);
+  assert.match(portraitVariantEditorSource, /data-script-editor-skip-inspector/);
+  assert.match(menuEditorSource, /data-script-editor-skip-inspector/);
+  assert.match(portraitEditorSource, /c-script-editor-editor-pane--tabbed/);
+  assert.match(portraitVariantEditorSource, /c-script-editor-editor-pane--tabbed/);
+  assert.match(menuEditorSource, /c-script-editor-editor-pane--tabbed/);
+  assert.match(portraitEditorSource, /aria-label="立绘资源详情分栏"/);
+  assert.match(portraitVariantEditorSource, /aria-label="立绘变体详情分栏"/);
+  assert.match(menuEditorSource, /aria-label="菜单详情分栏"/);
+  assert.match(portraitEditorSource, />\s*基础\s*</);
+  assert.match(portraitVariantEditorSource, />\s*基础\s*</);
+  assert.match(menuEditorSource, />\s*基础\s*</);
+  assert.doesNotMatch(portraitEditorSource, /SCRIPT_EDITOR_INSPECTOR_SLOT/);
+  assert.doesNotMatch(portraitVariantEditorSource, /SCRIPT_EDITOR_INSPECTOR_SLOT/);
+  assert.doesNotMatch(menuEditorSource, /SCRIPT_EDITOR_INSPECTOR_SLOT/);
 });
 
 test("script editor person authoring queue removes the advanced system details foldout from the profile form", () => {
@@ -14822,14 +15031,25 @@ test(
     assert.doesNotMatch(locationMenuPanelSource, /这里编辑作者视角下的菜单名称/);
     assert.match(locationMenuPanelSource, /c-script-editor-location-menu__remove/);
     assert.match(locationMenuPanelSource, /绑定事件/);
+    assert.match(locationMenuPanelSource, /c-script-editor-location-menu__paged-list c-script-editor-person-summary__list/);
+    assert.match(locationMenuPanelSource, /c-script-editor-location-menu__entry c-script-editor-person-summary__item/);
     assert.match(locationMenuPanelSource, /remove-location-menu-entry/);
-    assert.match(source, /const SCRIPT_EDITOR_LOCATION_MENU_ENTRY_PAGE_SIZE = 3;/);
+    assert.match(source, /const SCRIPT_EDITOR_LOCATION_MENU_ENTRY_PAGE_SIZE = 5;/);
     assert.match(locationMenuPanelSource, /menuPageState\.visibleEntries/);
     assert.match(locationMenuPanelSource, /renderScriptEditorLocationMenuPagination/);
+    assert.match(locationMenuPanelSource, /c-script-editor-location-menu__header c-script-editor-person-summary__header/);
+    assert.match(locationMenuPanelSource, /<h3 class="c-script-editor-editor-card__title">自定义菜单<\/h3>/);
+    assert.match(locationMenuPanelSource, /c-script-editor-location-menu__add-button/);
+    assert.match(locationMenuPanelSource, />\s*\+\s*</);
     assert.match(source, /location-menu-page-prev/);
     assert.match(source, /location-menu-page-next/);
-    assert.match(cssSource, /\.c-script-editor-location-menu__bundle[\s\S]*height: 636px;/);
+    assert.match(cssSource, /\.c-script-editor-location-menu__bundle[\s\S]*height:\s*auto;[\s\S]*min-height:\s*0;/);
+    assert.match(cssSource, /\.c-script-editor-location-editor:has\(\.c-script-editor-location-panel--menu-groups\)[\s\S]*grid-template-rows:\s*auto minmax\(0, 1fr\);/);
+    assert.match(cssSource, /\.c-script-editor-location-panel--menu-groups[\s\S]*align-content:\s*start;[\s\S]*gap:\s*10px;[\s\S]*grid-template-rows:\s*auto minmax\(0, 1fr\);/);
+    assert.match(cssSource, /\.c-script-editor-location-panel--menu-groups > \.c-script-editor-location-menu__list[\s\S]*gap:\s*12px;/);
     assert.match(cssSource, /\.c-script-editor-location-menu__pagination[\s\S]*margin-top: auto;/);
+    assert.match(cssSource, /\.c-script-editor-location-menu__add-button[\s\S]*width:\s*34px;/);
+    assert.match(cssSource, /\.c-script-editor-location-menu__add-button[\s\S]*padding-inline:\s*0;/);
     assert.match(cssSource, /\.c-main-ui-screen--script-editor-flow[\s\S]*height: 100vh;[\s\S]*overflow: hidden;/);
     assert.match(cssSource, /\.c-script-editor-shell[\s\S]*height: 100%;[\s\S]*overflow: hidden;/);
     assert.match(cssSource, /\.c-script-editor-shell__header[\s\S]*grid-template-columns: minmax\(0, 1fr\) auto;[\s\S]*height: 60px;[\s\S]*overflow: hidden;/);
@@ -14981,25 +15201,37 @@ test(
 );
 
 test(
-  "script editor city mounted building authoring omits the mounted panel header copy and side summary box",
+  "script editor city mounted building authoring renames the tab and uses a compact custom-building header",
   () => {
-    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const source = fs.readFileSync(
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+      "utf8"
+    );
     const mountedPanelSource =
       source.match(
         /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
       )?.[0] ?? "";
 
-    assert.doesNotMatch(
-      mountedPanelSource,
-      /<h3 class="c-script-editor-editor-card__title">[\s\S]*?<\/h3>/
+    assert.match(
+      source,
+      /renderScriptEditorLocationTabButton\("mounted", "建筑组"\)/
     );
-    assert.doesNotMatch(
+    assert.match(
       mountedPanelSource,
-      /<p class="c-script-editor-editor-card__hint">[\s\S]*?<\/p>/
+      /<h3 class="c-script-editor-editor-card__title">自定义建筑<\/h3>/
     );
+    assert.match(
+      mountedPanelSource,
+      /c-script-editor-location-menu__header c-script-editor-person-summary__header/
+    );
+    assert.match(
+      mountedPanelSource,
+      /c-script-editor-location-menu__add-button/
+    );
+    assert.match(mountedPanelSource, />\s*\+\s*</);
     assert.doesNotMatch(
       mountedPanelSource,
-      /c-script-editor-city-mounted-building-card__meta/
+      />[\s\r\n]*新增挂载建筑[\s\r\n]*</
     );
   }
 );
@@ -20052,7 +20284,7 @@ test(
     assert.match(source, /基础信息|去向|关联对象|预览与校验/);
     assert.doesNotMatch(source, /data-script-editor-event-tab="conditions"/);
     assert.match(source, /data-script-editor-action="select-narrative-tab"/);
-    assert.doesNotMatch(source, /data-script-editor-action="select-event-tab"/);
+    assert.match(source, /data-script-editor-action="select-event-tab"/);
     assert.match(source, /renderScriptEditorEventTabPanel\(eventRecord\)/);
     assert.match(source, /data-script-editor-event-destination-field="family"/);
     assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
@@ -20078,6 +20310,38 @@ test(
     assert.match(cssSource, /\.c-script-editor-narrative-inline/);
   }
 );
+
+test("script editor dialogue editor removes preview tab and advanced system section from the basics panel", () => {
+  const source = fs.readFileSync(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "utf8"
+  );
+  const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+  const dialogueEditorSource =
+    source.match(/renderScriptEditorDialogueEditor\(records, selectedRecord\) \{[\s\S]*?\n  renderScriptEditorEventEditor/)?.[0] ?? "";
+  const dialogueTabPanelSource =
+    source.match(/renderScriptEditorDialogueTabPanel\(dialogue\) \{[\s\S]*?\n  renderScriptEditorDialogueNodeReferenceSelect/)?.[0] ?? "";
+  const narrativeTabSelectorSource =
+    source.match(/selectScriptEditorNarrativeTab\(tab\) \{[\s\S]*?\n  selectScriptEditorEventTab/)?.[0] ?? "";
+
+  assert.match(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("profile", "基础"\)/);
+  assert.match(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("nodes", "节点"\)/);
+  assert.match(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("events", "事件"\)/);
+  assert.doesNotMatch(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("summary", "预览"\)/);
+  assert.doesNotMatch(dialogueTabPanelSource, /aria-label="对话预览分栏"/);
+  assert.doesNotMatch(dialogueTabPanelSource, /高级设置与系统信息/);
+  assert.doesNotMatch(dialogueTabPanelSource, /data-script-editor-dialogue-field="id"/);
+  assert.doesNotMatch(dialogueTabPanelSource, /data-script-editor-dialogue-field="storyNodeId"/);
+  assert.match(dialogueTabPanelSource, /c-script-editor-narrative-panel c-script-editor-narrative-panel--compact/);
+  assert.match(dialogueTabPanelSource, /c-script-editor-form-field__input c-script-editor-form-field__input--compact/);
+  assert.match(dialogueTabPanelSource, /renderScriptEditorStringRelationPanel\("参与人物", "dialogue-participants", dialogue\.participantPersonIds \?\? \[\], \{[\s\S]*compact: true/);
+  assert.match(cssSource, /\.c-script-editor-form-field__input--compact\s*\{/);
+  assert.match(cssSource, /\.c-script-editor-narrative-panel--compact\s*\{/);
+  assert.match(cssSource, /\.c-script-editor-narrative-list--compact\s*\{/);
+  assert.match(narrativeTabSelectorSource, /\["profile", "links", "summary", "events"\]/);
+  assert.match(narrativeTabSelectorSource, /\["profile", "nodes", "events"\]/);
+  assert.doesNotMatch(narrativeTabSelectorSource, /\["profile", "nodes", "summary", "events"\]/);
+});
 
 test.skip("script editor event editor exposes event binding navigation", () => {
   const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
@@ -20162,7 +20426,7 @@ test("script editor owner-local event binding authoring is routed through event 
   assert.doesNotMatch(source, /renderScriptEditorPersonTabButton\("events", "事件"\)/);
   assert.match(source, /renderScriptEditorLocationTabButton\("events", "事件"\)/);
   assert.match(source, /renderScriptEditorNarrativeTabButton\("events", "事件"\)/);
-  assert.match(source, /renderScriptEditorMinigameTabButton\("events", "事件"\)/);
+  assert.doesNotMatch(source, /renderScriptEditorMinigameTabButton\("events", "事件"\)/);
 
   for (const ownerFamily of ownerFamilies) {
     assert.match(source, new RegExp(`ownerFamily:\\s*"${ownerFamily}"`));
@@ -20173,7 +20437,7 @@ test("script editor owner-local event binding authoring is routed through event 
   assert.doesNotMatch(profilePanelSource, /renderScriptEditorOwnerLocalEventBindingsPanel/);
 
   const minigameBasicsSource =
-    source.match(/return `\s*<section class="c-script-editor-minigame-panel" aria-label="玩法绑定基础信息分栏">[\s\S]*?\n  renderScriptEditorEventBindingsEditor/)?.[0] ?? "";
+    source.match(/return `\s*<section class="c-script-editor-minigame-panel" aria-label="玩法基础信息分栏">[\s\S]*?\n  renderScriptEditorEventBindingsEditor/)?.[0] ?? "";
   assert.doesNotMatch(minigameBasicsSource, /renderScriptEditorOwnerLocalEventBindingsPanel/);
 });
 
@@ -20319,7 +20583,8 @@ test("script editor tab selectors allow owner-local event tabs and reject event-
   assert.match(locationSelectorSource, /\["profile", "menus", "access", "entry", "events"\]/);
   assert.match(narrativeSelectorSource, /\["profile", "links", "summary", "events"\]/);
   assert.match(narrativeSelectorSource, /\["profile", "nodes", "summary", "events"\]/);
-  assert.match(minigameSelectorSource, /\["basics", "launch", "settlement", "references", "events"\]/);
+  assert.match(minigameSelectorSource, /\["basics", "config", "settlement"\]/);
+  assert.match(eventSelectorSource, /\["basics", "destination", "relations", "preview"\]/);
   assert.doesNotMatch(eventSelectorSource, /"conditions"/);
 });
 
@@ -20710,15 +20975,7 @@ test("script editor direct first-phase default creators use canonical numeric id
   assert.equal(createDefaultScriptEditorMinigameRecord(0).id, "420001");
   assert.deepEqual(
     ["420002", "420003", "420004"].map((id) => createDefaultScriptEditorMinigameRecord(id).title),
-    ["玩法绑定 2", "玩法绑定 3", "玩法绑定 4"]
-  );
-  assert.deepEqual(
-    new Set(
-      ["420002", "420003", "420004"].map(
-        (id) => createDefaultScriptEditorMinigameRecord(id).integrationId
-      )
-    ).size,
-    3
+    ["玩法 2", "玩法 3", "玩法 4"]
   );
   assert.equal(createDefaultScriptEditorPersonRecord(0).id, "110001");
   assert.equal(createDefaultScriptEditorPortraitRecord(0).id, "120001");
@@ -21332,7 +21589,7 @@ test("script editor event deletion removes all cross-record event references", (
 });
 
 test(
-  "script editor minigame binding queue exposes creator-facing basics without trigger tabs",
+  "script editor playable instance queue exposes creator-facing basics config and settlement tabs",
   () => {
     const source = fs.readFileSync(
       "src/modules/script-editor/ui/main-ui-script-editor-module.js",
@@ -21350,22 +21607,21 @@ test(
     assert.doesNotMatch(source, /玩法绑定作者面|Minigame Binding/);
     assert.notEqual(panelStart, -1);
     assert.notEqual(panelEnd, -1);
-    assert.match(panelSource, /基础信息/);
+    assert.match(panelSource, /基础/);
     assert.match(panelSource, /玩法原型/);
-    assert.match(panelSource, /结算实例/);
-    assert.doesNotMatch(panelSource, /说明/);
-    assert.doesNotMatch(panelSource, /备注/);
-    assert.doesNotMatch(panelSource, /高级设置与系统信息/);
+    assert.match(panelSource, /renderScriptEditorMinigameTabButton\("config", "配置组"\)/);
+    assert.match(panelSource, /renderScriptEditorMinigameTabButton\("settlement", "结算组"\)/);
     assert.doesNotMatch(source, /触发与调度/);
     assert.doesNotMatch(source, /结算与返回/);
     assert.doesNotMatch(source, /renderScriptEditorMinigameTabButton\("events"/);
-    assert.doesNotMatch(source, /data-script-editor-action="select-minigame-tab"/);
+    assert.match(source, /data-script-editor-action="select-minigame-tab"/);
     assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
-    assert.doesNotMatch(panelSource, /data-script-editor-inspector-header-slot/);
+    assert.match(panelSource, /data-script-editor-inspector-header-slot/);
     assert.match(panelSource, /data-script-editor-minigame-field=/);
     assert.match(panelSource, /data-script-editor-minigame-field="playableId"/);
-    assert.match(panelSource, /data-script-editor-minigame-field="settlementId"/);
-    assert.match(panelSource, /getScriptEditorCreatorRecordOptions\("settlements"\)/);
+    assert.match(source, /data-script-editor-minigame-config-field=/);
+    assert.match(source, /data-script-editor-minigame-settlement-field=/);
+    assert.match(panelSource, /getScriptEditorCreatorRecordOptions\("events"\)/);
     assert.doesNotMatch(source, /data-script-editor-minigame-field="triggerId"/);
     assert.doesNotMatch(source, /data-script-editor-minigame-field="triggerEvent"/);
     assert.doesNotMatch(source, /data-script-editor-minigame-launch-field=/);
@@ -21376,94 +21632,162 @@ test(
   }
 );
 
-test("script editor minigame binding authoring keeps settlement binding as creator field", () => {
+test(
+  "script editor playable instance helpers normalize config entries and ordered settlement routes",
+  () => {
+    const {
+      createDefaultScriptEditorMinigameRecord,
+      normalizeScriptEditorMinigameRecord,
+    } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
+
+    const record = normalizeScriptEditorMinigameRecord(
+      createDefaultScriptEditorMinigameRecord(0)
+    );
+
+    assert.equal(Array.isArray(record.configEntries), true);
+    assert.equal(Array.isArray(record.settlementRoutes), true);
+    assert.equal("integrationId" in record, false);
+    assert.equal("settlementId" in record, false);
+    assert.equal("launchPayload" in record, false);
+    assert.equal("outcomeRoutes" in record, false);
+  }
+);
+
+test(
+  "script editor playable instance authoring exposes 基础 / 配置组 / 结算组 and hides retired binding jargon",
+  () => {
+    const source = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      ),
+      "utf8"
+    );
+    const minigameSource =
+      source.match(/renderScriptEditorMinigameEditor\(records, selectedRecord\) \{[\s\S]*?\n  renderScriptEditorNarrativeTabButton/)?.[0] ??
+      source;
+
+    assert.match(
+      minigameSource,
+      /renderScriptEditorMinigameTabButton\("basics", "基础"\)/
+    );
+    assert.match(
+      minigameSource,
+      /renderScriptEditorMinigameTabButton\("config", "配置组"\)/
+    );
+    assert.match(
+      minigameSource,
+      /renderScriptEditorMinigameTabButton\("settlement", "结算组"\)/
+    );
+    assert.doesNotMatch(minigameSource, /接入方案/);
+    assert.doesNotMatch(minigameSource, /结算实例/);
+  }
+);
+
+test(
+  "script editor module workbenches align first-tab naming to 基础",
+  () => {
+    const source = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      ),
+      "utf8"
+    );
+
+    assert.match(
+      source,
+      /renderScriptEditorPersonTabButton\("profile", "基础"\)/
+    );
+    assert.match(
+      source,
+      /renderScriptEditorLocationTabButton\("profile", "基础"\)/
+    );
+    assert.match(
+      source,
+      /renderScriptEditorNarrativeTabButton\("profile", "基础"\)/
+    );
+    assert.match(source, /c-script-editor-event-editor__tabs/);
+  }
+);
+
+test("script editor playable instance authoring keeps settlement routing on settlementRoutes instead of settlementId", () => {
   const {
+    appendScriptEditorMinigameSettlementRoute,
     createDefaultScriptEditorMinigameRecord,
     normalizeScriptEditorMinigameRecord,
-    updateScriptEditorMinigameField,
+    updateScriptEditorMinigameSettlementRouteField,
   } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
 
   let record = createDefaultScriptEditorMinigameRecord(0);
-  record = updateScriptEditorMinigameField(
+  record = appendScriptEditorMinigameSettlementRoute(record);
+  record = updateScriptEditorMinigameSettlementRouteField(
     record,
-    "settlementId",
-    " settlement.reward "
+    0,
+    "targetEventId",
+    " event.success "
   );
   const normalized = normalizeScriptEditorMinigameRecord(record);
 
-  assert.equal(normalized.settlementId, "settlement.reward");
+  assert.equal(normalized.settlementRoutes[0].targetEventId, "event.success");
+  assert.equal("settlementId" in normalized, false);
 });
 
 test(
-  "script editor minigame binding authoring helpers normalize builtin defaults and bounded settlement fields",
+  "script editor playable instance authoring helpers normalize config entries and settlement fields",
   () => {
     const {
-      appendScriptEditorMinigameLaunchPayloadEntry,
-      appendScriptEditorMinigameOutcomeRoute,
+      appendScriptEditorMinigameConfigEntry,
+      appendScriptEditorMinigameSettlementRoute,
       createDefaultScriptEditorMinigameRecord,
       normalizeScriptEditorMinigameRecord,
-      removeScriptEditorMinigameLaunchPayloadEntry,
       updateScriptEditorMinigameField,
-      updateScriptEditorMinigameIntegration,
-      updateScriptEditorMinigameLaunchPayloadField,
-      updateScriptEditorMinigameOutcomeRouteField,
+      updateScriptEditorMinigameConfigEntryField,
+      updateScriptEditorMinigameSettlementRouteField,
     } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
 
     let record = createDefaultScriptEditorMinigameRecord(0);
     record = updateScriptEditorMinigameField(record, "title", "市集算盘");
     record = updateScriptEditorMinigameField(record, "playableId", "grain-accounting");
-    record = updateScriptEditorMinigameIntegration(
-      record,
-      "playable.grain-accounting.house.grain-shop"
-    );
-    record = updateScriptEditorMinigameField(record, "ownerId", "building.grain-shop");
-    record = updateScriptEditorMinigameField(record, "triggerSource", "location-menu");
-    record = appendScriptEditorMinigameLaunchPayloadEntry(record);
-    record = updateScriptEditorMinigameLaunchPayloadField(record, 0, "key", "ledgerId");
-    record = updateScriptEditorMinigameLaunchPayloadField(
+    record = appendScriptEditorMinigameConfigEntry(record);
+    record = updateScriptEditorMinigameConfigEntryField(record, 0, "id", "ledgerId");
+    record = updateScriptEditorMinigameConfigEntryField(
       record,
       0,
       "value",
       "grain.shop.default"
     );
-    record = appendScriptEditorMinigameOutcomeRoute(record);
-    record = updateScriptEditorMinigameOutcomeRouteField(record, 1, "outcome", "failure");
-    record = updateScriptEditorMinigameOutcomeRouteField(
+    record = appendScriptEditorMinigameSettlementRoute(record);
+    record = updateScriptEditorMinigameSettlementRouteField(
       record,
-      1,
-      "handoffPolicy",
-      "close-only"
+      0,
+      "title",
+      "失败结算"
     );
-    record = updateScriptEditorMinigameOutcomeRouteField(
+    record = updateScriptEditorMinigameSettlementRouteField(
       record,
-      1,
-      "effectHint",
-      "扣除信誉"
+      0,
+      "targetEventId",
+      "event.failure"
     );
-    record = removeScriptEditorMinigameLaunchPayloadEntry(record, 1);
+    record = updateScriptEditorMinigameSettlementRouteField(record, 0, "outcomeIn", "failure");
+    record = updateScriptEditorMinigameSettlementRouteField(record, 0, "scoreMin", "5");
 
     const normalized = normalizeScriptEditorMinigameRecord(record);
 
     assert.equal(normalized.title, "市集算盘");
     assert.equal(normalized.playableId, "grain-accounting");
-    assert.equal(
-      normalized.integrationId,
-      "playable.grain-accounting.house.grain-shop"
-    );
-    assert.equal(normalized.ownerKind, "house");
-    assert.equal(normalized.returnPolicy, "resume-owner");
-    assert.equal(
-      normalized.triggerId,
-      "trigger.playable.grain-accounting.house.grain-shop"
-    );
-    assert.equal(normalized.launchPayload.length, 1);
-    assert.deepEqual(normalized.launchPayload[0], {
-      key: "ledgerId",
+    assert.equal(normalized.configEntries.length, 1);
+    assert.deepEqual(normalized.configEntries[0], {
+      id: "ledgerId",
+      label: "",
+      valueType: "text",
       value: "grain.shop.default",
     });
-    assert.equal(normalized.outcomeRoutes[1].outcome, "failure");
-    assert.equal(normalized.outcomeRoutes[1].handoffPolicy, "close-only");
-    assert.equal(normalized.outcomeRoutes[1].effectHint, "扣除信誉");
+    assert.equal(normalized.settlementRoutes[0].title, "失败结算");
+    assert.equal(normalized.settlementRoutes[0].targetEventId, "event.failure");
+    assert.deepEqual(normalized.settlementRoutes[0].conditions?.outcomeIn, ["failure"]);
+    assert.equal(normalized.settlementRoutes[0].conditions?.scoreMin, 5);
   }
 );
 
@@ -29783,16 +30107,22 @@ test("interactive runtime contract exports launch action exit and result seams",
 test("covered interactive flow is runtime-owned", () => {
   const {
     CITY_BEGGING_DURATION_DAYS,
-    applyCityBeggingMiniGameCompletion,
     createCityBeggingMiniGameState,
+    resolveCityBeggingMiniGameCompletion,
   } = require("../.test-dist/application/minigames/city-begging-minigame.js");
   const {
     convertHouseActivityDaysToSegments,
   } = require("../.test-dist/application/house/house-activity-costs.js");
   const {
+    settleRuntimeEffects,
+  } = require("../.test-dist/core/runtime/runtime-settlement.js");
+  const {
     createInteractiveActionRequest,
     runInteractiveRuntime,
   } = require("../.test-dist/core/runtime/interactive-runtime.js");
+  const {
+    createLaunchPlayableRequest,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
   const {
     createAdvanceTimeSegmentsRequest,
     runTimeRuntime,
@@ -29805,35 +30135,50 @@ test("covered interactive flow is runtime-owned", () => {
     success: true,
   };
   const baseState = createBaseState();
-  const appliedCompletion = applyCityBeggingMiniGameCompletion(
-    baseState,
-    prototypeCharacters,
+  const appliedCompletion = resolveCityBeggingMiniGameCompletion({
+    state: baseState,
+    characterDefinitions: prototypeCharacters,
     playerCharacterId,
-    completionResult
-  );
+    result: completionResult,
+  });
+  const settledCompletion = settleRuntimeEffects({
+    state: createRuntimeState(baseState),
+    effects: appliedCompletion.effects,
+    emittedBy: "test",
+    appliedBy: "test",
+    characterDefinitions: prototypeCharacters,
+    characterStatusById: appliedCompletion.characterStatusById,
+  });
   const expectedGameState = runTimeRuntime({
-    state: appliedCompletion.state,
+    state: settledCompletion.state.core,
     request: createAdvanceTimeSegmentsRequest(
       convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
     ),
   }).state;
+  const launched = runInteractiveRuntime({
+    state: createRuntimeState(baseState),
+    request: createLaunchPlayableRequest("city-begging", {
+      payload: { now: 0 },
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
   const runtimeResult = runInteractiveRuntime({
-    state: {
-      core: baseState,
-      app: {
-        beggingMiniGameState: createCityBeggingMiniGameState(0),
-        autoAdvanceState: null,
-        cityDirectoryState: null,
-        locationDialogueState: null,
-      },
-      view: {},
-    },
+    state: launched.state,
     request: createInteractiveActionRequest(
       "interactive.city-begging.complete",
       { result: completionResult }
     ),
     characterDefinitions: prototypeCharacters,
     playerCharacterId,
+  });
+  const settledRuntimeResult = settleRuntimeEffects({
+    state: runtimeResult.state,
+    effects: runtimeResult.settlement?.effects ?? [],
+    emittedBy: "test",
+    appliedBy: "test",
+    characterDefinitions: runtimeResult.characterDefinitions,
+    characterStatusById: runtimeResult.characterStatusById,
   });
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
@@ -29848,18 +30193,18 @@ test("covered interactive flow is runtime-owned", () => {
   )?.[0] ?? "";
 
   assert.equal(runtimeResult.state.app.beggingMiniGameState, null);
-  assert.deepEqual(runtimeResult.state.core.calendar, expectedGameState.calendar);
+  assert.deepEqual(settledRuntimeResult.state.core.calendar, expectedGameState.calendar);
   assert.equal(
-    runtimeResult.state.core.world.timeOfDay,
+    settledRuntimeResult.state.core.world.timeOfDay,
     expectedGameState.world.timeOfDay
   );
   assert.equal(
     readCharacterAttributeValueByKey(
-      getPlayerCharacter(runtimeResult.characterDefinitions),
+      getPlayerCharacter(settledRuntimeResult.characterDefinitions),
       "102"
     ),
     readCharacterAttributeValueByKey(
-      getPlayerCharacter(appliedCompletion.characterDefinitions),
+      getPlayerCharacter(settledCompletion.characterDefinitions),
       "102"
     )
   );
@@ -31404,16 +31749,22 @@ test("interactive covered main write-back paths use shared runtime commit helper
 test("covered settlement path stays on shared runtime ownership", () => {
   const {
     CITY_BEGGING_DURATION_DAYS,
-    applyCityBeggingMiniGameCompletion,
     createCityBeggingMiniGameState,
+    resolveCityBeggingMiniGameCompletion,
   } = require("../.test-dist/application/minigames/city-begging-minigame.js");
   const {
     convertHouseActivityDaysToSegments,
   } = require("../.test-dist/application/house/house-activity-costs.js");
   const {
+    settleRuntimeEffects,
+  } = require("../.test-dist/core/runtime/runtime-settlement.js");
+  const {
     createInteractiveActionRequest,
     runInteractiveRuntime,
   } = require("../.test-dist/core/runtime/interactive-runtime.js");
+  const {
+    createLaunchPlayableRequest,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
   const {
     createAdvanceTimeSegmentsRequest,
     runTimeRuntime,
@@ -31431,35 +31782,50 @@ test("covered settlement path stays on shared runtime ownership", () => {
     success: true,
   };
   const baseState = createBaseState();
-  const appliedCompletion = applyCityBeggingMiniGameCompletion(
-    baseState,
-    prototypeCharacters,
+  const appliedCompletion = resolveCityBeggingMiniGameCompletion({
+    state: baseState,
+    characterDefinitions: prototypeCharacters,
     playerCharacterId,
-    completionResult
-  );
+    result: completionResult,
+  });
+  const settledCompletion = settleRuntimeEffects({
+    state: createRuntimeState(baseState),
+    effects: appliedCompletion.effects,
+    emittedBy: "test",
+    appliedBy: "test",
+    characterDefinitions: prototypeCharacters,
+    characterStatusById: appliedCompletion.characterStatusById,
+  });
   const expectedInteractiveState = runTimeRuntime({
-    state: appliedCompletion.state,
+    state: settledCompletion.state.core,
     request: createAdvanceTimeSegmentsRequest(
       convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
     ),
   }).state;
+  const launched = runInteractiveRuntime({
+    state: createRuntimeState(baseState),
+    request: createLaunchPlayableRequest("city-begging", {
+      payload: { now: 0 },
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
   const interactiveResult = runInteractiveRuntime({
-    state: {
-      core: baseState,
-      app: {
-        beggingMiniGameState: createCityBeggingMiniGameState(0),
-        autoAdvanceState: null,
-        cityDirectoryState: null,
-        locationDialogueState: null,
-      },
-      view: {},
-    },
+    state: launched.state,
     request: createInteractiveActionRequest(
       "interactive.city-begging.complete",
       { result: completionResult }
     ),
     characterDefinitions: prototypeCharacters,
     playerCharacterId,
+  });
+  const settledInteractiveResult = settleRuntimeEffects({
+    state: interactiveResult.state,
+    effects: interactiveResult.settlement?.effects ?? [],
+    emittedBy: "test",
+    appliedBy: "test",
+    characterDefinitions: interactiveResult.characterDefinitions,
+    characterStatusById: interactiveResult.characterStatusById,
   });
 
   let appState = {
@@ -31531,11 +31897,11 @@ test("covered settlement path stays on shared runtime ownership", () => {
   });
 
   assert.deepEqual(
-    interactiveResult.state.core.calendar,
+    settledInteractiveResult.state.core.calendar,
     expectedInteractiveState.calendar
   );
   assert.equal(
-    interactiveResult.state.core.world.timeOfDay,
+    settledInteractiveResult.state.core.world.timeOfDay,
     expectedInteractiveState.world.timeOfDay
   );
   assert.equal(appState.gameState.world.timeOfDay, "afternoon");
@@ -37097,6 +37463,206 @@ test("child 31 city-begging completion clears shared playable session after sett
   assert.equal(completed.state.app.beggingMiniGameState, null);
 });
 
+test("playable runtime routes city-begging completion through a shared settlement payload", () => {
+  const { runPlayableRuntime, createLaunchPlayableRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
+  );
+  const { createInteractiveActionRequest } = require(
+    "../.test-dist/core/runtime/interactive-runtime.js"
+  );
+
+  const launched = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("city-begging", {
+      payload: { now: 789 },
+    }),
+    characterDefinitions: prototypeCharacters,
+  });
+
+  const completed = runPlayableRuntime({
+    state: launched.state,
+    request: createInteractiveActionRequest("interactive.city-begging.complete", {
+      result: {
+        foodGain: 3,
+        goldGain: 2,
+        maxCombo: 4,
+        success: true,
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  assert.equal(completed.handled, true);
+  assert.equal(completed.settlement != null, true);
+  assert.equal(Array.isArray(completed.settlement?.effects), true);
+});
+
+test("city-begging package runtime can finish locally and still expose a settlement result", () => {
+  const {
+    createCityBeggingMiniGameState,
+    getCityBeggingMiniGameCompletionResult,
+  } = require("../.test-dist/application/minigames/city-begging-minigame.js");
+  const {
+    advanceCityBeggingDetachedRuntime,
+    hydrateCityBeggingDetachedRuntime,
+    readCityBeggingDetachedCompletionResult,
+    resetCityBeggingDetachedRuntime,
+  } = require(
+    "../.test-dist/application/playables/builtin/city-begging/city-begging-runtime-controller.js"
+  );
+
+  resetCityBeggingDetachedRuntime();
+
+  try {
+    const initialState = createCityBeggingMiniGameState(0);
+    hydrateCityBeggingDetachedRuntime(initialState);
+
+    let finalState = null;
+    for (let now = 100; now <= 60000; now += 100) {
+      finalState = advanceCityBeggingDetachedRuntime(now);
+      if (finalState?.variantState.status === "result") {
+        break;
+      }
+    }
+
+    assert.equal(finalState?.variantState.status, "result");
+    assert.deepEqual(
+      readCityBeggingDetachedCompletionResult(),
+      finalState.variantState.result
+    );
+    assert.deepEqual(
+      getCityBeggingMiniGameCompletionResult(null),
+      null
+    );
+  } finally {
+    resetCityBeggingDetachedRuntime();
+  }
+});
+
+test("app render materializes the player character before building the global hud", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+  const getPlayerCharacterBlock = source.match(
+    /function getPlayerCharacter\([\s\S]*?\r?\n}\r?\n/
+  )?.[0] ?? "";
+
+  assert.match(source, /materializeCharacterDefinition/);
+  assert.match(getPlayerCharacterBlock, /characterStatusById/);
+  assert.match(getPlayerCharacterBlock, /materializeCharacterDefinition\(/);
+});
+
+test("playable runtime routes grain-accounting completion through a shared settlement payload", () => {
+  const { runPlayableRuntime, createLaunchPlayableRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
+  );
+  const { createInteractiveActionRequest } = require(
+    "../.test-dist/core/runtime/interactive-runtime.js"
+  );
+
+  const launched = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("grain-accounting", {
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: grainShopHouse.id,
+        returnPolicy: "resume-owner",
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  const completed = runPlayableRuntime({
+    state: {
+      ...launched.state,
+      core: {
+        ...launched.state.core,
+        ui: {
+          ...launched.state.core.ui,
+          houseSession: {
+            moduleId: "grain-shop",
+            state: {
+              npcGreeting: "x",
+              npcDefaultLine: "y",
+              dialoguePhase: "open",
+              overlay: {
+                type: "minigame",
+                score: 6,
+                wrongCount: 0,
+                secondsLeft: 1,
+                question: {
+                  bought: 3,
+                  sold: 1,
+                  displayedStock: 2,
+                  isLedgerCorrect: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    request: createInteractiveActionRequest("playable.grain-accounting.tick"),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  assert.equal(completed.handled, true);
+  assert.equal(completed.settlement != null, true);
+  assert.equal(Array.isArray(completed.settlement?.effects), true);
+});
+
+test("reference minigame implementations do not keep direct persistence ownership in their local definition modules", () => {
+  const cityBeggingPlayableSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/playables/city-begging/city-begging-definition.ts"
+    ),
+    "utf8"
+  );
+  const grainAccountingPlayableSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/playables/grain-accounting/grain-accounting-definition.ts"
+    ),
+    "utf8"
+  );
+  const cityBeggingBuiltinSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/playables/builtin/city-begging/city-begging-definition.ts"
+    ),
+    "utf8"
+  );
+  const grainAccountingBuiltinSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/playables/builtin/grain-accounting/grain-accounting-definition.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    cityBeggingPlayableSource,
+    /applyCityBeggingMiniGameCompletion\(/
+  );
+  assert.doesNotMatch(
+    grainAccountingPlayableSource,
+    /applyAccountingReward\(/
+  );
+  assert.doesNotMatch(
+    cityBeggingBuiltinSource,
+    /applyCityBeggingMiniGameCompletion\(/
+  );
+  assert.doesNotMatch(
+    grainAccountingBuiltinSource,
+    /applyAccountingReward\(/
+  );
+});
+
 test("child 32 grain accounting launch writes shared playable session into runtime state", () => {
   const startResult = grainShopHouseModule.dispatch({
     gameState: withCouncilInDays(createStateWithGrainVariables(), 200),
@@ -40144,5 +40710,3 @@ test("layout editor transition keeps centralized startup state while retaining t
     );
   }
 });
-
-

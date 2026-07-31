@@ -1,5 +1,4 @@
 import type {
-  ScriptEditorWorkspaceInspectorCard,
   ScriptEditorWorkspaceTreeGroup,
   ScriptEditorWorkspaceTreeNode,
   ScriptEditorWorkspaceViewModel,
@@ -171,27 +170,6 @@ function renderInspector(
         ${headerSlotMarkup}
       </div>
       ${inspectorDescriptionMarkup}
-      ${
-        options.compact
-          ? ""
-          : `
-            <dl class="c-script-editor-shell__stats">
-              ${inspector.stats
-                .map(
-                  (stat) => `
-                    <div class="c-script-editor-shell__stat">
-                      <dt>${escapeHtml(stat.label)}</dt>
-                      <dd>${escapeHtml(stat.value)}</dd>
-                    </div>
-                  `
-                )
-                .join("")}
-            </dl>
-            <div class="c-script-editor-shell__cards">
-              ${inspector.cards.map(renderInspectorCard).join("")}
-            </div>
-          `
-      }
     </section>
   `;
 }
@@ -218,17 +196,6 @@ function extractTemplateSlot(
     content: match[1] ?? "",
   };
 }
-
-function renderInspectorCard(card: ScriptEditorWorkspaceInspectorCard): string {
-  const toneClass = ` c-script-editor-shell__card--${card.tone}`;
-  return `
-    <article class="c-script-editor-shell__card${toneClass}">
-      <h3>${escapeHtml(card.title)}</h3>
-      <p>${escapeHtml(card.body)}</p>
-    </article>
-  `;
-}
-
 function escapeHtml(value: string | number | null | undefined): string {
   return String(value ?? "")
     .replaceAll("&", "&amp;")

@@ -789,8 +789,13 @@
 }
 
 .c-script-editor-form-field__input {
-  min-height: 44px;
-  padding: 10px 12px;
+  min-height: 48px;
+  padding: 11px 14px;
+}
+
+.c-script-editor-form-field__input--compact {
+  min-height: 36px;
+  padding: 7px 10px;
 }
 
 .c-script-editor-form-field--wide {
@@ -965,12 +970,26 @@
 .c-script-editor-location-editor,
 .c-script-editor-narrative-editor,
 .c-script-editor-minigame-editor,
+.c-script-editor-stage-configuration-editor,
 .c-script-editor-record-editor {
   padding: 18px;
   border: 1px solid rgba(145, 111, 72, 0.18);
   border-radius: 22px;
   background: rgba(255, 249, 241, 0.72);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.c-script-editor-editor-pane--tabbed {
+  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.c-script-editor-editor-pane__topbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 16px;
+  align-items: flex-start;
 }
 
 .c-script-editor-person-editor:has(.c-script-editor-person-summary) {
@@ -994,8 +1013,32 @@
   grid-template-rows: auto auto;
 }
 
+.c-script-editor-location-editor:has(.c-script-editor-location-panel--menu-groups) {
+  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.c-script-editor-location-editor:has(.c-script-editor-location-panel--access) {
+  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
 .c-script-editor-location-panel--profile {
   align-content: start;
+}
+
+.c-script-editor-location-panel--menu-groups {
+  align-content: start;
+  gap: 10px;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.c-script-editor-location-panel--access {
+  align-self: start;
+  align-content: start;
+  grid-template-rows: auto auto auto auto;
+  min-height: 0;
 }
 
 .c-script-editor-person-editor__tabs,
@@ -1005,6 +1048,7 @@
 .c-script-editor-location-menu__header,
 .c-script-editor-location-menu__toggles,
 .c-script-editor-narrative-editor__tabs,
+.c-script-editor-event-editor__tabs,
 .c-script-editor-narrative-panel__header,
 .c-script-editor-narrative-inline {
   display: flex;
@@ -1015,11 +1059,16 @@
 .c-script-editor-person-editor__tabs,
 .c-script-editor-location-editor__tabs,
 .c-script-editor-narrative-editor__tabs,
-.c-script-editor-minigame-editor__tabs {
+.c-script-editor-minigame-editor__tabs,
+.c-script-editor-event-editor__tabs {
   gap: 4px;
   align-items: flex-end;
   padding: 0 4px;
   border-bottom: 1px solid rgba(145, 111, 72, 0.18);
+}
+
+.c-script-editor-editor-pane__topbar .c-script-editor-editor-card__actions {
+  justify-content: flex-end;
 }
 
 .c-script-editor-shell__inspector-header .c-script-editor-person-editor__tabs {
@@ -1029,7 +1078,8 @@
 .c-script-editor-person-editor__tab,
 .c-script-editor-location-editor__tab,
 .c-script-editor-narrative-editor__tab,
-.c-script-editor-minigame-editor__tab {
+.c-script-editor-minigame-editor__tab,
+.c-script-editor-event-editor__tab {
   min-height: 34px;
   margin-bottom: -1px;
   border: 1px solid rgba(145, 111, 72, 0.16);
@@ -1041,7 +1091,8 @@
 .c-script-editor-person-editor__tab.is-active,
 .c-script-editor-location-editor__tab.is-active,
 .c-script-editor-narrative-editor__tab.is-active,
-.c-script-editor-minigame-editor__tab.is-active {
+.c-script-editor-minigame-editor__tab.is-active,
+.c-script-editor-event-editor__tab.is-active {
   border-color: rgba(145, 111, 72, 0.22);
   border-bottom-color: rgba(255, 249, 241, 0.96);
   background: rgba(255, 249, 241, 0.96);
@@ -1357,6 +1408,19 @@
   align-items: flex-start;
 }
 
+.c-script-editor-location-menu__add-button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding-inline: 0;
+  padding-block: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
 .c-script-editor-location-menu__item {
   display: grid;
   gap: 16px;
@@ -1369,7 +1433,25 @@
 .c-script-editor-location-menu__bundle {
   display: flex;
   flex-direction: column;
-  height: 636px;
+  height: auto;
+  min-height: 0;
+}
+
+.c-script-editor-location-panel--menu-groups > .c-script-editor-location-menu__list {
+  gap: 12px;
+  align-content: start;
+}
+
+.c-script-editor-location-access-section,
+.c-script-editor-location-access-condition {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 0;
+}
+
+.c-script-editor-location-panel--menu-groups .c-script-editor-location-menu__bundle {
+  padding-top: 12px;
 }
 
 .c-script-editor-location-menu__paged-list {
@@ -1513,6 +1595,12 @@
   background: rgba(255, 248, 238, 0.76);
 }
 
+.c-script-editor-narrative-panel--compact {
+  align-self: start;
+  align-content: start;
+  gap: 10px;
+}
+
 .c-script-editor-narrative-panel__header {
   justify-content: space-between;
   align-items: flex-start;
@@ -1531,6 +1619,11 @@
   align-items: center;
 }
 
+.c-script-editor-narrative-list--compact {
+  align-content: start;
+  gap: 10px;
+}
+
 .c-script-editor-narrative-inline > .c-script-editor-form-field__input {
   flex: 1 1 180px;
 }
@@ -1544,10 +1637,15 @@
 
 .c-script-editor-record-editor__textarea {
   min-height: 360px;
-  padding: 16px;
+  padding: 16px 18px;
   resize: vertical;
   line-height: 1.6;
   font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+}
+
+.c-script-editor-record-editor--text-entry .c-script-editor-record-editor__textarea {
+  min-height: 0;
+  height: 100%;
 }
 
 .c-script-editor-record-editor__textarea--compact {
@@ -1613,10 +1711,11 @@
 .c-script-editor-minigame-editor__tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 4px;
 }
 
-.c-script-editor-minigame-editor__tab.is-active {
+.c-script-editor-minigame-editor__tab.is-active,
+.c-script-editor-event-editor__tab.is-active {
   border-color: rgba(176, 132, 76, 0.38);
   background: linear-gradient(180deg, rgba(240, 213, 168, 0.82), rgba(232, 202, 153, 0.62));
 }
@@ -1704,6 +1803,7 @@
   .c-script-editor-location-menu__header,
   .c-script-editor-location-menu__toggles,
   .c-script-editor-narrative-editor__tabs,
+  .c-script-editor-event-editor__tabs,
   .c-script-editor-narrative-panel__header,
   .c-script-editor-narrative-inline,
   .c-script-editor-minigame-editor__tabs,
