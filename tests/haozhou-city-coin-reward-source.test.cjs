@@ -8,7 +8,8 @@ test("city view and hud expose the coin reward animation anchors", () => {
   const appRenderSource = fs.readFileSync("src/ui/app-render.ts", "utf8");
   const prototypeCssSource = fs.readFileSync("src/styles/prototype.css", "utf8");
 
-  assert.match(cityViewSource, /data-action="grant-haozhou-test-coin"/);
+  assert.doesNotMatch(cityViewSource, /data-action="grant-haozhou-test-coin"/);
+  assert.doesNotMatch(cityViewSource, /测试\+10文|测试获得十文钱/);
   assert.match(panelSource, /data-ui-gold-target/);
   assert.match(panelSource, /data-ui-gold-value/);
   assert.doesNotMatch(panelSource, /data-action="toggle-coin-anchor-editor"/);
@@ -17,16 +18,12 @@ test("city view and hud expose the coin reward animation anchors", () => {
   assert.doesNotMatch(panelSource, /data-action="confirm-coin-anchor-editor"/);
   assert.doesNotMatch(panelSource, /data-action="revert-coin-anchor-editor"/);
   assert.match(appRenderSource, /data-ui-coin-reward-layer/);
-  assert.match(prototypeCssSource, /\.c-kulan-city__coin-test-action/);
+  assert.doesNotMatch(prototypeCssSource, /\.c-kulan-city__coin-test-action/);
   assert.match(prototypeCssSource, /\.p-global-status-compact__coin-anchor-toggle/);
   assert.match(prototypeCssSource, /display:\s*none;/);
-  assert.match(
-    prototypeCssSource,
-    /\.c-kulan-city__coin-test-action\s*\{[\s\S]*?bottom:\s*68px;/
-  );
 });
 
-test("haozhou test coin button is declared in city view instead of choice skin", () => {
+test("haozhou test coin button is hidden from city view and choice skin", () => {
   const cityViewSource = fs.readFileSync("src/ui/views/city/city-view.ts", "utf8");
   const choiceSkinMatch = cityViewSource.match(
     /function renderCityChoiceSkin\(\): string \{([\s\S]*?)^\}/m
@@ -38,7 +35,7 @@ test("haozhou test coin button is declared in city view instead of choice skin",
   assert.ok(choiceSkinMatch, "Expected renderCityChoiceSkin source.");
   assert.ok(cityViewMatch, "Expected renderCityView source.");
   assert.doesNotMatch(choiceSkinMatch[1], /grant-haozhou-test-coin/);
-  assert.match(cityViewMatch[1], /grant-haozhou-test-coin/);
+  assert.doesNotMatch(cityViewMatch[1], /grant-haozhou-test-coin/);
 });
 
 test("coin anchor editor wiring exists in main runtime and animator", () => {

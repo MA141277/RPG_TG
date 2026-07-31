@@ -36,6 +36,12 @@ import {
   resolveFactionMeritRank,
   resolveReviewCompletionGrade,
 } from "../../review/faction-review";
+import {
+  createReviewAdviceActionViewModels,
+  findSelectedReviewAdviceOption,
+  getAvailableReviewAdviceOptions,
+  REVIEW_ADVICE_EMPTY_FALLBACK_LINE,
+} from "../../review/review-advice";
 import { assertExists } from "../../../shared/assert";
 import {
   markLateCouncilAttendancePenaltyProcessed,
@@ -52,6 +58,7 @@ import {
 import { createInitialKeepHouseSessionState } from "./keep-house-session-state";
 
 const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
+const SELECT_REVIEW_ADVICE_ACTION_PREFIX = "select-keep-review-advice:";
 
 const defaultZhuyuanzhangActivities =
   defaultPackActivities as ActivityDefinition[];
@@ -742,6 +749,26 @@ function getAssignTaskLines(
   ];
 }
 
+function createKeepAssignTaskTransition(
+  input: HouseModuleDispatchInput<"keep-house">,
+  sessionState: KeepHouseSessionState,
+  playerCharacter: CharacterDefinition
+): HouseModuleTransitionResult<"keep-house"> {
+  const textEntriesById = getKeepTextEntries(input);
+  const taskChoices = getReviewTaskChoices(input, playerCharacter);
+
+  return withSessionState(input, sessionState, {
+    meetingStage: "assign-task",
+    dialoguePhase: "open",
+    overlay: null,
+    dialogueLines: getAssignTaskLines(
+      textEntriesById,
+      playerCharacter,
+      taskChoices.map((taskChoice) => taskChoice.label)
+    ),
+  });
+}
+
 function parseTaskActionId(actionId: string): string | null {
   return actionId.startsWith(ASSIGN_TASK_ACTION_PREFIX)
     ? actionId.slice(ASSIGN_TASK_ACTION_PREFIX.length)
@@ -887,6 +914,8 @@ function handleAction(
               createReviewPolicyPanel(textEntriesById)
             ),
           });
+        case "advice-response":
+          return createKeepAssignTaskTransition(input, sessionState, playerCharacter);
         default:
           return createTransitionResult(input);
       }
@@ -942,24 +971,50 @@ function handleAction(
     input.request.actionId === "keep-review-give-advice" ||
     input.request.actionId === "keep-review-stay-silent"
   ) {
-    const taskChoices = getReviewTaskChoices(input, playerCharacter);
-    const adviceResponseLines =
-      input.request.actionId === "keep-review-give-advice"
-        ? ["此议暂且记下。"]
-        : [];
+    if (input.request.actionId === "keep-review-stay-silent") {
+      return createKeepAssignTaskTransition(input, sessionState, playerCharacter);
+    }
+
+    const adviceOptions = getAvailableReviewAdviceOptions({
+      gameState: input.gameState,
+      playerCharacterId: input.playerCharacterId,
+    });
+
+    if (adviceOptions.length === 0) {
+      return withSessionState(input, sessionState, {
+        meetingStage: "advice-response",
+        dialoguePhase: "open",
+        overlay: null,
+        dialogueLines: [REVIEW_ADVICE_EMPTY_FALLBACK_LINE],
+      });
+    }
 
     return withSessionState(input, sessionState, {
-      meetingStage: "assign-task",
+      meetingStage: "advice-choice",
       dialoguePhase: "open",
       overlay: null,
-      dialogueLines: [
-        ...adviceResponseLines,
-        ...getAssignTaskLines(
-          textEntriesById,
-          playerCharacter,
-          taskChoices.map((taskChoice) => taskChoice.label)
-        ),
-      ],
+      dialogueLines: ["你要进言哪件事？"],
+    });
+  }
+
+  const selectedAdviceOption = findSelectedReviewAdviceOption({
+    actionId: input.request.actionId,
+    actionPrefix: SELECT_REVIEW_ADVICE_ACTION_PREFIX,
+    options: getAvailableReviewAdviceOptions({
+      gameState: input.gameState,
+      playerCharacterId: input.playerCharacterId,
+    }),
+  });
+  if (
+    selectedAdviceOption != null &&
+    sessionState.mode === "meeting" &&
+    sessionState.meetingStage === "advice-choice"
+  ) {
+    return withSessionState(input, sessionState, {
+      meetingStage: "advice-response",
+      dialoguePhase: "open",
+      overlay: null,
+      dialogueLines: [selectedAdviceOption.playerLine],
     });
   }
 
@@ -1149,6 +1204,10 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       },
       playerCharacter
     );
+    const reviewAdviceOptions = getAvailableReviewAdviceOptions({
+      gameState: nextState,
+      playerCharacterId: input.playerCharacterId,
+    });
     const assignedTask =
       sessionState.selectedTaskId == null
         ? null
@@ -1160,6 +1219,10 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
     const shouldShowAdviceActions =
       sessionState.mode === "meeting" &&
       sessionState.meetingStage === "advice" &&
+      sessionState.dialoguePhase === "open";
+    const shouldShowAdviceChoices =
+      sessionState.mode === "meeting" &&
+      sessionState.meetingStage === "advice-choice" &&
       sessionState.dialoguePhase === "open";
     const shouldShowDialogue = sessionState.dialoguePhase !== "idle";
     const rosterEntries =
@@ -1209,14 +1272,22 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
         ? null
         : {
             mode: "character",
-            speakerName: lordCharacter.name,
-            characterId: lordCharacter.id,
+            speakerName:
+              sessionState.mode === "meeting" &&
+              sessionState.meetingStage === "advice-response"
+                ? playerCharacter.name
+                : lordCharacter.name,
+            characterId:
+              sessionState.mode === "meeting" &&
+              sessionState.meetingStage === "advice-response"
+                ? playerCharacter.id
+                : lordCharacter.id,
             position: "right",
             textLines: sessionState.dialogueLines,
             advanceActionId:
               sessionState.overlay == null &&
               ((sessionState.mode === "meeting" &&
-                ["intro", "praise", "situation", "policy"].includes(
+                ["intro", "praise", "situation", "policy", "advice-response"].includes(
                   sessionState.meetingStage
                 )) ||
                 (sessionState.mode === "audience" &&
@@ -1227,7 +1298,7 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
             advanceHintText:
               sessionState.overlay == null &&
               ((sessionState.mode === "meeting" &&
-                ["intro", "praise", "situation", "policy"].includes(
+                ["intro", "praise", "situation", "policy", "advice-response"].includes(
                   sessionState.meetingStage
                 )) ||
                 (sessionState.mode === "audience" &&
@@ -1243,6 +1314,14 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
               { id: "keep-review-give-advice", label: "发表意见" },
               { id: "keep-review-stay-silent", label: "一言不发" },
             ],
+          }
+        : shouldShowAdviceChoices
+        ? {
+            title: "选择意见",
+            actions: createReviewAdviceActionViewModels({
+              actionPrefix: SELECT_REVIEW_ADVICE_ACTION_PREFIX,
+              options: reviewAdviceOptions,
+            }),
           }
         : shouldShowMeetingTasks
         ? {

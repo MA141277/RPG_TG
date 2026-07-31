@@ -3,6 +3,7 @@
     "id": "rule.zhu_yuanzhang.temple.first_review_stay",
     "priority": 100,
     "storyStages": [
+      "village-opening",
       "huangjue-temple"
     ],
     "excludedHouseModuleIds": [
@@ -18,12 +19,30 @@
     "confirmLabel": "知道了"
   },
   {
+    "id": "rule.zhu_yuanzhang.haozhou.evacuation_after_long_begging",
+    "priority": 90,
+    "cityIds": [
+      "city.kulan"
+    ],
+    "storyStages": [
+      "huangjue-begging-journey"
+    ],
+    "excludedHouseModuleIds": [
+      "temple-house"
+    ],
+    "speakerCharacterId": "player",
+    "title": "城中避难",
+    "text": "看来店主已经避难去了",
+    "confirmLabel": "离开"
+  },
+  {
     "id": "rule.zhu_yuanzhang.temple.keep_closed",
     "priority": 50,
     "houseModuleIds": [
       "keep-house"
     ],
     "storyStages": [
+      "village-opening",
       "huangjue-temple",
       "huangjue-begging-journey"
     ],

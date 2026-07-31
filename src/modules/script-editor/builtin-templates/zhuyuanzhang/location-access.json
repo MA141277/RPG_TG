@@ -13,6 +13,7 @@
             "left": {
               "type": "literal",
               "value": [
+                "village-opening",
                 "huangjue-temple"
               ]
             },
@@ -55,6 +56,7 @@
         "left": {
           "type": "literal",
           "value": [
+            "village-opening",
             "huangjue-temple",
             "huangjue-begging-journey"
           ]
@@ -86,6 +88,7 @@
             "left": {
               "type": "literal",
               "value": [
+                "village-opening",
                 "huangjue-temple"
               ]
             },
@@ -131,6 +134,7 @@
             "left": {
               "type": "literal",
               "value": [
+                "village-opening",
                 "huangjue-temple"
               ]
             },
@@ -176,6 +180,7 @@
             "left": {
               "type": "literal",
               "value": [
+                "village-opening",
                 "huangjue-temple"
               ]
             },
@@ -221,6 +226,7 @@
             "left": {
               "type": "literal",
               "value": [
+                "village-opening",
                 "huangjue-temple"
               ]
             },
@@ -266,6 +272,7 @@
             "left": {
               "type": "literal",
               "value": [
+                "village-opening",
                 "huangjue-temple"
               ]
             },
@@ -311,6 +318,7 @@
             "left": {
               "type": "literal",
               "value": [
+                "village-opening",
                 "huangjue-temple"
               ]
             },

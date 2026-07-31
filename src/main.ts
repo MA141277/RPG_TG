@@ -317,6 +317,7 @@ import type {
 } from "./domain/ui-layout";
 import type { ValuableItemId } from "./domain/valuable-item";
 import {
+  isHaozhouEvacuatedDuringBeggingJourney,
   isHaozhouShortageDuringBeggingJourney,
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
   ZHU_YUANZHANG_STORY_STAGES,
@@ -2111,6 +2112,27 @@ function openBeggingMiniGame(): void {
 function openCityBeggingDefault(): void {
   stopCityBeggingMiniGameLoop();
   destroyCityBeggingDefaultFortuneRuntime();
+  if (isHaozhouEvacuatedDuringBeggingJourney(appState.gameState)) {
+    appState = {
+      ...closeCityMenu(closeCityDirectory(appState)),
+      beggingMiniGameState: null,
+      locationDialogueState: {
+        type: "house-access-refusal",
+        speakerCharacterId: currentPlayerCharacterId,
+        textLines: [
+          getRuntimeText(
+            "runtime.zhu_yuanzhang.haozhou_evacuation.001"
+          ),
+        ],
+        advanceHintText: getRuntimeText(
+          "runtime.zhu_yuanzhang.haozhou_evacuation.advance_hint"
+        ),
+      },
+    };
+    renderApp();
+    return;
+  }
+
   if (appState.gameState.runtime.flags["flag.city_begging.default.completed"] === true) {
     appState = {
       ...closeCityMenu(closeCityDirectory(appState)),

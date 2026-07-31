@@ -108,6 +108,13 @@ function isHouseRuleMatch(
     return false;
   }
 
+  if (
+    rule.cityIds != null &&
+    !rule.cityIds.includes(houseDefinition.cityId)
+  ) {
+    return false;
+  }
+
   if (rule.excludedHouseIds?.includes(houseDefinition.id) === true) {
     return false;
   }

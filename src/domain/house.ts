@@ -8,6 +8,7 @@ export type HouseId = string;
 export type HouseAccessRefusalRule = {
   id: string;
   priority?: number;
+  cityIds?: string[];
   houseIds?: HouseId[];
   houseModuleIds?: HouseModuleId[];
   excludedHouseIds?: HouseId[];

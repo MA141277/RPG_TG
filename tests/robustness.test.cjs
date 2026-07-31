@@ -179,6 +179,9 @@ const {
   ACTIVITY_COMPLETION_STAMINA_COST,
 } = require("../.test-dist/application/player/player-stamina.js");
 const {
+  REVIEW_ADVICE_EMPTY_FALLBACK_LINE,
+} = require("../.test-dist/application/review/review-advice.js");
+const {
   createSundeyaRescueBattleSession,
   dispatchStoryBattleAction,
   startStoryBattle,
@@ -203,6 +206,7 @@ const {
   adjustActivityFortuneBoardWager,
   chooseActivityQteCommand,
   createActivityQteSession,
+  continueActivityPachinkoAfterFortuneCard,
   playActivityFortuneBoard,
   playActivityPachinkoBoard,
   tickActivityFortuneBoard,
@@ -212,6 +216,7 @@ const {
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
+  isHaozhouEvacuatedDuringBeggingJourney,
 } = require("../.test-dist/domain/zhu-yuanzhang-story.js");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -786,10 +791,10 @@ test("pachinko release does not reshuffle lower rewards before timed refresh", (
   };
   const state = {
     runtime: {
-      activitySession: {
-        ...createActivityQteSession(activityDefinition, "generic.qte"),
-        slotValues: [5, 3, 3, 2, 2, 2, "wheel"],
-      },
+        activitySession: {
+          ...createActivityQteSession(activityDefinition, "generic.qte"),
+          slotValues: [5, 3, 3, 2, 2, 2, "fortune-card"],
+        },
       flags: {},
       variables: {},
     },
@@ -799,7 +804,7 @@ test("pachinko release does not reshuffle lower rewards before timed refresh", (
   const session = result.state.runtime.activitySession;
 
   assert.equal(session?.type, "pachinko-board");
-  assert.deepEqual(session.slotValues, [5, 3, 3, 2, 2, 2, "wheel"]);
+  assert.deepEqual(session.slotValues, [5, 3, 3, 2, 2, 2, "fortune-card"]);
 });
 
 test("pachinko wheel reward flow keeps active balls falling", () => {
@@ -906,14 +911,93 @@ test("pachinko moving gate grants one extra ball immediately", () => {
   assert.equal(session.eventCharge, 0);
 });
 
-test("pachinko bottom wheel slot queues a wheel instead of adding a ball", () => {
+test("pachinko adds a slower top moving gate above the first pin row", () => {
   const activityDefinition = {
-    id: "activity.test.pachinko.wheel-slot",
-    label: "Wheel slot",
+    id: "activity.test.pachinko.top-gate-layout",
+    label: "Top gate layout",
+    outcome: {},
+  };
+  const session = createActivityQteSession(activityDefinition, "generic.qte");
+
+  assert.equal(session.type, "pachinko-board");
+  assert.equal(session.movingGates.length, 2);
+
+  const [topGate, middleGate] = session.movingGates;
+  const firstPinRowY = Math.min(...session.pins.map((pin) => pin.y));
+  const nextPinRowY = Math.min(
+    ...session.pins
+      .map((pin) => pin.y)
+      .filter((pinY) => pinY > firstPinRowY)
+  );
+  const rowSpacing = nextPinRowY - firstPinRowY;
+
+  assert.equal(topGate.y, firstPinRowY - rowSpacing);
+  assert.equal(topGate.pins[1].x - topGate.pins[0].x, middleGate.pins[1].x - middleGate.pins[0].x);
+  assert.equal(topGate.pins[0].radius, middleGate.pins[0].radius);
+  assert.equal(topGate.step < middleGate.step, true);
+});
+
+test("pachinko top moving gate grants two score immediately", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.top-gate-extra-ball",
+    label: "Top gate extra ball",
     outcome: {},
   };
   const baseSession = createActivityQteSession(activityDefinition, "generic.qte");
-  const slotIndex = baseSession.slotValues.findIndex((value) => value === "wheel");
+  assert.equal(baseSession.type, "pachinko-board");
+  const topGate = baseSession.movingGates[0];
+  const gateX = (topGate.pins[0].x + topGate.pins[1].x) / 2;
+  const result = tickActivityPachinkoBoard(
+    {
+      runtime: {
+        activitySession: {
+          ...baseSession,
+          phase: "dropping",
+          remainingBalls: 0,
+          activeBall: {
+            x: gateX,
+            y: topGate.y - 15,
+            previousX: gateX,
+            previousY: topGate.y - 25,
+            vx: 0,
+            vy: 18,
+            radius: 17,
+          },
+          activeBalls: [
+            {
+              x: gateX,
+              y: topGate.y - 15,
+              previousX: gateX,
+              previousY: topGate.y - 25,
+              vx: 0,
+              vy: 18,
+              radius: 17,
+            },
+          ],
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    activityDefinition,
+    []
+  );
+
+  const session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.gatePassCount, 1);
+  assert.equal(session.score, 2);
+  assert.equal(session.remainingBalls, 0);
+});
+
+test("pachinko bottom fortune-card slot queues a card draw after balls run out", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.fortune-card-slot",
+    label: "Fortune card slot",
+    outcome: {},
+  };
+  const baseSession = createActivityQteSession(activityDefinition, "generic.qte");
+  const slotIndex = baseSession.slotValues.findIndex((value) => value === "fortune-card");
   assert.notEqual(slotIndex, -1);
   const slotWidth = baseSession.boardWidth / baseSession.slotValues.length;
   const ballX = slotWidth * slotIndex + slotWidth / 2;
@@ -947,9 +1031,53 @@ test("pachinko bottom wheel slot queues a wheel instead of adding a ball", () =>
   assert.equal(session?.type, "pachinko-board");
   assert.equal(session.remainingBalls, 0);
   assert.equal(session.score, 0);
+  assert.equal(session.fortuneCardCount, 1);
+  assert.equal(session.phase, "drawing-card");
   assert.equal(session.rewardQueue.length, 0);
-  assert.equal(session.wheelState.phase, "spinning");
-  assert.notEqual(session.wheelState.selectedReward, null);
+  assert.equal(session.currentFortuneCard, null);
+});
+
+test("pachinko fortune-card draw shows result below card and second draw is encounter", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.second-card-encounter",
+    label: "Second card encounter",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: {
+          ...createActivityQteSession(activityDefinition, "generic.qte"),
+          phase: "drawing-card",
+          remainingBalls: 0,
+          fortuneCardCount: 2,
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+
+  result = playActivityPachinkoBoard(result.state, activityDefinition, []);
+  let session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.phase, "card-result");
+  assert.notEqual(session.currentFortuneCard, null);
+  assert.equal(session.currentFortuneCard.rank === "encounter", false);
+  assert.equal(typeof session.currentFortuneCard.description, "string");
+  assert.equal(session.currentFortuneCard.description.length > 0, true);
+
+  result = {
+    state: continueActivityPachinkoAfterFortuneCard(result.state),
+    characterDefinitions: result.characterDefinitions,
+  };
+  result = playActivityPachinkoBoard(result.state, activityDefinition, []);
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.phase, "card-result");
+  assert.equal(session.currentFortuneCard?.rank, "encounter");
+  assert.doesNotMatch(session.currentFortuneCard?.description ?? "", /演示|必然/);
 });
 
 test("pachinko queued wheels resolve one at a time and apply rewards after flashing", () => {
@@ -1090,7 +1218,7 @@ test("pachinko queued wheels realign selected segment on every spin", () => {
   });
 });
 
-test("pachinko wheel labels stay inside reward wedges and moving gate shows extra ball text", () => {
+test("pachinko wheel labels stay inside reward wedges and moving gates render reward labels", () => {
   const houseViewSource = fs.readFileSync(
     "src/ui/views/house/temple-house-view.ts",
     "utf8"
@@ -1100,8 +1228,8 @@ test("pachinko wheel labels stay inside reward wedges and moving gate shows extr
 
   assert.equal(houseViewSource.includes("c-pachinko-board__gate-label"), true);
   assert.equal(sceneViewSource.includes("c-pachinko-board__gate-label"), true);
-  assert.equal(houseViewSource.includes("+1球"), true);
-  assert.equal(sceneViewSource.includes("+1球"), true);
+  assert.equal(houseViewSource.includes("${movingGate.label}"), true);
+  assert.equal(sceneViewSource.includes("${movingGate.label}"), true);
   assert.equal(houseViewSource.includes("c-pachinko-wheel__segment"), true);
   assert.equal(sceneViewSource.includes("c-pachinko-wheel__segment"), true);
   assert.equal(houseViewSource.includes("is-${wheelState.phase}"), true);
@@ -1910,6 +2038,8 @@ test("zhuyuanzhang pack text entries provide extracted main runtime copy ids", (
     "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.001",
     "runtime.zhu_yuanzhang.haozhou_shortage.001",
     "runtime.zhu_yuanzhang.haozhou_shortage.advance_hint",
+    "runtime.zhu_yuanzhang.haozhou_evacuation.001",
+    "runtime.zhu_yuanzhang.haozhou_evacuation.advance_hint",
     "runtime.zhu_yuanzhang.begging_stamina_refusal.001",
     "runtime.zhu_yuanzhang.begging_stamina_refusal.002",
     "runtime.zhu_yuanzhang.begging_stamina_refusal.advance_hint",
@@ -1924,6 +2054,33 @@ test("zhuyuanzhang pack text entries provide extracted main runtime copy ids", (
   ].forEach((textId) => {
     assert.equal(typeof textEntriesById[textId], "string", `Missing text entry ${textId}`);
   });
+});
+
+test("haozhou evacuation starts as soon as long-distance begging stage begins", () => {
+  const state = {
+    ...createBaseState(),
+    runtime: {
+      ...createBaseState().runtime,
+      variables: {
+        ...createBaseState().runtime.variables,
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
+          ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
+      },
+      flags: {
+        ...createBaseState().runtime.flags,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.haozhouUprisingBroadcasted]: false,
+      },
+    },
+  };
+
+  assert.equal(isHaozhouEvacuatedDuringBeggingJourney(state), true);
+  assert.equal(
+    isHaozhouEvacuatedDuringBeggingJourney({
+      ...state,
+      world: { ...state.world, currentCityId: "city.runing" },
+    }),
+    false
+  );
 });
 
 test("zhuyuanzhang pack stamina refusal entries interpolate the activity cost", () => {
@@ -1981,6 +2138,7 @@ test("runtime zhuyuanzhang text ids in main.ts do not keep inline fallback prose
     "濠州近来断粮得厉害，沿街托钵也讨不出几把米来。",
     "住持早已吩咐过，这一轮别把时日耗在城里，还是往颍州方向走，外地才更有指望。",
     "改去北路",
+    "看来店主已经避难去了",
     "（隔着人群唤住了你）你这会儿脚步都虚了，就别再硬撑着出去化缘。",
     "先回去歇息，体力缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再出门也不迟。",
     "先去休息",
@@ -1993,6 +2151,25 @@ test("runtime zhuyuanzhang text ids in main.ts do not keep inline fallback prose
     matchedStrings,
     [],
     `Expected main.ts to stop carrying inline runtime fallback prose for zhuyuanzhang ids. Matched ${matchedStrings.length} string(s).`
+  );
+});
+
+test("city begging button routes to haozhou evacuation dialogue before launching begging", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const openDefaultMatch = source.match(
+    /function openCityBeggingDefault\(\): void \{[\s\S]*?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/m
+  );
+
+  assert.ok(openDefaultMatch, "Expected openCityBeggingDefault body.");
+  assert.match(openDefaultMatch[0], /isHaozhouEvacuatedDuringBeggingJourney/);
+  assert.match(
+    openDefaultMatch[0],
+    /runtime\.zhu_yuanzhang\.haozhou_evacuation\.001/
+  );
+  assert.ok(
+    openDefaultMatch[0].indexOf("isHaozhouEvacuatedDuringBeggingJourney") <
+      openDefaultMatch[0].indexOf("createLaunchPlayableRequest"),
+    "Evacuation dialogue should be checked before launching city begging."
   );
 });
 
@@ -2942,6 +3119,12 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
   assert.equal(
     firstReviewStayRule.excludedHouseModuleIds?.includes("market-house"),
     false
+  );
+  assert.equal(
+    houseAccessRefusalRules.some(
+      (rule) => rule.id === "rule.zhu_yuanzhang.temple.keep_closed"
+    ),
+    true
   );
   assert.equal(cityPortraits["city.kulan"] != null, true);
 });
@@ -8070,6 +8253,64 @@ test("global NPC interaction does not append default choices to temple review wo
   assert.doesNotMatch(html, /data-npc-action="gift"/);
 });
 
+test("temple review give advice falls back to player no-op line when no advice is available", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const entered = templeHouseHouseModule.enter({
+    gameState: {
+      ...createMonkStageState(),
+      runtime: {
+        ...createMonkStageState().runtime,
+        variables: {
+          ...createMonkStageState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const { advice } = advanceTempleReviewToAssignDuty({ enterResult: entered });
+
+  const fallback = templeHouseHouseModule.dispatch({
+    gameState: advice.gameState,
+    characterDefinitions: advice.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: advice.sessionState,
+    request: { type: "action", actionId: "temple-review-give-advice" },
+  });
+  const fallbackViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: fallback.gameState,
+    characterDefinitions: fallback.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: fallback.sessionState,
+  });
+
+  assert.equal(fallback.sessionState?.meetingStage, "advice-response");
+  assert.deepEqual(fallback.sessionState?.dialogueLines, [
+    REVIEW_ADVICE_EMPTY_FALLBACK_LINE,
+  ]);
+  assert.equal(fallbackViewModel.dialogue?.characterId, playerCharacterId);
+  assert.equal(fallbackViewModel.dialogue?.advanceActionId, "advance-temple-dialogue");
+  assert.equal(fallbackViewModel.actionContainer, null);
+
+  const assignDuty = templeHouseHouseModule.dispatch({
+    gameState: fallback.gameState,
+    characterDefinitions: fallback.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: fallback.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+
+  assert.equal(assignDuty.sessionState?.meetingStage, "assign-duty");
+  assert.notEqual(assignDuty.sessionState?.dialogueLines[0], "此议暂且记下。");
+});
+
 test("global NPC interaction temple abbot click exposes the same dialogue actions as the open panel", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
@@ -8131,8 +8372,8 @@ test("global NPC interaction renderer emits generic menu actions", () => {
   assert.match(html, /class="c-grain-shop-center c-grain-shop-center--open[^"]*"/);
   assert.match(html, /class="c-grain-shop-actions[^"]*"/);
   assert.doesNotMatch(html, /c-npc-interaction-menu/);
-  assert.match(html, /data-npc-action="special"/);
   assert.match(html, /data-house-action="tea:ask-intel"/);
+  assert.doesNotMatch(html, /data-npc-action="special"/);
   assert.match(html, /data-npc-action="talk"/);
   assert.match(html, /data-character-id="char\.tea"/);
   assert.doesNotMatch(html, /data-npc-action="profile"/);
@@ -8143,7 +8384,7 @@ test("global NPC interaction renderer emits generic menu actions", () => {
   );
 });
 
-test("global NPC default talk renders visible dialogue and close clears the session", () => {
+test("global NPC default talk renders subchoices and close clears the session", () => {
   const {
     chooseNpcDefaultTalk,
     closeNpcInteraction,
@@ -8176,16 +8417,15 @@ test("global NPC default talk renders visible dialogue and close clears the sess
   assert.doesNotMatch(html, /c-npc-interaction-menu/);
   assert.match(html, /茶博士/);
   assert.match(html, /谈话/);
-  assert.match(html, /c-grain-shop-dialogue__npc/);
-  assert.match(html, /c-test-portrait/);
+  assert.doesNotMatch(html, /c-grain-shop-dialogue__npc/);
+  assert.doesNotMatch(html, /c-test-portrait/);
+  assert.doesNotMatch(html, /简短交谈/);
   assert.match(html, /data-npc-action="close"/);
-  assert.match(html, /data-npc-action="continue"/);
+  assert.doesNotMatch(html, /data-npc-action="continue"/);
   assert.match(html, /data-npc-action="gift"/);
   assert.match(html, /data-npc-action="profile"/);
   assert.ok(
-    html.indexOf('data-npc-action="continue"') <
-      html.indexOf('data-npc-action="gift"') &&
-      html.indexOf('data-npc-action="gift"') <
+    html.indexOf('data-npc-action="gift"') <
         html.indexOf('data-npc-action="profile"') &&
       html.indexOf('data-npc-action="profile"') <
         html.indexOf('data-npc-action="close"'),
@@ -9238,6 +9478,100 @@ test("keep house starts review meeting at countdown zero and resets to 60 after 
   assert.equal(assignedResult.gameState.world.schedule.councilDate.day, 1);
   assert.equal(assignedResult.gameState.world.schedule.councilDate.month, 3);
   assert.equal(assignedResult.sessionState?.overlay?.type, "alert");
+});
+
+test("keep review give advice falls back to player no-op line when no advice is available", () => {
+  const state = createBaseState();
+  const enterResult = keepHouseHouseModule.enter({
+    gameState: {
+      ...state,
+      runtime: {
+        ...state.runtime,
+        variables: {
+          ...state.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+  });
+  const assignmentTableResult = keepHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+  const praiseResult = keepHouseHouseModule.dispatch({
+    gameState: assignmentTableResult.gameState,
+    characterDefinitions: assignmentTableResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: assignmentTableResult.sessionState,
+    request: { type: "action", actionId: "close-review-assignment-table" },
+  });
+  const situationResult = keepHouseHouseModule.dispatch({
+    gameState: praiseResult.gameState,
+    characterDefinitions: praiseResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: praiseResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+  const policyResult = keepHouseHouseModule.dispatch({
+    gameState: situationResult.gameState,
+    characterDefinitions: situationResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: situationResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+  const adviceResult = keepHouseHouseModule.dispatch({
+    gameState: policyResult.gameState,
+    characterDefinitions: policyResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: policyResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+
+  const fallback = keepHouseHouseModule.dispatch({
+    gameState: adviceResult.gameState,
+    characterDefinitions: adviceResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: adviceResult.sessionState,
+    request: { type: "action", actionId: "keep-review-give-advice" },
+  });
+  const fallbackViewModel = keepHouseHouseModule.selectViewModel({
+    gameState: fallback.gameState,
+    characterDefinitions: fallback.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: fallback.sessionState,
+  });
+
+  assert.equal(fallback.sessionState?.meetingStage, "advice-response");
+  assert.deepEqual(fallback.sessionState?.dialogueLines, [
+    REVIEW_ADVICE_EMPTY_FALLBACK_LINE,
+  ]);
+  assert.equal(fallbackViewModel.dialogue?.characterId, playerCharacterId);
+  assert.equal(fallbackViewModel.dialogue?.advanceActionId, "advance-keep-dialogue");
+  assert.equal(fallbackViewModel.actionContainer, null);
+
+  const assignTask = keepHouseHouseModule.dispatch({
+    gameState: fallback.gameState,
+    characterDefinitions: fallback.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: fallback.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+
+  assert.equal(assignTask.sessionState?.meetingStage, "assign-task");
 });
 
 test("keep house review copy resolves from text entries during strategy and assignment flow", () => {

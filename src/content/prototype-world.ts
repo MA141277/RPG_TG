@@ -23,7 +23,10 @@ export const prototypeHouseAccessRefusalRules: HouseAccessRefusalRule[] = [
   {
     id: "rule.zhu_yuanzhang.temple.first_review_stay",
     priority: 100,
-    storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueTemple],
+    storyStages: [
+      ZHU_YUANZHANG_STORY_STAGES.villageOpening,
+      ZHU_YUANZHANG_STORY_STAGES.huangjueTemple,
+    ],
     excludedHouseModuleIds: [
       "temple-house",
       "keep-house",
@@ -37,10 +40,22 @@ export const prototypeHouseAccessRefusalRules: HouseAccessRefusalRule[] = [
     confirmLabel: "知道了",
   },
   {
+    id: "rule.zhu_yuanzhang.haozhou.evacuation_after_long_begging",
+    priority: 90,
+    cityIds: ["city.kulan"],
+    storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney],
+    excludedHouseModuleIds: ["temple-house"],
+    speakerCharacterId: "player",
+    title: "城中避难",
+    text: "看来店主已经避难去了",
+    confirmLabel: "离开",
+  },
+  {
     id: "rule.zhu_yuanzhang.temple.keep_closed",
     priority: 50,
     houseModuleIds: ["keep-house"],
     storyStages: [
+      ZHU_YUANZHANG_STORY_STAGES.villageOpening,
       ZHU_YUANZHANG_STORY_STAGES.huangjueTemple,
       ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
     ],
@@ -636,11 +651,11 @@ export const prototypeCharacters: CharacterDefinition[] = [
     portraitVariantId: "stage-20",
     stats: {
       leadership: 60,
-      martial: 58,
-      intelligence: 55,
-      politics: 42,
-      charm: 51,
-      fame: 8,
+      martial: 54,
+      intelligence: 58,
+      politics: 38,
+      charm: 59,
+      fame: 0,
       gold: 120,
     },
     stamina: 100,
@@ -664,6 +679,136 @@ export const prototypeCharacters: CharacterDefinition[] = [
       tea: 1,
       medicine: 0,
     },
+    attributeGroups: [
+      {
+        key: "ability.martial",
+        keyName: "武力",
+        order: 10,
+        itemKeys: [
+          "ability.martial.strength",
+          "ability.martial.physique",
+          "ability.martial.agility",
+        ],
+      },
+      {
+        key: "ability.intelligence",
+        keyName: "智谋",
+        order: 20,
+        itemKeys: [
+          "ability.intelligence.adaptability",
+          "ability.intelligence.judgment",
+          "ability.intelligence.awareness",
+        ],
+      },
+      {
+        key: "ability.politics",
+        keyName: "政务",
+        order: 30,
+        itemKeys: [
+          "ability.politics.governance",
+          "ability.politics.livelihood",
+          "ability.politics.finance",
+        ],
+      },
+      {
+        key: "ability.charm",
+        keyName: "魅力",
+        order: 40,
+        itemKeys: [
+          "ability.charm.presence",
+          "ability.charm.learning",
+          "ability.charm.eloquence",
+        ],
+      },
+    ],
+    attributeMappings: [
+      {
+        key: "ability.martial.strength",
+        keyName: "力量",
+        type: "number",
+        semanticKey: "ability.martial.strength",
+      },
+      {
+        key: "ability.martial.physique",
+        keyName: "体魄",
+        type: "number",
+        semanticKey: "ability.martial.physique",
+      },
+      {
+        key: "ability.martial.agility",
+        keyName: "身法",
+        type: "number",
+        semanticKey: "ability.martial.agility",
+      },
+      {
+        key: "ability.intelligence.adaptability",
+        keyName: "机变",
+        type: "number",
+        semanticKey: "ability.intelligence.adaptability",
+      },
+      {
+        key: "ability.intelligence.judgment",
+        keyName: "谋断",
+        type: "number",
+        semanticKey: "ability.intelligence.judgment",
+      },
+      {
+        key: "ability.intelligence.awareness",
+        keyName: "察势",
+        type: "number",
+        semanticKey: "ability.intelligence.awareness",
+      },
+      {
+        key: "ability.politics.governance",
+        keyName: "吏治",
+        type: "number",
+        semanticKey: "ability.politics.governance",
+      },
+      {
+        key: "ability.politics.livelihood",
+        keyName: "民生",
+        type: "number",
+        semanticKey: "ability.politics.livelihood",
+      },
+      {
+        key: "ability.politics.finance",
+        keyName: "度支",
+        type: "number",
+        semanticKey: "ability.politics.finance",
+      },
+      {
+        key: "ability.charm.presence",
+        keyName: "气象",
+        type: "number",
+        semanticKey: "ability.charm.presence",
+      },
+      {
+        key: "ability.charm.learning",
+        keyName: "学问",
+        type: "number",
+        semanticKey: "ability.charm.learning",
+      },
+      {
+        key: "ability.charm.eloquence",
+        keyName: "辩才",
+        type: "number",
+        semanticKey: "ability.charm.eloquence",
+      },
+    ],
+    attributeValues: [
+      { key: "ability.martial.strength", value: 18 },
+      { key: "ability.martial.physique", value: 20 },
+      { key: "ability.martial.agility", value: 16 },
+      { key: "ability.intelligence.adaptability", value: 22 },
+      { key: "ability.intelligence.judgment", value: 17 },
+      { key: "ability.intelligence.awareness", value: 19 },
+      { key: "ability.politics.governance", value: 10 },
+      { key: "ability.politics.livelihood", value: 15 },
+      { key: "ability.politics.finance", value: 13 },
+      { key: "ability.charm.presence", value: 21 },
+      { key: "ability.charm.learning", value: 16 },
+      { key: "ability.charm.eloquence", value: 22 },
+    ],
   },
   {
     id: "char.kulan_lord",
@@ -1592,7 +1737,8 @@ export function createPrototypeCharactersForStoryStage(
 
   if (
     playerCharacter != null &&
-    (storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple ||
+    (storyStage === ZHU_YUANZHANG_STORY_STAGES.villageOpening ||
+      storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple ||
       storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney)
   ) {
     delete playerCharacter.clanId;

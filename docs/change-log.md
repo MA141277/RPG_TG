@@ -2,6 +2,15 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-01 Haozhou Long-Begging Evacuation
+
+### Changed
+- House access refusal rules now support `cityIds`, allowing story-stage blockers to target only one city while still matching house/module metadata through the generic selector.
+- During Zhu Yuanzhang's long-distance begging stage, Haozhou houses other than Huangjue Temple are blocked with the player line “看来店主已经避难去了”; Haozhou city begging uses the same line instead of launching the begging playable.
+
+### Impact
+- The long-distance begging flow now points the player out of Haozhou without adding a house-specific branch to `src/main.ts`; Huangjue Temple remains enterable for temple return flow.
+
 ## 2026-07-31 Web Dist Runtime Asset Publishing
 
 ### Added

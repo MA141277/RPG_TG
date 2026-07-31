@@ -41,6 +41,8 @@ export type KeepHouseMeetingStage =
   | "situation"
   | "policy"
   | "advice"
+  | "advice-choice"
+  | "advice-response"
   | "assign-task"
   | "assigned"
   | "finished";

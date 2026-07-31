@@ -137,6 +137,8 @@ export type ActivityPachinkoBoardPhase =
   | "ready"
   | "dropping"
   | "rewarding"
+  | "drawing-card"
+  | "card-result"
   | "settling";
 
 export type ActivityPachinkoBoardEventKind =
@@ -175,6 +177,23 @@ export type ActivityPachinkoBoardWheelRewardKind =
   | "extra-ball"
   | "encounter";
 
+export type ActivityPachinkoFortuneCardRank =
+  | "bad"
+  | "neutral"
+  | "good"
+  | "encounter";
+
+export type ActivityPachinkoFortuneCardResult = {
+  id: string;
+  rank: ActivityPachinkoFortuneCardRank;
+  label: string;
+  description: string;
+  scoreDelta?: number;
+  staminaDelta?: number;
+  applied: boolean;
+  resolved: boolean;
+};
+
 export type ActivityPachinkoBoardWheelRewardSegment = {
   id: string;
   label: string;
@@ -184,7 +203,7 @@ export type ActivityPachinkoBoardWheelRewardSegment = {
 };
 
 export type ActivityPachinkoBoardRewardQueueItem = {
-  type: "wheel";
+  type: "fortune-card";
 };
 
 export type ActivityPachinkoBoardAudioPulse = {
@@ -204,6 +223,25 @@ export type ActivityPachinkoBoardWheelState = {
   segments: ActivityPachinkoBoardWheelRewardSegment[];
 };
 
+export type ActivityPachinkoMovingGate = {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  direction: 1 | -1;
+  step: number;
+  reward:
+    | {
+        kind: "extra-ball";
+        amount: number;
+      }
+    | {
+        kind: "score";
+        amount: number;
+      };
+  pins: [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin];
+};
+
 export type ActivityPachinkoBoardSession = {
   type: "pachinko-board";
   activityId: ActivityId;
@@ -220,15 +258,20 @@ export type ActivityPachinkoBoardSession = {
   audioPulseCounter: number;
   audioPulse: ActivityPachinkoBoardAudioPulse | null;
   pins: ActivityPachinkoBoardPin[];
+  movingGates: ActivityPachinkoMovingGate[];
   movingGatePins: [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin];
   gatePassCount: number;
   eventCharge: number;
   eventLog: ActivityPachinkoBoardEventLogEntry[];
   score: number;
   lastSlotIndex: number | null;
-  slotValues: Array<number | "wheel">;
+  slotValues: Array<number | "fortune-card">;
   rewardQueue: ActivityPachinkoBoardRewardQueueItem[];
   wheelState: ActivityPachinkoBoardWheelState;
+  fortuneCardCount: number;
+  fortuneCardsDrawn: number;
+  currentFortuneCard: ActivityPachinkoFortuneCardResult | null;
+  fortuneCardHistory: ActivityPachinkoFortuneCardResult[];
   flipperAngle: number;
   flipperDirection: 1 | -1;
   movingGateX: number;

@@ -66,6 +66,7 @@ import { renderStoryChapterTitleOverlay } from "./views/story/story-chapter-titl
 import { renderLayoutEditor } from "./tools/layout-editor-view";
 import { formatCardDrawResultLabel } from "./animations/card-draw-animation";
 import { resolveCharacterFactionLabel } from "../application/faction/faction-affiliation-runtime";
+import { buildCharacterDetailAbilityValues } from "../application/character/character-ability-profile";
 import { defaultEquipmentLoadoutService } from "../domain/equipment/equipment-loadout-service";
 import type { EquipmentSlotId } from "../domain/equipment/equipment-slot-registry";
 
@@ -173,6 +174,7 @@ function buildCharacterDetailOptions(
     layout: input.appState.uiLayouts["character-detail-screen"],
     layoutEditor: input.appState.layoutEditor,
     abilityDetailOpen: input.appState.gameState.ui.isCharacterAbilityDetailOpen,
+    abilityValues: buildCharacterDetailAbilityValues(playerCharacter),
     notoriety: typeof notorietyValue === "number" ? notorietyValue : 0,
     stipendText: `${playerCharacter.stats.gold} 文`,
     accessoryName: equippedAccessory ?? "无",

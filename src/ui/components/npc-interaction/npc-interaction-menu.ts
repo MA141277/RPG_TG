@@ -39,7 +39,6 @@ export function renderNpcInteractionMenu(
           <button
             type="button"
             class="c-button c-grain-shop-button ${buttonTone}"
-            data-npc-action="special"
             data-house-action="${optionId}"
             ${buttonSoundAttribute}
             ${disabled}

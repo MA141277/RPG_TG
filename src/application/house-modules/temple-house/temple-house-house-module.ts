@@ -117,6 +117,12 @@ import {
   TEMPLE_FACTION_RANKS,
   writeFactionMerit,
 } from "../../review/faction-review";
+import {
+  createReviewAdviceActionViewModels,
+  findSelectedReviewAdviceOption,
+  getAvailableReviewAdviceOptions,
+  REVIEW_ADVICE_EMPTY_FALLBACK_LINE,
+} from "../../review/review-advice";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
 
 const DONATION_AMOUNT = 50;
@@ -128,6 +134,7 @@ const TEMPLE_WORK_WAGER_MINUS_ACTION_ID = "temple-work-board-wager-minus";
 const TEMPLE_WORK_WAGER_PLUS_ACTION_ID = "temple-work-board-wager-plus";
 const TEMPLE_WORK_SPEED_FIELD_ID = "temple-work-board-speed";
 const SELECT_REVIEW_WORK_ACTION_PREFIX = "select-review-work:";
+const SELECT_REVIEW_ADVICE_ACTION_PREFIX = "select-review-advice:";
 const TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID = "temple-review-give-advice";
 const TEMPLE_REVIEW_STAY_SILENT_ACTION_ID = "temple-review-stay-silent";
 const OPEN_TEMPLE_WORK_MENU_ACTION_ID = "open-temple-work-menu";
@@ -2154,6 +2161,45 @@ function getTempleAssignDutyLines(
   ];
 }
 
+function createTempleAssignDutyTransition(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  gameState: GameState
+): HouseModuleTransitionResult<"temple-house"> {
+  const reviewWorkChoices = getReviewWorkChoices(
+    gameState,
+    input.playerCharacterId,
+    input.activityDefinitionsById,
+    input.textEntriesById
+  );
+  const specialTaskHookResult = getDefaultReviewSpecialTaskHookResult();
+  const specialTaskLines =
+    specialTaskHookResult.type === "none"
+      ? []
+      : specialTaskHookResult.descriptionLines;
+
+  return withSessionState(
+    {
+      gameState,
+      characterDefinitions: input.characterDefinitions,
+    },
+    sessionState,
+    {
+      meetingStage: "assign-duty",
+      dialoguePhase: "open",
+      overlay: null,
+      dialogueLines: [
+        ...specialTaskLines,
+        ...getTempleAssignDutyLines(
+          gameState,
+          reviewWorkChoices,
+          input.textEntriesById
+        ),
+      ],
+    }
+  );
+}
+
 function getReviewWorkChoices(
   gameState: GameState,
   playerCharacterId: string,
@@ -3519,6 +3565,8 @@ function handleAction(
               overlay: null,
             }
           );
+        case "advice-response":
+          return createTempleAssignDutyTransition(input, sessionState, nextState);
         case "personnel":
           return createTemplePraiseTransition({
             gameState: nextState,
@@ -3555,21 +3603,30 @@ function handleAction(
     input.request.actionId === TEMPLE_REVIEW_STAY_SILENT_ACTION_ID
   ) {
     if (sessionState.mode === "meeting" && sessionState.meetingStage === "advice") {
-      const reviewWorkChoices = getReviewWorkChoices(
-        nextState,
-        input.playerCharacterId,
-        input.activityDefinitionsById,
-        input.textEntriesById
-      );
-      const adviceResponseLines =
-        input.request.actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID
-          ? ["此议暂且记下。"]
-          : [];
-      const specialTaskHookResult = getDefaultReviewSpecialTaskHookResult();
-      const specialTaskLines =
-        specialTaskHookResult.type === "none"
-          ? []
-          : specialTaskHookResult.descriptionLines;
+      if (input.request.actionId === TEMPLE_REVIEW_STAY_SILENT_ACTION_ID) {
+        return createTempleAssignDutyTransition(input, sessionState, nextState);
+      }
+
+      const adviceOptions = getAvailableReviewAdviceOptions({
+        gameState: nextState,
+        playerCharacterId: input.playerCharacterId,
+      });
+
+      if (adviceOptions.length === 0) {
+        return withSessionState(
+          {
+            gameState: nextState,
+            characterDefinitions: input.characterDefinitions,
+          },
+          sessionState,
+          {
+            meetingStage: "advice-response",
+            dialoguePhase: "open",
+            overlay: null,
+            dialogueLines: [REVIEW_ADVICE_EMPTY_FALLBACK_LINE],
+          }
+        );
+      }
 
       return withSessionState(
         {
@@ -3578,18 +3635,10 @@ function handleAction(
         },
         sessionState,
         {
-          meetingStage: "assign-duty",
+          meetingStage: "advice-choice",
           dialoguePhase: "open",
           overlay: null,
-          dialogueLines: [
-            ...adviceResponseLines,
-            ...specialTaskLines,
-            ...getTempleAssignDutyLines(
-              nextState,
-              reviewWorkChoices,
-              input.textEntriesById
-            ),
-          ],
+          dialogueLines: ["你要进言哪件事？"],
         }
       );
     }
@@ -3597,6 +3646,34 @@ function handleAction(
     return createTransitionResult(input, {
       gameState: nextState,
     });
+  }
+
+  const selectedAdviceOption = findSelectedReviewAdviceOption({
+    actionId: input.request.actionId,
+    actionPrefix: SELECT_REVIEW_ADVICE_ACTION_PREFIX,
+    options: getAvailableReviewAdviceOptions({
+      gameState: nextState,
+      playerCharacterId: input.playerCharacterId,
+    }),
+  });
+  if (
+    selectedAdviceOption != null &&
+    sessionState.mode === "meeting" &&
+    sessionState.meetingStage === "advice-choice"
+  ) {
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        meetingStage: "advice-response",
+        dialoguePhase: "open",
+        overlay: null,
+        dialogueLines: [selectedAdviceOption.playerLine],
+      }
+    );
   }
 
   if (input.request.actionId === "dismiss-dialogue") {
@@ -4613,6 +4690,7 @@ function selectPachinkoBoardOverlayViewModel(
     activeBall: session.activeBall,
     activeBalls: session.activeBalls,
     pins: session.pins,
+    movingGates: session.movingGates,
     movingGatePins: session.movingGatePins,
     gatePassCount: session.gatePassCount,
     eventCharge: session.eventCharge,
@@ -4622,6 +4700,10 @@ function selectPachinkoBoardOverlayViewModel(
     slotValues: session.slotValues,
     rewardQueue: session.rewardQueue,
     wheelState: session.wheelState,
+    fortuneCardCount: session.fortuneCardCount,
+    fortuneCardsDrawn: session.fortuneCardsDrawn,
+    currentFortuneCard: session.currentFortuneCard,
+    fortuneCardHistory: session.fortuneCardHistory,
     flipperAngle: session.flipperAngle,
     movingGateX: session.movingGateX,
     layoutRefreshElapsedMs: session.layoutRefreshElapsedMs,
@@ -4961,6 +5043,10 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       input.activityDefinitionsById,
       input.textEntriesById
     );
+    const reviewAdviceOptions = getAvailableReviewAdviceOptions({
+      gameState: nextState,
+      playerCharacterId: input.playerCharacterId,
+    });
     const templeTaskDefinitions = getTempleTaskDefinitions(
       input.activityDefinitionsById,
       input.textEntriesById
@@ -4973,7 +5059,11 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
               characterDefinition.id ===
               sessionState.dialogueOverride?.speakerCharacterId
           ) ?? null;
-    const dialogueSpeaker = dialogueOverrideSpeaker ?? abbotCharacter;
+    const dialogueSpeaker =
+      sessionState.mode === "meeting" &&
+      sessionState.meetingStage === "advice-response"
+        ? playerCharacter
+        : dialogueOverrideSpeaker ?? abbotCharacter;
     const dialoguePortraitArtClassName =
       dialogueSpeaker.id === input.playerCharacterId
         ? "c-temple-house-portrait-art--player"
@@ -4993,6 +5083,10 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
     const shouldShowMeetingAdvice =
       sessionState.mode === "meeting" &&
       sessionState.meetingStage === "advice" &&
+      !hasActiveTempleWorkPlayable;
+    const shouldShowMeetingAdviceChoices =
+      sessionState.mode === "meeting" &&
+      sessionState.meetingStage === "advice-choice" &&
       !hasActiveTempleWorkPlayable;
     const selectedTask =
       sessionState.selectedTaskId == null
@@ -5102,7 +5196,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
                 ((sessionState.mode === "daily" &&
                   sessionState.dialoguePhase === "greeting") ||
                   (sessionState.mode === "meeting" &&
-                    ["intro", "personnel", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
+                    ["intro", "personnel", "praise", "situation", "policy", "advice-response"].includes(sessionState.meetingStage)))
                   ? "advance-temple-dialogue"
                   : null),
               advanceHintText:
@@ -5111,7 +5205,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
                 ((sessionState.mode === "daily" &&
                   sessionState.dialoguePhase === "greeting") ||
                   (sessionState.mode === "meeting" &&
-                    ["intro", "personnel", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
+                    ["intro", "personnel", "praise", "situation", "policy", "advice-response"].includes(sessionState.meetingStage)))
                   ? "点击继续"
                   : null),
             },
@@ -5133,6 +5227,14 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
                 { id: TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID, label: "发表意见" },
                 { id: TEMPLE_REVIEW_STAY_SILENT_ACTION_ID, label: "一言不发" },
               ],
+            }
+        : shouldShowMeetingAdviceChoices
+          ? {
+              title: "选择意见",
+              actions: createReviewAdviceActionViewModels({
+                actionPrefix: SELECT_REVIEW_ADVICE_ACTION_PREFIX,
+                options: reviewAdviceOptions,
+              }),
             }
         : shouldShowDailyActions
           ? {

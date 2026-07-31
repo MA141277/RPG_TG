@@ -487,5 +487,7 @@
   "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.002": "老汉做的是小本买卖，消息也得算账。眼下这 {fee} 文还没凑够，我不好坏了规矩，只能先请客官改日再问。",
   "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.003": "客官有心问路，老汉明白。只是这份粮情得收 {fee} 文，如今钱数不齐，我也只得先把话收住。",
   "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.004": "请客官包涵，乱年头里连消息都得折本计价。你若眼下银钱紧，我便不多说了，等宽裕些再来。",
-  "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.005": "买卖有买卖的规矩，行情也有行情的价。如今还差着 {fee} 文的数目，老汉只能先向你陪个不是。"
+  "runtime.zhu_yuanzhang.grain_shop.investigation.refusal.005": "买卖有买卖的规矩，行情也有行情的价。如今还差着 {fee} 文的数目，老汉只能先向你陪个不是。",
+  "runtime.zhu_yuanzhang.haozhou_evacuation.001": "看来店主已经避难去了",
+  "runtime.zhu_yuanzhang.haozhou_evacuation.advance_hint": "离开濠州"
 }

@@ -348,7 +348,6 @@ function renderCityMenuPanel(input: {
       title = `${input.cityDefinition.name}情报`;
       bodyMarkup = `
         <section class="c-city-menu-panel__section">
-          <p class="c-city-menu-panel__hint">当前版本使用模拟情报，后续将接入真实 House、NPC 与事件内容。</p>
           <div class="c-city-menu-panel__intel-list">
             ${input.cityMenuState.intelItems
               .map(
@@ -431,16 +430,6 @@ export function renderCityView(
       }
     | null
 ): string {
-  const haozhouCoinTestButton = `
-    <button
-      type="button"
-      class="c-kulan-city__coin-test-action"
-      data-action="grant-haozhou-test-coin"
-      aria-label="测试获得十文钱"
-    >
-      测试+10文
-    </button>
-  `;
   return `
     <section class="view-city view-city--kulan">
       <div class="c-kulan-city">
@@ -452,7 +441,6 @@ export function renderCityView(
               houseDefinitions,
               cityEntries,
             })}
-            ${haozhouCoinTestButton}
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city" data-button-sound="light">
               返回地图
             </button>

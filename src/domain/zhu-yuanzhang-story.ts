@@ -1,11 +1,13 @@
 import type { GameState } from "./game-state";
 
 export type ZhuYuanzhangStoryStage =
+  | "village-opening"
   | "huangjue-temple"
   | "huangjue-begging-journey"
   | "guo-zixing-camp";
 
 export const ZHU_YUANZHANG_STORY_STAGES = {
+  villageOpening: "village-opening",
   huangjueTemple: "huangjue-temple",
   huangjueBeggingJourney: "huangjue-begging-journey",
   guoZixingCamp: "guo-zixing-camp",
@@ -43,6 +45,7 @@ export function isZhuYuanzhangStoryStage(
   value: string
 ): value is ZhuYuanzhangStoryStage {
   return (
+    value === ZHU_YUANZHANG_STORY_STAGES.villageOpening ||
     value === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple ||
     value === ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney ||
     value === ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp
@@ -61,6 +64,7 @@ export function readZhuYuanzhangStoryStage(
 export function isZhuYuanzhangMonkStoryStage(state: GameState): boolean {
   const storyStage = readZhuYuanzhangStoryStage(state);
   return (
+    storyStage === ZHU_YUANZHANG_STORY_STAGES.villageOpening ||
     storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple ||
     storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
   );
@@ -79,9 +83,17 @@ export function isHaozhouShortageDuringBeggingJourney(
   state: GameState
 ): boolean {
   return (
-    isZhuYuanzhangBeggingJourneyStage(state) &&
+    isHaozhouEvacuatedDuringBeggingJourney(state) &&
     state.runtime.flags[ZHU_YUANZHANG_STORY_FLAG_KEYS.haozhouUprisingBroadcasted] ===
-      true &&
+      true
+  );
+}
+
+export function isHaozhouEvacuatedDuringBeggingJourney(
+  state: GameState
+): boolean {
+  return (
+    isZhuYuanzhangBeggingJourneyStage(state) &&
     state.world.currentCityId === "city.kulan"
   );
 }

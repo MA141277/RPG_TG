@@ -98,6 +98,8 @@ export type TempleHouseMeetingStage =
   | "situation"
   | "policy"
   | "advice"
+  | "advice-choice"
+  | "advice-response"
   | "assign-duty"
   | "assigned"
   | "finished";

@@ -293,10 +293,6 @@ function renderPachinkoBoardOverlay(
     overlay.boardWidth,
     overlay.boardHeight
   );
-  const movingGateLabelX =
-    (overlay.movingGatePins[0].x + overlay.movingGatePins[1].x) / 2;
-  const movingGateLabelY =
-    (overlay.movingGatePins[0].y + overlay.movingGatePins[1].y) / 2;
   const renderBalls =
     overlay.activeBalls.length > 0
       ? overlay.activeBalls
@@ -337,7 +333,8 @@ function renderPachinkoBoardOverlay(
               `
             )
             .join("")}
-          ${overlay.movingGatePins
+          ${overlay.movingGates
+            .flatMap((movingGate) => movingGate.pins)
             .map(
               (pin) => `
                 <span
@@ -348,11 +345,21 @@ function renderPachinkoBoardOverlay(
               `
             )
             .join("")}
-          <span
-            class="c-pachinko-board__gate-label"
-            style="--gate-label-left:${(movingGateLabelX / overlay.boardWidth) * 100}%; --gate-label-top:${(movingGateLabelY / overlay.boardHeight) * 100}%;"
-            aria-hidden="true"
-          >+1球</span>
+          ${overlay.movingGates
+            .map((movingGate) => {
+              const movingGateLabelX =
+                (movingGate.pins[0].x + movingGate.pins[1].x) / 2;
+              const movingGateLabelY =
+                (movingGate.pins[0].y + movingGate.pins[1].y) / 2;
+              return `
+                <span
+                  class="c-pachinko-board__gate-label"
+                  style="--gate-label-left:${(movingGateLabelX / overlay.boardWidth) * 100}%; --gate-label-top:${(movingGateLabelY / overlay.boardHeight) * 100}%;"
+                  aria-hidden="true"
+                >${movingGate.label}</span>
+              `;
+            })
+            .join("")}
           ${renderBalls
             .map(
               (ball) => `

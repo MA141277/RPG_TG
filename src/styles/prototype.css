@@ -2062,33 +2062,6 @@
   border-color: rgb(246 220 148 / 90%);
 }
 
-.c-kulan-city__coin-test-action {
-  position: absolute;
-  right: 164px;
-  bottom: 68px;
-  z-index: 4;
-  min-height: 44px;
-  min-width: 112px;
-  padding: 0 14px;
-  border: 1px solid rgb(233 202 127 / 70%);
-  border-radius: 6px;
-  background: rgb(20 18 14 / 82%);
-  color: #f6ddb0;
-  font: 700 14px/1 var(--font-ui);
-  cursor: pointer;
-  transition:
-    transform var(--duration-fast) ease,
-    filter var(--duration-fast) ease,
-    border-color var(--duration-fast) ease;
-}
-
-.c-kulan-city__coin-test-action:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.06);
-  border-color: rgb(246 220 148 / 90%);
-}
-
-
 .c-kulan-city__leave-action {
   position: absolute;
   right: 0;

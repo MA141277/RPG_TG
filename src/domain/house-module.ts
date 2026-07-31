@@ -5,6 +5,8 @@ import type {
   ActivityFortuneBoardTripletReward,
   ActivityPachinkoBoardBall,
   ActivityPachinkoBoardEventLogEntry,
+  ActivityPachinkoFortuneCardResult,
+  ActivityPachinkoMovingGate,
   ActivityPachinkoBoardPin,
   ActivityPachinkoBoardRewardQueueItem,
   ActivityPachinkoBoardWheelState,
@@ -694,15 +696,20 @@ export type HouseOverlayViewModel =
       activeBall: ActivityPachinkoBoardBall | null;
       activeBalls: ActivityPachinkoBoardBall[];
       pins: ActivityPachinkoBoardPin[];
+      movingGates: ActivityPachinkoMovingGate[];
       movingGatePins: [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin];
       gatePassCount: number;
       eventCharge: number;
       eventLog: ActivityPachinkoBoardEventLogEntry[];
       score: number;
       lastSlotIndex: number | null;
-      slotValues: Array<number | "wheel">;
+      slotValues: Array<number | "fortune-card">;
       rewardQueue: ActivityPachinkoBoardRewardQueueItem[];
       wheelState: ActivityPachinkoBoardWheelState;
+      fortuneCardCount: number;
+      fortuneCardsDrawn: number;
+      currentFortuneCard: ActivityPachinkoFortuneCardResult | null;
+      fortuneCardHistory: ActivityPachinkoFortuneCardResult[];
       flipperAngle: number;
       movingGateX: number;
       layoutRefreshElapsedMs: number;

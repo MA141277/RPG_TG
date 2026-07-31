@@ -102,7 +102,7 @@ Rules:
 
 If a visible city location should reject entry with dialogue, define the rejection as
 content data and resolve it through a generic selector. A refusal rule may match by
-house id, `moduleId`, story stage, and runtime flags, then return structured
+city id, house id, `moduleId`, story stage, and runtime flags, then return structured
 dialogue data such as speaker character, title, text, and confirm label. The
 entrypoint may display that returned model through the shared dialogue component,
 but it must not contain the house-specific reason or branch.

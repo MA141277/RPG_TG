@@ -7,6 +7,8 @@ import type {
   ActivityPachinkoBoardBall,
   ActivityPachinkoBoardEventKind,
   ActivityPachinkoBoardEventLogEntry,
+  ActivityPachinkoFortuneCardResult,
+  ActivityPachinkoMovingGate,
   ActivityPachinkoBoardPin,
   ActivityPachinkoBoardSession,
   ActivityPachinkoBoardWheelRewardSegment,
@@ -65,26 +67,26 @@ const PACHINKO_FLIPPER_ROOT_GAP = 120;
 const PACHINKO_FLIPPER_LENGTH = 139;
 const PACHINKO_FLIPPER_RADIUS = 10;
 const PACHINKO_FLIPPER_KICK = 0.42;
+const PACHINKO_FIRST_PIN_ROW_Y = 590;
+const PACHINKO_PIN_ROW_SPACING = 170;
+const PACHINKO_TOP_MOVING_GATE_Y =
+  PACHINKO_FIRST_PIN_ROW_Y - PACHINKO_PIN_ROW_SPACING;
 const PACHINKO_MOVING_GATE_Y = 675;
 const PACHINKO_MOVING_GATE_GAP = 100;
 const PACHINKO_MOVING_GATE_MIN_X = 145;
 const PACHINKO_MOVING_GATE_MAX_X = 555;
 const PACHINKO_MOVING_GATE_STEP = 1.6;
+const PACHINKO_TOP_MOVING_GATE_STEP = PACHINKO_MOVING_GATE_STEP / 2;
 const PACHINKO_BOTTOM_WALL_START_Y = 1015;
 const PACHINKO_LAYOUT_REFRESH_PERIOD_MS = 20_000;
-const PACHINKO_WHEEL_SPIN_MS = 2_000;
-const PACHINKO_WHEEL_SLOW_MS = 1_200;
-const PACHINKO_WHEEL_FLASH_MS = 1_200;
-const PACHINKO_WHEEL_HOLD_MS = 500;
-const PACHINKO_WHEEL_FLASH_COUNT = 2;
-const PACHINKO_SLOT_VALUES: Array<number | "wheel"> = [
+const PACHINKO_SLOT_VALUES: Array<number | "fortune-card"> = [
   5,
   3,
   3,
   2,
   2,
   2,
-  "wheel",
+  "fortune-card",
 ];
 const PACHINKO_WHEEL_SEGMENTS: ActivityPachinkoBoardWheelRewardSegment[] = [
   { id: "score-2", label: "+2分", kind: "score", amount: 2, weight: 30 },
@@ -93,6 +95,64 @@ const PACHINKO_WHEEL_SEGMENTS: ActivityPachinkoBoardWheelRewardSegment[] = [
   { id: "score-5", label: "+5分", kind: "score", amount: 5, weight: 15 },
   { id: "score-minus-2", label: "-2分", kind: "score", amount: -2, weight: 10 },
   { id: "encounter", label: "奇遇", kind: "encounter", amount: 0, weight: 10 },
+];
+const PACHINKO_FORTUNE_CARDS: Array<
+  Omit<ActivityPachinkoFortuneCardResult, "applied" | "resolved">
+> = [
+  {
+    id: "good-abbot-effort",
+    rank: "good",
+    label: "吉",
+    description: "方丈看到你努力工作的样子，得分 +5。",
+    scoreDelta: 5,
+  },
+  {
+    id: "good-clear-bell",
+    rank: "good",
+    label: "吉",
+    description: "钟声正合你的节奏，手上的活计格外顺利，得分 +4。",
+    scoreDelta: 4,
+  },
+  {
+    id: "neutral-calm-temple",
+    rank: "neutral",
+    label: "平",
+    description: "寺院里清净的氛围让你感到舒适，体力 +5。",
+    staminaDelta: 5,
+  },
+  {
+    id: "neutral-clean-water",
+    rank: "neutral",
+    label: "平",
+    description: "井水清凉，你洗了把脸，精神稍稍恢复，体力 +3。",
+    staminaDelta: 3,
+  },
+  {
+    id: "bad-senior-trouble",
+    rank: "bad",
+    label: "凶",
+    description: "有师兄找你茬，得分 -2。",
+    scoreDelta: -2,
+  },
+  {
+    id: "bad-broken-broom",
+    rank: "bad",
+    label: "凶",
+    description: "扫帚忽然折断，耽误了不少工夫，得分 -1。",
+    scoreDelta: -1,
+  },
+  {
+    id: "encounter-abbot-question",
+    rank: "encounter",
+    label: "奇遇",
+    description: "方丈似乎有话要问你。",
+  },
+  {
+    id: "encounter-lamp-shadow",
+    rank: "encounter",
+    label: "奇遇",
+    description: "殿前灯影微动，一段机缘悄然临近。",
+  },
 ];
 
 type PachinkoFlipperSegment = {
@@ -171,6 +231,8 @@ function createActivityPachinkoBoardSession(
   handlerId: ActivityHandlerId
 ): ActivityPachinkoBoardSession {
   const movingGateX = PACHINKO_BOARD_WIDTH / 2;
+  const movingGates = createPachinkoMovingGates(movingGateX);
+  const middleMovingGate = movingGates[1];
   return {
     type: "pachinko-board",
     activityId: activityDefinition.id,
@@ -187,7 +249,8 @@ function createActivityPachinkoBoardSession(
     audioPulseCounter: 0,
     audioPulse: null,
     pins: createPachinkoPins(),
-    movingGatePins: createPachinkoMovingGatePins(movingGateX),
+    movingGates,
+    movingGatePins: middleMovingGate.pins,
     gatePassCount: 0,
     eventCharge: 0,
     eventLog: [],
@@ -196,6 +259,10 @@ function createActivityPachinkoBoardSession(
     slotValues: PACHINKO_SLOT_VALUES,
     rewardQueue: [],
     wheelState: createIdlePachinkoWheelState(),
+    fortuneCardCount: 0,
+    fortuneCardsDrawn: 0,
+    currentFortuneCard: null,
+    fortuneCardHistory: [],
     flipperAngle: 0,
     flipperDirection: 1,
     movingGateX,
@@ -518,6 +585,60 @@ export function playActivityPachinkoBoard(
   if (session?.type !== "pachinko-board" || session.activityId !== activityDefinition.id) {
     return {
       state,
+      characterDefinitions,
+    };
+  }
+
+  if (session.phase === "drawing-card") {
+    if (session.fortuneCardCount <= 0) {
+      return {
+        state: {
+          ...state,
+          runtime: {
+            ...state.runtime,
+            activitySession: {
+              ...session,
+              phase: "settling",
+            },
+          },
+        },
+        characterDefinitions,
+      };
+    }
+
+    const currentFortuneCard = drawPachinkoFortuneCard(session);
+    return {
+      state: {
+        ...state,
+        runtime: {
+          ...state.runtime,
+          activitySession: {
+            ...session,
+            phase: "card-result",
+            fortuneCardCount: Math.max(0, session.fortuneCardCount - 1),
+            fortuneCardsDrawn: session.fortuneCardsDrawn + 1,
+            currentFortuneCard,
+            fortuneCardHistory: [...session.fortuneCardHistory, currentFortuneCard],
+          },
+        },
+      },
+      characterDefinitions,
+    };
+  }
+
+  if (session.phase === "card-result") {
+    if (
+      session.currentFortuneCard?.rank === "encounter" &&
+      session.currentFortuneCard.resolved !== true
+    ) {
+      return {
+        state,
+        characterDefinitions,
+      };
+    }
+
+    return {
+      state: continueActivityPachinkoAfterFortuneCard(state),
       characterDefinitions,
     };
   }
@@ -1013,8 +1134,8 @@ function createPachinkoPins(): ActivityPachinkoBoardPin[] {
   const row6X = createPachinkoRowWithEqualWallGaps(6);
   const row7X = createPachinkoGapCenterRow(row6X);
   const rows: Array<{ y: number; xs: number[] }> = [
-    { y: 590, xs: row6X },
-    { y: 760, xs: row6X },
+    { y: PACHINKO_FIRST_PIN_ROW_Y, xs: row6X },
+    { y: PACHINKO_FIRST_PIN_ROW_Y + PACHINKO_PIN_ROW_SPACING, xs: row6X },
     { y: 845, xs: row7X },
     { y: 930, xs: row6X },
     { y: PACHINKO_BOTTOM_WALL_START_Y, xs: row6X },
@@ -1059,12 +1180,18 @@ function createIdlePachinkoWheelState(): ActivityPachinkoBoardWheelState {
 
 function hasPendingPachinkoReward(session: ActivityPachinkoBoardSession): boolean {
   return (
+    session.fortuneCardCount > 0 ||
+    session.currentFortuneCard != null ||
     session.rewardQueue.length > 0 ||
     session.wheelState.phase === "spinning" ||
     session.wheelState.phase === "slowing" ||
     session.wheelState.phase === "flashing" ||
     session.wheelState.phase === "holding"
   );
+}
+
+function hasPendingPachinkoFortuneCard(session: ActivityPachinkoBoardSession): boolean {
+  return session.fortuneCardCount > 0 || session.currentFortuneCard != null;
 }
 
 function createPachinkoRowWithEqualWallGaps(count: number): number[] {
@@ -1106,25 +1233,117 @@ function createPachinkoFlipperSegment(
   };
 }
 
-function createPachinkoMovingGatePins(
+function createPachinkoMovingGates(
   centerX: number
-): [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin] {
+): [ActivityPachinkoMovingGate, ActivityPachinkoMovingGate] {
   return [
-    {
-      id: "moving-gate-left",
-      x: centerX - PACHINKO_MOVING_GATE_GAP / 2,
+    createPachinkoMovingGate({
+      id: "top-moving-gate",
+      label: "+2分",
+      centerX,
+      y: PACHINKO_TOP_MOVING_GATE_Y,
+      direction: 1,
+      step: PACHINKO_TOP_MOVING_GATE_STEP,
+      reward: { kind: "score", amount: 2 },
+    }),
+    createPachinkoMovingGate({
+      id: "moving-gate",
+      label: "+1球",
+      centerX,
       y: PACHINKO_MOVING_GATE_Y,
+      direction: 1,
+      step: PACHINKO_MOVING_GATE_STEP,
+      reward: { kind: "extra-ball", amount: 1 },
+    }),
+  ];
+}
+
+function createPachinkoMovingGate(input: {
+  id: string;
+  label: string;
+  centerX: number;
+  y: number;
+  direction: 1 | -1;
+  step: number;
+  reward: ActivityPachinkoMovingGate["reward"];
+}): ActivityPachinkoMovingGate {
+  const pins: [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin] = [
+    {
+      id: `${input.id}-left`,
+      x: input.centerX - PACHINKO_MOVING_GATE_GAP / 2,
+      y: input.y,
       radius: PACHINKO_PIN_RADIUS,
       moving: true,
     },
     {
-      id: "moving-gate-right",
-      x: centerX + PACHINKO_MOVING_GATE_GAP / 2,
-      y: PACHINKO_MOVING_GATE_Y,
+      id: `${input.id}-right`,
+      x: input.centerX + PACHINKO_MOVING_GATE_GAP / 2,
+      y: input.y,
       radius: PACHINKO_PIN_RADIUS,
       moving: true,
     },
   ];
+  return {
+    id: input.id,
+    label: input.label,
+    x: input.centerX,
+    y: input.y,
+    direction: input.direction,
+    step: input.step,
+    reward: input.reward,
+    pins,
+  };
+}
+
+function getPachinkoMovingGates(
+  session: ActivityPachinkoBoardSession
+): ActivityPachinkoMovingGate[] {
+  if ((session.movingGates?.length ?? 0) > 0) {
+    return session.movingGates;
+  }
+
+  return [
+    createPachinkoMovingGate({
+      id: "top-moving-gate",
+      label: "+2分",
+      centerX: session.movingGateX,
+      y: PACHINKO_TOP_MOVING_GATE_Y,
+      direction: session.movingGateDirection,
+      step: PACHINKO_TOP_MOVING_GATE_STEP,
+      reward: { kind: "score", amount: 2 },
+    }),
+    createPachinkoMovingGate({
+      id: "moving-gate",
+      label: "+1球",
+      centerX: session.movingGateX,
+      y: PACHINKO_MOVING_GATE_Y,
+      direction: session.movingGateDirection,
+      step: PACHINKO_MOVING_GATE_STEP,
+      reward: { kind: "extra-ball", amount: 1 },
+    }),
+  ];
+}
+
+function advancePachinkoMovingGate(
+  gate: ActivityPachinkoMovingGate
+): ActivityPachinkoMovingGate {
+  const nextX = gate.x + gate.direction * gate.step;
+  const gateHitMax = nextX >= PACHINKO_MOVING_GATE_MAX_X;
+  const gateHitMin = nextX <= PACHINKO_MOVING_GATE_MIN_X;
+  const boundedX = Math.max(
+    PACHINKO_MOVING_GATE_MIN_X,
+    Math.min(PACHINKO_MOVING_GATE_MAX_X, nextX)
+  );
+  const nextDirection = gateHitMax ? -1 : gateHitMin ? 1 : gate.direction;
+  return createPachinkoMovingGate({
+    id: gate.id,
+    label: gate.label,
+    centerX: boundedX,
+    y: gate.y,
+    direction: nextDirection,
+    step: gate.step,
+    reward: gate.reward,
+  });
 }
 
 function advancePachinkoBoardMechanisms(
@@ -1138,22 +1357,17 @@ function advancePachinkoBoardMechanisms(
     PACHINKO_FLIPPER_MIN_ANGLE,
     Math.min(PACHINKO_FLIPPER_MAX_ANGLE, nextFlipperAngle)
   );
-  const nextMovingGateX =
-    session.movingGateX + session.movingGateDirection * PACHINKO_MOVING_GATE_STEP;
-  const gateHitMax = nextMovingGateX >= PACHINKO_MOVING_GATE_MAX_X;
-  const gateHitMin = nextMovingGateX <= PACHINKO_MOVING_GATE_MIN_X;
-  const boundedMovingGateX = Math.max(
-    PACHINKO_MOVING_GATE_MIN_X,
-    Math.min(PACHINKO_MOVING_GATE_MAX_X, nextMovingGateX)
-  );
+  const movingGates = getPachinkoMovingGates(session).map(advancePachinkoMovingGate);
+  const primaryMovingGate = movingGates[1] ?? movingGates[0];
   return {
     ...session,
     audioPulse: null,
     flipperAngle: boundedFlipperAngle,
     flipperDirection: flipperHitMax ? -1 : flipperHitMin ? 1 : session.flipperDirection,
-    movingGateX: boundedMovingGateX,
-    movingGateDirection: gateHitMax ? -1 : gateHitMin ? 1 : session.movingGateDirection,
-    movingGatePins: createPachinkoMovingGatePins(boundedMovingGateX),
+    movingGates,
+    movingGateX: primaryMovingGate?.x ?? session.movingGateX,
+    movingGateDirection: primaryMovingGate?.direction ?? session.movingGateDirection,
+    movingGatePins: primaryMovingGate?.pins ?? session.movingGatePins,
     layoutRefreshElapsedMs: session.layoutRefreshElapsedMs + session.animationTickMs,
   };
 }
@@ -1232,7 +1446,11 @@ function stepSinglePachinkoBall(
   };
 
   const flipperSegments = createPachinkoFlipperSegments(session);
-  const collisionPins = [...session.pins, ...session.movingGatePins];
+  const movingGates = getPachinkoMovingGates(session);
+  const collisionPins = [
+    ...session.pins,
+    ...movingGates.flatMap((movingGate) => movingGate.pins),
+  ];
   const bottomWallXs = createPachinkoRowWithEqualWallGaps(6);
   const tickPreviousX = ball.previousX;
   const tickPreviousY = ball.previousY;
@@ -1288,8 +1506,11 @@ function stepSinglePachinkoBall(
     previousY: tickPreviousY,
   };
 
-  const gateScored = didPachinkoBallPassMovingGate(ball, session.movingGatePins);
-  const scoredSession = gateScored ? scorePachinkoGatePass(session) : session;
+  const passedGate = movingGates.find((movingGate) =>
+    didPachinkoBallPassMovingGate(ball, movingGate)
+  );
+  const scoredSession =
+    passedGate == null ? session : scorePachinkoGatePass(session, passedGate);
 
   if (ball.y + ball.radius >= session.boardHeight) {
     return {
@@ -1490,31 +1711,36 @@ function getPachinkoPinNudgeDirection(pin: ActivityPachinkoBoardPin): 1 | -1 {
 
 function didPachinkoBallPassMovingGate(
   ball: ActivityPachinkoBoardBall,
-  gatePins: [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin]
+  gate: ActivityPachinkoMovingGate
 ): boolean {
-  const [leftPin, rightPin] = gatePins;
+  const [leftPin, rightPin] = gate.pins;
   return (
-    ball.previousY < PACHINKO_MOVING_GATE_Y &&
-    ball.y >= PACHINKO_MOVING_GATE_Y &&
+    ball.previousY < gate.y &&
+    ball.y >= gate.y &&
     ball.x > leftPin.x + leftPin.radius &&
     ball.x < rightPin.x - rightPin.radius
   );
 }
 
 function scorePachinkoGatePass(
-  session: ActivityPachinkoBoardSession
+  session: ActivityPachinkoBoardSession,
+  gate: ActivityPachinkoMovingGate
 ): ActivityPachinkoBoardSession {
+  const rewardState =
+    gate.reward.kind === "extra-ball"
+      ? { remainingBalls: session.remainingBalls + gate.reward.amount }
+      : { score: session.score + gate.reward.amount };
   return {
     ...session,
+    ...rewardState,
     gatePassCount: session.gatePassCount + 1,
     eventCharge: 0,
-    remainingBalls: session.remainingBalls + 1,
     eventLog: [
       ...session.eventLog,
       {
         roll: 0,
         kind: "timing",
-        label: "穿门 +1球",
+        label: `穿门 ${gate.label}`,
       },
     ],
   };
@@ -1578,17 +1804,29 @@ function settlePachinkoBall(
     Math.min(session.slotValues.length - 1, Math.floor(ball.x / slotWidth))
   );
   const slotValue = session.slotValues[slotIndex] ?? 0;
-  const scoreGain = slotValue === "wheel" ? 0 : slotValue;
-  const rewardQueue =
-    slotValue === "wheel"
-      ? [...session.rewardQueue, { type: "wheel" as const }]
-      : session.rewardQueue;
-  const hasReward = rewardQueue.length > 0 || session.wheelState.phase !== "idle";
+  const scoreGain = slotValue === "fortune-card" ? 0 : slotValue;
+  const fortuneCardCount =
+    slotValue === "fortune-card"
+      ? session.fortuneCardCount + 1
+      : session.fortuneCardCount;
+  const hasReward =
+    fortuneCardCount > 0 ||
+    session.currentFortuneCard != null ||
+    session.wheelState.phase !== "idle";
 
   return {
     ...session,
-    phase: hasReward ? "rewarding" : session.remainingBalls > 0 ? "ready" : "settling",
-    rewardQueue,
+    phase:
+      session.remainingBalls > 0
+        ? hasReward && session.wheelState.phase !== "idle"
+          ? "rewarding"
+          : "ready"
+        : fortuneCardCount > 0
+          ? "drawing-card"
+          : hasReward
+            ? "rewarding"
+            : "settling",
+    fortuneCardCount,
     activeBall: null,
     score: session.score + scoreGain,
     lastSlotIndex: slotIndex,
@@ -1598,12 +1836,32 @@ function settlePachinkoBall(
 function advancePachinkoRewardFlow(
   session: ActivityPachinkoBoardSession
 ): ActivityPachinkoBoardSession {
+  if (session.phase === "drawing-card" || session.phase === "card-result") {
+    return session;
+  }
+
+  if (
+    session.remainingBalls <= 0 &&
+    session.wheelState.phase === "idle" &&
+    session.fortuneCardCount > 0
+  ) {
+    return {
+      ...session,
+      phase: "drawing-card",
+    };
+  }
+
   if (session.wheelState.phase === "idle") {
     if (session.rewardQueue.length === 0) {
       return session.phase === "rewarding"
         ? {
             ...session,
-            phase: session.remainingBalls > 0 ? "ready" : "settling",
+            phase:
+              session.remainingBalls > 0
+                ? "ready"
+                : session.fortuneCardCount > 0
+                  ? "drawing-card"
+                  : "settling",
           }
         : session;
     }
@@ -1629,7 +1887,12 @@ function advancePachinkoRewardFlow(
     return session.phase === "rewarding"
       ? {
           ...session,
-          phase: session.remainingBalls > 0 ? "ready" : "settling",
+          phase:
+            session.remainingBalls > 0
+              ? "ready"
+              : session.fortuneCardCount > 0
+                ? "drawing-card"
+                : "settling",
         }
       : session;
   }
@@ -1715,7 +1978,12 @@ function advancePachinkoRewardFlow(
 
     return {
       ...session,
-      phase: session.remainingBalls > 0 ? "ready" : "settling",
+      phase:
+        session.remainingBalls > 0
+          ? "ready"
+          : session.fortuneCardCount > 0
+            ? "drawing-card"
+            : "settling",
       wheelState: {
         ...session.wheelState,
         phase: "settled",
@@ -1788,6 +2056,90 @@ function startNextPachinkoWheelReward(
       selectedReward,
       flashCount: 0,
       segments,
+    },
+  };
+}
+
+function drawPachinkoFortuneCard(
+  session: ActivityPachinkoBoardSession
+): ActivityPachinkoFortuneCardResult {
+  const drawNumber = session.fortuneCardsDrawn + 1;
+  const candidates =
+    drawNumber === 2
+      ? PACHINKO_FORTUNE_CARDS.filter((card) => card.rank === "encounter")
+      : PACHINKO_FORTUNE_CARDS.filter((card) => card.rank !== "encounter");
+  const deck = candidates.length > 0 ? candidates : PACHINKO_FORTUNE_CARDS;
+  const index = hashToPercent(
+    `${session.activityId}:fortune-card:${drawNumber}:${session.score}:${session.layoutVersion}`
+  ) % deck.length;
+  const card = deck[index] ?? deck[0];
+
+  return {
+    ...card,
+    applied: false,
+    resolved: card.rank !== "encounter",
+  };
+}
+
+export function continueActivityPachinkoAfterFortuneCard(
+  state: GameState
+): GameState {
+  const session = state.runtime.activitySession;
+  if (session?.type !== "pachinko-board" || session.phase !== "card-result") {
+    return state;
+  }
+
+  const nextPhase =
+    session.fortuneCardCount > 0
+      ? "drawing-card"
+      : session.remainingBalls > 0
+        ? "ready"
+        : "settling";
+
+  return {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      activitySession: {
+        ...session,
+        phase: nextPhase,
+        currentFortuneCard: null,
+      },
+    },
+  };
+}
+
+export function resolveActivityPachinkoFortuneEncounter(
+  state: GameState
+): GameState {
+  const session = state.runtime.activitySession;
+  if (
+    session?.type !== "pachinko-board" ||
+    session.phase !== "card-result" ||
+    session.currentFortuneCard?.rank !== "encounter"
+  ) {
+    return state;
+  }
+
+  const currentFortuneCard = {
+    ...session.currentFortuneCard,
+    applied: true,
+    resolved: true,
+  };
+
+  return {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      activitySession: {
+        ...session,
+        currentFortuneCard,
+        fortuneCardHistory: session.fortuneCardHistory.map((card) =>
+          card.id === currentFortuneCard.id && card.resolved === false
+            ? currentFortuneCard
+            : card
+        ),
+      },
     },
   };
 }
