@@ -370,6 +370,13 @@ Rules:
 - reusable services should return typed mutation/effect data that describes the persistent result
 - host houses may remain the UI/session owner, but must not recompute gold, inventory, or
   runtime settlement writes after the shared service has resolved them
+- when a house hosts a reusable settlement-trade or specialty-market subsystem, the house module
+  may keep overlay/session state only
+- persistent specialty stock, price multipliers, reset timers, and inventory settlement must live
+  in shared runtime owners and shared typed mutation appliers rather than house-local variables or
+  `src/main.ts` branches
+- investigation reports and trade overlays for that subsystem must read from the same resolved
+  service snapshot so dialogue, UI, and settlement cannot drift apart
 - player-owned non-equipment goods must continue through `var.player_inventory.item.<itemId>` or
   another shared inventory owner instead of a new house-local copy
 - settlement-owned market state belongs in a shared runtime owner such as

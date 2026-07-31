@@ -24,12 +24,12 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-31`
-- Current Focus: `Task 3 complete; Task 4 market-house adapter and host wiring is next.`
-- Next Step: `Write the failing host, investigation, and button-sound tests for Task 4, then wire market-house to the shared settlement-trade service and mutation applier.`
-- Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs tests/settlement-trade-mutations.test.cjs`
-- Notes: `Task 3 added the shared settlement-trade mutation applier, preserved legacy market-inventory migration through the unified player-item path, and switched stock writes to absolute post-trade quantities so first-write baseline handling stays correct; host-layer wiring remains out of scope until Task 4.`
+- Current Focus: `Implementation complete; awaiting final review, push, and structured closeout.`
+- Next Step: `Review the diff, push if requested, then add the child closeout block once remote push succeeds.`
+- Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs tests/settlement-trade-mutations.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/market-house-settlement-trade.test.cjs tests/market-house-investigation.test.cjs tests/house-button-sound-policy.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none --test-name-pattern "market house specialty trade integration keeps src/main.ts free of settlement trade host branches" tests/robustness.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\vite\bin\vite.js build`
+- Notes: `Do not mark the child closed until project-progress sync and remote push both succeed.`
 
 ## Progress Log
 
@@ -49,6 +49,10 @@
   - Summary: `Completed Task 3 with a shared settlement-trade mutation applier, legacy market-inventory migration through the unified player-item helper, and an absolute stock-write contract that preserves the first-trade service baseline.`
   - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs tests/settlement-trade-mutations.test.cjs`
   - Next: `Start Task 4 with failing host, investigation, and button-sound tests before wiring market-house to the shared settlement-trade adapter.`
+- 2026-07-31
+  - Summary: `Implemented the city specialty market runtime, pricing service, shared mutation applier, market-house host overlay, and shared investigation data path.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs tests/settlement-trade-mutations.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/market-house-settlement-trade.test.cjs tests/market-house-investigation.test.cjs tests/house-button-sound-policy.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none --test-name-pattern "market house specialty trade integration keeps src/main.ts free of settlement trade host branches" tests/robustness.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\vite\bin\vite.js build`
+  - Next: `Review the diff, push if requested, then add the child closeout block once remote push succeeds.`
 
 ## Based On Spec
 
@@ -1352,7 +1356,7 @@ git commit -m "feat: apply settlement trade mutations"
 - Produces: action ids `open-settlement-trade-buy`, `open-settlement-trade-sell`, `select-settlement-trade-goods:<goodsId>`, `settlement-trade-qty-minus`, `settlement-trade-qty-plus`, `confirm-settlement-trade`, `close-settlement-trade`
 - Produces: `createMarketHouseSettlementTradeOverlay(input: { state: GameState; cityId: CityId; mode: "buy" | "sell"; selectedGoodsId: SettlementTradeGoodId | null; quantity: number }): Extract<HouseOverlayViewModel, { type: "settlement-trade" }>`
 
-- [ ] **Step 1: Write the failing host, investigation, and button-sound tests**
+- [x] **Step 1: Write the failing host, investigation, and button-sound tests**
 
 Create `tests/market-house-settlement-trade.test.cjs` with:
 
@@ -1665,7 +1669,7 @@ test("market house specialty trade integration keeps src/main.ts free of settlem
 });
 ```
 
-- [ ] **Step 2: Run the host tests to verify RED**
+- [x] **Step 2: Run the host tests to verify RED**
 
 Run:
 
@@ -1678,7 +1682,7 @@ Expected:
 
 - `FAIL` because the new host action ids, overlay state, overlay view model, and renderer branch do not exist yet, and `market-house` still treats `"settlement-trade"` as an ordinary source shop.
 
-- [ ] **Step 3: Implement the host-only adapter layer and wire it into `market-house`**
+- [x] **Step 3: Implement the host-only adapter layer and wire it into `market-house`**
 
 Add the host session and view contracts:
 
@@ -1922,7 +1926,7 @@ if (input.request.actionId === "confirm-settlement-trade" && currentOverlay?.typ
 
 Update `src/application/house-modules/market-house/market-house-investigation.ts` to read from `SettlementTradeService.createInvestigationSummary()`, and add a `settlement-trade` branch to `src/ui/views/house/market-house-view.ts` that mirrors the current two-column trade popup structure instead of inventing a brand-new shell.
 
-- [ ] **Step 4: Run the host tests to verify GREEN**
+- [x] **Step 4: Run the host tests to verify GREEN**
 
 Run:
 
@@ -1939,7 +1943,7 @@ Expected:
 - `PASS` for the new overlay button-sound policy.
 - `PASS` for the `src/main.ts` no-branch guard.
 
-- [ ] **Step 5: Commit the host integration task**
+- [x] **Step 5: Commit the host integration task**
 
 Run:
 
@@ -1962,7 +1966,7 @@ git commit -m "feat: host city specialty trade in market house"
 - Produces: changelog entry for the new specialty market behavior
 - Produces: synchronized `Execution State` and project-progress entries set to `completed-but-open`
 
-- [ ] **Step 1: Update the shared docs and governance markdown**
+- [x] **Step 1: Update the shared docs and governance markdown**
 
 Append this bullet to the newest section of `docs/change-log.md`:
 
@@ -2027,7 +2031,7 @@ Append this project-progress log entry:
   - Next: `Review the diff, push if requested, then add the structured child closeout once remote push succeeds.`
 ```
 
-- [ ] **Step 2: Run final verification**
+- [x] **Step 2: Run final verification**
 
 Run:
 
@@ -2049,7 +2053,7 @@ Expected:
 - `PASS` for `npm run typecheck`
 - `PASS` for `npm run build`
 
-- [ ] **Step 3: Commit the docs and governance sync**
+- [x] **Step 3: Commit the docs and governance sync**
 
 Run:
 
@@ -2060,17 +2064,17 @@ git commit -m "docs: record city specialty market rollout"
 
 ## Exit Check
 
-- [ ] `GameState.runtime.settlementTrade` owns specialty stock, multiplier, progress, and last-traded day instead of `cityMarkets["settlement-trade"]`.
-- [ ] `SettlementTradeService` resolves snapshot, investigation, and trade output without importing `market-house` session types.
-- [ ] Successful specialty trades settle through typed mutations plus `applySettlementTradeMutations()` rather than direct host-local state patching.
-- [ ] `market-house` hosts a `settlement-trade` overlay and hides the feature when the current runtime city has no specialty profile.
-- [ ] Investigation dialogue and the specialty overlay both read from the same service data path.
-- [ ] `src/main.ts` remains free of city specialty market business branches.
-- [ ] Shared docs and governance state are synchronized before closeout.
+- [x] `GameState.runtime.settlementTrade` owns specialty stock, multiplier, progress, and last-traded day instead of `cityMarkets["settlement-trade"]`.
+- [x] `SettlementTradeService` resolves snapshot, investigation, and trade output without importing `market-house` session types.
+- [x] Successful specialty trades settle through typed mutations plus `applySettlementTradeMutations()` rather than direct host-local state patching.
+- [x] `market-house` hosts a `settlement-trade` overlay and hides the feature when the current runtime city has no specialty profile.
+- [x] Investigation dialogue and the specialty overlay both read from the same service data path.
+- [x] `src/main.ts` remains free of city specialty market business branches.
+- [x] Shared docs and governance state are synchronized before closeout.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

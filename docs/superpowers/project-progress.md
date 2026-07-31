@@ -7,16 +7,16 @@
 - Current Task: `City Specialty Market`
 - Current Task Status: `running`
 - Current Child: `City Specialty Market`
-- Current Child Status: `running`
+- Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-city-specialty-market-task-4`
+- Next Required Action: `review-city-specialty-market-and-push`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 4.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md and the current diff before pushing.`
 
 ## Progress Log
 
@@ -109,6 +109,10 @@
   - Summary: `Completed City Specialty Market Task 3 with a shared settlement-trade mutation applier, unified player-item settlement compatibility for legacy market inventory, and an absolute stock-write contract that preserves first-trade authored stock baselines.`
   - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs tests/settlement-trade-mutations.test.cjs`
   - Next: `Continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 4.`
+- 2026-07-31
+  - Summary: `Implemented the city specialty market under market-house with a dedicated settlementTrade runtime owner, reusable service, shared typed mutation applier, and a shared investigation/overlay data path.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs tests/settlement-trade-mutations.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/market-house-settlement-trade.test.cjs tests/market-house-investigation.test.cjs tests/house-button-sound-policy.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none --test-name-pattern "market house specialty trade integration keeps src/main.ts free of settlement trade host branches" tests/robustness.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\vite\bin\vite.js build`
+  - Next: `Review the diff, push if requested, then add the structured child closeout once remote push succeeds.`
 
 ## Latest Closeout
 
