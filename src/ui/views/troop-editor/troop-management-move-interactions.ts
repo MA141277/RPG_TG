@@ -62,7 +62,7 @@ const ALERT_TEXT = {
   clearReserveFull: "预备队空间不足，无法清空队伍",
   disbandReserveFull: "预备队空间不足，无法解散队伍",
   disbandForbidden: "本队不可解散",
-  captainRemoveForbidden: "褰撳墠闃熼暱涓嶅彲鐩存帴绉诲嚭闃熶紞",
+  captainRemoveForbidden: "当前队长不可直接移出队伍",
 } as const;
 
 function injectInteractionStyles(documentNode: Document): void {

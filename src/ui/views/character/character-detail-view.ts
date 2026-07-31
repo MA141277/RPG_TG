@@ -614,33 +614,33 @@ export function renderCharacterDetailView(
               className: "c-character-detail__info-grid",
             })}>
               ${renderElementResizeHandle(options, "character-detail-basic-info", "content")}
-              <div class="c-character-detail__info-row">
+              <div class="c-character-detail__info-row c-character-detail__info-row--paired">
                 <span class="c-character-detail__label">所属</span>
-                <strong>${options.clanName ?? "无"}</strong>
+                <strong class="c-character-detail__info-value c-character-detail__info-value--wide">${options.clanName ?? "无"}</strong>
                 <span class="c-character-detail__label">据点</span>
-                <strong>${options.cityName ?? character.cityId}</strong>
+                <strong class="c-character-detail__info-value">${options.cityName ?? character.cityId}</strong>
               </div>
-              <div class="c-character-detail__info-row">
+              <div class="c-character-detail__info-row c-character-detail__info-row--paired">
                 <span class="c-character-detail__label">上司</span>
-                <strong>${options.lordName ?? options.houseName ?? "无"}</strong>
+                <strong class="c-character-detail__info-value c-character-detail__info-value--wide">${options.lordName ?? options.houseName ?? "无"}</strong>
                 <span class="c-character-detail__label">俸禄</span>
-                <strong>${options.stipendText ?? `${character.stats.gold}贯`}</strong>
+                <strong class="c-character-detail__info-value">${options.stipendText ?? `${character.stats.gold}贯`}</strong>
               </div>
               <div class="c-character-detail__info-row">
                 <span class="c-character-detail__label">饰品</span>
-                <strong class="c-character-detail__info-span">${options.accessoryName ?? "无"}</strong>
+                <strong class="c-character-detail__info-value c-character-detail__info-span">${options.accessoryName ?? "无"}</strong>
               </div>
               <div class="c-character-detail__info-row">
                 <span class="c-character-detail__label">坐骑</span>
-                <strong class="c-character-detail__info-span">${options.mountName ?? "无"}</strong>
+                <strong class="c-character-detail__info-value c-character-detail__info-span">${options.mountName ?? "无"}</strong>
               </div>
               <div class="c-character-detail__info-row">
                 <span class="c-character-detail__label">装备武器</span>
-                <strong class="c-character-detail__info-span">${options.weaponName ?? "无"}</strong>
+                <strong class="c-character-detail__info-value c-character-detail__info-span">${options.weaponName ?? "无"}</strong>
               </div>
               <div class="c-character-detail__info-row">
                 <span class="c-character-detail__label">装备防具</span>
-                <strong class="c-character-detail__info-span">${options.armorName ?? "无"}</strong>
+                <strong class="c-character-detail__info-value c-character-detail__info-span">${options.armorName ?? "无"}</strong>
               </div>
             </div>
           </div>

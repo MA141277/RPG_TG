@@ -1,4 +1,5 @@
 import { PLAYER_MAIN_TROOP_ID } from "../../../domain/troop-editor";
+import { troopEditorRecruitSessionStore } from "./troop-editor-recruit-session-store";
 
 type SyncTroopEditorInteractionsInput = {
   onOpenTroopManagement: (input: { troopId: string }) => void;
@@ -35,17 +36,17 @@ type InteractionState = {
 };
 
 const ALERT_TEXT = {
-  disbandForbidden: "±¾¶Ó²»¿É½âÉ¢",
-  disbandReserveFull: "Ô¤±¸¶Ó¿Õ¼ä²»×ã£¬ÎÞ·¨½âÉ¢¶ÓÎé",
-  recruitReserveFull: "Ô¤±¸¶ÓÒÑÂú£¬ÇëÏÈ½â¹ÍÊ¿±ø",
-  recruitGoldInsufficient: "½ðÇ®²»×ã",
-  recruitFameInsufficient: "ÉùÍû²»×ã",
+  disbandForbidden: "æœ¬é˜Ÿä¸å¯è§£æ•£",
+  disbandReserveFull: "é¢„å¤‡é˜Ÿç©ºé—´ä¸è¶³ï¼Œæ— æ³•è§£æ•£é˜Ÿä¼",
+  recruitReserveFull: "é¢„å¤‡é˜Ÿå·²æ»¡ï¼Œè¯·å…ˆè§£é›‡å£«å…µ",
+  recruitGoldInsufficient: "é‡‘é’±ä¸è¶³",
+  recruitFameInsufficient: "å£°æœ›ä¸è¶³",
 } as const;
 
 const CREATE_ERROR_TEXT = {
-  emptyName: "¶ÓÎéÃû³Æ²»ÄÜÎª¿Õ",
-  duplicateName: "¶ÓÎéÃû³Æ²»ÄÜÖØ¸´",
-  missingCaptain: "±ØÐëÏÈÑ¡Ôñ¶Ó³¤",
+  emptyName: "é˜Ÿä¼åç§°ä¸èƒ½ä¸ºç©º",
+  duplicateName: "é˜Ÿä¼åç§°ä¸èƒ½é‡å¤",
+  missingCaptain: "å¿…é¡»å…ˆé€‰æ‹©é˜Ÿé•¿",
 } as const;
 
 
@@ -294,6 +295,14 @@ export function syncTroopEditorInteractions(
     sortToastTimeoutId: null,
   };
 
+  const restoredRecruitSession = troopEditorRecruitSessionStore.consume(
+    shopOfferButtons.map((button) => button.dataset.troopEditorShopOffer ?? "")
+  );
+  if (restoredRecruitSession != null) {
+    state.mode = restoredRecruitSession.mode;
+    state.selectedRecruitOfferId = restoredRecruitSession.selectedOfferId;
+  }
+
   const clearSortToastTimer = (): void => {
     if (state.sortToastTimeoutId != null) {
       window.clearTimeout(state.sortToastTimeoutId);
@@ -302,6 +311,11 @@ export function syncTroopEditorInteractions(
   };
 
   const syncUi = (): void => {
+    troopEditorRecruitSessionStore.remember({
+      mode: state.mode,
+      selectedRecruitOfferId: state.selectedRecruitOfferId,
+    });
+
     setPressedState(
       disbandButton,
       state.mode === "disband-select" || state.mode === "disband-confirm"
@@ -348,7 +362,7 @@ export function syncTroopEditorInteractions(
     }
 
     if (confirmText != null) {
-      confirmText.textContent = "È·¶¨Òª½âÉ¢¶ÓÎéÂð£¿±»½âÉ¢µÄµ¥Î»½«·µ»ØÔ¤±¸¶Ó¡£";
+      confirmText.textContent = "ç¡®å®šè¦è§£æ•£é˜Ÿä¼å—ï¼Ÿè¢«è§£æ•£çš„å•ä½å°†è¿”å›žé¢„å¤‡é˜Ÿã€‚";
     }
 
     if (alertText != null) {
@@ -396,6 +410,16 @@ export function syncTroopEditorInteractions(
           button.dataset.troopEditorShopOffer === state.selectedRecruitOfferId
       );
     });
+
+    if (state.mode === "recruit-menu") {
+      const selectedOfferButton = findRecruitOfferButton();
+      if (selectedOfferButton != null) {
+        placePrompt(shopPrompt, shopPanel, selectedOfferButton, {
+          width: 180,
+          xOffset: 20,
+        });
+      }
+    }
   };
 
   const resetToIdle = (): void => {
@@ -691,7 +715,7 @@ export function syncTroopEditorInteractions(
     }
 
     if (state.selectedCreateCaptainId == null) {
-      state.createErrorText = "å¿…é¡»å…ˆé€‰æ‹©é˜Ÿé•¿";
+      state.createErrorText = CREATE_ERROR_TEXT.missingCaptain;
       syncUi();
       return;
     }

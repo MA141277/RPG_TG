@@ -127,6 +127,7 @@ import {
 } from "./application/audio/battle-sound";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
+import { declaredScrollRestoration } from "./ui/runtime/declared-scroll-restoration";
 import {
   applyCouncilPriorityFollowUp,
   createNavigationTimeFollowUpBridge,
@@ -7354,6 +7355,8 @@ function renderAppFrame(
   )
     ? cachedCampaignMarkers
     : null;
+  const preservedDeclaredScrollState =
+    declaredScrollRestoration.capture(appRoot);
   const preservedCoinRewardLayer = captureCoinRewardLayer(appRoot);
   const preservedCityCardDrawOverlay = captureCityCardDrawOverlay(appRoot);
   const presenterOutput = createAppPresenterOutput({
@@ -7403,6 +7406,7 @@ function renderAppFrame(
   });
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
   restoreCampaignMarkerElements(appRoot, preservedCampaignMarkers);
+  declaredScrollRestoration.restore(appRoot, preservedDeclaredScrollState);
   restoreCoinRewardLayer(appRoot, preservedCoinRewardLayer);
   restoreCityCardDrawOverlay(appRoot, preservedCityCardDrawOverlay);
   syncCampaignMapDebugView();

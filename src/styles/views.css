@@ -2257,10 +2257,17 @@
   box-shadow: none;
 }
 
+.view-troop-editor .c-troop-editor__troops-panel-body {
+  display: grid;
+}
+
 .view-troop-editor .c-troop-editor__troop-scroll {
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: start;
-  padding-right: 0;
+  box-sizing: border-box;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  height: 100%;
+  justify-items: stretch;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 .view-troop-editor .c-troop-editor__panel-heading {
@@ -2414,8 +2421,18 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .view-troop-editor .c-troop-editor__troop-scroll {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .c-troop-management__battlefield {
     min-height: 420px;
     padding-inline: 34px;
+  }
+}
+
+@media (width <= 640px) {
+  .view-troop-editor .c-troop-editor__troop-scroll {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

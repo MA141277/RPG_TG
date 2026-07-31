@@ -19,7 +19,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
         <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel c-house-trade-popup" role="dialog" aria-modal="true">
           <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
           <div class="c-grain-shop-modal__body c-house-trade-popup__body c-house-trade-popup__body--market">
-            <div class="c-market-house-trade-list">
+            <div
+              class="c-market-house-trade-list"
+              data-preserve-scroll-key="house.market-trade.rows"
+            >
               ${overlay.rows
                 .map(
                   (row) => `

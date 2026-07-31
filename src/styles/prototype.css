@@ -3000,9 +3000,19 @@
   border-bottom: 1px solid rgb(110 88 52 / 22%);
 }
 
-.c-character-detail__info-row:nth-child(1),
-.c-character-detail__info-row:nth-child(2) {
-  grid-template-columns: 28% minmax(0, 1fr) 28% minmax(0, 1fr);
+.c-character-detail__info-row.c-character-detail__info-row--paired {
+  grid-template-columns: 16% minmax(0, 1.35fr) 16% minmax(0, 0.9fr);
+  gap: 0 3%;
+}
+
+.c-character-detail__info-value {
+  min-width: 0;
+}
+
+.c-character-detail__info-row--paired .c-character-detail__info-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .c-character-detail__info-span {

@@ -194,7 +194,11 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
           </div>
 
           <div class="c-troop-editor__troops-panel-body">
-            <div class="c-troop-editor__troop-scroll" data-troop-editor-list>
+            <div
+              class="c-troop-editor__troop-scroll"
+              data-troop-editor-list
+              data-preserve-scroll-key="troop-editor.troop-list"
+            >
               ${model.troops
                 .map(
                   (troop) => `
