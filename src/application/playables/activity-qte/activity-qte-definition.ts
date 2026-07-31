@@ -44,7 +44,6 @@ export function startActivityQtePlayable(input: {
           playableId: "activity-qte",
           integrationId:
             input.integrationId ?? "playable.activity-qte.scene.default",
-          family: "minigame",
           ownerContext:
             input.ownerContext ?? {
               ownerKind: "scene",

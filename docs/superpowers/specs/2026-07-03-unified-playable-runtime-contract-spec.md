@@ -1,8 +1,10 @@
 # Unified Playable Runtime Contract Spec
 
+> **2026-07-31 note:** The current code no longer carries a `family` field on playable definitions, launch requests, active sessions, or presenter models. Older sections in this document that mention `minigame/battle family` describe historical migration context and should be read as superseded unless they are explicitly about archived work.
+
 ## 1. Goal
 
-Define one repository-level contract for all playable interaction modules so current and future minigames and `story-battle` enter the same registration, runtime, presenter, settlement, and owner-handoff pipeline.
+Define one repository-level contract for all playable interaction modules so current and future playables, including `story-battle`, enter the same registration, runtime, presenter, settlement, and owner-handoff pipeline.
 
 The target is:
 
@@ -11,7 +13,7 @@ The target is:
 - presenter/view consumes one unified shell contract
 - settlement writes through unified game/runtime structures
 - completion always returns to the correct owner scene/house/session through explicit handoff data
-- `story-battle` is included in the same top-level runtime family without being flattened into ordinary minigame semantics
+- `story-battle` is included in the same top-level runtime without being flattened into ordinary short-form minigame semantics
 
 ## 2. Scope
 
@@ -78,20 +80,14 @@ This spec defines the target contract family and the migration path.
 
 ## 6. Core Taxonomy
 
-The repository should use a two-level taxonomy:
+The repository should use one top-level taxonomy:
 
-- top level
-  - `playable`
-- sub-family
-  - `minigame`
-  - `battle`
+- `playable`
 
 Rules:
 
-- all current minigames and `story-battle` belong to the top-level playable runtime family
-- `family` is mandatory contract data
-- `story-battle` must use `family: "battle"`
-- ordinary short-form challenge modules such as QTE, begging, accounting, and compounding should use `family: "minigame"`
+- all current minigames, `story-battle`, and flow-style playable instances belong to the same top-level playable runtime contract
+- runtime/editor behavior must be driven by explicit ids, integrations, layouts, and capabilities rather than one mandatory subtype enum
 - the repository must not use `minigame` as a blanket term for all playables once this spec is active
 
 ## 7. Current Mismatch Snapshot
@@ -102,7 +98,7 @@ Current repository mismatches that this spec resolves:
 - `src/core/runtime/interactive-runtime.ts` still contains feature-specific launch/action routing rather than one definition-driven playable runtime surface
 - `src/application/grain-shop/accounting-minigame.ts` and `src/application/medicine-house/compounding-minigame.ts` expose rules but not unified session/runtime/presenter/settlement contracts
 - `src/ui/views/minigames/city-begging-minigame-view.ts` is a feature-specific overlay rather than one presenter-shell consumer inside a common playable runtime path
-- `story-battle` already lives close to the same interactive seam but still lacks a shared playable taxonomy that distinguishes battle from minigame without splitting runtime shell ownership
+- `story-battle` already lives close to the same interactive seam but historically depended on a separate battle-vs-minigame classification that no longer belongs in the shared contract
 - return-to-owner behavior is not yet a mandatory top-level handoff contract for all playable completion paths
 
 ## 8. Core Architecture
@@ -128,8 +124,6 @@ These terms are required and should be used consistently in code and docs:
 
 - `playableId`
   - unique playable identifier
-- `family`
-  - top-level playable subtype, currently `minigame` or `battle`
 - `ownerContext`
   - normalized owner metadata captured when the playable starts
 - `session`

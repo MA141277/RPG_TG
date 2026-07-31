@@ -37,12 +37,10 @@ test("createPlayableRuntimeRegistriesFromActivatedMod installs contributed playa
         playables: [
           {
             id: "playable.training",
-            family: "minigame",
             commandPrefix: "playable.training.",
           },
           {
             id: "playable.unlisted",
-            family: "minigame",
             commandPrefix: "playable.unlisted.",
           },
         ],
@@ -118,7 +116,6 @@ test("playable runtime resolves launches through the configured default runtime 
           playables: [
             {
               id: "playable.training",
-              family: "minigame",
               commandPrefix: "playable.training.",
             },
           ],

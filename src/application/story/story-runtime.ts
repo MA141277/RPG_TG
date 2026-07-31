@@ -2,6 +2,7 @@ import type { ChoiceOption, SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityDefinition } from "../../domain/city";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type {
   EventBinding,
   EventDefinition,
@@ -55,10 +56,16 @@ import {
   runSceneUntilPause,
   type SceneRunnerContext,
 } from "../scene/scene-runner";
+import {
+  continueDialogueScreen,
+  selectDialogueScreenOption,
+  type DialogueScreenResult,
+} from "../../core/runtime/dialogue-screen-runtime";
 
 type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition> | undefined;
   eventBindingsById?: Record<string, EventBinding> | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   settlementDefinitionsById?:
@@ -485,6 +492,15 @@ export function advanceStorySceneStep(
   runtime: StoryRuntimeContext,
   content: StoryContent
 ): StoryRuntimeResult {
+  const activeDialogue = getActiveSingleScreenDialogue(runtime, content);
+  if (activeDialogue?.screen?.mode === "linear") {
+    return applyDialogueScreenResult(
+      runtime,
+      content,
+      continueDialogueScreen(activeDialogue)
+    );
+  }
+
   const result = advanceScene(
     runtime.state,
     createStorySceneRunnerContext(runtime, content)
@@ -507,6 +523,15 @@ export function chooseStorySceneOption(
   content: StoryContent,
   selectedOption: ChoiceOption
 ): StoryRuntimeResult {
+  const activeDialogue = getActiveSingleScreenDialogue(runtime, content);
+  if (activeDialogue?.screen?.mode === "choice") {
+    return applyDialogueScreenResult(
+      runtime,
+      content,
+      selectDialogueScreenOption(activeDialogue, selectedOption.id)
+    );
+  }
+
   if (selectedOption.nextEventId != null) {
     let nextState = runtime.state;
     let nextCharacterDefinitions = runtime.characterDefinitions;
@@ -593,6 +618,113 @@ export function chooseStorySceneOption(
         ? {}
         : { houseDefinitions: runtime.houseDefinitions }),
     },
+    content
+  );
+}
+
+function getActiveSingleScreenDialogue(
+  runtime: StoryRuntimeContext,
+  content: StoryContent
+): RuntimeDialogueDefinition | null {
+  const activeSceneId = runtime.state.scene.activeSceneId;
+  if (activeSceneId == null) {
+    return null;
+  }
+
+  const dialogue = content.dialogueDefinitionsById?.[activeSceneId] ?? null;
+  return dialogue?.screen == null ? null : dialogue;
+}
+
+function closeStoryScene(state: GameState): GameState {
+  return {
+    ...state,
+    scene: {
+      ...state.scene,
+      activeEventId: null,
+      activeSceneId: null,
+      cursor: 0,
+      status: "idle",
+    },
+    ui: {
+      ...state.ui,
+      currentView: state.world.currentHouseId == null ? "city" : "house",
+    },
+  };
+}
+
+function applyDialogueScreenResult(
+  runtime: StoryRuntimeContext,
+  content: StoryContent,
+  result: DialogueScreenResult
+): StoryRuntimeResult {
+  const nextEventId =
+    typeof result.nextEventId === "string" && result.nextEventId.length > 0
+      ? result.nextEventId
+      : null;
+
+  if (nextEventId == null) {
+    return {
+      state: closeStoryScene(runtime.state),
+      characterDefinitions: runtime.characterDefinitions,
+      ...(runtime.cityDefinitions == null
+        ? {}
+        : { cityDefinitions: runtime.cityDefinitions }),
+      ...(runtime.houseDefinitions == null
+        ? {}
+        : { houseDefinitions: runtime.houseDefinitions }),
+    };
+  }
+
+  const targetEvent = content.eventDefinitionsById[nextEventId];
+  if (targetEvent == null) {
+    return {
+      state: closeStoryScene(runtime.state),
+      characterDefinitions: runtime.characterDefinitions,
+      ...(runtime.cityDefinitions == null
+        ? {}
+        : { cityDefinitions: runtime.cityDefinitions }),
+      ...(runtime.houseDefinitions == null
+        ? {}
+        : { houseDefinitions: runtime.houseDefinitions }),
+    };
+  }
+
+  const continuation = resolveEventContinuation({
+    state: runtime.state,
+    eventDefinitionsById: content.eventDefinitionsById,
+    sourceEventId: runtime.state.scene.activeEventId,
+    targetEventId: targetEvent.id,
+    visitedEventIds:
+      runtime.state.scene.activeEventId == null
+        ? []
+        : [runtime.state.scene.activeEventId],
+  });
+  if (continuation == null) {
+    return {
+      state: closeStoryScene(runtime.state),
+      characterDefinitions: runtime.characterDefinitions,
+      ...(runtime.cityDefinitions == null
+        ? {}
+        : { cityDefinitions: runtime.cityDefinitions }),
+      ...(runtime.houseDefinitions == null
+        ? {}
+        : { houseDefinitions: runtime.houseDefinitions }),
+    };
+  }
+
+  return syncStoryScene(
+    routeStoryDirectEntry(
+      {
+        state: runtime.state,
+        characterDefinitions: runtime.characterDefinitions,
+        ...createRuntimeWorldDefinitionContext(runtime),
+      },
+      content,
+      {
+        eventId: continuation.eventDefinition.id,
+        eventDefinition: continuation.eventDefinition,
+      }
+    ),
     content
   );
 }

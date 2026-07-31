@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-31 Playable Family Removal Slice
+
+### Changed
+- `src/core/contracts/playable-runtime.ts` 删除了 `PlayableFamily` 以及 `PlayableDefinition`、`PlayableLaunchRequest`、`ActivePlayableSession`、`PlayablePresenterModel` 上的 `family` 字段；playable runtime 现在不再通过 `minigame / battle / flow` 这种顶层分类来表达玩法实例契约。
+- `src/core/runtime/playable-runtime.ts` 改为通过显式 `flowPlayablesById` 命中判断 flow 路径，而不是依赖 `family === "flow"`；`interactive-runtime` 的兼容 playable session 投影也不再写入 `family`。
+- `src/modules/script-editor/application/minigame-binding-authoring.ts` 与 `runtime-pack-export.ts` 现在会把 builtin playable 作为统一可选目录处理，不再因为 `story-battle` 不是 `minigame family` 而把它排除在玩法实例 authoring/export 之外。
+- `src/application/audio/audio-manager.ts` 的 battle BGM ownership 判断改为显式检查 `playableId === "story-battle"`，避免继续依赖已删除的 runtime family 标签。
+
+### Impact
+- 编辑器里创建玩法实例时，现在可以直接选择 `story-battle` 与其他 builtin playable；运行时 playable session 只保留 `playableId / integrationId / ownerContext / status / state` 这些真正有语义的字段。
+- 这次变更只移除了 playable contract family 这一层分类，没有顺带重做 settlement authoring、旧入口链或 house shell 架构。
+
 ## 2026-07-29 Story Runtime Event Binding And Progression Slice
 
 ### Added

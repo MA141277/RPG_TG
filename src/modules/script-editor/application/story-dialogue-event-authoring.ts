@@ -1,8 +1,11 @@
 ﻿import type {
+  ScriptEditorDialogueCastRecord,
   ScriptEditorDialogueFollowUp,
   ScriptEditorDialogueFollowUpTargetFamily,
+  ScriptEditorDialogueMode,
   ScriptEditorDialogueNodeRecord,
   ScriptEditorDialogueNodeType,
+  ScriptEditorDialogueOptionRecord,
   ScriptEditorDialogueRecord,
   ScriptEditorConditionComparisonOperator,
   ScriptEditorConditionGroupOperator,
@@ -31,6 +34,11 @@ export const SCRIPT_EDITOR_STORY_PROGRESS_MODES: readonly ScriptEditorStoryProgr
 export const SCRIPT_EDITOR_DIALOGUE_NODE_TYPES: readonly ScriptEditorDialogueNodeType[] = [
   "narration",
   "dialogue",
+  "choice",
+] as const;
+
+export const SCRIPT_EDITOR_DIALOGUE_MODES: readonly ScriptEditorDialogueMode[] = [
+  "linear",
   "choice",
 ] as const;
 
@@ -191,7 +199,6 @@ const SCRIPT_EDITOR_EVENT_BINDING_CONDITION_FIELD_OPTIONS: readonly ScriptEditor
       { value: "story-progress", label: "剧情推进" },
       { value: "city-enter", label: "进入城市" },
       { value: "building-enter", label: "进入建筑" },
-      { value: "dialogue-finished", label: "对话结束" },
       { value: "menu-select", label: "菜单选择" },
       { value: "minigame-settled", label: "小游戏结算" },
       { value: "custom", label: "自定义触发" },
@@ -207,7 +214,6 @@ const SCRIPT_EDITOR_EVENT_BINDING_CONDITION_FIELD_OPTIONS: readonly ScriptEditor
       { value: "person", label: "人物" },
       { value: "city", label: "城市" },
       { value: "building", label: "建筑" },
-      { value: "dialogue", label: "对话" },
       { value: "minigame", label: "小游戏" },
       { value: "story", label: "剧情节点" },
     ],
@@ -276,9 +282,12 @@ export function createDefaultScriptEditorDialogueRecord(
         ? indexOrId
         : createDefaultScriptEditorCanonicalId("dialogues", indexOrId),
     title: `对话 ${suffix}`,
-    storyNodeId: "",
-    participantPersonIds: [],
-    nodes: [createDefaultDialogueNode(0)],
+    mode: "linear",
+    textId: "",
+    speakerPersonId: "",
+    cast: [],
+    nextEventId: "",
+    options: [],
   };
 }
 
@@ -410,14 +419,27 @@ export function normalizeScriptEditorStoryNodeRecord(
 export function normalizeScriptEditorDialogueRecord(
   record: Partial<ScriptEditorDialogueRecord> & { id: string }
 ): ScriptEditorDialogueRecord {
+  const normalizedCast = (record.cast ?? []).map(normalizeDialogueCastRecord);
+  const normalizedOptions = (record.options ?? []).map(normalizeDialogueOptionRecord);
+  const compatParticipantPersonIds = normalizeStringArray(record.participantPersonIds, {
+    preserveEmptyEntries: true,
+  });
   return {
     ...record,
     title: normalizeString(record.title, record.id),
+    mode: normalizeDialogueMode(record.mode),
+    textId: normalizeOptionalTrimmedString(record.textId),
+    speakerPersonId: normalizeOptionalTrimmedString(record.speakerPersonId),
+    cast: normalizedCast,
+    nextEventId: normalizeOptionalTrimmedString(record.nextEventId),
+    options: normalizedOptions,
     storyNodeId: normalizeOptionalString(record.storyNodeId),
-    participantPersonIds: normalizeStringArray(record.participantPersonIds, {
-      preserveEmptyEntries: true,
-    }),
-    nodes: (record.nodes ?? []).map(normalizeDialogueNodeRecord),
+    ...(compatParticipantPersonIds.length === 0
+      ? {}
+      : { participantPersonIds: compatParticipantPersonIds }),
+    ...((record.nodes ?? []).length === 0
+      ? {}
+      : { nodes: (record.nodes ?? []).map(normalizeDialogueNodeRecord) }),
     ...(Array.isArray(record.followUps) && record.followUps.length > 0
       ? { followUps: record.followUps.map(normalizeDialogueFollowUp) }
       : {}),
@@ -734,12 +756,122 @@ export function removeScriptEditorStoryNodeRelation(
 
 export function updateScriptEditorDialogueField(
   record: ScriptEditorDialogueRecord,
-  field: "id" | "title" | "storyNodeId",
+  field:
+    | "id"
+    | "title"
+    | "mode"
+    | "textId"
+    | "speakerPersonId"
+    | "nextEventId"
+    | "storyNodeId",
+  value: string
+): ScriptEditorDialogueRecord {
+  if (field === "mode") {
+    const mode = normalizeDialogueMode(value);
+    return {
+      ...record,
+      mode,
+      ...(mode === "linear"
+        ? { nextEventId: normalizeOptionalTrimmedString(record.nextEventId) }
+        : {}),
+    };
+  }
+
+  return {
+    ...record,
+    [field]:
+      field === "storyNodeId"
+        ? normalizeOptionalString(value)
+        : normalizeOptionalTrimmedString(value),
+  };
+}
+
+export function appendScriptEditorDialogueCast(
+  record: ScriptEditorDialogueRecord
+): ScriptEditorDialogueRecord {
+  return {
+    ...record,
+    cast: [...(record.cast ?? []), { personId: "", side: "left" }],
+  };
+}
+
+export function updateScriptEditorDialogueCastField(
+  record: ScriptEditorDialogueRecord,
+  index: number,
+  field: keyof ScriptEditorDialogueCastRecord,
   value: string
 ): ScriptEditorDialogueRecord {
   return {
     ...record,
-    [field]: value.trim(),
+    cast: (record.cast ?? []).map((entry, entryIndex) =>
+      entryIndex === index
+        ? {
+            ...entry,
+            [field]:
+              field === "side"
+                ? normalizeDialogueSide(value)
+                : normalizeOptionalTrimmedString(value),
+          }
+        : entry
+    ),
+  };
+}
+
+export function removeScriptEditorDialogueCast(
+  record: ScriptEditorDialogueRecord,
+  index: number
+): ScriptEditorDialogueRecord {
+  return {
+    ...record,
+    cast: (record.cast ?? []).filter(
+      (_, entryIndex) => entryIndex !== index
+    ),
+  };
+}
+
+export function appendScriptEditorDialogueOption(
+  record: ScriptEditorDialogueRecord
+): ScriptEditorDialogueRecord {
+  const nextIndex = (record.options?.length ?? 0) + 1;
+  return {
+    ...record,
+    options: [
+      ...(record.options ?? []),
+      {
+        id: `option.${nextIndex}`,
+        textId: "",
+        nextEventId: "",
+      },
+    ],
+  };
+}
+
+export function updateScriptEditorDialogueOptionField(
+  record: ScriptEditorDialogueRecord,
+  index: number,
+  field: keyof ScriptEditorDialogueOptionRecord,
+  value: string
+): ScriptEditorDialogueRecord {
+  return {
+    ...record,
+    options: (record.options ?? []).map((option, optionIndex) =>
+      optionIndex === index
+        ? {
+            ...option,
+            [field]: normalizeOptionalTrimmedString(value),
+          }
+        : option
+    ),
+  };
+}
+
+export function removeScriptEditorDialogueOption(
+  record: ScriptEditorDialogueRecord,
+  index: number
+): ScriptEditorDialogueRecord {
+  return {
+    ...record,
+    options: (record.options ?? []).filter((_, optionIndex) => optionIndex !== index),
   };
 }
 
@@ -1154,6 +1286,25 @@ function normalizeDialogueNodeRecord(node: ScriptEditorDialogueNodeRecord): Scri
   };
 }
 
+function normalizeDialogueCastRecord(
+  value: ScriptEditorDialogueCastRecord
+): ScriptEditorDialogueCastRecord {
+  return {
+    personId: normalizeOptionalTrimmedString(value.personId),
+    side: normalizeDialogueSide(value.side),
+  };
+}
+
+function normalizeDialogueOptionRecord(
+  value: ScriptEditorDialogueOptionRecord
+): ScriptEditorDialogueOptionRecord {
+  return {
+    id: normalizeString(value.id, "option"),
+    textId: normalizeOptionalTrimmedString(value.textId),
+    nextEventId: normalizeOptionalTrimmedString(value.nextEventId),
+  };
+}
+
 function normalizeDialogueFollowUp(followUp: ScriptEditorDialogueFollowUp): ScriptEditorDialogueFollowUp {
   return {
     targetFamily: normalizeDialogueFollowUpTargetFamily(followUp.targetFamily),
@@ -1426,6 +1577,18 @@ function normalizeDialogueNodeType(value?: string): ScriptEditorDialogueNodeType
   return SCRIPT_EDITOR_DIALOGUE_NODE_TYPES.includes(value as ScriptEditorDialogueNodeType)
     ? (value as ScriptEditorDialogueNodeType)
     : "dialogue";
+}
+
+function normalizeDialogueMode(value?: string): ScriptEditorDialogueMode {
+  return SCRIPT_EDITOR_DIALOGUE_MODES.includes(value as ScriptEditorDialogueMode)
+    ? (value as ScriptEditorDialogueMode)
+    : "linear";
+}
+
+function normalizeDialogueSide(value: unknown): "left" | "right" | "center" {
+  return value === "left" || value === "right" || value === "center"
+    ? value
+    : "left";
 }
 
 function normalizeDialogueFollowUpTargetFamily(

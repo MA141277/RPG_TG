@@ -23,7 +23,6 @@ Create the mechanic-facing repository skeleton for one new playable.
 ### 3.2 Required Inputs
 
 - `playableId`
-- `family`
 - `kind`
 - `title`
 
@@ -32,7 +31,6 @@ Recommended CLI shape:
 ```bash
 npm run scaffold:playable -- ^
   --playable-id city-begging ^
-  --family minigame ^
   --kind pointer-runner ^
   --title "City Begging"
 ```

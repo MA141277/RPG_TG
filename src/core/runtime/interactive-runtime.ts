@@ -217,17 +217,16 @@ function createInteractiveSession(
   request: Extract<InteractiveRuntimeRequest, { phase: "launch" }>
 ): ActiveInteractiveRuntimeSession {
   return {
-    kind: request.kind,
-    sessionId: createInteractiveSessionId(request.kind),
-    source: request.source,
-    playable: {
-      sessionId: `playable.${request.playableLaunch.playableId}`,
-      playableId: request.playableLaunch.playableId,
-      integrationId: request.playableLaunch.integrationId,
-      family: request.playableLaunch.family,
-      ownerContext: request.playableLaunch.ownerContext,
-      status: "active",
-    },
+      kind: request.kind,
+      sessionId: createInteractiveSessionId(request.kind),
+      source: request.source,
+      playable: {
+        sessionId: `playable.${request.playableLaunch.playableId}`,
+        playableId: request.playableLaunch.playableId,
+        integrationId: request.playableLaunch.integrationId,
+        ownerContext: request.playableLaunch.ownerContext,
+        status: "active",
+      },
   };
 }
 
@@ -255,7 +254,6 @@ function getActiveInteractiveSession(
         sessionId: "playable.city-begging",
         playableId: "city-begging",
         integrationId: "playable.city-begging.external.default",
-        family: "minigame",
         ownerContext: {
           ownerKind: "external",
           ownerId: null,
@@ -286,7 +284,6 @@ function getActiveInteractiveSession(
         sessionId: "playable.activity-qte",
         playableId: "activity-qte",
         integrationId: "playable.activity-qte.scene.default",
-        family: "minigame",
         ownerContext: {
           ownerKind: "scene",
           ownerId: source.sceneId,
@@ -313,7 +310,6 @@ function getActiveInteractiveSession(
         sessionId: "playable.story-battle",
         playableId: "story-battle",
         integrationId: "playable.story-battle.scene.default",
-        family: "battle",
         ownerContext: {
           ownerKind: "scene",
           ownerId: source.sceneId,

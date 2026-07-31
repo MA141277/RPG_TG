@@ -963,7 +963,7 @@ export function queueAppAudioCue(
 function isBattlePlayableActive(state: GameState): boolean {
   return (
     state.runtime.playableSession?.status === "active" &&
-    state.runtime.playableSession.family === "battle"
+    state.runtime.playableSession.playableId === "story-battle"
   );
 }
 
@@ -1597,4 +1597,3 @@ export function createAppAudioController(
     },
   };
 }
-

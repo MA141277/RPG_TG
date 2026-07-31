@@ -12,6 +12,7 @@ import type { HouseDefinition } from "../../domain/house";
 import type { HouseModuleViewModel } from "../../domain/house-module";
 import type { TroopEditorStageViewModel } from "../troop-editor/troop-editor-stage-view-model";
 import type { TroopManagementStageViewModel } from "../troop-editor/troop-management-stage-view-model";
+import type { DialogueScreenViewModel } from "../../core/runtime/dialogue-screen-runtime";
 
 export type AppPresenterStageOutput =
   | { type: "map"; cityDefinitions: CityDefinition[] }
@@ -39,6 +40,7 @@ export type AppPresenterStageOutput =
       type: "scene";
       currentSceneAction: ActionNode | null;
       currentSceneChoiceOptions: ChoiceOption[];
+      dialogueScreenViewModel: DialogueScreenViewModel | null;
     }
   | { type: "battle" }
   | { type: "empty" };
@@ -57,4 +59,3 @@ export type AppPresenterOutput = {
   overlay: AppPresenterOverlayOutput;
   sceneDefinitionsById?: Record<string, SceneDefinition>;
 };
-

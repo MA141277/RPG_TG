@@ -64,7 +64,7 @@ test("flow playable launches with initial node state", () => {
   assert.equal(session.sessionId, "playable.playable.test.flow");
   assert.equal(session.playableId, flowDefinition.id);
   assert.equal(session.integrationId, "playable.test.flow.dialogue");
-  assert.equal(session.family, "flow");
+  assert.equal("family" in session, false);
   assert.deepEqual(session.ownerContext, ownerContext);
   assert.equal(session.status, "active");
   assert.deepEqual(session.state, { currentNodeId: "intro" });

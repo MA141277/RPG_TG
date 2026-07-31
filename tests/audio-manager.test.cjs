@@ -274,7 +274,6 @@ test("battle playable session takes BGM ownership over the scene and restores th
         sessionId: "playable.story-battle",
         playableId: "story-battle",
         integrationId: "playable.story-battle.scene.default",
-        family: "battle",
         ownerContext: {
           ownerKind: "scene",
           ownerId: "intro",
@@ -358,7 +357,6 @@ test("battle BGM falls back to in-game default when no outer scene cue exists", 
             sessionId: "playable.story-battle",
             playableId: "story-battle",
             integrationId: "playable.story-battle.scene.default",
-            family: "battle",
             ownerContext: {
               ownerKind: "scene",
               ownerId: "intro",
@@ -1263,4 +1261,3 @@ test("audio controller keeps one looping BGM player and switches its source when
   assert.equal(players.length, 1);
   assert.equal(players[0].src, "asset://BGM/游戏内.mp3");
 });
-

@@ -24,7 +24,6 @@ function createSession(sourceEventId) {
     sessionId: "playable.story-battle",
     playableId: "story-battle",
     integrationId: "playable.story-battle.dialogue.default",
-    family: "battle",
     status: "active",
     ownerContext: {
       ownerKind: "dialogue",

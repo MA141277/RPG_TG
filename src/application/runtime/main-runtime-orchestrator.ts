@@ -6,6 +6,7 @@ import type { BuildingStatusById } from "../../domain/building-status";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityDefinition } from "../../domain/city";
 import type { CityStatusById } from "../../domain/city-status";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type {
   EventBinding,
   EventDefinition,
@@ -74,6 +75,7 @@ export type MainRuntimeOrchestratorDependencies = {
   getStoryContent(): {
     eventDefinitionsById: Record<string, EventDefinition>;
     sceneDefinitionsById: Record<string, SceneDefinition>;
+    dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
     eventBindingsById?: Record<string, EventBinding>;
     activityDefinitionsById?: Record<string, ActivityDefinition>;
     settlementDefinitionsById?: Record<
@@ -221,6 +223,7 @@ export function createMainRuntimeOrchestrator(
           {
             eventDefinitionsById: storyContent.eventDefinitionsById,
             sceneDefinitionsById: storyContent.sceneDefinitionsById,
+            dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
             activityDefinitionsById: storyContent.activityDefinitionsById,
             textEntriesById: storyContent.textEntriesById,
           }
@@ -264,6 +267,7 @@ export function createMainRuntimeOrchestrator(
         {
           eventDefinitionsById: storyContent.eventDefinitionsById,
           sceneDefinitionsById: storyContent.sceneDefinitionsById,
+          dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
           activityDefinitionsById: storyContent.activityDefinitionsById,
           textEntriesById: storyContent.textEntriesById,
         },

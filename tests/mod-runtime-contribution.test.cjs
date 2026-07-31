@@ -115,7 +115,6 @@ test("createLoadedModFromScenarioPack declares playable runtime contributions", 
       playables: [
         {
           id: "playable.training",
-          family: "minigame",
           commandPrefix: "playable.training.",
         },
       ],

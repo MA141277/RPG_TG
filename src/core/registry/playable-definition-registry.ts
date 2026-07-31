@@ -14,29 +14,24 @@ export type PlayableDefinitionRegistry = {
 const builtinPlayableDefinitions: PlayableDefinition[] = [
   {
     id: "activity-qte",
-    family: "minigame",
     commandPrefix: "interactive.activity-qte.",
     legacyInteractiveKind: "activity-qte",
   },
   {
     id: "city-begging",
-    family: "minigame",
     commandPrefix: "interactive.city-begging.",
     legacyInteractiveKind: "city-begging",
   },
   {
     id: "grain-accounting",
-    family: "minigame",
     commandPrefix: "playable.grain-accounting.",
   },
   {
     id: "medicine-compounding",
-    family: "minigame",
     commandPrefix: "playable.medicine-compounding.",
   },
   {
     id: "story-battle",
-    family: "battle",
     commandPrefix: "interactive.story-battle.",
     legacyInteractiveKind: "story-battle",
   },

@@ -146,7 +146,6 @@ export function launchMedicineCompoundingPlayable(input: {
           sessionId: "playable.medicine-compounding",
           playableId: "medicine-compounding",
           integrationId: "playable.medicine-compounding.house.medicine-house",
-          family: "minigame",
           ownerContext: {
             ownerKind: "house",
             ownerId: input.ownerId,

@@ -67,7 +67,7 @@ test("flow presenter exposes text node view model and confirm action", () => {
   });
 
   assert.equal(presenter.playableId, flowDefinition.id);
-  assert.equal(presenter.family, "flow");
+  assert.equal("family" in presenter, false);
   assert.equal(presenter.layout, "panel");
   assert.equal(presenter.title, "Test Flow");
   assert.deepEqual(presenter.summaryLines, []);
@@ -88,7 +88,6 @@ test("flow presenter exposes choice options as custom actions", () => {
       sessionId: "playable.playable.test.flow",
       playableId: flowDefinition.id,
       integrationId: "playable.test.flow.dialogue",
-      family: "flow",
       ownerContext,
       status: "active",
       state: { currentNodeId: "choice" },

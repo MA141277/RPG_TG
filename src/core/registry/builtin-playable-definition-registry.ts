@@ -7,32 +7,26 @@ import {
 const builtinPlayableDefinitions: PlayableDefinition[] = [
   {
     id: "activity-qte",
-    family: "minigame",
     commandPrefix: "interactive.activity-qte.",
   },
   {
     id: "city-begging",
-    family: "minigame",
     commandPrefix: "interactive.city-begging.",
   },
   {
     id: "grain-accounting",
-    family: "minigame",
     commandPrefix: "playable.grain-accounting.",
   },
   {
     id: "medicine-compounding",
-    family: "minigame",
     commandPrefix: "playable.medicine-compounding.",
   },
   {
     id: "story-battle",
-    family: "battle",
     commandPrefix: "interactive.story-battle.",
   },
   {
     id: "building-flow",
-    family: "flow",
     commandPrefix: "playable.building-flow.",
   },
 ];

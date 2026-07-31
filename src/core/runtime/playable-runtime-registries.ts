@@ -121,7 +121,6 @@ function isPlayableDefinition(value: unknown): value is PlayableDefinition {
   const candidate = value as Record<string, unknown>;
   return (
     typeof candidate.id === "string" &&
-    typeof candidate.family === "string" &&
     typeof candidate.commandPrefix === "string"
   );
 }

@@ -23,7 +23,6 @@ export function launchCityBeggingPlayable(input: {
           sessionId: "playable.city-begging",
           playableId: "city-begging",
           integrationId: "playable.city-begging.external.default",
-          family: "minigame",
           ownerContext: {
             ownerKind: "external",
             ownerId: null,

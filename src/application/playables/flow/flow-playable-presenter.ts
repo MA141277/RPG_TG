@@ -17,7 +17,6 @@ export function presentFlowPlayable(input: {
 
   return {
     playableId: input.definition.id,
-    family: "flow",
     layout: "panel",
     title: input.definition.title,
     summaryLines: [],

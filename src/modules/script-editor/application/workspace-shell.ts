@@ -814,7 +814,12 @@ function describeSelectionLinkPreview(
 
   if (family === "dialogues") {
     const dialogue = project.dialogues.find((record) => record.id === entityId);
-    return `节点 ${(dialogue?.nodes ?? []).length} 条，参与人物 ${(dialogue?.participantPersonIds ?? []).length} 条。`;
+    if (dialogue == null) {
+      return "当前未找到对应对话。";
+    }
+    return dialogue.mode === "choice"
+      ? `选择对话，选项 ${(dialogue.options ?? []).length} 条，出场人物 ${(dialogue.cast ?? []).length} 条。`
+      : `单屏对话，后续事件 ${dialogue.nextEventId?.length ? "已配置" : "未配置"}，出场人物 ${(dialogue.cast ?? []).length} 条。`;
   }
 
   if (family === "quests") {

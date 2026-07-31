@@ -93,7 +93,6 @@ export function launchGrainAccountingPlayable(input: {
           sessionId: "playable.grain-accounting",
           playableId: "grain-accounting",
           integrationId: "playable.grain-accounting.house.grain-shop",
-          family: "minigame",
           ownerContext: {
             ownerKind: "house",
             ownerId: input.ownerId,

@@ -662,7 +662,12 @@ function resolveAccessBlockedMessage(
     if (dialogue == null) {
       return access?.blockedMessage;
     }
-    const textEntryId = dialogue.nodes?.find((node) => node.textId.length > 0)?.textId ?? "";
+    const textEntryId =
+      (typeof dialogue.textId === "string" && dialogue.textId.trim().length > 0
+        ? dialogue.textId.trim()
+        : "") ||
+      dialogue.nodes?.find((node) => node.textId.length > 0)?.textId ||
+      "";
     if (textEntryId.length > 0) {
       const textEntry = textEntries.find((entry) => entry.id === textEntryId);
       if (textEntry?.text != null && textEntry.text.length > 0) {

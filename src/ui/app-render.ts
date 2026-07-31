@@ -632,6 +632,7 @@ function renderStage(
       activitySession: input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,
       choiceOptions: stage.currentSceneChoiceOptions,
+      dialogueScreenViewModel: stage.dialogueScreenViewModel,
       ...(input.textEntriesById == null
         ? {}
         : { textEntriesById: input.textEntriesById }),

@@ -5,6 +5,7 @@ import {
   FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
 } from "../../../domain/activity-session";
 import type { CharacterDefinition } from "../../../domain/character";
+import type { DialogueScreenViewModel } from "../../../core/runtime/dialogue-screen-runtime";
 import {
   resolveActionNodeText,
   resolveChoiceOptionText,
@@ -14,12 +15,14 @@ import {
   renderDialogueTypewriterLines,
 } from "../../dialogue-typewriter";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
+import { renderDialogueScreenPanel } from "../../components/dialogue-screen-panel";
 
 type SceneViewInput = {
   currentAction: ActionNode | null;
   activitySession: ActiveActivitySession;
   characterDefinitions: CharacterDefinition[];
   choiceOptions: ChoiceOption[];
+  dialogueScreenViewModel?: DialogueScreenViewModel | null;
   textEntriesById?: Record<string, string>;
 };
 
@@ -515,6 +518,30 @@ export function renderSceneView(input: SceneViewInput): string {
     resolveChoiceOptionText(option, { textEntriesById })
   );
   const activityOverlay = renderActivityOverlay(input.activitySession);
+  const dialogueScreenViewModel = input.dialogueScreenViewModel ?? null;
+
+  if (dialogueScreenViewModel != null) {
+    const speaker = getCharacterDefinition(
+      input.characterDefinitions,
+      dialogueScreenViewModel.speakerCharacterId
+    );
+    const portraitImageUrl =
+      speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
+
+    return renderDialogueScreenPanel({
+      dialogueScreenViewModel,
+      activityOverlay,
+      speakerPortraitImageUrl: portraitImageUrl,
+      ...(portraitImageUrl == null
+        ? {
+            speakerPortraitArtClassName: getScenePortraitArtClassName(
+              dialogueScreenViewModel.speakerCharacterId
+            ),
+          }
+        : {}),
+    });
+  }
+
   if (action == null) {
     return activityOverlay;
   }

@@ -121,7 +121,7 @@ Suggested robustness patterns:
 Must prove:
 
 - `story-battle` routes through the shared playable runtime
-- `story-battle` remains `family: "battle"`
+- `story-battle` keeps its explicit battle semantics without relying on a shared-contract `family` field
 - battle-specific command and presenter semantics remain intact
 - post-battle return remains correct
 

@@ -184,19 +184,16 @@ Rule:
 
 - file naming may be scaffolded differently later, but the artifact identity must still expose both `playableId` and `integrationId`
 
-## 8. Family Naming
+## 8. Capability Naming
 
-Allowed top-level `family` values today:
-
-- `minigame`
-- `battle`
+> **2026-07-31 note:** The runtime contract no longer exposes a top-level playable `family` field. Any earlier guidance that distinguished `minigame` and `battle` as required contract tags is historical only.
 
 Rules:
 
-- use `family: "minigame"` for ordinary short-form challenge mechanics
-- use `family: "battle"` for battle-family mechanics such as `story-battle`
-- do not invent `family` variants such as `qte`, `debate`, `gambling`, or `house`
-- internal variants belong under mechanic detail, not top-level family
+- identify mechanics by `playableId`, not by a mandatory top-level subtype enum
+- represent behavioral differences through explicit capability/config fields such as layout, trigger support, settlement mapping, or owner-return policy
+- do not invent replacement pseudo-family tags such as `qte`, `debate`, `gambling`, or `house` just to recover the removed field
+- internal variants belong under mechanic detail, not a revived top-level family tag
 
 ## 9. Authoring Role Labels
 

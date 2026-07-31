@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const VALID_FAMILIES = new Set(["minigame", "battle"]);
 const VALID_OWNER_KINDS = new Set(["house", "scene", "task", "external"]);
 const VALID_RETURN_POLICIES = new Set([
   "resume-owner",
@@ -70,9 +69,6 @@ function validateMechanicArtifact({ repoRoot, filePath, artifact, errors }) {
   }
   if (!isValidPlayableId(artifact.playableId)) {
     errors.push(`${relative(repoRoot, filePath)}: playableId must be kebab-case.`);
-  }
-  if (!VALID_FAMILIES.has(artifact.family)) {
-    errors.push(`${relative(repoRoot, filePath)}: family must be minigame or battle.`);
   }
   if (!isNonEmptyString(artifact.title)) {
     errors.push(`${relative(repoRoot, filePath)}: title is required.`);

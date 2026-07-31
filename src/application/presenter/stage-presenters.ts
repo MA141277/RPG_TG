@@ -27,6 +27,8 @@ import { createTroopManagementStageViewModel } from "../troop-editor/troop-manag
 import {
   selectTroopEditorStageInput,
 } from "../troop-editor/troop-editor-selectors";
+import { createDialogueScreenViewModel } from "../../core/runtime/dialogue-screen-runtime";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 
 export type StagePresenterInput = {
   appState: AppState;
@@ -39,8 +41,20 @@ export type StagePresenterInput = {
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   sceneDefinitionsById?: Record<string, SceneDefinition>;
+  dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
   houseModuleRegistry?: HouseModuleRegistry;
 };
+
+function selectActiveDialogueDefinition(
+  input: StagePresenterInput
+): RuntimeDialogueDefinition | null {
+  const activeSceneId = input.appState.gameState.scene.activeSceneId;
+  if (activeSceneId == null) {
+    return null;
+  }
+
+  return input.dialogueDefinitionsById?.[activeSceneId] ?? null;
+}
 
 function selectActiveHouseDefinition(
   appState: AppState,
@@ -193,6 +207,7 @@ export function createStagePresenterOutput(
   }
 
   if (currentView === "scene") {
+    const activeDialogueDefinition = selectActiveDialogueDefinition(input);
     return {
       type: "scene",
       currentSceneAction: getCurrentSceneAction(
@@ -203,6 +218,16 @@ export function createStagePresenterOutput(
         input.appState.gameState,
         input.sceneDefinitionsById ?? {}
       ),
+      dialogueScreenViewModel:
+        activeDialogueDefinition?.screen == null
+          ? null
+          : createDialogueScreenViewModel({
+              dialogue: activeDialogueDefinition,
+              characterDefinitions: input.appState.characterDefinitions,
+              ...(input.textEntriesById == null
+                ? {}
+                : { textEntriesById: input.textEntriesById }),
+            }),
     };
   }
 

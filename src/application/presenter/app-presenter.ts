@@ -1,5 +1,6 @@
 import type { AppState } from "../app-shell";
 import type { SceneDefinition } from "../../domain/action";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
@@ -22,6 +23,7 @@ export type AppPresenterInput = {
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   sceneDefinitionsById?: Record<string, SceneDefinition>;
+  dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
   houseModuleRegistry?: HouseModuleRegistry;
 };
 

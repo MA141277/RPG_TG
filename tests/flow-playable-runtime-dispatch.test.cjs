@@ -117,7 +117,6 @@ function configureFlowPlayableRegistry() {
         playables: [
           {
             id: "flow-test",
-            family: "flow",
             commandPrefix: "playable.flow-test.",
           },
         ],
@@ -170,7 +169,7 @@ test("playable runtime launches and reduces flow playables", () => {
 
     assert.equal(launched.handled, true);
     assert.equal(launched.session?.playableId, "flow-test");
-    assert.equal(launched.session?.family, "flow");
+    assert.equal("family" in (launched.session ?? {}), false);
     assert.deepEqual(launched.state.core.runtime.playableSession?.state, {
       currentNodeId: "intro",
     });

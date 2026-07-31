@@ -6,7 +6,6 @@ import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
   ActivePlayableSession,
   PlayableCommand,
-  PlayableFamily,
   PlayableId,
   PlayableIntegrationDefinition,
   PlayableIntegrationId,
@@ -216,7 +215,6 @@ export function resolvePlayableLaunch(input: {
     launch: {
       playableId: definition.id,
       integrationId: integration.integrationId,
-      family: definition.family,
       ownerContext,
       ...(input.launch.payload == null ? {} : { payload: input.launch.payload }),
     },
@@ -243,22 +241,11 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "launch") {
-    if (resolvedRequest.launch.launch.family === "flow") {
-      const flowPlayable =
-        input.flowPlayablesById?.[resolvedRequest.launch.launch.playableId] ??
-        null;
-      if (flowPlayable == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(
-            input.state,
-            resolvedRequest.launch.launch.playableId
-          ),
-        };
-      }
-
+    const launchedFlowPlayable = resolveFlowPlayableDefinition(
+      resolvedRequest.launch.launch.playableId,
+      input.flowPlayablesById
+    );
+    if (launchedFlowPlayable != null) {
       const nextState = {
         ...input.state,
         core: {
@@ -266,7 +253,7 @@ export function runPlayableRuntime(input: {
           runtime: {
             ...input.state.core.runtime,
             playableSession: launchFlowPlayable({
-              definition: flowPlayable,
+              definition: launchedFlowPlayable,
               integrationId: resolvedRequest.launch.launch.integrationId,
               ownerContext: resolvedRequest.launch.launch.ownerContext,
             }),
@@ -277,7 +264,7 @@ export function runPlayableRuntime(input: {
         state: nextState,
         effects: [],
         handled: true,
-        session: getActivePlayableSession(nextState, flowPlayable.id),
+        session: getActivePlayableSession(nextState, launchedFlowPlayable.id),
       };
     }
 
@@ -457,9 +444,13 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "exit") {
+    const activeFlowPlayable = resolveFlowPlayableDefinition(
+      resolvedRequest.playableId,
+      input.flowPlayablesById
+    );
     if (
-      getActivePlayableSession(input.state, resolvedRequest.playableId)?.family ===
-      "flow"
+      activeFlowPlayable != null &&
+      getActivePlayableSession(input.state, resolvedRequest.playableId) != null
     ) {
       const nextState = {
         ...input.state,
@@ -541,9 +532,11 @@ export function runPlayableRuntime(input: {
     input.state,
     resolvedRequest.playableId
   );
-  const flowPlayable =
-    input.flowPlayablesById?.[resolvedRequest.playableId] ?? null;
-  if (activeFlowSession?.family === "flow" && flowPlayable != null) {
+  const flowPlayable = resolveFlowPlayableDefinition(
+    resolvedRequest.playableId,
+    input.flowPlayablesById
+  );
+  if (activeFlowSession != null && flowPlayable != null) {
     const command = toFlowPlayableCommand(
       resolvedRequest.action,
       resolvedRequest.payload
@@ -1063,7 +1056,6 @@ export function createPlayableSessionShell(input: {
   sessionId: string;
   playableId: PlayableId;
   integrationId: PlayableIntegrationId;
-  family: PlayableFamily;
   ownerContext: PlayableOwnerContext;
   status?: ActivePlayableSession["status"] | undefined;
 }): ActivePlayableSession {
@@ -1071,7 +1063,6 @@ export function createPlayableSessionShell(input: {
     sessionId: input.sessionId,
     playableId: input.playableId,
     integrationId: input.integrationId,
-    family: input.family,
     ownerContext: input.ownerContext,
     status: input.status ?? "active",
   };
@@ -1104,7 +1095,6 @@ export function createLegacyPlayableSession(input: {
     sessionId: `playable.${definition.id}`,
     playableId: definition.id,
     integrationId: integration.integrationId,
-    family: definition.family,
     ownerContext,
   });
 }
@@ -1510,6 +1500,13 @@ function toPlayableOutcome(
   }
 
   return "success";
+}
+
+function resolveFlowPlayableDefinition(
+  playableId: PlayableId,
+  flowPlayablesById?: Record<string, FlowPlayableDefinition>
+): FlowPlayableDefinition | null {
+  return flowPlayablesById?.[playableId] ?? null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

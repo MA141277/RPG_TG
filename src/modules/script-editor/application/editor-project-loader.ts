@@ -15,6 +15,7 @@
 import { formalizeScriptEditorProjectMenus } from "./menu-authoring";
 import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
+import { normalizeScriptEditorDialogueRecord } from "./story-dialogue-event-authoring";
 
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
   "buildingArrangements",
@@ -206,6 +207,9 @@ export function parseScriptEditorProject(
       (value.progressTrackBindings ?? []) as NonNullable<
         ScriptEditorProjectDefinition["progressTrackBindings"]
       >,
+    dialogues: (value.dialogues as Array<Record<string, unknown> & { id: string }>).map(
+      (dialogue) => normalizeScriptEditorDialogueRecord(dialogue)
+    ),
     menuResources:
       (value.menuResources ?? []) as ScriptEditorProjectDefinition["menuResources"],
     menuInstances:

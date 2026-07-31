@@ -18,6 +18,7 @@ import {
   type ScriptEditorAccessRule,
   type ScriptEditorBuildingArrangementRecord,
   type ScriptEditorDialogueRecord,
+  type ScriptEditorDialogueOptionRecord,
   type ScriptEditorEntityRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
@@ -566,22 +567,84 @@ function mapImportedRuntimeDialogues(
   const importedDialogues = Array.isArray(rawPack.dialogues)
     ? rawPack.dialogues
     : [];
+  const mappedDialogues: ScriptEditorDialogueRecord[] = [];
 
-  return importedDialogues.flatMap((value, dialogueIndex) => {
+  for (const [dialogueIndex, value] of importedDialogues.entries()) {
     if (value == null || typeof value !== "object" || Array.isArray(value)) {
-      return [];
+      continue;
     }
 
     const runtimeDialogue = value as Record<string, unknown>;
     const id = readString(runtimeDialogue.id) || `dialogue.imported.${dialogueIndex + 1}`;
     const title = readString(runtimeDialogue.name) || id;
+    if (
+      runtimeDialogue.screen != null &&
+      typeof runtimeDialogue.screen === "object" &&
+      !Array.isArray(runtimeDialogue.screen)
+    ) {
+      const screen = runtimeDialogue.screen as Record<string, unknown>;
+      const mode = readString(screen.mode) === "choice" ? "choice" : "linear";
+      const cast = Array.isArray(screen.cast)
+        ? screen.cast.flatMap((memberValue) => {
+            if (
+              memberValue == null ||
+              typeof memberValue !== "object" ||
+              Array.isArray(memberValue)
+            ) {
+              return [];
+            }
+            const member = memberValue as Record<string, unknown>;
+            const personId = readString(member.characterId);
+            if (personId.length === 0) {
+              return [];
+            }
+            const side: "left" | "right" =
+              readString(member.side) === "right" ? "right" : "left";
+            return [{ personId, side }];
+          })
+        : [];
+      const options =
+        mode === "choice" && Array.isArray(screen.options)
+          ? screen.options.flatMap((optionValue, optionIndex) => {
+              if (
+                optionValue == null ||
+                typeof optionValue !== "object" ||
+                Array.isArray(optionValue)
+              ) {
+                return [];
+              }
+              const option = optionValue as Record<string, unknown>;
+              return [
+                {
+                  id:
+                    readString(option.id) || `option.imported.${dialogueIndex + 1}.${optionIndex + 1}`,
+                  textId: readString(option.labelTextId),
+                  nextEventId: readString(option.nextEventId),
+                },
+              ];
+            })
+          : [];
+
+      mappedDialogues.push({
+        id,
+        title,
+        mode,
+        textId: readString(screen.textId),
+        speakerPersonId: readString(screen.speakerCharacterId),
+        cast,
+        nextEventId: mode === "linear" ? readString(screen.nextEventId) : "",
+        options,
+      });
+      continue;
+    }
+
     if (!Array.isArray(runtimeDialogue.nodes)) {
       if (Array.isArray(runtimeDialogue.actions)) {
         throw new Error(
           `Imported runtime dialogue "${id}" still uses retired actions[]; use dialogues[].nodes instead.`
         );
       }
-      return [];
+      continue;
     }
     const rawNodes = runtimeDialogue.nodes;
     const nodes = rawNodes.flatMap((nodeValue, nodeIndex) =>
@@ -605,16 +668,75 @@ function mapImportedRuntimeDialogues(
         })
       )
     );
+    const firstDialogueNode = nodes.find((node) => node.nodeType === "dialogue");
+    const firstTextNode = nodes.find((node) => node.textId.length > 0);
+    const migratedCast = participantPersonIds.slice(0, 2).map((personId, index) => ({
+      personId,
+      side: (index === 1 ? "right" : "left") as "left" | "right",
+    }));
+    const migratedOptions = extractImportedLegacyDialogueOptions(
+      rawNodes,
+      dialogueIndex
+    );
 
-    return [
-      {
-        id,
-        title,
-        participantPersonIds,
-        nodes,
-      },
-    ];
-  });
+    mappedDialogues.push({
+      id,
+      title,
+      mode: migratedOptions.length > 0 ? "choice" : "linear",
+      textId: firstTextNode?.textId ?? "",
+      speakerPersonId: firstDialogueNode?.speakerPersonId ?? participantPersonIds[0] ?? "",
+      cast: migratedCast,
+      nextEventId: "",
+      options: migratedOptions,
+      participantPersonIds,
+      nodes,
+    });
+  }
+
+  return mappedDialogues;
+}
+
+function extractImportedLegacyDialogueOptions(
+  rawNodes: unknown[],
+  dialogueIndex: number
+): ScriptEditorDialogueOptionRecord[] {
+  const migratedOptions: ScriptEditorDialogueOptionRecord[] = [];
+
+  for (const nodeValue of rawNodes) {
+    if (
+      nodeValue == null ||
+      typeof nodeValue !== "object" ||
+      Array.isArray(nodeValue)
+    ) {
+      continue;
+    }
+
+    const node = nodeValue as Record<string, unknown>;
+    if (readString(node.type) !== "choice" || !Array.isArray(node.options)) {
+      continue;
+    }
+
+    node.options.forEach((optionValue, optionIndex) => {
+      if (
+        optionValue == null ||
+        typeof optionValue !== "object" ||
+        Array.isArray(optionValue)
+      ) {
+        return;
+      }
+
+      const option = optionValue as Record<string, unknown>;
+      migratedOptions.push({
+        id:
+          readString(option.id) ||
+          `option.imported.${dialogueIndex + 1}.${optionIndex + 1}`,
+        textId: readString(option.labelTextId),
+        nextEventId: readString(option.nextEventId),
+      });
+    });
+  }
+
+  return migratedOptions;
 }
 
 function mapImportedRuntimeDialogueNode(

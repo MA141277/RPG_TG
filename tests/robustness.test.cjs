@@ -19215,7 +19215,7 @@ test("child 30 playable runtime contract exports unified playable launch session
     "utf8"
   );
 
-  assert.match(source, /export type PlayableFamily = "minigame" \| "battle"/);
+  assert.doesNotMatch(source, /export type PlayableFamily/);
   assert.match(source, /export type PlayableDefinition = \{/);
   assert.match(source, /export type PlayableIntegrationDefinition = \{/);
   assert.match(source, /export type PlayableLaunchRequest = \{/);
@@ -19223,22 +19223,17 @@ test("child 30 playable runtime contract exports unified playable launch session
   assert.match(source, /export type PlayableSettlement = \{/);
 });
 
-test("child 30 playable definition registry installs covered interactive playables with family boundaries", () => {
+test("child 30 playable definition registry installs covered interactive playables without family tags", () => {
   const {
     builtinPlayableDefinitionRegistry,
   } = require("../.test-dist/core/registry/playable-definition-registry.js");
 
+  assert.equal(builtinPlayableDefinitionRegistry.get("activity-qte")?.id, "activity-qte");
+  assert.equal(builtinPlayableDefinitionRegistry.get("city-begging")?.id, "city-begging");
+  assert.equal(builtinPlayableDefinitionRegistry.get("story-battle")?.id, "story-battle");
   assert.equal(
-    builtinPlayableDefinitionRegistry.get("activity-qte")?.family,
-    "minigame"
-  );
-  assert.equal(
-    builtinPlayableDefinitionRegistry.get("city-begging")?.family,
-    "minigame"
-  );
-  assert.equal(
-    builtinPlayableDefinitionRegistry.get("story-battle")?.family,
-    "battle"
+    "family" in (builtinPlayableDefinitionRegistry.get("story-battle") ?? {}),
+    false
   );
   assert.equal(
     builtinPlayableDefinitionRegistry.matchActionId(
@@ -19269,7 +19264,7 @@ test("child 30 playable launch normalization resolves city-begging by playable i
     resolution.launch.integrationId,
     "playable.city-begging.external.default"
   );
-  assert.equal(resolution.launch.family, "minigame");
+  assert.equal("family" in resolution.launch, false);
   assert.equal(resolution.launch.ownerContext.ownerKind, "external");
   assert.equal(resolution.launch.ownerContext.returnPolicy, "close-only");
   assert.deepEqual(resolution.launch.payload, { now: 123 });
@@ -19289,7 +19284,6 @@ test("child 30 playable launch normalization fails closed for ambiguous integrat
   const definitions = createPlayableDefinitionRegistry([
     {
       id: "playable.test.ambiguous",
-      family: "minigame",
       commandPrefix: "interactive.test.ambiguous.",
     },
   ]);
@@ -19362,7 +19356,7 @@ test("child 30 interactive runtime can launch covered playable sessions through 
     result.session?.playable.integrationId,
     "playable.city-begging.external.default"
   );
-  assert.equal(result.session?.playable.family, "minigame");
+  assert.equal("family" in (result.session?.playable ?? {}), false);
   assert.equal(result.session?.playable.ownerContext.ownerKind, "external");
   assert.equal(result.state.app.beggingMiniGameState?.variantId, "village-catching");
 });
@@ -19683,7 +19677,7 @@ test("child 33 story callback launch writes shared playable session into runtime
     started.state.runtime.playableSession?.integrationId,
     "playable.story-battle.scene.default"
   );
-  assert.equal(started.state.runtime.playableSession?.family, "battle");
+  assert.equal("family" in (started.state.runtime.playableSession ?? {}), false);
   assert.equal(
     started.state.runtime.playableSession?.ownerContext.ownerKind,
     "scene"
@@ -19810,8 +19804,6 @@ test("child 34 playable scaffold writes canonical mechanic and integration artif
       path.join(process.cwd(), "tools", "scaffold-playable.mjs"),
       "--playable-id",
       "test-playable",
-      "--family",
-      "minigame",
       "--title",
       "Test Playable",
       "--output-root",
@@ -19900,7 +19892,7 @@ test("child 34 playable scaffold writes canonical mechanic and integration artif
   );
 
   assert.equal(mechanicArtifact.playableId, "test-playable");
-  assert.equal(mechanicArtifact.family, "minigame");
+  assert.equal("family" in mechanicArtifact, false);
   assert.equal(integrationArtifact.playableId, "test-playable");
   assert.equal(
     integrationArtifact.integrationId,
@@ -19920,8 +19912,6 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
       path.join(process.cwd(), "tools", "scaffold-playable.mjs"),
       "--playable-id",
       "validator-playable",
-      "--family",
-      "battle",
       "--title",
       "Validator Playable",
       "--output-root",

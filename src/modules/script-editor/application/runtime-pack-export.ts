@@ -1116,7 +1116,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     }
 
     const definition = builtinPlayableDefinitionRegistry.get(playableId);
-    if (definition == null || definition.family !== "minigame") {
+    if (definition == null) {
       diagnostics.push({
         code: "missing-reference",
         fieldPath: `${fieldPath}.playableId`,
@@ -1174,7 +1174,6 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     integrationIds.add(integrationId);
     playablesById.set(playableId, {
       id: definition.id,
-      family: definition.family,
       commandPrefix: definition.commandPrefix,
     });
     playableIntegrations.push({

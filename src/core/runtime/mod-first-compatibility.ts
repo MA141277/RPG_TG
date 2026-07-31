@@ -4,6 +4,7 @@ import type {
   SceneDefinition,
 } from "../../domain/action";
 import type {
+  RuntimeDialogueCastMember,
   RuntimeDialogueChoiceOption,
   RuntimeDialogueDefinition,
   RuntimeDialogueNode,
@@ -34,11 +35,52 @@ export function createCompatibleSceneDefinitions(input: {
 export function toCompatibleSceneDefinitionFromRuntimeDialogue(
   dialogue: RuntimeDialogueDefinition
 ): SceneDefinition {
+  if (dialogue.screen != null) {
+    return {
+      id: dialogue.id,
+      name: dialogue.name,
+      actions: toCompatibleActionNodesFromRuntimeDialogueScreen(dialogue.screen),
+    };
+  }
+
   return {
     id: dialogue.id,
     name: dialogue.name,
-    actions: dialogue.nodes.map(toCompatibleActionNodeFromRuntimeDialogueNode),
+    actions: (dialogue.nodes ?? []).map(toCompatibleActionNodeFromRuntimeDialogueNode),
   };
+}
+
+function toCompatibleActionNodesFromRuntimeDialogueScreen(
+  screen: NonNullable<RuntimeDialogueDefinition["screen"]>
+): ActionNode[] {
+  const speakerSide = selectDialogueScreenSpeakerSide(
+    screen.cast,
+    screen.speakerCharacterId
+  );
+  const speakerAction: ActionNode = {
+    type: "dialogue",
+    characterId: screen.speakerCharacterId,
+    side: speakerSide,
+    textId: screen.textId,
+  };
+
+  if (screen.mode === "linear") {
+    return [
+      speakerAction,
+      ...(screen.nextEventId == null || screen.nextEventId.length === 0
+        ? []
+        : [{ type: "start-event", eventId: screen.nextEventId } satisfies ActionNode]),
+    ];
+  }
+
+  return [
+    speakerAction,
+    {
+      type: "choice",
+      promptTextId: screen.textId,
+      options: screen.options.map(toCompatibleChoiceOption),
+    },
+  ];
 }
 
 function toCompatibleActionNodeFromRuntimeDialogueNode(
@@ -69,6 +111,16 @@ function toCompatibleChoiceOption(
     ...rest,
     ...(nextDialogueId == null ? {} : { nextSceneId: nextDialogueId }),
   };
+}
+
+function selectDialogueScreenSpeakerSide(
+  cast: RuntimeDialogueCastMember[],
+  speakerCharacterId: string
+): "left" | "right" | "center" {
+  return (
+    cast.find((member) => member.characterId === speakerCharacterId)?.side ??
+    "center"
+  );
 }
 
 export type ModFirstEventBindingOwner = {

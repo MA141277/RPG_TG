@@ -3,16 +3,15 @@ import path from "node:path";
 
 const usage = `
 Usage:
-  node tools/scaffold-playable.mjs --playable-id <id> --family <minigame|battle> --title <title> [--output-root <path>]
+  node tools/scaffold-playable.mjs --playable-id <id> --title <title> [--output-root <path>]
 `.trim();
 
 const args = parseArgs(process.argv.slice(2));
 const playableId = args["playable-id"];
-const family = args.family;
 const title = args.title;
 const outputRoot = path.resolve(args["output-root"] ?? process.cwd());
 
-if (!isValidPlayableId(playableId) || !isValidFamily(family) || !isNonEmptyString(title)) {
+if (!isValidPlayableId(playableId) || !isNonEmptyString(title)) {
   fail(`${usage}\n\nMissing or invalid required arguments.`);
 }
 
@@ -39,7 +38,6 @@ const files = [
       {
         schemaVersion: 1,
         playableId,
-        family,
         title,
         kind: "builtin",
         paths: {
@@ -59,7 +57,7 @@ const files = [
   },
   {
     filePath: path.join(outputRoot, "src", "domain", "playables", `${playableId}.ts`),
-    contents: `export const ${playableConst}_PLAYABLE_ID = "${playableId}" as const;\nexport const ${playableConst}_PLAYABLE_FAMILY = "${family}" as const;\n\nexport type ${playableName}Session = {\n  playableId: typeof ${playableConst}_PLAYABLE_ID;\n  status: "idle" | "active" | "completed";\n};\n`,
+    contents: `export const ${playableConst}_PLAYABLE_ID = "${playableId}" as const;\n\nexport type ${playableName}Session = {\n  playableId: typeof ${playableConst}_PLAYABLE_ID;\n  status: "idle" | "active" | "completed";\n};\n`,
   },
   {
     filePath: path.join(playableDir, `${playableId}-session.ts`),
@@ -79,7 +77,7 @@ const files = [
   },
   {
     filePath: path.join(playableDir, `${playableId}-definition.ts`),
-    contents: `import { ${playableConst}_PLAYABLE_FAMILY, ${playableConst}_PLAYABLE_ID } from "../../../domain/playables/${playableId}";\nimport { create${playableName}Session } from "./${playableId}-session";\nimport { present${playableName} } from "./${playableId}-presenter";\nimport { create${playableName}Settlement } from "./${playableId}-settlement";\n\nexport const ${playableName[0].toLowerCase()}${playableName.slice(1)}Definition = {\n  playableId: ${playableConst}_PLAYABLE_ID,\n  family: ${playableConst}_PLAYABLE_FAMILY,\n  title: ${JSON.stringify(title)},\n  createSession: create${playableName}Session,\n  present: present${playableName},\n  settle: create${playableName}Settlement,\n};\n`,
+    contents: `import { ${playableConst}_PLAYABLE_ID } from "../../../domain/playables/${playableId}";\nimport { create${playableName}Session } from "./${playableId}-session";\nimport { present${playableName} } from "./${playableId}-presenter";\nimport { create${playableName}Settlement } from "./${playableId}-settlement";\n\nexport const ${playableName[0].toLowerCase()}${playableName.slice(1)}Definition = {\n  playableId: ${playableConst}_PLAYABLE_ID,\n  title: ${JSON.stringify(title)},\n  createSession: create${playableName}Session,\n  present: present${playableName},\n  settle: create${playableName}Settlement,\n};\n`,
   },
   {
     filePath: path.join(
@@ -161,10 +159,6 @@ function isNonEmptyString(value) {
 
 function isValidPlayableId(value) {
   return isNonEmptyString(value) && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
-}
-
-function isValidFamily(value) {
-  return value === "minigame" || value === "battle";
 }
 
 function toPosix(value) {

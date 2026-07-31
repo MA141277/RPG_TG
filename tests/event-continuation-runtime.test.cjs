@@ -65,7 +65,6 @@ function createEventOwnedPlayableSession(sourceEventId) {
     sessionId: "playable.story-battle",
     playableId: "story-battle",
     integrationId: "playable.story-battle.scene.default",
-    family: "battle",
     status: "active",
     ownerContext: {
       ownerKind: "scene",
@@ -877,6 +876,243 @@ test(
         originalDispatchRuntimeRequest;
       delete require.cache[storyRuntimePath];
       delete require.cache[runtimeDispatchPath];
+    }
+  }
+);
+
+test(
+  "advanceStorySceneStep resolves single-screen dialogue continuation through dialogue-screen-runtime first",
+  { concurrency: false },
+  () => {
+    const dialogueScreenRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/dialogue-screen-runtime.js"
+    );
+    const storyRuntimePath = require.resolve(
+      "../.test-dist/application/story/story-runtime.js"
+    );
+
+    delete require.cache[storyRuntimePath];
+    delete require.cache[dialogueScreenRuntimePath];
+
+    const dialogueScreenRuntime = require(dialogueScreenRuntimePath);
+    const originalContinueDialogueScreen =
+      dialogueScreenRuntime.continueDialogueScreen;
+    let continueDialogueScreenCalls = 0;
+
+    dialogueScreenRuntime.continueDialogueScreen = (...args) => {
+      continueDialogueScreenCalls += 1;
+      return originalContinueDialogueScreen(...args);
+    };
+
+    try {
+      const {
+        advanceStorySceneStep: advanceStorySceneStepWithPatchedDialogueRuntime,
+      } = require(storyRuntimePath);
+
+      const content = {
+        dialogueDefinitionsById: {
+          "dialogue.screen.linear": {
+            id: "dialogue.screen.linear",
+            name: "Single Screen Linear",
+            screen: {
+              mode: "linear",
+              textId: "text.dialogue.linear",
+              speakerCharacterId: "char.player",
+              cast: [{ characterId: "char.player", side: "left" }],
+              nextEventId: "event.screen.followup",
+            },
+          },
+        },
+        eventDefinitionsById: {
+          "event.screen.start": createEvent(
+            "event.screen.start",
+            "dialogue.screen.linear"
+          ),
+          "event.screen.followup": createEvent(
+            "event.screen.followup",
+            "scene.screen.followup"
+          ),
+        },
+        sceneDefinitionsById: {
+          "dialogue.screen.linear": {
+            id: "dialogue.screen.linear",
+            name: "Compat Carrier",
+            actions: [
+              {
+                type: "dialogue",
+                characterId: "char.player",
+                side: "left",
+                text: "Linear",
+              },
+            ],
+          },
+          "scene.screen.followup": {
+            id: "scene.screen.followup",
+            name: "Follow-up",
+            actions: [],
+          },
+        },
+      };
+
+      const startedState = startEvent(
+        createBaseState(),
+        content.eventDefinitionsById["event.screen.start"]
+      );
+
+      const continued = advanceStorySceneStepWithPatchedDialogueRuntime(
+        {
+          state: {
+            ...startedState,
+            ui: { ...startedState.ui, currentView: "scene" },
+          },
+          characterDefinitions: prototypeCharacters,
+        },
+        content
+      );
+
+      assert.ok(
+        continueDialogueScreenCalls > 0,
+        "advanceStorySceneStep should resolve single-screen dialogue through continueDialogueScreen before mutating host state"
+      );
+      assert.equal(
+        continued.state.runtime.eventHistory["event.screen.followup"]?.firedCount,
+        1
+      );
+    } finally {
+      dialogueScreenRuntime.continueDialogueScreen =
+        originalContinueDialogueScreen;
+      delete require.cache[storyRuntimePath];
+      delete require.cache[dialogueScreenRuntimePath];
+    }
+  }
+);
+
+test(
+  "chooseStorySceneOption resolves single-screen dialogue options through dialogue-screen-runtime first",
+  { concurrency: false },
+  () => {
+    const dialogueScreenRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/dialogue-screen-runtime.js"
+    );
+    const storyRuntimePath = require.resolve(
+      "../.test-dist/application/story/story-runtime.js"
+    );
+
+    delete require.cache[storyRuntimePath];
+    delete require.cache[dialogueScreenRuntimePath];
+
+    const dialogueScreenRuntime = require(dialogueScreenRuntimePath);
+    const originalSelectDialogueScreenOption =
+      dialogueScreenRuntime.selectDialogueScreenOption;
+    let selectDialogueScreenOptionCalls = 0;
+
+    dialogueScreenRuntime.selectDialogueScreenOption = (...args) => {
+      selectDialogueScreenOptionCalls += 1;
+      return originalSelectDialogueScreenOption(...args);
+    };
+
+    try {
+      const {
+        chooseStorySceneOption: chooseStorySceneOptionWithPatchedDialogueRuntime,
+      } = require(storyRuntimePath);
+
+      const content = {
+        dialogueDefinitionsById: {
+          "dialogue.screen.choice": {
+            id: "dialogue.screen.choice",
+            name: "Single Screen Choice",
+            screen: {
+              mode: "choice",
+              textId: "text.dialogue.choice",
+              speakerCharacterId: "char.player",
+              cast: [{ characterId: "char.player", side: "left" }],
+              options: [
+                {
+                  id: "option.accept",
+                  labelTextId: "text.option.accept",
+                  nextEventId: "event.choice.followup",
+                },
+              ],
+            },
+          },
+        },
+        eventDefinitionsById: {
+          "event.choice.start": createEvent(
+            "event.choice.start",
+            "dialogue.screen.choice"
+          ),
+          "event.choice.followup": createEvent(
+            "event.choice.followup",
+            "scene.choice.followup"
+          ),
+        },
+        sceneDefinitionsById: {
+          "dialogue.screen.choice": {
+            id: "dialogue.screen.choice",
+            name: "Compat Choice Carrier",
+            actions: [
+              {
+                type: "choice",
+                options: [
+                  {
+                    id: "option.accept",
+                    label: "Accept",
+                    nextEventId: "event.choice.followup",
+                  },
+                ],
+              },
+            ],
+          },
+          "scene.choice.followup": {
+            id: "scene.choice.followup",
+            name: "Follow-up",
+            actions: [],
+          },
+        },
+      };
+
+      const startedState = startEvent(
+        createBaseState(),
+        content.eventDefinitionsById["event.choice.start"]
+      );
+      const waitingChoice = {
+        state: {
+          ...startedState,
+          scene: {
+            ...startedState.scene,
+            status: "waiting-choice",
+          },
+          ui: {
+            ...startedState.ui,
+            currentView: "scene",
+          },
+        },
+        characterDefinitions: prototypeCharacters,
+      };
+
+      const continued = chooseStorySceneOptionWithPatchedDialogueRuntime(
+        waitingChoice,
+        content,
+        {
+          id: "option.accept",
+          label: "Accept",
+          nextEventId: "event.choice.followup",
+        }
+      );
+
+      assert.ok(
+        selectDialogueScreenOptionCalls > 0,
+        "chooseStorySceneOption should resolve single-screen dialogue choices through selectDialogueScreenOption before mutating host state"
+      );
+      assert.equal(
+        continued.state.runtime.eventHistory["event.choice.followup"]?.firedCount,
+        1
+      );
+    } finally {
+      dialogueScreenRuntime.selectDialogueScreenOption =
+        originalSelectDialogueScreenOption;
+      delete require.cache[storyRuntimePath];
+      delete require.cache[dialogueScreenRuntimePath];
     }
   }
 );

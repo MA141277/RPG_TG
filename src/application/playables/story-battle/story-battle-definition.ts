@@ -23,7 +23,6 @@ function withPlayableSession(
         sessionId: "playable.story-battle",
         playableId: "story-battle",
         integrationId: "playable.story-battle.scene.default",
-        family: "battle",
         ownerContext: {
           ownerKind: "scene",
           ownerId,
