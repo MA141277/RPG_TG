@@ -558,10 +558,10 @@ export type SettlementTradeMutation =
       delta: number;
     }
   | {
-      type: "change-settlement-trade-stock";
+      type: "set-settlement-trade-stock";
       cityId: CityId;
       goodsId: SettlementTradeGoodId;
-      delta: number;
+      stockQuantity: number;
     }
   | {
       type: "set-settlement-trade-multiplier";
@@ -587,6 +587,7 @@ Rules:
 
 - `SettlementTradeService` computes the final mutation set
 - `applySettlementTradeMutations()` applies the mutations without re-deriving business rules
+- `set-settlement-trade-stock` must carry the final post-trade stock quantity resolved from the snapshot baseline; the applier must not infer missing-entry stock deltas
 - `change-player-item` must settle through the shared player-item inventory path under `var.player_inventory.item.<itemId>`
 - no new player-owned specialty inventory copy may be introduced
 
@@ -631,13 +632,14 @@ Responsibilities:
 
 - apply `change-player-gold`
 - apply `change-player-item`
-- apply specialty runtime stock changes
-- apply specialty runtime multiplier delta
+- apply specialty runtime stock writes
+- apply specialty runtime multiplier writes
 - apply progress and day writes
 
 Rules:
 
 - the applier may reuse existing shared inventory and character-mutation helpers
+- specialty runtime writes should use the final values resolved by the service rather than re-deriving deltas from possibly missing runtime entries
 - it must not know about `market-house` session state
 - it must not return HTML
 

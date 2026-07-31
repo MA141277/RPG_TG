@@ -359,6 +359,24 @@ Rules:
 - house-local variables may store derived progress such as submitted amount or last grade, but
   not an independent copy of the player inventory
 
+### Shared Typed Settlement
+
+When a house-owned subsystem resolves trading, service settlement, or similar reusable business
+rules through a shared application/domain module, the host house must apply the result through
+typed mutations or effects rather than reimplementing the settlement inline.
+
+Rules:
+
+- reusable services should return typed mutation/effect data that describes the persistent result
+- host houses may remain the UI/session owner, but must not recompute gold, inventory, or
+  runtime settlement writes after the shared service has resolved them
+- player-owned non-equipment goods must continue through `var.player_inventory.item.<itemId>` or
+  another shared inventory owner instead of a new house-local copy
+- settlement-owned market state belongs in a shared runtime owner such as
+  `GameState.runtime.settlementTrade`, not in `main.ts` branches or ad hoc house globals
+- shared appliers should prefer absolute post-resolution values when the correct baseline may come
+  from authored content or snapshot normalization rather than an already-materialized runtime row
+
 ### Shared Review Settlement
 
 Periodic review/council flows may award items, update faction merit, and announce personnel

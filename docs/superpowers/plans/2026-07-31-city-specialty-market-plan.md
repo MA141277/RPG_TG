@@ -26,10 +26,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-31`
-- Current Focus: `Task 2 complete; Task 3 shared settlement-trade mutation applier TDD is next.`
-- Next Step: `Write the failing settlement-trade mutation-applier tests for Task 3, then implement the shared applier.`
-- Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
-- Notes: `Task 2 added typed trade resolutions and dynamic price pressure while preserving signed progress and legacy market-inventory compatibility; host-layer wiring remains out of scope until later tasks.`
+- Current Focus: `Task 3 complete; Task 4 market-house adapter and host wiring is next.`
+- Next Step: `Write the failing host, investigation, and button-sound tests for Task 4, then wire market-house to the shared settlement-trade service and mutation applier.`
+- Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs tests/settlement-trade-mutations.test.cjs`
+- Notes: `Task 3 added the shared settlement-trade mutation applier, preserved legacy market-inventory migration through the unified player-item path, and switched stock writes to absolute post-trade quantities so first-write baseline handling stays correct; host-layer wiring remains out of scope until Task 4.`
 
 ## Progress Log
 
@@ -45,6 +45,10 @@
   - Summary: `Completed Task 2 with typed settlement-trade resolutions, dynamic price pressure, 30-day reset coverage, and structured validation while preserving signed progress and legacy inventory compatibility.`
   - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
   - Next: `Start Task 3 with failing settlement-trade mutation-applier tests before writing the shared applier.`
+- 2026-07-31
+  - Summary: `Completed Task 3 with a shared settlement-trade mutation applier, legacy market-inventory migration through the unified player-item helper, and an absolute stock-write contract that preserves the first-trade service baseline.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs tests/settlement-trade-mutations.test.cjs`
+  - Next: `Start Task 4 with failing host, investigation, and button-sound tests before wiring market-house to the shared settlement-trade adapter.`
 
 ## Based On Spec
 
@@ -782,7 +786,7 @@ Extend `src/domain/settlement-trade.ts` with the mutation and resolution unions:
 export type SettlementTradeMutation =
   | { type: "change-player-gold"; amount: number }
   | { type: "change-player-item"; itemId: SettlementTradeGoodId; delta: number }
-  | { type: "change-settlement-trade-stock"; cityId: CityId; goodsId: SettlementTradeGoodId; delta: number }
+  | { type: "set-settlement-trade-stock"; cityId: CityId; goodsId: SettlementTradeGoodId; stockQuantity: number }
   | { type: "set-settlement-trade-multiplier"; cityId: CityId; goodsId: SettlementTradeGoodId; priceMultiplier: number }
   | { type: "set-settlement-trade-progress"; cityId: CityId; goodsId: SettlementTradeGoodId; progressUnits: number }
   | { type: "set-settlement-trade-last-traded-day"; cityId: CityId; goodsId: SettlementTradeGoodId; dayNumber: number };
@@ -935,10 +939,13 @@ resolveTrade(input: {
         delta: input.mode === "buy" ? input.quantity : -input.quantity,
       },
       {
-        type: "change-settlement-trade-stock",
+        type: "set-settlement-trade-stock",
         cityId: input.cityId,
         goodsId: input.goodsId,
-        delta: input.mode === "buy" ? -input.quantity : input.quantity,
+        stockQuantity:
+          input.mode === "buy"
+            ? row.stockQuantity - input.quantity
+            : row.stockQuantity + input.quantity,
       },
       {
         type: "set-settlement-trade-multiplier",
@@ -997,7 +1004,7 @@ git commit -m "feat: implement settlement trade pricing"
 - Consumes: `applyPlayerItemMutations(state: GameState, mutations: readonly PlayerItemQuantityMutation[]): GameState`
 - Produces: `applySettlementTradeMutations(input: { state: GameState; characterDefinitions: CharacterDefinition[]; playerCharacterId: string; mutations: readonly SettlementTradeMutation[] }): { state: GameState; characterDefinitions: CharacterDefinition[] }`
 
-- [ ] **Step 1: Write the failing applier tests**
+- [x] **Step 1: Write the failing applier tests**
 
 Create `tests/settlement-trade-mutations.test.cjs` with:
 
@@ -1083,7 +1090,7 @@ test("apply settlement trade mutations updates gold, items, stock, multiplier, p
     mutations: [
       { type: "change-player-gold", amount: -240 },
       { type: "change-player-item", itemId: "silk_textiles", delta: 2 },
-      { type: "change-settlement-trade-stock", cityId: "city.yingtian", goodsId: "silk_textiles", delta: -2 },
+      { type: "set-settlement-trade-stock", cityId: "city.yingtian", goodsId: "silk_textiles", stockQuantity: 6 },
       { type: "set-settlement-trade-multiplier", cityId: "city.yingtian", goodsId: "silk_textiles", priceMultiplier: 1.01 },
       { type: "set-settlement-trade-progress", cityId: "city.yingtian", goodsId: "silk_textiles", progressUnits: 0 },
       { type: "set-settlement-trade-last-traded-day", cityId: "city.yingtian", goodsId: "silk_textiles", dayNumber: 12 },
@@ -1110,7 +1117,7 @@ test("apply settlement trade mutations updates gold, items, stock, multiplier, p
 });
 ```
 
-- [ ] **Step 2: Run the applier tests to verify RED**
+- [x] **Step 2: Run the applier tests to verify RED**
 
 Run:
 
@@ -1122,14 +1129,19 @@ Expected:
 
 - `FAIL` because the shared applier module does not exist yet and no code currently knows how to settle the typed settlement-trade mutations.
 
-- [ ] **Step 3: Implement the shared applier without host-specific logic**
+- [x] **Step 3: Implement the shared applier without host-specific logic**
 
 Create `src/application/markets/apply-settlement-trade-mutations.ts` with:
 
 ```ts
 import type { CharacterDefinition } from "../../domain/character";
+import type { CityId } from "../../domain/city";
 import type { GameState } from "../../domain/game-state";
-import type { SettlementTradeMutation } from "../../domain/settlement-trade";
+import type {
+  SettlementTradeGoodId,
+  SettlementTradeGoodRuntimeState,
+  SettlementTradeMutation,
+} from "../../domain/settlement-trade";
 import { applyPlayerItemMutations } from "../inventory/player-item-inventory";
 
 function applyPlayerGoldChange(
@@ -1150,17 +1162,44 @@ function applyPlayerGoldChange(
   );
 }
 
-function ensureSettlementTradeEntry(
-  state: GameState,
-  cityId: string,
-  goodsId: string
-) {
-  const cityState = state.runtime.settlementTrade[cityId] ?? {};
-  return cityState[goodsId] ?? {
+function createDefaultSettlementTradeEntry(): SettlementTradeGoodRuntimeState {
+  return {
     stockQuantity: 0,
     priceMultiplier: 1,
     progressUnits: 0,
     lastTradedDay: null,
+  };
+}
+
+function readSettlementTradeEntry(
+  state: GameState,
+  cityId: CityId,
+  goodsId: SettlementTradeGoodId
+): SettlementTradeGoodRuntimeState {
+  return (
+    state.runtime.settlementTrade[cityId]?.[goodsId] ??
+    createDefaultSettlementTradeEntry()
+  );
+}
+
+function withSettlementTradeEntry(
+  state: GameState,
+  cityId: CityId,
+  goodsId: SettlementTradeGoodId,
+  nextEntry: SettlementTradeGoodRuntimeState
+): GameState {
+  return {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      settlementTrade: {
+        ...state.runtime.settlementTrade,
+        [cityId]: {
+          ...(state.runtime.settlementTrade[cityId] ?? {}),
+          [goodsId]: nextEntry,
+        },
+      },
+    },
   };
 }
 
@@ -1184,40 +1223,80 @@ export function applySettlementTradeMutations(input: {
         break;
       case "change-player-item":
         nextState = applyPlayerItemMutations(nextState, [
-          { itemId: mutation.itemId, delta: mutation.delta },
+          {
+            itemId: mutation.itemId,
+            delta: mutation.delta,
+            legacySources: ["market-house"],
+          },
         ]);
         break;
-      default: {
-        const current = ensureSettlementTradeEntry(
+      case "set-settlement-trade-stock": {
+        const current = readSettlementTradeEntry(
           nextState,
           mutation.cityId,
           mutation.goodsId
         );
-        const nextEntry =
-          mutation.type === "change-settlement-trade-stock"
-            ? { ...current, stockQuantity: current.stockQuantity + mutation.delta }
-            : mutation.type === "set-settlement-trade-multiplier"
-              ? {
-                  ...current,
-                  priceMultiplier: mutation.priceMultiplier,
-                }
-              : mutation.type === "set-settlement-trade-progress"
-                ? { ...current, progressUnits: mutation.progressUnits }
-                : { ...current, lastTradedDay: mutation.dayNumber };
-
-        nextState = {
-          ...nextState,
-          runtime: {
-            ...nextState.runtime,
-            settlementTrade: {
-              ...nextState.runtime.settlementTrade,
-              [mutation.cityId]: {
-                ...(nextState.runtime.settlementTrade[mutation.cityId] ?? {}),
-                [mutation.goodsId]: nextEntry,
-              },
-            },
-          },
-        };
+        nextState = withSettlementTradeEntry(
+          nextState,
+          mutation.cityId,
+          mutation.goodsId,
+          {
+            ...current,
+            stockQuantity: mutation.stockQuantity,
+          }
+        );
+        break;
+      }
+      case "set-settlement-trade-multiplier": {
+        const current = readSettlementTradeEntry(
+          nextState,
+          mutation.cityId,
+          mutation.goodsId
+        );
+        nextState = withSettlementTradeEntry(
+          nextState,
+          mutation.cityId,
+          mutation.goodsId,
+          {
+            ...current,
+            priceMultiplier: mutation.priceMultiplier,
+          }
+        );
+        break;
+      }
+      case "set-settlement-trade-progress": {
+        const current = readSettlementTradeEntry(
+          nextState,
+          mutation.cityId,
+          mutation.goodsId
+        );
+        nextState = withSettlementTradeEntry(
+          nextState,
+          mutation.cityId,
+          mutation.goodsId,
+          {
+            ...current,
+            progressUnits: mutation.progressUnits,
+          }
+        );
+        break;
+      }
+      case "set-settlement-trade-last-traded-day": {
+        const current = readSettlementTradeEntry(
+          nextState,
+          mutation.cityId,
+          mutation.goodsId
+        );
+        nextState = withSettlementTradeEntry(
+          nextState,
+          mutation.cityId,
+          mutation.goodsId,
+          {
+            ...current,
+            lastTradedDay: mutation.dayNumber,
+          }
+        );
+        break;
       }
     }
   }
@@ -1229,7 +1308,7 @@ export function applySettlementTradeMutations(input: {
 }
 ```
 
-- [ ] **Step 4: Run the applier tests to verify GREEN**
+- [x] **Step 4: Run the applier tests to verify GREEN**
 
 Run:
 
@@ -1241,7 +1320,7 @@ Expected:
 
 - `PASS` for the focused applier test that proves gold, player items, stock, multiplier, progress, and last-traded day all settle through the shared applier.
 
-- [ ] **Step 5: Commit the mutation task**
+- [x] **Step 5: Commit the mutation task**
 
 Run:
 

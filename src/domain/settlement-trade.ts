@@ -110,10 +110,10 @@ export type SettlementTradeMutation =
       delta: number;
     }
   | {
-      type: "change-settlement-trade-stock";
+      type: "set-settlement-trade-stock";
       cityId: CityId;
       goodsId: SettlementTradeGoodId;
-      delta: number;
+      stockQuantity: number;
     }
   | {
       type: "set-settlement-trade-multiplier";

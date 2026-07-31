@@ -2,6 +2,21 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-31 City Specialty Market Runtime Contract Foundation
+
+### Added
+- `GameState.runtime` 新增 `settlementTrade` 作为城市特产商圈的共享 runtime owner，用于持久保存各城市货物的库存、价格倍率、进度和最后交易日。
+- 新增 `SettlementTradeService` 与 `applySettlementTradeMutations(...)` 共享应用层接口，使城市特产商圈的快照、调查摘要和交易结算都能通过独立可复用类与 typed mutation 契约完成。
+
+### Changed
+- 城市特产交易现在约束为 typed mutation 流：玩家金币与背包货物通过共享 inventory/character 路径结算，商圈 runtime 通过 `set-settlement-trade-stock`、`set-settlement-trade-multiplier`、`set-settlement-trade-progress`、`set-settlement-trade-last-traded-day` 等结构化写入更新。
+- 特产库存写入改为“交易后绝对库存”而非相对 delta，避免首次交易时因为 runtime 还未物化而丢失 authored `initialStock` 基线。
+- 玩家持有的特产货物继续归并到 `var.player_inventory.item.<itemId>`；旧 `market-house` 交易库存变量只保留在共享迁移兼容边界，不再作为新的长期拥有态来源。
+
+### Impact
+- 后续把城市特产商圈接入 `market-house` 时，可以只做 host 适配与会话/UI wiring，而不需要在 `src/main.ts` 或 house host 中重写交易业务规则。
+- 当前批次的共享交易运行时只覆盖 `defaultRuntimeContent.cities` 中已存在且具备 market house 的城市，后续城市扩容可继续沿用同一套 service/content/applier 契约。
+
 ## 2026-07-30 Unified Equipment Slot UI And Backpack Contract
 
 ### Added

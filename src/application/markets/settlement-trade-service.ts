@@ -413,10 +413,13 @@ export class SettlementTradeService {
           delta: input.mode === "buy" ? input.quantity : -input.quantity,
         },
         {
-          type: "change-settlement-trade-stock",
+          type: "set-settlement-trade-stock",
           cityId: input.cityId,
           goodsId: input.goodsId,
-          delta: input.mode === "buy" ? -input.quantity : input.quantity,
+          stockQuantity:
+            input.mode === "buy"
+              ? row.stockQuantity - input.quantity
+              : row.stockQuantity + input.quantity,
         },
         {
           type: "set-settlement-trade-multiplier",

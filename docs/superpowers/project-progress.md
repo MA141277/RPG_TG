@@ -10,13 +10,13 @@
 - Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-city-specialty-market-task-3`
+- Next Required Action: `execute-city-specialty-market-task-4`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 3.`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 4.`
 
 ## Progress Log
 
@@ -105,6 +105,10 @@
   - Summary: `Completed City Specialty Market Task 2 with typed trade resolutions, dynamic price pressure, 30-day reset coverage, and structured validation in the shared settlement-trade service.`
   - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs`
   - Next: `Continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 3.`
+- 2026-07-31
+  - Summary: `Completed City Specialty Market Task 3 with a shared settlement-trade mutation applier, unified player-item settlement compatibility for legacy market inventory, and an absolute stock-write contract that preserves first-trade authored stock baselines.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/settlement-trade-service.test.cjs tests/settlement-trade-mutations.test.cjs`
+  - Next: `Continue docs/superpowers/plans/2026-07-31-city-specialty-market-plan.md from Task 4.`
 
 ## Latest Closeout
 
