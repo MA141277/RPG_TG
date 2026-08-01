@@ -135,10 +135,7 @@ import {
   type NavigationTimeFollowUpAppState,
 } from "./application/runtime/navigation-time-follow-up";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
-import {
-  ACTIVITY_COMPLETION_STAMINA_COST,
-  canAffordActivityCost,
-} from "./application/player/player-stamina";
+import { canAffordActivityCost } from "./application/player/player-stamina";
 import {
   formatCouncilStatusText,
   readCalendarDateNumber,
@@ -280,6 +277,7 @@ import {
   FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
   PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS,
 } from "./domain/activity-session";
+import type { ActiveActivitySession } from "./domain/activity-session";
 import type { SceneDefinition } from "./domain/action";
 import type { GameState } from "./domain/game-state";
 import type { CityDefinition } from "./domain/city";
@@ -455,6 +453,19 @@ type CityBeggingDefaultFortuneRuntime = {
   drawKey: string;
   animator: CardDrawAnimator;
   hasStarted: boolean;
+};
+
+type PachinkoFortuneCardDrawRuntime = {
+  overlay: HTMLElement;
+  mount: HTMLElement;
+  drawKey: string;
+  animator: CardDrawAnimator;
+  hasStarted: boolean;
+};
+
+type PreservedPachinkoFortuneCardDrawOverlay = {
+  overlay: HTMLElement;
+  drawKey: string;
 };
 
 const appElement = document.querySelector<HTMLElement>("#app");
@@ -878,6 +889,7 @@ const coinRewardAnimator = {
 let nextCityCardDrawTestSessionId = 0;
 let cityCardDrawOverlayRuntime: CityCardDrawOverlayRuntime | null = null;
 let cityBeggingDefaultFortuneRuntime: CityBeggingDefaultFortuneRuntime | null = null;
+let pachinkoFortuneCardDrawRuntime: PachinkoFortuneCardDrawRuntime | null = null;
 let campaignMapDebugState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
@@ -1134,6 +1146,138 @@ function destroyCityBeggingDefaultFortuneRuntime(): void {
 
   cityBeggingDefaultFortuneRuntime.animator.destroy();
   cityBeggingDefaultFortuneRuntime = null;
+}
+
+function destroyPachinkoFortuneCardDrawRuntime(): void {
+  if (pachinkoFortuneCardDrawRuntime == null) {
+    return;
+  }
+
+  pachinkoFortuneCardDrawRuntime.animator.destroy();
+  pachinkoFortuneCardDrawRuntime = null;
+}
+
+function getPachinkoFortuneCardDrawLabel(mount: HTMLElement): string {
+  const label = mount.dataset.pachinkoFortuneCardLabel;
+  return label == null || label.length === 0 ? "运势" : label;
+}
+
+function dispatchPachinkoFortuneCardDrawAction(mount: HTMLElement): void {
+  const dispatchKind = mount.dataset.pachinkoFortuneCardDispatch;
+  const actionId = mount.dataset.pachinkoFortuneCardActionId;
+  if (dispatchKind === "house" && actionId != null && actionId.length > 0) {
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "action",
+      actionId,
+    });
+    return;
+  }
+
+  if (dispatchKind === "activity") {
+    dispatchCurrentActivityQteAction("play");
+  }
+}
+
+function isPachinkoFortuneCardDrawMountActive(mount: HTMLElement): boolean {
+  const overlay = mount.closest<HTMLElement>(
+    "[data-activity-overlay='pachinko-fortune-card'], [data-house-overlay='pachinko-fortune-card']"
+  );
+  const cardRoot = mount.closest<HTMLElement>(
+    "[data-pachinko-fortune-card-state]"
+  );
+
+  return (
+    overlay != null &&
+    appRoot.contains(overlay) &&
+    cardRoot?.dataset.pachinkoFortuneCardState === "drawing-card"
+  );
+}
+
+function triggerPachinkoFortuneCardDrawFromElement(element: HTMLElement): boolean {
+  const pachinkoFortuneCardClickProxy = element.closest<HTMLElement>(
+    "[data-pachinko-fortune-card-click-proxy]"
+  );
+  if (pachinkoFortuneCardClickProxy == null) {
+    return false;
+  }
+
+  syncPachinkoFortuneCardDrawOverlay();
+  pachinkoFortuneCardDrawRuntime?.animator.trigger();
+  return true;
+}
+
+function syncPachinkoFortuneCardDrawOverlay(): void {
+  const overlay = appRoot.querySelector<HTMLElement>(
+    "[data-activity-overlay='pachinko-fortune-card'], [data-house-overlay='pachinko-fortune-card']"
+  );
+  const mount = overlay?.querySelector<HTMLElement>(
+    "[data-pachinko-fortune-card-mount]"
+  );
+
+  if (
+    overlay == null ||
+    mount == null ||
+    !isPachinkoFortuneCardDrawMountActive(mount)
+  ) {
+    destroyPachinkoFortuneCardDrawRuntime();
+    return;
+  }
+
+  const drawKey = mount.dataset.pachinkoFortuneCardDrawKey ?? "pachinko-fortune-card";
+  const hasMatchingRuntime =
+    pachinkoFortuneCardDrawRuntime != null &&
+    pachinkoFortuneCardDrawRuntime.overlay === overlay &&
+    pachinkoFortuneCardDrawRuntime.mount === mount &&
+    pachinkoFortuneCardDrawRuntime.drawKey === drawKey;
+
+  if (!hasMatchingRuntime) {
+    destroyPachinkoFortuneCardDrawRuntime();
+    mount.replaceChildren();
+    const fortuneCardDrawLabel = getPachinkoFortuneCardDrawLabel(mount);
+    pachinkoFortuneCardDrawRuntime = {
+      overlay,
+      mount,
+      drawKey,
+      animator: new CardDrawAnimator({
+        host: mount,
+        values: [0],
+        resolveValue: () => 0,
+        resultFormatter: () => fortuneCardDrawLabel,
+        resultHintFormatter: () => "运势已定",
+        stackCount: 5,
+        cardWidthPx: 146,
+        cardHeightPx: 192,
+        clickHintText: "点击抽取运势卡",
+        busyHintText: "抽取中...",
+      }),
+      hasStarted: false,
+    };
+  }
+
+  const runtime = pachinkoFortuneCardDrawRuntime;
+  if (runtime == null || runtime.hasStarted) {
+    return;
+  }
+
+  runtime.hasStarted = true;
+  void runtime.animator
+    .play({
+      values: [0],
+      resolveValue: () => 0,
+      resultFormatter: () => getPachinkoFortuneCardDrawLabel(runtime.mount),
+      resultHintFormatter: () => "运势已定",
+      questionLabel: "?",
+      clickHintText: "点击抽取运势卡",
+      busyHintText: "抽取中...",
+    })
+    .then(() => {
+      if (!isPachinkoFortuneCardDrawMountActive(runtime.mount)) {
+        return;
+      }
+
+      dispatchPachinkoFortuneCardDrawAction(runtime.mount);
+    })
+    .catch(() => {});
 }
 
 function getCityBeggingFortuneValue(result: string | null | undefined): number {
@@ -2052,16 +2196,10 @@ function openBeggingMiniGame(): void {
       ...closeCityMenu(closeCityDirectory(appState)),
       locationDialogueState: {
         type: "house-access-refusal",
-        speakerCharacterId: "char.kulan_temple_abbot",
+        speakerCharacterId: currentPlayerCharacterId,
         textLines: [
           getRuntimeText(
             "runtime.zhu_yuanzhang.begging_stamina_refusal.001"
-          ),
-          getRuntimeTemplateText(
-            "runtime.zhu_yuanzhang.begging_stamina_refusal.002",
-            {
-              requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST,
-            }
           ),
         ],
         advanceHintText: getRuntimeText(
@@ -2359,7 +2497,7 @@ function syncRenderedFortuneBoardOverlay(): boolean {
   }
 
   const playButton = overlayElement.querySelector<HTMLButtonElement>(
-    "[data-activity-action='play-board'], [data-house-action='temple-work-board-play']"
+    "[data-fortune-play-button]"
   );
   if (playButton != null) {
     playButton.textContent = session.phase === "scanning" ? "选定此列" : "游玩";
@@ -2488,13 +2626,25 @@ function getActivityQteLoopIntervalMs(): number {
     : ACTIVITY_QTE_INTERVAL_MS;
 }
 
+function shouldRunActivityQteLoop(session: ActiveActivitySession): boolean {
+  if (session?.type === "qte-bar") {
+    return true;
+  }
+
+  if (session?.type === "pachinko-board") {
+    return (
+      session.phase === "ready" ||
+      session.phase === "dropping" ||
+      session.phase === "rewarding"
+    );
+  }
+
+  return session?.type === "fortune-board" && session.phase !== "ready";
+}
+
 function syncActivityQteLoop(): void {
   const session = appState.gameState.runtime.activitySession;
-  if (
-    session?.type !== "qte-bar" &&
-    !(session?.type === "pachinko-board" && session.phase !== "settling") &&
-    !(session?.type === "fortune-board" && session.phase !== "ready")
-  ) {
+  if (!shouldRunActivityQteLoop(session)) {
     stopActivityQteLoop();
     return;
   }
@@ -2513,11 +2663,7 @@ function syncActivityQteLoop(): void {
 
   activityQteIntervalHandle = window.setInterval(() => {
     const activeSession = appState.gameState.runtime.activitySession;
-    if (
-      activeSession?.type !== "qte-bar" &&
-      !(activeSession?.type === "pachinko-board" && activeSession.phase !== "settling") &&
-      !(activeSession?.type === "fortune-board" && activeSession.phase !== "ready")
-    ) {
+    if (!shouldRunActivityQteLoop(activeSession)) {
       stopActivityQteLoop();
       return;
     }
@@ -4831,7 +4977,7 @@ appElement.addEventListener("keydown", (event) => {
     const session = appState.gameState.runtime.activitySession;
     if (session?.type === "pachinko-board" && session.phase !== "dropping") {
       const playButton = appRoot.querySelector<HTMLButtonElement>(
-        "[data-activity-overlay='pachinko-board'] [data-activity-action='play-board'], [data-house-overlay='pachinko-board'] [data-house-action='temple-work-board-play']"
+        "[data-activity-overlay='pachinko-board'] [data-activity-action='play-board'], [data-house-overlay='pachinko-board'] .c-pachinko-board__play"
       );
       if (playButton != null && !playButton.disabled) {
         event.preventDefault();
@@ -5226,6 +5372,11 @@ appElement.addEventListener("pointerdown", (event) => {
   if (!(targetElement instanceof HTMLElement)) {
     return;
   }
+  if (triggerPachinkoFortuneCardDrawFromElement(targetElement)) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
   const tile = targetElement.closest<HTMLElement>("[data-house-sortable-tile='true'][data-house-drag-payload]");
   const root = targetElement.closest<HTMLElement>("[data-house-drop-action-prefix]");
   const payload = tile?.dataset.houseDragPayload;
@@ -5415,6 +5566,12 @@ appElement.addEventListener("click", (event) => {
     return;
   }
   if (handleLayoutEditorClick(targetElement)) {
+    return;
+  }
+
+  if (triggerPachinkoFortuneCardDrawFromElement(targetElement)) {
+    event.preventDefault();
+    event.stopPropagation();
     return;
   }
 
@@ -7478,6 +7635,42 @@ function captureCityCardDrawOverlay(root: ParentNode): HTMLElement | null {
   return overlay;
 }
 
+function getPachinkoFortuneCardOverlayDrawKey(overlay: ParentNode): string | null {
+  const mount = overlay.querySelector<HTMLElement>(
+    "[data-pachinko-fortune-card-mount]"
+  );
+  return mount?.dataset.pachinkoFortuneCardDrawKey ?? null;
+}
+
+function isPachinkoFortuneCardOverlayDrawing(overlay: ParentNode): boolean {
+  const cardRoot = overlay.querySelector<HTMLElement>(
+    "[data-pachinko-fortune-card-state]"
+  );
+  return cardRoot?.dataset.pachinkoFortuneCardState === "drawing-card";
+}
+
+function capturePachinkoFortuneCardDrawOverlay(
+  root: ParentNode
+): PreservedPachinkoFortuneCardDrawOverlay | null {
+  const overlay = root.querySelector<HTMLElement>(
+    "[data-activity-overlay='pachinko-fortune-card'], [data-house-overlay='pachinko-fortune-card']"
+  );
+  if (overlay == null || !isPachinkoFortuneCardOverlayDrawing(overlay)) {
+    return null;
+  }
+
+  const drawKey = getPachinkoFortuneCardOverlayDrawKey(overlay);
+  if (drawKey == null) {
+    return null;
+  }
+
+  overlay.remove();
+  return {
+    overlay,
+    drawKey,
+  };
+}
+
 function syncPreservedCampaignMarkerAttributes(
   preservedElement: HTMLElement,
   replacementElement: HTMLElement
@@ -7565,6 +7758,29 @@ function restoreCityCardDrawOverlay(
   }
 
   replacementOverlay.replaceWith(preservedOverlay);
+}
+
+function restorePachinkoFortuneCardDrawOverlay(
+  root: ParentNode,
+  preservedOverlay: PreservedPachinkoFortuneCardDrawOverlay | null
+): void {
+  if (preservedOverlay == null) {
+    return;
+  }
+
+  const replacementOverlay = root.querySelector<HTMLElement>(
+    "[data-activity-overlay='pachinko-fortune-card'], [data-house-overlay='pachinko-fortune-card']"
+  );
+  if (
+    replacementOverlay == null ||
+    !isPachinkoFortuneCardOverlayDrawing(replacementOverlay) ||
+    getPachinkoFortuneCardOverlayDrawKey(replacementOverlay) !==
+      preservedOverlay.drawKey
+  ) {
+    return;
+  }
+
+  replacementOverlay.replaceWith(preservedOverlay.overlay);
 }
 
 let mapReturnEffectTimeoutId: number | null = null;
@@ -7687,6 +7903,8 @@ function renderAppFrame(
     : null;
   const preservedCoinRewardLayer = captureCoinRewardLayer(appRoot);
   const preservedCityCardDrawOverlay = captureCityCardDrawOverlay(appRoot);
+  const preservedPachinkoFortuneCardDrawOverlay =
+    capturePachinkoFortuneCardDrawOverlay(appRoot);
   const presenterOutput = createAppPresenterOutput({
     appState,
     playerCharacterId: currentPlayerCharacterId,
@@ -7736,12 +7954,17 @@ function renderAppFrame(
   restoreCampaignMarkerElements(appRoot, preservedCampaignMarkers);
   restoreCoinRewardLayer(appRoot, preservedCoinRewardLayer);
   restoreCityCardDrawOverlay(appRoot, preservedCityCardDrawOverlay);
+  restorePachinkoFortuneCardDrawOverlay(
+    appRoot,
+    preservedPachinkoFortuneCardDrawOverlay
+  );
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
   restoreCampaignMapScaleInputFocus(focusedScaleInput);
   syncMapIntroOverlay();
   syncStoryChapterTitleOverlay();
   syncActivityQteLoop();
+  syncPachinkoFortuneCardDrawOverlay();
   if (appState.gameState.ui.currentView === "map") {
     syncCampaignTerrainWebGl(appRoot);
     const campaignCoordinateSystem = getCurrentCampaignHexCoordinateSystem();

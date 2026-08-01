@@ -718,6 +718,19 @@ export type HouseOverlayViewModel =
       playActionId: string;
     }
   | {
+      type: "pachinko-fortune-card";
+      title: string;
+      taskLabel: string;
+      phase: string;
+      score: number;
+      fortuneCardCount: number;
+      fortuneCardsDrawn: number;
+      currentFortuneCard: ActivityPachinkoFortuneCardResult | null;
+      nextFortuneCardLabel: string;
+      drawKey: string;
+      drawActionId: string;
+    }
+  | {
       type: "qte-bar";
       title: string;
       taskLabel: string;
@@ -735,7 +748,9 @@ export type HouseModuleViewModel = {
   moduleId: HouseModuleId;
   houseId: string;
   sceneTitle: string;
+  sceneBackgroundId?: string;
   sceneSubtitle?: string;
+  isThinking?: boolean;
   standbyRoster: HouseStandbyActorViewModel[];
   dialogue: HouseDialogueViewModel | null;
   actionContainer: HouseActionContainerViewModel | null;

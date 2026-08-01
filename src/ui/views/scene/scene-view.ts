@@ -188,42 +188,8 @@ function getFortuneBoardKindLabel(kind: string): string {
   }
 }
 
-function formatPachinkoSlotValue(value: number | "wheel"): string {
-  return value === "wheel" ? "转盘" : String(value);
-}
-
-function renderPachinkoWheel(
-  wheelState: Extract<ActiveActivitySession, { type: "pachinko-board" }>["wheelState"],
-  boardWidth: number,
-  boardHeight: number
-): string {
-  const wheelLeft = 350;
-  const wheelTop = 280;
-  const wheelSize = 210;
-  const segmentAngle = 360 / Math.max(1, wheelState.segments.length);
-  return `
-    <div
-      class="c-pachinko-wheel ${wheelState.phase === "idle" ? "is-idle" : "is-active"} is-${wheelState.phase}"
-      style="--wheel-left:${(wheelLeft / boardWidth) * 100}%; --wheel-top:${(wheelTop / boardHeight) * 100}%; --wheel-size:${(wheelSize / boardWidth) * 100}%; --wheel-rotation:${wheelState.rotationDegrees}deg;"
-      aria-hidden="true"
-    >
-      <span class="c-pachinko-wheel__pointer"></span>
-      <span class="c-pachinko-wheel__disc">
-        ${wheelState.segments
-          .map(
-            (segment, index) => `
-              <span
-                class="c-pachinko-wheel__segment ${wheelState.selectedIndex === index ? "is-selected" : ""}"
-                style="--segment-angle:${index * segmentAngle + segmentAngle / 2}deg;"
-              >
-                <span class="c-pachinko-wheel__label">${segment.label}</span>
-              </span>
-            `
-          )
-          .join("")}
-      </span>
-    </div>
-  `;
+function formatPachinkoSlotValue(value: number | "fortune-card"): string {
+  return value === "fortune-card" ? "运势卡" : String(value);
 }
 
 function renderPachinkoBoard(input: {
@@ -250,9 +216,16 @@ function renderPachinkoBoard(input: {
   eventLog: Extract<ActiveActivitySession, { type: "pachinko-board" }>["eventLog"];
   score: number;
   lastSlotIndex: number | null;
-  slotValues: Array<number | "wheel">;
+  slotValues: Array<number | "fortune-card">;
   rewardQueue: Extract<ActiveActivitySession, { type: "pachinko-board" }>["rewardQueue"];
   wheelState: Extract<ActiveActivitySession, { type: "pachinko-board" }>["wheelState"];
+  fortuneCardCount: number;
+  fortuneCardsDrawn: number;
+  currentFortuneCard: Extract<
+    ActiveActivitySession,
+    { type: "pachinko-board" }
+  >["currentFortuneCard"];
+  layoutVersion: number;
   flipperAngle: number;
   playButtonAttributes: string;
 }): string {
@@ -262,11 +235,6 @@ function renderPachinkoBoard(input: {
       : ((input.pins[0]?.radius ?? 9) * 2 * 100) / input.boardWidth;
   const boardStyle = `--pachinko-width:${input.boardWidth}; --pachinko-height:${input.boardHeight}; --pachinko-flipper-angle:${input.flipperAngle}deg; --pachinko-pin-diameter:${pinDiameterPercent}%;`;
   const latestEvent = input.eventLog[input.eventLog.length - 1] ?? null;
-  const wheel = renderPachinkoWheel(
-    input.wheelState,
-    input.boardWidth,
-    input.boardHeight
-  );
   const renderBalls =
     input.activeBalls.length > 0
       ? input.activeBalls
@@ -276,6 +244,8 @@ function renderPachinkoBoard(input: {
   const playButtonLabel =
     input.phase === "settling"
       ? "确认结果"
+      : input.phase === "drawing-card"
+        ? "抽卡"
       : input.phase === "dropping"
         ? "弹珠中"
         : "游玩";
@@ -294,7 +264,6 @@ function renderPachinkoBoard(input: {
           <span class="c-pachinko-board__flipper c-pachinko-board__flipper--left"></span>
           <span class="c-pachinko-board__flipper c-pachinko-board__flipper--right"></span>
         </div>
-        ${wheel}
         ${input.pins
           .map(
             (pin) => `
@@ -357,12 +326,12 @@ function renderPachinkoBoard(input: {
         </div>
       </div>
       <div class="c-pachinko-board__summary">
-        <span>转盘队列 ${input.rewardQueue.length}</span>
+        <span>运势卡 ${input.fortuneCardCount}</span>
         <span>最近奖励 ${latestEvent?.label ?? "未触发"}</span>
-        <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 转盘</span>
+        <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 运势卡</span>
       </div>
       <div class="c-grain-shop-modal__actions c-pachinko-board__actions">
-        <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" ${input.playButtonAttributes} ${playButtonSoundAttribute} ${input.phase === "dropping" ? "disabled" : ""}>
+        <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" ${input.playButtonAttributes} ${playButtonSoundAttribute} ${input.phase === "dropping" || input.phase === "drawing-card" ? "disabled" : ""}>
           ${playButtonLabel}
         </button>
       </div>
@@ -370,8 +339,66 @@ function renderPachinkoBoard(input: {
   `;
 }
 
+function renderPachinkoFortuneCardOverlay(
+  activitySession: Extract<ActiveActivitySession, { type: "pachinko-board" }>
+): string {
+  const resultDescription =
+    activitySession.currentFortuneCard?.description ??
+    "点击卡牌，抽取本次劳作运势。";
+  const continueLabel =
+    activitySession.fortuneCardCount > 0 ? "继续抽卡" : "确认结果";
+  const resultAction =
+    activitySession.phase === "card-result" &&
+    activitySession.currentFortuneCard?.rank !== "encounter"
+      ? `
+          <div class="c-city-card-draw-test__actions c-pachinko-fortune-card__actions">
+            <button type="button" class="c-city-card-draw-test__confirm c-button c-grain-shop-button c-grain-shop-button--gold" data-activity-action="play-board">
+              ${continueLabel}
+            </button>
+          </div>
+        `
+      : "";
+
+  return `
+    <div class="c-grain-shop-overlay" data-activity-overlay="pachinko-fortune-card">
+      <section
+        class="c-city-card-draw-test c-pachinko-fortune-card"
+        data-pachinko-fortune-card-state="${activitySession.phase}"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="activity-pachinko-fortune-card-title"
+      >
+        <section class="c-city-card-draw-test__panel">
+          <p class="c-city-card-draw-test__eyebrow">运势卡 ${activitySession.fortuneCardsDrawn + 1}</p>
+          <h3 class="c-city-card-draw-test__title" id="activity-pachinko-fortune-card-title">${activitySession.title}</h3>
+          <p class="c-city-card-draw-test__copy">${activitySession.taskLabel} · 当前得分 ${activitySession.score}</p>
+          <div
+            class="c-city-card-draw-test__stage c-pachinko-fortune-card__stage"
+            data-pachinko-fortune-card-mount
+            data-pachinko-fortune-card-click-proxy
+            data-pachinko-fortune-card-draw-key="${activitySession.activityId}:${activitySession.fortuneCardsDrawn}:${activitySession.fortuneCardCount}:${activitySession.score}:${activitySession.layoutVersion}"
+            data-pachinko-fortune-card-dispatch="activity"
+            data-pachinko-fortune-card-action-id="play"
+          ></div>
+          <p class="c-city-card-draw-test__result c-pachinko-fortune-card__description" data-pachinko-fortune-card-result>
+            ${resultDescription}
+          </p>
+          ${resultAction}
+        </section>
+      </section>
+    </div>
+  `;
+}
+
 function renderActivityOverlay(activitySession: ActiveActivitySession): string {
   if (activitySession?.type === "pachinko-board") {
+    if (
+      activitySession.phase === "drawing-card" ||
+      activitySession.phase === "card-result"
+    ) {
+      return renderPachinkoFortuneCardOverlay(activitySession);
+    }
+
     return `
       <div class="c-grain-shop-overlay" data-activity-overlay="pachinko-board">
         ${renderPachinkoBoard({
@@ -446,7 +473,7 @@ function renderActivityOverlay(activitySession: ActiveActivitySession): string {
           </div>
           <div class="c-grain-shop-modal__actions c-fortune-board__actions">
             <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-minus">‹</button>
-            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-activity-action="play-board">
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-activity-action="play-board" data-fortune-play-button>
               ${activitySession.phase === "scanning" ? "选定此列" : "游玩"}
             </button>
             <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-plus">›</button>

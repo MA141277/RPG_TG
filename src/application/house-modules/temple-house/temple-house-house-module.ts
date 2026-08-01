@@ -71,6 +71,11 @@ import {
   spendPlayerStamina,
 } from "../../player/player-stamina";
 import {
+  continueActivityPachinkoAfterFortuneCard,
+  drawPachinkoFortuneCard,
+  resolveActivityPachinkoFortuneEncounter,
+} from "../../activity/activity-qte-runtime";
+import {
   convertHouseActivityDaysToSegments,
   formatHouseActivityCostLine,
   getHouseWorkDurationDays,
@@ -137,6 +142,8 @@ const SELECT_REVIEW_WORK_ACTION_PREFIX = "select-review-work:";
 const SELECT_REVIEW_ADVICE_ACTION_PREFIX = "select-review-advice:";
 const TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID = "temple-review-give-advice";
 const TEMPLE_REVIEW_STAY_SILENT_ACTION_ID = "temple-review-stay-silent";
+const TEMPLE_WORK_ENCOUNTER_CHOICE_ACTION_PREFIX =
+  "temple-work-encounter-choice:";
 const OPEN_TEMPLE_WORK_MENU_ACTION_ID = "open-temple-work-menu";
 const CLOSE_TEMPLE_WORK_MENU_ACTION_ID = "close-temple-work-menu";
 const OPEN_TEMPLE_REST_MENU_ACTION_ID = "open-temple-rest-menu";
@@ -3405,6 +3412,347 @@ function handleField(
   return createTransitionResult(input, { gameState: nextState });
 }
 
+function hasUnresolvedTempleWorkFortuneEncounter(gameState: GameState): boolean {
+  const activitySession = gameState.runtime.activitySession;
+  return (
+    gameState.runtime.playableSession?.playableId === "activity-qte" &&
+    activitySession?.type === "pachinko-board" &&
+    activitySession.phase === "card-result" &&
+    activitySession.currentFortuneCard?.rank === "encounter" &&
+    activitySession.currentFortuneCard.resolved !== true
+  );
+}
+
+function createTempleWorkEncounterDialogueOverride(input: {
+  stage: NonNullable<TempleHouseSessionState["workEncounterStage"]>;
+  playerCharacterId: string;
+  abbotCharacterId: string;
+}): NonNullable<TempleHouseSessionState["dialogueOverride"]> | null {
+  switch (input.stage) {
+    case "player-tired":
+      return {
+        speakerCharacterId: input.playerCharacterId,
+        textLines: ["终于干完活了，真累啊。"],
+        advanceActionId: "advance-temple-dialogue",
+        advanceHintText: "点击继续",
+      };
+    case "abbot-rest":
+      return {
+        speakerCharacterId: input.abbotCharacterId,
+        textLines: ["重八，你先歇下。"],
+        advanceActionId: "advance-temple-dialogue",
+        advanceHintText: "点击继续",
+      };
+    case "narration-called":
+      return {
+        speakerCharacterId: input.abbotCharacterId,
+        textLines: ["方丈喊住了你。"],
+        advanceActionId: "advance-temple-dialogue",
+        advanceHintText: "点击继续",
+      };
+    case "abbot-question":
+      return {
+        speakerCharacterId: input.abbotCharacterId,
+        textLines: ["我问你且回答，你为何皈依佛门。"],
+        advanceActionId: "advance-temple-dialogue",
+        advanceHintText: "点击继续",
+      };
+    case "famine-answer":
+      return {
+        speakerCharacterId: input.playerCharacterId,
+        textLines: [
+          "不瞒住持，若不来到皇觉寺，恐怕我已经是路边饿殍了。",
+        ],
+        advanceActionId: "advance-temple-dialogue",
+        advanceHintText: "点击继续",
+      };
+    case "dharma-answer":
+      return {
+        speakerCharacterId: input.playerCharacterId,
+        textLines: ["为···为了普渡众生。"],
+        advanceActionId: "advance-temple-dialogue",
+        advanceHintText: "点击继续",
+      };
+    case "famine-abbot":
+      return {
+        speakerCharacterId: input.abbotCharacterId,
+        textLines: ["你倒是诚实，干活也肯干，这也一种菩提之心。"],
+        advanceActionId: "advance-temple-dialogue",
+        advanceHintText: "点击继续",
+      };
+    case "dharma-abbot":
+      return {
+        speakerCharacterId: input.abbotCharacterId,
+        textLines: [
+          "口气倒不小，慈航之事不必在法内，我观你非偏安之人。罢了，都是命运。",
+        ],
+        advanceActionId: "advance-temple-dialogue",
+        advanceHintText: "点击继续",
+      };
+    default:
+      return null;
+  }
+}
+
+function startTempleWorkFortuneEncounter(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState
+): HouseModuleTransitionResult<"temple-house"> {
+  return withSessionState(
+    {
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+    },
+    sessionState,
+    {
+      workEncounterStage: "loading",
+      workEncounterLoadingTicks: Math.ceil(2500 / PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS),
+      dialoguePhase: "idle",
+      dialogueOverride: null,
+      overlay: null,
+    },
+    [
+      { type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID },
+      {
+        type: "start-interval",
+        intervalId: TEMPLE_WORK_INTERVAL_ID,
+        everyMs: PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS,
+        request: {
+          type: "tick",
+          tickId: TEMPLE_WORK_INTERVAL_ID,
+        },
+      },
+    ]
+  );
+}
+
+function tickTempleWorkFortuneEncounterLoading(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState
+): HouseModuleTransitionResult<"temple-house"> {
+  if (sessionState.workEncounterStage !== "loading") {
+    return createTransitionResult(input);
+  }
+
+  if (sessionState.workEncounterLoadingTicks > 1) {
+    return withSessionState(
+      {
+        gameState: input.gameState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        workEncounterLoadingTicks: sessionState.workEncounterLoadingTicks - 1,
+      }
+    );
+  }
+
+  return withSessionState(
+    {
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+    },
+    sessionState,
+    {
+      workEncounterStage: "player-tired",
+      workEncounterLoadingTicks: 0,
+      dialoguePhase: "open",
+      dialogueOverride: createTempleWorkEncounterDialogueOverride({
+        stage: "player-tired",
+        playerCharacterId: input.playerCharacterId,
+        abbotCharacterId: input.houseDefinition.defaultCharacterId ?? input.playerCharacterId,
+      }),
+    },
+    [{ type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID }]
+  );
+}
+
+function advanceTempleWorkFortuneEncounterDialogue(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  gameState: GameState
+): HouseModuleTransitionResult<"temple-house"> | null {
+  const abbotCharacterId =
+    input.houseDefinition.defaultCharacterId ?? input.playerCharacterId;
+  const nextStageByStage: Partial<
+    Record<NonNullable<TempleHouseSessionState["workEncounterStage"]>, NonNullable<TempleHouseSessionState["workEncounterStage"]>>
+  > = {
+    "player-tired": "abbot-rest",
+    "abbot-rest": "narration-called",
+    "narration-called": "abbot-question",
+    "abbot-question": "choice",
+    "famine-answer": "famine-abbot",
+    "dharma-answer": "dharma-abbot",
+    "famine-abbot": "reward",
+    "dharma-abbot": "reward",
+  };
+  const nextStage =
+    sessionState.workEncounterStage == null
+      ? null
+      : nextStageByStage[sessionState.workEncounterStage] ?? null;
+  if (nextStage == null) {
+    return null;
+  }
+
+  if (nextStage === "choice") {
+    return withSessionState(
+      {
+        gameState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        workEncounterStage: "choice",
+        dialoguePhase: "open",
+        dialogueOverride: null,
+        dialogueLines: ["我问你且回答，你为何皈依佛门。"],
+        overlay: null,
+      }
+    );
+  }
+
+  if (nextStage === "reward") {
+    return withSessionState(
+      {
+        gameState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        workEncounterStage: "reward",
+        dialogueOverride: null,
+        overlay: createAlertOverlay("奇遇奖励", [
+          "方丈好感度 +5",
+          "贡献 +5",
+        ]),
+      }
+    );
+  }
+
+  return withSessionState(
+    {
+      gameState,
+      characterDefinitions: input.characterDefinitions,
+    },
+    sessionState,
+    {
+      workEncounterStage: nextStage,
+      dialoguePhase: "open",
+      dialogueOverride: createTempleWorkEncounterDialogueOverride({
+        stage: nextStage,
+        playerCharacterId: input.playerCharacterId,
+        abbotCharacterId,
+      }),
+      overlay: null,
+    }
+  );
+}
+
+function chooseTempleWorkFortuneEncounterAnswer(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  gameState: GameState,
+  choiceId: string
+): HouseModuleTransitionResult<"temple-house"> | null {
+  if (sessionState.workEncounterStage !== "choice") {
+    return null;
+  }
+
+  const nextStage =
+    choiceId === "famine"
+      ? "famine-answer"
+      : choiceId === "dharma"
+        ? "dharma-answer"
+        : null;
+  if (nextStage == null) {
+    return null;
+  }
+
+  return withSessionState(
+    {
+      gameState,
+      characterDefinitions: input.characterDefinitions,
+    },
+    sessionState,
+    {
+      workEncounterStage: nextStage,
+      dialoguePhase: "open",
+      dialogueOverride: createTempleWorkEncounterDialogueOverride({
+        stage: nextStage,
+        playerCharacterId: input.playerCharacterId,
+        abbotCharacterId:
+          input.houseDefinition.defaultCharacterId ?? input.playerCharacterId,
+      }),
+      overlay: null,
+    }
+  );
+}
+
+function closeTempleWorkFortuneEncounterReward(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  gameState: GameState
+): HouseModuleTransitionResult<"temple-house"> | null {
+  if (sessionState.workEncounterStage !== "reward") {
+    return null;
+  }
+
+  const currentContribution = getTempleContribution(gameState);
+  const currentFavorability = readNumericVariable(
+    gameState,
+    ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeAbbotFavorability,
+    0
+  );
+  const rewardedState = {
+    ...gameState,
+    runtime: {
+      ...gameState.runtime,
+      variables: {
+        ...gameState.runtime.variables,
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]:
+          currentContribution + 5,
+        [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeAbbotFavorability]:
+          currentFavorability + 5,
+      },
+    },
+  };
+  const continuedState = continueActivityPachinkoAfterFortuneCard(
+    resolveActivityPachinkoFortuneEncounter(rewardedState)
+  );
+  const nextSessionState = {
+    ...sessionState,
+    workEncounterStage: null,
+    workEncounterLoadingTicks: 0,
+    dialogueOverride: null,
+    overlay: null,
+  };
+  const activeTaskId =
+    nextSessionState.selectedTaskId ??
+    findActiveTempleWorkTaskId(continuedState, input.activityDefinitionsById);
+
+  if (
+    activeTaskId != null &&
+    continuedState.runtime.activitySession?.type === "pachinko-board" &&
+    continuedState.runtime.activitySession.phase === "settling"
+  ) {
+    return runTempleWorkPlayableRequest(
+      {
+        ...input,
+        gameState: continuedState,
+      },
+      nextSessionState,
+      findTempleTaskActivityDefinition(activeTaskId, input.activityDefinitionsById),
+      createPlayableActionRequest("activity-qte", "play")
+    );
+  }
+
+  return {
+    gameState: continuedState,
+    characterDefinitions: input.characterDefinitions,
+    sessionState: nextSessionState,
+  };
+}
+
 function handleAction(
   input: HouseModuleDispatchInput<"temple-house">,
   sessionState: TempleHouseSessionState | null
@@ -3431,6 +3779,18 @@ function handleAction(
     "Temple house is missing a senior monk participant for review."
   );
   const nextState = ensureTempleRuntimeState(input.gameState);
+
+  if (input.request.actionId.startsWith(TEMPLE_WORK_ENCOUNTER_CHOICE_ACTION_PREFIX)) {
+    const result = chooseTempleWorkFortuneEncounterAnswer(
+      input,
+      sessionState,
+      nextState,
+      input.request.actionId.slice(TEMPLE_WORK_ENCOUNTER_CHOICE_ACTION_PREFIX.length)
+    );
+    if (result != null) {
+      return result;
+    }
+  }
 
   if (input.request.actionId === CLOSE_TEMPLE_LEAVE_REFUSAL_ACTION_ID) {
     return withSessionState(
@@ -3489,6 +3849,15 @@ function handleAction(
   }
 
   if (input.request.actionId === "advance-temple-dialogue") {
+    const encounterResult = advanceTempleWorkFortuneEncounterDialogue(
+      input,
+      sessionState,
+      nextState
+    );
+    if (encounterResult != null) {
+      return encounterResult;
+    }
+
     if (sessionState.mode === "meeting") {
       const contributionEntries = getTempleContributionEntries(
         nextState,
@@ -4121,6 +4490,12 @@ function handleAction(
               input.textEntriesById,
               "runtime.zhu_yuanzhang.temple.review.auto_advance.label"
             ),
+            statusPanel: createTempleReviewRestAutoAdvanceStatus({
+              gameState: nextState,
+              characterDefinitions: input.characterDefinitions,
+              playerCharacterId: input.playerCharacterId,
+              textEntriesById: input.textEntriesById,
+            }),
             completion: {
               type: "enter-house",
               houseId: input.houseDefinition.id,
@@ -4186,6 +4561,20 @@ function handleAction(
         overlay: null,
       }
     );
+  }
+
+  if (
+    input.request.actionId === "close-temple-overlay" &&
+    sessionState.workEncounterStage === "reward"
+  ) {
+    const result = closeTempleWorkFortuneEncounterReward(
+      input,
+      sessionState,
+      nextState
+    );
+    if (result != null) {
+      return result;
+    }
   }
 
   if (
@@ -4574,6 +4963,17 @@ function handleTick(
 
   if (
     input.request.tickId === TEMPLE_WORK_INTERVAL_ID &&
+    hasUnresolvedTempleWorkFortuneEncounter(input.gameState)
+  ) {
+    if (sessionState.workEncounterStage == null) {
+      return startTempleWorkFortuneEncounter(input, sessionState);
+    }
+
+    return tickTempleWorkFortuneEncounterLoading(input, sessionState);
+  }
+
+  if (
+    input.request.tickId === TEMPLE_WORK_INTERVAL_ID &&
     input.gameState.runtime.playableSession?.playableId === "activity-qte" &&
     (input.gameState.runtime.activitySession?.type === "fortune-board" ||
       input.gameState.runtime.activitySession?.type === "pachinko-board")
@@ -4678,6 +5078,23 @@ function selectFortuneBoardOverlayViewModel(
 function selectPachinkoBoardOverlayViewModel(
   session: ActivityPachinkoBoardSession
 ): HouseOverlayViewModel {
+  if (session.phase === "drawing-card" || session.phase === "card-result") {
+    return {
+      type: "pachinko-fortune-card",
+      title: session.title,
+      taskLabel: session.taskLabel,
+      phase: session.phase,
+      score: session.score,
+      fortuneCardCount: session.fortuneCardCount,
+      fortuneCardsDrawn: session.fortuneCardsDrawn,
+      currentFortuneCard: session.currentFortuneCard,
+      nextFortuneCardLabel:
+        session.currentFortuneCard?.label ?? drawPachinkoFortuneCard(session).label,
+      drawKey: `${session.activityId}:${session.fortuneCardsDrawn}:${session.fortuneCardCount}:${session.score}:${session.layoutVersion}`,
+      drawActionId: TEMPLE_WORK_PLAY_ACTION_ID,
+    };
+  }
+
   return {
     type: "pachinko-board",
     title: session.title,
@@ -5000,13 +5417,14 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
         ),
         selectedWorkPlan: readTempleWorkPlan(nextState),
       };
-    const activeFortuneBoardSession = isTempleFortuneBoardSession(
+    const suppressPlayableOverlay = sessionState.workEncounterStage != null;
+    const activeFortuneBoardSession = !suppressPlayableOverlay && isTempleFortuneBoardSession(
       nextState,
       input.houseDefinition.id
     )
       ? nextState.runtime.activitySession
       : null;
-    const activePachinkoBoardSession = isTemplePachinkoBoardSession(
+    const activePachinkoBoardSession = !suppressPlayableOverlay && isTemplePachinkoBoardSession(
       nextState,
       input.houseDefinition.id
     )
@@ -5072,6 +5490,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
           : "c-temple-house-portrait-art--senior-monk";
     const shouldShowDailyActions =
       sessionState.mode === "daily" &&
+      sessionState.workEncounterStage == null &&
       sessionState.overlay == null &&
       !hasActiveTempleWorkPlayable &&
       sessionState.dialoguePhase === "open";
@@ -5088,6 +5507,8 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       sessionState.mode === "meeting" &&
       sessionState.meetingStage === "advice-choice" &&
       !hasActiveTempleWorkPlayable;
+    const shouldShowWorkEncounterChoices =
+      sessionState.workEncounterStage === "choice" && sessionState.overlay == null;
     const selectedTask =
       sessionState.selectedTaskId == null
         ? null
@@ -5168,6 +5589,12 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       moduleId: "temple-house",
       houseId: input.houseDefinition.id,
       sceneTitle: input.houseDefinition.name,
+      ...(sessionState.workEncounterStage == null
+        ? {}
+        : { sceneBackgroundId: "bg.temple.hall" }),
+      ...(sessionState.workEncounterStage === "loading"
+        ? { isThinking: true }
+        : {}),
       sceneSubtitle: isMonkStoryStage(nextState)
         ? resolveTempleText(
             input.textEntriesById,
@@ -5209,7 +5636,23 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
                   ? "点击继续"
                   : null),
             },
-      actionContainer: shouldShowMeetingTasks
+      actionContainer: shouldShowWorkEncounterChoices
+        ? {
+            title: "回答方丈",
+            actions: [
+              {
+                id: `${TEMPLE_WORK_ENCOUNTER_CHOICE_ACTION_PREFIX}famine`,
+                label: "因为饥荒",
+                buttonSound: "light",
+              },
+              {
+                id: `${TEMPLE_WORK_ENCOUNTER_CHOICE_ACTION_PREFIX}dharma`,
+                label: "因为佛法",
+                buttonSound: "light",
+              },
+            ],
+          }
+        : shouldShowMeetingTasks
         ? {
             title: isMonkStoryStage(nextState) ? "本轮安排" : "本次寺中差事",
             actions: reviewWorkChoices.map<HouseActionViewModel>((workChoice) => ({

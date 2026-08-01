@@ -163,7 +163,6 @@ function renderCityMenuButtons(input: {
 }): string {
   const buttons = [
     { id: "culture", label: "风土人情" },
-    { id: "intel", label: "情报" },
     { id: "management", label: "管理" },
     { id: "locations", label: "地点" },
     { id: "begging", label: "化缘" },

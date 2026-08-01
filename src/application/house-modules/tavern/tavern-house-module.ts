@@ -9,7 +9,6 @@
 } from "../../../content/houses/tavern-content";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { GameState } from "../../../domain/game-state";
-import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
   TavernAlertOverlayState,
   TavernOverlayState,
@@ -77,17 +76,14 @@ import {
 } from "../../../domain/tavern-short-gambling";
 import { assertExists } from "../../../shared/assert";
 import {
-  acceptTavernWork,
   completeTavernWork,
   failTavernWork,
   getActiveTavernWorkIds,
-  getTavernWorkProgress,
   increaseTavernDrinkCount,
   increaseTavernTime,
   isTavernWorkCompleted,
   isTavernWorkFailed,
   mutatePlayerGold,
-  removeActiveTavernWork,
   setTavernWorkProgress,
 } from "../../tavern/tavern-mutations";
 import {
@@ -97,7 +93,6 @@ import {
 } from "../../player/player-stamina";
 import {
   convertHouseActivityDaysToSegments,
-  formatHouseActivityCostLine,
   getHouseWorkDurationDays,
 } from "../../house/house-activity-costs";
 import { createCouncilInsufficientTimeDialogueOverride } from "../../time/council-insufficient-time-dialogue";
@@ -115,7 +110,6 @@ import { selectTavernShortGambleOverlay } from "./tavern-short-gamble-view-model
 
 const ACCEPT_WORK_ACTION_PREFIX = "accept-work:";
 const CONFIRM_START_WORK_ACTION_PREFIX = "confirm-start-work:";
-const SUBMIT_WORK_ACTION_PREFIX = "submit-work:";
 const TAVERN_WORK_INTERVAL_ID = "tavern-work-qte";
 const TAVERN_GAMBLE_NPC_INTERVAL_ID = "tavern-gamble-npc-thinking";
 const TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID = "tavern-gamble-short-claim-timeout";
@@ -316,6 +310,9 @@ function getAvailableWorkOffers(
 ): TavernWorkOffer[] {
   const activeIds = new Set(getActiveTavernWorkIds(gameState, houseId));
   return tavernWorkOffers.filter((offer) => {
+    if (offer.type !== "dishwashing" || offer.canStartImmediately !== true) {
+      return false;
+    }
     if (activeIds.has(offer.id)) {
       return false;
     }
@@ -372,20 +369,20 @@ function createDishwashingOverlay(
   };
 }
 
-function resolveDishwashingReward(
-  offer: TavernWorkOffer,
+function resolveDirectWorkReward(
   successes: number
 ): { grade: string; rewardGold: number; success: boolean } {
+  const score = successes * 10;
   if (successes <= 0) {
-    return { grade: "失败", rewardGold: 0, success: false };
+    return { grade: "失手", rewardGold: 0, success: false };
   }
   if (successes === 1) {
-    return { grade: "勉强", rewardGold: Math.floor(offer.maxRewardGold * 0.3), success: true };
+    return { grade: "勉强", rewardGold: score, success: true };
   }
   if (successes === 2) {
-    return { grade: "合格", rewardGold: Math.floor(offer.maxRewardGold * 0.65), success: true };
+    return { grade: "合格", rewardGold: score, success: true };
   }
-  return { grade: "利落", rewardGold: offer.maxRewardGold, success: true };
+  return { grade: "利落", rewardGold: score, success: true };
 }
 
 function refreshWorkLists(
@@ -419,8 +416,8 @@ function startDishwashingQte(
     {
       ...refreshWorkLists(nextState, input.houseDefinition.id, playerCharacter.stats.fame),
       selectedOfferId: offer.id,
-      selectedSubmitOfferId: offer.id,
-      workPanelMode: "submit",
+      selectedSubmitOfferId: null,
+      workPanelMode: "accept",
       dialoguePhase: "idle",
       overlay: createDishwashingOverlay(offer, 1, 0),
     },
@@ -494,64 +491,14 @@ function handleTavernWorkStop(
   }
 
   const offer = findWorkOffer(overlay.offerId);
-  const reward = resolveDishwashingReward(offer, nextSuccesses);
-  const nextState = setTavernWorkProgress(
+  const reward = resolveDirectWorkReward(nextSuccesses);
+  const score = nextSuccesses * 10;
+  const durationDays = getHouseWorkDurationDays();
+  let nextState = setTavernWorkProgress(
     input.gameState,
     input.houseDefinition.id,
     offer.id,
     nextSuccesses
-  );
-
-  return {
-    gameState: nextState,
-    characterDefinitions: input.characterDefinitions,
-    sessionState: {
-      ...sessionState,
-      dialoguePhase: "open",
-      workPanelMode: "submit",
-      selectedSubmitOfferId: offer.id,
-      dialogueLines: [
-        `你把${offer.title}做完了，可以去柜台提交。`,
-        reward.success
-          ? `目前判定：${reward.grade}，预计可领 ${reward.rewardGold} 文。`
-          : "这活干砸了，仍然可以提交，但会按失败处理。",
-      ],
-      overlay: {
-        type: "result",
-        title: "活计进度",
-        grade: reward.grade,
-        score: nextSuccesses,
-        rewardLines: [
-          `${offer.title}`,
-          `命中 ${nextSuccesses} / ${overlay.totalRounds} 次`,
-          reward.success ? `预计报酬 ${reward.rewardGold} 文` : "未达到最低要求，提交会失败",
-        ],
-      },
-    },
-    sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
-  };
-}
-
-function submitWork(
-  input: HouseModuleDispatchInput<"tavern">,
-  sessionState: TavernSessionState,
-  offer: TavernWorkOffer
-): HouseModuleTransitionResult<"tavern"> {
-  const durationDays = getHouseWorkDurationDays();
-  const progress = getTavernWorkProgress(
-    input.gameState,
-    input.houseDefinition.id,
-    offer.id
-  );
-  const reward =
-    offer.type === "dishwashing"
-      ? resolveDishwashingReward(offer, progress)
-      : { grade: "失败", rewardGold: 0, success: false };
-
-  let nextState = removeActiveTavernWork(
-    input.gameState,
-    input.houseDefinition.id,
-    offer.id
   );
   nextState = increaseTavernTime(nextState, input.houseDefinition.id, durationDays);
   nextState = reward.success
@@ -588,20 +535,25 @@ function submitWork(
     sessionState: {
       ...sessionState,
       ...lists,
-      selectedOfferId: lists.availableOffers[0]?.id ?? null,
-      selectedSubmitOfferId: lists.acceptedOffers[0]?.id ?? null,
-      workPanelMode: "submit",
       dialoguePhase: "open",
-      dialogueLines: reward.success
-        ? [`你提交了${offer.title}。`, `（点过工钱）递来 ${reward.rewardGold} 文。`]
-        : [`你提交了${offer.title}。`, "（看完结果，摇了摇头）这单按失败记。"],
+      workPanelMode: "accept",
+      selectedOfferId: lists.availableOffers[0]?.id ?? null,
+      selectedSubmitOfferId: null,
+      dialogueLines: [
+        `你把${offer.title}做完了。`,
+        reward.success
+          ? `判定：${reward.grade}，工钱 ${reward.rewardGold} 文。`
+          : "这活干砸了，没有拿到工钱。",
+      ],
       overlay: {
         type: "result",
-        title: "提交结果",
+        title: "活计结算",
         grade: reward.grade,
-        score: Math.max(progress, 0),
+        score,
         rewardLines: [
-          reward.success ? "任务完成" : "任务失败",
+          `${offer.title}`,
+          `命中 ${nextSuccesses} / ${overlay.totalRounds} 次`,
+          `得分 ${score}`,
           `报酬 ${reward.rewardGold} 文`,
           `时间 +${durationDays}天`,
           `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
@@ -631,11 +583,11 @@ function beginAcceptedWorkOffer(
     return withCouncilInsufficientTimeDialogue(input, sessionState);
   }
 
-  const nextState = acceptTavernWork(input.gameState, input.houseDefinition.id, offer.id);
   if (offer.type === "dishwashing" && offer.canStartImmediately) {
-    return startDishwashingQte(input, sessionState, offer, nextState);
+    return startDishwashingQte(input, sessionState, offer, input.gameState);
   }
 
+  const nextState = input.gameState;
   const nextLists = refreshWorkLists(
     nextState,
     input.houseDefinition.id,
@@ -664,23 +616,6 @@ function beginAcceptedWorkOffer(
   );
 }
 
-function createActivityConfirmOverlay(
-  title: string,
-  paragraphs: string[],
-  confirmActionId: string
-): HouseActivityConfirmOverlayState {
-  return {
-    type: "activity-confirm",
-    title,
-    paragraphs,
-    confirmActionId,
-    confirmLabel: "接下这活",
-    cancelActionId: CANCEL_ACTIVITY_CONFIRM_ACTION_ID,
-    cancelLabel: "再看看",
-    tone: "info",
-  };
-}
-
 function handleWorkAction(
   input: HouseModuleDispatchInput<"tavern">,
   sessionState: TavernSessionState | null
@@ -700,11 +635,28 @@ function handleWorkAction(
     const entries = getTavernTextEntries(input.textEntriesById);
     return withSessionState(input, sessionState, {
       ...lists,
-      workPanelMode: "main",
+      workPanelMode: "accept",
+      selectedOfferId: lists.availableOffers[0]?.id ?? null,
       dialoguePhase: "open",
       dialogueLines: [
-        resolveTavernText(entries, "runtime.zhu_yuanzhang.tavern.work.main.001"),
-        resolveTavernText(entries, "runtime.zhu_yuanzhang.tavern.work.main.002"),
+        lists.availableOffers.length === 0
+          ? resolveTavernText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.work.accept.empty.001"
+            )
+          : resolveTavernText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.work.accept.available.001"
+            ),
+        lists.availableOffers.length === 0
+          ? resolveTavernText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.work.accept.empty.002"
+            )
+          : resolveTavernText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.work.accept.available.002"
+            ),
       ],
       overlay: null,
     });
@@ -737,39 +689,6 @@ function handleWorkAction(
               resolveTavernText(
                 entries,
                 "runtime.zhu_yuanzhang.tavern.work.accept.available.002"
-              ),
-            ],
-      overlay: null,
-    });
-  }
-
-  if (input.request.actionId === "open-work-submit") {
-    const entries = getTavernTextEntries(input.textEntriesById);
-    return withSessionState(input, sessionState, {
-      ...lists,
-      workPanelMode: "submit",
-      selectedSubmitOfferId: lists.acceptedOffers[0]?.id ?? null,
-      dialoguePhase: "open",
-      dialogueLines:
-        lists.acceptedOffers.length === 0
-          ? [
-              resolveTavernText(
-                entries,
-                "runtime.zhu_yuanzhang.tavern.work.submit.empty.001"
-              ),
-              resolveTavernText(
-                entries,
-                "runtime.zhu_yuanzhang.tavern.work.submit.empty.002"
-              ),
-            ]
-          : [
-              resolveTavernText(
-                entries,
-                "runtime.zhu_yuanzhang.tavern.work.submit.available.001"
-              ),
-              resolveTavernText(
-                entries,
-                "runtime.zhu_yuanzhang.tavern.work.submit.available.002"
               ),
             ],
       overlay: null,
@@ -826,13 +745,7 @@ function handleWorkAction(
       return withCouncilInsufficientTimeDialogue(input, sessionState);
     }
 
-    return withSessionState(input, sessionState, {
-      overlay: createActivityConfirmOverlay(offer.title, [
-        offer.description,
-        `（抬了抬下巴）这活真接下来，少说得占你 ${durationDays} 天。`,
-        formatHouseActivityCostLine(durationDays),
-      ], `${CONFIRM_START_WORK_ACTION_PREFIX}${offer.id}`),
-    });
+    return beginAcceptedWorkOffer(input, sessionState, offer);
   }
 
   const confirmOfferId = parseActionId(
@@ -848,51 +761,6 @@ function handleWorkAction(
     }
 
     return beginAcceptedWorkOffer(input, sessionState, offer);
-  }
-
-  const submitOfferId = parseActionId(input.request.actionId, SUBMIT_WORK_ACTION_PREFIX);
-  if (submitOfferId != null) {
-    const offer = lists.acceptedOffers.find((acceptedOffer) => acceptedOffer.id === submitOfferId);
-    if (offer == null) {
-      return createTransitionResult(input);
-    }
-
-    const progress = getTavernWorkProgress(input.gameState, houseId, offer.id);
-    return withSessionState(input, sessionState, {
-      selectedSubmitOfferId: offer.id,
-      overlay: {
-        type: "submit-confirm",
-        offerId: offer.id,
-        title: `提交${offer.title}`,
-        paragraphs: [
-          offer.description,
-          progress < 0
-            ? "这个任务还没有完成记录，现在提交会按失败处理。"
-            : `当前完成度 ${progress} / ${TAVERN_WORK_TOTAL_ROUNDS}。`,
-          "确认提交后，这个任务会从当前接取列表移除。",
-        ],
-        confirmActionId: "confirm-submit-work",
-        cancelActionId: "cancel-overlay",
-      },
-    });
-  }
-
-  if (input.request.actionId === "confirm-submit-work") {
-    if (!canAffordActivityCost(playerCharacter)) {
-      return withSessionState(input, sessionState, {
-        overlay: createLowStaminaOverlay("交活", input.textEntriesById),
-      });
-    }
-
-    const offerId = sessionState.selectedSubmitOfferId;
-    if (offerId == null) {
-      return createTransitionResult(input);
-    }
-    const offer = lists.acceptedOffers.find((acceptedOffer) => acceptedOffer.id === offerId);
-    if (offer == null) {
-      return createTransitionResult(input);
-    }
-    return submitWork(input, sessionState, offer);
   }
 
   if (input.request.actionId === "tavern-work-stop") {
@@ -2435,18 +2303,13 @@ function createWorkActions(
 
   if (sessionState.workPanelMode === "submit") {
     return [
-      ...sessionState.acceptedOffers.map((offer) => ({
-        id: `${SUBMIT_WORK_ACTION_PREFIX}${offer.id}`,
-        label: `提交：${offer.title}`,
-      })),
       { id: "open-work", label: "返回" },
       { id: "dismiss-dialogue", label: "关闭" },
     ];
   }
 
   return [
-    { id: "open-work-accept", label: "接取" },
-    { id: "open-work-submit", label: "提交" },
+    { id: "open-work-accept", label: "刷盘子" },
     { id: "dismiss-dialogue", label: "关闭" },
   ];
 }
@@ -2546,13 +2409,10 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     if (
       input.request.actionId === "open-work" ||
       input.request.actionId === "open-work-accept" ||
-      input.request.actionId === "open-work-submit" ||
-      input.request.actionId === "confirm-submit-work" ||
       input.request.actionId === "tavern-work-stop" ||
       input.request.actionId === "close-tavern-result" ||
       input.request.actionId.startsWith(ACCEPT_WORK_ACTION_PREFIX) ||
-      input.request.actionId.startsWith(CONFIRM_START_WORK_ACTION_PREFIX) ||
-      input.request.actionId.startsWith(SUBMIT_WORK_ACTION_PREFIX)
+      input.request.actionId.startsWith(CONFIRM_START_WORK_ACTION_PREFIX)
     ) {
       return handleWorkAction(input, input.sessionState);
     }

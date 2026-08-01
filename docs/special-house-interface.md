@@ -538,11 +538,17 @@ If the board supports continuous launches, expose `activeBalls` as the canonical
 layout variation such as lower slot refresh timing must be exposed through typed fields such as
 `layoutRefreshElapsedMs`, `layoutRefreshPeriodMs`, and `layoutVersion`; views may render the updated
 slot values, but must not shuffle or rescore the board themselves.
-If `pachinko-board` includes staged rewards such as a wheel spin, expose the queue and animation
-state as typed fields such as `rewardQueue` and `wheelState`. The runtime owns reward selection,
-weighted probabilities, spin/slow/flash timing, and reward application. Renderers may draw the
-wheel, pointer, selected segment, and dimmed board state, but must not apply score, ball, or
-encounter effects themselves.
+If `pachinko-board` includes staged rewards such as fortune-card draws, expose the queue, draw
+count, current card, and card history as typed fields. The runtime owns ordinary card selection,
+deterministic test/demo draw rules, card result text, and ordinary score/stamina application.
+When an encounter card must enter a house-specific story, the house module may temporarily
+suppress the playable overlay, drive typed dialogue/choice session state, apply house-owned
+story rewards through unified runtime variables, then mark the card resolved and resume the
+shared playable flow. Renderers may draw the card face and result text, but must not apply score,
+stamina, relationship, contribution, or encounter effects themselves.
+If that story needs a short loading/thinking beat before dialogue, expose it as typed view-model
+state such as `isThinking` plus any needed scene background id. Do not represent the delay as a
+blank screen, renderer-local timeout, or playable overlay that keeps intercepting input.
 If one overlay contains a staged interaction
 (for example "select a topic, then confirm"),
 extend the shared overlay contract with the staged control fields first
@@ -650,7 +656,9 @@ type HouseModuleViewModel = {
   moduleId: HouseModuleId;
   houseId: string;
   sceneTitle: string;
+  sceneBackgroundId?: string;
   sceneSubtitle?: string;
+  isThinking?: boolean;
   standbyRoster: HouseStandbyActorViewModel[];
   dialogue: HouseDialogueViewModel | null;
   actionContainer: HouseActionContainerViewModel | null;

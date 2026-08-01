@@ -4,6 +4,12 @@ const test = require("node:test");
 
 const cityViewPath = "src/ui/views/city/city-view.ts";
 
+test("city layout menu hides the intel button", () => {
+  const source = fs.readFileSync(cityViewPath, "utf8");
+
+  assert.doesNotMatch(source, /\{\s*id:\s*"intel"/);
+});
+
 test("city intel panel does not show temporary mock-intel disclaimer copy", () => {
   const source = fs.readFileSync(cityViewPath, "utf8");
 

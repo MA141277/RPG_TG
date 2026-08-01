@@ -19,5 +19,7 @@ export function createInitialTempleHouseSessionState(
     selectedTaskId: null,
     selectedWorkPlan: null,
     dailyActionPanel: "root",
+    workEncounterStage: null,
+    workEncounterLoadingTicks: 0,
   };
 }

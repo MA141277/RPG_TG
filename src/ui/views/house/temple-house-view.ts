@@ -231,7 +231,7 @@ function renderFortuneBoardOverlay(
         </div>
         <div class="c-grain-shop-modal__actions c-fortune-board__actions">
           <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.decreaseWagerActionId}">‹</button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.playActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.playActionId}" data-fortune-play-button>
             ${overlay.phase === "scanning" ? "选定此列" : "游玩"}
           </button>
           <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.increaseWagerActionId}">›</button>
@@ -241,42 +241,8 @@ function renderFortuneBoardOverlay(
   `;
 }
 
-function formatPachinkoSlotValue(value: number | "wheel"): string {
-  return value === "wheel" ? "转盘" : String(value);
-}
-
-function renderPachinkoWheel(
-  wheelState: Extract<HouseOverlayViewModel, { type: "pachinko-board" }>["wheelState"],
-  boardWidth: number,
-  boardHeight: number
-): string {
-  const wheelLeft = 350;
-  const wheelTop = 280;
-  const wheelSize = 210;
-  const segmentAngle = 360 / Math.max(1, wheelState.segments.length);
-  return `
-    <div
-      class="c-pachinko-wheel ${wheelState.phase === "idle" ? "is-idle" : "is-active"} is-${wheelState.phase}"
-      style="--wheel-left:${(wheelLeft / boardWidth) * 100}%; --wheel-top:${(wheelTop / boardHeight) * 100}%; --wheel-size:${(wheelSize / boardWidth) * 100}%; --wheel-rotation:${wheelState.rotationDegrees}deg;"
-      aria-hidden="true"
-    >
-      <span class="c-pachinko-wheel__pointer"></span>
-      <span class="c-pachinko-wheel__disc">
-        ${wheelState.segments
-          .map(
-            (segment, index) => `
-              <span
-                class="c-pachinko-wheel__segment ${wheelState.selectedIndex === index ? "is-selected" : ""}"
-                style="--segment-angle:${index * segmentAngle + segmentAngle / 2}deg;"
-              >
-                <span class="c-pachinko-wheel__label">${segment.label}</span>
-              </span>
-            `
-          )
-          .join("")}
-      </span>
-    </div>
-  `;
+function formatPachinkoSlotValue(value: number | "fortune-card"): string {
+  return value === "fortune-card" ? "运势卡" : String(value);
 }
 
 function renderPachinkoBoardOverlay(
@@ -288,11 +254,6 @@ function renderPachinkoBoardOverlay(
       ? 2.571
       : ((overlay.pins[0]?.radius ?? 9) * 2 * 100) / overlay.boardWidth;
   const boardStyle = `--pachinko-width:${overlay.boardWidth}; --pachinko-height:${overlay.boardHeight}; --pachinko-flipper-angle:${overlay.flipperAngle}deg; --pachinko-pin-diameter:${pinDiameterPercent}%;`;
-  const wheel = renderPachinkoWheel(
-    overlay.wheelState,
-    overlay.boardWidth,
-    overlay.boardHeight
-  );
   const renderBalls =
     overlay.activeBalls.length > 0
       ? overlay.activeBalls
@@ -306,6 +267,8 @@ function renderPachinkoBoardOverlay(
   const playButtonLabel =
     overlay.phase === "settling"
       ? "确认结果"
+      : overlay.phase === "drawing-card"
+        ? "抽卡"
       : overlay.phase === "dropping"
         ? "弹珠中"
         : "游玩";
@@ -321,7 +284,6 @@ function renderPachinkoBoardOverlay(
             <span class="c-pachinko-board__flipper c-pachinko-board__flipper--left"></span>
             <span class="c-pachinko-board__flipper c-pachinko-board__flipper--right"></span>
           </div>
-          ${wheel}
           ${overlay.pins
             .map(
               (pin) => `
@@ -384,12 +346,12 @@ function renderPachinkoBoardOverlay(
           </div>
         </div>
         <div class="c-pachinko-board__summary">
-          <span>转盘队列 ${overlay.rewardQueue.length}</span>
+          <span>运势卡 ${overlay.fortuneCardCount}</span>
           <span>最近奖励 ${latestEvent?.label ?? "未触发"}</span>
-          <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 转盘</span>
+          <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 运势卡</span>
         </div>
         <div class="c-grain-shop-modal__actions c-pachinko-board__actions">
-          <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" data-house-action="${overlay.playActionId}" ${playButtonSoundAttribute} ${overlay.phase === "dropping" ? "disabled" : ""}>
+          <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" data-house-action="${overlay.playActionId}" ${playButtonSoundAttribute} ${overlay.phase === "dropping" || overlay.phase === "drawing-card" ? "disabled" : ""}>
             ${playButtonLabel}
           </button>
         </div>
@@ -447,6 +409,57 @@ function renderResultOverlay(
           </button>
         </div>
       </div>
+    </div>
+  `;
+}
+
+function renderPachinkoFortuneCardOverlay(
+  overlay: Extract<HouseOverlayViewModel, { type: "pachinko-fortune-card" }>
+): string {
+  const resultDescription =
+    overlay.currentFortuneCard?.description ?? "点击卡牌，抽取本次寺务运势。";
+  const continueLabel =
+    overlay.fortuneCardCount > 0 ? "继续抽卡" : "确认结果";
+  const resultAction =
+    overlay.phase === "card-result" &&
+    overlay.currentFortuneCard?.rank !== "encounter"
+      ? `
+          <div class="c-city-card-draw-test__actions c-pachinko-fortune-card__actions">
+            <button type="button" class="c-city-card-draw-test__confirm c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.drawActionId}">
+              ${continueLabel}
+            </button>
+          </div>
+        `
+      : "";
+
+  return `
+    <div class="c-grain-shop-overlay" data-house-overlay="pachinko-fortune-card">
+      <section
+        class="c-city-card-draw-test c-pachinko-fortune-card"
+        data-pachinko-fortune-card-state="${overlay.phase}"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pachinko-fortune-card-title"
+      >
+        <section class="c-city-card-draw-test__panel">
+          <p class="c-city-card-draw-test__eyebrow">运势卡 ${overlay.fortuneCardsDrawn + 1}</p>
+          <h3 class="c-city-card-draw-test__title" id="pachinko-fortune-card-title">${overlay.title}</h3>
+          <p class="c-city-card-draw-test__copy">${overlay.taskLabel} · 当前得分 ${overlay.score}</p>
+          <div
+            class="c-city-card-draw-test__stage c-pachinko-fortune-card__stage"
+            data-pachinko-fortune-card-mount
+            data-pachinko-fortune-card-click-proxy
+            data-pachinko-fortune-card-draw-key="${overlay.drawKey}"
+            data-pachinko-fortune-card-label="${overlay.nextFortuneCardLabel}"
+            data-pachinko-fortune-card-dispatch="house"
+            data-pachinko-fortune-card-action-id="${overlay.drawActionId}"
+          ></div>
+          <p class="c-city-card-draw-test__result c-pachinko-fortune-card__description" data-pachinko-fortune-card-result>
+            ${resultDescription}
+          </p>
+          ${resultAction}
+        </section>
+      </section>
     </div>
   `;
 }
@@ -528,6 +541,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
     return renderPachinkoBoardOverlay(overlay);
   }
 
+  if (overlay.type === "pachinko-fortune-card") {
+    return renderPachinkoFortuneCardOverlay(overlay);
+  }
+
   if (overlay.type === "rest-days") {
     return renderRestDaysOverlay(overlay);
   }
@@ -579,13 +596,34 @@ function renderMeetingRoster(viewModel: HouseModuleViewModel): string {
   `;
 }
 
+function renderTempleThinkingPanel(viewModel: HouseModuleViewModel): string {
+  if (viewModel.isThinking !== true) {
+    return "";
+  }
+
+  return `
+    <div class="c-city-begging-default__thinking-panel" aria-label="加载中">
+      <div class="c-city-begging-default__thinking" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  `;
+}
+
 export function renderTempleHouseView(viewModel: HouseModuleViewModel): string {
   const isMeeting =
     viewModel.standbyRoster.length > 0 &&
     viewModel.standbyRoster.every((actor) => actor.isSelected != null) &&
     viewModel.standbyRoster.some((actor) => actor.isSelected === true);
+  const hasSceneBackground = viewModel.sceneBackgroundId != null;
+  const sceneClassName =
+    !hasSceneBackground
+      ? "view-house-grain-shop view-house-temple"
+      : "view-house-grain-shop view-house-temple view-scene c-city-begging-default c-city-begging-default--temple";
   return `
-    <section class="view-house-grain-shop view-house-temple" data-house-module="${viewModel.moduleId}">
+    <section class="${sceneClassName}" data-house-module="${viewModel.moduleId}">
       ${renderHouseActionContainer(viewModel)}
       ${
         isMeeting
@@ -603,6 +641,7 @@ export function renderTempleHouseView(viewModel: HouseModuleViewModel): string {
       ${renderHouseDialogue(viewModel, {
         footerClassName: "c-grain-shop-dialogue c-tea-house-dialogue c-temple-house-dialogue",
       })}
+      ${renderTempleThinkingPanel(viewModel)}
       ${isMeeting ? "" : renderHouseLeaveButton(viewModel)}
       ${renderOverlay(viewModel.overlay)}
     </section>

@@ -633,6 +633,31 @@
   animation: pachinko-wheel-result-flash 300ms steps(2, end) 4;
 }
 
+.c-pachinko-fortune-card {
+  display: grid;
+  place-items: center;
+}
+
+.c-pachinko-fortune-card__stage {
+  min-height: 210px;
+  cursor: pointer;
+}
+
+.c-pachinko-fortune-card__description {
+  width: 100%;
+  min-height: 3.2em;
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border: 1px solid rgb(238 216 171 / 28%);
+  border-radius: var(--radius-panel);
+  color: #fff0c6;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  text-align: center;
+  background: rgb(0 0 0 / 42%);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 24%);
+}
+
 .c-pachinko-board__gate-label {
   position: absolute;
   z-index: 2;

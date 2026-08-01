@@ -24,6 +24,7 @@ import {
 } from "../../domain/activity-session";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
+import { assertExists } from "../../shared/assert";
 import { applyEffects } from "../effects/effect-applier";
 import { advanceGameStateTimeSegments } from "../time/time-progression";
 
@@ -79,6 +80,11 @@ const PACHINKO_MOVING_GATE_STEP = 1.6;
 const PACHINKO_TOP_MOVING_GATE_STEP = PACHINKO_MOVING_GATE_STEP / 2;
 const PACHINKO_BOTTOM_WALL_START_Y = 1015;
 const PACHINKO_LAYOUT_REFRESH_PERIOD_MS = 20_000;
+const PACHINKO_WHEEL_SPIN_MS = 2_000;
+const PACHINKO_WHEEL_SLOW_MS = 1_200;
+const PACHINKO_WHEEL_FLASH_MS = 1_200;
+const PACHINKO_WHEEL_HOLD_MS = 500;
+const PACHINKO_WHEEL_FLASH_COUNT = 2;
 const PACHINKO_SLOT_VALUES: Array<number | "fortune-card"> = [
   5,
   3,
@@ -590,6 +596,22 @@ export function playActivityPachinkoBoard(
   }
 
   if (session.phase === "drawing-card") {
+    if (!canResolvePachinkoFortuneCards(session)) {
+      return {
+        state: {
+          ...state,
+          runtime: {
+            ...state.runtime,
+            activitySession: {
+              ...session,
+              phase: getPachinkoPostFortuneCardPhase(session),
+            },
+          },
+        },
+        characterDefinitions,
+      };
+    }
+
     if (session.fortuneCardCount <= 0) {
       return {
         state: {
@@ -598,7 +620,7 @@ export function playActivityPachinkoBoard(
             ...state.runtime,
             activitySession: {
               ...session,
-              phase: "settling",
+              phase: getPachinkoPostFortuneCardPhase(session),
             },
           },
         },
@@ -607,22 +629,30 @@ export function playActivityPachinkoBoard(
     }
 
     const currentFortuneCard = drawPachinkoFortuneCard(session);
+    const cardResult = applyPachinkoFortuneCardResult(
+      state,
+      characterDefinitions,
+      session,
+      currentFortuneCard
+    );
+
     return {
       state: {
-        ...state,
+        ...cardResult.state,
         runtime: {
-          ...state.runtime,
+          ...cardResult.state.runtime,
           activitySession: {
             ...session,
             phase: "card-result",
             fortuneCardCount: Math.max(0, session.fortuneCardCount - 1),
             fortuneCardsDrawn: session.fortuneCardsDrawn + 1,
-            currentFortuneCard,
-            fortuneCardHistory: [...session.fortuneCardHistory, currentFortuneCard],
+            currentFortuneCard: cardResult.card,
+            fortuneCardHistory: [...session.fortuneCardHistory, cardResult.card],
+            score: cardResult.score,
           },
         },
       },
-      characterDefinitions,
+      characterDefinitions: cardResult.characterDefinitions,
     };
   }
 
@@ -1192,6 +1222,26 @@ function hasPendingPachinkoReward(session: ActivityPachinkoBoardSession): boolea
 
 function hasPendingPachinkoFortuneCard(session: ActivityPachinkoBoardSession): boolean {
   return session.fortuneCardCount > 0 || session.currentFortuneCard != null;
+}
+
+function canResolvePachinkoFortuneCards(
+  session: ActivityPachinkoBoardSession
+): boolean {
+  return session.remainingBalls <= 0 && getPachinkoActiveBalls(session).length === 0;
+}
+
+function getPachinkoPostFortuneCardPhase(
+  session: ActivityPachinkoBoardSession
+): ActivityPachinkoBoardSession["phase"] {
+  if (getPachinkoActiveBalls(session).length > 0) {
+    return "dropping";
+  }
+
+  if (session.remainingBalls > 0) {
+    return "ready";
+  }
+
+  return session.fortuneCardCount > 0 ? "drawing-card" : "settling";
 }
 
 function createPachinkoRowWithEqualWallGaps(count: number): number[] {
@@ -1841,7 +1891,7 @@ function advancePachinkoRewardFlow(
   }
 
   if (
-    session.remainingBalls <= 0 &&
+    canResolvePachinkoFortuneCards(session) &&
     session.wheelState.phase === "idle" &&
     session.fortuneCardCount > 0
   ) {
@@ -1857,10 +1907,10 @@ function advancePachinkoRewardFlow(
         ? {
             ...session,
             phase:
-              session.remainingBalls > 0
-                ? "ready"
-                : session.fortuneCardCount > 0
-                  ? "drawing-card"
+              session.fortuneCardCount > 0
+                ? getPachinkoPostFortuneCardPhase(session)
+                : session.remainingBalls > 0
+                  ? "ready"
                   : "settling",
           }
         : session;
@@ -1891,7 +1941,7 @@ function advancePachinkoRewardFlow(
             session.remainingBalls > 0
               ? "ready"
               : session.fortuneCardCount > 0
-                ? "drawing-card"
+                ? getPachinkoPostFortuneCardPhase(session)
                 : "settling",
         }
       : session;
@@ -1982,7 +2032,7 @@ function advancePachinkoRewardFlow(
         session.remainingBalls > 0
           ? "ready"
           : session.fortuneCardCount > 0
-            ? "drawing-card"
+            ? getPachinkoPostFortuneCardPhase(session)
             : "settling",
       wheelState: {
         ...session.wheelState,
@@ -2060,7 +2110,7 @@ function startNextPachinkoWheelReward(
   };
 }
 
-function drawPachinkoFortuneCard(
+export function drawPachinkoFortuneCard(
   session: ActivityPachinkoBoardSession
 ): ActivityPachinkoFortuneCardResult {
   const drawNumber = session.fortuneCardsDrawn + 1;
@@ -2072,12 +2122,58 @@ function drawPachinkoFortuneCard(
   const index = hashToPercent(
     `${session.activityId}:fortune-card:${drawNumber}:${session.score}:${session.layoutVersion}`
   ) % deck.length;
-  const card = deck[index] ?? deck[0];
+  const card = deck[index] ?? deck[0] ?? PACHINKO_FORTUNE_CARDS[0];
+  assertExists(card, "Pachinko fortune card deck must not be empty.");
 
   return {
     ...card,
     applied: false,
     resolved: card.rank !== "encounter",
+  };
+}
+
+function applyPachinkoFortuneCardResult(
+  state: GameState,
+  characterDefinitions: CharacterDefinition[],
+  session: ActivityPachinkoBoardSession,
+  card: ActivityPachinkoFortuneCardResult
+): {
+  state: GameState;
+  characterDefinitions: CharacterDefinition[];
+  card: ActivityPachinkoFortuneCardResult;
+  score: number;
+} {
+  if (card.rank === "encounter" || card.applied) {
+    return {
+      state,
+      characterDefinitions,
+      card,
+      score: session.score,
+    };
+  }
+
+  const score = Math.max(0, session.score + (card.scoreDelta ?? 0));
+  const staminaDelta = card.staminaDelta ?? 0;
+  const nextCharacterDefinitions =
+    staminaDelta === 0
+      ? characterDefinitions
+      : characterDefinitions.map((characterDefinition) =>
+          characterDefinition.id !== state.player.characterId
+            ? characterDefinition
+            : {
+                ...characterDefinition,
+                stamina: Math.max(0, characterDefinition.stamina + staminaDelta),
+              }
+        );
+
+  return {
+    state,
+    characterDefinitions: nextCharacterDefinitions,
+    card: {
+      ...card,
+      applied: true,
+    },
+    score,
   };
 }
 
@@ -2091,7 +2187,7 @@ export function continueActivityPachinkoAfterFortuneCard(
 
   const nextPhase =
     session.fortuneCardCount > 0
-      ? "drawing-card"
+      ? getPachinkoPostFortuneCardPhase(session)
       : session.remainingBalls > 0
         ? "ready"
         : "settling";

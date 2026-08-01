@@ -89,6 +89,20 @@ export type TempleHouseWorkPlan = "temple-help" | "beg-alms" | null;
 
 export type TempleHouseDailyActionPanel = "root" | "work" | "rest";
 
+export type TempleHouseWorkEncounterStage =
+  | "loading"
+  | "player-tired"
+  | "abbot-rest"
+  | "narration-called"
+  | "abbot-question"
+  | "choice"
+  | "famine-answer"
+  | "famine-abbot"
+  | "dharma-answer"
+  | "dharma-abbot"
+  | "reward"
+  | null;
+
 export type TempleHouseMeetingStage =
   | "intro"
   | "assignment-table"
@@ -114,4 +128,6 @@ export type TempleHouseSessionState = {
   selectedTaskId: string | null;
   selectedWorkPlan: TempleHouseWorkPlan;
   dailyActionPanel: TempleHouseDailyActionPanel;
+  workEncounterStage: TempleHouseWorkEncounterStage;
+  workEncounterLoadingTicks: number;
 };

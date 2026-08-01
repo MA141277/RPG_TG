@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-01 Temple Work Fortune Cards
+
+### Changed
+- The shared `pachinko-board` activity now uses a `fortune-card` bottom slot instead of the visible wheel reward UI. Balls that land in the slot accumulate draw count, and fortune cards are resolved through the shared card-draw animation only after every ball has finished.
+- `pachinko-board` overlay/session contracts now expose fortune-card count, draw history, and current card result; ordinary cards apply score or stamina effects through the shared activity runtime.
+- Huangjue Temple work can intercept an unresolved encounter card, run a typed abbot dialogue/choice sequence, award abbot favorability and temple contribution through unified runtime variables, then resume the shared playable flow.
+- Encounter loading now exposes a typed `isThinking` view-model flag and restarts the house tick interval when the story handoff begins, so the temple scene shows a loading beat instead of a blank stalled screen.
+
+### Impact
+- House modules should treat encounter cards as typed playable handoff points rather than renderer-owned effects or `main.ts` branches.
+- Fortune-card draw UI is synchronized through the existing `CardDrawAnimator`; the activity runtime remains the owner of the actual card result.
+- The current demo rule that the second draw is an encounter is stored in runtime logic only and is not surfaced as UI copy.
+
 ## 2026-08-01 Haozhou Long-Begging Evacuation
 
 ### Changed

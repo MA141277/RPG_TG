@@ -1037,6 +1037,61 @@ test("pachinko bottom fortune-card slot queues a card draw after balls run out",
   assert.equal(session.currentFortuneCard, null);
 });
 
+test("pachinko fortune-card draws wait until every ball is used", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.fortune-card-waits-for-balls",
+    label: "Fortune card waits for balls",
+    outcome: {},
+  };
+  const baseSession = createActivityQteSession(activityDefinition, "generic.qte");
+  const state = {
+    runtime: {
+      activitySession: {
+        ...baseSession,
+        phase: "drawing-card",
+        remainingBalls: 1,
+        fortuneCardCount: 1,
+      },
+      flags: {},
+      variables: {},
+    },
+  };
+
+  const result = playActivityPachinkoBoard(state, activityDefinition, []);
+  const session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.phase, "ready");
+  assert.equal(session.remainingBalls, 1);
+  assert.equal(session.fortuneCardCount, 1);
+  assert.equal(session.currentFortuneCard, null);
+
+  const afterFirstCard = continueActivityPachinkoAfterFortuneCard({
+    runtime: {
+      activitySession: {
+        ...baseSession,
+        phase: "card-result",
+        remainingBalls: 1,
+        fortuneCardCount: 1,
+        currentFortuneCard: {
+          id: "test-card",
+          rank: "good",
+          label: "吉",
+          description: "测试结果",
+          applied: true,
+          resolved: true,
+        },
+      },
+      flags: {},
+      variables: {},
+    },
+  });
+  const continuedSession = afterFirstCard.runtime.activitySession;
+  assert.equal(continuedSession?.type, "pachinko-board");
+  assert.equal(continuedSession.phase, "ready");
+  assert.equal(continuedSession.fortuneCardCount, 1);
+  assert.equal(continuedSession.currentFortuneCard, null);
+});
+
 test("pachinko fortune-card draw shows result below card and second draw is encounter", () => {
   const activityDefinition = {
     id: "activity.test.pachinko.second-card-encounter",
@@ -1218,63 +1273,69 @@ test("pachinko queued wheels realign selected segment on every spin", () => {
   });
 });
 
-test("pachinko wheel labels stay inside reward wedges and moving gates render reward labels", () => {
+test("pachinko fortune cards render result text and moving gates render reward labels", () => {
   const houseViewSource = fs.readFileSync(
     "src/ui/views/house/temple-house-view.ts",
     "utf8"
   );
   const sceneViewSource = fs.readFileSync("src/ui/views/scene/scene-view.ts", "utf8");
   const pachinkoCss = fs.readFileSync("src/styles/temple-house.css", "utf8");
+  const mainSource = fs.readFileSync("src/main.ts", "utf8");
 
   assert.equal(houseViewSource.includes("c-pachinko-board__gate-label"), true);
   assert.equal(sceneViewSource.includes("c-pachinko-board__gate-label"), true);
   assert.equal(houseViewSource.includes("${movingGate.label}"), true);
   assert.equal(sceneViewSource.includes("${movingGate.label}"), true);
-  assert.equal(houseViewSource.includes("c-pachinko-wheel__segment"), true);
-  assert.equal(sceneViewSource.includes("c-pachinko-wheel__segment"), true);
-  assert.equal(houseViewSource.includes("is-${wheelState.phase}"), true);
-  assert.equal(sceneViewSource.includes("is-${wheelState.phase}"), true);
-  assert.equal(pachinkoCss.includes(".c-pachinko-wheel__segment::before"), true);
-  assert.equal(pachinkoCss.includes("clip-path: polygon(50% 50%, 25% 6.7%, 75% 6.7%)"), true);
+  assert.equal(houseViewSource.includes('data-house-overlay="pachinko-fortune-card"'), true);
+  assert.equal(sceneViewSource.includes('data-activity-overlay="pachinko-fortune-card"'), true);
+  assert.equal(houseViewSource.includes("data-pachinko-fortune-card-mount"), true);
+  assert.equal(sceneViewSource.includes("data-pachinko-fortune-card-mount"), true);
+  assert.equal(houseViewSource.includes("data-pachinko-fortune-card-click-proxy"), true);
+  assert.equal(sceneViewSource.includes("data-pachinko-fortune-card-click-proxy"), true);
+  assert.equal(houseViewSource.includes("data-pachinko-fortune-card-label"), true);
+  assert.equal(mainSource.includes("getPachinkoFortuneCardDrawLabel"), true);
+  assert.equal(mainSource.includes("dataset.pachinkoFortuneCardLabel"), true);
+  assert.equal(mainSource.includes("resultFormatter: () => fortuneCardDrawLabel"), true);
+  assert.equal(houseViewSource.includes("data-house-overlay=\"pachinko-board\"") && houseViewSource.includes("data-pachinko-fortune-card-mount"), true);
+  assert.equal(mainSource.includes("syncPachinkoFortuneCardDrawOverlay"), true);
+  assert.equal(mainSource.includes("isPachinkoFortuneCardDrawMountActive"), true);
   assert.equal(
-    pachinkoCss
-      .split(/\r?\n/)
-      .some((line) => line.trim() === "clip-path: polygon(50% 50%, 25% 6.7%, 75% 6.7%);"),
-    true
-  );
-  assert.equal(pachinkoCss.includes("translateY(-82%)"), false);
-  assert.equal(pachinkoCss.includes("top: 22%;"), true);
-  assert.equal(pachinkoCss.includes("rotate(30deg)"), true);
-  assert.equal(pachinkoCss.includes("rotate(90deg)"), false);
-  assert.equal(
-    pachinkoCss.includes(
-      ".c-pachinko-wheel.is-flashing .c-pachinko-wheel__segment.is-selected"
+    mainSource.includes(
+      'cardRoot?.dataset.pachinkoFortuneCardState === "drawing-card"'
     ),
     true
   );
+  assert.equal(mainSource.includes("triggerPachinkoFortuneCardDrawFromElement"), true);
+  assert.equal(mainSource.includes('appElement.addEventListener("pointerdown"'), true);
+  assert.equal(mainSource.includes("capturePachinkoFortuneCardDrawOverlay"), true);
+  assert.equal(mainSource.includes("restorePachinkoFortuneCardDrawOverlay"), true);
+  assert.equal(mainSource.includes("preservedPachinkoFortuneCardDrawOverlay"), true);
+  assert.equal(mainSource.includes("shouldRunActivityQteLoop"), true);
+  assert.equal(mainSource.includes('session.phase === "ready"'), true);
+  assert.equal(mainSource.includes('session.phase === "dropping"'), true);
+  assert.equal(mainSource.includes('session.phase === "rewarding"'), true);
+  assert.equal(mainSource.includes('session.phase !== "settling"'), false);
   assert.equal(
-    pachinkoCss.includes(
-      ".c-pachinko-wheel.is-holding .c-pachinko-wheel__segment.is-selected"
+    mainSource.includes(
+      "getPachinkoFortuneCardOverlayDrawKey(replacementOverlay) !=="
     ),
     true
   );
-  assert.equal(
-    pachinkoCss.includes(
-      ".c-pachinko-wheel.is-settled .c-pachinko-wheel__segment.is-selected"
-    ),
-    true
+  assert.equal(mainSource.includes("pachinkoFortuneCardDrawRuntime?.animator.trigger()"), true);
+  assert.equal(mainSource.includes("CardDrawAnimator"), true);
+  assert.equal(mainSource.includes("pachinkoFortuneCardDispatch"), true);
+  assert.equal(mainSource.includes("pachinkoFortuneCardActionId"), true);
+  assert.equal(houseViewSource.includes("currentFortuneCard?.description"), true);
+  assert.equal(sceneViewSource.includes("currentFortuneCard?.description"), true);
+  assert.equal(houseViewSource.includes("renderPachinkoWheel"), false);
+  assert.equal(sceneViewSource.includes("renderPachinkoWheel"), false);
+  assert.equal(pachinkoCss.includes(".c-pachinko-fortune-card__description"), true);
+  const fortuneCardStyleMatch = pachinkoCss.match(
+    /\.c-pachinko-fortune-card\s*\{([\s\S]*?)\n\}/
   );
-  assert.equal(
-    pachinkoCss.includes(".c-pachinko-wheel__label.is-selected"),
-    false
-  );
-  assert.equal(
-    pachinkoCss
-      .split(/\r?\n/)
-      .some((line) => line.trim() === ".c-pachinko-wheel__segment.is-selected {"),
-    false
-  );
-  assert.equal(pachinkoCss.includes("background: #ffd35a"), false);
+  assert.notEqual(fortuneCardStyleMatch, null);
+  assert.doesNotMatch(fortuneCardStyleMatch?.[1] ?? "", /position:\s*absolute/);
+  assert.doesNotMatch(fortuneCardStyleMatch?.[1] ?? "", /transform:/);
 });
 
 test("pachinko wheel flashes every point three seconds and holds before next queued wheel", () => {
@@ -2083,11 +2144,7 @@ test("haozhou evacuation starts as soon as long-distance begging stage begins", 
   );
 });
 
-test("zhuyuanzhang pack stamina refusal entries interpolate the activity cost", () => {
-  const {
-    resolveTextTemplateEntry,
-  } = require("../.test-dist/application/content/text-resolution.js");
-
+test("zhuyuanzhang pack stamina refusal entry is player self-talk", () => {
   const textEntriesById = JSON.parse(
     fs.readFileSync(
       path.join(
@@ -2098,17 +2155,9 @@ test("zhuyuanzhang pack stamina refusal entries interpolate the activity cost", 
     )
   );
 
-  const resolved = resolveTextTemplateEntry(
-    textEntriesById,
-    "runtime.zhu_yuanzhang.begging_stamina_refusal.002",
-    {
-      requiredStamina: 8,
-    }
-  );
-
   assert.equal(
-    resolved,
-    "先回去歇息，体力缓到 8 点，再出门也不迟。"
+    textEntriesById["runtime.zhu_yuanzhang.begging_stamina_refusal.001"],
+    "回寺庙休息吧。"
   );
 });
 
@@ -2151,6 +2200,24 @@ test("runtime zhuyuanzhang text ids in main.ts do not keep inline fallback prose
     matchedStrings,
     [],
     `Expected main.ts to stop carrying inline runtime fallback prose for zhuyuanzhang ids. Matched ${matchedStrings.length} string(s).`
+  );
+
+  const openBeggingMiniGameBlock = source.match(
+    /function openBeggingMiniGame\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/
+  )?.[0] ?? "";
+  const lowStaminaBlock = openBeggingMiniGameBlock.match(
+    /if \(!canAffordActivityCost\(playerCharacter\)\) \{[\s\S]*?renderApp\(\);\s*return;\s*\}/
+  )?.[0] ?? "";
+
+  assert.match(lowStaminaBlock, /speakerCharacterId:\s*currentPlayerCharacterId/);
+  assert.match(
+    lowStaminaBlock,
+    /runtime\.zhu_yuanzhang\.begging_stamina_refusal\.001/
+  );
+  assert.doesNotMatch(lowStaminaBlock, /char\.kulan_temple_abbot/);
+  assert.doesNotMatch(
+    lowStaminaBlock,
+    /runtime\.zhu_yuanzhang\.begging_stamina_refusal\.002/
   );
 });
 
@@ -14392,9 +14459,6 @@ test("tavern copy resolves from text entries for work panel and drink prompts", 
       "自定义当前还能接的活。",
     "runtime.zhu_yuanzhang.tavern.work.accept.available.002":
       "自定义前期只接一个。",
-    "runtime.zhu_yuanzhang.tavern.work.submit.empty.001": "自定义提交空状态。",
-    "runtime.zhu_yuanzhang.tavern.work.submit.empty.002":
-      "自定义还没有接下的活。",
     "runtime.zhu_yuanzhang.tavern.drink.confirm.title": "自定义点酒",
     "runtime.zhu_yuanzhang.tavern.drink.confirm.001": "自定义敲酒坛。",
     "runtime.zhu_yuanzhang.tavern.drink.confirm.002":
@@ -14426,38 +14490,8 @@ test("tavern copy resolves from text entries for work panel and drink prompts", 
   });
 
   assert.deepEqual(openWork.sessionState?.dialogueLines, [
-    "自定义活计面板。",
-    "自定义接取或提交说明。",
-  ]);
-
-  const openAccept = tavernHouseModule.dispatch({
-    gameState: openWork.gameState,
-    characterDefinitions: openWork.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openWork.sessionState,
-    request: { type: "action", actionId: "open-work-accept" },
-    textEntriesById,
-  });
-
-  assert.deepEqual(openAccept.sessionState?.dialogueLines, [
     "自定义当前还能接的活。",
     "自定义前期只接一个。",
-  ]);
-
-  const openSubmit = tavernHouseModule.dispatch({
-    gameState: openWork.gameState,
-    characterDefinitions: openWork.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openWork.sessionState,
-    request: { type: "action", actionId: "open-work-submit" },
-    textEntriesById,
-  });
-
-  assert.deepEqual(openSubmit.sessionState?.dialogueLines, [
-    "自定义提交空状态。",
-    "自定义还没有接下的活。",
   ]);
 
   const openDrink = tavernHouseModule.dispatch({
@@ -14547,30 +14581,22 @@ test("tavern work council-date refusal resolves from text entries", () => {
     request: { type: "action", actionId: "open-work" },
     textEntriesById,
   });
-  const openAccept = tavernHouseModule.dispatch({
+  const result = tavernHouseModule.dispatch({
     gameState: openWork.gameState,
     characterDefinitions: openWork.characterDefinitions,
     houseDefinition: tavernHouse,
     playerCharacterId,
     sessionState: openWork.sessionState,
-    request: { type: "action", actionId: "open-work-accept" },
-    textEntriesById,
-  });
-  const result = tavernHouseModule.dispatch({
-    gameState: openAccept.gameState,
-    characterDefinitions: openAccept.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openAccept.sessionState,
     request: { type: "action", actionId: "accept-work:offer.kulan.wash_dishes" },
     textEntriesById,
   });
 
-  assert.equal(result.sessionState?.overlay?.title, "自定义时日不够");
-  assert.deepEqual(result.sessionState?.overlay?.paragraphs, [
-    "自定义酒馆评定已到，刷盘子 要占 3 天。",
-    "自定义先去评定。",
-  ]);
+  assert.equal(result.sessionState?.overlay, null);
+  assert.equal(
+    result.sessionState?.dialogueOverride?.speakerCharacterId,
+    playerCharacterId
+  );
+  assert.equal(result.sessionState?.dialogueOverride?.textLines.length, 1);
 });
 
 test("tavern runtime no longer keeps work-panel and drink prompt prose inline", () => {
@@ -14596,7 +14622,7 @@ test("tavern runtime no longer keeps work-panel and drink prompt prose inline", 
   );
 });
 
-test("tavern work flow accepts dishwashing qte and submits with confirmation", () => {
+test("tavern work flow starts dishwashing qte and settles score directly", () => {
   const state = withCouncilInDays(createBaseState(), 30);
   const startingStamina = getPlayerCharacter(prototypeCharacters).stamina;
   const enterResult = tavernHouseModule.enter({
@@ -14615,43 +14641,20 @@ test("tavern work flow accepts dishwashing qte and submits with confirmation", (
     request: { type: "action", actionId: "open-work" },
   });
 
-  const openAccept = tavernHouseModule.dispatch({
+  assert.equal(openWork.sessionState?.workPanelMode, "accept");
+
+  const acceptWork = tavernHouseModule.dispatch({
     gameState: openWork.gameState,
     characterDefinitions: openWork.characterDefinitions,
     houseDefinition: tavernHouse,
     playerCharacterId,
     sessionState: openWork.sessionState,
-    request: { type: "action", actionId: "open-work-accept" },
-  });
-
-  assert.equal(openAccept.sessionState?.workPanelMode, "accept");
-
-  const acceptWork = tavernHouseModule.dispatch({
-    gameState: openAccept.gameState,
-    characterDefinitions: openAccept.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openAccept.sessionState,
     request: { type: "action", actionId: "accept-work:offer.kulan.wash_dishes" },
   });
 
-  assert.equal(acceptWork.sessionState?.overlay?.type, "activity-confirm");
+  assert.equal(acceptWork.sessionState?.overlay?.type, "qte-bar");
 
-  const confirmedWork = tavernHouseModule.dispatch({
-    gameState: acceptWork.gameState,
-    characterDefinitions: acceptWork.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: acceptWork.sessionState,
-    request: {
-      type: "action",
-      actionId: "confirm-start-work:offer.kulan.wash_dishes",
-    },
-  });
-
-  assert.equal(confirmedWork.sessionState?.overlay?.type, "qte-bar");
-
-  let qteResult = confirmedWork;
+  let qteResult = acceptWork;
   for (let round = 0; round < 3; round += 1) {
     qteResult = tavernHouseModule.dispatch({
       gameState: qteResult.gameState,
@@ -14670,36 +14673,18 @@ test("tavern work flow accepts dishwashing qte and submits with confirmation", (
   }
 
   assert.equal(qteResult.sessionState?.overlay?.type, "result");
+  assert.equal(qteResult.sessionState.overlay.score, 30);
+  assert.equal(qteResult.timeAdvanceCost, 9);
 
-  const openSubmitConfirm = tavernHouseModule.dispatch({
-    gameState: qteResult.gameState,
-    characterDefinitions: qteResult.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: qteResult.sessionState,
-    request: { type: "action", actionId: "submit-work:offer.kulan.wash_dishes" },
-  });
-
-  assert.equal(openSubmitConfirm.sessionState?.overlay?.type, "submit-confirm");
-
-  const submitResult = tavernHouseModule.dispatch({
-    gameState: openSubmitConfirm.gameState,
-    characterDefinitions: openSubmitConfirm.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openSubmitConfirm.sessionState,
-    request: { type: "action", actionId: "confirm-submit-work" },
-  });
-
-  const playerCharacter = getPlayerCharacter(submitResult.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 190);
+  const playerCharacter = getPlayerCharacter(qteResult.characterDefinitions);
+  assert.equal(playerCharacter.stats.gold, 150);
   assert.equal(
     playerCharacter.stamina,
     startingStamina - ACTIVITY_COMPLETION_STAMINA_COST
   );
-  assert.equal(submitResult.sessionState?.acceptedOffers.length, 0);
+  assert.equal(qteResult.sessionState?.acceptedOffers.length, 0);
   assert.equal(
-    submitResult.gameState.runtime.flags[
+    qteResult.gameState.runtime.flags[
       getTavernCompletedWorkKey(tavernHouse.id, "offer.kulan.wash_dishes")
     ],
     true
@@ -14747,95 +14732,7 @@ test("tavern work acceptance is blocked when stamina is below activity cost", ()
   assert.equal(result.sessionState?.acceptedOffers.length, 0);
 });
 
-test("tavern work submission is blocked when stamina is below activity cost", () => {
-  const enterResult = tavernHouseModule.enter({
-    gameState: withCouncilInDays(createBaseState(), 90),
-    characterDefinitions: prototypeCharacters,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-  });
-  const openWork = tavernHouseModule.dispatch({
-    gameState: enterResult.gameState,
-    characterDefinitions: enterResult.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: enterResult.sessionState,
-    request: { type: "action", actionId: "open-work" },
-  });
-  const openAccept = tavernHouseModule.dispatch({
-    gameState: openWork.gameState,
-    characterDefinitions: openWork.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openWork.sessionState,
-    request: { type: "action", actionId: "open-work-accept" },
-  });
-  const acceptWork = tavernHouseModule.dispatch({
-    gameState: openAccept.gameState,
-    characterDefinitions: openAccept.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openAccept.sessionState,
-    request: { type: "action", actionId: "accept-work:offer.kulan.wash_dishes" },
-  });
-  const confirmedWork = tavernHouseModule.dispatch({
-    gameState: acceptWork.gameState,
-    characterDefinitions: acceptWork.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: acceptWork.sessionState,
-    request: {
-      type: "action",
-      actionId: "confirm-start-work:offer.kulan.wash_dishes",
-    },
-  });
-
-  let qteResult = confirmedWork;
-  for (let round = 0; round < 3; round += 1) {
-    qteResult = tavernHouseModule.dispatch({
-      gameState: qteResult.gameState,
-      characterDefinitions: qteResult.characterDefinitions,
-      houseDefinition: tavernHouse,
-      playerCharacterId,
-      sessionState: {
-        ...qteResult.sessionState,
-        overlay: {
-          ...qteResult.sessionState.overlay,
-          markerPercent: qteResult.sessionState.overlay.targetStartPercent,
-        },
-      },
-      request: { type: "action", actionId: "tavern-work-stop" },
-    });
-  }
-
-  const openSubmitConfirm = tavernHouseModule.dispatch({
-    gameState: qteResult.gameState,
-    characterDefinitions: qteResult.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: qteResult.sessionState,
-    request: { type: "action", actionId: "submit-work:offer.kulan.wash_dishes" },
-  });
-  const lowStaminaCharacters = withPlayerStamina(
-    openSubmitConfirm.characterDefinitions,
-    ACTIVITY_COMPLETION_STAMINA_COST - 1
-  );
-
-  const result = tavernHouseModule.dispatch({
-    gameState: openSubmitConfirm.gameState,
-    characterDefinitions: lowStaminaCharacters,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openSubmitConfirm.sessionState,
-    request: { type: "action", actionId: "confirm-submit-work" },
-  });
-
-  assert.equal(result.sessionState?.overlay?.type, "alert");
-  assert.equal(getPlayerCharacter(result.characterDefinitions).stats.gold, 120);
-  assert.equal(result.sessionState?.acceptedOffers.length, 1);
-});
-
-test("tavern submitting unfinished work fails and clears active work", () => {
+test("tavern work action list no longer exposes submit mode", () => {
   const state = withCouncilInDays(createBaseState(), 30);
   const enterResult = tavernHouseModule.enter({
     gameState: state,
@@ -14853,69 +14750,21 @@ test("tavern submitting unfinished work fails and clears active work", () => {
     request: { type: "action", actionId: "open-work" },
   });
 
-  const openAccept = tavernHouseModule.dispatch({
+  const viewModel = tavernHouseModule.selectViewModel({
     gameState: openWork.gameState,
     characterDefinitions: openWork.characterDefinitions,
     houseDefinition: tavernHouse,
     playerCharacterId,
     sessionState: openWork.sessionState,
-    request: { type: "action", actionId: "open-work-accept" },
   });
+  const actionIds = viewModel.actionContainer?.actions.map((action) => action.id) ?? [];
 
-  const acceptRandom = tavernHouseModule.dispatch({
-    gameState: openAccept.gameState,
-    characterDefinitions: openAccept.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openAccept.sessionState,
-    request: { type: "action", actionId: "accept-work:offer.kulan.supply_run" },
-  });
-
-  assert.equal(acceptRandom.sessionState?.overlay?.type, "activity-confirm");
-
-  const confirmedRandom = tavernHouseModule.dispatch({
-    gameState: acceptRandom.gameState,
-    characterDefinitions: acceptRandom.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: acceptRandom.sessionState,
-    request: {
-      type: "action",
-      actionId: "confirm-start-work:offer.kulan.supply_run",
-    },
-  });
-
-  assert.equal(confirmedRandom.sessionState?.acceptedOffers.length, 1);
-
-  const openSubmitConfirm = tavernHouseModule.dispatch({
-    gameState: confirmedRandom.gameState,
-    characterDefinitions: confirmedRandom.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: confirmedRandom.sessionState,
-    request: { type: "action", actionId: "submit-work:offer.kulan.supply_run" },
-  });
-
-  assert.equal(openSubmitConfirm.sessionState?.overlay?.type, "submit-confirm");
-
-  const submitResult = tavernHouseModule.dispatch({
-    gameState: openSubmitConfirm.gameState,
-    characterDefinitions: openSubmitConfirm.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: openSubmitConfirm.sessionState,
-    request: { type: "action", actionId: "confirm-submit-work" },
-  });
-
-  const playerCharacter = getPlayerCharacter(submitResult.characterDefinitions);
-  assert.equal(playerCharacter.stats.gold, 120);
-  assert.equal(submitResult.sessionState?.acceptedOffers.length, 0);
-  assert.equal(
-    submitResult.gameState.runtime.flags[
-      getTavernFailedWorkKey(tavernHouse.id, "offer.kulan.supply_run")
-    ],
-    true
-  );
+  assert.deepEqual(actionIds, [
+    "accept-work:offer.kulan.wash_dishes",
+    "open-work",
+    "dismiss-dialogue",
+  ]);
+  assert.equal(actionIds.some((actionId) => actionId.startsWith("submit-work:")), false);
 });
 
 test("medicine house greeting flow opens actions after advance", () => {
@@ -15750,12 +15599,297 @@ test("temple work reaching contribution threshold starts shared map auto advance
   });
 
   assert.equal(closeResult.sessionState, null);
+  const autoAdvanceSideEffect = closeResult.sideEffects?.find(
+    (sideEffect) => sideEffect.type === "start-map-auto-advance"
+  );
   assert.equal(
-    closeResult.sideEffects?.some(
-      (sideEffect) => sideEffect.type === "start-map-auto-advance"
-    ),
+    autoAdvanceSideEffect?.statusPanel?.title,
+    "休至评定日"
+  );
+  assert.equal(
+    autoAdvanceSideEffect?.statusPanel?.variant,
+    "temple-review-rest"
+  );
+  assert.ok(
+    autoAdvanceSideEffect?.statusPanel?.lines.some((line) =>
+      line.includes("评定")
+    )
+  );
+});
+
+test("temple work fortune-card encounter runs abbot choice reward then resumes settlement", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const baseState = withCouncilInDays(createMonkStageState(), 30);
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...baseState,
+      runtime: {
+        ...baseState.runtime,
+        flags: {
+          ...baseState.runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        },
+        variables: {
+          ...baseState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+          [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeAbbotFavorability]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const openResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: { ...enterResult.sessionState, dialoguePhase: "open" },
+    request: { type: "action", actionId: "open-temple-work-menu" },
+  });
+  const startWorkResult = templeHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "assign-temple-task:copy-scripture" },
+  });
+  let result = templeHouseHouseModule.dispatch({
+    gameState: startWorkResult.gameState,
+    characterDefinitions: startWorkResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: startWorkResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-start-temple-task:copy-scripture",
+    },
+  });
+  const baseActivitySession = result.gameState.runtime.activitySession;
+  assert.equal(baseActivitySession?.type, "pachinko-board");
+  let preEncounterViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: {
+      ...result.gameState,
+      runtime: {
+        ...result.gameState.runtime,
+        activitySession: {
+          ...baseActivitySession,
+          phase: "drawing-card",
+          remainingBalls: 0,
+          fortuneCardCount: 1,
+        },
+      },
+    },
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+  });
+  assert.equal(preEncounterViewModel.overlay?.type, "pachinko-fortune-card");
+  assert.notEqual(preEncounterViewModel.overlay.nextFortuneCardLabel, "运势");
+  const encounterCard = {
+    id: "encounter-test",
+    rank: "encounter",
+    label: "奇遇",
+    description: "方丈似乎有话要问你。",
+    applied: false,
+    resolved: false,
+  };
+  result = {
+    ...result,
+    gameState: {
+      ...result.gameState,
+      runtime: {
+        ...result.gameState.runtime,
+        activitySession: {
+          ...baseActivitySession,
+          phase: "card-result",
+          remainingBalls: 0,
+          fortuneCardCount: 0,
+          fortuneCardsDrawn: 2,
+          currentFortuneCard: encounterCard,
+          fortuneCardHistory: [encounterCard],
+        },
+      },
+    },
+  };
+
+  result = templeHouseHouseModule.dispatch({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+    request: { type: "tick", tickId: "temple-house-work-qte" },
+  });
+  assert.equal(result.sessionState?.workEncounterStage, "loading");
+  assert.deepEqual(result.sideEffects, [
+    { type: "stop-interval", intervalId: "temple-house-work-qte" },
+    {
+      type: "start-interval",
+      intervalId: "temple-house-work-qte",
+      everyMs: 33,
+      request: { type: "tick", tickId: "temple-house-work-qte" },
+    },
+  ]);
+  preEncounterViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+  });
+  assert.equal(preEncounterViewModel.overlay, null);
+  assert.equal(preEncounterViewModel.sceneBackgroundId, "bg.temple.hall");
+  assert.equal(preEncounterViewModel.isThinking, true);
+  const templeHouseViewSource = fs.readFileSync(
+    "src/ui/views/house/temple-house-view.ts",
+    "utf8"
+  );
+  assert.equal(
+    templeHouseViewSource.includes("c-city-begging-default__thinking-panel"),
     true
   );
+
+  let loadingExitResult = result;
+  for (let index = 0; index < 90; index += 1) {
+    result = templeHouseHouseModule.dispatch({
+      gameState: result.gameState,
+      characterDefinitions: result.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: result.sessionState,
+      request: { type: "tick", tickId: "temple-house-work-qte" },
+    });
+    if (result.sessionState?.workEncounterStage !== "loading") {
+      loadingExitResult = result;
+      break;
+    }
+  }
+  assert.equal(loadingExitResult.sessionState?.workEncounterStage, "player-tired");
+  assert.deepEqual(loadingExitResult.sideEffects, [
+    { type: "stop-interval", intervalId: "temple-house-work-qte" },
+  ]);
+  let viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+  });
+  assert.equal(viewModel.dialogue?.characterId, playerCharacterId);
+  assert.deepEqual(viewModel.dialogue?.textLines, ["终于干完活了，真累啊。"]);
+
+  for (let index = 0; index < 4; index += 1) {
+    result = templeHouseHouseModule.dispatch({
+      gameState: result.gameState,
+      characterDefinitions: result.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: result.sessionState,
+      request: { type: "action", actionId: "advance-temple-dialogue" },
+    });
+  }
+  viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+  });
+  assert.deepEqual(
+    viewModel.actionContainer?.actions.map((action) => action.id),
+    [
+      "temple-work-encounter-choice:famine",
+      "temple-work-encounter-choice:dharma",
+    ]
+  );
+
+  result = templeHouseHouseModule.dispatch({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+    request: {
+      type: "action",
+      actionId: "temple-work-encounter-choice:famine",
+    },
+  });
+  viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+  });
+  assert.equal(viewModel.dialogue?.characterId, playerCharacterId);
+  assert.deepEqual(viewModel.dialogue?.textLines, [
+    "不瞒住持，若不来到皇觉寺，恐怕我已经是路边饿殍了。",
+  ]);
+
+  result = templeHouseHouseModule.dispatch({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+  });
+  assert.equal(viewModel.dialogue?.characterId, templeHouse.defaultCharacterId);
+  assert.deepEqual(viewModel.dialogue?.textLines, [
+    "你倒是诚实，干活也肯干，这也一种菩提之心。",
+  ]);
+
+  result = templeHouseHouseModule.dispatch({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  assert.equal(result.sessionState?.overlay?.type, "alert");
+  assert.deepEqual(result.sessionState.overlay.paragraphs, [
+    "方丈好感度 +5",
+    "贡献 +5",
+  ]);
+
+  result = templeHouseHouseModule.dispatch({
+    gameState: result.gameState,
+    characterDefinitions: result.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: result.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+  });
+  assert.equal(
+    result.gameState.runtime.variables[
+      ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeAbbotFavorability
+    ],
+    5
+  );
+  assert.equal(
+    result.gameState.runtime.variables[
+      ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution
+    ],
+    5
+  );
+  assert.equal(result.sessionState?.overlay?.type, "result");
 });
 
 test("story battle rescue flow opens battle demo scenario and returns to keep review", () => {

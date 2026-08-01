@@ -16,6 +16,8 @@ export const ZHU_YUANZHANG_STORY_STAGES = {
 export const ZHU_YUANZHANG_STORY_VARIABLE_KEYS = {
   stage: "var.story.zhu_yuanzhang.stage",
   templeContribution: "var.story.zhu_yuanzhang.temple_contribution",
+  templeAbbotFavorability:
+    "var.story.zhu_yuanzhang.temple_abbot_favorability",
   templeWeek: "var.story.zhu_yuanzhang.temple_week",
   lastBattleId: "var.story.zhu_yuanzhang.last_battle_id",
   lastBattleResult: "var.story.zhu_yuanzhang.last_battle_result",
