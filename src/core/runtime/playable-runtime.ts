@@ -9,7 +9,6 @@ import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
   ActivePlayableSession,
   PlayableCommand,
-  PlayableFamily,
   PlayableFactResult,
   PlayableId,
   PlayableIntegrationDefinition,
@@ -34,6 +33,15 @@ import {
   stopActivityQtePlayable,
   tickActivityQtePlayable,
 } from "../../application/playables/activity-qte/activity-qte-definition";
+import {
+  adjustTempleCopyScriptureWagerPlayable,
+  chooseTempleCopyScriptureCommandPlayable,
+  exitTempleCopyScripturePlayable,
+  launchTempleCopyScripturePlayable,
+  playTempleCopyScripturePlayable,
+  stopTempleCopyScripturePlayable,
+  tickTempleCopyScripturePlayable,
+} from "../../minigames/temple-copy-scripture";
 import {
   completeCityBeggingPlayable,
   exitCityBeggingPlayable,
@@ -85,7 +93,11 @@ export type PlayableRuntimeOutput = RuntimeResult & {
   settlement?: PlayableResult | null;
 };
 
-type InteractivePlayableId = "activity-qte" | "city-begging" | "story-battle";
+type InteractivePlayableId =
+  | "activity-qte"
+  | "temple-copy-scripture"
+  | "city-begging"
+  | "story-battle";
 
 type InteractivePlayableSource =
   | { type: "house"; houseId: string }
@@ -223,7 +235,6 @@ export function resolvePlayableLaunch(input: {
     launch: {
       playableId: definition.id,
       integrationId: integration.integrationId,
-      family: definition.family,
       ownerContext,
       ...mergeLaunchPayloadDefaults(integration, input.launch.payload),
     },
@@ -267,10 +278,12 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "launch") {
-    if (resolvedRequest.launch.launch.family === "flow") {
-      const flowPlayable =
-        input.flowPlayablesById?.[resolvedRequest.launch.launch.playableId] ??
-        null;
+    const flowPlayable =
+      input.flowPlayablesById?.[resolvedRequest.launch.launch.playableId] ?? null;
+    if (
+      flowPlayable != null ||
+      resolvedRequest.launch.launch.playableId === "building-flow"
+    ) {
       if (flowPlayable == null) {
         return {
           state: input.state,
@@ -351,11 +364,55 @@ export function runPlayableRuntime(input: {
       };
     }
 
+    if (resolvedRequest.launch.launch.playableId === "temple-copy-scripture") {
+      const activityId = resolvedRequest.launch.launch.payload?.activityId;
+      if (typeof activityId !== "string") {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
+        };
+      }
+
+      const activityDefinition =
+        input.activityDefinitionsById?.[activityId] ?? null;
+      if (activityDefinition == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
+        };
+      }
+
+      const handlerId =
+        typeof resolvedRequest.launch.launch.payload?.handlerId === "string"
+          ? resolvedRequest.launch.launch.payload.handlerId
+          : activityDefinition.fallbackHandlerId ?? activityDefinition.handlerId;
+      const nextState = launchTempleCopyScripturePlayable({
+        state: input.state,
+        activityDefinition,
+        handlerId,
+        integrationId: resolvedRequest.launch.launch.integrationId,
+        ownerContext: resolvedRequest.launch.launch.ownerContext,
+      });
+
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "temple-copy-scripture"),
+      };
+    }
+
     if (resolvedRequest.launch.launch.playableId === "city-begging") {
       const now = resolvedRequest.launch.launch.payload?.now;
       const nextState = launchCityBeggingPlayable({
         state: input.state,
         now: typeof now === "number" ? now : performance.now(),
+        integrationId: resolvedRequest.launch.launch.integrationId,
+        ownerContext: resolvedRequest.launch.launch.ownerContext,
       });
 
       return {
@@ -381,6 +438,11 @@ export function runPlayableRuntime(input: {
         characterDefinitions: input.characterDefinitions,
         playerCharacterId: input.playerCharacterId,
         ownerId: resolvedRequest.launch.launch.ownerContext.ownerId,
+        integrationId: resolvedRequest.launch.launch.integrationId,
+        ownerContext: resolvedRequest.launch.launch.ownerContext,
+        ...(resolvedRequest.launch.launch.payload == null
+          ? {}
+          : { launchPayload: resolvedRequest.launch.launch.payload }),
       });
 
       return {
@@ -406,6 +468,11 @@ export function runPlayableRuntime(input: {
         characterDefinitions: input.characterDefinitions,
         playerCharacterId: input.playerCharacterId,
         ownerId: resolvedRequest.launch.launch.ownerContext.ownerId,
+        integrationId: resolvedRequest.launch.launch.integrationId,
+        ownerContext: resolvedRequest.launch.launch.ownerContext,
+        ...(resolvedRequest.launch.launch.payload == null
+          ? {}
+          : { launchPayload: resolvedRequest.launch.launch.payload }),
       });
 
       return {
@@ -441,6 +508,8 @@ export function runPlayableRuntime(input: {
       const nextCoreState = launchStoryBattlePlayable({
         state: input.state.core,
         ownerId: resolvedRequest.launch.launch.ownerContext.ownerId,
+        integrationId: resolvedRequest.launch.launch.integrationId,
+        ownerContext: resolvedRequest.launch.launch.ownerContext,
         completion: {
           completedFlagKey,
           winFlagKey,
@@ -485,7 +554,11 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "exit") {
-    if (getActivePlayableSession(input.state, resolvedRequest.playableId)?.family === "flow") {
+    const activeSession = getActivePlayableSession(
+      input.state,
+      resolvedRequest.playableId
+    );
+    if (isFlowPlayableSession(activeSession, input.flowPlayablesById)) {
       const nextState = {
         ...input.state,
         core: {
@@ -506,6 +579,16 @@ export function runPlayableRuntime(input: {
 
     if (resolvedRequest.playableId === "activity-qte") {
       const nextState = exitActivityQtePlayable(input.state);
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: null,
+      };
+    }
+
+    if (resolvedRequest.playableId === "temple-copy-scripture") {
+      const nextState = exitTempleCopyScripturePlayable(input.state);
       return {
         state: nextState,
         effects: [],
@@ -568,7 +651,16 @@ export function runPlayableRuntime(input: {
   );
   const flowPlayable =
     input.flowPlayablesById?.[resolvedRequest.playableId] ?? null;
-  if (activeFlowSession?.family === "flow" && flowPlayable != null) {
+  if (isFlowPlayableSession(activeFlowSession, input.flowPlayablesById) && flowPlayable != null) {
+    const session = activeFlowSession;
+    if (session == null) {
+      return {
+        state: input.state,
+        effects: [],
+        handled: false,
+        session: null,
+      };
+    }
     const command = toFlowPlayableCommand(
       resolvedRequest.action,
       resolvedRequest.payload
@@ -584,7 +676,7 @@ export function runPlayableRuntime(input: {
 
     const reduction = reduceFlowPlayable({
       definition: flowPlayable,
-      session: activeFlowSession,
+      session,
       command,
     });
     if (
@@ -800,6 +892,183 @@ export function runPlayableRuntime(input: {
         effects: [],
         handled: true,
         session: getActivePlayableSession(completion.state, "activity-qte"),
+      };
+    }
+  }
+
+  if (resolvedRequest.playableId === "temple-copy-scripture") {
+    const session = input.state.core.runtime.activitySession;
+    const activityId =
+      session?.type === "qte-bar" ||
+      session?.type === "work-sequence" ||
+      session?.type === "fortune-board"
+        ? session.activityId
+        : null;
+    const activityDefinition =
+      activityId == null ? null : input.activityDefinitionsById?.[activityId] ?? null;
+
+    if (resolvedRequest.action === "tick") {
+      if (activityDefinition == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
+        };
+      }
+
+      const completion = tickTempleCopyScripturePlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+      });
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(
+          completion.state,
+          "temple-copy-scripture"
+        ),
+      };
+    }
+
+    if (resolvedRequest.action === "play") {
+      if (activityDefinition == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
+        };
+      }
+
+      const completion = playTempleCopyScripturePlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(
+          completion.state,
+          "temple-copy-scripture"
+        ),
+      };
+    }
+
+    if (
+      resolvedRequest.action === "wager-minus" ||
+      resolvedRequest.action === "wager-plus"
+    ) {
+      const completion = adjustTempleCopyScriptureWagerPlayable({
+        state: input.state,
+        characterDefinitions: input.characterDefinitions,
+        direction: resolvedRequest.action === "wager-minus" ? -1 : 1,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(
+          completion.state,
+          "temple-copy-scripture"
+        ),
+      };
+    }
+
+    if (resolvedRequest.action === "speed") {
+      if (activityDefinition == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
+        };
+      }
+
+      const tickMs = resolvedRequest.payload?.tickMs;
+      const completion = chooseTempleCopyScriptureCommandPlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+        commandId: `speed:${typeof tickMs === "number" ? tickMs : ""}`,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(
+          completion.state,
+          "temple-copy-scripture"
+        ),
+      };
+    }
+
+    if (resolvedRequest.action === "stop") {
+      if (activityDefinition == null) {
+        return {
+          state: exitTempleCopyScripturePlayable(input.state),
+          effects: [],
+          handled: true,
+          session: null,
+        };
+      }
+
+      const completion = stopTempleCopyScripturePlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(
+          completion.state,
+          "temple-copy-scripture"
+        ),
+      };
+    }
+
+    if (resolvedRequest.action === "choose") {
+      const commandId = resolvedRequest.payload?.commandId;
+      if (activityDefinition == null || typeof commandId !== "string") {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
+        };
+      }
+
+      const completion = chooseTempleCopyScriptureCommandPlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+        commandId,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(
+          completion.state,
+          "temple-copy-scripture"
+        ),
       };
     }
   }
@@ -1060,15 +1329,41 @@ export function runPlayableRuntime(input: {
         characterDefinitions: input.characterDefinitions,
         playerCharacterId: input.playerCharacterId,
       });
+      const session =
+        getActivePlayableSession(completion.state, "medicine-compounding") ??
+        getActivePlayableSession(input.state, "medicine-compounding");
+      const settlement =
+        completion.settlement == null || session == null
+          ? null
+          : resolvePlayableResultRouting({
+              session,
+              outcome: completion.settlement.outcome,
+              factResult: {
+                status: completion.settlement.factStatus,
+                metrics: {
+                  durationDays: completion.settlement.durationDays,
+                  rewardMedicine: completion.settlement.reward.medicine,
+                  rewardRelationship: completion.settlement.reward.relationship,
+                },
+                detail: {
+                  grade: completion.settlement.grade,
+                },
+              },
+              settlementEffects: completion.settlement.effects,
+            });
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.settlement == null
+          ? {}
+          : { characterStatusById: completion.settlement.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(
           completion.state,
           "medicine-compounding"
         ),
+        ...(settlement == null ? {} : { settlement }),
       };
     }
 
@@ -1088,15 +1383,41 @@ export function runPlayableRuntime(input: {
         characterDefinitions: input.characterDefinitions,
         playerCharacterId: input.playerCharacterId,
       });
+      const session =
+        getActivePlayableSession(completion.state, "medicine-compounding") ??
+        getActivePlayableSession(input.state, "medicine-compounding");
+      const settlement =
+        completion.settlement == null || session == null
+          ? null
+          : resolvePlayableResultRouting({
+              session,
+              outcome: completion.settlement.outcome,
+              factResult: {
+                status: completion.settlement.factStatus,
+                metrics: {
+                  durationDays: completion.settlement.durationDays,
+                  rewardMedicine: completion.settlement.reward.medicine,
+                  rewardRelationship: completion.settlement.reward.relationship,
+                },
+                detail: {
+                  grade: completion.settlement.grade,
+                },
+              },
+              settlementEffects: completion.settlement.effects,
+            });
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.settlement == null
+          ? {}
+          : { characterStatusById: completion.settlement.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(
           completion.state,
           "medicine-compounding"
         ),
+        ...(settlement == null ? {} : { settlement }),
       };
     }
 
@@ -1117,15 +1438,41 @@ export function runPlayableRuntime(input: {
         playerCharacterId: input.playerCharacterId,
         herbId,
       });
+      const session =
+        getActivePlayableSession(completion.state, "medicine-compounding") ??
+        getActivePlayableSession(input.state, "medicine-compounding");
+      const settlement =
+        completion.settlement == null || session == null
+          ? null
+          : resolvePlayableResultRouting({
+              session,
+              outcome: completion.settlement.outcome,
+              factResult: {
+                status: completion.settlement.factStatus,
+                metrics: {
+                  durationDays: completion.settlement.durationDays,
+                  rewardMedicine: completion.settlement.reward.medicine,
+                  rewardRelationship: completion.settlement.reward.relationship,
+                },
+                detail: {
+                  grade: completion.settlement.grade,
+                },
+              },
+              settlementEffects: completion.settlement.effects,
+            });
       return {
         state: completion.state,
         characterDefinitions: completion.characterDefinitions,
+        ...(completion.settlement == null
+          ? {}
+          : { characterStatusById: completion.settlement.characterStatusById }),
         effects: [],
         handled: true,
         session: getActivePlayableSession(
           completion.state,
           "medicine-compounding"
         ),
+        ...(settlement == null ? {} : { settlement }),
       };
     }
   }
@@ -1172,7 +1519,6 @@ export function createPlayableSessionShell(input: {
   sessionId: string;
   playableId: PlayableId;
   integrationId: PlayableIntegrationId;
-  family: PlayableFamily;
   ownerContext: PlayableOwnerContext;
   status?: ActivePlayableSession["status"] | undefined;
 }): ActivePlayableSession {
@@ -1180,7 +1526,6 @@ export function createPlayableSessionShell(input: {
     sessionId: input.sessionId,
     playableId: input.playableId,
     integrationId: input.integrationId,
-    family: input.family,
     ownerContext: input.ownerContext,
     status: input.status ?? "active",
   };
@@ -1211,9 +1556,24 @@ export function createInteractivePlayableSession(input: {
     sessionId: `playable.${definition.id}`,
     playableId: definition.id,
     integrationId: integration.integrationId,
-    family: definition.family,
     ownerContext,
   });
+}
+
+function isFlowPlayableSession(
+  session: ActivePlayableSession | null,
+  flowPlayablesById: Record<string, FlowPlayableDefinition> | undefined
+): boolean {
+  if (session == null) {
+    return false;
+  }
+  if (flowPlayablesById?.[session.playableId] != null) {
+    return true;
+  }
+  if (session.playableId === "building-flow") {
+    return true;
+  }
+  return typeof session.state?.currentNodeId === "string";
 }
 
 function tryLaunchPlayableFromFlowCompletion(input: {
@@ -1319,16 +1679,18 @@ function toPlayableRuntimeRequest(
 function parsePlayableActionRequest(
   actionId: string
 ): ParsedPlayableActionRequest | null {
-  const match = /^playable\.([^.]+)\.(.+)$/.exec(actionId);
-  if (match == null) {
+  if (!actionId.startsWith("playable.")) {
     return null;
   }
 
-  const playableId = match[1] as PlayableId;
-  const action = match[2];
-  if (action == null) {
+  const payload = actionId.slice("playable.".length);
+  const separatorIndex = payload.lastIndexOf(".");
+  if (separatorIndex <= 0 || separatorIndex >= payload.length - 1) {
     return null;
   }
+
+  const playableId = payload.slice(0, separatorIndex) as PlayableId;
+  const action = payload.slice(separatorIndex + 1);
   if (action === "exit") {
     return {
       phase: "exit",
@@ -1577,6 +1939,16 @@ function createInteractiveOwnerContext(input: {
   }
 
   if (input.source.type !== "dialogue") {
+    if (input.source.type === "house") {
+      return {
+        ownerKind: "house",
+        ownerId: input.source.houseId,
+        returnPolicy:
+          input.playableId === "story-battle"
+            ? "reenter-owner"
+            : "resume-owner",
+      };
+    }
     return null;
   }
 
@@ -1616,6 +1988,10 @@ function getInteractivePlayableIntegrationId(
 
   if (playableId === "story-battle") {
     return "playable.story-battle.dialogue.default";
+  }
+
+  if (playableId === "temple-copy-scripture") {
+    return "playable.temple-copy-scripture.house.temple";
   }
 
   return "playable.city-begging.external.default";

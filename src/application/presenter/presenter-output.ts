@@ -8,6 +8,7 @@ import type { BuildingArrangementDefinition } from "../../domain/building-arrang
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
+import type { DialogueScreenViewModel } from "../../core/runtime/dialogue-screen-runtime";
 import type {
   RuntimeDialogueChoiceOption,
   RuntimeDialogueDefinition,
@@ -42,8 +43,9 @@ export type AppPresenterStageOutput =
   | PresenterBuildingStageOutput
   | {
       type: "dialogue";
-      currentDialogueNode: RuntimeDialogueNode | null;
-      currentDialogueChoiceOptions: RuntimeDialogueChoiceOption[];
+      legacyDialogueNode: RuntimeDialogueNode | null;
+      legacyDialogueChoiceOptions: RuntimeDialogueChoiceOption[];
+      dialogueScreenViewModel: DialogueScreenViewModel | null;
       cityUnderlay?: Omit<PresenterCityStageOutput, "type">;
       buildingUnderlay?: Omit<PresenterBuildingStageOutput, "type">;
     }

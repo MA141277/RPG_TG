@@ -1606,6 +1606,22 @@
   align-items: flex-start;
 }
 
+.c-script-editor-narrative-panel__header--actions-only {
+  justify-content: flex-end;
+}
+
+.c-script-editor-help-icon-button {
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+}
+
 .c-script-editor-narrative-item {
   display: grid;
   gap: 16px;

@@ -471,8 +471,27 @@ export type ScriptEditorDialogueFollowUp = {
   targetId: string;
 };
 
+export type ScriptEditorDialogueMode = "linear" | "choice";
+
+export type ScriptEditorDialogueCastRecord = {
+  personId: string;
+  side: DialogueSide;
+};
+
+export type ScriptEditorDialogueOptionRecord = {
+  id: string;
+  textId: string;
+  nextEventId: string;
+};
+
 export type ScriptEditorDialogueRecord = ScriptEditorEntityRecord & {
   title: string;
+  mode?: ScriptEditorDialogueMode;
+  textId?: string;
+  speakerPersonId?: string;
+  cast?: ScriptEditorDialogueCastRecord[];
+  nextEventId?: string;
+  options?: ScriptEditorDialogueOptionRecord[];
   storyNodeId?: string;
   participantPersonIds?: string[];
   nodes?: ScriptEditorDialogueNodeRecord[];

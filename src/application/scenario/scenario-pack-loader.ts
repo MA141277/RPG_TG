@@ -4,6 +4,7 @@ import {
 } from "../content/content-pack-loader";
 import { assertHouseModuleDefaults } from "../content/house-module-defaults";
 import { GAME_VIEW_NAMES } from "../../domain/game-state";
+import type { ContentPackAudioSettings } from "../../domain/content-pack";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 
 type SettlementAttributeMetadata = {
@@ -1186,6 +1187,7 @@ type ScenarioPackManifest = {
   id: string;
   title: string;
   description?: string;
+  audioSettings?: ContentPackAudioSettings;
   files: ScenarioPackManifestFiles;
 };
 
@@ -1282,6 +1284,9 @@ async function hydrateScenarioPackManifest(
     id: manifest.id,
     title: manifest.title,
     ...(manifest.description == null ? {} : { description: manifest.description }),
+    ...(manifest.audioSettings == null
+      ? {}
+      : { audioSettings: manifest.audioSettings }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
     ...(resolvedPortraits == null ? {} : { portraits: resolvedPortraits }),
@@ -1325,6 +1330,9 @@ async function hydrateScenarioPackManifestFromFiles(
     id: manifest.id,
     title: manifest.title,
     ...(manifest.description == null ? {} : { description: manifest.description }),
+    ...(manifest.audioSettings == null
+      ? {}
+      : { audioSettings: manifest.audioSettings }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
     ...(resolvedPortraits == null ? {} : { portraits: resolvedPortraits }),

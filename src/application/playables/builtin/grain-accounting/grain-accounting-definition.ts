@@ -1,5 +1,9 @@
 import type { CharacterDefinition } from "../../../../domain/character";
 import type { Effect } from "../../../../core/contracts/effect";
+import type {
+  PlayableIntegrationId,
+  PlayableOwnerContext,
+} from "../../../../core/contracts/playable-runtime";
 import type { HouseActivityConfirmOverlayState } from "../../../../domain/house-activity";
 import type {
   AccountingGrade,
@@ -18,7 +22,6 @@ import {
 import { readNumericPersonAttributeBySemanticKey } from "../../../character/person-attribute-runtime";
 import {
   generateLedgerQuestion,
-  getAccountingGradeReward,
   isLedgerAnswerCorrect,
   resolveAccountingGrade,
 } from "../../../grain-shop/accounting-minigame";
@@ -79,6 +82,13 @@ type GrainAccountingSettlement = {
   characterStatusById: CharacterStatusById;
 };
 
+type GrainAccountingRuntimeConfig = {
+  durationSec: number;
+  maxWrongAnswers: number;
+  staminaCost: number;
+  rewardByGrade: Record<AccountingGrade, AccountingGradeReward>;
+};
+
 function getActiveSession(state: RuntimeState): GrainShopSessionState | null {
   const houseSession = state.core.ui.houseSession;
   if (houseSession?.moduleId !== "grain-shop") {
@@ -86,6 +96,111 @@ function getActiveSession(state: RuntimeState): GrainShopSessionState | null {
   }
 
   return houseSession.state as GrainShopSessionState;
+}
+
+function readLaunchPayload(state: RuntimeState): Record<string, unknown> {
+  const sessionState = state.core.runtime.playableSession?.state;
+  if (
+    sessionState == null ||
+    typeof sessionState !== "object" ||
+    Array.isArray(sessionState)
+  ) {
+    return {};
+  }
+  const launchPayload = (sessionState as Record<string, unknown>).launchPayload;
+  return launchPayload != null &&
+    typeof launchPayload === "object" &&
+    !Array.isArray(launchPayload)
+    ? (launchPayload as Record<string, unknown>)
+    : {};
+}
+
+function readPositiveInteger(
+  value: unknown,
+  fallback: number
+): number {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    Math.floor(value) > 0
+    ? Math.floor(value)
+    : fallback;
+}
+
+function readFiniteNumber(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function readRewardOverride(
+  launchPayload: Record<string, unknown>,
+  defaults: AccountingGradeReward,
+  grade: AccountingGrade
+): AccountingGradeReward {
+  const suffix = grade;
+  return {
+    money: readFiniteNumber(
+      launchPayload[`rewardMoney${suffix}`],
+      defaults.money
+    ),
+    math: readFiniteNumber(
+      launchPayload[`rewardMath${suffix}`],
+      defaults.math
+    ),
+    relationship: readFiniteNumber(
+      launchPayload[`rewardRelationship${suffix}`],
+      defaults.relationship
+    ),
+  };
+}
+
+function resolveRuntimeConfigFromPayload(
+  launchPayload: Record<string, unknown>
+): GrainAccountingRuntimeConfig {
+  const defaults = getGrainShopContentDefaults();
+  return {
+    durationSec: readPositiveInteger(
+      launchPayload.durationSec,
+      defaults.accountingGameDurationSec
+    ),
+    maxWrongAnswers: readPositiveInteger(
+      launchPayload.maxWrongAnswers,
+      defaults.accountingMaxWrongAnswers
+    ),
+    staminaCost: readPositiveInteger(
+      launchPayload.staminaCost,
+      ACTIVITY_COMPLETION_STAMINA_COST
+    ),
+    rewardByGrade: {
+      S: readRewardOverride(
+        launchPayload,
+        defaults.accountingGradeRewards.S,
+        "S"
+      ),
+      A: readRewardOverride(
+        launchPayload,
+        defaults.accountingGradeRewards.A,
+        "A"
+      ),
+      B: readRewardOverride(
+        launchPayload,
+        defaults.accountingGradeRewards.B,
+        "B"
+      ),
+      C: readRewardOverride(
+        launchPayload,
+        defaults.accountingGradeRewards.C,
+        "C"
+      ),
+      D: readRewardOverride(
+        launchPayload,
+        defaults.accountingGradeRewards.D,
+        "D"
+      ),
+    },
+  };
+}
+
+function resolveRuntimeConfig(state: RuntimeState): GrainAccountingRuntimeConfig {
+  return resolveRuntimeConfigFromPayload(readLaunchPayload(state));
 }
 
 function createExternalSession(): GrainShopSessionState {
@@ -147,8 +262,13 @@ export function launchGrainAccountingPlayable(input: {
   characterDefinitions: CharacterDefinition[];
   playerCharacterId: string;
   ownerId: string | null;
+  integrationId?: PlayableIntegrationId | undefined;
+  ownerContext?: PlayableOwnerContext | undefined;
+  launchPayload?: Record<string, unknown>;
 }): RuntimeState {
-  const { accountingGameDurationSec } = getGrainShopContentDefaults();
+  const runtimeConfig = resolveRuntimeConfigFromPayload(
+    input.launchPayload ?? {}
+  );
   const sessionState = getActiveSession(input.state) ?? createExternalSession();
 
   const nextState = withSessionState(input.state, {
@@ -157,7 +277,7 @@ export function launchGrainAccountingPlayable(input: {
       type: "minigame",
       score: 0,
       wrongCount: 0,
-      secondsLeft: accountingGameDurationSec,
+      secondsLeft: runtimeConfig.durationSec,
       question: generateLedgerQuestion(),
     },
   });
@@ -171,14 +291,18 @@ export function launchGrainAccountingPlayable(input: {
         playableSession: {
           sessionId: "playable.grain-accounting",
           playableId: "grain-accounting",
-          integrationId: "playable.grain-accounting.house.grain-shop",
-          family: "minigame",
-          ownerContext: {
-            ownerKind: "house",
-            ownerId: input.ownerId,
-            returnPolicy: "resume-owner",
-          },
+          integrationId:
+            input.integrationId ?? "playable.grain-accounting.house.grain-shop",
+          ownerContext:
+            input.ownerContext ?? {
+              ownerKind: "house",
+              ownerId: input.ownerId,
+              returnPolicy: "resume-owner",
+            },
           status: "active",
+          state: {
+            launchPayload: input.launchPayload ?? {},
+          },
         },
       },
     },
@@ -229,7 +353,7 @@ export function answerGrainAccountingPlayable(input: {
   characterDefinitions: CharacterDefinition[];
   settlement?: GrainAccountingSettlement;
 } {
-  const { accountingMaxWrongAnswers } = getGrainShopContentDefaults();
+  const runtimeConfig = resolveRuntimeConfig(input.state);
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
   if (sessionState == null || overlay?.type !== "minigame") {
@@ -246,7 +370,7 @@ export function answerGrainAccountingPlayable(input: {
   const nextScore = isCorrect ? overlay.score + 1 : overlay.score;
   const nextWrongCount = isCorrect ? overlay.wrongCount : overlay.wrongCount + 1;
 
-  if (nextWrongCount >= accountingMaxWrongAnswers) {
+  if (nextWrongCount >= runtimeConfig.maxWrongAnswers) {
     return settleGrainAccountingPlayable({
       ...input,
       state: withSessionState(input.state, {
@@ -299,7 +423,7 @@ export function settleGrainAccountingPlayable(input: {
     )
   );
   const grade = resolveAccountingGrade(overlay.score);
-  const reward = getAccountingGradeReward(grade);
+  const reward = resolveRuntimeConfig(input.state).rewardByGrade[grade];
   const playerCharacter = input.characterDefinitions.find(
     (characterDefinition) => characterDefinition.id === input.playerCharacterId
   );
@@ -322,7 +446,7 @@ export function settleGrainAccountingPlayable(input: {
     {
       stamina: Math.max(
         0,
-        playerCharacter.stamina - ACTIVITY_COMPLETION_STAMINA_COST
+        playerCharacter.stamina - resolveRuntimeConfig(input.state).staminaCost
       ),
     }
   );

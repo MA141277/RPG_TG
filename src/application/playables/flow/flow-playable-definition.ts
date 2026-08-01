@@ -29,7 +29,6 @@ export function launchFlowPlayable(input: {
     sessionId: `playable.${input.definition.id}`,
     playableId: input.definition.id,
     integrationId: input.integrationId,
-    family: "flow",
     ownerContext: input.ownerContext,
     status: "active",
     state: {

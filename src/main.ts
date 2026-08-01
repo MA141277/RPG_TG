@@ -6,7 +6,6 @@ import {
   closeCityDirectory,
   equipValuable,
   openCityMenu,
-  openDialogueFromMenuTarget,
   selectCard,
   selectValuable,
   setCardFilter,
@@ -16,13 +15,10 @@ import {
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
 import {
-  getCityBeggingMiniGameStatus,
-  isCityBeggingMiniGamePlaying,
-} from "./application/playables/builtin/city-begging/city-begging-minigame";
-import {
   createCityMenuState,
   resolveCityMenuEntries,
 } from "./application/city-menu/city-menu";
+import { launchLegacyCityMenuDialogue } from "./application/city-menu/city-menu-dialogue-compat";
 import { launchCityMenuEvent } from "./application/city-menu/city-menu-event-launch";
 import { launchCityMenuPlayable } from "./application/city-menu/city-menu-playable-launch";
 import { createAppRenderCoordinator } from "./application/presenter/app-render-coordinator";
@@ -78,6 +74,10 @@ import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "./application/content/text-resolution";
+import {
+  applyGlobalAudioMutedState,
+} from "./application/audio/global-audio-settings";
+import { resolveEntryShellAudioMutedState } from "./application/audio/entry-shell-audio-policy";
 import { createEntryShellBootstrapState } from "./application/startup/entry-shell-bootstrap-state";
 import {
   runStartupSessionCoordinator,
@@ -156,11 +156,15 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "./domain/scenario-pack";
-import { continueStoryFromSourceEvent } from "./application/story/story-runtime";
+import {
+  continueStoryFromSourceEvent,
+  startStoryEventById,
+} from "./application/story/story-runtime";
 import {
   applyStoryRuntimeResultToAppState,
   createStoryRuntimeDefinitionContext,
 } from "./application/story/story-runtime-state-bridge";
+import { applyPlayableCompletionFollowUp } from "./application/events/playable-completion-follow-up";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -194,6 +198,7 @@ import {
   type CampaignCityDepthMeshTransform,
   type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
+import { resetCityBeggingDetachedRuntime } from "./application/playables/builtin/city-begging/city-begging-runtime-controller";
 import { syncCityBeggingMiniGameOverlay } from "./application/playables/builtin/city-begging/city-begging-minigame-view";
 
 const GAME_VIEWPORT_WIDTH = 1600;
@@ -209,6 +214,7 @@ const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MAX_DURATION_MS = 18000 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
 const ACTIVITY_QTE_INTERVAL_MS = 90;
+const HOUSE_PLAYABLE_INTERVAL_MS = 1000;
 const SCENARIO_PENDING_ENTRY_EVENT_ID_VARIABLE =
   "__scenario.pendingEntryEventId";
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
@@ -350,6 +356,7 @@ function setActiveContentContext(
   nextContentContext: ActiveGameContentContext
 ): void {
   activeContentContext = nextContentContext;
+  syncGlobalAudioSettings();
   mainUiFlow?.setCharacters(getSelectableCharactersFromContentContext(nextContentContext));
 }
 
@@ -440,8 +447,8 @@ let houseTileDragState:
       restingBeforeId: string | null;
     }
   | null = null;
-let cityBeggingMiniGameFrameId: number | null = null;
 let activityQteIntervalHandle: number | null = null;
+let housePlayableIntervalHandle: number | null = null;
 let campaignTravelRequestId = 0;
 let loadingScreenAnimationFrameId: number | null = null;
 let loadingScreenRequestId = 0;
@@ -455,7 +462,9 @@ const cityHouseTransitionCoordinator = createCityHouseTransitionCoordinator({
     appState = nextAppState;
   },
   renderApp,
-  clearHouseIntervals: () => {},
+  clearHouseIntervals: () => {
+    stopHousePlayableLoop();
+  },
   stopCityBeggingMiniGameLoop,
   canEnterCity3d: () =>
     getActiveCitySceneMappingsByCityId()[appState.gameState.world.currentCityId] !=
@@ -495,7 +504,6 @@ const councilPriorityCityBeggingCoordinator =
       onBeggingGameComplete(result);
     },
     stopCityBeggingMiniGameLoop,
-    startCityBeggingMiniGameLoop,
     now: () => performance.now(),
   });
 const cityDirectoryLeaderResidenceCoordinator =
@@ -626,7 +634,9 @@ const shellBootLifecycleCoordinator = createShellBootLifecycleCoordinator({
 });
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const dialogueMusicPlayer = createDialogueMusicPlayer();
-const mainUiFlow = new MainUiFlow({
+let mainUiFlow: MainUiFlow | null = null;
+syncGlobalAudioSettings();
+mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
   characters: getSelectableCharactersFromContentContext(activeContentContext),
   scenarioPacks: entryShellBootstrapState.scenarioPacks,
@@ -636,6 +646,12 @@ const mainUiFlow = new MainUiFlow({
   onStartLoadedScenarioPack: startLoadedScenarioPackWithLoading,
   onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
   onExitRuntimePreview: exitScriptEditorRuntimePreviewSession,
+  onScreenChanged: () => {
+    syncGlobalAudioSettings();
+  },
+  onScriptEditorProjectChanged: () => {
+    syncGlobalAudioSettings();
+  },
   loadSaveData,
   getAppState: () => appState,
 });
@@ -659,6 +675,7 @@ const appRenderCoordinator = createAppRenderCoordinator({
   restoreCampaignMapScaleInputFocus,
   syncMapIntroOverlay,
   syncActivityQteLoop,
+  syncHousePlayableLoop,
   syncCampaignTerrainWebGl: (root) => {
     syncCampaignTerrainWebGl(root);
   },
@@ -811,7 +828,10 @@ function openCityMenuEntry(entryId: string | undefined): void {
     return;
   }
   if (menuEntry.action.type === "dialogue") {
-    appState = openDialogueFromMenuTarget(appState, menuEntry.action.dialogueId);
+    appState = launchLegacyCityMenuDialogue(
+      appState,
+      menuEntry.action.dialogueId
+    );
     renderApp();
     return;
   }
@@ -844,10 +864,7 @@ function openCityMenuEntry(entryId: string | undefined): void {
 }
 
 function stopCityBeggingMiniGameLoop(): void {
-  if (cityBeggingMiniGameFrameId != null) {
-    window.cancelAnimationFrame(cityBeggingMiniGameFrameId);
-  }
-  cityBeggingMiniGameFrameId = null;
+  resetCityBeggingDetachedRuntime();
 }
 
 function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
@@ -1038,97 +1055,6 @@ function confirmBeggingMiniGameResult(): void {
   councilPriorityCityBeggingCoordinator.confirmBeggingMiniGameResult();
 }
 
-function syncCityBeggingMiniGamePointer(clientX: number): void {
-  const currentState = appState.beggingMiniGameState;
-  if (currentState == null || !isCityBeggingMiniGamePlaying(currentState)) {
-    return;
-  }
-
-  const canvas = appRoot.querySelector<HTMLCanvasElement>(
-    "[data-begging-game-canvas]"
-  );
-  if (canvas == null) {
-    return;
-  }
-
-  const rect = canvas.getBoundingClientRect();
-  if (rect.width <= 0) {
-    return;
-  }
-
-  const normalizedX = (clientX - rect.left) / rect.width;
-  const pointerX = normalizedX * canvas.width;
-  appState = commitRuntimeRequest({
-    state: appState,
-    request: createInteractiveActionRequest(
-      "interactive.city-begging.pointer",
-      { pointerX }
-    ),
-    context: {
-      router: {
-        route: ({ state, request }) =>
-          runInteractiveRuntime({
-            state,
-            request,
-            characterDefinitions: appState.characterDefinitions,
-          }),
-      },
-    },
-  }).state;
-  syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
-}
-
-function tickCityBeggingMiniGame(timestamp: number): void {
-  cityBeggingMiniGameFrameId = null;
-  const currentState = appState.beggingMiniGameState;
-  if (currentState == null || !isCityBeggingMiniGamePlaying(currentState)) {
-    return;
-  }
-
-  const nextResult = commitRuntimeRequest({
-    state: appState,
-    request: createInteractiveActionRequest("interactive.city-begging.tick", {
-      now: timestamp,
-    }),
-    context: {
-      router: {
-        route: ({ state, request }) =>
-          runInteractiveRuntime({
-            state,
-            request,
-            characterDefinitions: appState.characterDefinitions,
-          }),
-      },
-    },
-  });
-  const nextAppState = nextResult.state;
-  const nextState = nextAppState.beggingMiniGameState ?? currentState;
-  const shouldRerender =
-    getCityBeggingMiniGameStatus(nextState) !==
-    getCityBeggingMiniGameStatus(currentState);
-  appState = nextAppState;
-
-  if (shouldRerender) {
-    renderApp();
-    return;
-  }
-
-  syncCityBeggingMiniGameOverlay(appRoot, nextState);
-  cityBeggingMiniGameFrameId = window.requestAnimationFrame(
-    tickCityBeggingMiniGame
-  );
-}
-
-function startCityBeggingMiniGameLoop(): void {
-  if (cityBeggingMiniGameFrameId != null) {
-    return;
-  }
-
-  cityBeggingMiniGameFrameId = window.requestAnimationFrame(
-    tickCityBeggingMiniGame
-  );
-}
-
 function openBeggingMiniGame(): void {
   councilPriorityCityBeggingCoordinator.openBeggingMiniGame();
 }
@@ -1311,6 +1237,20 @@ function stopActivityQteLoop(): void {
   }
 }
 
+function stopHousePlayableLoop(): void {
+  if (housePlayableIntervalHandle != null) {
+    window.clearInterval(housePlayableIntervalHandle);
+    housePlayableIntervalHandle = null;
+  }
+}
+
+function readTickableHousePlayableId(): import("./core/contracts/playable-runtime").PlayableId | null {
+  const playableId = appState.gameState.runtime.playableSession?.playableId;
+  return playableId === "grain-accounting" || playableId === "medicine-compounding"
+    ? playableId
+    : null;
+}
+
 function syncRenderedActivityQteMarker(): boolean {
   const session = appState.gameState.runtime.activitySession;
   if (session?.type !== "qte-bar") {
@@ -1329,7 +1269,8 @@ function syncRenderedActivityQteMarker(): boolean {
 }
 
 function syncActivityQteLoop(): void {
-  if (appState.gameState.runtime.activitySession?.type !== "qte-bar") {
+  const session = appState.gameState.runtime.activitySession;
+  if (session?.type !== "qte-bar" && session?.type !== "fortune-board") {
     stopActivityQteLoop();
     return;
   }
@@ -1338,15 +1279,23 @@ function syncActivityQteLoop(): void {
     return;
   }
 
+  const intervalMs =
+    session.type === "fortune-board"
+      ? session.animationTickMs
+      : ACTIVITY_QTE_INTERVAL_MS;
+
   activityQteIntervalHandle = window.setInterval(() => {
-    if (appState.gameState.runtime.activitySession?.type !== "qte-bar") {
+    const nextSession = appState.gameState.runtime.activitySession;
+    if (nextSession?.type !== "qte-bar" && nextSession?.type !== "fortune-board") {
       stopActivityQteLoop();
       return;
     }
 
     appState = commitRuntimeRequest({
       state: appState,
-      request: createInteractiveActionRequest("interactive.activity-qte.tick"),
+      request: createInteractiveActionRequest(
+        createActivityShellActionId("tick")
+      ),
       context: {
         router: {
           route: ({ state, request }) =>
@@ -1354,6 +1303,8 @@ function syncActivityQteLoop(): void {
               state,
               request,
               characterDefinitions: appState.characterDefinitions,
+              activityDefinitionsById:
+                activeContentContext.storyContent.activityDefinitionsById,
             }),
         },
       },
@@ -1362,7 +1313,64 @@ function syncActivityQteLoop(): void {
     if (!syncRenderedActivityQteMarker()) {
       renderApp();
     }
-  }, ACTIVITY_QTE_INTERVAL_MS);
+  }, intervalMs);
+}
+
+function syncHousePlayableLoop(): void {
+  const playableId = readTickableHousePlayableId();
+  if (playableId == null) {
+    stopHousePlayableLoop();
+    return;
+  }
+
+  if (housePlayableIntervalHandle != null) {
+    return;
+  }
+
+  housePlayableIntervalHandle = window.setInterval(() => {
+    const activePlayableId = readTickableHousePlayableId();
+    if (activePlayableId == null) {
+      stopHousePlayableLoop();
+      return;
+    }
+
+    dispatchCurrentHousePlayableAction(activePlayableId, "tick");
+  }, HOUSE_PLAYABLE_INTERVAL_MS);
+}
+
+function dispatchCurrentActivityQteAction(
+  action: string,
+  payload?: Record<string, unknown>
+): void {
+  const session = appState.gameState.runtime.activitySession;
+  if (
+    session == null ||
+    (session.type !== "fortune-board" &&
+      session.type !== "work-sequence" &&
+      session.type !== "qte-bar")
+  ) {
+    return;
+  }
+
+  appState = commitRuntimeRequest({
+    state: appState,
+    request: createInteractiveActionRequest(createActivityShellActionId(action), payload),
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            activityDefinitionsById:
+              activeContentContext.storyContent.activityDefinitionsById,
+          }),
+      },
+    },
+  }).state;
+
+  syncActivityQteLoop();
+  renderApp();
 }
 
 function stopCurrentActivityQte(): void {
@@ -1375,7 +1383,7 @@ function stopCurrentActivityQte(): void {
     stopActivityQteLoop();
     appState = commitRuntimeRequest({
       state: appState,
-      request: createInteractiveActionRequest("interactive.activity-qte.stop"),
+      request: createInteractiveActionRequest(createActivityShellActionId("stop")),
       context: {
         router: {
           route: ({ state, request }) =>
@@ -1395,7 +1403,7 @@ function stopCurrentActivityQte(): void {
 
   appState = commitRuntimeRequest({
     state: appState,
-    request: createInteractiveActionRequest("interactive.activity-qte.stop"),
+    request: createInteractiveActionRequest(createActivityShellActionId("stop")),
     context: {
       router: {
         route: ({ state, request }) =>
@@ -1410,6 +1418,14 @@ function stopCurrentActivityQte(): void {
     },
   }).state;
   renderApp();
+}
+
+function createActivityShellActionId(action: string): string {
+  const activePlayableId =
+    appState.gameState.runtime.playableSession?.playableId === "temple-copy-scripture"
+      ? "temple-copy-scripture"
+      : "activity-qte";
+  return `interactive.${activePlayableId}.${action}`;
 }
 
 function closeCurrentActivityResult(): void {
@@ -1544,6 +1560,21 @@ function applyEventOwnedPlayableCompletionFromRuntimeResult(input: {
     previousPlayableSession: input.previousPlayableSession,
     settlement: input.runtimeResult.settlement,
     followUp: input.runtimeResult.followUp,
+    startFromEventId: ({ eventId, state, characterDefinitions }) =>
+      startStoryEventById(
+        {
+          state,
+          characterDefinitions,
+          ...(runtimeDefinitionContext.cityDefinitions == null
+            ? {}
+            : { cityDefinitions: runtimeDefinitionContext.cityDefinitions }),
+          ...(runtimeDefinitionContext.houseDefinitions == null
+            ? {}
+            : { houseDefinitions: runtimeDefinitionContext.houseDefinitions }),
+        },
+        storyContent,
+        eventId
+      ),
     continueFromSourceEvent: ({
       sourceEventId,
       state,
@@ -1587,6 +1618,70 @@ function applyEventOwnedPlayableCompletionFromRuntimeResult(input: {
   return true;
 }
 
+function applyPlayableCompletionFollowUpFromRuntimeResult(input: {
+  previousPlayableSession: AppState["gameState"]["runtime"]["playableSession"];
+  runtimeResult: import("./core/contracts/runtime-result").RuntimeResult;
+}): boolean {
+  const storyContent = activeContentContext.storyContent;
+  const runtimeDefinitionContext = createStoryRuntimeDefinitionContext(
+    appState,
+    storyContent
+  );
+  const completion = applyPlayableCompletionFollowUp({
+    state: appState.gameState,
+    characterDefinitions: appState.characterDefinitions,
+    previousPlayableSession: input.previousPlayableSession,
+    settlement: input.runtimeResult.settlement,
+    followUp: input.runtimeResult.followUp,
+    startFromEventId: ({ eventId, state, characterDefinitions }) =>
+      startStoryEventById(
+        {
+          state,
+          characterDefinitions,
+          ...(runtimeDefinitionContext.cityDefinitions == null
+            ? {}
+            : { cityDefinitions: runtimeDefinitionContext.cityDefinitions }),
+          ...(runtimeDefinitionContext.houseDefinitions == null
+            ? {}
+            : { houseDefinitions: runtimeDefinitionContext.houseDefinitions }),
+        },
+        storyContent,
+        eventId
+      ),
+    applyFollowUp: ({ state, followUp }) => ({
+      state:
+        followUp.type === "reenter-house"
+          ? applyGameStateReenterBuilding(state, followUp.houseId)
+          : state,
+    }),
+  });
+  if (!completion.handled) {
+    return false;
+  }
+
+  appState = applyStoryRuntimeResultToAppState(appState, storyContent, {
+    state: completion.state,
+    characterDefinitions: completion.characterDefinitions,
+    ...(completion.cityDefinitions == null
+      ? {}
+      : { cityDefinitions: completion.cityDefinitions }),
+    ...(completion.houseDefinitions == null
+      ? {}
+      : { houseDefinitions: completion.houseDefinitions }),
+  });
+  return true;
+}
+
+function applyPlayableCompletionFromRuntimeResult(input: {
+  previousPlayableSession: AppState["gameState"]["runtime"]["playableSession"];
+  runtimeResult: import("./core/contracts/runtime-result").RuntimeResult;
+}): boolean {
+  return (
+    applyEventOwnedPlayableCompletionFromRuntimeResult(input) ||
+    applyPlayableCompletionFollowUpFromRuntimeResult(input)
+  );
+}
+
 function dispatchCurrentStoryBattleAction(actionId: string): void {
   const previousPlayableSession = appState.gameState.runtime.playableSession;
   const hasEventOwnedPlayableSource =
@@ -1626,7 +1721,7 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
     }),
   });
   appState = result.state;
-  applyEventOwnedPlayableCompletionFromRuntimeResult({
+  applyPlayableCompletionFromRuntimeResult({
     previousPlayableSession,
     runtimeResult: result.runtimeResult,
   });
@@ -1666,12 +1761,12 @@ function dispatchCurrentFlowAction(
   });
 
   appState = result.state;
-  const handledEventOwnedCompletion = applyEventOwnedPlayableCompletionFromRuntimeResult({
+  const handledPlayableCompletion = applyPlayableCompletionFromRuntimeResult({
     previousPlayableSession,
     runtimeResult: result.runtimeResult,
   });
   if (
-    !handledEventOwnedCompletion &&
+    !handledPlayableCompletion &&
     result.state.gameState.ui.currentView === "minigame" &&
     result.state.gameState.runtime.playableSession == null
   ) {
@@ -1687,6 +1782,77 @@ function dispatchCurrentFlowAction(
       },
     };
   }
+  renderApp();
+}
+
+function dispatchCurrentHousePlayableAction(
+  playableId: string,
+  action: string,
+  payload?: Record<string, unknown>
+): void {
+  const previousPlayableSession = appState.gameState.runtime.playableSession;
+  const result = commitRuntimeRequest({
+    state: appState,
+    request: createPlayableActionRequest(
+      playableId as import("./core/contracts/playable-runtime").PlayableId,
+      action,
+      payload
+    ),
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runPlayableRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            ...(currentPlayerCharacterId == null
+              ? {}
+              : { playerCharacterId: currentPlayerCharacterId }),
+            activityDefinitionsById:
+              activeContentContext.storyContent.activityDefinitionsById,
+            textEntriesById: activeContentContext.textEntriesById,
+            flowPlayablesById: activeContentContext.gameContent.flowPlayablesById,
+          }),
+      },
+    },
+  });
+
+  appState = result.state;
+  applyPlayableCompletionFromRuntimeResult({
+    previousPlayableSession,
+    runtimeResult: result.runtimeResult,
+  });
+  renderApp();
+}
+
+function closeCurrentPlayableResult(): void {
+  const houseSession = appState.gameState.ui.houseSession;
+  const sessionState = houseSession?.state;
+  if (
+    houseSession == null ||
+    sessionState == null ||
+    typeof sessionState !== "object" ||
+    (sessionState as { overlay?: { type?: string } | null }).overlay?.type !== "result"
+  ) {
+    return;
+  }
+
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        houseSession: {
+          ...houseSession,
+          state: {
+            ...(sessionState as Record<string, unknown>),
+            overlay: null,
+          },
+        },
+      },
+    },
+  };
   renderApp();
 }
 
@@ -2393,6 +2559,7 @@ function setGameVisibility(isVisible: boolean): void {
 function resetMainGameRuntime(): void {
   stopCityBeggingMiniGameLoop();
   stopActivityQteLoop();
+  stopHousePlayableLoop();
   dialogueMusicPlayer.pause();
   dialogueMusicPlayer.currentTime = 0;
   dialogueMusicPlayer.src = "";
@@ -2421,7 +2588,6 @@ function resetMainGameRuntime(): void {
   };
   campaignMapDragState = null;
   shouldSuppressNextClickAfterMapDrag = false;
-  cityBeggingMiniGameFrameId = null;
   hideMapIntroOverlay();
 }
 
@@ -2438,6 +2604,18 @@ function createDialogueMusicPlayer(): HTMLAudioElement {
   audio.preload = "auto";
   audio.volume = 0.45;
   return audio;
+}
+
+function syncGlobalAudioSettings(): void {
+  applyGlobalAudioMutedState({
+    players: [backgroundMusicPlayer, dialogueMusicPlayer],
+    muted: resolveEntryShellAudioMutedState({
+      screen: mainUiFlow?.currentScreen ?? null,
+      runtimeAudioSettings: activeContentContext.gameContent.audioSettings,
+      scriptEditorProjectAudioSettings:
+        mainUiFlow?.scriptEditorProject?.storyPack?.audioSettings,
+    }),
+  });
 }
 
 function syncBackgroundMusic(mode: BackgroundMusicMode): void {
@@ -2700,11 +2878,6 @@ appElement.addEventListener("pointerdown", (event) => {
 });
 
 appElement.addEventListener("pointermove", (event) => {
-  if (appState.beggingMiniGameState != null) {
-    syncCityBeggingMiniGamePointer(event.clientX);
-    return;
-  }
-
   if (
     campaignMapDragState == null ||
     campaignMapDragState.pointerId !== event.pointerId
@@ -3213,6 +3386,17 @@ appElement.addEventListener("click", (event) => {
     const activityAction = activityActionButton.dataset.activityAction;
     if (activityAction === "stop-qte") {
       stopCurrentActivityQte();
+    } else if (activityAction === "play-board") {
+      dispatchCurrentActivityQteAction("play");
+    } else if (activityAction === "wager-minus") {
+      dispatchCurrentActivityQteAction("wager-minus");
+    } else if (activityAction === "wager-plus") {
+      dispatchCurrentActivityQteAction("wager-plus");
+    } else if (activityAction === "choose-command") {
+      const commandId = activityActionButton.dataset.activityCommandId;
+      if (commandId != null && commandId.length > 0) {
+        dispatchCurrentActivityQteAction("choose", { commandId });
+      }
     } else if (activityAction === "close-result") {
       closeCurrentActivityResult();
     }
@@ -3278,6 +3462,43 @@ appElement.addEventListener("click", (event) => {
       );
     }
     return;
+  }
+
+  const playableActionButton = targetElement.closest<HTMLElement>(
+    "[data-playable-action]"
+  );
+  if (playableActionButton != null) {
+    const playableId = playableActionButton.dataset.playableId;
+    const action = playableActionButton.dataset.playableAction;
+    if (action === "close-result") {
+      closeCurrentPlayableResult();
+      return;
+    }
+    if (playableId != null && action === "answer-correct") {
+      dispatchCurrentHousePlayableAction(playableId, "answer", {
+        playerSaysCorrect: true,
+      });
+      return;
+    }
+    if (playableId != null && action === "answer-wrong") {
+      dispatchCurrentHousePlayableAction(playableId, "answer", {
+        playerSaysCorrect: false,
+      });
+      return;
+    }
+    if (playableId != null && action === "select-herb") {
+      const herbId = playableActionButton.dataset.herbId;
+      if (herbId != null && herbId.length > 0) {
+        dispatchCurrentHousePlayableAction(playableId, "select-herb", {
+          herbId,
+        });
+      }
+      return;
+    }
+    if (playableId != null && (action === "clear" || action === "finish")) {
+      dispatchCurrentHousePlayableAction(playableId, action);
+      return;
+    }
   }
 
   const buildingContainerItemActionButton = targetElement.closest<HTMLElement>(

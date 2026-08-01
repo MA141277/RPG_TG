@@ -1,5 +1,10 @@
 import type { RuntimeInteractiveSignal } from "../../../core/contracts/runtime-result";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
+import type {
+  ActivePlayableSession,
+  PlayableIntegrationId,
+  PlayableOwnerContext,
+} from "../../../core/contracts/playable-runtime";
 import type { GameState } from "../../../domain/game-state";
 import type { StoryBattleCompletion } from "../../../domain/story-battle";
 import {
@@ -10,8 +15,21 @@ import {
 
 function withPlayableSession(
   state: GameState,
-  ownerId: string | null
+  options: {
+    integrationId?: PlayableIntegrationId;
+    ownerContext?: PlayableOwnerContext;
+    fallbackOwnerId?: string | null;
+    previousSession?: ActivePlayableSession | null;
+  }
 ): GameState {
+  const previousSession = options.previousSession ?? null;
+  const ownerContext =
+    options.ownerContext ??
+    previousSession?.ownerContext ?? {
+      ownerKind: options.fallbackOwnerId == null ? "external" : "house",
+      ownerId: options.fallbackOwnerId ?? null,
+      returnPolicy: "reenter-owner",
+    };
   return {
     ...state,
     runtime: {
@@ -19,13 +37,11 @@ function withPlayableSession(
       playableSession: {
         sessionId: "playable.story-battle",
         playableId: "story-battle",
-        integrationId: "playable.story-battle.dialogue.default",
-        family: "battle",
-        ownerContext: {
-          ownerKind: ownerId == null ? "external" : "house",
-          ownerId,
-          returnPolicy: "reenter-owner",
-        },
+        integrationId:
+          options.integrationId ??
+          previousSession?.integrationId ??
+          "playable.story-battle.dialogue.default",
+        ownerContext,
         status: "active",
       },
     },
@@ -35,6 +51,8 @@ function withPlayableSession(
 export function launchStoryBattlePlayable(input: {
   state: GameState;
   ownerId: string | null;
+  integrationId?: PlayableIntegrationId | undefined;
+  ownerContext?: PlayableOwnerContext | undefined;
   completion: StoryBattleCompletion;
   textEntriesById?: Record<string, string> | undefined;
 }): GameState {
@@ -45,7 +63,15 @@ export function launchStoryBattlePlayable(input: {
         textEntriesById: input.textEntriesById,
       })
     ),
-    input.ownerId
+    {
+      fallbackOwnerId: input.ownerId,
+      ...(input.integrationId == null
+        ? {}
+        : { integrationId: input.integrationId }),
+      ...(input.ownerContext == null
+        ? {}
+        : { ownerContext: input.ownerContext }),
+    }
   );
 }
 
@@ -60,8 +86,9 @@ export function dispatchStoryBattlePlayableAction(input: {
   const result = dispatchStoryBattleAction(input.state.core, input.battleActionId, {
     textEntriesById: input.textEntriesById,
   });
+  const currentSession = input.state.core.runtime.playableSession;
   const ownerId =
-    input.state.core.runtime.playableSession?.ownerContext.ownerId ??
+    currentSession?.ownerContext.ownerId ??
     input.state.core.dialogue.activeDialogueId ??
     input.state.core.dialogue.activeEventId ??
     input.state.core.world.currentHouseId;
@@ -74,7 +101,16 @@ export function dispatchStoryBattlePlayableAction(input: {
             playableSession: null,
           },
         }
-      : withPlayableSession(result.state, ownerId);
+      : withPlayableSession(result.state, {
+          fallbackOwnerId: ownerId,
+          ...(currentSession?.integrationId == null
+            ? {}
+            : { integrationId: currentSession.integrationId }),
+          ...(currentSession?.ownerContext == null
+            ? {}
+            : { ownerContext: currentSession.ownerContext }),
+          ...(currentSession == null ? {} : { previousSession: currentSession }),
+        });
 
   return {
     state: {

@@ -183,6 +183,7 @@ export class MainUiFlow {
     this.onStartLoadedScenarioPack = options.onStartLoadedScenarioPack;
     this.onImportScenarioPackFiles = options.onImportScenarioPackFiles;
     this.onExitRuntimePreview = options.onExitRuntimePreview;
+    this.onScreenChanged = options.onScreenChanged;
     this.loadSaveData = options.loadSaveData;
     this.getAppState = options.getAppState;
     this.selectedCharacterId = this.characters[0]?.id ?? null;
@@ -334,6 +335,7 @@ export class MainUiFlow {
     this.currentScreen = screen;
     this.overlayRoot.classList.toggle("is-hidden", screen === "hidden");
     this.render();
+    this.onScreenChanged?.(screen);
   }
 
   render() {
@@ -820,34 +822,47 @@ export class MainUiFlow {
 
     if (target.matches("[data-script-editor-dialogue-field]")) {
       const field = target.dataset.scriptEditorDialogueField;
-      if (field === "id" || field === "title" || field === "storyNodeId") {
+      if (
+        field === "id" ||
+        field === "title" ||
+        field === "mode" ||
+        field === "textId" ||
+        field === "speakerPersonId" ||
+        field === "nextEventId"
+      ) {
         this.applyScriptEditorDialogueField(field, target.value);
       }
       return;
     }
 
-    if (target.matches("[data-script-editor-dialogue-node-field]")) {
-      const field = target.dataset.scriptEditorDialogueNodeField;
+    if (target.matches("[data-script-editor-dialogue-cast-field]")) {
+      const field = target.dataset.scriptEditorDialogueCastField;
       const index = Number.parseInt(
-        target.dataset.scriptEditorDialogueNodeIndex ?? "-1",
+        target.dataset.scriptEditorDialogueCastIndex ?? "-1",
         10
       );
       if (
-        ["id", "nodeType", "speakerPersonId", "textId", "nextNodeId", "choiceTargetNodeId"].includes(
-          field ?? ""
-        ) &&
+        (field === "personId" || field === "side") &&
         Number.isInteger(index) &&
         index >= 0
       ) {
-        this.applyScriptEditorDialogueNodeField(index, field, target.value);
+        this.applyScriptEditorDialogueCastField(index, field, target.value);
       }
       return;
     }
 
-    if (target.matches('[data-script-editor-relation-kind="dialogue-participants"]')) {
-      const index = Number.parseInt(target.dataset.scriptEditorRelationIndex ?? "-1", 10);
-      if (Number.isInteger(index) && index >= 0) {
-        this.applyScriptEditorDialogueParticipantField(index, target.value);
+    if (target.matches("[data-script-editor-dialogue-option-field]")) {
+      const field = target.dataset.scriptEditorDialogueOptionField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorDialogueOptionIndex ?? "-1",
+        10
+      );
+      if (
+        (field === "id" || field === "textId" || field === "nextEventId") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorDialogueOptionField(index, field, target.value);
       }
       return;
     }

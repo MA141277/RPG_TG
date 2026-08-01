@@ -10,7 +10,6 @@ import {
   closeCityDirectory,
   closeCityMenu,
   equipValuable,
-  openDialogueFromMenuTarget,
   openCityMenu,
   selectCard,
   selectValuable,
@@ -20,6 +19,7 @@ import {
   updateOverlayView,
 } from "../app-actions";
 import type { AppState } from "../app-shell";
+import { launchLegacyCityMenuDialogue } from "../city-menu/city-menu-dialogue-compat";
 import {
   createCityMenuState,
   resolveCityMenuEntries,
@@ -76,7 +76,9 @@ export function createAppClickCoordinator(
       return;
     }
     if (menuEntry.action.type === "dialogue") {
-      commitAppState(openDialogueFromMenuTarget(appState, menuEntry.action.dialogueId));
+      commitAppState(
+        launchLegacyCityMenuDialogue(appState, menuEntry.action.dialogueId)
+      );
       return;
     }
     if (menuEntry.action.type === "event") {

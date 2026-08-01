@@ -1,0 +1,104 @@
+[
+  {
+    "editorRecordId": "minigame.template.temple_copy_scripture",
+    "title": "寺庙抄经玩法",
+    "description": "皇觉寺抄经玩法实例，使用互动问答 fortune board，并从活动配置读取任务参数。",
+    "integrationId": "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+    "playableId": "temple-copy-scripture",
+    "ownerDefaults": {
+      "ownerKind": "external",
+      "ownerId": null,
+      "returnPolicy": "close-only"
+    },
+    "trigger": {
+      "triggerId": "trigger.playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+      "ownerKind": "external",
+      "trigger": "event.building.house.kulan.temple.copy_scripture",
+      "launchPayload": {
+        "activityId": "activity.zhu_yuanzhang.temple.copy_scripture"
+      }
+    },
+    "outcomeConfig": {
+      "handoffByOutcome": {
+        "success": "close-only",
+        "failure": "close-only",
+        "cancelled": "close-only"
+      }
+    }
+  },
+  {
+    "editorRecordId": "minigame.template.grain_accounting",
+    "title": "粮账核算玩法",
+    "description": "粮铺账目核算玩法实例，使用配置组控制时长、容错和体力成本。",
+    "integrationId": "playable.grain-accounting.instance.template.grain-accounting",
+    "playableId": "grain-accounting",
+    "ownerDefaults": {
+      "ownerKind": "external",
+      "ownerId": null,
+      "returnPolicy": "close-only"
+    },
+    "trigger": {
+      "triggerId": "trigger.playable.grain-accounting.instance.template.grain-accounting",
+      "ownerKind": "external",
+      "trigger": "event.building.template.house.grain_shop.accounting",
+      "launchPayload": {
+        "durationSec": 9,
+        "maxWrongAnswers": 1,
+        "staminaCost": 7,
+        "rewardMoneyD": 13
+      }
+    },
+    "outcomeConfig": {
+      "settlementRoutes": [
+        {
+          "id": "settlement-route.grain-accounting.failure",
+          "title": "失败结算",
+          "enabled": true,
+          "targetEventId": "event.playable.grain_accounting.failure_reward",
+          "conditions": {
+            "outcomeIn": [
+              "failure"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "editorRecordId": "minigame.template.medicine_compounding",
+    "title": "药材炼制玩法",
+    "description": "药铺炼药玩法实例，使用配置组控制时长、回合数和体力成本。",
+    "integrationId": "playable.medicine-compounding.instance.template.medicine-compounding",
+    "playableId": "medicine-compounding",
+    "ownerDefaults": {
+      "ownerKind": "external",
+      "ownerId": null,
+      "returnPolicy": "close-only"
+    },
+    "trigger": {
+      "triggerId": "trigger.playable.medicine-compounding.instance.template.medicine-compounding",
+      "ownerKind": "external",
+      "trigger": "event.building.template.house.medicine_house.compounding",
+      "launchPayload": {
+        "durationSec": 11,
+        "maxTurns": 1,
+        "staminaCost": 4
+      }
+    },
+    "outcomeConfig": {
+      "settlementRoutes": [
+        {
+          "id": "settlement-route.medicine-compounding.failure",
+          "title": "失败结算",
+          "enabled": true,
+          "targetEventId": "event.playable.medicine_compounding.failure_reward",
+          "conditions": {
+            "outcomeIn": [
+              "failure"
+            ]
+          }
+        }
+      ]
+    }
+  }
+]

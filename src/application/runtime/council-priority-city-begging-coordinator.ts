@@ -30,7 +30,6 @@ export type CouncilPriorityCityBeggingCoordinatorDependencies = {
   launchCityBeggingPlayable(appState: AppState, now: number): AppState;
   settleCityBeggingResult(result: CityBeggingGameCompletionResult): void;
   stopCityBeggingMiniGameLoop(): void;
-  startCityBeggingMiniGameLoop(): void;
   now(): number;
 };
 

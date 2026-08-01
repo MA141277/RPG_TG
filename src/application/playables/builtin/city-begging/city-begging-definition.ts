@@ -1,3 +1,7 @@
+import type {
+  PlayableIntegrationId,
+  PlayableOwnerContext,
+} from "../../../../core/contracts/playable-runtime";
 import type { CharacterDefinition } from "../../../../domain/character";
 import type { CityBeggingGameCompletionResult } from "../../../../domain/city-begging-minigame";
 import type { Effect } from "../../../../core/contracts/effect";
@@ -13,6 +17,8 @@ import {
 export function launchCityBeggingPlayable(input: {
   state: RuntimeState;
   now: number;
+  integrationId?: PlayableIntegrationId | undefined;
+  ownerContext?: PlayableOwnerContext | undefined;
 }): RuntimeState {
   return {
     ...input.state,
@@ -23,13 +29,14 @@ export function launchCityBeggingPlayable(input: {
         playableSession: {
           sessionId: "playable.city-begging",
           playableId: "city-begging",
-          integrationId: "playable.city-begging.external.default",
-          family: "minigame",
-          ownerContext: {
-            ownerKind: "external",
-            ownerId: null,
-            returnPolicy: "close-only",
-          },
+          integrationId:
+            input.integrationId ?? "playable.city-begging.external.default",
+          ownerContext:
+            input.ownerContext ?? {
+              ownerKind: "external",
+              ownerId: null,
+              returnPolicy: "close-only",
+            },
           status: "active",
         },
       },

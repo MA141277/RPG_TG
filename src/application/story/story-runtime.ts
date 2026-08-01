@@ -646,13 +646,24 @@ export function getCurrentDialogueNode(
     return null;
   }
 
-  return activeDialogue.nodes[state.dialogue.cursor] ?? null;
+  if (activeDialogue.screen != null) {
+    return null;
+  }
+
+  return activeDialogue.nodes?.[state.dialogue.cursor] ?? null;
 }
 
 export function getCurrentDialogueChoiceOptions(
   state: GameState,
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>
 ): RuntimeDialogueChoiceOption[] {
+  if (state.dialogue.activeDialogueId != null) {
+    const activeDialogue = dialogueDefinitionsById[state.dialogue.activeDialogueId];
+    if (activeDialogue?.screen?.mode === "choice") {
+      return activeDialogue.screen.options;
+    }
+  }
+
   const currentNode = getCurrentDialogueNode(state, dialogueDefinitionsById);
   return currentNode?.type === "choice" ? currentNode.options : [];
 }

@@ -219,7 +219,7 @@ export const sampleEventsById: Record<string, EventDefinition> = {
 };
 
 export function getSampleChoiceOptions(): RuntimeDialogueChoiceOption[] | null {
-  const choiceNode = sampleDialogue.nodes.find(
+  const choiceNode = (sampleDialogue.nodes ?? []).find(
     (
       node
     ): node is Extract<RuntimeDialogueNode, { type: "choice" }> =>

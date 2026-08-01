@@ -39,6 +39,7 @@ export type AppRenderCoordinatorDependencies = {
   ): void;
   syncMapIntroOverlay(): void;
   syncActivityQteLoop(): void;
+  syncHousePlayableLoop(): void;
   syncCampaignTerrainWebGl(root: HTMLElement): void;
   syncCityBeggingMiniGameOverlay(
     root: HTMLElement,
@@ -150,6 +151,7 @@ export function createAppRenderCoordinator(
     dependencies.restoreCampaignMapScaleInputFocus(focusedScaleInput);
     dependencies.syncMapIntroOverlay();
     dependencies.syncActivityQteLoop();
+    dependencies.syncHousePlayableLoop();
     dependencies.syncCampaignTerrainWebGl(appRoot);
     dependencies.syncCityBeggingMiniGameOverlay(
       appRoot,

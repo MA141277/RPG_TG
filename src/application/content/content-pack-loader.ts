@@ -39,7 +39,7 @@ type ContentPackFileKey = (typeof CONTENT_PACK_FILE_KEYS)[number];
 
 type ContentPackManifest = Pick<
   ContentPackDefinition,
-  "schemaVersion" | "id" | "title" | "description"
+  "schemaVersion" | "id" | "title" | "description" | "audioSettings"
 > & {
   files: Partial<Record<ContentPackFileKey, string>> & Record<string, unknown>;
 };
@@ -75,6 +75,9 @@ export async function loadContentPackFromManifestText(
     id: manifest.id,
     title: manifest.title,
     ...(manifest.description == null ? {} : { description: manifest.description }),
+    ...(manifest.audioSettings == null
+      ? {}
+      : { audioSettings: manifest.audioSettings }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
     ...(resolvedPortraits == null ? {} : { portraits: resolvedPortraits }),
@@ -111,6 +114,13 @@ function parseContentPackManifest(value: unknown): ContentPackManifest {
   assertString(value.id, "content pack id");
   assertString(value.title, "content pack title");
   assertObject(value.files, "content pack files");
+  if (value.audioSettings != null) {
+    assertObject(value.audioSettings, "content pack audioSettings");
+    assertOptionalBoolean(
+      value.audioSettings.muted,
+      "content pack audioSettings.muted"
+    );
+  }
   if (Object.hasOwn(value.files, "flowDefinitions")) {
     throw new Error(
       'content pack files.flowDefinitions is retired; use files.flowPlayables instead.'
@@ -210,5 +220,14 @@ function assertObject(
 function assertString(value: unknown, label: string): asserts value is string {
   if (typeof value !== "string" || value.length === 0) {
     throw new Error(`${label} must be a non-empty string.`);
+  }
+}
+
+function assertOptionalBoolean(
+  value: unknown,
+  label: string
+): asserts value is boolean | undefined {
+  if (value != null && typeof value !== "boolean") {
+    throw new Error(`${label} must be boolean when present.`);
   }
 }

@@ -183,8 +183,8 @@
     "actions": [
       {
         "type": "launchPlayable",
-        "playableId": "activity-qte",
-        "integrationId": "playable.activity-qte.house.temple",
+        "playableId": "temple-copy-scripture",
+        "integrationId": "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
@@ -601,15 +601,31 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.grain_shop.accounting",
+        "type": "launchPlayable",
+        "playableId": "grain-accounting",
+        "integrationId": "playable.grain-accounting.instance.template.grain-accounting",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.grain_shop",
-          "returnPolicy": "reenter-owner"
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "durationSec": 9,
+          "maxWrongAnswers": 1,
+          "staminaCost": 7,
+          "rewardMoneyD": 13
         }
       }
     ]
+  },
+  {
+    "id": "event.playable.grain_accounting.failure_reward",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "粮账核算 - 失败结算",
+    "occurrence": "repeatable",
+    "type": "settlement",
+    "settlementId": "settlement.playable.grain_accounting.failure_reward",
+    "dialogueId": ""
   },
   {
     "id": "event.building.template.house.grain_shop.leave",
@@ -676,15 +692,30 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.medicine_house.compounding",
+        "type": "launchPlayable",
+        "playableId": "medicine-compounding",
+        "integrationId": "playable.medicine-compounding.instance.template.medicine-compounding",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.medicine_house",
-          "returnPolicy": "reenter-owner"
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "durationSec": 11,
+          "maxTurns": 1,
+          "staminaCost": 4
         }
       }
     ]
+  },
+  {
+    "id": "event.playable.medicine_compounding.failure_reward",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "药材炼制 - 失败结算",
+    "occurrence": "repeatable",
+    "type": "settlement",
+    "settlementId": "settlement.playable.medicine_compounding.failure_reward",
+    "dialogueId": ""
   },
   {
     "id": "event.building.template.house.medicine_house.leave",

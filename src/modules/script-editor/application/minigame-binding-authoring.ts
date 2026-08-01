@@ -46,7 +46,7 @@ export const SCRIPT_EDITOR_MINIGAME_OUTCOMES: readonly ScriptEditorMinigameOutco
 
 const BUILTIN_PLAYABLE_DEFINITIONS = Array.from(
   builtinPlayableDefinitionRegistry.entries()
-).filter((definition) => definition.family === "minigame");
+);
 
 const BUILTIN_PLAYABLE_INTEGRATIONS = Array.from(
   builtinPlayableIntegrationRegistry.entries()

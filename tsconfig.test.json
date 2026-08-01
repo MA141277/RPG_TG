@@ -16,6 +16,7 @@
     "src/core/**/*.ts",
     "src/application/character/**/*.ts",
     "src/application/activity/**/*.ts",
+    "src/application/audio/**/*.ts",
     "src/application/building/**/*.ts",
     "src/application/city/**/*.ts",
     "src/application/city-entries/**/*.ts",

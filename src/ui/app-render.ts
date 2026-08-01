@@ -44,6 +44,7 @@ import {
   renderActivityOverlay,
   renderDialogueView,
 } from "./views/dialogue/dialogue-view";
+import { renderDialogueScreenPanel } from "./components/dialogue-screen-panel";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
 import {
   renderFlowPlayableOverlay,
@@ -402,32 +403,46 @@ function renderBuildingSceneUnderlay(
   `;
 }
 
+function getDialoguePortraitArtClassName(characterId: string): string {
+  switch (characterId) {
+    case "char.kulan_temple_abbot":
+      return "c-temple-house-portrait-art--abbot";
+    case "char.kulan_temple_senior_monk":
+      return "c-temple-house-portrait-art--senior-monk";
+    default:
+      return "";
+  }
+}
+
 function renderStage(
   input: AppRenderInput,
   playerCharacter: CharacterDefinition
 ): string {
   const { stage } = input.presenterOutput;
+  const activePlayableSession = input.appState.gameState.runtime.playableSession;
+  const activeFlowPlayable =
+    activePlayableSession == null || input.flowPlayablesById == null
+      ? null
+      : input.flowPlayablesById[activePlayableSession.playableId] ?? null;
 
   if (
     input.appState.gameState.ui.currentView === "minigame" &&
-    input.appState.gameState.runtime.playableSession?.family === "flow" &&
-    input.flowPlayablesById != null
+    activePlayableSession != null &&
+    activeFlowPlayable != null
   ) {
-    const session = input.appState.gameState.runtime.playableSession;
-    const definition = input.flowPlayablesById[session.playableId];
-    if (definition != null) {
-      if (session.ownerContext.ownerKind === "house" && stage.type === "building") {
-        return `
-          ${renderBuildingModuleView({
-            stage,
-            characterDefinitions: input.appState.characterDefinitions,
-            characterManager: input.characterManager,
-          })}
-          ${renderFlowPlayableOverlay({ definition, session })}
-        `;
-      }
-      return renderFlowPlayableView({ definition, session });
+    const session = activePlayableSession;
+    const definition = activeFlowPlayable;
+    if (session.ownerContext.ownerKind === "house" && stage.type === "building") {
+      return `
+        ${renderBuildingModuleView({
+          stage,
+          characterDefinitions: input.appState.characterDefinitions,
+          characterManager: input.characterManager,
+        })}
+        ${renderFlowPlayableOverlay({ definition, session })}
+      `;
     }
+    return renderFlowPlayableView({ definition, session });
   }
 
   if (stage.type === "map") {
@@ -502,11 +517,41 @@ function renderStage(
           ? undefined
           : renderCitySceneUnderlay(stage.cityUnderlay, input, playerCharacter);
 
+    if (stage.dialogueScreenViewModel != null) {
+      const speakerDefinition =
+        input.appState.characterDefinitions.find(
+          (characterDefinition) =>
+            characterDefinition.id ===
+            stage.dialogueScreenViewModel?.speakerCharacterId
+        ) ?? null;
+      const activityOverlay = renderActivityOverlay(
+        input.appState.gameState.runtime.activitySession
+      );
+
+      return renderDialogueScreenPanel({
+        dialogueScreenViewModel: stage.dialogueScreenViewModel,
+        activityOverlay,
+        speakerPortraitImageUrl:
+          speakerDefinition == null
+            ? null
+            : resolveCharacterPortraitImageUrl(speakerDefinition),
+        speakerPortraitArtClassName:
+          stage.dialogueScreenViewModel.speakerCharacterId.length === 0
+            ? ""
+            : getDialoguePortraitArtClassName(
+                stage.dialogueScreenViewModel.speakerCharacterId
+              ),
+        ...(sceneUnderlayMarkup == null
+          ? {}
+          : { underlayMarkup: sceneUnderlayMarkup }),
+      });
+    }
+
     return renderDialogueView({
-      currentAction: stage.currentDialogueNode,
+      currentAction: stage.legacyDialogueNode,
       activitySession: input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,
-      choiceOptions: stage.currentDialogueChoiceOptions,
+      choiceOptions: stage.legacyDialogueChoiceOptions,
       ...(sceneUnderlayMarkup == null
         ? {}
         : { underlayMarkup: sceneUnderlayMarkup }),

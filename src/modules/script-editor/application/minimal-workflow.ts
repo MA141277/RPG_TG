@@ -210,18 +210,12 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         ...createDefaultScriptEditorDialogueRecord(0),
         id: "dialogue.opening",
         title: "Opening Dialogue",
-        storyNodeId: "story-node.opening",
-        participantPersonIds: ["person.hero"],
-        nodes: [
-          {
-            id: "dialogue-node.opening.1",
-            nodeType: "dialogue",
-            speakerPersonId: "person.hero",
-            textId: "text.opening",
-            nextNodeId: "",
-            choiceTargetNodeId: "",
-          },
-        ],
+        mode: "linear",
+        textId: "text.opening",
+        speakerPersonId: "person.hero",
+        cast: [{ personId: "person.hero", side: "left" }],
+        nextEventId: "",
+        options: [],
       },
     ],
     minigames: [],
@@ -595,12 +589,30 @@ function removeEventReferencesFromScriptEditorProject(
     })),
     dialogues: project.dialogues.map((dialogue) => {
       const nextFollowUps = removeDialogueEventFollowUps(dialogue.followUps, removedEventId);
-      if (nextFollowUps === dialogue.followUps || nextFollowUps == null) {
+      const nextNextEventId =
+        dialogue.nextEventId === removedEventId ? "" : dialogue.nextEventId;
+      const nextOptions = (dialogue.options ?? []).map((option) =>
+        option.nextEventId === removedEventId
+          ? { ...option, nextEventId: "" }
+          : option
+      );
+      const optionsChanged = nextOptions.some(
+        (option, index) => option !== dialogue.options?.[index]
+      );
+      if (
+        nextFollowUps === dialogue.followUps &&
+        nextNextEventId === dialogue.nextEventId &&
+        !optionsChanged
+      ) {
         return dialogue;
       }
       return {
         ...dialogue,
-        followUps: nextFollowUps,
+        ...(nextFollowUps == null ? {} : { followUps: nextFollowUps }),
+        ...(nextNextEventId === dialogue.nextEventId
+          ? {}
+          : { nextEventId: nextNextEventId }),
+        ...(optionsChanged ? { options: nextOptions } : {}),
       };
     }),
     events: project.events.map((eventRecord) => {

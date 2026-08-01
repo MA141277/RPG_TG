@@ -15,11 +15,10 @@ const {
   SCRIPT_EDITOR_BUILDING_LAYOUT_CHARACTER_FILTERS,
   SCRIPT_EDITOR_BUILDING_LAYOUT_NODE_KINDS,
   SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS,
-  SCRIPT_EDITOR_DIALOGUE_NODE_TYPES,
+  SCRIPT_EDITOR_DIALOGUE_MODES,
   SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS,
   SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES,
   SCRIPT_EDITOR_EVENT_TYPES,
-  SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS,
   SCRIPT_EDITOR_MINIGAME_OUTCOMES,
   SCRIPT_EDITOR_MINIGAME_OWNER_KINDS,
   SCRIPT_EDITOR_MINIGAME_RETURN_POLICIES,
@@ -33,8 +32,8 @@ const {
   appendScriptEditorBuildingArrangementNpc,
   appendScriptEditorCityMountedBuilding,
   appendScriptEditorCityMountedBuildingNpc,
-  appendScriptEditorDialogueNode,
-  appendScriptEditorDialogueParticipant,
+  appendScriptEditorDialogueCast,
+  appendScriptEditorDialogueOption,
   appendScriptEditorEventBindingConditionItem,
   appendScriptEditorEventRelationEntry,
   appendScriptEditorLocationAttribute,
@@ -98,8 +97,8 @@ const {
   removeScriptEditorBuildingArrangementNpc,
   removeScriptEditorCityMountedBuilding,
   removeScriptEditorCityMountedBuildingNpc,
-  removeScriptEditorDialogueNode,
-  removeScriptEditorDialogueParticipant,
+  removeScriptEditorDialogueCast,
+  removeScriptEditorDialogueOption,
   removeScriptEditorEventBindingConditionItem,
   removeScriptEditorEventRelationEntry,
   findScriptEditorProjectLibraryEntry,
@@ -137,9 +136,9 @@ const {
   updateScriptEditorCityMountedBuilding,
   updateScriptEditorCityMountedBuildingNpc,
   updateScriptEditorCityMountedBuildingPrimaryNpc,
+  updateScriptEditorDialogueCastField,
   updateScriptEditorDialogueField,
-  updateScriptEditorDialogueNodeField,
-  updateScriptEditorDialogueParticipant,
+  updateScriptEditorDialogueOptionField,
   updateScriptEditorEventBindingConditionItemField,
   updateScriptEditorEventBindingConditionOperator,
   updateScriptEditorEventBindingField,
@@ -221,8 +220,7 @@ const SCRIPT_EDITOR_EVENT_BINDING_OWNER_FAMILY_OPTIONS = [
   { value: "person", label: "人物" },
   { value: "city", label: "城市" },
   { value: "building", label: "建筑" },
-  { value: "dialogue", label: "对话" },
-  { value: "minigame", label: "玩法" },
+  { value: "minigame", label: "小游戏" },
   { value: "story", label: "剧情节点" },
 ];
 
@@ -236,9 +234,6 @@ const SCRIPT_EDITOR_EVENT_BINDING_TRIGGER_OPTIONS_BY_OWNER = {
   building: [
     { timing: "after", action: "building-enter", label: "进入后" },
     { timing: "before", action: "building-leave", label: "离开前" },
-  ],
-  dialogue: [
-    { timing: "after", action: "dialogue-finished", label: "对话结束后" },
   ],
   minigame: [
     { timing: "after", action: "minigame-settled", label: "玩法结算后" },
@@ -286,6 +281,7 @@ const SCRIPT_EDITOR_PROGRESS_TIER_REPEAT_POLICY_OPTIONS = [
 const SCRIPT_EDITOR_SETTLEMENT_PERSON_BASE_ATTRIBUTE_OPTIONS = [
   { value: "age", label: "年龄", attributeType: "number" },
   { value: "stamina", label: "体力", attributeType: "number" },
+  { value: "stats.gold", label: "金钱", attributeType: "number" },
   { value: "stats.leadership", label: "统率", attributeType: "number" },
   { value: "stats.martial", label: "武勇", attributeType: "number" },
   { value: "stats.intelligence", label: "智略", attributeType: "number" },
@@ -540,6 +536,7 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "renderScriptEditorPersonAttributePagination",
   "normalizeScriptEditorPersonAttributeVisibleIndices",
   "renderScriptEditorSelectOptions",
+  "renderScriptEditorProjectSelect",
   "getScriptEditorProjectRecordOptions",
   "getScriptEditorCreatorRecordOptions",
   "getScriptEditorSettlementTargetOptions",
@@ -624,7 +621,9 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "renderScriptEditorNarrativeTabButton",
   "renderScriptEditorStoryNodeTabPanel",
   "renderScriptEditorDialogueTabPanel",
-  "renderScriptEditorDialogueNodeReferenceSelect",
+  "renderScriptEditorDialogueCastPanel",
+  "renderScriptEditorDialogueRoutePanel",
+  "renderScriptEditorDialogueReferenceSelect",
   "createScriptEditorPersonReferenceOptions",
   "createScriptEditorTextEntryReferenceOptions",
   "createScriptEditorDialogueReferenceOptions",
@@ -715,16 +714,16 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "removeScriptEditorStoryRelation",
   "applyScriptEditorStoryRelationField",
   "applyScriptEditorDialogueField",
+  "addScriptEditorDialogueCast",
+  "removeScriptEditorDialogueCast",
+  "applyScriptEditorDialogueCastField",
+  "addScriptEditorDialogueOption",
+  "removeScriptEditorDialogueOption",
+  "applyScriptEditorDialogueOptionField",
   "applyScriptEditorSettlementField",
   "addScriptEditorSettlementContent",
   "removeScriptEditorSettlementContent",
   "applyScriptEditorSettlementContentField",
-  "addScriptEditorDialogueParticipant",
-  "removeScriptEditorDialogueParticipant",
-  "applyScriptEditorDialogueParticipantField",
-  "addScriptEditorDialogueNode",
-  "removeScriptEditorDialogueNode",
-  "applyScriptEditorDialogueNodeField",
   "applyScriptEditorEventField",
   "applyScriptEditorEventRepeatable",
   "addScriptEditorEventBinding",
@@ -860,7 +859,7 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
 ];
 
 export function installMainUiFlowScriptEditorModule(host, options) {
-  void options;
+  host.onScriptEditorProjectChanged = options?.onScriptEditorProjectChanged;
     host.scriptEditorProject = null;
     host.scriptEditorSelection = {
       family: "storyPack",
@@ -903,6 +902,7 @@ export function installMainUiFlowScriptEditorModule(host, options) {
     host.scriptEditorScrollTop = 0;
     host.scriptEditorRuntimePreviewSession = null;
     host.scriptEditorStageConfigurationHelpOpen = false;
+    host.scriptEditorDialogueHelpOpen = false;
 
   const module = new MainUiFlowScriptEditorModule();
   for (const methodName of SCRIPT_EDITOR_MODULE_METHOD_NAMES) {
@@ -1053,6 +1053,10 @@ class MainUiFlowScriptEditorModule {
         { value: "fixed", label: "使用默认角色直接开局" },
         { value: "first-playable", label: "使用第一个可操作角色开局" },
       ];
+      const globalAudioOptions = [
+        { value: "false", label: "开启" },
+        { value: "true", label: "静音" },
+      ];
       const defaultRoleOptions = this.scriptEditorProject.people
         .filter((person) => person.personType === "角色")
         .map(createRecordOption);
@@ -1070,6 +1074,7 @@ class MainUiFlowScriptEditorModule {
             ${this.renderScriptEditorStartupSelect("houseId", "开局建筑", buildingOptions, initialLocation.houseId ?? "", "未设置开局建筑")}
             ${this.renderScriptEditorStartupSelect("characterSelection", "角色选择策略", characterSelectionOptions, launchPolicy.characterSelection ?? "", "未设置角色选择策略")}
             ${this.renderScriptEditorStartupSelect("playerCharacterId", "默认角色", defaultRoleOptions, scenarioProfile.playerCharacterId ?? "", "未设置默认角色")}
+            ${this.renderScriptEditorProjectSelect("storyPack.audioSettings.muted", "全局声音", globalAudioOptions, storyPack.audioSettings?.muted === true ? "true" : "false")}
             ${this.renderScriptEditorField("scenarioProfile.launchPolicy.entryEventTiming", "入口事件时机", launchPolicy.entryEventTiming ?? "")}
           </div>
           <div class="c-script-editor-editor-card__actions c-script-editor-editor-card__actions--center c-script-editor-project-info-card__actions">
@@ -2824,7 +2829,6 @@ class MainUiFlowScriptEditorModule {
   getScriptEditorLocationMenuTargetFamilyOptions(selectedValue = "") {
     return this.getScriptEditorLocationMenuOptionsWithFallback(
       [
-        { value: "dialogue", label: "对话" },
         { value: "event", label: "事件" },
         { value: "trade", label: "交易" },
         { value: "minigame", label: "玩法" },
@@ -5946,8 +5950,6 @@ class MainUiFlowScriptEditorModule {
                   <div class="c-script-editor-editor-pane__topbar">
                     <div class="c-script-editor-narrative-editor__tabs" role="tablist" aria-label="对话详情分栏">
                       ${this.renderScriptEditorNarrativeTabButton("profile", "基础")}
-                      ${this.renderScriptEditorNarrativeTabButton("nodes", "节点")}
-                      ${this.renderScriptEditorNarrativeTabButton("events", "事件")}
                     </div>
                   </div>
                   ${this.renderScriptEditorDialogueTabPanel(dialogue)}
@@ -6930,143 +6932,229 @@ class MainUiFlowScriptEditorModule {
   }
 
   renderScriptEditorDialogueTabPanel(dialogue) {
-    if (this.scriptEditorNarrativeTab === "events") {
-      return this.renderScriptEditorOwnerLocalEventBindingsPanel({ ownerFamily: "dialogue", ownerId: dialogue.id });
-    }
+    return `
+      <section class="c-script-editor-narrative-panel" aria-label="对话基础分栏">
+        <div class="c-script-editor-narrative-panel__header">
+          <div>
+            <p class="c-script-editor-editor-card__eyebrow">对话基础</p>
+            <h3 class="c-script-editor-editor-card__title">基础</h3>
+          </div>
+          <button
+            type="button"
+            class="c-main-ui-json-text-button c-script-editor-help-icon-button"
+            data-script-editor-action="open-dialogue-help"
+            aria-label="打开对话模块帮助"
+            title="对话模块帮助"
+          >
+            ?
+          </button>
+        </div>
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>对话标题</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(dialogue.title)}" data-script-editor-dialogue-field="title" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>对话类型</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-dialogue-field="mode">
+              ${SCRIPT_EDITOR_DIALOGUE_MODES.map(
+                (mode) => `
+                  <option value="${mode}" ${dialogue.mode === mode ? "selected" : ""}>
+                    ${mode === "choice" ? "有选择对话" : "无选择对话"}
+                  </option>
+                `
+              ).join("")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>对话文本</span>
+            ${this.renderScriptEditorDialogueReferenceSelect({
+              field: "textId",
+              value: dialogue.textId ?? "",
+              emptyLabel: "未选择文本",
+              options: this.createScriptEditorTextEntryReferenceOptions(),
+            })}
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>当前发言人物</span>
+            ${this.renderScriptEditorDialogueReferenceSelect({
+              field: "speakerPersonId",
+              value: dialogue.speakerPersonId ?? "",
+              emptyLabel: "未选择人物",
+              options: this.createScriptEditorPersonReferenceOptions(),
+            })}
+          </label>
+        </div>
+        ${this.renderScriptEditorDialogueCastPanel(dialogue)}
+        ${this.renderScriptEditorDialogueRoutePanel(dialogue)}
+        ${
+          this.scriptEditorDialogueHelpOpen
+            ? `
+              <section class="c-script-editor-stage-configuration-help" role="dialog" aria-modal="true" aria-label="对话模块帮助">
+                <button
+                  type="button"
+                  class="c-script-editor-stage-configuration-help__backdrop"
+                  data-script-editor-action="close-dialogue-help"
+                  aria-label="关闭帮助"
+                ></button>
+                <div class="c-script-editor-stage-configuration-help__panel">
+                  <div class="c-script-editor-narrative-panel__header">
+                    <div>
+                      <p class="c-script-editor-editor-card__eyebrow">功能说明</p>
+                      <h3 class="c-script-editor-editor-card__title">对话模块怎么用</h3>
+                    </div>
+                    <button
+                      type="button"
+                      class="c-main-ui-json-text-button"
+                      data-script-editor-action="close-dialogue-help"
+                    >
+                      关闭
+                    </button>
+                  </div>
+                  <div class="c-script-editor-stage-configuration-help__body">
+                    <p>这个模块只编辑一屏对话实例。事件负责进入对话，对话负责展示内容，结束后再把结果回交给事件继续路由。</p>
+                    <p>适用场景：短对白、接任务提示、单次选择分支。复杂连续演出不要在这里堆节点，而是拆成多条事件链和多屏对话。</p>
+                    <p>填写顺序建议：1. 先选对话类型。2. 绑定对话文本和当前发言人物。3. 配置出场人物左右站位。4. 最后填写后续事件或选项路由。</p>
+                    <p>示例：无选择对话。方丈说“今日先去化缘”，模式选“无选择对话”，对话文本指向该句文本，后续事件指向“外出化缘”。</p>
+                    <p>示例：有选择对话。住持问“是否愿意接下差事”，模式选“有选择对话”，为“愿意/改日再说”分别配置选项文本和各自后续事件。</p>
+                  </div>
+                </div>
+              </section>
+            `
+            : ""
+        }
+      </section>
+    `;
+  }
 
-    if (this.scriptEditorNarrativeTab === "nodes") {
+  renderScriptEditorDialogueCastPanel(dialogue) {
+    return `
+      <section class="c-script-editor-narrative-panel" aria-label="出场人物">
+        <div class="c-script-editor-narrative-panel__header">
+          <div>
+            <p class="c-script-editor-editor-card__eyebrow">出场人物</p>
+            <h3 class="c-script-editor-editor-card__title">出场人物</h3>
+          </div>
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-dialogue-cast">
+            新增人物
+          </button>
+        </div>
+        <div class="c-script-editor-narrative-list">
+          ${(dialogue.cast ?? [])
+            .map(
+              (entry, index) => `
+                <article class="c-script-editor-narrative-item">
+                  <div class="c-script-editor-form-grid">
+                    <label class="c-script-editor-form-field">
+                      <span>人物 ID</span>
+                      <select class="c-script-editor-form-field__input" data-script-editor-dialogue-cast-field="personId" data-script-editor-dialogue-cast-index="${index}">
+                        ${this.renderScriptEditorSelectOptions(
+                          this.createScriptEditorPersonReferenceOptions(),
+                          entry.personId,
+                          "未选择人物"
+                        )}
+                      </select>
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>位置</span>
+                      <select class="c-script-editor-form-field__input" data-script-editor-dialogue-cast-field="side" data-script-editor-dialogue-cast-index="${index}">
+                        ${this.renderScriptEditorSelectOptions(
+                          [
+                            { value: "left", label: "左" },
+                            { value: "right", label: "右" },
+                          ],
+                          entry.side,
+                          "选择站位"
+                        )}
+                      </select>
+                    </label>
+                  </div>
+                  <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-dialogue-cast" data-script-editor-dialogue-cast-index="${index}">
+                    删除人物
+                  </button>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorDialogueRoutePanel(dialogue) {
+    if (dialogue.mode === "choice") {
       return `
-        <section class="c-script-editor-narrative-panel" aria-label="对话节点分栏">
-          <div class="c-script-editor-narrative-panel__header">
-            <div>
-              <p class="c-script-editor-editor-card__eyebrow">对话节点</p>
-              <h3 class="c-script-editor-editor-card__title">演出流与后续动作</h3>
-            </div>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-dialogue-node">
-              新增节点
+        <section class="c-script-editor-narrative-panel" aria-label="选项后续事件">
+          <div class="c-script-editor-narrative-panel__header c-script-editor-narrative-panel__header--actions-only">
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-dialogue-option">
+              新增选项
             </button>
           </div>
           <div class="c-script-editor-narrative-list">
-            ${(dialogue.nodes ?? [])
+            ${(dialogue.options ?? [])
               .map(
-                (node, index) => `
+                (option, index) => `
                   <article class="c-script-editor-narrative-item">
                     <div class="c-script-editor-form-grid">
                       <label class="c-script-editor-form-field">
-                        <span>节点 ID</span>
-                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.id)}" data-script-editor-dialogue-node-field="id" data-script-editor-dialogue-node-index="${index}" />
-                      </label>
-                      <label class="c-script-editor-form-field">
-                        <span>节点类型</span>
-                        <select class="c-script-editor-form-field__input" data-script-editor-dialogue-node-field="nodeType" data-script-editor-dialogue-node-index="${index}">
-                          ${SCRIPT_EDITOR_DIALOGUE_NODE_TYPES.map(
-                            (nodeType) => `<option value="${nodeType}" ${node.nodeType === nodeType ? "selected" : ""}>${nodeType}</option>`
-                          ).join("")}
+                        <span>选项文案</span>
+                        <select class="c-script-editor-form-field__input" data-script-editor-dialogue-option-field="textId" data-script-editor-dialogue-option-index="${index}">
+                          ${this.renderScriptEditorSelectOptions(
+                            this.createScriptEditorTextEntryReferenceOptions(),
+                            option.textId ?? "",
+                            "未选择文本"
+                          )}
                         </select>
                       </label>
                       <label class="c-script-editor-form-field">
-                        <span>说话人物 ID</span>
-                        ${this.renderScriptEditorDialogueNodeReferenceSelect({
-                          field: "speakerPersonId",
-                          index,
-                          value: node.speakerPersonId,
-                          emptyLabel: "未选择人物",
-                          options: this.createScriptEditorPersonReferenceOptions(),
-                        })}
-                      </label>
-                      <label class="c-script-editor-form-field">
-                        <span>文本 textId</span>
-                        ${this.renderScriptEditorDialogueNodeReferenceSelect({
-                          field: "textId",
-                          index,
-                          value: node.textId,
-                          emptyLabel: "未选择文本",
-                          options: this.createScriptEditorTextEntryReferenceOptions(),
-                        })}
-                      </label>
-                      <label class="c-script-editor-form-field">
-                        <span>下一节点 ID</span>
-                        ${this.renderScriptEditorDialogueNodeReferenceSelect({
-                          field: "nextNodeId",
-                          index,
-                          value: node.nextNodeId,
-                          emptyLabel: "无下一节点",
-                          options: this.createScriptEditorDialogueNodeReferenceOptions(dialogue),
-                        })}
-                      </label>
-                      <label class="c-script-editor-form-field">
-                        <span>选择支目标 ID</span>
-                        ${this.renderScriptEditorDialogueNodeReferenceSelect({
-                          field: "choiceTargetNodeId",
-                          index,
-                          value: node.choiceTargetNodeId,
-                          emptyLabel: "无选择支目标",
-                          options: this.createScriptEditorDialogueNodeReferenceOptions(dialogue),
-                        })}
+                        <span>后续事件</span>
+                        <select class="c-script-editor-form-field__input" data-script-editor-dialogue-option-field="nextEventId" data-script-editor-dialogue-option-index="${index}">
+                          ${this.renderScriptEditorSelectOptions(
+                            this.createScriptEditorEventReferenceOptions(),
+                            option.nextEventId ?? "",
+                            "未选择事件"
+                          )}
+                        </select>
                       </label>
                     </div>
-                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-dialogue-node" data-script-editor-dialogue-node-index="${index}">
-                      删除节点
+                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-dialogue-option" data-script-editor-dialogue-option-index="${index}">
+                      删除选项
                     </button>
                   </article>
                 `
               )
               .join("")}
           </div>
-          <p class="c-script-editor-editor-card__hint">
-            对话节点只负责演出顺序与内部节点跳转。对话结束后的后续安排请到事件页继续设置。
-          </p>
         </section>
       `;
     }
 
     return `
-      <section class="c-script-editor-narrative-panel c-script-editor-narrative-panel--compact" aria-label="对话基础分栏">
+      <section class="c-script-editor-narrative-panel" aria-label="后续事件">
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
-            <span>对话标题</span>
-            <input class="c-script-editor-form-field__input c-script-editor-form-field__input--compact" type="text" value="${escapeHtml(dialogue.title)}" data-script-editor-dialogue-field="title" />
+            <span>后续事件</span>
+            ${this.renderScriptEditorDialogueReferenceSelect({
+              field: "nextEventId",
+              value: dialogue.nextEventId ?? "",
+              emptyLabel: "无后续事件",
+              options: this.createScriptEditorEventReferenceOptions(),
+            })}
           </label>
         </div>
-        ${this.renderScriptEditorStringRelationPanel("参与人物", "dialogue-participants", dialogue.participantPersonIds ?? [], {
-          compact: true,
-        })}
       </section>
     `;
   }
 
-  renderScriptEditorDialogueNodeReferenceSelect({
+  renderScriptEditorDialogueReferenceSelect({
     field,
-    index,
     value,
     emptyLabel,
     options,
   }) {
-    const currentValue = value ?? "";
-    const hasCurrentOption =
-      currentValue.length === 0 || options.some((option) => option.value === currentValue);
-
     return `
-      <select
-        class="c-script-editor-form-field__input"
-        data-script-editor-dialogue-node-field="${escapeHtml(field)}"
-        data-script-editor-dialogue-node-index="${index}"
-      >
-        <option value="" ${currentValue.length === 0 ? "selected" : ""}>${escapeHtml(emptyLabel)}</option>
-        ${
-          hasCurrentOption
-            ? ""
-            : `<option value="${escapeHtml(currentValue)}" selected>${escapeHtml(currentValue)}（未收录）</option>`
-        }
-        ${options
-          .map(
-            (option) => `
-              <option value="${escapeHtml(option.value)}" ${currentValue === option.value ? "selected" : ""}>
-                ${escapeHtml(option.label)}
-              </option>
-            `
-          )
-          .join("")}
+      <select class="c-script-editor-form-field__input" data-script-editor-dialogue-field="${escapeHtml(field)}">
+        ${this.renderScriptEditorSelectOptions(options, value ?? "", emptyLabel)}
       </select>
     `;
   }
@@ -7207,6 +7295,7 @@ class MainUiFlowScriptEditorModule {
   getScriptEditorMinigamePlayableLabel(playableId) {
     const labels = {
       "activity-qte": "互动问答",
+      "temple-copy-scripture": "寺庙抄经",
       "city-begging": "城市乞讨",
       "grain-accounting": "粮账核算",
       "medicine-compounding": "药材炼制",
@@ -7222,6 +7311,7 @@ class MainUiFlowScriptEditorModule {
       "playable.city-begging.external.default": "城市乞讨 / 外部入口",
       "playable.activity-qte.dialogue.default": "互动问答 / 对话接入",
       "playable.activity-qte.house.temple": "互动问答 / 寺庙接入",
+      "playable.temple-copy-scripture.house.temple": "寺庙抄经 / 寺庙接入",
       "playable.grain-accounting.house.grain-shop": "粮账核算 / 粮铺接入",
       "playable.medicine-compounding.house.medicine-house": "药材炼制 / 药铺接入",
       "playable.story-battle.dialogue.default": "剧情战斗 / 对话接入",
@@ -8287,6 +8377,20 @@ class MainUiFlowScriptEditorModule {
     `;
   }
 
+  renderScriptEditorProjectSelect(field, label, options, selectedValue) {
+    return `
+      <label class="c-script-editor-form-field">
+        <span>${escapeHtml(label)}</span>
+        <select
+          class="c-script-editor-form-field__input"
+          data-script-editor-project-field="${escapeHtml(field)}"
+        >
+          ${this.renderScriptEditorSelectOptions(options, selectedValue)}
+        </select>
+      </label>
+    `;
+  }
+
   renderScriptEditorSystemDetails(title, hint, body) {
     return `
       <details class="c-script-editor-system-details">
@@ -8766,6 +8870,18 @@ class MainUiFlowScriptEditorModule {
 
     if (action === "close-stage-configuration-help") {
       this.scriptEditorStageConfigurationHelpOpen = false;
+      this.render();
+      return;
+    }
+
+    if (action === "open-dialogue-help") {
+      this.scriptEditorDialogueHelpOpen = true;
+      this.render();
+      return;
+    }
+
+    if (action === "close-dialogue-help") {
+      this.scriptEditorDialogueHelpOpen = false;
       this.render();
       return;
     }
@@ -9288,26 +9404,34 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    if (action === "add-dialogue-participants") {
-      this.addScriptEditorDialogueParticipant();
+    if (action === "add-dialogue-cast") {
+      this.addScriptEditorDialogueCast();
       return;
     }
 
-    if (action === "remove-dialogue-participants") {
-      if (Number.isInteger(relationIndex) && relationIndex >= 0) {
-        this.removeScriptEditorDialogueParticipant(relationIndex);
+    if (action === "remove-dialogue-cast") {
+      const dialogueCastIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorDialogueCastIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(dialogueCastIndex) && dialogueCastIndex >= 0) {
+        this.removeScriptEditorDialogueCast(dialogueCastIndex);
       }
       return;
     }
 
-    if (action === "add-dialogue-node") {
-      this.addScriptEditorDialogueNode();
+    if (action === "add-dialogue-option") {
+      this.addScriptEditorDialogueOption();
       return;
     }
 
-    if (action === "remove-dialogue-node") {
-      if (Number.isInteger(dialogueNodeIndex) && dialogueNodeIndex >= 0) {
-        this.removeScriptEditorDialogueNode(dialogueNodeIndex);
+    if (action === "remove-dialogue-option") {
+      const dialogueOptionIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorDialogueOptionIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(dialogueOptionIndex) && dialogueOptionIndex >= 0) {
+        this.removeScriptEditorDialogueOption(dialogueOptionIndex);
       }
       return;
     }
@@ -9639,7 +9763,7 @@ class MainUiFlowScriptEditorModule {
     const allowedTabs =
       this.scriptEditorSelection.family === "storyNodes"
         ? ["profile", "links", "summary", "events"]
-        : ["profile", "nodes", "events"];
+        : ["profile"];
     if (!allowedTabs.includes(tab)) {
       return;
     }
@@ -9969,6 +10093,20 @@ class MainUiFlowScriptEditorModule {
         nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
           ...nextProject.storyPack,
           description: normalizedValue.length === 0 ? undefined : value,
+        });
+        break;
+      case "storyPack.audioSettings.muted":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          audioSettings: {
+            ...(
+              nextProject.storyPack.audioSettings != null &&
+              typeof nextProject.storyPack.audioSettings === "object"
+                ? nextProject.storyPack.audioSettings
+                : {}
+            ),
+            muted: normalizedValue === "true",
+          },
         });
         break;
       case "scenarioProfile.id":
@@ -10440,6 +10578,64 @@ class MainUiFlowScriptEditorModule {
     this.replaceSelectedScriptEditorDialogue(updateScriptEditorDialogueField(dialogue, field, value));
   }
 
+  addScriptEditorDialogueCast() {
+    const dialogue = this.getSelectedScriptEditorDialogue();
+    if (dialogue == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorDialogue(appendScriptEditorDialogueCast(dialogue));
+  }
+
+  removeScriptEditorDialogueCast(index) {
+    const dialogue = this.getSelectedScriptEditorDialogue();
+    if (dialogue == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorDialogue(removeScriptEditorDialogueCast(dialogue, index));
+  }
+
+  applyScriptEditorDialogueCastField(index, field, value) {
+    const dialogue = this.getSelectedScriptEditorDialogue();
+    if (dialogue == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorDialogue(
+      updateScriptEditorDialogueCastField(dialogue, index, field, value)
+    );
+  }
+
+  addScriptEditorDialogueOption() {
+    const dialogue = this.getSelectedScriptEditorDialogue();
+    if (dialogue == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorDialogue(appendScriptEditorDialogueOption(dialogue));
+  }
+
+  removeScriptEditorDialogueOption(index) {
+    const dialogue = this.getSelectedScriptEditorDialogue();
+    if (dialogue == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorDialogue(removeScriptEditorDialogueOption(dialogue, index));
+  }
+
+  applyScriptEditorDialogueOptionField(index, field, value) {
+    const dialogue = this.getSelectedScriptEditorDialogue();
+    if (dialogue == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorDialogue(
+      updateScriptEditorDialogueOptionField(dialogue, index, field, value)
+    );
+  }
+
   applyScriptEditorSettlementField(field, value) {
     const settlement = this.getSelectedScriptEditorSettlement();
     if (settlement == null) {
@@ -10532,64 +10728,6 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.replaceSelectedScriptEditorSettlement(nextSettlement);
-  }
-
-  addScriptEditorDialogueParticipant() {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(appendScriptEditorDialogueParticipant(dialogue));
-  }
-
-  removeScriptEditorDialogueParticipant(index) {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(removeScriptEditorDialogueParticipant(dialogue, index));
-  }
-
-  applyScriptEditorDialogueParticipantField(index, value) {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(
-      updateScriptEditorDialogueParticipant(dialogue, index, value)
-    );
-  }
-
-  addScriptEditorDialogueNode() {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(appendScriptEditorDialogueNode(dialogue));
-  }
-
-  removeScriptEditorDialogueNode(index) {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(removeScriptEditorDialogueNode(dialogue, index));
-  }
-
-  applyScriptEditorDialogueNodeField(index, field, value) {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(
-      updateScriptEditorDialogueNodeField(dialogue, index, field, value)
-    );
   }
 
   applyScriptEditorEventField(field, value) {
@@ -12514,6 +12652,7 @@ class MainUiFlowScriptEditorModule {
         this.scriptEditorProjectSource
       )
     );
+    this.onScriptEditorProjectChanged?.(this.scriptEditorProject);
   }
 
   rememberScriptEditorProjectPackageLocation(result) {
@@ -12596,6 +12735,7 @@ class MainUiFlowScriptEditorModule {
       };
     }
     this.scriptEditorAuxiliaryPanelOpen = false;
+    this.onScriptEditorProjectChanged?.(this.scriptEditorProject);
     this.setScreen("script-editor-workspace");
   }
 
@@ -12623,6 +12763,7 @@ class MainUiFlowScriptEditorModule {
       this.scriptEditorAuxiliaryPanelOpen = false;
       this.scriptEditorProjectDirectoryHandle = null;
       this.scriptEditorExportDirectoryHandle = null;
+      this.onScriptEditorProjectChanged?.(null);
     }
     this.scriptEditorPendingDeleteProjectId = null;
     this.recordScriptEditorNotice({

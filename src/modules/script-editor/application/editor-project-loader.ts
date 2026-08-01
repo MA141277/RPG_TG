@@ -15,6 +15,7 @@
 import { formalizeScriptEditorProjectMenus } from "./menu-authoring";
 import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
+import { normalizeScriptEditorDialogueRecord } from "./story-dialogue-event-authoring";
 
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
   "buildingArrangements",
@@ -189,6 +190,9 @@ export function parseScriptEditorProject(
     ),
     people: (value.people as Record<string, unknown>[]).map((person) =>
       normalizeScriptEditorPersonRecord(person, { portraitVariants })
+    ),
+    dialogues: (value.dialogues as ScriptEditorProjectDefinition["dialogues"]).map(
+      (dialogue) => normalizeScriptEditorDialogueRecord(dialogue)
     ),
     portraits: (value.portraits ?? []) as ScriptEditorProjectDefinition["portraits"],
     portraitVariants,
@@ -462,6 +466,17 @@ function assertStoryPackRecord(
   assertObject(value, "script editor project storyPack");
   assertString(value.id, "script editor project storyPack.id");
   assertString(value.title, "script editor project storyPack.title");
+  if (value.audioSettings != null) {
+    assertObject(value.audioSettings, "script editor project storyPack.audioSettings");
+    if (
+      value.audioSettings.muted != null &&
+      typeof value.audioSettings.muted !== "boolean"
+    ) {
+      throw new Error(
+        "script editor project storyPack.audioSettings.muted must be boolean when present."
+      );
+    }
+  }
   if (value.personAttributeSemantics != null) {
     assertPersonSemanticBindingArray(
       value.personAttributeSemantics,

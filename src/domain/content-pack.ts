@@ -55,11 +55,16 @@ export type SettlementDefinition = {
   contents?: SettlementContentDefinition[];
 };
 
+export type ContentPackAudioSettings = {
+  muted?: boolean;
+};
+
 export type ContentPackDefinition = {
   schemaVersion: 1;
   id: string;
   title: string;
   description?: string;
+  audioSettings?: ContentPackAudioSettings;
   textEntries?: Record<string, string>;
   maps?: MapDefinition[];
   cities?: CityDefinition[];

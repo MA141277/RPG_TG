@@ -134,6 +134,13 @@ export function applyEventOwnedPlayableCompletion(input: {
         }
       ) => EventOwnedPlayableContinuationResult | null)
     | undefined;
+  startFromEventId?:
+    | ((
+        input: EventOwnedPlayableContinuationResult & {
+          eventId: string;
+        }
+      ) => EventOwnedPlayableContinuationResult | null)
+    | undefined;
   applyFollowUp?:
     | ((
         input: EventOwnedPlayableContinuationResult & {
@@ -170,6 +177,19 @@ export function applyEventOwnedPlayableCompletion(input: {
     state: input.state,
     characterDefinitions: input.characterDefinitions,
   };
+  if (routedEventId != null && input.startFromEventId != null) {
+    const started = input.startFromEventId({
+      eventId: routedEventId,
+      state: input.state,
+      characterDefinitions: input.characterDefinitions,
+    });
+    if (started != null) {
+      return {
+        ...started,
+        handled: true,
+      };
+    }
+  }
   const continued = input.continueFromSourceEvent?.(continuationInput) ?? null;
   if (continued != null) {
     return {

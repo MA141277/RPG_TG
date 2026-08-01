@@ -3,6 +3,7 @@ import {
   createPlayableIntegrationRegistry,
   type PlayableIntegrationRegistry,
 } from "./playable-integration-registry";
+import { TEMPLE_COPY_SCRIPTURE_HOUSE_INTEGRATION_ID } from "../../minigames/temple-copy-scripture";
 
 const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
   {
@@ -45,6 +46,20 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
       triggerId: "trigger.playable.activity-qte.house.temple",
       ownerKind: "house",
       trigger: "house-action-temple-work",
+    },
+    outcomeConfig: {},
+  },
+  {
+    integrationId: TEMPLE_COPY_SCRIPTURE_HOUSE_INTEGRATION_ID,
+    playableId: "temple-copy-scripture",
+    ownerDefaults: {
+      ownerKind: "house",
+      returnPolicy: "resume-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.temple-copy-scripture.house.temple",
+      ownerKind: "house",
+      trigger: "house-action-temple-copy-scripture",
     },
     outcomeConfig: {},
   },

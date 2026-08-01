@@ -7,6 +7,7 @@ import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition, CityNpcPoolRuntimeState } from "../../domain/city-npc";
 import type {
   ContentPackDefinition,
+  ContentPackAudioSettings,
   SettlementDefinition,
 } from "../../domain/content-pack";
 import type {
@@ -48,6 +49,7 @@ import {
   createCharacterManager,
   type CharacterManager,
 } from "../character/character-manager";
+import { normalizeGlobalAudioSettings } from "../audio/global-audio-settings";
 
 type Identified = { id: string };
 
@@ -55,6 +57,7 @@ export type ActiveGameContent = {
   packId: string;
   title: string;
   description?: string;
+  audioSettings: ContentPackAudioSettings;
   textEntriesById: Record<string, string>;
   maps: MapDefinition[];
   mapDefinitionById: Record<string, MapDefinition>;
@@ -116,6 +119,7 @@ export type ActiveGameContent = {
 export type ActiveGameContentContext = {
   packId: string;
   gameContent: ActiveGameContent;
+  audioSettings: ContentPackAudioSettings;
   maps: MapDefinition[];
   mapDefinitionById: Record<string, MapDefinition>;
   cities: CityDefinition[];
@@ -214,6 +218,7 @@ export function createActiveGameContent(
     packId: resolvedPack.id,
     title: resolvedPack.title,
     ...(resolvedPack.description == null ? {} : { description: resolvedPack.description }),
+    audioSettings: normalizeGlobalAudioSettings(resolvedPack.audioSettings),
     textEntriesById: { ...(resolvedPack.textEntries ?? {}) },
     maps,
     mapDefinitionById: Object.fromEntries(
@@ -330,6 +335,7 @@ export function createActiveGameContentContext(
   return {
     packId: gameContent.packId,
     gameContent,
+    audioSettings: gameContent.audioSettings,
     maps: gameContent.maps,
     mapDefinitionById: gameContent.mapDefinitionById,
     cities: gameContent.cities,
@@ -415,6 +421,7 @@ export function mergeContentPacks(
     ...basePack,
     ...overridePack,
     schemaVersion: 1,
+    audioSettings: mergeAudioSettings(basePack.audioSettings, overridePack.audioSettings),
     textEntries: {
       ...(basePack.textEntries ?? {}),
       ...(overridePack.textEntries ?? {}),
@@ -506,6 +513,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
   return {
     ...pack,
     schemaVersion: 1,
+    audioSettings: normalizeGlobalAudioSettings(pack.audioSettings),
     textEntries: pack.textEntries ?? {},
     maps: pack.maps ?? [],
     cities: pack.cities ?? [],
@@ -536,6 +544,16 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     historicalCharacterIdByCharacterId: pack.historicalCharacterIdByCharacterId ?? {},
     historicalCharacters: pack.historicalCharacters ?? [],
     historicalCityRosters: pack.historicalCityRosters ?? [],
+  };
+}
+
+function mergeAudioSettings(
+  baseSettings: ContentPackAudioSettings | undefined,
+  overrideSettings: ContentPackAudioSettings | undefined
+): ContentPackAudioSettings {
+  return {
+    ...normalizeGlobalAudioSettings(baseSettings),
+    ...normalizeGlobalAudioSettings(overrideSettings),
   };
 }
 

@@ -27,6 +27,7 @@ import type {
 import { SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION } from "../domain/script-editor-project";
 import type { ScenarioProfileDefinition } from "../../../domain/scenario-profile";
 import { GAME_VIEW_NAMES, isViewName } from "../../../domain/game-state";
+import type { ContentPackAudioSettings } from "../../../domain/content-pack";
 import type { RuntimeDialogueDefinition } from "../../../domain/dialogue";
 import type {
   EventBinding,
@@ -106,6 +107,7 @@ type SettlementAttributeMetadata = {
 const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
   age: { attributeType: "number" },
   stamina: { attributeType: "number" },
+  "stats.gold": { attributeType: "number" },
   "stats.leadership": { attributeType: "number" },
   "stats.martial": { attributeType: "number" },
   "stats.intelligence": { attributeType: "number" },
@@ -132,6 +134,7 @@ type RuntimePackManifest = {
   id: string;
   title: string;
   description?: string;
+  audioSettings?: ContentPackAudioSettings;
   basePackId?: string;
   author?: string;
   version?: string;
@@ -942,6 +945,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ...(project.storyPack.description == null
       ? {}
       : { description: project.storyPack.description }),
+    ...pickOptionalAudioSettings(project.storyPack),
     ...(Array.isArray(project.storyPack.personAttributeSemantics)
       ? {
           personAttributeSemantics:
@@ -1082,7 +1086,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     const triggerEvent = eventLaunchEventId.length > 0 ? eventLaunchEventId : "manual-launch";
 
     const definition = builtinPlayableDefinitionRegistry.get(playableId);
-    if (definition == null || definition.family !== "minigame") {
+    if (definition == null) {
       diagnostics.push({
         code: "missing-reference",
         fieldPath: `${fieldPath}.playableId`,
@@ -1114,7 +1118,6 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     integrationIds.add(integrationId);
     playablesById.set(playableId, {
       id: definition.id,
-      family: definition.family,
       commandPrefix: definition.commandPrefix,
     });
     const launchPayload = materializeMinigameLaunchPayload({
@@ -2458,7 +2461,7 @@ function lowerEventDestinationLaunchAction(
   const minigame = minigamesById.get(targetId);
   if (minigame == null) {
     const playableDefinition = builtinPlayableDefinitionRegistry.get(targetId);
-    if (playableDefinition?.family === "minigame") {
+    if (playableDefinition != null) {
       diagnostics.push({
         code: "missing-reference",
         fieldPath: `project.events[${eventIndex}].destination.targetId`,
@@ -3136,6 +3139,25 @@ function pickOptionalPackMetadata(
     storyPack["tags"].every((tag) => typeof tag === "string")
       ? { tags: [...storyPack["tags"]] as string[] }
       : {}),
+  };
+}
+
+function pickOptionalAudioSettings(
+  storyPack: ScriptEditorStoryPackRecord
+): Partial<Pick<RuntimePackManifest, "audioSettings">> {
+  if (
+    storyPack["audioSettings"] == null ||
+    typeof storyPack["audioSettings"] !== "object" ||
+    Array.isArray(storyPack["audioSettings"])
+  ) {
+    return {};
+  }
+
+  const authoredAudioSettings = storyPack["audioSettings"] as { muted?: unknown };
+  return {
+    audioSettings: {
+      muted: authoredAudioSettings.muted === true,
+    },
   };
 }
 

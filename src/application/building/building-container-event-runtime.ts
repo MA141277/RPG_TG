@@ -149,7 +149,7 @@ export function triggerBuildingContainerItemAction(
     activeDialogueId == null
       ? null
       : input.storyContent.dialogueDefinitionsById[activeDialogueId] ?? null;
-  if (activeDialogue == null || activeDialogue.nodes.length === 0) {
+  if (activeDialogue == null || (activeDialogue.nodes?.length ?? 0) === 0) {
     return {
       state: bindingResult.state,
       characterDefinitions: input.characterDefinitions,

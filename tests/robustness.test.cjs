@@ -3047,6 +3047,84 @@ test("content pack loader hydrates optional task contribution files", async () =
   }
 });
 
+test("content pack loader preserves optional audio settings from manifest metadata", async () => {
+  const { loadContentPackFromManifestText } = await import(
+    "../.test-dist/application/content/content-pack-loader.js"
+  );
+
+  const pack = await loadContentPackFromManifestText(
+    JSON.stringify({
+      schemaVersion: 1,
+      id: "pack.test",
+      title: "Pack Test",
+      audioSettings: {
+        muted: true,
+      },
+      files: {},
+    }),
+    "file:///virtual/pack.json"
+  );
+
+  assert.deepEqual(pack.audioSettings, { muted: true });
+});
+
+test("global audio settings helper defaults open and mutes all managed players", async () => {
+  const {
+    applyGlobalAudioMutedState,
+    isGlobalAudioMuted,
+  } = await import("../.test-dist/application/audio/global-audio-settings.js");
+
+  const players = [{ muted: false }, { muted: false }];
+
+  assert.equal(isGlobalAudioMuted(undefined), false);
+
+  applyGlobalAudioMutedState({
+    players,
+    muted: true,
+  });
+
+  assert.deepEqual(players, [{ muted: true }, { muted: true }]);
+});
+
+test("entry shell audio policy forces mute in script editor and honors project audio during preview", async () => {
+  const { resolveEntryShellAudioMutedState } = await import(
+    "../.test-dist/application/audio/entry-shell-audio-policy.js"
+  );
+
+  assert.equal(
+    resolveEntryShellAudioMutedState({
+      screen: "script-editor-workspace",
+      runtimeAudioSettings: { muted: false },
+      scriptEditorProjectAudioSettings: { muted: false },
+    }),
+    true
+  );
+  assert.equal(
+    resolveEntryShellAudioMutedState({
+      screen: "runtime-preview",
+      runtimeAudioSettings: { muted: false },
+      scriptEditorProjectAudioSettings: { muted: true },
+    }),
+    true
+  );
+  assert.equal(
+    resolveEntryShellAudioMutedState({
+      screen: "runtime-preview",
+      runtimeAudioSettings: { muted: true },
+      scriptEditorProjectAudioSettings: { muted: false },
+    }),
+    false
+  );
+  assert.equal(
+    resolveEntryShellAudioMutedState({
+      screen: "main-menu",
+      runtimeAudioSettings: { muted: true },
+      scriptEditorProjectAudioSettings: { muted: false },
+    }),
+    true
+  );
+});
+
 test("content pack loader hydrates optional houseModuleDefaults file", async () => {
   const { loadContentPackFromManifestText } = await import(
     "../.test-dist/application/content/content-pack-loader.js"
@@ -4489,6 +4567,10 @@ test("script editor runtime preview launches from current in-memory project data
     "utf8"
   );
   const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const mainUiFlowSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
   const workspaceShellSource = fs.readFileSync(
     path.join(process.cwd(), "src/modules/script-editor/application/workspace-shell.ts"),
     "utf8"
@@ -4540,7 +4622,13 @@ test("script editor runtime preview launches from current in-memory project data
     workflowControllerSource,
     /const returnContext = this\.environment\.captureRuntimePreviewReturnContext\(\);/
   );
+  assert.match(mainUiFlowSource, /this\.onScreenChanged = options\.onScreenChanged;/);
+  assert.match(mainUiFlowSource, /this\.onScreenChanged\?\.\(screen\);/);
+  assert.match(moduleSource, /host\.onScriptEditorProjectChanged = options\?\.onScriptEditorProjectChanged;/);
+  assert.match(moduleSource, /this\.onScriptEditorProjectChanged\?\.\(this\.scriptEditorProject\);/);
   assert.match(mainSource, /onStartLoadedScenarioPack:\s*startLoadedScenarioPackWithLoading/);
+  assert.match(mainSource, /onScreenChanged:\s*\(\)\s*=>\s*{\s*syncGlobalAudioSettings\(\);/);
+  assert.match(mainSource, /onScriptEditorProjectChanged:\s*\(\)\s*=>\s*{\s*syncGlobalAudioSettings\(\);/);
   assert.match(mainSource, /async function startLoadedScenarioPackWithLoading\(\s*scenarioPack:\s*ScenarioPackDefinition\s*\)/);
   assert.match(mainSource, /sanitizeScenarioPackForRuntimePreview\(scenarioPack\)/);
   assert.match(mainSource, /filePath:\s*`preview:\$\{previewScenarioPack\.id\}`/);
@@ -4552,6 +4640,10 @@ test("script editor runtime preview launches from current in-memory project data
   assert.match(
     mainSource,
     /async function startLoadedScenarioPackWithLoading\([\s\S]*prepareScenarioPackCharacterSelection\([\s\S]*previewSession:\s*true/
+  );
+  assert.match(
+    mainSource,
+    /muted:\s*resolveEntryShellAudioMutedState\(\{\s*screen:\s*mainUiFlow\?\.currentScreen \?\? null,\s*runtimeAudioSettings:\s*activeContentContext\.gameContent\.audioSettings,\s*scriptEditorProjectAudioSettings:\s*mainUiFlow\?\.scriptEditorProject\?\.storyPack\?\.audioSettings/s
   );
 });
 
@@ -5873,7 +5965,7 @@ test("script editor runtime export still rejects referenced draft events", () =>
   );
 });
 
-test("script editor dialogue story materializer exposes runtime dialogues and text entries", () => {
+test("script editor dialogue story materializer exposes single-screen runtime dialogues and text entries", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
   } = require("../.test-dist/modules/script-editor/application/dialogue-story-runtime-materializer.js");
@@ -5882,33 +5974,28 @@ test("script editor dialogue story materializer exposes runtime dialogues and te
       {
         id: "dialogue.opening",
         title: "Opening Dialogue",
-        storyNodeId: "story-node.opening",
-        participantPersonIds: ["person.hero"],
-        nodes: [
-          {
-            id: "dialogue-node.1",
-            nodeType: "dialogue",
-            speakerPersonId: "person.hero",
-            textId: "text.opening",
-            nextNodeId: "",
-            choiceTargetNodeId: "",
-          },
-        ],
-        followUps: [],
+        mode: "linear",
+        textId: "text.opening",
+        speakerPersonId: "person.hero",
+        cast: [{ personId: "person.hero", side: "left" }],
+        nextEventId: "",
+        options: [],
       },
     ],
     storyNodes: [{ id: "story-node.opening", title: "Opening Node" }],
+    people: [{ id: "person.hero", title: "Hero" }],
     textEntries: [{ id: "text.opening", text: "Opening line." }],
+    events: [],
   });
 
   assert.deepEqual(result.diagnostics, []);
   assert.equal(result.textEntries?.["text.opening"], "Opening line.");
   assert.equal(result.dialogues?.[0]?.id, "dialogue.opening");
-  assert.equal(result.dialogues?.[0]?.nodes?.[0]?.type, "dialogue");
-  assert.equal(result.dialogues?.[0]?.nodes?.[0]?.textId, "text.opening");
+  assert.equal(result.dialogues?.[0]?.screen?.mode, "linear");
+  assert.equal(result.dialogues?.[0]?.screen?.textId, "text.opening");
 });
 
-test("script editor dialogue story materializer lowers node progression targets into runtime dialogues", () => {
+test("script editor dialogue story materializer rejects retired node progression lowering on the main export path", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
   } = require("../.test-dist/modules/script-editor/application/dialogue-story-runtime-materializer.js");
@@ -5947,48 +6034,28 @@ test("script editor dialogue story materializer lowers node progression targets 
       },
     ],
     storyNodes: [],
+    people: [{ id: "person.hero", title: "Hero" }],
     textEntries: [
       { id: "text.opening", text: "Opening line." },
       { id: "text.choice", text: "Continue." },
       { id: "text.followup", text: "Follow-up line." },
     ],
+    events: [],
   });
 
-  assert.deepEqual(result.diagnostics, []);
-  assert.equal(result.textEntries?.["text.choice"], "Continue.");
-  assert.deepEqual(
-    result.dialogues?.map((dialogue) => dialogue.id),
-    [
-      "dialogue.branching",
-      "dialogue.branching.dialogue-node.2",
-      "dialogue.branching.dialogue-node.3",
-    ]
-  );
-  assert.deepEqual(result.dialogues?.[0]?.nodes, [
+  assert.equal(result.dialogues, null);
+  assert.equal(result.textEntries, null);
+  assert.deepEqual(result.diagnostics, [
     {
-      type: "dialogue",
-      characterId: "person.hero",
-      side: "center",
-      textId: "text.opening",
-    },
-    { type: "jump", nextDialogueId: "dialogue.branching.dialogue-node.3" },
-  ]);
-  assert.deepEqual(result.dialogues?.[1]?.nodes, [
-    {
-      type: "choice",
-      promptTextId: "text.choice",
-      options: [
-        {
-          id: "dialogue-node.2.choiceTarget",
-          labelTextId: "text.choice",
-          nextDialogueId: "dialogue.branching.dialogue-node.3",
-        },
-      ],
+      code: "unsupported-lowering",
+      fieldPath: "project.dialogues[0].nodes",
+      message:
+        'Dialogue "dialogue.branching" still relies on retired node-based export fields; migrate it onto the single-screen dialogue model before runtime export.',
     },
   ]);
 });
 
-test("script editor dialogue story materializer rejects missing node progression targets", () => {
+test("script editor dialogue story materializer reports node-based export residue before missing-target checks", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
   } = require("../.test-dist/modules/script-editor/application/dialogue-story-runtime-materializer.js");
@@ -6011,17 +6078,19 @@ test("script editor dialogue story materializer rejects missing node progression
       },
     ],
     storyNodes: [],
+    people: [{ id: "person.hero", title: "Hero" }],
     textEntries: [{ id: "text.opening", text: "Opening line." }],
+    events: [],
   });
 
   assert.equal(result.dialogues, null);
   assert.equal(result.textEntries, null);
   assert.deepEqual(result.diagnostics.map((diagnostic) => diagnostic.fieldPath), [
-    "project.dialogues[0].nodes[0].nextNodeId",
+    "project.dialogues[0].nodes",
   ]);
   assert.match(
     result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
-    /missing dialogue node target/i
+    /retired node-based export fields|single-screen dialogue model/i
   );
 });
 
@@ -6161,7 +6230,6 @@ test(
     assert.deepEqual(exportedPack.playables, [
       {
         id: "activity-qte",
-        family: "minigame",
         commandPrefix: "interactive.activity-qte.",
       },
     ]);
@@ -7978,7 +8046,7 @@ test("script editor event destination export lowers minigame targets into runnab
     {
       type: "launchPlayable",
       playableId: "city-begging",
-      integrationId: "playable.city-begging.external.default",
+      integrationId: "playable.city-begging.instance.minigame.training.begging",
       ownerContext: {
         ownerKind: "external",
         ownerId: null,
@@ -10987,6 +11055,120 @@ test(
 );
 
 test(
+  "script editor runtime export and compatibility import preserve story pack audio settings",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.storyPack.audioSettings = {
+      muted: true,
+    };
+
+    const serializedPack =
+      exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedPack["pack.json"]);
+
+    assert.deepEqual(manifest.audioSettings, { muted: true });
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedPack,
+        "imported-scenario-pack"
+      )
+    );
+
+    assert.deepEqual(importedProject.storyPack.audioSettings, { muted: true });
+  }
+);
+
+test(
+  "script editor runtime preview load preserves story pack audio settings from manifest hydration",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = await import("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.storyPack.audioSettings = {
+      muted: true,
+    };
+
+    const serializedPack =
+      exportScriptEditorProjectToScenarioPackFiles(project);
+
+    const scenarioPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedPack,
+        "runtime-preview-pack"
+      )
+    );
+
+    assert.deepEqual(scenarioPack.audioSettings, { muted: true });
+  }
+);
+
+test("temple copy scripture sample is exported as a standalone playable template", () => {
+  const playables = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/content/scenario-packs/zhuyuanzhang/playables.json"
+      ),
+      "utf8"
+    )
+  );
+  const integrations = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/content/scenario-packs/zhuyuanzhang/playable-integrations.json"
+      ),
+      "utf8"
+    )
+  );
+  const events = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/content/scenario-packs/zhuyuanzhang/events.json"
+      ),
+      "utf8"
+    )
+  );
+
+  assert.ok(
+    playables.some(
+      (definition) =>
+        definition.id === "temple-copy-scripture" &&
+        definition.commandPrefix === "interactive.temple-copy-scripture."
+    )
+  );
+  assert.ok(
+    integrations.some(
+      (integration) =>
+        integration.integrationId ===
+          "playable.temple-copy-scripture.instance.template.temple-copy-scripture" &&
+        integration.playableId === "temple-copy-scripture"
+    )
+  );
+
+  const copyScriptureEvent = events.find(
+    (eventRecord) => eventRecord.id === "event.building.house.kulan.temple.copy_scripture"
+  );
+  assert.equal(copyScriptureEvent.actions[0].playableId, "temple-copy-scripture");
+  assert.equal(
+    copyScriptureEvent.actions[0].integrationId,
+    "playable.temple-copy-scripture.instance.template.temple-copy-scripture"
+  );
+});
+
+test(
   "script editor runtime export and import preserve formal menu resources, instances, and location references",
   async () => {
     const {
@@ -11954,6 +12136,56 @@ test("city menu monk identity reads semantic title and occupation attributes", (
     }),
     true
   );
+
+  assert.equal(
+    isPlayerMonkIdentity({
+      ...prototypeCharacters[0],
+      title: "挂单僧",
+      occupation: "皇觉寺僧人",
+      attributeMappings: [],
+      attributeValues: [],
+    }),
+    true
+  );
+});
+
+test("person attribute runtime falls back to direct character fields when semantic mappings are absent", () => {
+  const {
+    readNumericPersonAttributeBySemanticKey,
+    readStringPersonAttributeBySemanticKey,
+  } = require("../.test-dist/application/character/person-attribute-runtime.js");
+
+  const character = {
+    ...prototypeCharacters[0],
+    title: "挂单僧",
+    occupation: "皇觉寺僧人",
+    stamina: 88,
+    stats: {
+      leadership: 60,
+      martial: 58,
+      intelligence: 55,
+      politics: 42,
+      charm: 51,
+      fame: 8,
+      gold: 120,
+    },
+    skills: {
+      arithmetic: 3,
+      medicine: 2,
+    },
+    attributeMappings: [],
+    attributeValues: [],
+  };
+
+  assert.equal(readStringPersonAttributeBySemanticKey(character, "title"), "挂单僧");
+  assert.equal(
+    readStringPersonAttributeBySemanticKey(character, "occupation"),
+    "皇觉寺僧人"
+  );
+  assert.equal(readNumericPersonAttributeBySemanticKey(character, "gold"), 120);
+  assert.equal(readNumericPersonAttributeBySemanticKey(character, "fame"), 8);
+  assert.equal(readNumericPersonAttributeBySemanticKey(character, "arithmetic"), 3);
+  assert.equal(readNumericPersonAttributeBySemanticKey(character, "stamina"), 88);
 });
 
 test("app render detail options read semantic gold attribute for stipend", () => {
@@ -12403,6 +12635,96 @@ test("script editor built-in zhuyuanzhang template wraps city-begging prototype 
   }
 });
 
+test("script editor built-in zhuyuanzhang template imports authored grain and medicine minigame instances", async () => {
+  const {
+    loadScriptEditorProjectFromScenarioPackUrl,
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
+
+  const packRoot = path.join(
+    process.cwd(),
+    "src/modules/script-editor/builtin-templates/zhuyuanzhang"
+  );
+  const previousFetch = global.fetch;
+  const previousWindow = global.window;
+  global.window = { location: { href: "https://example.test/editor/" } };
+  global.fetch = async (url) => {
+    const parsed = new URL(String(url), "https://example.test");
+    const relativePath = parsed.pathname.replace(
+      /^\/script-editor-templates\/zhuyuanzhang\/?/,
+      ""
+    );
+    const filePath = path.join(packRoot, relativePath || "pack.json");
+    if (!fs.existsSync(filePath)) {
+      return new Response("missing", { status: 404 });
+    }
+    return new Response(fs.readFileSync(filePath), { status: 200 });
+  };
+
+  try {
+    const project = await loadScriptEditorProjectFromScenarioPackUrl(
+      "/script-editor-templates/zhuyuanzhang/pack.json"
+    );
+
+    const grainInstance = project.minigames.find(
+      (minigame) =>
+        minigame.playableId === "grain-accounting" &&
+        minigame.title === "粮账核算玩法"
+    );
+    const medicineInstance = project.minigames.find(
+      (minigame) =>
+        minigame.playableId === "medicine-compounding" &&
+        minigame.title === "药材炼制玩法"
+    );
+
+    assert.ok(grainInstance, "expected imported grain-accounting minigame instance");
+    assert.ok(
+      medicineInstance,
+      "expected imported medicine-compounding minigame instance"
+    );
+    assert.equal(grainInstance?.configEntries?.length, 4);
+    assert.equal(medicineInstance?.configEntries?.length, 3);
+    assert.equal(
+      grainInstance?.settlementRoutes?.[0]?.targetEventId,
+      "event.playable.grain_accounting.failure_reward"
+    );
+    assert.equal(
+      medicineInstance?.settlementRoutes?.[0]?.targetEventId,
+      "event.playable.medicine_compounding.failure_reward"
+    );
+    assert.equal(
+      project.events.some(
+        (eventRecord) =>
+          eventRecord.destination?.family === "minigame" &&
+          eventRecord.destination.targetId === grainInstance?.id
+      ),
+      true
+    );
+    assert.equal(
+      project.events.some(
+        (eventRecord) =>
+          eventRecord.destination?.family === "minigame" &&
+          eventRecord.destination.targetId === medicineInstance?.id
+      ),
+      true
+    );
+    assert.equal(
+      project.settlements.some(
+        (settlement) => settlement.id === "settlement.playable.grain_accounting.failure_reward"
+      ),
+      true
+    );
+    assert.equal(
+      project.settlements.some(
+        (settlement) => settlement.id === "settlement.playable.medicine_compounding.failure_reward"
+      ),
+      true
+    );
+  } finally {
+    global.fetch = previousFetch;
+    global.window = previousWindow;
+  }
+});
+
 test("script editor runtime export rejects event destinations that reference minigame prototypes directly", () => {
   const {
     validateScriptEditorProjectForRuntimeExport,
@@ -12625,6 +12947,52 @@ test("script editor workspace shell does not require dialogue ownership for play
     workspace.toolbarActions.find((action) => action.id === "export")?.status,
     "ready"
   );
+});
+
+test("script editor playable instance options include story-battle", () => {
+  const {
+    listScriptEditorBuiltinMinigamePlayableOptions,
+  } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
+
+  const options = listScriptEditorBuiltinMinigamePlayableOptions();
+
+  assert.equal(
+    options.some((option) => option.id === "story-battle"),
+    true
+  );
+});
+
+test("script editor runtime export accepts story-battle playable instances", () => {
+  const {
+    createDefaultScriptEditorMinigameRecord,
+  } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.minigames = [
+    {
+      ...createDefaultScriptEditorMinigameRecord(0),
+      playableId: "story-battle",
+      title: "剧情战斗测试",
+      outcomeRoutes: [],
+    },
+  ];
+
+  const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const playables = JSON.parse(files["playables.json"]);
+  const playableIntegrations = JSON.parse(files["playable-integrations.json"]);
+
+  assert.equal(
+    diagnostics.some((diagnostic) =>
+      diagnostic.message.includes('unknown playable "story-battle"')
+    ),
+    false
+  );
+  assert.equal(playables[0]?.id, "story-battle");
+  assert.equal(playableIntegrations[0]?.playableId, "story-battle");
 });
 
 test("script editor runtime export launches city menu minigames through event-bound instances", () => {
@@ -13121,7 +13489,6 @@ test("external playable overlay renders accounting and crafting sessions", () =>
       sessionId: "playable.grain-accounting",
       playableId: "grain-accounting",
       integrationId: "playable.grain-accounting.external.420004",
-      family: "minigame",
       ownerContext: {
         ownerKind: "external",
         ownerId: null,
@@ -13152,7 +13519,6 @@ test("external playable overlay renders accounting and crafting sessions", () =>
       sessionId: "playable.medicine-compounding",
       playableId: "medicine-compounding",
       integrationId: "playable.medicine-compounding.external.420002",
-      family: "minigame",
       ownerContext: {
         ownerKind: "external",
         ownerId: null,
@@ -18356,7 +18722,6 @@ test("minigame presenter preserves the building stage when a house-hosted playab
           sessionId: "playable.flow.building.temple",
           playableId: "flow.building.temple.review",
           integrationId: "playable.flow.building.temple.review",
-          family: "flow",
           ownerContext: {
             ownerKind: "house",
             ownerId: "building.temple",
@@ -20145,10 +20510,10 @@ test("city menu runtime localizes default panel labels when menu entries omit cu
   );
 });
 
-test("city menu dialogue target opens runtime dialogue view through app action", () => {
+test("legacy city menu dialogue target remains available only through the compat seam", () => {
   const {
-    openDialogueFromMenuTarget,
-  } = require("../.test-dist/application/app-actions.js");
+    launchLegacyCityMenuDialogue,
+  } = require("../.test-dist/application/city-menu/city-menu-dialogue-compat.js");
   const appState = {
     gameState: createInitialState({
       currentMapId: "map.test",
@@ -20184,7 +20549,7 @@ test("city menu dialogue target opens runtime dialogue view through app action",
     uiLayouts: {},
   };
 
-  const nextState = openDialogueFromMenuTarget(
+  const nextState = launchLegacyCityMenuDialogue(
     appState,
     "dialogue.abbot.unlock_begging"
   );
@@ -20320,26 +20685,29 @@ test("script editor dialogue editor removes preview tab and advanced system sect
   const dialogueEditorSource =
     source.match(/renderScriptEditorDialogueEditor\(records, selectedRecord\) \{[\s\S]*?\n  renderScriptEditorEventEditor/)?.[0] ?? "";
   const dialogueTabPanelSource =
-    source.match(/renderScriptEditorDialogueTabPanel\(dialogue\) \{[\s\S]*?\n  renderScriptEditorDialogueNodeReferenceSelect/)?.[0] ?? "";
+    source.match(/renderScriptEditorDialogueTabPanel\(dialogue\) \{[\s\S]*?\n  renderScriptEditorDialogueCastPanel/)?.[0] ?? "";
   const narrativeTabSelectorSource =
     source.match(/selectScriptEditorNarrativeTab\(tab\) \{[\s\S]*?\n  selectScriptEditorEventTab/)?.[0] ?? "";
 
   assert.match(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("profile", "基础"\)/);
-  assert.match(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("nodes", "节点"\)/);
-  assert.match(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("events", "事件"\)/);
+  assert.doesNotMatch(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("nodes", "节点"\)/);
+  assert.doesNotMatch(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("events", "事件"\)/);
   assert.doesNotMatch(dialogueEditorSource, /renderScriptEditorNarrativeTabButton\("summary", "预览"\)/);
   assert.doesNotMatch(dialogueTabPanelSource, /aria-label="对话预览分栏"/);
   assert.doesNotMatch(dialogueTabPanelSource, /高级设置与系统信息/);
   assert.doesNotMatch(dialogueTabPanelSource, /data-script-editor-dialogue-field="id"/);
   assert.doesNotMatch(dialogueTabPanelSource, /data-script-editor-dialogue-field="storyNodeId"/);
-  assert.match(dialogueTabPanelSource, /c-script-editor-narrative-panel c-script-editor-narrative-panel--compact/);
-  assert.match(dialogueTabPanelSource, /c-script-editor-form-field__input c-script-editor-form-field__input--compact/);
-  assert.match(dialogueTabPanelSource, /renderScriptEditorStringRelationPanel\("参与人物", "dialogue-participants", dialogue\.participantPersonIds \?\? \[\], \{[\s\S]*compact: true/);
+  assert.match(dialogueTabPanelSource, /c-script-editor-help-icon-button/);
+  assert.match(dialogueTabPanelSource, /data-script-editor-action="open-dialogue-help"/);
+  assert.match(dialogueTabPanelSource, /renderScriptEditorDialogueCastPanel\(dialogue\)/);
+  assert.match(dialogueTabPanelSource, /renderScriptEditorDialogueRoutePanel\(dialogue\)/);
+  assert.doesNotMatch(dialogueTabPanelSource, /dialogue\.participantPersonIds/);
   assert.match(cssSource, /\.c-script-editor-form-field__input--compact\s*\{/);
   assert.match(cssSource, /\.c-script-editor-narrative-panel--compact\s*\{/);
   assert.match(cssSource, /\.c-script-editor-narrative-list--compact\s*\{/);
   assert.match(narrativeTabSelectorSource, /\["profile", "links", "summary", "events"\]/);
-  assert.match(narrativeTabSelectorSource, /\["profile", "nodes", "events"\]/);
+  assert.match(narrativeTabSelectorSource, /\["profile"\]/);
+  assert.doesNotMatch(narrativeTabSelectorSource, /\["profile", "nodes", "events"\]/);
   assert.doesNotMatch(narrativeTabSelectorSource, /\["profile", "nodes", "summary", "events"\]/);
 });
 
@@ -20768,14 +21136,12 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     normalizeScriptEditorEventRecord,
     normalizeScriptEditorSettlementRecord,
     normalizeScriptEditorStoryNodeRecord,
-    appendScriptEditorDialogueNode,
-    appendScriptEditorDialogueParticipant,
+    appendScriptEditorDialogueCast,
     appendScriptEditorEventRelationEntry,
     appendScriptEditorStoryNodeRelation,
     toggleScriptEditorEventRepeatable,
+    updateScriptEditorDialogueCastField,
     updateScriptEditorDialogueField,
-    updateScriptEditorDialogueNodeField,
-    updateScriptEditorDialogueParticipant,
     updateScriptEditorEventDestinationField,
     updateScriptEditorEventField,
     updateScriptEditorEventPreviewSummaryField,
@@ -20791,6 +21157,9 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(typeof authoringHelpers.appendScriptEditorDialogueFollowUp, "undefined");
   assert.equal(typeof authoringHelpers.updateScriptEditorDialogueFollowUpField, "undefined");
   assert.equal(typeof authoringHelpers.removeScriptEditorDialogueFollowUp, "undefined");
+  assert.equal(typeof authoringHelpers.appendScriptEditorDialogueNode, "undefined");
+  assert.equal(typeof authoringHelpers.updateScriptEditorDialogueNodeField, "undefined");
+  assert.equal(typeof authoringHelpers.removeScriptEditorDialogueNode, "undefined");
 
   let storyNode = createDefaultScriptEditorStoryNodeRecord(0);
   storyNode = updateScriptEditorStoryNodeField(storyNode, "progressMode", "invalid-mode");
@@ -20806,11 +21175,8 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   let dialogue = createDefaultScriptEditorDialogueRecord(0);
   assert.equal(Object.hasOwn(dialogue, "followUps"), false);
   dialogue = updateScriptEditorDialogueField(dialogue, "storyNodeId", "story-node.hero");
-  dialogue = appendScriptEditorDialogueParticipant(dialogue);
-  dialogue = updateScriptEditorDialogueParticipant(dialogue, 0, "person.hero");
-  dialogue = appendScriptEditorDialogueNode(dialogue);
-  dialogue = updateScriptEditorDialogueNodeField(dialogue, 1, "nodeType", "choice");
-  dialogue = updateScriptEditorDialogueNodeField(dialogue, 1, "textId", "text.dialogue.choice");
+  dialogue = appendScriptEditorDialogueCast(dialogue);
+  dialogue = updateScriptEditorDialogueCastField(dialogue, 0, "personId", "person.hero");
   const normalizedDialogue = normalizeScriptEditorDialogueRecord(dialogue);
 
   let eventRecord = createDefaultScriptEditorEventRecord(0);
@@ -20906,8 +21272,8 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedStoryNode.progressMode, "block");
   assert.deepEqual(normalizedStoryNode.relatedDialogueIds, ["dialogue.hero.open"]);
   assert.equal(normalizedDialogue.storyNodeId, "story-node.hero");
-  assert.equal(normalizedDialogue.participantPersonIds[0], "person.hero");
-  assert.equal(normalizedDialogue.nodes[1].nodeType, "choice");
+  assert.equal(normalizedDialogue.cast[0].personId, "person.hero");
+  assert.equal(Object.hasOwn(normalizedDialogue, "nodes"), false);
   assert.equal(Object.hasOwn(normalizedDialogue, "followUps"), false);
   assert.equal(normalizedEvent.title, "Opening Event");
   assert.equal(normalizedEvent.type, "settlement");
@@ -20994,7 +21360,6 @@ test("script editor direct first-phase default creators use canonical numeric id
 test("script editor authoring normalization preserves blank draft relation rows for editing", () => {
   const authoringHelpers = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
   const {
-    appendScriptEditorDialogueParticipant,
     appendScriptEditorEventRelationEntry,
     appendScriptEditorStoryNodeRelation,
     createDefaultScriptEditorDialogueRecord,
@@ -21009,14 +21374,13 @@ test("script editor authoring normalization preserves blank draft relation rows 
     createDefaultScriptEditorStoryNodeRecord(1),
     "relatedPersonIds"
   );
-  const dialogue = appendScriptEditorDialogueParticipant(createDefaultScriptEditorDialogueRecord(1));
   const eventRecord = appendScriptEditorEventRelationEntry(
     createDefaultScriptEditorEventRecord(1),
     "personIds"
   );
 
   assert.deepEqual(normalizeScriptEditorStoryNodeRecord(storyNode).relatedPersonIds, [""]);
-  assert.deepEqual(normalizeScriptEditorDialogueRecord(dialogue).participantPersonIds, [""]);
+  assert.deepEqual(normalizeScriptEditorDialogueRecord(createDefaultScriptEditorDialogueRecord(1)).cast, []);
   assert.deepEqual(normalizeScriptEditorEventRecord(eventRecord).relations.personIds, [""]);
 });
 
@@ -30643,6 +31007,14 @@ test("runtime settlement executes progression settlement instances through autho
             operation: "add",
             value: 5,
           },
+          {
+            targetFamily: "person",
+            targetId: player.id,
+            attributeKey: "stats.gold",
+            attributeType: "number",
+            operation: "add",
+            value: 12,
+          },
         ],
       },
     },
@@ -30653,6 +31025,234 @@ test("runtime settlement executes progression settlement instances through autho
 
   assert.equal(result.unsupportedEffects.length, 0);
   assert.equal(result.characterDefinitions[0].stamina, 105);
+  assert.equal(result.characterDefinitions[0].stats.gold, player.stats.gold + 12);
+});
+
+test("script editor settlement authoring exposes person gold as a supported attribute", () => {
+  const source = fs.readFileSync(
+    path.join(
+      __dirname,
+      "../src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+  const exportSource = fs.readFileSync(
+    path.join(
+      __dirname,
+      "../src/modules/script-editor/application/runtime-pack-export.ts"
+    ),
+    "utf8"
+  );
+  const importSource = fs.readFileSync(
+    path.join(
+      __dirname,
+      "../src/modules/script-editor/application/runtime-pack-import.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /value: "stats\.gold", label: "金钱", attributeType: "number"/);
+  assert.match(exportSource, /"stats\.gold": \{ attributeType: "number" \}/);
+  assert.match(importSource, /"stats\.gold": \{ attributeType: "number" \}/);
+});
+
+test("playable instance launch payload configures runtime and emits settlement context", () => {
+  const {
+    createLaunchPlayableRequest,
+    createPlayableActionRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+
+  const launched = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("grain-accounting", {
+      integrationId: "playable.grain-accounting.house.grain-shop",
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: grainShopHouse.id,
+        returnPolicy: "resume-owner",
+      },
+      payload: {
+        durationSec: 9,
+        maxWrongAnswers: 1,
+        staminaCost: 7,
+        rewardMoneyD: 13,
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  assert.equal(
+    launched.state.core.ui.houseSession?.state?.overlay?.secondsLeft,
+    9
+  );
+
+  const completed = runPlayableRuntime({
+    state: launched.state,
+    request: createPlayableActionRequest("grain-accounting", "answer", {
+      playerSaysCorrect: false,
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  assert.equal(completed.settlement != null, true);
+  assert.equal(completed.settlement?.followUpEventId, undefined);
+  assert.equal(
+    completed.settlement?.effects.some(
+      (effect) =>
+        effect.type === "setVariable" &&
+        effect.key === "var.playable.last.config.durationSec" &&
+        effect.value === 9
+    ),
+    true
+  );
+  assert.equal(
+    completed.settlement?.effects.some(
+      (effect) =>
+        effect.type === "setVariable" &&
+        effect.key === "var.playable.last.metrics.rewardMoney" &&
+        effect.value === 13
+    ),
+    true
+  );
+});
+
+test("playable result routing defers direct settlement effects when an authored route is selected", () => {
+  const {
+    resolvePlayableResultRouting,
+  } = require("../.test-dist/core/runtime/playable-result-routing.js");
+
+  const result = resolvePlayableResultRouting({
+    session: {
+      sessionId: "session.playable",
+      playableId: "grain-accounting",
+      integrationId: "playable.test.integration",
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "building.test",
+        returnPolicy: "resume-owner",
+      },
+      status: "active",
+      state: {
+        launchPayload: {
+          durationSec: 12,
+        },
+      },
+    },
+    outcome: "success",
+    factResult: {
+      status: "completed",
+      metrics: {
+        rewardMoney: 22,
+      },
+      detail: {
+        grade: "A",
+      },
+    },
+    settlementEffects: [
+      {
+        type: "mutateCharacterNumericAttribute",
+        characterId: playerCharacterId,
+        semanticKey: "gold",
+        operation: "add",
+        value: 22,
+      },
+    ],
+    followUpEventId: "event.playable.success",
+  });
+
+  assert.equal(result.followUpEventId, "event.playable.success");
+  assert.equal(
+    result.effects.some(
+      (effect) => effect.type === "mutateCharacterNumericAttribute"
+    ),
+    false
+  );
+  assert.equal(
+    result.effects.some(
+      (effect) =>
+        effect.type === "setVariable" &&
+        effect.key === "var.playable.last.config.durationSec" &&
+        effect.value === 12
+    ),
+    true
+  );
+  assert.equal(
+    result.effects.some(
+      (effect) =>
+        effect.type === "setVariable" &&
+        effect.key === "var.playable.last.detail.grade" &&
+        effect.value === "A"
+    ),
+    true
+  );
+});
+
+test("secondary playable launch payload also configures session runtime and settlement context", () => {
+  const {
+    createLaunchPlayableRequest,
+    createPlayableActionRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+
+  const launched = runPlayableRuntime({
+    state: createRuntimeState({
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.medicine",
+      },
+    }),
+    request: createLaunchPlayableRequest("medicine-compounding", {
+      integrationId: "playable.medicine-compounding.house.medicine-house",
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "house.medicine",
+        returnPolicy: "resume-owner",
+      },
+      payload: {
+        durationSec: 11,
+        maxTurns: 1,
+        staminaCost: 4,
+        rewardMedicineD: 2,
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  assert.equal(
+    launched.state.core.ui.houseSession?.state?.overlay?.secondsLeft,
+    11
+  );
+  assert.equal(
+    launched.state.core.ui.houseSession?.state?.overlay?.selectionsLeft,
+    1
+  );
+
+  const completed = runPlayableRuntime({
+    state: launched.state,
+    request: createPlayableActionRequest("medicine-compounding", "finish"),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+
+  assert.equal(completed.settlement?.followUpEventId, undefined);
+  assert.equal(
+    completed.characterStatusById?.[playerCharacterId]?.stamina,
+    96
+  );
+  assert.equal(
+    completed.settlement?.effects.some(
+      (effect) =>
+        effect.type === "setVariable" &&
+        effect.key === "var.playable.last.config.maxTurns" &&
+        effect.value === 1
+    ),
+    true
+  );
 });
 
 test("runtime settlement applies canonical city and building runtime keys", () => {
@@ -35328,6 +35928,35 @@ test("shell thinning main.ts no longer inlines covered council-priority and city
   );
 });
 
+test("city-begging detached package owns pointer and frame scheduling instead of main shell", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const controllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/playables/builtin/city-begging/city-begging-runtime-controller.ts"
+    ),
+    "utf8"
+  );
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/council-priority-city-begging-coordinator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(controllerSource, /requestAnimationFrame|scheduleDetachedRuntimeFrame/);
+  assert.match(controllerSource, /pointermove|attachPointerTracking/);
+  assert.doesNotMatch(
+    mainSource,
+    /interactive\.city-begging\.pointer|interactive\.city-begging\.tick|cityBeggingMiniGameFrameId|function syncCityBeggingMiniGamePointer|function tickCityBeggingMiniGame|function startCityBeggingMiniGameLoop/
+  );
+  assert.doesNotMatch(
+    coordinatorSource,
+    /startCityBeggingMiniGameLoop\(\): void;/
+  );
+});
+
 test("main shell render-trigger ownerization introduces a council priority city begging coordinator seam for refusal and playable launch result flow", () => {
   const coordinatorPath = path.join(
     process.cwd(),
@@ -36452,7 +37081,6 @@ test("mod runtime contribution activation installs unified gameplay contribution
       playables: [
         {
           id: "playable.registry.training",
-          family: "minigame",
           commandPrefix: "playable.registry.training.",
         },
       ],
@@ -36957,7 +37585,7 @@ test("child 30 playable runtime contract exports unified playable launch session
     "utf8"
   );
 
-  assert.match(source, /export type PlayableFamily = "minigame" \| "battle" \| "flow"/);
+  assert.doesNotMatch(source, /export type PlayableFamily =/);
   assert.match(source, /export type PlayableDefinition = \{/);
   assert.match(source, /export type PlayableIntegrationDefinition = \{/);
   assert.match(source, /export type PlayableLaunchRequest = \{/);
@@ -36989,22 +37617,22 @@ test("interactive closeout removes legacy interactive kind residue from playable
   assert.doesNotMatch(playableRuntimeSource, /createLegacyPlayableSession/);
 });
 
-test("child 30 playable definition registry installs covered interactive playables with family boundaries", () => {
+test("child 30 playable definition registry installs covered interactive playables without family boundaries", () => {
   const {
     builtinPlayableDefinitionRegistry,
   } = require("../.test-dist/core/registry/builtin-playable-definition-registry.js");
 
   assert.equal(
-    builtinPlayableDefinitionRegistry.get("activity-qte")?.family,
-    "minigame"
+    builtinPlayableDefinitionRegistry.get("activity-qte")?.commandPrefix,
+    "interactive.activity-qte."
   );
   assert.equal(
-    builtinPlayableDefinitionRegistry.get("city-begging")?.family,
-    "minigame"
+    builtinPlayableDefinitionRegistry.get("city-begging")?.commandPrefix,
+    "interactive.city-begging."
   );
   assert.equal(
-    builtinPlayableDefinitionRegistry.get("story-battle")?.family,
-    "battle"
+    builtinPlayableDefinitionRegistry.get("story-battle")?.commandPrefix,
+    "interactive.story-battle."
   );
   assert.equal(
     builtinPlayableDefinitionRegistry.matchActionId(
@@ -37077,7 +37705,7 @@ test("child 30 playable launch normalization resolves city-begging by playable i
     resolution.launch.integrationId,
     "playable.city-begging.external.default"
   );
-  assert.equal(resolution.launch.family, "minigame");
+  assert.equal("family" in resolution.launch, false);
   assert.equal(resolution.launch.ownerContext.ownerKind, "external");
   assert.equal(resolution.launch.ownerContext.returnPolicy, "close-only");
   assert.deepEqual(resolution.launch.payload, { now: 123 });
@@ -37097,7 +37725,6 @@ test("playable launch normalization merges integration launch payload defaults",
   const definitions = createPlayableDefinitionRegistry([
     {
       id: "activity-qte",
-      family: "minigame",
       commandPrefix: "interactive.activity-qte.",
     },
   ]);
@@ -37177,7 +37804,6 @@ test("playable runtime can configure default registries from activated mod playa
       playables: [
         {
           id: "playable.test.runtime",
-          family: "minigame",
           commandPrefix: "playable.test.runtime.",
         },
       ],
@@ -37235,7 +37861,7 @@ test("playable runtime can configure default registries from activated mod playa
       resolution.launch.integrationId,
       "playable.test.runtime.external.default"
     );
-    assert.equal(resolution.launch.family, "minigame");
+    assert.equal("family" in resolution.launch, false);
     assert.equal(resolution.launch.ownerContext.ownerKind, "external");
   } finally {
     resetDefaultPlayableRuntimeRegistries();
@@ -37256,7 +37882,6 @@ test("child 30 playable launch normalization fails closed for ambiguous integrat
   const definitions = createPlayableDefinitionRegistry([
     {
       id: "playable.test.ambiguous",
-      family: "minigame",
       commandPrefix: "interactive.test.ambiguous.",
     },
   ]);
@@ -37329,7 +37954,7 @@ test("child 30 interactive runtime can launch covered playable sessions through 
     result.session?.playable.integrationId,
     "playable.city-begging.external.default"
   );
-  assert.equal(result.session?.playable.family, "minigame");
+  assert.equal("family" in (result.session?.playable ?? {}), false);
   assert.equal(result.session?.playable.ownerContext.ownerKind, "external");
   assert.equal(result.state.app.beggingMiniGameState?.variantId, "village-catching");
 });
@@ -37496,6 +38121,317 @@ test("playable runtime routes city-begging completion through a shared settlemen
   assert.equal(completed.handled, true);
   assert.equal(completed.settlement != null, true);
   assert.equal(Array.isArray(completed.settlement?.effects), true);
+});
+
+test(
+  "city-begging completion defers direct runtime rewards when a settlement route is configured",
+  { concurrency: false },
+  async () => {
+  const {
+    createEmptyModRuntimeState,
+    createLoadedModFromManifest,
+    runModRuntime,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+  const {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+    createLaunchPlayableRequest,
+    resetDefaultPlayableRuntimeRegistries,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const { createInteractiveActionRequest } = require(
+    "../.test-dist/core/runtime/interactive-runtime.js"
+  );
+
+  const integrationId = "playable.city-begging.instance.route-test";
+  const activationResult = await runModRuntime({
+    state: createEmptyModRuntimeState(),
+    request: {
+      type: "mod.activate-loaded",
+      requestId: "test:city-begging-settlement-route",
+      loadedMod: createLoadedModFromManifest({
+        source: { kind: "builtin", modId: "mod.test.city-begging-route" },
+        manifest: {
+          id: "mod.test.city-begging-route",
+          schemaVersion: "1",
+          version: "1.0.0",
+          title: "City Begging Route Test",
+          entryContentPackIds: ["pack.test.city-begging-route"],
+          gameplayContributions: {
+            playableIntegrations: [integrationId],
+          },
+        },
+        rawContent: {
+          id: "pack.test.city-begging-route",
+          title: "City Begging Route Test Pack",
+          playableIntegrations: [
+            {
+              integrationId,
+              playableId: "city-begging",
+              ownerDefaults: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+              trigger: {
+                triggerId: "trigger.playable.city-begging.instance.route-test",
+                ownerKind: "external",
+                trigger: "manual-launch",
+              },
+              outcomeConfig: {
+                settlementRoutes: [
+                  {
+                    title: "成功结算",
+                    targetEventId: "event.city-begging.success",
+                    conditions: {
+                      outcomeIn: ["success"],
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    },
+    context: {
+      allowedCapabilities: [],
+    },
+  });
+
+  assert.equal(activationResult.ok, true);
+  if (!activationResult.ok) {
+    return;
+  }
+
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+    activationResult.activatedMod
+  );
+
+  try {
+    const launched = runPlayableRuntime({
+      state: createRuntimeState(),
+      request: createLaunchPlayableRequest("city-begging", {
+        integrationId,
+        payload: { now: 789 },
+      }),
+      characterDefinitions: prototypeCharacters,
+    });
+
+    const completed = runPlayableRuntime({
+      state: launched.state,
+      request: createInteractiveActionRequest("interactive.city-begging.complete", {
+        result: {
+          foodGain: 3,
+          goldGain: 2,
+          maxCombo: 4,
+          success: true,
+        },
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    });
+
+    assert.equal(completed.handled, true);
+    assert.equal(
+      completed.settlement?.followUpEventId,
+      "event.city-begging.success"
+    );
+    assert.equal(
+      completed.characterStatusById?.[playerCharacterId]?.stamina,
+      prototypeCharacters.find((character) => character.id === playerCharacterId)
+        ?.stamina - 15
+    );
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
+  }
+);
+
+test(
+  "grain-accounting keeps direct stamina cost even when settlement routing is authored",
+  { concurrency: false },
+  async () => {
+    const {
+      createEmptyModRuntimeState,
+      createLoadedModFromManifest,
+      runModRuntime,
+    } = require("../.test-dist/core/mods/mod-runtime.js");
+    const {
+      configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+      createLaunchPlayableRequest,
+      createPlayableActionRequest,
+      resetDefaultPlayableRuntimeRegistries,
+      runPlayableRuntime,
+    } = require("../.test-dist/core/runtime/playable-runtime.js");
+
+    const integrationId = "playable.grain-accounting.instance.route-test";
+    const activationResult = await runModRuntime({
+      state: createEmptyModRuntimeState(),
+      request: {
+        type: "mod.activate-loaded",
+        requestId: "test:grain-accounting-settlement-route",
+        loadedMod: createLoadedModFromManifest({
+          source: { kind: "builtin", modId: "mod.test.grain-accounting-route" },
+          manifest: {
+            id: "mod.test.grain-accounting-route",
+            schemaVersion: "1",
+            version: "1.0.0",
+            title: "Grain Accounting Route Test",
+            entryContentPackIds: ["pack.test.grain-accounting-route"],
+            gameplayContributions: {
+              playableIntegrations: [integrationId],
+            },
+          },
+          rawContent: {
+            id: "pack.test.grain-accounting-route",
+            title: "Grain Accounting Route Test Pack",
+            playableIntegrations: [
+              {
+                integrationId,
+                playableId: "grain-accounting",
+                ownerDefaults: {
+                  ownerKind: "external",
+                  ownerId: null,
+                  returnPolicy: "close-only",
+                },
+                trigger: {
+                  triggerId: "trigger.playable.grain-accounting.instance.route-test",
+                  ownerKind: "external",
+                  trigger: "manual-launch",
+                  launchPayload: {
+                    durationSec: 9,
+                    maxWrongAnswers: 1,
+                    staminaCost: 7,
+                    rewardMoneyD: 13,
+                  },
+                },
+                outcomeConfig: {
+                  settlementRoutes: [
+                    {
+                      id: "settlement-route.grain.failure",
+                      title: "失败结算",
+                      targetEventId: "event.playable.grain.failure",
+                      conditions: {
+                        outcomeIn: ["failure"],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        }),
+      },
+      context: {
+        allowedCapabilities: [],
+      },
+    });
+
+    assert.equal(activationResult.ok, true);
+    if (!activationResult.ok) {
+      return;
+    }
+
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+      activationResult.activatedMod
+    );
+
+    try {
+      const launched = runPlayableRuntime({
+        state: createRuntimeState(),
+        request: createLaunchPlayableRequest("grain-accounting", {
+          integrationId,
+          payload: {
+            durationSec: 9,
+            maxWrongAnswers: 1,
+            staminaCost: 7,
+            rewardMoneyD: 13,
+          },
+        }),
+        characterDefinitions: prototypeCharacters,
+        playerCharacterId,
+      });
+      const launchedQuestion =
+        launched.state.core.ui.houseSession?.state?.overlay?.question ?? null;
+      const playerSaysCorrect =
+        launchedQuestion != null &&
+        typeof launchedQuestion === "object" &&
+        launchedQuestion.isLedgerCorrect === true
+          ? false
+          : true;
+
+      const completed = runPlayableRuntime({
+        state: launched.state,
+        request: createPlayableActionRequest("grain-accounting", "answer", {
+          playerSaysCorrect,
+        }),
+        characterDefinitions: prototypeCharacters,
+        playerCharacterId,
+      });
+
+      assert.equal(completed.handled, true);
+      assert.equal(
+        completed.settlement?.followUpEventId,
+        "event.playable.grain.failure"
+      );
+      assert.equal(
+        completed.characterStatusById?.[playerCharacterId]?.stamina,
+        prototypeCharacters.find((character) => character.id === playerCharacterId)
+          ?.stamina - 7
+      );
+    } finally {
+      resetDefaultPlayableRuntimeRegistries();
+    }
+  }
+);
+
+test("external playable completion can hand routed settlement events to the story bridge", () => {
+  const {
+    applyPlayableCompletionFollowUp,
+  } = require("../.test-dist/application/events/playable-completion-follow-up.js");
+
+  let startedEventId = null;
+  const result = applyPlayableCompletionFollowUp({
+    state: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    previousPlayableSession: {
+      sessionId: "playable.test.session",
+      playableId: "grain-accounting",
+      integrationId: "playable.test.integration",
+      ownerContext: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+      status: "active",
+      state: {},
+    },
+    settlement: {
+      integrationId: "playable.test.integration",
+      outcome: "failure",
+      factResult: {
+        status: "failed",
+      },
+      followUpEventId: "event.playable.test.failure",
+      handoff: {
+        type: "close-only",
+        ownerKind: "external",
+        ownerId: null,
+      },
+      effects: [],
+    },
+    followUp: { type: "none" },
+    startFromEventId: ({ eventId, state, characterDefinitions }) => {
+      startedEventId = eventId;
+      return {
+        state,
+        characterDefinitions,
+      };
+    },
+  });
+
+  assert.equal(result.handled, true);
+  assert.equal(startedEventId, "event.playable.test.failure");
 });
 
 test("city-begging package runtime can finish locally and still expose a settlement result", () => {
@@ -37851,7 +38787,6 @@ test("child 33 story callback launch writes shared playable session into runtime
     started.state.runtime.playableSession?.integrationId,
     "playable.story-battle.dialogue.default"
   );
-  assert.equal(started.state.runtime.playableSession?.family, "battle");
   assert.equal(
     started.state.runtime.playableSession?.ownerContext.ownerKind,
     "house"
@@ -37978,8 +38913,6 @@ test("child 34 playable scaffold writes canonical mechanic and integration artif
       path.join(process.cwd(), "tools", "scaffold-playable.mjs"),
       "--playable-id",
       "test-playable",
-      "--family",
-      "minigame",
       "--title",
       "Test Playable",
       "--output-root",
@@ -38068,7 +39001,7 @@ test("child 34 playable scaffold writes canonical mechanic and integration artif
   );
 
   assert.equal(mechanicArtifact.playableId, "test-playable");
-  assert.equal(mechanicArtifact.family, "minigame");
+  assert.equal("family" in mechanicArtifact, false);
   assert.equal(integrationArtifact.playableId, "test-playable");
   assert.equal(
     integrationArtifact.integrationId,
@@ -38088,8 +39021,6 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
       path.join(process.cwd(), "tools", "scaffold-playable.mjs"),
       "--playable-id",
       "validator-playable",
-      "--family",
-      "battle",
       "--title",
       "Validator Playable",
       "--output-root",
@@ -38173,6 +39104,87 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
   assert.match(mainSource, /interactive\.city-begging\.complete/);
   assert.match(mainSource, /interactive\.activity-qte\.tick/);
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
+});
+
+test("activity qte shell routes board and command buttons into interactive runtime actions", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const activityActionBlock = mainSource.match(
+    /const activityActionButton = targetElement\.closest<HTMLElement>\(\s*"\[data-activity-action\]"\s*\);[\s\S]*?return;\r?\n  }/
+  )?.[0] ?? "";
+
+  assert.match(activityActionBlock, /activityAction === "play-board"/);
+  assert.match(activityActionBlock, /dispatchCurrentActivityQteAction\("play"\)/);
+  assert.match(activityActionBlock, /activityAction === "wager-minus"/);
+  assert.match(activityActionBlock, /dispatchCurrentActivityQteAction\("wager-minus"\)/);
+  assert.match(activityActionBlock, /activityAction === "wager-plus"/);
+  assert.match(activityActionBlock, /dispatchCurrentActivityQteAction\("wager-plus"\)/);
+  assert.match(activityActionBlock, /activityAction === "choose-command"/);
+  assert.match(
+    activityActionBlock,
+    /dispatchCurrentActivityQteAction\("choose", \{ commandId \}\)/
+  );
+  assert.match(
+    mainSource,
+    /createInteractiveActionRequest\(\s*`interactive\.activity-qte\.\$\{action\}`,\s*payload\s*\)/
+  );
+  assert.match(
+    mainSource,
+    /function dispatchCurrentActivityQteAction\(\s*action: string,\s*payload\?: Record<string, unknown>\s*\): void/
+  );
+});
+
+test("activity qte loop keeps fortune-board sessions ticking through interactive runtime", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const syncLoopBlock = mainSource.match(
+    /function syncActivityQteLoop\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction syncHousePlayableLoop/
+  )?.[0] ?? "";
+
+  assert.match(syncLoopBlock, /session\?\.type !== "qte-bar" && session\?\.type !== "fortune-board"/);
+  assert.match(syncLoopBlock, /session\.type === "fortune-board"\s*\?\s*session\.animationTickMs\s*:\s*ACTIVITY_QTE_INTERVAL_MS/);
+  assert.match(syncLoopBlock, /activityDefinitionsById:\s*activeContentContext\.storyContent\.activityDefinitionsById/);
+  assert.match(syncLoopBlock, /createInteractiveActionRequest\("interactive\.activity-qte\.tick"\)/);
+});
+
+test("zhuyuanzhang builtin templates expose the temple activity qte playable and template integration", () => {
+  const builtinPlayables = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/builtin-templates/zhuyuanzhang/playables.json"
+      ),
+      "utf8"
+    )
+  );
+  const builtinPlayableIntegrations = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/builtin-templates/zhuyuanzhang/playable-integrations.json"
+      ),
+      "utf8"
+    )
+  );
+
+  assert.ok(
+    builtinPlayables.some((playable) => playable.id === "activity-qte"),
+    "expected activity-qte playable template in zhuyuanzhang builtin pack"
+  );
+  assert.ok(
+    builtinPlayableIntegrations.some(
+      (integration) =>
+        integration.playableId === "activity-qte" &&
+        integration.title === "寺庙抄经玩法" &&
+        integration.trigger?.launchPayload?.activityId ===
+          "activity.zhu_yuanzhang.temple.copy_scripture"
+    ),
+    "expected temple copy scripture activity-qte template integration"
+  );
 });
 
 test("phase 3 package scripts expose scenario-pack scaffold and validation entry points", () => {
@@ -38558,8 +39570,8 @@ test("flow playable is registered with a building owner integration", () => {
   } = require("../.test-dist/core/registry/builtin-playable-integration-registry.js");
 
   assert.equal(
-    builtinPlayableDefinitionRegistry.get("building-flow")?.family,
-    "flow"
+    builtinPlayableDefinitionRegistry.get("building-flow")?.commandPrefix,
+    "playable.building-flow."
   );
   const integration = builtinPlayableIntegrationRegistry.get(
     "playable.building-flow.house.default"
@@ -38614,7 +39626,10 @@ test("flow playable launches with building owner context and exposes a presenter
 
   assert.equal(result.handled, true);
   assert.equal(result.state.core.ui.currentView, "minigame");
-  assert.equal(result.state.core.runtime.playableSession?.family, "flow");
+  assert.equal(
+    result.state.core.runtime.playableSession?.playableId,
+    "building-flow"
+  );
   assert.equal(
     result.state.core.runtime.playableSession?.ownerContext.ownerId,
     "building.temple"
@@ -38628,7 +39643,7 @@ test("flow playable launches with building owner context and exposes a presenter
     definition: flowDefinition,
     session: result.state.core.runtime.playableSession,
   });
-  assert.equal(presenter.family, "flow");
+  assert.equal("family" in presenter, false);
   assert.equal(presenter.layout, "panel");
   assert.equal(presenter.viewModel.currentNodeId, "node.start");
 });
@@ -40458,6 +41473,64 @@ test("dispatchCurrentFlowAction routes activity definitions into shared playable
     dispatchCurrentFlowActionBlock,
     /flowPlayablesById:\s*activeContentContext\.gameContent\.flowPlayablesById/
   );
+});
+
+test("shared playable overlay keeps result overlays visible after settlement", () => {
+  const {
+    renderHousePlayableOverlay,
+  } = require("../.test-dist/ui/views/playables/house-playable-overlay.js");
+
+  const grainMarkup = renderHousePlayableOverlay({
+    session: null,
+    houseSession: {
+      moduleId: "grain-shop",
+      state: {
+        overlay: {
+          type: "result",
+          grade: "A",
+          score: 6,
+          reward: { money: 80, math: 8, relationship: 8 },
+          durationDays: 3,
+        },
+      },
+    },
+  });
+  const medicineMarkup = renderHousePlayableOverlay({
+    session: null,
+    houseSession: {
+      moduleId: "medicine-house",
+      state: {
+        overlay: {
+          type: "result",
+          grade: "B",
+          summaryLines: ["药性相合。"],
+          rewardLines: ["医术 +1", "体力 -5"],
+        },
+      },
+    },
+  });
+
+  assert.match(grainMarkup, /粮账核算/);
+  assert.match(grainMarkup, /A/);
+  assert.match(grainMarkup, /80/);
+  assert.match(medicineMarkup, /药材炼制/);
+  assert.match(medicineMarkup, /药性相合/);
+  assert.match(medicineMarkup, /体力 -5/);
+});
+
+test("main runtime routes overlay playable actions and syncs their tick loop", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(mainSource, /\[data-playable-action\]/);
+  assert.match(mainSource, /function dispatchCurrentHousePlayableAction\(/);
+  assert.match(mainSource, /createPlayableActionRequest\(\s*playableId/);
+  assert.match(mainSource, /function syncHousePlayableLoop\(\): void/);
+  assert.match(mainSource, /function stopHousePlayableLoop\(\): void/);
+  assert.match(mainSource, /syncHousePlayableLoop,/);
+  assert.match(mainSource, /stopHousePlayableLoop\(\);/);
 });
 
 test("house-hosted flow presenter exports an overlay variant and app render keeps the building shell under it", () => {

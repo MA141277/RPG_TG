@@ -4,6 +4,7 @@ import type {
   PlayableSettlementRoute,
   PlayableFactValue,
 } from "../contracts/playable-runtime";
+import type { Effect } from "../contracts/effect";
 import { readDefaultPlayableIntegrationRegistry } from "./playable-runtime-registries";
 
 export function createPlayableResultShell(input: {
@@ -41,13 +42,115 @@ export function resolvePlayableResultRouting(input: {
 }): PlayableResult {
   const routedEventId =
     input.followUpEventId ?? resolveSettlementRouteEventId(input);
+  const contextEffects = createPlayableResultContextEffects(input);
   return createPlayableResultShell({
     session: input.session,
     outcome: input.outcome,
     factResult: input.factResult,
-    effects: input.settlementEffects,
+    effects:
+      routedEventId == null
+        ? [...contextEffects, ...(input.settlementEffects ?? [])]
+        : contextEffects,
     followUpEventId: routedEventId,
   });
+}
+
+function createPlayableResultContextEffects(input: {
+  session: ActivePlayableSession;
+  outcome: PlayableResult["outcome"];
+  factResult: PlayableResult["factResult"];
+}): Effect[] {
+  const effects: Effect[] = [
+    {
+      type: "setVariable",
+      key: "var.playable.last.integrationId",
+      value: input.session.integrationId,
+    },
+    {
+      type: "setVariable",
+      key: "var.playable.last.playableId",
+      value: input.session.playableId,
+    },
+    {
+      type: "setVariable",
+      key: "var.playable.last.outcome",
+      value: input.outcome,
+    },
+    {
+      type: "setVariable",
+      key: "var.playable.last.status",
+      value: input.factResult.status,
+    },
+  ];
+
+  const launchPayload = readLaunchPayload(input.session);
+  for (const [key, value] of Object.entries(launchPayload)) {
+    const normalized = normalizeContextVariableValue(value);
+    if (normalized == null) {
+      continue;
+    }
+    effects.push({
+      type: "setVariable",
+      key: `var.playable.last.config.${key}`,
+      value: normalized,
+    });
+  }
+
+  for (const [key, value] of Object.entries(input.factResult.metrics ?? {})) {
+    const normalized = normalizeContextVariableValue(value);
+    if (normalized == null) {
+      continue;
+    }
+    effects.push({
+      type: "setVariable",
+      key: `var.playable.last.metrics.${key}`,
+      value: normalized,
+    });
+  }
+
+  for (const [key, value] of Object.entries(input.factResult.detail ?? {})) {
+    const normalized = normalizeContextVariableValue(value);
+    if (normalized == null) {
+      continue;
+    }
+    effects.push({
+      type: "setVariable",
+      key: `var.playable.last.detail.${key}`,
+      value: normalized,
+    });
+  }
+
+  return effects;
+}
+
+function readLaunchPayload(
+  session: ActivePlayableSession
+): Record<string, unknown> {
+  const state = session.state;
+  if (state == null || typeof state !== "object" || Array.isArray(state)) {
+    return {};
+  }
+  const launchPayload = (state as Record<string, unknown>).launchPayload;
+  return launchPayload != null &&
+    typeof launchPayload === "object" &&
+    !Array.isArray(launchPayload)
+    ? (launchPayload as Record<string, unknown>)
+    : {};
+}
+
+function normalizeContextVariableValue(
+  value: unknown
+): string | number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "boolean") {
+    return value ? 1 : 0;
+  }
+  return null;
 }
 
 function resolveSettlementRouteEventId(input: {

@@ -15,6 +15,7 @@ import {
   createDefaultScriptEditorMinigameRecord,
 } from "./minigame-binding-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
+import type { ContentPackAudioSettings } from "../../../domain/content-pack";
 import {
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
   SCRIPT_EDITOR_PROJECT_KIND,
@@ -22,6 +23,7 @@ import {
   SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
   type ScriptEditorAccessRule,
   type ScriptEditorBuildingArrangementRecord,
+  type ScriptEditorDialogueOptionRecord,
   type ScriptEditorDialogueRecord,
   type ScriptEditorEntityRecord,
   type ScriptEditorEventRecord,
@@ -101,6 +103,7 @@ type SettlementAttributeMetadata = {
 const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
   age: { attributeType: "number" },
   stamina: { attributeType: "number" },
+  "stats.gold": { attributeType: "number" },
   "stats.leadership": { attributeType: "number" },
   "stats.martial": { attributeType: "number" },
   "stats.intelligence": { attributeType: "number" },
@@ -127,6 +130,7 @@ type RuntimePackManifest = {
   id: string;
   title: string;
   description?: string;
+  audioSettings?: ContentPackAudioSettings;
   basePackId?: string;
   author?: string;
   version?: string;
@@ -286,7 +290,12 @@ export function importScenarioPackToScriptEditorProject(
     progressTrackBindings: readProgressTrackBindingFamily(rawPack),
     menuResources: mapImportedMenuResources(rawPack, importedMinigames),
     menuInstances: readMenuInstanceFamily(rawPack),
-    dialogues: mapImportedRuntimeDialogues(rawPack),
+    dialogues: mapImportedRuntimeDialogues(
+      rawPack,
+      typeof pack.scenarioProfile.playerCharacterId === "string"
+        ? pack.scenarioProfile.playerCharacterId.trim()
+        : ""
+    ),
     quests: pack.tasks ?? [],
     activities: pack.activities ?? [],
     cards: pack.cards ?? [],
@@ -398,6 +407,12 @@ function createStoryPackRecord(
   pack: ReturnType<typeof parseScenarioPack>,
   rawPack: Record<string, unknown>
 ): ScriptEditorStoryPackRecord {
+  const rawAudioSettings =
+    rawPack.audioSettings != null &&
+    typeof rawPack.audioSettings === "object" &&
+    !Array.isArray(rawPack.audioSettings)
+      ? (rawPack.audioSettings as { muted?: unknown })
+      : null;
   return {
     id: pack.id,
     title: pack.title,
@@ -408,6 +423,13 @@ function createStoryPackRecord(
       : {}),
     ...(typeof rawPack.author === "string" ? { author: rawPack.author } : {}),
     ...(typeof rawPack.version === "string" ? { version: rawPack.version } : {}),
+    ...(rawAudioSettings != null
+      ? {
+          audioSettings: {
+            muted: rawAudioSettings.muted === true,
+          },
+        }
+      : {}),
     ...(Array.isArray(rawPack.tags) &&
     rawPack.tags.every((tag) => typeof tag === "string")
       ? { tags: [...rawPack.tags] as string[] }
@@ -563,27 +585,91 @@ function buildImportedEventDescription(
 }
 
 function mapImportedRuntimeDialogues(
-  rawPack: Record<string, unknown>
+  rawPack: Record<string, unknown>,
+  fallbackSpeakerPersonId: string
 ): ScriptEditorDialogueRecord[] {
   const importedDialogues = Array.isArray(rawPack.dialogues)
     ? rawPack.dialogues
     : [];
+  const mappedDialogues: ScriptEditorDialogueRecord[] = [];
 
-  return importedDialogues.flatMap((value, dialogueIndex) => {
+  for (const [dialogueIndex, value] of importedDialogues.entries()) {
     if (value == null || typeof value !== "object" || Array.isArray(value)) {
-      return [];
+      continue;
     }
 
     const runtimeDialogue = value as Record<string, unknown>;
     const id = readString(runtimeDialogue.id) || `dialogue.imported.${dialogueIndex + 1}`;
     const title = readString(runtimeDialogue.name) || id;
+    if (
+      runtimeDialogue.screen != null &&
+      typeof runtimeDialogue.screen === "object" &&
+      !Array.isArray(runtimeDialogue.screen)
+    ) {
+      const screen = runtimeDialogue.screen as Record<string, unknown>;
+      const mode = readString(screen.mode) === "choice" ? "choice" : "linear";
+      const cast = Array.isArray(screen.cast)
+        ? screen.cast.flatMap((memberValue) => {
+            if (
+              memberValue == null ||
+              typeof memberValue !== "object" ||
+              Array.isArray(memberValue)
+            ) {
+              return [];
+            }
+            const member = memberValue as Record<string, unknown>;
+            const personId = readString(member.characterId);
+            if (personId.length === 0) {
+              return [];
+            }
+            const side: "left" | "right" =
+              readString(member.side) === "right" ? "right" : "left";
+            return [{ personId, side }];
+          })
+        : [];
+      const options =
+        mode === "choice" && Array.isArray(screen.options)
+          ? screen.options.flatMap((optionValue, optionIndex) => {
+              if (
+                optionValue == null ||
+                typeof optionValue !== "object" ||
+                Array.isArray(optionValue)
+              ) {
+                return [];
+              }
+              const option = optionValue as Record<string, unknown>;
+              return [
+                {
+                  id:
+                    readString(option.id) ||
+                    `option.imported.${dialogueIndex + 1}.${optionIndex + 1}`,
+                  textId: readString(option.labelTextId),
+                  nextEventId: readString(option.nextEventId),
+                },
+              ];
+            })
+          : [];
+
+      mappedDialogues.push({
+        id,
+        title,
+        mode,
+        textId: readString(screen.textId),
+        speakerPersonId: readString(screen.speakerCharacterId),
+        cast,
+        nextEventId: mode === "linear" ? readString(screen.nextEventId) : "",
+        options,
+      });
+      continue;
+    }
+
     if (!Array.isArray(runtimeDialogue.nodes)) {
       if (Array.isArray(runtimeDialogue.actions)) {
         throw new Error(
           `Imported runtime dialogue "${id}" still uses retired actions[]; use dialogues[].nodes instead.`
         );
       }
-      return [];
+      continue;
     }
     const rawNodes = runtimeDialogue.nodes;
     const nodes = rawNodes.flatMap((nodeValue, nodeIndex) =>
@@ -607,16 +693,87 @@ function mapImportedRuntimeDialogues(
         })
       )
     );
+    const firstDialogueNode = nodes.find((node) => node.nodeType === "dialogue");
+    const firstTextNode = nodes.find((node) => node.textId.length > 0);
+    const migratedSpeakerPersonId =
+      firstDialogueNode?.speakerPersonId ??
+      participantPersonIds[0] ??
+      fallbackSpeakerPersonId;
+    const migratedCastSourcePersonIds =
+      participantPersonIds.length > 0
+        ? participantPersonIds
+        : migratedSpeakerPersonId.length > 0
+          ? [migratedSpeakerPersonId]
+          : [];
+    const migratedCast = migratedCastSourcePersonIds
+      .slice(0, 2)
+      .map((personId, index) => ({
+        personId,
+        side: (index === 1 ? "right" : "left") as "left" | "right",
+      }));
+    const migratedOptions = extractImportedLegacyDialogueOptions(
+      rawNodes,
+      dialogueIndex
+    );
 
-    return [
-      {
-        id,
-        title,
-        participantPersonIds,
-        nodes,
-      },
-    ];
-  });
+    mappedDialogues.push({
+      id,
+      title,
+      mode: migratedOptions.length > 0 ? "choice" : "linear",
+      textId: firstTextNode?.textId ?? "",
+      speakerPersonId: migratedSpeakerPersonId,
+      cast: migratedCast,
+      nextEventId: "",
+      options: migratedOptions,
+      participantPersonIds,
+      nodes,
+    });
+  }
+
+  return mappedDialogues;
+}
+
+function extractImportedLegacyDialogueOptions(
+  rawNodes: unknown[],
+  dialogueIndex: number
+): ScriptEditorDialogueOptionRecord[] {
+  const migratedOptions: ScriptEditorDialogueOptionRecord[] = [];
+
+  for (const nodeValue of rawNodes) {
+    if (
+      nodeValue == null ||
+      typeof nodeValue !== "object" ||
+      Array.isArray(nodeValue)
+    ) {
+      continue;
+    }
+
+    const node = nodeValue as Record<string, unknown>;
+    if (readString(node.type) !== "choice" || !Array.isArray(node.options)) {
+      continue;
+    }
+
+    node.options.forEach((optionValue, optionIndex) => {
+      if (
+        optionValue == null ||
+        typeof optionValue !== "object" ||
+        Array.isArray(optionValue)
+      ) {
+        return;
+      }
+
+      const option = optionValue as Record<string, unknown>;
+      migratedOptions.push({
+        id:
+          readString(option.id) ||
+          `option.imported.${dialogueIndex + 1}.${optionIndex + 1}`,
+        textId: readString(option.labelTextId),
+        nextEventId: readString(option.nextEventId),
+      });
+    });
+  }
+
+  return migratedOptions;
 }
 
 function mapImportedRuntimeDialogueNode(
@@ -1068,6 +1225,8 @@ function mapImportedPlayableIntegrations(
 
     const integration = value as PlayableIntegrationDefinition & {
       editorRecordId?: string;
+      title?: string;
+      description?: string;
     };
     if (
       typeof integration.integrationId !== "string" ||
@@ -1087,9 +1246,37 @@ function mapImportedPlayableIntegrations(
     return [
       {
         ...defaultRecord,
-        title: integration.integrationId,
-        description: "",
+        title:
+          typeof integration.title === "string" && integration.title.trim().length > 0
+            ? integration.title.trim()
+            : integration.integrationId,
+        description:
+          typeof integration.description === "string"
+            ? integration.description.trim()
+            : "",
         playableId: integration.playableId,
+        integrationId: integration.integrationId,
+        ...(integration.ownerDefaults?.ownerKind != null ||
+        integration.trigger?.ownerKind != null
+          ? {
+              ownerKind:
+                integration.ownerDefaults?.ownerKind ??
+                integration.trigger?.ownerKind,
+            }
+          : {}),
+        ...(typeof integration.ownerDefaults?.ownerId === "string"
+          ? { ownerId: integration.ownerDefaults.ownerId }
+          : {}),
+        ...(typeof integration.ownerDefaults?.returnPolicy === "string"
+          ? { returnPolicy: integration.ownerDefaults.returnPolicy }
+          : {}),
+        ...(typeof integration.trigger?.triggerId === "string"
+          ? { triggerId: integration.trigger.triggerId }
+          : {}),
+        triggerSource: "event-destination",
+        ...(typeof integration.trigger?.trigger === "string"
+          ? { triggerEvent: integration.trigger.trigger }
+          : {}),
         configEntries: mapImportedLaunchPayload(trigger?.launchPayload),
         settlementRoutes: mapImportedSettlementRoutes(integration.outcomeConfig),
         notes: "Imported from runtime playable integration.",
@@ -1178,12 +1365,15 @@ function createImportedMinigameIdByIntegrationId(
   return new Map(
     importedMinigames.flatMap((minigame) => {
       const minigameId = typeof minigame.id === "string" ? minigame.id : "";
-      const playableId =
-        typeof minigame.playableId === "string" ? minigame.playableId.trim() : "";
       const integrationId =
-        minigameId.length > 0 && playableId.length > 0
-          ? createDerivedMinigameIntegrationId(minigameId, playableId)
-          : "";
+        typeof minigame.integrationId === "string" &&
+        minigame.integrationId.trim().length > 0
+          ? minigame.integrationId.trim()
+          : minigameId.length > 0 &&
+              typeof minigame.playableId === "string" &&
+              minigame.playableId.trim().length > 0
+            ? createDerivedMinigameIntegrationId(minigameId, minigame.playableId)
+            : "";
       return integrationId.length > 0 ? [[integrationId, minigameId] as const] : [];
     })
   );
@@ -1515,6 +1705,13 @@ async function hydrateScenarioPackManifestFromFiles(
     id: manifest.id,
     title: manifest.title,
     ...(manifest.description == null ? {} : { description: manifest.description }),
+    ...(manifest.audioSettings == null
+      ? {}
+      : {
+          audioSettings: {
+            muted: manifest.audioSettings.muted === true,
+          },
+        }),
     ...(manifest.basePackId == null ? {} : { basePackId: manifest.basePackId }),
     ...(manifest.author == null ? {} : { author: manifest.author }),
     ...(manifest.version == null ? {} : { version: manifest.version }),

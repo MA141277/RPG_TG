@@ -23,13 +23,13 @@ export type GameContent = {
 export type GameStoreSnapshot = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
-  currentNode: RuntimeDialogueDefinition["nodes"][number] | null;
+  currentNode: NonNullable<RuntimeDialogueDefinition["nodes"]>[number] | null;
 };
 
 export function createGameStore(initialState: GameState, content: GameContent) {
   let state = initialState;
   let characterDefinitions = content.characterDefinitions;
-  let currentNode: RuntimeDialogueDefinition["nodes"][number] | null = null;
+  let currentNode: NonNullable<RuntimeDialogueDefinition["nodes"]>[number] | null = null;
 
   return {
     getSnapshot(): GameStoreSnapshot {

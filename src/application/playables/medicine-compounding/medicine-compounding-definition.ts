@@ -1,4 +1,10 @@
 import type { CharacterDefinition } from "../../../domain/character";
+import type { Effect } from "../../../core/contracts/effect";
+import type {
+  PlayableIntegrationId,
+  PlayableOwnerContext,
+} from "../../../core/contracts/playable-runtime";
+import type { CharacterStatusById } from "../../../domain/character-status";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type { MedicineHouseActionOutcome } from "../../../domain/medicine-house";
 import type {
@@ -8,6 +14,11 @@ import type {
   MedicineHouseHerbDefinition,
 } from "../../../domain/medicine-house";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
+import { mergeCharacterStatusById } from "../../../domain/character-status";
+import {
+  getMedicineHouseFavorabilityVariableKey,
+  getMedicineHouseTimeVariableKey,
+} from "../../../domain/medicine-house";
 import { assertExists } from "../../../shared/assert";
 import {
   convertHouseActivityDaysToSegments,
@@ -22,10 +33,8 @@ import {
   pickCompoundingTarget,
   resolveCompoundingGrade,
 } from "../../medicine-house/compounding-minigame";
-import { applyMedicineHouseOutcome } from "../../medicine-house/medicine-house-mutations";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
-  spendPlayerStamina,
 } from "../../player/player-stamina";
 
 type MedicineHouseOverlayState =
@@ -62,6 +71,31 @@ type MedicineHouseSessionState = {
   overlay: MedicineHouseOverlayState;
 };
 
+type MedicineCompoundingSettlement = {
+  outcome: "success" | "failure";
+  factStatus: "completed" | "failed";
+  grade: MedicineHouseCompoundingGrade;
+  reward: {
+    medicine: number;
+    relationship: number;
+  };
+  durationDays: number;
+  summaryLines: string[];
+  rewardLines: string[];
+  effects: Effect[];
+  characterStatusById: CharacterStatusById;
+};
+
+type MedicineCompoundingRuntimeConfig = {
+  durationSec: number;
+  maxTurns: number;
+  staminaCost: number;
+  rewardByGrade: Record<
+    MedicineHouseCompoundingGrade,
+    { medicine: number; relationship: number }
+  >;
+};
+
 function countSelections(
   selections: Array<{ amount: number }>
 ): number {
@@ -78,6 +112,113 @@ function getActiveSession(state: RuntimeState): MedicineHouseSessionState | null
   }
 
   return houseSession.state as MedicineHouseSessionState;
+}
+
+function readLaunchPayload(state: RuntimeState): Record<string, unknown> {
+  const sessionState = state.core.runtime.playableSession?.state;
+  if (
+    sessionState == null ||
+    typeof sessionState !== "object" ||
+    Array.isArray(sessionState)
+  ) {
+    return {};
+  }
+  const launchPayload = (sessionState as Record<string, unknown>).launchPayload;
+  return launchPayload != null &&
+    typeof launchPayload === "object" &&
+    !Array.isArray(launchPayload)
+    ? (launchPayload as Record<string, unknown>)
+    : {};
+}
+
+function readPositiveInteger(value: unknown, fallback: number): number {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    Math.floor(value) > 0
+    ? Math.floor(value)
+    : fallback;
+}
+
+function readFiniteNumber(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function readRewardOverride(
+  launchPayload: Record<string, unknown>,
+  defaults: { medicine: number; relationship: number },
+  grade: MedicineHouseCompoundingGrade
+): { medicine: number; relationship: number } {
+  const suffix = grade;
+  return {
+    medicine: readFiniteNumber(
+      launchPayload[`rewardMedicine${suffix}`],
+      defaults.medicine
+    ),
+    relationship: readFiniteNumber(
+      launchPayload[`rewardRelationship${suffix}`],
+      defaults.relationship
+    ),
+  };
+}
+
+function resolveRuntimeConfigFromPayload(
+  launchPayload: Record<string, unknown>
+): MedicineCompoundingRuntimeConfig {
+  const defaults = getMedicineHouseContentDefaults();
+  return {
+    durationSec: readPositiveInteger(
+      launchPayload.durationSec,
+      defaults.medicineHouseCompoundingBaseDurationSec
+    ),
+    maxTurns: readPositiveInteger(
+      launchPayload.maxTurns,
+      defaults.medicineHouseCompoundingBaseTurns
+    ),
+    staminaCost: readPositiveInteger(
+      launchPayload.staminaCost,
+      ACTIVITY_COMPLETION_STAMINA_COST
+    ),
+    rewardByGrade: {
+      S: readRewardOverride(
+        launchPayload,
+        defaults.medicineHouseCompoundingGradeRewards.S,
+        "S"
+      ),
+      A: readRewardOverride(
+        launchPayload,
+        defaults.medicineHouseCompoundingGradeRewards.A,
+        "A"
+      ),
+      B: readRewardOverride(
+        launchPayload,
+        defaults.medicineHouseCompoundingGradeRewards.B,
+        "B"
+      ),
+      C: readRewardOverride(
+        launchPayload,
+        defaults.medicineHouseCompoundingGradeRewards.C,
+        "C"
+      ),
+      D: readRewardOverride(
+        launchPayload,
+        defaults.medicineHouseCompoundingGradeRewards.D,
+        "D"
+      ),
+    },
+  };
+}
+
+function resolveRuntimeConfig(state: RuntimeState): MedicineCompoundingRuntimeConfig {
+  return resolveRuntimeConfigFromPayload(readLaunchPayload(state));
+}
+
+function readNumericVariable(
+  state: RuntimeState["core"],
+  key: string,
+  fallback: number
+): number {
+  const value = state.runtime.variables[key];
+  return typeof value === "number" ? value : fallback;
 }
 
 function createExternalSession(): MedicineHouseSessionState {
@@ -159,14 +300,19 @@ export function launchMedicineCompoundingPlayable(input: {
   characterDefinitions: CharacterDefinition[];
   playerCharacterId: string;
   ownerId: string | null;
+  integrationId?: PlayableIntegrationId | undefined;
+  ownerContext?: PlayableOwnerContext | undefined;
+  launchPayload?: Record<string, unknown>;
 }): RuntimeState {
   const sessionState = getActiveSession(input.state) ?? createExternalSession();
+  const runtimeConfig = resolveRuntimeConfigFromPayload(
+    input.launchPayload ?? {}
+  );
 
   const medicineSkill = getPlayerMedicineSkill(
     input.characterDefinitions,
     input.playerCharacterId
   );
-  const limits = getCompoundingLimits(medicineSkill);
   const nextState = withSessionState(input.state, {
     ...sessionState,
     overlay: {
@@ -174,8 +320,8 @@ export function launchMedicineCompoundingPlayable(input: {
       target: pickCompoundingTarget(medicineSkill),
       availableHerbs: getAvailableHerbsForSkill(medicineSkill),
       selections: [],
-      selectionsLeft: limits.maxTurns,
-      secondsLeft: limits.durationSec,
+      selectionsLeft: runtimeConfig.maxTurns,
+      secondsLeft: runtimeConfig.durationSec,
     },
   });
 
@@ -188,14 +334,19 @@ export function launchMedicineCompoundingPlayable(input: {
         playableSession: {
           sessionId: "playable.medicine-compounding",
           playableId: "medicine-compounding",
-          integrationId: "playable.medicine-compounding.house.medicine-house",
-          family: "minigame",
-          ownerContext: {
-            ownerKind: "house",
-            ownerId: input.ownerId,
-            returnPolicy: "resume-owner",
-          },
+          integrationId:
+            input.integrationId ??
+            "playable.medicine-compounding.house.medicine-house",
+          ownerContext:
+            input.ownerContext ?? {
+              ownerKind: "house",
+              ownerId: input.ownerId,
+              returnPolicy: "resume-owner",
+            },
           status: "active",
+          state: {
+            launchPayload: input.launchPayload ?? {},
+          },
         },
       },
     },
@@ -209,6 +360,7 @@ export function tickMedicineCompoundingPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  settlement?: MedicineCompoundingSettlement;
 } {
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
@@ -260,6 +412,7 @@ export function selectMedicineCompoundingHerbPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  settlement?: MedicineCompoundingSettlement;
 } {
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
@@ -305,6 +458,7 @@ export function settleMedicineCompoundingPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  settlement?: MedicineCompoundingSettlement;
 } {
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
@@ -320,22 +474,24 @@ export function settleMedicineCompoundingPlayable(input: {
     overlay.selections,
     overlay.availableHerbs
   );
+  const runtimeConfig = resolveRuntimeConfig(input.state);
   const durationDays = getHouseMinigameDurationDays(
     getPlayerMedicineSkill(
       input.characterDefinitions,
       input.playerCharacterId
     )
   );
+  const reward = runtimeConfig.rewardByGrade[gradeResult.grade];
   const outcome: MedicineHouseActionOutcome = {
-    relationshipChange: gradeResult.reward.relationship,
+    relationshipChange: reward.relationship,
     attributeChange:
-      gradeResult.reward.medicine === 0
+      reward.medicine === 0
         ? []
         : [
             {
               key: "medicine",
               label: "医术",
-              delta: gradeResult.reward.medicine,
+              delta: reward.medicine,
             },
           ],
     fatigueRecovery: 0,
@@ -343,24 +499,77 @@ export function settleMedicineCompoundingPlayable(input: {
     inventoryChange: [],
     timeCost: durationDays,
   };
+  const playerCharacter = input.characterDefinitions.find(
+    (characterDefinition) => characterDefinition.id === input.playerCharacterId
+  );
+  assertExists(
+    playerCharacter,
+    `Player character not found for id "${input.playerCharacterId}" in medicine compounding settlement.`
+  );
   const houseId = input.state.core.world.currentHouseId ?? "house.unknown";
   const { medicineHouseDoctorProfile } = getMedicineHouseContentDefaults();
-  const mutation = applyMedicineHouseOutcome(
-    input.state.core,
-    input.characterDefinitions,
+  const characterStatusById = mergeCharacterStatusById(
+    {},
     input.playerCharacterId,
-    houseId,
-    medicineHouseDoctorProfile.actorId,
-    outcome
+    {
+      stamina: Math.max(0, playerCharacter.stamina - runtimeConfig.staminaCost),
+    }
   );
-  const staminaMutation = spendPlayerStamina(
-    mutation.state,
-    mutation.characterDefinitions,
-    input.playerCharacterId
-  );
+  const effects: Effect[] = [
+    ...(outcome.relationshipChange === 0
+      ? []
+      : [
+          {
+            type: "setVariable" as const,
+            key: getMedicineHouseFavorabilityVariableKey(
+              houseId,
+              medicineHouseDoctorProfile.actorId
+            ),
+            value:
+              readNumericVariable(
+                input.state.core,
+                getMedicineHouseFavorabilityVariableKey(
+                  houseId,
+                  medicineHouseDoctorProfile.actorId
+                ),
+                0
+              ) + outcome.relationshipChange,
+          },
+        ]),
+    ...outcome.attributeChange.flatMap((attributeChange) =>
+      attributeChange.delta === 0
+        ? []
+        : [
+            {
+              type: "mutateCharacterNumericAttribute" as const,
+              characterId: input.playerCharacterId,
+              semanticKey: attributeChange.key,
+              operation:
+                attributeChange.delta >= 0
+                  ? ("add" as const)
+                  : ("subtract" as const),
+              value: Math.abs(attributeChange.delta),
+            },
+          ]
+    ),
+    ...(outcome.timeCost === 0
+      ? []
+      : [
+          {
+            type: "setVariable" as const,
+            key: getMedicineHouseTimeVariableKey(houseId),
+            value:
+              readNumericVariable(
+                input.state.core,
+                getMedicineHouseTimeVariableKey(houseId),
+                0
+              ) + outcome.timeCost,
+          },
+        ]),
+  ];
   const rewardLines = [
     ...formatOutcomeSummary(outcome),
-    `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
+    `体力 -${runtimeConfig.staminaCost}`,
   ];
   const nextSessionState: MedicineHouseSessionState = {
     ...sessionState,
@@ -372,32 +581,41 @@ export function settleMedicineCompoundingPlayable(input: {
       rewardLines,
     },
   };
+  const settlement: MedicineCompoundingSettlement = {
+    outcome: gradeResult.grade === "D" ? "failure" : "success",
+    factStatus: gradeResult.grade === "D" ? "failed" : "completed",
+    grade: gradeResult.grade,
+    reward,
+    durationDays,
+    summaryLines: gradeResult.summaryLines,
+    rewardLines,
+    effects,
+    characterStatusById,
+  };
 
   return {
     state: {
       ...withSessionState(
-        {
-          ...input.state,
-          core: staminaMutation.state,
-        },
+        input.state,
         nextSessionState
       ),
       core: {
-        ...staminaMutation.state,
+        ...input.state.core,
         ui: {
-          ...staminaMutation.state.ui,
+          ...input.state.core.ui,
           houseSession: {
             moduleId: "medicine-house",
             state: nextSessionState,
           },
         },
         runtime: {
-          ...staminaMutation.state.runtime,
+          ...input.state.core.runtime,
           playableSession: null,
         },
       },
     },
-    characterDefinitions: staminaMutation.characterDefinitions,
+    characterDefinitions: input.characterDefinitions,
+    settlement,
   };
 }
 

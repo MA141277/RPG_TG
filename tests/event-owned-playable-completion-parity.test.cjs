@@ -11,13 +11,21 @@ const {
   createInitialState,
 } = require("../.test-dist/application/state/create-initial-state.js");
 const {
+  startStoryEventById,
   continueStoryFromSourceEvent,
   triggerStoryEvents,
 } = require("../.test-dist/application/story/story-runtime.js");
 const {
   createPlayableActionRequest,
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+  resetDefaultPlayableRuntimeRegistries,
   runPlayableRuntime,
 } = require("../.test-dist/core/runtime/playable-runtime.js");
+const {
+  createEmptyModRuntimeState,
+  createLoadedModFromManifest,
+  runModRuntime,
+} = require("../.test-dist/core/mods/mod-runtime.js");
 const {
   stateSyncCoreSeam,
 } = require("../.test-dist/core/runtime/state-sync-core-seam.js");
@@ -57,6 +65,121 @@ function createRuntimeState(gameState) {
     modalState: null,
   });
 }
+
+test(
+  "routed playable completion starts the authored target event before any follow-up continuation",
+  () => {
+    const state = createBaseState();
+    const storyContent = {
+      eventDefinitionsById: {
+        "event.route.source": {
+          id: "event.route.source",
+          chapterId: "chapter.prototype",
+          name: "Route Source",
+          occurrence: "repeatable",
+          dialogueId: "",
+        },
+        "event.route.settlement": {
+          id: "event.route.settlement",
+          chapterId: "chapter.prototype",
+          name: "Route Settlement",
+          occurrence: "repeatable",
+          type: "settlement",
+          dialogueId: "",
+          settlementId: "settlement.route.reward",
+          nextEventId: "event.route.after",
+        },
+        "event.route.after": {
+          id: "event.route.after",
+          chapterId: "chapter.prototype",
+          name: "After Route Settlement",
+          occurrence: "repeatable",
+          dialogueId: "",
+        },
+      },
+      dialogueDefinitionsById: {},
+      settlementDefinitionsById: {
+        "settlement.route.reward": {
+          id: "settlement.route.reward",
+          title: "Route Reward",
+          contents: [
+            {
+              targetFamily: "person",
+              targetId: PLAYER_CHARACTER_ID,
+              attributeKey: "stamina",
+              attributeType: "number",
+              operation: "add",
+              value: 7,
+            },
+          ],
+        },
+      },
+    };
+    const previousPlayableSession = {
+      sessionId: "session.route",
+      playableId: "flow.route",
+      integrationId: "playable.flow.route",
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "building.temple",
+        returnPolicy: "resume-owner",
+        sessionToken: "event.route.source",
+      },
+      status: "completed",
+    };
+
+    const continued = applyEventOwnedPlayableCompletion({
+      state,
+      characterDefinitions: prototypeCharacters,
+      previousPlayableSession,
+      settlement: {
+        integrationId: "playable.flow.route",
+        outcome: "success",
+        factResult: { status: "completed" },
+        followUpEventId: "event.route.settlement",
+        handoff: {
+          type: "resume-owner",
+          ownerKind: "house",
+          ownerId: "building.temple",
+          sessionToken: "event.route.source",
+        },
+        effects: [],
+      },
+      startFromEventId: ({ eventId, state: currentState, characterDefinitions }) =>
+        startStoryEventById(
+          {
+            state: currentState,
+            characterDefinitions,
+          },
+          storyContent,
+          eventId
+        ),
+      continueFromSourceEvent: ({ sourceEventId, state: currentState, characterDefinitions }) =>
+        continueStoryFromSourceEvent(
+          {
+            state: currentState,
+            characterDefinitions,
+          },
+          storyContent,
+          sourceEventId
+        ),
+    });
+
+    assert.equal(continued.handled, true);
+    assert.equal(
+      continued.state.runtime.eventHistory["event.route.settlement"]?.firedCount,
+      1
+    );
+    assert.equal(
+      continued.state.runtime.eventHistory["event.route.after"]?.firedCount,
+      1
+    );
+    const player = continued.characterDefinitions.find(
+      (character) => character.id === PLAYER_CHARACTER_ID
+    );
+    assert.equal(player?.stamina, 107);
+  }
+);
 
 test(
   "story-triggered event-owned playable completion continues through the authored follow-up event",
@@ -194,6 +317,271 @@ test(
       "dialogue.story.after-battle"
     );
     assert.equal(continued.state.ui.currentView, "dialogue");
+  }
+);
+
+test(
+  "story-triggered playable launch preserves the authored integration id instead of collapsing to the builtin default",
+  async () => {
+    const state = createBaseState();
+    state.world.currentCityId = "city.kulan";
+    state.world.currentHouseId = "building.temple";
+    state.ui.currentView = "house";
+
+    const integrationId = "playable.story-battle.instance.training.battle";
+    const activationResult = await runModRuntime({
+      state: createEmptyModRuntimeState(),
+      request: {
+        type: "mod.activate-loaded",
+        requestId: "test:story-battle-instance-launch",
+        loadedMod: createLoadedModFromManifest({
+          source: { kind: "builtin", modId: "mod.test.story-battle-instance-launch" },
+          manifest: {
+            id: "mod.test.story-battle-instance-launch",
+            schemaVersion: "1",
+            version: "1.0.0",
+            title: "Story Battle Instance Launch Test",
+            entryContentPackIds: ["pack.test.story-battle-instance-launch"],
+            gameplayContributions: {
+              playableIntegrations: [integrationId],
+            },
+          },
+          rawContent: {
+            id: "pack.test.story-battle-instance-launch",
+            title: "Story Battle Instance Launch Test Pack",
+            playableIntegrations: [
+              {
+                integrationId,
+                playableId: "story-battle",
+                ownerDefaults: {
+                  ownerKind: "house",
+                  ownerId: "building.temple",
+                  returnPolicy: "reenter-owner",
+                },
+                trigger: {
+                  triggerId: "trigger.playable.story-battle.instance.training.battle",
+                  ownerKind: "dialogue",
+                  trigger: "event-destination",
+                },
+                outcomeConfig: {},
+              },
+            ],
+          },
+        }),
+      },
+      context: {
+        allowedCapabilities: [],
+      },
+    });
+    assert.equal(activationResult.ok, true);
+    if (!activationResult.ok) {
+      return;
+    }
+
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+      activationResult.activatedMod
+    );
+
+    try {
+    const storyContent = {
+      eventDefinitionsById: {
+        "event.story.battle": {
+          id: "event.story.battle",
+          chapterId: "chapter.prototype",
+          name: "Story Battle",
+          occurrence: "repeatable",
+          dialogueId: "",
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "story-battle",
+              integrationId,
+              ownerContext: {
+                ownerKind: "house",
+                ownerId: "building.temple",
+                returnPolicy: "reenter-owner",
+              },
+              payload: {
+                completedFlagKey: "battle.completed",
+                winFlagKey: "battle.won",
+                battleIdVariableKey: "battle.id",
+                resultVariableKey: "battle.result",
+                enterHouseId: "building.temple",
+              },
+            },
+          ],
+        },
+      },
+      eventBindingsById: {
+        "binding.story.battle": {
+          id: "binding.story.battle",
+          eventId: "event.story.battle",
+          owner: { family: "building", id: "building.temple" },
+          trigger: { timing: "after", action: "building-enter" },
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {},
+      textEntriesById: {},
+    };
+
+    const launched = triggerStoryEvents(
+      {
+        state,
+        characterDefinitions: prototypeCharacters,
+      },
+      storyContent,
+      {
+        timing: "house-enter",
+        cityId: "city.kulan",
+        houseId: "building.temple",
+      }
+    );
+
+    assert.equal(
+      launched.state.runtime.playableSession?.integrationId,
+      integrationId
+    );
+    } finally {
+      resetDefaultPlayableRuntimeRegistries();
+    }
+  }
+);
+
+test(
+  "story-battle runtime preserves the authored integration id when a non-terminal action keeps the battle open",
+  async () => {
+    const state = createBaseState();
+    state.world.currentCityId = "city.kulan";
+    state.world.currentHouseId = "building.temple";
+    state.ui.currentView = "house";
+
+    const integrationId = "playable.story-battle.instance.training.battle";
+    const activationResult = await runModRuntime({
+      state: createEmptyModRuntimeState(),
+      request: {
+        type: "mod.activate-loaded",
+        requestId: "test:story-battle-instance-runtime",
+        loadedMod: createLoadedModFromManifest({
+          source: { kind: "builtin", modId: "mod.test.story-battle-instance-runtime" },
+          manifest: {
+            id: "mod.test.story-battle-instance-runtime",
+            schemaVersion: "1",
+            version: "1.0.0",
+            title: "Story Battle Instance Runtime Test",
+            entryContentPackIds: ["pack.test.story-battle-instance-runtime"],
+            gameplayContributions: {
+              playableIntegrations: [integrationId],
+            },
+          },
+          rawContent: {
+            id: "pack.test.story-battle-instance-runtime",
+            title: "Story Battle Instance Runtime Test Pack",
+            playableIntegrations: [
+              {
+                integrationId,
+                playableId: "story-battle",
+                ownerDefaults: {
+                  ownerKind: "house",
+                  ownerId: "building.temple",
+                  returnPolicy: "reenter-owner",
+                },
+                trigger: {
+                  triggerId: "trigger.playable.story-battle.instance.training.battle",
+                  ownerKind: "dialogue",
+                  trigger: "event-destination",
+                },
+                outcomeConfig: {},
+              },
+            ],
+          },
+        }),
+      },
+      context: {
+        allowedCapabilities: [],
+      },
+    });
+    assert.equal(activationResult.ok, true);
+    if (!activationResult.ok) {
+      return;
+    }
+
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+      activationResult.activatedMod
+    );
+
+    try {
+    const storyContent = {
+      eventDefinitionsById: {
+        "event.story.battle": {
+          id: "event.story.battle",
+          chapterId: "chapter.prototype",
+          name: "Story Battle",
+          occurrence: "repeatable",
+          dialogueId: "",
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "story-battle",
+              integrationId,
+              ownerContext: {
+                ownerKind: "house",
+                ownerId: "building.temple",
+                returnPolicy: "reenter-owner",
+              },
+              payload: {
+                completedFlagKey: "battle.completed",
+                winFlagKey: "battle.won",
+                battleIdVariableKey: "battle.id",
+                resultVariableKey: "battle.result",
+                enterHouseId: "building.temple",
+              },
+            },
+          ],
+        },
+      },
+      eventBindingsById: {
+        "binding.story.battle": {
+          id: "binding.story.battle",
+          eventId: "event.story.battle",
+          owner: { family: "building", id: "building.temple" },
+          trigger: { timing: "after", action: "building-enter" },
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {},
+      textEntriesById: {},
+    };
+
+    const launched = triggerStoryEvents(
+      {
+        state,
+        characterDefinitions: prototypeCharacters,
+      },
+      storyContent,
+      {
+        timing: "house-enter",
+        cityId: "city.kulan",
+        houseId: "building.temple",
+      }
+    );
+
+    const runtimeResult = runPlayableRuntime({
+      state: createRuntimeState(launched.state),
+      request: createPlayableActionRequest("story-battle", "battle-action", {
+        battleActionId: "ignored-action",
+      }),
+      characterDefinitions: launched.characterDefinitions,
+      textEntriesById: storyContent.textEntriesById,
+    });
+
+    assert.equal(
+      runtimeResult.state.core.runtime.playableSession?.integrationId,
+      integrationId
+    );
+    } finally {
+      resetDefaultPlayableRuntimeRegistries();
+    }
   }
 );
 

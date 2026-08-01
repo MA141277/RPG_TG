@@ -96,7 +96,24 @@ export function runDialogueUntilPause(
       return finishDialogue(nextState, nextCharacterDefinitions);
     }
 
-    const currentNode = activeDialogue.nodes[nextState.dialogue.cursor] ?? null;
+    if (activeDialogue.screen != null) {
+      return {
+        state: {
+          ...nextState,
+          dialogue: {
+            ...nextState.dialogue,
+            status:
+              activeDialogue.screen.mode === "choice"
+                ? "waiting-choice"
+                : "playing",
+          },
+        },
+        characterDefinitions: nextCharacterDefinitions,
+        currentNode: null,
+      };
+    }
+
+    const currentNode = activeDialogue.nodes?.[nextState.dialogue.cursor] ?? null;
     if (currentNode == null) {
       const continuedState = continueDialogueEvent(
         nextState,
@@ -220,6 +237,43 @@ export function advanceDialogue(
   state: GameState,
   context: DialogueRunnerContext
 ): DialogueStepResult {
+  const activeDialogueId = state.dialogue.activeDialogueId;
+  const activeDialogue =
+    activeDialogueId == null
+      ? null
+      : context.dialogueDefinitionsById[activeDialogueId] ?? null;
+
+  if (activeDialogue?.screen != null) {
+    if (activeDialogue.screen.mode === "choice") {
+      return {
+        state: {
+          ...state,
+          dialogue: {
+            ...state.dialogue,
+            status: "waiting-choice",
+          },
+        },
+        characterDefinitions: context.characterDefinitions,
+        currentNode: null,
+      };
+    }
+
+    const continuation = continueToEvent({
+      state,
+      eventDefinitionsById: context.eventDefinitionsById,
+      sourceEventId: state.dialogue.activeEventId,
+      targetEventId: activeDialogue.screen.nextEventId,
+      visitedEventIds: createEventContinuationTracker([
+        state.dialogue.activeEventId,
+      ]),
+    });
+    if (continuation == null) {
+      return finishDialogue(state, context.characterDefinitions);
+    }
+
+    return runDialogueUntilPause(continuation.state, context);
+  }
+
   return runDialogueUntilPause(incrementDialogueCursor(state), context);
 }
 

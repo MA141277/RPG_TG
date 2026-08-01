@@ -20,6 +20,7 @@ import type {
   MenuResourceDefinition,
 } from "../../domain/menu";
 import type { PlayableIntegrationDefinition } from "../../core/contracts/playable-runtime";
+import { createDialogueScreenViewModel } from "../../core/runtime/dialogue-screen-runtime";
 import { materializeBuildingDefinitions } from "../../domain/building-status";
 import { materializeCityDefinitions } from "../../domain/city-status";
 import type { AppPresenterStageOutput } from "./presenter-output";
@@ -47,6 +48,17 @@ export type StagePresenterInput = {
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
 };
+
+function selectActiveDialogueDefinition(
+  input: StagePresenterInput
+): RuntimeDialogueDefinition | null {
+  const activeDialogueId = input.appState.gameState.dialogue.activeDialogueId;
+  if (activeDialogueId == null) {
+    return null;
+  }
+
+  return input.dialogueDefinitionsById?.[activeDialogueId] ?? null;
+}
 
 export function createStagePresenterOutput(
   input: StagePresenterInput
@@ -168,6 +180,17 @@ export function createStagePresenterOutput(
   }
 
   if (currentView === "dialogue") {
+    const activeDialogueDefinition = selectActiveDialogueDefinition(input);
+    const dialogueScreenViewModel =
+      activeDialogueDefinition?.screen == null
+        ? null
+        : createDialogueScreenViewModel({
+            dialogue: activeDialogueDefinition,
+            characterDefinitions: input.appState.characterDefinitions,
+            ...(input.textEntriesById == null
+              ? {}
+              : { textEntriesById: input.textEntriesById }),
+          });
     const cityUnderlay =
       input.appState.gameState.world.currentCityId != null &&
       input.appState.gameState.world.currentHouseId == null
@@ -211,14 +234,21 @@ export function createStagePresenterOutput(
 
     return {
       type: "dialogue",
-      currentDialogueNode: getCurrentDialogueNode(
-        input.appState.gameState,
-        input.dialogueDefinitionsById ?? {}
-      ),
-      currentDialogueChoiceOptions: getCurrentDialogueChoiceOptions(
-        input.appState.gameState,
-        input.dialogueDefinitionsById ?? {}
-      ),
+      legacyDialogueNode:
+        dialogueScreenViewModel == null
+          ? getCurrentDialogueNode(
+              input.appState.gameState,
+              input.dialogueDefinitionsById ?? {}
+            )
+          : null,
+      legacyDialogueChoiceOptions:
+        dialogueScreenViewModel == null
+          ? getCurrentDialogueChoiceOptions(
+              input.appState.gameState,
+              input.dialogueDefinitionsById ?? {}
+            )
+          : [],
+      dialogueScreenViewModel,
       ...(cityUnderlay == null ? {} : { cityUnderlay }),
       ...(buildingUnderlay == null || buildingUnderlay.type !== "building"
         ? {}

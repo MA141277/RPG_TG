@@ -988,7 +988,7 @@ function resolveMenuEntryMinigamePrototypeDestination(
     return null;
   }
   const playableDefinition = builtinPlayableDefinitionRegistry.get(playableId);
-  if (playableDefinition?.family !== "minigame") {
+  if (playableDefinition == null) {
     return null;
   }
 

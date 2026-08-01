@@ -1,7 +1,5 @@
 import type { Effect } from "./effect";
 
-export type PlayableFamily = "minigame" | "battle" | "flow";
-
 export type PlayableId = string & {};
 
 export type PlayableIntegrationId = string & {};
@@ -77,7 +75,6 @@ export type PlayableOutcomeConfig = {
 
 export type PlayableDefinition = {
   id: PlayableId;
-  family: PlayableFamily;
   commandPrefix: string;
 };
 
@@ -99,7 +96,6 @@ export type PlayableLaunchInput = {
 export type PlayableLaunchRequest = {
   playableId: PlayableId;
   integrationId: PlayableIntegrationId;
-  family: PlayableFamily;
   ownerContext: PlayableOwnerContext;
   payload?: Record<string, unknown> | undefined;
 };
@@ -114,7 +110,6 @@ export type ActivePlayableSession = {
   sessionId: string;
   playableId: PlayableId;
   integrationId: PlayableIntegrationId;
-  family: PlayableFamily;
   ownerContext: PlayableOwnerContext;
   status: "active" | "completed" | "cancelled";
   state?: Record<string, unknown> | undefined;
@@ -122,7 +117,6 @@ export type ActivePlayableSession = {
 
 export type PlayablePresenterModel = {
   playableId: PlayableId;
-  family: PlayableFamily;
   layout: "compact" | "panel" | "battlefield";
   title: string;
   summaryLines: string[];

@@ -49,6 +49,27 @@ export type RuntimeDialogueChoiceOption = {
   conditions?: DialogueCondition[];
 };
 
+export type RuntimeDialogueCastMember = {
+  characterId: CharacterId;
+  side: DialogueSide;
+};
+
+export type RuntimeDialogueScreenDefinition =
+  | {
+      mode: "linear";
+      textId: string;
+      speakerCharacterId: CharacterId;
+      cast: RuntimeDialogueCastMember[];
+      nextEventId?: EventId;
+    }
+  | {
+      mode: "choice";
+      textId: string;
+      speakerCharacterId: CharacterId;
+      cast: RuntimeDialogueCastMember[];
+      options: RuntimeDialogueChoiceOption[];
+    };
+
 export type RuntimeDialogueNode =
   | {
       type: "background";
@@ -104,5 +125,6 @@ export type RuntimeDialogueNode =
 export type RuntimeDialogueDefinition = {
   id: DialogueId;
   name: string;
-  nodes: RuntimeDialogueNode[];
+  nodes?: RuntimeDialogueNode[];
+  screen?: RuntimeDialogueScreenDefinition;
 };

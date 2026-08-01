@@ -1,0 +1,18 @@
+[
+  {
+    "id": "activity-qte",
+    "commandPrefix": "interactive.activity-qte."
+  },
+  {
+    "id": "temple-copy-scripture",
+    "commandPrefix": "interactive.temple-copy-scripture."
+  },
+  {
+    "id": "grain-accounting",
+    "commandPrefix": "playable.grain-accounting."
+  },
+  {
+    "id": "medicine-compounding",
+    "commandPrefix": "playable.medicine-compounding."
+  }
+]

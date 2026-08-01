@@ -189,7 +189,10 @@ export function toInteractiveRuntimeRequest(
 function toInteractiveRuntimeKind(
   playableId: string | undefined
 ): InteractiveRuntimeKind | null {
-  if (playableId === "activity-qte") {
+  if (
+    playableId === "activity-qte" ||
+    playableId === "temple-copy-scripture"
+  ) {
     return "activity-qte";
   }
 
@@ -221,7 +224,6 @@ function createInteractiveSession(
       sessionId: `playable.${request.playableLaunch.playableId}`,
       playableId: request.playableLaunch.playableId,
       integrationId: request.playableLaunch.integrationId,
-      family: request.playableLaunch.family,
       ownerContext: request.playableLaunch.ownerContext,
       status: "active",
     },
@@ -252,7 +254,6 @@ function getActiveInteractiveSession(
         sessionId: "playable.city-begging",
         playableId: "city-begging",
         integrationId: "playable.city-begging.external.default",
-        family: "minigame",
         ownerContext: {
           ownerKind: "external",
           ownerId: null,
@@ -276,14 +277,13 @@ function getActiveInteractiveSession(
       kind,
       sessionId: createInteractiveSessionId(kind),
       source,
-      playable: createInteractivePlayableSession({
-        playableId: kind,
+      playable: state.core.runtime.playableSession ?? createInteractivePlayableSession({
+        playableId: "activity-qte",
         source,
       }) ?? {
         sessionId: "playable.activity-qte",
         playableId: "activity-qte",
         integrationId: "playable.activity-qte.dialogue.default",
-        family: "minigame",
         ownerContext: {
           ownerKind: "house",
           ownerId: source.houseId,
@@ -310,7 +310,6 @@ function getActiveInteractiveSession(
         sessionId: "playable.story-battle",
         playableId: "story-battle",
         integrationId: "playable.story-battle.dialogue.default",
-        family: "battle",
         ownerContext: {
           ownerKind: "house",
           ownerId: source.houseId,
