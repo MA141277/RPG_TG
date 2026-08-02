@@ -145,7 +145,10 @@ function validateMechanicArtifactPaths({ repoRoot, filePath, artifact, errors })
   }
 
   for (const key of Object.keys(artifactPaths)) {
-    if (!ALLOWED_PLAYABLE_PATH_KEYS.has(key)) {
+    if (
+      !ALLOWED_PLAYABLE_PATH_KEYS.has(key) &&
+      !LEGACY_PLAYABLE_PATH_KEYS.has(key)
+    ) {
       errors.push(`${fileLabel}: unexpected playable artifact path key ${key}.`);
     }
   }
@@ -312,7 +315,7 @@ function isNonEmptyString(value) {
 }
 
 function isValidPlayableId(value) {
-  return isNonEmptyString(value) && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+  return isNonEmptyString(value) && /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(value);
 }
 
 function toPosix(value) {

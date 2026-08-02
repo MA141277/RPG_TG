@@ -39123,6 +39123,49 @@ test("child 34 playable scaffold rejects ids that would generate invalid TypeScr
   );
 });
 
+test("child 34 playable integration scaffold rejects ids that would generate invalid TypeScript identifiers", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-playable-integration-invalid-id-")
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-playable-integration.mjs"),
+      "--integration-id",
+      "playable.1v1-battle.scene.default",
+      "--playable-id",
+      "1v1-battle",
+      "--owner-kind",
+      "scene",
+      "--owner-id",
+      "scene.1v1-battle",
+      "--return-policy",
+      "resume-owner",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Missing or invalid required arguments/i);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        outputRoot,
+        "src",
+        "content",
+        "playable-integrations",
+        "playable.1v1-battle.scene.default.integration.json"
+      )
+    ),
+    false
+  );
+});
+
 test("child 34 playable validator accepts scaffolded artifacts and rejects missing outcome config", () => {
   const { spawnSync } = require("node:child_process");
   const os = require("node:os");
@@ -39233,6 +39276,10 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
   );
   assert.equal(stalePathsRun.status, 1);
   assert.match(stalePathsRun.stderr, /legacy playable artifact path key domainFile/i);
+  assert.doesNotMatch(
+    stalePathsRun.stderr,
+    /unexpected playable artifact path key domainFile/i
+  );
 
   stalePathsArtifact.paths = {
     manifestFile: "src/playables/validator-playable/manifest.ts",
@@ -39297,6 +39344,71 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
   assert.match(
     extraKeyRun.stderr,
     /unexpected playable artifact path key arbitraryExtraKey/i
+  );
+
+  const invalidPlayableId = "1v1-battle";
+  const invalidPlayableArtifactPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "playables",
+    `${invalidPlayableId}.playable.json`
+  );
+  const invalidPlayablePackageRoot = path.join(
+    outputRoot,
+    "src",
+    "playables",
+    invalidPlayableId
+  );
+  fs.mkdirSync(invalidPlayablePackageRoot, { recursive: true });
+  for (const [fileName, contents] of [
+    ["manifest.ts", "export const manifest = {};\n"],
+    ["contract.ts", "export type Placeholder = Record<string, never>;\n"],
+    ["session.ts", "export function create1v1BattleSession() { return {}; }\n"],
+    ["reducer.ts", "export function reduce1v1Battle(session) { return session; }\n"],
+    ["presenter.ts", "export function present1v1Battle() { return {}; }\n"],
+    ["settlement.ts", "export function complete1v1Battle() { return {}; }\n"],
+    ["index.ts", "export {};\n"],
+  ]) {
+    fs.writeFileSync(path.join(invalidPlayablePackageRoot, fileName), contents);
+  }
+  fs.writeFileSync(
+    invalidPlayableArtifactPath,
+    `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        playableId: invalidPlayableId,
+        title: "1v1 Battle",
+        kind: "builtin",
+        paths: {
+          manifestFile: `src/playables/${invalidPlayableId}/manifest.ts`,
+          contractFile: `src/playables/${invalidPlayableId}/contract.ts`,
+          sessionFile: `src/playables/${invalidPlayableId}/session.ts`,
+          reducerFile: `src/playables/${invalidPlayableId}/reducer.ts`,
+          presenterFile: `src/playables/${invalidPlayableId}/presenter.ts`,
+          settlementFile: `src/playables/${invalidPlayableId}/settlement.ts`,
+          indexFile: `src/playables/${invalidPlayableId}/index.ts`,
+          assetDirectory: `src/assets/playables/${invalidPlayableId}`,
+        },
+      },
+      null,
+      2
+    )}\n`
+  );
+
+  const invalidPlayableIdRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-playables.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(invalidPlayableIdRun.status, 1);
+  assert.match(
+    invalidPlayableIdRun.stderr,
+    /1v1-battle\.playable\.json: playableId must be kebab-case/i
   );
 
   const invalidIntegrationPath = path.join(
