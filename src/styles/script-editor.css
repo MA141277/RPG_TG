@@ -1673,6 +1673,73 @@
   gap: 18px;
 }
 
+.c-script-editor-settlement-panel {
+  gap: 12px;
+  padding: 14px;
+  align-content: start;
+}
+
+.c-script-editor-settlement-panel > .c-script-editor-form-grid {
+  gap: 10px 12px;
+  align-items: start;
+}
+
+.c-script-editor-settlement-panel .c-script-editor-form-field {
+  gap: 5px;
+  font-size: 13px;
+}
+
+.c-script-editor-settlement-panel .c-script-editor-form-field__input {
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+.c-script-editor-settlement-content-list {
+  gap: 10px;
+  align-content: start;
+}
+
+.c-script-editor-settlement-content-list > .c-script-editor-narrative-panel__header {
+  gap: 8px;
+}
+
+.c-script-editor-settlement-content-list > .c-script-editor-narrative-panel__header > div {
+  display: grid;
+  gap: 0;
+}
+
+.c-script-editor-settlement-content-list > .c-script-editor-narrative-panel__header .c-script-editor-editor-card__eyebrow {
+  margin: 0 0 2px;
+}
+
+.c-script-editor-settlement-content-card {
+  position: relative;
+  gap: 10px;
+  padding: 16px 12px 12px;
+  align-content: start;
+}
+
+.c-script-editor-settlement-content-card .c-script-editor-form-grid {
+  gap: 10px 12px;
+  align-items: start;
+}
+
+.c-script-editor-settlement-content-card .c-script-editor-form-field {
+  gap: 5px;
+  font-size: 13px;
+}
+
+.c-script-editor-settlement-content-card .c-script-editor-form-field__input {
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+.c-script-editor-settlement-content-card__remove {
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+}
+
 .c-script-editor-stage-configuration-editor,
 .c-script-editor-stage-configuration-panel,
 .c-script-editor-stage-configuration-help__body {
@@ -1741,6 +1808,25 @@
 .c-script-editor-minigame-list__route {
   display: grid;
   gap: 16px;
+  align-content: start;
+}
+
+.c-script-editor-minigame-list--paged {
+  align-content: start;
+  min-height: 0;
+}
+
+.c-script-editor-minigame-panel > .c-script-editor-narrative-panel__header {
+  gap: 8px;
+}
+
+.c-script-editor-minigame-panel > .c-script-editor-narrative-panel__header > div {
+  display: grid;
+  gap: 0;
+}
+
+.c-script-editor-minigame-panel > .c-script-editor-narrative-panel__header .c-script-editor-editor-card__eyebrow {
+  margin: 0 0 2px;
 }
 
 .c-script-editor-minigame-panel,
@@ -1749,6 +1835,21 @@
   border: 1px solid rgba(145, 111, 72, 0.12);
   border-radius: 18px;
   background: rgba(255, 248, 238, 0.76);
+}
+
+.c-script-editor-minigame-list__route {
+  position: relative;
+  padding: 18px 18px 18px 18px;
+}
+
+.c-script-editor-minigame-list__route:has(.c-script-editor-minigame-list__remove) {
+  padding-top: 16px;
+}
+
+.c-script-editor-minigame-list__remove {
+  top: 8px;
+  right: 8px;
+  z-index: 1;
 }
 
 .c-script-editor-minigame-list__item {

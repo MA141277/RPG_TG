@@ -438,6 +438,7 @@ const characterSelectLayoutBindings = [
 ];
 
 const SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE = 6;
+const SCRIPT_EDITOR_MINIGAME_CARD_PAGE_SIZE = 3;
 const SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE = 5;
 const SCRIPT_EDITOR_LOCATION_MENU_ENTRY_PAGE_SIZE = 5;
 const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE = 6;
@@ -500,6 +501,10 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "resetScriptEditorRecordListPages",
   "resetScriptEditorRecordSearch",
   "resetScriptEditorPersonAttributePage",
+  "isScriptEditorCustomRecordListPageKey",
+  "getScriptEditorMinigameCardPageKey",
+  "getScriptEditorRecordListPageSize",
+  "resolveScriptEditorRecordListPageRecords",
   "setScriptEditorRecordListPage",
   "syncScriptEditorRecordListPageToRecord",
   "getScriptEditorRecordSearchValue",
@@ -1700,6 +1705,9 @@ class MainUiFlowScriptEditorModule {
   }
 
   getScriptEditorRecordListPage(family) {
+    if (this.isScriptEditorCustomRecordListPageKey(family)) {
+      return this.scriptEditorRecordListPages[family] ?? 1;
+    }
     if (family === SCRIPT_EDITOR_STAGE_CONFIGURATION_FAMILY) {
       return this.scriptEditorRecordListPages[family] ?? 1;
     }
@@ -1742,18 +1750,63 @@ class MainUiFlowScriptEditorModule {
   resetScriptEditorPersonAttributePage() {
   }
 
-  setScriptEditorRecordListPage(family, nextPage) {
+  isScriptEditorCustomRecordListPageKey(pageKey) {
+    return (
+      typeof pageKey === "string" &&
+      (pageKey.startsWith("minigame-config:") ||
+        pageKey.startsWith("minigame-settlement:"))
+    );
+  }
+
+  getScriptEditorMinigameCardPageKey(section, minigameId) {
+    if (typeof minigameId !== "string" || minigameId.length === 0) {
+      return `minigame-${section}:__missing__`;
+    }
+    return `minigame-${section}:${minigameId}`;
+  }
+
+  getScriptEditorRecordListPageSize(pageKey) {
+    if (this.isScriptEditorCustomRecordListPageKey(pageKey)) {
+      return SCRIPT_EDITOR_MINIGAME_CARD_PAGE_SIZE;
+    }
+
+    return SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE;
+  }
+
+  resolveScriptEditorRecordListPageRecords(pageKey) {
     if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    if (this.isScriptEditorCustomRecordListPageKey(pageKey)) {
+      const minigame = this.getSelectedScriptEditorMinigame();
+      if (minigame == null) {
+        return [];
+      }
+      if (pageKey === this.getScriptEditorMinigameCardPageKey("config", minigame.id)) {
+        return minigame.configEntries ?? [];
+      }
+      if (
+        pageKey === this.getScriptEditorMinigameCardPageKey("settlement", minigame.id)
+      ) {
+        return minigame.settlementRoutes ?? [];
+      }
+      return [];
+    }
+
+    return this.getScriptEditorWorkflowRecordsForFamily(pageKey);
+  }
+
+  setScriptEditorRecordListPage(family, nextPage, records = null) {
+    if (this.scriptEditorProject == null && !this.isScriptEditorCustomRecordListPageKey(family)) {
       return 1;
     }
 
-    const records = this.getScriptEditorWorkflowRecordsForFamily(family);
-    if (records.length === 0 && family === "storyPack") {
-      return 1;
-    }
+    const pageSize = this.getScriptEditorRecordListPageSize(family);
+    const resolvedRecords = records ?? this.resolveScriptEditorRecordListPageRecords(family);
     const totalPages = Math.max(
       1,
-      Math.ceil(records.length / SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE)
+      Math.ceil(resolvedRecords.length / pageSize)
     );
     const resolvedPage = Math.min(
       Math.max(Number.isInteger(nextPage) ? nextPage : 1, 1),
@@ -1773,11 +1826,9 @@ class MainUiFlowScriptEditorModule {
       return 1;
     }
 
+    const pageSize = this.getScriptEditorRecordListPageSize(family);
     const resolvedRecords =
-      records ?? this.getScriptEditorWorkflowRecordsForFamily(family);
-    if (resolvedRecords.length === 0 && family === "storyPack") {
-      return 1;
-    }
+      records ?? this.resolveScriptEditorRecordListPageRecords(family);
     const recordIndex = resolvedRecords.findIndex((record) => record.id === recordId);
 
     if (recordIndex < 0) {
@@ -1786,7 +1837,7 @@ class MainUiFlowScriptEditorModule {
 
     return this.setScriptEditorRecordListPage(
       family,
-      Math.floor(recordIndex / SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE) + 1
+      Math.floor(recordIndex / pageSize) + 1
     );
   }
 
@@ -2202,15 +2253,16 @@ class MainUiFlowScriptEditorModule {
   }
 
   getScriptEditorPaginatedRecordListState(family, records) {
+    const pageSize = this.getScriptEditorRecordListPageSize(family);
     const totalPages = Math.max(
       1,
-      Math.ceil(records.length / SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE)
+      Math.ceil(records.length / pageSize)
     );
     const currentPage = Math.min(
       Math.max(this.getScriptEditorRecordListPage(family), 1),
       totalPages
     );
-    const startIndex = (currentPage - 1) * SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE;
+    const startIndex = (currentPage - 1) * pageSize;
 
     if (this.getScriptEditorRecordListPage(family) !== currentPage) {
       this.scriptEditorRecordListPages = {
@@ -2222,20 +2274,31 @@ class MainUiFlowScriptEditorModule {
     return {
       currentPage,
       totalPages,
+      startIndex,
       visibleRecords: records.slice(
         startIndex,
-        startIndex + SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE
+        startIndex + pageSize
       ),
     };
   }
 
-  renderScriptEditorRecordPagination(family, currentPage, totalPages) {
+  renderScriptEditorRecordPagination(family, currentPage, totalPages, options = {}) {
+    const ariaLabel =
+      typeof options.ariaLabel === "string" && options.ariaLabel.length > 0
+        ? options.ariaLabel
+        : `${this.getScriptEditorFamilyLabel(family)} 分页`;
+    const pageKey =
+      typeof options.pageKey === "string" && options.pageKey.length > 0
+        ? options.pageKey
+        : family;
+
     return `
-      <nav class="c-script-editor-record-pagination" aria-label="${escapeHtml(this.getScriptEditorFamilyLabel(family))} 分页">
+      <nav class="c-script-editor-record-pagination" aria-label="${escapeHtml(ariaLabel)}">
         <button
           type="button"
           class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
           data-script-editor-action="record-page-prev"
+          data-script-editor-page-key="${escapeHtml(pageKey)}"
           aria-label="上一页"
           ${currentPage <= 1 ? "disabled" : ""}
         >
@@ -2246,6 +2309,7 @@ class MainUiFlowScriptEditorModule {
           type="button"
           class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
           data-script-editor-action="record-page-next"
+          data-script-editor-page-key="${escapeHtml(pageKey)}"
           aria-label="下一页"
           ${currentPage >= totalPages ? "disabled" : ""}
         >
@@ -2257,6 +2321,8 @@ class MainUiFlowScriptEditorModule {
 
   renderScriptEditorPaginatedRecordList({
     family,
+    pageKey = family,
+    paginationLabel = "",
     records,
     ariaLabel,
     modifierClass = "",
@@ -2264,7 +2330,7 @@ class MainUiFlowScriptEditorModule {
     renderRecord,
   }) {
     const { visibleRecords, currentPage, totalPages } =
-      this.getScriptEditorPaginatedRecordListState(family, records);
+      this.getScriptEditorPaginatedRecordListState(pageKey, records);
     const listClassName = ["c-script-editor-record-list", modifierClass]
       .filter((className) => className.length > 0)
       .join(" ");
@@ -2275,9 +2341,12 @@ class MainUiFlowScriptEditorModule {
         ${
           visibleRecords.length === 0
             ? '<p class="c-script-editor-record-list__empty">暂无可编辑对象。</p>'
-            : visibleRecords.map((record) => renderRecord(record)).join("")
+            : visibleRecords.map((record, index) => renderRecord(record, index)).join("")
         }
-        ${this.renderScriptEditorRecordPagination(family, currentPage, totalPages)}
+        ${this.renderScriptEditorRecordPagination(family, currentPage, totalPages, {
+          ariaLabel: paginationLabel,
+          pageKey,
+        })}
       </aside>
     `;
   }
@@ -6086,7 +6155,7 @@ class MainUiFlowScriptEditorModule {
               settlement == null
                 ? `<p class="c-script-editor-editor-card__hint">请选择一个结算以继续编辑。</p>`
                 : `
-                  <section class="c-script-editor-narrative-panel" aria-label="结算编辑面板">
+                  <section class="c-script-editor-narrative-panel c-script-editor-settlement-panel" aria-label="结算编辑面板">
                     <div class="c-script-editor-form-grid">
                       <label class="c-script-editor-form-field">
                         <span>结算标题</span>
@@ -6103,7 +6172,7 @@ class MainUiFlowScriptEditorModule {
                         </select>
                       </label>
                     </div>
-                    <section class="c-script-editor-minigame-list">
+                    <section class="c-script-editor-minigame-list c-script-editor-settlement-content-list">
                       <div class="c-script-editor-narrative-panel__header">
                         <div>
                           <p class="c-script-editor-editor-card__eyebrow">结算</p>
@@ -6133,7 +6202,16 @@ class MainUiFlowScriptEditorModule {
           content.attributeType
         );
         return `
-          <article class="c-script-editor-minigame-list__route">
+          <article class="c-script-editor-minigame-list__route c-script-editor-settlement-content-card">
+            <button
+              type="button"
+              class="c-script-editor-person-summary__remove c-script-editor-settlement-content-card__remove"
+              aria-label="删除结算内容"
+              data-script-editor-action="remove-settlement-content"
+              data-script-editor-settlement-content-index="${index}"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
             <div class="c-script-editor-form-grid">
               <label class="c-script-editor-form-field">
                 <span>目标类型</span>
@@ -6180,9 +6258,6 @@ class MainUiFlowScriptEditorModule {
                 ${this.renderScriptEditorSettlementContentValueControl(content, index)}
               </label>
             </div>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-settlement-content" data-script-editor-settlement-content-index="${index}">
-              删除结算内容
-            </button>
           </article>
         `;
       })
@@ -7657,6 +7732,28 @@ class MainUiFlowScriptEditorModule {
   renderScriptEditorMinigameTabPanel(minigame) {
     const playableOptions = listScriptEditorBuiltinMinigamePlayableOptions();
     const eventOptions = this.getScriptEditorCreatorRecordOptions("events");
+    const configEntries = minigame.configEntries ?? [];
+    const settlementRoutes = minigame.settlementRoutes ?? [];
+    const configPageKey = this.getScriptEditorMinigameCardPageKey("config", minigame.id);
+    const settlementPageKey = this.getScriptEditorMinigameCardPageKey(
+      "settlement",
+      minigame.id
+    );
+    const {
+      visibleRecords: visibleConfigEntries,
+      currentPage: configCurrentPage,
+      totalPages: configTotalPages,
+      startIndex: configStartIndex,
+    } = this.getScriptEditorPaginatedRecordListState(configPageKey, configEntries);
+    const {
+      visibleRecords: visibleSettlementRoutes,
+      currentPage: settlementCurrentPage,
+      totalPages: settlementTotalPages,
+      startIndex: settlementStartIndex,
+    } = this.getScriptEditorPaginatedRecordListState(
+      settlementPageKey,
+      settlementRoutes
+    );
 
     if (this.scriptEditorMinigameTab === "config") {
       return `
@@ -7675,15 +7772,26 @@ class MainUiFlowScriptEditorModule {
             </button>
           </div>
           ${
-            (minigame.configEntries ?? []).length === 0
+            configEntries.length === 0
               ? `<p class="c-script-editor-editor-card__hint">当前还没有配置项。配置组只提供玩法运行时读取的实例参数，不直接发奖励。</p>`
               : ""
           }
-          <div class="c-script-editor-minigame-list">
-            ${(minigame.configEntries ?? [])
+          <div class="c-script-editor-minigame-list c-script-editor-minigame-list--paged">
+            ${visibleConfigEntries
               .map(
-                (entry, index) => `
+                (entry, visibleIndex) => {
+                  const index = configStartIndex + visibleIndex;
+                  return `
                   <article class="c-script-editor-minigame-list__route">
+                    <button
+                      type="button"
+                      class="c-script-editor-person-summary__remove c-script-editor-minigame-list__remove"
+                      aria-label="删除配置"
+                      data-script-editor-action="remove-minigame-config-entry"
+                      data-script-editor-minigame-config-index="${index}"
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
                     <div class="c-script-editor-form-grid">
                       <label class="c-script-editor-form-field">
                         <span>配置键</span>
@@ -7734,30 +7842,22 @@ class MainUiFlowScriptEditorModule {
                           data-script-editor-minigame-config-index="${index}"
                         />
                       </label>
-                      <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-                        <span>说明</span>
-                        <input
-                          class="c-script-editor-form-field__input"
-                          type="text"
-                          value="${escapeHtml(entry.notes ?? "")}"
-                          data-script-editor-minigame-config-field="notes"
-                          data-script-editor-minigame-config-index="${index}"
-                        />
-                      </label>
                     </div>
-                    <button
-                      type="button"
-                      class="c-main-ui-json-text-button"
-                      data-script-editor-action="remove-minigame-config-entry"
-                      data-script-editor-minigame-config-index="${index}"
-                    >
-                      删除配置
-                    </button>
                   </article>
-                `
+                `;
+                }
               )
               .join("")}
           </div>
+          ${this.renderScriptEditorRecordPagination(
+            "minigames",
+            configCurrentPage,
+            configTotalPages,
+            {
+              ariaLabel: "玩法配置组卡片分页",
+              pageKey: configPageKey,
+            }
+          )}
         </section>
       `;
     }
@@ -7778,14 +7878,22 @@ class MainUiFlowScriptEditorModule {
               新增结算路由
             </button>
           </div>
-          <p class="c-script-editor-editor-card__hint">
-            玩法只产出事实结果。这里按顺序声明命中条件和目标事件，首条命中后交给事件与结算运行时继续处理。
-          </p>
-          <div class="c-script-editor-minigame-list">
-            ${(minigame.settlementRoutes ?? [])
+          <div class="c-script-editor-minigame-list c-script-editor-minigame-list--paged">
+            ${visibleSettlementRoutes
               .map(
-                (route, index) => `
+                (route, visibleIndex) => {
+                  const index = settlementStartIndex + visibleIndex;
+                  return `
                   <article class="c-script-editor-minigame-list__route">
+                    <button
+                      type="button"
+                      class="c-script-editor-person-summary__remove c-script-editor-minigame-list__remove"
+                      aria-label="删除结算路由"
+                      data-script-editor-action="remove-minigame-settlement-route"
+                      data-script-editor-minigame-settlement-index="${index}"
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
                     <div class="c-script-editor-form-grid">
                       <label class="c-script-editor-form-field">
                         <span>路由标题</span>
@@ -7860,19 +7968,21 @@ class MainUiFlowScriptEditorModule {
                         <span>启用这条结算路由</span>
                       </label>
                     </div>
-                    <button
-                      type="button"
-                      class="c-main-ui-json-text-button"
-                      data-script-editor-action="remove-minigame-settlement-route"
-                      data-script-editor-minigame-settlement-index="${index}"
-                    >
-                      删除结算路由
-                    </button>
                   </article>
-                `
+                `;
+                }
               )
               .join("")}
           </div>
+          ${this.renderScriptEditorRecordPagination(
+            "minigames",
+            settlementCurrentPage,
+            settlementTotalPages,
+            {
+              ariaLabel: "玩法结算组卡片分页",
+              pageKey: settlementPageKey,
+            }
+          )}
         </section>
       `;
     }
@@ -7893,10 +8003,6 @@ class MainUiFlowScriptEditorModule {
                 )
                 .join("")}
             </select>
-          </label>
-          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-            <span>玩法说明</span>
-            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-minigame-field="description" spellcheck="false" placeholder="填写这个玩法实例的用途、触发背景或作者备注。">${escapeHtml(minigame.description ?? "")}</textarea>
           </label>
         </div>
       </section>
@@ -8711,6 +8817,7 @@ class MainUiFlowScriptEditorModule {
       actionElement?.dataset.scriptEditorMinigameSettlementIndex ?? "-1",
       10
     );
+    const recordPageKey = actionElement?.dataset.scriptEditorPageKey ?? null;
     const buildingId = actionElement?.dataset.scriptEditorBuildingId ?? null;
     const targetFamily = actionElement?.dataset.scriptEditorFamily ?? null;
     const targetEntityId = actionElement?.dataset.scriptEditorEntityId ?? null;
@@ -8941,12 +9048,12 @@ class MainUiFlowScriptEditorModule {
     }
 
     if (action === "record-page-prev") {
-      this.changeScriptEditorRecordListPage(-1);
+      this.changeScriptEditorRecordListPage(-1, recordPageKey);
       return;
     }
 
     if (action === "record-page-next") {
-      this.changeScriptEditorRecordListPage(1);
+      this.changeScriptEditorRecordListPage(1, recordPageKey);
       return;
     }
 
@@ -9669,15 +9776,15 @@ class MainUiFlowScriptEditorModule {
     this.render();
   }
 
-  changeScriptEditorRecordListPage(delta) {
+  changeScriptEditorRecordListPage(delta, pageKey = null) {
     if (
       this.scriptEditorProject == null ||
-      this.scriptEditorSelection.family === "storyPack"
+      (this.scriptEditorSelection.family === "storyPack" && pageKey == null)
     ) {
       return;
     }
 
-    const family = this.scriptEditorSelection.family;
+    const family = pageKey ?? this.scriptEditorSelection.family;
     this.setScriptEditorRecordListPage(
       family,
       this.getScriptEditorRecordListPage(family) + delta
@@ -11002,9 +11109,16 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    this.replaceSelectedScriptEditorMinigame(
-      appendScriptEditorMinigameConfigEntry(minigame)
+    const nextMinigame = appendScriptEditorMinigameConfigEntry(minigame);
+    this.setScriptEditorRecordListPage(
+      this.getScriptEditorMinigameCardPageKey("config", nextMinigame.id),
+      Math.ceil(
+        Math.max((nextMinigame.configEntries ?? []).length, 1) /
+          SCRIPT_EDITOR_MINIGAME_CARD_PAGE_SIZE
+      ),
+      nextMinigame.configEntries ?? []
     );
+    this.replaceSelectedScriptEditorMinigame(nextMinigame);
   }
 
   removeScriptEditorMinigameConfigEntry(index) {
@@ -11013,9 +11127,15 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    this.replaceSelectedScriptEditorMinigame(
-      removeScriptEditorMinigameConfigEntry(minigame, index)
+    const nextMinigame = removeScriptEditorMinigameConfigEntry(minigame, index);
+    this.setScriptEditorRecordListPage(
+      this.getScriptEditorMinigameCardPageKey("config", nextMinigame.id),
+      this.getScriptEditorRecordListPage(
+        this.getScriptEditorMinigameCardPageKey("config", nextMinigame.id)
+      ),
+      nextMinigame.configEntries ?? []
     );
+    this.replaceSelectedScriptEditorMinigame(nextMinigame);
   }
 
   applyScriptEditorMinigameConfigField(index, field, value) {
@@ -11035,9 +11155,16 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    this.replaceSelectedScriptEditorMinigame(
-      appendScriptEditorMinigameSettlementRoute(minigame)
+    const nextMinigame = appendScriptEditorMinigameSettlementRoute(minigame);
+    this.setScriptEditorRecordListPage(
+      this.getScriptEditorMinigameCardPageKey("settlement", nextMinigame.id),
+      Math.ceil(
+        Math.max((nextMinigame.settlementRoutes ?? []).length, 1) /
+          SCRIPT_EDITOR_MINIGAME_CARD_PAGE_SIZE
+      ),
+      nextMinigame.settlementRoutes ?? []
     );
+    this.replaceSelectedScriptEditorMinigame(nextMinigame);
   }
 
   removeScriptEditorMinigameSettlementRoute(index) {
@@ -11046,9 +11173,15 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    this.replaceSelectedScriptEditorMinigame(
-      removeScriptEditorMinigameSettlementRoute(minigame, index)
+    const nextMinigame = removeScriptEditorMinigameSettlementRoute(minigame, index);
+    this.setScriptEditorRecordListPage(
+      this.getScriptEditorMinigameCardPageKey("settlement", nextMinigame.id),
+      this.getScriptEditorRecordListPage(
+        this.getScriptEditorMinigameCardPageKey("settlement", nextMinigame.id)
+      ),
+      nextMinigame.settlementRoutes ?? []
     );
+    this.replaceSelectedScriptEditorMinigame(nextMinigame);
   }
 
   applyScriptEditorMinigameSettlementField(index, field, value) {
