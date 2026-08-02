@@ -1,69 +1,14 @@
-import type { ActivityDefinition, ActivityHandlerId } from "../../../domain/activity";
-import type { CharacterDefinition } from "../../../domain/character";
-import type {
-  PlayableIntegrationId,
-  PlayableOwnerContext,
-} from "../../../core/contracts/playable-runtime";
-import type { RuntimeState } from "../../../core/contracts/runtime-state";
+import type { ActivityDefinition } from "../../domain/activity";
+import type { CharacterDefinition } from "../../domain/character";
 import {
   adjustActivityFortuneBoardWager,
-  advanceActivityQteMarker,
   chooseActivityQteCommand,
-  createActivityQteSession,
   playActivityFortuneBoard,
   stopActivityQte,
   tickActivityFortuneBoard,
-} from "../../activity/activity-qte-runtime";
-
-type ActivityQtePlayableResult = {
-  state: RuntimeState;
-  characterDefinitions: CharacterDefinition[];
-  completed: boolean;
-};
-
-export function startActivityQtePlayable(input: {
-  state: RuntimeState;
-  activityDefinition: ActivityDefinition;
-  handlerId: ActivityHandlerId;
-  integrationId?: PlayableIntegrationId;
-  ownerContext?: PlayableOwnerContext;
-}): RuntimeState {
-  const session = createActivityQteSession(
-    input.activityDefinition,
-    input.handlerId
-  );
-
-  return {
-    ...input.state,
-    core: {
-      ...input.state.core,
-      runtime: {
-        ...input.state.core.runtime,
-        playableSession: {
-          sessionId: "playable.activity-qte",
-          playableId: "activity-qte",
-          integrationId:
-            input.integrationId ?? "playable.activity-qte.dialogue.default",
-          ownerContext:
-            input.ownerContext ?? {
-              ownerKind: "house",
-              ownerId: input.state.core.world.currentHouseId,
-              returnPolicy: "resume-owner",
-            },
-          status: "active",
-        },
-        activitySession: session,
-      },
-    },
-  };
-}
-
-export function advanceActivityQtePlayable(state: RuntimeState): RuntimeState {
-  return {
-    ...state,
-    core: advanceActivityQteMarker(state.core),
-  };
-}
+} from "../../application/activity/activity-qte-runtime";
+import type { ActivityQtePlayableResult } from "./contract";
+import type { RuntimeState } from "../../core/contracts/runtime-state";
 
 export function tickActivityQtePlayable(input: {
   state: RuntimeState;
@@ -139,20 +84,6 @@ export function chooseActivityQteCommandPlayable(input: {
       input.commandId
     ),
   });
-}
-
-export function exitActivityQtePlayable(state: RuntimeState): RuntimeState {
-  return {
-    ...state,
-    core: {
-      ...state.core,
-      runtime: {
-        ...state.core.runtime,
-        playableSession: null,
-        activitySession: null,
-      },
-    },
-  };
 }
 
 function toActivityQtePlayableResult(input: {

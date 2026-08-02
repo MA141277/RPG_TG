@@ -11467,6 +11467,59 @@ test("playable runtime routes standalone package playables through direct shell 
   assert.doesNotMatch(source, /readDefaultPlayableHostAdapterRegistry/);
 });
 
+test("canonical shell package exists for activity-qte", () => {
+  const packageRoot = path.join(
+    process.cwd(),
+    "src/playables/activity-qte"
+  );
+
+  assert.equal(fs.existsSync(path.join(packageRoot, "manifest.ts")), true);
+  assert.equal(fs.existsSync(path.join(packageRoot, "index.ts")), true);
+});
+
+test("activity qte runtime no longer imports the legacy application playable definition path", () => {
+  const playableRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
+    "utf8"
+  );
+  const activityRunnerSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/activity/activity-runner.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    playableRuntimeSource,
+    /application\/playables\/activity-qte\/activity-qte-definition/
+  );
+  assert.doesNotMatch(
+    activityRunnerSource,
+    /playables\/activity-qte\/activity-qte-definition/
+  );
+});
+
+test("main.ts routes activity qte actions through shared playable requests instead of interactive action ids", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /interactive\.activity-qte\.tick/);
+  assert.doesNotMatch(mainSource, /interactive\.activity-qte\.\$\{action\}/);
+  assert.doesNotMatch(mainSource, /interactive\.activity-qte\.stop/);
+  assert.match(
+    mainSource,
+    /createPlayableActionRequest\(\s*"activity-qte",\s*"tick"/
+  );
+  assert.match(
+    mainSource,
+    /createPlayableActionRequest\(\s*"activity-qte",\s*action,\s*payload\s*\)/
+  );
+  assert.match(
+    mainSource,
+    /createExitPlayableRequest\(\s*"activity-qte"/
+  );
+});
+
 test("shared house playable overlay stays free of temple copy scripture render branches", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/ui/views/playables/house-playable-overlay.ts"),
@@ -38032,14 +38085,14 @@ test("interactive closeout removes legacy interactive kind residue from playable
   assert.doesNotMatch(playableRuntimeSource, /createLegacyPlayableSession/);
 });
 
-test("child 30 playable definition registry installs covered interactive playables without family boundaries", () => {
+test("child 30 playable definition registry installs covered builtin playables without family boundaries", () => {
   const {
     builtinPlayableDefinitionRegistry,
   } = require("../.test-dist/core/registry/builtin-playable-definition-registry.js");
 
   assert.equal(
     builtinPlayableDefinitionRegistry.get("activity-qte")?.commandPrefix,
-    "interactive.activity-qte."
+    "playable.activity-qte."
   );
   assert.equal(
     builtinPlayableDefinitionRegistry.get("city-begging")?.commandPrefix,
@@ -38140,7 +38193,7 @@ test("playable launch normalization merges integration launch payload defaults",
   const definitions = createPlayableDefinitionRegistry([
     {
       id: "activity-qte",
-      commandPrefix: "interactive.activity-qte.",
+      commandPrefix: "playable.activity-qte.",
     },
   ]);
   const integrations = createPlayableIntegrationRegistry([
@@ -38433,9 +38486,7 @@ test("child 31 playable runtime closes activity qte through shared playable sess
   } = require("../.test-dist/core/runtime/playable-runtime.js");
   const {
     startActivityQtePlayable,
-  } = require(
-    "../.test-dist/application/playables/activity-qte/activity-qte-definition.js"
-  );
+  } = require("../.test-dist/playables/activity-qte/index.js");
 
   const activityDefinition = {
     id: "activity.test.child31.exit",
@@ -39873,7 +39924,7 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
   assert.match(invalidRun.stderr, /missing outcome conditions/i);
 });
 
-test("child 34 removes only the obsolete interactive launch helper while keeping active compatibility ids", () => {
+test("child 34 removes only the obsolete interactive launch helper while keeping remaining active compatibility ids", () => {
   const interactiveRuntimeSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
     "utf8"
@@ -39888,11 +39939,11 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
     /export function createLaunchInteractiveRequest/
   );
   assert.match(mainSource, /interactive\.city-begging\.complete/);
-  assert.match(mainSource, /interactive\.activity-qte\.tick/);
+  assert.doesNotMatch(mainSource, /interactive\.activity-qte\.tick/);
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
 });
 
-test("activity qte shell routes board and command buttons into interactive runtime actions", () => {
+test("activity qte shell routes board and command buttons into shared playable runtime actions", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
@@ -39914,7 +39965,7 @@ test("activity qte shell routes board and command buttons into interactive runti
   );
   assert.match(
     mainSource,
-    /createInteractiveActionRequest\(\s*`interactive\.activity-qte\.\$\{action\}`,\s*payload\s*\)/
+    /createPlayableActionRequest\(\s*"activity-qte",\s*action,\s*payload\s*\)/
   );
   assert.match(
     mainSource,
@@ -39934,7 +39985,7 @@ test("activity qte loop keeps fortune-board sessions ticking through interactive
   assert.match(syncLoopBlock, /session\?\.type !== "qte-bar" && session\?\.type !== "fortune-board"/);
   assert.match(syncLoopBlock, /session\.type === "fortune-board"\s*\?\s*session\.animationTickMs\s*:\s*ACTIVITY_QTE_INTERVAL_MS/);
   assert.match(syncLoopBlock, /activityDefinitionsById:\s*activeContentContext\.storyContent\.activityDefinitionsById/);
-  assert.match(syncLoopBlock, /createInteractiveActionRequest\("interactive\.activity-qte\.tick"\)/);
+  assert.match(syncLoopBlock, /createPlayableActionRequest\("activity-qte",\s*"tick"\)/);
 });
 
 test("zhuyuanzhang builtin templates expose the temple standalone playable and template integration", () => {

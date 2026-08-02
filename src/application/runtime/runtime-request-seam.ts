@@ -5,6 +5,7 @@ export {
 } from "../../core/runtime/interactive-runtime";
 export {
   createPlayableActionRequest,
+  createExitPlayableRequest,
   runPlayableRuntime,
 } from "../../core/runtime/playable-runtime";
 export { commitRuntimeRequest } from "../../core/runtime/state-sync-runtime";

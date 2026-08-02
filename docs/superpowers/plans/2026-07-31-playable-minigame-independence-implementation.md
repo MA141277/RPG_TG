@@ -11,11 +11,11 @@
 ## Execution State
 
 - Status: `running`
-- Last Updated: `2026-07-31`
-- Current Focus: `Task 4 finished: city-begging and grain-accounting now emit settlement-owned completion from builtin package seams, and grain-accounting now also owns package-local text/resource manifests.`
-- Next Step: `Keep this legacy plan in waiting state until it is explicitly admitted, then sync docs/superpowers/project-progress.md and write the formal closeout block or continue migrating the next playable slice.`
-- Verification: `pnpm run build:test; pnpm run typecheck; direct node verification confirms city-begging settlement/session clear/CharacterStatus commit and grain-accounting settlement/session clear; pnpm run lint:plans`
-- Notes: `Legacy docs/superpowers project-progress currently points at another explicitly resumed child. This plan is intentionally waiting and does not yet replace that active resume truth.`
+- Last Updated: `2026-08-02`
+- Current Focus: `Activity-qte first migration slice: canonical src/playables/activity-qte package landed, legacy application definition path removed, and host-side action dispatch now routes through shared playable requests.`
+- Next Step: `Widen the shared shell/runtime contract until src/core/runtime/playable-runtime.ts no longer owns direct activity-qte lifecycle branches, then continue converging the remaining runnable playables onto the same canonical package rule.`
+- Verification: `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.json; node node_modules/typescript/bin/tsc -p tsconfig.test.json; node --test tests/robustness.test.cjs --test-name-pattern "canonical shell package exists for activity-qte|activity qte runtime no longer imports the legacy application playable definition path|main.ts routes activity qte actions through shared playable requests instead of interactive action ids|child 30 playable definition registry installs covered builtin playables without family boundaries|child 31 playable runtime closes activity qte through shared playable session exit|child 34 removes only the obsolete interactive launch helper while keeping remaining active compatibility ids|activity qte shell routes board and command buttons into shared playable runtime actions|activity qte loop keeps fortune-board sessions ticking through interactive runtime"; pnpm run lint:plans`
+- Notes: `This plan is now explicitly resumed for the unified playable-shell end state. The current batch intentionally does not claim full activity-qte migration completion because playable-runtime still owns direct activity-qte lifecycle branches.`
 
 ## Progress Log
 
@@ -35,6 +35,10 @@
   - Summary: `Removed the last direct persistence ownership from builtin city-begging and grain-accounting completion, taught interactive runtime to preserve routed settlement payloads, and finished the grain-accounting package shell with package-local texts/assets manifests so both reference minigames are portable builtin slices.`
   - Verification: `pnpm run build:test; pnpm run typecheck; node -e direct verification for citySettlementPresent/citySessionCleared/cityCommittedPlayerStatus/grainSettlementPresent/grainSessionCleared`
   - Next: `Leave this legacy plan waiting until formally admitted, or reuse the same package contract to migrate the next playable slice.`
+- 2026-08-02
+  - Summary: `Started the activity-qte migration onto the final unified playable-shell path by creating src/playables/activity-qte, deleting the retired application/playables definition file, switching authored commandPrefix values to playable.activity-qte.*, and routing host-side activity-qte tick/action/stop/exit requests through shared playable requests.`
+  - Verification: `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.json; node node_modules/typescript/bin/tsc -p tsconfig.test.json; node --test tests/robustness.test.cjs --test-name-pattern "canonical shell package exists for activity-qte|activity qte runtime no longer imports the legacy application playable definition path|main.ts routes activity qte actions through shared playable requests instead of interactive action ids|child 30 playable definition registry installs covered builtin playables without family boundaries|child 31 playable runtime closes activity qte through shared playable session exit|child 34 removes only the obsolete interactive launch helper while keeping remaining active compatibility ids|activity qte shell routes board and command buttons into shared playable runtime actions|activity qte loop keeps fortune-board sessions ticking through interactive runtime"`
+  - Next: `Replace the remaining direct activity-qte lifecycle ownership in playable-runtime with a widened shared shell/runtime contract instead of leaving runtime-local special branches in place.`
 
 ---
 

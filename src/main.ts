@@ -121,6 +121,7 @@ import {
 } from "./core/runtime/interactive-runtime";
 import {
   configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+  createExitPlayableRequest,
   createLaunchPlayableRequest,
   createPlayableActionRequest,
   runPlayableRuntime,
@@ -1293,11 +1294,11 @@ function syncActivityQteLoop(): void {
 
     appState = commitRuntimeRequest({
       state: appState,
-      request: createInteractiveActionRequest("interactive.activity-qte.tick"),
+      request: createPlayableActionRequest("activity-qte", "tick"),
       context: {
         router: {
           route: ({ state, request }) =>
-            runInteractiveRuntime({
+            runPlayableRuntime({
               state,
               request,
               characterDefinitions: appState.characterDefinitions,
@@ -1352,14 +1353,11 @@ function dispatchCurrentActivityQteAction(
 
   appState = commitRuntimeRequest({
     state: appState,
-    request: createInteractiveActionRequest(
-      `interactive.activity-qte.${action}`,
-      payload
-    ),
+    request: createPlayableActionRequest("activity-qte", action, payload),
     context: {
       router: {
         route: ({ state, request }) =>
-          runInteractiveRuntime({
+          runPlayableRuntime({
             state,
             request,
             characterDefinitions: appState.characterDefinitions,
@@ -1384,11 +1382,11 @@ function stopCurrentActivityQte(): void {
     stopActivityQteLoop();
     appState = commitRuntimeRequest({
       state: appState,
-      request: createInteractiveActionRequest("interactive.activity-qte.stop"),
+      request: createPlayableActionRequest("activity-qte", "stop"),
       context: {
         router: {
           route: ({ state, request }) =>
-            runInteractiveRuntime({
+            runPlayableRuntime({
               state,
               request,
               characterDefinitions: appState.characterDefinitions,
@@ -1404,16 +1402,16 @@ function stopCurrentActivityQte(): void {
 
   appState = commitRuntimeRequest({
     state: appState,
-    request: createInteractiveActionRequest("interactive.activity-qte.stop"),
+    request: createPlayableActionRequest("activity-qte", "stop"),
     context: {
       router: {
         route: ({ state, request }) =>
-            runInteractiveRuntime({
-              state,
-              request,
-              characterDefinitions: appState.characterDefinitions,
-              activityDefinitionsById:
-                activeContentContext.storyContent.activityDefinitionsById,
+          runPlayableRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            activityDefinitionsById:
+              activeContentContext.storyContent.activityDefinitionsById,
           }),
       },
     },
@@ -1424,11 +1422,11 @@ function stopCurrentActivityQte(): void {
 function closeCurrentActivityResult(): void {
   appState = commitRuntimeRequest({
     state: appState,
-    request: createExitInteractiveRequest("activity-qte"),
+    request: createExitPlayableRequest("activity-qte"),
     context: {
       router: {
         route: ({ state, request }) =>
-          runInteractiveRuntime({
+          runPlayableRuntime({
             state,
             request,
             characterDefinitions: appState.characterDefinitions,

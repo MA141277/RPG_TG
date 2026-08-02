@@ -34,7 +34,7 @@ import {
   playActivityQtePlayable,
   stopActivityQtePlayable,
   tickActivityQtePlayable,
-} from "../../application/playables/activity-qte/activity-qte-definition";
+} from "../../playables/activity-qte";
 import {
   completeCityBeggingPlayable,
   exitCityBeggingPlayable,

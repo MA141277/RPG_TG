@@ -1,7 +1,7 @@
 [
   {
     "id": "activity-qte",
-    "commandPrefix": "interactive.activity-qte."
+    "commandPrefix": "playable.activity-qte."
   },
   {
     "id": "temple-copy-scripture",

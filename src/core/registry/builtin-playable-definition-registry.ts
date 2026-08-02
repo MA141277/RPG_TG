@@ -4,13 +4,16 @@ import {
   type PlayableDefinitionRegistry,
 } from "./playable-definition-registry";
 import {
+  manifest as activityQteManifest,
+} from "../../playables/activity-qte";
+import {
   manifest as templeCopyScriptureManifest,
 } from "../../playables/temple-copy-scripture";
 
 const builtinPlayableDefinitions: PlayableDefinition[] = [
   {
-    id: "activity-qte",
-    commandPrefix: "interactive.activity-qte.",
+    id: activityQteManifest.playableId,
+    commandPrefix: activityQteManifest.commandPrefix,
   },
   {
     id: templeCopyScriptureManifest.playableId,

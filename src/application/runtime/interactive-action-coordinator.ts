@@ -5,9 +5,9 @@ import type { AppState } from "../app-shell";
 import type { MainRuntimeOrchestratorRequest } from "./main-runtime-orchestrator";
 import {
   createExitInteractiveRequest,
-  createInteractiveActionRequest,
-  runInteractiveRuntime,
+  createExitPlayableRequest,
   createPlayableActionRequest,
+  runInteractiveRuntime,
   runPlayableRuntime,
   commitRuntimeRequest,
 } from "./runtime-request-seam";
@@ -52,11 +52,11 @@ export function createInteractiveActionCoordinator(
 
     const nextAppState = commitRuntimeRequest({
       state: appState,
-      request: createInteractiveActionRequest("interactive.activity-qte.stop"),
+      request: createPlayableActionRequest("activity-qte", "stop"),
       context: {
         router: {
           route: ({ state, request }) =>
-            runInteractiveRuntime({
+            runPlayableRuntime({
               state,
               request,
               characterDefinitions: appState.characterDefinitions,
@@ -74,11 +74,11 @@ export function createInteractiveActionCoordinator(
     const appState = dependencies.getAppState();
     const nextAppState = commitRuntimeRequest({
       state: appState,
-      request: createExitInteractiveRequest("activity-qte"),
+      request: createExitPlayableRequest("activity-qte"),
       context: {
         router: {
           route: ({ state, request }) =>
-            runInteractiveRuntime({
+            runPlayableRuntime({
               state,
               request,
               characterDefinitions: appState.characterDefinitions,

@@ -2,7 +2,7 @@ import type { ActivityDefinition, ActivityHandlerId } from "../../domain/activit
 import { GENERIC_QTE_ACTIVITY_HANDLER_ID } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
-import { startActivityQtePlayable } from "../playables/activity-qte/activity-qte-definition";
+import { startActivityQtePlayable } from "../../playables/activity-qte";
 
 export type ActivityRunnerContext = {
   activityDefinitionsById: Record<string, ActivityDefinition>;
