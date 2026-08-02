@@ -14,6 +14,16 @@ const KNOWN_BUILTIN_PLAYABLE_IDS = new Set([
   "medicine-compounding",
   "story-battle",
 ]);
+const ALLOWED_PLAYABLE_PATH_KEYS = new Set([
+  "manifestFile",
+  "contractFile",
+  "sessionFile",
+  "reducerFile",
+  "presenterFile",
+  "settlementFile",
+  "indexFile",
+  "assetDirectory",
+]);
 const LEGACY_PLAYABLE_PATH_KEYS = new Set([
   "domainFile",
   "definitionFile",
@@ -131,6 +141,12 @@ function validateMechanicArtifactPaths({ repoRoot, filePath, artifact, errors })
   for (const legacyKey of LEGACY_PLAYABLE_PATH_KEYS) {
     if (legacyKey in artifactPaths) {
       errors.push(`${fileLabel}: legacy playable artifact path key ${legacyKey} is not allowed.`);
+    }
+  }
+
+  for (const key of Object.keys(artifactPaths)) {
+    if (!ALLOWED_PLAYABLE_PATH_KEYS.has(key)) {
+      errors.push(`${fileLabel}: unexpected playable artifact path key ${key}.`);
     }
   }
 

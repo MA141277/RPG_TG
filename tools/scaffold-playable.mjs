@@ -145,7 +145,7 @@ function isNonEmptyString(value) {
 }
 
 function isValidPlayableId(value) {
-  return isNonEmptyString(value) && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+  return isNonEmptyString(value) && /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(value);
 }
 
 function toPosix(value) {

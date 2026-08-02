@@ -39092,6 +39092,37 @@ test("child 34 playable scaffold writes canonical mechanic and integration artif
   );
 });
 
+test("child 34 playable scaffold rejects ids that would generate invalid TypeScript identifiers", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-playable-scaffold-invalid-id-")
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-playable.mjs"),
+      "--playable-id",
+      "1v1-battle",
+      "--title",
+      "1v1 Battle",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Missing or invalid required arguments/i);
+  assert.equal(
+    fs.existsSync(
+      path.join(outputRoot, "src", "content", "playables", "1v1-battle.playable.json")
+    ),
+    false
+  );
+});
+
 test("child 34 playable validator accepts scaffolded artifacts and rejects missing outcome config", () => {
   const { spawnSync } = require("node:child_process");
   const os = require("node:os");
@@ -39235,6 +39266,37 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
   assert.match(
     wrongPathRun.stderr,
     /paths\.presenterFile must equal src\/playables\/validator-playable\/presenter\.ts/i
+  );
+
+  stalePathsArtifact.paths = {
+    manifestFile: "src/playables/validator-playable/manifest.ts",
+    contractFile: "src/playables/validator-playable/contract.ts",
+    sessionFile: "src/playables/validator-playable/session.ts",
+    reducerFile: "src/playables/validator-playable/reducer.ts",
+    presenterFile: "src/playables/validator-playable/presenter.ts",
+    settlementFile: "src/playables/validator-playable/settlement.ts",
+    indexFile: "src/playables/validator-playable/index.ts",
+    assetDirectory: "src/assets/playables/validator-playable",
+    arbitraryExtraKey: "src/playables/validator-playable/extra.ts",
+  };
+  fs.writeFileSync(
+    playableArtifactPath,
+    `${JSON.stringify(stalePathsArtifact, null, 2)}\n`
+  );
+
+  const extraKeyRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-playables.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(extraKeyRun.status, 1);
+  assert.match(
+    extraKeyRun.stderr,
+    /unexpected playable artifact path key arbitraryExtraKey/i
   );
 
   const invalidIntegrationPath = path.join(
