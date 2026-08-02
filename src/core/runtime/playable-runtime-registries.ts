@@ -4,6 +4,7 @@ import type {
   PlayableIntegrationDefinition,
 } from "../contracts/playable-runtime";
 import { installBuiltinPlayableDefinitions } from "../registry/builtin-playable-definition-registry";
+import { createBuiltinPlayableShellRegistry } from "../registry/builtin-playable-shell-registry";
 import { installBuiltinPlayableIntegrations } from "../registry/builtin-playable-integration-registry";
 import {
   createPlayableDefinitionRegistry,
@@ -13,10 +14,12 @@ import {
   createPlayableIntegrationRegistry,
   type PlayableIntegrationRegistry,
 } from "../registry/playable-integration-registry";
+import { type PlayableShellRegistry } from "../registry/playable-shell-registry";
 
 export type PlayableRuntimeRegistries = {
   definitions: PlayableDefinitionRegistry;
   integrations: PlayableIntegrationRegistry;
+  shells: PlayableShellRegistry;
 };
 
 type PlayableContributionSource = {
@@ -29,6 +32,7 @@ let defaultPlayableRuntimeRegistries = createDefaultPlayableRuntimeRegistries();
 export function createDefaultPlayableRuntimeRegistries(): PlayableRuntimeRegistries {
   const definitions = createPlayableDefinitionRegistry();
   const integrations = createPlayableIntegrationRegistry();
+  const shells = createBuiltinPlayableShellRegistry();
 
   installBuiltinPlayableDefinitions(definitions);
   installBuiltinPlayableIntegrations(integrations);
@@ -36,6 +40,7 @@ export function createDefaultPlayableRuntimeRegistries(): PlayableRuntimeRegistr
   return {
     definitions,
     integrations,
+    shells,
   };
 }
 
@@ -89,6 +94,10 @@ export function readDefaultPlayableDefinitionRegistry(): PlayableDefinitionRegis
 
 export function readDefaultPlayableIntegrationRegistry(): PlayableIntegrationRegistry {
   return defaultPlayableRuntimeRegistries.integrations;
+}
+
+export function readDefaultPlayableShellRegistry(): PlayableShellRegistry {
+  return defaultPlayableRuntimeRegistries.shells;
 }
 
 function readPlayableDefinitions(value: unknown): PlayableDefinition[] {

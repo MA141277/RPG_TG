@@ -2,6 +2,7 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { AppState } from "../../application/app-shell";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import type { ScenarioPackSummary } from "../../domain/scenario-pack";
+import type { ScriptEditorProjectDefinition } from "../../modules/script-editor/domain/script-editor-project";
 
 type ScriptEditorRuntimePreviewStartResult =
   | "started"
@@ -27,11 +28,17 @@ type MainUiFlowOptions = {
   ): ScriptEditorRuntimePreviewStartResult | Promise<ScriptEditorRuntimePreviewStartResult>;
   onImportScenarioPackFiles?(files: File[]): void | Promise<void>;
   onExitRuntimePreview?(): void;
+  onScreenChanged?(screen: string): void;
+  onScriptEditorProjectChanged?(
+    project: ScriptEditorProjectDefinition | null
+  ): void;
   loadSaveData(): Promise<SaveDataResult> | SaveDataResult;
   getAppState(): AppState;
 };
 
 export class MainUiFlow {
+  currentScreen: string;
+  scriptEditorProject: ScriptEditorProjectDefinition | null;
   constructor(options: MainUiFlowOptions);
   mount(): void;
   destroy(): void;

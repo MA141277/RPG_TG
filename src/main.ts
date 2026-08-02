@@ -634,7 +634,7 @@ const shellBootLifecycleCoordinator = createShellBootLifecycleCoordinator({
 });
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const dialogueMusicPlayer = createDialogueMusicPlayer();
-let mainUiFlow: MainUiFlow | null = null;
+let mainUiFlow!: MainUiFlow;
 syncGlobalAudioSettings();
 mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
@@ -1293,9 +1293,7 @@ function syncActivityQteLoop(): void {
 
     appState = commitRuntimeRequest({
       state: appState,
-      request: createInteractiveActionRequest(
-        createActivityShellActionId("tick")
-      ),
+      request: createInteractiveActionRequest("interactive.activity-qte.tick"),
       context: {
         router: {
           route: ({ state, request }) =>
@@ -1354,7 +1352,10 @@ function dispatchCurrentActivityQteAction(
 
   appState = commitRuntimeRequest({
     state: appState,
-    request: createInteractiveActionRequest(createActivityShellActionId(action), payload),
+    request: createInteractiveActionRequest(
+      `interactive.activity-qte.${action}`,
+      payload
+    ),
     context: {
       router: {
         route: ({ state, request }) =>
@@ -1383,7 +1384,7 @@ function stopCurrentActivityQte(): void {
     stopActivityQteLoop();
     appState = commitRuntimeRequest({
       state: appState,
-      request: createInteractiveActionRequest(createActivityShellActionId("stop")),
+      request: createInteractiveActionRequest("interactive.activity-qte.stop"),
       context: {
         router: {
           route: ({ state, request }) =>
@@ -1403,7 +1404,7 @@ function stopCurrentActivityQte(): void {
 
   appState = commitRuntimeRequest({
     state: appState,
-    request: createInteractiveActionRequest(createActivityShellActionId("stop")),
+    request: createInteractiveActionRequest("interactive.activity-qte.stop"),
     context: {
       router: {
         route: ({ state, request }) =>
@@ -1418,14 +1419,6 @@ function stopCurrentActivityQte(): void {
     },
   }).state;
   renderApp();
-}
-
-function createActivityShellActionId(action: string): string {
-  const activePlayableId =
-    appState.gameState.runtime.playableSession?.playableId === "temple-copy-scripture"
-      ? "temple-copy-scripture"
-      : "activity-qte";
-  return `interactive.${activePlayableId}.${action}`;
 }
 
 function closeCurrentActivityResult(): void {
@@ -1828,11 +1821,19 @@ function dispatchCurrentHousePlayableAction(
 function closeCurrentPlayableResult(): void {
   const houseSession = appState.gameState.ui.houseSession;
   const sessionState = houseSession?.state;
+  const overlayType =
+    sessionState != null &&
+    typeof sessionState === "object" &&
+    !Array.isArray(sessionState)
+      ? (sessionState as { overlay?: { type?: unknown } | null }).overlay?.type
+      : null;
   if (
     houseSession == null ||
     sessionState == null ||
     typeof sessionState !== "object" ||
-    (sessionState as { overlay?: { type?: string } | null }).overlay?.type !== "result"
+    appState.gameState.runtime.playableSession != null ||
+    typeof overlayType !== "string" ||
+    (overlayType !== "result" && !overlayType.endsWith("-result"))
   ) {
     return;
   }
@@ -2610,10 +2611,10 @@ function syncGlobalAudioSettings(): void {
   applyGlobalAudioMutedState({
     players: [backgroundMusicPlayer, dialogueMusicPlayer],
     muted: resolveEntryShellAudioMutedState({
-      screen: mainUiFlow?.currentScreen ?? null,
+      screen: mainUiFlow.currentScreen,
       runtimeAudioSettings: activeContentContext.gameContent.audioSettings,
       scriptEditorProjectAudioSettings:
-        mainUiFlow?.scriptEditorProject?.storyPack?.audioSettings,
+        mainUiFlow.scriptEditorProject?.storyPack?.audioSettings,
     }),
   });
 }
@@ -3495,8 +3496,30 @@ appElement.addEventListener("click", (event) => {
       }
       return;
     }
+    if (playableId != null && action === "choose-command") {
+      const commandId = playableActionButton.dataset.commandId;
+      if (commandId != null && commandId.length > 0) {
+        dispatchCurrentHousePlayableAction(playableId, "choose-command", {
+          commandId,
+        });
+      }
+      return;
+    }
     if (playableId != null && (action === "clear" || action === "finish")) {
       dispatchCurrentHousePlayableAction(playableId, action);
+      return;
+    }
+    if (playableId != null && (action === "confirm" || action === "cancel")) {
+      dispatchCurrentHousePlayableAction(playableId, action);
+      return;
+    }
+    if (playableId != null && action === "custom") {
+      const actionId = playableActionButton.dataset.playableCustomAction;
+      if (actionId != null && actionId.length > 0) {
+        dispatchCurrentHousePlayableAction(playableId, "custom", {
+          actionId,
+        });
+      }
       return;
     }
   }

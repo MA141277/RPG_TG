@@ -5,7 +5,7 @@
   },
   {
     "id": "temple-copy-scripture",
-    "commandPrefix": "interactive.temple-copy-scripture."
+    "commandPrefix": "playable.temple-copy-scripture."
   },
   {
     "id": "grain-accounting",

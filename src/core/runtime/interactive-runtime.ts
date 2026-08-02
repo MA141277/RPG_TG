@@ -189,10 +189,7 @@ export function toInteractiveRuntimeRequest(
 function toInteractiveRuntimeKind(
   playableId: string | undefined
 ): InteractiveRuntimeKind | null {
-  if (
-    playableId === "activity-qte" ||
-    playableId === "temple-copy-scripture"
-  ) {
+  if (playableId === "activity-qte") {
     return "activity-qte";
   }
 

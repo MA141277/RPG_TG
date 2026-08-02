@@ -260,6 +260,8 @@
   "runtime.zhu_yuanzhang.temple.task.carry_water.briefing": "从山下汲水，供寺里煮粥、洗涤与清扫使用。这是最耗力气的活。",
   "runtime.zhu_yuanzhang.temple.task.carry_water.order.001": "“水担挑得稳，人才能站得住。别一上来就图快，先把步子走稳。”",
   "runtime.zhu_yuanzhang.temple.task.carry_water.order.002": "“争不得一口气，却能挑起半寺活路。”",
+  "runtime.zhu_yuanzhang.temple.donate.001": "你在香案前放下香火钱，替寺中添上一分灯火与米面。",
+  "runtime.zhu_yuanzhang.temple.donate.002": "僧人默默合十致意，殿里的香烟也似乎安稳了些。",
   "runtime.zhu_yuanzhang.temple.task.beg_alms.title": "下乡化缘",
   "runtime.zhu_yuanzhang.temple.task.beg_alms.briefing": "跟着寺中老僧去周边乡里化缘，换些米面回来接济寺众与灾民。",
   "runtime.zhu_yuanzhang.temple.task.beg_alms.order.001": "“先去化缘，不是替自己求食，是替寺里和乡民留一口活路。”",
@@ -461,5 +463,7 @@
   "runtime.zhu_yuanzhang.grain_shop.accounting.blocked_by_council.soon.003": "“先去把评定应下，回头再来拨算盘。”",
   "runtime.zhu_yuanzhang.grain_shop.sold_out.title": "今日无米可买",
   "runtime.zhu_yuanzhang.grain_shop.sold_out.001": "粮铺掌柜摊了摊手，“濠州这一阵闹得太凶，店里剩下的几袋米早被熟客和军中先订走了。”",
-  "runtime.zhu_yuanzhang.grain_shop.sold_out.002": "“你若真要替寺里寻粮，别在城里耗着，还是往外地再碰碰运气吧。”"
+  "runtime.zhu_yuanzhang.grain_shop.sold_out.002": "“你若真要替寺里寻粮，别在城里耗着，还是往外地再碰碰运气吧。”",
+  "runtime.zhu_yuanzhang.temple.review.001": "前殿木鱼声未绝，今日寺中事务仍要按规矩逐项回看。",
+  "runtime.zhu_yuanzhang.temple.review.002": "“先把这一轮寺里的情形说清，再定你接下来的差事。”"
 }

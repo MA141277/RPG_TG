@@ -3,14 +3,19 @@ import {
   createPlayableDefinitionRegistry,
   type PlayableDefinitionRegistry,
 } from "./playable-definition-registry";
-import { templeCopyScripturePlayableDefinition } from "../../minigames/temple-copy-scripture";
+import {
+  manifest as templeCopyScriptureManifest,
+} from "../../playables/temple-copy-scripture";
 
 const builtinPlayableDefinitions: PlayableDefinition[] = [
   {
     id: "activity-qte",
     commandPrefix: "interactive.activity-qte.",
   },
-  templeCopyScripturePlayableDefinition,
+  {
+    id: templeCopyScriptureManifest.playableId,
+    commandPrefix: templeCopyScriptureManifest.commandPrefix,
+  },
   {
     id: "city-begging",
     commandPrefix: "interactive.city-begging.",

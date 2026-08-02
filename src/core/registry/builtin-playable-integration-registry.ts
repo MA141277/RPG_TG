@@ -3,7 +3,6 @@ import {
   createPlayableIntegrationRegistry,
   type PlayableIntegrationRegistry,
 } from "./playable-integration-registry";
-import { TEMPLE_COPY_SCRIPTURE_HOUSE_INTEGRATION_ID } from "../../minigames/temple-copy-scripture";
 
 const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
   {
@@ -50,16 +49,47 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
     outcomeConfig: {},
   },
   {
-    integrationId: TEMPLE_COPY_SCRIPTURE_HOUSE_INTEGRATION_ID,
+    integrationId:
+      "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
     playableId: "temple-copy-scripture",
     ownerDefaults: {
-      ownerKind: "house",
-      returnPolicy: "resume-owner",
+      ownerKind: "external",
+      ownerId: null,
+      returnPolicy: "close-only",
     },
     trigger: {
-      triggerId: "trigger.playable.temple-copy-scripture.house.temple",
-      ownerKind: "house",
-      trigger: "house-action-temple-copy-scripture",
+      triggerId:
+        "trigger.playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+      ownerKind: "external",
+      trigger: "event.building.house.kulan.temple.copy_scripture",
+      launchPayload: {
+        title: "抄写经卷",
+        briefing:
+          "在偏殿抄录残缺经卷，顺便替住持整理寺中的旧账与香火名册。",
+        prompts: [
+          {
+            id: "prompt-1",
+            text: "静坐抄经，先定你的心，再定你的字。",
+            choices: [
+              { id: "trace", label: "依字描摹" },
+              { id: "balance", label: "稳腕正锋" },
+              { id: "review", label: "核对残页" },
+            ],
+            expectedChoiceId: "trace",
+          },
+          {
+            id: "prompt-2",
+            text: "这桩事不见刀光，却最考验耐性。",
+            choices: [
+              { id: "trace", label: "依字描摹" },
+              { id: "balance", label: "稳腕正锋" },
+              { id: "review", label: "核对残页" },
+            ],
+            expectedChoiceId: "balance",
+          },
+        ],
+        requiredScore: 1,
+      },
     },
     outcomeConfig: {},
   },

@@ -15,7 +15,31 @@
       "ownerKind": "external",
       "trigger": "event.building.house.kulan.temple.copy_scripture",
       "launchPayload": {
-        "activityId": "activity.zhu_yuanzhang.temple.copy_scripture"
+        "title": "抄写经卷",
+        "briefing": "在偏殿抄录残缺经卷，顺便替住持整理寺中的旧账与香火名册。",
+        "prompts": [
+          {
+            "id": "prompt-1",
+            "text": "静坐抄经，先定你的心，再定你的字。",
+            "choices": [
+              { "id": "trace", "label": "依字描摹" },
+              { "id": "balance", "label": "稳腕正锋" },
+              { "id": "review", "label": "核对残页" }
+            ],
+            "expectedChoiceId": "trace"
+          },
+          {
+            "id": "prompt-2",
+            "text": "这桩事不见刀光，却最考验耐性。",
+            "choices": [
+              { "id": "trace", "label": "依字描摹" },
+              { "id": "balance", "label": "稳腕正锋" },
+              { "id": "review", "label": "核对残页" }
+            ],
+            "expectedChoiceId": "balance"
+          }
+        ],
+        "requiredScore": 1
       }
     },
     "outcomeConfig": {
@@ -40,7 +64,7 @@
     "trigger": {
       "triggerId": "trigger.playable.grain-accounting.instance.template.grain-accounting",
       "ownerKind": "external",
-      "trigger": "event.building.template.house.grain_shop.accounting",
+      "trigger": "manual-launch",
       "launchPayload": {
         "durationSec": 9,
         "maxWrongAnswers": 1,
@@ -65,6 +89,60 @@
     }
   },
   {
+    "editorRecordId": "minigame.template.temple_sweep_courtyard",
+    "title": "打扫庭院玩法",
+    "description": "皇觉寺打扫庭院玩法实例，使用活动 QTE 并从活动配置读取任务参数。",
+    "integrationId": "playable.activity-qte.instance.template.temple-sweep-courtyard",
+    "playableId": "activity-qte",
+    "ownerDefaults": {
+      "ownerKind": "external",
+      "ownerId": null,
+      "returnPolicy": "close-only"
+    },
+    "trigger": {
+      "triggerId": "trigger.playable.activity-qte.instance.template.temple-sweep-courtyard",
+      "ownerKind": "external",
+      "trigger": "event.building.house.kulan.temple.sweep_courtyard",
+      "launchPayload": {
+        "activityId": "activity.zhu_yuanzhang.temple.sweep_courtyard"
+      }
+    },
+    "outcomeConfig": {
+      "handoffByOutcome": {
+        "success": "close-only",
+        "failure": "close-only",
+        "cancelled": "close-only"
+      }
+    }
+  },
+  {
+    "editorRecordId": "minigame.template.temple_carry_water",
+    "title": "挑水玩法",
+    "description": "皇觉寺挑水玩法实例，使用活动 QTE 并从活动配置读取任务参数。",
+    "integrationId": "playable.activity-qte.instance.template.temple-carry-water",
+    "playableId": "activity-qte",
+    "ownerDefaults": {
+      "ownerKind": "external",
+      "ownerId": null,
+      "returnPolicy": "close-only"
+    },
+    "trigger": {
+      "triggerId": "trigger.playable.activity-qte.instance.template.temple-carry-water",
+      "ownerKind": "external",
+      "trigger": "event.building.house.kulan.temple.carry_water",
+      "launchPayload": {
+        "activityId": "activity.zhu_yuanzhang.temple.carry_water"
+      }
+    },
+    "outcomeConfig": {
+      "handoffByOutcome": {
+        "success": "close-only",
+        "failure": "close-only",
+        "cancelled": "close-only"
+      }
+    }
+  },
+  {
     "editorRecordId": "minigame.template.medicine_compounding",
     "title": "药材炼制玩法",
     "description": "药铺炼药玩法实例，使用配置组控制时长、回合数和体力成本。",
@@ -78,7 +156,7 @@
     "trigger": {
       "triggerId": "trigger.playable.medicine-compounding.instance.template.medicine-compounding",
       "ownerKind": "external",
-      "trigger": "event.building.template.house.medicine_house.compounding",
+      "trigger": "manual-launch",
       "launchPayload": {
         "durationSec": 11,
         "maxTurns": 1,

@@ -12,6 +12,7 @@ export function renderHousePlayableOverlay(input: {
 }): string {
   const playableId = resolvePlayableId(input.session, input.houseSession);
   if (
+    playableId !== "temple-copy-scripture" &&
     playableId !== "grain-accounting" &&
     playableId !== "medicine-compounding"
   ) {
@@ -24,9 +25,11 @@ export function renderHousePlayableOverlay(input: {
   }
 
   const body =
-    playableId === "grain-accounting"
-      ? renderGrainAccountingBody(overlay)
-      : renderMedicineCompoundingBody(overlay);
+    playableId === "temple-copy-scripture"
+      ? renderPlayableShellBody(overlay)
+      : playableId === "grain-accounting"
+        ? renderGrainAccountingBody(overlay)
+        : renderMedicineCompoundingBody(overlay);
   if (body.length === 0) {
     return "";
   }
@@ -74,6 +77,70 @@ function renderGrainAccountingBody(overlay: Record<string, unknown>): string {
       <div class="c-house-roster">
         <button class="c-button" data-playable-id="grain-accounting" data-playable-action="answer-correct">${GRAIN_ACCOUNTING_TEXT.answerCorrect}</button>
         <button class="c-button" data-playable-id="grain-accounting" data-playable-action="answer-wrong">${GRAIN_ACCOUNTING_TEXT.answerWrong}</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderPlayableShellBody(overlay: Record<string, unknown>): string {
+  if (overlay.type === "playable-shell-result") {
+    const summaryLines = Array.isArray(overlay.summaryLines)
+      ? overlay.summaryLines
+      : [];
+    return `
+      <div class="c-stage-header">
+        <div>
+          <p class="c-stage-header__eyebrow">玩法</p>
+          <h1 class="c-stage-header__title">${formatValue(overlay.title)}</h1>
+        </div>
+      </div>
+      <div class="c-house-interior">
+        <div class="c-panel">
+          ${summaryLines.map((line) => `<p>${formatValue(line)}</p>`).join("")}
+        </div>
+        <div class="c-house-roster">
+          <button class="c-button" data-playable-action="close-result">收起结果</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (overlay.type !== "playable-shell") {
+    return "";
+  }
+
+  const actions = Array.isArray(overlay.actions) ? overlay.actions : [];
+  const playableId = formatValue(overlay.playableId);
+  const summaryLines = Array.isArray(overlay.summaryLines)
+    ? overlay.summaryLines
+    : [];
+  return `
+    <div class="c-stage-header">
+      <div>
+        <p class="c-stage-header__eyebrow">玩法</p>
+        <h1 class="c-stage-header__title">${formatValue(overlay.title)}</h1>
+      </div>
+    </div>
+    <div class="c-house-interior">
+      <div class="c-panel">
+        ${summaryLines.map((line) => `<p>${formatValue(line)}</p>`).join("")}
+      </div>
+      <div class="c-house-roster">
+        ${actions
+          .map((action) => {
+            const record = readObject(action);
+            const commandType = formatValue(record.commandType);
+            const actionAttrs =
+              commandType === "custom"
+                ? `data-playable-action="custom" data-playable-custom-action="${formatValue(record.id)}"`
+                : `data-playable-action="${commandType}"`;
+            return `
+              <button class="c-button" data-playable-id="${playableId}" ${actionAttrs}>
+                ${formatValue(record.label)}
+              </button>
+            `;
+          })
+          .join("")}
       </div>
     </div>
   `;
@@ -192,6 +259,11 @@ function resolvePlayableId(
 
   if (houseSession?.moduleId === "medicine-house") {
     return "medicine-compounding";
+  }
+
+  const overlay = readOverlay(houseSession);
+  if (typeof overlay?.playableId === "string" && overlay.playableId.length > 0) {
+    return overlay.playableId;
   }
 
   return null;

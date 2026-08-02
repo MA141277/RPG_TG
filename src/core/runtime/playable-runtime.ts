@@ -13,9 +13,11 @@ import type {
   PlayableId,
   PlayableIntegrationDefinition,
   PlayableIntegrationId,
+  PlayableLaunchFailure,
   PlayableLaunchInput,
   PlayableLaunchResolution,
   PlayableOwnerContext,
+  PlayablePresenterModel,
   PlayableResult,
 } from "../contracts/playable-runtime";
 import type { FlowPlayableDefinition } from "../../domain/playables/flow";
@@ -33,15 +35,6 @@ import {
   stopActivityQtePlayable,
   tickActivityQtePlayable,
 } from "../../application/playables/activity-qte/activity-qte-definition";
-import {
-  adjustTempleCopyScriptureWagerPlayable,
-  chooseTempleCopyScriptureCommandPlayable,
-  exitTempleCopyScripturePlayable,
-  launchTempleCopyScripturePlayable,
-  playTempleCopyScripturePlayable,
-  stopTempleCopyScripturePlayable,
-  tickTempleCopyScripturePlayable,
-} from "../../minigames/temple-copy-scripture";
 import {
   completeCityBeggingPlayable,
   exitCityBeggingPlayable,
@@ -76,6 +69,7 @@ import {
   configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
   readDefaultPlayableDefinitionRegistry,
   readDefaultPlayableIntegrationRegistry,
+  readDefaultPlayableShellRegistry,
   resetDefaultPlayableRuntimeRegistries,
 } from "./playable-runtime-registries";
 import {
@@ -91,11 +85,11 @@ export type PlayableRuntimeOutput = RuntimeResult & {
   characterDefinitions?: CharacterDefinition[];
   followUp?: RuntimeInteractiveSignal | null;
   settlement?: PlayableResult | null;
+  launchFailure?: PlayableLaunchFailure | null;
 };
 
 type InteractivePlayableId =
   | "activity-qte"
-  | "temple-copy-scripture"
   | "city-begging"
   | "story-battle";
 
@@ -129,8 +123,119 @@ type ParsedPlayableActionRequest =
     }
   | {
       phase: "exit";
-      playableId: PlayableId;
-    };
+    playableId: PlayableId;
+  };
+
+type PlayableShellOverlayState = {
+  playableId: PlayableId;
+  type: "playable-shell" | "playable-shell-result";
+  title: string;
+  summaryLines: string[];
+  actions: PlayablePresenterModel["actions"];
+};
+
+function isLegacyRuntimeOwnedPlayable(playableId: PlayableId): boolean {
+  return (
+    playableId === "city-begging" ||
+    playableId === "grain-accounting" ||
+    playableId === "medicine-compounding" ||
+    playableId === "story-battle"
+  );
+}
+
+function createPlayableShellOverlayState(input: {
+  session: ActivePlayableSession;
+  presenter: PlayablePresenterModel;
+}): PlayableShellOverlayState {
+  return {
+    playableId: input.session.playableId,
+    type:
+      input.session.status === "active"
+        ? "playable-shell"
+        : "playable-shell-result",
+    title: input.presenter.title,
+    summaryLines: input.presenter.summaryLines,
+    actions: input.presenter.actions,
+  };
+}
+
+function withPlayableShellOverlay(
+  state: RuntimeState,
+  overlay: PlayableShellOverlayState | null
+): RuntimeState {
+  const currentHouseSession = state.core.ui.houseSession;
+  const currentState =
+    currentHouseSession?.state != null &&
+    typeof currentHouseSession.state === "object" &&
+    !Array.isArray(currentHouseSession.state)
+      ? (currentHouseSession.state as Record<string, unknown>)
+      : {};
+
+  if (overlay == null && currentHouseSession == null) {
+    return state;
+  }
+
+  return {
+    ...state,
+    core: {
+      ...state.core,
+      ui: {
+        ...state.core.ui,
+        houseSession: {
+          moduleId: currentHouseSession?.moduleId ?? "playable-shell",
+          state: {
+            ...currentState,
+            overlay,
+          },
+        },
+      },
+    },
+  };
+}
+
+function createMissingPlayableShellFailure(
+  playableId: PlayableId
+): PlayableLaunchFailure {
+  return {
+    ok: false,
+    code: "missing-playable-shell",
+    message: `Playable "${playableId}" is not backed by a shell package.`,
+  };
+}
+
+function toShellPlayableCommand(input: {
+  action: string;
+  payload: Record<string, unknown> | undefined;
+}): PlayableCommand | null {
+  if (input.action === "confirm") {
+    return { type: "confirm" };
+  }
+  if (input.action === "cancel") {
+    return { type: "cancel" };
+  }
+  if (input.action === "select") {
+    return typeof input.payload?.value === "string"
+      ? { type: "select", value: input.payload.value }
+      : null;
+  }
+  if (input.action === "custom") {
+    return typeof input.payload?.actionId === "string"
+      ? {
+          type: "custom",
+          actionId: input.payload.actionId,
+        }
+      : null;
+  }
+  if (input.action === "choose-command") {
+    return typeof input.payload?.commandId === "string"
+      ? {
+          type: "custom",
+          actionId: input.payload.commandId,
+        }
+      : null;
+  }
+  return null;
+}
 
 export function createLaunchPlayableRequest(
   playableId: PlayableId,
@@ -364,45 +469,48 @@ export function runPlayableRuntime(input: {
       };
     }
 
-    if (resolvedRequest.launch.launch.playableId === "temple-copy-scripture") {
-      const activityId = resolvedRequest.launch.launch.payload?.activityId;
-      if (typeof activityId !== "string") {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
-        };
-      }
-
-      const activityDefinition =
-        input.activityDefinitionsById?.[activityId] ?? null;
-      if (activityDefinition == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
-        };
-      }
-
-      const handlerId =
-        typeof resolvedRequest.launch.launch.payload?.handlerId === "string"
-          ? resolvedRequest.launch.launch.payload.handlerId
-          : activityDefinition.fallbackHandlerId ?? activityDefinition.handlerId;
-      const nextState = launchTempleCopyScripturePlayable({
-        state: input.state,
-        activityDefinition,
-        handlerId,
-        integrationId: resolvedRequest.launch.launch.integrationId,
-        ownerContext: resolvedRequest.launch.launch.ownerContext,
-      });
-
+    const shell = readDefaultPlayableShellRegistry().get(
+      resolvedRequest.launch.launch.playableId
+    );
+    if (shell != null) {
+      const session = shell.createSession(resolvedRequest.launch.launch);
+      const presenter = shell.present(session);
+      const nextState = withPlayableShellOverlay(
+        {
+          ...input.state,
+          core: {
+            ...input.state.core,
+            runtime: {
+              ...input.state.core.runtime,
+              playableSession: session,
+            },
+          },
+        },
+        createPlayableShellOverlayState({
+          session,
+          presenter,
+        })
+      );
       return {
         state: nextState,
         effects: [],
         handled: true,
-        session: getActivePlayableSession(nextState, "temple-copy-scripture"),
+        session,
+      };
+    }
+
+    if (!isLegacyRuntimeOwnedPlayable(resolvedRequest.launch.launch.playableId)) {
+      return {
+        state: input.state,
+        effects: [],
+        handled: false,
+        session: getActivePlayableSession(
+          input.state,
+          resolvedRequest.launch.launch.playableId
+        ),
+        launchFailure: createMissingPlayableShellFailure(
+          resolvedRequest.launch.launch.playableId
+        ),
       };
     }
 
@@ -587,10 +695,22 @@ export function runPlayableRuntime(input: {
       };
     }
 
-    if (resolvedRequest.playableId === "temple-copy-scripture") {
-      const nextState = exitTempleCopyScripturePlayable(input.state);
+    const shell = readDefaultPlayableShellRegistry().get(resolvedRequest.playableId);
+    if (shell != null) {
       return {
-        state: nextState,
+        state: withPlayableShellOverlay(
+          {
+            ...input.state,
+            core: {
+              ...input.state.core,
+              runtime: {
+                ...input.state.core.runtime,
+                playableSession: null,
+              },
+            },
+          },
+          null
+        ),
         effects: [],
         handled: true,
         session: null,
@@ -896,181 +1016,83 @@ export function runPlayableRuntime(input: {
     }
   }
 
-  if (resolvedRequest.playableId === "temple-copy-scripture") {
-    const session = input.state.core.runtime.activitySession;
-    const activityId =
-      session?.type === "qte-bar" ||
-      session?.type === "work-sequence" ||
-      session?.type === "fortune-board"
-        ? session.activityId
-        : null;
-    const activityDefinition =
-      activityId == null ? null : input.activityDefinitionsById?.[activityId] ?? null;
-
-    if (resolvedRequest.action === "tick") {
-      if (activityDefinition == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
-        };
-      }
-
-      const completion = tickTempleCopyScripturePlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-      });
+  const shell = readDefaultPlayableShellRegistry().get(resolvedRequest.playableId);
+  if (shell != null) {
+    const activeSession = getActivePlayableSession(
+      input.state,
+      resolvedRequest.playableId
+    );
+    if (activeSession == null) {
       return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
+        state: input.state,
         effects: [],
-        handled: true,
-        session: getActivePlayableSession(
-          completion.state,
-          "temple-copy-scripture"
-        ),
+        handled: false,
+        session: null,
       };
     }
 
-    if (resolvedRequest.action === "play") {
-      if (activityDefinition == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
-        };
-      }
-
-      const completion = playTempleCopyScripturePlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-      });
-
+    const command = toShellPlayableCommand({
+      action: resolvedRequest.action,
+      payload: resolvedRequest.payload,
+    });
+    if (command == null) {
       return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
+        state: input.state,
         effects: [],
         handled: true,
-        session: getActivePlayableSession(
-          completion.state,
-          "temple-copy-scripture"
-        ),
+        session: activeSession,
       };
     }
 
-    if (
-      resolvedRequest.action === "wager-minus" ||
-      resolvedRequest.action === "wager-plus"
-    ) {
-      const completion = adjustTempleCopyScriptureWagerPlayable({
-        state: input.state,
-        characterDefinitions: input.characterDefinitions,
-        direction: resolvedRequest.action === "wager-minus" ? -1 : 1,
-      });
-
+    const nextSession = shell.reduce(activeSession, command);
+    const presenter = shell.present(nextSession);
+    const settlement = shell.complete(nextSession);
+    if (settlement != null) {
       return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
+        state: withPlayableShellOverlay(
+          {
+            ...input.state,
+            core: {
+              ...input.state.core,
+              runtime: {
+                ...input.state.core.runtime,
+                playableSession: null,
+              },
+            },
+          },
+          createPlayableShellOverlayState({
+            session: nextSession,
+            presenter,
+          })
+        ),
         effects: [],
         handled: true,
-        session: getActivePlayableSession(
-          completion.state,
-          "temple-copy-scripture"
-        ),
+        session: null,
+        settlement,
       };
     }
 
-    if (resolvedRequest.action === "speed") {
-      if (activityDefinition == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
-        };
-      }
-
-      const tickMs = resolvedRequest.payload?.tickMs;
-      const completion = chooseTempleCopyScriptureCommandPlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-        commandId: `speed:${typeof tickMs === "number" ? tickMs : ""}`,
-      });
-
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(
-          completion.state,
-          "temple-copy-scripture"
-        ),
-      };
-    }
-
-    if (resolvedRequest.action === "stop") {
-      if (activityDefinition == null) {
-        return {
-          state: exitTempleCopyScripturePlayable(input.state),
-          effects: [],
-          handled: true,
-          session: null,
-        };
-      }
-
-      const completion = stopTempleCopyScripturePlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-      });
-
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(
-          completion.state,
-          "temple-copy-scripture"
-        ),
-      };
-    }
-
-    if (resolvedRequest.action === "choose") {
-      const commandId = resolvedRequest.payload?.commandId;
-      if (activityDefinition == null || typeof commandId !== "string") {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "temple-copy-scripture"),
-        };
-      }
-
-      const completion = chooseTempleCopyScriptureCommandPlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-        commandId,
-      });
-
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(
-          completion.state,
-          "temple-copy-scripture"
-        ),
-      };
-    }
+    return {
+      state: withPlayableShellOverlay(
+        {
+          ...input.state,
+          core: {
+            ...input.state.core,
+            runtime: {
+              ...input.state.core.runtime,
+              playableSession: nextSession,
+            },
+          },
+        },
+        createPlayableShellOverlayState({
+          session: nextSession,
+          presenter,
+        })
+      ),
+      effects: [],
+      handled: true,
+      session: nextSession,
+    };
   }
 
   if (resolvedRequest.playableId === "city-begging") {
@@ -1988,10 +2010,6 @@ function getInteractivePlayableIntegrationId(
 
   if (playableId === "story-battle") {
     return "playable.story-battle.dialogue.default";
-  }
-
-  if (playableId === "temple-copy-scripture") {
-    return "playable.temple-copy-scripture.house.temple";
   }
 
   return "playable.city-begging.external.default";
