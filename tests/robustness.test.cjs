@@ -38900,6 +38900,37 @@ test("child 34 package scripts expose playable scaffold and validation entry poi
   );
 });
 
+test("playable tooling only scaffolds canonical src/playables packages", () => {
+  const repoRoot = process.cwd();
+  const scaffoldSource = fs.readFileSync(
+    path.join(repoRoot, "tools/scaffold-playable.mjs"),
+    "utf8"
+  );
+
+  assert.match(scaffoldSource, /src",\s*"playables"/);
+  assert.doesNotMatch(
+    scaffoldSource,
+    /src",\s*"application",\s*"playables"/
+  );
+  assert.doesNotMatch(
+    scaffoldSource,
+    /src",\s*"ui",\s*"views",\s*"playables"/
+  );
+});
+
+test("playable validator requires shell package files under src/playables", () => {
+  const repoRoot = process.cwd();
+  const validatorSource = fs.readFileSync(
+    path.join(repoRoot, "tools/validate-playables.mjs"),
+    "utf8"
+  );
+
+  assert.match(validatorSource, /src\/playables\/\$\{artifact\.playableId\}/);
+  assert.match(validatorSource, /manifest\.ts/);
+  assert.match(validatorSource, /index\.ts/);
+  assert.doesNotMatch(validatorSource, /src\/application\/playables/);
+});
+
 test("child 34 playable scaffold writes canonical mechanic and integration artifacts", () => {
   const { spawnSync } = require("node:child_process");
   const os = require("node:os");
@@ -38960,37 +38991,49 @@ test("child 34 playable scaffold writes canonical mechanic and integration artif
 
   assert.equal(fs.existsSync(mechanicArtifactPath), true);
   assert.equal(fs.existsSync(integrationArtifactPath), true);
-  assert.equal(
-    fs.existsSync(
-      path.join(
-        outputRoot,
-        "src",
-        "application",
-        "playables",
-        "test-playable",
-        "test-playable-definition.ts"
-      )
-    ),
-    true
+  const playablePackageRoot = path.join(
+    outputRoot,
+    "src",
+    "playables",
+    "test-playable"
   );
-  assert.equal(
-    fs.existsSync(
-      path.join(outputRoot, "src", "domain", "playables", "test-playable.ts")
-    ),
-    true
+
+  for (const fileName of [
+    "manifest.ts",
+    "contract.ts",
+    "session.ts",
+    "reducer.ts",
+    "presenter.ts",
+    "settlement.ts",
+    "index.ts",
+  ]) {
+    assert.equal(
+      fs.existsSync(path.join(playablePackageRoot, fileName)),
+      true,
+      `${fileName} should be scaffolded in the playable package root`
+    );
+  }
+
+  const indexSource = fs.readFileSync(
+    path.join(playablePackageRoot, "index.ts"),
+    "utf8"
   );
-  assert.equal(
-    fs.existsSync(
-      path.join(
-        outputRoot,
-        "src",
-        "ui",
-        "views",
-        "playables",
-        "test-playable-view.ts"
-      )
-    ),
-    true
+  assert.match(indexSource, /export \{ manifest \} from "\.\/manifest";/);
+  assert.match(
+    indexSource,
+    /export \{ createTestPlayableSession as createSession \} from "\.\/session";/
+  );
+  assert.match(
+    indexSource,
+    /export \{ reduceTestPlayable as reduce \} from "\.\/reducer";/
+  );
+  assert.match(
+    indexSource,
+    /export \{ presentTestPlayable as present \} from "\.\/presenter";/
+  );
+  assert.match(
+    indexSource,
+    /export \{ completeTestPlayable as complete \} from "\.\/settlement";/
   );
 
   const mechanicArtifact = JSON.parse(

@@ -82,13 +82,13 @@ function validateMechanicArtifact({ repoRoot, filePath, artifact, errors }) {
   }
 
   const requiredPaths = [
-    `src/domain/playables/${artifact.playableId}.ts`,
-    `src/application/playables/${artifact.playableId}/${artifact.playableId}-definition.ts`,
-    `src/application/playables/${artifact.playableId}/${artifact.playableId}-session.ts`,
-    `src/application/playables/${artifact.playableId}/${artifact.playableId}-presenter.ts`,
-    `src/application/playables/${artifact.playableId}/${artifact.playableId}-metrics.ts`,
-    `src/application/playables/${artifact.playableId}/${artifact.playableId}-settlement.ts`,
-    `src/ui/views/playables/${artifact.playableId}-view.ts`,
+    `src/playables/${artifact.playableId}/manifest.ts`,
+    `src/playables/${artifact.playableId}/contract.ts`,
+    `src/playables/${artifact.playableId}/session.ts`,
+    `src/playables/${artifact.playableId}/reducer.ts`,
+    `src/playables/${artifact.playableId}/presenter.ts`,
+    `src/playables/${artifact.playableId}/settlement.ts`,
+    `src/playables/${artifact.playableId}/index.ts`,
   ];
 
   for (const relativePath of requiredPaths) {
