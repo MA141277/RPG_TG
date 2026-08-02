@@ -7684,6 +7684,15 @@ class MainUiFlowScriptEditorModule {
               .map(
                 (entry, index) => `
                   <article class="c-script-editor-minigame-list__route">
+                    <button
+                      type="button"
+                      class="c-script-editor-minigame-list__remove"
+                      data-script-editor-action="remove-minigame-config-entry"
+                      data-script-editor-minigame-config-index="${index}"
+                      aria-label="删除配置"
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
                     <div class="c-script-editor-form-grid">
                       <label class="c-script-editor-form-field">
                         <span>配置键</span>
@@ -7745,14 +7754,6 @@ class MainUiFlowScriptEditorModule {
                         />
                       </label>
                     </div>
-                    <button
-                      type="button"
-                      class="c-main-ui-json-text-button"
-                      data-script-editor-action="remove-minigame-config-entry"
-                      data-script-editor-minigame-config-index="${index}"
-                    >
-                      删除配置
-                    </button>
                   </article>
                 `
               )
@@ -7786,6 +7787,15 @@ class MainUiFlowScriptEditorModule {
               .map(
                 (route, index) => `
                   <article class="c-script-editor-minigame-list__route">
+                    <button
+                      type="button"
+                      class="c-script-editor-minigame-list__remove"
+                      data-script-editor-action="remove-minigame-settlement-route"
+                      data-script-editor-minigame-settlement-index="${index}"
+                      aria-label="删除结算路由"
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
                     <div class="c-script-editor-form-grid">
                       <label class="c-script-editor-form-field">
                         <span>路由标题</span>
@@ -7857,17 +7867,9 @@ class MainUiFlowScriptEditorModule {
                           data-script-editor-minigame-settlement-index="${index}"
                           ${route.enabled !== false ? "checked" : ""}
                         />
-                        <span>启用这条结算路由</span>
-                      </label>
+                          <span>启用这条结算路由</span>
+                        </label>
                     </div>
-                    <button
-                      type="button"
-                      class="c-main-ui-json-text-button"
-                      data-script-editor-action="remove-minigame-settlement-route"
-                      data-script-editor-minigame-settlement-index="${index}"
-                    >
-                      删除结算路由
-                    </button>
                   </article>
                 `
               )
