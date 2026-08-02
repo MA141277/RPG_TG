@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-08-02`
-- Current Focus: `Task 3 complete in the temple path; continue Task 4 by migrating remaining builtin playables into canonical src/playables packages.`
-- Next Step: `Start the remaining package migrations after temple: move activity-qte and building-flow into canonical src/playables roots and continue deleting feature-owned runnable seams.`
+- Current Focus: `Task 4 is now split: building-flow residue is being retired because authored flow-playables are empty, while activity-qte and the remaining runnable builtins still need canonical shell migration.`
+- Next Step: `Finish deleting retired building-flow builtin/runtime residue, then move activity-qte and the remaining runnable builtins into canonical src/playables roots.`
 - Verification: `Task 1/2/3 targeted verification passed in the real mod-first-dev worktree; full tests/robustness.test.cjs file still reports unrelated pre-existing failures outside the playable-shell migration scope.`
 - Notes: `This plan is fail-closed. No task may introduce compatibility re-exports, dual runnable directories, or per-playable host adapters.`
 
@@ -35,6 +35,10 @@
   - Summary: `Completed the Task 3 shell-ownership cutover for the temple path: deleted the playable-host-adapter registry seam, rewired playable-runtime and house-playable-overlay to consume direct shell state, moved temple-copy-scripture into src/playables/temple-copy-scripture, and normalized the retained Huangjue Temple temple-copy-scripture payloads so launch no longer depends on host-side activity/text translation.`
   - Verification: `'/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node' node_modules/typescript/bin/tsc -p tsconfig.test.json' passed; Task 2/3 target robustness cases passed in /tmp/mod-first-dev-task23.log; full tests/robustness.test.cjs file still reports unrelated pre-existing failures.`
   - Next: `Continue Task 4 by migrating the remaining builtin playables and deleting the leftover feature-owned runnable roots beyond temple-copy-scripture.`
+- 2026-08-02
+  - Summary: `While starting Task 4, confirmed both retained zhuyuanzhang flow-playables tables are already empty and therefore retired the leftover built-in building-flow residue instead of migrating it into src/playables: removed its builtin definition/integration registration, deleted its runtime special-case, and removed its Script Editor builtin labels.`
+  - Verification: `'/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node' node_modules/typescript/bin/tsc --noEmit -p tsconfig.json' passed; '/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node' node_modules/typescript/bin/tsc -p tsconfig.test.json' passed; targeted building-flow retirement guards passed in tests/robustness.test.cjs.`
+  - Next: `Continue Task 4 by migrating activity-qte and the remaining actually-runnable builtins; do not create a src/playables/building-flow package for already-retired content.`
 
 ---
 
@@ -55,7 +59,7 @@
 - Notes:
   - `mod-first-dev` already contains a partially completed temple package split, but that split still uses `src/minigames/temple-copy-scripture/**`, `src/application/playables/builtin/temple-copy-scripture/**`, and the new `playable-host-adapter` registry seam. All three are residue under the approved final-state spec.
   - The repository still has no `src/playables/**` root, and `tools/scaffold-playable.mjs` plus `tools/validate-playables.mjs` still enforce the retired `src/application/playables/**` / `src/ui/views/playables/**` / `src/domain/playables/**` spread instead of the new package-root rule.
-  - Builtin runnable playable ids currently visible in registry/runtime scope are `activity-qte`, `temple-copy-scripture`, `city-begging`, `grain-accounting`, `medicine-compounding`, `story-battle`, and `building-flow`. The plan migrates all of them in one batch.
+  - Builtin runnable playable ids currently visible in registry/runtime scope are `activity-qte`, `temple-copy-scripture`, `city-begging`, `grain-accounting`, `medicine-compounding`, and `story-battle`. `building-flow` is no longer treated as runnable scope because authored flow-playables are already empty and the leftover builtin/runtime residue is being deleted instead of migrated.
 
 ## Implementation Scope
 
@@ -137,7 +141,6 @@
   - Canonical builtin installation point for all runnable shells.
 - `src/playables/activity-qte/**`
 - `src/playables/temple-copy-scripture/**`
-- `src/playables/building-flow/**`
 - `src/playables/city-begging/**`
 - `src/playables/grain-accounting/**`
 - `src/playables/medicine-compounding/**`
@@ -482,19 +485,17 @@ git commit -m "refactor: make playable runtime shell-owned" -m "Summary:
 - delete the host-adapter registry seam and related special-case runtime ownership"
 ```
 
-## Task 4: Migrate Activity QTE, Temple Copy Scripture, And Building Flow To `src/playables`
+## Task 4: Migrate Activity QTE While Retiring Empty Building-Flow Residue
 
 **Files:**
 - Create: `src/playables/activity-qte/**`
 - Create: `src/playables/temple-copy-scripture/**`
-- Create: `src/playables/building-flow/**`
 - Modify: `src/core/registry/builtin-playable-shell-registry.ts`
 - Modify: `src/core/registry/builtin-playable-definition-registry.ts`
 - Modify: `src/core/registry/builtin-playable-integration-registry.ts`
 - Delete: `src/application/playables/activity-qte/**`
 - Delete: `src/minigames/temple-copy-scripture/**`
 - Delete: `src/application/playables/builtin/temple-copy-scripture/**`
-- Delete: `src/application/playables/flow/**`
 - Modify: `tests/robustness.test.cjs`
 
 - [ ] **Step 1: Write the failing canonical-path tests for the first three packages**
@@ -502,11 +503,7 @@ git commit -m "refactor: make playable runtime shell-owned" -m "Summary:
 Add file-presence/source guards that name the three packages explicitly:
 
 ```js
-for (const playableId of [
-  "activity-qte",
-  "temple-copy-scripture",
-  "building-flow",
-]) {
+for (const playableId of ["activity-qte", "temple-copy-scripture"]) {
   test(`canonical shell package exists for ${playableId}`, () => {
     const packageRoot = path.join(repoRoot, "src/playables", playableId);
     assert.ok(fs.existsSync(path.join(packageRoot, "manifest.ts")));
@@ -524,8 +521,8 @@ test("retired runnable roots are removed for temple and flow packages", () => {
     false
   );
   assert.equal(
-    fs.existsSync(path.join(repoRoot, "src/application/playables/flow")),
-    false
+    builtinPlayableDefinitionRegistry.get("building-flow"),
+    null
   );
 });
 ```
@@ -536,13 +533,13 @@ Run:
 
 ```bash
 npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "canonical shell package exists for activity-qte|canonical shell package exists for temple-copy-scripture|canonical shell package exists for building-flow|retired runnable roots are removed for temple and flow packages"
+node --test tests/robustness.test.cjs --test-name-pattern "canonical shell package exists for activity-qte|canonical shell package exists for temple-copy-scripture|retired runnable roots are removed for temple and flow packages"
 ```
 
 Expected:
 
 - `FAIL`
-- missing `src/playables/activity-qte`, `src/playables/temple-copy-scripture`, and `src/playables/building-flow`
+- missing `src/playables/activity-qte` and `src/playables/temple-copy-scripture`
 
 - [ ] **Step 3: Move the three packages and export direct shells**
 
@@ -562,21 +559,7 @@ export const templeCopyScriptureShell: PlayableShell = {
 };
 ```
 
-```ts
-export const buildingFlowShell: PlayableShell = {
-  manifest: {
-    playableId: "building-flow",
-    family: "flow",
-    commandPrefix: "playable.building-flow.",
-  },
-  createSession: createBuildingFlowSession,
-  reduce: reduceBuildingFlowSession,
-  present: presentBuildingFlowSession,
-  complete: completeBuildingFlowSession,
-};
-```
-
-Install the new shells in `builtin-playable-shell-registry.ts` and remove the retired runnable directories in the same task.
+Install the new shells in `builtin-playable-shell-registry.ts` and delete the leftover built-in `building-flow` registry/runtime residue in the same task instead of migrating a package for already-retired content.
 
 - [ ] **Step 4: Re-run the canonical-path tests**
 
@@ -584,7 +567,7 @@ Run:
 
 ```bash
 npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "canonical shell package exists for activity-qte|canonical shell package exists for temple-copy-scripture|canonical shell package exists for building-flow|retired runnable roots are removed for temple and flow packages"
+node --test tests/robustness.test.cjs --test-name-pattern "canonical shell package exists for activity-qte|canonical shell package exists for temple-copy-scripture|retired runnable roots are removed for temple and flow packages"
 ```
 
 Expected:
@@ -596,11 +579,11 @@ Expected:
 Run:
 
 ```bash
-git add src/playables/activity-qte src/playables/temple-copy-scripture src/playables/building-flow src/core/registry/builtin-playable-shell-registry.ts src/core/registry/builtin-playable-definition-registry.ts src/core/registry/builtin-playable-integration-registry.ts tests/robustness.test.cjs
-git rm -r src/application/playables/activity-qte src/minigames/temple-copy-scripture src/application/playables/builtin/temple-copy-scripture src/application/playables/flow
+git add src/playables/activity-qte src/playables/temple-copy-scripture src/core/registry/builtin-playable-shell-registry.ts src/core/registry/builtin-playable-definition-registry.ts src/core/registry/builtin-playable-integration-registry.ts tests/robustness.test.cjs
+git rm -r src/application/playables/activity-qte src/minigames/temple-copy-scripture src/application/playables/builtin/temple-copy-scripture
 git commit -m "refactor: migrate core minigame shells to src/playables" -m "Summary:
-- move activity-qte, temple-copy-scripture, and building-flow into canonical playable packages
-- delete the retired temple and flow runnable roots"
+- move activity-qte and temple-copy-scripture into canonical playable packages
+- delete the retired temple runnable roots and leftover building-flow builtin residue"
 ```
 
 ## Task 5: Migrate City Begging, Grain Accounting, And Medicine Compounding

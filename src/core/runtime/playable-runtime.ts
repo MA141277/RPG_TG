@@ -385,10 +385,7 @@ export function runPlayableRuntime(input: {
   if (resolvedRequest.phase === "launch") {
     const flowPlayable =
       input.flowPlayablesById?.[resolvedRequest.launch.launch.playableId] ?? null;
-    if (
-      flowPlayable != null ||
-      resolvedRequest.launch.launch.playableId === "building-flow"
-    ) {
+    if (flowPlayable != null) {
       if (flowPlayable == null) {
         return {
           state: input.state,
@@ -1590,9 +1587,6 @@ function isFlowPlayableSession(
     return false;
   }
   if (flowPlayablesById?.[session.playableId] != null) {
-    return true;
-  }
-  if (session.playableId === "building-flow") {
     return true;
   }
   return typeof session.state?.currentNodeId === "string";

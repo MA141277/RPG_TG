@@ -7300,7 +7300,6 @@ class MainUiFlowScriptEditorModule {
       "grain-accounting": "粮账核算",
       "medicine-compounding": "药材炼制",
       "story-battle": "剧情战斗",
-      "building-flow": "建筑流程",
     };
 
     return labels[playableId] ?? playableId ?? "未设置";
@@ -7315,7 +7314,6 @@ class MainUiFlowScriptEditorModule {
       "playable.grain-accounting.house.grain-shop": "粮账核算 / 粮铺接入",
       "playable.medicine-compounding.house.medicine-house": "药材炼制 / 药铺接入",
       "playable.story-battle.dialogue.default": "剧情战斗 / 对话接入",
-      "playable.building-flow.house.default": "建筑流程 / 建筑接入",
     };
 
     return labels[integrationId] ?? integrationId ?? "未设置";

@@ -32,10 +32,6 @@ const builtinPlayableDefinitions: PlayableDefinition[] = [
     id: "story-battle",
     commandPrefix: "interactive.story-battle.",
   },
-  {
-    id: "building-flow",
-    commandPrefix: "playable.building-flow.",
-  },
 ];
 
 export function installBuiltinPlayableDefinitions(

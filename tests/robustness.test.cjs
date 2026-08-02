@@ -40372,7 +40372,7 @@ test("dev browser validation resources avoid mojibake paths and watcher profile 
   assert.equal(parseResult.status, 0, parseResult.stderr || parseResult.stdout);
 });
 
-test("flow playable is registered with a building owner integration", () => {
+test("retired building-flow no longer appears in builtin playable registries", () => {
   const {
     builtinPlayableDefinitionRegistry,
   } = require("../.test-dist/core/registry/builtin-playable-definition-registry.js");
@@ -40380,83 +40380,11 @@ test("flow playable is registered with a building owner integration", () => {
     builtinPlayableIntegrationRegistry,
   } = require("../.test-dist/core/registry/builtin-playable-integration-registry.js");
 
+  assert.equal(builtinPlayableDefinitionRegistry.get("building-flow"), null);
   assert.equal(
-    builtinPlayableDefinitionRegistry.get("building-flow")?.commandPrefix,
-    "playable.building-flow."
+    builtinPlayableIntegrationRegistry.get("playable.building-flow.house.default"),
+    null
   );
-  const integration = builtinPlayableIntegrationRegistry.get(
-    "playable.building-flow.house.default"
-  );
-  assert.equal(integration?.playableId, "building-flow");
-  assert.equal(integration?.ownerDefaults.ownerKind, "house");
-  assert.equal(integration?.ownerDefaults.returnPolicy, "resume-owner");
-});
-
-test("flow playable launches with building owner context and exposes a presenter model", () => {
-  const {
-    createLaunchPlayableRequest,
-    runPlayableRuntime,
-  } = require("../.test-dist/core/runtime/playable-runtime.js");
-  const {
-    presentFlowPlayable,
-  } = require("../.test-dist/application/playables/flow/flow-playable-presenter.js");
-
-  const flowDefinition = {
-    id: "building-flow",
-    title: "Rest",
-    initialNodeId: "node.start",
-    nodes: [
-      {
-        id: "node.start",
-        type: "text",
-        text: "Rest here.",
-        nextNodeId: "node.finish",
-      },
-      {
-        id: "node.finish",
-        type: "complete",
-        outcome: "success",
-        metrics: { rested: true },
-      },
-    ],
-  };
-  const result = runPlayableRuntime({
-    state: createRuntimeState(),
-    request: createLaunchPlayableRequest("building-flow", {
-      ownerContext: {
-        ownerKind: "house",
-        ownerId: "building.temple",
-        returnPolicy: "resume-owner",
-      },
-    }),
-    characterDefinitions: prototypeCharacters,
-    flowPlayablesById: {
-      [flowDefinition.id]: flowDefinition,
-    },
-  });
-
-  assert.equal(result.handled, true);
-  assert.equal(result.state.core.ui.currentView, "minigame");
-  assert.equal(
-    result.state.core.runtime.playableSession?.playableId,
-    "building-flow"
-  );
-  assert.equal(
-    result.state.core.runtime.playableSession?.ownerContext.ownerId,
-    "building.temple"
-  );
-  assert.equal(
-    result.state.core.runtime.playableSession?.state?.currentNodeId,
-    "node.start"
-  );
-
-  const presenter = presentFlowPlayable({
-    definition: flowDefinition,
-    session: result.state.core.runtime.playableSession,
-  });
-  assert.equal("family" in presenter, false);
-  assert.equal(presenter.layout, "panel");
-  assert.equal(presenter.viewModel.currentNodeId, "node.start");
 });
 
 function loadZhuyuanzhangBuildingMenuPack() {
@@ -41297,127 +41225,29 @@ test("legacy house runtime retirement removes superseded house code and governan
   assert.doesNotMatch(agentsSource, /house module/i);
 });
 
-test("flow playable reduces a command and settles through shared handoff", () => {
-  const {
-    createLaunchPlayableRequest,
-    createPlayableActionRequest,
-    runPlayableRuntime,
-  } = require("../.test-dist/core/runtime/playable-runtime.js");
-  const flowDefinition = {
-    id: "building-flow",
-    title: "Rest",
-    initialNodeId: "node.start",
-    nodes: [
-      {
-        id: "node.start",
-        type: "text",
-        text: "Rest here.",
-        nextNodeId: "node.finish",
-      },
-      {
-        id: "node.finish",
-        type: "complete",
-        outcome: "success",
-        metrics: { rested: true },
-      },
-    ],
-  };
-  const launched = runPlayableRuntime({
-    state: createRuntimeState(),
-    request: createLaunchPlayableRequest("building-flow", {
-      ownerContext: {
-        ownerKind: "house",
-        ownerId: "building.temple",
-        returnPolicy: "resume-owner",
-      },
-    }),
-    characterDefinitions: prototypeCharacters,
-    flowPlayablesById: {
-      [flowDefinition.id]: flowDefinition,
-    },
-  });
-
-  const settled = runPlayableRuntime({
-    state: launched.state,
-    request: createPlayableActionRequest("building-flow", "confirm"),
-    characterDefinitions: prototypeCharacters,
-    flowPlayablesById: {
-      [flowDefinition.id]: flowDefinition,
-    },
-  });
-
-  assert.equal(settled.handled, true);
-  assert.equal(settled.state.core.runtime.playableSession, null);
-  assert.equal(settled.settlement?.outcome, "success");
-  assert.equal(settled.settlement?.handoff.type, "resume-owner");
-  assert.equal(settled.settlement?.handoff.ownerId, "building.temple");
-  assert.deepEqual(settled.settlement?.factResult.metrics, { rested: true });
-});
-
-test("flow playable settlement preserves canonical home template owner id in shared handoff", () => {
-  const {
-    createLaunchPlayableRequest,
-    createPlayableActionRequest,
-    runPlayableRuntime,
-  } = require("../.test-dist/core/runtime/playable-runtime.js");
-  const flowDefinition = {
-    id: "building-flow",
-    title: "Rest",
-    initialNodeId: "node.start",
-    nodes: [
-      {
-        id: "node.start",
-        type: "text",
-        text: "Rest here.",
-        nextNodeId: "node.finish",
-      },
-      {
-        id: "node.finish",
-        type: "complete",
-        outcome: "success",
-        metrics: { rested: true },
-      },
-    ],
-  };
-  const launched = runPlayableRuntime({
-    state: createRuntimeState({
-      world: {
-        ...createBaseState().world,
-        currentHouseId: "home.ningbo",
-      },
-    }),
-    request: createLaunchPlayableRequest("building-flow", {
-      ownerContext: {
-        ownerKind: "house",
-        ownerId: "home.template",
-        returnPolicy: "resume-owner",
-      },
-    }),
-    characterDefinitions: prototypeCharacters,
-    flowPlayablesById: {
-      [flowDefinition.id]: flowDefinition,
-    },
-  });
-
-  assert.equal(
-    launched.state.core.runtime.playableSession?.ownerContext.ownerId,
-    "home.template"
+test("playable runtime no longer special-cases retired building-flow launches", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
+    "utf8"
   );
 
-  const settled = runPlayableRuntime({
-    state: launched.state,
-    request: createPlayableActionRequest("building-flow", "confirm"),
-    characterDefinitions: prototypeCharacters,
-    flowPlayablesById: {
-      [flowDefinition.id]: flowDefinition,
-    },
-  });
+  assert.doesNotMatch(source, /playableId === "building-flow"/);
+});
 
-  assert.equal(settled.handled, true);
-  assert.equal(settled.state.core.runtime.playableSession, null);
-  assert.equal(settled.settlement?.handoff.type, "resume-owner");
-  assert.equal(settled.settlement?.handoff.ownerId, "home.template");
-  assert.equal(settled.state.core.world.currentHouseId, "home.ningbo");
+test("script editor retired building-flow labels are removed from builtin minigame pickers", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /"building-flow": "建筑流程"/);
+  assert.doesNotMatch(
+    source,
+    /"playable\.building-flow\.house\.default": "建筑流程 \/ 建筑接入"/
+  );
 });
 
 test("dispatchCurrentFlowAction routes activity definitions into shared playable runtime", () => {
