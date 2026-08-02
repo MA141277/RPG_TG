@@ -14,6 +14,12 @@ const KNOWN_BUILTIN_PLAYABLE_IDS = new Set([
   "medicine-compounding",
   "story-battle",
 ]);
+const LEGACY_PLAYABLE_PATH_KEYS = new Set([
+  "domainFile",
+  "definitionFile",
+  "viewFile",
+  "metricsFile",
+]);
 
 const args = parseArgs(process.argv.slice(2));
 const repoRoot = path.resolve(args["repo-root"] ?? process.cwd());
@@ -81,6 +87,8 @@ function validateMechanicArtifact({ repoRoot, filePath, artifact, errors }) {
     return;
   }
 
+  validateMechanicArtifactPaths({ repoRoot, filePath, artifact, errors });
+
   const requiredPaths = [
     `src/playables/${artifact.playableId}/manifest.ts`,
     `src/playables/${artifact.playableId}/contract.ts`,
@@ -97,6 +105,38 @@ function validateMechanicArtifact({ repoRoot, filePath, artifact, errors }) {
       errors.push(
         `${relative(repoRoot, filePath)}: missing canonical playable file ${relativePath}.`
       );
+    }
+  }
+}
+
+function validateMechanicArtifactPaths({ repoRoot, filePath, artifact, errors }) {
+  const fileLabel = relative(repoRoot, filePath);
+  const expectedPaths = {
+    manifestFile: `src/playables/${artifact.playableId}/manifest.ts`,
+    contractFile: `src/playables/${artifact.playableId}/contract.ts`,
+    sessionFile: `src/playables/${artifact.playableId}/session.ts`,
+    reducerFile: `src/playables/${artifact.playableId}/reducer.ts`,
+    presenterFile: `src/playables/${artifact.playableId}/presenter.ts`,
+    settlementFile: `src/playables/${artifact.playableId}/settlement.ts`,
+    indexFile: `src/playables/${artifact.playableId}/index.ts`,
+    assetDirectory: `src/assets/playables/${artifact.playableId}`,
+  };
+  const artifactPaths = artifact.paths;
+
+  if (!isObject(artifactPaths)) {
+    errors.push(`${fileLabel}: paths is required.`);
+    return;
+  }
+
+  for (const legacyKey of LEGACY_PLAYABLE_PATH_KEYS) {
+    if (legacyKey in artifactPaths) {
+      errors.push(`${fileLabel}: legacy playable artifact path key ${legacyKey} is not allowed.`);
+    }
+  }
+
+  for (const [key, expectedValue] of Object.entries(expectedPaths)) {
+    if (artifactPaths[key] !== expectedValue) {
+      errors.push(`${fileLabel}: paths.${key} must equal ${expectedValue}.`);
     }
   }
 }
@@ -263,8 +303,8 @@ function toPosix(value) {
   return value.replaceAll(path.sep, "/");
 }
 
-function relative(rootPath, filePath) {
-  return toPosix(path.relative(rootPath, filePath));
+function relative(rootPath, targetPath) {
+  return toPosix(path.relative(rootPath, targetPath));
 }
 
 function fail(message) {

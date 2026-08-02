@@ -39049,6 +39049,33 @@ test("child 34 playable scaffold writes canonical mechanic and integration artif
     /export \{ completeTestPlayable as complete \} from "\.\/settlement";/
   );
 
+  const contractSource = fs.readFileSync(
+    path.join(playablePackageRoot, "contract.ts"),
+    "utf8"
+  );
+  const sessionSource = fs.readFileSync(
+    path.join(playablePackageRoot, "session.ts"),
+    "utf8"
+  );
+  const reducerSource = fs.readFileSync(
+    path.join(playablePackageRoot, "reducer.ts"),
+    "utf8"
+  );
+  const presenterSource = fs.readFileSync(
+    path.join(playablePackageRoot, "presenter.ts"),
+    "utf8"
+  );
+  const settlementSource = fs.readFileSync(
+    path.join(playablePackageRoot, "settlement.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(contractSource, /roundsCompleted|start" \}|advance" \}|complete" \}/);
+  assert.doesNotMatch(sessionSource, /roundsCompleted|status:/);
+  assert.doesNotMatch(reducerSource, /switch \(action\.type\)|roundsCompleted|status:/);
+  assert.doesNotMatch(presenterSource, /roundsCompleted|status:/);
+  assert.doesNotMatch(settlementSource, /outcome:|pending|completed/);
+
   const mechanicArtifact = JSON.parse(
     fs.readFileSync(mechanicArtifactPath, "utf8")
   );
@@ -39113,6 +39140,102 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
   );
   assert.equal(validRun.status, 0, validRun.stderr);
   assert.match(validRun.stdout, /Playable validation passed/);
+
+  const missingShellFilePath = path.join(
+    outputRoot,
+    "src",
+    "playables",
+    "validator-playable",
+    "settlement.ts"
+  );
+  fs.unlinkSync(missingShellFilePath);
+
+  const missingShellRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-playables.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(missingShellRun.status, 1);
+  assert.match(
+    missingShellRun.stderr,
+    /missing canonical playable file src\/playables\/validator-playable\/settlement\.ts/i
+  );
+
+  const playableArtifactPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "playables",
+    "validator-playable.playable.json"
+  );
+  const stalePathsArtifact = JSON.parse(
+    fs.readFileSync(playableArtifactPath, "utf8")
+  );
+  stalePathsArtifact.paths = {
+    manifestFile: "src/playables/validator-playable/manifest.ts",
+    contractFile: "src/playables/validator-playable/contract.ts",
+    sessionFile: "src/playables/validator-playable/session.ts",
+    reducerFile: "src/playables/validator-playable/reducer.ts",
+    presenterFile: "src/playables/validator-playable/presenter.ts",
+    settlementFile: "src/playables/validator-playable/settlement.ts",
+    indexFile: "src/playables/validator-playable/index.ts",
+    assetDirectory: "src/assets/playables/validator-playable",
+    domainFile: "src/domain/playables/validator-playable.ts",
+  };
+  fs.writeFileSync(
+    playableArtifactPath,
+    `${JSON.stringify(stalePathsArtifact, null, 2)}\n`
+  );
+
+  const stalePathsRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-playables.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(stalePathsRun.status, 1);
+  assert.match(stalePathsRun.stderr, /legacy playable artifact path key domainFile/i);
+
+  stalePathsArtifact.paths = {
+    manifestFile: "src/playables/validator-playable/manifest.ts",
+    contractFile: "src/playables/validator-playable/contract.ts",
+    sessionFile: "src/playables/validator-playable/session.ts",
+    reducerFile: "src/playables/validator-playable/reducer.ts",
+    presenterFile: "src/playables/validator-playable/presenter.ts",
+    settlementFile: "src/playables/validator-playable/settlement.ts",
+    indexFile: "src/playables/validator-playable/index.ts",
+    assetDirectory: "src/assets/playables/validator-playable",
+  };
+  fs.mkdirSync(path.dirname(missingShellFilePath), { recursive: true });
+  fs.writeFileSync(missingShellFilePath, "export function completeValidatorPlayable() {}\n");
+  stalePathsArtifact.paths.presenterFile =
+    "src/application/playables/validator-playable/validator-playable-presenter.ts";
+  fs.writeFileSync(
+    playableArtifactPath,
+    `${JSON.stringify(stalePathsArtifact, null, 2)}\n`
+  );
+
+  const wrongPathRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-playables.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(wrongPathRun.status, 1);
+  assert.match(
+    wrongPathRun.stderr,
+    /paths\.presenterFile must equal src\/playables\/validator-playable\/presenter\.ts/i
+  );
 
   const invalidIntegrationPath = path.join(
     outputRoot,

@@ -51,23 +51,23 @@ const files = [
   },
   {
     filePath: path.join(playableDir, "contract.ts"),
-    contents: `export const ${playableConst}_PLAYABLE_ID = "${playableId}" as const;\n\nexport type ${playableName}Status = "idle" | "active" | "completed";\n\nexport type ${playableName}Session = {\n  playableId: typeof ${playableConst}_PLAYABLE_ID;\n  status: ${playableName}Status;\n  roundsCompleted: number;\n};\n\nexport type ${playableName}Action =\n  | { type: "start" }\n  | { type: "advance" }\n  | { type: "complete" };\n\nexport type ${playableName}ViewModel = {\n  playableId: typeof ${playableConst}_PLAYABLE_ID;\n  status: ${playableName}Status;\n  roundsCompleted: number;\n};\n\nexport type ${playableName}Completion = {\n  outcome: "pending" | "completed";\n  effects: readonly [];\n};\n`,
+    contents: `export const ${playableConst}_PLAYABLE_ID = "${playableId}" as const;\n\nexport type ${playableName}Session = Record<string, never>;\nexport type ${playableName}Action = Record<string, never>;\nexport type ${playableName}ViewModel = Record<string, never>;\nexport type ${playableName}Completion = Record<string, never>;\n`,
   },
   {
     filePath: path.join(playableDir, "session.ts"),
-    contents: `import { ${playableConst}_PLAYABLE_ID, type ${playableName}Session } from "./contract";\n\nexport function create${playableName}Session(): ${playableName}Session {\n  return {\n    playableId: ${playableConst}_PLAYABLE_ID,\n    status: "idle",\n    roundsCompleted: 0,\n  };\n}\n`,
+    contents: `import type { ${playableName}Session } from "./contract";\n\nexport function create${playableName}Session(): ${playableName}Session {\n  return {};\n}\n`,
   },
   {
     filePath: path.join(playableDir, "reducer.ts"),
-    contents: `import type { ${playableName}Action, ${playableName}Session } from "./contract";\n\nexport function reduce${playableName}(\n  session: ${playableName}Session,\n  action: ${playableName}Action\n): ${playableName}Session {\n  switch (action.type) {\n    case "start":\n      return {\n        ...session,\n        status: "active",\n      };\n    case "advance":\n      return {\n        ...session,\n        status: "active",\n        roundsCompleted: session.roundsCompleted + 1,\n      };\n    case "complete":\n      return {\n        ...session,\n        status: "completed",\n      };\n  }\n}\n`,
+    contents: `import type { ${playableName}Action, ${playableName}Session } from "./contract";\n\nexport function reduce${playableName}(\n  session: ${playableName}Session,\n  _action: ${playableName}Action\n): ${playableName}Session {\n  return session;\n}\n`,
   },
   {
     filePath: path.join(playableDir, "presenter.ts"),
-    contents: `import type { ${playableName}Session, ${playableName}ViewModel } from "./contract";\n\nexport function present${playableName}(\n  session: ${playableName}Session\n): ${playableName}ViewModel {\n  return {\n    playableId: session.playableId,\n    status: session.status,\n    roundsCompleted: session.roundsCompleted,\n  };\n}\n`,
+    contents: `import type { ${playableName}Session, ${playableName}ViewModel } from "./contract";\n\nexport function present${playableName}(\n  _session: ${playableName}Session\n): ${playableName}ViewModel {\n  return {};\n}\n`,
   },
   {
     filePath: path.join(playableDir, "settlement.ts"),
-    contents: `import type { ${playableName}Completion, ${playableName}Session } from "./contract";\n\nexport function complete${playableName}(\n  session: ${playableName}Session\n): ${playableName}Completion {\n  return {\n    outcome: session.status === "completed" ? "completed" : "pending",\n    effects: [] as const,\n  };\n}\n`,
+    contents: `import type { ${playableName}Completion, ${playableName}Session } from "./contract";\n\nexport function complete${playableName}(\n  _session: ${playableName}Session\n): ${playableName}Completion {\n  return {};\n}\n`,
   },
   {
     filePath: path.join(playableDir, "manifest.ts"),
