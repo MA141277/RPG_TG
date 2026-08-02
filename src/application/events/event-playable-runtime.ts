@@ -53,7 +53,6 @@ export function runEventPlayableRuntime(
   const playableResult = runPlayableRuntime({
     state: stateSyncCoreSeam.createRuntimeStateFromAppState({
       gameState: input.state,
-      beggingMiniGameState: null,
       autoAdvanceState: null,
       campaignTravelState: null,
       cityDirectoryState: null,

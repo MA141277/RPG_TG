@@ -103,7 +103,6 @@ export function createPrototypeStartupAppStateBuilder(
       campaignTravelState: null,
       modalState: null,
       locationDialogueState: null,
-      beggingMiniGameState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       autoAdvanceState: null,
@@ -195,7 +194,6 @@ export function createPrototypeStartupAppStateBuilder(
       locationDialogueState: null,
       cityMenuState: null,
       cityDirectoryState: null,
-      beggingMiniGameState: null,
       campaignTravelState: null,
     };
   }

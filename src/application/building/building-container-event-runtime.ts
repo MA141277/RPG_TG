@@ -3,13 +3,11 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
-import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import { createRuntimeTriggerContext } from "../../core/runtime/event-binding-contract";
 import { runEventBindingRuntime } from "../../core/runtime/event-binding-runtime";
 import { resolveActiveEventPresentationDialogueId } from "../dialogue/dialogue-presentation";
 import { runDialogueUntilPause } from "../dialogue/dialogue-runner";
 import { runEventPlayableRuntime } from "../events/event-playable-runtime";
-import { launchFlowPlayable } from "../playables/flow/flow-playable-definition";
 
 export type BuildingContainerItemAction = {
   arrangementId: string;
@@ -23,7 +21,6 @@ export type BuildingContainerEventStoryContent = {
   eventBindingsById?: Record<string, EventBinding> | undefined;
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
@@ -95,48 +92,6 @@ export function triggerBuildingContainerItemAction(
   if (activeEvent == null) {
     return {
       state: bindingResult.state,
-      characterDefinitions: input.characterDefinitions,
-    };
-  }
-  const launchFlowAction = activeEvent?.actions?.find(
-    (action): action is Extract<typeof action, { type: "launchFlow" }> =>
-      action.type === "launchFlow"
-  );
-  if (launchFlowAction != null) {
-    const activeFlow =
-      input.storyContent.flowPlayablesById?.[launchFlowAction.flowId] ?? null;
-    if (activeFlow == null) {
-      return {
-        state: bindingResult.state,
-        characterDefinitions: input.characterDefinitions,
-      };
-    }
-    return {
-      state: {
-        ...bindingResult.state,
-        dialogue: {
-          ...bindingResult.state.dialogue,
-          activeEventId: null,
-          activeDialogueId: null,
-          cursor: 0,
-          status: "idle" as const,
-        },
-        ui: {
-          ...bindingResult.state.ui,
-          currentView: "minigame" as const,
-        },
-        runtime: {
-          ...bindingResult.state.runtime,
-          playableSession: launchFlowPlayable({
-            definition: activeFlow,
-            integrationId: `playable.${activeFlow.id}`,
-            ownerContext: {
-              ...launchFlowAction.ownerContext,
-              sessionToken: activeEvent.id,
-            },
-          }),
-        },
-      },
       characterDefinitions: input.characterDefinitions,
     };
   }

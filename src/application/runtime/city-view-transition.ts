@@ -30,7 +30,6 @@ export function applyCityViewTransition(
   if (request.type === "leave-city") {
     return {
       ...appState,
-      beggingMiniGameState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       locationDialogueState: null,

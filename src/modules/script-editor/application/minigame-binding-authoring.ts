@@ -4,6 +4,9 @@
 import {
   builtinPlayableIntegrationRegistry,
 } from "../../../core/registry/builtin-playable-integration-registry";
+import {
+  builtinPlayableShellRegistry,
+} from "../../../core/registry/builtin-playable-shell-registry";
 import type {
   ScriptEditorKeyValueEntry,
   ScriptEditorPlayableConfigEntry,
@@ -46,7 +49,7 @@ export const SCRIPT_EDITOR_MINIGAME_OUTCOMES: readonly ScriptEditorMinigameOutco
 
 const BUILTIN_PLAYABLE_DEFINITIONS = Array.from(
   builtinPlayableDefinitionRegistry.entries()
-);
+).filter((definition) => builtinPlayableShellRegistry.get(definition.id) != null);
 
 const BUILTIN_PLAYABLE_INTEGRATIONS = Array.from(
   builtinPlayableIntegrationRegistry.entries()
@@ -66,6 +69,16 @@ export function listScriptEditorBuiltinMinigamePlayableOptions(): Array<{
     label: definition.id,
     commandPrefix: definition.commandPrefix,
   }));
+}
+
+export function isScriptEditorShellBackedMinigamePlayableId(
+  playableId: string | undefined
+): playableId is string {
+  if (typeof playableId !== "string" || playableId.trim().length === 0) {
+    return false;
+  }
+
+  return builtinPlayableShellRegistry.get(playableId.trim()) != null;
 }
 
 export function listScriptEditorBuiltinMinigameIntegrationOptions(

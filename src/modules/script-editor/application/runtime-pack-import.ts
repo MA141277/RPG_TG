@@ -69,7 +69,7 @@ type RuntimePackManifestFiles = {
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
-  flowPlayables?: string;
+  playableShells?: string;
   cities?: string;
   houses?: string;
   buildingArrangements?: string;
@@ -1441,11 +1441,11 @@ function readFlowPlayablesFamily(
 ): ScriptEditorProjectDefinition["flows"] {
   if (rawPack.flowDefinitions != null) {
     throw new Error(
-      'Imported runtime pack still uses retired family "flowDefinitions"; use "flowPlayables" instead.'
+      'Imported runtime pack still uses retired family "flowDefinitions"; use "playableShells" instead.'
     );
   }
 
-  const value = rawPack.flowPlayables;
+  const value = rawPack.playableShells;
   if (!Array.isArray(value)) {
     return [];
   }
@@ -1457,7 +1457,7 @@ function mapImportedFlowPlayable(
   index: number
 ): ScriptEditorProjectDefinition["flows"][number] {
   if (value == null || typeof value !== "object" || Array.isArray(value)) {
-    throw new Error(`Imported flowPlayables[${index}] must be an object.`);
+    throw new Error(`Imported playableShells[${index}] must be an object.`);
   }
 
   const flow = value as Record<string, unknown>;
@@ -1475,7 +1475,7 @@ function mapImportedFlowPlayable(
   ]) {
     if (Object.hasOwn(flow, retiredField)) {
       throw new Error(
-        `Imported flowPlayables[${index}] still carries retired routing field "${retiredField}".`
+        `Imported playableShells[${index}] still carries retired routing field "${retiredField}".`
       );
     }
   }

@@ -92,26 +92,44 @@ export function createLoadedModFromScenarioPack(input: {
 }
 
 function collectPlayableIds(scenarioPack: ScenarioPackDefinition): string[] {
-  return Array.isArray(scenarioPack.playables)
-    ? scenarioPack.playables.flatMap((playable) =>
-        typeof playable.id === "string" && playable.id.trim().length > 0
-          ? [playable.id]
-          : []
-      )
-    : [];
+  return [
+    ...(Array.isArray(scenarioPack.playables)
+      ? scenarioPack.playables.flatMap((playable) =>
+          typeof playable.id === "string" && playable.id.trim().length > 0
+            ? [playable.id]
+            : []
+        )
+      : []),
+    ...(Array.isArray(scenarioPack.playableShells)
+      ? scenarioPack.playableShells.flatMap((playable) =>
+          typeof playable.id === "string" && playable.id.trim().length > 0
+            ? [playable.id]
+            : []
+        )
+      : []),
+  ];
 }
 
 function collectPlayableIntegrationIds(
   scenarioPack: ScenarioPackDefinition
 ): string[] {
-  return Array.isArray(scenarioPack.playableIntegrations)
-    ? scenarioPack.playableIntegrations.flatMap((integration) =>
-        typeof integration.integrationId === "string" &&
-        integration.integrationId.trim().length > 0
-          ? [integration.integrationId]
-          : []
-      )
-    : [];
+  return [
+    ...(Array.isArray(scenarioPack.playableIntegrations)
+      ? scenarioPack.playableIntegrations.flatMap((integration) =>
+          typeof integration.integrationId === "string" &&
+          integration.integrationId.trim().length > 0
+            ? [integration.integrationId]
+            : []
+        )
+      : []),
+    ...(Array.isArray(scenarioPack.playableShells)
+      ? scenarioPack.playableShells.flatMap((playable) =>
+          typeof playable.id === "string" && playable.id.trim().length > 0
+            ? [`playable.${playable.id}.default`]
+            : []
+        )
+      : []),
+  ];
 }
 
 export async function runModRuntime(input: {

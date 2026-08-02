@@ -4,9 +4,7 @@ import type { RuntimeState } from "../../core/contracts/runtime-state";
 import type { AppState } from "../app-shell";
 import type { MainRuntimeOrchestratorRequest } from "./main-runtime-orchestrator";
 import {
-  createExitInteractiveRequest,
-  createInteractiveActionRequest,
-  runInteractiveRuntime,
+  createExitPlayableRequest,
   createPlayableActionRequest,
   runPlayableRuntime,
   commitRuntimeRequest,
@@ -25,7 +23,7 @@ export type InteractiveActionCoordinatorDependencies = {
   getPlayerCharacterId(): string | null;
   getActivityDefinitionsById(): Record<string, ActivityDefinition>;
   getTextEntriesById(): Record<string, string>;
-  getFlowPlayablesById(): Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
+  getPlayableShellsById(): Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
   executeMainRuntime(request: MainRuntimeOrchestratorRequest): void;
   applyInteractiveFollowUp(
     interactive: Exclude<NonNullable<RuntimeInteractiveSignal>, { type: "none" }>
@@ -45,6 +43,7 @@ export function createInteractiveActionCoordinator(
 
   function stopCurrentActivityQte(): void {
     const appState = dependencies.getAppState();
+    const playerCharacterId = dependencies.getPlayerCharacterId();
     const session = appState.gameState.runtime.activitySession;
     if (session?.type !== "qte-bar") {
       return;
@@ -52,15 +51,17 @@ export function createInteractiveActionCoordinator(
 
     const nextAppState = commitRuntimeRequest({
       state: appState,
-      request: createInteractiveActionRequest("interactive.activity-qte.stop"),
+      request: createPlayableActionRequest("activity-qte", "stop"),
       context: {
         router: {
           route: ({ state, request }) =>
-            runInteractiveRuntime({
+            runPlayableRuntime({
               state,
               request,
               characterDefinitions: appState.characterDefinitions,
+              ...(playerCharacterId == null ? {} : { playerCharacterId }),
               activityDefinitionsById: dependencies.getActivityDefinitionsById(),
+              textEntriesById: dependencies.getTextEntriesById(),
             }),
         },
       },
@@ -72,16 +73,20 @@ export function createInteractiveActionCoordinator(
 
   function closeCurrentActivityResult(): void {
     const appState = dependencies.getAppState();
+    const playerCharacterId = dependencies.getPlayerCharacterId();
     const nextAppState = commitRuntimeRequest({
       state: appState,
-      request: createExitInteractiveRequest("activity-qte"),
+      request: createExitPlayableRequest("activity-qte"),
       context: {
         router: {
           route: ({ state, request }) =>
-            runInteractiveRuntime({
+            runPlayableRuntime({
               state,
               request,
               characterDefinitions: appState.characterDefinitions,
+              ...(playerCharacterId == null ? {} : { playerCharacterId }),
+              activityDefinitionsById: dependencies.getActivityDefinitionsById(),
+              textEntriesById: dependencies.getTextEntriesById(),
             }),
         },
       },
@@ -137,7 +142,6 @@ export function createInteractiveActionCoordinator(
               characterDefinitions: appState.characterDefinitions,
               ...(playerCharacterId == null ? {} : { playerCharacterId }),
               textEntriesById: dependencies.getTextEntriesById(),
-              flowPlayablesById: dependencies.getFlowPlayablesById(),
             }),
         },
         followUp: {

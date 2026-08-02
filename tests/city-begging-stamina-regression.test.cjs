@@ -10,22 +10,14 @@ nodeTest(
     } = require("../.test-dist/core/runtime/state-sync-runtime.js");
     const {
       createLaunchPlayableRequest,
+      createPlayableActionRequest,
+      runPlayableRuntime,
     } = require("../.test-dist/core/runtime/playable-runtime.js");
-    const {
-      createInteractiveActionRequest,
-      runInteractiveRuntime,
-    } = require("../.test-dist/core/runtime/interactive-runtime.js");
     const {
       prototypeCharacters,
     } = require("../.test-dist/content/prototype-world.js");
 
     const playerCharacterId = "char.player";
-    const resultPayload = {
-      foodGain: 2,
-      goldGain: 0,
-      maxCombo: 3,
-      success: true,
-    };
     const playerCharacter = prototypeCharacters.find(
       (characterDefinition) => characterDefinition.id === playerCharacterId
     );
@@ -75,7 +67,7 @@ nodeTest(
         context: {
           router: {
             route: ({ state, request }) =>
-              runInteractiveRuntime({
+              runPlayableRuntime({
                 state,
                 request,
                 characterDefinitions: appState.characterDefinitions,
@@ -90,9 +82,12 @@ nodeTest(
       createLaunchPlayableRequest("city-begging", { payload: { now: 0 } })
     );
     appState = commit(
-      createInteractiveActionRequest("interactive.city-begging.complete", {
-        result: resultPayload,
+      createPlayableActionRequest("city-begging", "tick", {
+        now: 60000,
       })
+    );
+    appState = commit(
+      createPlayableActionRequest("city-begging", "confirm-result")
     );
 
     assert.equal(appState.characterStatusById?.[playerCharacterId]?.stamina, 85);
@@ -101,9 +96,12 @@ nodeTest(
       createLaunchPlayableRequest("city-begging", { payload: { now: 1000 } })
     );
     appState = commit(
-      createInteractiveActionRequest("interactive.city-begging.complete", {
-        result: resultPayload,
+      createPlayableActionRequest("city-begging", "tick", {
+        now: 61000,
       })
+    );
+    appState = commit(
+      createPlayableActionRequest("city-begging", "confirm-result")
     );
 
     assert.equal(appState.characterStatusById?.[playerCharacterId]?.stamina, 70);

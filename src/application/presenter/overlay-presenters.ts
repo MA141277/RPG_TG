@@ -14,7 +14,8 @@ export function createOverlayPresenterOutput(
   const isDialogueActive =
     input.appState.gameState.ui.currentView === "dialogue" ||
     input.appState.gameState.dialogue.activeDialogueId != null;
-  const isBeggingMiniGameActive = input.appState.beggingMiniGameState != null;
+  const isBeggingMiniGameActive =
+    input.appState.gameState.runtime.playableSession?.playableId === "city-begging";
   const shouldShowGlobalHud =
     input.appState.gameState.ui.currentView !== "house" &&
     input.appState.gameState.ui.currentView !== "battle" &&

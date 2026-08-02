@@ -23,7 +23,7 @@
     "cards": "cards.json",
     "valuables": "valuables.json",
     "cityNpcPools": "city-npc-pools.json",
-    "flowPlayables": "flow-playables.json",
+    "playableShells": "playable-shells.json",
     "settlements": "settlements.json",
     "locationAccess": "location-access.json",
     "houseModuleDefaults": "house-module-defaults.json",

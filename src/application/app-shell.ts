@@ -1,7 +1,6 @@
 import type { CharacterDefinition } from "../domain/character";
 import type { CharacterStatusById } from "../domain/character-status";
 import type { BuildingStatusById } from "../domain/building-status";
-import type { CityBeggingMiniGameState } from "../domain/city-begging-minigame";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
 import type { CityStatusById } from "../domain/city-status";
 import type {
@@ -77,7 +76,6 @@ export type AppState = {
     | null;
   modalState: AppModalState;
   locationDialogueState: AppLocationDialogueState;
-  beggingMiniGameState: CityBeggingMiniGameState | null;
   cityMenuState: CityMenuState | null;
   cityDirectoryState:
     | {

@@ -11,11 +11,11 @@
 ## Execution State
 
 - Status: `running`
-- Last Updated: `2026-07-31`
-- Current Focus: `Task 4 finished: city-begging and grain-accounting now emit settlement-owned completion from builtin package seams, and grain-accounting now also owns package-local text/resource manifests.`
-- Next Step: `Keep this legacy plan in waiting state until it is explicitly admitted, then sync docs/superpowers/project-progress.md and write the formal closeout block or continue migrating the next playable slice.`
-- Verification: `pnpm run build:test; pnpm run typecheck; direct node verification confirms city-begging settlement/session clear/CharacterStatus commit and grain-accounting settlement/session clear; pnpm run lint:plans`
-- Notes: `Legacy docs/superpowers project-progress currently points at another explicitly resumed child. This plan is intentionally waiting and does not yet replace that active resume truth.`
+- Last Updated: `2026-08-03`
+- Current Focus: `Task 5 remains in progress only for the separately-isolated story-battle seam; the non-battle flow/building residue has now been converged onto the canonical shell/runtime path, and the pack-owned shell family truth has been hard-cut to playableShells/playable-shells.json without reopening launchFlow or building-flow compatibility lines.`
+- Next Step: `Pause before any story-battle-specific work; if resumed, continue only on battle-side closeout rather than reintroducing non-battle flow compatibility.`
+- Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node tests/minigame-shell-guard.test.cjs; node --test tests/activity-qte-shell-runtime.test.cjs tests/temple-copy-scripture-shell-runtime.test.cjs tests/city-begging-shell-runtime.test.cjs tests/city-begging-overlay-controller.test.cjs tests/city-begging-stamina-regression.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs tests/event-flow-playable-runtime.test.cjs tests/interactive-runtime-residue.test.cjs tests/flow-playable-dotted-id-runtime.test.cjs`
+- Notes: `Shell-only minigame loading/export/import remains locked, and flow playables are now registered, launched, rendered, and settled through the same shell-backed contract as the other non-battle playables. Repository-wide robustness still contains unrelated historical noise, so the batch gate remains the targeted compiled suite plus plan lint.`
 
 ## Progress Log
 
@@ -35,6 +35,54 @@
   - Summary: `Removed the last direct persistence ownership from builtin city-begging and grain-accounting completion, taught interactive runtime to preserve routed settlement payloads, and finished the grain-accounting package shell with package-local texts/assets manifests so both reference minigames are portable builtin slices.`
   - Verification: `pnpm run build:test; pnpm run typecheck; node -e direct verification for citySettlementPresent/citySessionCleared/cityCommittedPlayerStatus/grainSettlementPresent/grainSessionCleared`
   - Next: `Leave this legacy plan waiting until formally admitted, or reuse the same package contract to migrate the next playable slice.`
+- 2026-08-02
+  - Summary: `Converged grain-accounting and medicine-compounding onto canonical playable shells under src/application/playables/*, rewired playable-runtime to consume the shared shell registry, and removed host-side action/timer special casing from main.ts plus house-playable-overlay.ts.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node --test tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs`
+  - Next: `Migrate the remaining legacy playable slices onto the same shell/runtime path and retire the obsolete runtime-owned branches.`
+- 2026-08-02
+  - Summary: `Removed city-begging's special interactive-runtime identity from the live command path by switching launch/completion callers and builtin command prefix onto standard playable runtime requests, while preserving the current detached renderer for presentation only.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node --test tests/city-begging-stamina-regression.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs`
+  - Next: `Collapse the remaining presentation-side detached runtime ownership for city-begging or migrate the next legacy playable slice, but do not reintroduce a second runtime identity path.`
+- 2026-08-02
+  - Summary: `Collapsed city-begging's remaining presentation-side detached runtime ownership: the overlay controller now only forwards pointer/tick callbacks into shared playable runtime, and completion confirmation reads solely from canonical runtime state.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node --test tests/city-begging-overlay-controller.test.cjs tests/city-begging-stamina-regression.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs`
+  - Next: `Move the next builtin playable onto the same shell contract, or promote city-begging itself into a canonical shell package without creating a second presenter/runtime seam.`
+- 2026-08-02
+  - Summary: `Promoted city-begging into a canonical playable shell under src/application/playables/city-begging, routed its overlay through shell render/sync hooks, and removed beggingMiniGameState from the source app/runtime contracts so the live session only exists under playable runtime ownership.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node --test tests/city-begging-shell-runtime.test.cjs tests/city-begging-overlay-controller.test.cjs tests/city-begging-stamina-regression.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs`
+  - Next: `Continue migrating remaining legacy playable slices onto the unified shell path and then tighten creator/runtime rules so non-shell minigames are not loadable.`
+- 2026-08-02
+  - Summary: `Promoted temple-copy-scripture into the canonical playable shell registry, switched its authored command prefix to playable.temple-copy-scripture., removed the obsolete dedicated runtime wrapper, and deleted the playable-runtime plus interactive-runtime special cases that had kept this minigame on a second launch/action path.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node --test tests/temple-copy-scripture-shell-runtime.test.cjs tests/city-begging-shell-runtime.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs`
+  - Next: `Continue migrating the remaining legacy non-shell playable mechanisms, then enforce shell-only loading for creator-authored minigames.`
+- 2026-08-02
+  - Summary: `Promoted activity-qte into the canonical playable shell registry, switched its authored command prefix to playable.activity-qte., rewired host click/exit handling through createPlayableActionRequest/createExitPlayableRequest, and removed the remaining activity-qte compatibility kind from interactive-runtime.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node --test tests/activity-qte-shell-runtime.test.cjs tests/temple-copy-scripture-shell-runtime.test.cjs tests/city-begging-shell-runtime.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs`
+  - Next: `Continue migrating the remaining legacy non-shell playable mechanisms, then enforce shell-only loading for creator-authored minigames.`
+- 2026-08-03
+  - Summary: `Enforced shell-only loading for creator-authored minigames by filtering Script Editor playable options to registered shells, rejecting shell-less minigame export, and failing runtime pack load/import when playables or integrations declare an unregistered shell id. Also made builtin playable registries initialize lazily and import shell modules directly so the new shared shell checks do not reintroduce circular initialization.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node tests/minigame-shell-guard.test.cjs; node --test tests/activity-qte-shell-runtime.test.cjs tests/temple-copy-scripture-shell-runtime.test.cjs tests/city-begging-shell-runtime.test.cjs tests/city-begging-overlay-controller.test.cjs tests/city-begging-stamina-regression.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs`
+  - Next: `Continue migrating the remaining legacy non-shell playable mechanisms, with shell-only authoring/export/load now locked on the shared runtime path.`
+- 2026-08-03
+  - Summary: `Moved event-owned flow launch behind the shared event playable seam: runEventPlayableRuntime now handles launchFlow, and building-container event runtime no longer imports or directly calls launchFlowPlayable.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node tests/event-flow-playable-runtime.test.cjs; node --test tests/activity-qte-shell-runtime.test.cjs tests/temple-copy-scripture-shell-runtime.test.cjs tests/city-begging-shell-runtime.test.cjs tests/city-begging-overlay-controller.test.cjs tests/city-begging-stamina-regression.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs tests/event-flow-playable-runtime.test.cjs`
+  - Next: `Keep collapsing remaining flow- and battle-related special seams until playable lifecycle lives only on shared runtime-owned paths.`
+- 2026-08-03
+  - Summary: `Removed the last id-based building-flow fallback from playable runtime so flow launch/session detection now depends on concrete authored flow definitions or real flow session state, not on the literal playable id alone.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node tests/event-flow-playable-runtime.test.cjs; node --test tests/activity-qte-shell-runtime.test.cjs tests/temple-copy-scripture-shell-runtime.test.cjs tests/city-begging-shell-runtime.test.cjs tests/city-begging-overlay-controller.test.cjs tests/city-begging-stamina-regression.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs tests/event-flow-playable-runtime.test.cjs`
+  - Next: `Continue deleting interactive and battle-side residue that still survives outside the canonical shell/data-backed runtime path.`
+- 2026-08-03
+  - Summary: `Removed city-begging's leftover interactive helper residue from playable-runtime so only story-battle still participates in the narrowed interactive compatibility seam.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node tests/interactive-runtime-residue.test.cjs; node --test tests/activity-qte-shell-runtime.test.cjs tests/temple-copy-scripture-shell-runtime.test.cjs tests/city-begging-shell-runtime.test.cjs tests/city-begging-overlay-controller.test.cjs tests/city-begging-stamina-regression.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs tests/event-flow-playable-runtime.test.cjs tests/interactive-runtime-residue.test.cjs`
+  - Next: `Continue deleting interactive and battle-side residue that still survives outside the canonical shell/data-backed runtime path, with story-battle now isolated as the remaining compatibility seam.`
+- 2026-08-03
+  - Summary: `Converged the remaining non-battle flow/building residue onto the canonical shell path by registering pack-owned playableShells as per-flow shells with derived playable/integration ids, deleting the shared runtime and event/building launchFlow branches, removing the retired building-flow registry/editor identities, hard-renaming the canonical pack family/file truth to playableShells/playable-shells.json, and rewriting shipped template/scenario events to launch flows through launchPlayable only.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node tests/event-flow-playable-runtime.test.cjs; node tests/flow-playable-dotted-id-runtime.test.cjs; node --test tests/activity-qte-shell-runtime.test.cjs tests/temple-copy-scripture-shell-runtime.test.cjs tests/city-begging-shell-runtime.test.cjs tests/city-begging-overlay-controller.test.cjs tests/city-begging-stamina-regression.test.cjs tests/house-playables-shell-runtime.test.cjs tests/playable-instance-integration-preservation.test.cjs tests/event-flow-playable-runtime.test.cjs tests/interactive-runtime-residue.test.cjs tests/flow-playable-dotted-id-runtime.test.cjs`
+  - Next: `Keep story-battle isolated from this queue; if the plan continues, the only lawful remaining compatibility cleanup is battle-side rather than non-battle flow rework.`
+- 2026-08-03
+  - Summary: `Updated the authoring/runtime regression surfaces to point at the real script-editor module UI and the launchPlayable-only event seam, so the post-cutover tests no longer encode retired flowPlayables/launchFlow/building-flow assumptions while preserving shell-only minigame and flow completion coverage.`
+  - Verification: `node node_modules/typescript/bin/tsc -p tsconfig.test.json; node tests/event-flow-playable-runtime.test.cjs; node tests/flow-playable-dotted-id-runtime.test.cjs; node tests/minigame-shell-guard.test.cjs; node tests/event-owned-playable-completion-parity.test.cjs; node tests/city-building-mount-authoring.test.cjs`
+  - Next: `Keep story-battle isolated; if resumed, only battle-side residue remains in scope for this plan.`
 
 ---
 

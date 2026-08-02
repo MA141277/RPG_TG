@@ -1,18 +1,13 @@
 import { closeCityDirectory, closeCityMenu } from "../app-actions";
 import type { AppState } from "../app-shell";
 import { isPlayerMonkIdentity } from "../city-menu/city-menu";
-import {
-  CITY_BEGGING_DURATION_DAYS,
-  getCityBeggingMiniGameCompletionResult,
-} from "../playables/builtin/city-begging/city-begging-minigame";
-import { readCityBeggingDetachedCompletionResult } from "../playables/builtin/city-begging/city-begging-runtime-controller";
+import { CITY_BEGGING_DURATION_DAYS } from "../playables/builtin/city-begging/city-begging-minigame";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
   canAffordActivityCost,
 } from "../player/player-stamina";
 import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
 import type { CharacterDefinition } from "../../domain/character";
-import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
 import type { HouseDefinition } from "../../domain/house";
 
 export type CouncilPriorityCityBeggingCoordinatorDependencies = {
@@ -28,7 +23,6 @@ export type CouncilPriorityCityBeggingCoordinatorDependencies = {
   ): string;
   hasHaozhouShortage(appState: AppState): boolean;
   launchCityBeggingPlayable(appState: AppState, now: number): AppState;
-  settleCityBeggingResult(result: CityBeggingGameCompletionResult): void;
   stopCityBeggingMiniGameLoop(): void;
   now(): number;
 };
@@ -94,7 +88,6 @@ export function createCouncilPriorityCityBeggingCoordinator(
 
     dependencies.setAppState({
       ...closeCityMenu(closeCityDirectory(appState)),
-      beggingMiniGameState: null,
       locationDialogueState: {
         type: "house-access-refusal",
         speakerCharacterId:
@@ -163,24 +156,6 @@ export function createCouncilPriorityCityBeggingCoordinator(
     dependencies.renderApp();
   }
 
-  function confirmBeggingMiniGameResult(): void {
-    const result = dependencies.getAppState().beggingMiniGameState;
-    const completionResult =
-      getCityBeggingMiniGameCompletionResult(result) ??
-      readCityBeggingDetachedCompletionResult();
-    if (completionResult == null) {
-      return;
-    }
-
-    dependencies.settleCityBeggingResult(completionResult);
-    dependencies.stopCityBeggingMiniGameLoop();
-    dependencies.setAppState({
-      ...dependencies.getAppState(),
-      beggingMiniGameState: null,
-    });
-    dependencies.renderApp();
-  }
-
   function openBeggingMiniGame(): void {
     const appState = dependencies.getAppState();
     const playerCharacter = dependencies.getCurrentPlayerCharacter();
@@ -207,7 +182,6 @@ export function createCouncilPriorityCityBeggingCoordinator(
             "runtime.zhu_yuanzhang.haozhou_shortage.advance_hint"
           ),
         },
-        beggingMiniGameState: null,
       });
       dependencies.renderApp();
       return;
@@ -235,7 +209,6 @@ export function createCouncilPriorityCityBeggingCoordinator(
             "runtime.zhu_yuanzhang.begging_stamina_refusal.advance_hint"
           ),
         },
-        beggingMiniGameState: null,
       });
       dependencies.renderApp();
       return;
@@ -269,7 +242,6 @@ export function createCouncilPriorityCityBeggingCoordinator(
   return {
     showCouncilPriorityRefusal,
     showCouncilInsufficientTimeRefusal,
-    confirmBeggingMiniGameResult,
     openBeggingMiniGame,
   };
 }

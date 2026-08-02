@@ -4,12 +4,4 @@ export {
   TEMPLE_COPY_SCRIPTURE_PLAYABLE_ID,
   templeCopyScripturePlayableDefinition,
 } from "./contract";
-export {
-  adjustTempleCopyScriptureWagerPlayable,
-  chooseTempleCopyScriptureCommandPlayable,
-  exitTempleCopyScripturePlayable,
-  launchTempleCopyScripturePlayable,
-  playTempleCopyScripturePlayable,
-  stopTempleCopyScripturePlayable,
-  tickTempleCopyScripturePlayable,
-} from "./runtime";
+export { templeCopyScripturePlayableShell } from "./shell";

@@ -4,6 +4,7 @@ export {
   runInteractiveRuntime,
 } from "../../core/runtime/interactive-runtime";
 export {
+  createExitPlayableRequest,
   createPlayableActionRequest,
   runPlayableRuntime,
 } from "../../core/runtime/playable-runtime";

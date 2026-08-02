@@ -7,7 +7,7 @@ import type {
 export const TEMPLE_COPY_SCRIPTURE_PLAYABLE_ID =
   "temple-copy-scripture" as PlayableId;
 export const TEMPLE_COPY_SCRIPTURE_COMMAND_PREFIX =
-  "interactive.temple-copy-scripture.";
+  "playable.temple-copy-scripture.";
 export const TEMPLE_COPY_SCRIPTURE_HOUSE_INTEGRATION_ID =
   "playable.temple-copy-scripture.house.temple" as PlayableIntegrationId;
 

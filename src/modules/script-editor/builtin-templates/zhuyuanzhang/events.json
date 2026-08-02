@@ -101,8 +101,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.leader_residence.review",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.leader_residence.review",
+        "integrationId": "playable.flow.building.template.house.leader_residence.review.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.leader_residence",
@@ -136,8 +137,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.temple.review",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.temple.review",
+        "integrationId": "playable.flow.building.template.house.temple.review.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.temple",
@@ -159,8 +161,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.house.kulan.temple.work",
+        "type": "launchPlayable",
+        "playableId": "flow.building.house.kulan.temple.work",
+        "integrationId": "playable.flow.building.house.kulan.temple.work.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
@@ -209,8 +212,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.house.kulan.temple.sweep_courtyard",
+        "type": "launchPlayable",
+        "playableId": "flow.building.house.kulan.temple.sweep_courtyard",
+        "integrationId": "playable.flow.building.house.kulan.temple.sweep_courtyard.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
@@ -249,8 +253,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.temple.donate",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.temple.donate",
+        "integrationId": "playable.flow.building.template.house.temple.donate.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.temple",
@@ -272,8 +277,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.house.kulan.temple.carry_water",
+        "type": "launchPlayable",
+        "playableId": "flow.building.house.kulan.temple.carry_water",
+        "integrationId": "playable.flow.building.house.kulan.temple.carry_water.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
@@ -307,8 +313,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.keep.review",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.keep.review",
+        "integrationId": "playable.flow.building.template.house.keep.review.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.keep",
@@ -330,8 +337,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.keep.work",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.keep.work",
+        "integrationId": "playable.flow.building.template.house.keep.work.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.keep",
@@ -382,8 +390,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.tea_house.talk",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.tea_house.talk",
+        "integrationId": "playable.flow.building.template.house.tea_house.talk.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.tea_house",
@@ -405,8 +414,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.tea_house.intel",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.tea_house.intel",
+        "integrationId": "playable.flow.building.template.house.tea_house.intel.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.tea_house",
@@ -428,8 +438,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.tea_house.tea",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.tea_house.tea",
+        "integrationId": "playable.flow.building.template.house.tea_house.tea.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.tea_house",
@@ -480,8 +491,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.market.talk",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.market.talk",
+        "integrationId": "playable.flow.building.template.house.market.talk.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.market",
@@ -503,8 +515,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.market.trade",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.market.trade",
+        "integrationId": "playable.flow.building.template.house.market.trade.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.market",
@@ -526,8 +539,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.market.intel",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.market.intel",
+        "integrationId": "playable.flow.building.template.house.market.intel.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.market",
@@ -578,8 +592,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.grain_shop.trade",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.grain_shop.trade",
+        "integrationId": "playable.flow.building.template.house.grain_shop.trade.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.grain_shop",
@@ -669,8 +684,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.medicine_house.treatment",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.medicine_house.treatment",
+        "integrationId": "playable.flow.building.template.house.medicine_house.treatment.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.medicine_house",
@@ -776,8 +792,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.inn.work",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.inn.work",
+        "integrationId": "playable.flow.building.template.house.inn.work.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.inn",
@@ -799,8 +816,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.inn.talk",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.inn.talk",
+        "integrationId": "playable.flow.building.template.house.inn.talk.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.inn",
@@ -822,8 +840,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.inn.gamble",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.inn.gamble",
+        "integrationId": "playable.flow.building.template.house.inn.gamble.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.inn",
@@ -845,8 +864,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.temple.work",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.temple.work",
+        "integrationId": "playable.flow.building.template.house.temple.work.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.temple",
@@ -868,8 +888,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.inn.drink",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.house.inn.drink",
+        "integrationId": "playable.flow.building.template.house.inn.drink.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.template.inn",
@@ -891,8 +912,9 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.home.rest",
+        "type": "launchPlayable",
+        "playableId": "flow.building.template.home.rest",
+        "integrationId": "playable.flow.building.template.home.rest.default",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "home.template",

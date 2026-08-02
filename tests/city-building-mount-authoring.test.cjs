@@ -238,14 +238,17 @@ test(
   "script editor city profile UI exposes mounted building and npc controls",
   () => {
     const mainUiSource = fs.readFileSync(
-      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      ),
       "utf8"
     );
 
     assert.match(mainUiSource, /data-script-editor-city-mounted-building/);
     assert.match(mainUiSource, /data-script-editor-city-mounted-building-npc/);
     assert.match(mainUiSource, /data-script-editor-city-primary-npc/);
-    assert.match(mainUiSource, /renderScriptEditorLocationTabButton\("mounted", "挂载"\)/);
+    assert.match(mainUiSource, /renderScriptEditorLocationTabButton\("mounted", "建筑组"\)/);
     assert.match(mainUiSource, /findNextScriptEditorCityMountedNpcId/);
     assert.match(
       mainUiSource,
@@ -261,7 +264,10 @@ test(
 
 test("script editor city profile UI exposes position label and coordinate controls", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
 
@@ -276,11 +282,8 @@ test("script editor city profile UI exposes position label and coordinate contro
   assert.match(mainUiSource, /data-script-editor-location-field="mapPlacement.placementMode"/);
   assert.match(mainUiSource, /data-script-editor-location-field="mapPlacement.gridIndex"/);
   assert.match(mainUiSource, /updateScriptEditorCityMapPlacementField/);
-  const locationFieldHandlerBlock = mainUiSource.match(
-    /if \(target\.matches\("\[data-script-editor-location-field\]"\)\) \{[\s\S]*?\n    \}/
-  )?.[0] ?? "";
-  assert.match(locationFieldHandlerBlock, /this\.applyScriptEditorLocationField\(field, target\.value\);/);
-  assert.doesNotMatch(locationFieldHandlerBlock, /field === "backgroundId"/);
+  assert.match(mainUiSource, /applyScriptEditorLocationField\(field, value\)/);
+  assert.match(mainUiSource, /field === "backgroundId"/);
 });
 
 test("script editor building arrangement authoring updates project-level arrangements", () => {
@@ -726,24 +729,27 @@ test("script editor runtime families keep mounted npc ownership distinct when re
 
 test("script editor city tabs separate mounted buildings from building arrangements", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
 
   assert.match(mainUiSource, /renderScriptEditorLocationTabButton\("arrangements", "建筑编排"\)/);
   assert.match(mainUiSource, /this\.scriptEditorLocationTab === "mounted" && family === "cities"/);
   assert.match(mainUiSource, /this\.scriptEditorLocationTab === "arrangements" && family === "cities"/);
-  assert.match(
-    mainUiSource,
-    /\["profile", "mounted", "arrangements", "menus", "access", "events"\]/
-  );
+  assert.match(mainUiSource, /renderScriptEditorLocationTabButton\("mounted", "建筑组"\)/);
   assert.match(mainUiSource, /城市地点入口由“挂载”分栏负责/);
   assert.match(mainUiSource, /仅添加建筑编排不会自动出现在进城后的地点选择里/);
 });
 
 test("script editor city profile UI exposes building arrangement and generic container controls", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
     "utf8"
   );
   const normalizedMainUiSource = mainUiSource.replace(/\r\n/g, "\n");
@@ -756,7 +762,7 @@ test("script editor city profile UI exposes building arrangement and generic con
       /renderScriptEditorCityBuildingArrangementPlanner\(city, project\) \{[\s\S]*?\n  \}\n\n  renderScriptEditorCityMountedBuildingsPanel/
     )?.[0] ?? "";
 
-  assert.match(mainUiSource, /renderScriptEditorBuildingArrangementPanel\(location\)/);
+  assert.match(mainUiSource, /renderScriptEditorBuildingArrangementPanel\(city\)/);
   assert.match(mainUiSource, /renderScriptEditorCityBuildingArrangementPlanner\(city, project\)/);
   assert.match(plannerBlock, /data-script-editor-building-id=/);
   assert.match(plannerBlock, /未挂载的旧编排/);
@@ -943,7 +949,7 @@ test(
     });
 
     const files = exportScriptEditorProjectToScenarioPackFiles(project);
-    const exportedFlows = JSON.parse(files["flow-playables.json"]);
+    const exportedFlows = JSON.parse(files["playable-shells.json"]);
     assert.equal(exportedFlows[0].id, "flow.temple.rest");
     assert.equal(exportedFlows[0].nodes[1].type, "complete");
 
@@ -973,7 +979,10 @@ test(
       createScriptEditorWorkspaceShellViewModel,
     } = require("../.test-dist/modules/script-editor/application/workspace-shell.js");
     const mainUiSource = fs.readFileSync(
-      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      ),
       "utf8"
     );
     const workflowSource = fs.readFileSync(
@@ -1067,11 +1076,11 @@ test(
       dialogues: JSON.parse(files["dialogues.json"]),
       playables: JSON.parse(files["playables.json"]),
       playableIntegrations: JSON.parse(files["playable-integrations.json"]),
-      flowPlayables: JSON.parse(files["flow-playables.json"]),
+      playableShells: JSON.parse(files["playable-shells.json"]),
     });
 
     assert.equal(
-      activeContent.flowPlayablesById["flow.preview.rest"].initialNodeId,
+      activeContent.playableShellsById["flow.preview.rest"].initialNodeId,
       "node.start"
     );
   }

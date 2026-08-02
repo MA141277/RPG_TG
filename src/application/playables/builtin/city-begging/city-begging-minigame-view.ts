@@ -24,8 +24,8 @@ import { ACTIVITY_COMPLETION_STAMINA_COST } from "../../../player/player-stamina
 import { CITY_BEGGING_DURATION_DAYS } from "./city-begging-minigame";
 import { CITY_BEGGING_GRANARY_ESCORT_CONFIG } from "./city-begging-granary-escort";
 import {
-  bindCityBeggingDetachedRuntime,
-  resetCityBeggingDetachedRuntime,
+  bindCityBeggingOverlayController,
+  resetCityBeggingOverlayController,
 } from "./city-begging-runtime-controller";
 import { CITY_BEGGING_VILLAGE_CATCHING_CONFIG } from "./city-begging-village-catching";
 
@@ -136,7 +136,10 @@ function renderVillageComboPips(): string {
   }).join("");
 }
 
-function renderGranaryEscortOverlay(state: CityBeggingMiniGameState): string {
+function renderGranaryEscortOverlay(
+  state: CityBeggingMiniGameState,
+  actionAttributes = 'data-playable-id="city-begging" data-playable-action="confirm-result"'
+): string {
   if (state.variantId !== "granary-escort") {
     return "";
   }
@@ -158,7 +161,7 @@ function renderGranaryEscortOverlay(state: CityBeggingMiniGameState): string {
             <button
               type="button"
               class="c-begging-game__confirm"
-              data-action="confirm-begging-game-result"
+              ${actionAttributes}
             >
               确定
             </button>
@@ -273,7 +276,10 @@ function renderVillageEventPanel(state: CityBeggingVillagePlayingState): string 
   `;
 }
 
-function renderVillageCatchingOverlay(state: CityBeggingMiniGameState): string {
+function renderVillageCatchingOverlay(
+  state: CityBeggingMiniGameState,
+  actionAttributes = 'data-playable-id="city-begging" data-playable-action="confirm-result"'
+): string {
   if (state.variantId !== "village-catching") {
     return "";
   }
@@ -296,7 +302,7 @@ function renderVillageCatchingOverlay(state: CityBeggingMiniGameState): string {
             <button
               type="button"
               class="c-begging-game__confirm"
-              data-action="confirm-begging-game-result"
+              ${actionAttributes}
             >
               确定
             </button>
@@ -337,15 +343,25 @@ function renderVillageCatchingOverlay(state: CityBeggingMiniGameState): string {
 }
 
 export function renderCityBeggingMiniGameOverlay(
-  state: CityBeggingMiniGameState | null
+  state: CityBeggingMiniGameState | null,
+  options?: {
+    playableId?: string;
+    confirmActionId?: string;
+  }
 ): string {
   if (state == null) {
     return "";
   }
 
+  const actionAttributes =
+    typeof options?.playableId === "string" &&
+    typeof options?.confirmActionId === "string"
+      ? `data-playable-id="${options.playableId}" data-playable-action="${options.confirmActionId}"`
+      : 'data-playable-id="city-begging" data-playable-action="confirm-result"';
+
   return state.variantId === "granary-escort"
-    ? renderGranaryEscortOverlay(state)
-    : renderVillageCatchingOverlay(state);
+    ? renderGranaryEscortOverlay(state, actionAttributes)
+    : renderVillageCatchingOverlay(state, actionAttributes);
 }
 
 function drawGranaryEscortScene(
@@ -631,22 +647,32 @@ function applyCityBeggingMiniGameOverlay(
 
 export function syncCityBeggingMiniGameOverlay(
   root: ParentNode,
-  state: CityBeggingMiniGameState | null
+  state: CityBeggingMiniGameState | null,
+  runtimeCallbacks?: {
+    onPointer(pointerX: number): void;
+    onTick(now: number): void;
+    requestAnimationFrame(callback: FrameRequestCallback): number;
+    cancelAnimationFrame(frameId: number): void;
+  }
 ): void {
   if (state == null) {
-    resetCityBeggingDetachedRuntime();
+    resetCityBeggingOverlayController();
     return;
   }
 
-  const presentedState =
-    state.variantState.status === "playing"
-      ? bindCityBeggingDetachedRuntime({
-          root,
-          state,
-          syncOverlay: applyCityBeggingMiniGameOverlay,
-          renderOverlay: renderCityBeggingMiniGameOverlay,
-        })
-      : state;
+  if (state.variantState.status === "playing" && runtimeCallbacks != null) {
+    bindCityBeggingOverlayController({
+      root,
+      launchKey: `${state.variantId}:${state.variantState.startedAtMs}`,
+      isPlaying: true,
+      onPointer: runtimeCallbacks.onPointer,
+      onTick: runtimeCallbacks.onTick,
+      requestAnimationFrame: runtimeCallbacks.requestAnimationFrame,
+      cancelAnimationFrame: runtimeCallbacks.cancelAnimationFrame,
+    });
+  } else if (state.variantState.status !== "playing") {
+    resetCityBeggingOverlayController();
+  }
 
-  applyCityBeggingMiniGameOverlay(root, presentedState);
+  applyCityBeggingMiniGameOverlay(root, state);
 }

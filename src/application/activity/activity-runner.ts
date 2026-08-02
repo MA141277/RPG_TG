@@ -93,7 +93,6 @@ function runGenericQteActivity(
   const runtimeState = {
     core: state,
     app: {
-      beggingMiniGameState: null,
       autoAdvanceState: null,
       campaignTravelState: null,
       cityDirectoryState: null,
