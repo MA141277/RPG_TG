@@ -38908,6 +38908,7 @@ test("playable tooling only scaffolds canonical src/playables packages", () => {
   );
 
   assert.match(scaffoldSource, /src",\s*"playables"/);
+  assert.doesNotMatch(scaffoldSource, /src",\s*"domain",\s*"playables"/);
   assert.doesNotMatch(
     scaffoldSource,
     /src",\s*"application",\s*"playables"/
@@ -38926,8 +38927,20 @@ test("playable validator requires shell package files under src/playables", () =
   );
 
   assert.match(validatorSource, /src\/playables\/\$\{artifact\.playableId\}/);
-  assert.match(validatorSource, /manifest\.ts/);
-  assert.match(validatorSource, /index\.ts/);
+  for (const requiredFile of [
+    "manifest.ts",
+    "contract.ts",
+    "session.ts",
+    "reducer.ts",
+    "presenter.ts",
+    "settlement.ts",
+    "index.ts",
+  ]) {
+    assert.match(
+      validatorSource,
+      new RegExp(requiredFile.replace(".", "\\."), "u")
+    );
+  }
   assert.doesNotMatch(validatorSource, /src\/application\/playables/);
 });
 
