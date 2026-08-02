@@ -38944,6 +38944,36 @@ test("playable validator requires shell package files under src/playables", () =
   assert.doesNotMatch(validatorSource, /src\/application\/playables/);
 });
 
+test(
+  "playable runtime registries install builtin shells instead of host adapters",
+  () => {
+    const repoRoot = process.cwd();
+    const registrySource = fs.readFileSync(
+      path.join(repoRoot, "src/core/runtime/playable-runtime-registries.ts"),
+      "utf8"
+    );
+
+    assert.match(registrySource, /installBuiltinPlayableShells/);
+    assert.doesNotMatch(registrySource, /installBuiltinPlayableHostAdapters/);
+    assert.match(registrySource, /shells:/);
+    assert.doesNotMatch(registrySource, /hostAdapters:/);
+  }
+);
+
+test("playable runtime contract exposes a direct PlayableShell surface", () => {
+  const repoRoot = process.cwd();
+  const contractSource = fs.readFileSync(
+    path.join(repoRoot, "src/core/contracts/playable-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(contractSource, /export type PlayableShell =/);
+  assert.match(contractSource, /createSession:/);
+  assert.match(contractSource, /reduce:/);
+  assert.match(contractSource, /present:/);
+  assert.match(contractSource, /complete:/);
+});
+
 test("child 34 playable scaffold writes canonical mechanic and integration artifacts", () => {
   const { spawnSync } = require("node:child_process");
   const os = require("node:os");

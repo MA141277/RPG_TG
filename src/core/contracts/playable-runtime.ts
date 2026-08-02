@@ -129,6 +129,21 @@ export type PlayablePresenterModel = {
   detail?: Record<string, unknown> | undefined;
 };
 
+export type PlayableShell = {
+  manifest: {
+    playableId: PlayableId;
+    family: "minigame" | "battle" | "flow";
+    commandPrefix: string;
+  };
+  createSession: (input: PlayableLaunchRequest) => ActivePlayableSession;
+  reduce: (
+    session: ActivePlayableSession,
+    command: PlayableCommand
+  ) => ActivePlayableSession;
+  present: (session: ActivePlayableSession) => PlayablePresenterModel;
+  complete: (session: ActivePlayableSession) => PlayableResult | null;
+};
+
 export type PlayableResult = {
   integrationId: PlayableIntegrationId;
   outcome: PlayableOutcome;
