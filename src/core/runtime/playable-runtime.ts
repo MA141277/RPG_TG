@@ -1,6 +1,5 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
-import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
 import type {
   RuntimeInteractiveSignal,
   RuntimeResult,
@@ -13,56 +12,20 @@ import type {
   PlayableId,
   PlayableIntegrationDefinition,
   PlayableIntegrationId,
-  PlayableLaunchFailure,
   PlayableLaunchInput,
   PlayableLaunchResolution,
   PlayableOwnerContext,
   PlayablePresenterModel,
   PlayableResult,
 } from "../contracts/playable-runtime";
-import type { FlowPlayableDefinition } from "../../domain/playables/flow";
-import {
-  launchFlowPlayable,
-  reduceFlowPlayable,
-} from "../../application/playables/flow/flow-playable-definition";
 import type { RuntimeState } from "../contracts/runtime-state";
-import {
-  startActivityQtePlayable,
-  adjustActivityQteWagerPlayable,
-  chooseActivityQteCommandPlayable,
-  exitActivityQtePlayable,
-  playActivityQtePlayable,
-  stopActivityQtePlayable,
-  tickActivityQtePlayable,
-} from "../../playables/activity-qte";
-import {
-  completeCityBeggingPlayable,
-  exitCityBeggingPlayable,
-  launchCityBeggingPlayable,
-  tickCityBeggingPlayable,
-  updateCityBeggingPointerPlayable,
-} from "../../application/playables/builtin/city-begging/city-begging-definition";
-import { CITY_BEGGING_DURATION_DAYS } from "../../application/playables/builtin/city-begging/city-begging-minigame";
-import {
-  answerGrainAccountingPlayable,
-  exitGrainAccountingPlayable,
-  launchGrainAccountingPlayable,
-  tickGrainAccountingPlayable,
-} from "../../application/playables/builtin/grain-accounting/grain-accounting-definition";
-import {
-  clearMedicineCompoundingPlayable,
-  exitMedicineCompoundingPlayable,
-  launchMedicineCompoundingPlayable,
-  selectMedicineCompoundingHerbPlayable,
-  settleMedicineCompoundingPlayable,
-  tickMedicineCompoundingPlayable,
-} from "../../application/playables/medicine-compounding/medicine-compounding-definition";
 import {
   dispatchStoryBattlePlayableAction,
   exitStoryBattlePlayable,
   launchStoryBattlePlayable,
 } from "../../application/playables/story-battle/story-battle-definition";
-import { convertHouseActivityDaysToSegments } from "../../application/house/house-activity-costs";
+import { readNumericPersonAttributeBySemanticKey } from "../../application/character/person-attribute-runtime";
+import type { CharacterStatusById } from "../../domain/character-status";
 import { type PlayableDefinitionRegistry } from "../registry/playable-definition-registry";
 import { type PlayableIntegrationRegistry } from "../registry/playable-integration-registry";
 import {
@@ -85,12 +48,9 @@ export type PlayableRuntimeOutput = RuntimeResult & {
   characterDefinitions?: CharacterDefinition[];
   followUp?: RuntimeInteractiveSignal | null;
   settlement?: PlayableResult | null;
-  launchFailure?: PlayableLaunchFailure | null;
 };
 
 type InteractivePlayableId =
-  | "activity-qte"
-  | "city-begging"
   | "story-battle";
 
 type InteractivePlayableSource =
@@ -123,119 +83,8 @@ type ParsedPlayableActionRequest =
     }
   | {
       phase: "exit";
-    playableId: PlayableId;
-  };
-
-type PlayableShellOverlayState = {
-  playableId: PlayableId;
-  type: "playable-shell" | "playable-shell-result";
-  title: string;
-  summaryLines: string[];
-  actions: PlayablePresenterModel["actions"];
-};
-
-function isLegacyRuntimeOwnedPlayable(playableId: PlayableId): boolean {
-  return (
-    playableId === "city-begging" ||
-    playableId === "grain-accounting" ||
-    playableId === "medicine-compounding" ||
-    playableId === "story-battle"
-  );
-}
-
-function createPlayableShellOverlayState(input: {
-  session: ActivePlayableSession;
-  presenter: PlayablePresenterModel;
-}): PlayableShellOverlayState {
-  return {
-    playableId: input.session.playableId,
-    type:
-      input.session.status === "active"
-        ? "playable-shell"
-        : "playable-shell-result",
-    title: input.presenter.title,
-    summaryLines: input.presenter.summaryLines,
-    actions: input.presenter.actions,
-  };
-}
-
-function withPlayableShellOverlay(
-  state: RuntimeState,
-  overlay: PlayableShellOverlayState | null
-): RuntimeState {
-  const currentHouseSession = state.core.ui.houseSession;
-  const currentState =
-    currentHouseSession?.state != null &&
-    typeof currentHouseSession.state === "object" &&
-    !Array.isArray(currentHouseSession.state)
-      ? (currentHouseSession.state as Record<string, unknown>)
-      : {};
-
-  if (overlay == null && currentHouseSession == null) {
-    return state;
-  }
-
-  return {
-    ...state,
-    core: {
-      ...state.core,
-      ui: {
-        ...state.core.ui,
-        houseSession: {
-          moduleId: currentHouseSession?.moduleId ?? "playable-shell",
-          state: {
-            ...currentState,
-            overlay,
-          },
-        },
-      },
-    },
-  };
-}
-
-function createMissingPlayableShellFailure(
-  playableId: PlayableId
-): PlayableLaunchFailure {
-  return {
-    ok: false,
-    code: "missing-playable-shell",
-    message: `Playable "${playableId}" is not backed by a shell package.`,
-  };
-}
-
-function toShellPlayableCommand(input: {
-  action: string;
-  payload: Record<string, unknown> | undefined;
-}): PlayableCommand | null {
-  if (input.action === "confirm") {
-    return { type: "confirm" };
-  }
-  if (input.action === "cancel") {
-    return { type: "cancel" };
-  }
-  if (input.action === "select") {
-    return typeof input.payload?.value === "string"
-      ? { type: "select", value: input.payload.value }
-      : null;
-  }
-  if (input.action === "custom") {
-    return typeof input.payload?.actionId === "string"
-      ? {
-          type: "custom",
-          actionId: input.payload.actionId,
-        }
-      : null;
-  }
-  if (input.action === "choose-command") {
-    return typeof input.payload?.commandId === "string"
-      ? {
-          type: "custom",
-          actionId: input.payload.commandId,
-        }
-      : null;
-  }
-  return null;
-}
+      playableId: PlayableId;
+    };
 
 export function createLaunchPlayableRequest(
   playableId: PlayableId,
@@ -370,7 +219,6 @@ export function runPlayableRuntime(input: {
   playerCharacterId?: string;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
 }): PlayableRuntimeOutput {
   const resolvedRequest = toPlayableRuntimeRequest(input.request);
   if (resolvedRequest == null) {
@@ -383,212 +231,41 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "launch") {
-    const flowPlayable =
-      input.flowPlayablesById?.[resolvedRequest.launch.launch.playableId] ?? null;
-    if (flowPlayable != null) {
-      if (flowPlayable == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(
-            input.state,
-            resolvedRequest.launch.launch.playableId
-          ),
-        };
-      }
-
-      const nextState = {
-        ...input.state,
-        core: {
-          ...input.state.core,
-          ui: {
-            ...input.state.core.ui,
-            currentView: "minigame" as const,
-          },
-          runtime: {
-            ...input.state.core.runtime,
-            playableSession: launchFlowPlayable({
-              definition: flowPlayable,
-              integrationId: resolvedRequest.launch.launch.integrationId,
-              ownerContext: resolvedRequest.launch.launch.ownerContext,
-            }),
-          },
-        },
-      };
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(nextState, flowPlayable.id),
-      };
-    }
-
-    if (resolvedRequest.launch.launch.playableId === "activity-qte") {
-      const activityId = resolvedRequest.launch.launch.payload?.activityId;
-      if (typeof activityId !== "string") {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "activity-qte"),
-        };
-      }
-
-      const activityDefinition =
-        input.activityDefinitionsById?.[activityId] ?? null;
-      if (activityDefinition == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "activity-qte"),
-        };
-      }
-
-      const handlerId =
-        typeof resolvedRequest.launch.launch.payload?.handlerId === "string"
-          ? resolvedRequest.launch.launch.payload.handlerId
-          : activityDefinition.fallbackHandlerId ?? activityDefinition.handlerId;
-      const nextState = startActivityQtePlayable({
-        state: input.state,
-        activityDefinition,
-        handlerId,
-        integrationId: resolvedRequest.launch.launch.integrationId,
-        ownerContext: resolvedRequest.launch.launch.ownerContext,
-      });
-
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(nextState, "activity-qte"),
-      };
-    }
-
-    const shell = readDefaultPlayableShellRegistry().get(
-      resolvedRequest.launch.launch.playableId
-    );
-    if (shell != null) {
-      const session = shell.createSession(resolvedRequest.launch.launch);
-      const presenter = shell.present(session);
-      const nextState = withPlayableShellOverlay(
-        {
-          ...input.state,
-          core: {
-            ...input.state.core,
-            runtime: {
-              ...input.state.core.runtime,
-              playableSession: session,
-            },
-          },
-        },
-        createPlayableShellOverlayState({
-          session,
-          presenter,
-        })
-      );
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session,
-      };
-    }
-
-    if (!isLegacyRuntimeOwnedPlayable(resolvedRequest.launch.launch.playableId)) {
-      return {
-        state: input.state,
-        effects: [],
-        handled: false,
-        session: getActivePlayableSession(
-          input.state,
-          resolvedRequest.launch.launch.playableId
-        ),
-        launchFailure: createMissingPlayableShellFailure(
-          resolvedRequest.launch.launch.playableId
-        ),
-      };
-    }
-
-    if (resolvedRequest.launch.launch.playableId === "city-begging") {
-      const now = resolvedRequest.launch.launch.payload?.now;
-      const nextState = launchCityBeggingPlayable({
-        state: input.state,
-        now: typeof now === "number" ? now : performance.now(),
-        integrationId: resolvedRequest.launch.launch.integrationId,
-        ownerContext: resolvedRequest.launch.launch.ownerContext,
-      });
-
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(nextState, "city-begging"),
-      };
-    }
-
-    if (resolvedRequest.launch.launch.playableId === "grain-accounting") {
-      if (input.playerCharacterId == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "grain-accounting"),
-        };
-      }
-
-      const nextState = launchGrainAccountingPlayable({
+  const playableShell = readDefaultPlayableShellRegistry().get(
+    resolvedRequest.launch.launch.playableId
+  );
+  if (playableShell != null) {
+    const session = playableShell.createSession({
+      ...resolvedRequest.launch.launch,
+      payload: buildPlayableShellLaunchPayload({
         state: input.state,
         characterDefinitions: input.characterDefinitions,
-        playerCharacterId: input.playerCharacterId,
-        ownerId: resolvedRequest.launch.launch.ownerContext.ownerId,
-        integrationId: resolvedRequest.launch.launch.integrationId,
-        ownerContext: resolvedRequest.launch.launch.ownerContext,
-        ...(resolvedRequest.launch.launch.payload == null
+        ...(input.playerCharacterId == null
           ? {}
-          : { launchPayload: resolvedRequest.launch.launch.payload }),
-      });
+          : { playerCharacterId: input.playerCharacterId }),
+        activityDefinitionsById: input.activityDefinitionsById,
+        launchPayload: resolvedRequest.launch.launch.payload,
+      }),
+    });
+    const nextState = {
+      ...input.state,
+      core: {
+        ...input.state.core,
+        runtime: {
+          ...input.state.core.runtime,
+          playableSession: session,
+        },
+      },
+    };
+    return {
+      state: nextState,
+      effects: [],
+      handled: true,
+      session,
+    };
+  }
 
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(nextState, "grain-accounting"),
-      };
-    }
-
-    if (resolvedRequest.launch.launch.playableId === "medicine-compounding") {
-      if (input.playerCharacterId == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "medicine-compounding"),
-        };
-      }
-
-      const nextState = launchMedicineCompoundingPlayable({
-        state: input.state,
-        characterDefinitions: input.characterDefinitions,
-        playerCharacterId: input.playerCharacterId,
-        ownerId: resolvedRequest.launch.launch.ownerContext.ownerId,
-        integrationId: resolvedRequest.launch.launch.integrationId,
-        ownerContext: resolvedRequest.launch.launch.ownerContext,
-        ...(resolvedRequest.launch.launch.payload == null
-          ? {}
-          : { launchPayload: resolvedRequest.launch.launch.payload }),
-      });
-
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(nextState, "medicine-compounding"),
-      };
-    }
-
-    if (resolvedRequest.launch.launch.playableId === "story-battle") {
+  if (resolvedRequest.launch.launch.playableId === "story-battle") {
       const completedFlagKey =
         resolvedRequest.launch.launch.payload?.completedFlagKey;
       const winFlagKey = resolvedRequest.launch.launch.payload?.winFlagKey;
@@ -663,79 +340,11 @@ export function runPlayableRuntime(input: {
       input.state,
       resolvedRequest.playableId
     );
-    if (isFlowPlayableSession(activeSession, input.flowPlayablesById)) {
-      const nextState = {
-        ...input.state,
-        core: {
-          ...input.state.core,
-          runtime: {
-            ...input.state.core.runtime,
-            playableSession: null,
-          },
-        },
-      };
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: null,
-      };
-    }
-
-    if (resolvedRequest.playableId === "activity-qte") {
-      const nextState = exitActivityQtePlayable(input.state);
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: null,
-      };
-    }
-
-    const shell = readDefaultPlayableShellRegistry().get(resolvedRequest.playableId);
-    if (shell != null) {
-      return {
-        state: withPlayableShellOverlay(
-          {
-            ...input.state,
-            core: {
-              ...input.state.core,
-              runtime: {
-                ...input.state.core.runtime,
-                playableSession: null,
-              },
-            },
-          },
-          null
-        ),
-        effects: [],
-        handled: true,
-        session: null,
-      };
-    }
-
-    if (resolvedRequest.playableId === "city-begging") {
-      const nextState = exitCityBeggingPlayable(input.state);
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: null,
-      };
-    }
-
-    if (resolvedRequest.playableId === "grain-accounting") {
-      const nextState = exitGrainAccountingPlayable(input.state);
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: null,
-      };
-    }
-
-    if (resolvedRequest.playableId === "medicine-compounding") {
-      const nextState = exitMedicineCompoundingPlayable(input.state);
+    const playableShell = readDefaultPlayableShellRegistry().get(
+      resolvedRequest.playableId
+    );
+    if (playableShell != null) {
+      const nextState = clearPlayableSession(input.state);
       return {
         state: nextState,
         effects: [],
@@ -766,19 +375,11 @@ export function runPlayableRuntime(input: {
     input.state,
     resolvedRequest.playableId
   );
-  const flowPlayable =
-    input.flowPlayablesById?.[resolvedRequest.playableId] ?? null;
-  if (isFlowPlayableSession(activeFlowSession, input.flowPlayablesById) && flowPlayable != null) {
-    const session = activeFlowSession;
-    if (session == null) {
-      return {
-        state: input.state,
-        effects: [],
-        handled: false,
-        session: null,
-      };
-    }
-    const command = toFlowPlayableCommand(
+  const playableShell = readDefaultPlayableShellRegistry().get(
+    resolvedRequest.playableId
+  );
+  if (playableShell != null && activeFlowSession != null) {
+    const command = toPlayableShellCommand(
       resolvedRequest.action,
       resolvedRequest.payload
     );
@@ -791,58 +392,48 @@ export function runPlayableRuntime(input: {
       };
     }
 
-    const reduction = reduceFlowPlayable({
-      definition: flowPlayable,
-      session,
-      command,
-    });
+    const reducedSession = playableShell.reduce(activeFlowSession, command);
     if (
-      reduction.lifecycle.type === "completed" ||
-      reduction.lifecycle.type === "cancelled"
+      reducedSession.status === "completed" ||
+      reducedSession.status === "cancelled"
     ) {
-      const launchedFromFlowCompletion = tryLaunchPlayableFromFlowCompletion({
-        input,
-        session: reduction.session,
-        factResult: reduction.lifecycle.result,
-      });
-      if (launchedFromFlowCompletion != null) {
-        return launchedFromFlowCompletion;
+      const settlement = playableShell.complete(reducedSession);
+      const chainedLaunch =
+        settlement == null
+          ? null
+          : tryLaunchPlayableFromCompletionResult({
+              input,
+              session: reducedSession,
+              settlement,
+            });
+      if (chainedLaunch != null) {
+        return chainedLaunch;
       }
-
-      const settlement = createPlayableResultShell({
-        session: reduction.session,
-        outcome:
-          reduction.lifecycle.type === "cancelled"
-            ? "cancelled"
-            : reduction.lifecycle.result.status === "failed"
-              ? "failure"
-              : "success",
-        factResult: reduction.lifecycle.result,
-      });
+      const presenter = playableShell.present(reducedSession);
+      const nextState = writePlayableShellResultOverlayState(
+        clearPlayableSession(input.state),
+        reducedSession.ownerContext.ownerKind,
+        presenter
+      );
+      const characterStatusById =
+        readPlayableShellCharacterStatusById(reducedSession);
       return {
-        state: {
-          ...input.state,
-          core: {
-            ...input.state.core,
-            runtime: {
-              ...input.state.core.runtime,
-              playableSession: null,
-            },
-          },
-        },
+        state: nextState,
         effects: [],
         handled: true,
         session: null,
-        settlement,
+        ...(settlement == null ? {} : { settlement }),
+        ...(characterStatusById == null ? {} : { characterStatusById }),
       };
     }
+
     const nextState = {
       ...input.state,
       core: {
         ...input.state.core,
         runtime: {
           ...input.state.core.runtime,
-          playableSession: reduction.session,
+          playableSession: reducedSession,
         },
       },
     };
@@ -850,650 +441,8 @@ export function runPlayableRuntime(input: {
       state: nextState,
       effects: [],
       handled: true,
-      session: reduction.session,
+      session: reducedSession,
     };
-  }
-
-  if (resolvedRequest.playableId === "activity-qte") {
-    const session = input.state.core.runtime.activitySession;
-    const activityId =
-      session?.type === "qte-bar" ||
-      session?.type === "work-sequence" ||
-      session?.type === "fortune-board"
-        ? session.activityId
-        : null;
-    const activityDefinition =
-      activityId == null ? null : input.activityDefinitionsById?.[activityId] ?? null;
-
-    if (resolvedRequest.action === "tick") {
-      if (activityDefinition == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "activity-qte"),
-        };
-      }
-
-      const completion = tickActivityQtePlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-      });
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(completion.state, "activity-qte"),
-      };
-    }
-
-    if (resolvedRequest.action === "play") {
-      if (activityDefinition == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "activity-qte"),
-        };
-      }
-
-      const completion = playActivityQtePlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-      });
-
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(completion.state, "activity-qte"),
-      };
-    }
-
-    if (
-      resolvedRequest.action === "wager-minus" ||
-      resolvedRequest.action === "wager-plus"
-    ) {
-      const completion = adjustActivityQteWagerPlayable({
-        state: input.state,
-        characterDefinitions: input.characterDefinitions,
-        direction: resolvedRequest.action === "wager-minus" ? -1 : 1,
-      });
-
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(completion.state, "activity-qte"),
-      };
-    }
-
-    if (resolvedRequest.action === "speed") {
-      if (activityDefinition == null) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "activity-qte"),
-        };
-      }
-
-      const tickMs = resolvedRequest.payload?.tickMs;
-      const completion = chooseActivityQteCommandPlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-        commandId: `speed:${typeof tickMs === "number" ? tickMs : ""}`,
-      });
-
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(completion.state, "activity-qte"),
-      };
-    }
-
-    if (resolvedRequest.action === "stop") {
-      if (activityDefinition == null) {
-        return {
-          state: exitActivityQtePlayable(input.state),
-          effects: [],
-          handled: true,
-          session: null,
-        };
-      }
-
-      const completion = stopActivityQtePlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-      });
-
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(completion.state, "activity-qte"),
-      };
-    }
-
-    if (resolvedRequest.action === "choose") {
-      const commandId = resolvedRequest.payload?.commandId;
-      if (activityDefinition == null || typeof commandId !== "string") {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "activity-qte"),
-        };
-      }
-
-      const completion = chooseActivityQteCommandPlayable({
-        state: input.state,
-        activityDefinition,
-        characterDefinitions: input.characterDefinitions,
-        commandId,
-      });
-
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(completion.state, "activity-qte"),
-      };
-    }
-  }
-
-  const shell = readDefaultPlayableShellRegistry().get(resolvedRequest.playableId);
-  if (shell != null) {
-    const activeSession = getActivePlayableSession(
-      input.state,
-      resolvedRequest.playableId
-    );
-    if (activeSession == null) {
-      return {
-        state: input.state,
-        effects: [],
-        handled: false,
-        session: null,
-      };
-    }
-
-    const command = toShellPlayableCommand({
-      action: resolvedRequest.action,
-      payload: resolvedRequest.payload,
-    });
-    if (command == null) {
-      return {
-        state: input.state,
-        effects: [],
-        handled: true,
-        session: activeSession,
-      };
-    }
-
-    const nextSession = shell.reduce(activeSession, command);
-    const presenter = shell.present(nextSession);
-    const settlement = shell.complete(nextSession);
-    if (settlement != null) {
-      return {
-        state: withPlayableShellOverlay(
-          {
-            ...input.state,
-            core: {
-              ...input.state.core,
-              runtime: {
-                ...input.state.core.runtime,
-                playableSession: null,
-              },
-            },
-          },
-          createPlayableShellOverlayState({
-            session: nextSession,
-            presenter,
-          })
-        ),
-        effects: [],
-        handled: true,
-        session: null,
-        settlement,
-      };
-    }
-
-    return {
-      state: withPlayableShellOverlay(
-        {
-          ...input.state,
-          core: {
-            ...input.state.core,
-            runtime: {
-              ...input.state.core.runtime,
-              playableSession: nextSession,
-            },
-          },
-        },
-        createPlayableShellOverlayState({
-          session: nextSession,
-          presenter,
-        })
-      ),
-      effects: [],
-      handled: true,
-      session: nextSession,
-    };
-  }
-
-  if (resolvedRequest.playableId === "city-begging") {
-    if (resolvedRequest.action === "pointer") {
-      const pointerX = resolvedRequest.payload?.pointerX;
-      if (typeof pointerX !== "number") {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "city-begging"),
-        };
-      }
-
-      const nextState = updateCityBeggingPointerPlayable({
-        state: input.state,
-        pointerX,
-      });
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(nextState, "city-begging"),
-      };
-    }
-
-    if (resolvedRequest.action === "tick") {
-      const now = resolvedRequest.payload?.now;
-      if (typeof now !== "number") {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "city-begging"),
-        };
-      }
-
-      const nextState = tickCityBeggingPlayable({
-        state: input.state,
-        now,
-      });
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(nextState, "city-begging"),
-      };
-    }
-
-    if (resolvedRequest.action === "complete") {
-      const result = resolvedRequest.payload?.result;
-      if (
-        input.playerCharacterId == null ||
-        result == null ||
-        typeof result !== "object"
-      ) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "city-begging"),
-        };
-      }
-
-      const completion = completeCityBeggingPlayable({
-        state: input.state,
-        playerCharacterId: input.playerCharacterId,
-        characterDefinitions: input.characterDefinitions,
-        result: result as CityBeggingGameCompletionResult,
-      });
-      const completionResult = result as CityBeggingGameCompletionResult;
-      const session =
-        getActivePlayableSession(completion.state, "city-begging") ??
-        getActivePlayableSession(input.state, "city-begging");
-      const settlement =
-        session == null
-          ? null
-          : resolvePlayableResultRouting({
-              session,
-              outcome: completionResult.success === true ? "success" : "failure",
-              factResult: {
-                status:
-                  completionResult.success === true ? "completed" : "failed",
-                metrics: {
-                  foodGain:
-                    typeof completionResult.foodGain === "number"
-                      ? completionResult.foodGain
-                      : 0,
-                  goldGain:
-                    typeof completionResult.goldGain === "number"
-                      ? completionResult.goldGain
-                      : 0,
-                  maxCombo:
-                    typeof completionResult.maxCombo === "number"
-                      ? completionResult.maxCombo
-                      : 0,
-                },
-                detail: completionResult as Record<string, unknown>,
-              },
-              settlementEffects: [
-                ...completion.effects,
-                {
-                  type: "advanceTime",
-                  days:
-                    convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS) === 0
-                      ? 0
-                      : CITY_BEGGING_DURATION_DAYS,
-                },
-              ],
-            });
-
-      return {
-        state: {
-          ...completion.state,
-          core: {
-            ...completion.state.core,
-            runtime: {
-              ...completion.state.core.runtime,
-              playableSession: null,
-            },
-          },
-        },
-        characterDefinitions: input.characterDefinitions,
-        characterStatusById: completion.characterStatusById,
-        effects: [],
-        handled: true,
-        session: null,
-        ...(settlement == null ? {} : { settlement }),
-      };
-    }
-  }
-
-  if (resolvedRequest.playableId === "grain-accounting") {
-    if (input.playerCharacterId == null) {
-      return {
-        state: input.state,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(input.state, "grain-accounting"),
-      };
-    }
-
-    if (resolvedRequest.action === "tick") {
-      const completion = tickGrainAccountingPlayable({
-        state: input.state,
-        characterDefinitions: input.characterDefinitions,
-        playerCharacterId: input.playerCharacterId,
-      });
-      const session =
-        getActivePlayableSession(completion.state, "grain-accounting") ??
-        getActivePlayableSession(input.state, "grain-accounting");
-      const settlement =
-        completion.settlement == null || session == null
-          ? null
-          : resolvePlayableResultRouting({
-              session,
-              outcome: completion.settlement.outcome,
-              factResult: {
-                status: completion.settlement.factStatus,
-                metrics: {
-                  score: completion.settlement.score,
-                  durationDays: completion.settlement.durationDays,
-                  rewardMoney: completion.settlement.reward.money,
-                  rewardMath: completion.settlement.reward.math,
-                  rewardRelationship: completion.settlement.reward.relationship,
-                },
-                detail: {
-                  grade: completion.settlement.grade,
-                  reward: completion.settlement.reward,
-                },
-              },
-              settlementEffects: completion.settlement.effects,
-            });
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        ...(completion.settlement == null
-          ? {}
-          : { characterStatusById: completion.settlement.characterStatusById }),
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(completion.state, "grain-accounting"),
-        ...(settlement == null ? {} : { settlement }),
-      };
-    }
-
-    if (resolvedRequest.action === "answer") {
-      const playerSaysCorrect = resolvedRequest.payload?.playerSaysCorrect;
-      if (typeof playerSaysCorrect !== "boolean") {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "grain-accounting"),
-        };
-      }
-
-      const completion = answerGrainAccountingPlayable({
-        state: input.state,
-        characterDefinitions: input.characterDefinitions,
-        playerCharacterId: input.playerCharacterId,
-        playerSaysCorrect,
-      });
-      const session =
-        getActivePlayableSession(completion.state, "grain-accounting") ??
-        getActivePlayableSession(input.state, "grain-accounting");
-      const settlement =
-        completion.settlement == null || session == null
-          ? null
-          : resolvePlayableResultRouting({
-              session,
-              outcome: completion.settlement.outcome,
-              factResult: {
-                status: completion.settlement.factStatus,
-                metrics: {
-                  score: completion.settlement.score,
-                  durationDays: completion.settlement.durationDays,
-                  rewardMoney: completion.settlement.reward.money,
-                  rewardMath: completion.settlement.reward.math,
-                  rewardRelationship: completion.settlement.reward.relationship,
-                },
-                detail: {
-                  grade: completion.settlement.grade,
-                  reward: completion.settlement.reward,
-                },
-              },
-              settlementEffects: completion.settlement.effects,
-            });
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        ...(completion.settlement == null
-          ? {}
-          : { characterStatusById: completion.settlement.characterStatusById }),
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(completion.state, "grain-accounting"),
-        ...(settlement == null ? {} : { settlement }),
-      };
-    }
-  }
-
-  if (resolvedRequest.playableId === "medicine-compounding") {
-    if (input.playerCharacterId == null) {
-      return {
-        state: input.state,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(input.state, "medicine-compounding"),
-      };
-    }
-
-    if (resolvedRequest.action === "tick") {
-      const completion = tickMedicineCompoundingPlayable({
-        state: input.state,
-        characterDefinitions: input.characterDefinitions,
-        playerCharacterId: input.playerCharacterId,
-      });
-      const session =
-        getActivePlayableSession(completion.state, "medicine-compounding") ??
-        getActivePlayableSession(input.state, "medicine-compounding");
-      const settlement =
-        completion.settlement == null || session == null
-          ? null
-          : resolvePlayableResultRouting({
-              session,
-              outcome: completion.settlement.outcome,
-              factResult: {
-                status: completion.settlement.factStatus,
-                metrics: {
-                  durationDays: completion.settlement.durationDays,
-                  rewardMedicine: completion.settlement.reward.medicine,
-                  rewardRelationship: completion.settlement.reward.relationship,
-                },
-                detail: {
-                  grade: completion.settlement.grade,
-                },
-              },
-              settlementEffects: completion.settlement.effects,
-            });
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        ...(completion.settlement == null
-          ? {}
-          : { characterStatusById: completion.settlement.characterStatusById }),
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(
-          completion.state,
-          "medicine-compounding"
-        ),
-        ...(settlement == null ? {} : { settlement }),
-      };
-    }
-
-    if (resolvedRequest.action === "clear") {
-      const nextState = clearMedicineCompoundingPlayable(input.state);
-      return {
-        state: nextState,
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(nextState, "medicine-compounding"),
-      };
-    }
-
-    if (resolvedRequest.action === "finish") {
-      const completion = settleMedicineCompoundingPlayable({
-        state: input.state,
-        characterDefinitions: input.characterDefinitions,
-        playerCharacterId: input.playerCharacterId,
-      });
-      const session =
-        getActivePlayableSession(completion.state, "medicine-compounding") ??
-        getActivePlayableSession(input.state, "medicine-compounding");
-      const settlement =
-        completion.settlement == null || session == null
-          ? null
-          : resolvePlayableResultRouting({
-              session,
-              outcome: completion.settlement.outcome,
-              factResult: {
-                status: completion.settlement.factStatus,
-                metrics: {
-                  durationDays: completion.settlement.durationDays,
-                  rewardMedicine: completion.settlement.reward.medicine,
-                  rewardRelationship: completion.settlement.reward.relationship,
-                },
-                detail: {
-                  grade: completion.settlement.grade,
-                },
-              },
-              settlementEffects: completion.settlement.effects,
-            });
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        ...(completion.settlement == null
-          ? {}
-          : { characterStatusById: completion.settlement.characterStatusById }),
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(
-          completion.state,
-          "medicine-compounding"
-        ),
-        ...(settlement == null ? {} : { settlement }),
-      };
-    }
-
-    if (resolvedRequest.action === "select-herb") {
-      const herbId = resolvedRequest.payload?.herbId;
-      if (typeof herbId !== "string" || herbId.length === 0) {
-        return {
-          state: input.state,
-          effects: [],
-          handled: true,
-          session: getActivePlayableSession(input.state, "medicine-compounding"),
-        };
-      }
-
-      const completion = selectMedicineCompoundingHerbPlayable({
-        state: input.state,
-        characterDefinitions: input.characterDefinitions,
-        playerCharacterId: input.playerCharacterId,
-        herbId,
-      });
-      const session =
-        getActivePlayableSession(completion.state, "medicine-compounding") ??
-        getActivePlayableSession(input.state, "medicine-compounding");
-      const settlement =
-        completion.settlement == null || session == null
-          ? null
-          : resolvePlayableResultRouting({
-              session,
-              outcome: completion.settlement.outcome,
-              factResult: {
-                status: completion.settlement.factStatus,
-                metrics: {
-                  durationDays: completion.settlement.durationDays,
-                  rewardMedicine: completion.settlement.reward.medicine,
-                  rewardRelationship: completion.settlement.reward.relationship,
-                },
-                detail: {
-                  grade: completion.settlement.grade,
-                },
-              },
-              settlementEffects: completion.settlement.effects,
-            });
-      return {
-        state: completion.state,
-        characterDefinitions: completion.characterDefinitions,
-        ...(completion.settlement == null
-          ? {}
-          : { characterStatusById: completion.settlement.characterStatusById }),
-        effects: [],
-        handled: true,
-        session: getActivePlayableSession(
-          completion.state,
-          "medicine-compounding"
-        ),
-        ...(settlement == null ? {} : { settlement }),
-      };
-    }
   }
 
   if (resolvedRequest.playableId === "story-battle") {
@@ -1579,25 +528,14 @@ export function createInteractivePlayableSession(input: {
   });
 }
 
-function isFlowPlayableSession(
-  session: ActivePlayableSession | null,
-  flowPlayablesById: Record<string, FlowPlayableDefinition> | undefined
-): boolean {
-  if (session == null) {
-    return false;
-  }
-  if (flowPlayablesById?.[session.playableId] != null) {
-    return true;
-  }
-  return typeof session.state?.currentNodeId === "string";
-}
-
-function tryLaunchPlayableFromFlowCompletion(input: {
+function tryLaunchPlayableFromCompletionResult(input: {
   input: Parameters<typeof runPlayableRuntime>[0];
   session: ActivePlayableSession;
-  factResult: PlayableFactResult;
+  settlement: PlayableResult;
 }): PlayableRuntimeOutput | null {
-  const launchConfig = readFlowCompletionLaunchConfig(input.factResult.detail);
+  const launchConfig = readFlowCompletionLaunchConfig(
+    input.settlement.factResult.detail
+  );
   if (launchConfig == null) {
     return null;
   }
@@ -1732,23 +670,6 @@ function getActivePlayableSession(
     }
   }
 
-  if (playableId === "city-begging" && state.app.beggingMiniGameState != null) {
-    return createInteractivePlayableSession({
-      playableId: "city-begging",
-      source: { type: "external", id: "interactive.city-begging.launch" },
-    });
-  }
-
-  if (playableId === "activity-qte" && state.core.runtime.activitySession != null) {
-    return createInteractivePlayableSession({
-      playableId: "activity-qte",
-      source: {
-        type: "house",
-        houseId: state.core.world.currentHouseId ?? "house.unknown",
-      },
-    });
-  }
-
   if (playableId === "story-battle" && state.core.storyBattle != null) {
     return createInteractivePlayableSession({
       playableId: "story-battle",
@@ -1789,13 +710,6 @@ function toPlayableLaunchInput(request: RuntimeRequest): PlayableLaunchInput | n
       ...(integrationId == null ? {} : { integrationId }),
       ...(ownerContext == null ? {} : { ownerContext }),
       ...(launchPayload == null ? {} : { payload: launchPayload }),
-    };
-  }
-
-  if (request.eventId === "interactive.city-begging.launch") {
-    return {
-      playableId: "city-begging",
-      ...(request.payload == null ? {} : { payload: request.payload }),
     };
   }
 
@@ -1946,23 +860,12 @@ function createInteractiveOwnerContext(input: {
   playableId: InteractivePlayableId;
   source: InteractivePlayableSource;
 }): PlayableOwnerContext | null {
-  if (input.playableId === "city-begging") {
-    return {
-      ownerKind: "external",
-      ownerId: null,
-      returnPolicy: "close-only",
-    };
-  }
-
   if (input.source.type !== "dialogue") {
     if (input.source.type === "house") {
       return {
         ownerKind: "house",
         ownerId: input.source.houseId,
-        returnPolicy:
-          input.playableId === "story-battle"
-            ? "reenter-owner"
-            : "resume-owner",
+        returnPolicy: "reenter-owner",
       };
     }
     return null;
@@ -1971,12 +874,11 @@ function createInteractiveOwnerContext(input: {
   return {
     ownerKind: "dialogue",
     ownerId: input.source.dialogueId,
-    returnPolicy:
-      input.playableId === "activity-qte" ? "resume-owner" : "reenter-owner",
+    returnPolicy: "reenter-owner",
   };
 }
 
-function toFlowPlayableCommand(
+function toPlayableShellCommand(
   action: string,
   payload: Record<string, unknown> | undefined
 ): PlayableCommand | null {
@@ -1992,21 +894,17 @@ function toFlowPlayableCommand(
     return { type: "select", value: payload.value };
   }
 
-  return null;
+  return {
+    type: "custom",
+    actionId: action,
+    ...(payload == null ? {} : { payload }),
+  };
 }
 
 function getInteractivePlayableIntegrationId(
   playableId: InteractivePlayableId
 ): PlayableIntegrationId {
-  if (playableId === "activity-qte") {
-    return "playable.activity-qte.dialogue.default";
-  }
-
-  if (playableId === "story-battle") {
-    return "playable.story-battle.dialogue.default";
-  }
-
-  return "playable.city-begging.external.default";
+  return "playable.story-battle.dialogue.default";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -2044,6 +942,156 @@ function readFlowCompletionLaunchConfig(
       ? { payload: launchPlayable.payload }
       : {}),
   };
+}
+
+function buildPlayableShellLaunchPayload(input: {
+  state: RuntimeState;
+  characterDefinitions: CharacterDefinition[];
+  playerCharacterId?: string;
+  activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  launchPayload?: Record<string, unknown> | undefined;
+}): Record<string, unknown> {
+  const playerCharacter =
+    input.playerCharacterId == null
+      ? null
+      : input.characterDefinitions.find(
+          (characterDefinition) =>
+            characterDefinition.id === input.playerCharacterId
+        ) ?? null;
+
+  const activityId =
+    typeof input.launchPayload?.activityId === "string"
+      ? input.launchPayload.activityId
+      : null;
+  const activityDefinition =
+    activityId == null
+      ? null
+      : input.activityDefinitionsById?.[activityId] ?? null;
+
+  return {
+    ...(input.launchPayload ?? {}),
+    ...(activityDefinition == null
+      ? {}
+      : {
+          __activity: {
+            definition: activityDefinition,
+            gameState: input.state.core,
+          },
+        }),
+    __runtime: {
+      player: {
+        characterId: input.playerCharacterId ?? null,
+        stamina: playerCharacter?.stamina ?? 0,
+        numericAttributes: {
+          arithmetic:
+            playerCharacter == null
+              ? 1
+              : Math.max(
+                  1,
+                  readNumericPersonAttributeBySemanticKey(
+                    playerCharacter,
+                    "arithmetic",
+                    1
+                  )
+                ),
+          medicine:
+            playerCharacter == null
+              ? 0
+              : readNumericPersonAttributeBySemanticKey(
+                  playerCharacter,
+                  "medicine",
+                  0
+                ),
+        },
+      },
+      world: {
+        currentHouseId: input.state.core.world.currentHouseId,
+      },
+      variables: input.state.core.runtime.variables,
+    },
+  };
+}
+
+function clearPlayableSession(state: RuntimeState): RuntimeState {
+  return {
+    ...state,
+    core: {
+      ...state.core,
+      runtime: {
+        ...state.core.runtime,
+        playableSession: null,
+      },
+    },
+  };
+}
+
+function writePlayableShellResultOverlayState(
+  state: RuntimeState,
+  ownerKind: PlayableOwnerContext["ownerKind"],
+  presenter: PlayablePresenterModel
+): RuntimeState {
+  if (ownerKind !== "house") {
+    return state;
+  }
+
+  const houseSession = state.core.ui.houseSession;
+  const sessionState =
+    houseSession?.state != null &&
+    typeof houseSession.state === "object" &&
+    !Array.isArray(houseSession.state)
+      ? (houseSession.state as Record<string, unknown>)
+      : {};
+
+  return {
+    ...state,
+    core: {
+      ...state.core,
+      ui: {
+        ...state.core.ui,
+        houseSession:
+          houseSession == null
+            ? {
+                moduleId: "playable-shell",
+                state: {
+                  overlay: {
+                    type: "playable-shell-result",
+                    presenter,
+                  },
+                },
+              }
+            : {
+                ...houseSession,
+                state: {
+                  ...sessionState,
+                  overlay: {
+                    type: "playable-shell-result",
+                    presenter,
+                  },
+                },
+              },
+      },
+    },
+  };
+}
+
+function readPlayableShellCharacterStatusById(
+  session: ActivePlayableSession
+): CharacterStatusById | undefined {
+  const state = session.state;
+  if (state == null || typeof state !== "object" || Array.isArray(state)) {
+    return undefined;
+  }
+  const completion = (state as Record<string, unknown>).completion;
+  if (completion == null || typeof completion !== "object" || Array.isArray(completion)) {
+    return undefined;
+  }
+  const characterStatusById = (completion as { characterStatusById?: unknown })
+    .characterStatusById;
+  return characterStatusById != null &&
+    typeof characterStatusById === "object" &&
+    !Array.isArray(characterStatusById)
+    ? (characterStatusById as CharacterStatusById)
+    : undefined;
 }
 
 export {

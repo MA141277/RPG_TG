@@ -140,9 +140,7 @@ function validateMechanicArtifactPaths({ repoRoot, filePath, artifact, errors })
 
   for (const legacyKey of LEGACY_PLAYABLE_PATH_KEYS) {
     if (legacyKey in artifactPaths) {
-      errors.push(
-        `${fileLabel}: legacy playable artifact path key ${legacyKey} is not allowed.`
-      );
+      errors.push(`${fileLabel}: legacy playable artifact path key ${legacyKey} is not allowed.`);
     }
   }
 

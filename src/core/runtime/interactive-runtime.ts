@@ -11,7 +11,6 @@ import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeState } from "../contracts/runtime-state";
 import {
   createInteractivePlayableSession,
-  resolvePlayableLaunchRequest,
   runPlayableRuntime,
 } from "./playable-runtime";
 import { readDefaultPlayableDefinitionRegistry } from "./playable-runtime-registries";
@@ -63,11 +62,7 @@ export function runInteractiveRuntime(input: {
     };
   }
 
-  if (
-    request.kind === "activity-qte" ||
-    request.kind === "city-begging" ||
-    request.kind === "story-battle"
-  ) {
+  if (request.kind === "story-battle") {
     const playableResult = runPlayableRuntime({
       state: input.state,
       request: input.request,
@@ -135,27 +130,7 @@ export function toInteractiveRuntimeRequest(
   request: RuntimeRequest
 ): InteractiveRuntimeRequest | null {
   if (request.type === "external") {
-    const launch = resolvePlayableLaunchRequest({ request });
-    if (launch == null || !launch.ok) {
-      if (launch == null) {
-        return null;
-      }
-      return null;
-    }
-
-    const kind = toInteractiveRuntimeKind(launch.definition.id);
-    if (kind == null) {
-      return null;
-    }
-
-    return {
-      phase: "launch",
-      kind,
-      interactiveId: request.eventId,
-      source: { type: "external", id: request.eventId },
-      playableLaunch: launch.launch,
-      ...(request.payload == null ? {} : { payload: request.payload }),
-    };
+    return null;
   }
 
   if (request.type !== "action") {
@@ -189,14 +164,6 @@ export function toInteractiveRuntimeRequest(
 function toInteractiveRuntimeKind(
   playableId: string | undefined
 ): InteractiveRuntimeKind | null {
-  if (playableId === "activity-qte") {
-    return "activity-qte";
-  }
-
-  if (playableId === "city-begging") {
-    return "city-begging";
-  }
-
   if (playableId === "story-battle") {
     return "story-battle";
   }
@@ -235,62 +202,6 @@ function getActiveInteractiveSession(
   state: RuntimeState,
   kind: InteractiveRuntimeKind | null
 ): ActiveInteractiveRuntimeSession | null {
-  if (kind === "city-begging" && state.app.beggingMiniGameState != null) {
-    const source = {
-      type: "external" as const,
-      id: "interactive.city-begging.launch",
-    };
-    return {
-      kind,
-      sessionId: createInteractiveSessionId(kind),
-      source,
-      playable: createInteractivePlayableSession({
-        playableId: kind,
-        source,
-      }) ?? {
-        sessionId: "playable.city-begging",
-        playableId: "city-begging",
-        integrationId: "playable.city-begging.external.default",
-        ownerContext: {
-          ownerKind: "external",
-          ownerId: null,
-          returnPolicy: "close-only",
-        },
-        status: "active",
-      },
-    };
-  }
-
-  if (
-    kind === "activity-qte" &&
-    state.core.runtime.activitySession != null &&
-    state.core.runtime.activitySession.type !== "result"
-  ) {
-    const source = {
-      type: "house" as const,
-      houseId: state.core.world.currentHouseId ?? "house.unknown",
-    };
-    return {
-      kind,
-      sessionId: createInteractiveSessionId(kind),
-      source,
-      playable: state.core.runtime.playableSession ?? createInteractivePlayableSession({
-        playableId: "activity-qte",
-        source,
-      }) ?? {
-        sessionId: "playable.activity-qte",
-        playableId: "activity-qte",
-        integrationId: "playable.activity-qte.dialogue.default",
-        ownerContext: {
-          ownerKind: "house",
-          ownerId: source.houseId,
-          returnPolicy: "resume-owner",
-        },
-        status: "active",
-      },
-    };
-  }
-
   if (kind === "story-battle" && state.core.storyBattle != null) {
     const source = {
       type: "house" as const,
@@ -324,30 +235,6 @@ function exitInteractiveState(
   state: RuntimeState,
   kind: InteractiveRuntimeKind
 ): RuntimeState {
-  if (kind === "city-begging") {
-    return {
-      ...state,
-      app: {
-        ...state.app,
-        beggingMiniGameState: null,
-      },
-    };
-  }
-
-  if (kind === "activity-qte") {
-    return {
-      ...state,
-      core: {
-        ...state.core,
-        runtime: {
-          ...state.core.runtime,
-          playableSession: null,
-          activitySession: null,
-        },
-      },
-    };
-  }
-
   return {
     ...state,
     core: {

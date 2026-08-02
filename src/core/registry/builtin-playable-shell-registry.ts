@@ -3,9 +3,19 @@ import {
   createPlayableShellRegistry,
   type PlayableShellRegistry,
 } from "./playable-shell-registry";
+import { activityQtePlayableShell } from "../../playables/activity-qte/shell";
 import { templeCopyScriptureShell } from "../../playables/temple-copy-scripture";
+import { cityBeggingPlayableShell } from "../../application/playables/city-begging/shell";
+import { grainAccountingPlayableShell } from "../../application/playables/grain-accounting/shell";
+import { medicineCompoundingPlayableShell } from "../../application/playables/medicine-compounding/shell";
 
-const builtinPlayableShells: PlayableShell[] = [templeCopyScriptureShell];
+const builtinPlayableShells: PlayableShell[] = [
+  activityQtePlayableShell,
+  templeCopyScriptureShell,
+  cityBeggingPlayableShell,
+  grainAccountingPlayableShell,
+  medicineCompoundingPlayableShell,
+];
 
 export function installBuiltinPlayableShells(
   registry: PlayableShellRegistry

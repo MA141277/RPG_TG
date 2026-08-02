@@ -22,7 +22,6 @@ import type {
 } from "../domain/historical-character";
 import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
-import type { FlowPlayableDefinition } from "../domain/playables/flow";
 import { materializeCharacterDefinition } from "../domain/character-status";
 import { assertExists } from "../shared/assert";
 import { renderSharedDialog } from "./components/dialog/shared-dialog";
@@ -38,7 +37,6 @@ import { renderCharacterDetailView } from "./views/character/character-detail-vi
 import { renderCardLibraryView } from "./views/cards/card-library-view";
 import { renderCity3dView } from "./views/city/city-3d-view";
 import { renderCityModuleView } from "./views/city/city-module-view";
-import { renderCityBeggingMiniGameOverlay } from "../application/playables/builtin/city-begging/city-begging-minigame-view";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import {
   renderActivityOverlay,
@@ -46,12 +44,9 @@ import {
 } from "./views/dialogue/dialogue-view";
 import { renderDialogueScreenPanel } from "./components/dialogue-screen-panel";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
-import {
-  renderFlowPlayableOverlay,
-  renderFlowPlayableView,
-} from "./views/playables/flow-playable-view";
 import { renderHousePlayableOverlay } from "./views/playables/house-playable-overlay";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
+import { readDefaultPlayableShellRegistry } from "../core/runtime/playable-runtime-registries";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
 
@@ -76,7 +71,6 @@ export type AppRenderInput = {
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
   presenterOutput: AppPresenterOutput;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition>;
 };
 
 function getPlayerCharacter(
@@ -414,35 +408,90 @@ function getDialoguePortraitArtClassName(characterId: string): string {
   }
 }
 
+function renderPlayableStageSession(session: NonNullable<AppState["gameState"]["runtime"]["playableSession"]>): string {
+  const shell = readDefaultPlayableShellRegistry().get(session.playableId);
+  if (shell == null) {
+    return "";
+  }
+  if (shell.renderStage != null) {
+    return shell.renderStage(session);
+  }
+
+  const presenter = shell.present(session);
+  return `
+    <section class="view-house view-playable-stage">
+      <div class="c-stage-header">
+        <div>
+          <p class="c-stage-header__eyebrow">玩法</p>
+          <h1 class="c-stage-header__title">${escapePlayableHtml(presenter.title)}</h1>
+        </div>
+      </div>
+      <div class="c-house-interior">
+        <div class="c-panel">
+          ${presenter.summaryLines
+            .map((line) => `<p>${escapePlayableHtml(line)}</p>`)
+            .join("")}
+        </div>
+        <div class="c-house-roster">
+          ${presenter.actions
+            .map(
+              (action) => `
+                <button
+                  class="c-button"
+                  data-playable-id="${session.playableId}"
+                  data-playable-action="${action.id}"
+                >
+                  ${escapePlayableHtml(action.label)}
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function escapePlayableHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
 function renderStage(
   input: AppRenderInput,
   playerCharacter: CharacterDefinition
 ): string {
   const { stage } = input.presenterOutput;
   const activePlayableSession = input.appState.gameState.runtime.playableSession;
-  const activeFlowPlayable =
-    activePlayableSession == null || input.flowPlayablesById == null
-      ? null
-      : input.flowPlayablesById[activePlayableSession.playableId] ?? null;
+  const activityQteShellActive = activePlayableSession?.playableId === "activity-qte";
 
   if (
     input.appState.gameState.ui.currentView === "minigame" &&
-    activePlayableSession != null &&
-    activeFlowPlayable != null
+    activePlayableSession != null
   ) {
-    const session = activePlayableSession;
-    const definition = activeFlowPlayable;
-    if (session.ownerContext.ownerKind === "house" && stage.type === "building") {
+    if (
+      activePlayableSession.ownerContext.ownerKind === "house" &&
+      stage.type === "building"
+    ) {
       return `
         ${renderBuildingModuleView({
           stage,
           characterDefinitions: input.appState.characterDefinitions,
           characterManager: input.characterManager,
         })}
-        ${renderFlowPlayableOverlay({ definition, session })}
+        ${renderHousePlayableOverlay({
+          session: activePlayableSession,
+          houseSession: input.appState.gameState.ui.houseSession,
+        })}
       `;
     }
-    return renderFlowPlayableView({ definition, session });
+    const playableStageMarkup = renderPlayableStageSession(activePlayableSession);
+    if (playableStageMarkup.length > 0) {
+      return playableStageMarkup;
+    }
   }
 
   if (stage.type === "map") {
@@ -476,11 +525,11 @@ function renderStage(
       cityDirectoryState: input.appState.cityDirectoryState,
       citySceneMapping: stage.citySceneMapping,
     });
-    const activityOverlay = renderActivityOverlay(
-      input.appState.gameState.runtime.activitySession
-    );
+    const activityOverlay = activityQteShellActive
+      ? ""
+      : renderActivityOverlay(input.appState.gameState.runtime.activitySession);
     const housePlayableOverlay = renderHousePlayableOverlay({
-      session: input.appState.gameState.runtime.playableSession,
+      session: activePlayableSession,
       houseSession: input.appState.gameState.ui.houseSession,
     });
     return `${cityMarkup}${activityOverlay}${housePlayableOverlay}`;
@@ -499,11 +548,11 @@ function renderStage(
       characterDefinitions: input.appState.characterDefinitions,
       characterManager: input.characterManager,
     });
-    const activityOverlay = renderActivityOverlay(
-      input.appState.gameState.runtime.activitySession
-    );
+    const activityOverlay = activityQteShellActive
+      ? ""
+      : renderActivityOverlay(input.appState.gameState.runtime.activitySession);
     const housePlayableOverlay = renderHousePlayableOverlay({
-      session: input.appState.gameState.runtime.playableSession,
+      session: activePlayableSession,
       houseSession: input.appState.gameState.ui.houseSession,
     });
     return `${buildingMarkup}${activityOverlay}${housePlayableOverlay}`;
@@ -524,9 +573,12 @@ function renderStage(
             characterDefinition.id ===
             stage.dialogueScreenViewModel?.speakerCharacterId
         ) ?? null;
-      const activityOverlay = renderActivityOverlay(
-        input.appState.gameState.runtime.activitySession
-      );
+      const activityOverlay = activityQteShellActive
+        ? renderHousePlayableOverlay({
+            session: activePlayableSession,
+            houseSession: input.appState.gameState.ui.houseSession,
+          })
+        : renderActivityOverlay(input.appState.gameState.runtime.activitySession);
 
       return renderDialogueScreenPanel({
         dialogueScreenViewModel: stage.dialogueScreenViewModel,
@@ -549,7 +601,9 @@ function renderStage(
 
     return renderDialogueView({
       currentAction: stage.legacyDialogueNode,
-      activitySession: input.appState.gameState.runtime.activitySession,
+      activitySession: activityQteShellActive
+        ? null
+        : input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,
       choiceOptions: stage.legacyDialogueChoiceOptions,
       ...(sceneUnderlayMarkup == null
@@ -610,7 +664,6 @@ export function renderApp(input: AppRenderInput): string {
               input.mapDefinition,
               input.cityDefinitions ?? []
             )}
-            ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
             ${renderOverlay(input, playerCharacter)}
           </div>
         </div>

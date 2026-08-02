@@ -99,8 +99,8 @@ export type ActiveGameContent = {
     string,
     PlayableIntegrationDefinition
   >;
-  flowPlayables: FlowPlayableDefinition[];
-  flowPlayablesById: Record<string, FlowPlayableDefinition>;
+  playableShells: FlowPlayableDefinition[];
+  playableShellsById: Record<string, FlowPlayableDefinition>;
   cards: CardDefinition[];
   valuables: ValuableItemDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
@@ -151,16 +151,16 @@ export type ActiveGameContentContext = {
     string,
     PlayableIntegrationDefinition
   >;
-  flowPlayablesById: Record<string, FlowPlayableDefinition>;
-    storyContent: {
-      eventDefinitionsById: Record<string, EventDefinition>;
-      eventBindingsById: Record<string, EventBinding>;
-      settlementDefinitionsById: Record<string, SettlementDefinition>;
-      progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
-      progressTrackBindingsById: Record<string, ProgressTrackBinding>;
-      dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
-      activityDefinitionsById: Record<string, ActivityDefinition>;
-    flowPlayablesById: Record<string, FlowPlayableDefinition>;
+  playableShellsById: Record<string, FlowPlayableDefinition>;
+  storyContent: {
+    eventDefinitionsById: Record<string, EventDefinition>;
+    eventBindingsById: Record<string, EventBinding>;
+    settlementDefinitionsById: Record<string, SettlementDefinition>;
+    progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
+    progressTrackBindingsById: Record<string, ProgressTrackBinding>;
+    dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
+    activityDefinitionsById: Record<string, ActivityDefinition>;
+    playableShellsById: Record<string, FlowPlayableDefinition>;
     cityDefinitionsById: Record<string, CityDefinition>;
     houseDefinitionsById: Record<string, HouseDefinition>;
     textEntriesById: Record<string, string>;
@@ -192,7 +192,7 @@ export function createActiveGameContent(
   const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
   const playableIntegrations = resolvedPack.playableIntegrations ?? [];
-  const flowPlayables = resolvedPack.flowPlayables ?? [];
+  const playableShells = resolvedPack.playableShells ?? [];
   const cards = resolvedPack.cards ?? [];
   const valuables = resolvedPack.valuables ?? [];
   const cityNpcPools = resolvedPack.cityNpcPools ?? [];
@@ -301,9 +301,9 @@ export function createActiveGameContent(
     ),
     playableIntegrationsByEditorRecordId:
       createPlayableIntegrationsByEditorRecordId(playableIntegrations),
-    flowPlayables,
-    flowPlayablesById: Object.fromEntries(
-      flowPlayables.map((flowPlayable) => [flowPlayable.id, flowPlayable])
+    playableShells,
+    playableShellsById: Object.fromEntries(
+      playableShells.map((flowPlayable) => [flowPlayable.id, flowPlayable])
     ),
     cards,
     valuables,
@@ -368,7 +368,7 @@ export function createActiveGameContentContext(
     taskDefinitionsById: gameContent.taskDefinitionsById,
     playableIntegrationsByEditorRecordId:
       gameContent.playableIntegrationsByEditorRecordId,
-    flowPlayablesById: gameContent.flowPlayablesById,
+    playableShellsById: gameContent.playableShellsById,
     storyContent: {
       eventDefinitionsById: gameContent.eventDefinitionsById,
       eventBindingsById: gameContent.eventBindingsById,
@@ -377,7 +377,7 @@ export function createActiveGameContentContext(
       progressTrackBindingsById: gameContent.progressTrackBindingsById,
       dialogueDefinitionsById: gameContent.dialogueDefinitionsById,
       activityDefinitionsById: gameContent.activityDefinitionsById,
-      flowPlayablesById: gameContent.flowPlayablesById,
+      playableShellsById: gameContent.playableShellsById,
       cityDefinitionsById: gameContent.cityDefinitionById,
       houseDefinitionsById: gameContent.houseDefinitionById,
       textEntriesById: gameContent.textEntriesById,
@@ -466,9 +466,9 @@ export function mergeContentPacks(
       basePack.playableIntegrations ?? [],
       overridePack.playableIntegrations ?? []
     ),
-    flowPlayables: mergeById(
-      basePack.flowPlayables ?? [],
-      overridePack.flowPlayables ?? []
+    playableShells: mergeById(
+      basePack.playableShells ?? [],
+      overridePack.playableShells ?? []
     ),
     cards: mergeById(basePack.cards ?? [], overridePack.cards ?? []),
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
@@ -532,7 +532,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],
     playableIntegrations: pack.playableIntegrations ?? [],
-    flowPlayables: pack.flowPlayables ?? [],
+    playableShells: pack.playableShells ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
     cityNpcPools: pack.cityNpcPools ?? [],

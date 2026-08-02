@@ -106,29 +106,7 @@ function configureDottedFlowPlayableRegistry() {
     },
     normalizedContentSources: [
       {
-        playables: [
-          {
-            id: dottedFlowDefinition.id,
-            commandPrefix: `playable.${dottedFlowDefinition.id}.`,
-          },
-        ],
-        playableIntegrations: [
-          {
-            integrationId: "integration.flow-test.dotted",
-            playableId: dottedFlowDefinition.id,
-            ownerDefaults: {
-              ownerKind: "dialogue",
-              ownerId: "dialogue.test.flow.dotted",
-              returnPolicy: "resume-owner",
-            },
-            trigger: {
-              triggerId: "trigger.flow-test.dotted",
-              ownerKind: "dialogue",
-              trigger: "manual-launch",
-            },
-            outcomeConfig: {},
-          },
-        ],
+        playableShells: [dottedFlowDefinition],
       },
     ],
     registeredDefinitionIds: ["pack.test.flow-dispatch.dotted"],
@@ -142,7 +120,7 @@ function configureDottedFlowPlayableRegistry() {
       houses: [],
       houseModules: [],
       playables: [dottedFlowDefinition.id],
-      playableIntegrations: ["integration.flow-test.dotted"],
+      playableIntegrations: [`playable.${dottedFlowDefinition.id}.default`],
     },
     startupProfile: {},
   });
@@ -154,11 +132,15 @@ test("playable runtime dispatches actions for dotted flow playable ids", () => {
 
     const launched = runPlayableRuntime({
       state: createRuntimeState(),
-      request: createLaunchPlayableRequest(dottedFlowDefinition.id),
+      request: createLaunchPlayableRequest(dottedFlowDefinition.id, {
+        integrationId: `playable.${dottedFlowDefinition.id}.default`,
+        ownerContext: {
+          ownerKind: "dialogue",
+          ownerId: "dialogue.test.flow.dotted",
+          returnPolicy: "resume-owner",
+        },
+      }),
       characterDefinitions: prototypeCharacters,
-      flowPlayablesById: {
-        [dottedFlowDefinition.id]: dottedFlowDefinition,
-      },
     });
 
     assert.equal(launched.handled, true);
@@ -170,28 +152,27 @@ test("playable runtime dispatches actions for dotted flow playable ids", () => {
       state: launched.state,
       request: createPlayableActionRequest(dottedFlowDefinition.id, "confirm"),
       characterDefinitions: prototypeCharacters,
-      flowPlayablesById: {
-        [dottedFlowDefinition.id]: dottedFlowDefinition,
-      },
     });
 
     assert.equal(confirmed.handled, true);
     assert.equal(confirmed.state.core.runtime.playableSession, null);
-    assert.deepEqual(confirmed.settlement, {
-      integrationId: "integration.flow-test.dotted",
-      outcome: "success",
-      factResult: {
-        status: "completed",
-        metrics: { score: 1 },
-        detail: { flagKey: "temple.carry_water.completed" },
-      },
-      handoff: {
-        type: "resume-owner",
-        ownerKind: "dialogue",
-        ownerId: "dialogue.test.flow.dotted",
-      },
-      effects: [],
+    assert.equal(
+      confirmed.settlement?.integrationId,
+      `playable.${dottedFlowDefinition.id}.default`
+    );
+    assert.equal(confirmed.settlement?.outcome, "success");
+    assert.deepEqual(confirmed.settlement?.factResult, {
+      status: "completed",
+      metrics: { score: 1 },
+      detail: { flagKey: "temple.carry_water.completed" },
     });
+    assert.deepEqual(confirmed.settlement?.handoff, {
+      type: "resume-owner",
+      ownerKind: "dialogue",
+      ownerId: "dialogue.test.flow.dotted",
+    });
+    assert.ok(Array.isArray(confirmed.settlement?.effects));
+    assert.ok((confirmed.settlement?.effects.length ?? 0) > 0);
   } finally {
     resetDefaultPlayableRuntimeRegistries();
   }

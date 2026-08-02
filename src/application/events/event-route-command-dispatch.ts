@@ -1,6 +1,5 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { EventDefinition, EventRouteCommand } from "../../domain/event";
-import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import type { AppState } from "../app-shell";
 import {
   createLaunchPlayableRequest,
@@ -18,7 +17,6 @@ export function dispatchEventRouteCommands(input: {
   state: AppState;
   eventDefinition: EventDefinition | null | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 }): EventRouteCommandDispatchResult {
   const eventDefinition = input.eventDefinition;
@@ -41,7 +39,6 @@ export function dispatchEventRouteCommands(input: {
         eventDefinition,
         command,
         activityDefinitionsById: input.activityDefinitionsById,
-        flowPlayablesById: input.flowPlayablesById,
         textEntriesById: input.textEntriesById,
       });
       state = result.state;
@@ -67,7 +64,6 @@ function dispatchLaunchPlayableCommand(input: {
   eventDefinition: EventDefinition;
   command: Extract<EventRouteCommand, { type: "launchPlayable" }>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 }): { state: AppState; handled: boolean } {
   const command = input.command;
@@ -95,9 +91,6 @@ function dispatchLaunchPlayableCommand(input: {
             ...(input.activityDefinitionsById == null
               ? {}
               : { activityDefinitionsById: input.activityDefinitionsById }),
-            ...(input.flowPlayablesById == null
-              ? {}
-              : { flowPlayablesById: input.flowPlayablesById }),
             ...(input.textEntriesById == null
               ? {}
               : { textEntriesById: input.textEntriesById }),

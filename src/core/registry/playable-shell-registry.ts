@@ -11,10 +11,10 @@ export type PlayableShellRegistry = {
 export function createPlayableShellRegistry(
   shells: PlayableShell[] = []
 ): PlayableShellRegistry {
-  const shellsByPlayableId = new Map<PlayableId, PlayableShell>();
+  const entries = new Map<PlayableId, PlayableShell>();
 
   const register = (shell: PlayableShell): void => {
-    shellsByPlayableId.set(shell.manifest.playableId, shell);
+    entries.set(shell.manifest.playableId, shell);
   };
 
   shells.forEach(register);
@@ -22,7 +22,7 @@ export function createPlayableShellRegistry(
   return {
     register,
     get(playableId) {
-      return shellsByPlayableId.get(playableId) ?? null;
+      return entries.get(playableId) ?? null;
     },
   };
 }

@@ -15,7 +15,7 @@ const CONTENT_PACK_FILE_KEYS = [
   "menuInstances",
   "dialogues",
   "tasks",
-  "flowPlayables",
+  "playableShells",
   "textEntries",
   "activities",
   "cards",
@@ -123,7 +123,7 @@ function parseContentPackManifest(value: unknown): ContentPackManifest {
   }
   if (Object.hasOwn(value.files, "flowDefinitions")) {
     throw new Error(
-      'content pack files.flowDefinitions is retired; use files.flowPlayables instead.'
+      'content pack files.flowDefinitions is retired; use files.playableShells instead.'
     );
   }
 

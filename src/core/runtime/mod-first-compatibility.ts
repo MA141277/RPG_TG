@@ -190,15 +190,6 @@ export type ModFirstEventRuntimeAction =
         returnPolicy: PlayableReturnPolicy;
       };
       payload?: Record<string, unknown>;
-    }
-  | {
-      type: "launchFlow";
-      flowId: string;
-      ownerContext: {
-        ownerKind: "house" | "scene" | "dialogue" | "task" | "external";
-        ownerId: string | null;
-        returnPolicy: PlayableReturnPolicy;
-      };
     };
 
 export type ModFirstEventDefinitionOverlay = {

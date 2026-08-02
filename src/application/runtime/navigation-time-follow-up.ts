@@ -72,7 +72,6 @@ export function applyCouncilPriorityFollowUp(input: {
             ? {}
             : { councilArrivalNotice: input.councilArrivalNotice }),
         }),
-        beggingMiniGameState: null,
         cityMenuState: null,
         cityDirectoryState: null,
         autoAdvanceState: null,

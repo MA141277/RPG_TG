@@ -2,8 +2,6 @@ import type { RuntimeResult } from "./runtime-result";
 import type { ActivePlayableSession, PlayableLaunchRequest } from "./playable-runtime";
 
 export type InteractiveRuntimeKind =
-  | "activity-qte"
-  | "city-begging"
   | "story-battle";
 
 export type InteractiveRuntimeSource =

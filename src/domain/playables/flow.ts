@@ -42,3 +42,15 @@ export type FlowPlayableDefinition = {
 export type FlowPlayableSessionState = {
   currentNodeId: string;
 };
+
+export function createFlowPlayableCommandPrefix(flowId: string): string {
+  return `playable.${flowId}.`;
+}
+
+export function createFlowPlayableIntegrationId(flowId: string): string {
+  return `playable.${flowId}.default`;
+}
+
+export function createFlowPlayableTriggerId(flowId: string): string {
+  return `trigger.playable.${flowId}.default`;
+}

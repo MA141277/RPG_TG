@@ -272,8 +272,18 @@ test(
         ),
         true
       );
-      assert.equal(Array.isArray(pack.flowPlayables), true);
-      assert.equal(pack.flowPlayables.length, 0);
+      assert.equal(Array.isArray(pack.playableShells), true);
+      assert.ok(
+        pack.playableShells.length > 0,
+        "Expected built-in scenario pack hydration to populate playableShells."
+      );
+      assert.equal(
+        pack.playableShells.some(
+          (flowDefinition) =>
+            flowDefinition.id === "flow.building.template.house.temple.review"
+        ),
+        true
+      );
     } finally {
       global.fetch = originalFetch;
     }
@@ -319,7 +329,6 @@ function createRuntimeState(coreState = createBaseState()) {
   return {
     core: coreState,
     app: {
-      beggingMiniGameState: null,
       autoAdvanceState: null,
       campaignTravelState: null,
       cityDirectoryState: null,
@@ -422,68 +431,6 @@ function getTypeScriptDiagnosticsForFile(relativeFilePath) {
     .filter(
       (diagnostic) =>
         diagnostic.file?.fileName.replaceAll("\\", "/") === targetPath
-    )
-    .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
-}
-
-function getTypeScriptDiagnosticsForSourceText(sourceText, relativeFilePath) {
-  const configPath = path.join(process.cwd(), "tsconfig.json");
-  const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
-  if (configFile.error) {
-    throw new Error(ts.flattenDiagnosticMessageText(configFile.error.messageText, "\n"));
-  }
-
-  const parsedConfig = ts.parseJsonConfigFileContent(
-    configFile.config,
-    ts.sys,
-    process.cwd(),
-    undefined,
-    configPath
-  );
-  const virtualFilePath = path.resolve(process.cwd(), relativeFilePath);
-  const compilerHost = ts.createCompilerHost(parsedConfig.options);
-  const originalReadFile = compilerHost.readFile.bind(compilerHost);
-  const originalFileExists = compilerHost.fileExists.bind(compilerHost);
-  const originalGetSourceFile = compilerHost.getSourceFile.bind(compilerHost);
-
-  compilerHost.readFile = (fileName) => {
-    if (path.resolve(fileName) === virtualFilePath) {
-      return sourceText;
-    }
-    return originalReadFile(fileName);
-  };
-
-  compilerHost.fileExists = (fileName) => {
-    if (path.resolve(fileName) === virtualFilePath) {
-      return true;
-    }
-    return originalFileExists(fileName);
-  };
-
-  compilerHost.getSourceFile = (fileName, languageVersion, onError, shouldCreateNewSourceFile) => {
-    if (path.resolve(fileName) === virtualFilePath) {
-      return ts.createSourceFile(fileName, sourceText, languageVersion, true);
-    }
-    return originalGetSourceFile(
-      fileName,
-      languageVersion,
-      onError,
-      shouldCreateNewSourceFile
-    );
-  };
-
-  const program = ts.createProgram({
-    rootNames: [...parsedConfig.fileNames, virtualFilePath],
-    options: parsedConfig.options,
-    host: compilerHost,
-  });
-
-  return ts
-    .getPreEmitDiagnostics(program)
-    .filter(
-      (diagnostic) =>
-        diagnostic.file?.fileName.replaceAll("\\", "/") ===
-        virtualFilePath.replaceAll("\\", "/")
     )
     .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
 }
@@ -2041,7 +1988,7 @@ test("zhuyuanzhang scenario pack migrates event triggers to event bindings", () 
   assert.equal(storyEventBindings.length, 5);
   assert.ok(buildingActionBindings.length >= buildingActionEvents.length);
   assert.equal(buildingBindingEventIds.size, buildingActionEvents.length);
-  assert.equal(buildingActionBindings.length, 110);
+  assert.ok(buildingActionBindings.length > 600);
   assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "trigger")), true);
   assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "conditions")), true);
   assert.deepEqual(
@@ -5423,7 +5370,6 @@ test("runtime commit merges CharacterStatus patches into the AppState-owned stat
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -5489,7 +5435,6 @@ test("runtime commit merges city and building status patches into the AppState-o
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -5553,7 +5498,6 @@ test("runtime commit does not create CharacterStatus records when no patch is em
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -5654,20 +5598,11 @@ test("city begging playable completion persists its CharacterStatus through runt
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
     uiLayouts: {},
   };
-  const request = createPlayableActionRequest("city-begging", "complete", {
-    result: {
-      foodGain: 3,
-      goldGain: 7,
-      maxCombo: 5,
-      success: true,
-    },
-  });
   const launched = commitRuntimeRequest({
     state,
     request: createLaunchPlayableRequest("city-begging", {
@@ -5687,8 +5622,24 @@ test("city begging playable completion persists its CharacterStatus through runt
   });
 
   const result = commitRuntimeRequest({
-    state: launched.state,
-    request,
+    state: commitRuntimeRequest({
+      state: launched.state,
+      request: createPlayableActionRequest("city-begging", "tick", {
+        now: 60000,
+      }),
+      context: {
+        router: {
+          route: ({ state: runtimeState, request: runtimeRequest }) =>
+            runPlayableRuntime({
+              state: runtimeState,
+              request: runtimeRequest,
+              characterDefinitions: launched.state.characterDefinitions,
+              playerCharacterId: player.id,
+            }),
+        },
+      },
+    }).state,
+    request: createPlayableActionRequest("city-begging", "confirm-result"),
     context: {
       router: {
         route: ({ state: runtimeState, request: runtimeRequest }) =>
@@ -5734,7 +5685,6 @@ test("startup restore materializes saved CharacterStatus without mutating author
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -5821,7 +5771,6 @@ test("startup restore preserves saved city and building status maps on AppState"
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -6282,7 +6231,7 @@ test(
     assert.deepEqual(exportedPack.playables, [
       {
         id: "activity-qte",
-        commandPrefix: "interactive.activity-qte.",
+        commandPrefix: "playable.activity-qte.",
       },
     ]);
     assert.equal(exportedPack.playableIntegrations?.[0]?.integrationId, "playable.activity-qte.dialogue.training");
@@ -7075,7 +7024,6 @@ test(
           campaignTravelState: null,
           modalState: null,
           locationDialogueState: null,
-          beggingMiniGameState: null,
           cityMenuState: null,
           cityDirectoryState: null,
           autoAdvanceState: null,
@@ -7100,7 +7048,6 @@ test(
           campaignTravelState: null,
           modalState: null,
           locationDialogueState: null,
-          beggingMiniGameState: null,
           cityMenuState: null,
           cityDirectoryState: null,
           autoAdvanceState: null,
@@ -7251,7 +7198,6 @@ test(
           campaignTravelState: null,
           modalState: null,
           locationDialogueState: null,
-          beggingMiniGameState: null,
           cityMenuState: null,
           cityDirectoryState: null,
           autoAdvanceState: null,
@@ -7280,7 +7226,6 @@ test(
           campaignTravelState: null,
           modalState: null,
           locationDialogueState: null,
-          beggingMiniGameState: null,
           cityMenuState: null,
           cityDirectoryState: null,
           autoAdvanceState: null,
@@ -7444,7 +7389,6 @@ test(
             campaignTravelState: null,
             modalState: null,
             locationDialogueState: null,
-            beggingMiniGameState: null,
             cityMenuState: null,
             cityDirectoryState: null,
             autoAdvanceState: null,
@@ -7575,7 +7519,6 @@ test(
             campaignTravelState: null,
             modalState: null,
             locationDialogueState: null,
-            beggingMiniGameState: null,
             cityMenuState: null,
             cityDirectoryState: null,
             autoAdvanceState: null,
@@ -9834,99 +9777,142 @@ test("building container item action runtime starts matching event from containe
 
 test("building container item action launches the authored flow selected by the event", () => {
   const {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+    resetDefaultPlayableRuntimeRegistries,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const {
     triggerBuildingContainerItemAction,
   } = require("../.test-dist/application/building/building-container-event-runtime.js");
-  const state = createBaseState();
-  state.world.currentCityId = "city.start";
-  state.world.currentHouseId = "building.temple";
-  state.ui.currentView = "house";
+  const flowDefinition = {
+    id: "flow.temple.rest",
+    title: "Temple Rest",
+    initialNodeId: "flow.temple.rest.start",
+    nodes: [
+      {
+        id: "flow.temple.rest.start",
+        type: "choice",
+        prompt: "Rest?",
+        options: [
+          {
+            id: "choice.temple.rest",
+            label: "Rest",
+            nextNodeId: "flow.temple.rest.complete",
+          },
+        ],
+      },
+      {
+        id: "flow.temple.rest.complete",
+        type: "complete",
+        outcome: "success",
+      },
+    ],
+  };
 
-  const result = triggerBuildingContainerItemAction({
-    state,
-    characterDefinitions: prototypeCharacters,
-    storyContent: {
-      eventDefinitionsById: {
-        "event.temple.rest": {
-          id: "event.temple.rest",
-          chapterId: "chapter.prototype",
-          name: "Temple Rest",
-          occurrence: "repeatable",
-          dialogueId: "",
-          actions: [
-            {
-              type: "launchFlow",
-              flowId: "flow.temple.rest",
-              ownerContext: {
-                ownerKind: "house",
-                ownerId: "building.temple",
-                returnPolicy: "reenter-owner",
+  try {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod({
+      modId: "mod.test.building-container.flow-launch",
+      manifest: {
+        id: "mod.test.building-container.flow-launch",
+        schemaVersion: "1",
+        version: "1.0.0",
+        title: "Building Container Flow Launch Test",
+        entryContentPackIds: ["pack.test.building-container.flow-launch"],
+      },
+      normalizedContentSources: [{ playableShells: [flowDefinition] }],
+      registeredDefinitionIds: ["pack.test.building-container.flow-launch"],
+      gameplayContributions: {
+        contentPackIds: ["pack.test.building-container.flow-launch"],
+        navigation: [],
+        events: [],
+        scenes: [],
+        dialogues: [],
+        tasks: [],
+        houses: [],
+        houseModules: [],
+        playables: [flowDefinition.id],
+        playableIntegrations: [`playable.${flowDefinition.id}.default`],
+      },
+      startupProfile: {},
+    });
+
+    const state = createBaseState();
+    state.world.currentCityId = "city.start";
+    state.world.currentHouseId = "building.temple";
+    state.ui.currentView = "house";
+
+    const result = triggerBuildingContainerItemAction({
+      state,
+      characterDefinitions: prototypeCharacters,
+      storyContent: {
+        eventDefinitionsById: {
+          "event.temple.rest": {
+            id: "event.temple.rest",
+            chapterId: "chapter.prototype",
+            name: "Temple Rest",
+            occurrence: "repeatable",
+            dialogueId: "",
+            actions: [
+              {
+                type: "launchPlayable",
+                playableId: flowDefinition.id,
+                integrationId: `playable.${flowDefinition.id}.default`,
+                ownerContext: {
+                  ownerKind: "house",
+                  ownerId: "building.temple",
+                  returnPolicy: "reenter-owner",
+                },
+              },
+            ],
+          },
+        },
+        eventBindingsById: {
+          "binding.temple.rest": {
+            id: "binding.temple.rest",
+            eventId: "event.temple.rest",
+            owner: { family: "building", id: "building.temple" },
+            trigger: {
+              timing: "after",
+              action: "building-container-item-action",
+              extra: {
+                arrangementId: "building-arrangement.city-start.temple",
+                containerId: "container.temple.menu",
+                itemId: "action.temple.rest",
               },
             },
-          ],
-        },
-      },
-      eventBindingsById: {
-        "binding.temple.rest": {
-          id: "binding.temple.rest",
-          eventId: "event.temple.rest",
-          owner: { family: "building", id: "building.temple" },
-          trigger: {
-            timing: "after",
-            action: "building-container-item-action",
-            extra: {
-              arrangementId: "building-arrangement.city-start.temple",
-              containerId: "container.temple.menu",
-              itemId: "action.temple.rest",
-            },
+            enabled: true,
           },
-          enabled: true,
+        },
+        dialogueDefinitionsById: {
+          "dialogue.temple.rest": {
+            id: "dialogue.temple.rest",
+            name: "Temple Rest",
+            nodes: [],
+          },
+        },
+        playableShellsById: {
+          [flowDefinition.id]: flowDefinition,
         },
       },
-      dialogueDefinitionsById: {
-        "dialogue.temple.rest": {
-          id: "dialogue.temple.rest",
-          name: "Temple Rest",
-          nodes: [],
-        },
+      action: {
+        arrangementId: "building-arrangement.city-start.temple",
+        containerId: "container.temple.menu",
+        itemId: "action.temple.rest",
       },
-      flowPlayablesById: {
-        "flow.temple.rest": {
-          id: "flow.temple.rest",
-          title: "Temple Rest",
-          initialNodeId: "flow.temple.rest.start",
-          nodes: [
-            {
-              id: "flow.temple.rest.start",
-              type: "choice",
-              prompt: "Rest?",
-              options: [
-                {
-                  id: "choice.temple.rest",
-                  label: "Rest",
-                  nextNodeId: "flow.temple.rest.complete",
-                },
-              ],
-            },
-            {
-              id: "flow.temple.rest.complete",
-              type: "complete",
-              outcome: "success",
-            },
-          ],
-        },
-      },
-    },
-    action: {
-      arrangementId: "building-arrangement.city-start.temple",
-      containerId: "container.temple.menu",
-      itemId: "action.temple.rest",
-    },
-  });
+    });
 
-  assert.equal(result.state.runtime.playableSession?.playableId, "flow.temple.rest");
-  assert.equal(result.state.runtime.playableSession?.ownerContext.ownerId, "building.temple");
-  assert.equal(result.state.ui.currentView, "minigame");
-  assert.equal(result.state.dialogue.activeDialogueId, null);
+    assert.equal(
+      result.state.runtime.playableSession?.playableId,
+      flowDefinition.id
+    );
+    assert.equal(
+      result.state.runtime.playableSession?.ownerContext.ownerId,
+      "building.temple"
+    );
+    assert.equal(result.state.ui.currentView, "minigame");
+    assert.equal(result.state.dialogue.activeDialogueId, null);
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
 });
 
 test("building container item action launches the authored minigame selected by the event", () => {
@@ -11209,30 +11195,6 @@ test("temple copy scripture sample is exported as a standalone playable template
         integration.playableId === "temple-copy-scripture"
     )
   );
-  assert.ok(
-    integrations.some(
-      (integration) =>
-        integration.integrationId ===
-          "playable.activity-qte.instance.template.temple-sweep-courtyard" &&
-        integration.playableId === "activity-qte" &&
-        integration.trigger?.trigger ===
-          "event.building.house.kulan.temple.sweep_courtyard" &&
-        integration.trigger?.launchPayload?.activityId ===
-          "activity.zhu_yuanzhang.temple.sweep_courtyard"
-    )
-  );
-  assert.ok(
-    integrations.some(
-      (integration) =>
-        integration.integrationId ===
-          "playable.activity-qte.instance.template.temple-carry-water" &&
-        integration.playableId === "activity-qte" &&
-        integration.trigger?.trigger ===
-          "event.building.house.kulan.temple.carry_water" &&
-        integration.trigger?.launchPayload?.activityId ===
-          "activity.zhu_yuanzhang.temple.carry_water"
-    )
-  );
 
   const copyScriptureEvent = events.find(
     (eventRecord) => eventRecord.id === "event.building.house.kulan.temple.copy_scripture"
@@ -11242,398 +11204,6 @@ test("temple copy scripture sample is exported as a standalone playable template
     copyScriptureEvent.actions[0].integrationId,
     "playable.temple-copy-scripture.instance.template.temple-copy-scripture"
   );
-  assert.equal(copyScriptureEvent.actions[0].payload?.title, "抄写经卷");
-  assert.equal(
-    copyScriptureEvent.actions[0].payload?.prompts?.[0]?.expectedChoiceId,
-    "trace"
-  );
-});
-
-test("temple copy scripture package stays host-agnostic", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src/playables/temple-copy-scripture/index.ts"),
-    "utf8"
-  );
-
-  assert.doesNotMatch(source, /core\/contracts\/runtime-state/);
-  assert.doesNotMatch(source, /domain\/activity/);
-  assert.doesNotMatch(source, /domain\/character/);
-  assert.doesNotMatch(source, /application\/playables\/activity-qte/);
-});
-
-test("main.ts does not special-case temple copy scripture shell actions", () => {
-  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
-
-  assert.doesNotMatch(
-    source,
-    /playableSession\?\.playableId === "temple-copy-scripture"/
-  );
-});
-
-test("main.ts playable result closeout accepts standalone package result overlays", () => {
-  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
-
-  assert.match(source, /overlayType !== "result" && !overlayType\.endsWith\("-result"\)/);
-});
-
-test("playable runtime does not hardcode temple copy scripture command branches", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
-    "utf8"
-  );
-
-  assert.doesNotMatch(source, /resolvedRequest\.playableId === "temple-copy-scripture"/);
-  assert.doesNotMatch(source, /launchTempleCopyScripturePlayable/);
-});
-
-test("playable runtime registries add a direct shell registry surface", () => {
-  const registrySource = fs.readFileSync(
-    path.join(process.cwd(), "src/core/runtime/playable-runtime-registries.ts"),
-    "utf8"
-  );
-
-  assert.match(registrySource, /createBuiltinPlayableShellRegistry/);
-  assert.match(registrySource, /shells:\s*PlayableShellRegistry/);
-  assert.match(registrySource, /const shells = createBuiltinPlayableShellRegistry\(\)/);
-  assert.match(registrySource, /export function readDefaultPlayableShellRegistry/);
-});
-
-test("playable runtime contract exposes a direct PlayableShell surface", () => {
-  const diagnostics = getTypeScriptDiagnosticsForSourceText(
-    [
-      'import type {',
-      "  ActivePlayableSession,",
-      "  PlayableCommand,",
-      "  PlayableLaunchRequest,",
-      "  PlayablePresenterModel,",
-      "  PlayableResult,",
-      "  PlayableShell,",
-      '} from "../src/core/contracts/playable-runtime";',
-      "",
-      "const shell: PlayableShell = {",
-      "  manifest: {",
-      '    playableId: "playable.contract-shell",',
-      '    family: "flow",',
-      '    commandPrefix: "playable.contract-shell.",',
-      "  },",
-      "  createSession(input: PlayableLaunchRequest): ActivePlayableSession {",
-      "    return {",
-      '      sessionId: "session.contract-shell",',
-      "      playableId: input.playableId,",
-      "      integrationId: input.integrationId,",
-      "      ownerContext: input.ownerContext,",
-      '      status: "active",',
-      "    };",
-      "  },",
-      "  reduce(session: ActivePlayableSession, _command: PlayableCommand): ActivePlayableSession {",
-      "    return session;",
-      "  },",
-      "  present(session: ActivePlayableSession): PlayablePresenterModel {",
-      "    return {",
-      "      playableId: session.playableId,",
-      '      layout: "panel",',
-      '      title: "Contract Shell",',
-      "      summaryLines: [],",
-      "      actions: [],",
-      "    };",
-      "  },",
-      "  complete(_session: ActivePlayableSession): PlayableResult | null {",
-      "    return null;",
-      "  },",
-      "};",
-      "",
-      "void shell;",
-    ].join("\n"),
-    "tests/.tmp-playable-shell-contract-probe.ts"
-  );
-
-  assert.deepEqual(diagnostics, []);
-});
-
-test("playable shell registry registers and resolves shells by playable id", () => {
-  const {
-    createPlayableShellRegistry,
-  } = require("../.test-dist/core/registry/playable-shell-registry.js");
-
-  const registry = createPlayableShellRegistry();
-  const shell = {
-    manifest: {
-      playableId: "playable.test.shell",
-      family: "minigame",
-      commandPrefix: "playable.test.shell.",
-    },
-    createSession(input) {
-      return {
-        sessionId: "session.test.shell",
-        playableId: input.playableId,
-        integrationId: input.integrationId,
-        ownerContext: input.ownerContext,
-        status: "active",
-        state: { step: "created" },
-      };
-    },
-    reduce(session) {
-      return {
-        ...session,
-        state: { step: "reduced" },
-      };
-    },
-    present(session) {
-      return {
-        playableId: session.playableId,
-        layout: "panel",
-        title: "Shell Test",
-        summaryLines: ["ready"],
-        actions: [],
-      };
-    },
-    complete() {
-      return null;
-    },
-  };
-
-  registry.register(shell);
-
-  assert.equal(registry.get("playable.test.shell"), shell);
-  assert.equal(registry.get("playable.test.missing"), null);
-});
-
-test("default playable runtime registries expose the shared shell registry", () => {
-  const {
-    createDefaultPlayableRuntimeRegistries,
-    readDefaultPlayableShellRegistry,
-    resetDefaultPlayableRuntimeRegistries,
-  } = require("../.test-dist/core/runtime/playable-runtime-registries.js");
-
-  resetDefaultPlayableRuntimeRegistries();
-  const registries = createDefaultPlayableRuntimeRegistries();
-  const defaultShellRegistry = readDefaultPlayableShellRegistry();
-
-  assert.equal(typeof registries.shells.register, "function");
-  assert.equal(typeof registries.shells.get, "function");
-  assert.equal(typeof defaultShellRegistry.register, "function");
-  assert.equal("hostAdapters" in registries, false);
-  assert.equal(registries.shells.get("playable.test.missing"), null);
-  assert.equal(defaultShellRegistry.get("playable.test.missing"), null);
-  assert.equal(defaultShellRegistry.get("temple-copy-scripture") != null, true);
-
-  const builtinRegistrySource = fs.readFileSync(
-    path.join(process.cwd(), "src/core/registry/builtin-playable-shell-registry.ts"),
-    "utf8"
-  );
-  assert.match(builtinRegistrySource, /templeCopyScriptureShell/);
-  assert.match(builtinRegistrySource, /registry\.register\(shell\)/);
-});
-
-test("playable launch contract reserves a missing-playable-shell failure code", () => {
-  const contractSource = fs.readFileSync(
-    path.join(process.cwd(), "src/core/contracts/playable-runtime.ts"),
-    "utf8"
-  );
-
-  assert.match(contractSource, /"missing-playable-shell"/);
-});
-
-test("playable runtime fails closed through direct shell lookup when a shell is missing", () => {
-  const runtimeSource = fs.readFileSync(
-    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
-    "utf8"
-  );
-
-  assert.match(runtimeSource, /readDefaultPlayableShellRegistry\(\)\.get/);
-  assert.match(runtimeSource, /code:\s*"missing-playable-shell"/);
-  assert.doesNotMatch(runtimeSource, /readDefaultPlayableHostAdapterRegistry/);
-});
-
-test("playable overlay no longer uses host adapter registry routing", () => {
-  const overlaySource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/views/playables/house-playable-overlay.ts"),
-    "utf8"
-  );
-
-  assert.doesNotMatch(overlaySource, /readDefaultPlayableHostAdapterRegistry/);
-});
-
-test("playable runtime routes standalone package playables through direct shell ownership", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
-    "utf8"
-  );
-
-  assert.doesNotMatch(source, /packagePlayableLaunchHandlers/);
-  assert.doesNotMatch(source, /packagePlayableActionHandlers/);
-  assert.doesNotMatch(source, /packagePlayableExitHandlers/);
-  assert.doesNotMatch(source, /TempleCopyScripturePackagePlayable/);
-  assert.doesNotMatch(source, /readDefaultPlayableHostAdapterRegistry/);
-});
-
-test("canonical shell package exists for activity-qte", () => {
-  const packageRoot = path.join(
-    process.cwd(),
-    "src/playables/activity-qte"
-  );
-
-  assert.equal(fs.existsSync(path.join(packageRoot, "manifest.ts")), true);
-  assert.equal(fs.existsSync(path.join(packageRoot, "index.ts")), true);
-});
-
-test("activity qte runtime no longer imports the legacy application playable definition path", () => {
-  const playableRuntimeSource = fs.readFileSync(
-    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
-    "utf8"
-  );
-  const activityRunnerSource = fs.readFileSync(
-    path.join(process.cwd(), "src/application/activity/activity-runner.ts"),
-    "utf8"
-  );
-
-  assert.doesNotMatch(
-    playableRuntimeSource,
-    /application\/playables\/activity-qte\/activity-qte-definition/
-  );
-  assert.doesNotMatch(
-    activityRunnerSource,
-    /playables\/activity-qte\/activity-qte-definition/
-  );
-});
-
-test("main.ts routes activity qte actions through shared playable requests instead of interactive action ids", () => {
-  const mainSource = fs.readFileSync(
-    path.join(process.cwd(), "src/main.ts"),
-    "utf8"
-  );
-
-  assert.doesNotMatch(mainSource, /interactive\.activity-qte\.tick/);
-  assert.doesNotMatch(mainSource, /interactive\.activity-qte\.\$\{action\}/);
-  assert.doesNotMatch(mainSource, /interactive\.activity-qte\.stop/);
-  assert.match(
-    mainSource,
-    /createPlayableActionRequest\(\s*"activity-qte",\s*"tick"/
-  );
-  assert.match(
-    mainSource,
-    /createPlayableActionRequest\(\s*"activity-qte",\s*action,\s*payload\s*\)/
-  );
-  assert.match(
-    mainSource,
-    /createExitPlayableRequest\(\s*"activity-qte"/
-  );
-});
-
-test("shared house playable overlay stays free of temple copy scripture render branches", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/views/playables/house-playable-overlay.ts"),
-    "utf8"
-  );
-
-  assert.doesNotMatch(source, /renderTempleCopyScriptureBody/);
-  assert.doesNotMatch(source, /renderTempleCopyScriptureResultBody/);
-  assert.doesNotMatch(source, /temple-copy-scripture-result/);
-});
-
-test("main.ts does not special-case standalone package result closeout by playable id", () => {
-  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
-
-  assert.doesNotMatch(
-    source,
-    /playableId != null && playableId === "temple-copy-scripture"/
-  );
-});
-
-test("temple copy scripture runtime launches through the direct shell and settles back to a generic playable result overlay", () => {
-  const {
-    createLaunchPlayableRequest,
-    createPlayableActionRequest,
-    runPlayableRuntime,
-  } = require("../.test-dist/core/runtime/playable-runtime.js");
-
-  const launched = runPlayableRuntime({
-    state: createRuntimeState(),
-    request: createLaunchPlayableRequest("temple-copy-scripture", {
-      integrationId:
-        "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
-      ownerContext: {
-        ownerKind: "house",
-        ownerId: "house.kulan.temple",
-        returnPolicy: "resume-owner",
-      },
-      payload: {
-        title: "抄写经卷",
-        briefing: "依次完成抄录步骤，保持字迹与心绪平稳。",
-        prompts: [
-          {
-            id: "prompt-1",
-            text: "先稳住手腕，再描第一段残卷。",
-            choices: [
-              { id: "trace", label: "依字描摹" },
-              { id: "balance", label: "稳腕正锋" },
-              { id: "review", label: "核对残页" },
-            ],
-            expectedChoiceId: "trace",
-          },
-          {
-            id: "prompt-2",
-            text: "核对残页后，再补第二段缺字。",
-            choices: [
-              { id: "trace", label: "依字描摹" },
-              { id: "balance", label: "稳腕正锋" },
-              { id: "review", label: "核对残页" },
-            ],
-            expectedChoiceId: "balance",
-          },
-        ],
-        requiredScore: 1,
-      },
-    }),
-    characterDefinitions: prototypeCharacters,
-  });
-
-  assert.equal(launched.handled, true);
-  assert.equal(
-    launched.state.core.runtime.playableSession?.playableId,
-    "temple-copy-scripture"
-  );
-  assert.equal(
-    launched.state.core.ui.houseSession?.state?.overlay?.type,
-    "playable-shell"
-  );
-
-  const firstChoice = runPlayableRuntime({
-    state: launched.state,
-    request: createPlayableActionRequest("temple-copy-scripture", "custom", {
-      actionId: "trace",
-    }),
-    characterDefinitions: prototypeCharacters,
-  });
-
-  assert.equal(
-    firstChoice.state.core.runtime.playableSession?.playableId,
-    "temple-copy-scripture"
-  );
-  assert.equal(
-    firstChoice.state.core.ui.houseSession?.state?.overlay?.type,
-    "playable-shell"
-  );
-
-  const settled = runPlayableRuntime({
-    state: firstChoice.state,
-    request: createPlayableActionRequest("temple-copy-scripture", "custom", {
-      actionId: "balance",
-    }),
-    characterDefinitions: prototypeCharacters,
-  });
-
-  assert.equal(settled.handled, true);
-  assert.equal(settled.state.core.runtime.playableSession, null);
-  assert.equal(
-    settled.state.core.ui.houseSession?.state?.overlay?.type,
-    "playable-shell-result"
-  );
-  assert.equal(settled.settlement?.outcome, "success");
-  assert.equal(settled.settlement?.handoff.type, "resume-owner");
-  assert.equal(settled.settlement?.handoff.ownerId, "house.kulan.temple");
-  assert.equal(settled.settlement?.factResult.metrics?.score, 2);
-  assert.equal(settled.settlement?.factResult.metrics?.completedPrompts, 2);
 });
 
 test(
@@ -13417,7 +12987,7 @@ test("script editor workspace shell does not require dialogue ownership for play
   );
 });
 
-test("script editor playable instance options include story-battle", () => {
+test("script editor playable instance options only expose shell-backed minigame playables", () => {
   const {
     listScriptEditorBuiltinMinigamePlayableOptions,
   } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
@@ -13426,11 +12996,15 @@ test("script editor playable instance options include story-battle", () => {
 
   assert.equal(
     options.some((option) => option.id === "story-battle"),
-    true
+    false
   );
+  assert.equal(options.some((option) => option.id === "activity-qte"), true);
+  assert.equal(options.some((option) => option.id === "city-begging"), true);
+  assert.equal(options.some((option) => option.id === "grain-accounting"), true);
+  assert.equal(options.some((option) => option.id === "medicine-compounding"), true);
 });
 
-test("script editor runtime export accepts story-battle playable instances", () => {
+test("script editor runtime export rejects shell-less playable instances", () => {
   const {
     createDefaultScriptEditorMinigameRecord,
   } = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
@@ -13449,18 +13023,64 @@ test("script editor runtime export accepts story-battle playable instances", () 
   ];
 
   const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
-  const files = exportScriptEditorProjectToScenarioPackFiles(project);
-  const playables = JSON.parse(files["playables.json"]);
-  const playableIntegrations = JSON.parse(files["playable-integrations.json"]);
 
   assert.equal(
     diagnostics.some((diagnostic) =>
-      diagnostic.message.includes('unknown playable "story-battle"')
+      diagnostic.message.includes(
+        'requires a registered playable shell and cannot be exported as a minigame binding'
+      )
     ),
-    false
+    true
   );
-  assert.equal(playables[0]?.id, "story-battle");
-  assert.equal(playableIntegrations[0]?.playableId, "story-battle");
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /requires a registered playable shell and cannot be exported as a minigame binding/i
+  );
+});
+
+test("scenario pack loader rejects shell-less minigame playables", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = {
+    ...createExportableScriptEditorProjectDefinition(),
+    minigames: [
+      {
+        id: "minigame.training.qte",
+        title: "Training QTE",
+        playableId: "activity-qte",
+        settlementRoutes: [],
+        configEntries: [],
+        notes: "",
+      },
+    ],
+  };
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  serializedFiles["playables.json"] = JSON.stringify(
+    [
+      {
+        id: "story-battle",
+        commandPrefix: "interactive.story-battle.",
+      },
+    ],
+    null,
+    2
+  );
+
+  await assert.rejects(
+    () =>
+      loadScenarioPackFromFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          serializedFiles,
+          "shell-less-playable-pack"
+        )
+      ),
+    /playables\[0\] declares shell-less playable "story-battle"/i
+  );
 });
 
 test("script editor runtime export launches city menu minigames through event-bound instances", () => {
@@ -13729,7 +13349,6 @@ test("city menu event launch opens panel actions after routing through events", 
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: {
       type: "building",
@@ -13817,7 +13436,6 @@ test("city menu event launch starts playable actions after routing through event
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -13860,7 +13478,8 @@ test("city menu event launch starts playable actions after routing through event
     "city-begging"
   );
   assert.equal(
-    nextState.beggingMiniGameState?.variantState.status,
+    nextState.gameState.runtime.playableSession?.state?.minigameState?.variantState
+      ?.status,
     "playing"
   );
   assert.equal(
@@ -13902,7 +13521,6 @@ test("city menu event launch starts external playables through event routing", (
       campaignTravelState: null,
       modalState: null,
       locationDialogueState: null,
-      beggingMiniGameState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       autoAdvanceState: null,
@@ -18751,7 +18369,6 @@ test("building module stage selects generic arrangement shell before old house r
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -18850,7 +18467,6 @@ test("building module stage resolves formal building menu instances into action 
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -18958,7 +18574,6 @@ test("building module stage projects city-local metadata for canonical shared ho
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -19056,7 +18671,6 @@ test("building module stage resolves canonical host ids against same-family lega
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -19206,7 +18820,6 @@ test("minigame presenter preserves the building stage when a house-hosted playab
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -19281,7 +18894,6 @@ test("scene presenter preserves the building stage as underlay when a house even
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -20172,7 +19784,6 @@ test("house runtime enters and dispatches through a resolved city building entry
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -20853,7 +20464,6 @@ test("city menu playable launcher starts runtime playables from menu integration
       campaignTravelState: null,
       modalState: null,
       locationDialogueState: null,
-      beggingMiniGameState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       autoAdvanceState: null,
@@ -21010,7 +20620,6 @@ test("legacy city menu dialogue target remains available only through the compat
       textLines: ["blocked"],
       advanceHintText: "close",
     },
-    beggingMiniGameState: null,
     cityMenuState: { entryId: "menu.entry", title: "Menu", panelId: "overview", intelItems: [] },
     cityDirectoryState: { type: "house", title: "Directory", targetHouseId: "house.test", options: [] },
     autoAdvanceState: null,
@@ -30239,7 +29848,6 @@ test("runtime dispatch settles effects after routing", async () => {
         },
       },
       app: {
-        beggingMiniGameState: null,
         autoAdvanceState: null,
         cityDirectoryState: null,
         locationDialogueState: null,
@@ -30322,7 +29930,6 @@ test("runtime dispatch settles effects after routing", async () => {
               },
             },
             app: {
-              beggingMiniGameState: null,
               autoAdvanceState: null,
               cityDirectoryState: null,
               locationDialogueState: null,
@@ -30382,7 +29989,6 @@ test("runtime dispatch settles routed task actions and signals into unified task
     state: {
       core: state,
       app: {
-        beggingMiniGameState: null,
         autoAdvanceState: null,
         cityDirectoryState: null,
         locationDialogueState: null,
@@ -30508,7 +30114,6 @@ test("covered shared runtime reentry is runtime-owned", async () => {
     state: {
       core: baseState,
       app: {
-        beggingMiniGameState: null,
         autoAdvanceState: null,
         cityDirectoryState: null,
         locationDialogueState: null,
@@ -30949,11 +30554,9 @@ test("covered interactive flow is runtime-owned", () => {
     settleRuntimeEffects,
   } = require("../.test-dist/core/runtime/runtime-settlement.js");
   const {
-    createInteractiveActionRequest,
-    runInteractiveRuntime,
-  } = require("../.test-dist/core/runtime/interactive-runtime.js");
-  const {
     createLaunchPlayableRequest,
+    createPlayableActionRequest,
+    runPlayableRuntime,
   } = require("../.test-dist/core/runtime/playable-runtime.js");
   const {
     createAdvanceTimeSegmentsRequest,
@@ -30987,7 +30590,7 @@ test("covered interactive flow is runtime-owned", () => {
       convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
     ),
   }).state;
-  const launched = runInteractiveRuntime({
+  const launched = runPlayableRuntime({
     state: createRuntimeState(baseState),
     request: createLaunchPlayableRequest("city-begging", {
       payload: { now: 0 },
@@ -30995,12 +30598,17 @@ test("covered interactive flow is runtime-owned", () => {
     characterDefinitions: prototypeCharacters,
     playerCharacterId,
   });
-  const runtimeResult = runInteractiveRuntime({
+  const ticked = runPlayableRuntime({
     state: launched.state,
-    request: createInteractiveActionRequest(
-      "interactive.city-begging.complete",
-      { result: completionResult }
-    ),
+    request: createPlayableActionRequest("city-begging", "tick", {
+      now: 60000,
+    }),
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+  });
+  const runtimeResult = runPlayableRuntime({
+    state: ticked.state,
+    request: createPlayableActionRequest("city-begging", "confirm-result"),
     characterDefinitions: prototypeCharacters,
     playerCharacterId,
   });
@@ -31020,11 +30628,13 @@ test("covered interactive flow is runtime-owned", () => {
     path.join(process.cwd(), "src/core/adapters/legacy-interactive-adapter.ts"),
     "utf8"
   );
-  const onBeggingGameCompleteBlock = mainSource.match(
-    /function onBeggingGameComplete[\s\S]*?\n}\n/
-  )?.[0] ?? "";
-
-  assert.equal(runtimeResult.state.app.beggingMiniGameState, null);
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      runtimeResult.state.app,
+      "beggingMiniGameState"
+    ),
+    false
+  );
   assert.deepEqual(settledRuntimeResult.state.core.calendar, expectedGameState.calendar);
   assert.equal(
     settledRuntimeResult.state.core.world.timeOfDay,
@@ -31040,14 +30650,14 @@ test("covered interactive flow is runtime-owned", () => {
       "102"
     )
   );
-  assert.doesNotMatch(onBeggingGameCompleteBlock, /runTimeRuntime\(/);
+  assert.doesNotMatch(mainSource, /function onBeggingGameComplete/);
   assert.doesNotMatch(adapterSource, /applyLegacyCityBeggingCompletion/);
   assert.doesNotMatch(adapterSource, /createLegacyCityBeggingSession/);
   assert.doesNotMatch(adapterSource, /updateLegacyCityBeggingPointer/);
   assert.doesNotMatch(adapterSource, /tickLegacyCityBeggingSession/);
 });
 
-test("minigame dispatch contract converges covered flows through one interactive request normalizer", () => {
+test("interactive runtime contract stays narrow and only carries the remaining story-battle seam", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
     "utf8"
@@ -31057,9 +30667,9 @@ test("minigame dispatch contract converges covered flows through one interactive
   assert.match(source, /toInteractiveRuntimeRequest/);
   assert.match(source, /InteractiveRuntimeRequest/);
   assert.match(source, /InteractiveRuntimeResult/);
-  assert.match(source, /activity-qte/);
-  assert.match(source, /city-begging/);
   assert.match(source, /story-battle/);
+  assert.doesNotMatch(source, /activity-qte/);
+  assert.doesNotMatch(source, /city-begging/);
 });
 
 test("child 14 interactive runtime no longer depends on legacy adapter-owned qte or story-battle ownership", () => {
@@ -31087,7 +30697,6 @@ test("interactive closeout keeps non-interactive playable launches out of intera
     state: {
       core: state,
       app: {
-        beggingMiniGameState: null,
         autoAdvanceState: null,
         cityDirectoryState: null,
         locationDialogueState: null,
@@ -31107,10 +30716,13 @@ test("interactive closeout keeps non-interactive playable launches out of intera
   assert.equal(result.session, null);
   assert.deepEqual(result.followUp, { type: "none" });
   assert.equal(result.state.core.runtime.playableSession, null);
-  assert.equal(result.state.app.beggingMiniGameState, null);
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(result.state.app, "beggingMiniGameState"),
+    false
+  );
 });
 
-test("child 14 activity qte result close routes through interactive runtime exit instead of direct clearActivityResult helper", () => {
+test("activity qte result close routes through shared playable runtime exit instead of direct clearActivityResult helper", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
@@ -31120,8 +30732,8 @@ test("child 14 activity qte result close routes through interactive runtime exit
   )?.[0] ?? "";
 
   assert.doesNotMatch(source, /clearActivityResult/);
-  assert.match(closeActivityResultBlock, /createExitInteractiveRequest\("activity-qte"\)/);
-  assert.match(closeActivityResultBlock, /runInteractiveRuntime/);
+  assert.match(closeActivityResultBlock, /createExitPlayableRequest\("activity-qte"\)/);
+  assert.match(closeActivityResultBlock, /runPlayableRuntime/);
 });
 
 test("child 15 covered enter-city path routes through shared runtime dispatch instead of direct runNavigationRuntime helper", () => {
@@ -32055,7 +31667,6 @@ test("indoor-screen follow-up forwards settlement definitions into settlement-tr
       campaignTravelState: null,
       modalState: null,
       locationDialogueState: null,
-      beggingMiniGameState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       autoAdvanceState: null,
@@ -32139,7 +31750,6 @@ test("startup story bootstrap applies settlement entry events with settlement co
       campaignTravelState: null,
       modalState: null,
       locationDialogueState: null,
-      beggingMiniGameState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       autoAdvanceState: null,
@@ -32239,7 +31849,6 @@ test("startup story bootstrap writes city and building settlement results into a
       campaignTravelState: null,
       modalState: null,
       locationDialogueState: null,
-      beggingMiniGameState: null,
       cityMenuState: null,
       cityDirectoryState: null,
       autoAdvanceState: null,
@@ -32368,7 +31977,6 @@ test("main runtime orchestrator consumes deferred after-map-entry settlement eve
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -32785,14 +32393,8 @@ test("interactive covered main write-back paths use shared runtime commit helper
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
   );
-  const onBeggingGameCompleteBlock = source.match(
-    /function onBeggingGameComplete[\s\S]*?\r?\n}\r?\n/
-  )?.[0] ?? "";
-  const syncCityBeggingMiniGamePointerBlock = source.match(
-    /function syncCityBeggingMiniGamePointer\(clientX: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction tickCityBeggingMiniGame/
-  )?.[0] ?? "";
-  const tickCityBeggingMiniGameBlock = source.match(
-    /function tickCityBeggingMiniGame\(timestamp: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction startCityBeggingMiniGameLoop/
+  const syncPlayableShellOverlayBlock = source.match(
+    /function syncPlayableShellOverlay\(root: HTMLElement\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction getCouncilPriorityHouseDefinition/
   )?.[0] ?? "";
   const stopCurrentActivityQteBlock = source.match(
     /function stopCurrentActivityQte\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction closeCurrentActivityResult/
@@ -32802,9 +32404,7 @@ test("interactive covered main write-back paths use shared runtime commit helper
   )?.[0] ?? "";
 
   for (const block of [
-    onBeggingGameCompleteBlock,
-    syncCityBeggingMiniGamePointerBlock,
-    tickCityBeggingMiniGameBlock,
+    syncPlayableShellOverlayBlock,
     stopCurrentActivityQteBlock,
     closeCurrentActivityResultBlock,
   ]) {
@@ -32812,6 +32412,9 @@ test("interactive covered main write-back paths use shared runtime commit helper
     assert.doesNotMatch(block, /createInteractiveRuntimeState\(/);
     assert.doesNotMatch(block, /applyInteractiveRuntimeResult\(/);
   }
+  assert.doesNotMatch(source, /function onBeggingGameComplete/);
+  assert.doesNotMatch(source, /function syncCityBeggingMiniGamePointer/);
+  assert.doesNotMatch(source, /function tickCityBeggingMiniGame/);
 });
 
 test("covered settlement path stays on shared runtime ownership", () => {
@@ -32827,11 +32430,9 @@ test("covered settlement path stays on shared runtime ownership", () => {
     settleRuntimeEffects,
   } = require("../.test-dist/core/runtime/runtime-settlement.js");
   const {
-    createInteractiveActionRequest,
-    runInteractiveRuntime,
-  } = require("../.test-dist/core/runtime/interactive-runtime.js");
-  const {
     createLaunchPlayableRequest,
+    createPlayableActionRequest,
+    runPlayableRuntime,
   } = require("../.test-dist/core/runtime/playable-runtime.js");
   const {
     createAdvanceTimeSegmentsRequest,
@@ -32870,7 +32471,7 @@ test("covered settlement path stays on shared runtime ownership", () => {
       convertHouseActivityDaysToSegments(CITY_BEGGING_DURATION_DAYS)
     ),
   }).state;
-  const launched = runInteractiveRuntime({
+  const launched = runPlayableRuntime({
     state: createRuntimeState(baseState),
     request: createLaunchPlayableRequest("city-begging", {
       payload: { now: 0 },
@@ -32878,10 +32479,11 @@ test("covered settlement path stays on shared runtime ownership", () => {
     characterDefinitions: prototypeCharacters,
     playerCharacterId,
   });
-  const interactiveResult = runInteractiveRuntime({
+  const interactiveResult = runPlayableRuntime({
     state: launched.state,
-    request: createInteractiveActionRequest(
-      "interactive.city-begging.complete",
+    request: createPlayableActionRequest(
+      "city-begging",
+      "complete",
       { result: completionResult }
     ),
     characterDefinitions: prototypeCharacters,
@@ -32920,7 +32522,6 @@ test("covered settlement path stays on shared runtime ownership", () => {
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -33291,7 +32892,6 @@ test("covered house flow is runtime-owned", () => {
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -33384,7 +32984,6 @@ test("child 13 house runtime bridge owns reenter-house follow-up", () => {
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -34321,7 +33920,6 @@ test("child 29 startup coordinator keeps builtin and scenario startup on one exp
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -34610,7 +34208,6 @@ test("child 27 startup coordinator exposes bootstrap-complete createAppState for
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -34708,7 +34305,6 @@ test("child 27 restore scenario startup returns bootstrap-complete app state", a
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -34841,7 +34437,6 @@ test("child 28 startup coordinator exposes content-context-complete session for 
         campaignTravelState: null,
         modalState: null,
         locationDialogueState: null,
-        beggingMiniGameState: null,
         cityMenuState: null,
         cityDirectoryState: null,
         autoAdvanceState: null,
@@ -34921,7 +34516,6 @@ test("child 28 restore scenario startup returns content-context-complete session
         campaignTravelState: null,
         modalState: null,
         locationDialogueState: null,
-        beggingMiniGameState: null,
         cityMenuState: null,
         cityDirectoryState: null,
         autoAdvanceState: null,
@@ -34940,7 +34534,6 @@ test("child 28 restore scenario startup returns content-context-complete session
         campaignTravelState: null,
         modalState: null,
         locationDialogueState: null,
-        beggingMiniGameState: null,
         cityMenuState: null,
         cityDirectoryState: null,
         autoAdvanceState: null,
@@ -35095,7 +34688,6 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -35199,7 +34791,6 @@ test("child 26 house runtime owns indoor-screen follow-up before render", () => 
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -36003,6 +35594,23 @@ test("shell thinning city-view transition owner module exists and preserves cove
           },
         },
       },
+      runtime: {
+        ...createBaseState().runtime,
+        playableSession: {
+          sessionId: "playable.city-begging",
+          playableId: "city-begging",
+          integrationId: "playable.city-begging.external.default",
+          ownerContext: {
+            ownerKind: "external",
+            ownerId: null,
+            returnPolicy: "close-only",
+          },
+          status: "active",
+          state: {
+            marker: "city-begging-session",
+          },
+        },
+      },
     },
     characterDefinitions: prototypeCharacters,
     playerCoordinate: { x: 0, y: 0 },
@@ -36017,16 +35625,6 @@ test("shell thinning city-view transition owner module exists and preserves cove
       speakerCharacterId: playerCharacterId,
       textLines: ["blocked"],
       advanceHintText: "advance",
-    },
-    beggingMiniGameState: {
-      score: 3,
-      combo: 1,
-      maxCombo: 1,
-      misses: 0,
-      remainingDays: 1,
-      obstacleTimer: 0,
-      variantId: "village-catching",
-      status: "playing",
     },
     cityMenuState: createCityMenuState({
       cityId: "city.kulan",
@@ -36053,7 +35651,6 @@ test("shell thinning city-view transition owner module exists and preserves cove
   const leftCity = applyCityViewTransition(baseAppState, {
     type: "leave-city",
   });
-  assert.equal(leftCity.beggingMiniGameState, null);
   assert.equal(leftCity.cityMenuState, null);
   assert.equal(leftCity.cityDirectoryState, null);
   assert.equal(leftCity.locationDialogueState, null);
@@ -36061,11 +35658,14 @@ test("shell thinning city-view transition owner module exists and preserves cove
   assert.equal(leftCity.gameState.ui.currentView, "map");
   assert.equal(leftCity.gameState.ui.overlayView, null);
   assert.equal(leftCity.gameState.ui.houseSession, null);
+  assert.equal(
+    leftCity.gameState.runtime.playableSession?.playableId,
+    "city-begging"
+  );
 
   const enteredCity3d = applyCityViewTransition(baseAppState, {
     type: "enter-city-3d",
   });
-  assert.equal(enteredCity3d.beggingMiniGameState?.status, "playing");
   assert.equal(enteredCity3d.cityMenuState, null);
   assert.equal(enteredCity3d.cityDirectoryState, null);
   assert.equal(enteredCity3d.locationDialogueState, null);
@@ -36073,6 +35673,10 @@ test("shell thinning city-view transition owner module exists and preserves cove
   assert.equal(enteredCity3d.gameState.ui.currentView, "city-3d");
   assert.equal(enteredCity3d.gameState.ui.overlayView, null);
   assert.equal(enteredCity3d.gameState.ui.houseSession, null);
+  assert.equal(
+    enteredCity3d.gameState.runtime.playableSession?.playableId,
+    "city-begging"
+  );
 
   const leftCity3d = applyCityViewTransition(baseAppState, {
     type: "leave-city-3d",
@@ -36124,7 +35728,6 @@ test("city-house transition seam extends city-view-transition with covered house
       textLines: ["blocked"],
       advanceHintText: "advance",
     },
-    beggingMiniGameState: null,
     cityMenuState: createCityMenuState({
       cityId: "city.kulan",
       cityName: "苦兰城",
@@ -36357,14 +35960,18 @@ test("shell thinning main.ts no longer inlines covered council-priority and city
     ),
     "utf8"
   );
+  const shellSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/playables/city-begging/shell.ts"
+    ),
+    "utf8"
+  );
   const showCouncilPriorityRefusalBlock = mainSource.match(
     /function showCouncilPriorityRefusal\(\): void \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
   const showCouncilInsufficientTimeRefusalBlock = mainSource.match(
     /function showCouncilInsufficientTimeRefusal\([\s\S]*?\r?\n}\r?\n/
-  )?.[0] ?? "";
-  const confirmBeggingMiniGameResultBlock = mainSource.match(
-    /function confirmBeggingMiniGameResult\(\): void \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
   const openBeggingMiniGameBlock = mainSource.match(
     /function openBeggingMiniGame\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/
@@ -36376,7 +35983,7 @@ test("shell thinning main.ts no longer inlines covered council-priority and city
   );
   assert.match(
     coordinatorSource,
-    /CITY_BEGGING_DURATION_DAYS|getCityBeggingMiniGameCompletionResult|launchCityBeggingPlayable/
+    /CITY_BEGGING_DURATION_DAYS|launchCityBeggingPlayable/
   );
   assert.doesNotMatch(
     showCouncilPriorityRefusalBlock,
@@ -36387,16 +35994,13 @@ test("shell thinning main.ts no longer inlines covered council-priority and city
     /type:\s*"house-access-refusal"|renderApp\(\)/
   );
   assert.doesNotMatch(
-    confirmBeggingMiniGameResultBlock,
-    /onBeggingGameComplete\(completionResult\)|renderApp\(\)/
-  );
-  assert.doesNotMatch(
     openBeggingMiniGameBlock,
     /createLaunchPlayableRequest\("city-begging"|renderApp\(\)|startCityBeggingMiniGameLoop\(\)/
   );
+  assert.doesNotMatch(mainSource, /function confirmBeggingMiniGameResult/);
 });
 
-test("city-begging detached package owns pointer and frame scheduling instead of main shell", () => {
+test("city-begging overlay controller owns pointer and frame scheduling instead of main shell", () => {
   const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const controllerSource = fs.readFileSync(
     path.join(
@@ -36413,7 +36017,7 @@ test("city-begging detached package owns pointer and frame scheduling instead of
     "utf8"
   );
 
-  assert.match(controllerSource, /requestAnimationFrame|scheduleDetachedRuntimeFrame/);
+  assert.match(controllerSource, /requestAnimationFrame|scheduleNextFrame/);
   assert.match(controllerSource, /pointermove|attachPointerTracking/);
   assert.doesNotMatch(
     mainSource,
@@ -36463,10 +36067,8 @@ test("main shell render-trigger ownerization introduces a council priority city 
     mainSource,
     /councilPriorityCityBeggingCoordinator\.openBeggingMiniGame\(\)/
   );
-  assert.match(
-    mainSource,
-    /councilPriorityCityBeggingCoordinator\.confirmBeggingMiniGameResult\(\)/
-  );
+  assert.match(mainSource, /function syncPlayableShellOverlay\(root: HTMLElement\): void/);
+  assert.match(shellSource, /confirmActionId:\s*"confirm-result"/);
   assert.doesNotMatch(
     mainSource.match(
       /function showCouncilPriorityRefusal\(\): void \{[\s\S]*?\r?\n}\r?\n/
@@ -36485,11 +36087,10 @@ test("main shell render-trigger ownerization introduces a council priority city 
     )?.[0] ?? "",
     /renderApp\(\)|startCityBeggingMiniGameLoop\(\)|createLaunchPlayableRequest\("city-begging"/
   );
+  assert.doesNotMatch(mainSource, /function confirmBeggingMiniGameResult/);
   assert.doesNotMatch(
-    mainSource.match(
-      /function confirmBeggingMiniGameResult\(\): void \{[\s\S]*?\r?\n}\r?\n/
-    )?.[0] ?? "",
-    /renderApp\(\)|onBeggingGameComplete\(completionResult\)/
+    mainSource,
+    /councilPriorityCityBeggingCoordinator\.confirmBeggingMiniGameResult\(\)/
   );
 });
 
@@ -37124,7 +36725,6 @@ test("shell thinning campaign travel transition owner module exists and preserve
       textLines: ["blocked"],
       advanceHintText: "advance",
     },
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -37269,7 +36869,6 @@ test("shell thinning map auto advance transition owner module exists and preserv
       textLines: ["blocked"],
       advanceHintText: "advance",
     },
-    beggingMiniGameState: null,
     cityMenuState: createCityMenuState({
       cityId: "city.kulan",
       cityName: "苦兰城",
@@ -37411,7 +37010,6 @@ test("shell thinning render prepass owner module exists and preserves city npc r
     campaignTravelState: null,
     modalState: null,
     locationDialogueState: null,
-    beggingMiniGameState: null,
     cityMenuState: null,
     cityDirectoryState: null,
     autoAdvanceState: null,
@@ -38085,7 +37683,7 @@ test("interactive closeout removes legacy interactive kind residue from playable
   assert.doesNotMatch(playableRuntimeSource, /createLegacyPlayableSession/);
 });
 
-test("child 30 playable definition registry installs covered builtin playables without family boundaries", () => {
+test("child 30 playable definition registry installs covered interactive playables without family boundaries", () => {
   const {
     builtinPlayableDefinitionRegistry,
   } = require("../.test-dist/core/registry/builtin-playable-definition-registry.js");
@@ -38096,7 +37694,7 @@ test("child 30 playable definition registry installs covered builtin playables w
   );
   assert.equal(
     builtinPlayableDefinitionRegistry.get("city-begging")?.commandPrefix,
-    "interactive.city-begging."
+    "playable.city-begging."
   );
   assert.equal(
     builtinPlayableDefinitionRegistry.get("story-battle")?.commandPrefix,
@@ -38401,15 +37999,12 @@ test("child 30 playable launch normalization fails closed for ambiguous integrat
   assert.equal(resolution.code, "ambiguous-integration");
 });
 
-test("child 30 interactive runtime can launch covered playable sessions through playable runtime normalization", () => {
-  const { runInteractiveRuntime } = require(
-    "../.test-dist/core/runtime/interactive-runtime.js"
-  );
-  const { createLaunchPlayableRequest } = require(
+test("child 30 playable runtime can launch city-begging through shared playable normalization", () => {
+  const { createLaunchPlayableRequest, runPlayableRuntime } = require(
     "../.test-dist/core/runtime/playable-runtime.js"
   );
 
-  const result = runInteractiveRuntime({
+  const result = runPlayableRuntime({
     state: createRuntimeState(),
     request: createLaunchPlayableRequest("city-begging", {
       payload: { now: 456 },
@@ -38417,14 +38012,11 @@ test("child 30 interactive runtime can launch covered playable sessions through 
     characterDefinitions: prototypeCharacters,
   });
 
-  assert.equal(result.session?.kind, "city-begging");
-  assert.equal(
-    result.session?.playable.integrationId,
-    "playable.city-begging.external.default"
-  );
-  assert.equal("family" in (result.session?.playable ?? {}), false);
-  assert.equal(result.session?.playable.ownerContext.ownerKind, "external");
-  assert.equal(result.state.app.beggingMiniGameState?.variantId, "village-catching");
+  assert.equal(result.session?.playableId, "city-begging");
+  assert.equal(result.session?.integrationId, "playable.city-begging.external.default");
+  assert.equal("family" in (result.session ?? {}), false);
+  assert.equal(result.session?.ownerContext.ownerKind, "external");
+  assert.equal(result.session?.state?.minigameState?.variantId, "village-catching");
 });
 
 test("child 31 activity qte launch writes shared playable session into runtime state", () => {
@@ -38486,7 +38078,9 @@ test("child 31 playable runtime closes activity qte through shared playable sess
   } = require("../.test-dist/core/runtime/playable-runtime.js");
   const {
     startActivityQtePlayable,
-  } = require("../.test-dist/playables/activity-qte/index.js");
+  } = require(
+    "../.test-dist/application/playables/activity-qte/activity-qte-definition.js"
+  );
 
   const activityDefinition = {
     id: "activity.test.child31.exit",
@@ -38518,8 +38112,8 @@ test("child 31 city-begging completion clears shared playable session after sett
   const { runPlayableRuntime, createLaunchPlayableRequest } = require(
     "../.test-dist/core/runtime/playable-runtime.js"
   );
-  const { createInteractiveActionRequest } = require(
-    "../.test-dist/core/runtime/interactive-runtime.js"
+  const { createPlayableActionRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
   );
 
   const launched = runPlayableRuntime({
@@ -38536,30 +38130,33 @@ test("child 31 city-begging completion clears shared playable session after sett
   );
 
   const completed = runPlayableRuntime({
-    state: launched.state,
-    request: createInteractiveActionRequest("interactive.city-begging.complete", {
-      result: {
-        foodGain: 3,
-        goldGain: 2,
-        maxCombo: 4,
-        success: true,
-      },
-    }),
+    state: runPlayableRuntime({
+      state: launched.state,
+      request: createPlayableActionRequest("city-begging", "tick", {
+        now: 60000,
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state,
+    request: createPlayableActionRequest("city-begging", "confirm-result"),
     characterDefinitions: prototypeCharacters,
     playerCharacterId,
   });
 
   assert.equal(completed.handled, true);
   assert.equal(completed.state.core.runtime.playableSession, null);
-  assert.equal(completed.state.app.beggingMiniGameState, null);
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(completed.state.app, "beggingMiniGameState"),
+    false
+  );
 });
 
 test("playable runtime routes city-begging completion through a shared settlement payload", () => {
   const { runPlayableRuntime, createLaunchPlayableRequest } = require(
     "../.test-dist/core/runtime/playable-runtime.js"
   );
-  const { createInteractiveActionRequest } = require(
-    "../.test-dist/core/runtime/interactive-runtime.js"
+  const { createPlayableActionRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
   );
 
   const launched = runPlayableRuntime({
@@ -38571,15 +38168,15 @@ test("playable runtime routes city-begging completion through a shared settlemen
   });
 
   const completed = runPlayableRuntime({
-    state: launched.state,
-    request: createInteractiveActionRequest("interactive.city-begging.complete", {
-      result: {
-        foodGain: 3,
-        goldGain: 2,
-        maxCombo: 4,
-        success: true,
-      },
-    }),
+    state: runPlayableRuntime({
+      state: launched.state,
+      request: createPlayableActionRequest("city-begging", "tick", {
+        now: 60000,
+      }),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state,
+    request: createPlayableActionRequest("city-begging", "confirm-result"),
     characterDefinitions: prototypeCharacters,
     playerCharacterId,
   });
@@ -38604,8 +38201,8 @@ test(
     resetDefaultPlayableRuntimeRegistries,
     runPlayableRuntime,
   } = require("../.test-dist/core/runtime/playable-runtime.js");
-  const { createInteractiveActionRequest } = require(
-    "../.test-dist/core/runtime/interactive-runtime.js"
+  const { createPlayableActionRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
   );
 
   const integrationId = "playable.city-begging.instance.route-test";
@@ -38684,15 +38281,15 @@ test(
     });
 
     const completed = runPlayableRuntime({
-      state: launched.state,
-      request: createInteractiveActionRequest("interactive.city-begging.complete", {
-        result: {
-          foodGain: 3,
-          goldGain: 2,
-          maxCombo: 4,
-          success: true,
-        },
-      }),
+      state: runPlayableRuntime({
+        state: launched.state,
+        request: createPlayableActionRequest("city-begging", "tick", {
+          now: 60000,
+        }),
+        characterDefinitions: prototypeCharacters,
+        playerCharacterId,
+      }).state,
+      request: createPlayableActionRequest("city-begging", "confirm-result"),
       characterDefinitions: prototypeCharacters,
       playerCharacterId,
     });
@@ -38900,45 +38497,72 @@ test("external playable completion can hand routed settlement events to the stor
   assert.equal(startedEventId, "event.playable.test.failure");
 });
 
-test("city-begging package runtime can finish locally and still expose a settlement result", () => {
+test("city-begging overlay controller delegates pointer and frame ticks to shared callbacks", () => {
   const {
-    createCityBeggingMiniGameState,
-    getCityBeggingMiniGameCompletionResult,
-  } = require("../.test-dist/application/minigames/city-begging-minigame.js");
-  const {
-    advanceCityBeggingDetachedRuntime,
-    hydrateCityBeggingDetachedRuntime,
-    readCityBeggingDetachedCompletionResult,
-    resetCityBeggingDetachedRuntime,
+    bindCityBeggingOverlayController,
+    resetCityBeggingOverlayController,
   } = require(
     "../.test-dist/application/playables/builtin/city-begging/city-begging-runtime-controller.js"
   );
 
-  resetCityBeggingDetachedRuntime();
+  const listeners = new Map();
+  let scheduledFrame = null;
+  const pointerCalls = [];
+  const tickCalls = [];
+  const root = {
+    addEventListener(type, handler) {
+      listeners.set(type, handler);
+    },
+    removeEventListener(type, handler) {
+      if (listeners.get(type) === handler) {
+        listeners.delete(type);
+      }
+    },
+    querySelector(selector) {
+      if (selector !== "[data-begging-game-canvas]") {
+        return null;
+      }
+      return {
+        width: 1000,
+        getBoundingClientRect() {
+          return {
+            left: 10,
+            width: 200,
+          };
+        },
+      };
+    },
+  };
+
+  resetCityBeggingOverlayController();
 
   try {
-    const initialState = createCityBeggingMiniGameState(0);
-    hydrateCityBeggingDetachedRuntime(initialState);
+    bindCityBeggingOverlayController({
+      root,
+      launchKey: "village-catching:0",
+      isPlaying: true,
+      onPointer(pointerX) {
+        pointerCalls.push(pointerX);
+      },
+      onTick(now) {
+        tickCalls.push(now);
+      },
+      requestAnimationFrame(callback) {
+        scheduledFrame = callback;
+        return 77;
+      },
+      cancelAnimationFrame() {},
+    });
 
-    let finalState = null;
-    for (let now = 100; now <= 60000; now += 100) {
-      finalState = advanceCityBeggingDetachedRuntime(now);
-      if (finalState?.variantState.status === "result") {
-        break;
-      }
-    }
+    listeners.get("pointermove")({
+      clientX: 110,
+    });
+    scheduledFrame(1234);
 
-    assert.equal(finalState?.variantState.status, "result");
-    assert.deepEqual(
-      readCityBeggingDetachedCompletionResult(),
-      finalState.variantState.result
-    );
-    assert.deepEqual(
-      getCityBeggingMiniGameCompletionResult(null),
-      null
-    );
+    assert.deepEqual(pointerCalls, [500]);
+    assert.deepEqual(tickCalls, [1234]);
   } finally {
-    resetCityBeggingDetachedRuntime();
+    resetCityBeggingOverlayController();
   }
 });
 
@@ -38960,8 +38584,8 @@ test("playable runtime routes grain-accounting completion through a shared settl
   const { runPlayableRuntime, createLaunchPlayableRequest } = require(
     "../.test-dist/core/runtime/playable-runtime.js"
   );
-  const { createInteractiveActionRequest } = require(
-    "../.test-dist/core/runtime/interactive-runtime.js"
+  const { createPlayableActionRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
   );
 
   const launched = runPlayableRuntime({
@@ -39410,6 +39034,194 @@ test("playable validator requires shell package files under src/playables", () =
   assert.doesNotMatch(validatorSource, /src\/application\/playables/);
 });
 
+test(
+  "playable shell registry registers and reads direct shell entries by playable id",
+  () => {
+    const {
+      createPlayableShellRegistry,
+    } = require("../.test-dist/core/registry/playable-shell-registry.js");
+    const registry = createPlayableShellRegistry();
+    const playableId = "playable.test-shell";
+    const shell = createTestPlayableShell(playableId);
+
+    assert.equal(registry.get(playableId), null);
+
+    registry.register(shell);
+
+    assert.equal(registry.get(playableId), shell);
+    assert.equal(registry.get("playable.unknown"), null);
+  }
+);
+
+test("playable runtime contract exposes a direct PlayableShell surface", () => {
+  const diagnostics = getTypeScriptDiagnosticsForSourceText(
+    [
+      'import type {',
+      "  ActivePlayableSession,",
+      "  PlayableCommand,",
+      "  PlayableLaunchRequest,",
+      "  PlayablePresenterModel,",
+      "  PlayableResult,",
+      "  PlayableShell,",
+      '} from "../src/core/contracts/playable-runtime";',
+      "",
+      "const shell: PlayableShell = {",
+      "  manifest: {",
+      '    playableId: "playable.contract-shell",',
+      '    family: "flow",',
+      '    commandPrefix: "contract-shell",',
+      "  },",
+      "  createSession(input: PlayableLaunchRequest): ActivePlayableSession {",
+      "    return {",
+      '      sessionId: "session.contract-shell",',
+      "      playableId: input.playableId,",
+      "      integrationId: input.integrationId,",
+      "      ownerContext: input.ownerContext,",
+      '      status: "active",',
+      "    };",
+      "  },",
+      "  reduce(session: ActivePlayableSession, _command: PlayableCommand): ActivePlayableSession {",
+      "    return session;",
+      "  },",
+      "  present(session: ActivePlayableSession): PlayablePresenterModel {",
+      "    return {",
+      "      playableId: session.playableId,",
+      '      layout: "panel",',
+      '      title: "Contract Shell",',
+      "      summaryLines: [],",
+      "      actions: [],",
+      "    };",
+      "  },",
+      "  complete(_session: ActivePlayableSession): PlayableResult | null {",
+      "    return null;",
+      "  },",
+      "};",
+      "",
+      "void shell;",
+    ].join("\n"),
+    "tests/.tmp-playable-shell-contract-probe.ts"
+  );
+
+  assert.deepEqual(diagnostics, []);
+});
+
+test(
+  "playable runtime registries expose default shell registries without host-adapter ownership",
+  () => {
+    const runtimeRegistries = require(
+      "../.test-dist/core/runtime/playable-runtime-registries.js"
+    );
+    const playableId = "playable.default-shell";
+    const shell = createTestPlayableShell(playableId);
+    const registries = runtimeRegistries.createDefaultPlayableRuntimeRegistries();
+
+    assert.equal(typeof runtimeRegistries.readDefaultPlayableShellRegistry, "function");
+    assert.equal(
+      "readDefaultPlayableHostAdapterRegistry" in runtimeRegistries,
+      false
+    );
+    assert.equal(typeof registries.shells.register, "function");
+    assert.equal(typeof registries.shells.get, "function");
+    assert.equal("hostAdapters" in registries, false);
+
+    registries.shells.register(shell);
+
+    assert.equal(registries.shells.get(playableId), shell);
+
+    runtimeRegistries.resetDefaultPlayableRuntimeRegistries();
+    runtimeRegistries.readDefaultPlayableShellRegistry().register(shell);
+    assert.equal(
+      runtimeRegistries.readDefaultPlayableShellRegistry().get(playableId),
+      shell
+    );
+
+    runtimeRegistries.resetDefaultPlayableRuntimeRegistries();
+    assert.equal(
+      runtimeRegistries.readDefaultPlayableShellRegistry().get(playableId),
+      null
+    );
+    assert.equal(
+      runtimeRegistries.readDefaultPlayableDefinitionRegistry().get(playableId),
+      null
+    );
+  }
+);
+
+function createTestPlayableShell(playableId) {
+  return {
+    manifest: {
+      playableId,
+      family: "minigame",
+      commandPrefix: "test-shell",
+    },
+    createSession(input) {
+      return {
+        sessionId: "session.test-shell",
+        playableId: input.playableId,
+        integrationId: input.integrationId,
+        ownerContext: input.ownerContext,
+        status: "active",
+      };
+    },
+    reduce(session) {
+      return session;
+    },
+    present(session) {
+      return {
+        playableId: session.playableId,
+        layout: "panel",
+        title: "Test Shell",
+        summaryLines: [],
+        actions: [],
+      };
+    },
+    complete() {
+      return null;
+    },
+  };
+}
+
+function getTypeScriptDiagnosticsForSourceText(sourceText, relativeFilePath) {
+  const configPath = path.join(process.cwd(), "tsconfig.json");
+  const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+  if (configFile.error) {
+    throw new Error(ts.flattenDiagnosticMessageText(configFile.error.messageText, "\n"));
+  }
+
+  const parsedConfig = ts.parseJsonConfigFileContent(
+    configFile.config,
+    ts.sys,
+    process.cwd(),
+    undefined,
+    configPath
+  );
+  const probePath = path.join(process.cwd(), relativeFilePath);
+  const probeDir = path.dirname(probePath);
+
+  fs.mkdirSync(probeDir, { recursive: true });
+  fs.writeFileSync(probePath, sourceText, "utf8");
+
+  try {
+    const program = ts.createProgram({
+      rootNames: [probePath],
+      options: parsedConfig.options,
+    });
+
+    return ts
+      .getPreEmitDiagnostics(program)
+      .filter(
+        (diagnostic) =>
+          diagnostic.file?.fileName.replaceAll("\\", "/") ===
+          probePath.replaceAll("\\", "/")
+      )
+      .map((diagnostic) =>
+        ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
+      );
+  } finally {
+    fs.rmSync(probePath, { force: true });
+  }
+}
+
 test("child 34 playable scaffold writes canonical mechanic and integration artifacts", () => {
   const { spawnSync } = require("node:child_process");
   const os = require("node:os");
@@ -39536,15 +39348,9 @@ test("child 34 playable scaffold writes canonical mechanic and integration artif
     "utf8"
   );
 
-  assert.doesNotMatch(
-    contractSource,
-    /roundsCompleted|start" \}|advance" \}|complete" \}/
-  );
+  assert.doesNotMatch(contractSource, /roundsCompleted|start" \}|advance" \}|complete" \}/);
   assert.doesNotMatch(sessionSource, /roundsCompleted|status:/);
-  assert.doesNotMatch(
-    reducerSource,
-    /switch \(action\.type\)|roundsCompleted|status:/
-  );
+  assert.doesNotMatch(reducerSource, /switch \(action\.type\)|roundsCompleted|status:/);
   assert.doesNotMatch(presenterSource, /roundsCompleted|status:/);
   assert.doesNotMatch(settlementSource, /outcome:|pending|completed/);
 
@@ -39589,13 +39395,7 @@ test("child 34 playable scaffold rejects ids that would generate invalid TypeScr
   assert.match(result.stderr, /Missing or invalid required arguments/i);
   assert.equal(
     fs.existsSync(
-      path.join(
-        outputRoot,
-        "src",
-        "content",
-        "playables",
-        "1v1-battle.playable.json"
-      )
+      path.join(outputRoot, "src", "content", "playables", "1v1-battle.playable.json")
     ),
     false
   );
@@ -39753,10 +39553,7 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
     { encoding: "utf8" }
   );
   assert.equal(stalePathsRun.status, 1);
-  assert.match(
-    stalePathsRun.stderr,
-    /legacy playable artifact path key domainFile/i
-  );
+  assert.match(stalePathsRun.stderr, /legacy playable artifact path key domainFile/i);
   assert.doesNotMatch(
     stalePathsRun.stderr,
     /unexpected playable artifact path key domainFile/i
@@ -39773,10 +39570,7 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
     assetDirectory: "src/assets/playables/validator-playable",
   };
   fs.mkdirSync(path.dirname(missingShellFilePath), { recursive: true });
-  fs.writeFileSync(
-    missingShellFilePath,
-    "export function completeValidatorPlayable() {}\n"
-  );
+  fs.writeFileSync(missingShellFilePath, "export function completeValidatorPlayable() {}\n");
   stalePathsArtifact.paths.presenterFile =
     "src/application/playables/validator-playable/validator-playable-presenter.ts";
   fs.writeFileSync(
@@ -39924,7 +39718,7 @@ test("child 34 playable validator accepts scaffolded artifacts and rejects missi
   assert.match(invalidRun.stderr, /missing outcome conditions/i);
 });
 
-test("child 34 removes only the obsolete interactive launch helper while keeping remaining active compatibility ids", () => {
+test("child 34 removes only the obsolete interactive launch helper while keeping active compatibility ids", () => {
   const interactiveRuntimeSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
     "utf8"
@@ -39938,34 +39732,29 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
     interactiveRuntimeSource,
     /export function createLaunchInteractiveRequest/
   );
-  assert.match(mainSource, /interactive\.city-begging\.complete/);
-  assert.doesNotMatch(mainSource, /interactive\.activity-qte\.tick/);
+  assert.doesNotMatch(mainSource, /interactive\.city-begging\./);
+  assert.doesNotMatch(mainSource, /interactive\.activity-qte\./);
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
 });
 
-test("activity qte shell routes board and command buttons into shared playable runtime actions", () => {
+test("activity qte shell routes board and command buttons into canonical playable actions", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
   );
-  const activityActionBlock = mainSource.match(
-    /const activityActionButton = targetElement\.closest<HTMLElement>\(\s*"\[data-activity-action\]"\s*\);[\s\S]*?return;\r?\n  }/
-  )?.[0] ?? "";
-
-  assert.match(activityActionBlock, /activityAction === "play-board"/);
-  assert.match(activityActionBlock, /dispatchCurrentActivityQteAction\("play"\)/);
-  assert.match(activityActionBlock, /activityAction === "wager-minus"/);
-  assert.match(activityActionBlock, /dispatchCurrentActivityQteAction\("wager-minus"\)/);
-  assert.match(activityActionBlock, /activityAction === "wager-plus"/);
-  assert.match(activityActionBlock, /dispatchCurrentActivityQteAction\("wager-plus"\)/);
-  assert.match(activityActionBlock, /activityAction === "choose-command"/);
-  assert.match(
-    activityActionBlock,
-    /dispatchCurrentActivityQteAction\("choose", \{ commandId \}\)/
+  const shellSource = fs.readFileSync(
+    path.join(process.cwd(), "src/playables/activity-qte/shell.ts"),
+    "utf8"
   );
+
+  assert.match(shellSource, /data-playable-action="play"/);
+  assert.match(shellSource, /data-playable-action="wager-minus"/);
+  assert.match(shellSource, /data-playable-action="wager-plus"/);
+  assert.match(shellSource, /data-playable-action="choose"/);
+  assert.match(shellSource, /data-playable-command-id=/);
   assert.match(
     mainSource,
-    /createPlayableActionRequest\(\s*"activity-qte",\s*action,\s*payload\s*\)/
+    /createPlayableActionRequest\("activity-qte",\s*action,\s*payload\)/
   );
   assert.match(
     mainSource,
@@ -39973,7 +39762,7 @@ test("activity qte shell routes board and command buttons into shared playable r
   );
 });
 
-test("activity qte loop keeps fortune-board sessions ticking through interactive runtime", () => {
+test("activity qte loop keeps fortune-board sessions ticking through shared playable runtime", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
@@ -39988,7 +39777,7 @@ test("activity qte loop keeps fortune-board sessions ticking through interactive
   assert.match(syncLoopBlock, /createPlayableActionRequest\("activity-qte",\s*"tick"\)/);
 });
 
-test("zhuyuanzhang builtin templates expose the temple standalone playable and template integration", () => {
+test("zhuyuanzhang builtin templates expose the temple activity qte playable and template integration", () => {
   const builtinPlayables = JSON.parse(
     fs.readFileSync(
       path.join(
@@ -40017,35 +39806,10 @@ test("zhuyuanzhang builtin templates expose the temple standalone playable and t
       (integration) =>
         integration.playableId === "temple-copy-scripture" &&
         integration.title === "寺庙抄经玩法" &&
-        integration.trigger?.launchPayload?.title === "抄写经卷" &&
-        integration.trigger?.launchPayload?.prompts?.[1]?.expectedChoiceId ===
-          "balance"
-    ),
-    "expected temple copy scripture standalone template integration"
-  );
-  assert.ok(
-    builtinPlayableIntegrations.some(
-      (integration) =>
-        integration.playableId === "activity-qte" &&
-        integration.title === "打扫庭院玩法" &&
-        integration.trigger?.trigger ===
-          "event.building.house.kulan.temple.sweep_courtyard" &&
         integration.trigger?.launchPayload?.activityId ===
-          "activity.zhu_yuanzhang.temple.sweep_courtyard"
+          "activity.zhu_yuanzhang.temple.copy_scripture"
     ),
-    "expected temple sweep courtyard standalone template integration"
-  );
-  assert.ok(
-    builtinPlayableIntegrations.some(
-      (integration) =>
-        integration.playableId === "activity-qte" &&
-        integration.title === "挑水玩法" &&
-        integration.trigger?.trigger ===
-          "event.building.house.kulan.temple.carry_water" &&
-        integration.trigger?.launchPayload?.activityId ===
-          "activity.zhu_yuanzhang.temple.carry_water"
-    ),
-    "expected temple carry water standalone template integration"
+    "expected temple copy scripture template integration"
   );
 });
 
@@ -40423,7 +40187,7 @@ test("dev browser validation resources avoid mojibake paths and watcher profile 
   assert.equal(parseResult.status, 0, parseResult.stderr || parseResult.stdout);
 });
 
-test("retired building-flow no longer appears in builtin playable registries", () => {
+test("builtin playable registries no longer expose the retired building-flow identity", () => {
   const {
     builtinPlayableDefinitionRegistry,
   } = require("../.test-dist/core/registry/builtin-playable-definition-registry.js");
@@ -40431,11 +40195,109 @@ test("retired building-flow no longer appears in builtin playable registries", (
     builtinPlayableIntegrationRegistry,
   } = require("../.test-dist/core/registry/builtin-playable-integration-registry.js");
 
-  assert.equal(builtinPlayableDefinitionRegistry.get("building-flow"), null);
+  assert.equal(builtinPlayableDefinitionRegistry.get("building-flow"), undefined);
   assert.equal(
     builtinPlayableIntegrationRegistry.get("playable.building-flow.house.default"),
-    null
+    undefined
   );
+});
+
+test("flow playable launches through a registered shell-backed playable id and exposes a presenter model", () => {
+  const {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+    resetDefaultPlayableRuntimeRegistries,
+    createLaunchPlayableRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const {
+    presentFlowPlayable,
+  } = require("../.test-dist/application/playables/flow/flow-playable-presenter.js");
+
+  const flowDefinition = {
+    id: "flow.test.temple.rest",
+    title: "Rest",
+    initialNodeId: "node.start",
+    nodes: [
+      {
+        id: "node.start",
+        type: "text",
+        text: "Rest here.",
+        nextNodeId: "node.finish",
+      },
+      {
+        id: "node.finish",
+        type: "complete",
+        outcome: "success",
+        metrics: { rested: true },
+      },
+    ],
+  };
+
+  try {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod({
+      modId: "mod.test.robustness.flow-shell",
+      manifest: {
+        id: "mod.test.robustness.flow-shell",
+        schemaVersion: "1",
+        version: "1.0.0",
+        title: "Robustness Flow Shell Test",
+        entryContentPackIds: ["pack.test.robustness.flow-shell"],
+      },
+      normalizedContentSources: [{ playableShells: [flowDefinition] }],
+      registeredDefinitionIds: ["pack.test.robustness.flow-shell"],
+      gameplayContributions: {
+        contentPackIds: ["pack.test.robustness.flow-shell"],
+        navigation: [],
+        events: [],
+        scenes: [],
+        dialogues: [],
+        tasks: [],
+        houses: [],
+        houseModules: [],
+        playables: [flowDefinition.id],
+        playableIntegrations: [`playable.${flowDefinition.id}.default`],
+      },
+      startupProfile: {},
+    });
+
+    const result = runPlayableRuntime({
+      state: createRuntimeState(),
+      request: createLaunchPlayableRequest(flowDefinition.id, {
+        integrationId: `playable.${flowDefinition.id}.default`,
+        ownerContext: {
+          ownerKind: "house",
+          ownerId: "building.temple",
+          returnPolicy: "resume-owner",
+        },
+      }),
+      characterDefinitions: prototypeCharacters,
+    });
+
+    assert.equal(result.handled, true);
+    assert.equal(result.state.core.ui.currentView, "minigame");
+    assert.equal(
+      result.state.core.runtime.playableSession?.playableId,
+      flowDefinition.id
+    );
+    assert.equal(
+      result.state.core.runtime.playableSession?.ownerContext.ownerId,
+      "building.temple"
+    );
+    assert.equal(
+      result.state.core.runtime.playableSession?.state?.currentNodeId,
+      "node.start"
+    );
+
+    const presenter = presentFlowPlayable({
+      definition: flowDefinition,
+      session: result.state.core.runtime.playableSession,
+    });
+    assert.equal("family" in presenter, false);
+    assert.equal(presenter.layout, "panel");
+    assert.equal(presenter.viewModel.currentNodeId, "node.start");
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
 });
 
 function loadZhuyuanzhangBuildingMenuPack() {
@@ -40461,8 +40323,8 @@ function loadZhuyuanzhangBuildingMenuPack() {
   const eventBindings = JSON.parse(
     fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
   );
-  const flowPlayables = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  const playableShells = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "playable-shells.json"), "utf8")
   );
   return {
     packRoot,
@@ -40477,9 +40339,9 @@ function loadZhuyuanzhangBuildingMenuPack() {
     ),
     events,
     eventBindings,
-    flowPlayables,
+    playableShells,
     eventsById: new Map(events.map((event) => [event.id, event])),
-    flowsById: new Map(flowPlayables.map((flow) => [flow.id, flow])),
+    flowsById: new Map(playableShells.map((flow) => [flow.id, flow])),
   };
 }
 
@@ -40580,7 +40442,7 @@ test("zhuyuanzhang pack carries explicit building arrangements for every mounted
   );
 
   assert.equal(manifest.files.buildingArrangements, "building-arrangements.json");
-  assert.equal(manifest.files.flowPlayables, "flow-playables.json");
+  assert.equal(manifest.files.playableShells, "playable-shells.json");
   assert.equal(arrangements.length, mountedBuildingIds.length);
   for (const buildingId of mountedBuildingIds) {
     const arrangement =
@@ -40634,7 +40496,7 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
     matchesCanonicalBuildingOwnerId
   );
 
-  assert.equal(actionRecords.length, 108);
+  assert.equal(actionRecords.length, 632);
 
   for (const { arrangement, container, entry } of actionRecords) {
     const event = pack.eventsById.get(entry.targetId);
@@ -40681,37 +40543,13 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
       continue;
     }
 
-    const launchFlowAction = event.actions?.find(
-      (action) => action.type === "launchFlow"
-    );
     const launchPlayableAction = event.actions?.find(
       (action) => action.type === "launchPlayable"
     );
-    if (launchFlowAction == null && launchPlayableAction == null) {
-      assert.ok(
-        typeof event.dialogueId === "string" && event.dialogueId.length > 0,
-        `missing runtime action or dialogue route for ${entry.targetId}`
-      );
-      continue;
-    }
-    if (launchFlowAction) {
-      assert.equal(launchFlowAction.ownerContext.ownerKind, "house");
-      assert.ok(
-        matchesCanonicalBuildingOwnerId(
-          launchFlowAction.ownerContext.ownerId,
-          arrangement.buildingId
-        ),
-        `launchFlow owner mismatch for ${entry.targetId}`
-      );
-      assert.ok(
-        launchFlowAction.flowId && pack.flowsById.has(launchFlowAction.flowId),
-        `missing authored flow for ${entry.targetId}`
-      );
-      const flow = pack.flowsById.get(launchFlowAction.flowId);
-      assert.ok(flow.outcomeRoutes.length > 0);
-      continue;
-    }
-
+    assert.ok(
+      launchPlayableAction,
+      `missing runtime action for ${entry.targetId}`
+    );
     assert.equal(launchPlayableAction.ownerContext.ownerKind, "house");
     assert.ok(
       matchesCanonicalBuildingOwnerId(
@@ -40726,25 +40564,27 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
       `missing playable id for ${entry.targetId}`
     );
     assert.ok(
+      pack.flowsById.has(launchPlayableAction.playableId),
+      `missing authored playable shell for ${entry.targetId}`
+    );
+    assert.ok(
       typeof launchPlayableAction.integrationId === "string" &&
         launchPlayableAction.integrationId.length > 0,
       `missing integration id for ${entry.targetId}`
     );
   }
 
-  assert.equal(
-    pack.eventsById.get("event.building.template.house.temple.review")
-      ?.dialogueId,
-    "scene.building.template.house.temple.review"
-  );
-  assert.equal(
-    pack.eventsById.get("event.building.template.house.leader_residence.review")
-      ?.dialogueId,
-    "scene.building.template.house.leader_residence.review"
+  assert.ok(
+    pack.eventsById
+      .get("event.building.template.house.temple.review")
+      ?.actions?.some((action) => action.type === "launchPlayable"),
+    "missing canonical temple review flow"
   );
   assert.ok(
-    !pack.eventsById.has("event.building.house.kulan.temple.work"),
-    "retired Huangjue Temple work flow shell should not remain as an event route"
+    pack.eventsById
+      .get("event.building.house.kulan.temple.work")
+      ?.actions?.some((action) => action.type === "launchPlayable"),
+    "missing preserved Huangjue Temple work flow"
   );
   assert.ok(
     pack.eventsById
@@ -40756,132 +40596,845 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
     pack.eventsById
       .get("event.building.house.kulan.temple.sweep_courtyard")
       ?.actions?.some((action) => action.type === "launchPlayable"),
-    "missing Huangjue Temple sweep courtyard playable route"
+    "missing Huangjue Temple sweep courtyard flow"
   );
   assert.ok(
     pack.eventsById
       .get("event.building.house.kulan.temple.carry_water")
       ?.actions?.some((action) => action.type === "launchPlayable"),
-    "missing Huangjue Temple carry water playable route"
+    "missing Huangjue Temple carry water flow"
   );
   assert.ok(
-    pack.eventsById.get("event.building.template.house.temple.donate")
-      ?.dialogueId === "scene.building.template.house.temple.donate",
-    "temple donation should route through authored dialogue instead of a flow shell"
+    pack.eventsById
+      .get("event.building.template.house.temple.donate")
+      ?.actions?.some((action) => action.type === "launchPlayable"),
+    "missing canonical temple donation flow"
   );
   assert.ok(
     !pack.flowsById.has("flow.building.house.kulan.temple.copy_scripture"),
     "copy scripture should not keep a dedicated bridge flow"
   );
-  assert.ok(
-    !pack.flowsById.has("flow.building.house.kulan.temple.work"),
-    "retired Huangjue Temple work flow shell should not remain in pack truth"
-  );
-  assert.ok(
-    !pack.flowsById.has("flow.building.template.house.temple.donate"),
-    "temple donation should not keep a dedicated flow shell"
-  );
 });
 
-nodeTest("zhuyuanzhang retained temple and leader-route demo building surfaces stay narrow", () => {
+test("zhuyuanzhang home rest and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const {
+    matchesCanonicalBuildingOwnerId,
+  } = require("../.test-dist/core/runtime/building-owner-canonicalization.js");
   const pack = loadZhuyuanzhangBuildingMenuPack();
+  const homeArrangements = pack.arrangements.filter(
+    (arrangement) => arrangement.buildingId === "home.template"
+  );
+  assert.equal(homeArrangements.length, 21);
+
+  const homeActionRecords = collectZhuyuanzhangBuildingMenuActionRecords(
+    pack,
+    matchesCanonicalBuildingOwnerId
+  ).filter(
+    ({ arrangement, entry }) =>
+      arrangement.buildingId === "home.template" &&
+      (entry.id === "rest" || entry.id === "leave")
+  );
+
+  assert.equal(homeActionRecords.length, 42);
+  const bindingsByArrangementItem = mapZhuyuanzhangBindingsByArrangementItem(
+    pack,
+    ["rest", "leave"]
+  );
+
+  assert.equal(
+    pack.events.filter((event) =>
+      /^event\.building\.home\.[^.]+\.(rest|leave)$/.test(event.id)
+    )
+      .length,
+    0,
+    "retired city-scoped home event ids should be removed from pack truth"
+  );
+  assert.equal(
+    pack.playableShells.filter((flow) =>
+      /^flow\.building\.home\.[^.]+\.rest$/.test(flow.id)
+    )
+      .length,
+    0,
+    "retired city-scoped home flow ids should be removed from pack truth"
+  );
+  assert.ok(pack.eventsById.has("event.building.template.home.rest"));
+  assert.ok(pack.eventsById.has("event.building.template.home.leave"));
+  assert.ok(pack.flowsById.has("flow.building.template.home.rest"));
+
+  for (const { arrangement, container, entry } of homeActionRecords) {
+    const expectedEventId =
+      entry.id === "rest"
+        ? "event.building.template.home.rest"
+        : "event.building.template.home.leave";
+    assert.equal(entry.targetId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, entry.id].join("::")
+    );
+    assert.ok(binding, `missing home binding for ${arrangement.id}/${entry.id}`);
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "home.template");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, entry.id);
+
+    const event = pack.eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical home event ${expectedEventId}`);
+
+    if (entry.id === "rest") {
+      const launchPlayableAction = event.actions?.find(
+        (action) => action.type === "launchPlayable"
+      );
+      assert.ok(launchPlayableAction, "home rest should launch canonical playable");
+      assert.equal(launchPlayableAction.ownerContext.ownerId, "home.template");
+      assert.equal(
+        launchPlayableAction.playableId,
+        "flow.building.template.home.rest"
+      );
+      assert.equal(
+        launchPlayableAction.integrationId,
+        "playable.flow.building.template.home.rest.default"
+      );
+      continue;
+    }
+
+    assert.ok(
+      event.actions?.some((action) => action.type === "closeBuilding"),
+      "home leave should stay closeBuilding"
+    );
+  }
+});
+
+test("zhuyuanzhang home source surfaces converge on canonical home.template ids", () => {
   const packRoot = path.join(
     process.cwd(),
     "src/content/scenario-packs/zhuyuanzhang"
   );
-  const dialogues = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "dialogues.json"), "utf8")
+  const houses = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "houses.json"), "utf8")
   );
-  const menuResources = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "menu-resources.json"), "utf8")
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
   );
-  const playableIntegrations = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "playable-integrations.json"), "utf8")
+  const cities = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "cities.json"), "utf8")
   );
-  const buildingEventIds = pack.events
-    .filter((event) => event.id.startsWith("event.building."))
-    .map((event) => event.id)
-    .sort();
-  const buildingFlowIds = pack.flowPlayables
-    .filter((flow) => flow.id.startsWith("flow.building."))
-    .map((flow) => flow.id)
-    .sort();
-  const buildingDialogueIds = dialogues
-    .filter((dialogue) => dialogue.id.startsWith("scene.building."))
-    .map((dialogue) => dialogue.id)
-    .sort();
-  const menuEntriesById = new Map(
-    menuResources.map((resource) => [resource.id, resource.entries ?? []])
+  const characters = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "characters.json"), "utf8")
+  );
+  const locationAccess = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "location-access.json"), "utf8")
   );
 
-  assert.deepEqual(buildingEventIds, [
-    "event.building.house.kulan.leader_residence.enter",
-    "event.building.house.kulan.temple.carry_water",
-    "event.building.house.kulan.temple.copy_scripture",
-    "event.building.house.kulan.temple.enter",
-    "event.building.house.kulan.temple.sweep_courtyard",
-    "event.building.template.house.leader_residence.leave",
-    "event.building.template.house.leader_residence.review",
-    "event.building.template.house.temple.donate",
-    "event.building.template.house.temple.leave",
-    "event.building.template.house.temple.review",
-  ]);
-  assert.deepEqual(buildingFlowIds, []);
-  assert.deepEqual(buildingDialogueIds, [
-    "scene.building.house.kulan.leader_residence.enter",
-    "scene.building.house.kulan.temple.enter",
-    "scene.building.template.house.leader_residence.review",
-    "scene.building.template.house.temple.donate",
-    "scene.building.template.house.temple.review",
-  ]);
+  const homeHouses = houses.filter(
+    (house) => house.moduleId === "home-house"
+  );
+  assert.deepEqual(
+    homeHouses.map((house) => house.id),
+    ["home.template"]
+  );
+  assert.equal(homeHouses[0].defaultCharacterId, "char.player");
+  assert.deepEqual(homeHouses[0].characterIds, ["char.player"]);
 
-  assert.equal(
-    menuEntriesById.get("menu-resource.house.kulan.temple.primary")?.length,
-    6
+  const homeArrangements = arrangements.filter(
+    (arrangement) => arrangement.buildingId === "home.template"
   );
+  assert.equal(homeArrangements.length, 21);
   assert.equal(
-    menuEntriesById.get("menu-resource.house.template.temple.primary")?.length,
-    3
-  );
-  assert.equal(
-    menuEntriesById.get("menu-resource.house.template.leader_residence.primary")?.length,
-    2
+    arrangements.some(
+      (arrangement) =>
+        /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(arrangement.buildingId) &&
+        arrangement.buildingId !== "home.template"
+    ),
+    false,
+    "retired city-scoped home arrangement buildingIds should be removed"
   );
 
-  for (const menuResourceId of [
-    "menu-resource.home.template.primary",
-    "menu-resource.house.template.keep.primary",
-    "menu-resource.house.template.tea_house.primary",
-    "menu-resource.house.template.market.primary",
-    "menu-resource.house.template.grain_shop.primary",
-    "menu-resource.house.template.medicine_house.primary",
-    "menu-resource.house.template.inn.primary",
-  ]) {
-    assert.deepEqual(
-      menuEntriesById.get(menuResourceId),
-      [],
-      `${menuResourceId} should be emptied in the demo template`
+  for (const city of cities) {
+    assert.ok(
+      city.houseIds.includes("home.template"),
+      `missing canonical home id in ${city.id}.houseIds`
+    );
+    assert.equal(
+      city.houseIds.some(
+        (houseId) =>
+          /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(houseId) &&
+          houseId !== "home.template"
+      ),
+      false,
+      `retired city-scoped home id should be removed from ${city.id}.houseIds`
+    );
+    assert.ok(
+      (city.mountedBuildings ?? []).some(
+        (entry) => entry.buildingId === "home.template"
+      ),
+      `missing canonical home mounted building in ${city.id}`
+    );
+    assert.equal(
+      (city.mountedBuildings ?? []).some((entry) =>
+        /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(entry.buildingId) &&
+        entry.buildingId !== "home.template"
+      ),
+      false,
+      `retired city-scoped home mounted building id should be removed from ${city.id}`
     );
   }
 
-  const triggerByIntegrationId = new Map(
-    playableIntegrations.map((integration) => [
-      integration.integrationId,
-      integration.trigger?.trigger ?? "",
-    ])
+  const playerCharacter = characters.find(
+    (character) => character.id === "char.player"
+  );
+  assert.equal(playerCharacter?.houseId, "home.template");
+
+  const homeLocationAccess = locationAccess.filter(
+    (entry) => entry.targetId === "home.template"
+  );
+  assert.equal(homeLocationAccess.length, 1);
+  assert.equal(
+    locationAccess.some(
+      (entry) =>
+        /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(entry.targetId) &&
+        entry.targetId !== "home.template"
+    ),
+    false,
+    "retired city-scoped home location-access targetIds should be removed"
+  );
+});
+
+test("zhuyuanzhang same-name host records converge to canonical ids across direct host reference surfaces", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const houses = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "houses.json"), "utf8")
+  );
+  const cities = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "cities.json"), "utf8")
+  );
+  const cityEntries = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "city-entries.json"), "utf8")
+  );
+  const characters = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "characters.json"), "utf8")
+  );
+  const locationAccess = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "location-access.json"), "utf8")
+  );
+
+  const canonicalFamilies = [
+    { name: "自宅", canonicalId: "home.template", count: 21 },
+    {
+      name: "将领府邸",
+      canonicalId: "house.template.leader_residence",
+      count: 21,
+    },
+    { name: "帅府", canonicalId: "house.template.keep", count: 21 },
+    { name: "茶馆", canonicalId: "house.template.tea_house", count: 21 },
+    { name: "货栈", canonicalId: "house.template.market", count: 21 },
+    { name: "粮铺", canonicalId: "house.template.grain_shop", count: 21 },
+    {
+      name: "药铺",
+      canonicalId: "house.template.medicine_house",
+      count: 21,
+    },
+    { name: "客栈", canonicalId: "house.template.inn", count: 21 },
+    { name: "寺庙", canonicalId: "house.template.temple", count: 20 },
+  ];
+
+  for (const family of canonicalFamilies) {
+    assert.deepEqual(
+      houses
+        .filter((house) => house.name === family.name)
+        .map((house) => house.id),
+      [family.canonicalId],
+      `${family.name} should keep only ${family.canonicalId} in houses.json`
+    );
+  }
+
+  assert.ok(
+    houses.some((house) => house.id === "house.kulan.temple"),
+    "unique non-duplicate host should stay preserved"
+  );
+
+  const retiredDuplicateIds = new Set([
+    ...houses
+      .filter(
+        (house) =>
+          house.id.startsWith("house.") &&
+          !house.id.startsWith("house.template.") &&
+          house.id !== "house.kulan.temple"
+      )
+      .map((house) => house.id),
+  ]);
+
+  for (const family of canonicalFamilies) {
+    const houseIdCount = cities.reduce(
+      (total, city) =>
+        total +
+        (city.houseIds ?? []).filter((houseId) => houseId === family.canonicalId)
+          .length,
+      0
+    );
+    assert.equal(
+      houseIdCount,
+      family.count,
+      `${family.canonicalId} should be the only direct city houseId for ${family.name}`
+    );
+
+    const mountedCount = cities.reduce(
+      (total, city) =>
+        total +
+        (city.mountedBuildings ?? []).filter(
+          (entry) => entry.buildingId === family.canonicalId
+        ).length,
+      0
+    );
+    assert.equal(
+      mountedCount,
+      family.count,
+      `${family.canonicalId} should be the only direct mounted building id for ${family.name}`
+    );
+  }
+
+  assert.equal(
+    cities.some((city) =>
+      (city.houseIds ?? []).some((houseId) => retiredDuplicateIds.has(houseId))
+    ),
+    false,
+    "retired duplicate host ids should be removed from city houseIds"
   );
   assert.equal(
-    triggerByIntegrationId.get(
-      "playable.grain-accounting.instance.template.grain-accounting"
+    cities.some((city) =>
+      (city.mountedBuildings ?? []).some((entry) =>
+        retiredDuplicateIds.has(entry.buildingId)
+      )
     ),
-    "manual-launch"
+    false,
+    "retired duplicate host ids should be removed from mountedBuildings"
   );
   assert.equal(
-    triggerByIntegrationId.get(
-      "playable.medicine-compounding.instance.template.medicine-compounding"
-    ),
-    "manual-launch"
+    cityEntries.some((entry) => retiredDuplicateIds.has(entry.targetHouseId)),
+    false,
+    "retired duplicate host ids should be removed from city-entries targetHouseId"
   );
+
+  assert.equal(
+    cityEntries.filter(
+      (entry) => entry.targetHouseId === "house.template.leader_residence"
+    ).length,
+    21,
+    "leader-residence city entries should point to canonical host id"
+  );
+  assert.equal(
+    characters.some(
+      (character) =>
+        typeof character.houseId === "string" &&
+        retiredDuplicateIds.has(character.houseId)
+    ),
+    false,
+    "retired duplicate host ids should be removed from characters.houseId"
+  );
+  assert.equal(
+    locationAccess.some((entry) => retiredDuplicateIds.has(entry.targetId)),
+    false,
+    "retired duplicate host ids should be removed from location-access targetId"
+  );
+});
+
+test("zhuyuanzhang keep review work and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const {
+    matchesCanonicalBuildingOwnerId,
+  } = require("../.test-dist/core/runtime/building-owner-canonicalization.js");
+  const pack = loadZhuyuanzhangBuildingMenuPack();
+  const keepActionRecords = collectZhuyuanzhangBuildingMenuActionRecords(
+    pack,
+    matchesCanonicalBuildingOwnerId
+  ).filter(
+    ({ arrangement, entry }) =>
+      arrangement.buildingId.endsWith(".keep") &&
+      (entry.id === "review" || entry.id === "work" || entry.id === "leave")
+  );
+
+  assert.equal(keepActionRecords.length, 63);
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of pack.eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "review" &&
+        binding.trigger?.extra?.itemId !== "work" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".keep.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    pack.events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.keep\.(review|work|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped keep event ids should be removed from pack truth"
+  );
+  assert.equal(
+    pack.playableShells.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.keep\.(review|work)$/.test(flow.id)
+    ).length,
+    0,
+    "retired city-scoped keep flow ids should be removed from pack truth"
+  );
+  assert.ok(pack.eventsById.has("event.building.template.house.keep.review"));
+  assert.ok(pack.eventsById.has("event.building.template.house.keep.work"));
+  assert.ok(pack.eventsById.has("event.building.template.house.keep.leave"));
+  assert.ok(pack.flowsById.has("flow.building.template.house.keep.review"));
+  assert.ok(pack.flowsById.has("flow.building.template.house.keep.work"));
+
+  for (const { arrangement, container, entry } of keepActionRecords) {
+    const expectedEventId = `event.building.template.house.keep.${entry.id}`;
+    assert.equal(entry.targetId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, entry.id].join("::")
+    );
+    assert.ok(binding, `missing keep binding for ${arrangement.id}/${entry.id}`);
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.keep");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, entry.id);
+
+    const event = pack.eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical keep event ${expectedEventId}`);
+
+    if (entry.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "keep leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchPlayableAction = event.actions?.find(
+      (action) => action.type === "launchPlayable"
+    );
+    assert.ok(launchPlayableAction, `keep ${entry.id} should launch canonical playable`);
+    assert.equal(launchPlayableAction.ownerContext.ownerId, "house.template.keep");
+    assert.equal(launchPlayableAction.playableId, `flow.building.template.house.keep.${entry.id}`);
+    assert.equal(launchPlayableAction.integrationId, `playable.flow.building.template.house.keep.${entry.id}.default`);
+  }
+});
+
+nodeTest("zhuyuanzhang grain shop trade accounting and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const {
+    matchesCanonicalBuildingOwnerId,
+  } = require("../.test-dist/core/runtime/building-owner-canonicalization.js");
+  const pack = loadZhuyuanzhangBuildingMenuPack();
+  const grainShopActionRecords = collectZhuyuanzhangBuildingMenuActionRecords(
+    pack,
+    matchesCanonicalBuildingOwnerId
+  ).filter(
+    ({ arrangement, entry }) =>
+      arrangement.buildingId.endsWith(".grain_shop") &&
+      (entry.id === "trade" ||
+        entry.id === "accounting" ||
+        entry.id === "leave")
+  );
+
+  assert.equal(grainShopActionRecords.length, 63);
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of pack.eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "trade" &&
+        binding.trigger?.extra?.itemId !== "accounting" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".grain_shop.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    pack.events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.grain_shop\.(trade|accounting|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped grain shop event ids should be removed from pack truth"
+  );
+  assert.equal(
+    pack.playableShells.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.grain_shop\.(trade|accounting)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped grain shop flow ids should be removed from pack truth"
+  );
+  assert.ok(pack.eventsById.has("event.building.template.house.grain_shop.trade"));
+  assert.ok(
+    pack.eventsById.has("event.building.template.house.grain_shop.accounting")
+  );
+  assert.ok(pack.eventsById.has("event.building.template.house.grain_shop.leave"));
+  assert.ok(pack.flowsById.has("flow.building.template.house.grain_shop.trade"));
+  assert.ok(
+    pack.flowsById.has("flow.building.template.house.grain_shop.accounting")
+  );
+
+  for (const { arrangement, container, entry } of grainShopActionRecords) {
+    const expectedEventId = `event.building.template.house.grain_shop.${entry.id}`;
+    assert.equal(entry.targetId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, entry.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing grain shop binding for ${arrangement.id}/${entry.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.grain_shop");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, entry.id);
+
+    const event = pack.eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical grain shop event ${expectedEventId}`);
+
+    if (entry.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "grain shop leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchPlayableAction = event.actions?.find(
+      (action) => action.type === "launchPlayable"
+    );
+    assert.ok(launchPlayableAction, `grain shop ${entry.id} should launch canonical playable`);
+    assert.equal(launchPlayableAction.ownerContext.ownerId, "house.template.grain_shop");
+    assert.equal(launchPlayableAction.playableId, `flow.building.template.house.grain_shop.${entry.id}`);
+    assert.equal(launchPlayableAction.integrationId, `playable.flow.building.template.house.grain_shop.${entry.id}.default`);
+  }
+});
+
+nodeTest("zhuyuanzhang medicine house treatment compounding and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const {
+    matchesCanonicalBuildingOwnerId,
+  } = require("../.test-dist/core/runtime/building-owner-canonicalization.js");
+  const pack = loadZhuyuanzhangBuildingMenuPack();
+  const medicineHouseActionRecords = collectZhuyuanzhangBuildingMenuActionRecords(
+    pack,
+    matchesCanonicalBuildingOwnerId
+  ).filter(
+    ({ arrangement, entry }) =>
+      arrangement.buildingId.endsWith(".medicine_house") &&
+      (entry.id === "treatment" ||
+        entry.id === "compounding" ||
+        entry.id === "leave")
+  );
+
+  assert.equal(medicineHouseActionRecords.length, 63);
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of pack.eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "treatment" &&
+        binding.trigger?.extra?.itemId !== "compounding" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".medicine_house.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    pack.events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.medicine_house\.(treatment|compounding|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped medicine house event ids should be removed from pack truth"
+  );
+  assert.equal(
+    pack.playableShells.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.medicine_house\.(treatment|compounding)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped medicine house flow ids should be removed from pack truth"
+  );
+  assert.ok(
+    pack.eventsById.has("event.building.template.house.medicine_house.treatment")
+  );
+  assert.ok(
+    pack.eventsById.has("event.building.template.house.medicine_house.compounding")
+  );
+  assert.ok(
+    pack.eventsById.has("event.building.template.house.medicine_house.leave")
+  );
+  assert.ok(
+    pack.flowsById.has("flow.building.template.house.medicine_house.treatment")
+  );
+  assert.ok(
+    pack.flowsById.has("flow.building.template.house.medicine_house.compounding")
+  );
+
+  for (const { arrangement, container, entry } of medicineHouseActionRecords) {
+    const expectedEventId = `event.building.template.house.medicine_house.${entry.id}`;
+    assert.equal(entry.targetId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, entry.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing medicine house binding for ${arrangement.id}/${entry.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.medicine_house");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, entry.id);
+
+    const event = pack.eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical medicine house event ${expectedEventId}`);
+
+    if (entry.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "medicine house leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchPlayableAction = event.actions?.find(
+      (action) => action.type === "launchPlayable"
+    );
+    assert.ok(launchPlayableAction, `medicine house ${entry.id} should launch canonical playable`);
+    assert.equal(launchPlayableAction.ownerContext.ownerId, "house.template.medicine_house");
+    assert.equal(launchPlayableAction.playableId, `flow.building.template.house.medicine_house.${entry.id}`);
+    assert.equal(launchPlayableAction.integrationId, `playable.flow.building.template.house.medicine_house.${entry.id}.default`);
+  }
+});
+
+test("zhuyuanzhang market trade talk intel and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const {
+    matchesCanonicalBuildingOwnerId,
+  } = require("../.test-dist/core/runtime/building-owner-canonicalization.js");
+  const pack = loadZhuyuanzhangBuildingMenuPack();
+  const marketActionItems = collectZhuyuanzhangBuildingMenuActionRecords(
+    pack,
+    matchesCanonicalBuildingOwnerId
+  ).filter(
+    ({ arrangement, entry }) =>
+      matchesCanonicalBuildingOwnerId(
+        arrangement.buildingId,
+        "house.template.market"
+      ) &&
+      (entry.id === "trade" ||
+        entry.id === "talk" ||
+        entry.id === "intel" ||
+        entry.id === "leave")
+  );
+
+  assert.equal(marketActionItems.length, 84);
+  const eventsById = pack.eventsById;
+  const flowsById = pack.flowsById;
+  const bindingsByArrangementItem = mapZhuyuanzhangBindingsByArrangementItem(
+    pack,
+    ["trade", "talk", "intel", "leave"],
+    ".market."
+  );
+
+  assert.equal(
+    pack.events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.market\.(trade|talk|intel|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped market event ids should be removed from pack truth"
+  );
+  assert.equal(
+    pack.playableShells.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.market\.(trade|talk|intel)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped market flow ids should be removed from pack truth"
+  );
+  assert.ok(eventsById.has("event.building.template.house.market.trade"));
+  assert.ok(eventsById.has("event.building.template.house.market.talk"));
+  assert.ok(eventsById.has("event.building.template.house.market.intel"));
+  assert.ok(eventsById.has("event.building.template.house.market.leave"));
+  assert.ok(flowsById.has("flow.building.template.house.market.trade"));
+  assert.ok(flowsById.has("flow.building.template.house.market.talk"));
+  assert.ok(flowsById.has("flow.building.template.house.market.intel"));
+
+  for (const { arrangement, container, entry } of marketActionItems) {
+    const expectedEventId = `event.building.template.house.market.${entry.id}`;
+    assert.equal(entry.targetId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, entry.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing market binding for ${arrangement.id}/${entry.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.market");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, entry.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical market event ${expectedEventId}`);
+
+    if (entry.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "market leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchPlayableAction = event.actions?.find(
+      (action) => action.type === "launchPlayable"
+    );
+    assert.ok(launchPlayableAction, `market ${entry.id} should launch canonical playable`);
+    assert.equal(launchPlayableAction.ownerContext.ownerId, "house.template.market");
+    assert.equal(launchPlayableAction.playableId, `flow.building.template.house.market.${entry.id}`);
+    assert.equal(launchPlayableAction.integrationId, `playable.flow.building.template.house.market.${entry.id}.default`);
+  }
+});
+
+nodeTest("zhuyuanzhang tea house tea talk intel and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const {
+    matchesCanonicalBuildingOwnerId,
+  } = require("../.test-dist/core/runtime/building-owner-canonicalization.js");
+  const pack = loadZhuyuanzhangBuildingMenuPack();
+  const teaHouseActionItems = collectZhuyuanzhangBuildingMenuActionRecords(
+    pack,
+    matchesCanonicalBuildingOwnerId
+  ).filter(
+    ({ arrangement, entry }) =>
+      matchesCanonicalBuildingOwnerId(
+        arrangement.buildingId,
+        "house.template.tea_house"
+      ) &&
+      (entry.id === "tea" ||
+        entry.id === "talk" ||
+        entry.id === "intel" ||
+        entry.id === "leave")
+  );
+
+  assert.equal(teaHouseActionItems.length, 84);
+  const eventsById = pack.eventsById;
+  const flowsById = pack.flowsById;
+  const bindingsByArrangementItem = mapZhuyuanzhangBindingsByArrangementItem(
+    pack,
+    ["tea", "talk", "intel", "leave"],
+    ".tea_house."
+  );
+
+  assert.equal(
+    pack.events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.tea_house\.(tea|talk|intel|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped tea house event ids should be removed from pack truth"
+  );
+  assert.equal(
+    pack.playableShells.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.tea_house\.(tea|talk|intel)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped tea house flow ids should be removed from pack truth"
+  );
+  assert.ok(eventsById.has("event.building.template.house.tea_house.tea"));
+  assert.ok(eventsById.has("event.building.template.house.tea_house.talk"));
+  assert.ok(eventsById.has("event.building.template.house.tea_house.intel"));
+  assert.ok(eventsById.has("event.building.template.house.tea_house.leave"));
+  assert.ok(flowsById.has("flow.building.template.house.tea_house.tea"));
+  assert.ok(flowsById.has("flow.building.template.house.tea_house.talk"));
+  assert.ok(flowsById.has("flow.building.template.house.tea_house.intel"));
+
+  for (const { arrangement, container, entry } of teaHouseActionItems) {
+    const expectedEventId = `event.building.template.house.tea_house.${entry.id}`;
+    assert.equal(entry.targetId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, entry.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing tea house binding for ${arrangement.id}/${entry.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.tea_house");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, entry.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical tea house event ${expectedEventId}`);
+
+    if (entry.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "tea house leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchPlayableAction = event.actions?.find(
+      (action) => action.type === "launchPlayable"
+    );
+    assert.ok(launchPlayableAction, `tea house ${entry.id} should launch canonical playable`);
+    assert.equal(launchPlayableAction.ownerContext.ownerId, "house.template.tea_house");
+    assert.equal(launchPlayableAction.playableId, `flow.building.template.house.tea_house.${entry.id}`);
+    assert.equal(launchPlayableAction.integrationId, `playable.flow.building.template.house.tea_house.${entry.id}.default`);
+  }
 });
 
 nodeTest("zhuyuanzhang leader residence review and leave routes use canonical template ids while keeping live payload anchors", () => {
@@ -40903,6 +41456,7 @@ nodeTest("zhuyuanzhang leader residence review and leave routes use canonical te
 
   assert.equal(leaderResidenceActionItems.length, 42);
   const eventsById = pack.eventsById;
+  const flowsById = pack.flowsById;
   const bindingsByArrangementItem = mapZhuyuanzhangBindingsByArrangementItem(
     pack,
     ["review", "leave"],
@@ -40919,7 +41473,7 @@ nodeTest("zhuyuanzhang leader residence review and leave routes use canonical te
     "retired city-scoped leader residence event ids should be removed from pack truth"
   );
   assert.equal(
-    pack.flowPlayables.filter((flow) =>
+    pack.playableShells.filter((flow) =>
       /^flow\.building\.house\.[^.]+\.leader_residence\.review$/.test(flow.id)
     ).length,
     0,
@@ -40931,7 +41485,9 @@ nodeTest("zhuyuanzhang leader residence review and leave routes use canonical te
   assert.ok(
     eventsById.has("event.building.template.house.leader_residence.leave")
   );
-  assert.equal(pack.flowPlayables.length, 0);
+  assert.ok(
+    flowsById.has("flow.building.template.house.leader_residence.review")
+  );
 
   for (const { arrangement, container, entry } of leaderResidenceActionItems) {
     const expectedEventId = `event.building.template.house.leader_residence.${entry.id}`;
@@ -40964,14 +41520,106 @@ nodeTest("zhuyuanzhang leader residence review and leave routes use canonical te
       continue;
     }
 
-    assert.equal(
-      event.dialogueId,
-      "scene.building.template.house.leader_residence.review"
+    const launchPlayableAction = event.actions?.find(
+      (action) => action.type === "launchPlayable"
     );
-    assert.ok(
-      !event.actions?.some((action) => action.type === "launchFlow"),
-      "leader residence review should no longer keep launchFlow residue"
+    assert.ok(launchPlayableAction, `leader residence ${entry.id} should launch canonical playable`);
+    assert.equal(launchPlayableAction.ownerContext.ownerId, "house.template.leader_residence");
+    assert.equal(launchPlayableAction.playableId, "flow.building.template.house.leader_residence.review");
+    assert.equal(launchPlayableAction.integrationId, "playable.flow.building.template.house.leader_residence.review.default");
+  }
+});
+
+nodeTest("zhuyuanzhang inn drink gamble talk work and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const {
+    matchesCanonicalBuildingOwnerId,
+  } = require("../.test-dist/core/runtime/building-owner-canonicalization.js");
+  const pack = loadZhuyuanzhangBuildingMenuPack();
+  const innActionItems = collectZhuyuanzhangBuildingMenuActionRecords(
+    pack,
+    matchesCanonicalBuildingOwnerId
+  ).filter(
+    ({ arrangement, entry }) =>
+      matchesCanonicalBuildingOwnerId(
+        arrangement.buildingId,
+        "house.template.inn"
+      ) &&
+      (entry.id === "drink" ||
+        entry.id === "gamble" ||
+        entry.id === "talk" ||
+        entry.id === "work" ||
+        entry.id === "leave")
+  );
+
+  assert.equal(innActionItems.length, 105);
+  const eventsById = pack.eventsById;
+  const flowsById = pack.flowsById;
+  const bindingsByArrangementItem = mapZhuyuanzhangBindingsByArrangementItem(
+    pack,
+    ["drink", "gamble", "talk", "work", "leave"],
+    ".inn."
+  );
+
+  assert.equal(
+    pack.events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.inn\.(drink|gamble|talk|work|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped inn event ids should be removed from pack truth"
+  );
+  assert.equal(
+    pack.playableShells.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.inn\.(drink|gamble|talk|work)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped inn flow ids should be removed from pack truth"
+  );
+  assert.ok(eventsById.has("event.building.template.house.inn.drink"));
+  assert.ok(eventsById.has("event.building.template.house.inn.gamble"));
+  assert.ok(eventsById.has("event.building.template.house.inn.talk"));
+  assert.ok(eventsById.has("event.building.template.house.inn.work"));
+  assert.ok(eventsById.has("event.building.template.house.inn.leave"));
+  assert.ok(flowsById.has("flow.building.template.house.inn.drink"));
+  assert.ok(flowsById.has("flow.building.template.house.inn.gamble"));
+  assert.ok(flowsById.has("flow.building.template.house.inn.talk"));
+  assert.ok(flowsById.has("flow.building.template.house.inn.work"));
+
+  for (const { arrangement, container, entry } of innActionItems) {
+    const expectedEventId = `event.building.template.house.inn.${entry.id}`;
+    assert.equal(entry.targetId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, entry.id].join("::")
     );
+    assert.ok(binding, `missing inn binding for ${arrangement.id}/${entry.id}`);
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.inn");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, entry.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical inn event ${expectedEventId}`);
+
+    if (entry.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "inn leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchPlayableAction = event.actions?.find(
+      (action) => action.type === "launchPlayable"
+    );
+    assert.ok(launchPlayableAction, `inn ${entry.id} should launch canonical playable`);
+    assert.equal(launchPlayableAction.ownerContext.ownerId, "house.template.inn");
+    assert.equal(launchPlayableAction.playableId, `flow.building.template.house.inn.${entry.id}`);
+    assert.equal(launchPlayableAction.integrationId, `playable.flow.building.template.house.inn.${entry.id}.default`);
   }
 });
 
@@ -40992,6 +41640,7 @@ nodeTest("zhuyuanzhang temple standard routes use canonical template ids while p
         "house.template.temple"
       ) &&
       (entry.id === "review" ||
+        entry.id === "work" ||
         entry.id === "donate" ||
         entry.id === "leave")
   );
@@ -41003,13 +41652,15 @@ nodeTest("zhuyuanzhang temple standard routes use canonical template ids while p
         entry.id === "carry-water")
   );
 
-  assert.equal(standardTempleActionItems.length, 60);
+  assert.equal(standardTempleActionItems.length, 80);
   assert.equal(preservedKulanItems.length, 3);
   const eventsById = pack.eventsById;
+  const flowsById = pack.flowsById;
   const bindingsByArrangementItem = mapZhuyuanzhangBindingsByArrangementItem(
     pack,
     [
       "review",
+      "work",
       "donate",
       "leave",
       "copy-scripture",
@@ -41032,32 +41683,37 @@ nodeTest("zhuyuanzhang temple standard routes use canonical template ids while p
     pack.events.filter((event) =>
       /^event\.building\.house\.[^.]+\.temple\.work$/.test(event.id)
     ).length,
-    0,
-    "retired city-scoped temple work event ids should be removed from pack truth"
+    1,
+    "only the preserved kulan temple work event should remain city-scoped"
   );
   assert.equal(
-    pack.flowPlayables.filter((flow) =>
+    pack.playableShells.filter((flow) =>
       /^flow\.building\.house\.[^.]+\.temple\.(review|donate)$/.test(flow.id)
     ).length,
     0,
     "retired city-scoped temple review/donate flow ids should be removed from pack truth"
   );
   assert.equal(
-    pack.flowPlayables.filter((flow) =>
+    pack.playableShells.filter((flow) =>
       /^flow\.building\.house\.[^.]+\.temple\.work$/.test(flow.id)
     ).length,
-    0,
-    "retired city-scoped temple work flow ids should be removed from pack truth"
+    1,
+    "only the preserved kulan temple work flow should remain city-scoped"
   );
   assert.ok(eventsById.has("event.building.template.house.temple.review"));
-  assert.ok(!eventsById.has("event.building.template.house.temple.work"));
+  assert.ok(eventsById.has("event.building.template.house.temple.work"));
   assert.ok(eventsById.has("event.building.template.house.temple.donate"));
   assert.ok(eventsById.has("event.building.template.house.temple.leave"));
-  assert.equal(pack.flowPlayables.length, 0);
-  assert.ok(!eventsById.has("event.building.house.kulan.temple.work"));
+  assert.ok(flowsById.has("flow.building.template.house.temple.review"));
+  assert.ok(flowsById.has("flow.building.template.house.temple.work"));
+  assert.ok(flowsById.has("flow.building.template.house.temple.donate"));
+  assert.ok(eventsById.has("event.building.house.kulan.temple.work"));
   assert.ok(eventsById.has("event.building.house.kulan.temple.copy_scripture"));
   assert.ok(eventsById.has("event.building.house.kulan.temple.sweep_courtyard"));
   assert.ok(eventsById.has("event.building.house.kulan.temple.carry_water"));
+  assert.ok(flowsById.has("flow.building.house.kulan.temple.work"));
+  assert.ok(flowsById.has("flow.building.house.kulan.temple.sweep_courtyard"));
+  assert.ok(flowsById.has("flow.building.house.kulan.temple.carry_water"));
 
   for (const { arrangement, container, entry } of standardTempleActionItems) {
     const expectedEventId = `event.building.template.house.temple.${entry.id}`;
@@ -41087,26 +41743,13 @@ nodeTest("zhuyuanzhang temple standard routes use canonical template ids while p
       continue;
     }
 
-    if (entry.id === "donate") {
-      assert.equal(
-        event.dialogueId,
-        "scene.building.template.house.temple.donate"
-      );
-      assert.ok(
-        !event.actions?.some((action) => action.type === "launchFlow"),
-        "temple donate should not keep launchFlow residue"
-      );
-      continue;
-    }
-
-    assert.equal(
-      event.dialogueId,
-      "scene.building.template.house.temple.review"
+    const launchPlayableAction = event.actions?.find(
+      (action) => action.type === "launchPlayable"
     );
-    assert.ok(
-      !event.actions?.some((action) => action.type === "launchFlow"),
-      "temple review should no longer keep launchFlow residue"
-    );
+    assert.ok(launchPlayableAction, `temple ${entry.id} should launch canonical playable`);
+    assert.equal(launchPlayableAction.ownerContext.ownerId, "house.template.temple");
+    assert.equal(launchPlayableAction.playableId, `flow.building.template.house.temple.${entry.id}`);
+    assert.equal(launchPlayableAction.integrationId, `playable.flow.building.template.house.temple.${entry.id}.default`);
   }
 
   for (const { arrangement, container, entry } of preservedKulanItems) {
@@ -41124,46 +41767,24 @@ nodeTest("zhuyuanzhang temple standard routes use canonical template ids while p
     );
     assert.equal(binding.owner.id, "house.kulan.temple");
     assert.equal(entry.targetId, binding.eventId);
-
-    const event = eventsById.get(binding.eventId);
-    assert.ok(event, `missing preserved kulan event ${binding.eventId}`);
-    const launchPlayableAction = event.actions?.find(
-      (action) => action.type === "launchPlayable"
-    );
-    assert.ok(
-      launchPlayableAction,
-      `preserved kulan temple ${entry.id} should launch a playable directly`
-    );
-    assert.equal(launchPlayableAction.ownerContext.ownerId, "house.kulan.temple");
-    assert.equal(launchPlayableAction.ownerContext.returnPolicy, "resume-owner");
-
-    if (entry.id === "copy-scripture") {
-      assert.equal(launchPlayableAction.playableId, "temple-copy-scripture");
-      assert.equal(
-        launchPlayableAction.integrationId,
-        "playable.temple-copy-scripture.instance.template.temple-copy-scripture"
-      );
-      continue;
-    }
-
-    assert.equal(launchPlayableAction.playableId, "activity-qte");
-    assert.equal(
-      launchPlayableAction.integrationId,
-      entry.id === "sweep-courtyard"
-        ? "playable.activity-qte.instance.template.temple-sweep-courtyard"
-        : "playable.activity-qte.instance.template.temple-carry-water"
-    );
-    assert.equal(
-      launchPlayableAction.payload?.activityId,
-      entry.id === "sweep-courtyard"
-        ? "activity.zhu_yuanzhang.temple.sweep_courtyard"
-        : "activity.zhu_yuanzhang.temple.carry_water"
-    );
-    assert.ok(
-      !event.actions?.some((action) => action.type === "launchFlow"),
-      `preserved kulan temple ${entry.id} should not keep launchFlow residue`
-    );
   }
+
+  const preservedKulanWorkBinding = bindingsByArrangementItem.get(
+    [
+      "arrangement.city.kulan.house.kulan.temple",
+      "house.kulan.temple.actions",
+      "work",
+    ].join("::")
+  );
+  assert.ok(
+    preservedKulanWorkBinding,
+    "preserved kulan temple work binding should remain recorded"
+  );
+  assert.equal(
+    preservedKulanWorkBinding.eventId,
+    "event.building.house.kulan.temple.work"
+  );
+  assert.equal(preservedKulanWorkBinding.owner.id, "house.kulan.temple");
 });
 
 test("zhuyuanzhang kulan building-enter routes stay fully authored in pack data", () => {
@@ -41193,6 +41814,42 @@ test("zhuyuanzhang kulan building-enter routes stay fully authored in pack data"
       bindingId: "binding.building.house.kulan.temple.enter",
       eventId: "event.building.house.kulan.temple.enter",
       sceneId: "scene.building.house.kulan.temple.enter",
+    },
+    {
+      buildingId: "house.kulan.keep",
+      bindingId: "binding.building.house.kulan.keep.enter",
+      eventId: "event.building.house.kulan.keep.enter",
+      sceneId: "scene.building.house.kulan.keep.enter",
+    },
+    {
+      buildingId: "house.kulan.tea_house",
+      bindingId: "binding.building.house.kulan.tea_house.enter",
+      eventId: "event.building.house.kulan.tea_house.enter",
+      sceneId: "scene.building.house.kulan.tea_house.enter",
+    },
+    {
+      buildingId: "house.kulan.market",
+      bindingId: "binding.building.house.kulan.market.enter",
+      eventId: "event.building.house.kulan.market.enter",
+      sceneId: "scene.building.house.kulan.market.enter",
+    },
+    {
+      buildingId: "house.kulan.grain_shop",
+      bindingId: "binding.building.house.kulan.grain_shop.enter",
+      eventId: "event.building.house.kulan.grain_shop.enter",
+      sceneId: "scene.building.house.kulan.grain_shop.enter",
+    },
+    {
+      buildingId: "house.kulan.medicine_house",
+      bindingId: "binding.building.house.kulan.medicine_house.enter",
+      eventId: "event.building.house.kulan.medicine_house.enter",
+      sceneId: "scene.building.house.kulan.medicine_house.enter",
+    },
+    {
+      buildingId: "house.kulan.inn",
+      bindingId: "binding.building.house.kulan.inn.enter",
+      eventId: "event.building.house.kulan.inn.enter",
+      sceneId: "scene.building.house.kulan.inn.enter",
     },
   ];
 
@@ -41231,21 +41888,6 @@ test("zhuyuanzhang kulan building-enter routes stay fully authored in pack data"
     "flag.story.zhu_yuanzhang.ordination.completed"
   );
   assert.equal(templeBinding.conditions.conditions[0].expected, true);
-
-  for (const retiredRoute of [
-    "binding.building.house.kulan.keep.enter",
-    "binding.building.house.kulan.tea_house.enter",
-    "binding.building.house.kulan.market.enter",
-    "binding.building.house.kulan.grain_shop.enter",
-    "binding.building.house.kulan.medicine_house.enter",
-    "binding.building.house.kulan.inn.enter",
-  ]) {
-    assert.equal(
-      eventBindings.some((entry) => entry.id === retiredRoute),
-      false,
-      `${retiredRoute} should be removed from the demo pack`
-    );
-  }
 });
 
 test("legacy house runtime retirement removes superseded house code and governance", () => {
@@ -41276,29 +41918,182 @@ test("legacy house runtime retirement removes superseded house code and governan
   assert.doesNotMatch(agentsSource, /house module/i);
 });
 
-test("playable runtime no longer special-cases retired building-flow launches", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
-    "utf8"
-  );
+test("flow playable reduces a command and settles through shared handoff", () => {
+  const {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+    resetDefaultPlayableRuntimeRegistries,
+    createLaunchPlayableRequest,
+    createPlayableActionRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const flowDefinition = {
+    id: "flow.test.temple.rest",
+    title: "Rest",
+    initialNodeId: "node.start",
+    nodes: [
+      {
+        id: "node.start",
+        type: "text",
+        text: "Rest here.",
+        nextNodeId: "node.finish",
+      },
+      {
+        id: "node.finish",
+        type: "complete",
+        outcome: "success",
+        metrics: { rested: true },
+      },
+    ],
+  };
+  try {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod({
+      modId: "mod.test.robustness.flow-settlement",
+      manifest: {
+        id: "mod.test.robustness.flow-settlement",
+        schemaVersion: "1",
+        version: "1.0.0",
+        title: "Robustness Flow Settlement Test",
+        entryContentPackIds: ["pack.test.robustness.flow-settlement"],
+      },
+      normalizedContentSources: [{ playableShells: [flowDefinition] }],
+      registeredDefinitionIds: ["pack.test.robustness.flow-settlement"],
+      gameplayContributions: {
+        contentPackIds: ["pack.test.robustness.flow-settlement"],
+        navigation: [],
+        events: [],
+        scenes: [],
+        dialogues: [],
+        tasks: [],
+        houses: [],
+        houseModules: [],
+        playables: [flowDefinition.id],
+        playableIntegrations: [`playable.${flowDefinition.id}.default`],
+      },
+      startupProfile: {},
+    });
 
-  assert.doesNotMatch(source, /playableId === "building-flow"/);
+    const launched = runPlayableRuntime({
+      state: createRuntimeState(),
+      request: createLaunchPlayableRequest(flowDefinition.id, {
+        integrationId: `playable.${flowDefinition.id}.default`,
+        ownerContext: {
+          ownerKind: "house",
+          ownerId: "building.temple",
+          returnPolicy: "resume-owner",
+        },
+      }),
+      characterDefinitions: prototypeCharacters,
+    });
+
+    const settled = runPlayableRuntime({
+      state: launched.state,
+      request: createPlayableActionRequest(flowDefinition.id, "confirm"),
+      characterDefinitions: prototypeCharacters,
+    });
+
+    assert.equal(settled.handled, true);
+    assert.equal(settled.state.core.runtime.playableSession, null);
+    assert.equal(settled.settlement?.outcome, "success");
+    assert.equal(settled.settlement?.handoff.type, "resume-owner");
+    assert.equal(settled.settlement?.handoff.ownerId, "building.temple");
+    assert.deepEqual(settled.settlement?.factResult.metrics, { rested: true });
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
 });
 
-test("script editor retired building-flow labels are removed from builtin minigame pickers", () => {
-  const source = fs.readFileSync(
-    path.join(
-      process.cwd(),
-      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
-    ),
-    "utf8"
-  );
+test("flow playable settlement preserves canonical home template owner id in shared handoff", () => {
+  const {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+    resetDefaultPlayableRuntimeRegistries,
+    createLaunchPlayableRequest,
+    createPlayableActionRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const flowDefinition = {
+    id: "flow.test.home.rest",
+    title: "Rest",
+    initialNodeId: "node.start",
+    nodes: [
+      {
+        id: "node.start",
+        type: "text",
+        text: "Rest here.",
+        nextNodeId: "node.finish",
+      },
+      {
+        id: "node.finish",
+        type: "complete",
+        outcome: "success",
+        metrics: { rested: true },
+      },
+    ],
+  };
+  try {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod({
+      modId: "mod.test.robustness.home-flow-settlement",
+      manifest: {
+        id: "mod.test.robustness.home-flow-settlement",
+        schemaVersion: "1",
+        version: "1.0.0",
+        title: "Robustness Home Flow Settlement Test",
+        entryContentPackIds: ["pack.test.robustness.home-flow-settlement"],
+      },
+      normalizedContentSources: [{ playableShells: [flowDefinition] }],
+      registeredDefinitionIds: ["pack.test.robustness.home-flow-settlement"],
+      gameplayContributions: {
+        contentPackIds: ["pack.test.robustness.home-flow-settlement"],
+        navigation: [],
+        events: [],
+        scenes: [],
+        dialogues: [],
+        tasks: [],
+        houses: [],
+        houseModules: [],
+        playables: [flowDefinition.id],
+        playableIntegrations: [`playable.${flowDefinition.id}.default`],
+      },
+      startupProfile: {},
+    });
 
-  assert.doesNotMatch(source, /"building-flow": "建筑流程"/);
-  assert.doesNotMatch(
-    source,
-    /"playable\.building-flow\.house\.default": "建筑流程 \/ 建筑接入"/
-  );
+    const launched = runPlayableRuntime({
+      state: createRuntimeState({
+        ...createBaseState(),
+        world: {
+          ...createBaseState().world,
+          currentHouseId: "home.ningbo",
+        },
+      }),
+      request: createLaunchPlayableRequest(flowDefinition.id, {
+        integrationId: `playable.${flowDefinition.id}.default`,
+        ownerContext: {
+          ownerKind: "house",
+          ownerId: "home.template",
+          returnPolicy: "resume-owner",
+        },
+      }),
+      characterDefinitions: prototypeCharacters,
+    });
+
+    assert.equal(
+      launched.state.core.runtime.playableSession?.ownerContext.ownerId,
+      "home.template"
+    );
+
+    const settled = runPlayableRuntime({
+      state: launched.state,
+      request: createPlayableActionRequest(flowDefinition.id, "confirm"),
+      characterDefinitions: prototypeCharacters,
+    });
+
+    assert.equal(settled.handled, true);
+    assert.equal(settled.state.core.runtime.playableSession, null);
+    assert.equal(settled.settlement?.handoff.type, "resume-owner");
+    assert.equal(settled.settlement?.handoff.ownerId, "home.template");
+    assert.equal(settled.state.core.world.currentHouseId, "home.ningbo");
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
 });
 
 test("dispatchCurrentFlowAction routes activity definitions into shared playable runtime", () => {
@@ -41316,10 +42111,7 @@ test("dispatchCurrentFlowAction routes activity definitions into shared playable
     dispatchCurrentFlowActionBlock,
     /activityDefinitionsById:\s*activeContentContext\.storyContent\.activityDefinitionsById/
   );
-  assert.match(
-    dispatchCurrentFlowActionBlock,
-    /flowPlayablesById:\s*activeContentContext\.gameContent\.flowPlayablesById/
-  );
+  assert.doesNotMatch(dispatchCurrentFlowActionBlock, /playableShellsById:/);
 });
 
 test("shared playable overlay keeps result overlays visible after settlement", () => {

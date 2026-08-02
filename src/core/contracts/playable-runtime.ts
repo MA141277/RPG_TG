@@ -129,6 +129,20 @@ export type PlayablePresenterModel = {
   detail?: Record<string, unknown> | undefined;
 };
 
+export type PlayableShellOverlaySyncInput = {
+  root: ParentNode;
+  session: ActivePlayableSession | null;
+  dispatchAction(
+    playableId: PlayableId,
+    action: string,
+    payload?: Record<string, unknown>
+  ): void;
+  readSession(playableId: PlayableId): ActivePlayableSession | null;
+  renderApp(): void;
+  requestAnimationFrame(callback: FrameRequestCallback): number;
+  cancelAnimationFrame(frameId: number): void;
+};
+
 export type PlayableShell = {
   manifest: {
     playableId: PlayableId;
@@ -142,6 +156,9 @@ export type PlayableShell = {
   ) => ActivePlayableSession;
   present: (session: ActivePlayableSession) => PlayablePresenterModel;
   complete: (session: ActivePlayableSession) => PlayableResult | null;
+  renderStage?: ((session: ActivePlayableSession) => string) | undefined;
+  renderOverlay?: ((session: ActivePlayableSession) => string) | undefined;
+  syncOverlay?: ((input: PlayableShellOverlaySyncInput) => void) | undefined;
 };
 
 export type PlayableResult = {

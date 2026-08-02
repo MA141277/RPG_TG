@@ -50,6 +50,9 @@ import {
 import {
   builtinPlayableDefinitionRegistry,
 } from "../../../core/registry/builtin-playable-definition-registry";
+import {
+  isScriptEditorShellBackedMinigamePlayableId,
+} from "./minigame-binding-authoring";
 
 export type ScriptEditorRuntimeExportDiagnostic = {
   code:
@@ -83,7 +86,7 @@ type RuntimePackManifestFiles = {
   activities: string;
   playables: string;
   playableIntegrations: string;
-  flowPlayables: string;
+  playableShells: string;
   tasks: string;
   textEntries: string;
   cards: string;
@@ -164,7 +167,7 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   activities: "./activities.json",
   playables: "./playables.json",
   playableIntegrations: "./playable-integrations.json",
-  flowPlayables: "./flow-playables.json",
+  playableShells: "./playable-shells.json",
   tasks: "./tasks.json",
   textEntries: "./text-entries.json",
   cards: "./cards.json",
@@ -255,7 +258,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       activities: project.activities,
       playables: playableRuntimeFamilies.playables,
       playableIntegrations: playableRuntimeFamilies.playableIntegrations,
-      flowPlayables: playableRuntimeFamilies.flowPlayables,
+      playableShells: playableRuntimeFamilies.playableShells,
       tasks: exportedTasks,
       textEntries: exportedTextEntries,
       cards: project.cards,
@@ -1011,8 +1014,8 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.playableIntegrations)]: stringifyJson(
       playableRuntimeFamilies.playableIntegrations
     ),
-    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.flowPlayables)]: stringifyJson(
-      playableRuntimeFamilies.flowPlayables
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.playableShells)]: stringifyJson(
+      playableRuntimeFamilies.playableShells
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.tasks)]: stringifyJson(
       exportedTasks
@@ -1062,7 +1065,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
 ): {
   playables: PlayableDefinition[];
   playableIntegrations: PlayableIntegrationDefinition[];
-  flowPlayables: FlowPlayableDefinition[];
+  playableShells: FlowPlayableDefinition[];
 } {
   const playablesById = new Map<string, PlayableDefinition>();
   const playableIntegrations: PlayableIntegrationDefinition[] = [];
@@ -1079,6 +1082,16 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     );
     const eventLaunchEventId = eventLaunchEventIdsByMinigameId.get(minigame.id) ?? "";
     if (playableId == null) {
+      continue;
+    }
+    if (!isScriptEditorShellBackedMinigamePlayableId(playableId)) {
+      diagnostics.push({
+        code: "unsupported-family",
+        fieldPath: `${fieldPath}.playableId`,
+        message:
+          `Minigame binding references playable "${playableId}", which requires ` +
+          "a registered playable shell and cannot be exported as a minigame binding.",
+      });
       continue;
     }
     const integrationId = createDerivedMinigameIntegrationId(minigame.id, playableId);
@@ -1144,12 +1157,12 @@ function materializeScriptEditorPlayableRuntimeFamilies(
       outcomeConfig,
     } as PlayableIntegrationDefinition & { editorRecordId: string });
   }
-  const flowPlayables = materializeRuntimeFlowDefinitions(project.flows, diagnostics);
+  const playableShells = materializeRuntimeFlowDefinitions(project.flows, diagnostics);
 
   return {
     playables: Array.from(playablesById.values()),
     playableIntegrations,
-    flowPlayables,
+    playableShells,
   };
 }
 
@@ -2139,17 +2152,6 @@ function lowerEditorEventToRuntimeEvent(
   if (actions === null) {
     return null;
   }
-  for (const action of actions) {
-    if (action.type === "launchFlow" && !sourceFlowIds.has(action.flowId)) {
-      diagnostics.push({
-        code: "missing-reference",
-        fieldPath: `project.events[${eventIndex}].actions`,
-        message: `Event "${eventRecord.id}" references missing flow "${action.flowId}".`,
-      });
-      return null;
-    }
-  }
-
   const settlementId = lowerEventSettlementId(
     eventRecord,
     eventIndex,
@@ -2345,48 +2347,11 @@ function lowerEventRouteCommands(
       });
       continue;
     }
-    if (
-      action?.type === "launchFlow" &&
-      typeof action.flowId === "string" &&
-      action.flowId.trim().length > 0 &&
-      action.ownerContext != null
-    ) {
-      const ownerKind = action.ownerContext.ownerKind;
-      const ownerId = action.ownerContext.ownerId;
-      const returnPolicy = action.ownerContext.returnPolicy;
-      if (
-        (ownerKind !== "house" &&
-          ownerKind !== "dialogue" &&
-          ownerKind !== "task" &&
-          ownerKind !== "external") ||
-        !isPlayableReturnPolicy(returnPolicy)
-      ) {
-        diagnostics.push({
-          code: "invalid-field",
-          fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
-          message: "launchFlow actions require a supported ownerContext contract.",
-        });
-        return null;
-      }
-      actions.push({
-        type: "launchFlow",
-        flowId: action.flowId.trim(),
-        ownerContext: {
-          ownerKind,
-          ownerId:
-            typeof ownerId === "string" && ownerId.trim().length > 0
-              ? ownerId.trim()
-              : null,
-          returnPolicy,
-        },
-      });
-      continue;
-    }
     diagnostics.push({
       code: "unsupported-lowering",
       fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
       message:
-        "Event export currently supports only closeBuilding, launchPlayable, and launchFlow runtime actions.",
+        "Event export currently supports only closeBuilding and launchPlayable runtime actions.",
     });
     return null;
   }

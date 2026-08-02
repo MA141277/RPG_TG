@@ -10,7 +10,6 @@ export type RuntimeCoreState = GameState & {
 
 export type RuntimeAppState = Pick<
   AppState,
-  | "beggingMiniGameState"
   | "autoAdvanceState"
   | "campaignTravelState"
   | "cityDirectoryState"

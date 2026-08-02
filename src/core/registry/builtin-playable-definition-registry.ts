@@ -3,33 +3,32 @@ import {
   createPlayableDefinitionRegistry,
   type PlayableDefinitionRegistry,
 } from "./playable-definition-registry";
-import {
-  manifest as activityQteManifest,
-} from "../../playables/activity-qte";
-import {
-  manifest as templeCopyScriptureManifest,
-} from "../../playables/temple-copy-scripture";
+import { activityQtePlayableShell } from "../../playables/activity-qte/shell";
+import { templeCopyScriptureShell } from "../../playables/temple-copy-scripture";
+import { cityBeggingPlayableShell } from "../../application/playables/city-begging/shell";
+import { grainAccountingPlayableShell } from "../../application/playables/grain-accounting/shell";
+import { medicineCompoundingPlayableShell } from "../../application/playables/medicine-compounding/shell";
 
 const builtinPlayableDefinitions: PlayableDefinition[] = [
   {
-    id: activityQteManifest.playableId,
-    commandPrefix: activityQteManifest.commandPrefix,
+    id: activityQtePlayableShell.manifest.playableId,
+    commandPrefix: activityQtePlayableShell.manifest.commandPrefix,
   },
   {
-    id: templeCopyScriptureManifest.playableId,
-    commandPrefix: templeCopyScriptureManifest.commandPrefix,
+    id: templeCopyScriptureShell.manifest.playableId,
+    commandPrefix: templeCopyScriptureShell.manifest.commandPrefix,
   },
   {
-    id: "city-begging",
-    commandPrefix: "interactive.city-begging.",
+    id: cityBeggingPlayableShell.manifest.playableId,
+    commandPrefix: cityBeggingPlayableShell.manifest.commandPrefix,
   },
   {
-    id: "grain-accounting",
-    commandPrefix: "playable.grain-accounting.",
+    id: grainAccountingPlayableShell.manifest.playableId,
+    commandPrefix: grainAccountingPlayableShell.manifest.commandPrefix,
   },
   {
-    id: "medicine-compounding",
-    commandPrefix: "playable.medicine-compounding.",
+    id: medicineCompoundingPlayableShell.manifest.playableId,
+    commandPrefix: medicineCompoundingPlayableShell.manifest.commandPrefix,
   },
   {
     id: "story-battle",

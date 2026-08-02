@@ -6,6 +6,7 @@ import { assertHouseModuleDefaults } from "../content/house-module-defaults";
 import { GAME_VIEW_NAMES } from "../../domain/game-state";
 import type { ContentPackAudioSettings } from "../../domain/content-pack";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
+import { builtinPlayableShellRegistry } from "../../core/registry/builtin-playable-shell-registry";
 
 type SettlementAttributeMetadata = {
   attributeType: "number" | "boolean" | "enum";
@@ -341,21 +342,25 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   }
   if (value.playables != null) {
     assertArray(value.playables, "scenario playables");
+    assertScenarioPlayablesUseRegisteredShells(value.playables);
   }
   if (value.playableIntegrations != null) {
     assertArray(value.playableIntegrations, "scenario playable integrations");
     assertPlayableIntegrationsDoNotUseRetiredSceneOwnerKind(
       value.playableIntegrations
     );
+    assertScenarioPlayableIntegrationsUseRegisteredShells(
+      value.playableIntegrations
+    );
   }
   if (value.flowDefinitions != null) {
     throw new Error(
-      'scenario flowDefinitions is retired; use flowPlayables as the content-only flow family.'
+      'scenario flowDefinitions is retired; use playableShells as the content-only flow family.'
     );
   }
-  if (value.flowPlayables != null) {
-    assertArray(value.flowPlayables, "scenario flow playables");
-    assertFlowPlayablesDoNotUseRetiredSceneOwnerKind(value.flowPlayables);
+  if (value.playableShells != null) {
+    assertArray(value.playableShells, "scenario flow playables");
+    assertFlowPlayablesDoNotUseRetiredSceneOwnerKind(value.playableShells);
   }
 
   if (value.activities != null) {
@@ -1115,14 +1120,14 @@ function assertPlayableIntegrationsDoNotUseRetiredSceneOwnerKind(
 }
 
 function assertFlowPlayablesDoNotUseRetiredSceneOwnerKind(
-  flowPlayables: unknown[]
+  playableShells: unknown[]
 ): void {
-  flowPlayables.forEach((flowPlayable, index) => {
-    assertObject(flowPlayable, `scenario flowPlayables[${index}]`);
+  playableShells.forEach((flowPlayable, index) => {
+    assertObject(flowPlayable, `scenario playableShells[${index}]`);
     const record = flowPlayable as Record<string, unknown>;
     if (record.ownerKind === "scene") {
       throw new Error(
-        `scenario flowPlayables[${index}] uses retired ownerKind "scene".`
+        `scenario playableShells[${index}] uses retired ownerKind "scene".`
       );
     }
     for (const retiredField of [
@@ -1139,9 +1144,44 @@ function assertFlowPlayablesDoNotUseRetiredSceneOwnerKind(
     ]) {
       if (Object.hasOwn(record, retiredField)) {
         throw new Error(
-          `scenario flowPlayables[${index}] uses retired routing field "${retiredField}".`
+          `scenario playableShells[${index}] uses retired routing field "${retiredField}".`
         );
       }
+    }
+  });
+}
+
+function assertScenarioPlayablesUseRegisteredShells(playables: unknown[]): void {
+  playables.forEach((playableDefinition, index) => {
+    assertObject(playableDefinition, `scenario playables[${index}]`);
+    const playableId = (playableDefinition as { id?: unknown }).id;
+    if (typeof playableId !== "string" || playableId.length === 0) {
+      return;
+    }
+    if (builtinPlayableShellRegistry.get(playableId) == null) {
+      throw new Error(
+        `scenario playables[${index}] declares shell-less playable "${playableId}".`
+      );
+    }
+  });
+}
+
+function assertScenarioPlayableIntegrationsUseRegisteredShells(
+  playableIntegrations: unknown[]
+): void {
+  playableIntegrations.forEach((playableIntegration, index) => {
+    assertObject(
+      playableIntegration,
+      `scenario playableIntegrations[${index}]`
+    );
+    const playableId = (playableIntegration as { playableId?: unknown }).playableId;
+    if (typeof playableId !== "string" || playableId.length === 0) {
+      return;
+    }
+    if (builtinPlayableShellRegistry.get(playableId) == null) {
+      throw new Error(
+        `scenario playableIntegrations[${index}] declares shell-less playable "${playableId}".`
+      );
     }
   });
 }
@@ -1158,7 +1198,7 @@ type ScenarioPackManifestFiles = {
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
-  flowPlayables?: string;
+  playableShells?: string;
   cities?: string;
   houses?: string;
   buildingArrangements?: string;

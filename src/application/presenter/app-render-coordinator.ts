@@ -41,10 +41,7 @@ export type AppRenderCoordinatorDependencies = {
   syncActivityQteLoop(): void;
   syncHousePlayableLoop(): void;
   syncCampaignTerrainWebGl(root: HTMLElement): void;
-  syncCityBeggingMiniGameOverlay(
-    root: HTMLElement,
-    beggingMiniGameState: AppState["beggingMiniGameState"]
-  ): void;
+  syncPlayableShellOverlay(root: HTMLElement): void;
 };
 
 function readFocusedScaleInput(): FocusedScaleInputState {
@@ -140,7 +137,6 @@ export function createAppRenderCoordinator(
       citySceneMappingsByCityId,
       historicalCharacters: activeContentContext.historicalCharacters,
       historicalCityRosters: activeContentContext.historicalCityRosters,
-      flowPlayablesById: activeContentContext.gameContent.flowPlayablesById,
       presenterOutput,
     });
     dependencies.restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
@@ -153,10 +149,7 @@ export function createAppRenderCoordinator(
     dependencies.syncActivityQteLoop();
     dependencies.syncHousePlayableLoop();
     dependencies.syncCampaignTerrainWebGl(appRoot);
-    dependencies.syncCityBeggingMiniGameOverlay(
-      appRoot,
-      appState.beggingMiniGameState
-    );
+    dependencies.syncPlayableShellOverlay(appRoot);
   }
 
   return {

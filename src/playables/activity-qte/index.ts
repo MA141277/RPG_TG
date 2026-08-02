@@ -10,3 +10,4 @@ export {
 } from "./reducer";
 export { presentActivityQtePlayable } from "./presenter";
 export { exitActivityQtePlayable } from "./settlement";
+export { activityQtePlayableShell } from "./shell";

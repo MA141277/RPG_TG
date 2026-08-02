@@ -4,10 +4,8 @@ import type { RuntimeState } from "../../core/contracts/runtime-state";
 import type { AppState } from "../app-shell";
 import type { MainRuntimeOrchestratorRequest } from "./main-runtime-orchestrator";
 import {
-  createExitInteractiveRequest,
   createExitPlayableRequest,
   createPlayableActionRequest,
-  runInteractiveRuntime,
   runPlayableRuntime,
   commitRuntimeRequest,
 } from "./runtime-request-seam";
@@ -25,7 +23,7 @@ export type InteractiveActionCoordinatorDependencies = {
   getPlayerCharacterId(): string | null;
   getActivityDefinitionsById(): Record<string, ActivityDefinition>;
   getTextEntriesById(): Record<string, string>;
-  getFlowPlayablesById(): Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
+  getPlayableShellsById(): Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
   executeMainRuntime(request: MainRuntimeOrchestratorRequest): void;
   applyInteractiveFollowUp(
     interactive: Exclude<NonNullable<RuntimeInteractiveSignal>, { type: "none" }>
@@ -45,6 +43,7 @@ export function createInteractiveActionCoordinator(
 
   function stopCurrentActivityQte(): void {
     const appState = dependencies.getAppState();
+    const playerCharacterId = dependencies.getPlayerCharacterId();
     const session = appState.gameState.runtime.activitySession;
     if (session?.type !== "qte-bar") {
       return;
@@ -60,7 +59,9 @@ export function createInteractiveActionCoordinator(
               state,
               request,
               characterDefinitions: appState.characterDefinitions,
+              ...(playerCharacterId == null ? {} : { playerCharacterId }),
               activityDefinitionsById: dependencies.getActivityDefinitionsById(),
+              textEntriesById: dependencies.getTextEntriesById(),
             }),
         },
       },
@@ -72,6 +73,7 @@ export function createInteractiveActionCoordinator(
 
   function closeCurrentActivityResult(): void {
     const appState = dependencies.getAppState();
+    const playerCharacterId = dependencies.getPlayerCharacterId();
     const nextAppState = commitRuntimeRequest({
       state: appState,
       request: createExitPlayableRequest("activity-qte"),
@@ -82,6 +84,9 @@ export function createInteractiveActionCoordinator(
               state,
               request,
               characterDefinitions: appState.characterDefinitions,
+              ...(playerCharacterId == null ? {} : { playerCharacterId }),
+              activityDefinitionsById: dependencies.getActivityDefinitionsById(),
+              textEntriesById: dependencies.getTextEntriesById(),
             }),
         },
       },
@@ -137,7 +142,6 @@ export function createInteractiveActionCoordinator(
               characterDefinitions: appState.characterDefinitions,
               ...(playerCharacterId == null ? {} : { playerCharacterId }),
               textEntriesById: dependencies.getTextEntriesById(),
-              flowPlayablesById: dependencies.getFlowPlayablesById(),
             }),
         },
         followUp: {

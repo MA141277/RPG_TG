@@ -1,1 +1,1 @@
-export * from "../builtin/city-begging/city-begging-definition";
+export * from "./shell";

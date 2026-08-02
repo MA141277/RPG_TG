@@ -27,7 +27,6 @@ import { prepareSaveState } from "./state-sync-save";
 
 export type RuntimeAppStateInput = {
   gameState: LegacyBridgeRuntimeState["core"];
-  beggingMiniGameState: LegacyBridgeRuntimeState["app"]["beggingMiniGameState"];
   autoAdvanceState: LegacyBridgeRuntimeState["app"]["autoAdvanceState"];
   campaignTravelState: LegacyBridgeRuntimeState["app"]["campaignTravelState"];
   cityDirectoryState: LegacyBridgeRuntimeState["app"]["cityDirectoryState"];
@@ -46,7 +45,6 @@ function createRuntimeStateFromAppState(
   return {
     core: state.gameState,
     app: {
-      beggingMiniGameState: state.beggingMiniGameState,
       autoAdvanceState: state.autoAdvanceState,
       campaignTravelState: state.campaignTravelState,
       cityDirectoryState: state.cityDirectoryState,
@@ -97,7 +95,6 @@ function applyRuntimeStateToAppState<TAppState extends RuntimeAppStateInput>(
   return {
     ...state,
     gameState: runtimeState.core,
-    beggingMiniGameState: runtimeState.app.beggingMiniGameState,
     autoAdvanceState: runtimeState.app.autoAdvanceState,
     campaignTravelState: runtimeState.app.campaignTravelState,
     cityDirectoryState: runtimeState.app.cityDirectoryState,
