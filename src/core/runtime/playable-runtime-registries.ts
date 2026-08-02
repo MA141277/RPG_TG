@@ -3,9 +3,13 @@ import type {
   PlayableDefinition,
   PlayableIntegrationDefinition,
 } from "../contracts/playable-runtime";
-import { installBuiltinPlayableDefinitions } from "../registry/builtin-playable-definition-registry";
+import {
+  installBuiltinPlayableDefinitions,
+} from "../registry/builtin-playable-definition-registry";
 import { installBuiltinPlayableIntegrations } from "../registry/builtin-playable-integration-registry";
-import { installBuiltinPlayableShells } from "../registry/builtin-playable-shell-registry";
+import {
+  createBuiltinPlayableShellRegistry,
+} from "../registry/builtin-playable-shell-registry";
 import {
   createPlayableDefinitionRegistry,
   type PlayableDefinitionRegistry,
@@ -14,10 +18,7 @@ import {
   createPlayableIntegrationRegistry,
   type PlayableIntegrationRegistry,
 } from "../registry/playable-integration-registry";
-import {
-  createPlayableShellRegistry,
-  type PlayableShellRegistry,
-} from "../registry/playable-shell-registry";
+import { type PlayableShellRegistry } from "../registry/playable-shell-registry";
 
 export type PlayableRuntimeRegistries = {
   definitions: PlayableDefinitionRegistry;
@@ -35,11 +36,10 @@ let defaultPlayableRuntimeRegistries = createDefaultPlayableRuntimeRegistries();
 export function createDefaultPlayableRuntimeRegistries(): PlayableRuntimeRegistries {
   const definitions = createPlayableDefinitionRegistry();
   const integrations = createPlayableIntegrationRegistry();
-  const shells = createPlayableShellRegistry();
+  const shells = createBuiltinPlayableShellRegistry();
 
   installBuiltinPlayableDefinitions(definitions);
   installBuiltinPlayableIntegrations(integrations);
-  installBuiltinPlayableShells(shells);
 
   return {
     definitions,

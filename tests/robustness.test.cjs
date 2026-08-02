@@ -38945,34 +38945,192 @@ test("playable validator requires shell package files under src/playables", () =
 });
 
 test(
-  "playable runtime registries install builtin shells instead of host adapters",
+  "playable shell registry registers and reads direct shell entries by playable id",
   () => {
-    const repoRoot = process.cwd();
-    const registrySource = fs.readFileSync(
-      path.join(repoRoot, "src/core/runtime/playable-runtime-registries.ts"),
-      "utf8"
-    );
+    const {
+      createPlayableShellRegistry,
+    } = require("../.test-dist/core/registry/playable-shell-registry.js");
+    const registry = createPlayableShellRegistry();
+    const playableId = "playable.test-shell";
+    const shell = createTestPlayableShell(playableId);
 
-    assert.match(registrySource, /installBuiltinPlayableShells/);
-    assert.doesNotMatch(registrySource, /installBuiltinPlayableHostAdapters/);
-    assert.match(registrySource, /shells:/);
-    assert.doesNotMatch(registrySource, /hostAdapters:/);
+    assert.equal(registry.get(playableId), null);
+
+    registry.register(shell);
+
+    assert.equal(registry.get(playableId), shell);
+    assert.equal(registry.get("playable.unknown"), null);
   }
 );
 
 test("playable runtime contract exposes a direct PlayableShell surface", () => {
-  const repoRoot = process.cwd();
-  const contractSource = fs.readFileSync(
-    path.join(repoRoot, "src/core/contracts/playable-runtime.ts"),
-    "utf8"
+  const diagnostics = getTypeScriptDiagnosticsForSourceText(
+    [
+      'import type {',
+      "  ActivePlayableSession,",
+      "  PlayableCommand,",
+      "  PlayableLaunchRequest,",
+      "  PlayablePresenterModel,",
+      "  PlayableResult,",
+      "  PlayableShell,",
+      '} from "../src/core/contracts/playable-runtime";',
+      "",
+      "const shell: PlayableShell = {",
+      "  manifest: {",
+      '    playableId: "playable.contract-shell",',
+      '    family: "flow",',
+      '    commandPrefix: "contract-shell",',
+      "  },",
+      "  createSession(input: PlayableLaunchRequest): ActivePlayableSession {",
+      "    return {",
+      '      sessionId: "session.contract-shell",',
+      "      playableId: input.playableId,",
+      "      integrationId: input.integrationId,",
+      "      ownerContext: input.ownerContext,",
+      '      status: "active",',
+      "    };",
+      "  },",
+      "  reduce(session: ActivePlayableSession, _command: PlayableCommand): ActivePlayableSession {",
+      "    return session;",
+      "  },",
+      "  present(session: ActivePlayableSession): PlayablePresenterModel {",
+      "    return {",
+      "      playableId: session.playableId,",
+      '      layout: "panel",',
+      '      title: "Contract Shell",',
+      "      summaryLines: [],",
+      "      actions: [],",
+      "    };",
+      "  },",
+      "  complete(_session: ActivePlayableSession): PlayableResult | null {",
+      "    return null;",
+      "  },",
+      "};",
+      "",
+      "void shell;",
+    ].join("\n"),
+    "tests/.tmp-playable-shell-contract-probe.ts"
   );
 
-  assert.match(contractSource, /export type PlayableShell =/);
-  assert.match(contractSource, /createSession:/);
-  assert.match(contractSource, /reduce:/);
-  assert.match(contractSource, /present:/);
-  assert.match(contractSource, /complete:/);
+  assert.deepEqual(diagnostics, []);
 });
+
+test(
+  "playable runtime registries expose default shell registries without host-adapter ownership",
+  () => {
+    const runtimeRegistries = require(
+      "../.test-dist/core/runtime/playable-runtime-registries.js"
+    );
+    const playableId = "playable.default-shell";
+    const shell = createTestPlayableShell(playableId);
+    const registries = runtimeRegistries.createDefaultPlayableRuntimeRegistries();
+
+    assert.equal(typeof runtimeRegistries.readDefaultPlayableShellRegistry, "function");
+    assert.equal(
+      "readDefaultPlayableHostAdapterRegistry" in runtimeRegistries,
+      false
+    );
+    assert.equal(typeof registries.shells.register, "function");
+    assert.equal(typeof registries.shells.get, "function");
+    assert.equal("hostAdapters" in registries, false);
+
+    registries.shells.register(shell);
+
+    assert.equal(registries.shells.get(playableId), shell);
+
+    runtimeRegistries.resetDefaultPlayableRuntimeRegistries();
+    runtimeRegistries.readDefaultPlayableShellRegistry().register(shell);
+    assert.equal(
+      runtimeRegistries.readDefaultPlayableShellRegistry().get(playableId),
+      shell
+    );
+
+    runtimeRegistries.resetDefaultPlayableRuntimeRegistries();
+    assert.equal(
+      runtimeRegistries.readDefaultPlayableShellRegistry().get(playableId),
+      null
+    );
+    assert.equal(
+      runtimeRegistries.readDefaultPlayableDefinitionRegistry().get(playableId),
+      null
+    );
+  }
+);
+
+function createTestPlayableShell(playableId) {
+  return {
+    manifest: {
+      playableId,
+      family: "minigame",
+      commandPrefix: "test-shell",
+    },
+    createSession(input) {
+      return {
+        sessionId: "session.test-shell",
+        playableId: input.playableId,
+        integrationId: input.integrationId,
+        ownerContext: input.ownerContext,
+        status: "active",
+      };
+    },
+    reduce(session) {
+      return session;
+    },
+    present(session) {
+      return {
+        playableId: session.playableId,
+        layout: "panel",
+        title: "Test Shell",
+        summaryLines: [],
+        actions: [],
+      };
+    },
+    complete() {
+      return null;
+    },
+  };
+}
+
+function getTypeScriptDiagnosticsForSourceText(sourceText, relativeFilePath) {
+  const configPath = path.join(process.cwd(), "tsconfig.json");
+  const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+  if (configFile.error) {
+    throw new Error(ts.flattenDiagnosticMessageText(configFile.error.messageText, "\n"));
+  }
+
+  const parsedConfig = ts.parseJsonConfigFileContent(
+    configFile.config,
+    ts.sys,
+    process.cwd(),
+    undefined,
+    configPath
+  );
+  const probePath = path.join(process.cwd(), relativeFilePath);
+  const probeDir = path.dirname(probePath);
+
+  fs.mkdirSync(probeDir, { recursive: true });
+  fs.writeFileSync(probePath, sourceText, "utf8");
+
+  try {
+    const program = ts.createProgram({
+      rootNames: [probePath],
+      options: parsedConfig.options,
+    });
+
+    return ts
+      .getPreEmitDiagnostics(program)
+      .filter(
+        (diagnostic) =>
+          diagnostic.file?.fileName.replaceAll("\\", "/") ===
+          probePath.replaceAll("\\", "/")
+      )
+      .map((diagnostic) =>
+        ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
+      );
+  } finally {
+    fs.rmSync(probePath, { force: true });
+  }
+}
 
 test("child 34 playable scaffold writes canonical mechanic and integration artifacts", () => {
   const { spawnSync } = require("node:child_process");
