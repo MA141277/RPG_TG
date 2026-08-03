@@ -15,6 +15,7 @@ import type {
   EventParticipant,
 } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { NavigationRouteTarget } from "../contracts/navigation";
 import type { PlayableReturnPolicy } from "../contracts/playable-runtime";
 import type { RuntimeTaskInput } from "../contracts/runtime-result";
 import { matchesCanonicalBuildingOwnerId } from "./building-owner-canonicalization";
@@ -178,7 +179,8 @@ export type ModFirstTriggerContext = {
 
 export type ModFirstEventRuntimeAction =
   | {
-      type: "closeBuilding";
+      type: "navigate";
+      target: NavigationRouteTarget;
     }
   | {
       type: "launchPlayable";

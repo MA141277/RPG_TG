@@ -1,10 +1,18 @@
 import type { ActivityDefinition } from "../../domain/activity";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
+import type { CityDefinition } from "../../domain/city";
 import type { EventDefinition, EventRouteCommand } from "../../domain/event";
+import type { HouseDefinition } from "../../domain/house";
+import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { AppState } from "../app-shell";
 import {
   createLaunchPlayableRequest,
   runPlayableRuntime,
 } from "../../core/runtime/playable-runtime";
+import {
+  createNavigateRequest,
+  routeNavigationRuntime,
+} from "../../core/runtime/navigation-runtime";
 import { commitRuntimeRequest } from "../../core/runtime/state-sync-runtime";
 
 export type EventRouteCommandDispatchResult = {
@@ -18,6 +26,10 @@ export function dispatchEventRouteCommands(input: {
   eventDefinition: EventDefinition | null | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
+  cityDefinitionsById?: Record<string, CityDefinition> | undefined;
+  houseDefinitionsById?: Record<string, HouseDefinition> | undefined;
+  buildingArrangements?: readonly BuildingArrangementDefinition[] | undefined;
+  locationAccessDefinitions?: readonly LocationAccessDefinition[] | undefined;
 }): EventRouteCommandDispatchResult {
   const eventDefinition = input.eventDefinition;
   if (eventDefinition == null || eventDefinition.actions == null) {
@@ -33,6 +45,23 @@ export function dispatchEventRouteCommands(input: {
   const unhandledCommands: EventRouteCommand[] = [];
 
   for (const command of eventDefinition.actions) {
+    if (command.type === "navigate") {
+      const result = dispatchNavigateCommand({
+        state,
+        command,
+        cityDefinitionsById: input.cityDefinitionsById,
+        houseDefinitionsById: input.houseDefinitionsById,
+        buildingArrangements: input.buildingArrangements,
+        locationAccessDefinitions: input.locationAccessDefinitions,
+      });
+      state = result.state;
+      handled ||= result.handled;
+      if (!result.handled) {
+        unhandledCommands.push(command);
+      }
+      continue;
+    }
+
     if (command.type === "launchPlayable") {
       const result = dispatchLaunchPlayableCommand({
         state,
@@ -56,6 +85,50 @@ export function dispatchEventRouteCommands(input: {
     state,
     handled,
     unhandledCommands,
+  };
+}
+
+function dispatchNavigateCommand(input: {
+  state: AppState;
+  command: Extract<EventRouteCommand, { type: "navigate" }>;
+  cityDefinitionsById?: Record<string, CityDefinition> | undefined;
+  houseDefinitionsById?: Record<string, HouseDefinition> | undefined;
+  buildingArrangements?: readonly BuildingArrangementDefinition[] | undefined;
+  locationAccessDefinitions?: readonly LocationAccessDefinition[] | undefined;
+}): { state: AppState; handled: boolean } {
+  const houseDefinition =
+    input.command.target.kind === "building"
+      ? input.houseDefinitionsById?.[input.command.target.houseId] ?? null
+      : null;
+  const result = commitRuntimeRequest({
+    state: input.state,
+    request: createNavigateRequest(input.command.target),
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          routeNavigationRuntime({
+            state,
+            request,
+            ...(houseDefinition == null ? {} : { houseDefinition }),
+            ...(input.cityDefinitionsById == null
+              ? {}
+              : { cityDefinitionsById: input.cityDefinitionsById }),
+            ...(input.buildingArrangements == null
+              ? {}
+              : { buildingArrangements: input.buildingArrangements }),
+            characterDefinitions: input.state.characterDefinitions,
+            ...(input.locationAccessDefinitions == null
+              ? {}
+              : { locationAccessDefinitions: input.locationAccessDefinitions }),
+          }),
+      },
+    },
+  });
+
+  const navigation = result.runtimeResult.navigation;
+  return {
+    state: result.state,
+    handled: navigation != null,
   };
 }
 

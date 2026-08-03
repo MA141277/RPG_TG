@@ -37,7 +37,10 @@ import { createCityDirectoryLeaderResidenceCoordinator } from "./application/run
 import { createCouncilPriorityCityBeggingCoordinator } from "./application/runtime/council-priority-city-begging-coordinator";
 import { createCityHouseTransitionCoordinator } from "./application/runtime/city-house-transition-coordinator";
 import { matchesCanonicalBuildingOwnerId } from "./core/runtime/building-owner-canonicalization";
-import { applyCityViewTransition } from "./application/runtime/city-view-transition";
+import {
+  applyNavigationRuntimeFollowUpToGameState,
+  applyNavigationRuntimeFollowUpToRuntimeState,
+} from "./application/runtime/navigation-runtime-follow-up";
 import { createHouseDragDropCoordinator } from "./application/runtime/house-drag-drop-coordinator";
 import { triggerBuildingContainerItemAction } from "./application/building/building-container-event-runtime";
 import {
@@ -101,6 +104,7 @@ import { resolveScenarioStartupTarget } from "./application/startup/scenario-sta
 import {
   createEnterCityRequest,
   createEnterHouseRequest,
+  createNavigateRequest,
   routeNavigationRuntime,
 } from "./core/runtime/navigation-runtime";
 import { enterHouse } from "./application/navigation/enter-house";
@@ -132,7 +136,6 @@ import type {
   RuntimeFollowUpContext,
   RuntimeRouter,
 } from "./core/runtime/runtime-router";
-import type { RuntimeState } from "./core/contracts/runtime-state";
 import type {
   ModActivationResult,
   ModSourceDescriptor,
@@ -1117,7 +1120,23 @@ function enterBuilding(houseId: string): void {
 }
 
 function leaveBuilding(): void {
-  appState = applyCityViewTransition(appState, { type: "leave-house" });
+  const runtimeCommit = commitRuntimeRequest({
+    state: appState,
+    request: createNavigateRequest({ kind: "leaveBuilding" }),
+    context: createRuntimeCommitContext({
+      router: {
+        route: ({ state, request }) =>
+          routeNavigationRuntime({
+            state,
+            request,
+            cityDefinitionsById: activeContentContext.cityDefinitionById,
+            characterDefinitions: appState.characterDefinitions,
+            locationAccessDefinitions: activeContentContext.locationAccess,
+          }),
+      },
+    }),
+  });
+  appState = runtimeCommit.state;
   renderApp();
 }
 
@@ -1129,47 +1148,6 @@ function applyBuildingAutoAdvanceCompletion(
   }
 
   enterBuilding(completion.houseId);
-}
-
-function applyRuntimeReenterBuilding(
-  state: RuntimeState,
-  houseId: string
-): RuntimeState {
-  return {
-    ...state,
-    core: {
-      ...state.core,
-      world: {
-        ...state.core.world,
-        currentHouseId: houseId,
-      },
-      ui: {
-        ...state.core.ui,
-        currentView: "house",
-        overlayView: null,
-        houseSession: null,
-      },
-    },
-  };
-}
-
-function applyGameStateReenterBuilding(
-  state: GameState,
-  houseId: string
-): GameState {
-  return {
-    ...state,
-    world: {
-      ...state.world,
-      currentHouseId: houseId,
-    },
-    ui: {
-      ...state.ui,
-      currentView: "house",
-      overlayView: null,
-      houseSession: null,
-    },
-  };
 }
 
 function applyPostNavigationStoryTrigger(
@@ -1599,12 +1577,7 @@ function applyEventOwnedPlayableCompletionFromRuntimeResult(input: {
         storyContent,
         sourceEventId
       ),
-    applyFollowUp: ({ state, followUp }) => ({
-      state:
-        followUp.type === "reenter-house"
-          ? applyGameStateReenterBuilding(state, followUp.houseId)
-          : state,
-    }),
+    applyFollowUp: applyNavigationRuntimeFollowUpToGameState,
   });
   if (!completion.handled) {
     return false;
@@ -1653,12 +1626,7 @@ function applyPlayableCompletionFollowUpFromRuntimeResult(input: {
         storyContent,
         eventId
       ),
-    applyFollowUp: ({ state, followUp }) => ({
-      state:
-        followUp.type === "reenter-house"
-          ? applyGameStateReenterBuilding(state, followUp.houseId)
-          : state,
-    }),
+    applyFollowUp: applyNavigationRuntimeFollowUpToGameState,
   });
   if (!completion.handled) {
     return false;
@@ -1714,12 +1682,7 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
         ? {}
         : {
             followUp: {
-              handleFollowUp: ({ state, followUp }) => ({
-                state:
-                  followUp.type === "reenter-house"
-                    ? applyRuntimeReenterBuilding(state, followUp.houseId)
-                    : state,
-              }),
+              handleFollowUp: applyNavigationRuntimeFollowUpToRuntimeState,
             },
           }),
     }),
@@ -3498,6 +3461,10 @@ appElement.addEventListener("click", (event) => {
           activityDefinitionsById:
             activeContentContext.storyContent.activityDefinitionsById,
           textEntriesById: activeContentContext.storyContent.textEntriesById,
+          cityDefinitionsById: activeContentContext.cityDefinitionById,
+          houseDefinitionsById: activeContentContext.houseDefinitionById,
+          buildingArrangements: activeContentContext.buildingArrangements,
+          locationAccessDefinitions: activeContentContext.locationAccess,
         },
         action: {
           arrangementId,

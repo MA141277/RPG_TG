@@ -5,6 +5,23 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-08-03 Event-Owned Navigation Runtime Route Command
+
+### Changed
+- Added a generic `NavigationRouteTarget` and `createNavigateRequest` path so [src/core/runtime/navigation-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts:1) can execute city, building, leave-building, and map navigation from one runtime request while staying independent from event, dialogue, playable, and story systems.
+- Extended event `actions` with `type: "navigate"` in [src/domain/event.ts](/D:/workspace/project/RPG_TG/src/domain/event.ts:1), and wired [src/application/events/event-route-command-dispatch.ts](/D:/workspace/project/RPG_TG/src/application/events/event-route-command-dispatch.ts:1), [src/application/building/building-container-event-runtime.ts](/D:/workspace/project/RPG_TG/src/application/building/building-container-event-runtime.ts:1), and [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:1) to translate event-owned navigation commands into navigation-runtime requests instead of writing view state directly.
+- Passed building arrangement and location-access context through [src/application/city-menu/city-menu-event-launch.ts](/D:/workspace/project/RPG_TG/src/application/city-menu/city-menu-event-launch.ts:1) so city-menu events can route `navigate -> building` through the same independent navigation runtime.
+- Updated Script Editor runtime export plus the Zhu Yuanzhang scenario/template leave-building events so leave actions now export and ship as `navigate -> leaveBuilding` rather than `closeBuilding`.
+- Retired the remaining production `closeBuilding` event action/export path so legacy close-building actions now fail closed and EventBindingRuntime no longer owns navigation state mutation.
+- Added [src/application/runtime/navigation-runtime-follow-up.ts](/D:/workspace/project/RPG_TG/src/application/runtime/navigation-runtime-follow-up.ts:1) so playable/story-battle `reenter-house` follow-up is converted into an internal navigation-runtime reenter-building request instead of being handled by direct `main.ts` state branches.
+- Routed the reusable city/house transition seam for map, leave-building, enter-house, and resume-house-session through navigation-runtime while leaving city-3d as a UI-specific mode transition.
+- Kept malformed `navigate` actions fail-closed during Script Editor export instead of allowing missing targets to throw a generic runtime error.
+- Made [src/core/registry/builtin-playable-shell-registry.ts](/D:/workspace/project/RPG_TG/src/core/registry/builtin-playable-shell-registry.ts:1) lazily initialize its default registry so building-container/event modules can be loaded for navigation verification without tripping the shell/result-routing registry cycle at require time.
+- Added [tests/navigation-event-routing-runtime.test.cjs](/D:/workspace/project/RPG_TG/tests/navigation-event-routing-runtime.test.cjs:1) and updated the related robustness assertions to guard the event action shape, export behavior, and navigation-runtime dependency boundary.
+
+### Impact
+- Event ids remain the route owner, but navigation state transitions now belong to the independent navigation runtime. This keeps building leave/return routing on the Script Editor arrangement/event path without making navigation-runtime depend on event definitions.
+
 ## 2026-08-03 Script Editor Preview Registry Browser Safety
 
 ### Changed

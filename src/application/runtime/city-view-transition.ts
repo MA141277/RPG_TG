@@ -1,4 +1,8 @@
 import type { AppState } from "../app-shell";
+import {
+  createNavigateRequest,
+  runNavigationRuntime,
+} from "../../core/runtime/navigation-runtime";
 
 export type CityViewTransitionRequest =
   | {
@@ -33,19 +37,10 @@ export function applyCityViewTransition(
       cityMenuState: null,
       cityDirectoryState: null,
       locationDialogueState: null,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "map",
-          overlayView: null,
-          houseSession: null,
-        },
-      },
+      gameState: runNavigationRuntime({
+        state: appState.gameState,
+        request: createNavigateRequest({ kind: "map" }),
+      }).state,
     };
   }
 
@@ -74,54 +69,41 @@ export function applyCityViewTransition(
   if (request.type === "enter-house") {
     return {
       ...appState,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: request.houseId,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "house",
-          overlayView: null,
-          houseSession: null,
-        },
-      },
+      gameState: runNavigationRuntime({
+        state: appState.gameState,
+        request: createNavigateRequest({
+          kind: "reenterBuilding",
+          houseId: request.houseId,
+        }),
+      }).state,
     };
   }
 
   if (request.type === "leave-house") {
     return {
       ...appState,
-      gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...appState.gameState.ui,
-          currentView: "city",
-          overlayView: null,
-          houseSession: null,
-        },
-      },
+      gameState: runNavigationRuntime({
+        state: appState.gameState,
+        request: createNavigateRequest({ kind: "leaveBuilding" }),
+      }).state,
     };
   }
 
   if (request.type === "resume-house-session") {
+    const navigationState = runNavigationRuntime({
+      state: appState.gameState,
+      request: createNavigateRequest({
+        kind: "reenterBuilding",
+        houseId: request.houseId,
+      }),
+    }).state;
+
     return {
       ...appState,
       gameState: {
-        ...appState.gameState,
-        world: {
-          ...appState.gameState.world,
-          currentHouseId: request.houseId,
-        },
+        ...navigationState,
         ui: {
-          ...appState.gameState.ui,
-          currentView: "house",
-          overlayView: null,
+          ...navigationState.ui,
           houseSession: request.houseSession,
         },
       },
@@ -131,18 +113,9 @@ export function applyCityViewTransition(
   return {
     ...appState,
     cityMenuState: null,
-    gameState: {
-      ...appState.gameState,
-      world: {
-        ...appState.gameState.world,
-        currentHouseId: null,
-      },
-      ui: {
-        ...appState.gameState.ui,
-        currentView: "city",
-        overlayView: null,
-        houseSession: null,
-      },
-    },
+    gameState: runNavigationRuntime({
+      state: appState.gameState,
+      request: createNavigateRequest({ kind: "leaveBuilding" }),
+    }).state,
   };
 }

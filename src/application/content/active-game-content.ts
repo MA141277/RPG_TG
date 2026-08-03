@@ -163,6 +163,8 @@ export type ActiveGameContentContext = {
     playableShellsById: Record<string, FlowPlayableDefinition>;
     cityDefinitionsById: Record<string, CityDefinition>;
     houseDefinitionsById: Record<string, HouseDefinition>;
+    buildingArrangements: BuildingArrangementDefinition[];
+    locationAccessDefinitions: LocationAccessDefinition[];
     textEntriesById: Record<string, string>;
   };
 };
@@ -380,6 +382,8 @@ export function createActiveGameContentContext(
       playableShellsById: gameContent.playableShellsById,
       cityDefinitionsById: gameContent.cityDefinitionById,
       houseDefinitionsById: gameContent.houseDefinitionById,
+      buildingArrangements: gameContent.buildingArrangements,
+      locationAccessDefinitions: gameContent.locationAccess,
       textEntriesById: gameContent.textEntriesById,
     },
   };

@@ -1,5 +1,6 @@
 import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
 import type { PlayableReturnPolicy } from "../core/contracts/playable-runtime";
+import type { NavigationRouteTarget } from "../core/contracts/navigation";
 
 export type EventId = string;
 export type ChapterId = string;
@@ -69,7 +70,8 @@ export type EventParticipant = {
 };
 
 export type EventRouteCommand = {
-  type: "closeBuilding";
+  type: "navigate";
+  target: NavigationRouteTarget;
 } | {
   type: "openCityMenuPanel";
   panelId: "overview" | "intel" | "locations" | "management";

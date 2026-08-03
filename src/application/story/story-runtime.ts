@@ -1,4 +1,5 @@
 import type { ActivityDefinition } from "../../domain/activity";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityDefinition } from "../../domain/city";
 import type {
@@ -11,6 +12,7 @@ import type {
 } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
+import type { LocationAccessDefinition } from "../../domain/location-access";
 import { runEventBindingRuntime } from "../../core/runtime/event-binding-runtime";
 import { createRuntimeTriggerContext } from "../../core/runtime/event-binding-contract";
 import {
@@ -66,6 +68,8 @@ type StoryContent = {
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   cityDefinitionsById?: Record<string, CityDefinition> | undefined;
   houseDefinitionsById?: Record<string, HouseDefinition> | undefined;
+  buildingArrangements?: readonly BuildingArrangementDefinition[] | undefined;
+  locationAccessDefinitions?: readonly LocationAccessDefinition[] | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 

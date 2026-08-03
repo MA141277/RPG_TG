@@ -621,6 +621,10 @@ function createExportableScriptEditorProjectDefinition() {
   };
 }
 
+function isLeaveBuildingNavigateAction(action) {
+  return action?.type === "navigate" && action.target?.kind === "leaveBuilding";
+}
+
 function createImportedFilesFromSerializedJsonRecord(fileMap, folderName) {
   return Object.entries(fileMap).map(([fileName, contents]) => {
     const file = new File([contents], path.basename(fileName), {
@@ -13488,6 +13492,62 @@ test("city menu event launch starts playable actions after routing through event
   );
 });
 
+test("event route command dispatch routes navigate actions through navigation runtime", () => {
+  const {
+    dispatchEventRouteCommands,
+  } = require("../.test-dist/application/events/event-route-command-dispatch.js");
+  const { createInitialState } = require("../.test-dist/application/state/create-initial-state.js");
+
+  const state = {
+    gameState: createInitialState({
+      currentMapId: "map.test",
+      currentCityId: "city.kulan",
+      currentHouseId: "house.city.start.temple",
+      playerCharacterId: "person.hero",
+      chapterId: "chapter.test",
+      year: 1352,
+      month: 1,
+      day: 1,
+      pinnedCharacterId: "person.hero",
+      reviewDateText: "今日评定",
+      mainHouseMissionText: "当前任务",
+      cards: { ownedCardIds: [], selectedCardId: null },
+      valuables: { items: [], selectedItemId: null },
+      currentView: "house",
+    }),
+    characterDefinitions: [],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+  state.gameState.ui.houseSession = { moduleId: "temple-house", state: {} };
+
+  const result = dispatchEventRouteCommands({
+    state,
+    eventDefinition: {
+      id: "event.leave-building",
+      chapterId: "chapter.test",
+      name: "Leave Building",
+      occurrence: "repeatable",
+      dialogueId: "",
+      actions: [{ type: "navigate", target: { kind: "leaveBuilding" } }],
+    },
+  });
+
+  assert.equal(result.handled, true);
+  assert.deepEqual(result.unhandledCommands, []);
+  assert.equal(result.state.gameState.world.currentCityId, "city.kulan");
+  assert.equal(result.state.gameState.world.currentHouseId, null);
+  assert.equal(result.state.gameState.ui.currentView, "city");
+  assert.equal(result.state.gameState.ui.houseSession, null);
+});
+
 test("city menu event launch starts external playables through event routing", () => {
   const {
     launchCityMenuEvent,
@@ -13659,6 +13719,29 @@ test("script editor workspace shell accepts settlement events with existing sett
   assert.equal(workspace.handoffSummary.blockedCount, 0);
   const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
   assert.doesNotMatch(riskCard?.body ?? "", /missing settlement|settlementId/i);
+});
+
+test("script editor export preserves navigate event actions without adding event fields", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.leave-building",
+      title: "Leave Building",
+      actions: [{ type: "navigate", target: { kind: "leaveBuilding" } }],
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const events = JSON.parse(files["events.json"]);
+
+  assert.deepEqual(events[0].actions, [
+    { type: "navigate", target: { kind: "leaveBuilding" } },
+  ]);
+  assert.equal(Object.hasOwn(events[0], "navigationTarget"), false);
+  assert.equal(Object.hasOwn(events[0], "routeTarget"), false);
 });
 
 test("script editor workspace shell surfaces progression tier settlement blockers", () => {
@@ -35064,6 +35147,123 @@ test("building entry runtime enters mounted building when the current city has a
   assert.equal(result.access, undefined);
 });
 
+test("navigation runtime consumes generic navigate requests for city and building targets", () => {
+  const {
+    createNavigateRequest,
+    runNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+
+  const cityResult = runNavigationRuntime({
+    state: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+        currentHouseId: "house.start.temple",
+      },
+    },
+    request: createNavigateRequest({ kind: "city", cityId: "city.kulan" }),
+  });
+
+  assert.equal(cityResult.state.world.currentCityId, "city.kulan");
+  assert.equal(cityResult.state.world.currentHouseId, null);
+  assert.equal(cityResult.state.ui.currentView, "city");
+  assert.deepEqual(cityResult.navigation, {
+    view: "city",
+    cityId: "city.kulan",
+  });
+
+  const buildingResult = runNavigationRuntime({
+    state: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.kulan",
+        currentHouseId: null,
+      },
+    },
+    request: createNavigateRequest({
+      kind: "building",
+      houseId: "house.city.start.temple",
+    }),
+    houseDefinition: {
+      id: "house.city.start.temple",
+      cityId: "city.kulan",
+      name: "Temple",
+      type: "temple",
+      characterIds: [],
+      defaultCharacterId: null,
+      activityLocationId: "temple",
+    },
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city.kulan.temple",
+        cityId: "city.kulan",
+        buildingId: "house.city.start.temple",
+        displayName: "Temple Shell",
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [],
+      },
+    ],
+  });
+
+  assert.equal(buildingResult.state.world.currentHouseId, "house.city.start.temple");
+  assert.equal(buildingResult.state.ui.currentView, "house");
+  assert.deepEqual(buildingResult.navigation, {
+    view: "house",
+    houseId: "house.city.start.temple",
+  });
+});
+
+test("navigation runtime consumes generic navigate request for leaving a building", () => {
+  const {
+    createNavigateRequest,
+    runNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+
+  const result = runNavigationRuntime({
+    state: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.kulan",
+        currentHouseId: "house.city.start.temple",
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "house",
+        overlayView: "dialogue",
+        houseSession: { moduleId: "temple-house", state: {} },
+      },
+    },
+    request: createNavigateRequest({ kind: "leaveBuilding" }),
+  });
+
+  assert.equal(result.state.world.currentCityId, "city.kulan");
+  assert.equal(result.state.world.currentHouseId, null);
+  assert.equal(result.state.ui.currentView, "city");
+  assert.equal(result.state.ui.overlayView, null);
+  assert.equal(result.state.ui.houseSession, null);
+  assert.deepEqual(result.navigation, {
+    view: "city",
+    cityId: "city.kulan",
+  });
+});
+
+test("navigation runtime remains independent from event and playable systems", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/navigation-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /domain\/event|EventDefinition|EventRouteCommand/);
+  assert.doesNotMatch(source, /dialogue|playable|story-runtime|event-binding-runtime/);
+  assert.doesNotMatch(source, /eventDefinitionsById|eventBindingsById/);
+});
+
 test("map city markers use city-owned map placement", () => {
   const {
     createMapCityMarkers,
@@ -40537,8 +40737,8 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
 
     if (entry.id === "leave" || entry.targetId.endsWith(".leave")) {
       assert.ok(
-        event.actions?.some((action) => action.type === "closeBuilding"),
-        `missing closeBuilding action for ${entry.targetId}`
+        event.actions?.some(isLeaveBuildingNavigateAction),
+        `missing navigate leaveBuilding action for ${entry.targetId}`
       );
       continue;
     }
@@ -40699,8 +40899,8 @@ test("zhuyuanzhang home rest and leave routes use canonical template ids while k
     }
 
     assert.ok(
-      event.actions?.some((action) => action.type === "closeBuilding"),
-      "home leave should stay closeBuilding"
+      event.actions?.some(isLeaveBuildingNavigateAction),
+      "home leave should route through navigate leaveBuilding"
     );
   }
 });
@@ -41019,8 +41219,8 @@ test("zhuyuanzhang keep review work and leave routes use canonical template ids 
 
     if (entry.id === "leave") {
       assert.ok(
-        event.actions?.some((action) => action.type === "closeBuilding"),
-        "keep leave should stay closeBuilding"
+        event.actions?.some(isLeaveBuildingNavigateAction),
+        "keep leave should route through navigate leaveBuilding"
       );
       continue;
     }
@@ -41124,8 +41324,8 @@ nodeTest("zhuyuanzhang grain shop trade accounting and leave routes use canonica
 
     if (entry.id === "leave") {
       assert.ok(
-        event.actions?.some((action) => action.type === "closeBuilding"),
-        "grain shop leave should stay closeBuilding"
+        event.actions?.some(isLeaveBuildingNavigateAction),
+        "grain shop leave should route through navigate leaveBuilding"
       );
       continue;
     }
@@ -41235,8 +41435,8 @@ nodeTest("zhuyuanzhang medicine house treatment compounding and leave routes use
 
     if (entry.id === "leave") {
       assert.ok(
-        event.actions?.some((action) => action.type === "closeBuilding"),
-        "medicine house leave should stay closeBuilding"
+        event.actions?.some(isLeaveBuildingNavigateAction),
+        "medicine house leave should route through navigate leaveBuilding"
       );
       continue;
     }
@@ -41328,8 +41528,8 @@ test("zhuyuanzhang market trade talk intel and leave routes use canonical templa
 
     if (entry.id === "leave") {
       assert.ok(
-        event.actions?.some((action) => action.type === "closeBuilding"),
-        "market leave should stay closeBuilding"
+        event.actions?.some(isLeaveBuildingNavigateAction),
+        "market leave should route through navigate leaveBuilding"
       );
       continue;
     }
@@ -41421,8 +41621,8 @@ nodeTest("zhuyuanzhang tea house tea talk intel and leave routes use canonical t
 
     if (entry.id === "leave") {
       assert.ok(
-        event.actions?.some((action) => action.type === "closeBuilding"),
-        "tea house leave should stay closeBuilding"
+        event.actions?.some(isLeaveBuildingNavigateAction),
+        "tea house leave should route through navigate leaveBuilding"
       );
       continue;
     }
@@ -41514,8 +41714,8 @@ nodeTest("zhuyuanzhang leader residence review and leave routes use canonical te
 
     if (entry.id === "leave") {
       assert.ok(
-        event.actions?.some((action) => action.type === "closeBuilding"),
-        "leader residence leave should stay closeBuilding"
+        event.actions?.some(isLeaveBuildingNavigateAction),
+        "leader residence leave should route through navigate leaveBuilding"
       );
       continue;
     }
@@ -41607,8 +41807,8 @@ nodeTest("zhuyuanzhang inn drink gamble talk work and leave routes use canonical
 
     if (entry.id === "leave") {
       assert.ok(
-        event.actions?.some((action) => action.type === "closeBuilding"),
-        "inn leave should stay closeBuilding"
+        event.actions?.some(isLeaveBuildingNavigateAction),
+        "inn leave should route through navigate leaveBuilding"
       );
       continue;
     }
@@ -41737,8 +41937,8 @@ nodeTest("zhuyuanzhang temple standard routes use canonical template ids while p
 
     if (entry.id === "leave") {
       assert.ok(
-        event.actions?.some((action) => action.type === "closeBuilding"),
-        "temple leave should stay closeBuilding"
+        event.actions?.some(isLeaveBuildingNavigateAction),
+        "temple leave should route through navigate leaveBuilding"
       );
       continue;
     }

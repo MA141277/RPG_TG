@@ -63,6 +63,10 @@ export function launchCityMenuEvent(input: {
     eventDefinition,
     activityDefinitionsById: input.storyContent.activityDefinitionsById,
     textEntriesById: input.storyContent.textEntriesById,
+    cityDefinitionsById: input.storyContent.cityDefinitionsById,
+    houseDefinitionsById: input.storyContent.houseDefinitionsById,
+    buildingArrangements: input.storyContent.buildingArrangements,
+    locationAccessDefinitions: input.storyContent.locationAccessDefinitions,
   });
   if (
     commandResult.handled &&

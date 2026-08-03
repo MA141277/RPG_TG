@@ -49,17 +49,16 @@ export function runEventBindingRuntime(
     };
   }
 
-  const actionState = applyEventRuntimeActions(input.state, eventDefinition);
-  if (hasOnlyStateRuntimeActions(eventDefinition)) {
+  if (hasOnlyRouteCommands(eventDefinition)) {
     return {
-      state: actionState,
+      state: input.state,
       activation,
       candidate,
     };
   }
 
   return {
-    state: startEvent(actionState, eventDefinition),
+    state: startEvent(input.state, eventDefinition),
     activation,
     candidate,
   };
@@ -131,32 +130,7 @@ function matchesTriggerExtra(
   );
 }
 
-function applyEventRuntimeActions(
-  state: GameState,
-  eventDefinition: EventDefinition
-): GameState {
-  return (eventDefinition.actions ?? []).reduce((currentState, action) => {
-    if (action.type === "closeBuilding") {
-      return {
-        ...currentState,
-        world: {
-          ...currentState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...currentState.ui,
-          currentView: "city",
-          overlayView: null,
-          houseSession: null,
-        },
-      };
-    }
-
-    return currentState;
-  }, state);
-}
-
-function hasOnlyStateRuntimeActions(eventDefinition: EventDefinition): boolean {
+function hasOnlyRouteCommands(eventDefinition: EventDefinition): boolean {
   const dialogueId =
     typeof eventDefinition.dialogueId === "string"
       ? eventDefinition.dialogueId.trim()

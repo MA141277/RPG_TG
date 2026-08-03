@@ -2302,8 +2302,8 @@ function lowerEventRouteCommands(
     actions.push(destinationAction);
   }
   for (const [actionIndex, action] of (eventRecord.actions ?? []).entries()) {
-    if (action?.type === "closeBuilding") {
-      actions.push({ type: "closeBuilding" });
+    if (action?.type === "navigate" && isSupportedNavigateAction(action)) {
+      actions.push(action);
       continue;
     }
     if (
@@ -2351,13 +2351,40 @@ function lowerEventRouteCommands(
       code: "unsupported-lowering",
       fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
       message:
-        "Event export currently supports only closeBuilding and launchPlayable runtime actions.",
+        "Event export currently supports only navigate and launchPlayable runtime actions.",
     });
     return null;
   }
 
   actions.push(...derivedFlowActions);
   return actions;
+}
+
+function isSupportedNavigateAction(
+  action: EventRouteCommand
+): action is Extract<EventRouteCommand, { type: "navigate" }> {
+  if (action.type !== "navigate") {
+    return false;
+  }
+
+  const target = action.target;
+  if (target == null || typeof target !== "object") {
+    return false;
+  }
+  if (target.kind === "city") {
+    return typeof target.cityId === "string" && target.cityId.trim().length > 0;
+  }
+  if (target.kind === "building") {
+    return typeof target.houseId === "string" && target.houseId.trim().length > 0;
+  }
+  if (target.kind === "leaveBuilding") {
+    return true;
+  }
+  if (target.kind === "map") {
+    return target.mapId == null || target.mapId.trim().length > 0;
+  }
+
+  return false;
 }
 
 function lowerEventDestinationMenuAction(
