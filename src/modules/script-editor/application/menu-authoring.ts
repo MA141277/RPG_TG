@@ -1,56 +1,36 @@
 ﻿import type {
+  MenuEntryDefinition,
   MenuInstanceDefinition,
   MenuResourceDefinition,
+  MenuTargetFamily,
 } from "../../../domain/menu";
 import type {
   ScriptEditorBuildingArrangementRecord,
   ScriptEditorBuildingRecord,
   ScriptEditorCityRecord,
-  ScriptEditorMenuEntry,
-  ScriptEditorMenuInstanceRecord,
-  ScriptEditorMenuResourceRecord,
-  ScriptEditorMenuTargetFamily,
-  ScriptEditorMountRecord,
-  ScriptEditorItemRecord,
-  ScriptEditorPersonRecord,
+  ScriptEditorEventDestination,
+  ScriptEditorEventRecord,
+  ScriptEditorMinigameRecord,
   ScriptEditorProjectDefinition,
 } from "../domain/script-editor-project";
-import { allocateNextScriptEditorProjectCanonicalId } from "./script-editor-id-allocation";
+import {
+  builtinPlayableDefinitionRegistry,
+} from "../../../core/registry/builtin-playable-definition-registry";
+import {
+  builtinPlayableIntegrationRegistry,
+} from "../../../core/registry/builtin-playable-integration-registry";
+import { allocateNextScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 type ScriptEditorLocationFamily = "cities" | "buildings";
-export type ScriptEditorMenuOwnerFamily = "people" | "cities" | "buildings" | "items";
 
 type ScriptEditorLocationRecord = ScriptEditorCityRecord | ScriptEditorBuildingRecord;
-type ScriptEditorMenuInstanceOwnerRecord =
-  | ScriptEditorCityRecord
-  | ScriptEditorBuildingRecord
-  | ScriptEditorItemRecord;
-type ScriptEditorMenuOwnerRecord =
-  | ScriptEditorPersonRecord
-  | ScriptEditorCityRecord
-  | ScriptEditorBuildingRecord
-  | ScriptEditorItemRecord;
 
 export type ScriptEditorLocationMenuBundle = {
   instanceId: string;
   instanceTitle: string;
   resourceId: string;
   resourceTitle: string;
-  entries: ScriptEditorMenuEntry[];
-};
-
-export type ScriptEditorMenuModuleRecord = {
-  id: string;
-  title: string;
-  resourceId: string;
-  entries: ScriptEditorMenuEntry[];
-};
-
-export type ScriptEditorMountedMenuRecord = {
-  instanceId: string;
-  title: string;
-  order: number;
-  visible: boolean;
+  entries: MenuEntryDefinition[];
 };
 
 type ScriptEditorMenuEntryEditableField =
@@ -60,23 +40,6 @@ type ScriptEditorMenuEntryEditableField =
   | "targetFamily"
   | "targetId"
   | "disabledHint";
-
-const formalizedProjectCache = new WeakMap<
-  ScriptEditorProjectDefinition,
-  ScriptEditorProjectDefinition
->();
-const menuModuleRecordCache = new WeakMap<
-  ScriptEditorProjectDefinition,
-  ScriptEditorMenuModuleRecord[]
->();
-const mountedMenuRecordCache = new WeakMap<
-  ScriptEditorProjectDefinition,
-  Map<string, ScriptEditorMountedMenuRecord[]>
->();
-const locationMenuBundleCache = new WeakMap<
-  ScriptEditorProjectDefinition,
-  Map<string, ScriptEditorLocationMenuBundle[]>
->();
 
 const DEFAULT_CITY_MENU_FAMILIES = ["overview", "intel", "locations", "management"];
 const DEFAULT_BUILDING_MENU_FAMILIES = ["dialogue", "trade", "work", "rest"];
@@ -90,253 +53,15 @@ const MENU_FAMILY_LABELS: Record<string, string> = {
   trade: "交易",
   work: "工作",
   rest: "休息",
-  minigame: "小游戏",
+  minigame: "玩法",
   leave: "离开",
   begging: "化缘",
+  other: "其他",
 };
-
-export function normalizeScriptEditorMounts(value: unknown): ScriptEditorMountRecord[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value
-    .map((entry, index) => normalizeScriptEditorMountRecord(entry, index))
-    .filter((entry) => entry != null)
-    .sort((left, right) => left.order - right.order)
-    .map((entry, index) => ({ ...entry, order: index }));
-}
-
-export function listScriptEditorMenuModuleRecords(
-  project: ScriptEditorProjectDefinition
-): ScriptEditorMenuModuleRecord[] {
-  const cachedRecords = menuModuleRecordCache.get(project);
-  if (cachedRecords != null) {
-    return cachedRecords;
-  }
-
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
-  const cachedFormalizedRecords = menuModuleRecordCache.get(formalizedProject);
-  if (cachedFormalizedRecords != null) {
-    menuModuleRecordCache.set(project, cachedFormalizedRecords);
-    return cachedFormalizedRecords;
-  }
-
-  const menuResourceById = Object.fromEntries(
-    (formalizedProject.menuResources ?? []).map((resource) => [resource.id, resource] as const)
-  );
-
-  const records = (formalizedProject.menuInstances ?? []).map((instance) => {
-    const resource = menuResourceById[normalizeOptionalString(instance.resourceId)];
-    const entries = normalizeMenuEntries(resource?.entries, `${instance.id}.entry`);
-    const title = normalizeString(
-      entries[0]?.label,
-      instance.title ?? resource?.title ?? "未命名菜单项"
-    );
-    return {
-      id: instance.id,
-      title,
-      resourceId: resource?.id ?? normalizeOptionalString(instance.resourceId),
-      entries,
-    };
-  });
-  menuModuleRecordCache.set(project, records);
-  menuModuleRecordCache.set(formalizedProject, records);
-  return records;
-}
-
-export function appendScriptEditorMenuModuleRecord(
-  project: ScriptEditorProjectDefinition
-): { project: ScriptEditorProjectDefinition; instanceId: string } {
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
-  const resourceId = allocateNextScriptEditorProjectCanonicalId(
-    formalizedProject,
-    "menuResources"
-  );
-  const instanceId = allocateNextScriptEditorProjectCanonicalId(
-    formalizedProject,
-    "menuInstances"
-  );
-  const title = `菜单项 ${(formalizedProject.menuInstances?.length ?? 0) + 1}`;
-  const entry = createDefaultMenuEntry(`${resourceId}.entry`, "management", title);
-  return {
-    project: {
-      ...formalizedProject,
-      menuResources: [
-        ...(formalizedProject.menuResources ?? []),
-        {
-          id: resourceId,
-          title,
-          entries: [entry],
-        } satisfies ScriptEditorMenuResourceRecord,
-      ],
-      menuInstances: [
-        ...(formalizedProject.menuInstances ?? []),
-        {
-          id: instanceId,
-          title,
-          resourceId,
-        } satisfies ScriptEditorMenuInstanceRecord,
-      ],
-    },
-    instanceId,
-  };
-}
-
-export function removeScriptEditorMenuModuleRecord(
-  project: ScriptEditorProjectDefinition,
-  instanceId: string
-): ScriptEditorProjectDefinition {
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
-  const trimmedInstanceId = normalizeOptionalString(instanceId);
-  if (trimmedInstanceId.length === 0) {
-    return formalizedProject;
-  }
-
-  const instance = (formalizedProject.menuInstances ?? []).find(
-    (entry) => entry.id === trimmedInstanceId
-  );
-  const resourceId = normalizeOptionalString(instance?.resourceId);
-  const nextInstances = (formalizedProject.menuInstances ?? []).filter(
-    (entry) => entry.id !== trimmedInstanceId
-  );
-  const resourceStillReferenced = nextInstances.some(
-    (entry) => normalizeOptionalString(entry.resourceId) === resourceId
-  );
-
-  return syncMenuOwnerBindings({
-    ...formalizedProject,
-    menuInstances: nextInstances,
-    menuResources:
-      resourceId.length === 0 || resourceStillReferenced
-        ? formalizedProject.menuResources
-        : (formalizedProject.menuResources ?? []).filter(
-            (entry) => entry.id !== resourceId
-          ),
-  });
-}
-
-export function listScriptEditorMountedMenus(
-  project: ScriptEditorProjectDefinition,
-  ownerFamily: ScriptEditorMenuOwnerFamily,
-  ownerId: string
-): ScriptEditorMountedMenuRecord[] {
-  const cacheKey = `${ownerFamily}:${normalizeOptionalString(ownerId)}`;
-  const cachedRecords = mountedMenuRecordCache.get(project)?.get(cacheKey);
-  if (cachedRecords != null) {
-    return cachedRecords;
-  }
-
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
-  const cachedFormalizedRecords = mountedMenuRecordCache
-    .get(formalizedProject)
-    ?.get(cacheKey);
-  if (cachedFormalizedRecords != null) {
-    cacheMountedMenuRecords(project, cacheKey, cachedFormalizedRecords);
-    return cachedFormalizedRecords;
-  }
-
-  const owner = getProjectMenuOwner(formalizedProject, ownerFamily, ownerId);
-  if (owner == null) {
-    const emptyRecords: ScriptEditorMountedMenuRecord[] = [];
-    cacheMountedMenuRecords(project, cacheKey, emptyRecords);
-    cacheMountedMenuRecords(formalizedProject, cacheKey, emptyRecords);
-    return emptyRecords;
-  }
-  const menuModuleById = Object.fromEntries(
-    listScriptEditorMenuModuleRecords(formalizedProject).map((record) => [record.id, record] as const)
-  );
-
-  const records = normalizeScriptEditorMounts(owner.mounts)
-    .filter((mount) => mount.kind === "menu")
-    .map((mount) => {
-      const menuRecord = menuModuleById[mount.target.menuInstanceId];
-      return {
-        instanceId: mount.target.menuInstanceId,
-        title: normalizeString(mount.title, menuRecord?.title ?? "未命名菜单"),
-        order: mount.order,
-        visible: mount.visible !== false,
-      };
-    });
-  cacheMountedMenuRecords(project, cacheKey, records);
-  cacheMountedMenuRecords(formalizedProject, cacheKey, records);
-  return records;
-}
-
-export function appendScriptEditorOwnerMenuMount(
-  project: ScriptEditorProjectDefinition,
-  ownerFamily: ScriptEditorMenuOwnerFamily,
-  ownerId: string,
-  menuInstanceId: string
-): ScriptEditorProjectDefinition {
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
-  const owner = getProjectMenuOwner(formalizedProject, ownerFamily, ownerId);
-  const trimmedMenuInstanceId = normalizeOptionalString(menuInstanceId);
-  if (owner == null || trimmedMenuInstanceId.length === 0) {
-    return formalizedProject;
-  }
-
-  const nextMounts = normalizeScriptEditorMounts(owner.mounts);
-  if (
-    nextMounts.some(
-      (mount) => mount.kind === "menu" && mount.target.menuInstanceId === trimmedMenuInstanceId
-    )
-  ) {
-    return formalizedProject;
-  }
-
-  return replaceProjectMenuOwner(
-    formalizedProject,
-    ownerFamily,
-    {
-      ...owner,
-      mounts: [
-        ...nextMounts,
-        {
-          kind: "menu",
-          order: nextMounts.length,
-          target: {
-            kind: "menu",
-            menuInstanceId: trimmedMenuInstanceId,
-          },
-        },
-      ],
-    } satisfies ScriptEditorMenuOwnerRecord
-  );
-}
-
-export function removeScriptEditorOwnerMenuMount(
-  project: ScriptEditorProjectDefinition,
-  ownerFamily: ScriptEditorMenuOwnerFamily,
-  ownerId: string,
-  index: number
-): ScriptEditorProjectDefinition {
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
-  const owner = getProjectMenuOwner(formalizedProject, ownerFamily, ownerId);
-  if (owner == null) {
-    return formalizedProject;
-  }
-
-  return replaceProjectMenuOwner(
-    formalizedProject,
-    ownerFamily,
-    {
-      ...owner,
-      mounts: normalizeScriptEditorMounts(owner.mounts).filter(
-        (_, itemIndex) => itemIndex !== index
-      ),
-    } satisfies ScriptEditorMenuOwnerRecord
-  );
-}
 
 export function formalizeScriptEditorProjectMenus(
   project: ScriptEditorProjectDefinition
 ): ScriptEditorProjectDefinition {
-  const cachedProject = formalizedProjectCache.get(project);
-  if (cachedProject != null) {
-    return cachedProject;
-  }
-
   const legacyActionMenuItemsError = findLegacyArrangementActionMenuItemsError(
     project.buildingArrangements ?? []
   );
@@ -344,14 +69,9 @@ export function formalizeScriptEditorProjectMenus(
     throw new Error(legacyActionMenuItemsError);
   }
   const locationFormalizedProject = formalizeLocationProjectMenus(project);
-  const formalizedProject = syncMenuOwnerBindings(
-    formalizeMenuModuleItemRecords(
-      formalizeBuildingArrangementProjectMenus(locationFormalizedProject)
-    )
-  );
-  formalizedProjectCache.set(project, formalizedProject);
-  formalizedProjectCache.set(formalizedProject, formalizedProject);
-  return formalizedProject;
+  const arrangementFormalizedProject =
+    formalizeBuildingArrangementProjectMenus(locationFormalizedProject);
+  return formalizeMenuEntriesThroughEvents(arrangementFormalizedProject);
 }
 
 function formalizeLocationProjectMenus(
@@ -366,7 +86,7 @@ function formalizeLocationProjectMenus(
 
   const nextCities = project.cities.map((city) => {
     const result = formalizeLocationMenuBindings(
-      syncLocationMenuMounts(city),
+      city,
       "cities",
       menuResources,
       menuInstances
@@ -379,7 +99,7 @@ function formalizeLocationProjectMenus(
 
   const nextBuildings = project.buildings.map((building) => {
     const result = formalizeLocationMenuBindings(
-      syncLocationMenuMounts(building),
+      building,
       "buildings",
       menuResources,
       menuInstances
@@ -437,27 +157,10 @@ export function listScriptEditorLocationMenuBundles(
   family: ScriptEditorLocationFamily,
   locationId: string
 ): ScriptEditorLocationMenuBundle[] {
-  const cacheKey = `${family}:${normalizeOptionalString(locationId)}`;
-  const cachedBundles = locationMenuBundleCache.get(project)?.get(cacheKey);
-  if (cachedBundles != null) {
-    return cachedBundles;
-  }
-
   const formalizedProject = formalizeScriptEditorProjectMenus(project);
-  const cachedFormalizedBundles = locationMenuBundleCache
-    .get(formalizedProject)
-    ?.get(cacheKey);
-  if (cachedFormalizedBundles != null) {
-    cacheLocationMenuBundles(project, cacheKey, cachedFormalizedBundles);
-    return cachedFormalizedBundles;
-  }
-
   const location = getProjectLocation(formalizedProject, family, locationId);
   if (location == null) {
-    const emptyBundles: ScriptEditorLocationMenuBundle[] = [];
-    cacheLocationMenuBundles(project, cacheKey, emptyBundles);
-    cacheLocationMenuBundles(formalizedProject, cacheKey, emptyBundles);
-    return emptyBundles;
+    return [];
   }
 
   const menuResourceById = Object.fromEntries(
@@ -467,7 +170,7 @@ export function listScriptEditorLocationMenuBundles(
     (formalizedProject.menuInstances ?? []).map((instance) => [instance.id, instance] as const)
   );
 
-  const bundles = readTrimmedStringArray(location.menuInstanceIds).flatMap((instanceId) => {
+  return readTrimmedStringArray(location.menuInstanceIds).flatMap((instanceId) => {
     const instance = menuInstanceById[instanceId];
     if (instance == null) {
       return [];
@@ -487,9 +190,6 @@ export function listScriptEditorLocationMenuBundles(
       },
     ];
   });
-  cacheLocationMenuBundles(project, cacheKey, bundles);
-  cacheLocationMenuBundles(formalizedProject, cacheKey, bundles);
-  return bundles;
 }
 
 export function countScriptEditorLocationMenuEntries(
@@ -503,71 +203,22 @@ export function countScriptEditorLocationMenuEntries(
   );
 }
 
-function cacheMountedMenuRecords(
-  project: ScriptEditorProjectDefinition,
-  key: string,
-  records: ScriptEditorMountedMenuRecord[]
-): void {
-  let cache = mountedMenuRecordCache.get(project);
-  if (cache == null) {
-    cache = new Map<string, ScriptEditorMountedMenuRecord[]>();
-    mountedMenuRecordCache.set(project, cache);
-  }
-  cache.set(key, records);
-}
-
-function cacheLocationMenuBundles(
-  project: ScriptEditorProjectDefinition,
-  key: string,
-  bundles: ScriptEditorLocationMenuBundle[]
-): void {
-  let cache = locationMenuBundleCache.get(project);
-  if (cache == null) {
-    cache = new Map<string, ScriptEditorLocationMenuBundle[]>();
-    locationMenuBundleCache.set(project, cache);
-  }
-  cache.set(key, bundles);
-}
-
 export function updateScriptEditorLocationMenuInstanceTitle(
   project: ScriptEditorProjectDefinition,
   instanceId: string,
   value: string
 ): ScriptEditorProjectDefinition {
   const formalizedProject = formalizeScriptEditorProjectMenus(project);
-  const resolved = resolveMenuBundleIds(formalizedProject, instanceId);
-  const nextTitle = normalizeString(value, "未命名菜单项");
   return {
     ...formalizedProject,
     menuInstances: (formalizedProject.menuInstances ?? []).map((instance) =>
       instance.id === instanceId
         ? {
             ...instance,
-            title: nextTitle,
+            title: normalizeString(value, instance.id),
           }
         : instance
     ),
-    ...(resolved == null
-      ? {}
-      : {
-          menuResources: (formalizedProject.menuResources ?? []).map((resource) =>
-            resource.id === resolved.resourceId
-              ? {
-                  ...resource,
-                  title: nextTitle,
-                  entries: normalizeMenuEntries(resource.entries, `${resource.id}.entry`).map(
-                    (entry, entryIndex) =>
-                      entryIndex === 0
-                        ? {
-                            ...entry,
-                            label: nextTitle,
-                          }
-                        : entry
-                  ),
-                }
-              : resource
-          ),
-        }),
   };
 }
 
@@ -600,7 +251,7 @@ export function appendScriptEditorLocationMenuEntry(
     return formalizeScriptEditorProjectMenus(project);
   }
   const { project: formalizedProject, resourceId } = prepared;
-  return {
+  return formalizeScriptEditorProjectMenus({
     ...formalizedProject,
     menuResources: (formalizedProject.menuResources ?? []).map((resource) => {
       if (resource.id !== resourceId) {
@@ -616,14 +267,7 @@ export function appendScriptEditorLocationMenuEntry(
         ],
       };
     }),
-  };
-}
-
-export function appendScriptEditorMenuModuleEntry(
-  project: ScriptEditorProjectDefinition,
-  instanceId: string
-): ScriptEditorProjectDefinition {
-  return formalizeScriptEditorProjectMenus(project);
+  });
 }
 
 export function removeScriptEditorLocationMenuEntry(
@@ -634,12 +278,6 @@ export function removeScriptEditorLocationMenuEntry(
   const resolved = resolveMenuBundleIds(project, instanceId);
   if (resolved == null) {
     return formalizeScriptEditorProjectMenus(project);
-  }
-  const currentResource = (resolved.project.menuResources ?? []).find(
-    (resource) => resource.id === resolved.resourceId
-  );
-  if (normalizeMenuEntries(currentResource?.entries, `${resolved.resourceId}.entry`).length <= 1) {
-    return resolved.project;
   }
 
   return {
@@ -683,19 +321,22 @@ export function updateScriptEditorLocationMenuEntryField(
                 if (field === "targetFamily") {
                   return {
                     ...entry,
-                    ...normalizeMenuEntryRouteTarget(entry, value, ""),
+                    targetFamily: normalizeMenuTargetFamily(value),
                   };
                 }
-                if (field === "targetId") {
-                  return {
-                    ...entry,
-                    ...normalizeMenuEntryRouteTarget(entry, undefined, value),
-                  };
+                if (field === "menuFamily") {
+                  return syncCityPanelTargetForMenuFamily(
+                    {
+                      ...entry,
+                      menuFamily: normalizeString(value, entry.menuFamily),
+                    },
+                    resolved.locationFamily
+                  );
                 }
                 return {
                   ...entry,
                   [field]:
-                    field === "id" || field === "label" || field === "menuFamily"
+                    field === "id" || field === "label"
                       ? normalizeString(value, entry[field])
                       : normalizeOptionalString(value),
                 };
@@ -894,6 +535,7 @@ function resolveMenuBundleIds(
 ): {
   project: ScriptEditorProjectDefinition;
   resourceId: string;
+  locationFamily: ScriptEditorLocationFamily | null;
 } | null {
   const formalizedProject = formalizeScriptEditorProjectMenus(project);
   const instance = (formalizedProject.menuInstances ?? []).find(
@@ -905,7 +547,31 @@ function resolveMenuBundleIds(
   return {
     project: formalizedProject,
     resourceId: normalizeOptionalString(instance.resourceId),
+    locationFamily: resolveLocationFamilyForMenuInstance(formalizedProject, instanceId),
   };
+}
+
+function resolveLocationFamilyForMenuInstance(
+  project: ScriptEditorProjectDefinition,
+  instanceId: string
+): ScriptEditorLocationFamily | null {
+  if (
+    project.cities.some((city) =>
+      readTrimmedStringArray(city.menuInstanceIds).includes(instanceId)
+    )
+  ) {
+    return "cities";
+  }
+
+  if (
+    project.buildings.some((building) =>
+      readTrimmedStringArray(building.menuInstanceIds).includes(instanceId)
+    )
+  ) {
+    return "buildings";
+  }
+
+  return null;
 }
 
 function replaceProjectLocation(
@@ -939,198 +605,6 @@ function getProjectLocation(
   return family === "cities"
     ? project.cities.find((city) => city.id === locationId) ?? null
     : project.buildings.find((building) => building.id === locationId) ?? null;
-}
-
-function formalizeMenuModuleItemRecords(
-  project: ScriptEditorProjectDefinition
-): ScriptEditorProjectDefinition {
-  const resourceById = Object.fromEntries(
-    (project.menuResources ?? []).map((resource) => [normalizeOptionalString(resource.id), resource] as const)
-  );
-  const usedResourceIds = new Set<string>();
-  const usedInstanceIds = new Set<string>();
-  const nextResources: ScriptEditorMenuResourceRecord[] = [];
-  const nextInstances: ScriptEditorMenuInstanceRecord[] = [];
-  const replacementInstanceIds = new Map<string, string[]>();
-
-  (project.menuInstances ?? []).forEach((instance, instanceIndex) => {
-    const instanceId = normalizeString(
-      instance.id,
-      `menu-instance.generated.${instanceIndex + 1}`
-    );
-    const resource = resourceById[normalizeOptionalString(instance.resourceId)];
-    const resourceIdBase = normalizeString(
-      resource?.id,
-      `menu-resource.generated.${instanceIndex + 1}`
-    );
-    const baseTitle = normalizeString(
-      instance.title,
-      resource?.title ?? `菜单项 ${instanceIndex + 1}`
-    );
-    const normalizedEntries = normalizeMenuEntries(
-      resource?.entries,
-      `${resourceIdBase}.entry`
-    );
-    const effectiveEntries =
-      normalizedEntries.length > 0
-        ? normalizedEntries
-        : [createDefaultMenuEntry(`${resourceIdBase}.entry`, "management", baseTitle)];
-    const nextIds: string[] = [];
-
-    effectiveEntries.forEach((entry, entryIndex) => {
-      const itemTitle = normalizeString(
-        entry.label,
-        effectiveEntries.length === 1 ? baseTitle : `${baseTitle} ${entryIndex + 1}`
-      );
-      const nextInstanceId = claimUniqueId(
-        entryIndex === 0 ? instanceId : `${instanceId}.item.${entryIndex + 1}`,
-        usedInstanceIds,
-        "menu-instance.generated"
-      );
-      const nextResourceId = claimUniqueId(
-        entryIndex === 0 ? resourceIdBase : `${resourceIdBase}.item.${entryIndex + 1}`,
-        usedResourceIds,
-        "menu-resource.generated"
-      );
-      nextResources.push({
-        id: nextResourceId,
-        title: itemTitle,
-        entries: [
-          {
-            ...entry,
-            label: itemTitle,
-          },
-        ],
-      });
-      nextInstances.push({
-        id: nextInstanceId,
-        title: itemTitle,
-        resourceId: nextResourceId,
-      });
-      nextIds.push(nextInstanceId);
-    });
-
-    replacementInstanceIds.set(instanceId, nextIds);
-  });
-
-  const nextResourcesWithTargets = nextResources.map((resource) => ({
-    ...resource,
-    entries: resource.entries.map((entry) => {
-      if (entry.authoringTarget?.kind !== "menu") {
-        return entry;
-      }
-      const nextTargetId = resolveReplacementMenuInstanceId(
-        replacementInstanceIds,
-        entry.authoringTarget.menuInstanceId
-      );
-      return nextTargetId === entry.authoringTarget.menuInstanceId
-        ? entry
-        : {
-            ...entry,
-            ...normalizeMenuEntryRouteTarget(entry, "menu", nextTargetId),
-          };
-    }),
-  }));
-
-  const nextPeople = project.people.map((person) =>
-    replaceMenuOwnerReferences(person, replacementInstanceIds)
-  );
-  const nextCities = project.cities.map((city) =>
-    replaceMenuOwnerReferences(city, replacementInstanceIds)
-  );
-  const nextBuildings = project.buildings.map((building) =>
-    replaceMenuOwnerReferences(building, replacementInstanceIds)
-  );
-
-  if (
-    JSON.stringify(nextResourcesWithTargets) === JSON.stringify(project.menuResources ?? []) &&
-    JSON.stringify(nextInstances) === JSON.stringify(project.menuInstances ?? []) &&
-    JSON.stringify(nextPeople) === JSON.stringify(project.people) &&
-    JSON.stringify(nextCities) === JSON.stringify(project.cities) &&
-    JSON.stringify(nextBuildings) === JSON.stringify(project.buildings)
-  ) {
-    return project;
-  }
-
-  return {
-    ...project,
-    menuResources: nextResourcesWithTargets,
-    menuInstances: nextInstances,
-    people: nextPeople,
-    cities: nextCities,
-    buildings: nextBuildings,
-  };
-}
-
-function claimUniqueId(
-  preferredId: string,
-  usedIds: Set<string>,
-  fallbackBase: string
-): string {
-  const baseId = normalizeString(preferredId, fallbackBase);
-  if (!usedIds.has(baseId)) {
-    usedIds.add(baseId);
-    return baseId;
-  }
-
-  let suffix = 2;
-  while (usedIds.has(`${baseId}-${suffix}`)) {
-    suffix += 1;
-  }
-  const nextId = `${baseId}-${suffix}`;
-  usedIds.add(nextId);
-  return nextId;
-}
-
-function resolveReplacementMenuInstanceId(
-  replacementInstanceIds: ReadonlyMap<string, string[]>,
-  instanceId: string
-): string {
-  const normalizedInstanceId = normalizeOptionalString(instanceId);
-  if (normalizedInstanceId.length === 0) {
-    return "";
-  }
-  return replacementInstanceIds.get(normalizedInstanceId)?.[0] ?? normalizedInstanceId;
-}
-
-function replaceMenuOwnerReferences<TOwner extends ScriptEditorMenuOwnerRecord>(
-  owner: TOwner,
-  replacementInstanceIds: ReadonlyMap<string, string[]>
-): TOwner {
-  const nextMounts: ScriptEditorMountRecord[] = normalizeScriptEditorMounts(
-    owner.mounts
-  ).flatMap<ScriptEditorMountRecord>((mount) => {
-    if (mount.kind !== "menu") {
-      return [mount];
-    }
-    const nextIds = replacementInstanceIds.get(mount.target.menuInstanceId) ?? [
-      mount.target.menuInstanceId,
-    ];
-    return nextIds.map(
-      (menuInstanceId): ScriptEditorMountRecord => ({
-        ...mount,
-        target: {
-          kind: "menu",
-          menuInstanceId,
-        },
-      })
-    );
-  });
-
-  const hasMenuInstanceIds = "menuInstanceIds" in owner;
-  const nextMenuInstanceIds = hasMenuInstanceIds
-    ? readTrimmedStringArray(
-        ((owner as ScriptEditorMenuInstanceOwnerRecord).menuInstanceIds ?? []).flatMap(
-          (menuInstanceId) => replacementInstanceIds.get(menuInstanceId) ?? [menuInstanceId]
-        )
-      )
-    : undefined;
-
-  return {
-    ...owner,
-    mounts: nextMounts,
-    ...(hasMenuInstanceIds ? { menuInstanceIds: nextMenuInstanceIds } : {}),
-  } as TOwner;
 }
 
 function upsertMenuResource(
@@ -1210,11 +684,10 @@ function createGeneratedMenuTitle(
 }
 
 function normalizeMenuEntries(
-  entries: readonly ScriptEditorMenuEntry[] | undefined,
+  entries: readonly MenuEntryDefinition[] | undefined,
   idBase: string
-): ScriptEditorMenuEntry[] {
+): MenuEntryDefinition[] {
   return (entries ?? []).map((entry, index) => ({
-    ...entry,
     id: normalizeString(entry.id, `${idBase}.${index + 1}`),
     label: normalizeString(
       entry.label,
@@ -1230,28 +703,21 @@ function normalizeMenuEntries(
       entry.menuFamily,
       suggestMenuFamilyByIndex(index)
     ),
-    ...normalizeMenuEntryRouteTarget(entry),
+    targetFamily: normalizeMenuTargetFamily(entry.targetFamily),
+    targetId: normalizeOptionalString(entry.targetId),
     isVisible: entry.isVisible !== false,
     isEnabled: entry.isEnabled !== false,
     disabledHint: normalizeOptionalString(entry.disabledHint),
   }));
 }
 
-function createDefaultMenuEntry(
-  idBase: string,
-  menuFamily: string,
-  labelOverride?: string
-): ScriptEditorMenuEntry {
+function createDefaultMenuEntry(idBase: string, menuFamily: string): MenuEntryDefinition {
   return {
     id: `${idBase}.${slugifyMenuFamily(menuFamily)}`,
-    label: normalizeString(labelOverride, resolveMenuFamilyLabel(menuFamily)),
+    label: resolveMenuFamilyLabel(menuFamily),
     menuFamily,
-    targetFamily: "event",
+    targetFamily: "info",
     targetId: "",
-    authoringTarget: {
-      kind: "event",
-      eventId: "",
-    },
     isVisible: true,
     isEnabled: true,
     disabledHint: "",
@@ -1261,7 +727,7 @@ function createDefaultMenuEntry(
 function createDefaultLocationMenuEntries(
   locationId: string,
   family: ScriptEditorLocationFamily
-): ScriptEditorMenuEntry[] {
+): MenuEntryDefinition[] {
   const defaultFamilies =
     family === "cities"
       ? DEFAULT_CITY_MENU_FAMILIES
@@ -1308,92 +774,314 @@ function slugifyMenuFamily(value: string): string {
   return normalized.length > 0 ? normalized : "entry";
 }
 
-function normalizeMenuEntryRouteTarget(
-  entry: Partial<ScriptEditorMenuEntry>,
-  nextKind?: string,
-  nextTargetId?: string
-): Pick<ScriptEditorMenuEntry, "authoringTarget" | "targetFamily" | "targetId"> {
-  const explicitTargetId =
-    nextTargetId === undefined ? undefined : normalizeOptionalString(nextTargetId);
-  const authoringTarget = entry.authoringTarget;
-  const rawTargetFamily = normalizeOptionalString(entry.targetFamily);
-  const rawTargetId = normalizeOptionalString(entry.targetId);
-  if (nextKind === undefined) {
-    if (authoringTarget?.kind === "menu") {
-      const menuInstanceId =
-        explicitTargetId ?? normalizeOptionalString(authoringTarget.menuInstanceId);
-      return {
-        authoringTarget: {
-          kind: "menu",
-          menuInstanceId,
-        },
-        targetFamily: "info",
-        targetId: menuInstanceId,
-      };
-    }
+function normalizeMenuTargetFamily(value?: string): MenuTargetFamily {
+  return ["dialogue", "event", "trade", "minigame", "info"].includes(value ?? "")
+    ? (value as MenuTargetFamily)
+    : "info";
+}
 
-    if (authoringTarget?.kind === "event" || rawTargetFamily === "event") {
-      const eventId =
-        explicitTargetId ??
-        (authoringTarget?.kind === "event"
-          ? normalizeOptionalString(authoringTarget.eventId)
-          : rawTargetId);
-      return {
-        authoringTarget: {
-          kind: "event",
-          eventId,
-        },
-        targetFamily: "event",
-        targetId: eventId,
-      };
-    }
+function formalizeMenuEntriesThroughEvents(
+  project: ScriptEditorProjectDefinition
+): ScriptEditorProjectDefinition {
+  const events = [...(project.events ?? [])];
+  const minigames = [...(project.minigames ?? [])];
+  const projectMinigameIds = new Set(
+    minigames
+      .map((minigame) => normalizeOptionalString(minigame.id))
+      .filter((id) => id.length > 0)
+  );
+  let resourcesChanged = false;
+  let eventsChanged = false;
+  let minigamesChanged = false;
 
+  const nextMenuResources = (project.menuResources ?? []).map((resource) => {
+    const normalizedEntries = normalizeMenuEntries(
+      resource.entries,
+      `${resource.id}.entry`
+    );
+    let entriesChanged =
+      JSON.stringify(normalizedEntries) !== JSON.stringify(resource.entries ?? []);
+    const nextEntries = normalizedEntries.map((entry, index) => {
+      const result = formalizeMenuEntryThroughEvent(
+        events,
+        minigames,
+        entry,
+        index,
+        projectMinigameIds
+      );
+      eventsChanged ||= result.eventsChanged;
+      minigamesChanged ||= result.minigamesChanged;
+      entriesChanged ||= result.entry !== entry;
+      return result.entry;
+    });
+
+    if (!entriesChanged) {
+      return resource;
+    }
+    resourcesChanged = true;
     return {
-      authoringTarget: undefined,
-      targetFamily: normalizeMenuTargetFamily(rawTargetFamily || "event"),
-      targetId: explicitTargetId ?? rawTargetId,
+      ...resource,
+      entries: nextEntries,
     };
+  });
+
+  if (!resourcesChanged && !eventsChanged && !minigamesChanged) {
+    return project;
   }
 
-  const currentKind =
-    nextKind ??
-    (authoringTarget?.kind === "menu"
-      ? "menuInstance"
-      : authoringTarget?.kind === "event"
-        ? "event"
-        : entry.targetFamily === "event"
-          ? "event"
-          : "menuInstance");
-
-  if (currentKind === "menuInstance" || currentKind === "menu") {
-    const menuInstanceId =
-      explicitTargetId ??
-      (authoringTarget?.kind === "menu"
-        ? normalizeOptionalString(authoringTarget.menuInstanceId)
-        : normalizeOptionalString(entry.targetId));
-    return {
-      authoringTarget: {
-        kind: "menu",
-        menuInstanceId,
-      },
-      targetFamily: "info",
-      targetId: menuInstanceId,
-    };
-  }
-
-  const eventId =
-    explicitTargetId ??
-    (authoringTarget?.kind === "event"
-      ? normalizeOptionalString(authoringTarget.eventId)
-      : normalizeOptionalString(entry.targetId));
   return {
-    authoringTarget: {
-      kind: "event",
-      eventId,
-    },
-    targetFamily: "event",
-    targetId: eventId,
+    ...project,
+    ...(resourcesChanged ? { menuResources: nextMenuResources } : {}),
+    ...(eventsChanged ? { events } : {}),
+    ...(minigamesChanged ? { minigames } : {}),
   };
+}
+
+function formalizeMenuEntryThroughEvent(
+  events: ScriptEditorEventRecord[],
+  minigames: ScriptEditorMinigameRecord[],
+  entry: MenuEntryDefinition,
+  index: number,
+  projectMinigameIds: Set<string>
+): {
+  entry: MenuEntryDefinition;
+  eventsChanged: boolean;
+  minigamesChanged: boolean;
+} {
+  const directTargetEvent = events.find(
+    (eventRecord) => entry.targetFamily === "event" && eventRecord.id === entry.targetId
+  );
+  if (directTargetEvent != null) {
+    return {
+      entry: {
+        ...entry,
+        targetFamily: "event",
+        targetId: directTargetEvent.id,
+      },
+      eventsChanged: false,
+      minigamesChanged: false,
+    };
+  }
+
+  const existingTargetEvent = events.find(
+    (eventRecord) =>
+      entry.targetFamily === "event" &&
+      eventRecord.id === entry.targetId &&
+      eventRecord.type === "menu" &&
+      eventRecord.destination?.family === "menu"
+  );
+  if (existingTargetEvent != null) {
+    return {
+      entry: {
+        ...entry,
+        targetFamily: "event",
+        targetId: existingTargetEvent.id,
+      },
+      eventsChanged: false,
+      minigamesChanged: false,
+    };
+  }
+
+  const provisionalMenuEventId = allocateNextScriptEditorCanonicalId("events", events);
+  const minigameResolution = resolveMenuEntryMinigamePrototypeDestination(
+    entry,
+    minigames,
+    projectMinigameIds,
+    provisionalMenuEventId
+  );
+  if (minigameResolution != null) {
+    minigames.push(minigameResolution.minigame);
+    projectMinigameIds.add(minigameResolution.minigame.id);
+    events.push({
+      id: provisionalMenuEventId,
+      title: normalizeString(entry.label, resolveMenuFamilyLabel(entry.menuFamily, index)),
+      type: "menu",
+      destination: minigameResolution.destination,
+    });
+    return {
+      entry: {
+        ...entry,
+        targetFamily: "event",
+        targetId: provisionalMenuEventId,
+      },
+      eventsChanged: true,
+      minigamesChanged: true,
+    };
+  }
+
+  const destination = resolveMenuEventDestination(entry, index, projectMinigameIds);
+  const existingMenuEvent = events.find(
+    (eventRecord) =>
+      eventRecord.type === "menu" &&
+      eventRecord.destination?.family === destination.family &&
+      eventRecord.destination.targetId === destination.targetId
+  );
+  const menuEventId = existingMenuEvent?.id ?? provisionalMenuEventId;
+
+  if (existingMenuEvent == null) {
+    events.push({
+      id: menuEventId,
+      title: normalizeString(entry.label, resolveMenuFamilyLabel(entry.menuFamily, index)),
+      type: "menu",
+      destination,
+    });
+  }
+
+  const nextEntry = {
+    ...entry,
+    targetFamily: "event",
+    targetId: menuEventId,
+  } satisfies MenuEntryDefinition;
+
+  return {
+    entry: nextEntry,
+    eventsChanged: existingMenuEvent == null,
+    minigamesChanged: false,
+  };
+}
+
+function resolveMenuEventDestination(
+  entry: MenuEntryDefinition,
+  index: number,
+  projectMinigameIds: ReadonlySet<string>
+): ScriptEditorEventDestination {
+  const targetId = normalizeOptionalString(entry.targetId);
+  if (entry.targetFamily === "dialogue" && targetId.length > 0) {
+    return {
+      family: "dialogue",
+      targetId,
+    };
+  }
+  if (
+    entry.targetFamily === "minigame" &&
+    targetId.length > 0 &&
+    projectMinigameIds.has(targetId)
+  ) {
+    return {
+      family: "minigame",
+      targetId,
+    };
+  }
+  if (entry.targetFamily === "info" && targetId.startsWith("city-panel.")) {
+    return {
+      family: "menu",
+      targetId: normalizeString(targetId.slice("city-panel.".length), entry.menuFamily),
+    };
+  }
+  return {
+    family: "menu",
+    targetId: normalizeString(entry.menuFamily, suggestMenuFamilyByIndex(index)),
+  };
+}
+
+function resolveMenuEntryMinigamePrototypeDestination(
+  entry: MenuEntryDefinition,
+  minigames: readonly ScriptEditorMinigameRecord[],
+  projectMinigameIds: ReadonlySet<string>,
+  menuEventId: string
+): { destination: ScriptEditorEventDestination; minigame: ScriptEditorMinigameRecord } | null {
+  if (entry.targetFamily !== "minigame") {
+    return null;
+  }
+  const playableId = normalizeOptionalString(entry.targetId);
+  if (playableId.length === 0 || projectMinigameIds.has(playableId)) {
+    return null;
+  }
+  const playableDefinition = builtinPlayableDefinitionRegistry.get(playableId);
+  if (playableDefinition == null) {
+    return null;
+  }
+
+  const minigameId = allocateNextScriptEditorCanonicalId("minigames", minigames);
+  const builtinIntegration = Array.from(
+    builtinPlayableIntegrationRegistry.entries()
+  ).find((integration) => integration.playableId === playableId);
+  const ownerKind =
+    builtinIntegration?.ownerDefaults.ownerKind ??
+    builtinIntegration?.trigger.ownerKind ??
+    "external";
+  const returnPolicy =
+    (builtinIntegration?.ownerDefaults.returnPolicy ?? "close-only") as NonNullable<
+      ScriptEditorMinigameRecord["returnPolicy"]
+    >;
+
+  return {
+    destination: {
+      family: "minigame",
+      targetId: minigameId,
+    },
+    minigame: {
+      id: minigameId,
+      title: normalizeString(entry.label, playableId),
+      description: "",
+      playableId,
+      integrationId: `playable.${playableId}.script-editor.${minigameId}`,
+      ownerKind,
+      ownerId:
+        typeof builtinIntegration?.ownerDefaults.ownerId === "string"
+          ? builtinIntegration.ownerDefaults.ownerId
+          : "",
+      returnPolicy,
+      triggerId: `trigger.playable.${playableId}.script-editor.${minigameId}`,
+      triggerSource: "event-destination",
+      triggerEvent: menuEventId,
+      launchPayload: [],
+      outcomeRoutes: createDefaultMenuMinigameOutcomeRoutes(
+        minigameId,
+        returnPolicy
+      ),
+      notes: "由菜单中的玩法原型自动包装为玩法实例。",
+    },
+  };
+}
+
+function createDefaultMenuMinigameOutcomeRoutes(
+  minigameId: string,
+  handoffPolicy: NonNullable<ScriptEditorMinigameRecord["returnPolicy"]>
+): NonNullable<ScriptEditorMinigameRecord["outcomeRoutes"]> {
+  return (["success", "failure", "cancelled"] as const).map((outcome, index) => ({
+    id: `${minigameId}${index + 1}`,
+    outcome,
+    handoffPolicy,
+    summary: "",
+    effectHint: "",
+  }));
+}
+
+function syncCityPanelTargetForMenuFamily(
+  entry: MenuEntryDefinition,
+  locationFamily: ScriptEditorLocationFamily | null
+): MenuEntryDefinition {
+  if (locationFamily !== "cities" || entry.targetFamily === "event") {
+    return entry;
+  }
+
+  const panelTargetId = resolveCityPanelTargetId(entry.menuFamily);
+  if (panelTargetId == null) {
+    return entry;
+  }
+
+  return {
+    ...entry,
+    targetFamily: "info",
+    targetId: panelTargetId,
+  };
+}
+
+function resolveCityPanelTargetId(menuFamily: string): string | null {
+  switch (normalizeOptionalString(menuFamily).toLowerCase()) {
+    case "overview":
+    case "culture":
+      return "city-panel.overview";
+    case "intel":
+      return "city-panel.intel";
+    case "locations":
+      return "city-panel.locations";
+    case "management":
+      return "city-panel.management";
+    default:
+      return null;
+  }
 }
 
 function normalizeString(value: unknown, fallback: string): string {
@@ -1405,100 +1093,6 @@ function normalizeOptionalString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function normalizeMenuTargetFamily(value?: string): ScriptEditorMenuTargetFamily {
-  return ["dialogue", "event", "trade", "minigame", "info"].includes(value ?? "")
-    ? (value as ScriptEditorMenuTargetFamily)
-    : "info";
-}
-
-function normalizeScriptEditorMountRecord(
-  value: unknown,
-  index: number
-): ScriptEditorMountRecord | null {
-  if (value == null || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-  const rawValue = value as Record<string, unknown>;
-  const kind = normalizeOptionalString(rawValue.kind);
-  const order = Number.isFinite(rawValue.order) ? Number(rawValue.order) : index;
-  const title = normalizeOptionalString(rawValue.title);
-  const visible = rawValue.visible !== false;
-  const target =
-    rawValue.target != null && typeof rawValue.target === "object" && !Array.isArray(rawValue.target)
-      ? (rawValue.target as Record<string, unknown>)
-      : {};
-
-  if (kind === "menu") {
-    const menuInstanceId = normalizeOptionalString(target.menuInstanceId);
-    if (menuInstanceId.length === 0) {
-      return null;
-    }
-    return {
-      kind: "menu",
-      ...(title.length === 0 ? {} : { title }),
-      order,
-      visible,
-      target: {
-        kind: "menu",
-        menuInstanceId,
-      },
-    };
-  }
-
-  if (kind === "city") {
-    const cityId = normalizeOptionalString(target.cityId);
-    if (cityId.length === 0) {
-      return null;
-    }
-    return {
-      kind: "city",
-      ...(title.length === 0 ? {} : { title }),
-      order,
-      visible,
-      target: {
-        kind: "city",
-        cityId,
-      },
-    };
-  }
-
-  if (kind === "building") {
-    const buildingId = normalizeOptionalString(target.buildingId);
-    if (buildingId.length === 0) {
-      return null;
-    }
-    return {
-      kind: "building",
-      ...(title.length === 0 ? {} : { title }),
-      order,
-      visible,
-      target: {
-        kind: "building",
-        buildingId,
-      },
-    };
-  }
-
-  if (kind === "event") {
-    const eventId = normalizeOptionalString(target.eventId);
-    if (eventId.length === 0) {
-      return null;
-    }
-    return {
-      kind: "event",
-      ...(title.length === 0 ? {} : { title }),
-      order,
-      visible,
-      target: {
-        kind: "event",
-        eventId,
-      },
-    };
-  }
-
-  return null;
-}
-
 function readTrimmedStringArray(values: readonly string[] | undefined): string[] {
   return (values ?? []).map((value) => normalizeOptionalString(value)).filter(Boolean);
 }
@@ -1508,121 +1102,4 @@ function arraysEqual(left: readonly string[], right: readonly string[]): boolean
     return false;
   }
   return left.every((value, index) => value === normalizeOptionalString(right[index]));
-}
-
-function getProjectMenuOwner(
-  project: ScriptEditorProjectDefinition,
-  family: ScriptEditorMenuOwnerFamily,
-  ownerId: string
-): ScriptEditorMenuOwnerRecord | null {
-  if (family === "people") {
-    return project.people.find((record) => record.id === ownerId) ?? null;
-  }
-  if (family === "cities") {
-    return project.cities.find((record) => record.id === ownerId) ?? null;
-  }
-  if (family === "items") {
-    return project.items.find((record) => record.id === ownerId) ?? null;
-  }
-  return project.buildings.find((record) => record.id === ownerId) ?? null;
-}
-
-function replaceProjectMenuOwner(
-  project: ScriptEditorProjectDefinition,
-  family: ScriptEditorMenuOwnerFamily,
-  nextOwner: ScriptEditorMenuOwnerRecord
-): ScriptEditorProjectDefinition {
-  if (family === "people") {
-    return syncMenuOwnerBindings({
-      ...project,
-      people: project.people.map((record) =>
-        record.id === nextOwner.id ? (nextOwner as ScriptEditorPersonRecord) : record
-      ),
-    });
-  }
-  if (family === "cities") {
-    return syncMenuOwnerBindings({
-      ...project,
-      cities: project.cities.map((record) =>
-        record.id === nextOwner.id ? (nextOwner as ScriptEditorCityRecord) : record
-      ),
-    });
-  }
-  if (family === "items") {
-    return syncMenuOwnerBindings({
-      ...project,
-      items: project.items.map((record) =>
-        record.id === nextOwner.id ? (nextOwner as ScriptEditorItemRecord) : record
-      ),
-    });
-  }
-  return syncMenuOwnerBindings({
-    ...project,
-    buildings: project.buildings.map((record) =>
-      record.id === nextOwner.id ? (nextOwner as ScriptEditorBuildingRecord) : record
-    ),
-  });
-}
-
-function syncMenuOwnerBindings(
-  project: ScriptEditorProjectDefinition
-): ScriptEditorProjectDefinition {
-  return {
-    ...project,
-    people: project.people.map((person) => ({
-      ...person,
-      mounts: normalizeScriptEditorMounts(person.mounts),
-    })),
-    cities: project.cities.map((city) => syncLocationMenuMounts(city)),
-    buildings: project.buildings.map((building) => syncLocationMenuMounts(building)),
-    items: project.items.map((item) => syncItemMenuMounts(item)),
-  };
-}
-
-function syncLocationMenuMounts<TLocation extends ScriptEditorLocationRecord>(
-  location: TLocation
-): TLocation {
-  return syncMenuInstanceOwnerMounts(location);
-}
-
-function syncMenuInstanceOwnerMounts<TOwner extends ScriptEditorMenuInstanceOwnerRecord>(
-  location: TOwner
-): TOwner {
-  const normalizedMounts = normalizeScriptEditorMounts(location.mounts);
-  const normalizedMenuInstanceIds = readTrimmedStringArray(location.menuInstanceIds);
-  const effectiveMounts =
-    normalizedMounts.length > 0
-      ? normalizedMounts
-      : normalizedMenuInstanceIds.map((menuInstanceId, index) => ({
-          kind: "menu" as const,
-          order: index,
-          target: {
-            kind: "menu" as const,
-            menuInstanceId,
-          },
-        }));
-
-  return {
-    ...location,
-    mounts: effectiveMounts,
-    menuInstanceIds:
-      effectiveMounts.length > 0
-        ? effectiveMounts
-            .filter((mount) => mount.kind === "menu")
-            .map((mount) => mount.target.menuInstanceId)
-        : normalizedMenuInstanceIds,
-  };
-}
-
-function syncItemMenuMounts(item: ScriptEditorItemRecord): ScriptEditorItemRecord {
-  const syncedItem = syncMenuInstanceOwnerMounts(item);
-  if (
-    (syncedItem.mounts?.length ?? 0) === 0 &&
-    (syncedItem.menuInstanceIds?.length ?? 0) === 0
-  ) {
-    const { mounts, ...itemWithoutEmptyMounts } = syncedItem;
-    void mounts;
-    return itemWithoutEmptyMounts;
-  }
-  return syncedItem;
 }

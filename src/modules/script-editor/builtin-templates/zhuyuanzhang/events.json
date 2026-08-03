@@ -98,18 +98,7 @@
       "building:house.template.leader_residence",
       "action:review"
     ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.leader_residence.review",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.leader_residence",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
+    "dialogueId": "scene.building.template.house.leader_residence.review"
   },
   {
     "id": "event.building.house.kulan.temple.enter",
@@ -133,41 +122,7 @@
       "building:house.template.temple",
       "action:review"
     ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.temple.review",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.temple",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.house.kulan.temple.work",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "皇觉寺 - 寺内工作",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.kulan.temple",
-      "action:work"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.house.kulan.temple.work",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.kulan.temple",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
+    "dialogueId": "scene.building.template.house.temple.review"
   },
   {
     "id": "event.building.house.kulan.temple.copy_scripture",
@@ -183,18 +138,42 @@
     "actions": [
       {
         "type": "launchPlayable",
-        "playableId": "activity-qte",
-        "integrationId": "playable.activity-qte.house.temple",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.kulan.temple",
-          "returnPolicy": "resume-owner"
-        },
-        "payload": {
-          "activityId": "activity.zhu_yuanzhang.temple.copy_scripture"
-        }
+        "playableId": "temple-copy-scripture",
+        "integrationId": "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+      "ownerContext": {
+        "ownerKind": "house",
+        "ownerId": "house.kulan.temple",
+        "returnPolicy": "resume-owner"
+      },
+      "payload": {
+        "title": "抄写经卷",
+        "briefing": "在偏殿抄录残缺经卷，顺便替住持整理寺中的旧账与香火名册。",
+        "prompts": [
+          {
+            "id": "prompt-1",
+            "text": "静坐抄经，先定你的心，再定你的字。",
+            "choices": [
+              { "id": "trace", "label": "依字描摹" },
+              { "id": "balance", "label": "稳腕正锋" },
+              { "id": "review", "label": "核对残页" }
+            ],
+            "expectedChoiceId": "trace"
+          },
+          {
+            "id": "prompt-2",
+            "text": "这桩事不见刀光，却最考验耐性。",
+            "choices": [
+              { "id": "trace", "label": "依字描摹" },
+              { "id": "balance", "label": "稳腕正锋" },
+              { "id": "review", "label": "核对残页" }
+            ],
+            "expectedChoiceId": "balance"
+          }
+        ],
+        "requiredScore": 1
       }
-    ]
+    }
+  ]
   },
   {
     "id": "event.building.house.kulan.temple.sweep_courtyard",
@@ -209,12 +188,16 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.house.kulan.temple.sweep_courtyard",
+        "type": "launchPlayable",
+        "playableId": "activity-qte",
+        "integrationId": "playable.activity-qte.instance.template.temple-sweep-courtyard",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
-          "returnPolicy": "reenter-owner"
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "activityId": "activity.zhu_yuanzhang.temple.sweep_courtyard"
         }
       }
     ]
@@ -246,18 +229,7 @@
       "building:house.template.temple",
       "action:donate"
     ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.temple.donate",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.temple",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
+    "dialogueId": "scene.building.template.house.temple.donate"
   },
   {
     "id": "event.building.house.kulan.temple.carry_water",
@@ -272,619 +244,36 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.house.kulan.temple.carry_water",
+        "type": "launchPlayable",
+        "playableId": "activity-qte",
+        "integrationId": "playable.activity-qte.instance.template.temple-carry-water",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
-          "returnPolicy": "reenter-owner"
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "activityId": "activity.zhu_yuanzhang.temple.carry_water"
         }
       }
     ]
   },
   {
-    "id": "event.building.house.kulan.keep.enter",
+    "id": "event.playable.grain_accounting.failure_reward",
     "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "帅府 - 进入",
+    "name": "粮账核算 - 失败结算",
     "occurrence": "repeatable",
-    "tags": [
-      "building-enter",
-      "building:house.kulan.keep",
-      "action:enter"
-    ],
-    "dialogueId": "scene.building.house.kulan.keep.enter"
-  },
-  {
-    "id": "event.building.template.house.keep.review",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "帅府 - 评定",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.keep",
-      "action:review"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.keep.review",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.keep",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.keep.work",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "帅府 - 安排工作",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.keep",
-      "action:work"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.keep.work",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.keep",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.keep.leave",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "帅府 - 离开",
-    "occurrence": "repeatable",
-    "actions": [
-      {
-        "type": "closeBuilding"
-      }
-    ],
-    "tags": [
-      "building-action",
-      "building:house.template.keep",
-      "action:leave"
-    ],
+    "type": "settlement",
+    "settlementId": "settlement.playable.grain_accounting.failure_reward",
     "dialogueId": ""
   },
   {
-    "id": "event.building.house.kulan.tea_house.enter",
+    "id": "event.playable.medicine_compounding.failure_reward",
     "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "茶馆 - 进入",
+    "name": "药材炼制 - 失败结算",
     "occurrence": "repeatable",
-    "tags": [
-      "building-enter",
-      "building:house.kulan.tea_house",
-      "action:enter"
-    ],
-    "dialogueId": "scene.building.house.kulan.tea_house.enter"
-  },
-  {
-    "id": "event.building.template.house.tea_house.talk",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "茶馆 - 交谈",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.tea_house",
-      "action:talk"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.tea_house.talk",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.tea_house",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.tea_house.intel",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "茶馆 - 打听消息",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.tea_house",
-      "action:intel"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.tea_house.intel",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.tea_house",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.tea_house.tea",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "茶馆 - 喝茶",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.tea_house",
-      "action:tea"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.tea_house.tea",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.tea_house",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.tea_house.leave",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "茶馆 - 离开",
-    "occurrence": "repeatable",
-    "actions": [
-      {
-        "type": "closeBuilding"
-      }
-    ],
-    "tags": [
-      "building-action",
-      "building:house.template.tea_house",
-      "action:leave"
-    ],
-    "dialogueId": ""
-  },
-  {
-    "id": "event.building.house.kulan.market.enter",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "货栈 - 进入",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-enter",
-      "building:house.kulan.market",
-      "action:enter"
-    ],
-    "dialogueId": "scene.building.house.kulan.market.enter"
-  },
-  {
-    "id": "event.building.template.house.market.talk",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "货栈 - 交谈",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.market",
-      "action:talk"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.market.talk",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.market",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.market.trade",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "货栈 - 交易",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.market",
-      "action:trade"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.market.trade",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.market",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.market.intel",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "货栈 - 打听消息",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.market",
-      "action:intel"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.market.intel",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.market",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.market.leave",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "货栈 - 离开",
-    "occurrence": "repeatable",
-    "actions": [
-      {
-        "type": "closeBuilding"
-      }
-    ],
-    "tags": [
-      "building-action",
-      "building:house.template.market",
-      "action:leave"
-    ],
-    "dialogueId": ""
-  },
-  {
-    "id": "event.building.house.kulan.grain_shop.enter",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "粮铺 - 进入",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-enter",
-      "building:house.kulan.grain_shop",
-      "action:enter"
-    ],
-    "dialogueId": "scene.building.house.kulan.grain_shop.enter"
-  },
-  {
-    "id": "event.building.template.house.grain_shop.trade",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "粮铺 - 粮食交易",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.grain_shop",
-      "action:trade"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.grain_shop.trade",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.grain_shop",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.grain_shop.accounting",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "粮铺 - 账目核算",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.grain_shop",
-      "action:accounting"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.grain_shop.accounting",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.grain_shop",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.grain_shop.leave",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "粮铺 - 离开",
-    "occurrence": "repeatable",
-    "actions": [
-      {
-        "type": "closeBuilding"
-      }
-    ],
-    "tags": [
-      "building-action",
-      "building:house.template.grain_shop",
-      "action:leave"
-    ],
-    "dialogueId": ""
-  },
-  {
-    "id": "event.building.house.kulan.medicine_house.enter",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "药铺 - 进入",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-enter",
-      "building:house.kulan.medicine_house",
-      "action:enter"
-    ],
-    "dialogueId": "scene.building.house.kulan.medicine_house.enter"
-  },
-  {
-    "id": "event.building.template.house.medicine_house.treatment",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "药铺 - 治疗",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.medicine_house",
-      "action:treatment"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.medicine_house.treatment",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.medicine_house",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.medicine_house.compounding",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "药铺 - 炼药",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.medicine_house",
-      "action:compounding"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.medicine_house.compounding",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.medicine_house",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.medicine_house.leave",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "药铺 - 离开",
-    "occurrence": "repeatable",
-    "actions": [
-      {
-        "type": "closeBuilding"
-      }
-    ],
-    "tags": [
-      "building-action",
-      "building:house.template.medicine_house",
-      "action:leave"
-    ],
-    "dialogueId": ""
-  },
-  {
-    "id": "event.building.house.kulan.inn.enter",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "客栈 - 进入",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-enter",
-      "building:house.kulan.inn",
-      "action:enter"
-    ],
-    "dialogueId": "scene.building.house.kulan.inn.enter"
-  },
-  {
-    "id": "event.building.template.house.inn.leave",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "客栈 - 离开",
-    "occurrence": "repeatable",
-    "actions": [
-      {
-        "type": "closeBuilding"
-      }
-    ],
-    "tags": [
-      "building-action",
-      "building:house.template.inn",
-      "action:leave"
-    ],
-    "dialogueId": ""
-  },
-  {
-    "id": "event.building.template.house.inn.work",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "客栈 - 酒馆工作",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.inn",
-      "action:work"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.inn.work",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.inn",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.inn.talk",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "客栈 - 交谈",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.inn",
-      "action:talk"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.inn.talk",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.inn",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.inn.gamble",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "客栈 - 赌局",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.inn",
-      "action:gamble"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.inn.gamble",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.inn",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.temple.work",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "寺庙 - 寺内工作",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.temple",
-      "action:work"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.temple.work",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.temple",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.house.inn.drink",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "客栈 - 饮酒",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:house.template.inn",
-      "action:drink"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.inn.drink",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.inn",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.home.rest",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "自宅 - 休息",
-    "occurrence": "repeatable",
-    "tags": [
-      "building-action",
-      "building:home.template",
-      "action:rest"
-    ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.home.rest",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "home.template",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
-  },
-  {
-    "id": "event.building.template.home.leave",
-    "chapterId": "chapter.zhu-yuanzhang-rise",
-    "name": "自宅 - 离开",
-    "occurrence": "repeatable",
-    "actions": [
-      {
-        "type": "closeBuilding"
-      }
-    ],
-    "tags": [
-      "building-action",
-      "building:home.template",
-      "action:leave"
-    ],
+    "type": "settlement",
+    "settlementId": "settlement.playable.medicine_compounding.failure_reward",
     "dialogueId": ""
   }
 ]

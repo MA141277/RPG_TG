@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>剧本编辑器手册</title>
+    <style>
+      :root {
+        --bg: #f6efdf;
+        --paper: #fbf6ec;
+        --ink: #2b2117;
+        --muted: #7a6450;
+        --line: #dcc8ac;
+        --accent: #9b6b2f;
+        --accent-2: #c99f5d;
+        --soft: #efe3ce;
+        --shadow: 0 18px 40px rgba(73, 44, 18, 0.12);
+        --radius: 18px;
+        --content: 1120px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        font:
+          16px/1.75 "Noto Serif SC",
+          "Source Han Serif SC",
+          "Songti SC",
+          serif;
+        background:
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 28%),
+          linear-gradient(180deg, #f8f1e4 0%, #f1e5d0 100%);
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .shell {
+        width: min(calc(100% - 32px), var(--content));
+        margin: 0 auto;
+      }
+
+      .hero {
+        padding: 36px 0 24px;
+      }
+
+      .hero-card {
+        background: linear-gradient(180deg, rgba(255, 250, 241, 0.96), rgba(249, 241, 226, 0.94));
+        border: 1px solid rgba(165, 122, 66, 0.18);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .hero-top {
+        padding: 40px 40px 28px;
+        background:
+          linear-gradient(135deg, rgba(212, 179, 121, 0.28), rgba(255, 255, 255, 0) 45%),
+          linear-gradient(180deg, rgba(169, 120, 56, 0.08), rgba(169, 120, 56, 0));
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        font-size: 13px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        margin: 0;
+        line-height: 1.3;
+        font-weight: 700;
+      }
+
+      h1 {
+        font-size: clamp(32px, 5vw, 52px);
+      }
+
+      h2 {
+        font-size: clamp(24px, 3vw, 34px);
+      }
+
+      h3 {
+        font-size: 22px;
+      }
+
+      h4 {
+        font-size: 18px;
+      }
+
+      .hero-copy {
+        max-width: 850px;
+        margin-top: 16px;
+        color: var(--muted);
+        font-size: 17px;
+      }
+
+      .hero-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .hero-tag {
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255, 248, 236, 0.9);
+        border: 1px solid rgba(155, 107, 47, 0.18);
+        color: var(--accent);
+        font-size: 14px;
+      }
+
+      .toc {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        padding: 0 24px 24px;
+      }
+
+      .toc a {
+        display: block;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: rgba(255, 252, 246, 0.82);
+        border: 1px solid rgba(155, 107, 47, 0.12);
+        color: var(--ink);
+      }
+
+      .toc a strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--accent);
+      }
+
+      .sticky-nav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(10px);
+        background: rgba(246, 239, 223, 0.86);
+        border-bottom: 1px solid rgba(155, 107, 47, 0.12);
+      }
+
+      .sticky-nav .shell {
+        display: flex;
+        gap: 14px;
+        overflow-x: auto;
+        padding: 12px 0;
+      }
+
+      .sticky-nav a {
+        white-space: nowrap;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(155, 107, 47, 0.12);
+        background: rgba(255, 250, 241, 0.86);
+      }
+
+      main {
+        padding: 28px 0 56px;
+      }
+
+      section.doc-section {
+        margin-bottom: 28px;
+        padding: 28px;
+        border-radius: 24px;
+        background: rgba(251, 246, 236, 0.92);
+        border: 1px solid rgba(165, 122, 66, 0.14);
+        box-shadow: var(--shadow);
+      }
+
+      .section-intro {
+        margin-top: 12px;
+        color: var(--muted);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        padding: 18px 18px 16px;
+        border-radius: var(--radius);
+        background: var(--paper);
+        border: 1px solid rgba(155, 107, 47, 0.1);
+      }
+
+      .card p:last-child,
+      .card ul:last-child,
+      .card ol:last-child {
+        margin-bottom: 0;
+      }
+
+      .figure {
+        margin: 18px 0 0;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(155, 107, 47, 0.12);
+        background: #fdfaf4;
+      }
+
+      .figure img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .figure figcaption {
+        padding: 10px 14px 12px;
+        font-size: 14px;
+        color: var(--muted);
+        background: rgba(247, 239, 225, 0.85);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 14px;
+        background: rgba(255, 252, 247, 0.82);
+        overflow: hidden;
+        border-radius: 16px;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        font-size: 14px;
+        color: var(--accent);
+        background: rgba(217, 190, 149, 0.18);
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      ul,
+      ol {
+        margin: 10px 0 16px 22px;
+        padding: 0;
+      }
+
+      .flow {
+        padding: 18px;
+        border-radius: var(--radius);
+        background: linear-gradient(180deg, #f8f0e2, #f4e7d1);
+        border: 1px dashed rgba(155, 107, 47, 0.28);
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .mini-note {
+        padding: 14px 16px;
+        border-left: 4px solid var(--accent-2);
+        background: rgba(249, 240, 224, 0.8);
+        border-radius: 12px;
+        color: #6d543f;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(201, 159, 93, 0.16);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      code {
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: rgba(201, 159, 93, 0.12);
+        color: #6a4a24;
+      }
+
+      @media (max-width: 900px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-top {
+          padding: 28px 22px 22px;
+        }
+
+        .toc {
+          padding: 0 16px 18px;
+        }
+
+        section.doc-section {
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="shell">
+        <div class="hero-card">
+          <div class="hero-top">
+            <p class="eyebrow">RPG_TG / Mod-First-Dev</p>
+            <h1>剧本编辑器整合手册</h1>
+            <p class="hero-copy">
+              这是一份单页 HTML 版整合手册，合并了“功能说明”“新手上手手册”和“实例演练”三部分内容。
+              它的目标不是解释源码，而是帮助创作者和策划从当前真实界面出发，理解编辑器现在能做什么、怎么用、模块之间怎么互相引用。
+            </p>
+            <div class="hero-tags">
+              <span class="hero-tag">功能说明</span>
+              <span class="hero-tag">新手上手</span>
+              <span class="hero-tag">实例演练</span>
+              <span class="hero-tag">单页阅读</span>
+            </div>
+          </div>
+          <nav class="toc" aria-label="内容目录">
+            <a href="#feature">
+              <strong>功能说明</strong>
+              模块职责、字段、下拉项、引用关系
+            </a>
+            <a href="#beginner">
+              <strong>新手上手</strong>
+              第一次进入后该先看什么、先做什么
+            </a>
+            <a href="#walkthrough">
+              <strong>实例演练</strong>
+              跟着模板项目走一条“菜单 -> 事件 -> 玩法”
+            </a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <nav class="sticky-nav">
+      <div class="shell">
+        <a href="#feature">功能说明</a>
+        <a href="#feature-structure">结构与模块</a>
+        <a href="#feature-fields">字段与下拉</a>
+        <a href="#feature-relations">引用关系</a>
+        <a href="#beginner">新手上手</a>
+        <a href="#walkthrough">实例演练</a>
+      </div>
+    </nav>
+
+    <main>
+      <div class="shell">
+        <section class="doc-section" id="feature">
+          <span class="badge">功能说明</span>
+          <h2>一、剧本编辑器功能说明</h2>
+          <p class="section-intro">
+            这一部分是正式说明书口径。它重点解释编辑器当前有哪些模块、字段是什么意思、下拉框每一项代表什么、以及模块之间如何引用。它不等同于操作教程。
+          </p>
+
+          <div class="grid-2" id="feature-structure">
+            <div class="card">
+              <h3>1. 编辑器定位</h3>
+              <p>当前剧本编辑器最适合承担三类工作：</p>
+              <ol>
+                <li>建立内容对象：人物、城市、建筑、菜单、事件、玩法、结算。</li>
+                <li>组织内容流程：入口、跳转、去向、后续事件。</li>
+                <li>进行运行前检查：运行预览、导出准备。</li>
+              </ol>
+              <p>它当前不负责底层玩法机制开发，也不适合作为工程字段编辑器。</p>
+            </div>
+            <div class="card">
+              <h3>2. 当前工作台结构</h3>
+              <div class="flow">顶部工具栏 → 左侧对象树 → 中间编辑区</div>
+              <ul>
+                <li><code>项目信息</code>：项目级开局设置。</li>
+                <li><code>运行预览</code>：把当前编辑器数据转成临时可运行版本。</li>
+                <li><code>剧本导出</code>：导出为运行时剧本包。</li>
+              </ul>
+            </div>
+          </div>
+
+          <figure class="figure">
+            <img alt="剧本编辑器入口" src="./assets/script-editor-guides/landing.png" />
+            <figcaption>入口页：当前推荐第一次使用时优先选择“使用模板”。</figcaption>
+          </figure>
+
+          <figure class="figure">
+            <img alt="剧本编辑器工作台" src="./assets/script-editor-guides/workspace.png" />
+            <figcaption>工作台：左侧选模块，中间改内容，上方做预览和导出。</figcaption>
+          </figure>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>3. 当前可见模块总览</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>模块</th>
+                  <th>当前职责</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>项目信息</td><td>设置开局参数</td><td>项目级，不是单条剧情级</td></tr>
+                <tr><td>人物</td><td>管理角色档案与自定义属性</td><td>当前完成度较高</td></tr>
+                <tr><td>城市 / 建筑</td><td>管理世界对象</td><td>作为人物、入口、玩法的挂载背景</td></tr>
+                <tr><td>菜单</td><td>配置玩家能点到的入口</td><td>当前主要指向事件</td></tr>
+                <tr><td>事件</td><td>承接流程、决定去向</td><td>当前最关键的流程模块</td></tr>
+                <tr><td>玩法</td><td>把预制玩法接入项目</td><td>当前界面仍保留旧字段</td></tr>
+                <tr><td>结算</td><td>组织结果收尾</td><td>模板项目默认无预置记录</td></tr>
+                <tr><td>立绘资源 / 立绘变体</td><td>提供人物视觉资源</td><td>会被人物模块引用</td></tr>
+                <tr><td>文本</td><td>管理文本资源</td><td>作为内容资源库使用</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card" style="margin-top: 18px;" id="feature-relations">
+            <h3>4. 模块之间的引用关系</h3>
+            <p>当前最核心的一条引用链是：</p>
+            <div class="flow">菜单 → 事件 → 对话 / 事件 / 菜单 / 玩法 / 任务 → 结算或后续流程</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>来源模块</th>
+                  <th>主要引用目标</th>
+                  <th>作用</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>项目信息</td><td>人物、城市、建筑</td><td>决定开局位置和默认角色</td></tr>
+                <tr><td>人物</td><td>城市、建筑、立绘资源、立绘变体</td><td>决定归属与视觉表现</td></tr>
+                <tr><td>菜单</td><td>事件</td><td>让玩家点下去后进入某条流程</td></tr>
+                <tr><td>事件</td><td>对话、事件、菜单、玩法、任务、结算</td><td>决定流程接下来去哪里</td></tr>
+                <tr><td>玩法</td><td>玩法原型、接入方案、结算</td><td>决定实际调用的可玩内容与收尾方式</td></tr>
+                <tr><td>结算</td><td>人物、城市、建筑等目标对象</td><td>结果最终落到谁身上</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card" style="margin-top: 18px;" id="feature-fields">
+            <h3>5. 固定下拉与动态下拉</h3>
+            <div class="grid-2">
+              <div>
+                <h4>固定下拉</h4>
+                <ul>
+                  <li><code>开局视图</code></li>
+                  <li><code>角色选择策略</code></li>
+                  <li><code>人物类型</code></li>
+                  <li><code>事件类型</code></li>
+                  <li><code>去向类型</code></li>
+                  <li><code>玩法原型</code></li>
+                </ul>
+              </div>
+              <div>
+                <h4>动态下拉</h4>
+                <ul>
+                  <li><code>开局城市</code></li>
+                  <li><code>开局建筑</code></li>
+                  <li><code>默认角色</code></li>
+                  <li><code>所属城市</code></li>
+                  <li><code>所属建筑</code></li>
+                  <li><code>目标对象</code></li>
+                  <li><code>后续事件</code></li>
+                  <li><code>去向目标</code></li>
+                  <li><code>结算实例</code></li>
+                </ul>
+              </div>
+            </div>
+            <p class="mini-note">固定下拉是在选“类别”；动态下拉是在选“当前项目里哪一个具体对象”。</p>
+          </div>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>6. 项目信息模块字段说明</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>字段</th>
+                  <th>类型</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>项目标题</td><td>文本</td><td>编辑器项目本身的标题，用于项目识别。</td></tr>
+                <tr><td>剧本包标题</td><td>文本</td><td>更接近最终内容包的标题。</td></tr>
+                <tr><td>开场场景标题</td><td>文本</td><td>用于描述开局场景名称。</td></tr>
+                <tr><td>开局视图</td><td>固定下拉</td><td>决定开局先进入地图、城市还是建筑。</td></tr>
+                <tr><td>开局城市</td><td>动态下拉</td><td>来源于当前项目全部城市对象。</td></tr>
+                <tr><td>开局建筑</td><td>动态下拉</td><td>来源于当前项目全部建筑对象。</td></tr>
+                <tr><td>角色选择策略</td><td>固定下拉</td><td>决定玩家进入前是否选角色，以及如何确定主角。</td></tr>
+                <tr><td>默认角色</td><td>动态下拉</td><td>来源于人物模块中 <code>人物类型 = 角色</code> 的对象。</td></tr>
+                <tr><td>入口事件时机</td><td>文本</td><td>用于标记开局入口事件的触发时机。</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">开局视图下拉项</h4>
+            <table>
+              <thead>
+                <tr><th>选项</th><th>含义</th><th>适合场景</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>地图</td><td>开局先进入地图层级</td><td>从大地图开始游玩</td></tr>
+                <tr><td>城市</td><td>开局直接进入某座城市</td><td>开局先落在城市场景</td></tr>
+                <tr><td>建筑</td><td>开局直接进入某个建筑</td><td>开局先落在某个室内或据点</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">角色选择策略下拉项</h4>
+            <table>
+              <thead>
+                <tr><th>选项</th><th>含义</th><th>适合场景</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>开局时选择角色</td><td>进入游戏前先选角色</td><td>多主角、多候选开局角色</td></tr>
+                <tr><td>使用默认角色直接开局</td><td>不弹角色选择，直接进入默认角色</td><td>单主角固定开局</td></tr>
+                <tr><td>使用第一个可操作角色开局</td><td>自动选项目中第一个可操作角色</td><td>需要快速进场但不固定某人时</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <figure class="figure">
+            <img alt="人物模块" src="./assets/script-editor-guides/people.png" />
+            <figcaption>人物模块：当前完成度较高，适合作为理解字段和引用关系的起点。</figcaption>
+          </figure>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>7. 人物模块字段说明</h3>
+            <p>当前人物详情主要以 <code>基础</code> 和 <code>属性组</code> 两个页签组织。</p>
+            <table>
+              <thead>
+                <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>人物名称</td><td>文本</td><td>角色名称。</td></tr>
+                <tr><td>人物类型</td><td>固定下拉</td><td>决定对象是可操作角色还是 NPC。</td></tr>
+                <tr><td>正式身份</td><td>文本</td><td>角色的正式身份、头衔或职位。</td></tr>
+                <tr><td>职业/定位</td><td>文本</td><td>角色在内容中的功能定位。</td></tr>
+                <tr><td>所属城市</td><td>动态下拉</td><td>来源于城市模块。</td></tr>
+                <tr><td>所属建筑</td><td>动态下拉</td><td>来源于建筑模块，并会优先按已选城市过滤。</td></tr>
+                <tr><td>人物立绘</td><td>动态下拉</td><td>来源于立绘资源和立绘变体两类对象的合并结果。</td></tr>
+                <tr><td>人物简介</td><td>文本</td><td>角色说明或创作备注。</td></tr>
+                <tr><td>自定义属性</td><td>可增删属性组</td><td>附加人物属性，如年龄、武勇、阵营等。</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">人物类型下拉项</h4>
+            <table>
+              <thead>
+                <tr><th>选项</th><th>含义</th><th>影响</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>角色</td><td>可作为玩家操作角色的对象</td><td>会进入“默认角色”下拉候选</td></tr>
+                <tr><td>NPC</td><td>普通非玩家角色</td><td>不会进入“默认角色”下拉</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">人物立绘下拉说明</h4>
+            <p>当前人物立绘下拉不是单一来源，而是两类对象混合：</p>
+            <ul>
+              <li><code>立绘资源</code>：基础立绘对象</li>
+              <li><code>立绘变体</code>：挂在某个立绘资源下的变体对象</li>
+            </ul>
+            <p>因此你在下拉里可能看到看起来相似甚至重复的名称，它们实际可能分别代表“资源本体”和“变体”。</p>
+          </div>
+
+          <figure class="figure">
+            <img alt="菜单模块" src="./assets/script-editor-guides/menu.png" />
+            <figcaption>菜单模块：当前主表单很精简，重点是“菜单名称”和“目标对象”。</figcaption>
+          </figure>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>8. 菜单模块字段说明</h3>
+            <table>
+              <thead>
+                <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>菜单名称</td><td>文本</td><td>玩家最终看到的按钮文本。</td></tr>
+                <tr><td>目标对象</td><td>动态下拉</td><td>当前主要来源于事件模块，用于决定菜单点击后进入哪条流程。</td></tr>
+              </tbody>
+            </table>
+            <p class="mini-note">当前版本里，菜单模块最主要的作用是“入口指向事件”。它不是完整剧情逻辑承载层。</p>
+          </div>
+
+          <figure class="figure">
+            <img alt="事件模块" src="./assets/script-editor-guides/event.png" />
+            <figcaption>事件模块：当前最关键的流程承接层。</figcaption>
+          </figure>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>9. 事件模块字段说明</h3>
+            <table>
+              <thead>
+                <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>事件标题</td><td>文本</td><td>当前事件名称。</td></tr>
+                <tr><td>事件类型</td><td>固定下拉</td><td>普通事件、结算、菜单。</td></tr>
+                <tr><td>允许重复触发</td><td>开关</td><td>决定事件是否允许重复进入。</td></tr>
+                <tr><td>事件说明</td><td>文本</td><td>事件用途、创作备注或结果描述。</td></tr>
+                <tr><td>后续事件</td><td>动态下拉</td><td>来源于事件模块，决定当前事件完成后是否自动接下一条事件。</td></tr>
+                <tr><td>结算模块</td><td>动态下拉</td><td>仅当事件类型是“结算”时出现，来源于结算模块。</td></tr>
+                <tr><td>去向类型</td><td>固定下拉</td><td>决定流程后续进入对话、事件、菜单、玩法还是任务。</td></tr>
+                <tr><td>去向目标</td><td>动态下拉</td><td>会随去向类型变化而切换来源。</td></tr>
+                <tr><td>所属剧情 ID</td><td>文本</td><td>把事件挂到剧情节点或剧情线下。</td></tr>
+                <tr><td>关联人物 / 城市 / 建筑</td><td>关联列表</td><td>说明事件和谁相关，而不是说明流程去哪。</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">事件类型下拉项</h4>
+            <table>
+              <thead>
+                <tr><th>选项</th><th>含义</th><th>附加变化</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>普通事件</td><td>默认流程事件</td><td>不额外出现结算模块字段</td></tr>
+                <tr><td>结算</td><td>以结果收尾为核心的事件</td><td>会出现“结算模块”下拉</td></tr>
+                <tr><td>菜单</td><td>与菜单类流程有关的事件</td><td>仍可继续配置去向</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">后续事件下拉项说明</h4>
+            <p>来源于当前项目全部事件对象，但会排除当前事件本身。</p>
+            <table>
+              <thead>
+                <tr><th>选项</th><th>含义</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>空表示直接关闭</td><td>当前事件结束后，不再自动接下一条事件。</td></tr>
+                <tr><td>其他事件对象</td><td>当前事件结束后自动跳到所选事件。</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">去向类型下拉项</h4>
+            <table>
+              <thead>
+                <tr><th>选项</th><th>含义</th><th>去向目标来源</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>对话</td><td>事件后进入对话对象</td><td>对话模块</td></tr>
+                <tr><td>事件</td><td>事件后继续进入另一条事件</td><td>事件模块</td></tr>
+                <tr><td>菜单</td><td>事件后进入菜单类落点</td><td>菜单用途目标列表</td></tr>
+                <tr><td>玩法</td><td>事件后进入玩法对象</td><td>玩法模块</td></tr>
+                <tr><td>任务</td><td>事件后进入任务对象</td><td>任务模块</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <figure class="figure">
+            <img alt="玩法模块" src="./assets/script-editor-guides/minigame.png" />
+            <figcaption>玩法模块：当前真实界面仍以“绑定标题 / 玩法原型 / 接入方案 / 结算实例”组织。</figcaption>
+          </figure>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>10. 玩法模块字段说明</h3>
+            <table>
+              <thead>
+                <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>绑定标题</td><td>文本</td><td>这条玩法实例在当前项目里的名字。</td></tr>
+                <tr><td>玩法原型</td><td>固定下拉</td><td>决定实际调用哪种玩法能力。</td></tr>
+                <tr><td>接入方案</td><td>系统内置动态下拉</td><td>决定该玩法通过哪种入口方式接入。</td></tr>
+                <tr><td>结算实例</td><td>动态下拉</td><td>来源于结算模块，决定玩法结束后交给哪个结算对象处理。</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">玩法原型下拉项</h4>
+            <table>
+              <thead>
+                <tr><th>选项</th><th>含义</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>互动问答</td><td>问答 / QTE 类玩法</td></tr>
+                <tr><td>城市乞讨</td><td>城市乞讨玩法</td></tr>
+                <tr><td>粮账核算</td><td>粮铺账目核算玩法</td></tr>
+                <tr><td>药材炼制</td><td>药铺炼药玩法</td></tr>
+                <tr><td>剧情战斗</td><td>剧情战斗玩法</td></tr>
+                <tr><td>建筑流程</td><td>建筑流程类玩法</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">接入方案下拉项说明</h4>
+            <table>
+              <thead>
+                <tr><th>选项</th><th>含义</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>城市乞讨 / 外部入口</td><td>从外部入口启动城市乞讨。</td></tr>
+                <tr><td>互动问答 / 对话接入</td><td>从对话流程启动互动问答。</td></tr>
+                <tr><td>互动问答 / 寺庙接入</td><td>从寺庙相关入口启动互动问答。</td></tr>
+                <tr><td>粮账核算 / 粮铺接入</td><td>从粮铺场景进入粮账核算。</td></tr>
+                <tr><td>药材炼制 / 药铺接入</td><td>从药铺场景进入药材炼制。</td></tr>
+                <tr><td>剧情战斗 / 对话接入</td><td>从对话流程进入剧情战斗。</td></tr>
+                <tr><td>建筑流程 / 建筑接入</td><td>从建筑入口进入建筑流程玩法。</td></tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 18px;">结算实例下拉项说明</h4>
+            <table>
+              <thead>
+                <tr><th>选项</th><th>含义</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>不绑定</td><td>当前玩法实例不直接关联结算对象。</td></tr>
+                <tr><td>其他结算对象</td><td>玩法结束后可把结果交给该结算对象处理。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <figure class="figure">
+            <img alt="结算模块" src="./assets/script-editor-guides/settlement.png" />
+            <figcaption>结算模块：模板项目当前默认没有预置记录，但事件和玩法都可以引用它。</figcaption>
+          </figure>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>11. 结算模块说明</h3>
+            <p>结算模块当前主要用于承接奖励、扣除、状态变化与结果收尾。</p>
+            <p>在当前模板项目中，它默认是空的。这意味着功能存在，但示例数据没有预先填好。</p>
+            <ul>
+              <li>当 <code>事件类型 = 结算</code> 时，事件可以引用结算对象。</li>
+              <li>玩法中的 <code>结算实例</code> 也可以引用结算对象。</li>
+            </ul>
+          </div>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>12. 当前版本的重要边界</h3>
+            <ul>
+              <li>当前功能说明一律按真实界面来写，不按未来规划来写。</li>
+              <li>玩法页当前仍存在 <code>接入方案</code> 和 <code>结算实例</code>。</li>
+              <li>菜单页顶部仍有概述区，但创作时最核心的仍是主表单字段。</li>
+              <li>结算模块在模板项目中默认空白，不代表没有结算能力。</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="doc-section" id="beginner">
+          <span class="badge">新手上手</span>
+          <h2>二、新手上手手册</h2>
+          <p class="section-intro">
+            这一部分只回答“第一次进来该怎么学、先做什么、用什么顺序最不容易乱”。它不追求字段穷举，而是帮助创作者尽快进入状态。
+          </p>
+          <div class="grid-2">
+            <div class="card">
+              <h3>1. 第一次最推荐的进入方式</h3>
+              <ol>
+                <li>从主菜单进入 <code>剧本编辑</code></li>
+                <li>第一次优先点 <code>使用模板</code></li>
+                <li>先看工作台结构，再决定改哪一块</li>
+              </ol>
+            </div>
+            <div class="card">
+              <h3>2. 最推荐的学习顺序</h3>
+              <ol>
+                <li><code>项目信息</code></li>
+                <li><code>人物</code></li>
+                <li><code>事件</code></li>
+                <li><code>菜单</code></li>
+                <li><code>玩法</code></li>
+                <li><code>结算</code></li>
+              </ol>
+            </div>
+          </div>
+
+          <figure class="figure">
+            <img alt="项目工作台" src="./assets/script-editor-guides/workspace.png" />
+            <figcaption>新手先只要认清三处：左边模块、上方预览/导出、中间编辑区。</figcaption>
+          </figure>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>3. 新手最小目标</h3>
+            <div class="flow">菜单 → 事件 → 玩法 / 对话 → 结束或返回</div>
+            <p>第一次不追求做完整大剧情，只追求先跑通一条小闭环。能点、能跳、能进，就已经算入门。</p>
+          </div>
+        </section>
+
+        <section class="doc-section" id="walkthrough">
+          <span class="badge">实例演练</span>
+          <h2>三、实例演练：做一条“菜单 → 事件 → 玩法”流程</h2>
+          <p class="section-intro">
+            这部分不从空白项目开始，而是借模板项目里现成的“化缘”例子，带你理解一条真实入口链路是怎样串起来的。
+          </p>
+
+          <div class="card">
+            <h3>演练目标</h3>
+            <div class="flow">玩家看到菜单项 → 点击菜单 → 进入事件 → 事件把流程导向玩法 → 玩法开始运行</div>
+          </div>
+
+          <div class="grid-2" style="margin-top: 18px;">
+            <figure class="figure">
+              <img alt="菜单模块" src="./assets/script-editor-guides/menu.png" />
+              <figcaption>先在菜单里找入口：看“菜单名称”和“目标对象”。</figcaption>
+            </figure>
+            <figure class="figure">
+              <img alt="事件模块" src="./assets/script-editor-guides/event.png" />
+              <figcaption>再在事件里找中转：看“去向类型”和“去向目标”。</figcaption>
+            </figure>
+          </div>
+
+          <figure class="figure" style="margin-top: 18px;">
+            <img alt="玩法模块" src="./assets/script-editor-guides/minigame.png" />
+            <figcaption>最后在玩法里找真正开始玩的内容：看“绑定标题”“玩法原型”“接入方案”。</figcaption>
+          </figure>
+
+          <div class="card" style="margin-top: 18px;">
+            <h3>推荐仿做顺序</h3>
+            <ol>
+              <li>先决定你要做什么玩法。</li>
+              <li>在玩法页先建玩法对象。</li>
+              <li>在事件页建事件，把去向接到玩法。</li>
+              <li>在菜单页建入口，把目标对象指向该事件。</li>
+              <li>回到顶部点 <code>运行预览</code> 检查整条链。</li>
+            </ol>
+            <p class="mini-note">先把“玩什么”定下来，再用事件把它接起来，最后才把玩家入口放出来。</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

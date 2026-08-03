@@ -25,7 +25,6 @@ const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFile
   "menuResources",
   "menuInstances",
   "flows",
-  "items",
   "portraits",
   "portraitVariants",
   "settlements",
@@ -144,7 +143,6 @@ export function parseScriptEditorProject(
   assertEntityRecordArray(value.activities, "script editor project activities");
   assertEntityRecordArray(value.cards, "script editor project cards");
   assertEntityRecordArray(value.valuables, "script editor project valuables");
-  assertEntityRecordArray(value.items ?? [], "script editor project items");
   assertObjectRecordArray(value.cityNpcPools, "script editor project cityNpcPools");
   assertObject(value.houseModuleDefaults, "script editor project houseModuleDefaults");
   assertEntityRecordArray(
@@ -193,6 +191,9 @@ export function parseScriptEditorProject(
     people: (value.people as Record<string, unknown>[]).map((person) =>
       normalizeScriptEditorPersonRecord(person, { portraitVariants })
     ),
+    dialogues: (value.dialogues as ScriptEditorProjectDefinition["dialogues"]).map(
+      (dialogue) => normalizeScriptEditorDialogueRecord(dialogue)
+    ),
     portraits: (value.portraits ?? []) as ScriptEditorProjectDefinition["portraits"],
     portraitVariants,
     buildingArrangements:
@@ -207,15 +208,11 @@ export function parseScriptEditorProject(
       (value.progressTrackBindings ?? []) as NonNullable<
         ScriptEditorProjectDefinition["progressTrackBindings"]
       >,
-    dialogues: (value.dialogues as Array<Record<string, unknown> & { id: string }>).map(
-      (dialogue) => normalizeScriptEditorDialogueRecord(dialogue)
-    ),
     menuResources:
       (value.menuResources ?? []) as ScriptEditorProjectDefinition["menuResources"],
     menuInstances:
       (value.menuInstances ?? []) as ScriptEditorProjectDefinition["menuInstances"],
     flows: (value.flows ?? []) as ScriptEditorProjectDefinition["flows"],
-    items: (value.items ?? []) as ScriptEditorProjectDefinition["items"],
   });
 }
 
@@ -469,6 +466,17 @@ function assertStoryPackRecord(
   assertObject(value, "script editor project storyPack");
   assertString(value.id, "script editor project storyPack.id");
   assertString(value.title, "script editor project storyPack.title");
+  if (value.audioSettings != null) {
+    assertObject(value.audioSettings, "script editor project storyPack.audioSettings");
+    if (
+      value.audioSettings.muted != null &&
+      typeof value.audioSettings.muted !== "boolean"
+    ) {
+      throw new Error(
+        "script editor project storyPack.audioSettings.muted must be boolean when present."
+      );
+    }
+  }
   if (value.personAttributeSemantics != null) {
     assertPersonSemanticBindingArray(
       value.personAttributeSemantics,

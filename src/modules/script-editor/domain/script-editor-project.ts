@@ -2,7 +2,7 @@ import type { HouseDefinition } from "../../../domain/house";
 import type {
   EventOccurrence,
   EventParticipant,
-  EventRuntimeAction,
+  EventRouteCommand,
 } from "../../../domain/event";
 import type {
   LocationAccessConditionExpression,
@@ -57,7 +57,6 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "activities",
   "cards",
   "valuables",
-  "items",
   "cityNpcPools",
   "houseModuleDefaults",
   "portraits",
@@ -100,7 +99,6 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   activities: "./activities.json",
   cards: "./cards.json",
   valuables: "./valuables.json",
-  items: "./items.json",
   cityNpcPools: "./city-npc-pools.json",
   houseModuleDefaults: "./house-module-defaults.json",
   portraits: "./portraits.json",
@@ -183,91 +181,9 @@ export type ScriptEditorProgressTrackRecord = ProgressTrackDefinition;
 export type ScriptEditorProgressTrackBindingRecord = ProgressTrackBinding;
 
 export type ScriptEditorMenuTargetFamily = MenuTargetFamily;
-export type ScriptEditorMenuRouteTarget =
-  | {
-      kind: "event";
-      eventId: string;
-    }
-  | {
-      kind: "menu";
-      menuInstanceId: string;
-    };
-
-export type ScriptEditorMenuEntry = Omit<MenuEntryDefinition, "targetFamily" | "targetId"> & {
-  targetFamily: MenuTargetFamily;
-  targetId: string;
-  authoringTarget?: ScriptEditorMenuRouteTarget | undefined;
-};
-
-export type ScriptEditorMenuResourceRecord = Omit<MenuResourceDefinition, "entries"> & {
-  entries: ScriptEditorMenuEntry[];
-};
+export type ScriptEditorMenuEntry = MenuEntryDefinition;
+export type ScriptEditorMenuResourceRecord = MenuResourceDefinition;
 export type ScriptEditorMenuInstanceRecord = MenuInstanceDefinition;
-
-export type ScriptEditorItemDisplayRecord = {
-  title?: string | undefined;
-  iconId?: string | undefined;
-  imageId?: string | undefined;
-};
-
-export type ScriptEditorItemStackRuleRecord = {
-  stackable: boolean;
-  maxStack?: number | undefined;
-  unit?: string | undefined;
-};
-
-export type ScriptEditorItemRecord = ScriptEditorEntityRecord & {
-  name: string;
-  description?: string | undefined;
-  internalNote?: string | undefined;
-  display?: ScriptEditorItemDisplayRecord | undefined;
-  stack?: ScriptEditorItemStackRuleRecord | undefined;
-  menuInstanceIds?: string[] | undefined;
-  mounts?: ScriptEditorMountRecord[] | undefined;
-  customProperties?: ScriptEditorTypedAttributeRecord[] | undefined;
-};
-
-export type ScriptEditorMountRecord =
-  | {
-      kind: "menu";
-      title?: string | undefined;
-      order: number;
-      visible?: boolean | undefined;
-      target: {
-        kind: "menu";
-        menuInstanceId: string;
-      };
-    }
-  | {
-      kind: "city";
-      title?: string | undefined;
-      order: number;
-      visible?: boolean | undefined;
-      target: {
-        kind: "city";
-        cityId: string;
-      };
-    }
-  | {
-      kind: "building";
-      title?: string | undefined;
-      order: number;
-      visible?: boolean | undefined;
-      target: {
-        kind: "building";
-        buildingId: string;
-      };
-    }
-  | {
-      kind: "event";
-      title?: string | undefined;
-      order: number;
-      visible?: boolean | undefined;
-      target: {
-        kind: "event";
-        eventId: string;
-      };
-    };
 
 export type {
   LocationAccessConditionExpression,
@@ -333,7 +249,6 @@ export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
   attributeGroup: Record<string, ScriptEditorPersonAttributeGroup>;
   attributeMappings: ScriptEditorPersonAttributeMapping[];
   attributeValues: ScriptEditorPersonAttributeValue[];
-  mounts?: ScriptEditorMountRecord[];
 };
 
 export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
@@ -370,7 +285,6 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   menuInstanceIds?: string[];
-  mounts?: ScriptEditorMountRecord[];
   access?: ScriptEditorAccessRule;
 };
 
@@ -503,7 +417,6 @@ export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   menuInstanceIds?: string[];
-  mounts?: ScriptEditorMountRecord[];
   access?: ScriptEditorAccessRule;
   entryBinding?: ScriptEditorBuildingEntryBinding;
   backAction?: HouseDefinition["backAction"];
@@ -675,11 +588,11 @@ export type ScriptEditorConditionGroup = {
 export type ScriptEditorEventDestinationFamily =
   | "dialogue"
   | "event"
+  | "menu"
   | "minigame"
-  | "task"
-  | "menuInstance";
+  | "task";
 
-export type ScriptEditorEventType = "settlement";
+export type ScriptEditorEventType = "settlement" | "menu";
 
 export type ScriptEditorEventDestination = {
   family: ScriptEditorEventDestinationFamily;
@@ -715,6 +628,7 @@ export type ScriptEditorSettlementRecord = ScriptEditorEntityRecord & {
 
 export type ScriptEditorMinigameOwnerKind =
   | "house"
+  | "scene"
   | "dialogue"
   | "task"
   | "external";
@@ -744,11 +658,50 @@ export type ScriptEditorMinigameOutcomeRoute = {
   effectHint: string;
 };
 
+export type ScriptEditorPlayableConfigValueType =
+  | "number"
+  | "text"
+  | "boolean"
+  | "enum";
+
+export type ScriptEditorPlayableConfigEntry = {
+  id: string;
+  label: string;
+  valueType: ScriptEditorPlayableConfigValueType;
+  value: string | number | boolean | null;
+  notes?: string;
+  enumOptions?: Array<{ value: string; label: string }>;
+};
+
+export type ScriptEditorPlayableMetricRule = {
+  metricKey: string;
+  operator: ">" | ">=" | "<" | "<=" | "=";
+  value: string | number | boolean;
+};
+
+export type ScriptEditorPlayableSettlementRouteConditions = {
+  outcomeIn?: ScriptEditorMinigameOutcome[];
+  scoreMin?: number;
+  scoreMax?: number;
+  metricRules?: ScriptEditorPlayableMetricRule[];
+};
+
+export type ScriptEditorPlayableSettlementRoute = {
+  id: string;
+  title: string;
+  enabled: boolean;
+  targetEventId: string;
+  conditions: ScriptEditorPlayableSettlementRouteConditions;
+};
+
 export type ScriptEditorMinigameRecord = ScriptEditorEntityRecord & {
   title: string;
   description?: string;
   playableId?: string;
+  configEntries?: ScriptEditorPlayableConfigEntry[];
+  settlementRoutes?: ScriptEditorPlayableSettlementRoute[];
   integrationId?: string;
+  settlementId?: string;
   ownerKind?: ScriptEditorMinigameOwnerKind;
   ownerId?: string;
   returnPolicy?: ScriptEditorMinigameReturnPolicy;
@@ -793,7 +746,7 @@ export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   occurrence?: EventOccurrence;
   type?: ScriptEditorEventType;
   participants?: EventParticipant[];
-  actions?: EventRuntimeAction[];
+  actions?: EventRouteCommand[];
   settlementId?: string;
   tags?: string[];
   triggerTiming?: ScriptEditorEventTriggerTiming;
@@ -883,7 +836,6 @@ export type ScriptEditorProjectDefinition = {
   activities: ScriptEditorActivityRecord[];
   cards: ScriptEditorEntityRecord[];
   valuables: ScriptEditorEntityRecord[];
-  items: ScriptEditorItemRecord[];
   cityNpcPools: ScriptEditorRuntimeRecord[];
   houseModuleDefaults: Record<string, unknown>;
   portraits: ScriptEditorPortraitResourceRecord[];

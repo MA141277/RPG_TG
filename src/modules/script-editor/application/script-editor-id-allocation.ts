@@ -12,8 +12,6 @@ const SCRIPT_EDITOR_CANONICAL_ID_FAMILY_CODE = {
   settlements: 24,
   progressTracks: 25,
   progressTrackBindings: 26,
-  menuResources: 27,
-  menuInstances: 28,
   quests: 31,
   dialogues: 41,
   minigames: 42,
@@ -22,7 +20,9 @@ const SCRIPT_EDITOR_CANONICAL_ID_FAMILY_CODE = {
   storyNodes: 45,
   events: 46,
   eventBindings: 47,
-  items: 51,
+  menuResources: 48,
+  menuInstances: 49,
+  menuItems: 50,
 } as const;
 
 export type ScriptEditorCanonicalIdFamily =
@@ -95,10 +95,6 @@ export function allocateNextScriptEditorProjectCanonicalId(
         family,
         project.progressTrackBindings ?? []
       );
-    case "menuResources":
-      return allocateNextScriptEditorCanonicalId(family, project.menuResources);
-    case "menuInstances":
-      return allocateNextScriptEditorCanonicalId(family, project.menuInstances);
     case "quests":
       return allocateNextScriptEditorCanonicalId(family, project.quests);
     case "dialogues":
@@ -115,8 +111,15 @@ export function allocateNextScriptEditorProjectCanonicalId(
       return allocateNextScriptEditorCanonicalId(family, project.events);
     case "eventBindings":
       return allocateNextScriptEditorCanonicalId(family, project.eventBindings);
-    case "items":
-      return allocateNextScriptEditorCanonicalId(family, project.items);
+    case "menuResources":
+      return allocateNextScriptEditorCanonicalId(family, project.menuResources);
+    case "menuInstances":
+      return allocateNextScriptEditorCanonicalId(family, project.menuInstances);
+    case "menuItems":
+      return allocateNextScriptEditorCanonicalId(
+        family,
+        project.menuResources.flatMap((resource) => resource.entries ?? [])
+      );
   }
 }
 

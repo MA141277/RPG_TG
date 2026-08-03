@@ -27,17 +27,19 @@ import type {
 import { SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION } from "../domain/script-editor-project";
 import type { ScenarioProfileDefinition } from "../../../domain/scenario-profile";
 import { GAME_VIEW_NAMES, isViewName } from "../../../domain/game-state";
+import type { ContentPackAudioSettings } from "../../../domain/content-pack";
 import type { RuntimeDialogueDefinition } from "../../../domain/dialogue";
 import type {
   EventBinding,
   EventDefinition,
-  EventRuntimeAction,
+  EventRouteCommand,
 } from "../../../domain/event";
 import type { RuntimeTaskInput } from "../../../core/contracts/runtime-result";
 import type {
   PlayableDefinition,
   PlayableIntegrationDefinition,
   PlayableOutcome,
+  PlayableSettlementRoute,
   PlayableReturnPolicy,
 } from "../../../core/contracts/playable-runtime";
 import type { FlowPlayableDefinition } from "../../../domain/playables/flow";
@@ -48,6 +50,9 @@ import {
 import {
   builtinPlayableDefinitionRegistry,
 } from "../../../core/registry/builtin-playable-definition-registry";
+import {
+  isScriptEditorShellBackedMinigamePlayableId,
+} from "./minigame-binding-authoring";
 
 export type ScriptEditorRuntimeExportDiagnostic = {
   code:
@@ -72,7 +77,6 @@ type RuntimePackManifestFiles = {
   cityEntries: string;
   settlements: string;
   events: string;
-  scenes: string;
   eventBindings: string;
   progressTracks: string;
   progressTrackBindings: string;
@@ -82,12 +86,11 @@ type RuntimePackManifestFiles = {
   activities: string;
   playables: string;
   playableIntegrations: string;
-  flowPlayables: string;
+  playableShells: string;
   tasks: string;
   textEntries: string;
   cards: string;
   valuables: string;
-  items: string;
   cityNpcPools: string;
   locationAccess: string;
   houseModuleDefaults: string;
@@ -107,6 +110,7 @@ type SettlementAttributeMetadata = {
 const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
   age: { attributeType: "number" },
   stamina: { attributeType: "number" },
+  "stats.gold": { attributeType: "number" },
   "stats.leadership": { attributeType: "number" },
   "stats.martial": { attributeType: "number" },
   "stats.intelligence": { attributeType: "number" },
@@ -133,6 +137,7 @@ type RuntimePackManifest = {
   id: string;
   title: string;
   description?: string;
+  audioSettings?: ContentPackAudioSettings;
   basePackId?: string;
   author?: string;
   version?: string;
@@ -153,7 +158,6 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   cityEntries: "./city-entries.json",
   settlements: "./settlements.json",
   events: "./events.json",
-  scenes: "./scenes.json",
   eventBindings: "./event-bindings.json",
   progressTracks: "./progress-tracks.json",
   progressTrackBindings: "./progress-track-bindings.json",
@@ -163,12 +167,11 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   activities: "./activities.json",
   playables: "./playables.json",
   playableIntegrations: "./playable-integrations.json",
-  flowPlayables: "./flow-playables.json",
+  playableShells: "./playable-shells.json",
   tasks: "./tasks.json",
   textEntries: "./text-entries.json",
   cards: "./cards.json",
   valuables: "./valuables.json",
-  items: "./items.json",
   cityNpcPools: "./city-npc-pools.json",
   locationAccess: "./location-access.json",
   houseModuleDefaults: "./house-module-defaults.json",
@@ -215,6 +218,7 @@ export function validateScriptEditorProjectForRuntimeExport(
   const sharedRuleDiagnostics: ScriptEditorSharedRuleDiagnostic[] = [];
   const exportedTasks = compileScriptEditorProjectTasks(project, sharedRuleDiagnostics);
   appendSharedRuleDiagnostics(sharedRuleDiagnostics, diagnostics);
+  const exportedMenuResources = materializeRuntimeMenuResources(project);
 
   if (
     diagnostics.length > 0 ||
@@ -245,22 +249,20 @@ export function validateScriptEditorProjectForRuntimeExport(
       cityEntries: cityBuildingRuntimeFamilies.cityEntries,
       settlements: project.settlements,
       events: exportedEvents,
-      scenes: [],
       eventBindings: exportedEventBindings,
       progressTracks: project.progressTracks ?? [],
       progressTrackBindings: project.progressTrackBindings ?? [],
-      menuResources: project.menuResources,
+      menuResources: exportedMenuResources,
       menuInstances: project.menuInstances,
       dialogues: exportedDialogues,
       activities: project.activities,
       playables: playableRuntimeFamilies.playables,
       playableIntegrations: playableRuntimeFamilies.playableIntegrations,
-      flowPlayables: playableRuntimeFamilies.flowPlayables,
+      playableShells: playableRuntimeFamilies.playableShells,
       tasks: exportedTasks,
       textEntries: exportedTextEntries,
       cards: project.cards,
       valuables: project.valuables,
-      items: project.items,
       cityNpcPools: cityBuildingRuntimeFamilies.cityNpcPools,
       locationAccess: cityBuildingRuntimeFamilies.locationAccess,
       houseModuleDefaults: project.houseModuleDefaults,
@@ -924,6 +926,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     project,
     []
   );
+  const exportedMenuResources = materializeRuntimeMenuResources(project);
   if (
     scenarioProfile == null ||
     exportedTextEntries == null ||
@@ -945,6 +948,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ...(project.storyPack.description == null
       ? {}
       : { description: project.storyPack.description }),
+    ...pickOptionalAudioSettings(project.storyPack),
     ...(Array.isArray(project.storyPack.personAttributeSemantics)
       ? {
           personAttributeSemantics:
@@ -984,7 +988,6 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.events)]: stringifyJson(
       exportedEvents
     ),
-    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.scenes)]: stringifyJson([]),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.eventBindings)]: stringifyJson(
       exportedEventBindings
     ),
@@ -994,7 +997,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.progressTrackBindings)]:
       stringifyJson(project.progressTrackBindings ?? []),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.menuResources)]: stringifyJson(
-      project.menuResources
+      exportedMenuResources
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.menuInstances)]: stringifyJson(
       project.menuInstances
@@ -1011,8 +1014,8 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.playableIntegrations)]: stringifyJson(
       playableRuntimeFamilies.playableIntegrations
     ),
-    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.flowPlayables)]: stringifyJson(
-      playableRuntimeFamilies.flowPlayables
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.playableShells)]: stringifyJson(
+      playableRuntimeFamilies.playableShells
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.tasks)]: stringifyJson(
       exportedTasks
@@ -1025,9 +1028,6 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.valuables)]: stringifyJson(
       project.valuables
-    ),
-    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.items)]: stringifyJson(
-      project.items
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityNpcPools)]: stringifyJson(
       cityBuildingRuntimeFamilies.cityNpcPools
@@ -1065,11 +1065,13 @@ function materializeScriptEditorPlayableRuntimeFamilies(
 ): {
   playables: PlayableDefinition[];
   playableIntegrations: PlayableIntegrationDefinition[];
-  flowPlayables: FlowPlayableDefinition[];
+  playableShells: FlowPlayableDefinition[];
 } {
   const playablesById = new Map<string, PlayableDefinition>();
   const playableIntegrations: PlayableIntegrationDefinition[] = [];
   const integrationIds = new Set<string>();
+  const menuLaunchedMinigameIds = collectMenuLaunchedMinigameIds(project);
+  const eventLaunchEventIdsByMinigameId = collectEventLaunchEventIdsByMinigameId(project);
 
   for (const [index, minigame] of project.minigames.entries()) {
     const fieldPath = `project.minigames[${index}]`;
@@ -1078,42 +1080,23 @@ function materializeScriptEditorPlayableRuntimeFamilies(
       `${fieldPath}.playableId`,
       diagnostics
     );
-    const integrationId = readRequiredTrimmedString(
-      minigame.integrationId,
-      `${fieldPath}.integrationId`,
-      diagnostics
-    );
-    const ownerKind = readRequiredTrimmedString(
-      minigame.ownerKind,
-      `${fieldPath}.ownerKind`,
-      diagnostics
-    );
-    const returnPolicy = readRequiredTrimmedString(
-      minigame.returnPolicy,
-      `${fieldPath}.returnPolicy`,
-      diagnostics
-    );
-    const triggerId = readRequiredTrimmedString(
-      minigame.triggerId,
-      `${fieldPath}.triggerId`,
-      diagnostics
-    );
-    const triggerEvent = readRequiredTrimmedString(
-      minigame.triggerEvent,
-      `${fieldPath}.triggerEvent`,
-      diagnostics
-    );
-
-    if (
-      playableId == null ||
-      integrationId == null ||
-      ownerKind == null ||
-      returnPolicy == null ||
-      triggerId == null ||
-      triggerEvent == null
-    ) {
+    const eventLaunchEventId = eventLaunchEventIdsByMinigameId.get(minigame.id) ?? "";
+    if (playableId == null) {
       continue;
     }
+    if (!isScriptEditorShellBackedMinigamePlayableId(playableId)) {
+      diagnostics.push({
+        code: "unsupported-family",
+        fieldPath: `${fieldPath}.playableId`,
+        message:
+          `Minigame binding references playable "${playableId}", which requires ` +
+          "a registered playable shell and cannot be exported as a minigame binding.",
+      });
+      continue;
+    }
+    const integrationId = createDerivedMinigameIntegrationId(minigame.id, playableId);
+    const triggerId = createDerivedMinigameTriggerId(minigame.id, playableId);
+    const triggerEvent = eventLaunchEventId.length > 0 ? eventLaunchEventId : "manual-launch";
 
     const definition = builtinPlayableDefinitionRegistry.get(playableId);
     if (definition == null) {
@@ -1125,33 +1108,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
       continue;
     }
 
-    if (!isPlayableOwnerKind(ownerKind)) {
-      diagnostics.push({
-        code: "invalid-field",
-        fieldPath: `${fieldPath}.ownerKind`,
-        message: `Minigame binding ownerKind must be one of: house, dialogue, task, external.`,
-      });
-      continue;
-    }
-
-    if (!isPlayableReturnPolicy(returnPolicy)) {
-      diagnostics.push({
-        code: "invalid-field",
-        fieldPath: `${fieldPath}.returnPolicy`,
-        message:
-          `Minigame binding returnPolicy must be one of: resume-owner, reenter-owner, close-only.`,
-      });
-      continue;
-    }
-
-    if (ownerKind !== "external" && (minigame.ownerId == null || minigame.ownerId.trim().length === 0)) {
-      diagnostics.push({
-        code: "missing-field",
-        fieldPath: `${fieldPath}.ownerId`,
-        message: createMinigameOwnerRequiredMessage(ownerKind),
-      });
-      continue;
-    }
+    const isEventLaunched = eventLaunchEventIdsByMinigameId.has(minigame.id);
 
     if (integrationIds.has(integrationId)) {
       diagnostics.push({
@@ -1163,7 +1120,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     }
 
     const outcomeConfig = materializeMinigameOutcomeConfig(
-      minigame.outcomeRoutes,
+      minigame.settlementRoutes,
       fieldPath,
       diagnostics
     );
@@ -1176,32 +1133,113 @@ function materializeScriptEditorPlayableRuntimeFamilies(
       id: definition.id,
       commandPrefix: definition.commandPrefix,
     });
+    const launchPayload = materializeMinigameLaunchPayload({
+      minigame,
+      project,
+      isMenuLaunched: menuLaunchedMinigameIds.has(minigame.id) || isEventLaunched,
+    });
+
     playableIntegrations.push({
       editorRecordId: minigame.id,
       integrationId,
       playableId,
       ownerDefaults: {
-        ownerKind,
-        ownerId:
-          ownerKind === "external" ? null : minigame.ownerId?.trim() ?? null,
-        returnPolicy,
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
       },
       trigger: {
         triggerId,
-        ownerKind,
+        ownerKind: "external",
         trigger: triggerEvent,
-        ...materializeLaunchPayload(minigame.launchPayload),
+        ...launchPayload,
       },
       outcomeConfig,
     } as PlayableIntegrationDefinition & { editorRecordId: string });
   }
-  const flowPlayables = materializeRuntimeFlowDefinitions(project.flows, diagnostics);
+  const playableShells = materializeRuntimeFlowDefinitions(project.flows, diagnostics);
 
   return {
     playables: Array.from(playablesById.values()),
     playableIntegrations,
-    flowPlayables,
+    playableShells,
   };
+}
+
+function materializeRuntimeMenuResources(
+  project: ScriptEditorProjectDefinition
+): ScriptEditorProjectDefinition["menuResources"] {
+  const integrationIdByMinigameId = new Map(
+    project.minigames.flatMap((minigame) => {
+      const minigameId = typeof minigame.id === "string" ? minigame.id : "";
+      const playableId =
+        typeof minigame.playableId === "string" ? minigame.playableId.trim() : "";
+      const integrationId =
+        minigameId.length > 0 && playableId.length > 0
+          ? createDerivedMinigameIntegrationId(minigameId, playableId)
+          : "";
+      return minigameId.length > 0 && integrationId.length > 0
+        ? [[minigameId, integrationId] as const]
+        : [];
+    })
+  );
+
+  return project.menuResources.map((resource) => ({
+    ...resource,
+    entries: resource.entries.map((entry) => {
+      if (entry.targetFamily !== "minigame") {
+        return entry;
+      }
+      const runtimeTargetId =
+        integrationIdByMinigameId.get(entry.targetId) ?? entry.targetId;
+      return {
+        ...entry,
+        targetId: runtimeTargetId,
+      };
+    }),
+  }));
+}
+
+function collectMenuLaunchedMinigameIds(
+  project: ScriptEditorProjectDefinition
+): Set<string> {
+  const minigameIds = new Set<string>();
+  for (const resource of project.menuResources ?? []) {
+    for (const entry of resource.entries ?? []) {
+      if (entry.targetFamily !== "minigame") {
+        continue;
+      }
+      const targetId =
+        typeof entry.targetId === "string" ? entry.targetId.trim() : "";
+      if (targetId.length > 0) {
+        minigameIds.add(targetId);
+      }
+    }
+  }
+  return minigameIds;
+}
+
+function collectEventLaunchEventIdsByMinigameId(
+  project: ScriptEditorProjectDefinition
+): Map<string, string> {
+  const eventIdsByMinigameId = new Map<string, string>();
+  for (const eventRecord of project.events ?? []) {
+    if (eventRecord.destination?.family !== "minigame") {
+      continue;
+    }
+    const minigameId =
+      typeof eventRecord.destination.targetId === "string"
+        ? eventRecord.destination.targetId.trim()
+        : "";
+    const eventId = typeof eventRecord.id === "string" ? eventRecord.id.trim() : "";
+    if (minigameId.length === 0 || eventId.length === 0) {
+      continue;
+    }
+    if (!eventIdsByMinigameId.has(minigameId)) {
+      eventIdsByMinigameId.set(minigameId, eventId);
+    }
+  }
+  return eventIdsByMinigameId;
 }
 
 function materializeRuntimeFlowDefinitions(
@@ -1269,53 +1307,148 @@ function materializeRuntimeFlowDefinitions(
 }
 
 function materializeMinigameOutcomeConfig(
-  outcomeRoutes: ScriptEditorProjectDefinition["minigames"][number]["outcomeRoutes"],
+  settlementRoutes: ScriptEditorProjectDefinition["minigames"][number]["settlementRoutes"],
   fieldPath: string,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): PlayableIntegrationDefinition["outcomeConfig"] | null {
-  if (outcomeRoutes == null || outcomeRoutes.length === 0) {
-    diagnostics.push({
-      code: "missing-field",
-      fieldPath: `${fieldPath}.outcomeRoutes`,
-      message: "Minigame binding requires at least one outcome route.",
+  if (settlementRoutes == null || settlementRoutes.length === 0) {
+    return {
+      handoffByOutcome: {
+        success: "close-only",
+        failure: "close-only",
+        cancelled: "close-only",
+      },
+    };
+  }
+
+  const exportedRoutes: PlayableSettlementRoute[] = [];
+  for (const [index, route] of settlementRoutes.entries()) {
+    const targetEventId =
+      typeof route.targetEventId === "string" ? route.targetEventId.trim() : "";
+    if (targetEventId.length === 0) {
+      diagnostics.push({
+        code: "missing-field",
+        fieldPath: `${fieldPath}.settlementRoutes[${index}].targetEventId`,
+        message: "玩法结算路由必须指定目标事件。",
+      });
+      continue;
+    }
+    const outcomeIn = (route.conditions?.outcomeIn ?? []).filter(isPlayableOutcome);
+    const metricRules = (route.conditions?.metricRules ?? []).flatMap((metricRule, ruleIndex) => {
+      const metricKey =
+        typeof metricRule.metricKey === "string" ? metricRule.metricKey.trim() : "";
+      if (metricKey.length === 0) {
+        diagnostics.push({
+          code: "missing-field",
+          fieldPath: `${fieldPath}.settlementRoutes[${index}].conditions.metricRules[${ruleIndex}].metricKey`,
+          message: "玩法结算路由的指标规则必须填写指标键名。",
+        });
+        return [];
+      }
+      if (
+        metricRule.operator !== ">" &&
+        metricRule.operator !== ">=" &&
+        metricRule.operator !== "<" &&
+        metricRule.operator !== "<=" &&
+        metricRule.operator !== "="
+      ) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `${fieldPath}.settlementRoutes[${index}].conditions.metricRules[${ruleIndex}].operator`,
+          message: "玩法结算路由的指标规则运算符必须是 >、>=、<、<= 或 =。",
+        });
+        return [];
+      }
+      return [
+        {
+          metricKey,
+          operator: metricRule.operator,
+          value: metricRule.value,
+        },
+      ];
     });
-    return null;
+    exportedRoutes.push({
+      id:
+        typeof route.id === "string" && route.id.trim().length > 0
+          ? route.id.trim()
+          : `settlement-route.${index + 1}`,
+      title:
+        typeof route.title === "string" && route.title.trim().length > 0
+          ? route.title.trim()
+          : `结算路由 ${index + 1}`,
+      targetEventId,
+      enabled: route.enabled !== false,
+      conditions: {
+        ...(outcomeIn.length === 0 ? {} : { outcomeIn }),
+        ...(typeof route.conditions?.scoreMin === "number"
+          ? { scoreMin: route.conditions.scoreMin }
+          : {}),
+        ...(typeof route.conditions?.scoreMax === "number"
+          ? { scoreMax: route.conditions.scoreMax }
+          : {}),
+        ...(metricRules.length === 0 ? {} : { metricRules }),
+      },
+    });
   }
 
-  const handoffByOutcome: Partial<Record<PlayableOutcome, PlayableReturnPolicy>> = {};
-  for (const [index, route] of outcomeRoutes.entries()) {
-    if (!isPlayableOutcome(route.outcome)) {
-      diagnostics.push({
-        code: "invalid-field",
-        fieldPath: `${fieldPath}.outcomeRoutes[${index}].outcome`,
-        message: "Minigame outcome route must be success, failure, or cancelled.",
-      });
-      continue;
-    }
-    if (!isPlayableReturnPolicy(route.handoffPolicy)) {
-      diagnostics.push({
-        code: "invalid-field",
-        fieldPath: `${fieldPath}.outcomeRoutes[${index}].handoffPolicy`,
-        message:
-          "Minigame outcome route handoffPolicy must be resume-owner, reenter-owner, or close-only.",
-      });
-      continue;
-    }
-    handoffByOutcome[route.outcome] = route.handoffPolicy;
-  }
-
-  return Object.keys(handoffByOutcome).length === 0 ? null : { handoffByOutcome };
+  return {
+    handoffByOutcome: {
+      success: "close-only",
+      failure: "close-only",
+      cancelled: "close-only",
+    },
+    settlementRoutes: exportedRoutes,
+  };
 }
 
 function materializeLaunchPayload(
-  entries: ScriptEditorProjectDefinition["minigames"][number]["launchPayload"]
+  entries: ScriptEditorProjectDefinition["minigames"][number]["configEntries"]
 ): Pick<PlayableIntegrationDefinition["trigger"], "launchPayload"> {
   const launchPayload = Object.fromEntries(
     (entries ?? [])
-      .filter((entry) => entry.key.trim().length > 0)
-      .map((entry) => [entry.key.trim(), entry.value])
+      .filter((entry) => isMeaningfulConfigEntry(entry))
+      .map((entry) => [entry.id.trim(), entry.value])
   );
   return Object.keys(launchPayload).length === 0 ? {} : { launchPayload };
+}
+
+function materializeMinigameLaunchPayload(input: {
+  minigame: ScriptEditorProjectDefinition["minigames"][number];
+  project: ScriptEditorProjectDefinition;
+  isMenuLaunched: boolean;
+}): Pick<PlayableIntegrationDefinition["trigger"], "launchPayload"> {
+  const materialized = materializeLaunchPayload(input.minigame.configEntries);
+  if (
+    !input.isMenuLaunched ||
+    input.minigame.playableId !== "activity-qte" ||
+    materialized.launchPayload?.activityId != null
+  ) {
+    return materialized;
+  }
+
+  const fallbackActivityId = input.project.activities[0]?.id;
+  if (fallbackActivityId == null || fallbackActivityId.length === 0) {
+    return materialized;
+  }
+
+  return {
+    launchPayload: {
+      ...(materialized.launchPayload ?? {}),
+      activityId: fallbackActivityId,
+    },
+  };
+}
+
+function isMeaningfulConfigEntry(
+  entry: NonNullable<
+    ScriptEditorProjectDefinition["minigames"][number]["configEntries"]
+  >[number]
+): boolean {
+  const key = entry.id.trim();
+  if (key.length === 0) {
+    return false;
+  }
+  return !(entry.value === "" && /^config\d+$/.test(key));
 }
 
 function readRequiredTrimmedString(
@@ -1338,17 +1471,18 @@ function isPlayableOwnerKind(value: string): value is PlayableIntegrationDefinit
   return value === "house" || value === "dialogue" || value === "task" || value === "external";
 }
 
-function createMinigameOwnerRequiredMessage(ownerKind: string): string {
-  if (ownerKind === "house") {
-    return "玩法绑定需要填写所属建筑，才能运行预览或导出剧本。";
-  }
-  if (ownerKind === "dialogue") {
-    return "玩法绑定需要填写所属对话，才能运行预览或导出剧本。";
-  }
-  if (ownerKind === "task") {
-    return "玩法绑定需要填写所属任务，才能运行预览或导出剧本。";
-  }
-  return "玩法绑定需要先补全所属对象，才能运行预览或导出剧本。";
+function createDerivedMinigameIntegrationId(
+  minigameId: string,
+  playableId: string
+): string {
+  return `playable.${playableId}.instance.${minigameId}`;
+}
+
+function createDerivedMinigameTriggerId(
+  minigameId: string,
+  playableId: string
+): string {
+  return `trigger.playable.${playableId}.instance.${minigameId}`;
 }
 
 function isPlayableReturnPolicy(value: string): value is PlayableReturnPolicy {
@@ -1861,8 +1995,8 @@ function appendSettlementRecordDiagnostics(
 function collectLegacyFlowLaunchActionsByEventId(
   project: ScriptEditorProjectDefinition,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
-): Map<string, EventRuntimeAction[]> {
-  const actionsByEventId = new Map<string, EventRuntimeAction[]>();
+): Map<string, EventRouteCommand[]> {
+  const actionsByEventId = new Map<string, EventRouteCommand[]>();
 
   for (const [index, flowRecord] of project.flows.entries()) {
     const fieldPath = `project.flows[${index}]`;
@@ -1937,7 +2071,7 @@ function lowerEditorEventToRuntimeEvent(
   sourceSettlementIds: Set<string>,
   minigamesById: Map<string, ScriptEditorProjectDefinition["minigames"][number]>,
   flowStartEventIds: Set<string>,
-  derivedFlowActions: EventRuntimeAction[],
+  derivedFlowActions: EventRouteCommand[],
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): EventDefinition | null {
   if (typeof eventRecord.id !== "string" || eventRecord.id.length === 0) {
@@ -1946,6 +2080,13 @@ function lowerEditorEventToRuntimeEvent(
       fieldPath: `project.events[${eventIndex}].id`,
       message: "Event export requires a non-empty id.",
     });
+    return null;
+  }
+
+  const destinationMenuAction = lowerEventDestinationMenuAction(
+    eventRecord
+  );
+  if (destinationMenuAction === null) {
     return null;
   }
 
@@ -1964,7 +2105,7 @@ function lowerEditorEventToRuntimeEvent(
     eventIndex,
     flowStartEventIds,
     derivedFlowActions.length > 0,
-    destinationLaunchAction != null,
+    destinationLaunchAction != null || destinationMenuAction != null,
     diagnostics
   );
   if (dialogueId == null) {
@@ -2001,27 +2142,16 @@ function lowerEditorEventToRuntimeEvent(
     return null;
   }
 
-  const actions = lowerEventRuntimeActions(
+  const actions = lowerEventRouteCommands(
     eventRecord,
     eventIndex,
-    destinationLaunchAction,
+    destinationMenuAction ?? destinationLaunchAction,
     derivedFlowActions,
     diagnostics
   );
   if (actions === null) {
     return null;
   }
-  for (const action of actions) {
-    if (action.type === "launchFlow" && !sourceFlowIds.has(action.flowId)) {
-      diagnostics.push({
-        code: "missing-reference",
-        fieldPath: `project.events[${eventIndex}].actions`,
-        message: `Event "${eventRecord.id}" references missing flow "${action.flowId}".`,
-      });
-      return null;
-    }
-  }
-
   const settlementId = lowerEventSettlementId(
     eventRecord,
     eventIndex,
@@ -2047,14 +2177,10 @@ function lowerEditorEventToRuntimeEvent(
           ? "repeatable"
           : "once",
     trigger: {
-      timing: "manual",
+      timing: lowerEventTriggerTiming(eventRecord.triggerTiming),
     },
     conditions: [],
-    entrySceneId:
-      typeof eventRecord.dialogueId === "string" &&
-      eventRecord.dialogueId.length > 0
-        ? eventRecord.dialogueId
-        : eventRecord.id,
+    entrySceneId: dialogueId.length > 0 ? dialogueId : eventRecord.id,
     ...(Array.isArray(eventRecord.participants) && eventRecord.participants.length > 0
     ? { participants: eventRecord.participants }
       : {}),
@@ -2068,6 +2194,18 @@ function lowerEditorEventToRuntimeEvent(
       ? { tags: eventRecord.tags }
       : {}),
   };
+}
+
+function lowerEventTriggerTiming(
+  timing: ScriptEditorEventRecord["triggerTiming"]
+): EventDefinition["trigger"]["timing"] {
+  if (timing === "city-enter") {
+    return "city-enter";
+  }
+  if (timing === "building-enter") {
+    return "house-enter";
+  }
+  return "manual";
 }
 
 function lowerEventSettlementId(
@@ -2138,6 +2276,9 @@ function resolveEventDialogueId(
   }
 
   const destination = eventRecord.destination;
+  if (destination?.family === "menu") {
+    return "";
+  }
   if (
     destination == null ||
     destination.family !== "dialogue" ||
@@ -2160,19 +2301,22 @@ function hasRuntimeEventActions(eventRecord: ScriptEditorEventRecord): boolean {
   return Array.isArray(eventRecord.actions) && eventRecord.actions.length > 0;
 }
 
-function lowerEventRuntimeActions(
+function lowerEventRouteCommands(
   eventRecord: ScriptEditorEventRecord,
   eventIndex: number,
-  destinationLaunchAction:
-    | Extract<EventRuntimeAction, { type: "launchPlayable" }>
+  destinationAction:
+    | Extract<
+        EventRouteCommand,
+        { type: "launchPlayable" } | { type: "openCityMenuPanel" }
+      >
     | null
     | undefined,
-  derivedFlowActions: EventRuntimeAction[],
+  derivedFlowActions: EventRouteCommand[],
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
-): EventRuntimeAction[] | null {
-  const actions: EventRuntimeAction[] = [];
-  if (destinationLaunchAction != null) {
-    actions.push(destinationLaunchAction);
+): EventRouteCommand[] | null {
+  const actions: EventRouteCommand[] = [];
+  if (destinationAction != null) {
+    actions.push(destinationAction);
   }
   for (const [actionIndex, action] of (eventRecord.actions ?? []).entries()) {
     if (action?.type === "closeBuilding") {
@@ -2220,48 +2364,11 @@ function lowerEventRuntimeActions(
       });
       continue;
     }
-    if (
-      action?.type === "launchFlow" &&
-      typeof action.flowId === "string" &&
-      action.flowId.trim().length > 0 &&
-      action.ownerContext != null
-    ) {
-      const ownerKind = action.ownerContext.ownerKind;
-      const ownerId = action.ownerContext.ownerId;
-      const returnPolicy = action.ownerContext.returnPolicy;
-      if (
-        (ownerKind !== "house" &&
-          ownerKind !== "dialogue" &&
-          ownerKind !== "task" &&
-          ownerKind !== "external") ||
-        !isPlayableReturnPolicy(returnPolicy)
-      ) {
-        diagnostics.push({
-          code: "invalid-field",
-          fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
-          message: "launchFlow actions require a supported ownerContext contract.",
-        });
-        return null;
-      }
-      actions.push({
-        type: "launchFlow",
-        flowId: action.flowId.trim(),
-        ownerContext: {
-          ownerKind,
-          ownerId:
-            typeof ownerId === "string" && ownerId.trim().length > 0
-              ? ownerId.trim()
-              : null,
-          returnPolicy,
-        },
-      });
-      continue;
-    }
     diagnostics.push({
       code: "unsupported-lowering",
       fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
       message:
-        "Event export currently supports only closeBuilding, launchPlayable, and launchFlow runtime actions.",
+        "Event export currently supports only closeBuilding and launchPlayable runtime actions.",
     });
     return null;
   }
@@ -2270,12 +2377,53 @@ function lowerEventRuntimeActions(
   return actions;
 }
 
+function lowerEventDestinationMenuAction(
+  eventRecord: ScriptEditorEventRecord
+): Extract<EventRouteCommand, { type: "openCityMenuPanel" }> | null | undefined {
+  const destination = eventRecord.destination;
+  if (destination?.family !== "menu") {
+    return undefined;
+  }
+
+  const panelId = normalizeCityMenuPanelId(destination.targetId);
+  if (panelId == null) {
+    return undefined;
+  }
+
+  return {
+    type: "openCityMenuPanel",
+    panelId,
+  };
+}
+
+function normalizeCityMenuPanelId(
+  value: unknown
+): Extract<EventRouteCommand, { type: "openCityMenuPanel" }>["panelId"] | null {
+  const normalized =
+    typeof value === "string"
+      ? value.trim().toLowerCase().replace(/^city-panel\./, "")
+      : "";
+  switch (normalized) {
+    case "overview":
+    case "culture":
+      return "overview";
+    case "intel":
+      return "intel";
+    case "locations":
+      return "locations";
+    case "management":
+      return "management";
+    default:
+      return null;
+  }
+}
+
 function lowerEventDestinationLaunchAction(
   eventRecord: ScriptEditorEventRecord,
   eventIndex: number,
   minigamesById: Map<string, ScriptEditorProjectDefinition["minigames"][number]>,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
-): Extract<EventRuntimeAction, { type: "launchPlayable" }> | null | undefined {
+): Extract<EventRouteCommand, { type: "launchPlayable" }> | null | undefined {
   const destination = eventRecord.destination;
   if (destination?.family !== "minigame") {
     return undefined;
@@ -2294,6 +2442,16 @@ function lowerEventDestinationLaunchAction(
 
   const minigame = minigamesById.get(targetId);
   if (minigame == null) {
+    const playableDefinition = builtinPlayableDefinitionRegistry.get(targetId);
+    if (playableDefinition != null) {
+      diagnostics.push({
+        code: "missing-reference",
+        fieldPath: `project.events[${eventIndex}].destination.targetId`,
+        message:
+          `Event "${eventRecord.id}" references minigame prototype "${targetId}"; create a gameplay instance in the minigame module first.`,
+      });
+      return null;
+    }
     diagnostics.push({
       code: "missing-reference",
       fieldPath: `project.events[${eventIndex}].destination.targetId`,
@@ -2308,101 +2466,19 @@ function lowerEventDestinationLaunchAction(
     `${fieldPath}.playableId`,
     diagnostics
   );
-  const integrationId = readRequiredTrimmedString(
-    minigame.integrationId,
-    `${fieldPath}.integrationId`,
-    diagnostics
-  );
-  const ownerKind = readRequiredTrimmedString(
-    minigame.ownerKind,
-    `${fieldPath}.ownerKind`,
-    diagnostics
-  );
-  const returnPolicy = readRequiredTrimmedString(
-    minigame.returnPolicy,
-    `${fieldPath}.returnPolicy`,
-    diagnostics
-  );
-  const triggerSource = readRequiredTrimmedString(
-    minigame.triggerSource,
-    `${fieldPath}.triggerSource`,
-    diagnostics
-  );
-  const triggerEvent = readRequiredTrimmedString(
-    minigame.triggerEvent,
-    `${fieldPath}.triggerEvent`,
-    diagnostics
-  );
-  if (
-    playableId == null ||
-    integrationId == null ||
-    ownerKind == null ||
-    returnPolicy == null ||
-    triggerSource == null ||
-    triggerEvent == null
-  ) {
+  if (playableId == null) {
     return null;
   }
-
-  if (!isPlayableOwnerKind(ownerKind)) {
-    diagnostics.push({
-      code: "invalid-field",
-      fieldPath: `${fieldPath}.ownerKind`,
-      message: `Minigame destination ownerKind must be one of: house, dialogue, task, external.`,
-    });
-    return null;
-  }
-
-  if (!isPlayableReturnPolicy(returnPolicy)) {
-    diagnostics.push({
-      code: "invalid-field",
-      fieldPath: `${fieldPath}.returnPolicy`,
-      message:
-        `Minigame destination returnPolicy must be one of: resume-owner, reenter-owner, close-only.`,
-    });
-    return null;
-  }
-
-  if (triggerSource !== "event-destination") {
-    diagnostics.push({
-      code: "invalid-field",
-      fieldPath: `${fieldPath}.triggerSource`,
-      message: `Minigame destination "${targetId}" must use triggerSource "event-destination".`,
-    });
-    return null;
-  }
-
-  if (triggerEvent !== eventRecord.id) {
-    diagnostics.push({
-      code: "invalid-field",
-      fieldPath: `${fieldPath}.triggerEvent`,
-      message:
-        `Minigame destination "${targetId}" must set triggerEvent to "${eventRecord.id}".`,
-    });
-    return null;
-  }
-
-  if (
-    ownerKind !== "external" &&
-    (typeof minigame.ownerId !== "string" || minigame.ownerId.trim().length === 0)
-  ) {
-    diagnostics.push({
-      code: "missing-field",
-      fieldPath: `${fieldPath}.ownerId`,
-      message: `Minigame destination ownerId is required for ${ownerKind} owners.`,
-    });
-    return null;
-  }
+  const integrationId = createDerivedMinigameIntegrationId(minigame.id, playableId);
 
   return {
     type: "launchPlayable",
     playableId,
     integrationId,
     ownerContext: {
-      ownerKind,
-      ownerId:
-        ownerKind === "external" ? null : minigame.ownerId?.trim() ?? null,
-      returnPolicy,
+      ownerKind: "external",
+      ownerId: null,
+      returnPolicy: "close-only",
     },
   };
 }
@@ -3045,6 +3121,25 @@ function pickOptionalPackMetadata(
     storyPack["tags"].every((tag) => typeof tag === "string")
       ? { tags: [...storyPack["tags"]] as string[] }
       : {}),
+  };
+}
+
+function pickOptionalAudioSettings(
+  storyPack: ScriptEditorStoryPackRecord
+): Partial<Pick<RuntimePackManifest, "audioSettings">> {
+  if (
+    storyPack["audioSettings"] == null ||
+    typeof storyPack["audioSettings"] !== "object" ||
+    Array.isArray(storyPack["audioSettings"])
+  ) {
+    return {};
+  }
+
+  const authoredAudioSettings = storyPack["audioSettings"] as { muted?: unknown };
+  return {
+    audioSettings: {
+      muted: authoredAudioSettings.muted === true,
+    },
   };
 }
 

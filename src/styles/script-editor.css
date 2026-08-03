@@ -1,9 +1,12 @@
 .c-script-editor-shell {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  min-height: 100vh;
-  padding: 28px;
+  gap: 14px;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  padding: 18px 28px 22px;
+  overflow: hidden;
   color: #3e2b1e;
   font-family: "Noto Serif SC", "Source Han Serif SC", "Microsoft YaHei", serif;
   background:
@@ -14,8 +17,13 @@
 
 .c-script-editor-shell__header {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
+  align-items: center;
+  box-sizing: border-box;
+  height: 60px;
   padding: 12px 14px 14px;
+  overflow: hidden;
   border: 1px solid rgba(145, 111, 72, 0.18);
   border-radius: 24px;
   background:
@@ -171,17 +179,33 @@
   display: grid;
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
   gap: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.c-script-editor-shell__notice-slot {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.c-script-editor-shell__notice-slot:empty {
+  min-height: 36px;
 }
 
 .c-script-editor-shell__sidebar {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
   padding: 18px;
   border: 1px solid rgba(145, 111, 72, 0.18);
   border-radius: 24px;
   background: rgba(246, 235, 217, 0.74);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  overflow: hidden;
 }
 
 .c-script-editor-shell__inspector,
@@ -236,17 +260,23 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 20px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .c-script-editor-shell__editor-stage {
   display: grid;
   gap: 20px;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
   padding: 18px;
   border: 1px solid rgba(145, 111, 72, 0.18);
   border-radius: 24px;
   background: rgba(246, 235, 217, 0.62);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
+  overflow: hidden;
 }
 
 .c-script-editor-shell__inspector,
@@ -417,12 +447,11 @@
 }
 
 .c-main-ui-screen--script-editor-flow {
-  height: 100%;
-  min-height: 100vh;
+  box-sizing: border-box;
+  height: 100vh;
+  min-height: 0;
   padding: 24px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
+  overflow: hidden;
   background:
     radial-gradient(circle at top right, rgba(214, 181, 126, 0.26), transparent 28%),
     radial-gradient(circle at top left, rgba(120, 147, 110, 0.1), transparent 24%),
@@ -492,6 +521,11 @@
 .c-script-editor-editor-card__actions--end {
   width: 100%;
   justify-content: flex-end;
+}
+
+.c-script-editor-editor-card__actions--center {
+  width: 100%;
+  justify-content: center;
 }
 
 .c-script-editor-landing__help-button {
@@ -642,11 +676,17 @@
 }
 
 .c-script-editor-workflow__notice {
-  padding: 14px 16px;
+  max-width: 720px;
+  min-height: 34px;
+  max-height: 36px;
+  padding: 7px 16px;
+  overflow: hidden;
   border: 1px solid rgba(145, 111, 72, 0.18);
   border-radius: 16px;
   color: #2f1f14;
-  line-height: 1.6;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   background: rgba(248, 240, 226, 0.92);
 }
 
@@ -663,24 +703,56 @@
 .c-script-editor-editor-card {
   display: grid;
   gap: 18px;
-  padding: 24px;
-  border: 1px solid rgba(145, 111, 72, 0.16);
-  border-radius: 24px;
-  background: rgba(249, 241, 228, 0.94);
-  box-shadow:
-    0 14px 32px rgba(88, 60, 32, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.c-script-editor-project-info-card {
+  align-content: start;
+  gap: 14px;
+}
+
+.c-script-editor-project-info-card__actions {
+  padding-top: 0;
+}
+
+.c-script-editor-project-info-card__save-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 118px;
+  min-height: 42px;
+  height: 42px;
+  padding: 0 22px;
+  line-height: 1;
+  writing-mode: horizontal-tb;
+}
+
+.c-script-editor-editor-card:has(.c-script-editor-record-layout--location) {
+  height: 100%;
+}
+
+.c-script-editor-editor-card:has(.c-script-editor-record-layout) {
+  height: 100%;
 }
 
 .c-script-editor-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
+  align-items: start;
 }
 
 .c-script-editor-form-field {
   display: grid;
-  gap: 8px;
+  gap: 6px;
+  align-content: start;
+  align-items: start;
   color: #3b2a1d;
   font-size: 14px;
 }
@@ -694,6 +766,21 @@
   display: none;
 }
 
+.c-script-editor-person-panel .c-script-editor-form-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.c-script-editor-person-panel .c-script-editor-form-field {
+  gap: 5px;
+  font-size: 13px;
+}
+
+.c-script-editor-person-panel .c-script-editor-form-field__input {
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
 .c-script-editor-form-field__input,
 .c-script-editor-record-editor__textarea {
   width: 100%;
@@ -702,11 +789,18 @@
   background: rgba(255, 251, 245, 0.92);
   color: #2f2014;
   font: inherit;
+  align-self: start;
 }
 
 .c-script-editor-form-field__input {
-  min-height: 44px;
-  padding: 10px 12px;
+  min-height: 40px;
+  padding: 8px 12px;
+  line-height: 1.4;
+}
+
+.c-script-editor-form-field__input--compact {
+  min-height: 32px;
+  padding: 6px 10px;
 }
 
 .c-script-editor-form-field--wide {
@@ -716,26 +810,38 @@
 .c-script-editor-record-layout {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 16px;
+  height: 100%;
+  min-height: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.c-script-editor-record-layout > * {
+  min-height: 0;
 }
 
 .c-script-editor-record-layout--people {
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .c-script-editor-record-layout--location {
-  align-items: flex-start;
+  height: 100%;
+  align-items: stretch;
 }
 
 .c-script-editor-record-layout--narrative {
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .c-script-editor-record-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 580px;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
   border: 1px solid rgba(145, 111, 72, 0.18);
   border-radius: 22px;
@@ -750,8 +856,7 @@
 }
 
 .c-script-editor-record-list__search {
-  display: grid;
-  gap: 8px;
+  display: block;
   color: #5a3c23;
   font-size: 13px;
 }
@@ -767,8 +872,11 @@
 
 .c-script-editor-record-list__item {
   display: grid;
-  gap: 6px;
-  padding: 14px;
+  align-items: center;
+  box-sizing: border-box;
+  height: 48px;
+  gap: 0;
+  padding: 0 14px;
   border: 1px solid rgba(145, 111, 72, 0.14);
   border-radius: 16px;
   color: #2f2014;
@@ -777,17 +885,26 @@
   cursor: pointer;
 }
 
+.c-script-editor-record-list__item strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .c-script-editor-record-list__title {
   min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   word-break: break-word;
 }
 
 .c-script-editor-record-list__title--clamp-2 {
-  display: -webkit-box;
+  display: block;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
   overflow: hidden;
 }
 
@@ -797,28 +914,23 @@
 }
 
 .c-script-editor-record-list__item--person {
-  gap: 8px;
+  gap: 0;
 }
 
 .c-script-editor-record-list__item--location {
-  gap: 8px;
+  gap: 0;
 }
 
 .c-script-editor-record-list__item--narrative {
-  gap: 8px;
+  gap: 0;
 }
 
 .c-script-editor-record-list__item--text-entry {
-  align-items: start;
+  align-items: center;
 }
 
 .c-script-editor-record-list__item span {
-  color: rgba(72, 48, 30, 0.62);
-  font-size: 13px;
-}
-
-.c-script-editor-record-list__summary.is-hidden {
-  visibility: hidden;
+  display: none;
 }
 
 .c-script-editor-record-pagination {
@@ -863,12 +975,75 @@
 .c-script-editor-location-editor,
 .c-script-editor-narrative-editor,
 .c-script-editor-minigame-editor,
+.c-script-editor-stage-configuration-editor,
 .c-script-editor-record-editor {
   padding: 18px;
   border: 1px solid rgba(145, 111, 72, 0.18);
   border-radius: 22px;
   background: rgba(255, 249, 241, 0.72);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.c-script-editor-editor-pane--tabbed {
+  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.c-script-editor-editor-pane__topbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 16px;
+  align-items: flex-start;
+}
+
+.c-script-editor-person-editor:has(.c-script-editor-person-summary) {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.c-script-editor-person-editor:has(.c-script-editor-person-panel--attribute-groups) {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.c-script-editor-person-panel {
+  align-content: start;
+}
+
+.c-script-editor-person-panel--attribute-groups {
+  align-content: start;
+}
+
+.c-script-editor-location-editor:has(.c-script-editor-location-panel--profile) {
+  align-content: start;
+  grid-template-rows: auto auto;
+}
+
+.c-script-editor-location-editor:has(.c-script-editor-location-panel--menu-groups) {
+  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.c-script-editor-location-editor:has(.c-script-editor-location-panel--access) {
+  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.c-script-editor-location-panel--profile {
+  align-content: start;
+}
+
+.c-script-editor-location-panel--menu-groups {
+  align-content: start;
+  gap: 10px;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.c-script-editor-location-panel--access {
+  align-self: start;
+  align-content: start;
+  grid-template-rows: auto auto auto auto;
+  min-height: 0;
 }
 
 .c-script-editor-person-editor__tabs,
@@ -878,6 +1053,7 @@
 .c-script-editor-location-menu__header,
 .c-script-editor-location-menu__toggles,
 .c-script-editor-narrative-editor__tabs,
+.c-script-editor-event-editor__tabs,
 .c-script-editor-narrative-panel__header,
 .c-script-editor-narrative-inline {
   display: flex;
@@ -888,11 +1064,16 @@
 .c-script-editor-person-editor__tabs,
 .c-script-editor-location-editor__tabs,
 .c-script-editor-narrative-editor__tabs,
-.c-script-editor-minigame-editor__tabs {
+.c-script-editor-minigame-editor__tabs,
+.c-script-editor-event-editor__tabs {
   gap: 4px;
   align-items: flex-end;
   padding: 0 4px;
   border-bottom: 1px solid rgba(145, 111, 72, 0.18);
+}
+
+.c-script-editor-editor-pane__topbar .c-script-editor-editor-card__actions {
+  justify-content: flex-end;
 }
 
 .c-script-editor-shell__inspector-header .c-script-editor-person-editor__tabs {
@@ -902,7 +1083,8 @@
 .c-script-editor-person-editor__tab,
 .c-script-editor-location-editor__tab,
 .c-script-editor-narrative-editor__tab,
-.c-script-editor-minigame-editor__tab {
+.c-script-editor-minigame-editor__tab,
+.c-script-editor-event-editor__tab {
   min-height: 34px;
   margin-bottom: -1px;
   border: 1px solid rgba(145, 111, 72, 0.16);
@@ -914,7 +1096,8 @@
 .c-script-editor-person-editor__tab.is-active,
 .c-script-editor-location-editor__tab.is-active,
 .c-script-editor-narrative-editor__tab.is-active,
-.c-script-editor-minigame-editor__tab.is-active {
+.c-script-editor-minigame-editor__tab.is-active,
+.c-script-editor-event-editor__tab.is-active {
   border-color: rgba(145, 111, 72, 0.22);
   border-bottom-color: rgba(255, 249, 241, 0.96);
   background: rgba(255, 249, 241, 0.96);
@@ -929,12 +1112,49 @@
 }
 
 .c-script-editor-person-summary {
+  position: relative;
   display: grid;
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid rgba(145, 111, 72, 0.12);
-  border-radius: 18px;
-  background: rgba(255, 248, 238, 0.76);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.c-script-editor-person-profile-attribute-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.c-script-editor-person-profile-attribute-heading > span {
+  color: inherit;
+  font: inherit;
+}
+
+.c-script-editor-person-profile-attribute-heading > button {
+  flex: 0 0 auto;
+}
+
+.c-script-editor-person-profile-attribute-heading__add {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.c-script-editor-person-panel [data-script-editor-person-field="biography"] {
+  min-height: 104px;
+  padding: 10px 12px;
 }
 
 .c-script-editor-person-summary__header {
@@ -948,7 +1168,24 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
+  min-height: 0;
+  align-content: start;
   align-items: stretch;
+}
+
+.c-script-editor-person-summary > .c-script-editor-record-pagination {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.c-script-editor-person-summary .c-script-editor-record-pagination__button {
+  width: 44px;
+  min-width: 44px;
+  height: 42px;
+  min-height: 42px;
+  padding-inline: 0;
 }
 
 .c-script-editor-person-mapped-fields {
@@ -971,12 +1208,19 @@
 .c-script-editor-person-summary__item {
   position: relative;
   display: grid;
-  gap: 12px;
-  min-height: 120px;
-  padding: 18px 14px 14px;
+  align-content: center;
+  gap: 8px;
+  height: 146px;
+  min-height: 146px;
+  padding: 14px 10px 10px;
   border: 1px solid rgba(145, 111, 72, 0.12);
   border-radius: 16px;
   background: rgba(255, 252, 247, 0.92);
+}
+
+.c-script-editor-person-summary__item .c-script-editor-form-field__input {
+  min-height: 32px;
+  padding: 6px 8px;
 }
 
 .c-script-editor-person-summary__remove {
@@ -1169,6 +1413,19 @@
   align-items: flex-start;
 }
 
+.c-script-editor-location-menu__add-button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding-inline: 0;
+  padding-block: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
 .c-script-editor-location-menu__item {
   display: grid;
   gap: 16px;
@@ -1176,6 +1433,81 @@
   border: 1px solid rgba(145, 111, 72, 0.12);
   border-radius: 18px;
   background: rgba(255, 248, 238, 0.76);
+}
+
+.c-script-editor-location-menu__bundle {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 0;
+}
+
+.c-script-editor-location-panel--menu-groups > .c-script-editor-location-menu__list {
+  gap: 12px;
+  align-content: start;
+}
+
+.c-script-editor-location-access-section,
+.c-script-editor-location-access-condition {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 0;
+}
+
+.c-script-editor-location-panel--menu-groups .c-script-editor-location-menu__bundle {
+  padding-top: 12px;
+}
+
+.c-script-editor-location-menu__paged-list {
+  flex: 1;
+  align-content: start;
+}
+
+.c-script-editor-location-menu__entry {
+  position: relative;
+  padding-top: 24px;
+  padding-right: 52px;
+}
+
+.c-script-editor-location-menu__pagination {
+  margin-top: auto;
+}
+
+.c-script-editor-location-menu__remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: #c84f4f;
+  color: #fff8f4;
+  box-shadow: 0 6px 14px rgba(163, 56, 56, 0.24);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.c-script-editor-location-menu__remove:hover,
+.c-script-editor-location-menu__remove:focus-visible {
+  background: #b53d3d;
+  box-shadow: 0 10px 18px rgba(163, 56, 56, 0.3);
+  transform: translateY(-1px);
+}
+
+.c-script-editor-location-menu__remove:focus-visible {
+  outline: 2px solid rgba(181, 61, 61, 0.28);
+  outline-offset: 2px;
 }
 
 .c-script-editor-location-menu__toggles {
@@ -1268,9 +1600,31 @@
   background: rgba(255, 248, 238, 0.76);
 }
 
+.c-script-editor-narrative-panel--compact {
+  align-self: start;
+  align-content: start;
+  gap: 10px;
+}
+
 .c-script-editor-narrative-panel__header {
   justify-content: space-between;
   align-items: flex-start;
+}
+
+.c-script-editor-narrative-panel__header--actions-only {
+  justify-content: flex-end;
+}
+
+.c-script-editor-help-icon-button {
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .c-script-editor-narrative-item {
@@ -1286,6 +1640,11 @@
   align-items: center;
 }
 
+.c-script-editor-narrative-list--compact {
+  align-content: start;
+  gap: 10px;
+}
+
 .c-script-editor-narrative-inline > .c-script-editor-form-field__input {
   flex: 1 1 180px;
 }
@@ -1298,15 +1657,20 @@
 }
 
 .c-script-editor-record-editor__textarea {
-  min-height: 360px;
-  padding: 16px;
+  min-height: 320px;
+  padding: 12px 14px;
   resize: vertical;
   line-height: 1.6;
   font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 }
 
+.c-script-editor-record-editor--text-entry .c-script-editor-record-editor__textarea {
+  min-height: 0;
+  height: 100%;
+}
+
 .c-script-editor-record-editor__textarea--compact {
-  min-height: 140px;
+  min-height: 120px;
 }
 
 .c-script-editor-minigame-editor {
@@ -1323,9 +1687,9 @@
 
 .c-script-editor-stage-configuration-panel,
 .c-script-editor-stage-configuration-help__panel {
-  padding: 18px;
+  padding: 14px;
   border: 1px solid rgba(145, 111, 72, 0.12);
-  border-radius: 18px;
+  border-radius: 16px;
   background: rgba(255, 248, 238, 0.76);
 }
 
@@ -1368,10 +1732,11 @@
 .c-script-editor-minigame-editor__tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 4px;
 }
 
-.c-script-editor-minigame-editor__tab.is-active {
+.c-script-editor-minigame-editor__tab.is-active,
+.c-script-editor-event-editor__tab.is-active {
   border-color: rgba(176, 132, 76, 0.38);
   background: linear-gradient(180deg, rgba(240, 213, 168, 0.82), rgba(232, 202, 153, 0.62));
 }
@@ -1380,15 +1745,61 @@
 .c-script-editor-minigame-list,
 .c-script-editor-minigame-list__route {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .c-script-editor-minigame-panel,
 .c-script-editor-minigame-list__route {
-  padding: 18px;
+  padding: 14px;
   border: 1px solid rgba(145, 111, 72, 0.12);
-  border-radius: 18px;
+  border-radius: 16px;
   background: rgba(255, 248, 238, 0.76);
+}
+
+.c-script-editor-minigame-list__route {
+  position: relative;
+  padding-top: 18px;
+  padding-right: 52px;
+}
+
+.c-script-editor-minigame-list__remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: #c84f4f;
+  color: #fff8f4;
+  box-shadow: 0 6px 14px rgba(163, 56, 56, 0.24);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.c-script-editor-minigame-list__remove:hover,
+.c-script-editor-minigame-list__remove:focus-visible {
+  background: #b53d3d;
+  box-shadow: 0 10px 18px rgba(163, 56, 56, 0.3);
+  transform: translateY(-1px);
+}
+
+.c-script-editor-minigame-list__remove:focus-visible {
+  outline: 2px solid rgba(181, 61, 61, 0.28);
+  outline-offset: 2px;
+}
+
+.c-script-editor-minigame-list__remove span {
+  transform: translateY(-1px);
 }
 
 .c-script-editor-minigame-list__item {
@@ -1423,8 +1834,7 @@
   .c-script-editor-shell__inspector,
   .c-script-editor-shell__handoff,
   .c-script-editor-tree-group,
-  .c-script-editor-landing,
-  .c-script-editor-editor-card {
+  .c-script-editor-landing {
     padding: 18px;
   }
 
@@ -1460,6 +1870,7 @@
   .c-script-editor-location-menu__header,
   .c-script-editor-location-menu__toggles,
   .c-script-editor-narrative-editor__tabs,
+  .c-script-editor-event-editor__tabs,
   .c-script-editor-narrative-panel__header,
   .c-script-editor-narrative-inline,
   .c-script-editor-minigame-editor__tabs,

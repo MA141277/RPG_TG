@@ -166,88 +166,13 @@ function lowerDialogueToRuntimeDialogues(
     return runtimeDialogue == null ? null : [runtimeDialogue];
   }
 
-  const nodes = dialogue.nodes ?? [];
-  if (nodes.length === 0) {
-    const fallbackDialogue = lowerDialogueFallbackRuntimeDialogue(
-      dialogue,
-      dialogueIndex,
-      textEntryIds,
-      diagnostics
-    );
-    return fallbackDialogue == null ? null : [fallbackDialogue];
-  }
-
-  const nodeDialogueIds = mapDialogueNodeRuntimeIds(
-    dialogue,
-    dialogueIndex,
-    nodes,
-    diagnostics
-  );
-  const runtimeDialogues: RuntimeDialogueDefinition[] = [];
-
-  for (const [nodeIndex, node] of nodes.entries()) {
-    if (
-      node.nodeType !== "background" &&
-      node.nodeType !== "music" &&
-      (typeof node.textId !== "string" || node.textId.length === 0)
-    ) {
-      diagnostics.push({
-        code: "missing-field",
-        fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].textId`,
-        message: "Dialogue node export requires a non-empty textId.",
-      });
-      continue;
-    }
-    if (
-      node.nodeType !== "background" &&
-      node.nodeType !== "music" &&
-      !textEntryIds.has(node.textId)
-    ) {
-      diagnostics.push({
-        code: "missing-reference",
-        fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].textId`,
-        message: `Dialogue node references missing text entry "${node.textId}".`,
-      });
-      continue;
-    }
-
-    const runtimeDialogueId = nodeDialogueIds.get(node.id);
-    if (runtimeDialogueId == null) {
-      continue;
-    }
-
-    const runtimeNodes = lowerDialogueNodeRuntimeNodes(
-      dialogueIndex,
-      node,
-      nodeIndex,
-      nodes,
-      nodeDialogueIds,
-      diagnostics
-    );
-    if (runtimeNodes.length === 0) {
-      continue;
-    }
-
-    runtimeDialogues.push({
-      id: runtimeDialogueId,
-      name:
-        nodeIndex === 0
-          ? dialogue.title || dialogue.id
-          : `${dialogue.title || dialogue.id} / ${node.id}`,
-      nodes: runtimeNodes,
-    });
-  }
-
-  if ((dialogue.followUps ?? []).length > 0) {
-    diagnostics.push({
-      code: "unsupported-lowering",
-      fieldPath: `project.dialogues[${dialogueIndex}].followUps`,
-      message:
-        "Dialogue follow-up lowering is not supported in this bounded dialogue export slice.",
-    });
-  }
-
-  return runtimeDialogues;
+  diagnostics.push({
+    code: "unsupported-lowering",
+    fieldPath: `project.dialogues[${dialogueIndex}].nodes`,
+    message:
+      `Dialogue "${dialogue.id}" still relies on retired node-based export fields; migrate it onto the single-screen dialogue model before runtime export.`,
+  });
+  return null;
 }
 
 function shouldPreferSingleScreenDialogue(
