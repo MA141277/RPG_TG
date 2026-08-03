@@ -9,8 +9,14 @@ const CONTENT_PACK_FILE_KEYS = [
   "cityEntries",
   "characters",
   "events",
+  "menuResources",
+  "menuInstances",
   "scenes",
   "dialogues",
+  "playables",
+  "playableIntegrations",
+  "playableShells",
+  "flowPlayables",
   "eventBindings",
   "settlements",
   "progressTracks",
@@ -22,6 +28,8 @@ const CONTENT_PACK_FILE_KEYS = [
   "valuables",
   "items",
   "cityNpcPools",
+  "locationAccess",
+  "houseModuleDefaults",
   "houseAccessRefusalRules",
   "cityPortraits",
   "historicalCharacters",
@@ -95,6 +103,11 @@ function parseContentPackManifest(value: unknown): ContentPackManifest {
   assertString(value.id, "content pack id");
   assertString(value.title, "content pack title");
   assertObject(value.files, "content pack files");
+  if (Object.hasOwn(value.files, "flowDefinitions")) {
+    throw new Error(
+      'content pack files.flowDefinitions is retired; use files.playableShells instead.'
+    );
+  }
 
   return value as ContentPackManifest;
 }

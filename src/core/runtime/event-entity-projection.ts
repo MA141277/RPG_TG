@@ -2,6 +2,26 @@ import type { RuntimeEventEntity } from "../contracts/event-router";
 import type { RuntimeTaskInput } from "../contracts/runtime-result";
 import type { EventDefinition, EventRuntimeAction } from "../../domain/event";
 
+export function resolveRuntimeEventSceneId(
+  eventDefinition: Pick<EventDefinition, "entrySceneId" | "dialogueId">
+): string | null {
+  if (
+    typeof eventDefinition.entrySceneId === "string" &&
+    eventDefinition.entrySceneId.trim().length > 0
+  ) {
+    return eventDefinition.entrySceneId.trim();
+  }
+
+  if (
+    typeof eventDefinition.dialogueId === "string" &&
+    eventDefinition.dialogueId.trim().length > 0
+  ) {
+    return eventDefinition.dialogueId.trim();
+  }
+
+  return null;
+}
+
 export function createRuntimeEventEntity(
   eventDefinition: EventDefinition
 ): RuntimeEventEntity {
@@ -9,7 +29,8 @@ export function createRuntimeEventEntity(
     id: eventDefinition.id,
     kind: eventDefinition.type === "settlement" ? "settlement" : "dialogue",
     payload: {
-      entrySceneId: eventDefinition.entrySceneId,
+      entrySceneId:
+        resolveRuntimeEventSceneId(eventDefinition) ?? eventDefinition.entrySceneId,
       ...(eventDefinition.dialogueId == null
         ? {}
         : { dialogueId: eventDefinition.dialogueId }),

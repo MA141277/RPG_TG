@@ -1070,6 +1070,13 @@ function materializeScriptEditorPlayableRuntimeFamilies(
   const playablesById = new Map<string, PlayableDefinition>();
   const playableIntegrations: PlayableIntegrationDefinition[] = [];
   const integrationIds = new Set<string>();
+  const authoredFlowIds = new Set(
+    project.flows.flatMap((flow) =>
+      typeof flow.id === "string" && flow.id.trim().length > 0
+        ? [flow.id.trim()]
+        : []
+    )
+  );
   const menuLaunchedMinigameIds = collectMenuLaunchedMinigameIds(project);
   const eventLaunchEventIdsByMinigameId = collectEventLaunchEventIdsByMinigameId(project);
 
@@ -1084,7 +1091,10 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     if (playableId == null) {
       continue;
     }
-    if (!isScriptEditorShellBackedMinigamePlayableId(playableId)) {
+    const usesBuiltinPlayableShell =
+      isScriptEditorShellBackedMinigamePlayableId(playableId);
+    const usesAuthoredFlowShell = authoredFlowIds.has(playableId);
+    if (!usesBuiltinPlayableShell && !usesAuthoredFlowShell) {
       diagnostics.push({
         code: "unsupported-family",
         fieldPath: `${fieldPath}.playableId`,
@@ -1098,7 +1108,12 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     const triggerId = createDerivedMinigameTriggerId(minigame.id, playableId);
     const triggerEvent = eventLaunchEventId.length > 0 ? eventLaunchEventId : "manual-launch";
 
-    const definition = builtinPlayableDefinitionRegistry.get(playableId);
+    const definition = usesBuiltinPlayableShell
+      ? builtinPlayableDefinitionRegistry.get(playableId)
+      : {
+          id: playableId,
+          commandPrefix: `playable.${playableId}.`,
+        };
     if (definition == null) {
       diagnostics.push({
         code: "missing-reference",

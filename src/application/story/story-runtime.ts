@@ -67,7 +67,7 @@ type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
+  playableShellsById?: Record<string, FlowPlayableDefinition> | undefined;
   eventBindingsById?: Record<string, EventBinding> | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   settlementDefinitionsById?:
@@ -377,7 +377,7 @@ function createStorySceneRunnerContext(
     sceneDefinitionsById: content.sceneDefinitionsById,
     eventDefinitionsById: content.eventDefinitionsById,
     activityDefinitionsById: content.activityDefinitionsById,
-    flowPlayablesById: content.flowPlayablesById,
+    playableShellsById: content.playableShellsById,
     characterDefinitions: runtime.characterDefinitions,
     textEntriesById: content.textEntriesById,
     continueFromSceneEvent: ({ state, characterDefinitions, eventDefinition }) =>

@@ -12,6 +12,9 @@
     "cityEntries": "city-entries.json",
     "characters": "characters.json",
     "events": "events.json",
+    "playables": "playables.json",
+    "playableIntegrations": "playable-integrations.json",
+    "playableShells": "playable-shells.json",
     "scenes": "scenes.json",
     "textEntries": "text-entries.json",
     "activities": "activities.json",
@@ -22,6 +25,14 @@
     "cityPortraits": "city-portraits.json",
     "historicalCharacters": "historical-characters.json",
     "historicalCityRosters": "historical-city-rosters.json",
-    "historicalCharacterIdByCharacterId": "historical-character-id-map.json"
+    "historicalCharacterIdByCharacterId": "historical-character-id-map.json",
+    "buildingArrangements": "building-arrangements.json",
+    "dialogues": "dialogues.json",
+    "eventBindings": "event-bindings.json",
+    "houseModuleDefaults": "house-module-defaults.json",
+    "locationAccess": "location-access.json",
+    "menuInstances": "menu-instances.json",
+    "menuResources": "menu-resources.json",
+    "settlements": "settlements.json"
   }
 }

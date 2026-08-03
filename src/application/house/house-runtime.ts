@@ -1,6 +1,6 @@
 import type { AppState } from "../app-shell";
 import type { HouseDefinition } from "../../domain/house";
-import type { EventDefinition } from "../../domain/event";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { GameState } from "../../domain/game-state";
@@ -38,8 +38,10 @@ type HouseRuntimeDependencies = {
   playerCharacterId: string;
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  eventBindingsById?: Record<string, EventBinding> | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
+  houseModuleDefaults?: Record<string, unknown> | undefined;
   houseModuleRegistry?: HouseModuleRegistry | undefined;
   syncCouncilPriorityAfterGameStateChange(
     previousGameState: GameState,
@@ -130,8 +132,14 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
       houseDefinition: activeHouse,
       playerCharacterId: dependencies.playerCharacterId,
       sessionState: appState.gameState.ui.houseSession?.state ?? null,
+      eventDefinitionsById: dependencies.eventDefinitionsById,
+      eventBindings:
+        dependencies.eventBindingsById == null
+          ? undefined
+          : Object.values(dependencies.eventBindingsById),
       activityDefinitionsById: dependencies.activityDefinitionsById,
       textEntriesById: dependencies.textEntriesById,
+      houseModuleDefaults: dependencies.houseModuleDefaults,
       request,
     });
 
@@ -272,8 +280,14 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         characterDefinitions: nextAppState.characterDefinitions,
         houseDefinition,
         playerCharacterId: dependencies.playerCharacterId,
+        eventDefinitionsById: dependencies.eventDefinitionsById,
+        eventBindings:
+          dependencies.eventBindingsById == null
+            ? undefined
+            : Object.values(dependencies.eventBindingsById),
         activityDefinitionsById: dependencies.activityDefinitionsById,
         textEntriesById: dependencies.textEntriesById,
+        houseModuleDefaults: dependencies.houseModuleDefaults,
       });
       applyHouseModuleResult(houseDefinition, moduleId, result);
     }
@@ -323,8 +337,14 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         houseDefinition: activeHouse,
         playerCharacterId: dependencies.playerCharacterId,
         sessionState: appState.gameState.ui.houseSession?.state ?? null,
+        eventDefinitionsById: dependencies.eventDefinitionsById,
+        eventBindings:
+          dependencies.eventBindingsById == null
+            ? undefined
+            : Object.values(dependencies.eventBindingsById),
         activityDefinitionsById: dependencies.activityDefinitionsById,
         textEntriesById: dependencies.textEntriesById,
+        houseModuleDefaults: dependencies.houseModuleDefaults,
       });
       const councilTriggered = applyHouseModuleResult(
         activeHouse,

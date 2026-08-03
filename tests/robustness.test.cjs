@@ -2720,6 +2720,42 @@ test("story callbacks do not keep inline fallback prose for guo zixing camp runt
   );
 });
 
+test("story callback scenario seeds are owned by a dedicated zhuyuanzhang callback defaults helper", () => {
+  const helperSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "story",
+      "zhu-yuanzhang-story-callback-defaults.ts"
+    ),
+    "utf8"
+  );
+  const callbackSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "application", "story", "story-callbacks.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    helperSource,
+    /export function resolveJoinGuoZixingCampStoryCallbackSeed\(/
+  );
+  assert.match(
+    helperSource,
+    /export function resolveSundeyaRescueBattleStoryCallbackSeed\(/
+  );
+  assert.match(
+    callbackSource,
+    /resolveJoinGuoZixingCampStoryCallbackSeed\(|resolveSundeyaRescueBattleStoryCallbackSeed\(/
+  );
+  assert.doesNotMatch(callbackSource, /clan\.guo/);
+  assert.doesNotMatch(callbackSource, /house\.kulan\.keep/);
+  assert.doesNotMatch(
+    callbackSource,
+    /runtime\.zhu_yuanzhang\.(main_mission\.guo_zixing_keep|main_mission\.sundeya_battle_review|player\.title\.guo_zixing_camp|player\.occupation\.guo_zixing_camp|player\.affiliation\.guo_zixing_camp|player\.biography\.guo_zixing_camp)/
+  );
+});
+
 test("sample scenario scene content is migrated to text ids", () => {
   const dialogueAction = sampleScene.actions.find(
     (action) => action.type === "dialogue"
@@ -9644,6 +9680,51 @@ test("keep house review module no longer keeps core assignment prose inline", ()
   );
 });
 
+test("keep review assignment scenario seeds are owned by a dedicated keep helper", () => {
+  const helperSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "keep-house",
+      "keep-review-assignment-defaults.ts"
+    ),
+    "utf8"
+  );
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "keep-house",
+      "keep-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const expulsionBlock =
+    moduleSource.match(/if \(resolution\.expelled\) \{[\s\S]*?\n  }\n\n  return \{/)
+      ?.[0] ?? "";
+  const assignTaskBlock =
+    moduleSource.match(/function assignTaskToPlayer\([\s\S]*?\n}\n\nfunction handleAction\(/)
+      ?.[0] ?? "";
+
+  assert.match(helperSource, /export function resolveKeepReviewTaskAssignmentSeed\(/);
+  assert.match(helperSource, /export function resolveKeepReviewExpulsionSeed\(/);
+  assert.match(
+    moduleSource,
+    /resolveKeepReviewTaskAssignmentSeed\(|resolveKeepReviewExpulsionSeed\(/
+  );
+  assert.doesNotMatch(expulsionBlock, /formatReviewDateText\(60\)/);
+  assert.doesNotMatch(expulsionBlock, /mainHouseMissionText:\s*"grain-procurement"/);
+  assert.doesNotMatch(assignTaskBlock, /formatReviewDateText\(60\)/);
+  assert.doesNotMatch(
+    assignTaskBlock,
+    /runtime\.zhu_yuanzhang\.keep\.review\.assignment\.(order|overlay)/
+  );
+});
+
 test("story-stage access keeps leader residence entry visible in monk stage", () => {
   const monkState = createMonkStageState();
   const monkCharacters = createPrototypeCharactersForStoryStage(
@@ -10625,6 +10706,49 @@ test("temple house rest summary resolves from text entries", () => {
   ]);
 });
 
+test("temple house late review copy resolves from text entries", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const lightLateTextEntries = {
+    "runtime.zhu_yuanzhang.temple.review.late.light.001":
+      "自定义寺评轻度迟到 {lateDays} 天。",
+    "runtime.zhu_yuanzhang.temple.review.late.light.002":
+      "自定义寺评轻度扣除 {contributionPenalty} 点。",
+  };
+  const lightLateEnterResult = templeHouseHouseModule.enter({
+    gameState: withCouncilInDays(createMonkStageState(), -2),
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    textEntriesById: lightLateTextEntries,
+  });
+
+  assert.deepEqual(lightLateEnterResult.sessionState?.dialogueLines, [
+    "自定义寺评轻度迟到 2 天。",
+    "自定义寺评轻度扣除 5 点。",
+  ]);
+
+  const heavyLateTextEntries = {
+    "runtime.zhu_yuanzhang.temple.review.late.heavy.001":
+      "自定义寺评重度迟到 {lateDays} 天。",
+    "runtime.zhu_yuanzhang.temple.review.late.heavy.002":
+      "自定义寺评重度扣除 {contributionPenalty} 点。",
+  };
+  const heavyLateEnterResult = templeHouseHouseModule.enter({
+    gameState: withCouncilInDays(createMonkStageState(), -6),
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    textEntriesById: heavyLateTextEntries,
+  });
+
+  assert.deepEqual(heavyLateEnterResult.sessionState?.dialogueLines, [
+    "自定义寺评重度迟到 6 天。",
+    "自定义寺评重度扣除 12 点。",
+  ]);
+});
+
 test("temple house review module no longer keeps core assignment prose inline", () => {
   const source = fs.readFileSync(
     path.join(
@@ -10654,6 +10778,62 @@ test("temple house review module no longer keeps core assignment prose inline", 
   assert.deepEqual(
     forbiddenStrings.filter((entry) => source.includes(entry)),
     []
+  );
+});
+
+test("temple review assignment scenario seeds are owned by a dedicated temple helper", () => {
+  const helperSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-review-assignment-defaults.ts"
+    ),
+    "utf8"
+  );
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const submitReviewWorkPlanBlock =
+    moduleSource.match(
+      /function submitReviewWorkPlan\([\s\S]*?\n}\n\nfunction assignTempleTask\(/
+    )?.[0] ?? "";
+  const assignTempleTaskBlock =
+    moduleSource.match(/function assignTempleTask\([\s\S]*?\n}\n\nfunction startBegAlmsWork\(/)
+      ?.[0] ?? "";
+
+  assert.match(
+    helperSource,
+    /export function resolveTempleReviewWorkPlanAssignmentSeed\(/
+  );
+  assert.match(
+    helperSource,
+    /export function resolveTempleReviewTaskAssignmentSeed\(/
+  );
+  assert.match(
+    moduleSource,
+    /resolveTempleReviewWorkPlanAssignmentSeed\(|resolveTempleReviewTaskAssignmentSeed\(/
+  );
+  assert.doesNotMatch(submitReviewWorkPlanBlock, /formatReviewDateText\(30\)/);
+  assert.doesNotMatch(submitReviewWorkPlanBlock, /mission\.temple\.beg-alms/);
+  assert.doesNotMatch(
+    submitReviewWorkPlanBlock,
+    /runtime\.zhu_yuanzhang\.temple\.review\.assignment\.(beg_alms|indoor|overlay)/
+  );
+  assert.doesNotMatch(assignTempleTaskBlock, /formatReviewDateText\(30\)/);
+  assert.doesNotMatch(
+    assignTempleTaskBlock,
+    /runtime\.zhu_yuanzhang\.temple\.review\.task_assignment\.(order|overlay)/
   );
 });
 
@@ -11154,6 +11334,15 @@ test("temple house status labels, fortune, and begging submit overlay resolve fr
     "runtime.zhu_yuanzhang.temple.status.title.monk": "自定义寺中标题。",
     "runtime.zhu_yuanzhang.temple.status.subtitle.daily": "自定义住持接待副标题。",
     "runtime.zhu_yuanzhang.temple.status.metric.abbot": "自定义住持称呼",
+    "runtime.zhu_yuanzhang.temple.ui.action_panel.temple_daily": "自定义寺庙事务",
+    "runtime.zhu_yuanzhang.temple.ui.root_action.submit_food": "自定义提交粮食：{amount}",
+    "runtime.zhu_yuanzhang.temple.ui.root_action.work.ready": "自定义工作",
+    "runtime.zhu_yuanzhang.temple.ui.root_action.rest": "自定义休息",
+    "runtime.zhu_yuanzhang.temple.ui.root_action.donate": "自定义捐香火",
+    "runtime.zhu_yuanzhang.temple.ui.status.countdown": "自定义评定倒计时",
+    "runtime.zhu_yuanzhang.temple.ui.status.current_task": "自定义当前差事",
+    "runtime.zhu_yuanzhang.temple.ui.leave_action.label": "自定义离开寺庙",
+    "runtime.zhu_yuanzhang.temple.ui.alert.confirm": "自定义收下",
     "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.default.label": "自定义外出化缘",
     "runtime.zhu_yuanzhang.temple.fortune.upper.title": "自定义上签",
     "runtime.zhu_yuanzhang.temple.fortune.upper.001": "自定义求签首句。",
@@ -11161,6 +11350,12 @@ test("temple house status labels, fortune, and begging submit overlay resolve fr
     "runtime.zhu_yuanzhang.temple.begging_food.submit.title": "自定义提交化缘粮食",
     "runtime.zhu_yuanzhang.temple.begging_food.submit.001": "自定义交粮说明一。",
     "runtime.zhu_yuanzhang.temple.begging_food.submit.002": "自定义交粮说明二。",
+    "runtime.zhu_yuanzhang.temple.begging_food.submit.quantity.label":
+      "自定义交粮数量",
+    "runtime.zhu_yuanzhang.temple.begging_food.submit.confirm.label":
+      "自定义交给寺里",
+    "runtime.zhu_yuanzhang.temple.begging_food.submit.cancel.label":
+      "自定义暂缓",
   };
   const gameState = withCouncilInDays(
     {
@@ -11219,12 +11414,21 @@ test("temple house status labels, fortune, and begging submit overlay resolve fr
   assert.equal(viewModel.sceneSubtitle, "自定义皇觉寺副标题。");
   assert.equal(viewModel.statusCard?.eyebrow, "自定义寺院眉题。");
   assert.equal(viewModel.statusCard?.title, "自定义寺中标题。");
+  const abbotRosterEntry = viewModel.standbyRoster?.find(
+    (actor) => actor.characterId === templeHouse.defaultCharacterId
+  );
+  assert.equal(abbotRosterEntry?.interactionActions?.[0]?.label, "自定义提交粮食：1石2斗");
+  assert.equal(abbotRosterEntry?.interactionActions?.[1]?.label, "自定义工作");
+  assert.equal(abbotRosterEntry?.interactionActions?.[2]?.label, "自定义休息");
+  assert.equal(abbotRosterEntry?.interactionActions?.[3]?.label, "自定义捐香火");
   assert.equal(viewModel.statusCard?.metrics[0]?.label, "自定义住持称呼");
+  assert.equal(viewModel.statusCard?.metrics[1]?.label, "自定义评定倒计时");
   assert.equal(
-    viewModel.statusCard?.metrics.find((metric) => metric.label === "当前差事")
+    viewModel.statusCard?.metrics.find((metric) => metric.label === "自定义当前差事")
       ?.value,
     "自定义外出化缘"
   );
+  assert.equal(viewModel.leaveAction?.label, "自定义离开寺庙");
 
   const openResult = templeHouseHouseModule.dispatch({
     gameState: enterResult.gameState,
@@ -11244,12 +11448,21 @@ test("temple house status labels, fortune, and begging submit overlay resolve fr
     request: { type: "action", actionId: "ask-fortune" },
     textEntriesById,
   });
+  const fortuneViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: fortuneResult.gameState,
+    characterDefinitions: fortuneResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: fortuneResult.sessionState,
+    textEntriesById,
+  });
 
   assert.equal(fortuneResult.sessionState?.overlay?.title, "自定义上签");
   assert.deepEqual(fortuneResult.sessionState?.overlay?.paragraphs, [
     "自定义求签首句。",
     "自定义寺门外应验句。",
   ]);
+  assert.equal(fortuneViewModel.overlay?.confirmLabel, "自定义收下");
 
   const submitOverlayResult = templeHouseHouseModule.dispatch({
     gameState: enterResult.gameState,
@@ -11273,6 +11486,102 @@ test("temple house status labels, fortune, and begging submit overlay resolve fr
   assert.deepEqual(submitOverlayViewModel.overlay?.paragraphs, [
     "自定义交粮说明一。",
     "自定义交粮说明二。",
+  ]);
+  assert.equal(submitOverlayViewModel.overlay?.quantityLabel, "自定义交粮数量");
+  assert.equal(submitOverlayViewModel.overlay?.confirmLabel, "自定义交给寺里");
+  assert.equal(submitOverlayViewModel.overlay?.cancelLabel, "自定义暂缓");
+});
+
+test("temple house rest-days and qte overlays resolve from text entries", () => {
+  const textEntriesById = {
+    "runtime.zhu_yuanzhang.temple.rest_days.title": "自定义指定休息天数",
+    "runtime.zhu_yuanzhang.temple.rest_days.001":
+      "自定义休息说明：若评定先到，就按已休天数立刻结算。",
+    "runtime.zhu_yuanzhang.temple.rest_days.confirm.label": "自定义开始休息",
+    "runtime.zhu_yuanzhang.temple.rest_days.cancel.label": "自定义返回",
+    "runtime.zhu_yuanzhang.temple.qte.title": "自定义寺内帮忙",
+    "runtime.zhu_yuanzhang.temple.qte.001": "自定义说明一：看准时机再出手。",
+    "runtime.zhu_yuanzhang.temple.qte.002": "自定义说明二：三轮内尽量多命中。",
+  };
+  const baseState = withCouncilInDays(createMonkStageState(), 30);
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...baseState,
+      currentHouseId: templeHouse.id,
+      runtime: {
+        ...baseState.runtime,
+        flags: {
+          ...baseState.runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        },
+        variables: {
+          ...baseState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+          [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    textEntriesById,
+  });
+
+  const restDaysViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      overlay: {
+        type: "rest-days",
+        inputValue: "4",
+      },
+    },
+    textEntriesById,
+  });
+
+  assert.equal(restDaysViewModel.overlay?.type, "rest-days");
+  assert.equal(restDaysViewModel.overlay?.title, "自定义指定休息天数");
+  assert.deepEqual(restDaysViewModel.overlay?.paragraphs, [
+    "自定义休息说明：若评定先到，就按已休天数立刻结算。",
+  ]);
+  assert.equal(restDaysViewModel.overlay?.confirmLabel, "自定义开始休息");
+  assert.equal(restDaysViewModel.overlay?.cancelLabel, "自定义返回");
+
+  const qteViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      overlay: {
+        type: "qte-bar",
+        taskId: "copy-scripture",
+        taskLabel: "抄录经卷",
+        round: 1,
+        totalRounds: 3,
+        successes: 0,
+        markerPercent: 8,
+        markerDirection: 1,
+        targetStartPercent: 20,
+        targetWidthPercent: 22,
+      },
+    },
+    textEntriesById,
+  });
+
+  assert.equal(qteViewModel.overlay?.type, "qte-bar");
+  assert.equal(qteViewModel.overlay?.title, "自定义寺内帮忙");
+  assert.deepEqual(qteViewModel.overlay?.helperLines, [
+    "自定义说明一：看准时机再出手。",
+    "自定义说明二：三轮内尽量多命中。",
   ]);
 });
 
@@ -18263,7 +18572,7 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
   );
   assert.match(
     coordinatorSource,
-    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*deps\.createScenarioPackAppState\(scenarioPack\)/
+    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*createScenarioPackAppState\(/
   );
   assert.match(mainSource, /applyActivatedModSession|mainRuntimeOrchestrator/);
   assert.match(
@@ -18678,6 +18987,64 @@ test("child 28 startup apply consumes session content context before app state b
   );
 });
 
+test("scenario-pack startup defaults are resolved through scenario-profile owner instead of inline main.ts literals", () => {
+  const scenarioProfileSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "domain", "scenario-profile.ts"),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    scenarioProfileSource,
+    /export function resolveScenarioProfileStartupDefaults\(/
+  );
+  assert.match(mainSource, /resolveScenarioProfileStartupDefaults\(/);
+  assert.doesNotMatch(
+    mainSource,
+    /reviewDateText:\s*profile\.initialUi\?\.reviewDateText\s*\?\?\s*"JSON 开局"/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /const calendar = profile\.initialCalendar \?\? \{\s*year:\s*1,\s*month:\s*1,\s*day:\s*1,\s*\}/
+  );
+});
+
+test("prototype startup defaults are resolved through startup helper instead of inline main.ts stage literals", () => {
+  const helperSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "prototype-startup-defaults.ts"
+    ),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const prototypeBlock = mainSource.match(
+    /function createPrototypeAppState\(playerCharacterId: string\): AppState \{[\s\S]*?return revealCampaignMapAroundAppCoordinate\([\s\S]*?\r?\n}\r?\n/
+  )?.[0] ?? "";
+
+  assert.match(helperSource, /export function resolvePrototypeStartupSeed\(/);
+  assert.match(mainSource, /resolvePrototypeStartupSeed\(/);
+  assert.doesNotMatch(
+    prototypeBlock,
+    /playerCharacterId === defaultPlayerCharacterId[\s\S]*huangjueTemple[\s\S]*guoZixingCamp/
+  );
+  assert.doesNotMatch(
+    prototypeBlock,
+    /runtime\.zhu_yuanzhang\.prototype\.main_mission\.(review_hall|temple_review)/
+  );
+  assert.doesNotMatch(prototypeBlock, /formatCouncilStatusText\(40\)/);
+  assert.doesNotMatch(prototypeBlock, /formatCouncilStatusText\(0\)/);
+});
+
 test("child 24 main runtime orchestrator module exists with a narrow request/result seam", () => {
   const orchestratorPath = path.join(
     process.cwd(),
@@ -19015,6 +19382,151 @@ test("child 25 narrow follow-up contract stays outside main.ts and main-runtime-
   assert.doesNotMatch(
     orchestratorSource,
     /navigation\.entered-city|time\.advanced|time\.council-threshold-crossed/
+  );
+});
+
+test("main.ts council dialogue shell no longer owns temple or keep default copy branches", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const runtimeSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "runtime",
+      "navigation-time-follow-up.ts"
+    ),
+    "utf8"
+  );
+  const arrivalBlock =
+    mainSource.match(
+      /function createCouncilArrivalDialogue\([\s\S]*?\n}\n\nfunction clearTransientUiForCouncilTrigger/
+    )?.[0] ?? "";
+  const refusalBlock =
+    mainSource.match(
+      /function showCouncilPriorityRefusal\(\): void \{[\s\S]*?\n}\n\nfunction showCouncilInsufficientTimeRefusal/
+    )?.[0] ?? "";
+  const insufficientBlock =
+    mainSource.match(
+      /function showCouncilInsufficientTimeRefusal\([\s\S]*?\n}\n\nfunction showCouncilArrivalReminder/
+    )?.[0] ?? "";
+
+  assert.match(
+    runtimeSource,
+    /export function createCouncilPriorityRefusalDialogue\(/
+  );
+  assert.match(
+    runtimeSource,
+    /export function createCouncilInsufficientTimeDialogue\(/
+  );
+  assert.match(mainSource, /createCouncilPriorityRefusalDialogue\(/);
+  assert.match(mainSource, /createCouncilInsufficientTimeDialogue\(/);
+  assert.equal(arrivalBlock, "");
+  assert.doesNotMatch(refusalBlock, /council_refusal\.(temple|keep)/);
+  assert.doesNotMatch(insufficientBlock, /council_insufficient_time\.(temple|keep)/);
+  assert.doesNotMatch(refusalBlock, /char\.kulan_temple_abbot|char\.kulan_guard/);
+  assert.doesNotMatch(insufficientBlock, /char\.kulan_temple_abbot|char\.kulan_guard/);
+});
+
+test("main.ts city begging refusal shell no longer owns zhuyuanzhang shortage or stamina dialogue seeds", () => {
+  const helperSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "runtime",
+      "city-begging-refusal-dialogues.ts"
+    ),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const shortageBlock =
+    mainSource.match(
+      /if \(isHaozhouShortageDuringBeggingJourney\(appState\.gameState\)\) \{[\s\S]*?return;\n  }\n/
+    )?.[0] ?? "";
+  const staminaBlock =
+    mainSource.match(/if \(!canAffordActivityCost\(playerCharacter\)\) \{[\s\S]*?return;\n  }\n/)
+      ?.[0] ?? "";
+
+  assert.match(
+    helperSource,
+    /export function createHaozhouShortageBeggingRefusalDialogue\(/
+  );
+  assert.match(
+    helperSource,
+    /export function createBeggingStaminaRefusalDialogue\(/
+  );
+  assert.match(mainSource, /createHaozhouShortageBeggingRefusalDialogue\(/);
+  assert.match(mainSource, /createBeggingStaminaRefusalDialogue\(/);
+  assert.doesNotMatch(shortageBlock, /runtime\.zhu_yuanzhang\.haozhou_shortage\./);
+  assert.doesNotMatch(
+    staminaBlock,
+    /runtime\.zhu_yuanzhang\.begging_stamina_refusal\./
+  );
+  assert.doesNotMatch(shortageBlock, /char\.kulan_temple_abbot/);
+  assert.doesNotMatch(staminaBlock, /char\.kulan_temple_abbot/);
+});
+
+test("main.ts map intro shell no longer owns the zhuyuanzhang chapter intro text id", () => {
+  const helperSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "runtime",
+      "campaign-map-intro-prompts.ts"
+    ),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const startIntroBlock =
+    mainSource.match(
+      /function startInitialCampaignMapDebugAnimation\(\): void \{[\s\S]*?\n}\n\nfunction interpolateCampaignMapDebugState/
+    )?.[0] ?? "";
+  const refreshIntroBlock =
+    mainSource.match(
+      /function refreshMapIntroOverlay\(\): void \{[\s\S]*?\n}\n\nfunction zoomCampaignMapAtScreenCenter/
+    )?.[0] ?? "";
+
+  assert.match(
+    helperSource,
+    /export function resolveInitialCampaignMapIntroTitle\(/
+  );
+  assert.match(mainSource, /resolveInitialCampaignMapIntroTitle\(/);
+  assert.doesNotMatch(
+    startIntroBlock,
+    /runtime\.zhu_yuanzhang\.chapter_intro\.huai_xi_begging/
+  );
+  assert.doesNotMatch(
+    refreshIntroBlock,
+    /runtime\.zhu_yuanzhang\.chapter_intro\.huai_xi_begging/
+  );
+});
+
+test("main.ts haozhou return entry no longer owns the sundeya battle review mission text id", () => {
+  const startupSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "haozhou-return-battle-state.ts"
+    ),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const encounterBlock =
+    mainSource.match(
+      /function createHaozhouReturnEncounterAppState\(baseState: AppState\): AppState \{[\s\S]*?\n}\n\nfunction beginLoadingScreen/
+    )?.[0] ?? "";
+
+  assert.match(
+    startupSource,
+    /export function resolveHaozhouReturnEncounterBattleSeed\(/
+  );
+  assert.match(mainSource, /createHaozhouReturnEncounterBattleState\(\{/);
+  assert.doesNotMatch(
+    encounterBlock,
+    /runtime\.zhu_yuanzhang\.main_mission\.sundeya_battle_review/
   );
 });
 

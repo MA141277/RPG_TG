@@ -70,6 +70,7 @@ type RuntimePackManifestFiles = {
   playables?: string;
   playableIntegrations?: string;
   playableShells?: string;
+  flowPlayables?: string;
   cities?: string;
   houses?: string;
   buildingArrangements?: string;
@@ -1463,7 +1464,9 @@ function readFlowPlayablesFamily(
     );
   }
 
-  const value = rawPack.playableShells;
+  const value = Array.isArray(rawPack.playableShells)
+    ? rawPack.playableShells
+    : rawPack.flowPlayables;
   if (!Array.isArray(value)) {
     return [];
   }

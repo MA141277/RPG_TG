@@ -1,5 +1,6 @@
 import type { CharacterDefinition, CharacterId } from "./character";
 import type { ActivityDefinition } from "./activity";
+import type { EventBinding, EventDefinition } from "./event";
 import type {
   ActivityFortuneBoardCell,
   ActivityFortuneBoardTripletReward,
@@ -607,8 +608,11 @@ export type HouseModuleBaseInput<ModuleId extends HouseModuleId = HouseModuleId>
   houseDefinition: HouseDefinition;
   playerCharacterId: CharacterId;
   sessionState: HouseModuleSessionState<ModuleId> | null;
+  eventDefinitionsById?: Record<string, EventDefinition> | undefined;
+  eventBindings?: EventBinding[] | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
+  houseModuleDefaults?: Record<string, unknown> | undefined;
 };
 
 export type HouseModuleEnterInput<ModuleId extends HouseModuleId = HouseModuleId> =

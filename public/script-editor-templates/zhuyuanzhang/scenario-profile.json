@@ -3,11 +3,20 @@
   "title": "朱元璋：皇觉寺开局",
   "playerCharacterId": "char.player",
   "chapterId": "chapter.zhu-yuanzhang-rise",
+  "initialCalendar": {
+    "year": 1567,
+    "month": 1,
+    "day": 1
+  },
   "initialLocation": {
     "mapId": "map.yuanmo_campaign",
     "cityId": "city.kulan",
     "houseId": "house.kulan.temple",
     "view": "house"
+  },
+  "initialUi": {
+    "reviewDateText": "今日评定",
+    "mainHouseMissionText": "前往皇觉寺听候住持训示"
   },
   "initialRuntime": {
     "variables": {
@@ -17,41 +26,44 @@
   "characterStartups": [
     {
       "characterId": "char.kulan_xu_da",
+      "initialUi": {
+        "reviewDateText": "距离评定 40 天",
+        "mainHouseMissionText": "前往评定会场"
+      },
       "initialRuntime": {
         "variables": {
           "var.story.zhu_yuanzhang.stage": "guo-zixing-camp"
         }
-      },
-      "entryEventId": null,
-      "openingFlowId": null
+      }
     },
     {
       "characterId": "char.kulan_tang_he",
+      "initialUi": {
+        "reviewDateText": "距离评定 40 天",
+        "mainHouseMissionText": "前往评定会场"
+      },
       "initialRuntime": {
         "variables": {
           "var.story.zhu_yuanzhang.stage": "guo-zixing-camp"
         }
-      },
-      "entryEventId": null,
-      "openingFlowId": null
+      }
     },
     {
       "characterId": "char.kulan_chang_yuchun",
+      "initialUi": {
+        "reviewDateText": "距离评定 40 天",
+        "mainHouseMissionText": "前往评定会场"
+      },
       "initialRuntime": {
         "variables": {
           "var.story.zhu_yuanzhang.stage": "guo-zixing-camp"
         }
-      },
-      "entryEventId": null,
-      "openingFlowId": null
+      }
     }
   ],
   "launchPolicy": {
     "characterSelection": "select",
-    "initialView": "map",
-    "entryEventTiming": "after-map-entry"
+    "initialView": "map"
   },
-  "entryEventId": "event.story.zhu_yuanzhang.ordination",
-  "openingFlowId": "flow.zhu_yuanzhang.monk_opening",
   "tags": ["built-in", "main-story", "temple"]
 }

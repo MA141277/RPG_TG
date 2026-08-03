@@ -127,11 +127,18 @@ import {
 } from "./application/audio/battle-sound";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
+import { resolveInitialCampaignMapIntroTitle } from "./application/runtime/campaign-map-intro-prompts";
 import {
   applyCouncilPriorityFollowUp,
+  createCouncilInsufficientTimeDialogue,
   createNavigationTimeFollowUpBridge,
+  createCouncilPriorityRefusalDialogue,
   type NavigationTimeFollowUpAppState,
 } from "./application/runtime/navigation-time-follow-up";
+import {
+  createBeggingStaminaRefusalDialogue,
+  createHaozhouShortageBeggingRefusalDialogue,
+} from "./application/runtime/city-begging-refusal-dialogues";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
@@ -188,6 +195,7 @@ import {
   type StartupScenario,
   type StartupSessionBootstrap,
 } from "./application/startup/startup-session-coordinator";
+import { resolvePrototypeStartupSeed } from "./application/startup/prototype-startup-defaults";
 import { sanitizeScenarioPackForRuntimePreview } from "./application/startup/scenario-preview-sanitizer";
 import {
   applyStartupStoryBootstrap,
@@ -291,6 +299,10 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "./domain/scenario-pack";
+import {
+  resolveScenarioProfileStartupDefaults,
+  resolveScenarioProfileStartupPresentation,
+} from "./domain/scenario-profile";
 import type {
   BackpackItemCategoryFilter,
   ItemActionId,
@@ -1085,28 +1097,31 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     activeContentContext.cities[0];
   assertExists(defaultMapDefinition, "Missing default map definition.");
   assertExists(defaultCityDefinition, "Missing default city definition.");
-  const storyStage: ZhuYuanzhangStoryStage =
-    playerCharacterId === defaultPlayerCharacterId
-      ? ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-      : ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp;
+  const startupSeed = resolvePrototypeStartupSeed({
+    playerCharacterId,
+    defaultPlayerCharacterId,
+    defaultMapId: defaultMapDefinition.id,
+    defaultCityId: defaultCityDefinition.id,
+  });
+  const storyStage: ZhuYuanzhangStoryStage = startupSeed.storyStage;
   const storyCharacterDefinitions =
     createPrototypeCharactersForStoryStage(storyStage);
   let nextAppState: AppState = {
     gameState: ensureCityNpcPoolsForCurrentDay(
       createInitialState({
-        currentMapId: defaultMapDefinition.id,
-        currentCityId: defaultCityDefinition.id,
-        currentHouseId: null,
+        currentMapId: startupSeed.currentMapId,
+        currentCityId: startupSeed.currentCityId,
+        currentHouseId: startupSeed.currentHouseId,
         playerCharacterId,
-        chapterId: "chapter.prototype",
-        year: 1567,
-        month: 1,
-        day: 1,
+        chapterId: startupSeed.chapterId,
+        year: startupSeed.calendar.year,
+        month: startupSeed.calendar.month,
+        day: startupSeed.calendar.day,
         pinnedCharacterId: playerCharacterId,
-        reviewDateText: formatCouncilStatusText(40),
-        mainHouseMissionText: getRuntimeText(
-          "runtime.zhu_yuanzhang.prototype.main_mission.review_hall",
+        reviewDateText: formatCouncilStatusText(
+          startupSeed.reviewCountdownDaysForUi
         ),
+        mainHouseMissionText: getRuntimeText(startupSeed.missionTextId),
         cards: {
           ownedCardIds: activeContentContext.cards.map(
             (cardDefinition) => cardDefinition.id
@@ -1127,7 +1142,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
               )?.id ?? null,
           },
         },
-        currentView: "map",
+        currentView: startupSeed.currentView,
       }),
       activeContentContext.cityNpcPools
     ),
@@ -1173,24 +1188,12 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     ...nextAppState,
     gameState: {
       ...nextAppState.gameState,
-      ui: {
-        ...nextAppState.gameState.ui,
-        reviewDateText:
-          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? formatCouncilStatusText(0)
-            : nextAppState.gameState.ui.reviewDateText,
-        mainHouseMissionText:
-          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? getRuntimeText(
-                "runtime.zhu_yuanzhang.prototype.main_mission.temple_review"
-              )
-            : nextAppState.gameState.ui.mainHouseMissionText,
-      },
       runtime: {
         ...nextAppState.gameState.runtime,
         variables: {
           ...nextAppState.gameState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]:
+            startupSeed.runtimeReviewCountdown,
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: storyStage,
         },
       },
@@ -1347,66 +1350,6 @@ function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
   window.onBeggingGameComplete?.(result);
 }
 
-function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
-  const priorityModuleId = getCouncilPriorityHouseModuleId(appState.gameState);
-  const currentCityId = appState.gameState.world.currentCityId;
-
-  return (
-    activeContentContext.houses.find(
-      (houseDefinition) =>
-        houseDefinition.moduleId === priorityModuleId &&
-        houseDefinition.cityId === currentCityId
-    ) ??
-    activeContentContext.houses.find(
-      (houseDefinition) => houseDefinition.moduleId === priorityModuleId
-    ) ??
-    null
-  );
-}
-
-function createCouncilArrivalDialogue(
-  targetHouseId: string,
-  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
-): NonNullable<AppState["locationDialogueState"]> | null {
-  const priorityHouse = getCouncilPriorityHouseDefinition();
-  if (priorityHouse == null) {
-    return null;
-  }
-
-  const isTempleReview = priorityHouse.moduleId === "temple-house";
-  const defaultSpeakerCharacterId =
-    priorityHouse.defaultCharacterId ??
-    (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard");
-  const defaultTextLines = isTempleReview
-    ? [
-        getRuntimeTemplateText(
-          "runtime.zhu_yuanzhang.council_arrival.temple.001",
-          { targetHouseName: priorityHouse.name }
-        ),
-        getRuntimeText(
-          "runtime.zhu_yuanzhang.council_arrival.temple.002"
-        ),
-      ]
-    : [
-        getRuntimeTemplateText(
-          "runtime.zhu_yuanzhang.council_arrival.keep.001",
-          { targetHouseName: priorityHouse.name }
-        ),
-        getRuntimeText(
-          "runtime.zhu_yuanzhang.council_arrival.keep.002"
-        ),
-      ];
-
-  return {
-    type: "council-arrival-reminder",
-    speakerCharacterId:
-      councilArrivalNotice?.speakerCharacterId ?? defaultSpeakerCharacterId,
-    textLines: [...defaultTextLines, ...(councilArrivalNotice?.textLines ?? [])],
-    advanceHintText: councilArrivalNotice?.advanceHintText ?? "知道了",
-    targetHouseId,
-  };
-}
-
 function clearTransientUiForCouncilTrigger(): void {
   appState = {
     ...appState,
@@ -1441,37 +1384,14 @@ function syncCouncilPriorityAfterGameStateChange(
 }
 
 function showCouncilPriorityRefusal(): void {
-  const priorityHouse = getCouncilPriorityHouseDefinition();
-  const isTempleReview = priorityHouse?.moduleId === "temple-house";
-
   appState = {
     ...appState,
-    locationDialogueState: {
-      type: "house-access-refusal",
-      speakerCharacterId:
-        priorityHouse?.defaultCharacterId ??
-        (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
-      textLines: isTempleReview
-        ? [
-            getRuntimeTemplateText(
-              "runtime.zhu_yuanzhang.council_refusal.temple.001",
-              { targetHouseName: priorityHouse?.name ?? "皇觉寺" }
-            ),
-            getRuntimeText(
-              "runtime.zhu_yuanzhang.council_refusal.temple.002"
-            ),
-          ]
-        : [
-            getRuntimeTemplateText(
-              "runtime.zhu_yuanzhang.council_refusal.keep.001",
-              { targetHouseName: priorityHouse?.name ?? "帅府" }
-            ),
-            getRuntimeText(
-              "runtime.zhu_yuanzhang.council_refusal.keep.002"
-            ),
-          ],
-      advanceHintText: priorityHouse == null ? "知道了" : `前往${priorityHouse.name}`,
-    },
+    locationDialogueState: createCouncilPriorityRefusalDialogue({
+      gameState: appState.gameState,
+      houseDefinitions: activeContentContext.houses,
+      buildingArrangements: activeContentContext.buildingArrangements,
+      textEntriesById: activeContentContext.textEntriesById,
+    }),
   };
   renderApp();
 }
@@ -1481,63 +1401,18 @@ function showCouncilInsufficientTimeRefusal(
   durationDays: number,
   remainingDays: number
 ): void {
-  const priorityHouse = getCouncilPriorityHouseDefinition();
-  const isTempleReview = priorityHouse?.moduleId === "temple-house";
-  const targetName = priorityHouse?.name ?? (isTempleReview ? "皇觉寺" : "帅府");
-
   appState = {
     ...closeCityMenu(closeCityDirectory(appState)),
     beggingMiniGameState: null,
-    locationDialogueState: {
-      type: "house-access-refusal",
-      speakerCharacterId:
-        priorityHouse?.defaultCharacterId ??
-        (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
-      textLines: isTempleReview
-        ? remainingDays <= 0
-          ? [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.001",
-                { activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-          : [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.001",
-                { remainingDays, activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-        : remainingDays <= 0
-          ? [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.001",
-                { activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-          : [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.001",
-                { remainingDays, activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.002",
-                { targetHouseName: targetName }
-              ),
-            ],
-      advanceHintText: "知道了",
-    },
+    locationDialogueState: createCouncilInsufficientTimeDialogue({
+      gameState: appState.gameState,
+      houseDefinitions: activeContentContext.houses,
+      buildingArrangements: activeContentContext.buildingArrangements,
+      textEntriesById: activeContentContext.textEntriesById,
+      activityLabel,
+      durationDays,
+      remainingDays,
+    }),
   };
   renderApp();
 }
@@ -1681,21 +1556,9 @@ function openBeggingMiniGame(): void {
     stopCityBeggingMiniGameLoop();
     appState = {
       ...closeCityMenu(closeCityDirectory(appState)),
-      locationDialogueState: {
-        type: "house-access-refusal",
-        speakerCharacterId: "char.kulan_temple_abbot",
-        textLines: [
-          getRuntimeText(
-            "runtime.zhu_yuanzhang.haozhou_shortage.001"
-          ),
-          getRuntimeText(
-            "runtime.zhu_yuanzhang.haozhou_shortage.002"
-          ),
-        ],
-        advanceHintText: getRuntimeText(
-          "runtime.zhu_yuanzhang.haozhou_shortage.advance_hint"
-        ),
-      },
+      locationDialogueState: createHaozhouShortageBeggingRefusalDialogue({
+        textEntriesById: activeContentContext.textEntriesById,
+      }),
       beggingMiniGameState: null,
     };
     renderApp();
@@ -1706,24 +1569,10 @@ function openBeggingMiniGame(): void {
     stopCityBeggingMiniGameLoop();
     appState = {
       ...closeCityMenu(closeCityDirectory(appState)),
-      locationDialogueState: {
-        type: "house-access-refusal",
-        speakerCharacterId: "char.kulan_temple_abbot",
-        textLines: [
-          getRuntimeText(
-            "runtime.zhu_yuanzhang.begging_stamina_refusal.001"
-          ),
-          getRuntimeTemplateText(
-            "runtime.zhu_yuanzhang.begging_stamina_refusal.002",
-            {
-              requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST,
-            }
-          ),
-        ],
-        advanceHintText: getRuntimeText(
-          "runtime.zhu_yuanzhang.begging_stamina_refusal.advance_hint"
-        ),
-      },
+      locationDialogueState: createBeggingStaminaRefusalDialogue({
+        textEntriesById: activeContentContext.textEntriesById,
+        requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST,
+      }),
       beggingMiniGameState: null,
     };
     renderApp();
@@ -1791,6 +1640,7 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
     cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
     houseDefinitionsById: activeContentContext.storyContent.houseDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,
+    houseModuleDefaults: activeContentContext.gameContent.houseModuleDefaults,
   });
 }
 
@@ -3014,6 +2864,7 @@ function createScenarioPackAppState(
   scenarioPack: ScenarioPackDefinition
 ): AppState {
   const profile = scenarioPack.scenarioProfile;
+  const startupPresentation = resolveScenarioProfileStartupPresentation(profile);
   const scenarioMapDefinition =
     getMapDefinitionById(profile.initialLocation.mapId) ??
     activeContentContext.maps[0];
@@ -3021,11 +2872,9 @@ function createScenarioPackAppState(
     scenarioMapDefinition,
     `Missing scenario map "${profile.initialLocation.mapId}".`
   );
-  const calendar = profile.initialCalendar ?? {
-    year: 1,
-    month: 1,
-    day: 1,
-  };
+  const startupDefaults = resolveScenarioProfileStartupDefaults(profile, {
+    fallbackMissionText: scenarioPack.title,
+  });
   const playerCoordinate =
     profile.initialPlayerCoordinate ??
     activeContentContext.cityCoordinatesById[profile.initialLocation.cityId] ??
@@ -3037,16 +2886,15 @@ function createScenarioPackAppState(
       createInitialState({
         currentMapId: profile.initialLocation.mapId,
         currentCityId: profile.initialLocation.cityId,
-        currentHouseId: profile.initialLocation.houseId,
+        currentHouseId: startupPresentation.currentHouseId,
         playerCharacterId: profile.playerCharacterId,
         chapterId: profile.chapterId,
-        year: calendar.year,
-        month: calendar.month,
-        day: calendar.day,
+        year: startupDefaults.calendar.year,
+        month: startupDefaults.calendar.month,
+        day: startupDefaults.calendar.day,
         pinnedCharacterId: profile.playerCharacterId,
-        reviewDateText: profile.initialUi?.reviewDateText ?? "JSON 开局",
-        mainHouseMissionText:
-          profile.initialUi?.mainHouseMissionText ?? scenarioPack.title,
+        reviewDateText: startupDefaults.reviewDateText,
+        mainHouseMissionText: startupDefaults.mainHouseMissionText,
         cards: {
           ownedCardIds: activeContentContext.cards.map(
             (cardDefinition) => cardDefinition.id
@@ -3068,7 +2916,7 @@ function createScenarioPackAppState(
               )?.id ?? null,
           },
         },
-        currentView: profile.initialLocation.view,
+        currentView: startupPresentation.currentView,
       }),
       activeContentContext.cityNpcPools
     ),
@@ -3162,9 +3010,6 @@ function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
     ...baseState,
     gameState: createHaozhouReturnEncounterBattleState({
       state: baseState.gameState,
-      mainMissionText: getRuntimeText(
-        "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review"
-      ),
       textEntriesById: activeContentContext.textEntriesById,
     }),
     characterDefinitions: createPrototypeCharactersForStoryStage(
@@ -7226,7 +7071,9 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
   campaignMapDebugHomeState = { ...mapHomeState };
   syncCampaignMapDebugView();
   showMapIntroOverlay(
-    getRuntimeText("runtime.zhu_yuanzhang.chapter_intro.huai_xi_begging")
+    resolveInitialCampaignMapIntroTitle({
+      textEntriesById: activeContentContext.textEntriesById,
+    })
   );
 
   const animate = (timestamp: number) => {
@@ -7333,7 +7180,9 @@ function syncMapIntroOverlay(): void {
     activeMapIntroOverlay = null;
     if (isInitialCampaignMapDebugAnimating()) {
       showMapIntroOverlay(
-        getRuntimeText("runtime.zhu_yuanzhang.chapter_intro.huai_xi_begging")
+        resolveInitialCampaignMapIntroTitle({
+          textEntriesById: activeContentContext.textEntriesById,
+        })
       );
     }
   }

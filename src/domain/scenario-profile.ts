@@ -80,6 +80,12 @@ export type ScenarioProfileStartupPresentation = {
   activeDialogueId: DialogueId | null;
 };
 
+export type ScenarioProfileStartupDefaults = {
+  calendar: CalendarDate;
+  reviewDateText: string;
+  mainHouseMissionText: string;
+};
+
 export function resolveScenarioProfileForCharacter(
   profile: ScenarioProfileDefinition,
   selectedCharacterId?: CharacterId | null
@@ -201,5 +207,23 @@ export function resolveScenarioProfileStartupPresentation(
       currentView === "house" ? profile.initialLocation.houseId : null,
     activeDialogueId:
       currentView === "dialogue" ? profile.initialLocation.dialogueId ?? null : null,
+  };
+}
+
+export function resolveScenarioProfileStartupDefaults(
+  profile: ScenarioProfileDefinition,
+  options: {
+    fallbackMissionText: string;
+  }
+): ScenarioProfileStartupDefaults {
+  return {
+    calendar: profile.initialCalendar ?? {
+      year: 1,
+      month: 1,
+      day: 1,
+    },
+    reviewDateText: profile.initialUi?.reviewDateText ?? "JSON 开局",
+    mainHouseMissionText:
+      profile.initialUi?.mainHouseMissionText ?? options.fallbackMissionText,
   };
 }

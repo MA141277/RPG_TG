@@ -50,6 +50,10 @@ import {
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
 import { createInitialKeepHouseSessionState } from "./keep-house-session-state";
+import {
+  resolveKeepReviewExpulsionSeed,
+  resolveKeepReviewTaskAssignmentSeed,
+} from "./keep-review-assignment-defaults";
 
 const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
 
@@ -625,6 +629,7 @@ function applyKeepLateCouncilAttendancePenalty(
   let nextCharacterDefinitions = characterDefinitions;
 
   if (resolution.expelled) {
+    const expulsionSeed = resolveKeepReviewExpulsionSeed();
     const playerCharacter = getPlayerCharacter(characterDefinitions, playerCharacterId);
     const expelledPlayer: CharacterDefinition = {
       ...playerCharacter,
@@ -643,14 +648,15 @@ function applyKeepLateCouncilAttendancePenalty(
       },
       ui: {
         ...nextState.ui,
-        reviewDateText: formatReviewDateText(60),
-        mainHouseMissionText: "grain-procurement",
+        reviewDateText: formatReviewDateText(expulsionSeed.reviewCountdownDays),
+        mainHouseMissionText: expulsionSeed.fallbackMissionText,
       },
       runtime: {
         ...nextState.runtime,
         variables: {
           ...nextState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]:
+            expulsionSeed.reviewCountdownDays,
         },
       },
     };
@@ -752,6 +758,7 @@ function assignTaskToPlayer(
   input: HouseModuleDispatchInput<"keep-house">,
   taskDefinition: KeepHouseTaskDefinition
 ): HouseModuleTransitionResult<"keep-house"> {
+  const assignmentSeed = resolveKeepReviewTaskAssignmentSeed();
   const textEntriesById = getKeepTextEntries(input);
   const nextState = {
     ...input.gameState,
@@ -769,14 +776,15 @@ function assignTaskToPlayer(
     ui: {
       ...input.gameState.ui,
       activeMissionId: taskDefinition.missionId,
-      reviewDateText: formatReviewDateText(60),
+      reviewDateText: formatReviewDateText(assignmentSeed.reviewCountdownDays),
       mainHouseMissionText: taskDefinition.title,
     },
     runtime: {
       ...input.gameState.runtime,
       variables: {
         ...input.gameState.runtime.variables,
-        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]:
+          assignmentSeed.reviewCountdownDays,
         [KEEP_HOUSE_VARIABLE_KEYS.currentStrategy]:
           resolveKeepDefaultStrategyTitle(textEntriesById),
         [KEEP_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: taskDefinition.id,
@@ -799,7 +807,7 @@ function assignTaskToPlayer(
         ...taskDefinition.orderLines,
         resolveKeepTemplateText(
           textEntriesById,
-          "runtime.zhu_yuanzhang.keep.review.assignment.order.001",
+          assignmentSeed.orderSummaryTextId,
           {
             taskTitle: taskDefinition.title,
           }
@@ -808,12 +816,12 @@ function assignTaskToPlayer(
       overlay: createAlertOverlay(
         resolveKeepText(
           textEntriesById,
-          "runtime.zhu_yuanzhang.keep.review.assignment.overlay.title"
+          assignmentSeed.overlayTitleTextId
         ),
         [
           resolveKeepTemplateText(
             textEntriesById,
-            "runtime.zhu_yuanzhang.keep.review.assignment.overlay.001",
+            assignmentSeed.overlayBodyTemplateTextId,
             {
               taskTitle: taskDefinition.title,
               taskBriefing: taskDefinition.briefing,
@@ -821,7 +829,7 @@ function assignTaskToPlayer(
           ),
           resolveKeepText(
             textEntriesById,
-            "runtime.zhu_yuanzhang.keep.review.assignment.overlay.002"
+            assignmentSeed.overlaySharedTextId
           ),
         ],
         "success"
@@ -1281,4 +1289,3 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
     };
   },
 };
-

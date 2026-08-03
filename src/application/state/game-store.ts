@@ -13,7 +13,7 @@ export type GameContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
+  playableShellsById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
@@ -41,7 +41,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
         sceneDefinitionsById: content.sceneDefinitionsById,
         eventDefinitionsById: content.eventDefinitionsById,
         activityDefinitionsById: content.activityDefinitionsById,
-        flowPlayablesById: content.flowPlayablesById,
+        playableShellsById: content.playableShellsById,
         characterDefinitions,
         textEntriesById: content.textEntriesById,
       });
@@ -57,7 +57,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
         sceneDefinitionsById: content.sceneDefinitionsById,
         eventDefinitionsById: content.eventDefinitionsById,
         activityDefinitionsById: content.activityDefinitionsById,
-        flowPlayablesById: content.flowPlayablesById,
+        playableShellsById: content.playableShellsById,
         characterDefinitions,
         textEntriesById: content.textEntriesById,
       });

@@ -1,0 +1,566 @@
+# Scenario-Pack Source Unification Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Converge `zhuyuanzhang` toward a two-pack model: one builtin scenario pack and one script-editor template scenario pack, keep those two packs synchronized, and demote the current public template tree into a publication layer only, while preserving the current UI, feature behavior, startup order, and pre-merge scenario content/order.
+
+**Architecture:** Converge the repository onto two maintained zhuyuanzhang pack trees only: `src/content/scenario-packs/zhuyuanzhang/**` as the builtin runtime pack and `src/modules/script-editor/builtin-templates/zhuyuanzhang/**` as the script-editor template pack. `public/script-editor-templates/zhuyuanzhang/**` is not a third maintained pack in the target state; it remains only as a generated publication target until the current public template URL is intentionally migrated away. Shared fields between the builtin pack and the template pack must have an explicit synchronization mechanism in both directions, so changes originating from either maintained pack can be propagated to the other through one centralized repository-owned tooling seam.
+
+**Tech Stack:** TypeScript startup/editor shell, JSON scenario-pack content, Node sync tooling under `tools/`, script-editor runtime preview tests, `pnpm run build:test`, targeted `node --test`, `pnpm run typecheck`, `pnpm run build`, `pnpm run lint:plans`.
+
+## Execution State
+
+- Status: `running`
+- Last Updated: `2026-08-04`
+- Current Focus: `Task 3C 这一批内部 owner 收口已经基本完成。playable-runtime、game-store、active-game-content 现在都以 playableShells / playableShellsById 为唯一内部 owner，flowPlayables 只剩 loader、public 发布层、script-editor import 以及 active-game-content 对 legacy pack 字段的兜底读取。`
+- Next Step: `如果继续推进，同一主线的下一刀不再是改内部运行时，而是重新评估这些剩余 legacy 读取点里哪些还能进一步收掉、哪些必须保留到 public/template loader 迁移完成为止。仍然不要启用 mirrored temple enter event，直到现有寺庙进入顺序可以被原样保持。`
+- Verification: `Targeted verification passed: PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/flow-playable-runtime-dispatch.test.cjs tests/active-game-content-story-context.test.cjs tests/game-store-playable-shells.test.cjs tests/scenario-pack-playable-shells-contract.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/script-editor-template-url.test.cjs; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack. Full pnpm run lint:plans remains blocked by an unrelated historical plan file missing a required title heading.`
+- Notes: `Branch-local follow-up plan to the completed startup-chain unification child. It is intentionally not promoted into docs/superpowers/project-progress.md because that canonical governance track currently points at an unrelated child.`
+
+## Progress Log
+
+- 2026-08-03
+  - Summary: `Created the source-unification follow-up plan for zhuyuanzhang and explicitly folded the public/script-editor-templates deletion question into the governed scope. The plan locks runtime as canonical, builtin/public as derived layers, and forbids deleting public until the default editor template loading contract is migrated or replaced on purpose.`
+  - Verification: `Planning-only update; no code changes or runtime verification performed yet.`
+  - Next: `Execute Task 1 to formalize the source hierarchy, file ownership, and public-retirement gate before expanding the sync tool.`
+- 2026-08-03
+  - Summary: `Updated the target architecture to the newly approved two-pack end state: one builtin pack plus one script-editor template pack are the only maintained zhuyuanzhang packs, and whichever maintained pack changes must have a defined synchronization path to update the other.`
+  - Verification: `Planning-only update; no code changes or runtime verification performed yet.`
+  - Next: `Revise Task 1 and Task 2 execution around the two-pack synchronization contract before implementation starts.`
+- 2026-08-03
+  - Summary: `Completed Task 1 by adding an executable zhuyuanzhang source contract module, wiring the startup-template sync tool to that contract, and adding regression coverage that freezes the current two-maintained-pack model plus the public default-template publication dependency.`
+  - Verification: `node --test tests/script-editor-template-url.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`; `node tools/sync-zhuyuanzhang-startup-templates.mjs --check`
+  - Next: `Start Task 2 and expand the current startup-only sync tool into a broader builtin-pack/template-pack shared-field synchronization mechanism.`
+- 2026-08-03
+  - Summary: `Started Task 2 by adding an explicit sync-source contract for both maintained packs and teaching the existing zhuyuanzhang sync tool to run from either builtin-runtime-pack or script-editor-template-pack while still publishing out to public.`
+  - Verification: `node --test tests/zhuyuanzhang-source-unification.test.cjs`; `node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `Define the first safe shared-file whitelist and overlay rules so Task 2 can expand beyond startup-only files without overwriting editor-only structures.`
+- 2026-08-03
+  - Summary: `While Task 2 was in progress, fixed a retained runtime-preview UI regression: the script-editor exit-preview banner had been hidden together with the whole main UI overlay once the game became visible, so main-ui.css now preserves the runtime-preview overlay/badge path and the source test locks that behavior.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `node --test tests/script-editor-entry-availability.test.cjs`
+  - Next: `Continue Task 2 shared-file whitelist design; keep the restored runtime-preview exit banner behavior covered as a non-negotiable preview invariant.`
+- 2026-08-03
+  - Summary: `Completed Task 2 by formalizing the first shared sync whitelist and implementing it in the zhuyuanzhang sync tool: scenario-profile.json still uses whole-file replacement, characters.json keeps the startup projection, text-entries.json now syncs shared keys while preserving pack-only entries, and activities.json now syncs shared activity records while preserving pack-only fields/records. The first deferred set is now explicit as pack/cities/city-entries/events/houses/maps.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `node --test tests/zhuyuanzhang-source-unification.test.cjs tests/script-editor-template-url.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `Move to Task 3 and reconcile manifest/publication-shape ownership so pack.json and public-vs-builtin playable file drift are no longer hand-maintained.`
+- 2026-08-03
+  - Summary: `Started Task 3 with a bounded manifest/publication slice: the zhuyuanzhang source contract now records builtin-only manifest keys and publication-only manifest keys, the sync tool can project public/pack.json from the builtin template manifest, and public pack.json has been regenerated through that projection while preserving the existing flowPlayables publication key.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `node --test tests/zhuyuanzhang-source-unification.test.cjs tests/script-editor-template-url.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `Finish Task 3 by deciding the owner of flow-playables.json and auditing the remaining runtime-vs-template manifest keys that are still intentionally split.`
+- 2026-08-03
+  - Summary: `Audited mod-first-dev against the current branch and confirmed the remaining minigame-loading gap: mod-first-dev already treats playables/playableIntegrations/playableShells/settlements as the canonical family set, while the current branch still keeps public/script-editor-templates/zhuyuanzhang/flow-playables.json as a legacy publication artifact and still uses internal runtime owner names such as resolvedPack.flows / flowPlayablesById in the main content path.`
+  - Verification: `git ls-tree -r --name-only mod-first-dev -- public/script-editor-templates/zhuyuanzhang src/modules/script-editor/builtin-templates/zhuyuanzhang src/content/scenario-packs/zhuyuanzhang | rg "flow-playables|playable-shells|playables|playable-integrations|settlements|flow"`; `git show mod-first-dev:src/modules/script-editor/builtin-templates/zhuyuanzhang/pack.json`; `git show mod-first-dev:src/content/scenario-packs/zhuyuanzhang/pack.json`; `git grep -n "flowPlayables\\|playableShells\\|playableIntegrations\\|playables\\|settlements\\|readFlowPlayablesFamily" mod-first-dev -- src/modules/script-editor src/application src/core src/main.ts`; `rg -n "flowPlayables|playableShells|playableIntegrations|playables|settlements|readFlowPlayablesFamily" src/modules/script-editor src/application src/core src/main.ts public/script-editor-templates/zhuyuanzhang`
+  - Next: `Expand Task 3 into an explicit minigame-loading unification checklist so the remaining flow-playables retirement, runtime owner rename, and loader validation work can be executed in order without changing visible behavior.`
+- 2026-08-03
+  - Summary: `Completed Task 3A by promoting flow-playables.json from an implied public exception to an explicit source contract rule: the zhuyuanzhang sync contract now declares flow-playables.json as a legacy public-only publication artifact, publication-only manifest keys are derived from that rule instead of duplicated by hand, and regression coverage now fails if either maintained pack starts declaring flowPlayables or if the public manifest loses the current legacy publication key before loader migration.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `Start Task 3B and collapse the runtime-side flowPlayables/flows owner seam into a single playableShells-family owner or compatibility bridge.`
+- 2026-08-03
+  - Summary: `Started Task 3B with a bounded compatibility-bridge slice instead of a risky repo-wide rename. active-game-content now treats playableShells as the canonical loaded family while still exposing flowPlayables aliases, the core playable runtime now accepts playableShellsById as the primary lookup surface, and the scene-runner -> event-playable-runtime path now forwards playableShellsById so runtime-preview event actions can launch the same flow shell without depending on the old property name.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`
+  - Next: `Continue Task 3B by applying the same canonical playableShells bridge to dialogue/story runtime contracts and then reassess how much flowPlayables surface remains before loader-contract alignment.`
+- 2026-08-03
+  - Summary: `Extended Task 3B into the shared story runtime path. Scene/dialogue runtime contracts now accept playableShellsById, story-runtime passes the canonical shell map into its scene-runner context, and a new targeted regression proves startStoryEventById can launch a flow shell when only playableShellsById is present. During verification, a temporary failure was traced to global playable-registry test interference rather than runtime ownership; the new story-runtime test now uses a dedicated playable id so the coverage remains stable under multi-file node --test runs.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/story-runtime-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs`
+  - Next: `Use the remaining flowPlayables reference inventory to decide whether one more Task 3B caller-shrink slice is worthwhile before switching focus to Task 3C loader and manifest alignment.`
+- 2026-08-03
+  - Summary: `Completed one more Task 3B caller-shrink slice by wiring game-store through the same canonical playableShells bridge. A dedicated regression now proves createGameStore can launch a flow shell when only playableShellsById is present. While checking whether Task 3A's remaining legacy-public problem could now be handled, a fresh audit confirmed the blocking fact pattern has not changed: src/modules/script-editor/builtin-templates/zhuyuanzhang/playable-shells.json is still empty, but public/script-editor-templates/zhuyuanzhang/flow-playables.json still contains 24 records, so the legacy public file still lacks a maintained-pack owner and cannot yet be safely regenerated or deleted.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/game-store-playable-shells.test.cjs tests/story-runtime-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node -e "const fs=require('fs');const a=JSON.parse(fs.readFileSync('src/modules/script-editor/builtin-templates/zhuyuanzhang/playable-shells.json','utf8'));const b=JSON.parse(fs.readFileSync('public/script-editor-templates/zhuyuanzhang/flow-playables.json','utf8'));console.log(JSON.stringify({builtinPlayableShells:a.length, publicFlowPlayables:b.length},null,2))"`
+  - Next: `Decide whether to stop Task 3B after one last residual-reference audit and move to Task 3C, because Task 3A's remaining legacy-public file cannot progress further until a maintained canonical owner exists for the public-only flow records.`
+- 2026-08-03
+  - Summary: `Started Task 3C with a bounded loader-contract slice. scenario-pack-loader now explicitly accepts playables/playableIntegrations/playableShells and rejects the retired flowDefinitions family, while content-pack-loader now hydrates playables/playableIntegrations/playableShells from manifest files and rejects files.flowDefinitions. This brings the primary loader vocabulary closer to the mod-first-dev family set without changing runtime behavior.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/scenario-pack-playable-shells-contract.test.cjs tests/game-store-playable-shells.test.cjs tests/story-runtime-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs tests/dialogue-runtime-compatibility.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `Continue Task 3C by aligning more of the loader/manifest surface with the new playable family vocabulary, then reassess whether any remaining flowPlayables/flows compatibility fields can be narrowed without touching UI or behavior.`
+- 2026-08-03
+  - Summary: `Extended Task 3C into the script-editor import/export seam for the still-live public template contract. runtime-pack-import now accepts the legacy public flowPlayables publication family as a fallback only when playableShells is absent, so importing public/script-editor-templates/zhuyuanzhang no longer silently drops the 24 legacy flow shells. runtime-pack-export now also permits minigame bindings that target authored project flow shells, which restores round-trip export compatibility for the imported public template without changing the current UI or startup behavior.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/script-editor-runtime-preview-compat.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/scenario-pack-playable-shells-contract.test.cjs tests/game-store-playable-shells.test.cjs tests/story-runtime-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs tests/dialogue-runtime-compatibility.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `Keep Task 3C focused on the remaining loader/manifest contract inventory: decide whether legacy public flowPlayables should be made explicit in the remaining loader types/tests or remain a script-editor-only compatibility seam until the public publication contract is retired.`
+- 2026-08-03
+  - Summary: `Made the remaining legacy-public flowPlayables contract explicit instead of relying on accidental passthrough. script-editor runtime preview coverage now locks both file import and URL import of the public template path, scenario-pack-loader explicitly accepts and validates manifest/files.flowPlayables as a legacy public publication family, ContentPackDefinition now exposes flowPlayables as a compatibility alias, and active-game-content falls back from playableShells to flowPlayables before the older flows alias. This keeps the current UI and behavior unchanged while making the loader contract readable and testable.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/scenario-pack-playable-shells-contract.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/scenario-pack-playable-shells-contract.test.cjs tests/game-store-playable-shells.test.cjs tests/story-runtime-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs tests/dialogue-runtime-compatibility.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `Use the now-explicit loader contract to audit remaining manifest/publication drift: identify which playable-family files are still effectively public-only, which are already derivable from the two maintained packs, and whether the sync tool can absorb one more bounded publication slice without touching runtime UI or startup order.`
+- 2026-08-03
+  - Summary: `Finished the first playable-family drift audit after making the loader contract explicit. New source-unification regressions now freeze the actual current split: canonical playable family files (playables / playable-integrations / playable-shells) live only in the script-editor builtin template pack, runtime pack still does not own that family, and public remains limited to the legacy flow-playables publication file. This removes ambiguity about the current owner map and prevents public from silently regrowing into a third maintained playable source.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/zhuyuanzhang-source-unification.test.cjs tests/scenario-pack-playable-shells-contract.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/scenario-pack-playable-shells-contract.test.cjs tests/game-store-playable-shells.test.cjs tests/story-runtime-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs tests/dialogue-runtime-compatibility.test.cjs`
+  - Next: `Decide the next bounded Task 3C slice using the now-frozen owner map: either teach the sync/publication layer how to report public-only playable drift more explicitly, or start the harder owner migration that would move the 24 legacy public flow shells into one of the two maintained packs.`
+- 2026-08-03
+  - Summary: `Completed the governance-only warning slice before owner migration. The zhuyuanzhang sync tool now exports a dedicated legacy-public flow audit and a check-legacy-publication-drift CLI mode that reports the current owner gap without affecting the normal startup-template sync path. Regression coverage now locks both the structured audit result and the failing CLI output: builtin template playable-shells count is still 0, public legacy flow-playables count is 24, and all 24 ids are surfaced as public-only owner gaps.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/scenario-pack-playable-shells-contract.test.cjs tests/game-store-playable-shells.test.cjs tests/story-runtime-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs tests/dialogue-runtime-compatibility.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check-legacy-publication-drift`
+  - Next: `Use the frozen 24-id owner-gap list to design and execute the actual owner migration: choose the maintained canonical pack, project those legacy public flow shells into maintained data, and only then retire or regenerate public flow-playables from maintained sources.`
+- 2026-08-03
+  - Summary: `Completed the first owner migration slice after the warning pass. The script-editor builtin template pack is now the maintained canonical owner for the 24 legacy public flow shells: playable-shells.json has been populated from the previously public-only flow-playables data, the sync contract now treats flow-playables.json as a publication projection alongside pack.json, and the sync tool can project public flow-playables from builtin template playable-shells. The legacy-public audit remains available, but it now reports aligned for the repository state while still supporting synthetic owner-gap coverage.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/zhuyuanzhang-source-unification.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/scenario-pack-playable-shells-contract.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/scenario-pack-playable-shells-contract.test.cjs tests/game-store-playable-shells.test.cjs tests/story-runtime-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs tests/dialogue-runtime-compatibility.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check-legacy-publication-drift`
+  - Next: `Use the now-maintained builtin template owner to reduce the remaining publication/runtime split further: decide whether public flow-playables can be treated as fully derived in all workflows, and whether any playable-family ownership should also move toward the builtin runtime pack or remain template-owned by design.`
+- 2026-08-03
+  - Summary: `Finished the next publication-consistency slice by removing the remaining source-direction ambiguity for public flow-playables. The sync tool now resolves public flow-playables from the template-owned canonical playable-shells projection even when the caller runs --source=builtin-runtime-pack, so both sync directions agree on the same public publication output. This keeps public in a pure publication role and avoids a hidden split where runtime-source checks previously skipped that file entirely.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `With public publication now fully tied to the template-owned canonical projection in both directions, decide whether the remaining playable-family split between runtime pack and template pack is intentional long-term architecture or the next convergence target.`
+- 2026-08-03
+  - Summary: `Completed the first runtime mirror convergence slice for playable families. The sync contract now documents template-owned canonical playable-family data with a runtime mirror mode, the sync tool resolves canonical playables/playable-integrations/playable-shells from the template owner even when invoked from the runtime direction, and running the sync tool from script-editor-template-pack generated mirrored runtime files plus matching manifest entries under src/content/scenario-packs/zhuyuanzhang. Regression coverage now freezes the new boundary: runtime pack carries mirrored playable-family files, but runtime events still do not directly launch those playables, so visible behavior remains unchanged while source ownership becomes less fragmented.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/zhuyuanzhang-source-unification.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/scenario-pack-playable-shells-contract.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/scenario-pack-playable-shells-contract.test.cjs tests/game-store-playable-shells.test.cjs tests/story-runtime-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/active-game-content-story-context.test.cjs tests/flow-playable-runtime-dispatch.test.cjs tests/dialogue-runtime-compatibility.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `Use the new runtime mirror state to decide the long-term canonical owner: keep playable-family data template-first with runtime mirrors, or further converge around a shared canonical source in a later slice.`
+- 2026-08-03
+  - Summary: `Extended Task 3C past the playable-family vocabulary and into the first temple runtime-building support mirror. content-pack-loader and scenario-pack-loader now accept menuResources/menuInstances/locationAccess/houseModuleDefaults in addition to the newer playable families, active-game-content preserves these families for later builtin runtime consumption, and the zhuyuanzhang sync contract/tool now mirrors building-arrangements/dialogues/event-bindings/menu-resources/menu-instances/location-access/house-module-defaults/settlements from the script-editor template pack into the builtin runtime pack together with matching runtime manifest keys. This gives the builtin runtime pack the same authored temple-entry support set that mod-first-dev already carries, without yet changing the visible temple UI or entry order.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/scenario-pack-playable-shells-contract.test.cjs tests/active-game-content-story-context.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/script-editor-runtime-preview-compat.test.cjs tests/scenario-pack-playable-shells-contract.test.cjs tests/active-game-content-story-context.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`
+  - Next: `Start the next bounded temple-owner slice: choose one current builtin temple entry path and reroute it to consume the now-mirrored runtime pack building/action support data through an existing coordinator seam instead of keeping that entry entirely temple-module-owned.`
+- 2026-08-03
+  - Summary: `Started the first actual temple-owner consumption slice on top of the mirrored runtime support data. The zhuyuanzhang sync contract/tool now mirrors a safe temple event subset into the builtin runtime pack without enabling the mirrored temple enter event, a centralized house-module pack-event transition helper now owns this compat path, and temple-house leave now consumes the pack-owned temple leave event instead of keeping that close-building behavior only inside the house module. This keeps the current UI and temple entry order unchanged while moving one real temple action under pack-owned mod execution.`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/house-module-pack-event-runtime.test.cjs tests/zhuyuanzhang-source-unification.test.cjs tests/dialogue-runtime-compatibility.test.cjs tests/building-container-event-runtime.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `Use the same centralized seam for one bounded in-house temple action next, preferably a low-risk action whose current visible shell can stay exactly the same while the underlying event/playable ownership moves into the mirrored pack data.`
+- 2026-08-03
+  - Summary: `把第一组同构寺庙杂务动作一起收进了同一个集中入口。temple-house 不再只对“打扫庭院”尝试 pack-owned 启动，而是对“打扫庭院 / 挑水”都优先读取 mirrored runtime pack 里的 building-action -> launchPlayable 数据；命中时继续留在当前寺庙房屋壳内运行，拿 pack-authored integrationId 和 activityId 起 QTE；未命中时仍回退到原有 temple builtin 启动链。这样寺庙动作 ownership 继续往剧本包移动，但 UI、交互和既有顺序不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-pack-event-work-bridge.test.cjs tests/house-module-pack-event-runtime.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续判断下一类寺庙信息该优先往哪里收口：要么继续扩展同构 building-action 的 pack-owned 消费面，要么开始把寺庙专属默认文案/默认配置从 temple-house owner 下放到剧本包数据。`
+- 2026-08-03
+  - Summary: `开始把寺庙静态默认配置从 temple-house owner 下放到剧本包。temple review / task assignment 这组默认种子不再只依赖 temple-review-assignment-defaults.ts 内的固定值，而是先读取 scenario pack 的 house-module-defaults["temple-house"]，没有配置时再回退到旧默认值。与此同时，house runtime 已把 houseModuleDefaults 沿着统一输入链传给 house module，模板包中的 temple-house 默认配置也已同步写回 builtin runtime pack。这样寺庙相关“信息 owner”开始进入剧本包，但现有 UI、功能和顺序保持不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-review-assignment-defaults.test.cjs tests/temple-pack-event-work-bridge.test.cjs tests/house-module-pack-event-runtime.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续选择下一类低风险寺庙信息收口：优先考虑更多可配置默认文案/默认参数，或者继续扩展不改现有房屋壳的 building-action pack-owned 消费面。`
+- 2026-08-03
+  - Summary: `继续沿“静态默认信息下放”这条线推进了一小刀。新增了集中式 temple-house-static-defaults 读取器，先把 greeting / open / rest menu / meeting intro / leave refusal 这 5 组寺庙静态文案默认值从 temple-house-house-module.ts 里的直接文本键引用，改成优先读取 scenario pack 的 house-module-defaults["temple-house"]；没有配置时仍回退到原有内建文本键。模板包中的对应默认值已经补进 house-module-defaults.json，并同步镜像到 builtin runtime pack。这样寺庙静态信息继续往剧本包 owner 收口，但现有 UI 与交互不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs tests/temple-review-assignment-defaults.test.cjs tests/temple-pack-event-work-bridge.test.cjs tests/house-module-pack-event-runtime.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续下放下一批低风险寺庙静态信息，优先考虑捐香火确认/结果文案、工作方案标签和其余固定提示文本。`
+- 2026-08-03
+  - Summary: `继续沿同一个集中读取器扩大了寺庙静态默认值覆盖面。temple-house-static-defaults 现在除了 greeting / open / rest menu / meeting intro / leave refusal 之外，还统一承接 work-plan labels 与 donation text ids；temple-house-house-module.ts 里原本直接引用的“外出化缘/寺内帮忙”等工作方案文本键，以及捐香火确认/余额不足/结果提示文本键，已经改成优先从 scenario pack 的 house-module-defaults["temple-house"] 读取。模板包中的对应默认值已补进 house-module-defaults.json，并同步镜像到 builtin runtime pack。这样寺庙静态信息继续往剧本包 owner 收口，但现有 UI、行为和顺序不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs tests/temple-review-assignment-defaults.test.cjs tests/temple-pack-event-work-bridge.test.cjs tests/house-module-pack-event-runtime.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续下放下一批低风险寺庙静态信息，优先考虑其余固定提示文本、差事固定文案和静态参数。`
+- 2026-08-03
+  - Summary: `继续沿同一个集中读取器扩大了寺庙 review assignment 提示文案的收口范围。temple-house-static-defaults 现在除了已有的 greeting/open/rest/review-intro/leave-refusal/work-plan labels/donation text ids 之外，还统一承接 review assignment text ids；temple-house-house-module.ts 里原本直接引用的“第三周/第四周分配提示”“默认分配提示”“化缘未解锁提示”文本键，已经改成优先从 scenario pack 的 house-module-defaults["temple-house"] 读取。模板包中的对应默认值已补进 house-module-defaults.json，并同步镜像到 builtin runtime pack。这样寺庙静态信息继续往剧本包 owner 收口，但现有 UI、行为和顺序不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs tests/temple-review-assignment-defaults.test.cjs tests/temple-pack-event-work-bridge.test.cjs tests/house-module-pack-event-runtime.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续下放下一批低风险寺庙静态信息，优先考虑 beg-alms start overlay 文案、休息总结文案和状态卡固定标题/副标题。`
+- 2026-08-03
+  - Summary: `继续沿同一个集中读取器扩大了寺庙静态默认值覆盖面。temple-house-static-defaults 现在进一步统一承接 beg-alms start overlay 文案和状态卡固定文案；temple-house-house-module.ts 里原本直接拼接/直写的“化缘开始浮层标题与两段提示”“寺庙状态卡眉题/标题/副标题/住持指标标签”文本键，已经改成优先从 scenario pack 的 house-module-defaults["temple-house"] 读取。模板包中的对应默认值已补进 house-module-defaults.json，并同步镜像到 builtin runtime pack。这样寺庙静态信息继续往剧本包 owner 收口，但现有 UI、行为和顺序不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs tests/temple-review-assignment-defaults.test.cjs tests/temple-pack-event-work-bridge.test.cjs tests/house-module-pack-event-runtime.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续下放下一批低风险寺庙静态信息，优先考虑休息总结文案和其余固定提示文本。`
+- 2026-08-03
+  - Summary: `继续沿同一个集中读取器扩大了寺庙静态默认值覆盖面。temple-house-static-defaults 现在进一步统一承接休息总结文案；temple-house-house-module.ts 里原本直接引用的“休息被评定中断提示”“无须继续休息提示”“休息天数/当前体力/正常总结”这 6 个文本键，已经改成优先从 scenario pack 的 house-module-defaults["temple-house"] 读取。模板包中的对应默认值已补进 house-module-defaults.json，并同步镜像到 builtin runtime pack。这样寺庙静态信息继续往剧本包 owner 收口，但现有 UI、行为和顺序不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 --test-name-pattern="temple house rest summary resolves from text entries" tests/robustness.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs tests/temple-review-assignment-defaults.test.cjs tests/temple-pack-event-work-bridge.test.cjs tests/house-module-pack-event-runtime.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续下放下一批低风险寺庙静态信息，优先考虑其余固定提示文本和少量静态参数。`
+- 2026-08-03
+  - Summary: `继续沿同一个集中读取器扩大了寺庙静态默认值覆盖面。temple-house-static-defaults 现在进一步统一承接迟到评定文案；temple-house-house-module.ts 里原本直接引用的“迟到后续选择说明”“轻度迟到两段提示”“重度迟到两段提示”文本键，已经改成优先从 scenario pack 的 house-module-defaults["temple-house"] 读取。模板包中的对应默认值已补进 house-module-defaults.json，并同步镜像到 builtin runtime pack。同时补了一条行为回归，锁住迟到进入寺庙评定时的文案顺序保持不变。这样寺庙静态信息继续往剧本包 owner 收口，但现有 UI、行为和顺序不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 --test-name-pattern="temple house late review copy resolves from text entries" tests/robustness.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs tests/temple-review-assignment-defaults.test.cjs tests/temple-pack-event-work-bridge.test.cjs tests/house-module-pack-event-runtime.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续下放下一批低风险寺庙静态信息，优先考虑其余固定提示文本和少量静态参数。`
+- 2026-08-03
+  - Summary: `继续沿同一个集中读取器扩大了寺庙静态默认值覆盖面。temple-house-static-defaults 现在进一步统一承接化缘交粮文案；temple-house-house-module.ts 里原本直接引用或直写的“暂无可交粮食”标题、“空库存两段提示”“交粮确认标题与两段说明”“交粮完成后的主任务标签”已经改成优先从 scenario pack 的 house-module-defaults["temple-house"] 读取。为把原本写死的空库存标题也迁进剧本包，这次额外补了一个新的文本键 `runtime.zhu_yuanzhang.temple.begging_food.empty.title`，但显示文案仍保持“暂无可交粮食”不变。模板包中的对应默认值已补进 house-module-defaults.json，并通过同步工具镜像到 builtin runtime pack。这样寺庙静态信息继续往剧本包 owner 收口，但现有 UI、行为和顺序不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 --test-name-pattern="temple house status labels, fortune, and begging submit overlay resolve from text entries" tests/robustness.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs tests/temple-review-assignment-defaults.test.cjs tests/temple-pack-event-work-bridge.test.cjs tests/house-module-pack-event-runtime.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续下放下一批低风险寺庙静态信息，优先考虑其余固定提示文本和少量静态参数。`
+- 2026-08-03
+  - Summary: `继续沿同一个集中读取器扩大了寺庙静态默认值覆盖面。temple-house-static-defaults 现在进一步统一承接“指定休息天数”浮层文案、“寺内帮忙”说明浮层文案，以及化缘交粮浮层的数量标签/确认按钮/取消按钮。temple-house-house-module.ts 里原本直接写死的“指定休息天数”“开始休息”“返回”“寺内帮忙”“两条寺内帮忙说明”“交粮数量（斗）”“交给寺里”“暂缓”，已经改成优先从 scenario pack 的 house-module-defaults["temple-house"] 读取。模板包中的对应默认值与新 text id 已补进 house-module-defaults.json 和 text-entries.json，并通过同步工具镜像到 builtin runtime pack。这样寺庙静态信息继续往剧本包 owner 收口，但现有 UI、行为和顺序不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 --test-name-pattern="temple house status labels, fortune, and begging submit overlay resolve from text entries|temple house rest-days and qte overlays resolve from text entries" tests/robustness.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续下放下一批低风险寺庙静态信息，优先考虑剩余 alert/result 类固定标题、按钮标签和少量静态参数。`
+- 2026-08-03
+  - Summary: `把寺庙静态 owner 收口推到一层完成态。temple-house-static-defaults 这次继续接住了剩余 alert/result 类标题、工作确认标签、工作结果等级与评语、评定面板标题、日常按钮标签、状态卡标签、对话推进提示和离开按钮等静态文本；模板包中的 house-module-defaults.json 与 text-entries.json 已补齐对应键，runtime pack 也已同步镜像。当前 temple-house-house-module.ts 内部已经没有直接写死的中文文案，寺庙这一层的固定可见文案已统一归到剧本包 owner。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/temple-house-static-defaults.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 --test-name-pattern="temple house status labels, fortune, and begging submit overlay resolve from text entries|temple house rest-days and qte overlays resolve from text entries" tests/robustness.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `回到 Task 3C 主线，继续处理寺庙以外的 loader / manifest / playable family 统一问题。`
+- 2026-08-04
+  - Summary: `继续沿 Task 3C 缩小 playable family 的中间层兼容面。active-game-content 仍保留 gameContent.flowPlayables / flowPlayablesById 作为外层兼容别名，但 storyContent 已不再继续暴露 flowPlayablesById；story-runtime、scene-runner、event-playable-runtime、core scene-runtime、core dialogue-runtime 这一整条内部链现在只再透传 canonical 的 playableShellsById。这样旧 owner 名称被压回更外层兼容边界，运行时主干继续向 mod-first-dev 的 canonical 词汇收口，而现有 UI 和预览行为不变。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/active-game-content-story-context.test.cjs tests/story-runtime-playable-shells.test.cjs tests/game-store-playable-shells.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/dialogue-runtime-compatibility.test.cjs`
+  - Next: `继续处理更外层的 legacy public flow-playables / import-export / manifest 兼容边界，避免再把 flowPlayablesById 重新扩散回中间 runtime 链。`
+- 2026-08-04
+  - Summary: `继续沿 Task 3C 收 public 发布层的小游戏 family 合同。zhuyuanzhang source contract 不再把 playableShells 视为 builtin-template-only manifest key，sync 工具开始给 public/script-editor-templates/zhuyuanzhang 同步生成 canonical 的 playable-shells.json，同时保留 flow-playables.json 作为 legacy public publication。这样默认模板导入链在 public 同时提供新旧两个文件时，会优先使用 playable-shells，而旧 flow-playables 继续仅做外层兼容。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --source=script-editor-template-pack --write`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/zhuyuanzhang-source-unification.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/script-editor-template-url.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续把剩余 legacy flowPlayables 读取边界压回 script-editor/public seam，优先补 loader/import 侧的 canonical-first 合同与回归，再决定是否还能进一步收 manifest 别名。`
+- 2026-08-04
+  - Summary: `继续沿 Task 3C 补齐 loader 外层兼容面。content-pack loader 现在与 scenario-pack loader 一样，显式支持 files.flowPlayables 这个 legacy public manifest 键，因此外部内容包如果仍发布旧 flow-playables 文件，也能在最外层被正确接住；而 active-game-content 继续把这类旧键收束到 playableShells canonical owner，不向更内层扩散。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/scenario-pack-playable-shells-contract.test.cjs tests/zhuyuanzhang-source-unification.test.cjs tests/script-editor-template-url.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `继续清点剩余 flowPlayables / flowPlayablesById 残留，优先处理还停在 loader、导入导出、测试合同里的旧别名，再判断是否能继续缩减外层兼容口。`
+- 2026-08-04
+  - Summary: `继续沿 Task 3C 把内部运行时 owner 完成收口。core/runtime/playable-runtime.ts 不再接受 flowPlayablesById；application/state/game-store.ts 也不再保留 flowPlayablesById 兼容入口；application/content/active-game-content.ts 的 gameContent 结果已不再暴露 flowPlayables / flowPlayablesById。对应回归测试全部改为以 playableShells / playableShellsById 为 canonical owner，验证通过后，当前仓库里剩余的 flowPlayables 只再停留在 public/template loader 与 legacy pack 输入边界。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-concurrency=1 tests/flow-playable-runtime-dispatch.test.cjs tests/active-game-content-story-context.test.cjs tests/game-store-playable-shells.test.cjs tests/scenario-pack-playable-shells-contract.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/script-editor-template-url.test.cjs`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack`
+  - Next: `如果继续压缩剩余 legacy surface，下一刀只应针对 loader/public/template seam 做 keep-or-remove 判断，不要再把兼容别名重新带回 runtime 主链。`
+
+---
+
+## Based On Spec
+
+- Primary spec:
+  - `docs/superpowers/specs/2026-08-03-builtin-startup-scenario-pack-unification-design.md`
+- Upstream implementation handoff:
+  - `docs/superpowers/plans/2026-08-03-builtin-startup-scenario-pack-unification-plan.md`
+- Plan governance:
+  - `docs/superpowers/specs/plan-governance-spec.md`
+- Canonical progress entry:
+  - `docs/superpowers/project-progress.md`
+
+## Baseline Recheck
+
+- Recheck result: `changed`
+- Notes:
+  - `There are currently three zhuyuanzhang pack trees in active use, but the approved target state is now only two maintained pack trees: src/content/scenario-packs/zhuyuanzhang/** and src/modules/script-editor/builtin-templates/zhuyuanzhang/**.`
+  - `src/modules/script-editor/config.ts still points the default editor template URL at /script-editor-templates/zhuyuanzhang/pack.json, and tests/script-editor-template-url.test.cjs enforces that this public static path exists.`
+  - `tools/sync-zhuyuanzhang-startup-templates.mjs currently synchronizes only scenario-profile.json and startup-facing character fields, so the broader template/runtime drift problem is not solved yet.`
+  - `The builtin and public trees are not identical: builtin currently owns editor/runtime authoring files such as playable-integrations.json, playable-shells.json, playables.json, portraits.json, and settlements.json, while public currently includes flow-playables.json and remains shaped for direct browser loading.`
+  - `Because the public template tree is still a live runtime/editor dependency, deleting public/script-editor-templates/zhuyuanzhang/** immediately would break the current default-template loading contract; therefore public must first be demoted to a generated publication layer, not treated as one of the two maintained packs.`
+
+## Implementation Scope
+
+### Non-Negotiable Constraints
+
+- Do not change the current UI shell, page order, button order, or visible entry surfaces.
+- Do not change existing feature behavior for `开始游戏`, `角色选择`, `地图`, `模板运行预览`, map/house interactions, building layout, or editor tooling.
+- Do not reorder, rewrite, or replace the pre-merge scenario sequence or content.
+- Do not move feature business logic into `src/main.ts`; keep source unification in tooling, startup seams, and editor/runtime ownership modules.
+- Do not delete `public/script-editor-templates/zhuyuanzhang/**` in this child unless the editor default-template loading contract has already been replaced and the deletion gate below is satisfied.
+- The long-term maintained-pack target is exactly two zhuyuanzhang packs: builtin runtime pack plus script-editor template pack. `public/script-editor-templates/zhuyuanzhang/**` must not survive as a third hand-maintained pack.
+
+### In Scope
+
+- Define a durable ownership contract for the two maintained zhuyuanzhang packs plus the temporary public publication layer.
+- Keep `src/content/scenario-packs/zhuyuanzhang/**` as the builtin runtime pack and `src/modules/script-editor/builtin-templates/zhuyuanzhang/**` as the editor template pack.
+- Convert the public template tree from a hand-maintained copy into a derived publication output with documented exceptions for public-only files, if any.
+- Expand or replace the current zhuyuanzhang sync tooling so repeated multi-tree manual editing is no longer required and changes from either maintained pack can be synchronized to the other.
+- Add regressions that prove the default editor template URL, runtime preview, and canonical runtime pack stay aligned under the new ownership model.
+- Record the exact retirement gate for `public/script-editor-templates/zhuyuanzhang/**` even if that deletion stays out of scope for this child.
+
+### Still Out Of Scope
+
+- Broad scenario-content hardcoding cleanup unrelated to source ownership.
+- UI redesign, menu-flow changes, or startup-chain behavior changes already completed in the previous child.
+- Rewriting scenario story content, text ordering, or startup event order to “fit” the new source model.
+- Immediate removal of the public template URL without an explicit loader migration.
+- Converting unrelated scenario packs before zhuyuanzhang proves the ownership model.
+
+## File Map
+
+### Existing files to modify
+
+- `src/content/scenario-packs/zhuyuanzhang/pack.json`
+  - Builtin runtime-pack manifest may need explicit ownership metadata or normalized file coverage expectations for shared fields versus builtin-only fields.
+- `src/content/scenario-packs/zhuyuanzhang/scenario-profile.json`
+  - Builtin runtime-pack owner for shared startup/runtime-facing scenario defaults unless a field is explicitly template-only.
+- `src/content/scenario-packs/zhuyuanzhang/characters.json`
+  - Shared runtime/startup-facing character identity data must stay synchronized with the template pack.
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/pack.json`
+  - Editor template-pack manifest with explicit shared-field synchronization and template-only ownership boundaries.
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/scenario-profile.json`
+  - Shared fields must stay synchronized with the builtin runtime pack while preserving explicit editor-only fields.
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/characters.json`
+  - Shared startup/identity fields must stay synchronized with the builtin runtime pack while preserving editor-only metadata.
+- `public/script-editor-templates/zhuyuanzhang/pack.json`
+  - Remains the published default-template manifest and must become reproducible from the unified source model.
+- `public/script-editor-templates/zhuyuanzhang/scenario-profile.json`
+  - Derived published copy of the canonical runtime scenario profile.
+- `public/script-editor-templates/zhuyuanzhang/characters.json`
+  - Derived published copy of shared character startup fields.
+- `src/modules/script-editor/config.ts`
+  - Keeps or intentionally migrates the default template URL contract; the plan must preserve current behavior unless an explicit later task changes it.
+- `src/modules/script-editor/kernel/script-editor-workflow-controller.ts`
+  - May need source-loading seam updates if template publication becomes generated or if ownership metadata is enforced.
+- `tools/sync-zhuyuanzhang-startup-templates.mjs`
+  - Current narrow startup sync owner that should be expanded or replaced by the broader two-pack synchronization mechanism.
+- `package.json`
+  - Script wiring may need to expose the broader source sync/generation command and check mode.
+- `tests/script-editor-template-url.test.cjs`
+  - Must keep proving the public default-template contract works while the public tree is still live.
+- `tests/script-editor-runtime-preview-compat.test.cjs`
+  - Must keep proving runtime preview behavior stays aligned with the canonical runtime source.
+
+### Existing files expected to be deleted
+
+- `none`
+
+### New files to create
+
+- `tests/zhuyuanzhang-source-unification.test.cjs`
+  - Guards the two-pack synchronization contract and fails if builtin/template shared fields drift or if required generated public outputs go stale.
+
+## Verification Plan
+
+- Targeted verification:
+- `The builtin runtime pack and the editor template pack resolve the same shared startup/runtime-visible data under the approved ownership map, and the published public template pack remains a reproducible output instead of a third maintained source.`
+  - `The default editor template URL continues to resolve a working public pack until an explicit loader migration changes that contract.`
+- `The sync tool fails in check mode when the builtin pack and template pack drift on shared fields, or when the published public output drifts from the maintained-pack contract.`
+- Required commands:
+  - `pnpm run lint:plans`
+  - `pnpm run build:test`
+  - `node --test tests/script-editor-template-url.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/zhuyuanzhang-source-unification.test.cjs`
+  - `pnpm run typecheck`
+  - `pnpm run build`
+
+## Task 1: Lock The Source Hierarchy Contract
+
+**Files:**
+- Modify: `docs/superpowers/plans/2026-08-03-scenario-pack-source-unification-plan.md`
+- Read: `src/modules/script-editor/config.ts`
+- Read: `tests/script-editor-template-url.test.cjs`
+- Read: `tools/sync-zhuyuanzhang-startup-templates.mjs`
+
+- [x] **Step 1: Record the ownership map and public-retirement gate**
+
+Write down the exact tree contract:
+- builtin runtime pack and script-editor template pack are the only two maintained packs
+- shared fields between the two maintained packs must have explicit synchronization rules
+- public tree is a published derivative for direct browser loading, not a maintained third pack
+- public may only be deleted after the default template loader no longer depends on `/script-editor-templates/zhuyuanzhang/pack.json` and equivalent coverage exists elsewhere
+
+- [x] **Step 2: Freeze the current public dependency with regression coverage**
+
+Ensure tests keep failing if someone removes or silently bypasses the public default-template path before the loader migration is intentionally implemented, and if someone reintroduces a third hand-maintained pack workflow.
+
+- [x] **Step 3: Sync progress and governance state**
+
+Update this child plan after the contract is finalized so the next resume point stays explicit.
+
+## Task 2: Expand The Sync Tool From Startup Fields To Two-Pack Shared Fields
+
+**Files:**
+- Modify: `tools/sync-zhuyuanzhang-startup-templates.mjs`
+- Modify: `package.json`
+- Modify: `src/content/scenario-packs/zhuyuanzhang/scenario-profile.json`
+- Modify: `src/content/scenario-packs/zhuyuanzhang/characters.json`
+- Modify: `src/modules/script-editor/builtin-templates/zhuyuanzhang/scenario-profile.json`
+- Modify: `src/modules/script-editor/builtin-templates/zhuyuanzhang/characters.json`
+- Modify: `public/script-editor-templates/zhuyuanzhang/scenario-profile.json`
+- Modify: `public/script-editor-templates/zhuyuanzhang/characters.json`
+
+- [x] **Step 1: Broaden the synchronization model**
+
+Turn the current startup-only sync tool into the owner for all shared runtime/startup-facing fields that must stay identical across the two maintained packs, while still being able to emit the public published copy.
+
+- [x] **Step 2: Preserve explicit template-only/public-only overlays**
+
+Keep editor-only metadata and public-only publication needs out of the shared synchronization surface unless they are deliberately modeled as pack-specific overlays.
+
+- [x] **Step 3: Add bi-directional sync semantics and check-mode failure**
+
+Make drift visible in CI by ensuring the sync tool can fail loudly when either maintained pack becomes stale relative to the approved synchronization contract, and support an explicit source-of-change direction when applying updates.
+
+- [x] **Step 4: Sync progress and governance state**
+
+Update this child plan after the tool and derived files are aligned.
+
+## Task 3: Canonicalize Manifest And Asset Publication Rules
+
+**Files:**
+- Modify: `src/content/scenario-packs/zhuyuanzhang/pack.json`
+- Modify: `src/modules/script-editor/builtin-templates/zhuyuanzhang/pack.json`
+- Modify: `public/script-editor-templates/zhuyuanzhang/pack.json`
+- Modify: `src/modules/script-editor/kernel/script-editor-workflow-controller.ts`
+- Modify: `tests/script-editor-template-url.test.cjs`
+- Create: `tests/zhuyuanzhang-source-unification.test.cjs`
+
+- [ ] **Step 1: Separate shared-file ownership from publication shape**
+
+Define which manifest entries are shared between the two maintained packs, which remain pack-specific exceptions, and which belong only to the published browser-loading output.
+
+- [ ] **Step 2: Keep the current public loader contract working**
+
+Retain the current `/script-editor-templates/zhuyuanzhang/pack.json` behavior while making that published tree reproducible rather than hand-maintained.
+
+- [ ] **Step 3: Add ownership regressions**
+
+Cover the cases where builtin/template manifest coverage drifts on shared fields or where public publication loses a file the current default template still needs.
+
+- [ ] **Step 4: Sync progress and governance state**
+
+Record the manifest/publication outcome and the exact remaining gap, if any, before considering loader migration.
+
+### Task 3A: Lock The Legacy Public Flow-Playables Decision
+
+**Files:**
+- Modify: `tools/zhuyuanzhang-source-sync-contract.mjs`
+- Modify: `tools/sync-zhuyuanzhang-startup-templates.mjs`
+- Modify: `public/script-editor-templates/zhuyuanzhang/pack.json`
+- Modify: `tests/zhuyuanzhang-source-unification.test.cjs`
+- Read: `public/script-editor-templates/zhuyuanzhang/flow-playables.json`
+- Read: `src/modules/script-editor/builtin-templates/zhuyuanzhang/playable-shells.json`
+- Read: `src/modules/script-editor/builtin-templates/zhuyuanzhang/playables.json`
+- Read: `src/modules/script-editor/builtin-templates/zhuyuanzhang/playable-integrations.json`
+
+- [x] **Step 1: Freeze the current owner diagnosis**
+
+Record in code and tests that `public/script-editor-templates/zhuyuanzhang/flow-playables.json` is a legacy publication-only file, not one of the two maintained pack sources, and that it cannot be silently treated as canonical runtime/editor data.
+
+- [x] **Step 2: Decide the short-term publication contract**
+
+Choose one explicit temporary rule and encode it in the sync contract:
+- keep `flow-playables.json` as a legacy publication-only artifact with an explicit retention gate, or
+- regenerate it from a newly defined canonical owner if the current file can be derived without losing behavior.
+
+The key constraint is that the answer must be centralized in tooling rather than left as an undocumented hand-maintained exception.
+
+- [x] **Step 3: Add regression coverage for the public exception**
+
+Fail if:
+- `public/pack.json` drops `flowPlayables` before the loader/publication contract is migrated, or
+- a maintained pack starts declaring `flowPlayables` as if it were a first-class source family again.
+
+- [x] **Step 4: Sync progress and governance state**
+
+Update this plan with the explicit temporary decision, so later work does not have to rediscover why `flow-playables.json` still exists or under what gate it can be removed.
+
+### Task 3B: Move Runtime Content Ownership To The Playable-Shells Family Contract
+
+**Files:**
+- Modify: `src/application/content/active-game-content.ts`
+- Modify: `src/application/state/game-store.ts`
+- Modify: `src/application/story/story-runtime.ts`
+- Modify: `src/core/runtime/playable-runtime.ts`
+- Modify: `src/core/runtime/scene-runtime.ts`
+- Modify: `src/core/runtime/dialogue-runtime.ts`
+- Modify: `src/core/contracts/dialogue-runtime.ts`
+- Modify: `src/core/contracts/scene-runtime.ts`
+- Modify: `src/application/events/event-playable-runtime.ts`
+- Test: `tests/script-editor-runtime-preview-compat.test.cjs`
+- Test: `tests/robustness.test.cjs`
+
+- [ ] **Step 1: Replace runtime owner terminology, not runtime behavior**
+
+Refactor the central runtime content owner so the canonical loaded family becomes `playableShells` / `playableShellsById`, matching the newer pack model, while preserving every current UI path and playable launch behavior.
+
+This is an ownership cleanup, not a gameplay rewrite:
+- no menu reorder
+- no startup flow change
+- no minigame trigger semantics change
+
+- [ ] **Step 2: Keep a narrow compatibility seam where needed**
+
+If some downstream runtime APIs still need `flowPlayablesById` temporarily, isolate that as a transition seam in one owner module instead of letting both owner names continue to spread across the runtime.
+
+- [ ] **Step 3: Add runtime equivalence regressions**
+
+Cover that the same template preview/startup path can still:
+- enter the same scene/map shell
+- resolve the same minigame/playable triggers
+- keep the current exit-preview and first-playable behavior unchanged
+
+- [ ] **Step 4: Sync progress and governance state**
+
+Record which old runtime names, if any, remain intentionally bridged after this slice and where the bridge is expected to be deleted.
+
+### Task 3C: Align Scenario-Pack Validation And Loading With mod-first-dev
+
+**Files:**
+- Modify: `src/application/scenario/scenario-pack-loader.ts`
+- Modify: `src/application/content/content-pack-loader.ts`
+- Modify: `src/modules/script-editor/application/runtime-pack-import.ts`
+- Modify: `tests/script-editor-runtime-preview-compat.test.cjs`
+- Modify: `tests/zhuyuanzhang-source-unification.test.cjs`
+- Test: `tests/robustness.test.cjs`
+
+- [x] **Step 1: Promote the new family set into the main loader contract**
+
+Bring the main scenario/content loading contract up to the same family vocabulary already used by mod-first-dev:
+- `playables`
+- `playableIntegrations`
+- `playableShells`
+- `settlements`
+
+and explicitly reject retired inputs such as `flowDefinitions`.
+
+- [x] **Step 2: Keep the script-editor import/export path on the same contract**
+
+Verify the editor runtime-pack import/export seam still reads and writes the same family set after the runtime/content loaders are aligned, so preview, builtin runtime, and template publication no longer drift on minigame-family expectations.
+
+- [x] **Step 3: Add drift-detection coverage**
+
+Fail if:
+- builtin runtime pack and builtin editor template pack disagree on the canonical minigame-family manifest shape, or
+- a loader accepts retired flow-family manifest keys without an intentional compat bridge.
+
+- [x] **Step 4: Sync progress and governance state**
+
+Update Task 3 status with the exact remaining delta between the two maintained packs and the public publication layer after loader alignment is complete.
+
+### Task 3 Execution Order For The Remaining Minigame Slice
+
+- [ ] **Order 1: Complete Task 3A first**
+
+Do not rename runtime owners before the public legacy-exception rule is written down and test-covered.
+
+- [ ] **Order 2: Complete Task 3B second**
+
+Once the public exception is bounded, move runtime/game-content ownership to the `playableShells` family contract without changing visible behavior.
+
+- [x] **Order 3: Complete Task 3C third**
+
+After runtime ownership is aligned, tighten the scenario/content loader contract so the branch no longer accepts the old split by accident.
+
+- [ ] **Order 4: Only then revisit Task 4**
+
+The `public` deletion/migration decision should be revisited only after the minigame-family owner, loader, and publication contracts all match the two-pack model.
+
+## Task 4: Decide Whether Loader Migration Is Needed Or Public Remains A Published Layer
+
+**Files:**
+- Modify: `src/modules/script-editor/config.ts`
+- Modify: `src/modules/script-editor/kernel/script-editor-workflow-controller.ts`
+- Modify: `tests/script-editor-template-url.test.cjs`
+- Modify: `docs/superpowers/plans/2026-08-03-scenario-pack-source-unification-plan.md`
+
+- [ ] **Step 1: Re-evaluate the public deletion question using the new source model**
+
+After Tasks 1-3, decide whether the repository still needs the public pack as a published target or whether the editor loader can be intentionally migrated without changing UI or behavior.
+
+- [ ] **Step 2: If public stays, document it as a permanent published derivative**
+
+Close the deletion question by recording that public is not a third source anymore, only a generated publish target.
+
+- [ ] **Step 3: If public is migrated away, satisfy the deletion gate before removal**
+
+Only remove `public/script-editor-templates/zhuyuanzhang/**` if the loader, tests, and publication strategy have already been updated and verified.
+
+- [ ] **Step 4: Sync progress and governance state**
+
+Update the plan with the chosen outcome so later resumes know whether public was retained, migrated, or deleted.
+
+## Task 5: Final Verification And Handoff
+
+**Files:**
+- Modify: `docs/superpowers/plans/2026-08-03-scenario-pack-source-unification-plan.md`
+
+- [ ] **Step 1: Run the required verification set**
+
+Run:
+
+```bash
+pnpm run lint:plans
+pnpm run build:test
+node --test tests/script-editor-template-url.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/zhuyuanzhang-source-unification.test.cjs
+pnpm run typecheck
+pnpm run build
+```
+
+Expected:
+
+- `PASS`
+
+- [ ] **Step 2: Confirm the user-facing invariants remain true**
+
+Recheck that `开始游戏` UI flow, `角色选择 -> 地图` visible order, and `使用模板 -> 运行预览` behavior remain unchanged.
+
+- [ ] **Step 3: Sync progress and governance state**
+
+Update `Execution State`, append a `Progress Log` entry, and leave an explicit next action for follow-up work.
+
+## Exit Check
+
+- [ ] `The repository has exactly two maintained zhuyuanzhang packs: builtin runtime pack and script-editor template pack.`
+- [ ] `Shared fields between those two maintained packs are governed by an explicit reproducible synchronization model.`
+- [ ] `The public template tree is no longer treated as a third maintained pack.`
+- [ ] `The public deletion question is resolved with a documented keep-or-delete gate rather than left ambiguous.`
+- [ ] `Current UI, feature behavior, and pre-merge scenario order/content remain unchanged.`
+- [ ] Project progress sync is updated if the child state changed.
+- [ ] Closeout block is added before the child is marked `closed`.
+
+## Completion Checklist
+
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
+
+## Child Closeout
+
+- Closed Child: `Replace when closing.`
+- Parent Task: `Replace when closing.`
+- Parent Stage: `Replace when closing.`
+- Closeout Status: `closed`
+- Project Progress Synced: `yes/no`
+- Next Child: `Replace when closing.`
+- Next Child Status: `waiting/running/blocked/none`
+- Next Required Action: `Replace when closing.`
+- Next Entry Document: `docs/superpowers/project-progress.md`
+- Next Owner Document: `Replace when closing.`
+- Push Status: `success/failure/not-pushed`
+- Push Commit: `commit-sha-or-none`
+- Resume From: `Replace when closing.`

@@ -228,7 +228,7 @@ export function runPlayableRuntime(input: {
   playerCharacterId?: string;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
+  playableShellsById?: Record<string, FlowPlayableDefinition> | undefined;
 }): PlayableRuntimeOutput {
   const resolvedRequest = toPlayableRuntimeRequest(input.request);
   if (resolvedRequest == null) {
@@ -238,12 +238,12 @@ export function runPlayableRuntime(input: {
       handled: false,
       session: getActivePlayableSession(input.state, null),
     };
-  }
+    }
 
   if (resolvedRequest.phase === "launch") {
     const launchedFlowPlayable = resolveFlowPlayableDefinition(
       resolvedRequest.launch.launch.playableId,
-      input.flowPlayablesById
+      input.playableShellsById
     );
     if (launchedFlowPlayable != null) {
       const nextState = {
@@ -446,7 +446,7 @@ export function runPlayableRuntime(input: {
   if (resolvedRequest.phase === "exit") {
     const activeFlowPlayable = resolveFlowPlayableDefinition(
       resolvedRequest.playableId,
-      input.flowPlayablesById
+      input.playableShellsById
     );
     if (
       activeFlowPlayable != null &&
@@ -534,7 +534,7 @@ export function runPlayableRuntime(input: {
   );
   const flowPlayable = resolveFlowPlayableDefinition(
     resolvedRequest.playableId,
-    input.flowPlayablesById
+    input.playableShellsById
   );
   if (activeFlowSession != null && flowPlayable != null) {
     const command = toFlowPlayableCommand(
@@ -1506,9 +1506,9 @@ function toPlayableOutcome(
 
 function resolveFlowPlayableDefinition(
   playableId: PlayableId,
-  flowPlayablesById?: Record<string, FlowPlayableDefinition>
+  playableShellsById?: Record<string, FlowPlayableDefinition>
 ): FlowPlayableDefinition | null {
-  return flowPlayablesById?.[playableId] ?? null;
+  return playableShellsById?.[playableId] ?? null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

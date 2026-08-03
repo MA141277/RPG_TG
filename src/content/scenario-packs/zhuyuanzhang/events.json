@@ -19,7 +19,11 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.ordination",
-    "tags": ["main-story", "temple-opening", "fictionalized-bridge"]
+    "tags": [
+      "main-story",
+      "temple-opening",
+      "fictionalized-bridge"
+    ]
   },
   {
     "id": "event.story.zhu_yuanzhang.first_temple_review",
@@ -43,7 +47,10 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.first_temple_review",
-    "tags": ["main-story", "temple-review"]
+    "tags": [
+      "main-story",
+      "temple-review"
+    ]
   },
   {
     "id": "event.story.zhu_yuanzhang.unlock_begging",
@@ -76,7 +83,11 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.unlock_begging",
-    "tags": ["main-story", "unlock", "temple-loop"]
+    "tags": [
+      "main-story",
+      "unlock",
+      "temple-loop"
+    ]
   },
   {
     "id": "event.story.zhu_yuanzhang.runing_broadcast",
@@ -104,7 +115,11 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.runing_broadcast",
-    "tags": ["main-story", "city-enter", "foreshadowing"]
+    "tags": [
+      "main-story",
+      "city-enter",
+      "foreshadowing"
+    ]
   },
   {
     "id": "event.story.zhu_yuanzhang.haozhou_return_encounter",
@@ -133,6 +148,175 @@
       }
     ],
     "entrySceneId": "scene.story.zhu_yuanzhang.haozhou_return_encounter",
-    "tags": ["main-story", "city-enter", "battle-hook", "join-guo-zixing"]
+    "tags": [
+      "main-story",
+      "city-enter",
+      "battle-hook",
+      "join-guo-zixing"
+    ]
+  },
+  {
+    "id": "event.building.template.house.temple.review",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 评定",
+    "occurrence": "repeatable",
+    "tags": [
+      "building-action",
+      "building:house.template.temple",
+      "action:review"
+    ],
+    "dialogueId": "scene.building.template.house.temple.review"
+  },
+  {
+    "id": "event.building.house.kulan.temple.copy_scripture",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 抄经",
+    "occurrence": "repeatable",
+    "tags": [
+      "building-action",
+      "building:house.kulan.temple",
+      "action:copy-scripture"
+    ],
+    "dialogueId": "",
+    "actions": [
+      {
+        "type": "launchPlayable",
+        "playableId": "temple-copy-scripture",
+        "integrationId": "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+        "ownerContext": {
+          "ownerKind": "house",
+          "ownerId": "house.kulan.temple",
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "title": "抄写经卷",
+          "briefing": "在偏殿抄录残缺经卷，顺便替住持整理寺中的旧账与香火名册。",
+          "prompts": [
+            {
+              "id": "prompt-1",
+              "text": "静坐抄经，先定你的心，再定你的字。",
+              "choices": [
+                {
+                  "id": "trace",
+                  "label": "依字描摹"
+                },
+                {
+                  "id": "balance",
+                  "label": "稳腕正锋"
+                },
+                {
+                  "id": "review",
+                  "label": "核对残页"
+                }
+              ],
+              "expectedChoiceId": "trace"
+            },
+            {
+              "id": "prompt-2",
+              "text": "这桩事不见刀光，却最考验耐性。",
+              "choices": [
+                {
+                  "id": "trace",
+                  "label": "依字描摹"
+                },
+                {
+                  "id": "balance",
+                  "label": "稳腕正锋"
+                },
+                {
+                  "id": "review",
+                  "label": "核对残页"
+                }
+              ],
+              "expectedChoiceId": "balance"
+            }
+          ],
+          "requiredScore": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "event.building.house.kulan.temple.sweep_courtyard",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 打扫庭院",
+    "occurrence": "repeatable",
+    "tags": [
+      "building-action",
+      "building:house.kulan.temple",
+      "action:sweep-courtyard"
+    ],
+    "dialogueId": "",
+    "actions": [
+      {
+        "type": "launchPlayable",
+        "playableId": "activity-qte",
+        "integrationId": "playable.activity-qte.instance.template.temple-sweep-courtyard",
+        "ownerContext": {
+          "ownerKind": "house",
+          "ownerId": "house.kulan.temple",
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "activityId": "activity.zhu_yuanzhang.temple.sweep_courtyard"
+        }
+      }
+    ]
+  },
+  {
+    "id": "event.building.template.house.temple.leave",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 离开",
+    "occurrence": "repeatable",
+    "actions": [
+      {
+        "type": "closeBuilding"
+      }
+    ],
+    "tags": [
+      "building-action",
+      "building:house.template.temple",
+      "action:leave"
+    ],
+    "dialogueId": ""
+  },
+  {
+    "id": "event.building.template.house.temple.donate",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 捐香火",
+    "occurrence": "repeatable",
+    "tags": [
+      "building-action",
+      "building:house.template.temple",
+      "action:donate"
+    ],
+    "dialogueId": "scene.building.template.house.temple.donate"
+  },
+  {
+    "id": "event.building.house.kulan.temple.carry_water",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 挑水",
+    "occurrence": "repeatable",
+    "tags": [
+      "building-action",
+      "building:house.kulan.temple",
+      "action:carry-water"
+    ],
+    "dialogueId": "",
+    "actions": [
+      {
+        "type": "launchPlayable",
+        "playableId": "activity-qte",
+        "integrationId": "playable.activity-qte.instance.template.temple-carry-water",
+        "ownerContext": {
+          "ownerKind": "house",
+          "ownerId": "house.kulan.temple",
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "activityId": "activity.zhu_yuanzhang.temple.carry_water"
+        }
+      }
+    ]
   }
 ]

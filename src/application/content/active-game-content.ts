@@ -17,7 +17,9 @@ import type {
   HistoricalCityRoster,
 } from "../../domain/historical-character";
 import type { HouseAccessRefusalRule, HouseDefinition } from "../../domain/house";
+import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { MapDefinition, MapNode } from "../../domain/map";
+import type { MenuInstanceDefinition, MenuResourceDefinition } from "../../domain/menu";
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import type {
   ProgressTrackBinding,
@@ -55,10 +57,14 @@ export type ActiveGameContent = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   dialogueDefinitions: RuntimeDialogueDefinition[];
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
-  flowPlayables: FlowPlayableDefinition[];
-  flowPlayablesById: Record<string, FlowPlayableDefinition>;
+  playableShells: FlowPlayableDefinition[];
+  playableShellsById: Record<string, FlowPlayableDefinition>;
   eventBindings: EventBinding[];
   eventBindingsById: Record<string, EventBinding>;
+  menuResources: MenuResourceDefinition[];
+  menuResourcesById: Record<string, MenuResourceDefinition>;
+  menuInstances: MenuInstanceDefinition[];
+  menuInstancesById: Record<string, MenuInstanceDefinition>;
   settlementDefinitions: (SettlementDefinition & {
     id: string;
     title?: string;
@@ -85,6 +91,8 @@ export type ActiveGameContent = {
   valuables: ValuableItemDefinition[];
   items: ItemDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
+  locationAccess: LocationAccessDefinition[];
+  houseModuleDefaults: Record<string, unknown>;
   houseAccessRefusalRules: HouseAccessRefusalRule[];
   cityPortraits: Record<string, string>;
   historicalCharacterIdByCharacterId: Record<string, string>;
@@ -133,7 +141,7 @@ export type ActiveGameContentContext = {
     progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
     progressTrackBindingsById: Record<string, ProgressTrackBinding>;
     activityDefinitionsById: Record<string, ActivityDefinition>;
-    flowPlayablesById: Record<string, FlowPlayableDefinition>;
+    playableShellsById: Record<string, FlowPlayableDefinition>;
     cityDefinitionsById: Record<string, CityDefinition>;
     houseDefinitionsById: Record<string, HouseDefinition>;
     textEntriesById: Record<string, string>;
@@ -157,8 +165,17 @@ export function createActiveGameContent(
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
-  const flowPlayables = resolvedPack.flows ?? [];
+  const playableShells =
+    resolvedPack.playableShells ??
+    resolvedPack.flowPlayables ??
+    resolvedPack.flows ??
+    [];
+  const playableShellsById = Object.fromEntries(
+    playableShells.map((flowDefinition) => [flowDefinition.id, flowDefinition])
+  );
   const eventBindings = resolvedPack.eventBindings ?? [];
+  const menuResources = resolvedPack.menuResources ?? [];
+  const menuInstances = resolvedPack.menuInstances ?? [];
   const settlementDefinitions = resolvedPack.settlements ?? [];
   const progressTrackDefinitions = resolvedPack.progressTracks ?? [];
   const progressTrackBindings = resolvedPack.progressTrackBindings ?? [];
@@ -172,6 +189,7 @@ export function createActiveGameContent(
   const valuables = resolvedPack.valuables ?? [];
   const items = resolvedPack.items ?? [];
   const cityNpcPools = resolvedPack.cityNpcPools ?? [];
+  const locationAccess = resolvedPack.locationAccess ?? [];
   const houseAccessRefusalRules = resolvedPack.houseAccessRefusalRules ?? [];
   const historicalCharacters = resolvedPack.historicalCharacters ?? [];
   const historicalCityRosters = resolvedPack.historicalCityRosters ?? [];
@@ -227,13 +245,19 @@ export function createActiveGameContent(
         dialogueDefinition,
       ])
     ),
-    flowPlayables,
-    flowPlayablesById: Object.fromEntries(
-      flowPlayables.map((flowDefinition) => [flowDefinition.id, flowDefinition])
-    ),
+    playableShells,
+    playableShellsById,
     eventBindings,
     eventBindingsById: Object.fromEntries(
       eventBindings.map((eventBinding) => [eventBinding.id, eventBinding])
+    ),
+    menuResources,
+    menuResourcesById: Object.fromEntries(
+      menuResources.map((resource) => [resource.id, resource])
+    ),
+    menuInstances,
+    menuInstancesById: Object.fromEntries(
+      menuInstances.map((instance) => [instance.id, instance])
     ),
     settlementDefinitions,
     settlementDefinitionsById: Object.fromEntries(
@@ -268,6 +292,8 @@ export function createActiveGameContent(
     valuables,
     items,
     cityNpcPools,
+    locationAccess,
+    houseModuleDefaults: { ...(resolvedPack.houseModuleDefaults ?? {}) },
     houseAccessRefusalRules,
     cityPortraits: { ...(resolvedPack.cityPortraits ?? {}) },
     historicalCharacterIdByCharacterId: {
@@ -316,7 +342,7 @@ export function createActiveGameContentContext(
       eventDefinitionsById: gameContent.eventDefinitionsById,
       sceneDefinitionsById: gameContent.sceneDefinitionsById,
       dialogueDefinitionsById: gameContent.dialogueDefinitionsById,
-      flowPlayablesById: gameContent.flowPlayablesById,
+      playableShellsById: gameContent.playableShellsById,
       eventBindingsById: gameContent.eventBindingsById,
       settlementDefinitionsById: gameContent.settlementDefinitionsById,
       progressTrackDefinitionsById: gameContent.progressTrackDefinitionsById,
@@ -369,6 +395,14 @@ export function mergeContentPacks(
       basePack.eventBindings ?? [],
       overridePack.eventBindings ?? []
     ),
+    menuResources: mergeById(
+      basePack.menuResources ?? [],
+      overridePack.menuResources ?? []
+    ),
+    menuInstances: mergeById(
+      basePack.menuInstances ?? [],
+      overridePack.menuInstances ?? []
+    ),
     settlements: mergeById(
       basePack.settlements ?? [],
       overridePack.settlements ?? []
@@ -387,6 +421,14 @@ export function mergeContentPacks(
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
     items: mergeById(basePack.items ?? [], overridePack.items ?? []),
     cityNpcPools: mergeCityNpcPools(basePack.cityNpcPools ?? [], overridePack.cityNpcPools ?? []),
+    locationAccess: mergeById(
+      basePack.locationAccess ?? [],
+      overridePack.locationAccess ?? []
+    ),
+    houseModuleDefaults: {
+      ...(basePack.houseModuleDefaults ?? {}),
+      ...(overridePack.houseModuleDefaults ?? {}),
+    },
     houseAccessRefusalRules: mergeById(
       basePack.houseAccessRefusalRules ?? [],
       overridePack.houseAccessRefusalRules ?? []
@@ -425,6 +467,8 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     scenes: pack.scenes ?? [],
     dialogues: pack.dialogues ?? [],
     eventBindings: pack.eventBindings ?? [],
+    menuResources: pack.menuResources ?? [],
+    menuInstances: pack.menuInstances ?? [],
     settlements: pack.settlements ?? [],
     progressTracks: pack.progressTracks ?? [],
     progressTrackBindings: pack.progressTrackBindings ?? [],
@@ -434,6 +478,8 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     valuables: pack.valuables ?? [],
     items: pack.items ?? [],
     cityNpcPools: pack.cityNpcPools ?? [],
+    locationAccess: pack.locationAccess ?? [],
+    houseModuleDefaults: pack.houseModuleDefaults ?? {},
     houseAccessRefusalRules: pack.houseAccessRefusalRules ?? [],
     cityPortraits: pack.cityPortraits ?? {},
     historicalCharacterIdByCharacterId: pack.historicalCharacterIdByCharacterId ?? {},

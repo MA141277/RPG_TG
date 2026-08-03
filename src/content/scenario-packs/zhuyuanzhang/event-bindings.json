@@ -1,0 +1,2241 @@
+[
+  {
+    "id": "binding.story.zhu_yuanzhang.ordination.house-enter",
+    "eventId": "event.story.zhu_yuanzhang.ordination",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.ordination.completed",
+          "expected": false
+        }
+      ]
+    },
+    "priority": 200,
+    "enabled": true
+  },
+  {
+    "id": "binding.story.zhu_yuanzhang.first_temple_review.manual",
+    "eventId": "event.story.zhu_yuanzhang.first_temple_review",
+    "owner": {
+      "family": "story",
+      "id": "chapter.zhu-yuanzhang-rise"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "story-progress"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.ordination.completed",
+          "expected": true
+        },
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.first_temple_review.completed",
+          "expected": false
+        }
+      ]
+    },
+    "priority": 190,
+    "enabled": true
+  },
+  {
+    "id": "binding.story.zhu_yuanzhang.unlock_begging.indoor-screen-shown",
+    "eventId": "event.story.zhu_yuanzhang.unlock_begging",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "indoor-screen-shown"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.temple_work_unlocked",
+          "expected": true
+        },
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.begging_unlocked",
+          "expected": false
+        },
+        {
+          "type": "variable",
+          "key": "var.story.zhu_yuanzhang.temple_contribution",
+          "operator": ">=",
+          "value": 30
+        }
+      ]
+    },
+    "priority": 170,
+    "enabled": true
+  },
+  {
+    "id": "binding.story.zhu_yuanzhang.runing_broadcast.city-enter",
+    "eventId": "event.story.zhu_yuanzhang.runing_broadcast",
+    "owner": {
+      "family": "city",
+      "id": "city.runing"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "city-enter"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.begging_unlocked",
+          "expected": true
+        },
+        {
+          "type": "variable",
+          "key": "var.story.zhu_yuanzhang.stage",
+          "operator": "==",
+          "value": "huangjue-begging-journey"
+        }
+      ]
+    },
+    "priority": 160,
+    "enabled": true
+  },
+  {
+    "id": "binding.story.zhu_yuanzhang.haozhou_return_encounter.city-enter",
+    "eventId": "event.story.zhu_yuanzhang.haozhou_return_encounter",
+    "owner": {
+      "family": "city",
+      "id": "city.kulan"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "city-enter"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "variable",
+          "key": "var.story.zhu_yuanzhang.stage",
+          "operator": "==",
+          "value": "huangjue-begging-journey"
+        },
+        {
+          "type": "variable",
+          "key": "var.story.zhu_yuanzhang.temple_week",
+          "operator": "==",
+          "value": 4
+        }
+      ]
+    },
+    "priority": 155,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.leader_residence.enter",
+    "eventId": "event.building.house.kulan.leader_residence.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.enter",
+    "eventId": "event.building.house.kulan.temple.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.ordination.completed",
+          "expected": true
+        }
+      ]
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.leader_residence",
+        "containerId": "house.kulan.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.leader_residence",
+        "containerId": "house.kulan.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.temple",
+        "containerId": "house.kulan.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.copy_scripture.container-item",
+    "eventId": "event.building.house.kulan.temple.copy_scripture",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.temple",
+        "containerId": "house.kulan.temple.actions",
+        "itemId": "copy-scripture"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.sweep_courtyard.container-item",
+    "eventId": "event.building.house.kulan.temple.sweep_courtyard",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.temple",
+        "containerId": "house.kulan.temple.actions",
+        "itemId": "sweep-courtyard"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.carry_water.container-item",
+    "eventId": "event.building.house.kulan.temple.carry_water",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.temple",
+        "containerId": "house.kulan.temple.actions",
+        "itemId": "carry-water"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.temple",
+        "containerId": "house.kulan.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.temple",
+        "containerId": "house.kulan.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yingtian.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yingtian.house.yingtian.leader_residence",
+        "containerId": "house.yingtian.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yingtian.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yingtian.house.yingtian.leader_residence",
+        "containerId": "house.yingtian.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yingtian.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yingtian.house.yingtian.temple",
+        "containerId": "house.yingtian.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yingtian.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yingtian.house.yingtian.temple",
+        "containerId": "house.yingtian.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yingtian.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yingtian.house.yingtian.temple",
+        "containerId": "house.yingtian.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.luzhou.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.luzhou.house.luzhou.leader_residence",
+        "containerId": "house.luzhou.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.luzhou.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.luzhou.house.luzhou.leader_residence",
+        "containerId": "house.luzhou.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.luzhou.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.luzhou.house.luzhou.temple",
+        "containerId": "house.luzhou.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.luzhou.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.luzhou.house.luzhou.temple",
+        "containerId": "house.luzhou.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.luzhou.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.luzhou.house.luzhou.temple",
+        "containerId": "house.luzhou.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anqing.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anqing.house.anqing.leader_residence",
+        "containerId": "house.anqing.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anqing.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anqing.house.anqing.leader_residence",
+        "containerId": "house.anqing.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anqing.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anqing.house.anqing.temple",
+        "containerId": "house.anqing.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anqing.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anqing.house.anqing.temple",
+        "containerId": "house.anqing.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anqing.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anqing.house.anqing.temple",
+        "containerId": "house.anqing.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.taiping.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.taiping.house.taiping.leader_residence",
+        "containerId": "house.taiping.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.taiping.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.taiping.house.taiping.leader_residence",
+        "containerId": "house.taiping.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.taiping.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.taiping.house.taiping.temple",
+        "containerId": "house.taiping.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.taiping.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.taiping.house.taiping.temple",
+        "containerId": "house.taiping.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.taiping.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.taiping.house.taiping.temple",
+        "containerId": "house.taiping.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anfeng.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anfeng.house.anfeng.leader_residence",
+        "containerId": "house.anfeng.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anfeng.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anfeng.house.anfeng.leader_residence",
+        "containerId": "house.anfeng.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anfeng.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anfeng.house.anfeng.temple",
+        "containerId": "house.anfeng.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anfeng.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anfeng.house.anfeng.temple",
+        "containerId": "house.anfeng.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.anfeng.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.anfeng.house.anfeng.temple",
+        "containerId": "house.anfeng.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.runing.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.runing.house.runing.leader_residence",
+        "containerId": "house.runing.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.runing.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.runing.house.runing.leader_residence",
+        "containerId": "house.runing.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.runing.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.runing.house.runing.temple",
+        "containerId": "house.runing.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.runing.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.runing.house.runing.temple",
+        "containerId": "house.runing.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.runing.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.runing.house.runing.temple",
+        "containerId": "house.runing.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.huaian.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.huaian.house.huaian.leader_residence",
+        "containerId": "house.huaian.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.huaian.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.huaian.house.huaian.leader_residence",
+        "containerId": "house.huaian.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.huaian.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.huaian.house.huaian.temple",
+        "containerId": "house.huaian.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.huaian.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.huaian.house.huaian.temple",
+        "containerId": "house.huaian.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.huaian.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.huaian.house.huaian.temple",
+        "containerId": "house.huaian.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yangzhou.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yangzhou.house.yangzhou.leader_residence",
+        "containerId": "house.yangzhou.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yangzhou.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yangzhou.house.yangzhou.leader_residence",
+        "containerId": "house.yangzhou.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yangzhou.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yangzhou.house.yangzhou.temple",
+        "containerId": "house.yangzhou.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yangzhou.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yangzhou.house.yangzhou.temple",
+        "containerId": "house.yangzhou.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.yangzhou.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.yangzhou.house.yangzhou.temple",
+        "containerId": "house.yangzhou.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.suzhou.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.suzhou.house.suzhou.leader_residence",
+        "containerId": "house.suzhou.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.suzhou.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.suzhou.house.suzhou.leader_residence",
+        "containerId": "house.suzhou.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.suzhou.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.suzhou.house.suzhou.temple",
+        "containerId": "house.suzhou.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.suzhou.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.suzhou.house.suzhou.temple",
+        "containerId": "house.suzhou.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.suzhou.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.suzhou.house.suzhou.temple",
+        "containerId": "house.suzhou.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wuchang.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wuchang.house.wuchang.leader_residence",
+        "containerId": "house.wuchang.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wuchang.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wuchang.house.wuchang.leader_residence",
+        "containerId": "house.wuchang.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wuchang.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wuchang.house.wuchang.temple",
+        "containerId": "house.wuchang.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wuchang.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wuchang.house.wuchang.temple",
+        "containerId": "house.wuchang.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wuchang.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wuchang.house.wuchang.temple",
+        "containerId": "house.wuchang.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.nanchang.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.nanchang.house.nanchang.leader_residence",
+        "containerId": "house.nanchang.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.nanchang.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.nanchang.house.nanchang.leader_residence",
+        "containerId": "house.nanchang.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.nanchang.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.nanchang.house.nanchang.temple",
+        "containerId": "house.nanchang.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.nanchang.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.nanchang.house.nanchang.temple",
+        "containerId": "house.nanchang.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.nanchang.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.nanchang.house.nanchang.temple",
+        "containerId": "house.nanchang.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chongqing.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chongqing.house.chongqing.leader_residence",
+        "containerId": "house.chongqing.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chongqing.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chongqing.house.chongqing.leader_residence",
+        "containerId": "house.chongqing.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chongqing.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chongqing.house.chongqing.temple",
+        "containerId": "house.chongqing.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chongqing.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chongqing.house.chongqing.temple",
+        "containerId": "house.chongqing.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chongqing.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chongqing.house.chongqing.temple",
+        "containerId": "house.chongqing.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chengdu.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chengdu.house.chengdu.leader_residence",
+        "containerId": "house.chengdu.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chengdu.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chengdu.house.chengdu.leader_residence",
+        "containerId": "house.chengdu.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chengdu.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chengdu.house.chengdu.temple",
+        "containerId": "house.chengdu.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chengdu.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chengdu.house.chengdu.temple",
+        "containerId": "house.chengdu.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.chengdu.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.chengdu.house.chengdu.temple",
+        "containerId": "house.chengdu.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.ningbo.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.ningbo.house.ningbo.leader_residence",
+        "containerId": "house.ningbo.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.ningbo.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.ningbo.house.ningbo.leader_residence",
+        "containerId": "house.ningbo.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.ningbo.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.ningbo.house.ningbo.temple",
+        "containerId": "house.ningbo.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.ningbo.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.ningbo.house.ningbo.temple",
+        "containerId": "house.ningbo.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.ningbo.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.ningbo.house.ningbo.temple",
+        "containerId": "house.ningbo.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wenzhou.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wenzhou.house.wenzhou.leader_residence",
+        "containerId": "house.wenzhou.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wenzhou.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wenzhou.house.wenzhou.leader_residence",
+        "containerId": "house.wenzhou.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wenzhou.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wenzhou.house.wenzhou.temple",
+        "containerId": "house.wenzhou.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wenzhou.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wenzhou.house.wenzhou.temple",
+        "containerId": "house.wenzhou.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.wenzhou.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.wenzhou.house.wenzhou.temple",
+        "containerId": "house.wenzhou.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fuzhou.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fuzhou.house.fuzhou.leader_residence",
+        "containerId": "house.fuzhou.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fuzhou.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fuzhou.house.fuzhou.leader_residence",
+        "containerId": "house.fuzhou.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fuzhou.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fuzhou.house.fuzhou.temple",
+        "containerId": "house.fuzhou.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fuzhou.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fuzhou.house.fuzhou.temple",
+        "containerId": "house.fuzhou.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fuzhou.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fuzhou.house.fuzhou.temple",
+        "containerId": "house.fuzhou.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.dadu.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.dadu.house.dadu.leader_residence",
+        "containerId": "house.dadu.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.dadu.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.dadu.house.dadu.leader_residence",
+        "containerId": "house.dadu.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.dadu.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.dadu.house.dadu.temple",
+        "containerId": "house.dadu.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.dadu.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.dadu.house.dadu.temple",
+        "containerId": "house.dadu.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.dadu.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.dadu.house.dadu.temple",
+        "containerId": "house.dadu.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kaifeng.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kaifeng.house.kaifeng.leader_residence",
+        "containerId": "house.kaifeng.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kaifeng.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kaifeng.house.kaifeng.leader_residence",
+        "containerId": "house.kaifeng.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kaifeng.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kaifeng.house.kaifeng.temple",
+        "containerId": "house.kaifeng.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kaifeng.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kaifeng.house.kaifeng.temple",
+        "containerId": "house.kaifeng.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kaifeng.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kaifeng.house.kaifeng.temple",
+        "containerId": "house.kaifeng.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.gongchang.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.gongchang.house.gongchang.leader_residence",
+        "containerId": "house.gongchang.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.gongchang.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.gongchang.house.gongchang.leader_residence",
+        "containerId": "house.gongchang.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.gongchang.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.gongchang.house.gongchang.temple",
+        "containerId": "house.gongchang.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.gongchang.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.gongchang.house.gongchang.temple",
+        "containerId": "house.gongchang.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.gongchang.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.gongchang.house.gongchang.temple",
+        "containerId": "house.gongchang.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fengyuan.leader_residence.review.container-item",
+    "eventId": "event.building.template.house.leader_residence.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fengyuan.house.fengyuan.leader_residence",
+        "containerId": "house.fengyuan.leader_residence.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fengyuan.leader_residence.leave.container-item",
+    "eventId": "event.building.template.house.leader_residence.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fengyuan.house.fengyuan.leader_residence",
+        "containerId": "house.fengyuan.leader_residence.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fengyuan.temple.review.container-item",
+    "eventId": "event.building.template.house.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fengyuan.house.fengyuan.temple",
+        "containerId": "house.fengyuan.temple.actions",
+        "itemId": "review"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fengyuan.temple.donate.container-item",
+    "eventId": "event.building.template.house.temple.donate",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fengyuan.house.fengyuan.temple",
+        "containerId": "house.fengyuan.temple.actions",
+        "itemId": "donate"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.fengyuan.temple.leave.container-item",
+    "eventId": "event.building.template.house.temple.leave",
+    "owner": {
+      "family": "building",
+      "id": "house.template.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.fengyuan.house.fengyuan.temple",
+        "containerId": "house.fengyuan.temple.actions",
+        "itemId": "leave"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  }
+]

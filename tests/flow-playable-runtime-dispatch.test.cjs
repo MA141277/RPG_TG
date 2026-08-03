@@ -231,7 +231,7 @@ function configureDottedFlowPlayableRegistry() {
   });
 }
 
-test("playable runtime launches and reduces flow playables", () => {
+test("playable runtime launches and reduces flow playables through playableShells", () => {
   try {
     configureFlowPlayableRegistry();
 
@@ -239,7 +239,7 @@ test("playable runtime launches and reduces flow playables", () => {
       state: createRuntimeState(),
       request: createLaunchPlayableRequest("flow-test"),
       characterDefinitions: prototypeCharacters,
-      flowPlayablesById: { "flow-test": flowDefinition },
+      playableShellsById: { "flow-test": flowDefinition },
     });
 
     assert.equal(launched.handled, true);
@@ -253,7 +253,7 @@ test("playable runtime launches and reduces flow playables", () => {
       state: launched.state,
       request: createPlayableActionRequest("flow-test", "confirm"),
       characterDefinitions: prototypeCharacters,
-      flowPlayablesById: { "flow-test": flowDefinition },
+      playableShellsById: { "flow-test": flowDefinition },
     });
 
     assert.equal(confirmed.handled, true);
@@ -267,7 +267,7 @@ test("playable runtime launches and reduces flow playables", () => {
         value: "success",
       }),
       characterDefinitions: prototypeCharacters,
-      flowPlayablesById: { "flow-test": flowDefinition },
+      playableShellsById: { "flow-test": flowDefinition },
     });
 
     assert.equal(completed.handled, true);
@@ -292,7 +292,7 @@ test("playable runtime launches and reduces flow playables", () => {
   }
 });
 
-test("playable runtime exits active flow playables", () => {
+test("playable runtime accepts playableShellsById as the canonical flow shell owner", () => {
   try {
     configureFlowPlayableRegistry();
 
@@ -300,14 +300,35 @@ test("playable runtime exits active flow playables", () => {
       state: createRuntimeState(),
       request: createLaunchPlayableRequest("flow-test"),
       characterDefinitions: prototypeCharacters,
-      flowPlayablesById: { "flow-test": flowDefinition },
+      playableShellsById: { "flow-test": flowDefinition },
+    });
+
+    assert.equal(launched.handled, true);
+    assert.equal(launched.session?.playableId, "flow-test");
+    assert.deepEqual(launched.state.core.runtime.playableSession?.state, {
+      currentNodeId: "intro",
+    });
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
+});
+
+test("playable runtime exits active flow playables through playableShells", () => {
+  try {
+    configureFlowPlayableRegistry();
+
+    const launched = runPlayableRuntime({
+      state: createRuntimeState(),
+      request: createLaunchPlayableRequest("flow-test"),
+      characterDefinitions: prototypeCharacters,
+      playableShellsById: { "flow-test": flowDefinition },
     });
 
     const exited = runPlayableRuntime({
       state: launched.state,
       request: createExitPlayableRequest("flow-test"),
       characterDefinitions: prototypeCharacters,
-      flowPlayablesById: { "flow-test": flowDefinition },
+      playableShellsById: { "flow-test": flowDefinition },
     });
 
     assert.equal(exited.handled, true);
@@ -318,7 +339,7 @@ test("playable runtime exits active flow playables", () => {
   }
 });
 
-test("playable runtime dispatches actions for dotted flow playable ids", () => {
+test("playable runtime dispatches actions for dotted flow playable ids through playableShells", () => {
   try {
     configureDottedFlowPlayableRegistry();
 
@@ -326,7 +347,7 @@ test("playable runtime dispatches actions for dotted flow playable ids", () => {
       state: createRuntimeState(),
       request: createLaunchPlayableRequest(dottedFlowDefinition.id),
       characterDefinitions: prototypeCharacters,
-      flowPlayablesById: {
+      playableShellsById: {
         [dottedFlowDefinition.id]: dottedFlowDefinition,
       },
     });
@@ -340,7 +361,7 @@ test("playable runtime dispatches actions for dotted flow playable ids", () => {
       state: launched.state,
       request: createPlayableActionRequest(dottedFlowDefinition.id, "confirm"),
       characterDefinitions: prototypeCharacters,
-      flowPlayablesById: {
+      playableShellsById: {
         [dottedFlowDefinition.id]: dottedFlowDefinition,
       },
     });

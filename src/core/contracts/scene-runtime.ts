@@ -18,7 +18,7 @@ export type SceneRuntimeInput = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   eventDefinitionsById: Record<string, EventDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
+  playableShellsById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 

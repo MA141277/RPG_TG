@@ -18,7 +18,7 @@ export type SceneRunnerContext = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   eventDefinitionsById: Record<string, EventDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
+  playableShellsById?: Record<string, FlowPlayableDefinition> | undefined;
   characterDefinitions: CharacterDefinition[];
   textEntriesById?: Record<string, string> | undefined;
   continueFromSceneEvent?:
@@ -60,7 +60,7 @@ export function runSceneUntilPause(
       characterDefinitions: nextCharacterDefinitions,
       eventDefinition: activeEvent,
       activityDefinitionsById: context.activityDefinitionsById,
-      flowPlayablesById: context.flowPlayablesById,
+      playableShellsById: context.playableShellsById,
       textEntriesById: context.textEntriesById,
     });
     if (playableResult?.handled) {

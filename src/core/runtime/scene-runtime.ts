@@ -21,7 +21,7 @@ export function runSceneFromEvent(input: SceneRuntimeInput): SceneRuntimeResult 
     sceneDefinitionsById: input.sceneDefinitionsById,
     eventDefinitionsById: input.eventDefinitionsById,
     activityDefinitionsById: input.activityDefinitionsById,
-    flowPlayablesById: input.flowPlayablesById,
+    playableShellsById: input.playableShellsById,
     characterDefinitions: input.characterDefinitions,
     textEntriesById: input.textEntriesById,
     continueFromSceneEvent: ({
@@ -54,7 +54,7 @@ export function runStoryTriggerRuntime(input: {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
-  flowPlayablesById?: Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
+  playableShellsById?: Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
   textEntriesById?: Record<string, string>;
 }): {
   state: GameState;
@@ -86,7 +86,7 @@ export function runStoryTriggerRuntime(input: {
     sceneDefinitionsById: input.sceneDefinitionsById,
     eventDefinitionsById: input.eventDefinitionsById,
     activityDefinitionsById: input.activityDefinitionsById,
-    flowPlayablesById: input.flowPlayablesById,
+    playableShellsById: input.playableShellsById,
     textEntriesById: input.textEntriesById,
   });
 }

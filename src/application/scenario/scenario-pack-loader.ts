@@ -110,6 +110,29 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.eventBindings != null) {
     assertArray(value.eventBindings, "scenario event bindings");
   }
+  if (value.menuResources != null) {
+    assertArray(value.menuResources, "scenario menu resources");
+  }
+  if (value.menuInstances != null) {
+    assertArray(value.menuInstances, "scenario menu instances");
+  }
+  if (value.playables != null) {
+    assertArray(value.playables, "scenario playables");
+  }
+  if (value.playableIntegrations != null) {
+    assertArray(value.playableIntegrations, "scenario playable integrations");
+  }
+  if (value.flowDefinitions != null) {
+    throw new Error(
+      'scenario flowDefinitions is retired; use playableShells instead.'
+    );
+  }
+  if (value.playableShells != null) {
+    assertArray(value.playableShells, "scenario playable shells");
+  }
+  if (value.flowPlayables != null) {
+    assertArray(value.flowPlayables, "scenario legacy flow playables");
+  }
   if (value.settlements != null) {
     assertArray(value.settlements, "scenario settlements");
   }
@@ -137,6 +160,12 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   }
   if (value.cityNpcPools != null) {
     assertArray(value.cityNpcPools, "scenario city npc pools");
+  }
+  if (value.locationAccess != null) {
+    assertArray(value.locationAccess, "scenario location access");
+  }
+  if (value.houseModuleDefaults != null) {
+    assertObject(value.houseModuleDefaults, "scenario house module defaults");
   }
   if (value.houseAccessRefusalRules != null) {
     assertArray(value.houseAccessRefusalRules, "scenario house access refusal rules");
@@ -169,7 +198,13 @@ type ScenarioPackManifestFiles = {
   events: string;
   scenes?: string;
   dialogues?: string;
+  playables?: string;
+  playableIntegrations?: string;
+  playableShells?: string;
+  flowPlayables?: string;
   eventBindings?: string;
+  menuResources?: string;
+  menuInstances?: string;
   settlements?: string;
   progressTracks?: string;
   progressTrackBindings?: string;
@@ -185,6 +220,8 @@ type ScenarioPackManifestFiles = {
   valuables?: string;
   items?: string;
   cityNpcPools?: string;
+  locationAccess?: string;
+  houseModuleDefaults?: string;
   houseAccessRefusalRules?: string;
   historicalCharacters?: string;
   historicalCityRosters?: string;

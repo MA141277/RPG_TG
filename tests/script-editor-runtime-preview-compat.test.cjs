@@ -3,9 +3,11 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const path = require("node:path");
+const { execFileSync } = require("node:child_process");
 
 const {
   loadScriptEditorProjectFromScenarioPackFiles,
+  loadScriptEditorProjectFromScenarioPackUrl,
 } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 const {
   validateScriptEditorProjectForRuntimeExport,
@@ -45,6 +47,14 @@ async function createScenarioPackFilesFromTemplateDirectory(root) {
 
   await walk(root);
   return files;
+}
+
+function createJsonResponse(value) {
+  return {
+    ok: true,
+    json: async () => value,
+    text: async () => JSON.stringify(value),
+  };
 }
 
 function createBaseState() {
@@ -134,6 +144,253 @@ test("imported zhuyuanzhang script-editor template stays exportable for runtime 
   assert.deepEqual(diagnostics, []);
 });
 
+test("imported zhuyuanzhang public template preserves legacy flow-playables during script-editor import", async () => {
+  const templateRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+  const legacyFlowPlayables = JSON.parse(
+    fs.readFileSync(path.join(templateRoot, "flow-playables.json"), "utf8")
+  );
+
+  assert.equal(Array.isArray(legacyFlowPlayables), true);
+  assert.ok(legacyFlowPlayables.length > 0);
+
+  const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
+  const project = await loadScriptEditorProjectFromScenarioPackFiles(files);
+
+  assert.equal(project.flows.length, legacyFlowPlayables.length);
+  assert.equal(project.flows[0]?.id, legacyFlowPlayables[0]?.id);
+});
+
+test("script-editor URL import preserves legacy flow-playables from public template manifest", async () => {
+  const templateRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(templateRoot, "pack.json"), "utf8")
+  );
+  const legacyFlowPlayables = JSON.parse(
+    fs.readFileSync(path.join(templateRoot, "flow-playables.json"), "utf8")
+  );
+  const originalFetch = global.fetch;
+
+  global.fetch = async (input) => {
+    const url = typeof input === "string" ? input : input.url;
+    const fileName = url.split("/").pop();
+    if (fileName == null) {
+      return { ok: false, status: 404 };
+    }
+
+    if (fileName === "pack.json") {
+      return createJsonResponse(manifest);
+    }
+
+    const filePath = path.join(templateRoot, fileName);
+    if (!fs.existsSync(filePath)) {
+      return { ok: false, status: 404 };
+    }
+
+    return createJsonResponse(JSON.parse(fs.readFileSync(filePath, "utf8")));
+  };
+
+  try {
+    const project = await loadScriptEditorProjectFromScenarioPackUrl(
+      "https://example.test/script-editor-templates/zhuyuanzhang/pack.json"
+    );
+
+    assert.equal(project.flows.length, legacyFlowPlayables.length);
+    assert.equal(project.flows[0]?.id, legacyFlowPlayables[0]?.id);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("script-editor URL import prefers playable-shells over legacy flow-playables when both are published", async () => {
+  const manifest = {
+    schemaVersion: 1,
+    kind: "scenario-pack",
+    id: "scenario-pack.test.public-playable-precedence",
+    title: "Public Playable Precedence",
+    files: {
+      scenarioProfile: "scenario-profile.json",
+      characters: "characters.json",
+      events: "events.json",
+      dialogues: "dialogues.json",
+      playableShells: "playable-shells.json",
+      flowPlayables: "flow-playables.json",
+    },
+  };
+  const canonicalPlayableShells = [
+    {
+      id: "flow.test.public.canonical",
+      title: "Canonical Public Shell",
+      initialNodeId: "node.start",
+      nodes: [],
+    },
+  ];
+  const legacyFlowPlayables = [
+    {
+      id: "flow.test.public.legacy",
+      title: "Legacy Public Shell",
+      initialNodeId: "node.start",
+      nodes: [],
+    },
+  ];
+  const originalFetch = global.fetch;
+
+  global.fetch = async (input) => {
+    const url = typeof input === "string" ? input : input.url;
+    const fileName = url.split("/").pop();
+
+    switch (fileName) {
+      case "pack.json":
+        return createJsonResponse(manifest);
+      case "scenario-profile.json":
+        return createJsonResponse({
+          id: "profile.test.public-playable-precedence",
+          playerCharacterId: "char.player",
+          chapterId: "chapter.test",
+          initialLocation: {
+            mapId: "map.test",
+            cityId: "city.test",
+            houseId: null,
+            view: "city",
+          },
+        });
+      case "characters.json":
+        return createJsonResponse([{ id: "char.player", name: "Player" }]);
+      case "events.json":
+        return createJsonResponse([]);
+      case "dialogues.json":
+        return createJsonResponse([]);
+      case "playable-shells.json":
+        return createJsonResponse(canonicalPlayableShells);
+      case "flow-playables.json":
+        return createJsonResponse(legacyFlowPlayables);
+      default:
+        return { ok: false, status: 404 };
+    }
+  };
+
+  try {
+    const project = await loadScriptEditorProjectFromScenarioPackUrl(
+      "https://example.test/script-editor-templates/precedence/pack.json"
+    );
+
+    assert.equal(project.flows.length, canonicalPlayableShells.length);
+    assert.equal(project.flows[0]?.id, canonicalPlayableShells[0]?.id);
+    assert.equal(project.flows[0]?.id, "flow.test.public.canonical");
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("zhuyuanzhang runtime and editor template startup profiles stay aligned", () => {
+  const runtimeProfile = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "content",
+        "scenario-packs",
+        "zhuyuanzhang",
+        "scenario-profile.json"
+      ),
+      "utf8"
+    )
+  );
+  const builtinTemplateProfile = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "modules",
+        "script-editor",
+        "builtin-templates",
+        "zhuyuanzhang",
+        "scenario-profile.json"
+      ),
+      "utf8"
+    )
+  );
+  const publicTemplateProfile = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "public",
+        "script-editor-templates",
+        "zhuyuanzhang",
+        "scenario-profile.json"
+      ),
+      "utf8"
+    )
+  );
+
+  assert.deepEqual(builtinTemplateProfile, runtimeProfile);
+  assert.deepEqual(publicTemplateProfile, runtimeProfile);
+});
+
+test("zhuyuanzhang default player startup presentation stays aligned across runtime and templates", () => {
+  const files = [
+    path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang",
+      "characters.json"
+    ),
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "builtin-templates",
+      "zhuyuanzhang",
+      "characters.json"
+    ),
+    path.join(
+      process.cwd(),
+      "public",
+      "script-editor-templates",
+      "zhuyuanzhang",
+      "characters.json"
+    ),
+  ];
+
+  for (const file of files) {
+    const record = JSON.parse(fs.readFileSync(file, "utf8")).find(
+      (entry) => entry.id === "char.player"
+    );
+    assert.equal(record?.title, "流民");
+    assert.equal("clanId" in (record ?? {}), false);
+    assert.equal("affiliationLabel" in (record ?? {}), false);
+  }
+});
+
+test("zhuyuanzhang startup template sync tool reports canonical startup files are aligned", () => {
+  const toolPath = path.join(
+    process.cwd(),
+    "tools",
+    "sync-zhuyuanzhang-startup-templates.mjs"
+  );
+
+  assert.equal(fs.existsSync(toolPath), true);
+
+  const output = execFileSync(process.execPath, [toolPath, "--check"], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+
+  assert.match(output, /already aligned|up to date|no changes/i);
+});
+
 test("runtime-pack round trip preserves menu destinations for retained template events", async () => {
   const templateRoot = path.join(
     process.cwd(),
@@ -164,18 +421,74 @@ test("runtime-pack round trip preserves menu destinations for retained template 
   assert.deepEqual(validateScriptEditorProjectForRuntimeExport(roundTripProject), []);
 });
 
-test("scene runner launches flow-backed event actions through runtime preview", () => {
+test("template runtime-pack export preserves aligned zhuyuanzhang startup profile fields", async () => {
+  const templateRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+  const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
+  const project = await loadScriptEditorProjectFromScenarioPackFiles(files);
+  const exportedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedProfile = JSON.parse(exportedFiles["scenario-profile.json"]);
+
+  assert.deepEqual(exportedProfile.initialCalendar, {
+    year: 1567,
+    month: 1,
+    day: 1,
+  });
+  assert.deepEqual(exportedProfile.initialUi, {
+    reviewDateText: "今日评定",
+    mainHouseMissionText: "前往皇觉寺听候住持训示",
+  });
+  assert.deepEqual(exportedProfile.launchPolicy, {
+    characterSelection: "select",
+    initialView: "map",
+  });
+  assert.deepEqual(
+    exportedProfile.characterStartups?.map((record) => ({
+      characterId: record.characterId,
+      initialUi: record.initialUi,
+    })),
+    [
+      {
+        characterId: "char.kulan_xu_da",
+        initialUi: {
+          reviewDateText: "距离评定 40 天",
+          mainHouseMissionText: "前往评定会场",
+        },
+      },
+      {
+        characterId: "char.kulan_tang_he",
+        initialUi: {
+          reviewDateText: "距离评定 40 天",
+          mainHouseMissionText: "前往评定会场",
+        },
+      },
+      {
+        characterId: "char.kulan_chang_yuchun",
+        initialUi: {
+          reviewDateText: "距离评定 40 天",
+          mainHouseMissionText: "前往评定会场",
+        },
+      },
+    ]
+  );
+});
+
+test("scene runner accepts playableShellsById for flow-backed event actions through runtime preview", () => {
   configureFlowRuntimeRegistries();
 
   try {
     const eventDefinition = {
-      id: "event.playable.flow-preview",
+      id: "event.playable.flow-preview.canonical",
       chapterId: "chapter.test",
-      name: "Flow Preview",
+      name: "Flow Preview Canonical",
       occurrence: "repeatable",
       trigger: { timing: "manual" },
       conditions: [],
-      entrySceneId: "scene.playable.flow-preview",
+      entrySceneId: "scene.playable.flow-preview.canonical",
       actions: [
         {
           type: "launchPlayable",
@@ -190,7 +503,7 @@ test("scene runner launches flow-backed event actions through runtime preview", 
       ],
     };
 
-    const flowPlayablesById = {
+    const playableShellsById = {
       "flow.test.runtime-preview": {
         id: "flow.test.runtime-preview",
         title: "Flow Preview",
@@ -218,7 +531,7 @@ test("scene runner launches flow-backed event actions through runtime preview", 
         [eventDefinition.id]: eventDefinition,
       },
       characterDefinitions: [{ id: "char.player", name: "Player" }],
-      flowPlayablesById,
+      playableShellsById,
     });
 
     assert.equal(result.state.ui.currentView, "minigame");
@@ -228,7 +541,7 @@ test("scene runner launches flow-backed event actions through runtime preview", 
     );
     assert.equal(
       result.state.runtime.playableSession?.ownerContext.sessionToken,
-      "event.playable.flow-preview"
+      "event.playable.flow-preview.canonical"
     );
   } finally {
     resetDefaultPlayableRuntimeRegistries();

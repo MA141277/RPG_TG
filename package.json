@@ -23,6 +23,7 @@
     "spine:externalize-custom-images": "node scripts/externalize-spine-custom-images.mjs",
     "map:yuanmo:runtime-grid": "node tools/build-yuanmo-runtime-grid-from-editor-package.cjs",
     "serve:prod": "node scripts/serve-static.mjs",
+    "sync:zhuyuanzhang-startup-templates": "node tools/sync-zhuyuanzhang-startup-templates.mjs",
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
     "test": "npm run build:test && node --test tests/robustness.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs tests/character-runtime-authoring-compat.test.cjs tests/campaign-runtime-hex-coordinate-system.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",

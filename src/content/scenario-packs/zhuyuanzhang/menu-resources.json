@@ -1,0 +1,241 @@
+[
+  {
+    "id": "menu-resource.city.default",
+    "title": "城市菜单",
+    "entries": [
+      {
+        "id": "menu-entry.city.default.overview",
+        "label": "概况",
+        "menuFamily": "overview",
+        "targetFamily": "info",
+        "targetId": "city-panel.overview",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.intel",
+        "label": "情报",
+        "menuFamily": "intel",
+        "targetFamily": "info",
+        "targetId": "city-panel.intel",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.locations",
+        "label": "地点",
+        "menuFamily": "locations",
+        "targetFamily": "info",
+        "targetId": "city-panel.locations",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.management",
+        "label": "管理",
+        "menuFamily": "management",
+        "targetFamily": "info",
+        "targetId": "city-panel.management",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.begging",
+        "label": "化缘",
+        "menuFamily": "begging",
+        "targetFamily": "minigame",
+        "targetId": "city-begging",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.grain-accounting",
+        "label": "粮账",
+        "menuFamily": "grain-accounting",
+        "targetFamily": "minigame",
+        "targetId": "playable.grain-accounting.instance.template.grain-accounting",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.medicine-compounding",
+        "label": "炼药",
+        "menuFamily": "medicine-compounding",
+        "targetFamily": "minigame",
+        "targetId": "playable.medicine-compounding.instance.template.medicine-compounding",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      }
+    ]
+  },
+  {
+    "id": "menu-resource.house.kulan.temple.primary",
+    "title": "皇觉寺菜单",
+    "entries": [
+      {
+        "id": "review",
+        "label": "评定",
+        "menuFamily": "review",
+        "targetFamily": "event",
+        "targetId": "event.building.template.house.temple.review",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "copy-scripture",
+        "label": "抄经",
+        "menuFamily": "copy-scripture",
+        "targetFamily": "event",
+        "targetId": "event.building.house.kulan.temple.copy_scripture",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "sweep-courtyard",
+        "label": "打扫庭院",
+        "menuFamily": "sweep-courtyard",
+        "targetFamily": "event",
+        "targetId": "event.building.house.kulan.temple.sweep_courtyard",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "carry-water",
+        "label": "挑水",
+        "menuFamily": "carry-water",
+        "targetFamily": "event",
+        "targetId": "event.building.house.kulan.temple.carry_water",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "donate",
+        "label": "捐香火",
+        "menuFamily": "donate",
+        "targetFamily": "event",
+        "targetId": "event.building.template.house.temple.donate",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "leave",
+        "label": "离开",
+        "menuFamily": "leave",
+        "targetFamily": "event",
+        "targetId": "event.building.template.house.temple.leave",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      }
+    ]
+  },
+  {
+    "id": "menu-resource.home.template.primary",
+    "title": "自宅菜单",
+    "entries": []
+  },
+  {
+    "id": "menu-resource.house.template.leader_residence.primary",
+    "title": "将领府邸菜单",
+    "entries": [
+      {
+        "id": "review",
+        "label": "议事",
+        "menuFamily": "review",
+        "targetFamily": "event",
+        "targetId": "event.building.template.house.leader_residence.review",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "leave",
+        "label": "离开",
+        "menuFamily": "leave",
+        "targetFamily": "event",
+        "targetId": "event.building.template.house.leader_residence.leave",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      }
+    ]
+  },
+  {
+    "id": "menu-resource.house.template.keep.primary",
+    "title": "帅府菜单",
+    "entries": []
+  },
+  {
+    "id": "menu-resource.house.template.tea_house.primary",
+    "title": "茶馆菜单",
+    "entries": []
+  },
+  {
+    "id": "menu-resource.house.template.market.primary",
+    "title": "货栈菜单",
+    "entries": []
+  },
+  {
+    "id": "menu-resource.house.template.grain_shop.primary",
+    "title": "粮铺菜单",
+    "entries": []
+  },
+  {
+    "id": "menu-resource.house.template.medicine_house.primary",
+    "title": "药铺菜单",
+    "entries": []
+  },
+  {
+    "id": "menu-resource.house.template.inn.primary",
+    "title": "客栈菜单",
+    "entries": []
+  },
+  {
+    "id": "menu-resource.house.template.temple.primary",
+    "title": "寺庙菜单",
+    "entries": [
+      {
+        "id": "review",
+        "label": "评定",
+        "menuFamily": "review",
+        "targetFamily": "event",
+        "targetId": "event.building.template.house.temple.review",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "donate",
+        "label": "捐香火",
+        "menuFamily": "donate",
+        "targetFamily": "event",
+        "targetId": "event.building.template.house.temple.donate",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "leave",
+        "label": "离开",
+        "menuFamily": "leave",
+        "targetFamily": "event",
+        "targetId": "event.building.template.house.temple.leave",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      }
+    ]
+  }
+]

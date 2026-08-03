@@ -11,6 +11,7 @@ import {
   createRuntimeEventEntity,
   readRuntimeEventActions,
   readRuntimeEventDialogueId,
+  resolveRuntimeEventSceneId,
 } from "./event-entity-projection";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { dispatchEventRoute } from "./event-router";
@@ -124,7 +125,8 @@ function toEventBindingRuntimeCandidate(
 ): EventBindingRuntimeCandidate {
   return {
     ...candidate,
-    sceneId: eventDefinition?.entrySceneId ?? null,
+    sceneId:
+      eventDefinition == null ? null : resolveRuntimeEventSceneId(eventDefinition),
   };
 }
 

@@ -18,6 +18,7 @@ import { activateEvent, type ActivatedEvent } from "./event-activation";
 import {
   createRuntimeEventEntity,
   readRuntimeEventTaskInputs,
+  resolveRuntimeEventSceneId,
 } from "./event-entity-projection";
 import { selectEventCandidate } from "./event-candidate-selector";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
@@ -117,7 +118,7 @@ function toEventRuntimeCandidate(
   return {
     eventId: eventDefinition.id,
     priority: eventDefinition.trigger.priority ?? 0,
-    sceneId: eventDefinition.entrySceneId,
+    sceneId: resolveRuntimeEventSceneId(eventDefinition),
     taskInputs: readRuntimeEventTaskInputs(runtimeEvent),
   };
 }

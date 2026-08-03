@@ -21,7 +21,7 @@
     "cards": "cards.json",
     "valuables": "valuables.json",
     "cityNpcPools": "city-npc-pools.json",
-    "flowPlayables": "flow-playables.json",
+    "playableShells": "playable-shells.json",
     "locationAccess": "location-access.json",
     "houseModuleDefaults": "house-module-defaults.json",
     "cityPortraits": "city-portraits.json",
@@ -30,6 +30,7 @@
     "historicalCharacterIdByCharacterId": "historical-character-id-map.json",
     "dialogues": "dialogues.json",
     "portraits": "portraits.json",
-    "portraitVariants": "portrait-variants.json"
+    "portraitVariants": "portrait-variants.json",
+    "flowPlayables": "flow-playables.json"
   }
 }

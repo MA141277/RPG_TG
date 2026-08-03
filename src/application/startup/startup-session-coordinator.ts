@@ -13,6 +13,7 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "../../domain/scenario-pack";
+import { resolveScenarioProfileForCharacter } from "../../domain/scenario-profile";
 import type { StartupStoryBootstrap } from "./startup-story-bootstrap";
 
 export type StartupSaveData = {
@@ -51,6 +52,7 @@ export type StartupSessionRequest =
       type: "loaded-scenario-pack";
       scenarioPack: ScenarioPackDefinition;
       source: ModSourceDescriptor;
+      selectedCharacterId?: string | null;
     };
 
 export type StartupSessionBootstrap = {
@@ -132,6 +134,7 @@ export async function runStartupSessionCoordinator(
         return createLoadedScenarioPackStartupSession(
           request.scenarioPack,
           request.source,
+          request.selectedCharacterId,
           deps
         );
       default:
@@ -154,6 +157,19 @@ async function createBuiltinStartupSession(
   const activationResult = await deps.activateBuiltinDefaultMod(
     `startup:builtin:${startupScenario}`
   );
+  const activatedContentSource = readActivatedContentSource(activationResult);
+  const startupScenarioPack =
+    startupScenario === "default" ? activatedContentSource : null;
+
+  if (isScenarioPackSource(startupScenarioPack)) {
+    return createScenarioPackStartupSessionResult({
+      activationResult,
+      scenarioPack: startupScenarioPack,
+      selectedCharacterId: selectedCharacter.id,
+      deps,
+    });
+  }
+
   return createStartupSessionResult({
     activationResult,
     contentContext: deps.createStartupContentContext(activationResult),
@@ -231,6 +247,7 @@ async function createScenarioSummaryStartupSession(
       name: scenarioPack.title,
       url: scenarioPack.url,
     },
+    undefined,
     deps
   );
 }
@@ -251,6 +268,7 @@ async function createScenarioFilesStartupSession(
       name: importLabel,
       filePath: importLabel,
     },
+    undefined,
     deps
   );
 }
@@ -258,6 +276,7 @@ async function createScenarioFilesStartupSession(
 async function createLoadedScenarioPackStartupSession(
   scenarioPack: ScenarioPackDefinition,
   source: ModSourceDescriptor,
+  selectedCharacterId: string | null | undefined,
   deps: StartupSessionCoordinatorDeps
 ): Promise<StartupSessionResult> {
   const activationResult = await deps.activateScenarioPackMod(
@@ -265,15 +284,11 @@ async function createLoadedScenarioPackStartupSession(
     source,
     `startup:${source.kind}:${scenarioPack.id}`
   );
-  return createStartupSessionResult({
+  return createScenarioPackStartupSessionResult({
     activationResult,
-    contentContext: deps.createStartupContentContext(activationResult),
-    playerCharacterId: scenarioPack.scenarioProfile.playerCharacterId,
-    createAppState: createStartupAppStateBuilder(
-      () => deps.createScenarioPackAppState(scenarioPack),
-      readScenarioStartupStoryBootstrap(scenarioPack),
-      deps
-    ),
+    scenarioPack,
+    selectedCharacterId,
+    deps,
   });
 }
 
@@ -305,6 +320,13 @@ function readBuiltinStartupStoryBootstrap(
 function readScenarioStartupStoryBootstrap(
   scenarioPack: ScenarioPackDefinition
 ): StartupStoryBootstrap | null {
+  if (
+    scenarioPack.scenarioProfile.launchPolicy?.entryEventTiming ===
+    "after-map-entry"
+  ) {
+    return null;
+  }
+
   const entryEventId = scenarioPack.scenarioProfile.entryEventId;
   return entryEventId == null
     ? null
@@ -329,6 +351,29 @@ function createStartupSessionResult(
   };
 }
 
+function createScenarioPackStartupSessionResult(input: {
+  activationResult: ModActivationResult;
+  scenarioPack: ScenarioPackDefinition;
+  selectedCharacterId: string | null | undefined;
+  deps: StartupSessionCoordinatorDeps;
+}): StartupSessionResult {
+  const resolvedScenarioPack = resolveStartupScenarioPack(
+    input.scenarioPack,
+    input.selectedCharacterId
+  );
+
+  return createStartupSessionResult({
+    activationResult: input.activationResult,
+    contentContext: input.deps.createStartupContentContext(input.activationResult),
+    playerCharacterId: resolvedScenarioPack.scenarioProfile.playerCharacterId,
+    createAppState: createStartupAppStateBuilder(
+      () => input.deps.createScenarioPackAppState(resolvedScenarioPack),
+      readScenarioStartupStoryBootstrap(resolvedScenarioPack),
+      input.deps
+    ),
+  });
+}
+
 function readActivatedContentSource(
   activationResult: ModActivationResult
 ): ScenarioPackDefinition | null {
@@ -350,6 +395,28 @@ function isScenarioPackSource(
   value: ScenarioPackDefinition | null
 ): value is ScenarioPackDefinition {
   return value != null;
+}
+
+function resolveStartupScenarioPack(
+  scenarioPack: ScenarioPackDefinition,
+  selectedCharacterId?: string | null
+): ScenarioPackDefinition {
+  if (selectedCharacterId == null) {
+    return scenarioPack;
+  }
+
+  const resolvedProfile = resolveScenarioProfileForCharacter(
+    scenarioPack.scenarioProfile,
+    selectedCharacterId
+  );
+
+  return {
+    ...scenarioPack,
+    scenarioProfile: {
+      ...resolvedProfile,
+      playerCharacterId: selectedCharacterId,
+    },
+  };
 }
 
 function assertNeverRequest(request: never): never {

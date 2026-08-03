@@ -18,7 +18,7 @@ export type EventPlayableRuntimeInput = {
   characterDefinitions: CharacterDefinition[];
   eventDefinition: EventDefinition | null | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
+  playableShellsById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
@@ -109,9 +109,9 @@ export function runEventPlayableRuntime(
     ...(input.activityDefinitionsById == null
       ? {}
       : { activityDefinitionsById: input.activityDefinitionsById }),
-    ...(input.flowPlayablesById == null
+    ...(input.playableShellsById == null
       ? {}
-      : { flowPlayablesById: input.flowPlayablesById }),
+      : { playableShellsById: input.playableShellsById }),
     ...(input.textEntriesById == null
       ? {}
       : { textEntriesById: input.textEntriesById }),

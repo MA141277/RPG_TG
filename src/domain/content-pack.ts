@@ -88,6 +88,8 @@ export type ContentPackDefinition = {
   dialogues?: RuntimeDialogueDefinition[];
   playables?: PlayableDefinition[];
   playableIntegrations?: PlayableIntegrationDefinition[];
+  playableShells?: FlowPlayableDefinition[];
+  flowPlayables?: FlowPlayableDefinition[];
   flows?: FlowPlayableDefinition[];
   eventBindings?: EventBinding[];
   settlements?: (SettlementDefinition & { id: string; title?: string; nextEventId?: string })[];
