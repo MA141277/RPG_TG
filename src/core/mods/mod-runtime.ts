@@ -423,6 +423,7 @@ type ContributionSource = {
   tasks?: unknown;
   houses?: unknown;
   playables?: unknown;
+  playableShells?: unknown;
   playableIntegrations?: unknown;
 };
 
@@ -445,10 +446,16 @@ function installGameplayContributions(input: {
   );
   const availableTasks = uniqueStrings(collectRecordIds(sources, "tasks"));
   const availableHouses = uniqueStrings(collectRecordIds(sources, "houses"));
-  const availablePlayables = uniqueStrings(collectRecordIds(sources, "playables"));
-  const availablePlayableIntegrations = uniqueStrings(
-    collectRecordIds(sources, "playableIntegrations", "integrationId")
-  );
+  const availablePlayables = uniqueStrings([
+    ...collectRecordIds(sources, "playables"),
+    ...collectRecordIds(sources, "playableShells"),
+  ]);
+  const availablePlayableIntegrations = uniqueStrings([
+    ...collectRecordIds(sources, "playableIntegrations", "integrationId"),
+    ...collectRecordIds(sources, "playableShells").map(
+      (playableId) => `playable.${playableId}.default`
+    ),
+  ]);
   const resolvedHouses = resolveContributionIds({
     family: "houses",
     declaredIds: input.manifest.gameplayContributions?.houses,

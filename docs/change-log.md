@@ -21,6 +21,18 @@
 - Event authors and shipped scenario/template data no longer depend on a separate `launchFlow` action family, which removes the last non-battle authored path that bypassed the canonical playable shell entry.
 - The only deliberately isolated compatibility seam left in this area is `story-battle`; the non-battle flow/building residue is no longer carried by runtime, render, or editor registries.
 
+## 2026-08-03 Temple Copy Scripture Overlay And Tick Loop Runtime Repair
+
+### Changed
+- Updated [src/ui/app-render.ts](/Users/ms/.codex/worktrees/1109/RPG_TG/src/ui/app-render.ts:1) so building-stage playable sessions compose the building underlay whenever the current stage is a building, even when the authored playable owner kind is `external`; `temple-copy-scripture` no longer falls back to a black stage when launched from 皇觉寺 event/runtime wiring.
+- Updated [src/main.ts](/Users/ms/.codex/worktrees/1109/RPG_TG/src/main.ts:1) so shell `detail.autoTickMs` scheduling no longer rejects non-`house` owner kinds; event/dialogue-owned playable shells that still render inside a building stage now advance through the shared playable tick loop instead of stalling after the first command.
+- Updated [src/minigames/temple-copy-scripture/shell.ts](/Users/ms/.codex/worktrees/1109/RPG_TG/src/minigames/temple-copy-scripture/shell.ts:1), [src/application/playables/activity-qte/shell.ts](/Users/ms/.codex/worktrees/1109/RPG_TG/src/application/playables/activity-qte/shell.ts:1), and [src/ui/views/dialogue/dialogue-view.ts](/Users/ms/.codex/worktrees/1109/RPG_TG/src/ui/views/dialogue/dialogue-view.ts:1) so fortune-board overlays show a clear `处理中` primary action and disable repeat clicks / wager edits while scan-flash-cell-pick animation is running, instead of flipping the main button straight back to `游玩` and looking dead.
+- Added [tests/playable-stage-building-underlay.test.cjs](/Users/ms/.codex/worktrees/1109/RPG_TG/tests/playable-stage-building-underlay.test.cjs:1), [tests/tickable-playable-loop-owner-agnostic.test.cjs](/Users/ms/.codex/worktrees/1109/RPG_TG/tests/tickable-playable-loop-owner-agnostic.test.cjs:1), and [tests/fortune-board-processing-labels.test.cjs](/Users/ms/.codex/worktrees/1109/RPG_TG/tests/fortune-board-processing-labels.test.cjs:1) to lock the repaired stage composition, owner-agnostic auto-tick path, and runtime feedback contract.
+
+### Impact
+- 皇觉寺 `抄经` 现在会在真实建筑底图上叠加完整 fortune-board，不再出现纯黑背景或摘要死界面。
+- `游玩 -> 选定此列` 之后的 fortune-board 动画继续由共享 playable runtime 驱动，玩家能从按钮状态和禁用态明确看到玩法正在处理中，不会再误判为点击失效。
+
 ## 2026-08-02 House Playables Converged On Canonical Playable Shells
 
 ### Changed
@@ -4194,3 +4206,17 @@
 ### Impact
 - The shared runtime no longer advertises a second interactive identity path for `city-begging`; its only supported lifecycle is the canonical shell-backed playable path.
 - This further narrows the remaining interactive/battle residue surface to `story-battle`, making the next cleanup target more explicit.
+
+## 2026-08-03 Minigame Preview Runtime Regression Fixes
+
+### Changed
+- Updated [src/ui/main-ui/main-ui-flow.js](/Users/ms/.codex/worktrees/1109/RPG_TG/src/ui/main-ui/main-ui-flow.js) so Script Editor minigame authoring fields commit on `input`, fixing the regression where newly entered title/config/settlement text could be lost when users switched tabs or records before blur/change fired.
+- Updated [src/core/mods/mod-runtime.ts](/Users/ms/.codex/worktrees/1109/RPG_TG/src/core/mods/mod-runtime.ts) so mod gameplay contribution validation treats `playableShells` as available playable ids and synthesizes their default integration ids, matching the scenario-pack manifest path already used by authored flow shells.
+- Updated [src/core/runtime/playable-runtime-registries.ts](/Users/ms/.codex/worktrees/1109/RPG_TG/src/core/runtime/playable-runtime-registries.ts) and [src/application/playables/city-begging/shell.ts](/Users/ms/.codex/worktrees/1109/RPG_TG/src/application/playables/city-begging/shell.ts) to remove browser-side CommonJS `require()` usage from playable registry/bootstrap paths and city-begging overlay rendering, keeping the preview/runtime bundle on the shared ESM path only.
+- Updated [src/ui/app-render.ts](/Users/ms/.codex/worktrees/1109/RPG_TG/src/ui/app-render.ts) so non-house playable stage rendering now tries `shell.renderOverlay()` before falling back to the generic presenter panel, restoring external-owner fortune-board playables like temple copy scripture that otherwise rendered only a non-interactive summary.
+- Added [tests/script-editor-minigame-live-input.test.cjs](/Users/ms/.codex/worktrees/1109/RPG_TG/tests/script-editor-minigame-live-input.test.cjs), updated [tests/mod-runtime-playable-shell-contributions.test.cjs](/Users/ms/.codex/worktrees/1109/RPG_TG/tests/mod-runtime-playable-shell-contributions.test.cjs), and added [tests/browser-runtime-no-commonjs-require.test.cjs](/Users/ms/.codex/worktrees/1109/RPG_TG/tests/browser-runtime-no-commonjs-require.test.cjs) plus [tests/playable-stage-overlay-fallback.test.cjs](/Users/ms/.codex/worktrees/1109/RPG_TG/tests/playable-stage-overlay-fallback.test.cjs) to guard the live-authoring persistence fix, the `playableShells` contribution validation path, the no-CommonJS browser runtime rule, and the shared overlay fallback for external-owned playables.
+
+### Impact
+- Script Editor `玩法` records now preserve user edits during normal typing/navigation flows instead of silently reverting unsaved-looking values.
+- `运行预览` and normal `开始游戏` startup no longer fail on authored `flow.building.*` playable shells or browser-side `require is not defined` crashes; the verified runtime path now reaches角色选择、地图、城市菜单, and the authored temple/city minigame entrypoints can be launched again through the shared playable runtime.
+- External-owner shells that rely on overlay markup are no longer stranded on a summary-only stage: the verified `皇觉寺 -> 抄经` path now renders the full fortune-board controls instead of an unplayable text panel.

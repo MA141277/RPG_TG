@@ -416,6 +416,12 @@ function renderPlayableStageSession(session: NonNullable<AppState["gameState"]["
   if (shell.renderStage != null) {
     return shell.renderStage(session);
   }
+  if (shell.renderOverlay != null) {
+    const overlayMarkup = shell.renderOverlay(session);
+    if (overlayMarkup.length > 0) {
+      return overlayMarkup;
+    }
+  }
 
   const presenter = shell.present(session);
   return `
@@ -472,10 +478,7 @@ function renderStage(
     input.appState.gameState.ui.currentView === "minigame" &&
     activePlayableSession != null
   ) {
-    if (
-      activePlayableSession.ownerContext.ownerKind === "house" &&
-      stage.type === "building"
-    ) {
+    if (stage.type === "building") {
       return `
         ${renderBuildingModuleView({
           stage,

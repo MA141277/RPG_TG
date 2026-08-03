@@ -28,8 +28,10 @@ import {
   setCityBeggingMiniGamePointer,
   updateCityBeggingMiniGameState,
 } from "../builtin/city-begging/city-begging-minigame";
-
-declare const require: (path: string) => unknown;
+import {
+  renderCityBeggingMiniGameOverlay,
+  syncCityBeggingMiniGameOverlay,
+} from "../builtin/city-begging/city-begging-minigame-view";
 
 type CityBeggingRuntimeContext = {
   playerCharacterId: string | null;
@@ -230,13 +232,10 @@ export const cityBeggingPlayableShell: PlayableShell = {
   },
   renderOverlay(session) {
     const state = readSessionState(session);
-    return readCityBeggingViewModule().renderCityBeggingMiniGameOverlay(
-      state?.minigameState ?? null,
-      {
-        playableId: session.playableId,
-        confirmActionId: "confirm-result",
-      }
-    );
+    return renderCityBeggingMiniGameOverlay(state?.minigameState ?? null, {
+      playableId: session.playableId,
+      confirmActionId: "confirm-result",
+    });
   },
   syncOverlay(input) {
     if (input.session?.playableId !== "city-begging") {
@@ -455,42 +454,9 @@ function syncNextOverlayState(
   }
 
   if (nextState.variantState.status === "playing") {
-    readCityBeggingViewModule().syncCityBeggingMiniGameOverlay(
-      input.root,
-      nextState
-    );
+    syncCityBeggingMiniGameOverlay(input.root, nextState);
     return;
   }
 
   input.renderApp();
-}
-
-function readCityBeggingViewModule(): {
-  renderCityBeggingMiniGameOverlay(
-    state: CityBeggingMiniGameState | null,
-    options?: {
-      playableId?: string;
-      confirmActionId?: string;
-    }
-  ): string;
-  syncCityBeggingMiniGameOverlay(
-    root: ParentNode,
-    state: CityBeggingMiniGameState | null
-  ): void;
-} {
-  return require(
-    "../builtin/city-begging/city-begging-minigame-view"
-  ) as {
-    renderCityBeggingMiniGameOverlay(
-      state: CityBeggingMiniGameState | null,
-      options?: {
-        playableId?: string;
-        confirmActionId?: string;
-      }
-    ): string;
-    syncCityBeggingMiniGameOverlay(
-      root: ParentNode,
-      state: CityBeggingMiniGameState | null
-    ): void;
-  };
 }

@@ -258,6 +258,10 @@ function renderActivityQteOverlay(
   activitySession: ActiveActivitySession | null
 ): string {
   if (activitySession?.type === "fortune-board") {
+    const primaryActionLabel = getFortuneBoardPrimaryActionLabel(activitySession.phase);
+    const primaryActionDisabled =
+      activitySession.phase !== "ready" && activitySession.phase !== "scanning";
+    const wagerControlsDisabled = activitySession.phase !== "ready";
     return `
       <div class="c-grain-shop-overlay" data-playable-overlay="${playableId}">
         <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-temple-house-modal c-fortune-board" role="dialog" aria-modal="true">
@@ -306,11 +310,11 @@ function renderActivityQteOverlay(
             ${activitySession.rumorCount > 0 ? "<span>奇闻待触发</span>" : ""}
           </div>
           <div class="c-grain-shop-modal__actions c-fortune-board__actions">
-            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-playable-id="${playableId}" data-playable-action="wager-minus">-</button>
-            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-playable-id="${playableId}" data-playable-action="play">
-              ${activitySession.phase === "scanning" ? "选定此列" : "游玩"}
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-playable-id="${playableId}" data-playable-action="wager-minus" ${wagerControlsDisabled ? "disabled" : ""}>-</button>
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-playable-id="${playableId}" data-playable-action="play" ${primaryActionDisabled ? "disabled" : ""}>
+              ${primaryActionLabel}
             </button>
-            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-playable-id="${playableId}" data-playable-action="wager-plus">+</button>
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-playable-id="${playableId}" data-playable-action="wager-plus" ${wagerControlsDisabled ? "disabled" : ""}>+</button>
           </div>
         </div>
       </div>
@@ -580,6 +584,19 @@ function getFortuneBoardKindLabel(kind: string): string {
       return "奇闻";
     default:
       return "平常";
+  }
+}
+
+function getFortuneBoardPrimaryActionLabel(
+  phase: Extract<ActiveActivitySession, { type: "fortune-board" }>["phase"]
+): string {
+  switch (phase) {
+    case "scanning":
+      return "选定此列";
+    case "ready":
+      return "游玩";
+    default:
+      return "处理中";
   }
 }
 

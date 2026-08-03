@@ -125,6 +125,89 @@ test(
   }
 );
 
+test(
+  "temple-copy-scripture fortune-board advances from column selection into cell scan through runtime actions",
+  { concurrency: false },
+  () => {
+    let runtimeState = runPlayableRuntime({
+      state: createRuntimeState(createBaseState()),
+      request: createLaunchPlayableRequest("temple-copy-scripture", {
+        integrationId: "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+        ownerContext: {
+          ownerKind: "external",
+          ownerId: "event.temple.copy-scripture",
+          returnPolicy: "resume-owner",
+        },
+        payload: {
+          __activity: {
+            definition: activityDefinition,
+            gameState: createBaseState(),
+          },
+        },
+      }),
+      activityDefinitionsById: {
+        [activityDefinition.id]: activityDefinition,
+      },
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("temple-copy-scripture", "play"),
+      activityDefinitionsById: {
+        [activityDefinition.id]: activityDefinition,
+      },
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("temple-copy-scripture", "tick"),
+      activityDefinitionsById: {
+        [activityDefinition.id]: activityDefinition,
+      },
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+
+    const scanningSession =
+      runtimeState.core.runtime.playableSession?.state?.activitySession;
+    assert.equal(scanningSession?.type, "fortune-board");
+    assert.equal(scanningSession?.phase, "scanning");
+    assert.equal(typeof scanningSession?.highlightedColumn, "number");
+
+    runtimeState = runPlayableRuntime({
+      state: runtimeState,
+      request: createPlayableActionRequest("temple-copy-scripture", "play"),
+      activityDefinitionsById: {
+        [activityDefinition.id]: activityDefinition,
+      },
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+    }).state;
+
+    for (let step = 0; step < 4; step += 1) {
+      runtimeState = runPlayableRuntime({
+        state: runtimeState,
+        request: createPlayableActionRequest("temple-copy-scripture", "tick"),
+        activityDefinitionsById: {
+          [activityDefinition.id]: activityDefinition,
+        },
+        characterDefinitions: prototypeCharacters,
+        playerCharacterId,
+      }).state;
+    }
+
+    const cellScanSession =
+      runtimeState.core.runtime.playableSession?.state?.activitySession;
+    assert.equal(cellScanSession?.type, "fortune-board");
+    assert.equal(cellScanSession?.phase, "cell-scan");
+    assert.equal(typeof cellScanSession?.highlightedCellKey, "string");
+  }
+);
+
 test("temple-copy-scripture no longer depends on bespoke playable-runtime launch/action branches", () => {
   const runtimeSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),

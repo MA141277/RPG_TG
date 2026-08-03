@@ -5,6 +5,12 @@ import type {
 } from "../contracts/playable-runtime";
 import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import {
+  createFlowPlayableCommandPrefix,
+  createFlowPlayableIntegrationId,
+  createFlowPlayableTriggerId,
+} from "../../domain/playables/flow";
+import { createFlowPlayableShell } from "../../application/playables/flow/shell";
+import {
   createPlayableDefinitionRegistry,
   type PlayableDefinitionRegistry,
 } from "../registry/playable-definition-registry";
@@ -13,8 +19,13 @@ import {
   type PlayableIntegrationRegistry,
 } from "../registry/playable-integration-registry";
 import { type PlayableShellRegistry } from "../registry/playable-shell-registry";
-
-declare const require: (path: string) => unknown;
+import { createBuiltinPlayableShellRegistry } from "../registry/builtin-playable-shell-registry";
+import {
+  installBuiltinPlayableDefinitions,
+} from "../registry/builtin-playable-definition-registry";
+import {
+  installBuiltinPlayableIntegrations,
+} from "../registry/builtin-playable-integration-registry";
 
 export type PlayableRuntimeRegistries = {
   definitions: PlayableDefinitionRegistry;
@@ -31,21 +42,6 @@ type PlayableContributionSource = {
 let defaultPlayableRuntimeRegistries: PlayableRuntimeRegistries | null = null;
 
 export function createDefaultPlayableRuntimeRegistries(): PlayableRuntimeRegistries {
-  const { installBuiltinPlayableDefinitions } = require(
-    "../registry/builtin-playable-definition-registry"
-  ) as {
-    installBuiltinPlayableDefinitions: (registry: PlayableDefinitionRegistry) => void;
-  };
-  const { installBuiltinPlayableIntegrations } = require(
-    "../registry/builtin-playable-integration-registry"
-  ) as {
-    installBuiltinPlayableIntegrations: (registry: PlayableIntegrationRegistry) => void;
-  };
-  const { createBuiltinPlayableShellRegistry } = require(
-    "../registry/builtin-playable-shell-registry"
-  ) as {
-    createBuiltinPlayableShellRegistry: () => PlayableShellRegistry;
-  };
   const definitions = createPlayableDefinitionRegistry();
   const integrations = createPlayableIntegrationRegistry();
   const shells = createBuiltinPlayableShellRegistry();
@@ -102,23 +98,6 @@ function installFlowPlayableContributions(
   if (!Array.isArray(value)) {
     return;
   }
-
-  const { createFlowPlayableShell } = require(
-    "../../application/playables/flow/shell"
-  ) as {
-    createFlowPlayableShell: (
-      definition: FlowPlayableDefinition
-    ) => ReturnType<PlayableShellRegistry["get"]>;
-  };
-  const {
-    createFlowPlayableCommandPrefix,
-    createFlowPlayableIntegrationId,
-    createFlowPlayableTriggerId,
-  } = require("../../domain/playables/flow") as {
-    createFlowPlayableCommandPrefix: (flowId: string) => string;
-    createFlowPlayableIntegrationId: (flowId: string) => string;
-    createFlowPlayableTriggerId: (flowId: string) => string;
-  };
 
   for (const definition of readFlowPlayableDefinitions(value)) {
     registries.definitions.register({

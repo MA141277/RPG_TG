@@ -1272,7 +1272,7 @@ function readTickableHousePlayableSpec():
     }
   | null {
   const session = appState.gameState.runtime.playableSession;
-  if (session == null || session.ownerContext.ownerKind !== "house") {
+  if (session == null) {
     return null;
   }
 

@@ -225,8 +225,25 @@ function getFortuneBoardKindLabel(kind: string): string {
   }
 }
 
+function getFortuneBoardPrimaryActionLabel(
+  phase: Extract<ActiveActivitySession, { type: "fortune-board" }>["phase"]
+): string {
+  switch (phase) {
+    case "scanning":
+      return "选定此列";
+    case "ready":
+      return "游玩";
+    default:
+      return "处理中";
+  }
+}
+
 export function renderActivityOverlay(activitySession: ActiveActivitySession): string {
   if (activitySession?.type === "fortune-board") {
+    const primaryActionLabel = getFortuneBoardPrimaryActionLabel(activitySession.phase);
+    const primaryActionDisabled =
+      activitySession.phase !== "ready" && activitySession.phase !== "scanning";
+    const wagerControlsDisabled = activitySession.phase !== "ready";
     return `
       <div class="c-grain-shop-overlay" data-activity-overlay="fortune-board">
         <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-temple-house-modal c-fortune-board" role="dialog" aria-modal="true">
@@ -289,11 +306,11 @@ export function renderActivityOverlay(activitySession: ActiveActivitySession): s
             <strong data-fortune-speed-value>${activitySession.animationTickMs}ms</strong>
           </div>
           <div class="c-grain-shop-modal__actions c-fortune-board__actions">
-            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-minus">-</button>
-            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-activity-action="play-board">
-              ${activitySession.phase === "scanning" ? "选定此列" : "游玩"}
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-minus" ${wagerControlsDisabled ? "disabled" : ""}>-</button>
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-activity-action="play-board" ${primaryActionDisabled ? "disabled" : ""}>
+              ${primaryActionLabel}
             </button>
-            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-plus">+</button>
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-plus" ${wagerControlsDisabled ? "disabled" : ""}>+</button>
           </div>
         </div>
       </div>

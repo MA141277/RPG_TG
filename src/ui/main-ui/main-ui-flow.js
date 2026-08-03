@@ -1626,6 +1626,57 @@ export class MainUiFlow {
       }
       return;
     }
+
+    if (target.matches("[data-script-editor-minigame-field]")) {
+      const field = target.dataset.scriptEditorMinigameField;
+      if (
+        field === "id" ||
+        field === "title" ||
+        field === "description" ||
+        field === "notes"
+      ) {
+        this.applyScriptEditorMinigameField(field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-minigame-config-field]")) {
+      const field = target.dataset.scriptEditorMinigameConfigField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorMinigameConfigIndex ?? "-1",
+        10
+      );
+      if (
+        (field === "id" ||
+          field === "label" ||
+          field === "value" ||
+          field === "notes") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorMinigameConfigField(index, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-minigame-settlement-field]")) {
+      const field = target.dataset.scriptEditorMinigameSettlementField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorMinigameSettlementIndex ?? "-1",
+        10
+      );
+      if (
+        (field === "id" ||
+          field === "title" ||
+          field === "scoreMin" ||
+          field === "scoreMax") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorMinigameSettlementField(index, field, target.value);
+      }
+      return;
+    }
   }
 
   onCompositionEnd(event) {
