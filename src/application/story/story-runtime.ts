@@ -10,6 +10,7 @@ import type {
 } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import type {
   ProgressTrackBinding,
   ProgressTrackDefinition,
@@ -66,6 +67,7 @@ type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition> | undefined;
+  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
   eventBindingsById?: Record<string, EventBinding> | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   settlementDefinitionsById?:
@@ -375,6 +377,7 @@ function createStorySceneRunnerContext(
     sceneDefinitionsById: content.sceneDefinitionsById,
     eventDefinitionsById: content.eventDefinitionsById,
     activityDefinitionsById: content.activityDefinitionsById,
+    flowPlayablesById: content.flowPlayablesById,
     characterDefinitions: runtime.characterDefinitions,
     textEntriesById: content.textEntriesById,
     continueFromSceneEvent: ({ state, characterDefinitions, eventDefinition }) =>

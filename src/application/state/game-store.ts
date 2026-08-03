@@ -4,6 +4,7 @@ import type { GameState } from "../../domain/game-state";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { SceneDefinition } from "../../domain/action";
 import type { ChoiceOption } from "../../domain/action";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import { resolveChoiceOption } from "../scene/choice-resolver";
 import { advanceScene, runSceneUntilPause } from "../scene/scene-runner";
 
@@ -12,6 +13,7 @@ export type GameContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
@@ -39,6 +41,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
         sceneDefinitionsById: content.sceneDefinitionsById,
         eventDefinitionsById: content.eventDefinitionsById,
         activityDefinitionsById: content.activityDefinitionsById,
+        flowPlayablesById: content.flowPlayablesById,
         characterDefinitions,
         textEntriesById: content.textEntriesById,
       });
@@ -54,6 +57,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
         sceneDefinitionsById: content.sceneDefinitionsById,
         eventDefinitionsById: content.eventDefinitionsById,
         activityDefinitionsById: content.activityDefinitionsById,
+        flowPlayablesById: content.flowPlayablesById,
         characterDefinitions,
         textEntriesById: content.textEntriesById,
       });

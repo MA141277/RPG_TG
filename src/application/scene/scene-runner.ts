@@ -3,6 +3,7 @@ import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import { runActivity } from "../activity/activity-runner";
 import { applyEffects } from "../effects/effect-applier";
 import {
@@ -17,6 +18,7 @@ export type SceneRunnerContext = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   eventDefinitionsById: Record<string, EventDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
   characterDefinitions: CharacterDefinition[];
   textEntriesById?: Record<string, string> | undefined;
   continueFromSceneEvent?:
@@ -58,6 +60,7 @@ export function runSceneUntilPause(
       characterDefinitions: nextCharacterDefinitions,
       eventDefinition: activeEvent,
       activityDefinitionsById: context.activityDefinitionsById,
+      flowPlayablesById: context.flowPlayablesById,
       textEntriesById: context.textEntriesById,
     });
     if (playableResult?.handled) {

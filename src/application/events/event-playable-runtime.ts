@@ -4,6 +4,7 @@ import type { CityDefinition } from "../../domain/city";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import type { ActivePlayableSession } from "../../core/contracts/playable-runtime";
 import type { RuntimeInteractiveSignal } from "../../core/contracts/runtime-result";
 import {
@@ -17,6 +18,7 @@ export type EventPlayableRuntimeInput = {
   characterDefinitions: CharacterDefinition[];
   eventDefinition: EventDefinition | null | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
@@ -107,6 +109,9 @@ export function runEventPlayableRuntime(
     ...(input.activityDefinitionsById == null
       ? {}
       : { activityDefinitionsById: input.activityDefinitionsById }),
+    ...(input.flowPlayablesById == null
+      ? {}
+      : { flowPlayablesById: input.flowPlayablesById }),
     ...(input.textEntriesById == null
       ? {}
       : { textEntriesById: input.textEntriesById }),

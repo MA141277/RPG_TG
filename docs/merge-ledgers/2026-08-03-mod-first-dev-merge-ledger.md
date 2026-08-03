@@ -20,8 +20,8 @@
 ## Merge Snapshot
 
 - Merge command: `git merge --no-commit --no-ff mod-first-dev`
-- Merge state: `active conflict state`
-- Snapshot note: `The real merge reproduces the earlier dry-run shape. Conflicts are concentrated in main shell/render, map/building/layout, house/runtime, contracts/runtime, script-editor authoring, styles, and docs/tests.`
+- Merge state: `resolved, committed as d5bb961b, and stabilized on merage-mod2ui-1`
+- Snapshot note: `The real merge reproduced the earlier dry-run shape. Conflicts concentrated in main shell/render, map/building/layout, house/runtime, contracts/runtime, script-editor authoring, styles, and docs/tests; post-merge stabilization then closed the retained script-editor preview/round-trip gaps without changing current-branch shell ownership.`
 - Ownership-class highlights:
   - `main-shell-and-render`
     - `src/main.ts`
@@ -60,7 +60,7 @@
     - `AGENTS.md`
     - `tests/**`
 
-## [pending] src/main.ts
+## [resolved] src/main.ts
 
 - Conflict type: `pending`
 - Ownership class: `main-shell-and-render`
@@ -81,7 +81,7 @@
   - `typecheck passed`
   - `build passed`
 
-## [pending] src/ui/main-ui/main-ui-flow.js
+## [resolved] src/ui/main-ui/main-ui-flow.js
 
 - Conflict type: `pending`
 - Ownership class: `main-shell-and-render`
@@ -100,7 +100,7 @@
 - Post-merge verification:
   - `Manual navigation/UI smoke and editor-entry smoke.`
 
-## [pending] src/application/layout-editor/layout-editor-actions.ts
+## [resolved] src/application/layout-editor/layout-editor-actions.ts
 
 - Conflict type: `pending`
 - Ownership class: `house-and-layout-editor`
@@ -119,7 +119,7 @@
 - Post-merge verification:
   - `Layout-editor smoke and building layout regression checks.`
 
-## [pending] src/application/house/house-runtime.ts
+## [resolved] src/application/house/house-runtime.ts
 
 - Conflict type: `pending`
 - Ownership class: `house-and-layout-editor`
@@ -138,7 +138,7 @@
 - Post-merge verification:
   - `House-flow smoke checks and targeted house runtime tests chosen during merge execution.`
 
-## [pending] src/modules/script-editor/ui/main-ui-script-editor-module.js
+## [resolved] src/modules/script-editor/ui/main-ui-script-editor-module.js
 
 - Conflict type: `pending`
 - Ownership class: `script-editor-authoring`
@@ -157,7 +157,7 @@
 - Post-merge verification:
   - `Open editor, enter workspace, and inspect the retained editor surfaces.`
 
-## [pending] src/modules/script-editor/application/runtime-pack-export.ts
+## [resolved] src/modules/script-editor/application/runtime-pack-export.ts
 
 - Conflict type: `pending`
 - Ownership class: `script-editor-authoring`
@@ -178,7 +178,7 @@
   - `typecheck passed`
   - `build passed`
 
-## [pending] src/modules/script-editor/application/runtime-pack-import.ts
+## [resolved] src/modules/script-editor/application/runtime-pack-import.ts
 
 - Conflict type: `pending`
 - Ownership class: `script-editor-authoring`
@@ -198,7 +198,7 @@
   - `build:test passed`
   - `typecheck passed`
 
-## [pending] src/styles/script-editor.css
+## [resolved] src/styles/script-editor.css
 
 - Conflict type: `pending`
 - Ownership class: `styles`
@@ -229,3 +229,31 @@
   - `Added EventRouteCommand and openCityMenuPanel support as a shared contract seam already implied by existing editor export lowering.`
 - `src/core/contracts/playable-runtime.ts`
   - `Added PlayableSettlementRoute compatibility types so imported editor export/import code can compile against the current runtime baseline.`
+
+## Post-Merge Stabilization Notes (2026-08-03)
+
+### Smoke Findings
+
+- Passed: `http://localhost:5173/` loaded without framework overlay or console errors; current branch main menu still exposed `开始游戏 / 继续游戏 / JSON 开局 / 剧本编辑`.
+- Passed: `剧本编辑 -> 使用模板 -> 运行预览` no longer failed closed in the editor and successfully entered the Zhu Yuanzhang temple opening flow.
+- Passed: preserved current-branch temple/house surfaces remained intact through smoke, including council flow, assignment modal, task sidebar, character detail panel, and NPC interaction dialog shells.
+
+### Fixed Compatibility Gaps
+
+- `src/modules/script-editor/application/runtime-pack-export.ts` plus the active content/story/scene/dialogue/game-store runtime seams were stabilized so retained editor `launchFlow` actions can preview through runtime as derived flow-backed `launchPlayable` sessions.
+- `src/modules/script-editor/application/runtime-pack-import.ts` now canonicalizes runtime `openCityMenuPanel` actions back into editor `destination.family = "menu"` records during runtime-pack import, preventing export -> import round trips from becoming non-exportable.
+
+### Regression Coverage
+
+- `tests/script-editor-runtime-preview-compat.test.cjs`
+  - `imported zhuyuanzhang script-editor template stays exportable for runtime preview`
+  - `runtime-pack round trip preserves menu destinations for retained template events`
+  - `scene runner launches flow-backed event actions through runtime preview`
+
+### Verification
+
+- Browser smoke: `main menu -> script editor -> template workspace -> runtime preview -> temple opening / council / assignment / NPC dialog` passed with empty browser `error/warn` logs.
+- `pnpm run build:test` passed.
+- `node --test tests/script-editor-runtime-preview-compat.test.cjs` passed.
+- `pnpm run typecheck` passed.
+- `pnpm run build` passed with existing Vite asset/script warnings unrelated to this merge slice.

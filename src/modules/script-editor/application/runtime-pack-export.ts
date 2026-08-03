@@ -1158,6 +1158,38 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     } as PlayableIntegrationDefinition & { editorRecordId: string });
   }
   const playableShells = materializeRuntimeFlowDefinitions(project.flows, diagnostics);
+  for (const flow of playableShells) {
+    const integrationId = createDerivedFlowIntegrationId(flow.id);
+    if (integrationIds.has(integrationId)) {
+      diagnostics.push({
+        code: "duplicate-id",
+        fieldPath: `project.flows.${flow.id}.integrationId`,
+        message: `Duplicate playable integration id "${integrationId}" cannot be exported.`,
+      });
+      continue;
+    }
+
+    integrationIds.add(integrationId);
+    playablesById.set(flow.id, {
+      id: flow.id,
+      commandPrefix: `playable.${flow.id}.`,
+    });
+    playableIntegrations.push({
+      integrationId,
+      playableId: flow.id,
+      ownerDefaults: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+      trigger: {
+        triggerId: createDerivedFlowTriggerId(flow.id),
+        ownerKind: "external",
+        trigger: "manual-launch",
+      },
+      outcomeConfig: {},
+    });
+  }
 
   return {
     playables: Array.from(playablesById.values()),
@@ -1483,6 +1515,14 @@ function createDerivedMinigameTriggerId(
   playableId: string
 ): string {
   return `trigger.playable.${playableId}.instance.${minigameId}`;
+}
+
+function createDerivedFlowIntegrationId(flowId: string): string {
+  return `playable.${flowId}.default`;
+}
+
+function createDerivedFlowTriggerId(flowId: string): string {
+  return `trigger.playable.${flowId}.manual-launch`;
 }
 
 function isPlayableReturnPolicy(value: string): value is PlayableReturnPolicy {
@@ -2324,6 +2364,45 @@ function lowerEventRouteCommands(
       continue;
     }
     if (
+      action?.type === "launchFlow" &&
+      typeof action.flowId === "string" &&
+      action.flowId.trim().length > 0 &&
+      action.ownerContext != null
+    ) {
+      const ownerKind = action.ownerContext.ownerKind;
+      const ownerId = action.ownerContext.ownerId;
+      const returnPolicy = action.ownerContext.returnPolicy;
+      if (
+        (ownerKind !== "house" &&
+          ownerKind !== "dialogue" &&
+          ownerKind !== "task" &&
+          ownerKind !== "external") ||
+        !isPlayableReturnPolicy(returnPolicy)
+      ) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
+          message: "launchFlow actions require a supported ownerContext contract.",
+        });
+        return null;
+      }
+      const flowId = action.flowId.trim();
+      actions.push({
+        type: "launchPlayable",
+        playableId: flowId,
+        integrationId: createDerivedFlowIntegrationId(flowId),
+        ownerContext: {
+          ownerKind,
+          ownerId:
+            typeof ownerId === "string" && ownerId.trim().length > 0
+              ? ownerId.trim()
+              : null,
+          returnPolicy,
+        },
+      });
+      continue;
+    }
+    if (
       action?.type === "launchPlayable" &&
       typeof action.playableId === "string" &&
       action.playableId.trim().length > 0 &&
@@ -2368,7 +2447,7 @@ function lowerEventRouteCommands(
       code: "unsupported-lowering",
       fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
       message:
-        "Event export currently supports only closeBuilding and launchPlayable runtime actions.",
+        "Event export currently supports only closeBuilding, launchFlow, and launchPlayable runtime actions.",
     });
     return null;
   }

@@ -465,6 +465,14 @@ function mapImportedEvents(
       (action): action is Extract<NonNullable<EventDefinition["actions"]>[number], { type: "launchPlayable" }> =>
         action.type === "launchPlayable"
     );
+    const importedMenuAction = (eventDefinition.actions ?? []).find(
+      (
+        action
+      ): action is Extract<
+        NonNullable<EventDefinition["actions"]>[number],
+        { type: "openCityMenuPanel" }
+      > => action.type === "openCityMenuPanel"
+    );
     const importedMinigameId =
       importedPlayableAction == null
         ? ""
@@ -474,13 +482,23 @@ function mapImportedEvents(
         ? "dialogue"
         : importedMinigameId.length > 0
           ? "minigame"
+          : importedMenuAction != null
+            ? "menu"
           : "event";
     const destinationTargetId =
       destinationFamily === "dialogue"
         ? importedDialogueId
         : destinationFamily === "minigame"
           ? importedMinigameId
+          : destinationFamily === "menu"
+            ? importedMenuAction?.panelId ?? ""
           : eventDefinition.nextEventId ?? "";
+    const importedActions =
+      destinationFamily === "menu"
+        ? (eventDefinition.actions ?? []).filter(
+            (action) => action.type !== "openCityMenuPanel"
+          )
+        : eventDefinition.actions ?? [];
 
     return {
       id: eventDefinition.id,
@@ -490,7 +508,7 @@ function mapImportedEvents(
       occurrence: eventDefinition.occurrence,
       ...(eventDefinition.type === "settlement" ? { type: "settlement" as const } : {}),
       participants: eventDefinition.participants ?? [],
-      actions: eventDefinition.actions ?? [],
+      actions: importedActions,
       ...(eventDefinition.type === "settlement" &&
       typeof eventDefinition.settlementId === "string"
         ? { settlementId: eventDefinition.settlementId }

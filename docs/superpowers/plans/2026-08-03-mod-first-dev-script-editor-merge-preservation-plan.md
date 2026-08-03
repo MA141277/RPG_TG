@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `completed-but-open`
+- Status: `completed`
 - Last Updated: `2026-08-03`
-- Current Focus: `Local merge resolution is complete; remaining work is manual runtime smoke, review of imported docs/assets, and deciding whether to commit the merge.`
-- Next Step: `Review the resolved file set, run manual script-editor smoke if desired, then either trim remaining docs/assets or create the merge commit.`
-- Verification: `Plan lint remains blocked only by unrelated docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md. Local merge resolution has no unmerged files, build:test passed, typecheck passed, and build passed with existing Vite asset warnings.`
-- Notes: `Execution is branch-local and intentionally not promoted into docs/superpowers/project-progress.md because the repository's canonical active child remains unrelated.`
+- Current Focus: `Closed; merge preservation and post-merge stabilization are both complete on merage-mod2ui-1.`
+- Next Step: `None inside this child unless a new retained script-editor regression is reported.`
+- Verification: `build:test passed; targeted script-editor runtime preview compat tests passed; typecheck passed; build passed with existing Vite asset/script warnings; lint:plans was rerun and failed only because unrelated docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md is malformed and missing its title section.`
+- Notes: `Execution stayed branch-local and intentionally was not promoted into docs/superpowers/project-progress.md because the repository's canonical active child remains unrelated.`
 
 ## Progress Log
 
@@ -35,6 +35,10 @@
   - Summary: `Resolved the merge locally by restoring the full src tree to the current branch baseline, replaying only src/modules/script-editor/** and src/styles/script-editor.css from mod-first-dev, trimming unrelated governance/generated/test/tool additions, and adding a small centralized compatibility layer for the imported editor contracts.`
   - Verification: `git diff --name-only --diff-filter=U` returned empty output; `PATH=/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH /Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm run build:test`; `PATH=/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH /Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm run typecheck`; `PATH=/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH /Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm run build`
   - Next: `Run manual editor smoke if needed, then review/commit the merge result or trim any remaining imported documentation before commit.`
+- 2026-08-03
+  - Summary: `Completed the requested post-merge stabilization order: browser smoke confirmed preserved current-branch temple/house UI still worked, then retained script-editor runtime preview and runtime-pack round-trip compatibility gaps were fixed, and targeted regressions were added for both flows.`
+  - Verification: `Browser smoke against http://localhost:5173/` passed with empty `error/warn` logs; `PATH=/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH /Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm run build:test`; `PATH=/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH node --test tests/script-editor-runtime-preview-compat.test.cjs`; `PATH=/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH /Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm run typecheck`; `PATH=/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH /Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm run build`; `PATH=/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH /Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm run lint:plans` failed only because unrelated `docs/superpowers/plans/2026-07-23-haozhou-coin-ingot-flight.md` is malformed.
+  - Next: `No remaining merge-preservation actions inside this child; only unrelated plan-lint debt remains outside the merge scope.`
 
 ---
 

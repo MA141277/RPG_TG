@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-03 mod-first-dev Merge Stabilization
+
+### Changed
+- `src/modules/script-editor/application/runtime-pack-export.ts` 现在会把 retained editor 里的 `launchFlow` 事件动作降级成派生的 `launchPlayable` runtime action；同时，`src/application/content/active-game-content.ts`、`src/application/story/story-runtime.ts`、`src/application/scene/scene-runner.ts`、`src/application/events/event-playable-runtime.ts`、`src/application/state/game-store.ts` 与对应 `core` scene/dialogue runtime contract 会继续透传 `flowPlayablesById`，让 runtime preview 里的 flow-backed 事件真正能启动。
+- `src/modules/script-editor/application/runtime-pack-import.ts` 现在会在 runtime-pack round trip 时把 `openCityMenuPanel` 重新归一回编辑器的 `destination.family = "menu"` 结构，并移除已被 destination 吸收的兼容 action，避免导出后再导回编辑器就失去菜单目的地。
+- 新增 `tests/script-editor-runtime-preview-compat.test.cjs`，锁定三条 merge 后必须继续成立的 retained editor 路径：模板可直接做 runtime preview、flow-backed 事件预览可启动、runtime-pack round trip 不会破坏菜单 destination。
+
+### Impact
+- `mod-first-dev` 保留下来的剧本/骨架编辑器现在不仅能从当前分支 UI 进入工作台并启动预览，还能对模板做“导出运行包 -> 再导回编辑器”而不丢失菜单类事件结构。
+- 当前分支保留的寺庙/house UI、属性面板、NPC 交互在这次 merge 稳定化过程中保持不变；本轮修复只收敛在 script-editor import/export 与 runtime preview 的有界兼容层。
+
 ## 2026-07-31 Playable Family Removal Slice
 
 ### Changed

@@ -26,6 +26,7 @@ import type {
 import type { TaskDefinition } from "../../core/contracts/task-runtime";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import type { ValuableItemDefinition } from "../../domain/valuable-item";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import { createCompatibleSceneDefinitions } from "../../core/runtime/mod-first-compatibility";
 
 type Identified = { id: string };
@@ -54,6 +55,8 @@ export type ActiveGameContent = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   dialogueDefinitions: RuntimeDialogueDefinition[];
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
+  flowPlayables: FlowPlayableDefinition[];
+  flowPlayablesById: Record<string, FlowPlayableDefinition>;
   eventBindings: EventBinding[];
   eventBindingsById: Record<string, EventBinding>;
   settlementDefinitions: (SettlementDefinition & {
@@ -130,6 +133,7 @@ export type ActiveGameContentContext = {
     progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
     progressTrackBindingsById: Record<string, ProgressTrackBinding>;
     activityDefinitionsById: Record<string, ActivityDefinition>;
+    flowPlayablesById: Record<string, FlowPlayableDefinition>;
     cityDefinitionsById: Record<string, CityDefinition>;
     houseDefinitionsById: Record<string, HouseDefinition>;
     textEntriesById: Record<string, string>;
@@ -153,6 +157,7 @@ export function createActiveGameContent(
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
+  const flowPlayables = resolvedPack.flows ?? [];
   const eventBindings = resolvedPack.eventBindings ?? [];
   const settlementDefinitions = resolvedPack.settlements ?? [];
   const progressTrackDefinitions = resolvedPack.progressTracks ?? [];
@@ -221,6 +226,10 @@ export function createActiveGameContent(
         dialogueDefinition.id,
         dialogueDefinition,
       ])
+    ),
+    flowPlayables,
+    flowPlayablesById: Object.fromEntries(
+      flowPlayables.map((flowDefinition) => [flowDefinition.id, flowDefinition])
     ),
     eventBindings,
     eventBindingsById: Object.fromEntries(
@@ -307,6 +316,7 @@ export function createActiveGameContentContext(
       eventDefinitionsById: gameContent.eventDefinitionsById,
       sceneDefinitionsById: gameContent.sceneDefinitionsById,
       dialogueDefinitionsById: gameContent.dialogueDefinitionsById,
+      flowPlayablesById: gameContent.flowPlayablesById,
       eventBindingsById: gameContent.eventBindingsById,
       settlementDefinitionsById: gameContent.settlementDefinitionsById,
       progressTrackDefinitionsById: gameContent.progressTrackDefinitionsById,
