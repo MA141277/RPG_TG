@@ -5,6 +5,17 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-08-03 AI Collaboration Governance
+
+### Changed
+- Added [docs/ai-collaboration-governance.md](/D:/workspace/project/RPG_TG/docs/ai-collaboration-governance.md:1) as the repository execution-time rule set for AI collaborators working on scenario packs, Script Editor import/export/runtime preview, event routing, building arrangements, navigation, playable/minigame/QTE/story-battle behavior, scenario-specific UI/code, and shipped assets/resources.
+- Updated [AGENTS.md](/D:/workspace/project/RPG_TG/AGENTS.md:1) so AI collaborators must apply the governance before related work and must default non-framework/non-editor/non-shared-mechanism requests to scenario-pack JSON/data authoring.
+- Extended the AI collaboration rules with schema/contract versioning, stable IDs, deletion/migration audits, runtime preview acceptance, round-trip preservation, reference integrity, ownership, no silent duplication, acceptance evidence, text localization, deterministic JSON ordering, compatibility policy, asset size/format, external resource safety, and explicit base-pack dependency boundaries.
+- Added [tests/ai-collaboration-governance.test.cjs](/D:/workspace/project/RPG_TG/tests/ai-collaboration-governance.test.cjs:1) plus `npm run lint:ai-collaboration-governance` so the AI collaboration rule surface is guarded by a focused test.
+
+### Impact
+- Scenario-pack changes now have a single AI-facing execution rule covering default JSON ownership, runtime/editor template mirroring, unified event routing, playable governance, resource portability, import/export/preview symmetry, fail-closed behavior, reference/owner integrity, round-trip acceptance, and verification expectations.
+
 ## 2026-08-03 Event-Owned Navigation Runtime Route Command
 
 ### Changed

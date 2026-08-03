@@ -2,6 +2,40 @@
 
 This repository uses Script Editor-authored building arrangements and event-triggered playable flows for building behavior.
 
+## AI Collaboration Governance
+
+AI collaborators must follow `docs/ai-collaboration-governance.md` before changing scenario packs, Script Editor import/export/runtime preview, event routing, building arrangements, navigation, playable/minigame/QTE/story-battle behavior, scenario-specific UI/code, or shipped assets/resources.
+
+This is an execution-time rule, not a human-facing suggestion. If a request is not explicitly about changing the mod framework, Script Editor capability, shared runtime, shared UI renderer, or shared playable contract, default to treating the work as scenario-pack data authoring.
+
+The governing hard rules include:
+
+- Default-To-Scenario-Pack Rule
+- Scenario Pack Mirror Rule
+- Unified Event Route Rule
+- Playable / Minigame Governance
+- Asset / Resource Governance
+- Schema / Contract Version Rule
+- ID Stability Rule
+- Deletion / Migration Rule
+- Runtime Preview Acceptance Rule
+- Round-Trip Rule
+- Reference Integrity Rule
+- Ownership Rule
+- No Silent Duplication Rule
+- Acceptance Evidence Rule
+- Localization / Text Rule
+- Ordering / Determinism Rule
+- Backward Compatibility Policy Rule
+- Asset Size / Format Rule
+- Security / External Resource Rule
+- No Hidden Base-Pack Dependency Rule
+- No Scenario Branch Rule
+- Export / Import / Preview Symmetry
+- Fail-Closed Rule
+- Persistent State Rule
+- Verification Rule
+
 ## Mandatory Trigger
 
 If a user asks to add or change building behavior, first inspect whether the behavior belongs in:
