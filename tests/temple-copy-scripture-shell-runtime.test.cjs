@@ -64,7 +64,12 @@ test("temple-copy-scripture is registered as a canonical playable shell", () => 
   );
 
   assert.match(registrySource, /templeCopyScriptureShell/);
-  assert.match(definitionSource, /templeCopyScriptureShell\.manifest\.commandPrefix/);
+  assert.doesNotMatch(definitionSource, /templeCopyScriptureShell/);
+  assert.match(definitionSource, /id: "temple-copy-scripture"/);
+  assert.match(
+    definitionSource,
+    /commandPrefix: "playable\.temple-copy-scripture\."/
+  );
   assert.match(contractSource, /playable\.temple-copy-scripture\./);
 });
 

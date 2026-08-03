@@ -3,6 +3,7 @@ dist/
 .test-dist/
 .runtime/
 .codex-runtime/
+.codex/config.toml
 .worktrees/
 tmp/
 dev-server-codex.log

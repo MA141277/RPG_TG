@@ -157,6 +157,16 @@ test("playable runtime no longer owns legacy building-flow or direct flow reduce
   assert.doesNotMatch(source, /playableShellsById/);
 });
 
+test("playable runtime registries stay browser-safe for script editor preview", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/playable-runtime-registries.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /\brequire\s*\(/);
+  assert.doesNotMatch(source, /declare const require/);
+});
+
 test("builtin playable registries no longer advertise building-flow", () => {
   const definitionRegistrySource = fs.readFileSync(
     path.join(

@@ -5,6 +5,16 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-08-03 Script Editor Preview Registry Browser Safety
+
+### Changed
+- Updated [src/core/runtime/playable-runtime-registries.ts](/D:/workspace/project/RPG_TG/src/core/runtime/playable-runtime-registries.ts:1) so script-editor runtime preview no longer executes CommonJS `require()` in the browser when configuring activated playable registries.
+- Updated [src/core/registry/builtin-playable-definition-registry.ts](/D:/workspace/project/RPG_TG/src/core/registry/builtin-playable-definition-registry.ts:1) so builtin playable definitions no longer import shell modules during registry initialization, avoiding the activity-QTE/playable-result-routing/runtime-registry cycle while preserving the same canonical command prefixes.
+- Added/updated targeted regression coverage in [tests/event-flow-playable-runtime.test.cjs](/D:/workspace/project/RPG_TG/tests/event-flow-playable-runtime.test.cjs:1), [tests/activity-qte-shell-runtime.test.cjs](/D:/workspace/project/RPG_TG/tests/activity-qte-shell-runtime.test.cjs:1), and [tests/temple-copy-scripture-shell-runtime.test.cjs](/D:/workspace/project/RPG_TG/tests/temple-copy-scripture-shell-runtime.test.cjs:1) to keep the preview registry path browser-safe and the definition registry decoupled from shell imports.
+
+### Impact
+- The "Script Editor -> Use Template -> Run Preview" path can initialize playable registries in the browser without `require is not defined`, while shell-owned playables continue to register through the shared shell registry.
+
 ## 2026-08-03 Flow Playables Converged On The Canonical Shell Path
 
 ### Changed

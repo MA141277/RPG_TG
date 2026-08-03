@@ -82,7 +82,9 @@ test("activity-qte is registered as a canonical playable shell", () => {
   );
 
   assert.match(registrySource, /activityQtePlayableShell/);
-  assert.match(definitionSource, /activityQtePlayableShell\.manifest\.commandPrefix/);
+  assert.doesNotMatch(definitionSource, /activityQtePlayableShell/);
+  assert.match(definitionSource, /id: "activity-qte"/);
+  assert.match(definitionSource, /commandPrefix: "playable\.activity-qte\."/);
   assert.match(scenarioPlayablesSource, /playable\.activity-qte\./);
   assert.match(templatePlayablesSource, /playable\.activity-qte\./);
 });
