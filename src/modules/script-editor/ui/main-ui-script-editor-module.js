@@ -16,12 +16,10 @@ const {
   SCRIPT_EDITOR_BUILDING_LAYOUT_NODE_KINDS,
   SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS,
   SCRIPT_EDITOR_DIALOGUE_MODES,
-  SCRIPT_EDITOR_DIALOGUE_NODE_TYPES,
   appendScriptEditorDialogueCast,
   SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS,
   SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES,
   SCRIPT_EDITOR_EVENT_TYPES,
-  SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS,
   SCRIPT_EDITOR_MINIGAME_OUTCOMES,
   SCRIPT_EDITOR_MINIGAME_OWNER_KINDS,
   SCRIPT_EDITOR_MINIGAME_RETURN_POLICIES,
@@ -37,7 +35,6 @@ const {
   appendScriptEditorCityMountedBuilding,
   appendScriptEditorCityMountedBuildingNpc,
   appendScriptEditorDialogueOption,
-  appendScriptEditorDialogueParticipant,
   appendScriptEditorEventBindingConditionItem,
   appendScriptEditorEventRelationEntry,
   appendScriptEditorLocationAttribute,
@@ -108,7 +105,6 @@ const {
   removeScriptEditorCityMountedBuildingNpc,
   removeScriptEditorDialogueCast,
   removeScriptEditorDialogueOption,
-  removeScriptEditorDialogueParticipant,
   removeScriptEditorEventBindingConditionItem,
   removeScriptEditorEventRelationEntry,
   removeScriptEditorItemCustomProperty,
@@ -152,7 +148,6 @@ const {
   updateScriptEditorDialogueCastField,
   updateScriptEditorDialogueField,
   updateScriptEditorDialogueOptionField,
-  updateScriptEditorDialogueParticipant,
   updateScriptEditorEventBindingConditionItemField,
   updateScriptEditorEventBindingConditionOperator,
   updateScriptEditorEventBindingField,
@@ -627,7 +622,9 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "renderScriptEditorMinigameTabButton",
   "renderScriptEditorStoryNodeTabPanel",
   "renderScriptEditorDialogueTabPanel",
-  "renderScriptEditorDialogueNodeReferenceSelect",
+  "renderScriptEditorDialogueCastPanel",
+  "renderScriptEditorDialogueRoutePanel",
+  "renderScriptEditorDialogueReferenceSelect",
   "createScriptEditorPersonReferenceOptions",
   "createScriptEditorTextEntryReferenceOptions",
   "createScriptEditorDialogueReferenceOptions",
@@ -721,16 +718,16 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
   "removeScriptEditorStoryRelation",
   "applyScriptEditorStoryRelationField",
   "applyScriptEditorDialogueField",
+  "addScriptEditorDialogueCast",
+  "removeScriptEditorDialogueCast",
+  "applyScriptEditorDialogueCastField",
+  "addScriptEditorDialogueOption",
+  "removeScriptEditorDialogueOption",
+  "applyScriptEditorDialogueOptionField",
   "applyScriptEditorSettlementField",
   "addScriptEditorSettlementContent",
   "removeScriptEditorSettlementContent",
   "applyScriptEditorSettlementContentField",
-  "addScriptEditorDialogueParticipant",
-  "removeScriptEditorDialogueParticipant",
-  "applyScriptEditorDialogueParticipantField",
-  "addScriptEditorDialogueNode",
-  "removeScriptEditorDialogueNode",
-  "applyScriptEditorDialogueNodeField",
   "applyScriptEditorEventField",
   "applyScriptEditorEventRepeatable",
   "addScriptEditorEventBinding",
@@ -913,6 +910,7 @@ export function installMainUiFlowScriptEditorModule(host, options) {
     host.scriptEditorScrollTop = 0;
     host.scriptEditorRuntimePreviewSession = null;
     host.scriptEditorStageConfigurationHelpOpen = false;
+    host.scriptEditorDialogueHelpOpen = false;
     host.scriptEditorExportDiagnosticsCache = null;
 
   const module = new MainUiFlowScriptEditorModule();
@@ -6711,6 +6709,15 @@ class MainUiFlowScriptEditorModule {
   renderScriptEditorDialogueTabPanel(dialogue) {
     return `
       <section class="c-script-editor-narrative-panel" aria-label="对话基础分栏">
+        <div class="c-script-editor-narrative-panel__header">
+          <div>
+            <p class="c-script-editor-editor-card__eyebrow">对话基础</p>
+            <h3 class="c-script-editor-editor-card__title">基础</h3>
+          </div>
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="open-dialogue-help">
+            帮助
+          </button>
+        </div>
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
             <span>对话标题</span>
@@ -6749,22 +6756,42 @@ class MainUiFlowScriptEditorModule {
         </div>
         ${this.renderScriptEditorDialogueCastPanel(dialogue)}
         ${this.renderScriptEditorDialogueRoutePanel(dialogue)}
-        ${this.renderScriptEditorSystemDetails(
-          "高级设置与兼容字段",
-          "这里只保留对话 ID 与旧结构兼容信息。新内容请只维护基础信息、出场人物与后续路由。",
-          `
-            <div class="c-script-editor-form-grid">
-              <label class="c-script-editor-form-field">
-                <span>对话 ID</span>
-                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(dialogue.id)}" data-script-editor-dialogue-field="id" />
-              </label>
-              <label class="c-script-editor-form-field">
-                <span>所属剧情 ID（兼容）</span>
-                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(dialogue.storyNodeId ?? "")}" data-script-editor-dialogue-field="storyNodeId" />
-              </label>
-            </div>
-          `
-        )}
+        ${
+          this.scriptEditorDialogueHelpOpen
+            ? `
+              <section class="c-script-editor-stage-configuration-help" role="dialog" aria-modal="true" aria-label="对话模块帮助">
+                <button
+                  type="button"
+                  class="c-script-editor-stage-configuration-help__backdrop"
+                  data-script-editor-action="close-dialogue-help"
+                  aria-label="关闭帮助"
+                ></button>
+                <div class="c-script-editor-stage-configuration-help__panel">
+                  <div class="c-script-editor-narrative-panel__header">
+                    <div>
+                      <p class="c-script-editor-editor-card__eyebrow">功能说明</p>
+                      <h3 class="c-script-editor-editor-card__title">对话模块怎么用</h3>
+                    </div>
+                    <button
+                      type="button"
+                      class="c-main-ui-json-text-button"
+                      data-script-editor-action="close-dialogue-help"
+                    >
+                      关闭
+                    </button>
+                  </div>
+                  <div class="c-script-editor-stage-configuration-help__body">
+                    <p>这个模块只编辑一屏对话实例。事件负责进入对话，对话负责展示内容，结束后再把结果回交给事件继续路由。</p>
+                    <p>适用场景：短对白、接任务提示、单次选择分支。复杂连续演出不要在这里堆节点，而是拆成多条事件链和多屏对话。</p>
+                    <p>填写顺序建议：1. 先选对话类型。2. 绑定对话文本和当前发言人物。3. 配置出场人物左右站位。4. 最后填写后续事件或选项路由。</p>
+                    <p>示例：无选择对话。方丈说“今日先去化缘”，模式选“无选择对话”，对话文本指向该句文本，后续事件指向“外出化缘”。</p>
+                    <p>示例：有选择对话。住持问“是否愿意接下差事”，模式选“有选择对话”，为“愿意/改日再说”分别配置选项文本和各自后续事件。</p>
+                  </div>
+                </div>
+              </section>
+            `
+            : ""
+        }
       </section>
     `;
   }
@@ -6828,10 +6855,6 @@ class MainUiFlowScriptEditorModule {
       return `
         <section class="c-script-editor-narrative-panel" aria-label="后续路由">
           <div class="c-script-editor-narrative-panel__header">
-            <div>
-              <p class="c-script-editor-editor-card__eyebrow">后续路由</p>
-              <h3 class="c-script-editor-editor-card__title">后续路由</h3>
-            </div>
             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-dialogue-option">
               新增选项
             </button>
@@ -6881,12 +6904,6 @@ class MainUiFlowScriptEditorModule {
 
     return `
       <section class="c-script-editor-narrative-panel" aria-label="后续路由">
-        <div class="c-script-editor-narrative-panel__header">
-          <div>
-            <p class="c-script-editor-editor-card__eyebrow">后续路由</p>
-            <h3 class="c-script-editor-editor-card__title">后续路由</h3>
-          </div>
-        </div>
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
             <span>后续事件</span>
@@ -8597,6 +8614,18 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
+    if (action === "open-dialogue-help") {
+      this.scriptEditorDialogueHelpOpen = true;
+      this.render();
+      return;
+    }
+
+    if (action === "close-dialogue-help") {
+      this.scriptEditorDialogueHelpOpen = false;
+      this.render();
+      return;
+    }
+
     if (action === "add-stage-configuration-binding") {
       this.addScriptEditorStageConfigurationBinding();
       return;
@@ -9146,18 +9175,6 @@ class MainUiFlowScriptEditorModule {
       return;
     }
 
-    if (action === "add-dialogue-participants") {
-      this.addScriptEditorDialogueParticipant();
-      return;
-    }
-
-    if (action === "remove-dialogue-participants") {
-      if (Number.isInteger(relationIndex) && relationIndex >= 0) {
-        this.removeScriptEditorDialogueParticipant(relationIndex);
-      }
-      return;
-    }
-
     if (action === "add-dialogue-cast") {
       this.addScriptEditorDialogueCast();
       return;
@@ -9321,6 +9338,7 @@ class MainUiFlowScriptEditorModule {
         entityId: null,
       };
       this.scriptEditorStageConfigurationHelpOpen = false;
+      this.scriptEditorDialogueHelpOpen = false;
       this.scriptEditorNotice = null;
       this.refreshScriptEditorWorkspace();
       return;
@@ -9332,6 +9350,7 @@ class MainUiFlowScriptEditorModule {
         entityId: null,
       };
       this.scriptEditorStageConfigurationHelpOpen = false;
+      this.scriptEditorDialogueHelpOpen = false;
       this.scriptEditorNotice = null;
       this.refreshScriptEditorWorkspace();
       return;
@@ -9372,6 +9391,7 @@ class MainUiFlowScriptEditorModule {
       this.scriptEditorMinigameTab = "basics";
     }
     this.scriptEditorStageConfigurationHelpOpen = false;
+    this.scriptEditorDialogueHelpOpen = false;
     this.scriptEditorNotice = null;
     this.refreshScriptEditorWorkspace();
   }
@@ -9415,6 +9435,7 @@ class MainUiFlowScriptEditorModule {
       this.scriptEditorMinigameTab = "basics";
     }
     this.scriptEditorStageConfigurationHelpOpen = false;
+    this.scriptEditorDialogueHelpOpen = false;
     this.scriptEditorNotice = null;
     this.refreshScriptEditorWorkspace();
   }
@@ -10505,35 +10526,6 @@ class MainUiFlowScriptEditorModule {
     }
 
     this.replaceSelectedScriptEditorSettlement(nextSettlement);
-  }
-
-  addScriptEditorDialogueParticipant() {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(appendScriptEditorDialogueParticipant(dialogue));
-  }
-
-  removeScriptEditorDialogueParticipant(index) {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(removeScriptEditorDialogueParticipant(dialogue, index));
-  }
-
-  applyScriptEditorDialogueParticipantField(index, value) {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(
-      updateScriptEditorDialogueParticipant(dialogue, index, value)
-    );
   }
 
   applyScriptEditorEventField(field, value) {

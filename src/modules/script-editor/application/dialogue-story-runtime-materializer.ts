@@ -86,7 +86,6 @@ function materializeDialogues(
 ): RuntimeDialogueDefinition[] {
   const eventIds = new Set(input.events.map((eventRecord) => eventRecord.id));
   const personIds = new Set(input.people.map((personRecord) => personRecord.id));
-  const storyNodeIds = new Set(input.storyNodes.map((storyNode) => storyNode.id));
   const textEntryIds = new Set(input.textEntries.map((entry) => entry.id));
   const loweredDialogues: RuntimeDialogueDefinition[] = [];
   const dialogueIds = new Set<string>();
@@ -101,7 +100,6 @@ function materializeDialogues(
       dialogueIndex,
       eventIds,
       personIds,
-      storyNodeIds,
       textEntryIds,
       diagnostics
     );
@@ -153,7 +151,6 @@ function lowerDialogueToRuntimeDialogues(
   dialogueIndex: number,
   eventIds: Set<string>,
   personIds: Set<string>,
-  storyNodeIds: Set<string>,
   textEntryIds: Set<string>,
   diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[]
 ): RuntimeDialogueDefinition[] | null {
@@ -163,24 +160,10 @@ function lowerDialogueToRuntimeDialogues(
       dialogueIndex,
       eventIds,
       personIds,
-      storyNodeIds,
       textEntryIds,
       diagnostics
     );
     return runtimeDialogue == null ? null : [runtimeDialogue];
-  }
-
-  if (
-    dialogue.storyNodeId != null &&
-    dialogue.storyNodeId.length > 0 &&
-    !storyNodeIds.has(dialogue.storyNodeId)
-  ) {
-    diagnostics.push({
-      code: "missing-reference",
-      fieldPath: `project.dialogues[${dialogueIndex}].storyNodeId`,
-      message: `Dialogue "${dialogue.id}" references missing story node "${dialogue.storyNodeId}".`,
-    });
-    return null;
   }
 
   const nodes = dialogue.nodes ?? [];
@@ -286,23 +269,9 @@ function lowerSingleScreenDialogueToRuntimeDialogue(
   dialogueIndex: number,
   eventIds: Set<string>,
   personIds: Set<string>,
-  storyNodeIds: Set<string>,
   textEntryIds: Set<string>,
   diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[]
 ): RuntimeDialogueDefinition | null {
-  if (
-    dialogue.storyNodeId != null &&
-    dialogue.storyNodeId.length > 0 &&
-    !storyNodeIds.has(dialogue.storyNodeId)
-  ) {
-    diagnostics.push({
-      code: "missing-reference",
-      fieldPath: `project.dialogues[${dialogueIndex}].storyNodeId`,
-      message: `Dialogue "${dialogue.id}" references missing story node "${dialogue.storyNodeId}".`,
-    });
-    return null;
-  }
-
   const mode = dialogue.mode === "choice" ? "choice" : "linear";
   const textId = typeof dialogue.textId === "string" ? dialogue.textId.trim() : "";
   const title = typeof dialogue.title === "string" ? dialogue.title.trim() : "";

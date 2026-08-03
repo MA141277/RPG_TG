@@ -1105,25 +1105,6 @@ function collectLinkedValidationIssues(
     }
   }
 
-  for (const dialogue of project.dialogues) {
-    if (
-      typeof dialogue.storyNodeId === "string" &&
-      dialogue.storyNodeId.length > 0 &&
-      !hasRecord(project, "storyNodes", dialogue.storyNodeId)
-    ) {
-      addMissingReferenceIssue({
-        id: `linked.dialogues.story-node.${dialogue.id}.${dialogue.storyNodeId}`,
-        severity: "attention",
-        title: "对话所属剧情节点缺失",
-        message: `对话 ${dialogue.id} 指向的剧情节点 ${dialogue.storyNodeId} 不存在。`,
-        targetFamily: "dialogues",
-        targetEntityId: dialogue.id,
-        targetTab: "profile",
-      });
-    }
-
-  }
-
   for (const eventRecord of project.events) {
     const destination = eventRecord.destination;
     if (destination?.targetId != null && destination.targetId.length > 0) {

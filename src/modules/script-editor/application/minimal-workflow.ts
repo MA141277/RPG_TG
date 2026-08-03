@@ -221,7 +221,6 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         cast: [{ personId: "person.hero", side: "left" }],
         nextEventId: "",
         options: [],
-        storyNodeId: "story-node.opening",
       },
     ],
     minigames: [],

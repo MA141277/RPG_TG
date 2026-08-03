@@ -84,7 +84,6 @@ test("runtime pack import maps single-screen runtime dialogues into script-edito
         },
       ],
       nextEventId: "",
-      storyNodeId: "",
     },
   ]);
 });

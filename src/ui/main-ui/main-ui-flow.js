@@ -891,8 +891,7 @@ export class MainUiFlow {
         field === "mode" ||
         field === "textId" ||
         field === "speakerPersonId" ||
-        field === "nextEventId" ||
-        field === "storyNodeId"
+        field === "nextEventId"
       ) {
         this.applyScriptEditorDialogueField(field, target.value);
       }
@@ -927,14 +926,6 @@ export class MainUiFlow {
         index >= 0
       ) {
         this.applyScriptEditorDialogueOptionField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches('[data-script-editor-relation-kind="dialogue-participants"]')) {
-      const index = Number.parseInt(target.dataset.scriptEditorRelationIndex ?? "-1", 10);
-      if (Number.isInteger(index) && index >= 0) {
-        this.applyScriptEditorDialogueParticipantField(index, target.value);
       }
       return;
     }

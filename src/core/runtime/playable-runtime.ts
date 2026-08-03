@@ -1174,16 +1174,18 @@ function toPlayableRuntimeRequest(
 function parsePlayableActionRequest(
   actionId: string
 ): ParsedPlayableActionRequest | null {
-  const match = /^playable\.([^.]+)\.(.+)$/.exec(actionId);
-  if (match == null) {
+  if (!actionId.startsWith("playable.")) {
     return null;
   }
 
-  const playableId = match[1] as PlayableId;
-  const action = match[2];
-  if (action == null) {
+  const payload = actionId.slice("playable.".length);
+  const separatorIndex = payload.lastIndexOf(".");
+  if (separatorIndex <= 0 || separatorIndex >= payload.length - 1) {
     return null;
   }
+
+  const playableId = payload.slice(0, separatorIndex) as PlayableId;
+  const action = payload.slice(separatorIndex + 1);
   if (action === "exit") {
     return {
       phase: "exit",

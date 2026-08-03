@@ -301,8 +301,92 @@ function renderCityMapScene(input: {
   return renderCityStageScene(input);
 }
 
-function renderLocationsDeckView(): string {
-  return "";
+function renderLocationsDeckView(input: {
+  cityDefinition: CityDefinition;
+  houseDefinitions: HouseDefinition[];
+  cityEntries: CityEntryDefinition[];
+}): string {
+  const visibleHouseDefinitions = input.houseDefinitions.filter(
+    (houseDefinition) => houseDefinition.moduleId !== "leader-residence"
+  );
+  const cityEntryCards = input.cityEntries.map(
+    (cityEntry) => `
+      <button
+        type="button"
+        class="c-city-locations-subnav__button"
+        data-city-entry-id="${cityEntry.id}"
+        data-city-location-entry-ref="${cityEntry.id}"
+        data-enter-sound="enter"
+        data-button-hover-sound="light"
+      >
+        <span class="c-city-menu__subnav-button-label">${cityEntry.name}</span>
+      </button>
+    `
+  );
+  const houseCards = visibleHouseDefinitions.map(
+    (houseDefinition) => `
+      <button
+        type="button"
+        class="c-city-locations-subnav__button"
+        data-house-id="${houseDefinition.id}"
+        data-city-location-house-ref="${houseDefinition.id}"
+        data-enter-sound="enter"
+        data-button-hover-sound="light"
+      >
+        <span class="c-city-menu__subnav-button-label">${houseDefinition.name}</span>
+      </button>
+    `
+  );
+
+  return `
+    <div class="c-city-locations-view" role="dialog" aria-modal="true" aria-label="${input.cityDefinition.name}地点">
+      <div class="c-city-locations-view__backdrop"></div>
+      <div class="c-city-locations-view__chrome">
+        <div class="c-city-locations-view__header">
+          <div>
+            <p class="c-city-locations-view__eyebrow">城市地点</p>
+            <h2 class="c-city-locations-view__title">${input.cityDefinition.name}</h2>
+          </div>
+        </div>
+        <div class="c-city-locations-scene">
+          <div class="c-city-locations-nav">
+            <div class="c-city-locations-nav__primary">
+              <button
+                type="button"
+                class="c-city-locations-nav__button c-city-locations-nav__button--active"
+                aria-current="page"
+              >
+                地点
+              </button>
+            </div>
+            <div class="c-city-locations-subnav">
+              ${[...cityEntryCards, ...houseCards].join("")}
+            </div>
+          </div>
+          <div class="c-city-isometric-map" aria-hidden="true">
+            <div
+              class="c-city-isometric-map__grid"
+              style="--iso-map-width:${CITY_ISO_MAP_SIZE * CITY_ISO_TILE_WIDTH}px; --iso-map-height:${CITY_ISO_MAP_SIZE * CITY_ISO_TILE_HEIGHT}px;"
+            >
+              <img class="c-city-isometric-map__texture" src="${cityDiamondMapTextureUrl}" alt="" />
+              ${renderCityIsometricMap()}
+            </div>
+          </div>
+        </div>
+        <div class="c-city-locations-view__deck">
+          ${[...cityEntryCards, ...houseCards].join("")}
+        </div>
+        <button
+          type="button"
+          class="c-city-locations-view__return-action"
+          data-action="close-city-menu"
+          data-button-sound="light"
+        >
+          返回
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 function renderCityMenuPanel(input: {
@@ -322,7 +406,11 @@ function renderCityMenuPanel(input: {
   let bodyMarkup = "";
 
   if (input.cityMenuState.panelId === "locations") {
-    return renderLocationsDeckView();
+    return renderLocationsDeckView({
+      cityDefinition: input.cityDefinition,
+      houseDefinitions: input.houseDefinitions,
+      cityEntries: input.cityEntries,
+    });
   }
 
   switch (input.cityMenuState.panelId) {

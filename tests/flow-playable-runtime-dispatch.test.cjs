@@ -51,6 +51,27 @@ const flowDefinition = {
   ],
 };
 
+const dottedFlowDefinition = {
+  id: "flow.building.house.kulan.temple.carry_water",
+  title: "Temple Carry Water Flow Dispatch Test",
+  initialNodeId: "intro",
+  nodes: [
+    {
+      id: "intro",
+      type: "text",
+      text: "Carry water intro",
+      nextNodeId: "done",
+    },
+    {
+      id: "done",
+      type: "complete",
+      outcome: "success",
+      metrics: { score: 1 },
+      detail: { flagKey: "temple.carry_water.completed" },
+    },
+  ],
+};
+
 function createRuntimeState() {
   const grainShopHouse = prototypeHouses.find(
     (houseDefinition) => houseDefinition.moduleId === "grain-shop"
@@ -156,6 +177,60 @@ function configureFlowPlayableRegistry() {
   });
 }
 
+function configureDottedFlowPlayableRegistry() {
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod({
+    modId: "mod.test.flow-dispatch.dotted",
+    manifest: {
+      id: "mod.test.flow-dispatch.dotted",
+      schemaVersion: "1",
+      version: "1.0.0",
+      title: "Dotted Flow Dispatch Test",
+      entryContentPackIds: ["pack.test.flow-dispatch.dotted"],
+    },
+    normalizedContentSources: [
+      {
+        playables: [
+          {
+            id: dottedFlowDefinition.id,
+            commandPrefix: `playable.${dottedFlowDefinition.id}.`,
+          },
+        ],
+        playableIntegrations: [
+          {
+            integrationId: "integration.flow-test.dotted",
+            playableId: dottedFlowDefinition.id,
+            ownerDefaults: {
+              ownerKind: "dialogue",
+              ownerId: "dialogue.test.flow.dotted",
+              returnPolicy: "resume-owner",
+            },
+            trigger: {
+              triggerId: "trigger.flow-test.dotted",
+              ownerKind: "dialogue",
+              trigger: "manual-launch",
+            },
+            outcomeConfig: {},
+          },
+        ],
+      },
+    ],
+    registeredDefinitionIds: ["pack.test.flow-dispatch.dotted"],
+    gameplayContributions: {
+      contentPackIds: ["pack.test.flow-dispatch.dotted"],
+      navigation: [],
+      events: [],
+      scenes: [],
+      dialogues: [],
+      tasks: [],
+      houses: [],
+      houseModules: [],
+      playables: [dottedFlowDefinition.id],
+      playableIntegrations: ["integration.flow-test.dotted"],
+    },
+    startupProfile: {},
+  });
+}
+
 test("playable runtime launches and reduces flow playables", () => {
   try {
     configureFlowPlayableRegistry();
@@ -238,6 +313,54 @@ test("playable runtime exits active flow playables", () => {
     assert.equal(exited.handled, true);
     assert.equal(exited.session, null);
     assert.equal(exited.state.core.runtime.playableSession, null);
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
+});
+
+test("playable runtime dispatches actions for dotted flow playable ids", () => {
+  try {
+    configureDottedFlowPlayableRegistry();
+
+    const launched = runPlayableRuntime({
+      state: createRuntimeState(),
+      request: createLaunchPlayableRequest(dottedFlowDefinition.id),
+      characterDefinitions: prototypeCharacters,
+      flowPlayablesById: {
+        [dottedFlowDefinition.id]: dottedFlowDefinition,
+      },
+    });
+
+    assert.equal(launched.handled, true);
+    assert.deepEqual(launched.state.core.runtime.playableSession?.state, {
+      currentNodeId: "intro",
+    });
+
+    const confirmed = runPlayableRuntime({
+      state: launched.state,
+      request: createPlayableActionRequest(dottedFlowDefinition.id, "confirm"),
+      characterDefinitions: prototypeCharacters,
+      flowPlayablesById: {
+        [dottedFlowDefinition.id]: dottedFlowDefinition,
+      },
+    });
+
+    assert.equal(confirmed.handled, true);
+    assert.equal(confirmed.state.core.runtime.playableSession, null);
+    assert.deepEqual(confirmed.settlement, {
+      integrationId: "integration.flow-test.dotted",
+      outcome: "success",
+      factResult: {
+        status: "completed",
+        metrics: { score: 1 },
+        detail: { flagKey: "temple.carry_water.completed" },
+      },
+      handoff: {
+        type: "resume-owner",
+        ownerKind: "dialogue",
+        ownerId: "dialogue.test.flow.dotted",
+      },
+    });
   } finally {
     resetDefaultPlayableRuntimeRegistries();
   }

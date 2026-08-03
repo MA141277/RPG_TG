@@ -31,7 +31,7 @@ export const SCRIPT_EDITOR_STORY_PROGRESS_MODES: readonly ScriptEditorStoryProgr
   "force-close",
 ] as const;
 
-export const SCRIPT_EDITOR_DIALOGUE_NODE_TYPES: readonly ScriptEditorDialogueNodeType[] = [
+const SCRIPT_EDITOR_LEGACY_DIALOGUE_NODE_TYPES: readonly ScriptEditorDialogueNodeType[] = [
   "narration",
   "dialogue",
   "choice",
@@ -42,7 +42,7 @@ export const SCRIPT_EDITOR_DIALOGUE_MODES: readonly ScriptEditorDialogueMode[] =
   "choice",
 ] as const;
 
-export const SCRIPT_EDITOR_DIALOGUE_FOLLOWUP_FAMILIES: readonly ScriptEditorDialogueFollowUpTargetFamily[] = [
+const SCRIPT_EDITOR_LEGACY_DIALOGUE_FOLLOWUP_FAMILIES: readonly ScriptEditorDialogueFollowUpTargetFamily[] = [
   "dialogue",
   "event",
   "task",
@@ -55,8 +55,12 @@ export const SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS: readonly ScriptEditorEventTrig
   "manual",
   "city-enter",
   "building-enter",
-  "dialogue-finished",
   "story-progress",
+] as const;
+
+const SCRIPT_EDITOR_COMPAT_EVENT_TRIGGER_TIMINGS: readonly ScriptEditorEventTriggerTiming[] = [
+  ...SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS,
+  "dialogue-finished",
 ] as const;
 
 export const SCRIPT_EDITOR_EVENT_TYPES: readonly ScriptEditorEventType[] = [
@@ -433,7 +437,9 @@ export function normalizeScriptEditorDialogueRecord(
     cast: normalizedCast,
     nextEventId: normalizeOptionalTrimmedString(record.nextEventId),
     options: normalizedOptions,
-    storyNodeId: normalizeOptionalString(record.storyNodeId),
+    ...(typeof record.storyNodeId === "string"
+      ? { storyNodeId: normalizeOptionalString(record.storyNodeId) }
+      : {}),
     ...(compatParticipantPersonIds.length === 0
       ? {}
       : { participantPersonIds: compatParticipantPersonIds }),
@@ -762,8 +768,7 @@ export function updateScriptEditorDialogueField(
     | "mode"
     | "textId"
     | "speakerPersonId"
-    | "nextEventId"
-    | "storyNodeId",
+    | "nextEventId",
   value: string
 ): ScriptEditorDialogueRecord {
   if (field === "mode") {
@@ -779,10 +784,7 @@ export function updateScriptEditorDialogueField(
 
   return {
     ...record,
-    [field]:
-      field === "storyNodeId"
-        ? normalizeOptionalString(value)
-        : normalizeOptionalTrimmedString(value),
+    [field]: normalizeOptionalTrimmedString(value),
   };
 }
 
@@ -1574,7 +1576,9 @@ function normalizeStoryProgressMode(value?: string): ScriptEditorStoryProgressMo
 }
 
 function normalizeDialogueNodeType(value?: string): ScriptEditorDialogueNodeType {
-  return SCRIPT_EDITOR_DIALOGUE_NODE_TYPES.includes(value as ScriptEditorDialogueNodeType)
+  return SCRIPT_EDITOR_LEGACY_DIALOGUE_NODE_TYPES.includes(
+    value as ScriptEditorDialogueNodeType
+  )
     ? (value as ScriptEditorDialogueNodeType)
     : "dialogue";
 }
@@ -1594,7 +1598,7 @@ function normalizeDialogueSide(value: unknown): "left" | "right" | "center" {
 function normalizeDialogueFollowUpTargetFamily(
   value?: string
 ): ScriptEditorDialogueFollowUpTargetFamily {
-  return SCRIPT_EDITOR_DIALOGUE_FOLLOWUP_FAMILIES.includes(
+  return SCRIPT_EDITOR_LEGACY_DIALOGUE_FOLLOWUP_FAMILIES.includes(
     value as ScriptEditorDialogueFollowUpTargetFamily
   )
     ? (value as ScriptEditorDialogueFollowUpTargetFamily)
@@ -1602,7 +1606,9 @@ function normalizeDialogueFollowUpTargetFamily(
 }
 
 function normalizeEventTriggerTiming(value?: string): ScriptEditorEventTriggerTiming {
-  return SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS.includes(value as ScriptEditorEventTriggerTiming)
+  return SCRIPT_EDITOR_COMPAT_EVENT_TRIGGER_TIMINGS.includes(
+    value as ScriptEditorEventTriggerTiming
+  )
     ? (value as ScriptEditorEventTriggerTiming)
     : "manual";
 }
