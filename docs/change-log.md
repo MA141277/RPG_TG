@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-04 Temple Advice Follow-Up Owner Narrowing
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 新增 `createTempleReviewAdviceFollowupProjection(...)`，把 temple review 的 `advice -> assign-duty` 后续投影收口成单一 helper；回应文案、special-task 文案和差事列表不再由 hosted handoff 与 no-meeting fallback 各自拼接一份。
+- hosted `advice` stage handoff 与 `handleLegacyTempleReviewFallback(...)` 现在都只消费这一个 helper，再通过既有的 hosted projection / fallback session 应用路径落回当前 temple 壳层，不改 UI、不改功能、不改剧情顺序。
+
+### Added
+- `tests/robustness.test.cjs` 新增结构回归，锁定 temple review 的 `advice -> assign-duty` follow-up projection 由单一 helper 拥有，避免后续再次在 hosted path 与 legacy fallback 中 silent duplication。
+
+### Impact
+- temple review 的 owner 收口继续沿既定 D 线推进：shared meeting covered path 与 no-meeting fallback 之间又减少了一段重复 owner，而没有把逻辑塞回 `src/main.ts` 或新增宿主第二套状态机。
+- 这一步仍未触碰 `assigned` settlement seam；当前后续重点继续留在 temple 剩余 no-meeting fallback 与更正式的 shared stage capability 收口。
+
 ## 2026-08-04 Zhuyuanzhang Review Publication Projection
 
 ### Added

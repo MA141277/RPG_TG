@@ -2580,6 +2580,58 @@ function createTempleReviewOverlayCloseFollowupProjection(input: {
   });
 }
 
+function createTempleReviewAdviceFollowupProjection(input: {
+  actionId: string;
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+  playerCharacterId: string;
+  activityDefinitionsById?: Record<string, ActivityDefinition>;
+  textEntriesById?: Record<string, string>;
+  houseModuleDefaults?: Record<string, unknown>;
+}): TempleHostedReviewProjectionResult {
+  const reviewWorkChoices = getReviewWorkChoices(
+    input.gameState,
+    input.playerCharacterId,
+    input.activityDefinitionsById,
+    input.textEntriesById,
+    input.houseModuleDefaults
+  );
+  const adviceResponseLines =
+    input.actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID
+      ? [
+          resolveTempleText(
+            input.textEntriesById,
+            resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds
+              .reviewAdviceAcknowledge
+          ),
+        ]
+      : [];
+  const specialTaskHookResult = getDefaultReviewSpecialTaskHookResult();
+  const specialTaskLines =
+    specialTaskHookResult.type === "none"
+      ? []
+      : specialTaskHookResult.descriptionLines;
+
+  return {
+    gameState: input.gameState,
+    characterDefinitions: input.characterDefinitions,
+    projection: {
+      meetingStage: "assign-duty",
+      overlay: null,
+      dialogueLines: [
+        ...adviceResponseLines,
+        ...specialTaskLines,
+        ...getTempleAssignDutyLines(
+          input.gameState,
+          reviewWorkChoices,
+          input.textEntriesById,
+          input.houseModuleDefaults
+        ),
+      ],
+    },
+  };
+}
+
 function createTemplePersonnelOrPraiseProjection(input: {
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
@@ -3558,50 +3610,28 @@ function handleLegacyTempleReviewFallback(
     actionId === TEMPLE_REVIEW_STAY_SILENT_ACTION_ID
   ) {
     if (sessionState.mode === "meeting" && sessionState.meetingStage === "advice") {
-      const reviewWorkChoices = getReviewWorkChoices(
-        nextState,
-        input.playerCharacterId,
-        input.activityDefinitionsById,
-        input.textEntriesById,
-        input.houseModuleDefaults
-      );
-      const adviceResponseLines =
-        actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID
-          ? [
-              resolveTempleText(
-                input.textEntriesById,
-                resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds
-                  .reviewAdviceAcknowledge
-              ),
-            ]
-          : [];
-      const specialTaskHookResult = getDefaultReviewSpecialTaskHookResult();
-      const specialTaskLines =
-        specialTaskHookResult.type === "none"
-          ? []
-          : specialTaskHookResult.descriptionLines;
-
-      return withSessionState(
+      const followupProjection = createTempleReviewAdviceFollowupProjection({
+        actionId,
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+        playerCharacterId: input.playerCharacterId,
+        ...(input.activityDefinitionsById == null
+          ? {}
+          : { activityDefinitionsById: input.activityDefinitionsById }),
+        ...(input.textEntriesById == null
+          ? {}
+          : { textEntriesById: input.textEntriesById }),
+        ...(input.houseModuleDefaults == null
+          ? {}
+          : { houseModuleDefaults: input.houseModuleDefaults }),
+      });
+      return applyTempleHostedReviewProjectionToSessionState(
         {
-          gameState: nextState,
-          characterDefinitions: input.characterDefinitions,
+          gameState: followupProjection.gameState,
+          characterDefinitions: followupProjection.characterDefinitions,
         },
         sessionState,
-        {
-          meetingStage: "assign-duty",
-          dialoguePhase: "open",
-          overlay: null,
-          dialogueLines: [
-            ...adviceResponseLines,
-            ...specialTaskLines,
-            ...getTempleAssignDutyLines(
-              nextState,
-              reviewWorkChoices,
-              input.textEntriesById,
-              input.houseModuleDefaults
-            ),
-          ],
-        }
+        followupProjection.projection
       );
     }
 
@@ -4598,48 +4628,22 @@ function handleAction(
     matchesAction: (currentActionId) =>
       currentActionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID ||
       currentActionId === TEMPLE_REVIEW_STAY_SILENT_ACTION_ID,
-    resolveProjection: () => {
-      const reviewWorkChoices = getReviewWorkChoices(
-        nextState,
-        input.playerCharacterId,
-        input.activityDefinitionsById,
-        input.textEntriesById,
-        input.houseModuleDefaults
-      );
-      const adviceResponseLines =
-        actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID
-          ? [
-              resolveTempleText(
-                input.textEntriesById,
-                resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds
-                  .reviewAdviceAcknowledge
-              ),
-            ]
-          : [];
-      const specialTaskHookResult = getDefaultReviewSpecialTaskHookResult();
-      const specialTaskLines =
-        specialTaskHookResult.type === "none"
-          ? []
-          : specialTaskHookResult.descriptionLines;
-      return {
+    resolveProjection: () =>
+      createTempleReviewAdviceFollowupProjection({
+        actionId,
         gameState: nextState,
         characterDefinitions: input.characterDefinitions,
-        projection: {
-          meetingStage: "assign-duty",
-          overlay: null,
-          dialogueLines: [
-            ...adviceResponseLines,
-            ...specialTaskLines,
-            ...getTempleAssignDutyLines(
-              nextState,
-              reviewWorkChoices,
-              input.textEntriesById,
-              input.houseModuleDefaults
-            ),
-          ],
-        },
-      };
-    },
+        playerCharacterId: input.playerCharacterId,
+        ...(input.activityDefinitionsById == null
+          ? {}
+          : { activityDefinitionsById: input.activityDefinitionsById }),
+        ...(input.textEntriesById == null
+          ? {}
+          : { textEntriesById: input.textEntriesById }),
+        ...(input.houseModuleDefaults == null
+          ? {}
+          : { houseModuleDefaults: input.houseModuleDefaults }),
+      }),
   });
   if (hostedAdviceStageHandoff != null) {
     return hostedAdviceStageHandoff;
