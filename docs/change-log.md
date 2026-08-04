@@ -197,6 +197,17 @@
 - temple review 的 shared meeting covered path 继续止于 `assign-duty` 之后的选择回流；最终工作计划写回与 assigned 结果壳属于明确的宿主结算边界。
 - 这次没有改运行时行为，只是把 owner 决策正式固化下来，后续收口重点会留在 reward/personnel/praise 等真正仍在摇摆的 seam 上。
 
+## 2026-08-05 Temple Advice Action Boundary Audit Slice
+
+### Added
+- `tests/robustness.test.cjs` 新增结构回归，锁定 `temple-review-give-advice` / `temple-review-stay-silent` 这两个显式动作仍由 `handleLegacyTempleReviewFallback(...)` 持有，而不是在 `handleAction(...)` 内再长出 dedicated hosted advice 分支。
+
+### Changed
+- `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 追加本次 temple advice boundary audit 的执行记录，明确 hosted covered path 继续通过既有 `hostedReviewProjectionHandoff(...)` + `createTempleReviewAdviceFollowupProjection(...)` 这一条 shared projected handoff seam 前进。
+
+### Impact
+- 这一步没有改 temple review 的可见行为，也没有触碰 `main.ts`、startup 或 source-unification；它只是把 advice 选择这一段继续收口成“hosted 走 shared projected handoff、显式 advice action owner 只剩 legacy/no-meeting fallback”的可审计状态。
+
 ## 2026-08-04 Temple Hosted Legacy Fallback Isolation Slice
 
 ### Changed

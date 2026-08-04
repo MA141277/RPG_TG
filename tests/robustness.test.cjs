@@ -11310,6 +11310,72 @@ test("temple review assignment-table close uses one settlement helper across hos
   assert.doesNotMatch(legacyAssignmentCloseBlock, /writeFactionMerit\(/);
 });
 
+test("temple review advice actions remain fallback-only while hosted path uses shared projected handoff", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const projectionHelperBlock =
+    functionBlocksByName.get("createTempleReviewAdviceFollowupProjection") ?? "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+  const handleActionBlock = functionBlocksByName.get("handleAction") ?? "";
+
+  assert.match(
+    projectionHelperBlock,
+    /function createTempleReviewAdviceFollowupProjection\(input: \{/
+  );
+  assert.match(
+    handleActionBlock,
+    /const hostedAdviceStageHandoff = hostedReviewProjectionHandoff\(\{/
+  );
+  assert.match(handleActionBlock, /currentStageId: "advice"/);
+  assert.match(
+    handleActionBlock,
+    /matchesAction: \(currentActionId\) =>[\s\S]*TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID[\s\S]*TEMPLE_REVIEW_STAY_SILENT_ACTION_ID/
+  );
+  assert.match(handleActionBlock, /createTempleReviewAdviceFollowupProjection\(/);
+  assert.match(
+    legacyBlock,
+    /actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID \|\|[\s\S]*actionId === TEMPLE_REVIEW_STAY_SILENT_ACTION_ID/
+  );
+  assert.doesNotMatch(
+    handleActionBlock,
+    /if \(actionId === "temple-review-give-advice"\)/
+  );
+  assert.doesNotMatch(
+    handleActionBlock,
+    /if \(actionId === "temple-review-stay-silent"\)/
+  );
+});
+
 test("temple review assigned closeout remains host settlement seam only", () => {
   const moduleSource = fs.readFileSync(
     path.join(
