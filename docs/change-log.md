@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-03 AI Collaboration Governance
+
+### Changed
+- 新增 `docs/ai-collaboration-governance.md`，把 scenario pack、Script Editor import/export/runtime preview、event routing、building/navigation、playable/minigame/QTE/story-battle、scenario-specific UI/code、以及已发货资源的 AI 协作边界收口为执行期治理规则。
+- 更新 `AGENTS.md`，要求 AI 在上述范围工作前先遵守该治理，并默认把非 mod framework / editor capability / shared mechanism 的请求视为 scenario-pack JSON 或数据创作。
+- 将 schema/contract versioning、stable id、deletion/migration audit、runtime preview acceptance、round-trip preservation、reference integrity、ownership、no silent duplication、acceptance evidence、localization/text、deterministic ordering、compatibility policy、asset size/format、external resource safety 与 base-pack dependency boundary 一并纳入治理规则。
+- 新增 `tests/ai-collaboration-governance.test.cjs`，并在 `package.json` 接入 `npm run lint:ai-collaboration-governance` 与测试入口，作为这套规则的聚焦守卫。
+
+### Impact
+- 之后凡是改 scenario pack、编辑器模板、事件导航、playable 生命周期或资源引用，都会先走同一套 AI-facing execution rule，而不是继续在共享 runtime 或 `main.ts` 里散落 scenario-specific 例外。
+
 ## 2026-08-04 Review Owner Freeze And Keep Legacy Trim Slice
 
 ### Changed
