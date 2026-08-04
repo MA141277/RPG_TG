@@ -2,7 +2,7 @@ import type { SceneDefinition } from "../../domain/action";
 import type { GameState } from "../../domain/game-state";
 import { getCurrentSceneAction } from "../story/story-runtime";
 
-type AudioBusId = "bgm" | "sfx" | "ui";
+type AudioBusId = "bgm" | "ambient" | "sfx" | "ui";
 
 type AudioSourceDefinition =
   | {
@@ -81,6 +81,19 @@ export type BattleDemoAudioBridgeCommand = {
   nextStartFrame?: number;
 };
 
+export type AmbientLoopHandle = {
+  activate(): void;
+  deactivate(): void;
+  destroy(): void;
+};
+
+export type CreateAmbientLoopHandleInput = {
+  cueId: string;
+  fadeInMs: number;
+  fadeOutMs: number;
+  crossfadeMs: number;
+};
+
 export type AppAudioBgmLayer = {
   ownerKind: "visibility" | "scene" | "playable-battle";
   ownerId: string | null;
@@ -106,6 +119,7 @@ type ManagedAudioElement = {
   paused: boolean;
   loop: boolean;
   preload: string;
+  duration?: number;
   volume: number;
   playbackRate: number;
   currentTime: number;
@@ -130,6 +144,7 @@ type AppAudioController = {
     }
   ): void;
   playBattleDemoBridgeMessage(command: BattleDemoAudioBridgeCommand): void;
+  createAmbientLoopHandle(input: CreateAmbientLoopHandleInput): AmbientLoopHandle;
   unlock(): void;
 };
 
@@ -159,6 +174,7 @@ export const BUILTIN_AUDIO_CUE_IDS = {
   bgmInGame: "bgm.in_game",
   bgmBattle: "bgm.battle.default",
   bgmMidsummerDuel: "bgm.midsummer_duel",
+  ambienceCityMarket: "ambience.city.market",
   uiClick: "ui.click",
   uiButtonLight: "ui.button.light",
   uiButtonHeavy: "ui.button.heavy",
@@ -168,7 +184,12 @@ export const BUILTIN_AUDIO_CUE_IDS = {
   activityPachinkoLaunch: "activity.pachinko.launch",
   activityPachinkoBounce1: "activity.pachinko.bounce.1",
   activityPachinkoBounce2: "activity.pachinko.bounce.2",
+  activityCardDrawShuffle: "activity.card.draw.shuffle",
+  activityCardDrawPull: "activity.card.draw.pull",
+  activityCardDrawFlip: "activity.card.draw.flip",
   gameMoney: "game.money",
+  gameCoinRewardBurst: "game.coin.reward.burst",
+  gameCoinRewardCollect: "game.coin.reward.collect",
   gameTaskVictory: "game.task.victory",
   gameTaskFailure: "game.task.failure",
   battleSlashHit1: "battle.slash.hit.1",
@@ -285,6 +306,16 @@ const BUILTIN_AUDIO_CUE_DEFINITIONS: readonly AudioCueDefinition[] = [
     },
   },
   {
+    id: BUILTIN_AUDIO_CUE_IDS.ambienceCityMarket,
+    bus: "ambient",
+    loop: true,
+    defaultVolume: 0.24,
+    source: {
+      kind: "asset-path",
+      assetPath: "audio/ambient/city-market.mp3",
+    },
+  },
+  {
     id: BUILTIN_AUDIO_CUE_IDS.uiClick,
     bus: "ui",
     loop: false,
@@ -396,6 +427,40 @@ const BUILTIN_AUDIO_CUE_DEFINITIONS: readonly AudioCueDefinition[] = [
     },
   },
   {
+    id: BUILTIN_AUDIO_CUE_IDS.activityCardDrawShuffle,
+    bus: "sfx",
+    loop: false,
+    defaultVolume: 0.28,
+    cooldownMs: 20,
+    maxInstances: 4,
+    source: {
+      kind: "asset-path",
+      assetPath: "audio/activity/card-draw-shuffle.mp3",
+    },
+  },
+  {
+    id: BUILTIN_AUDIO_CUE_IDS.activityCardDrawPull,
+    bus: "sfx",
+    loop: false,
+    defaultVolume: 0.26,
+    maxInstances: 4,
+    source: {
+      kind: "asset-path",
+      assetPath: "audio/activity/card-draw-pull.mp3",
+    },
+  },
+  {
+    id: BUILTIN_AUDIO_CUE_IDS.activityCardDrawFlip,
+    bus: "sfx",
+    loop: false,
+    defaultVolume: 0.26,
+    maxInstances: 4,
+    source: {
+      kind: "asset-path",
+      assetPath: "audio/activity/card-draw-flip.mp3",
+    },
+  },
+  {
     id: BUILTIN_AUDIO_CUE_IDS.gameMoney,
     bus: "sfx",
     loop: false,
@@ -404,6 +469,28 @@ const BUILTIN_AUDIO_CUE_DEFINITIONS: readonly AudioCueDefinition[] = [
     source: {
       kind: "asset-path",
       assetPath: "audio/game-events/money.mp3",
+    },
+  },
+  {
+    id: BUILTIN_AUDIO_CUE_IDS.gameCoinRewardBurst,
+    bus: "sfx",
+    loop: false,
+    defaultVolume: 0.28,
+    maxInstances: 6,
+    source: {
+      kind: "asset-path",
+      assetPath: "audio/game-events/coin-reward-burst.mp3",
+    },
+  },
+  {
+    id: BUILTIN_AUDIO_CUE_IDS.gameCoinRewardCollect,
+    bus: "sfx",
+    loop: false,
+    defaultVolume: 0.28,
+    maxInstances: 6,
+    source: {
+      kind: "asset-path",
+      assetPath: "audio/game-events/coin-reward-collect.mp3",
     },
   },
   {
@@ -933,6 +1020,201 @@ function playManagedAudio(audio: ManagedAudioElement): void {
   void audio.play().catch(() => {
     // Browser autoplay policy may defer playback until the next user gesture.
   });
+}
+
+function createAmbientLoopHandle(
+  input: CreateAmbientLoopHandleInput,
+  cueRegistry: Map<string, AudioCueDefinition>,
+  createAudioElement: () => ManagedAudioElement,
+  resolveAssetPath: (assetPath: string) => string,
+  scheduleTask: (callback: () => void, delayMs: number) => unknown
+): AmbientLoopHandle {
+  type AmbientLoopRuntime = {
+    primaryPlayer: ManagedAudioElement | null;
+    secondaryPlayer: ManagedAudioElement | null;
+    savedTimeSeconds: number;
+    generation: number;
+    crossfadeGeneration: number;
+    active: boolean;
+  };
+
+  const runtime: AmbientLoopRuntime = {
+    primaryPlayer: null,
+    secondaryPlayer: null,
+    savedTimeSeconds: 0,
+    generation: 0,
+    crossfadeGeneration: 0,
+    active: false,
+  };
+
+  const cueDefinition = cueRegistry.get(input.cueId);
+  if (
+    cueDefinition == null ||
+    cueDefinition.bus !== "ambient" ||
+    !cueDefinition.loop
+  ) {
+    throw new Error(
+      `Ambient cue ${input.cueId} is not a registered looping ambient cue.`
+    );
+  }
+
+  const cueSourceUrl = resolveCueSourceUrl(cueDefinition, resolveAssetPath);
+  const fadeSteps = 4;
+
+  const createAmbientPlayer = () => {
+    const player = createAudioElement();
+    player.preload = "auto";
+    player.loop = false;
+    player.src = cueSourceUrl;
+    player.load();
+    return player;
+  };
+
+  const ensurePrimaryPlayer = () => {
+    if (runtime.primaryPlayer == null) {
+      runtime.primaryPlayer = createAmbientPlayer();
+    }
+    return runtime.primaryPlayer;
+  };
+
+  const captureAmbientTimelineSeconds = () => {
+    if (
+      runtime.secondaryPlayer != null &&
+      !runtime.secondaryPlayer.paused &&
+      runtime.secondaryPlayer.currentTime > 0
+    ) {
+      return runtime.secondaryPlayer.currentTime;
+    }
+    return runtime.primaryPlayer?.currentTime ?? runtime.savedTimeSeconds;
+  };
+
+  const monitorCrossfade = (generation: number) => {
+    scheduleTask(() => {
+      if (!runtime.active || generation !== runtime.generation) {
+        return;
+      }
+
+      const primaryPlayer = runtime.primaryPlayer;
+      if (primaryPlayer == null || primaryPlayer.paused) {
+        return;
+      }
+
+      const durationSeconds = primaryPlayer.duration;
+      if (
+        runtime.secondaryPlayer == null &&
+        Number.isFinite(durationSeconds) &&
+        durationSeconds != null
+      ) {
+        const remainingSeconds = durationSeconds - primaryPlayer.currentTime;
+        if (remainingSeconds <= input.crossfadeMs / 1000) {
+          const outgoingPlayer = primaryPlayer;
+          const incomingPlayer = createAmbientPlayer();
+          const crossfadeGeneration = ++runtime.crossfadeGeneration;
+          runtime.secondaryPlayer = incomingPlayer;
+          incomingPlayer.currentTime = 0;
+          incomingPlayer.volume = 0;
+          playManagedAudio(incomingPlayer);
+
+          for (let step = 1; step <= fadeSteps; step += 1) {
+            const delayMs = Math.round((input.crossfadeMs * step) / fadeSteps);
+            scheduleTask(() => {
+              if (
+                !runtime.active ||
+                generation !== runtime.generation ||
+                crossfadeGeneration !== runtime.crossfadeGeneration ||
+                runtime.primaryPlayer !== outgoingPlayer ||
+                runtime.secondaryPlayer !== incomingPlayer
+              ) {
+                return;
+              }
+
+              outgoingPlayer.volume = cueDefinition.defaultVolume * (1 - step / fadeSteps);
+              incomingPlayer.volume = cueDefinition.defaultVolume * (step / fadeSteps);
+
+              if (step === fadeSteps) {
+                outgoingPlayer.pause();
+                runtime.primaryPlayer = incomingPlayer;
+                runtime.secondaryPlayer = null;
+                runtime.savedTimeSeconds = incomingPlayer.currentTime;
+              }
+            }, delayMs);
+          }
+        }
+      }
+
+      monitorCrossfade(generation);
+    }, 100);
+  };
+
+  return {
+    activate() {
+      const nextPlayer = ensurePrimaryPlayer();
+      const nextGeneration = ++runtime.generation;
+      runtime.crossfadeGeneration += 1;
+      runtime.active = true;
+      runtime.secondaryPlayer?.pause();
+      runtime.secondaryPlayer = null;
+      nextPlayer.currentTime = runtime.savedTimeSeconds;
+      nextPlayer.volume = 0;
+      playManagedAudio(nextPlayer);
+      for (let step = 1; step <= fadeSteps; step += 1) {
+        const delayMs = Math.round((input.fadeInMs * step) / 4);
+        scheduleTask(() => {
+          if (
+            !runtime.active ||
+            runtime.generation !== nextGeneration ||
+            runtime.primaryPlayer !== nextPlayer
+          ) {
+            return;
+          }
+          nextPlayer.volume = cueDefinition.defaultVolume * (step / fadeSteps);
+        }, delayMs);
+      }
+      monitorCrossfade(nextGeneration);
+    },
+    deactivate() {
+      if (runtime.primaryPlayer == null && runtime.secondaryPlayer == null) {
+        return;
+      }
+      runtime.savedTimeSeconds = captureAmbientTimelineSeconds();
+      runtime.active = false;
+      const nextGeneration = ++runtime.generation;
+      runtime.crossfadeGeneration += 1;
+      const players = [runtime.primaryPlayer, runtime.secondaryPlayer].filter(
+        (player): player is ManagedAudioElement => player != null
+      );
+      const secondaryPlayer = runtime.secondaryPlayer;
+      runtime.secondaryPlayer = null;
+      for (const player of players) {
+        const currentVolume = player.volume;
+        for (let step = 1; step <= fadeSteps; step += 1) {
+          const delayMs = Math.round((input.fadeOutMs * step) / 4);
+          scheduleTask(() => {
+            if (runtime.generation !== nextGeneration) {
+              return;
+            }
+            player.volume = currentVolume * (1 - step / fadeSteps);
+            if (step === fadeSteps) {
+              player.pause();
+              if (player === secondaryPlayer) {
+                player.currentTime = 0;
+              }
+            }
+          }, delayMs);
+        }
+      }
+    },
+    destroy() {
+      runtime.active = false;
+      runtime.generation += 1;
+      runtime.crossfadeGeneration += 1;
+      runtime.primaryPlayer?.pause();
+      runtime.secondaryPlayer?.pause();
+      runtime.primaryPlayer = null;
+      runtime.secondaryPlayer = null;
+      runtime.savedTimeSeconds = 0;
+    },
+  };
 }
 
 export function createAppAudioSession(): AppAudioSession {
@@ -1589,6 +1871,17 @@ export function createAppAudioController(
     },
     playBattleDemoBridgeMessage(command: BattleDemoAudioBridgeCommand): void {
       playBattleDemoBridgeMessage(command);
+    },
+    createAmbientLoopHandle(
+      ambientLoopInput: CreateAmbientLoopHandleInput
+    ): AmbientLoopHandle {
+      return createAmbientLoopHandle(
+        ambientLoopInput,
+        cueRegistry,
+        createAudioElement,
+        resolveAssetPath,
+        scheduleTask
+      );
     },
     unlock(): void {
       if (!isBgmSyncSuppressed && bgmPlayer != null && bgmPlayer.paused) {

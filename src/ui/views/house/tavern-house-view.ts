@@ -9,6 +9,18 @@ import {
   renderHouseStatusCard,
 } from "./house-shared-view";
 
+const tavernWorkOverlayAttribute =
+  ' data-house-overlay-variant="assessment-popup"';
+const tavernWorkActionClassName = "c-house-red-nine-slice-actions";
+const tavernWorkButtonClassName =
+  "c-house-red-nine-slice-button c-tavern-work-button";
+const tavernGambleButtonSkinClassName =
+  "c-house-red-nine-slice-button c-tavern-gamble__button-skin";
+const tavernWorkQteModalClassName =
+  "c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-assessment-popup c-house-tavern-work-popup c-house-tavern-work-qte";
+const tavernWorkResultModalClassName =
+  "c-grain-shop-modal c-grain-shop-skin-panel c-assessment-popup c-house-tavern-work-popup c-house-tavern-work-result";
+
 function renderGambleChoiceOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "gamble-choice" }>
 ): string {
@@ -20,7 +32,7 @@ function renderGambleChoiceOverlay(
           ${overlay.options
             .map(
               (option) => `
-                <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper c-tavern-gamble__choice" data-house-action="${option.actionId}">
+                <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper ${tavernGambleButtonSkinClassName} c-tavern-gamble__choice" data-house-action="${option.actionId}">
                   <strong>${option.label}</strong>
                   <span>${option.description}</span>
                 </button>
@@ -29,7 +41,7 @@ function renderGambleChoiceOverlay(
             .join("")}
         </div>
         <div class="c-grain-shop-modal__actions">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper ${tavernGambleButtonSkinClassName}" data-house-action="${overlay.cancelActionId}">
             ${overlay.cancelLabel}
           </button>
         </div>
@@ -58,7 +70,7 @@ function renderGambleOverlay(
             ? ""
             : `
               <div class="c-grain-shop-modal__actions">
-                <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.debugToggle.actionId}">
+                <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper ${tavernGambleButtonSkinClassName}" data-house-action="${overlay.debugToggle.actionId}">
                   ${overlay.debugToggle.label}
                 </button>
               </div>
@@ -66,10 +78,10 @@ function renderGambleOverlay(
             `
         }
         <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper ${tavernGambleButtonSkinClassName}" data-house-action="${overlay.cancelActionId}">
             ${overlay.cancelLabel}
           </button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold ${tavernGambleButtonSkinClassName}" data-house-action="${overlay.confirmActionId}">
             ${overlay.confirmLabel}
           </button>
         </div>
@@ -78,14 +90,17 @@ function renderGambleOverlay(
   `;
 }
 
-function renderTile(tile: string): string {
-  return `<span class="c-tavern-gamble__tile">${tile}</span>`;
+function renderTile(tile: string, extraClassName?: string): string {
+  return `<span class="c-tavern-gamble__tile${extraClassName == null ? "" : ` ${extraClassName}`}">${tile}</span>`;
 }
 
-function renderDiscardTile(tile: string | { label: string; fromPublicTile?: boolean }): string {
+function renderDiscardTile(
+  tile: string | { label: string; fromPublicTile?: boolean },
+  extraClassName?: string
+): string {
   const label = typeof tile === "string" ? tile : tile.label;
   const fromPublicTile = typeof tile === "string" ? false : tile.fromPublicTile === true;
-  return `<span class="c-tavern-gamble__tile c-tavern-gamble__tile--discard${fromPublicTile ? " c-tavern-gamble__tile--discard-public" : ""}">${label}</span>`;
+  return `<span class="c-tavern-gamble__tile c-tavern-gamble__tile--discard${extraClassName == null ? "" : ` ${extraClassName}`}${fromPublicTile ? " c-tavern-gamble__tile--discard-public" : ""}">${label}</span>`;
 }
 
 function renderPublicTileButton(
@@ -109,13 +124,18 @@ function renderTileButton(
     id: string;
     label: string;
     selected: boolean;
+    lifted?: boolean;
+    dropping?: boolean;
+    incoming?: boolean;
     covered?: boolean;
     tone?: "hand" | "public";
     entering?: boolean;
     revealIndex?: number;
     actionId?: string | undefined;
+    mouseleaveActionId?: string | undefined;
   },
-  mode: "select" | "discard" | "idle"
+  mode: "select" | "discard" | "idle",
+  extraClassName?: string
 ): string {
   const action =
     tile.actionId ??
@@ -125,16 +145,15 @@ function renderTileButton(
   return `
     <button
       type="button"
-      class="c-tavern-gamble__tile c-tavern-gamble__tile--hand${tile.tone === "public" ? " c-tavern-gamble__tile--hand-public" : ""}${tile.selected ? " is-selected" : ""}${tile.covered ? " is-covered" : ""}${tile.entering ? " is-entering" : ""}"
+      class="c-tavern-gamble__tile c-tavern-gamble__tile--hand${extraClassName == null ? "" : ` ${extraClassName}`}${tile.tone === "public" ? " c-tavern-gamble__tile--hand-public" : ""}${tile.selected ? " is-selected" : ""}${tile.lifted ? " is-lifted" : ""}${tile.dropping ? " is-dropping" : ""}${tile.incoming ? " is-incoming" : ""}${tile.covered ? " is-covered" : ""}${tile.entering ? " is-entering" : ""}"
       data-house-sortable-tile="true"
       data-house-drag-payload="${tile.id}"
       data-house-drop-before="${tile.id}"
       ${action.length > 0 ? `data-house-action="${action}"` : ""}
+      ${tile.mouseleaveActionId == null ? "" : `data-house-mouseleave-action="${tile.mouseleaveActionId}"`}
       ${mode === "idle" || action.length === 0 ? 'aria-disabled="true"' : ""}
       ${tile.entering ? `style="--tile-enter-index:${tile.revealIndex ?? 0}"` : ""}
-    >
-      ${tile.covered ? "盖牌" : tile.label}
-    </button>
+    >${tile.covered ? "盖牌" : tile.label}</button>
   `;
 }
 
@@ -156,7 +175,7 @@ function renderShortActionButton(input: {
   return `
     <button
       type="button"
-      class="c-button c-grain-shop-button ${toneClass} c-tavern-gamble__action-button${input.extraClassName == null ? "" : ` ${input.extraClassName}`}"
+      class="c-button c-grain-shop-button ${toneClass} ${tavernGambleButtonSkinClassName} c-tavern-gamble__action-button${input.extraClassName == null ? "" : ` ${input.extraClassName}`}"
       data-house-action="${input.actionId}"
       ${disabled ? "disabled" : ""}
     >
@@ -165,10 +184,128 @@ function renderShortActionButton(input: {
   `;
 }
 
+function getShortPrimaryActionLabel(
+  overlay: Extract<HouseOverlayViewModel, { type: "gamble-table"; variant: "short" }>,
+  action: "check" | "call" | "raise" | "fold"
+): string {
+  if (action === "check") {
+    return "过牌";
+  }
+  if (action === "call") {
+    return "跟住";
+  }
+  if (action === "raise") {
+    return overlay.availableActions.includes("call") ? "加注" : "下注";
+  }
+  return "弃牌";
+}
+
+function getShortSeatMeldKindLabel(kind: "chow" | "pong" | "kong"): string {
+  if (kind === "chow") {
+    return "吃";
+  }
+  if (kind === "pong") {
+    return "碰";
+  }
+  return "杠";
+}
+
+function renderShortSeatMeldGroup(input: {
+  kind: "chow" | "pong" | "kong";
+  cards: Array<{ id: string; label: string }>;
+}): string {
+  return `
+    <div class="c-tavern-gamble__seat-meld-group">
+      <span class="c-tavern-gamble__seat-meld-kind">${getShortSeatMeldKindLabel(input.kind)}</span>
+      <div class="c-tavern-gamble__seat-meld-tiles">
+        ${input.cards
+          .map((card) =>
+            renderDiscardTile(card, "c-tavern-gamble__tile--depth-bottom")
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
+function getShortSeatSectionOrder(
+  tablePosition: "bottom" | "left" | "top" | "right"
+): Array<"summary" | "melds" | "discards"> {
+  if (tablePosition === "bottom") {
+    return ["discards", "melds", "summary"];
+  }
+  if (tablePosition === "left" || tablePosition === "right") {
+    return ["summary", "melds", "discards"];
+  }
+  return ["summary", "discards", "melds"];
+}
+
+function renderShortSeat(
+  player: Extract<
+    HouseOverlayViewModel,
+    { type: "gamble-table"; variant: "short" }
+  >["playerRows"][number],
+  chipLabel: string
+): string {
+  const discardTiles =
+    player.discardTiles ??
+    (player.discardLabels ?? []).map((label, index) => ({
+      id: `${player.id}-discard-${index}`,
+      label,
+    }));
+  const meldGroups = player.meldGroups ?? [];
+  const statusLabel = player.statusLabel ?? `已投 ${player.committed}`;
+  const tablePosition = player.tablePosition ?? "bottom";
+  const sectionMarkup: Record<"summary" | "melds" | "discards", string> = {
+    summary: `
+      <div class="c-tavern-gamble__seat-summary">
+        <strong>${player.name}</strong>
+        <span>${chipLabel} ${player.stack}</span>
+        <small>${statusLabel}</small>
+      </div>
+    `,
+    melds:
+      meldGroups.length === 0
+        ? ""
+        : `<div class="c-tavern-gamble__seat-melds">${meldGroups
+            .map(renderShortSeatMeldGroup)
+            .join("")}</div>`,
+    discards:
+      discardTiles.length === 0
+        ? ""
+        : `<div class="c-tavern-gamble__seat-discards">${discardTiles
+            .map((tile) =>
+              renderDiscardTile(tile, "c-tavern-gamble__tile--depth-bottom")
+            )
+            .join("")}</div>`,
+  };
+  return `
+    <div
+      class="c-tavern-gamble__seat c-tavern-gamble__seat--short-${player.seatIndex}${player.folded ? " is-folded" : ""}"
+      data-seat-id="${player.id}"
+      data-seat-position="${tablePosition}"
+    >
+      ${getShortSeatSectionOrder(tablePosition)
+        .map((section) => sectionMarkup[section])
+        .join("")}
+    </div>
+  `;
+}
+
 function renderShortGambleTableOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "gamble-table"; variant: "short" }>
 ): string {
   const betweenHandActions = overlay.betweenHandActions ?? null;
+  const isShortActionTurn = overlay.highlightAvailableActions === true;
+  const shortHasSelectedDiscard = overlay.handCards.some(
+    (tile) => tile.selected || tile.lifted === true
+  );
+  const showShortPlayPanel =
+    (isShortActionTurn && overlay.claimOptions.length > 0) ||
+    (isShortActionTurn &&
+      overlay.availableActions.some((action) =>
+        ["check", "call", "raise", "fold", "confirm-discard"].includes(action)
+      ));
   const isActionAvailable = (
     action: (typeof overlay.availableActions)[number]
   ): boolean => overlay.availableActions.includes(action);
@@ -182,8 +319,8 @@ function renderShortGambleTableOverlay(
                 renderShortActionButton({
                   actionId: option.actionId,
                   label: option.label,
-                  available: overlay.highlightAvailableActions,
-                  extraClassName: `c-tavern-gamble__meld-action${option.flashing ? " is-flashing" : ""}`,
+                  available: true,
+                  extraClassName: "c-tavern-gamble__meld-action",
                 })
               )
               .join("")}
@@ -193,7 +330,7 @@ function renderShortGambleTableOverlay(
                 : renderShortActionButton({
                     actionId: overlay.claimPassAction.actionId,
                     label: overlay.claimPassAction.label,
-                    available: overlay.highlightAvailableActions,
+                    available: true,
                   })
             }
           </div>
@@ -202,13 +339,22 @@ function renderShortGambleTableOverlay(
     overlay.claimCountdown == null
       ? ""
       : `
-          <div class="c-tavern-gamble__claim-countdown">
+          <div
+            class="c-tavern-gamble__claim-countdown"
+            data-house-claim-countdown="true"
+            data-house-claim-countdown-total-ms="${overlay.claimCountdown.totalSeconds * 1000}"
+            data-house-claim-countdown-remaining-ms="${overlay.claimCountdown.remainingMs}"
+          >
             <div class="c-tavern-gamble__claim-countdown-copy">
               <span>碰 / 杠倒计时</span>
-              <strong class="c-tavern-gamble__claim-countdown-value">${overlay.claimCountdown.label}</strong>
+              <strong
+                class="c-tavern-gamble__claim-countdown-value"
+                data-house-claim-countdown-label="true"
+              >${overlay.claimCountdown.label}</strong>
             </div>
             <div
               class="c-tavern-gamble__claim-countdown-track"
+              data-house-claim-countdown-track="true"
               role="progressbar"
               aria-valuemin="0"
               aria-valuemax="${overlay.claimCountdown.totalSeconds}"
@@ -216,57 +362,70 @@ function renderShortGambleTableOverlay(
             >
               <span
                 class="c-tavern-gamble__claim-countdown-fill"
+                data-house-claim-countdown-fill="true"
                 style="width: ${overlay.claimCountdown.progressPercent}%;"
               ></span>
             </div>
           </div>
         `;
-  const shortPrimaryActionRowMarkup = `
+  const shortPrimaryActionButtons: string[] = [];
+  if (isShortActionTurn) {
+    for (const action of overlay.availableActions) {
+      if (
+        action !== "check" &&
+        action !== "call" &&
+        action !== "raise" &&
+        action !== "fold"
+      ) {
+        continue;
+      }
+      const actionId =
+        action === "check"
+          ? overlay.actionIds.check
+          : action === "call"
+            ? overlay.actionIds.call
+            : action === "raise"
+              ? overlay.actionIds.raise
+              : overlay.actionIds.fold;
+      shortPrimaryActionButtons.push(
+        renderShortActionButton({
+          actionId,
+          label: getShortPrimaryActionLabel(overlay, action),
+          available: true,
+        })
+      );
+    }
+  }
+  if (
+    isShortActionTurn &&
+    overlay.actionIds.confirmDiscard != null &&
+    isActionAvailable("confirm-discard")
+  ) {
+    shortPrimaryActionButtons.push(
+      renderShortActionButton({
+        actionId: overlay.actionIds.confirmDiscard,
+        label: "打出",
+        tone: "gold",
+        available: true,
+      })
+    );
+  }
+  const shortPrimaryActionRowMarkup =
+    shortPrimaryActionButtons.length === 0
+      ? ""
+      : `
           <div class="c-tavern-gamble__actions-row c-tavern-gamble__actions-row--primary">
-            ${renderShortActionButton({
-              actionId: overlay.actionIds.check,
-              label: "让牌",
-              available: overlay.highlightAvailableActions && isActionAvailable("check"),
-            })}
-            ${renderShortActionButton({
-              actionId: overlay.actionIds.call,
-              label: "跟注",
-              available: overlay.highlightAvailableActions && isActionAvailable("call"),
-            })}
-            ${renderShortActionButton({
-              actionId: overlay.actionIds.raise,
-              label: "加注",
-              available: overlay.highlightAvailableActions && isActionAvailable("raise"),
-            })}
-            ${renderShortActionButton({
-              actionId: overlay.actionIds.fold,
-              label: "弃牌",
-              available: overlay.highlightAvailableActions && isActionAvailable("fold"),
-            })}
-            ${
-              overlay.actionIds.draw == null
-                ? ""
-                : renderShortActionButton({
-                    actionId: overlay.actionIds.draw,
-                    label: "摸牌",
-                    tone: "gold",
-                    available: overlay.highlightAvailableActions && isActionAvailable("draw"),
-                  })
-            }
-            ${
-              overlay.actionIds.confirmDiscard == null
-                ? ""
-                : renderShortActionButton({
-                    actionId: overlay.actionIds.confirmDiscard,
-                    label: "打出",
-                    tone: "gold",
-                    available:
-                      overlay.highlightAvailableActions &&
-                      isActionAvailable("confirm-discard"),
-                  })
-            }
+            ${shortPrimaryActionButtons.join("")}
           </div>
         `;
+  const shortPlayPanelMarkup =
+    !showShortPlayPanel
+      ? ""
+      : `<div class="c-tavern-gamble__actions c-tavern-gamble__actions--short-play${overlay.claimOptions.length === 0 ? "" : " has-claim-row"}">
+              ${shortClaimCountdownMarkup}
+              ${shortClaimRowMarkup}
+              ${shortPrimaryActionRowMarkup}
+            </div>`;
   const shortSettlementActionsMarkup =
     betweenHandActions == null
       ? ""
@@ -306,6 +465,12 @@ function renderShortGambleTableOverlay(
                   })}
                 </footer>
               `;
+  const shortMetaMarkup = `
+            <div class="c-tavern-gamble__meta">
+              <span>${overlay.phase}</span>
+              <span>池 ${overlay.pot}</span>
+            </div>
+          `;
 
   return `
     <div class="c-grain-shop-overlay c-tavern-gamble-overlay c-tavern-gamble-overlay--short" data-house-overlay="gamble-table">
@@ -318,77 +483,42 @@ function renderShortGambleTableOverlay(
           })}
         </div>
         <div class="c-tavern-gamble__table c-tavern-gamble__table--short">
-          <aside class="c-tavern-gamble__sidebar" aria-label="短牌桌玩家">
-            <h3>${overlay.title}</h3>
-            ${overlay.playerRows
-              .map(
-                (player) => `
-                  <div class="c-tavern-gamble__player${player.folded ? " is-folded" : ""}">
-                    <div class="c-tavern-gamble__player-summary">
-                      <strong>${player.name}</strong>
-                      <span>${player.folded ? "已弃牌" : player.allIn ? "All-in" : player.autoBetPending ? "待自动下注" : "在局中"}</span>
-                    </div>
-                    <small>${overlay.chipLabel} ${player.stack} · 已投 ${player.committed}</small>
-                    ${
-                      (player.meldLabels ?? []).length === 0
-                        ? ""
-                        : `<div class="c-tavern-gamble__meld-strip">${(player.meldLabels ?? [])
-                            .map((label) => `<span>${label}</span>`)
-                            .join("")}</div>`
-                    }
-                    ${
-                      player.discardLabels.length === 0
-                        ? ""
-                        : `<div class="c-tavern-gamble__discard-strip c-tavern-gamble__discard-strip--narrow">${player.discardLabels
-                            .map(renderDiscardTile)
-                            .join("")}</div>`
-                    }
-                  </div>
-                `
-              )
-              .join("")}
-          </aside>
           <section class="c-tavern-gamble__felt">
-            <header class="c-tavern-gamble__header">
-              <div class="c-tavern-gamble__meta">
-                <span>${overlay.phase}</span>
-                <span>底池 ${overlay.pot}</span>
-                <span>当前注 ${overlay.currentBet}</span>
-                ${overlay.sidePotLabels.map((label) => `<span>${label}</span>`).join("")}
-              </div>
-            </header>
+            <div class="c-tavern-gamble__seats c-tavern-gamble__seats--short" aria-label="短牌桌座位">
+              ${overlay.playerRows
+                .map((player) => renderShortSeat(player, overlay.chipLabel))
+                .join("")}
+            </div>
             <div class="c-tavern-gamble__center c-tavern-gamble__center--short">
+              ${shortMetaMarkup}
               <p>公共牌</p>
               <div class="c-tavern-gamble__tiles c-tavern-gamble__tiles--public">
-                ${overlay.publicCards.map((card) => renderTile(card.label)).join("")}
+                ${overlay.publicCards
+                  .map((card) =>
+                    renderTile(card.label, "c-tavern-gamble__tile--depth-bottom")
+                  )
+                  .join("")}
               </div>
-              ${
-                overlay.pendingIncomingCard == null
-                  ? ""
-                  : `<p class="c-tavern-gamble__short-note">待入手 ${overlay.pendingIncomingCard.label}</p>`
-              }
-              ${
-                overlay.visibleDiscard == null
-                  ? ""
-                  : `<p class="c-tavern-gamble__short-note">${overlay.visibleDiscard.seatName} 打出 ${overlay.visibleDiscard.label}</p>`
-              }
             </div>
             <section class="c-tavern-gamble__log">
               ${overlay.logLines.map((line) => `<p>${line}</p>`).join("")}
             </section>
-            <div class="c-tavern-gamble__actions c-tavern-gamble__actions--short-play${overlay.claimOptions.length === 0 ? "" : " has-claim-row"}">
-              ${shortClaimCountdownMarkup}
-              ${shortClaimRowMarkup}
-              ${shortPrimaryActionRowMarkup}
-            </div>
-            <section class="c-tavern-gamble__hand-on-felt" aria-label="我的手牌">
-              <p>我的手牌</p>
-              <div class="c-tavern-gamble__tiles c-tavern-gamble__tiles--hand">
+            <section class="c-tavern-gamble__hand-on-felt" aria-label="手牌区域">
+              ${shortPlayPanelMarkup}
+              <div class="c-tavern-gamble__tiles c-tavern-gamble__tiles--hand${shortHasSelectedDiscard ? " has-selected-discard" : ""}">
                 ${overlay.handCards
                   .map((tile) =>
                     renderTileButton(
-                      tile,
-                      overlay.pendingIncomingCard == null ? "idle" : "discard"
+                      {
+                        ...tile,
+                        mouseleaveActionId:
+                          tile.mouseleaveActionId ??
+                          (tile.lifted && !tile.selected
+                            ? `gamble-clear-lifted-tile:${tile.id}`
+                            : undefined),
+                      },
+                      overlay.pendingIncomingCard == null ? "idle" : "discard",
+                      "c-tavern-gamble__tile--depth-top"
                     )
                   )
                   .join("")}
@@ -478,7 +608,9 @@ function renderLongGambleTableOverlay(
                     ${
                       player.discardLabels.length === 0
                         ? ""
-                        : `<div class="c-tavern-gamble__discard-strip">${player.discardLabels.map(renderDiscardTile).join("")}</div>`
+                        : `<div class="c-tavern-gamble__discard-strip">${player.discardLabels
+                            .map((tile) => renderDiscardTile(tile))
+                            .join("")}</div>`
                     }
                     ${
                       player.playedGroupLabels.length === 0
@@ -511,7 +643,9 @@ function renderLongGambleTableOverlay(
                     <div class="c-tavern-gamble__seat c-tavern-gamble__seat--${player.seatIndex}">
                       <strong>${player.name}</strong>
                       <div class="c-tavern-gamble__seat-discards">
-                        ${player.discardLabels.map(renderDiscardTile).join("")}
+                        ${player.discardLabels
+                          .map((tile) => renderDiscardTile(tile))
+                          .join("")}
                       </div>
                       ${
                         (player.privateBackCount ?? 0) > 0 || (player.publicTileLabels?.length ?? 0) > 0
@@ -548,7 +682,9 @@ function renderLongGambleTableOverlay(
                   ${
                     overlay.playSlotTiles.length === 0
                       ? `<span class="c-tavern-gamble__slot-empty">选择 3 张顺/刻</span>`
-                      : overlay.playSlotTiles.map(renderTile).join("")
+                      : overlay.playSlotTiles
+                          .map((tile) => renderTile(tile))
+                          .join("")
                   }
                 </div>
                 <small>已打出自牌 ${overlay.playedOwnTileCount} 张</small>
@@ -595,7 +731,9 @@ function renderLongGambleTableOverlay(
                         ${
                           row.selectedTiles.length === 0
                             ? ""
-                            : `<div class="c-tavern-gamble__showdown-tiles">${row.selectedTiles.map(renderTile).join("")}</div>`
+                            : `<div class="c-tavern-gamble__showdown-tiles">${row.selectedTiles
+                                .map((tile) => renderTile(tile))
+                                .join("")}</div>`
                         }
                         <div class="c-tavern-gamble__showdown-detail">
                           ${row.detailLines.map((line) => `<span>${line}</span>`).join("")}
@@ -658,8 +796,8 @@ function renderQteOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "qte-bar" }>
 ): string {
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="qte-bar">
-      <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-temple-house-modal" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="qte-bar"${tavernWorkOverlayAttribute}>
+      <div class="${tavernWorkQteModalClassName}" role="dialog" aria-modal="true">
         <div class="c-temple-house-qte__header">
           <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
           <p class="c-temple-house-qte__task">${overlay.taskLabel}</p>
@@ -678,8 +816,8 @@ function renderQteOverlay(
             ></span>
           </div>
         </div>
-        <div class="c-grain-shop-modal__actions">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.stopActionId}">
+        <div class="c-grain-shop-modal__actions ${tavernWorkActionClassName}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold ${tavernWorkButtonClassName}" data-house-action="${overlay.stopActionId}">
             停手
           </button>
         </div>
@@ -692,16 +830,16 @@ function renderResultOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "result" }>
 ): string {
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="result">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="result"${tavernWorkOverlayAttribute}>
+      <div class="${tavernWorkResultModalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           <p class="c-temple-house-result__grade">评定：${overlay.grade}</p>
           <p class="c-temple-house-result__grade">命中：${overlay.score}</p>
           ${overlay.rewardLines.map((line) => `<p>${line}</p>`).join("")}
         </div>
-        <div class="c-grain-shop-modal__actions">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+        <div class="c-grain-shop-modal__actions ${tavernWorkActionClassName}">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold ${tavernWorkButtonClassName}" data-house-action="${overlay.confirmActionId}">
             ${overlay.confirmLabel}
           </button>
         </div>
@@ -719,7 +857,20 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
     case "alert":
       return renderHouseAlertOverlay(overlay);
     case "confirm":
-      return renderHouseConfirmOverlay(overlay);
+      return renderHouseConfirmOverlay(overlay, {
+        ...(overlay.overlayAttribute == null
+          ? {}
+          : { overlayAttribute: overlay.overlayAttribute }),
+        ...(overlay.modalClassName == null
+          ? {}
+          : { modalClassName: overlay.modalClassName }),
+        ...(overlay.actionsClassName == null
+          ? {}
+          : { actionsClassName: overlay.actionsClassName }),
+        ...(overlay.buttonClassName == null
+          ? {}
+          : { buttonClassName: overlay.buttonClassName }),
+      });
     case "gamble-choice":
       return renderGambleChoiceOverlay(overlay);
     case "gamble":

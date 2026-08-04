@@ -69,6 +69,8 @@ import {
   advanceTavernShortNpcAction,
   chooseTavernShortDiscardCandidate,
   claimTavernShortDiscard,
+  clearTavernShortDroppingDiscardCandidate,
+  clearTavernShortLiftedDiscardCandidate,
   confirmTavernShortDiscard,
   drawTavernShortIncomingCard,
   passTavernShortClaim,
@@ -110,19 +112,23 @@ import {
   tickTavernShortClaimCountdown,
   updateTavernShortTableSession,
 } from "./tavern-short-gamble-session";
+import { getTavernShortClaimCountdownRemainingMs } from "./tavern-short-claim-countdown";
 import { selectTavernShortGambleOverlay } from "./tavern-short-gamble-view-model";
 
 const ACCEPT_WORK_ACTION_PREFIX = "accept-work:";
 const CONFIRM_START_WORK_ACTION_PREFIX = "confirm-start-work:";
 const SUBMIT_WORK_ACTION_PREFIX = "submit-work:";
+const RETURN_TO_WORK_MENU_ACTION_ID = "return-to-work-menu";
 const TAVERN_WORK_INTERVAL_ID = "tavern-work-qte";
 const TAVERN_GAMBLE_NPC_INTERVAL_ID = "tavern-gamble-npc-thinking";
 const TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID = "tavern-gamble-short-claim-timeout";
+const TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID = "tavern-gamble-short-drop-clear";
 const TAVERN_WORK_TOTAL_ROUNDS = 3;
 const TAVERN_WORK_MARKER_STEP = 7;
 const GAMBLE_MELD_ACTION_PREFIX = "gamble-meld:";
 const GAMBLE_DISCARD_ACTION_PREFIX = "gamble-discard:";
 const GAMBLE_REORDER_ACTION_PREFIX = "gamble-reorder:";
+const GAMBLE_CLEAR_LIFTED_TILE_ACTION_PREFIX = "gamble-clear-lifted-tile:";
 const GAMBLE_PLAY_TILE_ACTION_PREFIX = "gamble-play-tile:";
 const SELECT_GAMBLE_VARIANT_ACTION_PREFIX = "select-gamble-variant:";
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
@@ -130,6 +136,15 @@ const GAMBLE_SHORT_CONTINUE_ACTION_ID = "gamble-short-continue-hand";
 const GAMBLE_SHORT_REBUY_ACTION_ID = "gamble-short-rebuy";
 const GAMBLE_SHORT_CASH_OUT_ACTION_ID = "gamble-short-cash-out";
 const TOGGLE_SHORT_DEBUG_PRESET_ACTION_ID = "toggle-short-debug-claim-cycle";
+const TAVERN_WORK_ACTION_CONTAINER_CLASS_NAME =
+  "c-house-red-nine-slice-actions c-tavern-work-actions";
+const TAVERN_WORK_BUTTON_CLASS_NAME =
+  "c-house-red-nine-slice-button c-tavern-work-button";
+const TAVERN_WORK_OVERLAY_ATTRIBUTE =
+  ' data-house-overlay-variant="assessment-popup"';
+const TAVERN_WORK_CONFIRM_MODAL_CLASS_NAME =
+  "c-assessment-popup c-house-tavern-work-popup c-house-tavern-work-confirm";
+const TAVERN_WORK_CONFIRM_ACTIONS_CLASS_NAME = "c-house-red-nine-slice-actions";
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -299,12 +314,6 @@ function getAvailableWorkOffers(
   const activeIds = new Set(getActiveTavernWorkIds(gameState, houseId));
   return tavernWorkOffers.filter((offer) => {
     if (activeIds.has(offer.id)) {
-      return false;
-    }
-    if (isTavernWorkCompleted(gameState, houseId, offer.id)) {
-      return false;
-    }
-    if (isTavernWorkFailed(gameState, houseId, offer.id)) {
       return false;
     }
     return offer.minFame == null || playerFame >= offer.minFame;
@@ -563,6 +572,18 @@ function submitWork(
     input.houseDefinition.id,
     playerCharacter.stats.fame
   );
+  const sideEffects: HouseModuleTransitionResult<"tavern">["sideEffects"] = [
+    { type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID },
+  ];
+
+  if (reward.rewardGold > 0) {
+    sideEffects.push({
+      type: "play-coin-reward",
+      playerCharacterId: input.playerCharacterId,
+      delta: reward.rewardGold,
+      source: "request-pointer",
+    });
+  }
 
   return {
     gameState: goldMutation.state,
@@ -590,7 +611,7 @@ function submitWork(
         ],
       },
     },
-    sideEffects: [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }],
+    sideEffects,
     timeAdvanceCost: convertHouseActivityDaysToSegments(durationDays),
   };
 }
@@ -726,7 +747,10 @@ function handleWorkAction(
   const houseId = input.houseDefinition.id;
   const lists = refreshWorkLists(input.gameState, houseId, playerCharacter.stats.fame);
 
-  if (input.request.actionId === "open-work") {
+  if (
+    input.request.actionId === "open-work" ||
+    input.request.actionId === RETURN_TO_WORK_MENU_ACTION_ID
+  ) {
     const entries = getTavernTextEntries(input.textEntriesById);
     return withSessionState(input, sessionState, {
       ...lists,
@@ -937,10 +961,47 @@ function handleWorkAction(
   }
 
   if (input.request.actionId === "close-tavern-result") {
+    const entries = getTavernTextEntries(input.textEntriesById);
+    const nextWorkPanelMode =
+      lists.acceptedOffers.length > 0
+        ? "submit"
+        : lists.availableOffers.length > 0
+          ? "accept"
+          : "main";
     return withSessionState(
       input,
       sessionState,
-      { overlay: null },
+      {
+        ...lists,
+        selectedOfferId: lists.availableOffers[0]?.id ?? null,
+        selectedSubmitOfferId: lists.acceptedOffers[0]?.id ?? null,
+        workPanelMode: nextWorkPanelMode,
+        dialogueLines:
+          nextWorkPanelMode === "accept"
+            ? [
+                resolveTavernText(
+                  entries,
+                  "runtime.zhu_yuanzhang.tavern.work.accept.available.001"
+                ),
+                resolveTavernText(
+                  entries,
+                  "runtime.zhu_yuanzhang.tavern.work.accept.available.002"
+                ),
+              ]
+            : nextWorkPanelMode === "main"
+              ? [
+                  resolveTavernText(
+                    entries,
+                    "runtime.zhu_yuanzhang.tavern.work.main.001"
+                  ),
+                  resolveTavernText(
+                    entries,
+                    "runtime.zhu_yuanzhang.tavern.work.main.002"
+                  ),
+                ]
+              : sessionState.dialogueLines,
+        overlay: null,
+      },
       [{ type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID }]
     );
   }
@@ -1304,6 +1365,7 @@ function getShortGambleSideEffects(
   const stopEffects: HouseModuleTransitionResult<"tavern">["sideEffects"] = [
     { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
     { type: "stop-interval", intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID },
+    { type: "stop-interval", intervalId: TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID },
   ];
   const hand = table.currentHand;
   if (hand == null) {
@@ -1322,6 +1384,11 @@ function getShortGambleSideEffects(
       actingSeatId != null &&
       actingSeatId !== table.playerSeatId);
   const requiresClaimCountdownTick = table.claimCountdown != null;
+  const claimCountdownDelayMs =
+    table.claimCountdown == null
+      ? null
+      : Math.max(16, getTavernShortClaimCountdownRemainingMs(table.claimCountdown));
+  const requiresDropClearTick = hand.droppingDiscardCardId != null;
   return [
     ...stopEffects,
     ...(requiresNpcTick
@@ -1334,15 +1401,28 @@ function getShortGambleSideEffects(
           },
         ]
       : []),
-    ...(requiresClaimCountdownTick
+    ...(requiresClaimCountdownTick && claimCountdownDelayMs != null
       ? [
           {
             type: "start-interval" as const,
             intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
-            everyMs: 1000,
+            everyMs: claimCountdownDelayMs,
             request: {
               type: "tick" as const,
               tickId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+            },
+          },
+        ]
+      : []),
+    ...(requiresDropClearTick
+      ? [
+          {
+            type: "start-interval" as const,
+            intervalId: TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID,
+            everyMs: 180,
+            request: {
+              type: "tick" as const,
+              tickId: TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID,
             },
           },
         ]
@@ -1439,6 +1519,31 @@ function handleGambleTick(
         tickTavernShortClaimCountdown(sessionState.gambleSession.table)
       );
     }
+    if (input.request.tickId === TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID) {
+      const currentHand = sessionState.gambleSession.table.currentHand;
+      if (currentHand == null || currentHand.droppingDiscardCardId == null) {
+        return createTransitionResult(input, {
+          sideEffects: [
+            {
+              type: "stop-interval",
+              intervalId: TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID,
+            },
+          ],
+        });
+      }
+      return withShortGambleSession(
+        input,
+        sessionState,
+        updateTavernShortTableSession(
+          sessionState.gambleSession.table,
+          clearTavernShortDroppingDiscardCandidate(
+            currentHand,
+            sessionState.gambleSession.table.playerSeatId,
+            currentHand.droppingDiscardCardId
+          )
+        )
+      );
+    }
     if (input.request.tickId !== TAVERN_GAMBLE_NPC_INTERVAL_ID) {
       return createTransitionResult(input);
     }
@@ -1450,6 +1555,10 @@ function handleGambleTick(
           {
             type: "stop-interval",
             intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+          },
+          {
+            type: "stop-interval",
+            intervalId: TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID,
           },
         ],
       });
@@ -1762,6 +1871,22 @@ function handleShortGambleTableAction(
       sessionState,
       table,
       claimTavernShortDiscard(currentHand, meldId)
+    );
+  }
+  const clearLiftedTileId = parseActionId(
+    actionId,
+    GAMBLE_CLEAR_LIFTED_TILE_ACTION_PREFIX
+  );
+  if (clearLiftedTileId != null) {
+    return withUpdatedShortTableHand(
+      input,
+      sessionState,
+      table,
+      clearTavernShortLiftedDiscardCandidate(
+        currentHand,
+        table.playerSeatId,
+        clearLiftedTileId
+      )
     );
   }
   const playTileId = parseActionId(actionId, GAMBLE_PLAY_TILE_ACTION_PREFIX);
@@ -2153,6 +2278,10 @@ function selectOverlayViewModel(
       type: "confirm",
       title: overlay.title,
       paragraphs: overlay.paragraphs,
+      overlayAttribute: TAVERN_WORK_OVERLAY_ATTRIBUTE,
+      modalClassName: TAVERN_WORK_CONFIRM_MODAL_CLASS_NAME,
+      actionsClassName: TAVERN_WORK_CONFIRM_ACTIONS_CLASS_NAME,
+      buttonClassName: TAVERN_WORK_BUTTON_CLASS_NAME,
       confirmActionId: overlay.confirmActionId,
       confirmLabel: overlay.confirmLabel,
       cancelActionId: overlay.cancelActionId,
@@ -2166,6 +2295,10 @@ function selectOverlayViewModel(
       type: "confirm",
       title: overlay.title,
       paragraphs: overlay.paragraphs,
+      overlayAttribute: TAVERN_WORK_OVERLAY_ATTRIBUTE,
+      modalClassName: TAVERN_WORK_CONFIRM_MODAL_CLASS_NAME,
+      actionsClassName: TAVERN_WORK_CONFIRM_ACTIONS_CLASS_NAME,
+      buttonClassName: TAVERN_WORK_BUTTON_CLASS_NAME,
       confirmActionId: overlay.confirmActionId,
       confirmLabel: "确认提交",
       cancelActionId: overlay.cancelActionId,
@@ -2471,8 +2604,7 @@ function createWorkActions(
         label: `${offer.title} / ${offer.rewardText}`,
         disabled: sessionState.acceptedOffers.length >= capacity,
       })),
-      { id: "open-work", label: "返回" },
-      { id: "dismiss-dialogue", label: "关闭" },
+      { id: RETURN_TO_WORK_MENU_ACTION_ID, label: "返回" },
     ];
   }
 
@@ -2482,15 +2614,14 @@ function createWorkActions(
         id: `${SUBMIT_WORK_ACTION_PREFIX}${offer.id}`,
         label: `提交：${offer.title}`,
       })),
-      { id: "open-work", label: "返回" },
-      { id: "dismiss-dialogue", label: "关闭" },
+      { id: RETURN_TO_WORK_MENU_ACTION_ID, label: "返回" },
     ];
   }
 
   return [
     { id: "open-work-accept", label: "接取" },
     { id: "open-work-submit", label: "提交" },
-    { id: "dismiss-dialogue", label: "关闭" },
+    { id: "open-boss-dialogue", label: "返回" },
   ];
 }
 
@@ -2528,6 +2659,10 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
           type: "stop-interval",
           intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
         },
+        {
+          type: "stop-interval",
+          intervalId: TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID,
+        },
       ],
     };
   },
@@ -2538,7 +2673,8 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       }
       if (
         input.request.tickId === TAVERN_GAMBLE_NPC_INTERVAL_ID ||
-        input.request.tickId === TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID
+        input.request.tickId === TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID ||
+        input.request.tickId === TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID
       ) {
         return handleGambleTick(input, input.sessionState);
       }
@@ -2585,6 +2721,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
 
     if (
       input.request.actionId === "open-work" ||
+      input.request.actionId === RETURN_TO_WORK_MENU_ACTION_ID ||
       input.request.actionId === "open-work-accept" ||
       input.request.actionId === "open-work-submit" ||
       input.request.actionId === "confirm-submit-work" ||
@@ -2628,6 +2765,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       input.request.actionId.startsWith(GAMBLE_MELD_ACTION_PREFIX) ||
       input.request.actionId.startsWith(GAMBLE_DISCARD_ACTION_PREFIX) ||
       input.request.actionId.startsWith(GAMBLE_REORDER_ACTION_PREFIX) ||
+      input.request.actionId.startsWith(GAMBLE_CLEAR_LIFTED_TILE_ACTION_PREFIX) ||
       input.request.actionId.startsWith(GAMBLE_PLAY_TILE_ACTION_PREFIX) ||
       input.request.actionId === "gamble-confirm-discard" ||
       input.request.actionId === "gamble-push-hu" ||
@@ -2661,6 +2799,10 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
         {
           type: "stop-interval",
           intervalId: TAVERN_GAMBLE_SHORT_CLAIM_TIMEOUT_INTERVAL_ID,
+        },
+        {
+          type: "stop-interval",
+          intervalId: TAVERN_GAMBLE_SHORT_DROP_CLEAR_INTERVAL_ID,
         },
       ],
     };
@@ -2786,6 +2928,8 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
             }
           : {
               title: `酒馆活计 / 已接 ${lists.acceptedOffers.length}/${capacity}`,
+              className: TAVERN_WORK_ACTION_CONTAINER_CLASS_NAME,
+              buttonClassName: TAVERN_WORK_BUTTON_CLASS_NAME,
               actions: createWorkActions(
                 {
                   ...sessionState,

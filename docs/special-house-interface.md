@@ -510,11 +510,19 @@ If a table player's public summary needs to distinguish exposed meld history fro
 discards, expose them as separate structured fields such as `meldLabels` and `discardLabels`.
 Do not ask the renderer to reverse-engineer exposed melds from discard order or private hand
 state.
+If that same table summary must render each seat directly on the felt, expose seat-facing
+structured data such as `tablePosition`, `statusLabel`, `meldGroups`, and `discardTiles`
+instead of asking the renderer to parse packed strings back into tile models or infer seat
+placement from hardcoded NPC ids.
 If a temporary incoming-card slot must keep some cards visible but unavailable for the follow-up
 discard step, expose that lock state as typed session data such as
 `pendingIncomingCard.lockedCardIds`, and omit discard `actionId`s for those locked cards in the
 overlay. The renderer must not recreate or bypass those locks by inferring actions from layout or
 button text.
+If that same staged table flow needs the renderer to visually distinguish the temporary incoming
+draw card or the one currently armed discard candidate, expose those as explicit structured tile
+fields such as `incoming` and `selected` on the tile view model. Do not infer that state from tile
+order, spacing, or DOM-only classes inside the renderer.
 If a table overlay needs local reordering, expose it through generic house action ids and
 data attributes; the entrypoint may dispatch the generic action, but must not understand the
 house-specific reorder semantics.
@@ -674,6 +682,45 @@ type HouseModuleViewModel = {
   leaveAction: HouseActionViewModel;
 };
 ```
+
+### Shared Presentation Hooks
+
+Shared house renderers may accept module-owned skin hooks when those hooks are purely presentational and the shared helper remains business-agnostic.
+
+Recommended additions:
+
+```ts
+type HouseActionContainerViewModel = {
+  title?: string;
+  className?: string;
+  buttonClassName?: string;
+  actions: HouseActionViewModel[];
+};
+
+type HouseOverlayViewModel =
+  | {
+      type: "confirm";
+      title: string;
+      paragraphs: string[];
+      overlayAttribute?: string;
+      modalClassName?: string;
+      actionsClassName?: string;
+      buttonClassName?: string;
+      confirmActionId: string;
+      confirmLabel: string;
+      cancelActionId: string;
+      cancelLabel: string;
+    }
+  | ...;
+```
+
+Rules:
+
+- optional class and attribute hooks are presentation-only; they must not carry business meaning on their own
+- the owning house module or house-owned view decides when to opt into a skin
+- shared render helpers may append these hooks, but must not branch on tavern/temple/grain-shop business rules
+- do not use the hooks to inject HTML, bypass the typed overlay contract, or move house logic into shared UI helpers
+- if a house needs a different layout or skin, prefer these typed hooks over new `src/main.ts` or shared-renderer business branches
 
 ### Shared NPC Interaction Rule
 

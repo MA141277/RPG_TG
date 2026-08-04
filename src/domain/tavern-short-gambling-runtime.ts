@@ -289,6 +289,9 @@ function formatBroadcastDrawLog(
   seatId: string,
   card: TavernShortCard
 ): string {
+  if (seatId !== "you") {
+    return `${getBroadcastSeatName(hand, seatId)}摸牌。`;
+  }
   return `${getBroadcastSeatName(hand, seatId)}摸入 ${getBroadcastCardLabel(card)}。`;
 }
 
@@ -510,6 +513,8 @@ function startBettingRound(
         pendingBetSeatIds: [],
         pendingIncomingCard: null,
         selectedDiscardCardId: null,
+        liftedDiscardCardId: null,
+        droppingDiscardCardId: null,
         claimChain: null,
         currentDrawTurnSeatId: null,
         logLines: appendLog(hand, "无人可继续下注，直接进入摊牌。"),
@@ -535,6 +540,8 @@ function startBettingRound(
     pendingBetSeatIds,
     pendingIncomingCard: null,
     selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: null,
     claimChain: null,
     currentDrawTurnSeatId: null,
     logLines: appendLog(hand, `进入第 ${nextBettingRoundIndex + 1} 轮下注。`),
@@ -559,6 +566,8 @@ function startDrawRound(
     currentDrawTurnSeatId: pendingDrawSeatIds[0] ?? null,
     pendingIncomingCard: null,
     selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: null,
     claimChain: null,
     logLines: appendLog(hand, `进入第 ${nextDrawRoundIndex} 轮摸打。`),
   };
@@ -579,6 +588,8 @@ function completeResolvedDiscard(
     ...hand,
     pendingIncomingCard: null,
     selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: null,
     claimChain: null,
     lastVisibleDiscard: { seatId: discarderSeatId, card: discardCard },
   };
@@ -700,6 +711,8 @@ export function createTavernShortHand(input: {
     lastFullRaise: TAVERN_SHORT_BIG_BLIND,
     pendingIncomingCard: null,
     selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: null,
     claimChain: null,
     pots: rebuildPots(nextPlayers),
     showdown: null,
@@ -842,6 +855,8 @@ export function drawTavernShortIncomingCard(
     pendingDrawSeatIds: nextPendingDrawSeatIds,
     currentDrawTurnSeatId: hand.currentDrawTurnSeatId ?? seatId,
     selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: null,
     logLines: appendLog(hand, formatBroadcastDrawLog(hand, seatId, nextCard)),
   };
 }
@@ -861,6 +876,23 @@ function getLockedClaimDiscardCardIds(
   return new Set(incoming.lockedCardIds ?? []);
 }
 
+function getLockedMeldCardIds(player: TavernShortPlayerState): Set<string> {
+  return new Set(
+    player.meldHistory.flatMap((meld) => meld.cards.map((card) => card.id))
+  );
+}
+
+function getLockedDiscardCardIds(
+  hand: TavernShortHandState,
+  player: TavernShortPlayerState
+): Set<string> {
+  const lockedCardIds = getLockedMeldCardIds(player);
+  for (const cardId of getLockedClaimDiscardCardIds(hand, player.seatId)) {
+    lockedCardIds.add(cardId);
+  }
+  return lockedCardIds;
+}
+
 function getSelectableDiscardCards(
   hand: TavernShortHandState,
   player: TavernShortPlayerState
@@ -869,7 +901,7 @@ function getSelectableDiscardCards(
   if (incoming == null || incoming.ownerSeatId !== player.seatId) {
     return [];
   }
-  const lockedCardIds = getLockedClaimDiscardCardIds(hand, player.seatId);
+  const lockedCardIds = getLockedDiscardCardIds(hand, player);
   return [...player.hand, incoming.card].filter((card) => !lockedCardIds.has(card.id));
 }
 
@@ -892,10 +924,75 @@ export function chooseTavernShortDiscardCandidate(
   if (!selectableCardIds.has(cardId)) {
     return hand;
   }
+  if (hand.selectedDiscardCardId === cardId) {
+    return {
+      ...hand,
+      actingSeatIndex: seatIndexOf(seatId),
+      selectedDiscardCardId: null,
+      liftedDiscardCardId: cardId,
+      droppingDiscardCardId: null,
+    };
+  }
+  if (
+    hand.selectedDiscardCardId != null &&
+    hand.selectedDiscardCardId !== cardId
+  ) {
+    return hand;
+  }
   return {
     ...hand,
     actingSeatIndex: seatIndexOf(seatId),
     selectedDiscardCardId: cardId,
+    liftedDiscardCardId: cardId,
+    droppingDiscardCardId: null,
+  };
+}
+
+export function clearTavernShortLiftedDiscardCandidate(
+  hand: TavernShortHandState,
+  seatId: string,
+  cardId: string
+): TavernShortHandState {
+  const player = hand.players.find((candidate) => candidate.seatId === seatId);
+  if (
+    hand.phase !== "draw-discard" ||
+    player == null ||
+    hand.pendingIncomingCard?.ownerSeatId !== seatId ||
+    hand.selectedDiscardCardId != null ||
+    hand.liftedDiscardCardId !== cardId
+  ) {
+    return hand;
+  }
+  const selectableCardIds = new Set(
+    getSelectableDiscardCards(hand, player).map((card) => card.id)
+  );
+  if (!selectableCardIds.has(cardId)) {
+    return hand;
+  }
+  return {
+    ...hand,
+    actingSeatIndex: seatIndexOf(seatId),
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: cardId,
+  };
+}
+
+export function clearTavernShortDroppingDiscardCandidate(
+  hand: TavernShortHandState,
+  seatId: string,
+  cardId: string
+): TavernShortHandState {
+  if (
+    hand.phase !== "draw-discard" ||
+    hand.pendingIncomingCard?.ownerSeatId !== seatId ||
+    hand.droppingDiscardCardId !== cardId
+  ) {
+    return hand;
+  }
+  return {
+    ...hand,
+    actingSeatIndex: seatIndexOf(seatId),
+    droppingDiscardCardId: null,
   };
 }
 
@@ -952,6 +1049,8 @@ export function confirmTavernShortDiscard(
     players: nextPlayers,
     pendingIncomingCard: null,
     selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: null,
     pots: rebuildPots(nextPlayers),
   };
   const claimOptions = buildClaimOptions(interimHand, seatId, discardedCard);
@@ -1064,6 +1163,8 @@ export function claimTavernShortDiscard(
       lockedCardIds,
     },
     selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: null,
     claimChain: {
       ...claimChain,
       discarderSeatId: option.seatId,
@@ -1189,6 +1290,8 @@ export function settleTavernShortShowdown(hand: TavernShortHandState): TavernSho
     showdown,
     pendingIncomingCard: null,
     selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: null,
     claimChain: null,
     pendingBetSeatIds: [],
     pendingDrawSeatIds: [],

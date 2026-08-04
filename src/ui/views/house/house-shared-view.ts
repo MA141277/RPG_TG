@@ -31,6 +31,8 @@ type LeaveButtonOptions = {
 type OverlaySkinOptions = {
   overlayAttribute?: string;
   modalClassName?: string;
+  actionsClassName?: string;
+  buttonClassName?: string;
 };
 
 type IdleOwnerOptions = {
@@ -51,6 +53,12 @@ function escapeHtml(value: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function joinClassNames(
+  ...classNames: Array<string | null | undefined | false>
+): string {
+  return classNames.filter(Boolean).join(" ");
 }
 
 function getAssessmentPopupClassName(
@@ -86,16 +94,29 @@ function isDismissHouseAction(action: HouseActionViewModel): boolean {
   );
 }
 
-function renderHouseActionButton(action: HouseActionViewModel): string {
+function renderHouseActionButton(
+  action: HouseActionViewModel,
+  options: {
+    extraClassName?: string | undefined;
+  } = {}
+): string {
   const buttonSoundAttribute =
     action.buttonSound == null
       ? ""
       : ` data-button-sound="${action.buttonSound}"`;
+  const buttonClassName = joinClassNames(
+    "c-button",
+    "c-grain-shop-button",
+    action.tone === "accent"
+      ? "c-grain-shop-button--gold"
+      : "c-grain-shop-button--paper",
+    options.extraClassName
+  );
 
   return `
     <button
       type="button"
-      class="c-button c-grain-shop-button ${action.tone === "accent" ? "c-grain-shop-button--gold" : "c-grain-shop-button--paper"}"
+      class="${buttonClassName}"
       data-house-action="${escapeHtml(action.id)}"
       ${buttonSoundAttribute}
       ${action.disabled ? "disabled" : ""}
@@ -212,11 +233,15 @@ export function renderHouseAlertOverlay(
 }
 
 export function renderHouseConfirmOverlay(
-  overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>
+  overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>,
+  options: OverlaySkinOptions = {}
 ): string {
   const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${getAssessmentPopupClassName(
-    overlay.paragraphs.length
+    overlay.paragraphs.length,
+    options.modalClassName
   )}`;
+  const overlayVariantAttribute =
+    options.overlayAttribute ?? ' data-house-overlay-variant="assessment-popup"';
   const confirmButtonSoundAttribute =
     overlay.confirmButtonSound == null
       ? ""
@@ -225,19 +250,36 @@ export function renderHouseConfirmOverlay(
     overlay.cancelButtonSound == null
       ? ""
       : ` data-button-sound="${overlay.cancelButtonSound}"`;
+  const actionsClassName = joinClassNames(
+    "c-grain-shop-modal__actions",
+    "c-grain-shop-modal__actions--split",
+    options.actionsClassName
+  );
+  const cancelButtonClassName = joinClassNames(
+    "c-button",
+    "c-grain-shop-button",
+    "c-grain-shop-button--paper",
+    options.buttonClassName
+  );
+  const confirmButtonClassName = joinClassNames(
+    "c-button",
+    "c-grain-shop-button",
+    "c-grain-shop-button--gold",
+    options.buttonClassName
+  );
 
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="confirm" data-house-overlay-variant="assessment-popup">
+    <div class="c-grain-shop-overlay" data-house-overlay="confirm"${overlayVariantAttribute}>
       <div class="${modalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
         </div>
-        <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}"${cancelButtonSoundAttribute}>
+        <div class="${actionsClassName}">
+          <button type="button" class="${cancelButtonClassName}" data-house-action="${overlay.cancelActionId}"${cancelButtonSoundAttribute}>
             ${overlay.cancelLabel}
           </button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}"${confirmButtonSoundAttribute}>
+          <button type="button" class="${confirmButtonClassName}" data-house-action="${overlay.confirmActionId}"${confirmButtonSoundAttribute}>
             ${overlay.confirmLabel}
           </button>
         </div>
@@ -392,6 +434,10 @@ export function renderHouseActionContainer(
     viewModel.standbyRoster.find((actor) => actor.isSelected === true) ??
     viewModel.standbyRoster[0] ??
     null;
+  const actionContainerClassName = joinClassNames(
+    "c-grain-shop-actions",
+    viewModel.actionContainer.className
+  );
   const targetCharacterId =
     targetActor == null ? null : escapeHtml(targetActor.characterId);
   const primaryHouseActions = viewModel.actionContainer.actions.filter(
@@ -421,7 +467,12 @@ export function renderHouseActionContainer(
           return `
             <button
               type="button"
-              class="c-button c-grain-shop-button ${buttonTone}"
+              class="${joinClassNames(
+                "c-button",
+                "c-grain-shop-button",
+                buttonTone,
+                viewModel.actionContainer?.buttonClassName
+              )}"
               data-npc-action="${escapeHtml(option.kind)}"
               data-character-id="${targetCharacterId}"
               ${buttonSoundAttribute}
@@ -435,12 +486,24 @@ export function renderHouseActionContainer(
   return `
     <div class="c-grain-shop-center c-grain-shop-center--open">
       <nav
-        class="c-grain-shop-actions"
+        class="${actionContainerClassName}"
         aria-label="${viewModel.actionContainer.title ?? "房屋操作"}"
       >
-        ${primaryHouseActions.map(renderHouseActionButton).join("")}
+        ${primaryHouseActions
+          .map((action) =>
+            renderHouseActionButton(action, {
+              extraClassName: viewModel.actionContainer?.buttonClassName,
+            })
+          )
+          .join("")}
         ${defaultNpcActions}
-        ${dismissHouseActions.map(renderHouseActionButton).join("")}
+        ${dismissHouseActions
+          .map((action) =>
+            renderHouseActionButton(action, {
+              extraClassName: viewModel.actionContainer?.buttonClassName,
+            })
+          )
+          .join("")}
       </nav>
     </div>
   `;

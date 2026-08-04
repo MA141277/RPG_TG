@@ -9,7 +9,7 @@ export const settlementTradeGoodsById = {
     name: "丝绸",
     categoryLabel: "织品",
     unit: "匹",
-    basePrice: 180,
+    basePrice: 600,
     description: "上等丝绸，最适合卖给富户、豪门与讲究体面的买家。",
   },
   ramie_cloth: {
@@ -17,7 +17,7 @@ export const settlementTradeGoodsById = {
     name: "麻布",
     categoryLabel: "织品",
     unit: "匹",
-    basePrice: 112,
+    basePrice: 120,
     description: "轻便耐穿，南方暖热地带的日常用布向来走得稳。",
   },
   cotton_cloth: {
@@ -25,7 +25,7 @@ export const settlementTradeGoodsById = {
     name: "棉布",
     categoryLabel: "织品",
     unit: "匹",
-    basePrice: 96,
+    basePrice: 200,
     description: "耐用实惠，最适合走内陆大宗商路。",
   },
   tea: {
@@ -33,7 +33,7 @@ export const settlementTradeGoodsById = {
     name: "茶叶",
     categoryLabel: "食货",
     unit: "箱",
-    basePrice: 124,
+    basePrice: 150,
     description: "耐运耐放，沿水路与长途商道都能保住身价。",
   },
   wine: {
@@ -41,7 +41,7 @@ export const settlementTradeGoodsById = {
     name: "酒",
     categoryLabel: "食货",
     unit: "坛",
-    basePrice: 146,
+    basePrice: 100,
     description: "酒楼、宴席与送礼场面都少不了封坛好酒。",
   },
   ceramics: {
@@ -49,7 +49,7 @@ export const settlementTradeGoodsById = {
     name: "瓷器",
     categoryLabel: "器物",
     unit: "箱",
-    basePrice: 138,
+    basePrice: 200,
     description: "窑货怕颠簸，走对商路就能卖出好价。",
   },
   copperware: {
@@ -57,7 +57,7 @@ export const settlementTradeGoodsById = {
     name: "铜器",
     categoryLabel: "金铁",
     unit: "箱",
-    basePrice: 158,
+    basePrice: 400,
     description: "铜制器皿与配件最受工匠行和殷实人家欢迎。",
   },
   ironware: {
@@ -65,7 +65,7 @@ export const settlementTradeGoodsById = {
     name: "铁器",
     categoryLabel: "金铁",
     unit: "箱",
-    basePrice: 132,
+    basePrice: 150,
     description: "工具与五金在边城和修筑地向来不愁出手。",
   },
   salt: {
@@ -73,7 +73,7 @@ export const settlementTradeGoodsById = {
     name: "盐",
     categoryLabel: "日用",
     unit: "担",
-    basePrice: 84,
+    basePrice: 60,
     description: "最稳妥的日用货，越往内陆越容易抬价。",
   },
   paper_brush: {
@@ -81,7 +81,7 @@ export const settlementTradeGoodsById = {
     name: "纸笔",
     categoryLabel: "文房",
     unit: "捆",
-    basePrice: 128,
+    basePrice: 100,
     description: "衙门、书吏、学塾都离不开纸笔文具。",
   },
   bamboo_woodware: {
@@ -89,7 +89,7 @@ export const settlementTradeGoodsById = {
     name: "竹木器",
     categoryLabel: "器物",
     unit: "箱",
-    basePrice: 98,
+    basePrice: 60,
     description: "轻巧好装，最适合走水陆混合商道。",
   },
   woven_goods: {
@@ -97,7 +97,7 @@ export const settlementTradeGoodsById = {
     name: "编织货",
     categoryLabel: "器物",
     unit: "箱",
-    basePrice: 118,
+    basePrice: 40,
     description: "结实耐用，适合车队与商帮长途贩运。",
   },
   lacquer_oil: {
@@ -105,7 +105,7 @@ export const settlementTradeGoodsById = {
     name: "漆油",
     categoryLabel: "器物",
     unit: "箱",
-    basePrice: 164,
+    basePrice: 250,
     description: "做漆作坊一旺，漆油就会立刻涨价。",
   },
   stone_goods: {
@@ -113,7 +113,7 @@ export const settlementTradeGoodsById = {
     name: "石料器货",
     categoryLabel: "工料",
     unit: "箱",
-    basePrice: 104,
+    basePrice: 100,
     description: "石作与矿料最适合成批整车地规划出货。",
   },
   hides: {
@@ -121,7 +121,7 @@ export const settlementTradeGoodsById = {
     name: "皮货",
     categoryLabel: "皮革",
     unit: "捆",
-    basePrice: 108,
+    basePrice: 300,
     description: "军需、马队和皮作铺子都爱收这类皮货。",
   },
 } as const satisfies Record<SettlementTradeGoodId, SettlementTradeGoodDefinition>;

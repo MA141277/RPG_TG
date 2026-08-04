@@ -7,6 +7,8 @@ import {
 import {
   advanceTavernShortNpcAction,
   claimTavernShortDiscard,
+  clearTavernShortDroppingDiscardCandidate,
+  clearTavernShortLiftedDiscardCandidate,
   chooseTavernShortDiscardCandidate,
   confirmTavernShortDiscard,
   createTavernShortHand,
@@ -136,6 +138,8 @@ export type TavernShortHandState = {
   lastFullRaise: number;
   pendingIncomingCard: TavernShortPendingIncomingCard | null;
   selectedDiscardCardId: string | null;
+  liftedDiscardCardId: string | null;
+  droppingDiscardCardId: string | null;
   claimChain: TavernShortClaimChainState | null;
   pots: TavernShortPot[];
   showdown: TavernShortShowdownRow[] | null;
@@ -192,6 +196,8 @@ export {
   advanceTavernShortNpcAction,
   buildTavernShortPots,
   claimTavernShortDiscard,
+  clearTavernShortDroppingDiscardCandidate,
+  clearTavernShortLiftedDiscardCandidate,
   chooseTavernShortDiscardCandidate,
   compareTavernShortBestFives,
   confirmTavernShortDiscard,

@@ -1,3 +1,5 @@
+import type { CardDrawSoundPlayer } from "../../domain/card-draw-sound";
+
 export type CardDrawPhase = "idle" | "shake" | "lift" | "flip" | "settle" | "done";
 
 export type CardDrawTimings = {
@@ -28,6 +30,7 @@ export type CardDrawAnimatorOptions = CardDrawPlayInput & {
   cardHeightPx?: number;
   timings?: Partial<CardDrawTimings>;
   random?: () => number;
+  soundPlayer?: CardDrawSoundPlayer;
 };
 
 type PendingPlay = {
@@ -137,6 +140,7 @@ export class CardDrawAnimator {
   private readonly defaultClickHintText: string;
   private readonly defaultBusyHintText: string;
   private readonly timings: CardDrawTimings;
+  private readonly soundPlayer: CardDrawSoundPlayer | null;
   private readonly scheduledTimeouts = new Set<ReturnType<typeof globalThis.setTimeout>>();
   private pendingPlay: PendingPlay | null = null;
   private busy = false;
@@ -153,6 +157,7 @@ export class CardDrawAnimator {
     this.defaultClickHintText = input.clickHintText ?? DEFAULT_CLICK_HINT;
     this.defaultBusyHintText = input.busyHintText ?? DEFAULT_BUSY_HINT;
     this.timings = mergeCardDrawTimings(input.timings);
+    this.soundPlayer = input.soundPlayer ?? null;
 
     const document = input.host.ownerDocument;
     this.root = document.createElement("div");
@@ -271,13 +276,17 @@ export class CardDrawAnimator {
     this.triggerButton.disabled = true;
     this.applyHint(currentPlay.busyHintText);
     this.applyPhase("shake");
+    this.playSound("shuffle");
 
     this.scheduleStep(token, this.timings.shakeMs, () => {
       this.applyPhase("lift");
+      this.playSound("pull");
       this.scheduleStep(token, this.timings.liftMs, () => {
         this.applyPhase("flip");
+        this.playSound("flip");
         this.scheduleStep(token, this.timings.flipMs, () => {
           this.applyPhase("settle");
+          this.playSound("return");
           this.scheduleStep(token, this.timings.settleMs, () => {
             this.busy = false;
             this.pendingPlay = null;
@@ -321,6 +330,10 @@ export class CardDrawAnimator {
 
   private applyHint(label: string): void {
     this.hint.textContent = label;
+  }
+
+  private playSound(event: "shuffle" | "pull" | "flip" | "return"): void {
+    this.soundPlayer?.play(event);
   }
 
   private clearScheduledSteps(): void {

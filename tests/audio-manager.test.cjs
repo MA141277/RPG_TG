@@ -21,6 +21,7 @@ function createFakeAudioElement(input) {
     paused: true,
     loop: false,
     preload: "none",
+    duration: options.duration ?? 0,
     volume: 1,
     playbackRate: 1,
     preservesPitch: true,
@@ -60,6 +61,35 @@ function createFakeAudioElement(input) {
   };
 
   return audio;
+}
+
+function createScheduledTaskQueue() {
+  const tasks = [];
+  let currentTimeMs = 0;
+  return {
+    schedule(callback, delayMs) {
+      tasks.push({
+        callback,
+        dueTimeMs: currentTimeMs + delayMs,
+        ran: false,
+      });
+      return tasks.length;
+    },
+    runThrough(delayMs) {
+      currentTimeMs += delayMs;
+      let ranTask = true;
+      while (ranTask) {
+        ranTask = false;
+        for (const task of tasks) {
+          if (!task.ran && task.dueTimeMs <= currentTimeMs) {
+            task.ran = true;
+            ranTask = true;
+            task.callback();
+          }
+        }
+      }
+    },
+  };
 }
 
 function createSequenceRandom(values) {
@@ -505,6 +535,36 @@ test("audio controller plays asset-backed light, heavy, enter, troop selection, 
     "asset://audio/ui/enter.mp3",
     "asset://audio/ui/troop-selection.mp3",
     "asset://audio/ui/troop-mutation.mp3",
+  ]);
+});
+
+test("audio controller plays asset-backed coin reward cues through the shared sfx bus", () => {
+  const playedSources = [];
+  const controller = createAppAudioController({
+    resolveAssetPath: (assetPath) => `asset://${assetPath}`,
+    createAudioElement: () =>
+      createFakeAudioElement((audio) => {
+        playedSources.push(audio.src);
+      }),
+  });
+
+  controller.sync({
+    bgmCueId: null,
+    commands: [
+      {
+        commandId: "cmd-coin-reward-burst",
+        cueId: BUILTIN_AUDIO_CUE_IDS.gameCoinRewardBurst,
+      },
+      {
+        commandId: "cmd-coin-reward-collect",
+        cueId: BUILTIN_AUDIO_CUE_IDS.gameCoinRewardCollect,
+      },
+    ],
+  });
+
+  assert.deepEqual(playedSources, [
+    "asset://audio/game-events/coin-reward-burst.mp3",
+    "asset://audio/game-events/coin-reward-collect.mp3",
   ]);
 });
 
@@ -1264,3 +1324,156 @@ test("audio controller keeps one looping BGM player and switches its source when
   assert.equal(players[0].src, "asset://BGM/游戏内.mp3");
 });
 
+test("audio controller can create a dedicated ambient loop handle that plays in parallel with bgm", () => {
+  const createdPlayers = [];
+  const scheduled = createScheduledTaskQueue();
+  const controller = createAppAudioController({
+    resolveAssetPath: (assetPath) => `asset://${assetPath}`,
+    scheduleTask: scheduled.schedule,
+    createAudioElement: () => {
+      const audio = createFakeAudioElement({ duration: 120 });
+      createdPlayers.push(audio);
+      return audio;
+    },
+  });
+
+  controller.sync({
+    bgmCueId: BUILTIN_AUDIO_CUE_IDS.bgmInGame,
+    commands: [],
+  });
+
+  const ambient = controller.createAmbientLoopHandle({
+    cueId: BUILTIN_AUDIO_CUE_IDS.ambienceCityMarket,
+    fadeInMs: 1000,
+    fadeOutMs: 1000,
+    crossfadeMs: 1000,
+  });
+
+  ambient.activate();
+
+  const bgmPlayer = createdPlayers[0];
+  const ambientPlayer = createdPlayers[1];
+
+  assert.ok(bgmPlayer, "Expected the regular BGM player.");
+  assert.ok(ambientPlayer, "Expected a dedicated ambient player.");
+  assert.equal(ambientPlayer.src, "asset://audio/ambient/city-market.mp3");
+  assert.equal(ambientPlayer.volume, 0);
+
+  scheduled.runThrough(1000);
+
+  assert.equal(ambientPlayer.volume, 0.24);
+  assert.equal(bgmPlayer.paused, false);
+  assert.equal(ambientPlayer.paused, false);
+});
+
+test("ambient loop handle fades out its own player without pausing bgm", () => {
+  const createdPlayers = [];
+  const scheduled = createScheduledTaskQueue();
+  const controller = createAppAudioController({
+    resolveAssetPath: (assetPath) => `asset://${assetPath}`,
+    scheduleTask: scheduled.schedule,
+    createAudioElement: () => {
+      const audio = createFakeAudioElement({ duration: 120 });
+      createdPlayers.push(audio);
+      return audio;
+    },
+  });
+
+  controller.sync({
+    bgmCueId: BUILTIN_AUDIO_CUE_IDS.bgmInGame,
+    commands: [],
+  });
+
+  const ambient = controller.createAmbientLoopHandle({
+    cueId: BUILTIN_AUDIO_CUE_IDS.ambienceCityMarket,
+    fadeInMs: 1000,
+    fadeOutMs: 1000,
+    crossfadeMs: 1000,
+  });
+
+  ambient.activate();
+  scheduled.runThrough(1000);
+
+  const bgmPlayer = createdPlayers[0];
+  const ambientPlayer = createdPlayers[1];
+
+  ambient.deactivate();
+  scheduled.runThrough(2000);
+
+  assert.equal(ambientPlayer.paused, true);
+  assert.equal(ambientPlayer.volume, 0);
+  assert.equal(bgmPlayer.paused, false);
+});
+
+test("ambient loop handle resumes from the saved position after reactivation", () => {
+  const createdPlayers = [];
+  const scheduled = createScheduledTaskQueue();
+  const controller = createAppAudioController({
+    resolveAssetPath: (assetPath) => `asset://${assetPath}`,
+    scheduleTask: scheduled.schedule,
+    createAudioElement: () => {
+      const audio = createFakeAudioElement({ duration: 120 });
+      createdPlayers.push(audio);
+      return audio;
+    },
+  });
+
+  const ambient = controller.createAmbientLoopHandle({
+    cueId: BUILTIN_AUDIO_CUE_IDS.ambienceCityMarket,
+    fadeInMs: 1000,
+    fadeOutMs: 1000,
+    crossfadeMs: 1000,
+  });
+
+  ambient.activate();
+  scheduled.runThrough(1000);
+
+  const firstPlayer = createdPlayers[0];
+  firstPlayer.currentTime = 37.5;
+
+  ambient.deactivate();
+  scheduled.runThrough(2000);
+  ambient.activate();
+
+  assert.equal(createdPlayers[0].currentTime, 37.5);
+  assert.equal(createdPlayers[0].paused, false);
+});
+
+test("ambient loop handle crossfades into a second player during the final crossfade window", () => {
+  const createdPlayers = [];
+  const scheduled = createScheduledTaskQueue();
+  const controller = createAppAudioController({
+    resolveAssetPath: (assetPath) => `asset://${assetPath}`,
+    scheduleTask: scheduled.schedule,
+    createAudioElement: () => {
+      const audio = createFakeAudioElement({ duration: 60 });
+      createdPlayers.push(audio);
+      return audio;
+    },
+  });
+
+  const ambient = controller.createAmbientLoopHandle({
+    cueId: BUILTIN_AUDIO_CUE_IDS.ambienceCityMarket,
+    fadeInMs: 1000,
+    fadeOutMs: 1000,
+    crossfadeMs: 1000,
+  });
+
+  ambient.activate();
+  scheduled.runThrough(1000);
+
+  const outgoingPlayer = createdPlayers[0];
+  outgoingPlayer.currentTime = 59.2;
+
+  scheduled.runThrough(1100);
+
+  const incomingPlayer = createdPlayers[1];
+  assert.ok(incomingPlayer, "Expected a second player for the tail crossfade.");
+  assert.equal(incomingPlayer.currentTime, 0);
+  assert.equal(incomingPlayer.paused, false);
+
+  scheduled.runThrough(2200);
+
+  assert.equal(outgoingPlayer.paused, true);
+  assert.equal(incomingPlayer.volume, 0.24);
+});

@@ -7,7 +7,13 @@ import troopMutationAudioUrl from "./assets/audio/ui/troop-mutation.mp3?url";
 import pachinkoLaunchAudioUrl from "./assets/audio/activity/pachinko-launch.mp3?url";
 import pachinkoBounce1AudioUrl from "./assets/audio/activity/pachinko-bounce-1.mp3?url";
 import pachinkoBounce2AudioUrl from "./assets/audio/activity/pachinko-bounce-2.mp3?url";
+import cardDrawShuffleAudioUrl from "./assets/audio/activity/card-draw-shuffle.mp3?url";
+import cardDrawPullAudioUrl from "./assets/audio/activity/card-draw-pull.mp3?url";
+import cardDrawFlipAudioUrl from "./assets/audio/activity/card-draw-flip.mp3?url";
+import cityMarketAmbientAudioUrl from "./assets/audio/ambient/city-market.mp3?url";
 import gameMoneyAudioUrl from "./assets/audio/game-events/money.mp3?url";
+import coinRewardBurstAudioUrl from "./assets/audio/game-events/coin-reward-burst.mp3?url";
+import coinRewardCollectAudioUrl from "./assets/audio/game-events/coin-reward-collect.mp3?url";
 import taskVictoryAudioUrl from "./assets/audio/game-events/task-victory.mp3?url";
 import taskFailureAudioUrl from "./assets/audio/game-events/task-failure.mp3?url";
 import battleSlashHit1AudioUrl from "./assets/audio/battle/slash-hit-1.mp3?url";
@@ -121,6 +127,9 @@ import {
   resolveUiClickCueIdFromTarget,
   type ButtonSoundEffect,
 } from "./application/audio/button-sound";
+import { ScopedAmbientLoopController } from "./application/audio/scoped-ambient-loop-controller";
+import { createCardDrawAudioCuePlayer } from "./application/audio/card-draw-sound";
+import { createCoinRewardAudioCuePlayer } from "./application/audio/coin-reward-sound";
 import {
   resolveBattleDemoCueId,
   resolveBattleDemoMusicCommand,
@@ -364,6 +373,7 @@ import {
 import { mountCityStageDomRuntime } from "./ui/views/city/city-stage-dom-runtime";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
 import { syncDialogueTypewriterRuntime } from "./ui/components/dialogue/dialogue-typewriter-runtime";
+import { syncTavernClaimCountdownDomRuntime } from "./ui/views/house/tavern-claim-countdown-dom";
 import { syncTroopEditorInteractions } from "./ui/views/troop-editor/troop-editor-interactions";
 import { syncTroopManagementBattlePreview } from "./ui/views/troop-editor/troop-management-battle-preview";
 import { syncTroopManagementMoveInteractions } from "./ui/views/troop-editor/troop-management-move-interactions";
@@ -434,12 +444,15 @@ type CampaignMoveAnimationState = {
 };
 
 type CityCardDrawOverlayRuntime = {
+  runtimeVersion: number;
   overlay: HTMLElement;
   mount: HTMLElement;
   sessionId: number;
   animator: CardDrawAnimator;
   hasStarted: boolean;
 };
+
+const CITY_CARD_DRAW_OVERLAY_RUNTIME_VERSION = 1;
 
 const appElement = document.querySelector<HTMLElement>("#app");
 const uiOverlayElement = document.querySelector<HTMLElement>("#ui-overlay");
@@ -978,6 +991,7 @@ function getCoinRewardAnimator(): ReturnType<typeof createCoinRewardAnimator> {
         coinRewardDisplayValue = value;
         syncCoinRewardGoldDisplay();
       },
+      soundPlayer: coinRewardSoundPlayer,
     });
   }
 
@@ -1051,6 +1065,8 @@ function syncCityCardDrawTestOverlay(): void {
   assertExists(mount, "Missing city card draw overlay mount.");
   const hasMatchingRuntime =
     cityCardDrawOverlayRuntime != null &&
+    cityCardDrawOverlayRuntime.runtimeVersion ===
+      CITY_CARD_DRAW_OVERLAY_RUNTIME_VERSION &&
     cityCardDrawOverlayRuntime.sessionId === currentState.sessionId &&
     cityCardDrawOverlayRuntime.mount === mount &&
     cityCardDrawOverlayRuntime.overlay === overlay;
@@ -1066,6 +1082,7 @@ function syncCityCardDrawTestOverlay(): void {
     destroyCityCardDrawOverlayRuntime();
     mount.replaceChildren();
     cityCardDrawOverlayRuntime = {
+      runtimeVersion: CITY_CARD_DRAW_OVERLAY_RUNTIME_VERSION,
       overlay,
       mount,
       sessionId: currentState.sessionId,
@@ -1076,6 +1093,7 @@ function syncCityCardDrawTestOverlay(): void {
         cardHeightPx: 192,
         clickHintText: "\u70b9\u51fb\u62bd\u53d6",
         busyHintText: "\u62bd\u53d6\u4e2d...",
+        soundPlayer: createCardDrawAudioCuePlayer(appAudioController),
       }),
       hasStarted: false,
     };
@@ -1278,10 +1296,16 @@ const STATIC_AUDIO_ASSET_URLS: Readonly<Partial<Record<string, string>>> = {
   "audio/ui/enter.mp3": enterAudioUrl,
   "audio/ui/troop-selection.mp3": troopSelectionAudioUrl,
   "audio/ui/troop-mutation.mp3": troopMutationAudioUrl,
+  "audio/ambient/city-market.mp3": cityMarketAmbientAudioUrl,
   "audio/activity/pachinko-launch.mp3": pachinkoLaunchAudioUrl,
   "audio/activity/pachinko-bounce-1.mp3": pachinkoBounce1AudioUrl,
   "audio/activity/pachinko-bounce-2.mp3": pachinkoBounce2AudioUrl,
+  "audio/activity/card-draw-shuffle.mp3": cardDrawShuffleAudioUrl,
+  "audio/activity/card-draw-pull.mp3": cardDrawPullAudioUrl,
+  "audio/activity/card-draw-flip.mp3": cardDrawFlipAudioUrl,
   "audio/game-events/money.mp3": gameMoneyAudioUrl,
+  "audio/game-events/coin-reward-burst.mp3": coinRewardBurstAudioUrl,
+  "audio/game-events/coin-reward-collect.mp3": coinRewardCollectAudioUrl,
   "audio/game-events/task-victory.mp3": taskVictoryAudioUrl,
   "audio/game-events/task-failure.mp3": taskFailureAudioUrl,
   "audio/battle/slash-hit-1.mp3": battleSlashHit1AudioUrl,
@@ -1304,6 +1328,20 @@ const appAudioController = createAppAudioController({
     STATIC_AUDIO_ASSET_URLS[assetPath] ??
     BUILTIN_AUDIO_ASSET_URLS[assetPath] ??
     new URL(`../${assetPath}`, import.meta.url).href,
+});
+const coinRewardSoundPlayer = createCoinRewardAudioCuePlayer(appAudioController);
+const cityMarketAmbientHandle = appAudioController.createAmbientLoopHandle({
+  cueId: BUILTIN_AUDIO_CUE_IDS.ambienceCityMarket,
+  fadeInMs: 3000,
+  fadeOutMs: 3000,
+  crossfadeMs: 1000,
+});
+const cityMarketAmbientController = new ScopedAmbientLoopController<{
+  isGameVisible: boolean;
+  currentView: AppState["gameState"]["ui"]["currentView"];
+}>({
+  target: cityMarketAmbientHandle,
+  isActive: (snapshot) => snapshot.isGameVisible && snapshot.currentView === "city",
 });
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
@@ -3764,6 +3802,10 @@ function syncAppAudio(): void {
   });
   appAudioSession = result.session;
   appAudioController.sync(result.output);
+  cityMarketAmbientController.sync({
+    isGameVisible,
+    currentView: appState.gameState.ui.currentView,
+  });
 }
 
 function shouldQueueUiClickCue(targetElement: HTMLElement): boolean {
@@ -4759,14 +4801,13 @@ appElement.addEventListener("pointerdown", (event) => {
     pointerHouseActionId != null &&
     shouldDispatchHouseActionOnPointerDown(pointerHouseActionId)
   ) {
-    const houseActionButton = pointerHouseActionButton;
     event.preventDefault();
     event.stopPropagation();
     recentPointerDispatchedHouseAction = {
       actionId: pointerHouseActionId,
       timestamp: window.performance.now(),
     };
-    queuePointerDispatchedUiClickCue(houseActionButton);
+    queuePointerDispatchedUiClickCue(pointerHouseActionButton);
     dispatchHouseRuntimeRequest(houseRuntime, {
       type: "action",
       actionId: pointerHouseActionId,
@@ -6240,6 +6281,32 @@ appElement.addEventListener("mouseout", (event) => {
     return;
   }
 
+  const houseMouseleaveActionButton = targetElement.closest<HTMLElement>(
+    "[data-house-mouseleave-action]"
+  );
+  const houseMouseleaveActionId =
+    houseMouseleaveActionButton?.dataset.houseMouseleaveAction;
+  const relatedTargetElement =
+    event.relatedTarget instanceof Element ? event.relatedTarget : null;
+  const relatedHouseMouseleaveActionButton =
+    relatedTargetElement?.closest<HTMLElement>("[data-house-mouseleave-action]") ??
+    null;
+  if (
+    houseMouseleaveActionButton != null &&
+    houseMouseleaveActionId != null &&
+    !(
+      event.relatedTarget instanceof Node &&
+      houseMouseleaveActionButton.contains(event.relatedTarget)
+    ) &&
+    relatedHouseMouseleaveActionButton?.dataset.houseMouseleaveAction !==
+      houseMouseleaveActionId
+  ) {
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "action",
+      actionId: houseMouseleaveActionId,
+    });
+  }
+
   const cityMapBuildingLabel = targetElement.closest<HTMLElement>(
     "[data-city-map-building-label-id]"
   );
@@ -7446,6 +7513,7 @@ function renderAppFrame(
   syncCityCardDrawTestOverlay();
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
   syncCityStageDomRuntime();
+  syncTavernClaimCountdownDomRuntime(appRoot);
   syncCoinRewardAnimatorTarget();
   syncCoinRewardAnchorEditor();
   syncCoinRewardAnchorEditorView();

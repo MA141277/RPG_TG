@@ -1965,6 +1965,42 @@
   --nine-slice-left: 18px;
   --nine-slice-seam-fill: #783021;
 }
+
+.c-house-red-nine-slice-actions {
+  justify-content: center;
+  gap: 8px;
+}
+
+.c-grain-shop-actions.c-house-red-nine-slice-actions .c-house-red-nine-slice-button,
+.c-grain-shop-modal.c-assessment-popup .c-grain-shop-modal__actions.c-house-red-nine-slice-actions .c-house-red-nine-slice-button {
+  border-style: solid;
+  border-color: transparent;
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-anti-seam.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  background: transparent;
+  box-shadow: none;
+  color: #f7e6ba;
+  text-shadow: 0 1px 1px rgb(57 16 8 / 66%);
+
+  --nine-slice-top: 10px;
+  --nine-slice-right: 18px;
+  --nine-slice-bottom: 10px;
+  --nine-slice-left: 18px;
+  --nine-slice-seam-fill: #783021;
+}
+
+.c-grain-shop-actions.c-house-red-nine-slice-actions .c-house-red-nine-slice-button {
+  padding: 0 18px;
+}
+
+.c-grain-shop-actions.c-house-red-nine-slice-actions .c-house-red-nine-slice-button:disabled,
+.c-grain-shop-modal.c-assessment-popup .c-grain-shop-modal__actions.c-house-red-nine-slice-actions .c-house-red-nine-slice-button:disabled {
+  color: #d2b98b;
+  filter: saturate(0.36) brightness(0.9);
+}
 /* stylelint-enable no-descending-specificity */
 
 /* stylelint-disable no-descending-specificity -- ordinary trade popups intentionally override older modal and control skins in one shared block. */

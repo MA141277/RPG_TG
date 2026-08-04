@@ -33,3 +33,12 @@ test("pointer-dispatched pachinko actions queue shared click audio before dispat
     /pointerHouseActionId != null[\s\S]*shouldDispatchHouseActionOnPointerDown\(pointerHouseActionId\)[\s\S]*queuePointerDispatchedUiClickCue\(pointerHouseActionButton\);[\s\S]*dispatchHouseRuntimeRequest\(houseRuntime, \{/
   );
 });
+
+test("generic house mouseleave actions dispatch through the shared top-level mouseout wiring", () => {
+  const source = readSource("src/main.ts");
+
+  assert.match(
+    source,
+    /appElement\.addEventListener\("mouseout", \(event\) => \{[\s\S]*const houseMouseleaveActionButton = targetElement\.closest<HTMLElement>\(\s*"\[data-house-mouseleave-action\]"\s*\);[\s\S]*houseMouseleaveActionId != null[\s\S]*dispatchHouseRuntimeRequest\(houseRuntime, \{[\s\S]*type: "action",[\s\S]*actionId: houseMouseleaveActionId,[\s\S]*\}[\s\S]*const cityMapBuildingLabel = targetElement\.closest<HTMLElement>\(/s
+  );
+});

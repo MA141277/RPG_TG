@@ -395,6 +395,7 @@ function cancelAnimationStep(frameId: AnimationStepId): void {
 export function createCoinRewardAnimator(input: {
   layer: HTMLElement;
   onDisplayValueChange: (displayValue: number | null) => void;
+  soundPlayer?: import("../../domain/coin-reward-sound").CoinRewardSoundPlayer;
 }): CoinRewardAnimator {
   applyCriticalLayerStyles(input.layer);
   let goldTargetElement: HTMLElement | null = null;
@@ -412,6 +413,7 @@ export function createCoinRewardAnimator(input: {
   let latestDisplayedNumericValue = 0;
   let lastEmittedValue: number | null = null;
   let hasShownAnyNumericValue = false;
+  let hasPlayedCollectSound = false;
 
   function emitDisplayValueChange(displayValue: number | null): void {
     if (typeof displayValue === "number") {
@@ -531,6 +533,11 @@ export function createCoinRewardAnimator(input: {
           ingot.hasArrived = true;
           completedIngots.push(ingot);
 
+          if (!hasPlayedCollectSound) {
+            hasPlayedCollectSound = true;
+            input.soundPlayer?.play("collect");
+          }
+
           if (ingot.hitValue >= inputForGather.targetValue) {
             emitDisplayValueChange(inputForGather.targetValue);
             emitDisplayValueChange(null);
@@ -596,6 +603,8 @@ export function createCoinRewardAnimator(input: {
       latestDisplayedNumericValue = startValue;
       lastEmittedValue = null;
       hasShownAnyNumericValue = false;
+      hasPlayedCollectSound = false;
+      input.soundPlayer?.play("burst");
 
       const ingotCount = clampIngotCount(amount);
       const sourcePoint = toLayerPoint(

@@ -258,6 +258,38 @@ test("card draw animator rejects overlapping play requests and rejects pending p
   assert.equal(host.children.length, 0);
 });
 
+test("card draw animator emits semantic audio events for shuffle pull flip and return", async () => {
+  const { CardDrawAnimator } = await import("../src/ui/animations/card-draw-animation.ts");
+  const host = createFakeHost();
+  const playedEvents = [];
+  const animator = new CardDrawAnimator({
+    host,
+    timings: {
+      shakeMs: 5,
+      liftMs: 5,
+      flipMs: 5,
+      settleMs: 5,
+    },
+    soundPlayer: {
+      play(event) {
+        playedEvents.push(event);
+      },
+    },
+  });
+
+  const playPromise = animator.play({
+    resolveValue() {
+      return 3;
+    },
+  });
+
+  animator.trigger();
+  const resolvedValue = await playPromise;
+
+  assert.equal(resolvedValue, 3);
+  assert.deepEqual(playedEvents, ["shuffle", "pull", "flip", "return"]);
+});
+
 test("stacked card layers stay opaque instead of fading by depth", () => {
   const source = fs.readFileSync("src/styles/card-draw.css", "utf8");
   const stackRuleMatch = source.match(

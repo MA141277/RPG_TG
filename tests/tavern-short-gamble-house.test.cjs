@@ -22,6 +22,7 @@ const {
 } = require("../.test-dist/application/player/player-stamina.js");
 const {
   advanceTavernShortNpcAction,
+  chooseTavernShortDiscardCandidate,
   resolveTavernShortBetAction,
 } = require("../.test-dist/domain/tavern-short-gambling.js");
 
@@ -266,126 +267,163 @@ test("tavern short debug toggle starts a stable pong-kong-chow claim cycle acros
 });
 
 test("tavern short claim countdown only starts for non-upstream pong-kong windows", () => {
+  const originalDateNow = Date.now;
+  Date.now = () => 2_500;
+  try {
+    const table = createTavernShortTableSession({
+      playerName: "tester",
+      buyInGold: 100,
+      seed: 17,
+    });
+    const visibleDiscard = { id: "wan-7", suit: "wan", rank: 7 };
+
+    const timedTable = updateTavernShortTableSession(table, {
+      ...table.currentHand,
+      phase: "claim-window",
+      actingSeatIndex: 0,
+      claimChain: {
+        discarderSeatId: "traveler",
+        visibleDiscard,
+        originalResumeSeatId: "you",
+        turnOwnerSeatId: "traveler",
+        stage: "pong-chow",
+        chainDepth: 0,
+        passedSeatIds: [],
+        options: [
+          {
+            id: "pong:you:wan-7:wan-7a:wan-7b",
+            seatId: "you",
+            kind: "pong",
+            discardCardId: "wan-7",
+            consumeCardIds: ["wan-7a", "wan-7b"],
+            priority: 2,
+          },
+        ],
+      },
+      lastVisibleDiscard: {
+        seatId: "traveler",
+        card: visibleDiscard,
+      },
+    });
+    assert.deepEqual(timedTable.claimCountdown, {
+      totalSeconds: 10,
+      startedAtEpochMs: 2_500,
+      expiresAtEpochMs: 12_500,
+    });
+
+    const upstreamTable = updateTavernShortTableSession(table, {
+      ...table.currentHand,
+      phase: "claim-window",
+      actingSeatIndex: 0,
+      claimChain: {
+        discarderSeatId: "guard",
+        visibleDiscard,
+        originalResumeSeatId: "you",
+        turnOwnerSeatId: "guard",
+        stage: "kong-pong-chow",
+        chainDepth: 0,
+        passedSeatIds: [],
+        options: [
+          {
+            id: "kong:you:wan-7:wan-7a:wan-7b:wan-7c",
+            seatId: "you",
+            kind: "kong",
+            discardCardId: "wan-7",
+            consumeCardIds: ["wan-7a", "wan-7b", "wan-7c"],
+            priority: 3,
+          },
+        ],
+      },
+      lastVisibleDiscard: {
+        seatId: "guard",
+        card: visibleDiscard,
+      },
+    });
+    assert.equal(upstreamTable.claimCountdown, null);
+
+    const chowOnlyTable = updateTavernShortTableSession(table, {
+      ...table.currentHand,
+      phase: "claim-window",
+      actingSeatIndex: 0,
+      claimChain: {
+        discarderSeatId: "traveler",
+        visibleDiscard,
+        originalResumeSeatId: "you",
+        turnOwnerSeatId: "traveler",
+        stage: "chow",
+        chainDepth: 0,
+        passedSeatIds: [],
+        options: [
+          {
+            id: "chow:you:wan-7:wan-5:wan-6",
+            seatId: "you",
+            kind: "chow",
+            discardCardId: "wan-7",
+            consumeCardIds: ["wan-5", "wan-6"],
+            priority: 1,
+          },
+        ],
+      },
+      lastVisibleDiscard: {
+        seatId: "traveler",
+        card: visibleDiscard,
+      },
+    });
+    assert.equal(chowOnlyTable.claimCountdown, null);
+  } finally {
+    Date.now = originalDateNow;
+  }
+});
+
+test("tavern short session auto-draws when the human enters a draw-discard turn", () => {
   const table = createTavernShortTableSession({
     playerName: "tester",
     buyInGold: 100,
     seed: 17,
   });
-  const visibleDiscard = { id: "wan-7", suit: "wan", rank: 7 };
 
-  const timedTable = updateTavernShortTableSession(table, {
+  const nextTable = updateTavernShortTableSession(table, {
     ...table.currentHand,
-    phase: "claim-window",
+    phase: "draw-discard",
     actingSeatIndex: 0,
-    claimChain: {
-      discarderSeatId: "traveler",
-      visibleDiscard,
-      originalResumeSeatId: "you",
-      turnOwnerSeatId: "traveler",
-      stage: "pong-chow",
-      chainDepth: 0,
-      passedSeatIds: [],
-      options: [
-        {
-          id: "pong:you:wan-7:wan-7a:wan-7b",
-          seatId: "you",
-          kind: "pong",
-          discardCardId: "wan-7",
-          consumeCardIds: ["wan-7a", "wan-7b"],
-          priority: 2,
-        },
-      ],
-    },
-    lastVisibleDiscard: {
-      seatId: "traveler",
-      card: visibleDiscard,
-    },
-  });
-  assert.deepEqual(timedTable.claimCountdown, {
-    totalSeconds: 10,
-    remainingSeconds: 10,
+    currentDrawTurnSeatId: "you",
+    pendingIncomingCard: null,
+    selectedDiscardCardId: null,
   });
 
-  const upstreamTable = updateTavernShortTableSession(table, {
-    ...table.currentHand,
-    phase: "claim-window",
-    actingSeatIndex: 0,
-    claimChain: {
-      discarderSeatId: "guard",
-      visibleDiscard,
-      originalResumeSeatId: "you",
-      turnOwnerSeatId: "guard",
-      stage: "kong-pong-chow",
-      chainDepth: 0,
-      passedSeatIds: [],
-      options: [
-        {
-          id: "kong:you:wan-7:wan-7a:wan-7b:wan-7c",
-          seatId: "you",
-          kind: "kong",
-          discardCardId: "wan-7",
-          consumeCardIds: ["wan-7a", "wan-7b", "wan-7c"],
-          priority: 3,
-        },
-      ],
-    },
-    lastVisibleDiscard: {
-      seatId: "guard",
-      card: visibleDiscard,
-    },
-  });
-  assert.equal(upstreamTable.claimCountdown, null);
-
-  const chowOnlyTable = updateTavernShortTableSession(table, {
-    ...table.currentHand,
-    phase: "claim-window",
-    actingSeatIndex: 0,
-    claimChain: {
-      discarderSeatId: "traveler",
-      visibleDiscard,
-      originalResumeSeatId: "you",
-      turnOwnerSeatId: "traveler",
-      stage: "chow",
-      chainDepth: 0,
-      passedSeatIds: [],
-      options: [
-        {
-          id: "chow:you:wan-7:wan-5:wan-6",
-          seatId: "you",
-          kind: "chow",
-          discardCardId: "wan-7",
-          consumeCardIds: ["wan-5", "wan-6"],
-          priority: 1,
-        },
-      ],
-    },
-    lastVisibleDiscard: {
-      seatId: "traveler",
-      card: visibleDiscard,
-    },
-  });
-  assert.equal(chowOnlyTable.claimCountdown, null);
+  assert.equal(nextTable.currentHand?.phase, "draw-discard");
+  assert.equal(nextTable.currentHand?.pendingIncomingCard?.ownerSeatId, "you");
+  assert.equal(nextTable.currentHand?.pendingIncomingCard?.source, "draw");
+  assert.equal(nextTable.claimCountdown, null);
 });
 
 test("tavern short claim countdown auto-skips after ten seconds", () => {
-  const started = openShortTable(createBaseState(), prototypeCharacters, 100, true);
-  let table = syncShortTableToHumanClaimWindow(started.sessionState.gambleSession.table);
-  assert.equal(table.currentHand.claimChain.discarderSeatId, "traveler");
-  assert.equal(table.claimCountdown.remainingSeconds, 10);
+  const originalDateNow = Date.now;
+  let nowMs = 1_000;
+  Date.now = () => nowMs;
+  try {
+    const started = openShortTable(createBaseState(), prototypeCharacters, 100, true);
+    let table = syncShortTableToHumanClaimWindow(started.sessionState.gambleSession.table);
+    assert.equal(table.currentHand.claimChain.discarderSeatId, "traveler");
+    assert.deepEqual(table.claimCountdown, {
+      totalSeconds: 10,
+      startedAtEpochMs: 1_000,
+      expiresAtEpochMs: 11_000,
+    });
 
-  let transition = {
-    gameState: started.gameState,
-    characterDefinitions: started.characterDefinitions,
-    sessionState: {
-      ...started.sessionState,
-      gambleSession: {
-        variant: "short",
-        table,
+    let transition = {
+      gameState: started.gameState,
+      characterDefinitions: started.characterDefinitions,
+      sessionState: {
+        ...started.sessionState,
+        gambleSession: {
+          variant: "short",
+          table,
+        },
       },
-    },
-  };
+    };
 
-  for (let step = 0; step < 9; step += 1) {
+    nowMs = 10_999;
     transition = tavernHouseModule.dispatch({
       gameState: transition.gameState,
       characterDefinitions: transition.characterDefinitions,
@@ -394,64 +432,75 @@ test("tavern short claim countdown auto-skips after ten seconds", () => {
       sessionState: transition.sessionState,
       request: { type: "tick", tickId: SHORT_CLAIM_TIMEOUT_TICK_ID },
     });
+
+    table = transition.sessionState.gambleSession.table;
+    assert.deepEqual(table.claimCountdown, {
+      totalSeconds: 10,
+      startedAtEpochMs: 1_000,
+      expiresAtEpochMs: 11_000,
+    });
+
+    nowMs = 11_000;
+    transition = tavernHouseModule.dispatch({
+      gameState: transition.gameState,
+      characterDefinitions: transition.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: transition.sessionState,
+      request: { type: "tick", tickId: SHORT_CLAIM_TIMEOUT_TICK_ID },
+    });
+
+    table = transition.sessionState.gambleSession.table;
+    assert.equal(table.claimCountdown, null);
+    assert.notEqual(table.currentHand.phase, "claim-window");
+    assert.equal(
+      table.currentHand.claimChain?.options.some((option) => option.seatId === "you") ?? false,
+      false
+    );
+  } finally {
+    Date.now = originalDateNow;
   }
-
-  table = transition.sessionState.gambleSession.table;
-  assert.deepEqual(table.claimCountdown, {
-    totalSeconds: 10,
-    remainingSeconds: 1,
-  });
-
-  transition = tavernHouseModule.dispatch({
-    gameState: transition.gameState,
-    characterDefinitions: transition.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: transition.sessionState,
-    request: { type: "tick", tickId: SHORT_CLAIM_TIMEOUT_TICK_ID },
-  });
-
-  table = transition.sessionState.gambleSession.table;
-  assert.equal(table.claimCountdown, null);
-  assert.notEqual(table.currentHand.phase, "claim-window");
-  assert.equal(
-    table.currentHand.claimChain?.options.some((option) => option.seatId === "you") ?? false,
-    false
-  );
 });
 
 test("tavern short claim countdown disappears once the player selects pong or kong", () => {
-  const started = openShortTable(createBaseState(), prototypeCharacters, 100, true);
-  const table = syncShortTableToHumanClaimWindow(started.sessionState.gambleSession.table);
-  const option = table.currentHand.claimChain.options.find(
-    (candidate) => candidate.seatId === "you" && candidate.kind === "pong"
-  );
-  assert.ok(option);
-  assert.deepEqual(table.claimCountdown, {
-    totalSeconds: 10,
-    remainingSeconds: 10,
-  });
+  const originalDateNow = Date.now;
+  Date.now = () => 4_000;
+  try {
+    const started = openShortTable(createBaseState(), prototypeCharacters, 100, true);
+    const table = syncShortTableToHumanClaimWindow(started.sessionState.gambleSession.table);
+    const option = table.currentHand.claimChain.options.find(
+      (candidate) => candidate.seatId === "you" && candidate.kind === "pong"
+    );
+    assert.ok(option);
+    assert.deepEqual(table.claimCountdown, {
+      totalSeconds: 10,
+      startedAtEpochMs: 4_000,
+      expiresAtEpochMs: 14_000,
+    });
 
-  const claimed = tavernHouseModule.dispatch({
-    gameState: started.gameState,
-    characterDefinitions: started.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: {
-      ...started.sessionState,
-      gambleSession: {
-        variant: "short",
-        table,
+    const claimed = tavernHouseModule.dispatch({
+      gameState: started.gameState,
+      characterDefinitions: started.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: {
+        ...started.sessionState,
+        gambleSession: {
+          variant: "short",
+          table,
+        },
       },
-    },
-    request: { type: "action", actionId: `gamble-meld:${option.id}` },
-  });
+      request: { type: "action", actionId: `gamble-meld:${option.id}` },
+    });
 
-  const nextTable = claimed.sessionState.gambleSession.table;
-  assert.equal(nextTable.claimCountdown, null);
-  assert.equal(nextTable.currentHand.phase, "draw-discard");
-  assert.equal(nextTable.currentHand.pendingIncomingCard?.ownerSeatId, "you");
-  assert.equal(nextTable.currentHand.pendingIncomingCard?.source, "claim");
+    const nextTable = claimed.sessionState.gambleSession.table;
+    assert.equal(nextTable.claimCountdown, null);
+    assert.equal(nextTable.currentHand.phase, "draw-discard");
+    assert.equal(nextTable.currentHand.pendingIncomingCard?.ownerSeatId, "you");
+    assert.equal(nextTable.currentHand.pendingIncomingCard?.source, "claim");
+  } finally {
+    Date.now = originalDateNow;
+  }
 });
 
 test("tavern short house ignores repeated claim actions after the player has already claimed", () => {
@@ -511,4 +560,173 @@ test("tavern short house ignores repeated claim actions after the player has alr
   assert.equal(afterRepeat.claimCountdown, null);
   assert.equal(afterRepeat.currentHand.selectedDiscardCardId, null);
   assert.equal(afterRepeatPlayer.meldHistory.length, 1);
+});
+
+test("tavern short discard toggle clears selection but keeps the lifted discard candidate", () => {
+  const table = createTavernShortTableSession({
+    playerName: "tester",
+    buyInGold: 100,
+    seed: 17,
+  });
+  const humanPlayer = table.currentHand.players.find((player) => player.seatId === "you");
+  assert.ok(humanPlayer);
+  const candidateCardId = humanPlayer.hand[0]?.id;
+  assert.ok(candidateCardId);
+
+  const drawDiscardHand = {
+    ...table.currentHand,
+    phase: "draw-discard",
+    actingSeatIndex: 0,
+    currentDrawTurnSeatId: "you",
+    pendingIncomingCard: {
+      ownerSeatId: "you",
+      source: "draw",
+      card: { id: "test-draw-card", suit: "wan", rank: 9 },
+    },
+    selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+  };
+
+  const selectedHand = chooseTavernShortDiscardCandidate(
+    drawDiscardHand,
+    "you",
+    candidateCardId
+  );
+  assert.equal(selectedHand.selectedDiscardCardId, candidateCardId);
+  assert.equal(selectedHand.liftedDiscardCardId, candidateCardId);
+
+  const deselectedHand = chooseTavernShortDiscardCandidate(
+    selectedHand,
+    "you",
+    candidateCardId
+  );
+  assert.equal(deselectedHand.selectedDiscardCardId, null);
+  assert.equal(deselectedHand.liftedDiscardCardId, candidateCardId);
+});
+
+test("tavern short lifted discard candidate starts a drop animation when the pointer leaves the deselected tile", () => {
+  const started = openShortTable(createBaseState(), prototypeCharacters, 100);
+  assert.equal(started.sessionState.gambleSession.variant, "short");
+
+  const table = started.sessionState.gambleSession.table;
+  const humanPlayer = table.currentHand.players.find((player) => player.seatId === "you");
+  assert.ok(humanPlayer);
+  const candidateCardId = humanPlayer.hand[0]?.id;
+  assert.ok(candidateCardId);
+
+  const drawDiscardHand = {
+    ...table.currentHand,
+    phase: "draw-discard",
+    actingSeatIndex: 0,
+    currentDrawTurnSeatId: "you",
+    pendingIncomingCard: {
+      ownerSeatId: "you",
+      source: "draw",
+      card: { id: "test-draw-card", suit: "wan", rank: 9 },
+    },
+    selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+  };
+
+  const deselectedHand = chooseTavernShortDiscardCandidate(
+    chooseTavernShortDiscardCandidate(drawDiscardHand, "you", candidateCardId),
+    "you",
+    candidateCardId
+  );
+  assert.equal(deselectedHand.selectedDiscardCardId, null);
+  assert.equal(deselectedHand.liftedDiscardCardId, candidateCardId);
+
+  const cleared = tavernHouseModule.dispatch({
+    gameState: started.gameState,
+    characterDefinitions: started.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...started.sessionState,
+      gambleSession: {
+        ...started.sessionState.gambleSession,
+        table: {
+          ...table,
+          currentHand: deselectedHand,
+        },
+      },
+    },
+    request: {
+      type: "action",
+      actionId: `gamble-clear-lifted-tile:${candidateCardId}`,
+    },
+  });
+
+  const clearedHand = cleared.sessionState.gambleSession.table.currentHand;
+  assert.equal(clearedHand.selectedDiscardCardId, null);
+  assert.equal(clearedHand.liftedDiscardCardId, null);
+  assert.equal(clearedHand.droppingDiscardCardId, candidateCardId);
+  assert.deepEqual(cleared.sideEffects, [
+    { type: "stop-interval", intervalId: "tavern-gamble-npc-thinking" },
+    { type: "stop-interval", intervalId: "tavern-gamble-short-claim-timeout" },
+    { type: "stop-interval", intervalId: "tavern-gamble-short-drop-clear" },
+    {
+      type: "start-interval",
+      intervalId: "tavern-gamble-short-drop-clear",
+      everyMs: 180,
+      request: { type: "tick", tickId: "tavern-gamble-short-drop-clear" },
+    },
+  ]);
+});
+
+test("tavern short dropping discard candidate clears after the drop animation tick", () => {
+  const started = openShortTable(createBaseState(), prototypeCharacters, 100);
+  assert.equal(started.sessionState.gambleSession.variant, "short");
+
+  const table = started.sessionState.gambleSession.table;
+  const humanPlayer = table.currentHand.players.find((player) => player.seatId === "you");
+  assert.ok(humanPlayer);
+  const candidateCardId = humanPlayer.hand[0]?.id;
+  assert.ok(candidateCardId);
+
+  const droppingHand = {
+    ...table.currentHand,
+    phase: "draw-discard",
+    actingSeatIndex: 0,
+    currentDrawTurnSeatId: "you",
+    pendingIncomingCard: {
+      ownerSeatId: "you",
+      source: "draw",
+      card: { id: "test-draw-card", suit: "wan", rank: 9 },
+    },
+    selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: candidateCardId,
+  };
+
+  const settled = tavernHouseModule.dispatch({
+    gameState: started.gameState,
+    characterDefinitions: started.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...started.sessionState,
+      gambleSession: {
+        ...started.sessionState.gambleSession,
+        table: {
+          ...table,
+          currentHand: droppingHand,
+        },
+      },
+    },
+    request: {
+      type: "tick",
+      tickId: "tavern-gamble-short-drop-clear",
+    },
+  });
+
+  const settledHand = settled.sessionState.gambleSession.table.currentHand;
+  assert.equal(settledHand.selectedDiscardCardId, null);
+  assert.equal(settledHand.liftedDiscardCardId, null);
+  assert.equal(settledHand.droppingDiscardCardId, null);
+  assert.deepEqual(settled.sideEffects, [
+    { type: "stop-interval", intervalId: "tavern-gamble-npc-thinking" },
+    { type: "stop-interval", intervalId: "tavern-gamble-short-claim-timeout" },
+    { type: "stop-interval", intervalId: "tavern-gamble-short-drop-clear" },
+  ]);
 });

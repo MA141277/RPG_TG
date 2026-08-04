@@ -62,6 +62,24 @@ test("application audio manager registers shared game event cues centrally", () 
   assert.match(source, /assetPath: "audio\/game-events\/task-failure\.mp3"/);
 });
 
+test("application audio manager registers shared coin reward cues centrally", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/audio/audio-manager.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /gameCoinRewardBurst: "game\.coin\.reward\.burst"/);
+  assert.match(source, /gameCoinRewardCollect: "game\.coin\.reward\.collect"/);
+  assert.match(
+    source,
+    /assetPath: "audio\/game-events\/coin-reward-burst\.mp3"/
+  );
+  assert.match(
+    source,
+    /assetPath: "audio\/game-events\/coin-reward-collect\.mp3"/
+  );
+});
+
 test("application audio manager registers shared pachinko launch cue centrally", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/application/audio/audio-manager.ts"),
@@ -105,6 +123,85 @@ test("application audio manager registers shared pachinko collision bounce cues 
   assert.match(
     audioManagerSource,
     /const PACHINKO_BOUNCE_PLAYBACK_VARIATION: AudioCuePlaybackVariation = \{/
+  );
+});
+
+test("application audio manager registers shared card draw cues centrally", () => {
+  const audioManagerSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/audio/audio-manager.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    audioManagerSource,
+    /activityCardDrawShuffle: "activity\.card\.draw\.shuffle"/
+  );
+  assert.match(
+    audioManagerSource,
+    /activityCardDrawPull: "activity\.card\.draw\.pull"/
+  );
+  assert.match(
+    audioManagerSource,
+    /activityCardDrawFlip: "activity\.card\.draw\.flip"/
+  );
+  assert.match(
+    audioManagerSource,
+    /assetPath: "audio\/activity\/card-draw-shuffle\.mp3"/
+  );
+  assert.match(
+    audioManagerSource,
+    /assetPath: "audio\/activity\/card-draw-pull\.mp3"/
+  );
+  assert.match(
+    audioManagerSource,
+    /assetPath: "audio\/activity\/card-draw-flip\.mp3"/
+  );
+});
+
+test("card draw audio module exposes a dedicated reusable sound player", () => {
+  const modulePath = path.join(
+    process.cwd(),
+    "src/application/audio/card-draw-sound.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(modulePath),
+    true,
+    "Expected a dedicated card draw audio module."
+  );
+
+  if (!fs.existsSync(modulePath)) {
+    return;
+  }
+
+  const source = fs.readFileSync(modulePath, "utf8");
+  assert.match(source, /export class CardDrawSoundEffectSet/);
+  assert.match(source, /export class CardDrawAudioCuePlayer/);
+  assert.match(source, /export const CARD_DRAW_SOUND_EFFECTS = new CardDrawSoundEffectSet/);
+});
+
+test("coin reward audio module exposes a dedicated reusable sound player", () => {
+  const modulePath = path.join(
+    process.cwd(),
+    "src/application/audio/coin-reward-sound.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(modulePath),
+    true,
+    "Expected a dedicated coin reward audio module."
+  );
+
+  if (!fs.existsSync(modulePath)) {
+    return;
+  }
+
+  const source = fs.readFileSync(modulePath, "utf8");
+  assert.match(source, /export class CoinRewardSoundEffectSet/);
+  assert.match(source, /export class CoinRewardAudioCuePlayer/);
+  assert.match(
+    source,
+    /export const COIN_REWARD_SOUND_EFFECTS = new CoinRewardSoundEffectSet/
   );
 });
 
@@ -213,6 +310,38 @@ test("main resolves pachinko collision bounce audio assets through static mp3 UR
   assert.match(
     mainSource,
     /"audio\/activity\/pachinko-bounce-2\.mp3": pachinkoBounce2AudioUrl/
+  );
+});
+
+test("main resolves card draw audio assets through static mp3 URLs before legacy fallback", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    mainSource,
+    /import cardDrawShuffleAudioUrl from "\.\/assets\/audio\/activity\/card-draw-shuffle\.mp3\?url";/
+  );
+  assert.match(
+    mainSource,
+    /import cardDrawPullAudioUrl from "\.\/assets\/audio\/activity\/card-draw-pull\.mp3\?url";/
+  );
+  assert.match(
+    mainSource,
+    /import cardDrawFlipAudioUrl from "\.\/assets\/audio\/activity\/card-draw-flip\.mp3\?url";/
+  );
+  assert.match(
+    mainSource,
+    /"audio\/activity\/card-draw-shuffle\.mp3": cardDrawShuffleAudioUrl/
+  );
+  assert.match(
+    mainSource,
+    /"audio\/activity\/card-draw-pull\.mp3": cardDrawPullAudioUrl/
+  );
+  assert.match(
+    mainSource,
+    /"audio\/activity\/card-draw-flip\.mp3": cardDrawFlipAudioUrl/
   );
 });
 
@@ -350,6 +479,43 @@ test("main resolves game event audio assets through static mp3 URLs before legac
     source,
     /"audio\/game-events\/task-failure\.mp3": taskFailureAudioUrl/
   );
+});
+
+test("main resolves coin reward audio assets through static mp3 URLs before legacy fallback", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    source,
+    /import coinRewardBurstAudioUrl from "\.\/assets\/audio\/game-events\/coin-reward-burst\.mp3\?url";/
+  );
+  assert.match(
+    source,
+    /import coinRewardCollectAudioUrl from "\.\/assets\/audio\/game-events\/coin-reward-collect\.mp3\?url";/
+  );
+  assert.match(
+    source,
+    /"audio\/game-events\/coin-reward-burst\.mp3": coinRewardBurstAudioUrl/
+  );
+  assert.match(
+    source,
+    /"audio\/game-events\/coin-reward-collect\.mp3": coinRewardCollectAudioUrl/
+  );
+});
+
+test("main keeps city ambient playback behind the shared audio seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    source,
+    /cityMarketAmbientController\.sync\(\{[\s\S]*currentView: appState\.gameState\.ui\.currentView,[\s\S]*\}\);/
+  );
+  assert.doesNotMatch(source, /if\s*\(\s*appState\.gameState\.ui\.currentView\s*===\s*"city"\s*\)\s*\{[\s\S]*new Audio/);
 });
 
 test("vite env types include mp3 url modules", () => {

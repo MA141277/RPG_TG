@@ -7,7 +7,8 @@ export type TavernShortTableDebugPresetMode = "off" | "claim-cycle";
 
 export type TavernShortClaimCountdownState = {
   totalSeconds: number;
-  remainingSeconds: number;
+  startedAtEpochMs: number;
+  expiresAtEpochMs: number;
 };
 
 export type TavernAlertOverlayState = {

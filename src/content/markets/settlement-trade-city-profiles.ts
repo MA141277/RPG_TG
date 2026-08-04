@@ -1,6 +1,8 @@
 import type { CityId } from "../../domain/city";
 import type {
+  SettlementTradeCityGoodsProfile,
   SettlementTradeCityProfile,
+  SettlementTradeGoodId,
   SettlementTradeTier,
 } from "../../domain/settlement-trade";
 
@@ -11,40 +13,83 @@ export const settlementTradeTierMultipliers = {
   "extreme-scarce": 3,
 } as const satisfies Record<SettlementTradeTier, number>;
 
+type SettlementTradeMatrixMultiplier = 1 | 1.4 | 2.2 | 3;
+
+const settlementTradeDefaultInitialStockByTier = {
+  abundant: 32,
+  local: 20,
+  scarce: 10,
+  "extreme-scarce": 6,
+} as const satisfies Record<SettlementTradeTier, number>;
+
+function resolveTierFromMultiplier(
+  multiplier: SettlementTradeMatrixMultiplier
+): SettlementTradeTier {
+  switch (multiplier) {
+    case 1:
+      return "abundant";
+    case 1.4:
+      return "local";
+    case 2.2:
+      return "scarce";
+    case 3:
+      return "extreme-scarce";
+  }
+}
+
+function createGoodsProfileFromMatrixRow(
+  multipliersByGoodsId: Record<SettlementTradeGoodId, SettlementTradeMatrixMultiplier>,
+  overrides: Partial<
+    Record<SettlementTradeGoodId, Partial<SettlementTradeCityGoodsProfile>>
+  > = {}
+): SettlementTradeCityProfile["goods"] {
+  return Object.fromEntries(
+    (Object.entries(multipliersByGoodsId) as Array<
+      [SettlementTradeGoodId, SettlementTradeMatrixMultiplier]
+    >).map(([goodsId, multiplier]) => {
+      const tier = resolveTierFromMultiplier(multiplier);
+      const override = overrides[goodsId];
+
+      return [
+        goodsId,
+        {
+          tier,
+          initialStock:
+            override?.initialStock ??
+            settlementTradeDefaultInitialStockByTier[tier],
+          ...(override?.routeHints == null
+            ? {}
+            : { routeHints: [...override.routeHints] }),
+          ...(override?.demandNotes == null
+            ? {}
+            : { demandNotes: [...override.demandNotes] }),
+        },
+      ];
+    })
+  ) as SettlementTradeCityProfile["goods"];
+}
+
 export const settlementTradeCityProfiles = [
   {
     cityId: "city.kulan",
     cityName: "Haozhou",
-    goods: {
-      hides: {
-        tier: "abundant",
-        initialStock: 32,
-        routeHints: [
-          "Camp suppliers and caravan guards keep hide bundles moving quickly.",
-        ],
-      },
-      ironware: {
-        tier: "local",
-        initialStock: 20,
-        routeHints: [
-          "Repair traffic around the garrison keeps iron goods liquid.",
-        ],
-      },
-      tea: {
-        tier: "scarce",
-        initialStock: 10,
-        demandNotes: [
-          "Travelers and officers still pay well once tea reaches the frontier.",
-        ],
-      },
-      paper_brush: {
-        tier: "scarce",
-        initialStock: 8,
-        demandNotes: [
-          "Quartermasters and clerks keep writing bundles at a premium.",
-        ],
-      },
-    },
+    goods: createGoodsProfileFromMatrixRow({
+      silk_textiles: 2.2,
+      ramie_cloth: 1,
+      cotton_cloth: 2.2,
+      tea: 2.2,
+      wine: 1,
+      ceramics: 1,
+      copperware: 2.2,
+      ironware: 2.2,
+      salt: 2.2,
+      paper_brush: 2.2,
+      bamboo_woodware: 2.2,
+      woven_goods: 1.4,
+      lacquer_oil: 2.2,
+      stone_goods: 1.4,
+      hides: 1.4,
+    }),
   },
   {
     cityId: "city.yingtian",

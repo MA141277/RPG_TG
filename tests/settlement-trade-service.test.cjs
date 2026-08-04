@@ -217,6 +217,48 @@ test("settlement trade prepare snapshot already supports future extreme-scarce g
   }
 });
 
+test("settlement trade prepare snapshot evaluates Haozhou against the full goods matrix", () => {
+  const service = new SettlementTradeService();
+  const prepared = withMockedMathRandom(
+    [
+      0.5, // silk_textiles scarce -> show
+      0.7, // cotton_cloth scarce -> hide
+      0.5, // tea scarce -> show
+      0.2, // copperware scarce -> show
+      0.1, // ironware scarce -> show
+      0.3, // salt scarce -> show
+      0.8, // paper_brush scarce -> hide
+      0.7, // bamboo_woodware scarce -> hide
+      0.2, // woven_goods local -> show
+      0.8, // lacquer_oil scarce -> hide
+      0.9, // stone_goods local -> hide
+      0.2, // hides local -> show
+    ],
+    () =>
+      service.prepareSnapshot({
+        state: createBaseState("city.kulan"),
+        cityId: "city.kulan",
+        currentDay: 1,
+      })
+  );
+
+  assert.deepEqual(
+    prepared.snapshot.rows.map((row) => row.goodsId),
+    [
+      "silk_textiles",
+      "ramie_cloth",
+      "tea",
+      "wine",
+      "ceramics",
+      "copperware",
+      "ironware",
+      "salt",
+      "woven_goods",
+      "hides",
+    ]
+  );
+});
+
 test("settlement trade snapshot reads content defaults for supported cities", () => {
   const service = new SettlementTradeService();
   const snapshot = service.createSnapshot({
@@ -244,10 +286,30 @@ test("settlement trade snapshot applies the configured tier price multipliers", 
       .rows.map((row) => [row.goodsId, row])
   );
 
-  assert.equal(rowsByGoodsId.silk_textiles?.staticReferencePrice, 180);
-  assert.equal(rowsByGoodsId.paper_brush?.staticReferencePrice, 179);
-  assert.equal(rowsByGoodsId.wine?.staticReferencePrice, 204);
-  assert.equal(rowsByGoodsId.salt?.staticReferencePrice, 185);
+  assert.equal(rowsByGoodsId.silk_textiles?.staticReferencePrice, 600);
+  assert.equal(rowsByGoodsId.paper_brush?.staticReferencePrice, 140);
+  assert.equal(rowsByGoodsId.wine?.staticReferencePrice, 140);
+  assert.equal(rowsByGoodsId.salt?.staticReferencePrice, 132);
+});
+
+test("settlement trade snapshot matches the Haozhou authored base prices and tiers from the planning table", () => {
+  const service = new SettlementTradeService();
+  const rowsByGoodsId = Object.fromEntries(
+    service
+      .createSnapshot({
+        state: createBaseState("city.kulan"),
+        cityId: "city.kulan",
+        currentDay: 1,
+      })
+      .rows.map((row) => [row.goodsId, row])
+  );
+
+  assert.equal(rowsByGoodsId.ramie_cloth?.staticReferencePrice, 120);
+  assert.equal(rowsByGoodsId.wine?.staticReferencePrice, 100);
+  assert.equal(rowsByGoodsId.ceramics?.staticReferencePrice, 200);
+  assert.equal(rowsByGoodsId.woven_goods?.staticReferencePrice, 56);
+  assert.equal(rowsByGoodsId.stone_goods?.staticReferencePrice, 140);
+  assert.equal(rowsByGoodsId.hides?.staticReferencePrice, 420);
 });
 
 test("settlement trade snapshot uses localized specialty labels for the current runtime pack", () => {
@@ -460,7 +522,7 @@ test("settlement trade buy pressure adds 0.01 for each 10 bought units and keeps
     goodsId: "silk_textiles",
     mode: "buy",
     quantity: 25,
-    playerGold: 10000,
+    playerGold: 20000,
   });
 
   assert.equal(result.ok, true);
@@ -576,7 +638,7 @@ test("settlement trade pressure clamps at the 2.0 multiplier ceiling", () => {
     goodsId: "silk_textiles",
     mode: "buy",
     quantity: 20,
-    playerGold: 10000,
+    playerGold: 30000,
   });
 
   assert.equal(result.ok, true);

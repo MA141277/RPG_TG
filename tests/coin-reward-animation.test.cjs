@@ -118,6 +118,61 @@ test("coin reward animator waits until gather starts before rolling the display 
   }
 });
 
+test("coin reward animator emits burst immediately and collect once right before the gold number starts rising", async () => {
+  const { createCoinRewardAnimator } = await import("../src/ui/animations/coin-reward-animation.ts");
+  const originalRandom = Math.random;
+  const fakeLayer = createFakeLayer();
+  const fakeSource = {
+    getBoundingClientRect: () => ({ left: 340, top: 200, width: 20, height: 20 }),
+  };
+  const fakeTarget = {
+    getBoundingClientRect: () => ({ left: 20, top: 20, width: 20, height: 20 }),
+  };
+  const timeline = [];
+
+  Math.random = createDeterministicRandom([0.13, 0.62, 0.29, 0.84, 0.41, 0.57]);
+
+  try {
+    const animator = createCoinRewardAnimator({
+      layer: fakeLayer,
+      onDisplayValueChange(value) {
+        if (typeof value === "number" && value > 10) {
+          timeline.push(`display:${value}`);
+        }
+      },
+      soundPlayer: {
+        play(event) {
+          timeline.push(`sound:${event}`);
+        },
+      },
+    });
+
+    animator.setGoldTargetElement(fakeTarget);
+    animator.play({
+      sourceElement: fakeSource,
+      startValue: 10,
+      targetValue: 20,
+      amount: 10,
+    });
+
+    assert.deepEqual(timeline, ["sound:burst"]);
+
+    await new Promise((resolve) => setTimeout(resolve, 2200));
+
+    const collectEvents = timeline.filter((entry) => entry === "sound:collect");
+    const collectIndex = timeline.indexOf("sound:collect");
+    const firstDisplayIndex = timeline.findIndex((entry) =>
+      entry.startsWith("display:")
+    );
+
+    assert.equal(collectEvents.length, 1);
+    assert.ok(collectIndex > 0);
+    assert.ok(firstDisplayIndex > collectIndex);
+  } finally {
+    Math.random = originalRandom;
+  }
+});
+
 test("coin reward animator changes burst scatter when random input changes", async () => {
   const { createCoinRewardAnimator } = await import("../src/ui/animations/coin-reward-animation.ts");
   const originalRandom = Math.random;

@@ -6,15 +6,19 @@ import type {
 } from "../../../domain/house-modules/tavern-session";
 import {
   createTavernShortHand,
+  drawTavernShortIncomingCard,
   passTavernShortClaim,
   type TavernShortDebugHandPreset,
   type TavernShortHandState,
 } from "../../../domain/tavern-short-gambling";
+import {
+  createTavernShortClaimCountdown,
+  isTavernShortClaimCountdownExpired,
+} from "./tavern-short-claim-countdown";
 
 const SHORT_TABLE_SEAT_IDS = ["you", "traveler", "broker", "guard"] as const;
 const SHORT_TABLE_CHIPS_PER_GOLD = 10;
 const SHORT_TABLE_REBUY_THRESHOLD = 200;
-const SHORT_TABLE_CLAIM_COUNTDOWN_SECONDS = 10;
 
 function getPlayerName(session: TavernShortTableSession): string {
   return (
@@ -88,13 +92,6 @@ function isUpstreamDiscarder(
   return discarderSeatId === upstreamSeatId;
 }
 
-function createShortClaimCountdown(): TavernShortClaimCountdownState {
-  return {
-    totalSeconds: SHORT_TABLE_CLAIM_COUNTDOWN_SECONDS,
-    remainingSeconds: SHORT_TABLE_CLAIM_COUNTDOWN_SECONDS,
-  };
-}
-
 function shouldUseClaimCountdown(
   session: TavernShortTableSession,
   hand: TavernShortHandState
@@ -116,6 +113,16 @@ function shouldUseClaimCountdown(
   );
 }
 
+function getNextShortClaimCountdown(
+  session: TavernShortTableSession,
+  hand: TavernShortHandState
+): TavernShortClaimCountdownState | null {
+  if (!shouldUseClaimCountdown(session, hand)) {
+    return null;
+  }
+  return session.claimCountdown ?? createTavernShortClaimCountdown();
+}
+
 function getDebugHandPreset(
   session: TavernShortTableSession
 ): TavernShortDebugHandPreset | null {
@@ -130,6 +137,21 @@ function getDebugHandPreset(
     default:
       return "claim-chow";
   }
+}
+
+function normalizeTavernShortActiveHand(
+  session: TavernShortTableSession,
+  hand: TavernShortHandState
+): TavernShortHandState {
+  if (hand.phase !== "draw-discard" || hand.pendingIncomingCard != null) {
+    return hand;
+  }
+  const actingPlayer =
+    hand.players.find((player) => player.seatIndex === hand.actingSeatIndex) ?? null;
+  if (actingPlayer?.seatId !== session.playerSeatId) {
+    return hand;
+  }
+  return drawTavernShortIncomingCard(hand, session.playerSeatId);
 }
 
 function startShortTableHand(
@@ -198,15 +220,14 @@ export function updateTavernShortTableSession(
   session: TavernShortTableSession,
   hand: TavernShortHandState
 ): TavernShortTableSession {
-  const bankrollBySeatId = toBankrollBySeatId(hand.players);
-  if (hand.phase !== "finished") {
+  const normalizedHand = normalizeTavernShortActiveHand(session, hand);
+  const bankrollBySeatId = toBankrollBySeatId(normalizedHand.players);
+  if (normalizedHand.phase !== "finished") {
     return {
       ...session,
-      claimCountdown: shouldUseClaimCountdown(session, hand)
-        ? createShortClaimCountdown()
-        : null,
+      claimCountdown: getNextShortClaimCountdown(session, normalizedHand),
       bankrollBySeatId,
-      currentHand: hand,
+      currentHand: normalizedHand,
       prompt: null,
     };
   }
@@ -218,7 +239,7 @@ export function updateTavernShortTableSession(
     currentHand: null,
     lastCompletedHand: {
       handNumber: session.handCount,
-      hand,
+      hand: normalizedHand,
     },
     prompt: getBetweenHandPrompt(playerChips),
   };
@@ -258,14 +279,8 @@ export function tickTavernShortClaimCountdown(
   if (session.claimCountdown == null || session.currentHand == null) {
     return session;
   }
-  if (session.claimCountdown.remainingSeconds > 1) {
-    return {
-      ...session,
-      claimCountdown: {
-        ...session.claimCountdown,
-        remainingSeconds: session.claimCountdown.remainingSeconds - 1,
-      },
-    };
+  if (!isTavernShortClaimCountdownExpired(session.claimCountdown)) {
+    return session;
   }
   return updateTavernShortTableSession(
     session,

@@ -110,6 +110,40 @@ test("tavern short hand keeps stable five-card hands through draw and discard", 
   assert.equal(confirmed.pendingIncomingCard, null);
 });
 
+test("tavern short broadcast hides NPC draw card labels but keeps the player's own draw visible", () => {
+  const cards = byId();
+  const travelerCard = cards["wan-9"];
+  const playerCard = cards["tong-12"];
+  const hand = createTavernShortHand({
+    seed: 7,
+    dealerSeatIndex: 0,
+    playerName: "tester",
+    openingStacks: [1200, 1200, 1200, 1200],
+  });
+
+  const npcDrawn = drawTavernShortIncomingCard(
+    {
+      ...hand,
+      deck: [travelerCard, ...hand.deck.filter((card) => card.id !== travelerCard.id)],
+    },
+    "traveler"
+  );
+  const npcLogLine = npcDrawn.logLines[npcDrawn.logLines.length - 1] ?? "";
+  assert.match(npcLogLine, /摸牌/u);
+  assert.doesNotMatch(npcLogLine, new RegExp(getTavernShortCardLabel(travelerCard), "u"));
+
+  const playerDrawn = drawTavernShortIncomingCard(
+    {
+      ...hand,
+      deck: [playerCard, ...hand.deck.filter((card) => card.id !== playerCard.id)],
+    },
+    "you"
+  );
+  const playerLogLine = playerDrawn.logLines[playerDrawn.logLines.length - 1] ?? "";
+  assert.match(playerLogLine, /摸/u);
+  assert.match(playerLogLine, new RegExp(getTavernShortCardLabel(playerCard), "u"));
+});
+
 test("tavern short claim chains keep original resume seat and highest priority option", () => {
   const base = createTavernShortHand({
     seed: 11,
@@ -308,6 +342,155 @@ test("tavern short claims lock meld cards for the forced discard step", () => {
   assert.ok(broker.hand.some((card) => card.id === "wan-7"));
   assert.ok(broker.hand.some((card) => card.id === "bing-7"));
   assert.ok(broker.hand.some((card) => card.id === "tong-7"));
+});
+
+test("tavern short claimed meld cards stay locked for later draw turns", () => {
+  const cards = byId();
+  const base = createTavernShortHand({
+    seed: 11,
+    dealerSeatIndex: 0,
+    playerName: "tester",
+    openingStacks: [1200, 1200, 1200, 1200],
+  });
+  const claimed = claimTavernShortDiscard(
+    {
+      ...base,
+      phase: "claim-window",
+      actingSeatIndex: 2,
+      players: base.players.map((player) =>
+        player.seatId !== "broker"
+          ? player
+          : {
+              ...player,
+              hand: [
+                cards["bing-7"],
+                cards["tong-7"],
+                cards["wan-2"],
+                cards["bing-3"],
+                cards["tong-4"],
+              ],
+              discardHistory: [],
+            }
+      ),
+      claimChain: {
+        discarderSeatId: "traveler",
+        visibleDiscard: { id: "wan-7", suit: "wan", rank: 7 },
+        originalResumeSeatId: "broker",
+        turnOwnerSeatId: "traveler",
+        stage: "pong-chow",
+        chainDepth: 0,
+        passedSeatIds: [],
+        options: [
+          {
+            id: "pong-broker",
+            seatId: "broker",
+            kind: "pong",
+            discardCardId: "wan-7",
+            consumeCardIds: ["bing-7", "tong-7"],
+            priority: 2,
+          },
+        ],
+      },
+    },
+    "pong-broker"
+  );
+  const confirmed = confirmTavernShortDiscard(
+    chooseTavernShortDiscardCandidate(claimed, "broker", "wan-2"),
+    "broker"
+  );
+  const laterDraw = {
+    ...confirmed,
+    phase: "draw-discard",
+    actingSeatIndex: 2,
+    pendingIncomingCard: {
+      ownerSeatId: "broker",
+      source: "draw",
+      card: cards["tiao-9"],
+    },
+    selectedDiscardCardId: null,
+  };
+
+  assert.equal(
+    chooseTavernShortDiscardCandidate(laterDraw, "broker", "wan-7")
+      .selectedDiscardCardId,
+    null
+  );
+  assert.equal(
+    chooseTavernShortDiscardCandidate(laterDraw, "broker", "bing-7")
+      .selectedDiscardCardId,
+    null
+  );
+  assert.equal(
+    chooseTavernShortDiscardCandidate(laterDraw, "broker", "tong-7")
+      .selectedDiscardCardId,
+    null
+  );
+  assert.equal(
+    chooseTavernShortDiscardCandidate(laterDraw, "broker", "bing-3")
+      .selectedDiscardCardId,
+    "bing-3"
+  );
+  assert.equal(
+    chooseTavernShortDiscardCandidate(laterDraw, "broker", "tiao-9")
+      .selectedDiscardCardId,
+    "tiao-9"
+  );
+});
+
+test("tavern short discard selection toggles off the same tile and ignores switching while armed", () => {
+  const cards = byId();
+  const base = createTavernShortHand({
+    seed: 29,
+    dealerSeatIndex: 0,
+    playerName: "tester",
+    openingStacks: [1200, 1200, 1200, 1200],
+  });
+  const drawDiscardTurn = {
+    ...base,
+    phase: "draw-discard",
+    actingSeatIndex: 0,
+    pendingIncomingCard: {
+      ownerSeatId: "you",
+      source: "draw",
+      card: cards["tiao-9"],
+    },
+    selectedDiscardCardId: null,
+    players: base.players.map((player) =>
+      player.seatId !== "you"
+        ? player
+        : {
+            ...player,
+            hand: [
+              cards["wan-2"],
+              cards["bing-3"],
+              cards["tong-4"],
+              cards["wan-5"],
+              cards["bing-6"],
+            ],
+          }
+    ),
+  };
+
+  const selected = chooseTavernShortDiscardCandidate(
+    drawDiscardTurn,
+    "you",
+    "bing-3"
+  );
+  assert.equal(selected.selectedDiscardCardId, "bing-3");
+
+  const rejectedSwitch = chooseTavernShortDiscardCandidate(
+    selected,
+    "you",
+    "tong-4"
+  );
+  assert.equal(rejectedSwitch.selectedDiscardCardId, "bing-3");
+
+  const deselected = chooseTavernShortDiscardCandidate(
+    selected,
+    "you",
+    "bing-3"
+  );
+  assert.equal(deselected.selectedDiscardCardId, null);
 });
 
 test("tavern short auto-bet is consumed once and a short all-in kong penalty rebuilds pots", () => {

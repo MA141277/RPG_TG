@@ -1,6 +1,11 @@
 import type { TavernShortTableSession } from "../../../domain/house-modules/tavern-session";
 import type { HouseOverlayViewModel } from "../../../domain/house-module";
 import { getTavernShortCardLabel } from "../../../domain/tavern-short-gambling";
+import {
+  getTavernShortClaimCountdownProgressPercent,
+  getTavernShortClaimCountdownRemainingMs,
+  getTavernShortClaimCountdownRemainingSeconds,
+} from "./tavern-short-claim-countdown";
 
 const SHORT_CHECK_ACTION_ID = "gamble-check";
 const SHORT_CALL_ACTION_ID = "gamble-call";
@@ -12,7 +17,102 @@ const SHORT_CASH_OUT_ACTION_ID = "gamble-short-cash-out";
 const SHORT_CONTINUE_ACTION_ID = "gamble-short-continue-hand";
 const SHORT_REBUY_ACTION_ID = "gamble-short-rebuy";
 const SHORT_CLAIM_ACTION_PREFIX = "gamble-meld:";
+const SHORT_CLEAR_LIFTED_TILE_ACTION_PREFIX = "gamble-clear-lifted-tile:";
 const SHORT_SKIP_CLAIM_ACTION_ID = "gamble-skip-meld";
+
+type TavernShortActiveHand = NonNullable<TavernShortTableSession["currentHand"]>;
+
+function getShortLockedDiscardCardIds(
+  hand: TavernShortActiveHand,
+  playerSeatId: string
+): Set<string> {
+  const player = hand.players.find((candidate) => candidate.seatId === playerSeatId);
+  const lockedCardIds = new Set(
+    player?.meldHistory.flatMap((meld) => meld.cards.map((card) => card.id)) ?? []
+  );
+  if (
+    hand.pendingIncomingCard?.ownerSeatId === playerSeatId &&
+    hand.pendingIncomingCard.source === "claim"
+  ) {
+    for (const cardId of hand.pendingIncomingCard.lockedCardIds ?? []) {
+      lockedCardIds.add(cardId);
+    }
+  }
+  return lockedCardIds;
+}
+
+function getShortSelectableDiscardCardIds(
+  hand: TavernShortActiveHand,
+  playerSeatId: string
+): Set<string> {
+  const player = hand.players.find((candidate) => candidate.seatId === playerSeatId);
+  if (player == null || hand.pendingIncomingCard?.ownerSeatId !== playerSeatId) {
+    return new Set();
+  }
+  const lockedCardIds = getShortLockedDiscardCardIds(hand, playerSeatId);
+  return new Set(
+    [...player.hand, hand.pendingIncomingCard.card]
+      .filter((card) => !lockedCardIds.has(card.id))
+      .map((card) => card.id)
+  );
+}
+
+function getArmedShortDiscardCardId(
+  hand: TavernShortActiveHand,
+  playerSeatId: string
+): string | null {
+  const selectableDiscardCardIds = getShortSelectableDiscardCardIds(
+    hand,
+    playerSeatId
+  );
+  return hand.selectedDiscardCardId != null &&
+    selectableDiscardCardIds.has(hand.selectedDiscardCardId)
+    ? hand.selectedDiscardCardId
+    : null;
+}
+
+function getLiftedShortDiscardCardId(
+  hand: TavernShortActiveHand,
+  playerSeatId: string
+): string | null {
+  const selectableDiscardCardIds = getShortSelectableDiscardCardIds(
+    hand,
+    playerSeatId
+  );
+  return hand.liftedDiscardCardId != null &&
+    selectableDiscardCardIds.has(hand.liftedDiscardCardId)
+    ? hand.liftedDiscardCardId
+    : null;
+}
+
+function getDroppingShortDiscardCardId(
+  hand: TavernShortActiveHand,
+  playerSeatId: string
+): string | null {
+  const selectableDiscardCardIds = getShortSelectableDiscardCardIds(
+    hand,
+    playerSeatId
+  );
+  return hand.droppingDiscardCardId != null &&
+    selectableDiscardCardIds.has(hand.droppingDiscardCardId)
+    ? hand.droppingDiscardCardId
+    : null;
+}
+
+function getShortBettingActions(
+  hand: TavernShortActiveHand,
+  playerSeatId: string
+): Extract<
+  HouseOverlayViewModel,
+  { type: "gamble-table"; variant: "short" }
+>["availableActions"] {
+  const player = hand.players.find((candidate) => candidate.seatId === playerSeatId);
+  if (player == null || player.folded || player.allIn) {
+    return [];
+  }
+  const owed = Math.max(0, hand.currentBet - player.committedThisRound);
+  return owed > 0 ? ["fold", "call", "raise"] : ["check", "raise"];
+}
 
 function getShortAvailableActions(
   table: TavernShortTableSession
@@ -33,10 +133,12 @@ function getShortAvailableActions(
   }
 
   if (hand.phase === "betting") {
-    return ["check", "call", "raise", "fold"];
+    return getShortBettingActions(hand, table.playerSeatId);
   }
   if (hand.phase === "draw-discard") {
-    return hand.pendingIncomingCard == null ? ["draw"] : ["confirm-discard"];
+    return getArmedShortDiscardCardId(hand, table.playerSeatId) == null
+      ? []
+      : ["confirm-discard"];
   }
   return [];
 }
@@ -66,22 +168,22 @@ function shouldHighlightShortAvailableActions(table: TavernShortTableSession): b
 function getShortPhaseLabel(table: TavernShortTableSession): string {
   const hand = table.currentHand ?? table.lastCompletedHand?.hand ?? null;
   if (table.prompt != null || hand?.phase === "finished") {
-    return "结算";
+    return "\u7ed3\u7b97";
   }
   if (hand?.phase === "betting") {
-    return "下注";
+    return "\u4e0b\u6ce8";
   }
   if (hand?.phase === "draw-discard") {
-    return "摸打";
+    return "\u51fa\u724c";
   }
   if (hand?.phase === "claim-window") {
-    return "碰杠";
+    return "\u78b0\u6760";
   }
-  return "NPC思考";
+  return "NPC\u601d\u8003";
 }
 
 function formatPotLabel(potId: string, amount: number): string {
-  return `${potId === "main" ? "主池" : "边池"} ${amount}`;
+  return `${potId === "main" ? "\u4e3b\u6c60" : "\u8fb9\u6c60"} ${amount}`;
 }
 
 function getShortMeldLabel(input: {
@@ -89,23 +191,65 @@ function getShortMeldLabel(input: {
   cards: Array<{ id: string; suit: "wan" | "bing" | "tong" | "tiao"; rank: number }>;
 }): string {
   const prefix =
-    input.kind === "chow" ? "吃" : input.kind === "pong" ? "碰" : "杠";
+    input.kind === "chow"
+      ? "\u5403"
+      : input.kind === "pong"
+        ? "\u78b0"
+        : "\u6760";
   return `${prefix} ${input.cards.map(getTavernShortCardLabel).join("")}`;
+}
+
+function getShortTablePosition(
+  seatIndex: number
+): "bottom" | "left" | "top" | "right" {
+  if (seatIndex === 1) {
+    return "left";
+  }
+  if (seatIndex === 2) {
+    return "top";
+  }
+  if (seatIndex === 3) {
+    return "right";
+  }
+  return "bottom";
+}
+
+function getShortSeatStatusLabel(input: {
+  committed: number;
+  folded: boolean;
+  allIn: boolean;
+  autoBetPending: boolean;
+}): string {
+  if (input.folded) {
+    return "\u5df2\u5f03\u724c";
+  }
+  if (input.allIn) {
+    return "All-in";
+  }
+  if (input.autoBetPending) {
+    return "\u81ea\u52a8\u4e0b\u6ce8";
+  }
+  return `\u5df2\u6295 ${input.committed}`;
 }
 
 export function selectTavernShortGambleOverlay(
   table: TavernShortTableSession
 ): Extract<HouseOverlayViewModel, { type: "gamble-table"; variant: "short" }> {
+  const nowMs = Date.now();
   const hand = table.currentHand ?? table.lastCompletedHand?.hand ?? null;
   const human = hand?.players.find((player) => player.seatId === table.playerSeatId) ?? null;
   const isHumanClaimWindow = hand?.phase === "claim-window";
-  const pendingIncomingCard =
+  const humanPendingIncoming =
     hand?.pendingIncomingCard?.ownerSeatId === table.playerSeatId
-      ? {
-          source: hand.pendingIncomingCard.source,
-          label: getTavernShortCardLabel(hand.pendingIncomingCard.card),
-        }
+      ? hand.pendingIncomingCard
       : null;
+  const pendingIncomingCard =
+    humanPendingIncoming == null
+      ? null
+      : {
+          source: humanPendingIncoming.source,
+          label: getTavernShortCardLabel(humanPendingIncoming.card),
+        };
   const visibleDiscard =
     hand?.lastVisibleDiscard == null
       ? null
@@ -128,68 +272,91 @@ export function selectTavernShortGambleOverlay(
             cashOutActionId: SHORT_CASH_OUT_ACTION_ID,
           };
   const potAmountById = new Map((hand?.pots ?? []).map((pot) => [pot.id, pot.amount]));
-  const lockedDiscardCardIds = new Set(
-    hand?.pendingIncomingCard?.ownerSeatId === table.playerSeatId &&
-    hand.pendingIncomingCard.source === "claim"
-      ? hand.pendingIncomingCard.lockedCardIds ?? []
-      : []
-  );
+  const selectableDiscardCardIds =
+    hand == null
+      ? new Set<string>()
+      : getShortSelectableDiscardCardIds(hand, table.playerSeatId);
+  const armedDiscardCardId =
+    hand == null ? null : getArmedShortDiscardCardId(hand, table.playerSeatId);
+  const liftedDiscardCardId =
+    hand == null ? null : getLiftedShortDiscardCardId(hand, table.playerSeatId);
+  const droppingDiscardCardId =
+    hand == null ? null : getDroppingShortDiscardCardId(hand, table.playerSeatId);
   const claimOptions =
     !isHumanClaimWindow
       ? []
       : hand?.claimChain?.options
-      .filter((option) => option.seatId === table.playerSeatId)
-      .map((option) => ({
-        id: option.id,
-        kind: option.kind,
-        label: `${
-          option.kind === "chow" ? "吃" : option.kind === "pong" ? "碰" : "杠"
-        } ${getTavernShortCardLabel(hand.claimChain!.visibleDiscard)}`,
-        actionId: `${SHORT_CLAIM_ACTION_PREFIX}${option.id}`,
-        flashing: true,
-      })) ?? [];
+          .filter((option) => option.seatId === table.playerSeatId)
+          .map((option) => ({
+            id: option.id,
+            kind: option.kind,
+            label: `${
+              option.kind === "chow"
+                ? "\u5403"
+                : option.kind === "pong"
+                  ? "\u78b0"
+                  : "\u6760"
+            } ${getTavernShortCardLabel(hand.claimChain!.visibleDiscard)}`,
+            actionId: `${SHORT_CLAIM_ACTION_PREFIX}${option.id}`,
+            flashing: true,
+          })) ?? [];
   const claimCountdown =
     table.claimCountdown == null
       ? null
-      : {
-          totalSeconds: table.claimCountdown.totalSeconds,
-          remainingSeconds: table.claimCountdown.remainingSeconds,
-          progressPercent: Math.max(
-            0,
-            Math.min(
-              100,
-              Math.round(
-                (table.claimCountdown.remainingSeconds /
-                  table.claimCountdown.totalSeconds) *
-                  100
-              )
-            )
-          ),
-          label: `剩余 ${table.claimCountdown.remainingSeconds} 秒`,
-        };
+      : (() => {
+          const remainingMs = getTavernShortClaimCountdownRemainingMs(
+            table.claimCountdown,
+            nowMs
+          );
+          const remainingSeconds = getTavernShortClaimCountdownRemainingSeconds(
+            table.claimCountdown,
+            nowMs
+          );
+          return {
+            totalSeconds: table.claimCountdown.totalSeconds,
+            remainingSeconds,
+            remainingMs,
+            progressPercent: getTavernShortClaimCountdownProgressPercent(
+              table.claimCountdown,
+              nowMs
+            ),
+            label: `\u5269\u4f59 ${remainingSeconds} \u79d2`,
+          };
+        })();
 
   return {
     type: "gamble-table",
     variant: "short",
-    title: "酒馆短牌",
+    title: "\u9152\u9986\u77ed\u724c",
     phase: getShortPhaseLabel(table),
     pot: hand?.pots.reduce((sum, pot) => sum + pot.amount, 0) ?? 0,
     currentBet: hand?.currentBet ?? 0,
-    chipLabel: "筹码",
+    chipLabel: "\u7b79\u7801",
     publicCards: (hand?.publicCards ?? []).map((card) => ({
       id: card.id,
       label: getTavernShortCardLabel(card),
     })),
     handCards: [
       ...(human?.hand ?? []),
-      ...(pendingIncomingCard == null || hand?.pendingIncomingCard == null
-        ? []
-        : [hand.pendingIncomingCard.card]),
+      ...(humanPendingIncoming == null ? [] : [humanPendingIncoming.card]),
     ].map((card) => ({
       id: card.id,
       label: getTavernShortCardLabel(card),
-      selected: hand?.selectedDiscardCardId === card.id,
-      ...(pendingIncomingCard == null || lockedDiscardCardIds.has(card.id)
+      selected: armedDiscardCardId === card.id,
+      lifted: liftedDiscardCardId === card.id,
+      dropping: droppingDiscardCardId === card.id,
+      incoming: humanPendingIncoming?.card.id === card.id,
+      ...(liftedDiscardCardId === card.id &&
+      droppingDiscardCardId == null &&
+      armedDiscardCardId !== card.id
+        ? {
+            mouseleaveActionId: `${SHORT_CLEAR_LIFTED_TILE_ACTION_PREFIX}${card.id}`,
+          }
+        : {}),
+      ...(droppingDiscardCardId != null ||
+      selectableDiscardCardIds.size === 0 ||
+      !selectableDiscardCardIds.has(card.id) ||
+      (armedDiscardCardId != null && armedDiscardCardId !== card.id)
         ? {}
         : { actionId: `gamble-play-tile:${card.id}` }),
     })),
@@ -203,7 +370,7 @@ export function selectTavernShortGambleOverlay(
         ? null
         : {
             actionId: SHORT_SKIP_CLAIM_ACTION_ID,
-            label: "跳过",
+            label: "\u8df3\u8fc7",
           },
     availableActions: getShortAvailableActions(table),
     highlightAvailableActions: shouldHighlightShortAvailableActions(table),
@@ -211,11 +378,29 @@ export function selectTavernShortGambleOverlay(
       id: player.seatId,
       name: player.name,
       seatIndex: player.seatIndex,
+      tablePosition: getShortTablePosition(player.seatIndex),
       stack: player.stack,
       committed: player.committedThisHand,
       folded: player.folded,
       allIn: player.allIn,
       autoBetPending: player.autoBetPending,
+      statusLabel: getShortSeatStatusLabel({
+        committed: player.committedThisHand,
+        folded: player.folded,
+        allIn: player.allIn,
+        autoBetPending: player.autoBetPending,
+      }),
+      meldGroups: player.meldHistory.map((meld) => ({
+        kind: meld.kind,
+        cards: meld.cards.map((card) => ({
+          id: card.id,
+          label: getTavernShortCardLabel(card),
+        })),
+      })),
+      discardTiles: player.discardHistory.map((card) => ({
+        id: card.id,
+        label: getTavernShortCardLabel(card),
+      })),
       meldLabels: player.meldHistory.map(getShortMeldLabel),
       discardLabels: player.discardHistory.map(getTavernShortCardLabel),
     })),

@@ -2,6 +2,48 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-03 Tavern Short Table Draw-Discard UX Contract
+
+### Added
+- 酒馆短局 `gamble-table` 手牌 tile 现在允许携带 typed `incoming` 视图态字段，用于明确标记“本回合刚摸到、仍在待打阶段”的那张牌，而不是让 renderer 从牌序、间距或 DOM class 自行推断。
+- 新增短局 focused 回归覆盖，锁定“玩家进入 draw-discard 自动摸牌”“只允许单张 armed discard 选择 / 再点取消”“incoming 手牌间距”“short-only tile depth markup/CSS”这组行为契约。
+
+### Changed
+- 酒馆短局的人类 `draw-discard` 回合现在在 session 归一化时自动摸牌，不再依赖一个独立的短局 `draw` 按钮。
+- 短局 `confirm-discard` 现在只会在玩家明确武装一张可弃牌后出现；再次点击同一张牌会取消武装，已武装时切换到别的牌会被忽略，吃/碰/杠锁住的牌继续保持不可弃。
+- 短局 renderer 现在把手牌、公共牌、弃牌/副露牌的层次通过 `depth-top / depth-bottom` 结构化 class 表达；新摸到的 incoming 手牌会保留更大间距，并复用 hover/selected 抬升态。
+
+### Impact
+- 短局摸打 UX 现在完全由 typed tavern session + overlay data 驱动：`pendingIncomingCard`、`selectedDiscardCardId`、tile `incoming`、tile `actionId` 一起决定能否选牌、是否显示“打出”、以及 renderer 的视觉状态，不需要再在 renderer 里藏一套 draw-button 或 DOM 推断逻辑。
+
+## 2026-08-03 Tavern Work Red Nine-Slice UI Contract
+
+### Added
+- Shared house action containers and shared confirm overlays now expose optional presentational class and attribute hooks, so a house-owned flow can opt into an established skin without adding tavern business branches to `src/main.ts` or shared render helpers.
+- 新增 `tests/house-shared-view-style-hooks.test.cjs` 与 `tests/tavern-work-ui-contract.test.cjs`，分别锁定共享样式钩子契约，以及“只让客栈工作分支吃到红色九宫格皮肤”的边界。
+
+### Changed
+- 只有客栈的工作分支现在使用统一红色九宫格按钮与评定弹窗皮肤；默认酒馆菜单、喝酒确认流和赌博相关弹窗继续保持原有 UI。
+- 客栈工作分支的接活/提交菜单、工作确认、刷盘子 QTE 和结果弹窗现在复用共享红色九宫格样式工具类与评定弹窗壳，而不是在 tavern renderer 里再写一套独占按钮资源。
+
+### Impact
+- 后续其他 house 如果也要接同一套红色九宫格皮肤，可以复用相同的 typed presentational hooks 和共享 CSS utility，而不需要继续往 `src/main.ts`、shared house renderer 或每个 house 里复制特殊分支。
+
+## 2026-08-03 City Market Ambient Audio Contract
+
+### Added
+- `src/application/audio/audio-manager.ts` 新增共享 `ambient` bus、`BUILTIN_AUDIO_CUE_IDS.ambienceCityMarket` 与 `createAmbientLoopHandle(...)` seam，使长时环境音可以在不打断主 BGM 的前提下由集中音频层并行播放。
+- 新增 `ScopedAmbientLoopController<TSnapshot>`，把环境音是否激活的判断收敛为 snapshot 谓词；壳层只需提供 `isGameVisible` 与 `currentView`，不再自己管理淡入淡出和浏览器音频对象。
+- 新增 repository-owned 资源 [src/assets/audio/ambient/city-market.mp3](/D:/GitHub克隆文件/RPG_TG/RPG_TG/src/assets/audio/ambient/city-market.mp3)，并以逻辑 asset key `audio/ambient/city-market.mp3` 接入共享静态音频映射。
+
+### Changed
+- 城市界面的市集环境音现在只在 `currentView === "city"` 且游戏可见时激活；离开到 `house / scene / battle / map / city-3d` 时 3 秒淡出并保留当前播放位置，回到城市后从上次时间点 3 秒淡入继续播放。
+- 市集环境音的循环方式改为尾声 1 秒双播放器 crossfade，而不再依赖浏览器原生硬切 `loop` 重启；环境音播放路径继续与主 BGM、UI/SFX 分离。
+
+### Impact
+- 后续若要增加建筑、地图或战场环境音，可以复用同一套 `ambient handle + scoped controller` 机制，而不需要在 `src/main.ts` 继续堆业务分支。
+- 当前 `src/main.ts` 只保留静态资源 URL 注册、单个 city-scope ambient controller 实例化，以及现有 `syncAppAudio()` seam 内的一次同步调用。
+
 ## 2026-07-31 City Specialty Market Runtime Contract Foundation
 
 ### Added

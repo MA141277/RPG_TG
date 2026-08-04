@@ -49,7 +49,27 @@ test("main render path and runtime wire the temporary city card draw overlay", (
   assert.match(mainSource, /close-city-card-draw-test/);
   assert.match(mainSource, /confirm-city-card-draw-test/);
   assert.match(mainSource, /CardDrawAnimator/);
+  assert.match(mainSource, /createCardDrawAudioCuePlayer/);
+  assert.match(mainSource, /soundPlayer:\s*createCardDrawAudioCuePlayer/);
   assert.match(appShellSource, /cityCardDrawTestState:/);
+});
+
+test("city card draw overlay invalidates preserved runtime instances when animator wiring changes", () => {
+  const mainSource = fs.readFileSync("src/main.ts", "utf8");
+
+  assert.match(mainSource, /const CITY_CARD_DRAW_OVERLAY_RUNTIME_VERSION = \d+;/);
+  assert.match(
+    mainSource,
+    /type CityCardDrawOverlayRuntime = \{[\s\S]*runtimeVersion: number;/
+  );
+  assert.match(
+    mainSource,
+    /cityCardDrawOverlayRuntime\.runtimeVersion\s*===\s*CITY_CARD_DRAW_OVERLAY_RUNTIME_VERSION/
+  );
+  assert.match(
+    mainSource,
+    /runtimeVersion: CITY_CARD_DRAW_OVERLAY_RUNTIME_VERSION/
+  );
 });
 
 test("city card draw test copy is stored as readable chinese instead of mojibake", () => {

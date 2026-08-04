@@ -128,6 +128,8 @@ export type HouseActionViewModel = {
 
 export type HouseActionContainerViewModel = {
   title?: string;
+  className?: string;
+  buttonClassName?: string;
   actions: HouseActionViewModel[];
 };
 
@@ -188,7 +190,11 @@ type ShortGambleTableOverlay = {
     id: string;
     label: string;
     selected: boolean;
+    lifted?: boolean;
+    dropping?: boolean;
+    incoming?: boolean;
     actionId?: string;
+    mouseleaveActionId?: string;
   }>;
   sidePotLabels: string[];
   pendingIncomingCard: {
@@ -213,6 +219,7 @@ type ShortGambleTableOverlay = {
   claimCountdown?: {
     totalSeconds: number;
     remainingSeconds: number;
+    remainingMs: number;
     progressPercent: number;
     label: string;
   } | null;
@@ -232,13 +239,26 @@ type ShortGambleTableOverlay = {
     id: string;
     name: string;
     seatIndex: number;
+    tablePosition?: "bottom" | "left" | "top" | "right";
     stack: number;
     committed: number;
     folded: boolean;
     allIn: boolean;
     autoBetPending: boolean;
-    meldLabels: string[];
-    discardLabels: string[];
+    statusLabel?: string;
+    meldGroups?: Array<{
+      kind: "chow" | "pong" | "kong";
+      cards: Array<{
+        id: string;
+        label: string;
+      }>;
+    }>;
+    discardTiles?: Array<{
+      id: string;
+      label: string;
+    }>;
+    meldLabels?: string[];
+    discardLabels?: string[];
   }>;
   logLines: string[];
   showdownRows: Array<{
@@ -395,6 +415,10 @@ export type HouseOverlayViewModel =
       type: "confirm";
       title: string;
       paragraphs: string[];
+      overlayAttribute?: string;
+      modalClassName?: string;
+      actionsClassName?: string;
+      buttonClassName?: string;
       workDescriptionLines?: string[];
       relatedAbilityLines?: string[];
       costLines?: string[];
