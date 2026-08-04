@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-04 Temple Hosted Overlay-Close Seam Narrowing
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 把 hosted temple review 里原先分开的 `hostedRewardStageHandoff` 与 `hostedPersonnelStageHandoff` 两段 overlay-close stage wiring 收口成同一个 `hostedOverlayCloseHandoff(...)` 本地 seam helper。
+- `reward` / `personnel` 两段仍继续复用既有的 `createTempleReviewOverlayCloseFollowupProjection(...)`，但 hosted path 不再为这两个 stage 各自保留一段重复的 handoff 接线。
+
+### Added
+- `tests/robustness.test.cjs` 新增结构回归，锁定 hosted `reward/personnel` overlay-close 已通过单一 seam helper 接线，避免后续再把这两段 hosted wiring 拆回双份实现。
+
+### Impact
+- 这一步只压缩 temple review hosted path 内部的 stage/seam duplication，没有改动 reward/personnel 的结算 owner、现有 UI 壳、剧情顺序或 assigned settlement seam。
+- temple review 继续沿 D 线朝“shared meeting owner + 最少宿主 seam”收口，但当前仍保留 no-meeting fallback 与必要的宿主 settlement 边界。
+
 ## 2026-08-04 Temple Advice Follow-Up Owner Narrowing
 
 ### Changed

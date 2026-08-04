@@ -10954,7 +10954,7 @@ test("temple review reward and personnel overlay-close follow-up projection is o
   const legacyBlock =
     functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
   const hostedBlockMatch = moduleSource.match(
-    /const hostedRewardStageHandoff =[\s\S]*?const hostedAdviceStageHandoff =/
+    /const hostedOverlayCloseHandoff =[\s\S]*?const hostedAdviceStageHandoff =/
   );
   const hostedBlock = hostedBlockMatch?.[0] ?? "";
 
@@ -10965,6 +10965,7 @@ test("temple review reward and personnel overlay-close follow-up projection is o
   assert.match(helperBlock, /currentStageId: "reward" \| "personnel"/);
   assert.match(helperBlock, /createTemplePersonnelOrPraiseProjection\(/);
   assert.match(helperBlock, /createTemplePraiseProjection\(/);
+  assert.match(hostedBlock, /const hostedOverlayCloseHandoff =/);
   assert.match(hostedBlock, /createTempleReviewOverlayCloseFollowupProjection\(/);
   assert.match(legacyBlock, /createTempleReviewOverlayCloseFollowupProjection\(/);
   assert.doesNotMatch(hostedBlock, /createTemplePersonnelOrPraiseProjection\(/);
@@ -11027,6 +11028,53 @@ test("temple review advice follow-up projection is owned by one helper across ho
   assert.doesNotMatch(hostedBlock, /getTempleAssignDutyLines\(/);
   assert.doesNotMatch(legacyBlock, /getDefaultReviewSpecialTaskHookResult\(/);
   assert.doesNotMatch(legacyBlock, /getTempleAssignDutyLines\(/);
+});
+
+test("temple review hosted reward and personnel overlay-close handoff uses one seam helper", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const handleActionBlock = functionBlocksByName.get("handleAction") ?? "";
+
+  assert.match(
+    handleActionBlock,
+    /const hostedOverlayCloseHandoff = \(currentStageId: "reward" \| "personnel"\) =>/
+  );
+  assert.match(handleActionBlock, /hostedOverlayCloseHandoff\("reward"\)/);
+  assert.match(handleActionBlock, /hostedOverlayCloseHandoff\("personnel"\)/);
+  assert.match(handleActionBlock, /const hostedRewardStageHandoff = hostedOverlayCloseHandoff\("reward"\)/);
+  assert.match(
+    handleActionBlock,
+    /const hostedPersonnelStageHandoff = hostedOverlayCloseHandoff\("personnel"\)/
+  );
 });
 
 test("temple and keep house content files no longer author pack task definitions", () => {

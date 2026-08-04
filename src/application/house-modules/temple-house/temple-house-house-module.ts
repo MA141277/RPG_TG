@@ -4579,46 +4579,32 @@ function handleAction(
     return hostedAssignmentTableHandoff;
   }
 
-  const hostedRewardStageHandoff = hostedReviewProjectionHandoff({
-    currentStageId: "reward",
-    expectedActionId: "close-temple-overlay",
-    resolveProjection: () =>
-      createTempleReviewOverlayCloseFollowupProjection({
-        currentStageId: "reward",
-        gameState: nextState,
-        characterDefinitions: input.characterDefinitions,
-        houseDefinition: input.houseDefinition,
-        playerCharacter,
-        seniorMonkCharacter,
-        playerCharacterId: input.playerCharacterId,
-        textEntriesById: input.textEntriesById,
-        ...(input.houseModuleDefaults == null
-          ? {}
-          : { houseModuleDefaults: input.houseModuleDefaults }),
-      }),
-  });
+  const hostedOverlayCloseHandoff = (currentStageId: "reward" | "personnel") =>
+    hostedReviewProjectionHandoff({
+      currentStageId,
+      expectedActionId: "close-temple-overlay",
+      resolveProjection: () =>
+        createTempleReviewOverlayCloseFollowupProjection({
+          currentStageId,
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+          houseDefinition: input.houseDefinition,
+          playerCharacter,
+          seniorMonkCharacter,
+          playerCharacterId: input.playerCharacterId,
+          textEntriesById: input.textEntriesById,
+          ...(input.houseModuleDefaults == null
+            ? {}
+            : { houseModuleDefaults: input.houseModuleDefaults }),
+        }),
+    });
+
+  const hostedRewardStageHandoff = hostedOverlayCloseHandoff("reward");
   if (hostedRewardStageHandoff != null) {
     return hostedRewardStageHandoff;
   }
 
-  const hostedPersonnelStageHandoff = hostedReviewProjectionHandoff({
-    currentStageId: "personnel",
-    expectedActionId: "close-temple-overlay",
-    resolveProjection: () =>
-      createTempleReviewOverlayCloseFollowupProjection({
-        currentStageId: "personnel",
-        gameState: nextState,
-        characterDefinitions: input.characterDefinitions,
-        houseDefinition: input.houseDefinition,
-        playerCharacter,
-        seniorMonkCharacter,
-        playerCharacterId: input.playerCharacterId,
-        textEntriesById: input.textEntriesById,
-        ...(input.houseModuleDefaults == null
-          ? {}
-          : { houseModuleDefaults: input.houseModuleDefaults }),
-      }),
-  });
+  const hostedPersonnelStageHandoff = hostedOverlayCloseHandoff("personnel");
   if (hostedPersonnelStageHandoff != null) {
     return hostedPersonnelStageHandoff;
   }
