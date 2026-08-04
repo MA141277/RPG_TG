@@ -11077,6 +11077,56 @@ test("temple review hosted reward and personnel overlay-close handoff uses one s
   );
 });
 
+test("temple review policy close remains fallback-only while hosted path uses one advance seam", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const hostedAdvanceHelperBlock =
+    functionBlocksByName.get("isTempleHostedMeetingAdvanceAction") ?? "";
+  const hostedRequestBlock =
+    functionBlocksByName.get("resolveTempleHostedMeetingRequest") ?? "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+  const handleActionBlock = functionBlocksByName.get("handleAction") ?? "";
+
+  assert.match(
+    hostedAdvanceHelperBlock,
+    /function isTempleHostedMeetingAdvanceAction\(actionId: string\)/
+  );
+  assert.match(hostedAdvanceHelperBlock, /close-review-policy-panel/);
+  assert.match(hostedRequestBlock, /isTempleHostedMeetingAdvanceAction\(actionId\)/);
+  assert.match(legacyBlock, /if \(actionId === "close-review-policy-panel"\)/);
+  assert.doesNotMatch(handleActionBlock, /const hostedPolicyStageHandoff =/);
+});
+
 test("temple and keep house content files no longer author pack task definitions", () => {
   const templeContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),

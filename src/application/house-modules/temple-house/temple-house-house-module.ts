@@ -2143,11 +2143,7 @@ function resolveTempleHostedMeetingRequest(
     | null
     | undefined
 ): { type: "advance" } | { type: "select-choice"; choiceId: string } | null {
-  if (
-    actionId === "advance-meeting-stage" ||
-    actionId === "close-review-assignment-table" ||
-    actionId === "close-review-policy-panel"
-  ) {
+  if (isTempleHostedMeetingAdvanceAction(actionId)) {
     return { type: "advance" };
   }
 
@@ -2159,6 +2155,14 @@ function resolveTempleHostedMeetingRequest(
   }
 
   return null;
+}
+
+function isTempleHostedMeetingAdvanceAction(actionId: string): boolean {
+  return (
+    actionId === "advance-meeting-stage" ||
+    actionId === "close-review-assignment-table" ||
+    actionId === "close-review-policy-panel"
+  );
 }
 
 function isTempleHostedReviewMeetingActive(

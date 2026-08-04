@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-04 Temple Policy Close Boundary Audit Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 新增 `isTempleHostedMeetingAdvanceAction(...)`，把 hosted temple review 的 `advance-meeting-stage`、`close-review-assignment-table`、`close-review-policy-panel` 统一显式归到同一条 hosted advance seam。
+- `resolveTempleHostedMeetingRequest(...)` 现在通过这一个 helper 识别 hosted advance 动作，明确 `policy` close 在 hosted path 下已不再需要单独的 stage-owner wiring。
+
+### Added
+- `tests/robustness.test.cjs` 新增结构回归，锁定 `close-review-policy-panel` 的显式分支当前只剩 `handleLegacyTempleReviewFallback(...)` 持有，而 hosted path 继续通过统一 advance seam 前进。
+
+### Impact
+- 这一步没有改变 temple review 的可见行为；它只是把一条剩余边界从“隐式由两套机制分担”改成了“hosted 走统一 advance、显式 close 逻辑只剩 fallback owner”的可审计状态。
+- 当前 temple review 的下一批收口重点进一步收窄到 no-meeting fallback 的长期保留范围，而不是再补新的 hosted stage wiring。
+
 ## 2026-08-04 Temple Hosted Overlay-Close Seam Narrowing
 
 ### Changed
