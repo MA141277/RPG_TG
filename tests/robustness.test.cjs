@@ -11310,6 +11310,65 @@ test("temple review assignment-table close uses one settlement helper across hos
   assert.doesNotMatch(legacyAssignmentCloseBlock, /writeFactionMerit\(/);
 });
 
+test("temple review assigned closeout remains host settlement seam only", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const handleActionBlock = functionBlocksByName.get("handleAction") ?? "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+  const hostedSettlementBlockMatch = handleActionBlock.match(
+    /const hostedSettlementResult = matchHostedMeetingSettlementHandoff\([\s\S]*?if \(hostedSettlementResult != null\) \{\s*return hostedSettlementResult;\s*\}/
+  );
+  const hostedSettlementBlock = hostedSettlementBlockMatch?.[0] ?? "";
+
+  assert.match(
+    legacyBlock,
+    /if \(actionId === "close-temple-overlay"\s*&&\s*sessionState\.meetingStage === "assigned"\)/
+  );
+  assert.match(legacyBlock, /Host-owned closeout for the settlement seam above\./);
+  assert.match(
+    legacyBlock,
+    /if \(actionId === "close-temple-overlay"\s*&&\s*sessionState\.meetingStage === "assigned"\)[\s\S]*mode: "daily"/
+  );
+  assert.match(legacyBlock, /meetingStage: "finished"/);
+  assert.match(legacyBlock, /dailyActionPanel: "root"/);
+  assert.match(legacyBlock, /overlay: null/);
+  assert.match(hostedSettlementBlock, /matchHostedMeetingSettlementHandoff\(/);
+  assert.match(hostedSettlementBlock, /resolvePayload: resolveTempleHostedReviewWorkPlanChoice/);
+  assert.doesNotMatch(handleActionBlock, /const hostedAssignedStageHandoff =/);
+  assert.doesNotMatch(handleActionBlock, /currentStageId: "assigned"/);
+  assert.doesNotMatch(hostedSettlementBlock, /close-temple-overlay/);
+});
+
 test("temple and keep house content files no longer author pack task definitions", () => {
   const templeContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),

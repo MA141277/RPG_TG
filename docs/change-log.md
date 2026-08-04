@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-04 Temple Assigned Closeout Host-Seam Audit Slice
+
+### Added
+- `tests/robustness.test.cjs` 新增结构回归，锁定 temple review 的 `close-temple-overlay` 在 `meetingStage === "assigned"` 时仍只属于宿主结果壳 closeout，不会再回到 shared / hosted meeting owner。
+
+### Changed
+- `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 同步记录这次 host-seam audit：当前 shared meeting owner 已经在更早的 settlement / return-to-host 边界结束，`assigned` 结果壳 closeout 继续保持宿主所有权。
+
+### Impact
+- 这一步没有改动 temple review 的运行时代码、UI、剧情顺序，也没有试图 shared-ify `assigned` 结果壳；它只是把这条既定的宿主 settlement seam 更明确地锁成可审计边界。
+- temple review 后续的窄切片可以继续围绕剩余 fallback-only、settlement-only、或“shared owner 已结束”的边界做审计，而不是重新引入 hosted `assigned` stage wiring。
+
 ## 2026-08-04 Temple Assignment-Table Shared Settlement Audit Slice
 
 ### Added
