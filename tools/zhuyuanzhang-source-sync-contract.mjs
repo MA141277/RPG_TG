@@ -47,6 +47,10 @@ export const SHARED_SYNC_FILE_RULES = Object.freeze([
   }),
 ]);
 
+export const ADDITIVE_SHARED_TEXT_ENTRY_PREFIXES = Object.freeze([
+  "runtime.zhu_yuanzhang.temple.",
+]);
+
 export const DEFERRED_SYNC_FILE_RULES = Object.freeze([
   Object.freeze({
     fileName: "pack.json",
@@ -109,18 +113,11 @@ export const RUNTIME_SAFE_EVENT_MIRROR_IDS = Object.freeze([
 export const PLAYABLE_FAMILY_OWNERSHIP = Object.freeze({
   canonicalMaintainedOwner: "scriptEditorTemplatePack",
   runtimePackMirrorMode: "derived-from-script-editor-template-pack",
-  publicPublicationFile: "flow-playables.json",
+  publicPublicationFile: "playable-shells.json",
   publicPublicationDerivedFrom: "playable-shells.json",
 });
 
-export const LEGACY_PUBLICATION_FILE_RULES = Object.freeze([
-  Object.freeze({
-    fileName: "flow-playables.json",
-    manifestKey: "flowPlayables",
-    reason:
-      "旧 public 模板仍直接暴露 flow-playables.json，但它不是两套维护源中的正式小游戏 family。",
-  }),
-]);
+export const LEGACY_PUBLICATION_FILE_RULES = Object.freeze([]);
 
 export const PUBLICATION_ONLY_MANIFEST_FILE_KEYS = Object.freeze(
   LEGACY_PUBLICATION_FILE_RULES.map((rule) => rule.manifestKey)
@@ -136,13 +133,7 @@ export const PUBLICATION_SYNC_FILE_RULES = Object.freeze([
     fileName: "playable-shells.json",
     mode: "public-playable-shells-projection",
     reason:
-      "public 发布层应同步暴露 canonical 的 playable-shells.json，让导入优先走新 family，同时保留旧兼容文件。",
-  }),
-  Object.freeze({
-    fileName: "flow-playables.json",
-    mode: "legacy-public-flow-playables-projection",
-    reason:
-      "public flow-playables.json 应由模板维护源的 playable-shells.json 投影生成，避免继续手工漂移。",
+      "public 发布层应同步暴露 canonical 的 playable-shells.json，默认模板导入不再依赖旧的 flow-playables 兼容文件。",
   }),
 ]);
 

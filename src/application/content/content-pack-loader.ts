@@ -13,10 +13,14 @@ const CONTENT_PACK_FILE_KEYS = [
   "menuInstances",
   "scenes",
   "dialogues",
+  "meetings",
+  "meetingBindings",
+  "meetingPanels",
+  "meetingChoiceSets",
+  "meetingActionSets",
   "playables",
   "playableIntegrations",
   "playableShells",
-  "flowPlayables",
   "eventBindings",
   "settlements",
   "progressTracks",
@@ -106,6 +110,11 @@ function parseContentPackManifest(value: unknown): ContentPackManifest {
   if (Object.hasOwn(value.files, "flowDefinitions")) {
     throw new Error(
       'content pack files.flowDefinitions is retired; use files.playableShells instead.'
+    );
+  }
+  if (Object.hasOwn(value.files, "flowPlayables")) {
+    throw new Error(
+      'content pack files.flowPlayables is retired; use files.playableShells instead.'
     );
   }
 

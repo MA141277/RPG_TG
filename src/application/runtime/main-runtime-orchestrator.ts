@@ -32,6 +32,10 @@ import {
   createStoryRuntimeDefinitionContext,
 } from "../story/story-runtime-state-bridge";
 import type { StorySettlementDefinition } from "../story/story-settlement-continuation";
+import {
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+  resetDefaultPlayableRuntimeRegistries,
+} from "../../core/runtime/playable-runtime-registries";
 
 type RuntimeStoryAppState = AppState & {
   cityStatusById?: CityStatusById;
@@ -167,6 +171,13 @@ export function createMainRuntimeOrchestrator(
     execute(request: MainRuntimeOrchestratorRequest): MainRuntimeOrchestratorResult {
       if (request.type === "apply-startup-session") {
         dependencies.resetMainGameRuntime();
+        if (request.session.activationResult.ok) {
+          configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+            request.session.activationResult.activatedMod
+          );
+        } else {
+          resetDefaultPlayableRuntimeRegistries();
+        }
         dependencies.setActiveContentContext(request.session.contentContext);
         dependencies.setPlayerCharacterId(request.session.playerCharacterId);
         const appState = request.session.createAppState();

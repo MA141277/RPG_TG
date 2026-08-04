@@ -70,7 +70,6 @@ type RuntimePackManifestFiles = {
   playables?: string;
   playableIntegrations?: string;
   playableShells?: string;
-  flowPlayables?: string;
   cities?: string;
   houses?: string;
   buildingArrangements?: string;
@@ -312,7 +311,7 @@ export function importScenarioPackToScriptEditorProject(
       pack.historicalCharacterIdByCharacterId
     ),
     minigames: importedMinigames,
-    flows: readFlowPlayablesFamily(rawPack),
+    flows: readPlayableShellsFamily(rawPack),
     storyNodes: [],
     textEntries: mapTextEntries(pack.textEntries),
     conditionGroups: [],
@@ -1455,7 +1454,7 @@ function readEntityArrayFamily(
   return readArrayFamily(rawPack, familyKey) as ScriptEditorEntityRecord[];
 }
 
-function readFlowPlayablesFamily(
+function readPlayableShellsFamily(
   rawPack: Record<string, unknown>
 ): ScriptEditorProjectDefinition["flows"] {
   if (rawPack.flowDefinitions != null) {
@@ -1463,10 +1462,13 @@ function readFlowPlayablesFamily(
       'Imported runtime pack still uses retired family "flowDefinitions"; use "playableShells" instead.'
     );
   }
+  if (rawPack.flowPlayables != null) {
+    throw new Error(
+      'Imported runtime pack still uses retired family "flowPlayables"; use "playableShells" instead.'
+    );
+  }
 
-  const value = Array.isArray(rawPack.playableShells)
-    ? rawPack.playableShells
-    : rawPack.flowPlayables;
+  const value = rawPack.playableShells;
   if (!Array.isArray(value)) {
     return [];
   }

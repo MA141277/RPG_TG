@@ -1,0 +1,58 @@
+[
+  {
+    "id": "actions.temple.review.assign.indoor",
+    "actions": [
+      {
+        "id": "action.temple.review.assign.indoor.plan",
+        "type": "set-variable",
+        "variableId": "var.temple.current_work_plan",
+        "value": "temple-help"
+      }
+    ]
+  },
+  {
+    "id": "actions.temple.review.assign.beg_alms",
+    "actions": [
+      {
+        "id": "action.temple.review.assign.beg_alms.plan",
+        "type": "set-variable",
+        "variableId": "var.temple.current_work_plan",
+        "value": "beg-alms"
+      }
+    ]
+  },
+  {
+    "id": "actions.temple.review.complete",
+    "actions": [
+      {
+        "id": "action.temple.review.complete.flag.first_review",
+        "type": "set-flag",
+        "flagId": "flag.story.zhu_yuanzhang.first_temple_review.completed",
+        "value": true
+      },
+      {
+        "id": "action.temple.review.complete.flag.work_unlocked",
+        "type": "set-flag",
+        "flagId": "flag.story.zhu_yuanzhang.temple_work_unlocked",
+        "value": true
+      },
+      {
+        "id": "action.temple.review.complete.variable.countdown",
+        "type": "set-variable",
+        "variableId": "var.keep.review_countdown",
+        "value": 30
+      }
+    ]
+  },
+  {
+    "id": "actions.keep.review.complete",
+    "actions": [
+      {
+        "id": "action.keep.review.complete.variable.countdown",
+        "type": "set-variable",
+        "variableId": "var.keep.review_countdown",
+        "value": 60
+      }
+    ]
+  }
+]

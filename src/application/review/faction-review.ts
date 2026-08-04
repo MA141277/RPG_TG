@@ -64,6 +64,11 @@ export const TEMPLE_TOP_RANK_REWARD: ReviewItemReward = {
   quantity: 1,
 };
 
+const REVIEW_ITEM_REWARDS_BY_ID: Record<string, ReviewItemReward> = {
+  "review.reward.default-top-rank": REVIEW_DEFAULT_TOP_RANK_REWARD,
+  "review.reward.temple-top-rank": TEMPLE_TOP_RANK_REWARD,
+};
+
 const RUNTIME_ITEM_QUANTITY_KEY_PREFIX = "var.player_inventory.item.";
 const GRAIN_ITEM_ID = "item.grain";
 const PLAYER_GRAIN_QUANTITY_KEY = "var.player_inventory.grain_dou";
@@ -296,6 +301,12 @@ export function settleFactionReviewPersonnel<
 
 export function getRuntimeItemQuantityKey(itemId: string): string {
   return `${RUNTIME_ITEM_QUANTITY_KEY_PREFIX}${itemId}`;
+}
+
+export function resolveReviewItemRewardById(
+  rewardId: string
+): ReviewItemReward | null {
+  return REVIEW_ITEM_REWARDS_BY_ID[rewardId] ?? null;
 }
 
 export function readRuntimeItemQuantity(

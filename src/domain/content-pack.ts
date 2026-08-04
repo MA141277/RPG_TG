@@ -13,6 +13,11 @@ import type {
 } from "./historical-character";
 import type { HouseDefinition, HouseAccessRefusalRule } from "./house";
 import type { MapDefinition } from "./map";
+import type { MeetingActionSetDefinition } from "./meeting/meeting-action-set";
+import type { MeetingBindingDefinition } from "./meeting/meeting-binding";
+import type { MeetingChoiceSetDefinition } from "./meeting/meeting-choice-set";
+import type { MeetingDefinition } from "./meeting/meeting-definition";
+import type { MeetingPanelDefinition } from "./meeting/meeting-panel";
 import type { RuntimeDialogueDefinition } from "./dialogue";
 import type { EventBinding } from "./event";
 import type { LocationAccessDefinition } from "./location-access";
@@ -86,6 +91,11 @@ export type ContentPackDefinition = {
   menuResources?: MenuResourceDefinition[];
   menuInstances?: MenuInstanceDefinition[];
   dialogues?: RuntimeDialogueDefinition[];
+  meetings?: MeetingDefinition[];
+  meetingBindings?: MeetingBindingDefinition[];
+  meetingPanels?: MeetingPanelDefinition[];
+  meetingChoiceSets?: MeetingChoiceSetDefinition[];
+  meetingActionSets?: MeetingActionSetDefinition[];
   playables?: PlayableDefinition[];
   playableIntegrations?: PlayableIntegrationDefinition[];
   playableShells?: FlowPlayableDefinition[];

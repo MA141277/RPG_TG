@@ -58,6 +58,7 @@ export type TempleStaticTextDefaults = {
     days: string;
     current: string;
     normal: string;
+    autoAdvanceTitleTemplate: string;
   };
   restDaysOverlayTextIds: {
     title: string;
@@ -90,6 +91,7 @@ export type TempleStaticTextDefaults = {
     activityRelatedAbilityPending: string;
     activityQuickCompleteLabel: string;
     alertConfirmLabel: string;
+    donateConfirmLabelTemplate: string;
     donateCancelLabel: string;
     resultConfirmLabel: string;
     leaveRefusalAdvanceHint: string;
@@ -132,15 +134,20 @@ export type TempleStaticTextDefaults = {
     actionPanelTitleWork: string;
     actionPanelTitleTempleDaily: string;
     statusCountdown: string;
+    statusCountdownValueTemplate: string;
     statusContribution: string;
+    statusContributionValueTemplate: string;
     statusWeek: string;
+    statusWeekValueTemplate: string;
     statusDonationTotal: string;
+    statusDonationTotalValueTemplate: string;
     statusCurrentTask: string;
     statusCurrentTaskNone: string;
     statusPlayerStamina: string;
     statusPlayerFood: string;
     statusSubmittedFood: string;
     statusPlayerGold: string;
+    statusPlayerGoldValueTemplate: string;
     leaveActionLabel: string;
   };
   alertTextIds: {
@@ -271,6 +278,8 @@ const TEMPLE_STATIC_TEXT_DEFAULTS: TempleStaticTextDefaults = {
     days: "runtime.zhu_yuanzhang.temple.rest.summary.days.001",
     current: "runtime.zhu_yuanzhang.temple.rest.summary.current.001",
     normal: "runtime.zhu_yuanzhang.temple.rest.summary.normal.001",
+    autoAdvanceTitleTemplate:
+      "runtime.zhu_yuanzhang.temple.rest.summary.auto_advance.title",
   },
   restDaysOverlayTextIds: {
     title: "runtime.zhu_yuanzhang.temple.rest_days.title",
@@ -328,6 +337,8 @@ const TEMPLE_STATIC_TEXT_DEFAULTS: TempleStaticTextDefaults = {
     activityQuickCompleteLabel:
       "runtime.zhu_yuanzhang.temple.ui.activity_confirm.quick_complete",
     alertConfirmLabel: "runtime.zhu_yuanzhang.temple.ui.alert.confirm",
+    donateConfirmLabelTemplate:
+      "runtime.zhu_yuanzhang.temple.ui.donate.confirm.label",
     donateCancelLabel: "runtime.zhu_yuanzhang.temple.ui.donate.cancel",
     resultConfirmLabel: "runtime.zhu_yuanzhang.temple.ui.result.confirm",
     leaveRefusalAdvanceHint:
@@ -393,9 +404,16 @@ const TEMPLE_STATIC_TEXT_DEFAULTS: TempleStaticTextDefaults = {
     actionPanelTitleTempleDaily:
       "runtime.zhu_yuanzhang.temple.ui.action_panel.temple_daily",
     statusCountdown: "runtime.zhu_yuanzhang.temple.ui.status.countdown",
+    statusCountdownValueTemplate:
+      "runtime.zhu_yuanzhang.temple.ui.status.countdown.value",
     statusContribution: "runtime.zhu_yuanzhang.temple.ui.status.contribution",
+    statusContributionValueTemplate:
+      "runtime.zhu_yuanzhang.temple.ui.status.contribution.value",
     statusWeek: "runtime.zhu_yuanzhang.temple.ui.status.week",
+    statusWeekValueTemplate: "runtime.zhu_yuanzhang.temple.ui.status.week.value",
     statusDonationTotal: "runtime.zhu_yuanzhang.temple.ui.status.donation_total",
+    statusDonationTotalValueTemplate:
+      "runtime.zhu_yuanzhang.temple.ui.status.donation_total.value",
     statusCurrentTask: "runtime.zhu_yuanzhang.temple.ui.status.current_task",
     statusCurrentTaskNone:
       "runtime.zhu_yuanzhang.temple.ui.status.current_task.none",
@@ -404,6 +422,8 @@ const TEMPLE_STATIC_TEXT_DEFAULTS: TempleStaticTextDefaults = {
     statusSubmittedFood:
       "runtime.zhu_yuanzhang.temple.ui.status.submitted_food",
     statusPlayerGold: "runtime.zhu_yuanzhang.temple.ui.status.player_gold",
+    statusPlayerGoldValueTemplate:
+      "runtime.zhu_yuanzhang.temple.ui.status.player_gold.value",
     leaveActionLabel: "runtime.zhu_yuanzhang.temple.ui.leave_action.label",
   },
   alertTextIds: {
@@ -694,6 +714,11 @@ export function resolveTempleStaticTextDefaults(
           templeDefaults?.templeRestSummaryTextIds,
           "normal"
         ) ?? TEMPLE_STATIC_TEXT_DEFAULTS.restSummaryTextIds.normal,
+      autoAdvanceTitleTemplate:
+        readTempleStaticTextId(
+          templeDefaults?.templeRestSummaryTextIds,
+          "autoAdvanceTitleTemplate"
+        ) ?? TEMPLE_STATIC_TEXT_DEFAULTS.restSummaryTextIds.autoAdvanceTitleTemplate,
     },
     restDaysOverlayTextIds: {
       title:
@@ -811,6 +836,11 @@ export function resolveTempleStaticTextDefaults(
       alertConfirmLabel:
         readTempleStaticTextId(templeDefaults?.templeUiTextIds, "alertConfirmLabel") ??
         TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.alertConfirmLabel,
+      donateConfirmLabelTemplate:
+        readTempleStaticTextId(
+          templeDefaults?.templeUiTextIds,
+          "donateConfirmLabelTemplate"
+        ) ?? TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.donateConfirmLabelTemplate,
       donateCancelLabel:
         readTempleStaticTextId(templeDefaults?.templeUiTextIds, "donateCancelLabel") ??
         TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.donateCancelLabel,
@@ -988,17 +1018,37 @@ export function resolveTempleStaticTextDefaults(
       statusCountdown:
         readTempleStaticTextId(templeDefaults?.templeUiTextIds, "statusCountdown") ??
         TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusCountdown,
+      statusCountdownValueTemplate:
+        readTempleStaticTextId(
+          templeDefaults?.templeUiTextIds,
+          "statusCountdownValueTemplate"
+        ) ?? TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusCountdownValueTemplate,
       statusContribution:
         readTempleStaticTextId(templeDefaults?.templeUiTextIds, "statusContribution") ??
         TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusContribution,
+      statusContributionValueTemplate:
+        readTempleStaticTextId(
+          templeDefaults?.templeUiTextIds,
+          "statusContributionValueTemplate"
+        ) ?? TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusContributionValueTemplate,
       statusWeek:
         readTempleStaticTextId(templeDefaults?.templeUiTextIds, "statusWeek") ??
         TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusWeek,
+      statusWeekValueTemplate:
+        readTempleStaticTextId(
+          templeDefaults?.templeUiTextIds,
+          "statusWeekValueTemplate"
+        ) ?? TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusWeekValueTemplate,
       statusDonationTotal:
         readTempleStaticTextId(
           templeDefaults?.templeUiTextIds,
           "statusDonationTotal"
         ) ?? TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusDonationTotal,
+      statusDonationTotalValueTemplate:
+        readTempleStaticTextId(
+          templeDefaults?.templeUiTextIds,
+          "statusDonationTotalValueTemplate"
+        ) ?? TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusDonationTotalValueTemplate,
       statusCurrentTask:
         readTempleStaticTextId(
           templeDefaults?.templeUiTextIds,
@@ -1025,6 +1075,11 @@ export function resolveTempleStaticTextDefaults(
       statusPlayerGold:
         readTempleStaticTextId(templeDefaults?.templeUiTextIds, "statusPlayerGold") ??
         TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusPlayerGold,
+      statusPlayerGoldValueTemplate:
+        readTempleStaticTextId(
+          templeDefaults?.templeUiTextIds,
+          "statusPlayerGoldValueTemplate"
+        ) ?? TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.statusPlayerGoldValueTemplate,
       leaveActionLabel:
         readTempleStaticTextId(templeDefaults?.templeUiTextIds, "leaveActionLabel") ??
         TEMPLE_STATIC_TEXT_DEFAULTS.uiTextIds.leaveActionLabel,

@@ -27,6 +27,14 @@ export type HouseModulePackEventByIdInput = {
   eventId: string;
 };
 
+export type HouseModulePackEventByItemIdInput = {
+  state: GameState;
+  eventDefinitionsById?: Record<string, EventDefinition> | undefined;
+  eventBindings?: EventBinding[] | undefined;
+  houseId: string;
+  itemId: string;
+};
+
 export type HouseModulePackEventByIdResult = {
   state: GameState;
   handled: boolean;
@@ -72,6 +80,40 @@ export function applyHouseModulePackEventById(
 ): HouseModulePackEventByIdResult {
   const eventDefinition =
     input.eventDefinitionsById?.[input.eventId] ?? null;
+  if (eventDefinition == null) {
+    return {
+      state: input.state,
+      handled: false,
+      eventDefinition: null,
+    };
+  }
+
+  return {
+    state: applyEventRuntimeActions(input.state, eventDefinition),
+    handled: true,
+    eventDefinition,
+  };
+}
+
+export function readHouseModulePackEventByItemId(
+  input: HouseModulePackEventByItemIdInput
+): EventDefinition | null {
+  const binding = resolveBuildingContainerItemBinding(
+    input.eventBindings,
+    input.houseId,
+    input.itemId
+  );
+  if (binding?.eventId == null || input.eventDefinitionsById == null) {
+    return null;
+  }
+
+  return input.eventDefinitionsById[binding.eventId] ?? null;
+}
+
+export function applyHouseModulePackEventByItemId(
+  input: HouseModulePackEventByItemIdInput
+): HouseModulePackEventByIdResult {
+  const eventDefinition = readHouseModulePackEventByItemId(input);
   if (eventDefinition == null) {
     return {
       state: input.state,

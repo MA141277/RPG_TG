@@ -3,6 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 import {
+  ADDITIVE_SHARED_TEXT_ENTRY_PREFIXES,
   BUILTIN_TEMPLATE_ONLY_MANIFEST_FILE_KEYS,
   PLAYABLE_FAMILY_FILE_NAMES,
   PUBLICATION_ONLY_MANIFEST_FILE_KEYS,
@@ -76,26 +77,6 @@ function toStableIdList(records) {
   )].sort();
 }
 
-export function auditLegacyPublicFlowPlayablesOwnerGap(
-  builtinTemplatePlayableShells,
-  publicFlowPlayables
-) {
-  const maintainedShellIds = toStableIdList(builtinTemplatePlayableShells);
-  const publicLegacyFlowIds = toStableIdList(publicFlowPlayables);
-  const maintainedShellIdSet = new Set(maintainedShellIds);
-  const publicOnlyFlowIds = publicLegacyFlowIds.filter(
-    (id) => !maintainedShellIdSet.has(id)
-  );
-
-  return {
-    status: publicOnlyFlowIds.length === 0 ? "aligned" : "owner-gap",
-    maintainedShellCount: maintainedShellIds.length,
-    publicLegacyFlowCount: publicLegacyFlowIds.length,
-    publicOnlyFlowCount: publicOnlyFlowIds.length,
-    publicOnlyFlowIds,
-  };
-}
-
 function syncCharacterStartupFields(runtimeCharacters, targetCharacters) {
   const runtimeById = new Map(runtimeCharacters.map((record) => [record.id, record]));
 
@@ -127,6 +108,18 @@ export function projectTextEntriesForSync(sourceEntries, targetEntries) {
     }
 
     nextEntries[key] = targetEntries[key];
+  }
+
+  for (const key of Object.keys(sourceEntries)) {
+    if (Object.prototype.hasOwnProperty.call(nextEntries, key)) {
+      continue;
+    }
+
+    if (
+      ADDITIVE_SHARED_TEXT_ENTRY_PREFIXES.some((prefix) => key.startsWith(prefix))
+    ) {
+      nextEntries[key] = sourceEntries[key];
+    }
   }
   return nextEntries;
 }
@@ -245,30 +238,6 @@ export function projectRuntimePackManifestForSync(
   return nextManifest;
 }
 
-export function projectLegacyPublicFlowPlayablesForSync(sourcePlayableShells) {
-  return Array.isArray(sourcePlayableShells)
-    ? JSON.parse(JSON.stringify(sourcePlayableShells))
-    : [];
-}
-
-export async function resolveCanonicalPublicFlowPlayablesForSync(
-  repoRootPath,
-  sourceRoot,
-  sourcePlayableShells
-) {
-  if (
-    sourceRoot.includes("/builtin-templates/") &&
-    Array.isArray(sourcePlayableShells)
-  ) {
-    return projectLegacyPublicFlowPlayablesForSync(sourcePlayableShells);
-  }
-
-  const { builtinTemplateRoot } = resolveZhuyuanzhangPackRoots(repoRootPath);
-  return projectLegacyPublicFlowPlayablesForSync(
-    await readJson(path.join(builtinTemplateRoot, "playable-shells.json"))
-  );
-}
-
 export async function resolveCanonicalPlayableFamilyForSync(
   repoRootPath,
   sourceRoot,
@@ -372,11 +341,6 @@ async function buildTargetContents(sourceRoot, targetRoots) {
     sourceRoot.includes("/builtin-templates/")
       ? await readJson(sourcePlayableShellsPath)
       : null;
-  const canonicalPublicFlowPlayables = await resolveCanonicalPublicFlowPlayablesForSync(
-    repoRoot,
-    sourceRoot,
-    sourcePlayableShells
-  );
   const canonicalPlayableFamily = await resolveCanonicalPlayableFamilyForSync(
     repoRoot,
     sourceRoot,
@@ -471,14 +435,6 @@ async function buildTargetContents(sourceRoot, targetRoots) {
             )
           : await readJson(path.join(targetRoot, "pack.json"))
       ),
-      publicFlowPlayablesPath:
-        targetRoot.includes("/public/")
-          ? path.join(targetRoot, "flow-playables.json")
-          : null,
-      publicFlowPlayablesContent:
-        targetRoot.includes("/public/")
-          ? formatJson(canonicalPublicFlowPlayables)
-          : null,
       publicPlayableShellsPath:
         targetRoot.includes("/public/")
           ? path.join(targetRoot, "playable-shells.json")
@@ -672,54 +628,6 @@ function areJsonValuesEqual(left, right) {
 }
 
 async function main() {
-  const legacyPublicationAuditMode =
-    process.argv.includes("--check-legacy-publication-drift");
-  if (legacyPublicationAuditMode) {
-    const builtinTemplateRoot = path.join(
-      repoRoot,
-      "src",
-      "modules",
-      "script-editor",
-      "builtin-templates",
-      "zhuyuanzhang"
-    );
-    const publicTemplateRoot = path.join(
-      repoRoot,
-      "public",
-      "script-editor-templates",
-      "zhuyuanzhang"
-    );
-    const audit = auditLegacyPublicFlowPlayablesOwnerGap(
-      await readJson(path.join(builtinTemplateRoot, "playable-shells.json")),
-      await readJson(path.join(publicTemplateRoot, "flow-playables.json"))
-    );
-
-    if (audit.status === "aligned") {
-      console.log(
-        "Zhuyuanzhang legacy public flow-playables are fully owned by maintained playable-shells."
-      );
-      return;
-    }
-
-    console.error(
-      "Zhuyuanzhang legacy public flow-playables still have no maintained-pack owner."
-    );
-    console.error(
-      `- builtin template playable-shells: ${audit.maintainedShellCount}`
-    );
-    console.error(
-      `- public legacy flow-playables: ${audit.publicLegacyFlowCount}`
-    );
-    console.error(
-      `- public-only owner gaps: ${audit.publicOnlyFlowCount}`
-    );
-    for (const id of audit.publicOnlyFlowIds) {
-      console.error(`  - ${id}`);
-    }
-    process.exitCode = 1;
-    return;
-  }
-
   const checkMode = process.argv.includes("--check");
   const writeMode = !checkMode || process.argv.includes("--write");
   const sourceArg = process.argv.find((arg) => arg.startsWith("--source="));
@@ -773,11 +681,6 @@ async function main() {
         fileName: "playable-shells.json",
         filePath: target.publicPlayableShellsPath,
         content: target.publicPlayableShellsContent,
-      },
-      {
-        fileName: "flow-playables.json",
-        filePath: target.publicFlowPlayablesPath,
-        content: target.publicFlowPlayablesContent,
       },
       {
         fileName: "playables.json",

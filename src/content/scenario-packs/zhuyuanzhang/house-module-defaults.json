@@ -131,7 +131,8 @@
       "none": "runtime.zhu_yuanzhang.temple.rest.summary.none.001",
       "days": "runtime.zhu_yuanzhang.temple.rest.summary.days.001",
       "current": "runtime.zhu_yuanzhang.temple.rest.summary.current.001",
-      "normal": "runtime.zhu_yuanzhang.temple.rest.summary.normal.001"
+      "normal": "runtime.zhu_yuanzhang.temple.rest.summary.normal.001",
+      "autoAdvanceTitleTemplate": "runtime.zhu_yuanzhang.temple.rest.summary.auto_advance.title"
     },
     "templeRestDaysOverlayTextIds": {
       "title": "runtime.zhu_yuanzhang.temple.rest_days.title",
@@ -183,6 +184,7 @@
       "activityRelatedAbilityPending": "runtime.zhu_yuanzhang.temple.ui.activity_confirm.related_ability",
       "activityQuickCompleteLabel": "runtime.zhu_yuanzhang.temple.ui.activity_confirm.quick_complete",
       "alertConfirmLabel": "runtime.zhu_yuanzhang.temple.ui.alert.confirm",
+      "donateConfirmLabelTemplate": "runtime.zhu_yuanzhang.temple.ui.donate.confirm.label",
       "donateCancelLabel": "runtime.zhu_yuanzhang.temple.ui.donate.cancel",
       "resultConfirmLabel": "runtime.zhu_yuanzhang.temple.ui.result.confirm",
       "leaveRefusalAdvanceHint": "runtime.zhu_yuanzhang.temple.ui.leave_refusal.advance",
@@ -225,15 +227,20 @@
       "actionPanelTitleWork": "runtime.zhu_yuanzhang.temple.ui.action_panel.work",
       "actionPanelTitleTempleDaily": "runtime.zhu_yuanzhang.temple.ui.action_panel.temple_daily",
       "statusCountdown": "runtime.zhu_yuanzhang.temple.ui.status.countdown",
+      "statusCountdownValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.countdown.value",
       "statusContribution": "runtime.zhu_yuanzhang.temple.ui.status.contribution",
+      "statusContributionValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.contribution.value",
       "statusWeek": "runtime.zhu_yuanzhang.temple.ui.status.week",
+      "statusWeekValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.week.value",
       "statusDonationTotal": "runtime.zhu_yuanzhang.temple.ui.status.donation_total",
+      "statusDonationTotalValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.donation_total.value",
       "statusCurrentTask": "runtime.zhu_yuanzhang.temple.ui.status.current_task",
       "statusCurrentTaskNone": "runtime.zhu_yuanzhang.temple.ui.status.current_task.none",
       "statusPlayerStamina": "runtime.zhu_yuanzhang.temple.ui.status.player_stamina",
       "statusPlayerFood": "runtime.zhu_yuanzhang.temple.ui.status.player_food",
       "statusSubmittedFood": "runtime.zhu_yuanzhang.temple.ui.status.submitted_food",
       "statusPlayerGold": "runtime.zhu_yuanzhang.temple.ui.status.player_gold",
+      "statusPlayerGoldValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.player_gold.value",
       "leaveActionLabel": "runtime.zhu_yuanzhang.temple.ui.leave_action.label"
     },
     "templeAlertTextIds": {

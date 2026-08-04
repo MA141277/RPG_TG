@@ -68,6 +68,51 @@ test("active game content context exposes richer story runtime families", () => 
         nodes: [],
       },
     ],
+    meetings: [
+      {
+        id: "meeting.test",
+        hostScope: {
+          family: "building",
+          templateId: "house.test",
+        },
+        initialStageId: "intro",
+        stageIds: ["intro"],
+        stagesById: {
+          intro: {
+            id: "intro",
+            type: "dialogue",
+            dialogueId: "dialogue.test",
+          },
+        },
+      },
+    ],
+    meetingBindings: [
+      {
+        id: "meeting-binding.test",
+        meetingId: "meeting.test",
+        owner: { family: "building", id: "house.test" },
+        trigger: { action: "building-container-item-action", itemId: "review" },
+      },
+    ],
+    meetingPanels: [
+      {
+        id: "meeting-panel.test",
+        title: "Meeting Panel",
+        sections: [],
+      },
+    ],
+    meetingChoiceSets: [
+      {
+        id: "meeting-choices.test",
+        choices: [],
+      },
+    ],
+    meetingActionSets: [
+      {
+        id: "meeting-actions.test",
+        actions: [],
+      },
+    ],
     eventBindings: [
       {
         id: "binding.test",
@@ -113,6 +158,23 @@ test("active game content context exposes richer story runtime families", () => 
   assert.equal(content.storyContent.progressTrackBindingsById["binding.track.test"]?.trackId, "track.test");
   assert.equal(content.storyContent.cityDefinitionsById["city.test"]?.name, "Test City");
   assert.equal(content.storyContent.houseDefinitionsById["house.test"]?.name, "Test House");
+  assert.equal(content.storyContent.meetingsById["meeting.test"]?.id, "meeting.test");
+  assert.equal(
+    content.storyContent.meetingBindingsById["meeting-binding.test"]?.meetingId,
+    "meeting.test"
+  );
+  assert.equal(
+    content.storyContent.meetingPanelsById["meeting-panel.test"]?.title,
+    "Meeting Panel"
+  );
+  assert.equal(
+    content.storyContent.meetingChoiceSetsById["meeting-choices.test"]?.id,
+    "meeting-choices.test"
+  );
+  assert.equal(
+    content.storyContent.meetingActionSetsById["meeting-actions.test"]?.id,
+    "meeting-actions.test"
+  );
 });
 
 test("active game content context treats playableShells as the canonical flow shell owner", () => {

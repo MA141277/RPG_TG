@@ -531,7 +531,11 @@ export function renderHouseDialogue(
     <footer class="${footerClassName}" aria-label="${ariaLabel}">
       <div
         class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
-        ${clickable ? `data-house-action="${viewModel.dialogue.advanceActionId}" role="button" tabindex="0" data-ui-click-sound="none"` : ""}
+        ${
+          clickable
+            ? `data-house-action="${escapeHtml(viewModel.dialogue.advanceActionId ?? "")}" role="button" tabindex="0" data-ui-click-sound="none"`
+            : ""
+        }
       >
         ${
           viewModel.dialogue.mode === "character" &&

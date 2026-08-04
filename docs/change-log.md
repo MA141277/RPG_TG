@@ -2,6 +2,110 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-04 Review Owner Freeze And Keep Legacy Trim Slice
+
+### Changed
+- 新增 `docs/superpowers/specs/2026-08-04-review-owner-inventory.md`，把 temple / keep 评议链的入口 owner、阶段 owner、结算 owner、authored content owner、legacy fallback owner 按文件与函数级别冻结下来，并明确哪些可以直接删、哪些必须先补 shared runtime、哪些只能暂时保留为 seam。
+- `src/domain/house-modules/keep-house-session.ts` 删除了 `KeepHouseReviewAssignmentTableOverlayState`、`KeepHouseReviewPolicyPanelOverlayState`，并把 `KeepHouseMeetingStage` 收窄到 keep 当前实际还在使用的 `intro / assigned / finished` 宿主壳状态。
+- `src/application/house-modules/keep-house/keep-house-house-module.ts` 删除了 `selectOverlayViewModel(...)` 里已经没有运行入口的本地 `review-assignment-table / review-policy-panel` 分支，确认 keep review 不再由第二套本地 overlay owner 兜底。
+
+### Impact
+- 这一步没有改 UI、没有改功能、没有改剧情顺序；变化只是在 keep 已经失效的本地评议兼容层继续变薄，并把后续 temple/keep 收口工作的 owner 边界正式写死。
+- 现在 keep 剩下的宿主评议 owner 主要只剩任务写回和 `assigned` 结果壳收尾；temple 的主要剩余工作也已经收敛到 `assignment -> reward -> personnel -> praise` 这条长链。
+
+## 2026-08-04 Temple Hosted Review Stage Projection Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 继续推进 temple review 的 hosted covered path：在已有 `assignment-table / reward / personnel` hosted handoff 基础上，`projectTempleHostedReviewStage(...)` 现在会把 praise 之后的动态文案、policy 弹层、advice 提示和 assign-duty 差事列表一起投影回 shared meeting presenter。
+- `src/application/meeting/meeting-presenter.ts` 补上了 `actionContainersByStageId` 派生态支持，允许宿主在不改现有 UI 壳的前提下，为特定 hosted stage 注入动态按钮集。
+- `src/application/meeting/meeting-host-stage-handoff.ts` 现在支持 `matchesAction(...)`，让 temple 这类“同一 stage 下需要按一组动作拦截再投影”的场景可以复用同一条 shared handoff seam，而不是回到宿主第二套主状态机。
+- `tests/temple-meeting-runtime-integration.test.cjs` 扩展为覆盖 temple hosted path 从 `assignment-table` 一直经过 `reward -> personnel -> praise -> situation -> policy -> advice -> assign-duty` 的阶段连续性。
+
+### Impact
+- temple review 当前的 covered path 已经可以在 shared meeting owner 下推进到 `assign-duty`，而不是在 advice 后重新落回宿主 action owner。
+- 这一步仍未改动当前 UI、当前功能或当前剧情顺序；宿主保留的主要 owner 已进一步收缩到结果写回、assigned 收尾，以及 no-meeting fallback。
+
+## 2026-08-04 Temple Assigned Settlement Seam Classification Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 现在在 `submitReviewWorkPlan(...)` 与 `meetingStage === "assigned"` 的 closeout 旁边明确标注：这一层是宿主 settlement seam，而不是后续默认继续下放到 shared meeting summary/complete 的目标。
+- `docs/superpowers/specs/2026-08-04-review-owner-inventory.md` 与 `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 同步把 temple 的 `submitReviewWorkPlan(...) + assigned 结果壳` 定性为正式宿主边界，避免后续再把这层当作待定 owner。
+
+### Impact
+- temple review 的 shared meeting covered path 继续止于 `assign-duty` 之后的选择回流；最终工作计划写回与 assigned 结果壳属于明确的宿主结算边界。
+- 这次没有改运行时行为，只是把 owner 决策正式固化下来，后续收口重点会留在 reward/personnel/praise 等真正仍在摇摆的 seam 上。
+
+## 2026-08-04 Temple Hosted Legacy Fallback Isolation Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 新增了对 `meeting.temple.review` hosted 会话的显式判定；当 shared meeting 已激活时，`handleAction(...)` 不再回落到 `handleLegacyTempleReviewFallback(...)`，避免宿主 legacy fallback 在 hosted covered path 期间重新接管评议推进。
+- `tests/temple-meeting-runtime-integration.test.cjs` 新增回归用例，锁定“shared meeting 激活时，legacy action 不会偷偷推动本地寺庙评议状态”这条 owner 边界。
+- `docs/superpowers/specs/2026-08-04-review-owner-inventory.md` 与 `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 同步更新，明确 `handleLegacyTempleReviewFallback(...)` 现在只服务于 no-meeting fallback，不再与 hosted covered path 并存为双 owner。
+
+### Impact
+- 这一步没有改当前 UI、功能和剧情顺序，但把寺庙评议 shared owner 的边界又收紧了一层：shared meeting 一旦接管，宿主 legacy fallback 就不会再偷偷改动本地评议状态。
+- 当前 temple 剩余的收口重点进一步收窄到 `settleTempleReviewAssignmentTable(...)`、`createTemplePersonnelOrPraiseTransition(...)`、`createTemplePraiseTransition(...)` 这些 reward/personnel/praise 相关 seam，而不是再反复处理 hosted path 与 legacy fallback 的双 owner 问题。
+
+## 2026-08-04 Temple Reward Personnel Praise Projection Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 里的 `settleTempleReviewAssignmentTable(...)`、`createTemplePersonnelOrPraiseProjection(...)`、`createTemplePraiseProjection(...)` 已统一改成返回“宿主结算 + shared meeting 投影结果”，不再返回本地评议 session 给调用方继续当作宿主状态机转场。
+- `projectTempleHostedReviewStage(...)` 现在直接消费投影结果；temple hosted handoff 与 legacy fallback 共用同一套投影应用函数，减少 reward / personnel / praise 这组三段的重复 owner 组织方式。
+- `docs/superpowers/specs/2026-08-04-review-owner-inventory.md` 与 `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 已同步把这组 seam 的当前归类更新为“宿主结算 seam + shared owner 投影”。
+
+### Impact
+- 这一步仍未改变当前 UI、功能和剧情顺序，但把寺庙评议中最重的一组宿主本地转场 helper 从“伪本地状态机”收紧成了“结算后投影给 shared meeting”。
+- temple 当前剩下的主要长期 seam，进一步只剩 no-meeting fallback 和 `projectTempleHostedReviewStage(...)` / `meeting-host-stage-handoff.ts` 这两层桥接，而不是 reward/personnel/praise 本身还在宿主本地推进。
+
+## 2026-08-04 Temple And Keep Review Fallback Convergence Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 与 `src/application/house-modules/keep-house/keep-house-house-module.ts` 现在都把“仅为评议兼容保留的本地动作分支”收口到各自单一 fallback helper，再由 `handleAction(...)` 在 hosted meeting 处理之后统一接管，避免评议 covered path 同时散落在宿主主分发函数和多个局部分支里。
+- 寺庙评议的 `advance-temple-dialogue`、`review advice`、`assignment-table`、`policy-panel`、`assigned/reward/personnel` 关闭动作，以及本地 `temple-review-assign-*` 回退委任，已经从 `handleAction(...)` 内联逻辑迁到 `handleLegacyTempleReviewFallback(...)`；帅府同类本地收尾分支此前也已收口到单入口 helper。
+- `tests/temple-meeting-runtime-integration.test.cjs`、`tests/keep-meeting-runtime-integration.test.cjs` 与 `tests/robustness.test.cjs` 继续作为本轮收口的回归锁，覆盖 hosted review 委任回流、评议阶段推进，以及寺庙/帅府评议相关稳健性路径。
+
+### Impact
+- 当前 temple / keep 的评议兼容代码已经从“宿主主流程里散落多段 owner”收紧成“hosted meeting 后的单入口 fallback”，后续可以按批继续删除，而不需要再回头梳理重复 owner。
+- 这次变化没有改动现有 UI 壳、操作入口、主线顺序或评议可见流程；变化只发生在 owner 收口和兼容代码组织方式上。
+
+## 2026-08-04 Keep Review Hosted Migration Slice
+
+### Changed
+- `src/application/house-modules/keep-house/keep-house-house-module.ts` 现在和寺庙一样，把帅府评议的入口、推进、返回都接到 shared meeting host bridge；`keep review` 的 covered path 不再由本地评议状态机正式驱动。
+- `src/application/meeting/meeting-presenter.ts` 补上了 `summary` stage 的共享投影，避免 hosted meeting 进入摘要阶段后回退到 house module 里的旧本地台词。
+- `src/application/meeting/meeting-host-settlement-handoff.ts` 新增集中式 hosted meeting 结算回流 helper，用同一条共享 handoff seam 承接“最终委任选择交回宿主现有结算 helper”这类过渡问题，而不是继续在 temple/keep 里各写一套会话清理逻辑。
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 与 `keep-house` 一起收紧了宿主壳规则：当 `sharedSessionState.hostedMeeting` 激活时，dialogue / action / overlay 以 shared meeting presenter 为唯一当前 owner，不再回退到本地评定文案。
+- `tests/keep-meeting-runtime-integration.test.cjs` 与 `tests/temple-meeting-runtime-integration.test.cjs` 新增并扩展了 hosted review 覆盖，锁定入口启动、壳层显示、阶段推进，以及“最终委任选择会回到现有宿主结算 helper”这条行为。
+
+### Impact
+- 帅府评议现在已经和寺庙评议一起走同一套 generic meeting runtime，同时保持当前 house UI 壳、交互入口和主线顺序不变。
+- 当前剩余工作不再是“让 keep 走 shared meeting”，而是继续清理寺庙和帅府里残留的本地评定兼容代码，并把目前仍借宿主 helper 完成的结算逻辑逐步下放到共享 meeting / 剧本包 owner。
+
+## 2026-08-04 Generic Meeting Host Bridge Slice
+
+### Changed
+- 新增 `src/application/meeting/meeting-host-bridge.ts`，集中承接 meeting binding 命中、host 发起 meeting、host session 恢复，以及 meeting 完成后返回 host target 的桥接逻辑。
+- `src/domain/house-module.ts` 与 `src/core/runtime/house-runtime.ts` 现在显式支持 `sharedSessionState`，让 concrete house 继续作为宿主，同时把 generic meeting 这类可复用、runtime-owned 的会话状态挂在统一 house session 边界上。
+- `src/ui/views/house/house-shared-view.ts` 对共享对话 action attribute 做了最小安全适配，使 authored meeting presenter 的 action id 继续走现有 house dialogue/action/overlay 壳。
+- 新增 `tests/meeting-host-bridge.test.cjs`，覆盖 `review` binding 启动 meeting、meeting session 跨 host runtime dispatch 边界恢复、以及 completed meeting 返回正确 host target 三条桥接契约。
+
+### Impact
+- 这一刀只落通用 host bridge 与 shared session wiring，不迁移 temple/keep 的具体评定流程，也不改现有可见 house UI shell。
+- 后续 temple review 的 generic migration 可以直接复用 `host session -> sharedSessionState.hostedMeeting -> return-to-host` 这条 seam，不需要把 meeting owner 再塞回具体 house module 或 `src/main.ts`。
+
+## 2026-08-04 Temple Pack-Event Front-Door Convergence Slice
+
+### Changed
+- `src/domain/house-module.ts`、`src/core/runtime/house-runtime.ts` 与 `src/main.ts` 现在会把 `dialogueDefinitionsById` 沿着共享 house runtime 输入链传给 `enter / dispatch / leave`，让 house 模块可以读取剧本包里的 authored 对话内容，而不必在入口层单独持有一份文案 owner。
+- `src/application/house/house-module-pack-event-runtime.ts` 新增按 `houseId + itemId` 解析与应用 pack event 的共享 helper，集中承接 building-container-item 这条前门，而不是让每个 house 模块各自写一套事件查找逻辑。
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 现在把寺庙的 `leave` 和 `donate` 也收口到与 `work` 相同的 pack 前门：`leave` 优先走 `itemId = "leave"` 的 pack 事件动作，`donate` 优先读取 `itemId = "donate"` 绑定事件上的 authored 对话段落，再投影进现有确认浮层。
+- 同一批里，寺庙 `review` 的开场文案也开始优先读取 `itemId = "review"` 绑定事件上的 authored 对话段落，再投影进现有评定会议壳；晚到评定和后续评定长链逻辑保持本地运行，不在这一刀里改 owner。
+- 新增并扩展 `tests/house-module-pack-event-runtime.test.cjs`，锁定“寺庙离开可通过 itemId 绑定事件关闭建筑”和“寺庙捐香火可投影 pack-owned 对话正文但保持现有浮层壳”的回归。
+
+### Impact
+- 寺庙 `work / donate / leave` 与 `review` 开场这四类入口现在都在向同一条 `building-container-item -> pack event / pack dialogue -> 当前 house 壳` 前门收口，owner 进一步往剧本包 / mod 框架收口，但现有 UI、功能和顺序不变。
+- 这次变化仍然没有启用 mirrored temple enter event，也没有改动寺庙长评定链；当前只是在不改外观和交互的前提下，减少 temple-house 自己额外持有的动态 owner。
+
 ## 2026-08-03 mod-first-dev Merge Stabilization
 
 ### Changed

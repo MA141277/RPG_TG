@@ -144,28 +144,28 @@ test("imported zhuyuanzhang script-editor template stays exportable for runtime 
   assert.deepEqual(diagnostics, []);
 });
 
-test("imported zhuyuanzhang public template preserves legacy flow-playables during script-editor import", async () => {
+test("imported zhuyuanzhang public template imports canonical playable-shells during script-editor import", async () => {
   const templateRoot = path.join(
     process.cwd(),
     "public",
     "script-editor-templates",
     "zhuyuanzhang"
   );
-  const legacyFlowPlayables = JSON.parse(
-    fs.readFileSync(path.join(templateRoot, "flow-playables.json"), "utf8")
+  const canonicalPlayableShells = JSON.parse(
+    fs.readFileSync(path.join(templateRoot, "playable-shells.json"), "utf8")
   );
 
-  assert.equal(Array.isArray(legacyFlowPlayables), true);
-  assert.ok(legacyFlowPlayables.length > 0);
+  assert.equal(Array.isArray(canonicalPlayableShells), true);
+  assert.ok(canonicalPlayableShells.length > 0);
 
   const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
   const project = await loadScriptEditorProjectFromScenarioPackFiles(files);
 
-  assert.equal(project.flows.length, legacyFlowPlayables.length);
-  assert.equal(project.flows[0]?.id, legacyFlowPlayables[0]?.id);
+  assert.equal(project.flows.length, canonicalPlayableShells.length);
+  assert.equal(project.flows[0]?.id, canonicalPlayableShells[0]?.id);
 });
 
-test("script-editor URL import preserves legacy flow-playables from public template manifest", async () => {
+test("script-editor URL import preserves canonical playable-shells from public template manifest", async () => {
   const templateRoot = path.join(
     process.cwd(),
     "public",
@@ -175,8 +175,8 @@ test("script-editor URL import preserves legacy flow-playables from public templ
   const manifest = JSON.parse(
     fs.readFileSync(path.join(templateRoot, "pack.json"), "utf8")
   );
-  const legacyFlowPlayables = JSON.parse(
-    fs.readFileSync(path.join(templateRoot, "flow-playables.json"), "utf8")
+  const canonicalPlayableShells = JSON.parse(
+    fs.readFileSync(path.join(templateRoot, "playable-shells.json"), "utf8")
   );
   const originalFetch = global.fetch;
 
@@ -204,88 +204,8 @@ test("script-editor URL import preserves legacy flow-playables from public templ
       "https://example.test/script-editor-templates/zhuyuanzhang/pack.json"
     );
 
-    assert.equal(project.flows.length, legacyFlowPlayables.length);
-    assert.equal(project.flows[0]?.id, legacyFlowPlayables[0]?.id);
-  } finally {
-    global.fetch = originalFetch;
-  }
-});
-
-test("script-editor URL import prefers playable-shells over legacy flow-playables when both are published", async () => {
-  const manifest = {
-    schemaVersion: 1,
-    kind: "scenario-pack",
-    id: "scenario-pack.test.public-playable-precedence",
-    title: "Public Playable Precedence",
-    files: {
-      scenarioProfile: "scenario-profile.json",
-      characters: "characters.json",
-      events: "events.json",
-      dialogues: "dialogues.json",
-      playableShells: "playable-shells.json",
-      flowPlayables: "flow-playables.json",
-    },
-  };
-  const canonicalPlayableShells = [
-    {
-      id: "flow.test.public.canonical",
-      title: "Canonical Public Shell",
-      initialNodeId: "node.start",
-      nodes: [],
-    },
-  ];
-  const legacyFlowPlayables = [
-    {
-      id: "flow.test.public.legacy",
-      title: "Legacy Public Shell",
-      initialNodeId: "node.start",
-      nodes: [],
-    },
-  ];
-  const originalFetch = global.fetch;
-
-  global.fetch = async (input) => {
-    const url = typeof input === "string" ? input : input.url;
-    const fileName = url.split("/").pop();
-
-    switch (fileName) {
-      case "pack.json":
-        return createJsonResponse(manifest);
-      case "scenario-profile.json":
-        return createJsonResponse({
-          id: "profile.test.public-playable-precedence",
-          playerCharacterId: "char.player",
-          chapterId: "chapter.test",
-          initialLocation: {
-            mapId: "map.test",
-            cityId: "city.test",
-            houseId: null,
-            view: "city",
-          },
-        });
-      case "characters.json":
-        return createJsonResponse([{ id: "char.player", name: "Player" }]);
-      case "events.json":
-        return createJsonResponse([]);
-      case "dialogues.json":
-        return createJsonResponse([]);
-      case "playable-shells.json":
-        return createJsonResponse(canonicalPlayableShells);
-      case "flow-playables.json":
-        return createJsonResponse(legacyFlowPlayables);
-      default:
-        return { ok: false, status: 404 };
-    }
-  };
-
-  try {
-    const project = await loadScriptEditorProjectFromScenarioPackUrl(
-      "https://example.test/script-editor-templates/precedence/pack.json"
-    );
-
     assert.equal(project.flows.length, canonicalPlayableShells.length);
     assert.equal(project.flows[0]?.id, canonicalPlayableShells[0]?.id);
-    assert.equal(project.flows[0]?.id, "flow.test.public.canonical");
   } finally {
     global.fetch = originalFetch;
   }

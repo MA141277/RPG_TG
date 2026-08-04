@@ -15,6 +15,13 @@ const {
   enterHouseThroughRuntime,
 } = require("../.test-dist/core/runtime/house-runtime.js");
 const {
+  createLaunchPlayableRequest,
+  resolvePlayableLaunchRequest,
+} = require("../.test-dist/core/runtime/playable-runtime.js");
+const {
+  resetDefaultPlayableRuntimeRegistries,
+} = require("../.test-dist/core/runtime/playable-runtime-registries.js");
+const {
   prototypeCharacters,
   prototypeCities,
   prototypeHouses,
@@ -353,6 +360,134 @@ test("main runtime orchestrator trigger-story-events projects settlement world u
       outputMultiplier: 3,
     },
   });
+});
+
+test("main runtime orchestrator apply-startup-session configures default playable registries from the activated mod", () => {
+  resetDefaultPlayableRuntimeRegistries();
+
+  try {
+    let appState = createAppState();
+    const orchestrator = createMainRuntimeOrchestrator({
+      getAppState: () => appState,
+      setAppState: (nextAppState) => {
+        appState = nextAppState;
+      },
+      setPlayerCharacterId: () => {},
+      getStoryContent: () => ({
+        eventDefinitionsById: {},
+        sceneDefinitionsById: {},
+      }),
+      resetMainGameRuntime: () => {},
+      setActiveContentContext: () => {},
+      recreateHouseRuntime: () => {},
+      setGameVisibility: () => {},
+      hideMainUiFlow: () => {},
+    });
+
+    const beforeLaunch = resolvePlayableLaunchRequest({
+      request: createLaunchPlayableRequest("playable.temple.copy-scripture"),
+    });
+    assert.equal(beforeLaunch.ok, false);
+
+    orchestrator.execute({
+      type: "apply-startup-session",
+      session: {
+        activationResult: {
+          ok: true,
+          state: {
+            availableModsById: {},
+            activeModId: "mod.test.startup-playable-runtime",
+            lastRequestId: "startup:test",
+          },
+          activatedMod: {
+            modId: "mod.test.startup-playable-runtime",
+            manifest: {
+              id: "mod.test.startup-playable-runtime",
+              schemaVersion: "1",
+              version: "1.0.0",
+              title: "Startup Playable Runtime Test",
+              entryContentPackIds: ["pack.test.startup-playable-runtime"],
+            },
+            normalizedContentSources: [
+              {
+                playables: [
+                  {
+                    id: "playable.temple.copy-scripture",
+                    commandPrefix: "playable.temple.copy-scripture.",
+                  },
+                ],
+                playableIntegrations: [
+                  {
+                    integrationId:
+                      "playable.temple.copy-scripture.instance.template.temple-copy-scripture",
+                    playableId: "playable.temple.copy-scripture",
+                    ownerDefaults: {
+                      ownerKind: "house",
+                      ownerId: targetHouse.id,
+                      returnPolicy: "resume-owner",
+                    },
+                    trigger: {
+                      triggerId: "trigger.temple.copy-scripture",
+                      ownerKind: "house",
+                      trigger: "manual-launch",
+                    },
+                    outcomeConfig: {},
+                  },
+                ],
+              },
+            ],
+            registeredDefinitionIds: ["pack.test.startup-playable-runtime"],
+            gameplayContributions: {
+              contentPackIds: ["pack.test.startup-playable-runtime"],
+              navigation: [],
+              events: [],
+              scenes: [],
+              dialogues: [],
+              tasks: [],
+              houses: [],
+              houseModules: [],
+              playables: ["playable.temple.copy-scripture"],
+              playableIntegrations: [
+                "playable.temple.copy-scripture.instance.template.temple-copy-scripture",
+              ],
+            },
+            startupProfile: {},
+          },
+        },
+        contentContext: {
+          packId: "pack.test.startup-playable-runtime",
+          storyContent: {
+            eventDefinitionsById: {},
+            sceneDefinitionsById: {},
+            dialogueDefinitionsById: {},
+            eventBindingsById: {},
+            settlementDefinitionsById: {},
+            progressTrackDefinitionsById: {},
+            progressTrackBindingsById: {},
+            activityDefinitionsById: {},
+            playableShellsById: {},
+            cityDefinitionsById: {},
+            houseDefinitionsById: {},
+            textEntriesById: {},
+          },
+        },
+        playerCharacterId,
+        createAppState,
+      },
+    });
+
+    const launch = resolvePlayableLaunchRequest({
+      request: createLaunchPlayableRequest("playable.temple.copy-scripture"),
+    });
+
+    assert.equal(launch.ok, true);
+    assert.equal(
+      launch.launch.integrationId,
+      "playable.temple.copy-scripture.instance.template.temple-copy-scripture"
+    );
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
 });
 
 test("house runtime enter applies house-enter settlement world updates before render", () => {

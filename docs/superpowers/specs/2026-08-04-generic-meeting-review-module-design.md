@@ -68,6 +68,13 @@ The production design must follow these rules:
 - shared runtime code should own stage execution, validation, and state write-back mechanisms
 - concrete house/building modules should remain hosts, not full meeting-flow implementations
 
+Additional hard requirements for this production version:
+
+- the current visible UI shell, action layout, and stage order must remain unchanged during migration
+- the current temple review chain must be treated as authored meeting content, not as the long-term owner of the mechanism
+- a future building must be able to mount the same mechanism by adding binding plus authored content, without cloning temple or keep logic
+- the framework must support both builtin scenario-pack content and editor-template content without introducing a second meeting runtime
+
 ## 5. Recommended Architecture
 
 Introduce a dedicated generic meeting subsystem with three layers:
@@ -88,6 +95,7 @@ Non-responsibilities:
 - it does not own the meeting stage machine
 - it does not decide stage transitions
 - it does not hardcode meeting copy or reward logic
+- it does not keep a second host-local fallback review enum or parallel review session graph
 
 ### 5.2 Generic Meeting Runtime Layer
 
@@ -295,6 +303,15 @@ Recommended authored files:
 
 The final file split may be merged if the repository prefers fewer files, but authored meeting content must remain structurally separated from host runtime code.
 
+The practical interpretation is:
+
+- building modules own `whether this action can start a meeting`
+- meeting bindings own `which meeting starts from that action`
+- meeting definitions own `what stages run and in which order`
+- shared runtime owns `how those stages execute`
+
+This keeps the repository on a single mechanism path instead of growing temple-owned, keep-owned, and future-building-owned review variants.
+
 ### 8.1 `meetings.json`
 
 Owns:
@@ -400,6 +417,25 @@ Non-required host behavior:
 
 For temple and keep, the current visible shell can stay intact while the meeting runtime becomes the owner of the meeting state machine.
 
+### 10.1 Required Host Capability Surface
+
+From day one, any building that wants a meeting/review flow should only need to provide:
+
+- a stable host id and host family
+- a launchable action id such as `review`, `council`, or `hearing`
+- a return target
+- participant lookup and optional speaker lookup
+- host-local eligibility checks, if any
+
+It should not need to provide:
+
+- a building-specific meeting enum
+- a building-specific review stage reducer
+- a building-specific reward/policy/assignment dispatch tree
+- a building-specific overlay family
+
+That is the production bar for "any building can mount this module."
+
 ## 11. UI And Presenter Strategy
 
 The first production version must preserve the current visual shell and avoid a large UI rewrite.
@@ -417,6 +453,17 @@ The framework should reuse and extend current presenter families where possible:
 - `HouseOverlayViewModel`
 
 If a new dedicated `MeetingPresenterModel` is introduced, it must still be safely adaptable into the current house shell without changing visible behavior for temple and keep during migration.
+
+### 11.1 Compatibility Guarantee
+
+The migration must preserve these user-facing invariants:
+
+- the player still enters the same house shell
+- the same assignment table popup and policy popup families are reused
+- the current action labels and click rhythm remain recognizable
+- temple and keep keep their existing visible opening order until authored meeting content explicitly changes in a later content-only update
+
+This is an owner migration, not a UI redesign.
 
 ## 12. Failure Handling
 
@@ -480,6 +527,21 @@ Once temple and keep both work, additional buildings should only need:
 - host metadata
 
 not a copied meeting state machine.
+
+### 13.5 Long-Term Canonical Pattern
+
+The long-term repository pattern should be:
+
+- one shared meeting/review runtime
+- many host buildings or locations
+- authored meeting content in scenario packs
+- editor/template sources that stay structurally compatible with the same meeting families
+
+The repository should not evolve toward:
+
+- one runtime for temple review and another runtime for editor/template preview
+- one meeting mechanism per building
+- a new compat layer every time a building gains a council/review feature
 
 ## 14. Testing Requirements
 

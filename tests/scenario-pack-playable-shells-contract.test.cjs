@@ -98,20 +98,15 @@ test("scenario pack parser rejects retired flowDefinitions family", () => {
   );
 });
 
-test("scenario pack parser accepts legacy public flowPlayables family", () => {
-  const pack = parseScenarioPack({
-    ...createBaseScenarioPack(),
-    flowPlayables: [
-      {
-        id: "flow.test.legacy-public",
-        title: "Legacy Public Flow Shell",
-        initialNodeId: "node.start",
-        nodes: [],
-      },
-    ],
-  });
-
-  assert.equal(pack.flowPlayables?.[0]?.id, "flow.test.legacy-public");
+test("scenario pack parser rejects retired flowPlayables family", () => {
+  assert.throws(
+    () =>
+      parseScenarioPack({
+        ...createBaseScenarioPack(),
+        flowPlayables: [],
+      }),
+    /flowPlayables is retired; use playableShells/i
+  );
 });
 
 test("scenario pack parser accepts runtime menu and location support families", () => {
@@ -230,45 +225,22 @@ test("content pack loader hydrates playable shell families from manifest files",
   }
 });
 
-test("content pack loader hydrates legacy manifest flowPlayables publication entry", async () => {
-  const originalFetch = global.fetch;
-
-  global.fetch = async (input) => {
-    const url = typeof input === "string" ? input : input.url;
-    if (url.endsWith("/flow-playables.json")) {
-      return {
-        ok: true,
-        json: async () => [
-          {
-            id: "flow.test.legacy-public",
-            title: "Legacy Public Flow Shell",
-            initialNodeId: "node.start",
-            nodes: [],
+test("content pack loader rejects retired manifest flowPlayables entry", async () => {
+  await assert.rejects(
+    () =>
+      loadContentPackFromManifestText(
+        JSON.stringify({
+          schemaVersion: 1,
+          id: "pack.test.legacy-flow-playables",
+          title: "Legacy Flow Playables",
+          files: {
+            flowPlayables: "flow-playables.json",
           },
-        ],
-      };
-    }
-
-    return { ok: true, json: async () => [] };
-  };
-
-  try {
-    const pack = await loadContentPackFromManifestText(
-      JSON.stringify({
-        schemaVersion: 1,
-        id: "pack.test.legacy-flow-playables",
-        title: "Legacy Flow Playables",
-        files: {
-          flowPlayables: "flow-playables.json",
-        },
-      }),
-      "file:///virtual/pack.json"
-    );
-
-    assert.equal(pack.flowPlayables?.[0]?.id, "flow.test.legacy-public");
-  } finally {
-    global.fetch = originalFetch;
-  }
+        }),
+        "file:///virtual/pack.json"
+      ),
+    /files\.flowPlayables is retired; use files\.playableShells instead/i
+  );
 });
 
 test("content pack loader hydrates runtime menu and location support families from manifest files", async () => {
@@ -378,7 +350,7 @@ test("content pack loader rejects retired manifest flowDefinitions entry", async
   );
 });
 
-test("scenario pack loader hydrates legacy manifest flowPlayables publication entry", async () => {
+test("scenario pack loader rejects retired manifest flowPlayables publication entry", async () => {
   const originalFetch = global.fetch;
 
   global.fetch = async (input) => {
@@ -426,29 +398,18 @@ test("scenario pack loader hydrates legacy manifest flowPlayables publication en
     if (url.endsWith("/events.json") || url.endsWith("/dialogues.json")) {
       return { ok: true, json: async () => [] };
     }
-    if (url.endsWith("/flow-playables.json")) {
-      return {
-        ok: true,
-        json: async () => [
-          {
-            id: "flow.test.legacy-public",
-            title: "Legacy Public Flow Shell",
-            initialNodeId: "node.start",
-            nodes: [],
-          },
-        ],
-      };
-    }
 
     return { ok: false, status: 404 };
   };
 
   try {
-    const pack = await loadScenarioPackFromUrl(
-      "https://example.test/script-editor-templates/zhuyuanzhang/pack.json"
+    await assert.rejects(
+      () =>
+        loadScenarioPackFromUrl(
+          "https://example.test/script-editor-templates/zhuyuanzhang/pack.json"
+        ),
+      /files\.flowPlayables is retired; use files\.playableShells instead/i
     );
-
-    assert.equal(pack.flowPlayables?.[0]?.id, "flow.test.legacy-public");
   } finally {
     global.fetch = originalFetch;
   }

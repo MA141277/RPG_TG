@@ -20,6 +20,11 @@ import type { HouseAccessRefusalRule, HouseDefinition } from "../../domain/house
 import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { MapDefinition, MapNode } from "../../domain/map";
 import type { MenuInstanceDefinition, MenuResourceDefinition } from "../../domain/menu";
+import type { MeetingActionSetDefinition } from "../../domain/meeting/meeting-action-set";
+import type { MeetingBindingDefinition } from "../../domain/meeting/meeting-binding";
+import type { MeetingChoiceSetDefinition } from "../../domain/meeting/meeting-choice-set";
+import type { MeetingDefinition } from "../../domain/meeting/meeting-definition";
+import type { MeetingPanelDefinition } from "../../domain/meeting/meeting-panel";
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import type {
   ProgressTrackBinding,
@@ -57,6 +62,16 @@ export type ActiveGameContent = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   dialogueDefinitions: RuntimeDialogueDefinition[];
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
+  meetings: MeetingDefinition[];
+  meetingsById: Record<string, MeetingDefinition>;
+  meetingBindings: MeetingBindingDefinition[];
+  meetingBindingsById: Record<string, MeetingBindingDefinition>;
+  meetingPanels: MeetingPanelDefinition[];
+  meetingPanelsById: Record<string, MeetingPanelDefinition>;
+  meetingChoiceSets: MeetingChoiceSetDefinition[];
+  meetingChoiceSetsById: Record<string, MeetingChoiceSetDefinition>;
+  meetingActionSets: MeetingActionSetDefinition[];
+  meetingActionSetsById: Record<string, MeetingActionSetDefinition>;
   playableShells: FlowPlayableDefinition[];
   playableShellsById: Record<string, FlowPlayableDefinition>;
   eventBindings: EventBinding[];
@@ -128,6 +143,11 @@ export type ActiveGameContentContext = {
     eventDefinitionsById: Record<string, EventDefinition>;
     sceneDefinitionsById: Record<string, SceneDefinition>;
     dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
+    meetingsById: Record<string, MeetingDefinition>;
+    meetingBindingsById: Record<string, MeetingBindingDefinition>;
+    meetingPanelsById: Record<string, MeetingPanelDefinition>;
+    meetingChoiceSetsById: Record<string, MeetingChoiceSetDefinition>;
+    meetingActionSetsById: Record<string, MeetingActionSetDefinition>;
     eventBindingsById: Record<string, EventBinding>;
     settlementDefinitionsById: Record<
       string,
@@ -165,6 +185,11 @@ export function createActiveGameContent(
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
+  const meetings = resolvedPack.meetings ?? [];
+  const meetingBindings = resolvedPack.meetingBindings ?? [];
+  const meetingPanels = resolvedPack.meetingPanels ?? [];
+  const meetingChoiceSets = resolvedPack.meetingChoiceSets ?? [];
+  const meetingActionSets = resolvedPack.meetingActionSets ?? [];
   const playableShells =
     resolvedPack.playableShells ??
     resolvedPack.flowPlayables ??
@@ -244,6 +269,24 @@ export function createActiveGameContent(
         dialogueDefinition.id,
         dialogueDefinition,
       ])
+    ),
+    meetings,
+    meetingsById: Object.fromEntries(meetings.map((meeting) => [meeting.id, meeting])),
+    meetingBindings,
+    meetingBindingsById: Object.fromEntries(
+      meetingBindings.map((binding) => [binding.id, binding])
+    ),
+    meetingPanels,
+    meetingPanelsById: Object.fromEntries(
+      meetingPanels.map((panel) => [panel.id, panel])
+    ),
+    meetingChoiceSets,
+    meetingChoiceSetsById: Object.fromEntries(
+      meetingChoiceSets.map((choiceSet) => [choiceSet.id, choiceSet])
+    ),
+    meetingActionSets,
+    meetingActionSetsById: Object.fromEntries(
+      meetingActionSets.map((actionSet) => [actionSet.id, actionSet])
     ),
     playableShells,
     playableShellsById,
@@ -342,6 +385,11 @@ export function createActiveGameContentContext(
       eventDefinitionsById: gameContent.eventDefinitionsById,
       sceneDefinitionsById: gameContent.sceneDefinitionsById,
       dialogueDefinitionsById: gameContent.dialogueDefinitionsById,
+      meetingsById: gameContent.meetingsById,
+      meetingBindingsById: gameContent.meetingBindingsById,
+      meetingPanelsById: gameContent.meetingPanelsById,
+      meetingChoiceSetsById: gameContent.meetingChoiceSetsById,
+      meetingActionSetsById: gameContent.meetingActionSetsById,
       playableShellsById: gameContent.playableShellsById,
       eventBindingsById: gameContent.eventBindingsById,
       settlementDefinitionsById: gameContent.settlementDefinitionsById,
@@ -391,6 +439,23 @@ export function mergeContentPacks(
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
     scenes: mergeById(basePack.scenes ?? [], overridePack.scenes ?? []),
     dialogues: mergeById(basePack.dialogues ?? [], overridePack.dialogues ?? []),
+    meetings: mergeById(basePack.meetings ?? [], overridePack.meetings ?? []),
+    meetingBindings: mergeById(
+      basePack.meetingBindings ?? [],
+      overridePack.meetingBindings ?? []
+    ),
+    meetingPanels: mergeById(
+      basePack.meetingPanels ?? [],
+      overridePack.meetingPanels ?? []
+    ),
+    meetingChoiceSets: mergeById(
+      basePack.meetingChoiceSets ?? [],
+      overridePack.meetingChoiceSets ?? []
+    ),
+    meetingActionSets: mergeById(
+      basePack.meetingActionSets ?? [],
+      overridePack.meetingActionSets ?? []
+    ),
     eventBindings: mergeById(
       basePack.eventBindings ?? [],
       overridePack.eventBindings ?? []
@@ -466,6 +531,11 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     events: pack.events ?? [],
     scenes: pack.scenes ?? [],
     dialogues: pack.dialogues ?? [],
+    meetings: pack.meetings ?? [],
+    meetingBindings: pack.meetingBindings ?? [],
+    meetingPanels: pack.meetingPanels ?? [],
+    meetingChoiceSets: pack.meetingChoiceSets ?? [],
+    meetingActionSets: pack.meetingActionSets ?? [],
     eventBindings: pack.eventBindings ?? [],
     menuResources: pack.menuResources ?? [],
     menuInstances: pack.menuInstances ?? [],

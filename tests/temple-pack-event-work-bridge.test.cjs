@@ -5,6 +5,10 @@ const {
   createInitialState,
 } = require("../.test-dist/application/state/create-initial-state.js");
 const {
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+  resetDefaultPlayableRuntimeRegistries,
+} = require("../.test-dist/core/runtime/playable-runtime-registries.js");
+const {
   templeHouseHouseModule,
 } = require("../.test-dist/application/house-modules/temple-house/temple-house-house-module.js");
 const {
@@ -123,6 +127,20 @@ function createCharacter(id, name, cityId, stamina, gold, extra = {}) {
 
 function createTempleActivityDefinitionsById() {
   return {
+    "activity.test.temple.copy-scripture": {
+      id: "activity.test.temple.copy-scripture",
+      label: "copy scripture test",
+      handlerId: "generic.qte",
+      houseModuleId: "temple-house",
+      taskId: "copy-scripture",
+      missionId: "mission.temple.copy-scripture",
+      titleTextId: "test.temple.task.copy.title",
+      briefingTextId: "test.temple.task.copy.briefing",
+      orderLineTextIds: [
+        "test.temple.task.copy.order.001",
+        "test.temple.task.copy.order.002",
+      ],
+    },
     "activity.test.temple.sweep-courtyard": {
       id: "activity.test.temple.sweep-courtyard",
       label: "sweep courtyard test",
@@ -156,6 +174,10 @@ function createTempleActivityDefinitionsById() {
 
 function createTempleTextEntries() {
   return {
+    "test.temple.task.copy.title": "抄经",
+    "test.temple.task.copy.briefing": "在偏殿抄录经卷。",
+    "test.temple.task.copy.order.001": "先把残页摊平。",
+    "test.temple.task.copy.order.002": "再逐句誊写清楚。",
     "test.temple.task.sweep.title": "扫院子",
     "test.temple.task.sweep.briefing": "把寺院前庭打扫干净。",
     "test.temple.task.sweep.order.001": "先把落叶扫净。",
@@ -169,6 +191,30 @@ function createTempleTextEntries() {
 
 function createTempleWorkEventDefinitionsById() {
   return {
+    "event.building.house.kulan.temple.copy_scripture": {
+      id: "event.building.house.kulan.temple.copy_scripture",
+      chapterId: "chapter.test",
+      name: "皇觉寺 - 抄经",
+      occurrence: "repeatable",
+      dialogueId: "",
+      actions: [
+        {
+          type: "launchPlayable",
+          playableId: "temple-copy-scripture",
+          integrationId:
+            "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+          ownerContext: {
+            ownerKind: "house",
+            ownerId: templeHouse.id,
+            returnPolicy: "resume-owner",
+          },
+          payload: {
+            title: "抄写经卷",
+            briefing: "在偏殿抄录残缺经卷。",
+          },
+        },
+      ],
+    },
     "event.building.house.kulan.temple.sweep_courtyard": {
       id: "event.building.house.kulan.temple.sweep_courtyard",
       chapterId: "chapter.test",
@@ -221,6 +267,25 @@ function createTempleWorkEventDefinitionsById() {
 function createTempleWorkEventBindings() {
   return [
     {
+      id: "binding.building.house.kulan.temple.copy_scripture.container-item",
+      eventId: "event.building.house.kulan.temple.copy_scripture",
+      owner: {
+        family: "building",
+        id: templeHouse.id,
+      },
+      trigger: {
+        timing: "after",
+        action: "building-container-item-action",
+        extra: {
+          arrangementId: "arrangement.city.kulan.house.kulan.temple",
+          containerId: "house.kulan.temple.actions",
+          itemId: "copy-scripture",
+        },
+      },
+      priority: 100,
+      enabled: true,
+    },
+    {
       id: "binding.building.house.kulan.temple.sweep_courtyard.container-item",
       eventId: "event.building.house.kulan.temple.sweep_courtyard",
       owner: {
@@ -259,6 +324,34 @@ function createTempleWorkEventBindings() {
       enabled: true,
     },
   ];
+}
+
+function createTempleCopyScripturePackQteEventDefinitionsById() {
+  return {
+    "event.building.house.kulan.temple.copy_scripture": {
+      id: "event.building.house.kulan.temple.copy_scripture",
+      chapterId: "chapter.test",
+      name: "皇觉寺 - 抄经",
+      occurrence: "repeatable",
+      dialogueId: "",
+      actions: [
+        {
+          type: "launchPlayable",
+          playableId: "activity-qte",
+          integrationId:
+            "playable.activity-qte.instance.template.temple-copy-scripture",
+          ownerContext: {
+            ownerKind: "house",
+            ownerId: templeHouse.id,
+            returnPolicy: "resume-owner",
+          },
+          payload: {
+            activityId: "activity.test.temple.copy-scripture",
+          },
+        },
+      ],
+    },
+  };
 }
 
 function createTempleDispatchInput(taskId = "sweep-courtyard", overrides = {}) {
@@ -311,6 +404,80 @@ function createTempleDispatchInput(taskId = "sweep-courtyard", overrides = {}) {
   };
 }
 
+function configureTempleCopyScripturePlayableRegistry() {
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod({
+    modId: "mod.test.temple-copy-scripture",
+    manifest: {
+      id: "mod.test.temple-copy-scripture",
+      schemaVersion: "1",
+      version: "1.0.0",
+      title: "Temple Copy Scripture Runtime Test",
+      entryContentPackIds: ["pack.test.temple-copy-scripture"],
+    },
+    normalizedContentSources: [
+      {
+        playables: [
+          {
+            id: "temple-copy-scripture",
+            commandPrefix: "playable.temple-copy-scripture.",
+          },
+        ],
+        playableIntegrations: [
+          {
+            integrationId:
+              "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+            playableId: "temple-copy-scripture",
+            ownerDefaults: {
+              ownerKind: "external",
+              ownerId: null,
+              returnPolicy: "close-only",
+            },
+            trigger: {
+              triggerId:
+                "trigger.playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+              ownerKind: "external",
+              trigger: "event.building.house.kulan.temple.copy_scripture",
+              launchPayload: {
+                title: "抄写经卷",
+                briefing: "在偏殿抄录残缺经卷。",
+                prompts: [
+                  {
+                    id: "prompt-1",
+                    text: "静坐抄经，先定你的心，再定你的字。",
+                    choices: [
+                      { id: "trace", label: "依字描摹" },
+                      { id: "balance", label: "稳腕正锋" },
+                    ],
+                    expectedChoiceId: "trace",
+                  },
+                ],
+                requiredScore: 1,
+              },
+            },
+            outcomeConfig: {},
+          },
+        ],
+      },
+    ],
+    registeredDefinitionIds: ["pack.test.temple-copy-scripture"],
+    gameplayContributions: {
+      contentPackIds: ["pack.test.temple-copy-scripture"],
+      navigation: [],
+      events: [],
+      scenes: [],
+      dialogues: [],
+      tasks: [],
+      houses: [],
+      houseModules: [],
+      playables: ["temple-copy-scripture"],
+      playableIntegrations: [
+        "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+      ],
+    },
+    startupProfile: {},
+  });
+}
+
 test("temple sweep courtyard can launch from mirrored pack event data without leaving the house shell", () => {
   const { activityDefinitionsById, textEntriesById, assignResult } =
     createTempleDispatchInput("sweep-courtyard", {
@@ -340,6 +507,107 @@ test("temple sweep courtyard can launch from mirrored pack event data without le
   assert.equal(
     result.gameState.runtime.playableSession?.integrationId,
     "playable.activity-qte.instance.template.temple-sweep-courtyard"
+  );
+});
+
+test("temple copy scripture can launch from mirrored pack event data once the pack event resolves to a supported playable", () => {
+  const { activityDefinitionsById, textEntriesById, assignResult } =
+    createTempleDispatchInput("copy-scripture", {
+      eventDefinitionsById: createTempleCopyScripturePackQteEventDefinitionsById(),
+      eventBindings: createTempleWorkEventBindings(),
+    });
+
+  const result = templeHouseHouseModule.dispatch({
+    gameState: assignResult.gameState,
+    characterDefinitions: assignResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-start-temple-task:copy-scripture",
+    },
+    activityDefinitionsById,
+    textEntriesById,
+    eventDefinitionsById: createTempleCopyScripturePackQteEventDefinitionsById(),
+    eventBindings: createTempleWorkEventBindings(),
+  });
+
+  assert.equal(result.sessionState?.overlay, null);
+  assert.equal(result.sessionState?.selectedTaskId, "copy-scripture");
+  assert.equal(result.gameState.ui.currentView, "house");
+  assert.equal(
+    result.gameState.runtime.playableSession?.integrationId,
+    "playable.activity-qte.instance.template.temple-copy-scripture"
+  );
+});
+
+test("temple copy scripture can stay pack-owned on the current authored event once the activated mod has registered the playable runtime", () => {
+  resetDefaultPlayableRuntimeRegistries();
+  configureTempleCopyScripturePlayableRegistry();
+
+  try {
+    const { activityDefinitionsById, textEntriesById, assignResult } =
+      createTempleDispatchInput("copy-scripture", {
+        eventDefinitionsById: createTempleWorkEventDefinitionsById(),
+        eventBindings: createTempleWorkEventBindings(),
+      });
+
+    const result = templeHouseHouseModule.dispatch({
+      gameState: assignResult.gameState,
+      characterDefinitions: assignResult.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: assignResult.sessionState,
+      request: {
+        type: "action",
+        actionId: "confirm-start-temple-task:copy-scripture",
+      },
+      activityDefinitionsById,
+      textEntriesById,
+      eventDefinitionsById: createTempleWorkEventDefinitionsById(),
+      eventBindings: createTempleWorkEventBindings(),
+    });
+
+    assert.equal(
+      result.gameState.runtime.playableSession?.integrationId,
+      "playable.temple-copy-scripture.instance.template.temple-copy-scripture"
+    );
+    assert.equal(result.gameState.runtime.playableSession?.playableId, "activity-qte");
+    assert.equal(result.gameState.runtime.activitySession?.type, "fortune-board");
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
+});
+
+test("temple copy scripture still falls back to the builtin temple playable launch when the mirrored pack event points at the current unsupported authored playable", () => {
+  resetDefaultPlayableRuntimeRegistries();
+
+  const { activityDefinitionsById, textEntriesById, assignResult } =
+    createTempleDispatchInput("copy-scripture", {
+      eventDefinitionsById: createTempleWorkEventDefinitionsById(),
+      eventBindings: createTempleWorkEventBindings(),
+    });
+
+  const result = templeHouseHouseModule.dispatch({
+    gameState: assignResult.gameState,
+    characterDefinitions: assignResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignResult.sessionState,
+    request: {
+      type: "action",
+      actionId: "confirm-start-temple-task:copy-scripture",
+    },
+    activityDefinitionsById,
+    textEntriesById,
+    eventDefinitionsById: createTempleWorkEventDefinitionsById(),
+    eventBindings: createTempleWorkEventBindings(),
+  });
+
+  assert.equal(
+    result.gameState.runtime.playableSession?.integrationId,
+    "playable.activity-qte.house.temple"
   );
 });
 

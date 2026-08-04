@@ -1,4 +1,9 @@
 import type { ActivityDefinition, ActivityHandlerId } from "../../../domain/activity";
+import type {
+  ActivityFortuneBoardSession,
+  ActivityPachinkoBoardSession,
+  ActivityQteSession,
+} from "../../../domain/activity-session";
 import type { CharacterDefinition } from "../../../domain/character";
 import type {
   PlayableIntegrationId,
@@ -27,12 +32,36 @@ export function startActivityQtePlayable(input: {
   handlerId: ActivityHandlerId;
   integrationId?: PlayableIntegrationId;
   ownerContext?: PlayableOwnerContext;
+  variant?: "fortune-board";
 }): RuntimeState {
-  const session = createActivityQteSession(
-    input.activityDefinition,
-    input.handlerId
-  );
+  const session =
+    input.variant === "fortune-board"
+      ? createActivityQteSession(input.activityDefinition, input.handlerId, {
+          variant: "fortune-board",
+        })
+      : createActivityQteSession(input.activityDefinition, input.handlerId);
 
+  return startActivityQtePlayableSession({
+    state: input.state,
+    session,
+    ...(input.integrationId == null
+      ? {}
+      : { integrationId: input.integrationId }),
+    ...(input.ownerContext == null
+      ? {}
+      : { ownerContext: input.ownerContext }),
+  });
+}
+
+export function startActivityQtePlayableSession(input: {
+  state: RuntimeState;
+  session:
+    | ActivityQteSession
+    | ActivityFortuneBoardSession
+    | ActivityPachinkoBoardSession;
+  integrationId?: PlayableIntegrationId;
+  ownerContext?: PlayableOwnerContext;
+}): RuntimeState {
   return {
     ...input.state,
     core: {
@@ -52,7 +81,7 @@ export function startActivityQtePlayable(input: {
             },
           status: "active",
         },
-        activitySession: session,
+        activitySession: input.session,
       },
     },
   };

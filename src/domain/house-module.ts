@@ -1,6 +1,7 @@
 import type { CharacterDefinition, CharacterId } from "./character";
 import type { ActivityDefinition } from "./activity";
 import type { EventBinding, EventDefinition } from "./event";
+import type { RuntimeDialogueDefinition } from "./dialogue";
 import type {
   ActivityFortuneBoardCell,
   ActivityFortuneBoardTripletReward,
@@ -21,6 +22,15 @@ import type { MedicineHouseSessionState } from "./house-modules/medicine-house-s
 import type { TempleHouseSessionState } from "./house-modules/temple-house-session";
 import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
 import type { TavernSessionState } from "./house-modules/tavern-session";
+import type { MeetingActionSetDefinition } from "./meeting/meeting-action-set";
+import type { MeetingBindingDefinition } from "./meeting/meeting-binding";
+import type { MeetingChoiceSetDefinition } from "./meeting/meeting-choice-set";
+import type { MeetingDefinition } from "./meeting/meeting-definition";
+import type { MeetingPanelDefinition } from "./meeting/meeting-panel";
+import type {
+  MeetingReturnTargetDefinition,
+  MeetingSessionState,
+} from "./meeting/meeting-session";
 import type { NpcInteractionOptionViewModel } from "./npc-interaction";
 import type { ReviewAssignmentRow, ReviewPolicyPanel } from "./review";
 
@@ -66,11 +76,23 @@ export type ActiveHouseModuleSession = {
   [ModuleId in HouseModuleId]: {
     moduleId: ModuleId;
     state: HouseModuleSessionStateMap[ModuleId];
+    sharedSessionState?: HouseSharedSessionState | null;
   };
 }[HouseModuleId] | null;
 
 export type HouseModuleSessionState<ModuleId extends HouseModuleId> =
   HouseModuleSessionStateMap[ModuleId];
+
+export type HouseSharedMeetingSessionState = {
+  kind: "meeting";
+  bindingId: string;
+  meetingId: string;
+  sessionState: MeetingSessionState;
+};
+
+export type HouseSharedSessionState = {
+  hostedMeeting: HouseSharedMeetingSessionState | null;
+};
 
 export type MapAutoAdvanceSnapshot = {
   gameState: GameState;
@@ -608,7 +630,14 @@ export type HouseModuleBaseInput<ModuleId extends HouseModuleId = HouseModuleId>
   houseDefinition: HouseDefinition;
   playerCharacterId: CharacterId;
   sessionState: HouseModuleSessionState<ModuleId> | null;
+  sharedSessionState?: HouseSharedSessionState | null;
   eventDefinitionsById?: Record<string, EventDefinition> | undefined;
+  dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition> | undefined;
+  meetingDefinitionsById?: Record<string, MeetingDefinition> | undefined;
+  meetingBindings?: MeetingBindingDefinition[] | undefined;
+  meetingPanelsById?: Record<string, MeetingPanelDefinition> | undefined;
+  meetingChoiceSetsById?: Record<string, MeetingChoiceSetDefinition> | undefined;
+  meetingActionSetsById?: Record<string, MeetingActionSetDefinition> | undefined;
   eventBindings?: EventBinding[] | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
@@ -633,6 +662,7 @@ export type HouseModuleTransitionResult<ModuleId extends HouseModuleId = HouseMo
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
   sessionState: HouseModuleSessionState<ModuleId> | null;
+  sharedSessionState?: HouseSharedSessionState | null | undefined;
   timeAdvanceCost?: number;
   councilArrivalNotice?: {
     speakerCharacterId?: string;
@@ -641,6 +671,12 @@ export type HouseModuleTransitionResult<ModuleId extends HouseModuleId = HouseMo
   } | undefined;
   sideEffects?: HouseModuleSideEffect[];
   navigation?: { type: "stay-in-house" };
+};
+
+export type HouseHostedMeetingCompletion = {
+  type: "return-to-host";
+  returnTarget: MeetingReturnTargetDefinition;
+  meetingId: string;
 };
 
 export type HouseModuleDefinition<ModuleId extends HouseModuleId = HouseModuleId> = {

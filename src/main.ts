@@ -1628,6 +1628,8 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
     playerCharacterId: currentPlayerCharacterId,
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+    dialogueDefinitionsById:
+      activeContentContext.storyContent.dialogueDefinitionsById,
     eventBindingsById: activeContentContext.storyContent.eventBindingsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,

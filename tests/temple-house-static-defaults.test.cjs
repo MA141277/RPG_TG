@@ -106,6 +106,8 @@ test("temple static text defaults centralize builtin fallback text ids", () => {
       days: "runtime.zhu_yuanzhang.temple.rest.summary.days.001",
       current: "runtime.zhu_yuanzhang.temple.rest.summary.current.001",
       normal: "runtime.zhu_yuanzhang.temple.rest.summary.normal.001",
+      autoAdvanceTitleTemplate:
+        "runtime.zhu_yuanzhang.temple.rest.summary.auto_advance.title",
     },
     restDaysOverlayTextIds: {
       title: "runtime.zhu_yuanzhang.temple.rest_days.title",
@@ -160,6 +162,8 @@ test("temple static text defaults centralize builtin fallback text ids", () => {
       activityQuickCompleteLabel:
         "runtime.zhu_yuanzhang.temple.ui.activity_confirm.quick_complete",
       alertConfirmLabel: "runtime.zhu_yuanzhang.temple.ui.alert.confirm",
+      donateConfirmLabelTemplate:
+        "runtime.zhu_yuanzhang.temple.ui.donate.confirm.label",
       donateCancelLabel: "runtime.zhu_yuanzhang.temple.ui.donate.cancel",
       resultConfirmLabel: "runtime.zhu_yuanzhang.temple.ui.result.confirm",
       leaveRefusalAdvanceHint:
@@ -226,9 +230,16 @@ test("temple static text defaults centralize builtin fallback text ids", () => {
       actionPanelTitleTempleDaily:
         "runtime.zhu_yuanzhang.temple.ui.action_panel.temple_daily",
       statusCountdown: "runtime.zhu_yuanzhang.temple.ui.status.countdown",
+      statusCountdownValueTemplate:
+        "runtime.zhu_yuanzhang.temple.ui.status.countdown.value",
       statusContribution: "runtime.zhu_yuanzhang.temple.ui.status.contribution",
+      statusContributionValueTemplate:
+        "runtime.zhu_yuanzhang.temple.ui.status.contribution.value",
       statusWeek: "runtime.zhu_yuanzhang.temple.ui.status.week",
+      statusWeekValueTemplate: "runtime.zhu_yuanzhang.temple.ui.status.week.value",
       statusDonationTotal: "runtime.zhu_yuanzhang.temple.ui.status.donation_total",
+      statusDonationTotalValueTemplate:
+        "runtime.zhu_yuanzhang.temple.ui.status.donation_total.value",
       statusCurrentTask: "runtime.zhu_yuanzhang.temple.ui.status.current_task",
       statusCurrentTaskNone:
         "runtime.zhu_yuanzhang.temple.ui.status.current_task.none",
@@ -238,6 +249,8 @@ test("temple static text defaults centralize builtin fallback text ids", () => {
       statusSubmittedFood:
         "runtime.zhu_yuanzhang.temple.ui.status.submitted_food",
       statusPlayerGold: "runtime.zhu_yuanzhang.temple.ui.status.player_gold",
+      statusPlayerGoldValueTemplate:
+        "runtime.zhu_yuanzhang.temple.ui.status.player_gold.value",
       leaveActionLabel: "runtime.zhu_yuanzhang.temple.ui.leave_action.label",
     },
     alertTextIds: {
@@ -366,6 +379,7 @@ test("temple static text defaults prefer scenario-pack house-module overrides wh
           days: "pack.temple.rest.days.001",
           current: "pack.temple.rest.current.001",
           normal: "pack.temple.rest.normal.001",
+          autoAdvanceTitleTemplate: "pack.temple.rest.auto_advance.title",
         },
         templeRestDaysOverlayTextIds: {
           title: "pack.temple.rest-days.title",
@@ -417,6 +431,7 @@ test("temple static text defaults prefer scenario-pack house-module overrides wh
           activityRelatedAbilityPending: "pack.temple.ui.activity.related",
           activityQuickCompleteLabel: "pack.temple.ui.activity.quick",
           alertConfirmLabel: "pack.temple.ui.alert.confirm",
+          donateConfirmLabelTemplate: "pack.temple.ui.donate.confirm",
           donateCancelLabel: "pack.temple.ui.donate.cancel",
           resultConfirmLabel: "pack.temple.ui.result.confirm",
           leaveRefusalAdvanceHint: "pack.temple.ui.leave.advance",
@@ -459,15 +474,22 @@ test("temple static text defaults prefer scenario-pack house-module overrides wh
           actionPanelTitleWork: "pack.temple.ui.panel.work",
           actionPanelTitleTempleDaily: "pack.temple.ui.panel.daily",
           statusCountdown: "pack.temple.ui.status.countdown",
+          statusCountdownValueTemplate: "pack.temple.ui.status.countdown.value",
           statusContribution: "pack.temple.ui.status.contribution",
+          statusContributionValueTemplate:
+            "pack.temple.ui.status.contribution.value",
           statusWeek: "pack.temple.ui.status.week",
+          statusWeekValueTemplate: "pack.temple.ui.status.week.value",
           statusDonationTotal: "pack.temple.ui.status.donation",
+          statusDonationTotalValueTemplate:
+            "pack.temple.ui.status.donation.value",
           statusCurrentTask: "pack.temple.ui.status.current_task",
           statusCurrentTaskNone: "pack.temple.ui.status.current_task.none",
           statusPlayerStamina: "pack.temple.ui.status.stamina",
           statusPlayerFood: "pack.temple.ui.status.food",
           statusSubmittedFood: "pack.temple.ui.status.submitted_food",
           statusPlayerGold: "pack.temple.ui.status.gold",
+          statusPlayerGoldValueTemplate: "pack.temple.ui.status.gold.value",
           leaveActionLabel: "pack.temple.ui.leave.label",
         },
         templeAlertTextIds: {
@@ -584,6 +606,7 @@ test("temple static text defaults prefer scenario-pack house-module overrides wh
         days: "pack.temple.rest.days.001",
         current: "pack.temple.rest.current.001",
         normal: "pack.temple.rest.normal.001",
+        autoAdvanceTitleTemplate: "pack.temple.rest.auto_advance.title",
       },
       restDaysOverlayTextIds: {
         title: "pack.temple.rest-days.title",
@@ -635,6 +658,7 @@ test("temple static text defaults prefer scenario-pack house-module overrides wh
         activityRelatedAbilityPending: "pack.temple.ui.activity.related",
         activityQuickCompleteLabel: "pack.temple.ui.activity.quick",
         alertConfirmLabel: "pack.temple.ui.alert.confirm",
+        donateConfirmLabelTemplate: "pack.temple.ui.donate.confirm",
         donateCancelLabel: "pack.temple.ui.donate.cancel",
         resultConfirmLabel: "pack.temple.ui.result.confirm",
         leaveRefusalAdvanceHint: "pack.temple.ui.leave.advance",
@@ -677,15 +701,22 @@ test("temple static text defaults prefer scenario-pack house-module overrides wh
         actionPanelTitleWork: "pack.temple.ui.panel.work",
         actionPanelTitleTempleDaily: "pack.temple.ui.panel.daily",
         statusCountdown: "pack.temple.ui.status.countdown",
+        statusCountdownValueTemplate: "pack.temple.ui.status.countdown.value",
         statusContribution: "pack.temple.ui.status.contribution",
+        statusContributionValueTemplate:
+          "pack.temple.ui.status.contribution.value",
         statusWeek: "pack.temple.ui.status.week",
+        statusWeekValueTemplate: "pack.temple.ui.status.week.value",
         statusDonationTotal: "pack.temple.ui.status.donation",
+        statusDonationTotalValueTemplate:
+          "pack.temple.ui.status.donation.value",
         statusCurrentTask: "pack.temple.ui.status.current_task",
         statusCurrentTaskNone: "pack.temple.ui.status.current_task.none",
         statusPlayerStamina: "pack.temple.ui.status.stamina",
         statusPlayerFood: "pack.temple.ui.status.food",
         statusSubmittedFood: "pack.temple.ui.status.submitted_food",
         statusPlayerGold: "pack.temple.ui.status.gold",
+        statusPlayerGoldValueTemplate: "pack.temple.ui.status.gold.value",
         leaveActionLabel: "pack.temple.ui.leave.label",
       },
       alertTextIds: {

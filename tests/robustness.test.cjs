@@ -10653,11 +10653,14 @@ test("temple house rest summary resolves from text entries", () => {
     },
   };
   const textEntriesById = {
+    "runtime.zhu_yuanzhang.temple.ui.rest_menu.one_day": "旧路径单日休息",
     "runtime.zhu_yuanzhang.temple.rest.summary.days.001":
       "自定义寺中休息 {daysRested} 天，恢复 {totalRecovered} 体力。",
     "runtime.zhu_yuanzhang.temple.rest.summary.current.001":
       "自定义寺中当前体力 {stamina}。",
     "runtime.zhu_yuanzhang.temple.rest.summary.normal.001": "自定义寺中静养总结。",
+    "runtime.zhu_yuanzhang.temple.rest.summary.auto_advance.title":
+      "自定义休息 {days} 天",
   };
   const enterResult = templeHouseHouseModule.enter({
     gameState: state,
@@ -10684,13 +10687,35 @@ test("temple house rest summary resolves from text entries", () => {
     request: { type: "action", actionId: "open-temple-rest-menu" },
     textEntriesById,
   });
-  const restResult = templeHouseHouseModule.dispatch({
+  const restDaysResult = templeHouseHouseModule.dispatch({
     gameState: restMenuResult.gameState,
     characterDefinitions: restMenuResult.characterDefinitions,
     houseDefinition: templeHouse,
     playerCharacterId,
     sessionState: restMenuResult.sessionState,
-    request: { type: "action", actionId: "temple-rest-one-day" },
+    request: { type: "action", actionId: "open-temple-rest-days" },
+    textEntriesById,
+  });
+  const fieldResult = templeHouseHouseModule.dispatch({
+    gameState: restDaysResult.gameState,
+    characterDefinitions: restDaysResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: restDaysResult.sessionState,
+    request: {
+      type: "field",
+      fieldId: "temple-house-rest-days",
+      value: "1",
+    },
+    textEntriesById,
+  });
+  const restResult = templeHouseHouseModule.dispatch({
+    gameState: fieldResult.gameState,
+    characterDefinitions: fieldResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: fieldResult.sessionState,
+    request: { type: "action", actionId: "confirm-temple-rest-days" },
     textEntriesById,
   });
 
@@ -10699,6 +10724,7 @@ test("temple house rest summary resolves from text entries", () => {
   );
   assert.ok(autoAdvanceEffect);
   assert.equal(autoAdvanceEffect.completion?.type, "restore-house-session");
+  assert.equal(autoAdvanceEffect.completion?.houseSession?.state.overlay?.title, "自定义休息 1 天");
   assert.deepEqual(autoAdvanceEffect.completion?.houseSession?.state.overlay?.paragraphs, [
     "自定义寺中休息 1 天，恢复 12 体力。",
     "自定义寺中当前体力 72。",
@@ -11340,9 +11366,16 @@ test("temple house status labels, fortune, and begging submit overlay resolve fr
     "runtime.zhu_yuanzhang.temple.ui.root_action.rest": "自定义休息",
     "runtime.zhu_yuanzhang.temple.ui.root_action.donate": "自定义捐香火",
     "runtime.zhu_yuanzhang.temple.ui.status.countdown": "自定义评定倒计时",
+    "runtime.zhu_yuanzhang.temple.ui.status.countdown.value": "自定义剩余 {countdown} 日",
+    "runtime.zhu_yuanzhang.temple.ui.status.contribution.value":
+      "自定义贡献 {contribution} / {threshold}",
+    "runtime.zhu_yuanzhang.temple.ui.status.week.value": "自定义第 {week} 周",
     "runtime.zhu_yuanzhang.temple.ui.status.current_task": "自定义当前差事",
+    "runtime.zhu_yuanzhang.temple.ui.status.player_gold.value":
+      "自定义香火钱 {gold} 文",
     "runtime.zhu_yuanzhang.temple.ui.leave_action.label": "自定义离开寺庙",
     "runtime.zhu_yuanzhang.temple.ui.alert.confirm": "自定义收下",
+    "runtime.zhu_yuanzhang.temple.ui.donate.confirm.label": "自定义捐 {amount} 文",
     "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.default.label": "自定义外出化缘",
     "runtime.zhu_yuanzhang.temple.fortune.upper.title": "自定义上签",
     "runtime.zhu_yuanzhang.temple.fortune.upper.001": "自定义求签首句。",
@@ -11423,10 +11456,23 @@ test("temple house status labels, fortune, and begging submit overlay resolve fr
   assert.equal(abbotRosterEntry?.interactionActions?.[3]?.label, "自定义捐香火");
   assert.equal(viewModel.statusCard?.metrics[0]?.label, "自定义住持称呼");
   assert.equal(viewModel.statusCard?.metrics[1]?.label, "自定义评定倒计时");
+  assert.equal(viewModel.statusCard?.metrics[1]?.value, "自定义剩余 30 日");
+  assert.equal(
+    viewModel.statusCard?.metrics.find((metric) => metric.label === "寺中贡献")?.value,
+    "自定义贡献 0 / 30"
+  );
+  assert.equal(
+    viewModel.statusCard?.metrics.find((metric) => metric.label === "当前周次")?.value,
+    "自定义第 1 周"
+  );
   assert.equal(
     viewModel.statusCard?.metrics.find((metric) => metric.label === "自定义当前差事")
       ?.value,
     "自定义外出化缘"
+  );
+  assert.equal(
+    viewModel.statusCard?.metrics.find((metric) => metric.label === "玩家金钱")?.value,
+    "自定义香火钱 120 文"
   );
   assert.equal(viewModel.leaveAction?.label, "自定义离开寺庙");
 
@@ -11490,6 +11536,26 @@ test("temple house status labels, fortune, and begging submit overlay resolve fr
   assert.equal(submitOverlayViewModel.overlay?.quantityLabel, "自定义交粮数量");
   assert.equal(submitOverlayViewModel.overlay?.confirmLabel, "自定义交给寺里");
   assert.equal(submitOverlayViewModel.overlay?.cancelLabel, "自定义暂缓");
+
+  const donateOverlayResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-donate" },
+    textEntriesById,
+  });
+  const donateOverlayViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: donateOverlayResult.gameState,
+    characterDefinitions: donateOverlayResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: donateOverlayResult.sessionState,
+    textEntriesById,
+  });
+
+  assert.equal(donateOverlayViewModel.overlay?.confirmLabel, "自定义捐 50 文");
 });
 
 test("temple house rest-days and qte overlays resolve from text entries", () => {

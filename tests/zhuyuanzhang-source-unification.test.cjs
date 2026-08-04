@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { execFileSync, spawnSync } = require("node:child_process");
+const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
@@ -213,14 +213,41 @@ test("zhuyuanzhang sync projections preserve pack-specific overlays while syncin
   ]);
 });
 
+test("zhuyuanzhang text sync can add approved temple shared keys into the runtime pack mirror", async () => {
+  const syncTool = await importModule(
+    "tools/sync-zhuyuanzhang-startup-templates.mjs"
+  );
+
+  const nextTextEntries = syncTool.projectTextEntriesForSync(
+    {
+      "runtime.zhu_yuanzhang.temple.ui.status.contribution": "寺中贡献",
+      "runtime.zhu_yuanzhang.temple.ui.status.contribution.value":
+        "{contribution} / {threshold}",
+      "runtime.zhu_yuanzhang.temple.rest.summary.auto_advance.title":
+        "休息 {days} 天",
+      "script_editor.template_only.note": "保留在模板包",
+    },
+    {
+      existing: "keep runtime only",
+    }
+  );
+
+  assert.deepEqual(nextTextEntries, {
+    existing: "keep runtime only",
+    "runtime.zhu_yuanzhang.temple.ui.status.contribution": "寺中贡献",
+    "runtime.zhu_yuanzhang.temple.ui.status.contribution.value":
+      "{contribution} / {threshold}",
+    "runtime.zhu_yuanzhang.temple.rest.summary.auto_advance.title":
+      "休息 {days} 天",
+  });
+});
+
 test("zhuyuanzhang source contract records publication-only manifest keys and builtin-only manifest keys", async () => {
   const contract = await importModule(
     "tools/zhuyuanzhang-source-sync-contract.mjs"
   );
 
-  assert.deepEqual(contract.PUBLICATION_ONLY_MANIFEST_FILE_KEYS, [
-    "flowPlayables",
-  ]);
+  assert.deepEqual(contract.PUBLICATION_ONLY_MANIFEST_FILE_KEYS, []);
   assert.deepEqual(contract.BUILTIN_TEMPLATE_ONLY_MANIFEST_FILE_KEYS, [
     "playables",
     "playableIntegrations",
@@ -234,12 +261,12 @@ test("zhuyuanzhang source contract records publication-only manifest keys and bu
   assert.deepEqual(contract.PLAYABLE_FAMILY_OWNERSHIP, {
     canonicalMaintainedOwner: "scriptEditorTemplatePack",
     runtimePackMirrorMode: "derived-from-script-editor-template-pack",
-    publicPublicationFile: "flow-playables.json",
+    publicPublicationFile: "playable-shells.json",
     publicPublicationDerivedFrom: "playable-shells.json",
   });
   assert.deepEqual(
     contract.PUBLICATION_SYNC_FILE_RULES.map((rule) => rule.fileName),
-    ["pack.json", "playable-shells.json", "flow-playables.json"]
+    ["pack.json", "playable-shells.json"]
   );
 });
 
@@ -268,7 +295,7 @@ test("zhuyuanzhang source contract records runtime building-support mirror files
   ]);
 });
 
-test("zhuyuanzhang source contract marks flow-playables as a legacy public-only artifact", async () => {
+test("zhuyuanzhang public manifest now publishes playable-shells without legacy flow-playables", async () => {
   const contract = await importModule(
     "tools/zhuyuanzhang-source-sync-contract.mjs"
   );
@@ -312,14 +339,7 @@ test("zhuyuanzhang source contract marks flow-playables as a legacy public-only 
     )
   );
 
-  assert.deepEqual(contract.LEGACY_PUBLICATION_FILE_RULES, [
-    {
-      fileName: "flow-playables.json",
-      manifestKey: "flowPlayables",
-      reason:
-        "旧 public 模板仍直接暴露 flow-playables.json，但它不是两套维护源中的正式小游戏 family。",
-    },
-  ]);
+  assert.deepEqual(contract.LEGACY_PUBLICATION_FILE_RULES, []);
   assert.equal(
     Object.prototype.hasOwnProperty.call(
       builtinRuntimeManifest.files,
@@ -334,27 +354,19 @@ test("zhuyuanzhang source contract marks flow-playables as a legacy public-only 
     ),
     false
   );
-  assert.equal(
-    publicManifest.files.flowPlayables,
-    "flow-playables.json"
-  );
+  assert.equal(Object.hasOwn(publicManifest.files, "flowPlayables"), false);
   assert.equal(
     publicManifest.files.playableShells,
     "playable-shells.json"
   );
 });
 
-test("zhuyuanzhang manifest projection keeps public publication keys while omitting builtin-only playable keys", async () => {
+test("zhuyuanzhang manifest projection keeps canonical public playable-shells while omitting builtin-only playable keys", async () => {
   const syncTool = await importModule(
     "tools/sync-zhuyuanzhang-startup-templates.mjs"
   );
 
   assert.equal(typeof syncTool.projectPublicPackManifestForSync, "function");
-  assert.equal(
-    typeof syncTool.projectLegacyPublicFlowPlayablesForSync,
-    "function"
-  );
-
   const nextManifest = syncTool.projectPublicPackManifestForSync(
     {
       schemaVersion: 1,
@@ -379,7 +391,7 @@ test("zhuyuanzhang manifest projection keeps public publication keys while omitt
       description: "Old public manifest",
       files: {
         activities: "activities.json",
-        flowPlayables: "flow-playables.json",
+        playableShells: "playable-shells.json",
         textEntries: "text-entries.json",
       },
     }
@@ -395,22 +407,11 @@ test("zhuyuanzhang manifest projection keeps public publication keys while omitt
       activities: "activities.json",
       playableShells: "playable-shells.json",
       textEntries: "text-entries.json",
-      flowPlayables: "flow-playables.json",
     },
   });
-
-  assert.deepEqual(
-    syncTool.projectLegacyPublicFlowPlayablesForSync([
-      { id: "flow.test.public", title: "Public Flow" },
-    ]),
-    [{ id: "flow.test.public", title: "Public Flow" }]
-  );
 });
 
-test("zhuyuanzhang public flow-playables file is fully derived from builtin template playable-shells", async () => {
-  const syncTool = await importModule(
-    "tools/sync-zhuyuanzhang-startup-templates.mjs"
-  );
+test("zhuyuanzhang public playable-shells file is fully derived from builtin template playable-shells", async () => {
   const builtinTemplatePlayableShells = JSON.parse(
     fs.readFileSync(
       path.join(
@@ -425,24 +426,25 @@ test("zhuyuanzhang public flow-playables file is fully derived from builtin temp
       "utf8"
     )
   );
-  const publicLegacyFlowPlayables = JSON.parse(
+  const publicPlayableShells = JSON.parse(
     fs.readFileSync(
       path.join(
         process.cwd(),
         "public",
         "script-editor-templates",
         "zhuyuanzhang",
-        "flow-playables.json"
+        "playable-shells.json"
       ),
       "utf8"
     )
   );
 
-  assert.deepEqual(
-    publicLegacyFlowPlayables,
-    syncTool.projectLegacyPublicFlowPlayablesForSync(
-      builtinTemplatePlayableShells
-    )
+  assert.deepEqual(publicPlayableShells, builtinTemplatePlayableShells);
+});
+
+test("zhuyuanzhang canonical playable family still resolves from builtin template playable-shells", async () => {
+  const syncTool = await importModule(
+    "tools/sync-zhuyuanzhang-startup-templates.mjs"
   );
   const runtimeRoot = path.join(
     process.cwd(),
@@ -451,13 +453,19 @@ test("zhuyuanzhang public flow-playables file is fully derived from builtin temp
     "scenario-packs",
     "zhuyuanzhang"
   );
-  assert.deepEqual(
-    await syncTool.resolveCanonicalPublicFlowPlayablesForSync(
-      process.cwd(),
-      runtimeRoot,
-      null
-    ),
-    publicLegacyFlowPlayables
+  const builtinTemplatePlayableShells = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "modules",
+        "script-editor",
+        "builtin-templates",
+        "zhuyuanzhang",
+        "playable-shells.json"
+      ),
+      "utf8"
+    )
   );
   assert.deepEqual(
     await syncTool.resolveCanonicalPlayableFamilyForSync(
@@ -670,7 +678,7 @@ test("zhuyuanzhang playable-family files now stay canonical in template pack, mi
 
   assert.equal(
     fs.existsSync(path.join(publicTemplateRoot, "flow-playables.json")),
-    true
+    false
   );
 });
 
@@ -856,90 +864,4 @@ test("zhuyuanzhang playable family remains template-canonical while runtime pack
     assert.equal(contract.RUNTIME_SAFE_EVENT_MIRROR_IDS.includes(eventId), true);
   }
   assert.equal(templateActionTypes.includes("launchPlayable"), true);
-});
-
-test("zhuyuanzhang legacy public flow-playables audit still reports owner-gap for synthetic drift input", async () => {
-  const syncTool = await importModule(
-    "tools/sync-zhuyuanzhang-startup-templates.mjs"
-  );
-  const audit = syncTool.auditLegacyPublicFlowPlayablesOwnerGap(
-    [],
-    [
-      { id: "flow.test.owner-gap.1" },
-      { id: "flow.test.owner-gap.2" },
-    ]
-  );
-
-  assert.equal(audit.status, "owner-gap");
-  assert.equal(audit.maintainedShellCount, 0);
-  assert.equal(audit.publicLegacyFlowCount, 2);
-  assert.equal(audit.publicOnlyFlowCount, 2);
-  assert.deepEqual(audit.publicOnlyFlowIds, [
-    "flow.test.owner-gap.1",
-    "flow.test.owner-gap.2",
-  ]);
-});
-
-test("zhuyuanzhang legacy public flow-playables audit is aligned for the current repository state", async () => {
-  const syncTool = await importModule(
-    "tools/sync-zhuyuanzhang-startup-templates.mjs"
-  );
-  const builtinTemplatePlayableShells = JSON.parse(
-    fs.readFileSync(
-      path.join(
-        process.cwd(),
-        "src",
-        "modules",
-        "script-editor",
-        "builtin-templates",
-        "zhuyuanzhang",
-        "playable-shells.json"
-      ),
-      "utf8"
-    )
-  );
-  const publicLegacyFlowPlayables = JSON.parse(
-    fs.readFileSync(
-      path.join(
-        process.cwd(),
-        "public",
-        "script-editor-templates",
-        "zhuyuanzhang",
-        "flow-playables.json"
-      ),
-      "utf8"
-    )
-  );
-
-  const audit = syncTool.auditLegacyPublicFlowPlayablesOwnerGap(
-    builtinTemplatePlayableShells,
-    publicLegacyFlowPlayables
-  );
-
-  assert.equal(audit.status, "aligned");
-  assert.equal(audit.maintainedShellCount, 24);
-  assert.equal(audit.publicLegacyFlowCount, 24);
-  assert.equal(audit.publicOnlyFlowCount, 0);
-  assert.deepEqual(audit.publicOnlyFlowIds, []);
-});
-
-test("zhuyuanzhang legacy public flow-playables check mode now passes with maintained ownership", () => {
-  const toolPath = path.join(
-    process.cwd(),
-    "tools",
-    "sync-zhuyuanzhang-startup-templates.mjs"
-  );
-  const nodePath =
-    process.env.NODE ||
-    "/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node";
-  const result = spawnSync(nodePath, [toolPath, "--check-legacy-publication-drift"], {
-    cwd: process.cwd(),
-    encoding: "utf8",
-  });
-
-  assert.equal(result.status, 0);
-  assert.match(
-    result.stdout,
-    /legacy public flow-playables are fully owned by maintained playable-shells/i
-  );
 });

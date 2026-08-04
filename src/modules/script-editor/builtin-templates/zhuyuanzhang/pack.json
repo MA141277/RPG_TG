@@ -32,6 +32,11 @@
     "historicalCityRosters": "historical-city-rosters.json",
     "historicalCharacterIdByCharacterId": "historical-character-id-map.json",
     "dialogues": "dialogues.json",
+    "meetings": "meetings.json",
+    "meetingBindings": "meeting-bindings.json",
+    "meetingPanels": "meeting-panels.json",
+    "meetingChoiceSets": "meeting-choice-sets.json",
+    "meetingActionSets": "meeting-action-sets.json",
     "portraits": "portraits.json",
     "portraitVariants": "portrait-variants.json"
   }

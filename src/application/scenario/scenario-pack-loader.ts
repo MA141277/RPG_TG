@@ -12,6 +12,7 @@ export async function loadScenarioPackFromUrl(
 
   const rawPack = await response.json();
   if (isScenarioPackManifest(rawPack)) {
+    assertSupportedScenarioPackManifestFiles(rawPack.files);
     return parseScenarioPack(
       await hydrateScenarioPackManifest(rawPack, resolvedManifestUrl)
     );
@@ -44,6 +45,7 @@ export async function loadScenarioPackFromFiles(
 
   const rawPack = JSON.parse(await manifestFileEntry.file.text());
   if (isScenarioPackManifest(rawPack)) {
+    assertSupportedScenarioPackManifestFiles(rawPack.files);
     return parseScenarioPack(
       await hydrateScenarioPackManifestFromFiles(
         rawPack,
@@ -107,6 +109,21 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.dialogues != null) {
     assertArray(value.dialogues, "scenario dialogues");
   }
+  if (value.meetings != null) {
+    assertArray(value.meetings, "scenario meetings");
+  }
+  if (value.meetingBindings != null) {
+    assertArray(value.meetingBindings, "scenario meeting bindings");
+  }
+  if (value.meetingPanels != null) {
+    assertArray(value.meetingPanels, "scenario meeting panels");
+  }
+  if (value.meetingChoiceSets != null) {
+    assertArray(value.meetingChoiceSets, "scenario meeting choice sets");
+  }
+  if (value.meetingActionSets != null) {
+    assertArray(value.meetingActionSets, "scenario meeting action sets");
+  }
   if (value.eventBindings != null) {
     assertArray(value.eventBindings, "scenario event bindings");
   }
@@ -131,7 +148,9 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     assertArray(value.playableShells, "scenario playable shells");
   }
   if (value.flowPlayables != null) {
-    assertArray(value.flowPlayables, "scenario legacy flow playables");
+    throw new Error(
+      'scenario flowPlayables is retired; use playableShells instead.'
+    );
   }
   if (value.settlements != null) {
     assertArray(value.settlements, "scenario settlements");
@@ -198,10 +217,14 @@ type ScenarioPackManifestFiles = {
   events: string;
   scenes?: string;
   dialogues?: string;
+  meetings?: string;
+  meetingBindings?: string;
+  meetingPanels?: string;
+  meetingChoiceSets?: string;
+  meetingActionSets?: string;
   playables?: string;
   playableIntegrations?: string;
   playableShells?: string;
-  flowPlayables?: string;
   eventBindings?: string;
   menuResources?: string;
   menuInstances?: string;
@@ -242,6 +265,16 @@ type ScenarioPackImportFileEntry = {
   file: File;
   relativePath: string;
 };
+
+function assertSupportedScenarioPackManifestFiles(
+  files: Record<string, unknown>
+): void {
+  if (Object.hasOwn(files, "flowPlayables")) {
+    throw new Error(
+      'scenario pack files.flowPlayables is retired; use files.playableShells instead.'
+    );
+  }
+}
 
 function resolveScenarioPackManifestUrl(url: string): string {
   if (/^(https?:|file:)/.test(url)) {
