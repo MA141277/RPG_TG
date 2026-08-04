@@ -11245,6 +11245,71 @@ test("temple review advance-temple-dialogue remains fallback-only while hosted p
   assert.doesNotMatch(handleActionBlock, /if \(actionId === "advance-temple-dialogue"\)/);
 });
 
+test("temple review assignment-table close uses one settlement helper across hosted and fallback paths", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const settlementHelperBlock =
+    functionBlocksByName.get("settleTempleReviewAssignmentTable") ?? "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+  const handleActionBlock = functionBlocksByName.get("handleAction") ?? "";
+  const legacyAssignmentCloseBlockMatch = legacyBlock.match(
+    /if \(\s*actionId === "close-review-assignment-table"[\s\S]*?if \(actionId === "close-review-policy-panel"\)/
+  );
+  const legacyAssignmentCloseBlock = legacyAssignmentCloseBlockMatch?.[0] ?? "";
+
+  assert.match(
+    settlementHelperBlock,
+    /function settleTempleReviewAssignmentTable\(input: \{/
+  );
+  assert.match(settlementHelperBlock, /createTempleReviewAssignmentRows\(/);
+  assert.match(settlementHelperBlock, /writeFactionMerit\(/);
+  assert.match(
+    handleActionBlock,
+    /const hostedAssignmentTableHandoff = hostedReviewProjectionHandoff\(\{/
+  );
+  assert.match(handleActionBlock, /expectedActionId: "close-review-assignment-table"/);
+  assert.match(handleActionBlock, /settleTempleReviewAssignmentTable\(/);
+  assert.match(
+    legacyBlock,
+    /actionId === "close-review-assignment-table"[\s\S]*const settlementResult = settleTempleReviewAssignmentTable\(/
+  );
+  assert.match(legacyAssignmentCloseBlock, /const settlementResult = settleTempleReviewAssignmentTable\(/);
+  assert.doesNotMatch(handleActionBlock, /createTempleReviewAssignmentRows\(/);
+  assert.doesNotMatch(handleActionBlock, /writeFactionMerit\(/);
+  assert.doesNotMatch(legacyAssignmentCloseBlock, /createTempleReviewAssignmentRows\(/);
+  assert.doesNotMatch(legacyAssignmentCloseBlock, /writeFactionMerit\(/);
+});
+
 test("temple and keep house content files no longer author pack task definitions", () => {
   const templeContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),

@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-04 Temple Assignment-Table Shared Settlement Audit Slice
+
+### Added
+- `tests/robustness.test.cjs` 新增结构回归，锁定 temple review 的 `close-review-assignment-table` 在 hosted `hostedAssignmentTableHandoff` 与 legacy fallback 两侧继续共用 `settleTempleReviewAssignmentTable(...)`，而不是各自再内联一套 assignment-table 结算逻辑。
+
+### Changed
+- `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 同步记录这次 duplication audit：当前 `assignment-table` close 仍是“宿主结算 helper + hosted/fallback 两侧复用”的边界，而不是新的第二套 owner。
+
+### Impact
+- 这一步没有改动 temple review 的运行时代码、UI、剧情顺序或 `assigned` settlement seam；它只是把另一条剩余 hosted/fallback duplication seam 正式审计成“单 helper 复用”状态。
+- temple review 后续的窄切片继续收缩到剩余 fallback-only、settlement-only 或 shared-helper-only 的边界，不需要再引入新的 hosted stage wiring。
+
 ## 2026-08-04 Temple Advance Dialogue Fallback Boundary Audit Slice
 
 ### Added
