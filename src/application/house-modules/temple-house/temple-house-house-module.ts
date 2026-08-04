@@ -130,7 +130,10 @@ import {
   launchMeetingFromHostAction,
   resumeMeetingFromHostSession,
 } from "../../meeting/meeting-host-bridge";
-import { matchHostedMeetingStageHandoff } from "../../meeting/meeting-host-stage-handoff";
+import {
+  matchHostedMeetingProjectedStageHandoff,
+  matchHostedMeetingStageHandoff,
+} from "../../meeting/meeting-host-stage-handoff";
 import { matchHostedMeetingSettlementHandoff } from "../../meeting/meeting-host-settlement-handoff";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
 import {
@@ -2176,6 +2179,47 @@ type TempleHostedReviewProjectionResult = {
   projection: TempleHostedReviewStageProjection;
 };
 
+type TempleReviewPraiseFollowupProjectionSeed = {
+  situationDialogueLines: string[];
+  policyDialogueLines: string[];
+  policyOverlay: TempleHouseOverlayState;
+  adviceDialogueLines: string[];
+};
+
+function createTempleReviewPraiseFollowupProjectionSeed(input: {
+  gameState: GameState;
+  textEntriesById?: Record<string, string>;
+  houseModuleDefaults?: Record<string, unknown>;
+}): TempleReviewPraiseFollowupProjectionSeed {
+  const uiTextIds = resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds;
+  const policyLines = getTempleMeetingPolicyLines(
+    input.gameState,
+    input.textEntriesById
+  );
+
+  return {
+    situationDialogueLines: [
+      resolveTempleText(input.textEntriesById, uiTextIds.reviewPraiseLead),
+      ...policyLines.slice(0, 1),
+    ],
+    policyDialogueLines: [
+      resolveTempleText(input.textEntriesById, uiTextIds.reviewPolicyLead),
+    ],
+    policyOverlay: createTempleReviewPolicyPanelOverlay(
+      createTempleReviewPolicyPanel(
+        input.gameState,
+        input.textEntriesById,
+        input.houseModuleDefaults
+      ),
+      input.textEntriesById,
+      input.houseModuleDefaults
+    ),
+    adviceDialogueLines: [
+      resolveTempleText(input.textEntriesById, uiTextIds.reviewAdvicePrompt),
+    ],
+  };
+}
+
 function projectTempleHostedReviewStage(input: {
   hostedSessionState: MeetingSessionState;
   projection: TempleHostedReviewStageProjection;
@@ -2206,30 +2250,23 @@ function projectTempleHostedReviewStage(input: {
   } as Record<string, HouseActionContainerViewModel | null>;
 
   if (nextStageId === "praise") {
-    const policyLines = getTempleMeetingPolicyLines(
-      input.gameState,
-      input.textEntriesById
-    );
-    nextStageDialogueLinesByStageId.situation = [
-      resolveTempleText(input.textEntriesById, uiTextIds.reviewPraiseLead),
-      ...policyLines.slice(0, 1),
-    ];
-    nextStageDialogueLinesByStageId.policy = [
-      resolveTempleText(input.textEntriesById, uiTextIds.reviewPolicyLead),
-    ];
-    nextStageDialogueLinesByStageId.advice = [
-      resolveTempleText(input.textEntriesById, uiTextIds.reviewAdvicePrompt),
-    ];
+    const praiseFollowupSeed = createTempleReviewPraiseFollowupProjectionSeed({
+      gameState: input.gameState,
+      ...(input.textEntriesById == null
+        ? {}
+        : { textEntriesById: input.textEntriesById }),
+      ...(input.houseModuleDefaults == null
+        ? {}
+        : { houseModuleDefaults: input.houseModuleDefaults }),
+    });
+    nextStageDialogueLinesByStageId.situation =
+      praiseFollowupSeed.situationDialogueLines;
+    nextStageDialogueLinesByStageId.policy =
+      praiseFollowupSeed.policyDialogueLines;
+    nextStageDialogueLinesByStageId.advice =
+      praiseFollowupSeed.adviceDialogueLines;
     nextStageOverlaysByStageId.policy = selectOverlayViewModel(
-      createTempleReviewPolicyPanelOverlay(
-        createTempleReviewPolicyPanel(
-          input.gameState,
-          input.textEntriesById,
-          input.houseModuleDefaults
-        ),
-        input.textEntriesById,
-        input.houseModuleDefaults
-      ),
+      praiseFollowupSeed.policyOverlay,
       null,
       null,
       input.textEntriesById,
@@ -2505,6 +2542,42 @@ function createTemplePraiseProjection(input: {
       overlay: null,
     },
   };
+}
+
+function createTempleReviewOverlayCloseFollowupProjection(input: {
+  currentStageId: "reward" | "personnel";
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+  houseDefinition: HouseDefinition;
+  playerCharacter: CharacterDefinition;
+  seniorMonkCharacter: CharacterDefinition;
+  playerCharacterId: string;
+  textEntriesById: Record<string, string> | undefined;
+  houseModuleDefaults?: Record<string, unknown>;
+}): TempleHostedReviewProjectionResult {
+  if (input.currentStageId === "reward") {
+    return createTemplePersonnelOrPraiseProjection({
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+      houseDefinition: input.houseDefinition,
+      playerCharacter: input.playerCharacter,
+      seniorMonkCharacter: input.seniorMonkCharacter,
+      playerCharacterId: input.playerCharacterId,
+      textEntriesById: input.textEntriesById,
+      ...(input.houseModuleDefaults == null
+        ? {}
+        : { houseModuleDefaults: input.houseModuleDefaults }),
+    });
+  }
+
+  return createTemplePraiseProjection({
+    gameState: input.gameState,
+    characterDefinitions: input.characterDefinitions,
+    playerCharacter: input.playerCharacter,
+    seniorMonkCharacter: input.seniorMonkCharacter,
+    playerCharacterId: input.playerCharacterId,
+    textEntriesById: input.textEntriesById,
+  });
 }
 
 function createTemplePersonnelOrPraiseProjection(input: {
@@ -3354,6 +3427,15 @@ function handleLegacyTempleReviewFallback(
         playerCharacter,
         seniorMonkCharacter
       );
+      const praiseFollowupSeed = createTempleReviewPraiseFollowupProjectionSeed({
+        gameState: nextState,
+        ...(input.textEntriesById == null
+          ? {}
+          : { textEntriesById: input.textEntriesById }),
+        ...(input.houseModuleDefaults == null
+          ? {}
+          : { houseModuleDefaults: input.houseModuleDefaults }),
+      });
       switch (sessionState.meetingStage) {
         case "intro":
           return withSessionState(
@@ -3394,17 +3476,7 @@ function handleLegacyTempleReviewFallback(
             {
               meetingStage: "situation",
               dialoguePhase: "open",
-              dialogueLines: [
-                resolveTempleText(
-                  input.textEntriesById,
-                  resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds
-                    .reviewPraiseLead
-                ),
-                ...getTempleMeetingPolicyLines(
-                  nextState,
-                  input.textEntriesById
-                ).slice(0, 1),
-              ],
+              dialogueLines: praiseFollowupSeed.situationDialogueLines,
             }
           );
         case "situation":
@@ -3417,22 +3489,8 @@ function handleLegacyTempleReviewFallback(
             {
               meetingStage: "policy",
               dialoguePhase: "open",
-              dialogueLines: [
-                resolveTempleText(
-                  input.textEntriesById,
-                  resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds
-                    .reviewPolicyLead
-                ),
-              ],
-              overlay: createTempleReviewPolicyPanelOverlay(
-                createTempleReviewPolicyPanel(
-                  nextState,
-                  input.textEntriesById,
-                  input.houseModuleDefaults
-                ),
-                input.textEntriesById,
-                input.houseModuleDefaults
-              ),
+              dialogueLines: praiseFollowupSeed.policyDialogueLines,
+              overlay: praiseFollowupSeed.policyOverlay,
             }
           );
         case "policy":
@@ -3445,32 +3503,31 @@ function handleLegacyTempleReviewFallback(
             {
               meetingStage: "advice",
               dialoguePhase: "open",
-              dialogueLines: [
-                resolveTempleText(
-                  input.textEntriesById,
-                  resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds
-                    .reviewAdvicePrompt
-                ),
-              ],
+              dialogueLines: praiseFollowupSeed.adviceDialogueLines,
               overlay: null,
             }
           );
         case "personnel":
-          const praiseProjection = createTemplePraiseProjection({
+          const overlayCloseProjection = createTempleReviewOverlayCloseFollowupProjection({
+            currentStageId: "personnel",
             gameState: nextState,
             characterDefinitions: input.characterDefinitions,
+            houseDefinition: input.houseDefinition,
             playerCharacter,
             seniorMonkCharacter,
             playerCharacterId: input.playerCharacterId,
             textEntriesById: input.textEntriesById,
+            ...(input.houseModuleDefaults == null
+              ? {}
+              : { houseModuleDefaults: input.houseModuleDefaults }),
           });
           return applyTempleHostedReviewProjectionToSessionState(
             {
-              gameState: praiseProjection.gameState,
-              characterDefinitions: praiseProjection.characterDefinitions,
+              gameState: overlayCloseProjection.gameState,
+              characterDefinitions: overlayCloseProjection.characterDefinitions,
             },
             sessionState,
-            praiseProjection.projection
+            overlayCloseProjection.projection
           );
         default:
           return createTransitionResult(input, {
@@ -3578,6 +3635,15 @@ function handleLegacyTempleReviewFallback(
 
   if (actionId === "close-review-policy-panel") {
     if (sessionState.mode === "meeting" && sessionState.meetingStage === "policy") {
+      const praiseFollowupSeed = createTempleReviewPraiseFollowupProjectionSeed({
+        gameState: nextState,
+        ...(input.textEntriesById == null
+          ? {}
+          : { textEntriesById: input.textEntriesById }),
+        ...(input.houseModuleDefaults == null
+          ? {}
+          : { houseModuleDefaults: input.houseModuleDefaults }),
+      });
       return withSessionState(
         {
           gameState: nextState,
@@ -3587,13 +3653,7 @@ function handleLegacyTempleReviewFallback(
         {
           meetingStage: "advice",
           dialoguePhase: "open",
-          dialogueLines: [
-            resolveTempleText(
-              input.textEntriesById,
-              resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds
-                .reviewAdvicePrompt
-            ),
-          ],
+          dialogueLines: praiseFollowupSeed.adviceDialogueLines,
           overlay: null,
         }
       );
@@ -3611,8 +3671,13 @@ function handleLegacyTempleReviewFallback(
     );
   }
 
-  if (actionId === "close-temple-overlay" && sessionState.meetingStage === "reward") {
-    const personnelProjection = createTemplePersonnelOrPraiseProjection({
+  if (
+    actionId === "close-temple-overlay" &&
+    (sessionState.meetingStage === "reward" ||
+      sessionState.meetingStage === "personnel")
+  ) {
+    const overlayCloseProjection = createTempleReviewOverlayCloseFollowupProjection({
+      currentStageId: sessionState.meetingStage,
       gameState: nextState,
       characterDefinitions: input.characterDefinitions,
       houseDefinition: input.houseDefinition,
@@ -3626,30 +3691,11 @@ function handleLegacyTempleReviewFallback(
     });
     return applyTempleHostedReviewProjectionToSessionState(
       {
-        gameState: personnelProjection.gameState,
-        characterDefinitions: personnelProjection.characterDefinitions,
+        gameState: overlayCloseProjection.gameState,
+        characterDefinitions: overlayCloseProjection.characterDefinitions,
       },
       sessionState,
-      personnelProjection.projection
-    );
-  }
-
-  if (actionId === "close-temple-overlay" && sessionState.meetingStage === "personnel") {
-    const praiseProjection = createTemplePraiseProjection({
-      gameState: nextState,
-      characterDefinitions: input.characterDefinitions,
-      playerCharacter,
-      seniorMonkCharacter,
-      playerCharacterId: input.playerCharacterId,
-      textEntriesById: input.textEntriesById,
-    });
-    return applyTempleHostedReviewProjectionToSessionState(
-      {
-        gameState: praiseProjection.gameState,
-        characterDefinitions: praiseProjection.characterDefinitions,
-      },
-      sessionState,
-      praiseProjection.projection
+      overlayCloseProjection.projection
     );
   }
 
@@ -4434,34 +4480,31 @@ function handleAction(
     return hostedSettlementResult;
   }
 
-  const hostedAssignmentTableHandoff = matchHostedMeetingStageHandoff({
-    sharedSessionState: input.sharedSessionState ?? null,
-    hostedMeetingId: "meeting.temple.review",
-    currentStageId: "assignment-table",
-    actionId,
-    expectedActionId: "close-review-assignment-table",
-    gameState: nextState,
-    characterDefinitions: input.characterDefinitions,
-    handoff: (hostedSessionState) => {
-      const settlementResult = settleTempleReviewAssignmentTable({
-        gameState: nextState,
-        characterDefinitions: input.characterDefinitions,
-        houseDefinition: input.houseDefinition,
-        playerCharacter,
-        seniorMonkCharacter,
-        playerCharacterId: input.playerCharacterId,
-        textEntriesById: input.textEntriesById,
-        ...(input.houseModuleDefaults == null
-          ? {}
-          : { houseModuleDefaults: input.houseModuleDefaults }),
-      });
-      return {
-        gameState: settlementResult.gameState,
-        characterDefinitions: settlementResult.characterDefinitions,
-        sessionState: projectTempleHostedReviewStage({
+  const hostedReviewProjectionHandoff = (projectionInput: {
+    currentStageId: string;
+    expectedActionId?: string;
+    matchesAction?: (actionId: string) => boolean;
+    resolveProjection: () => TempleHostedReviewProjectionResult;
+  }): HouseModuleTransitionResult<"temple-house"> | null => {
+    const handoffResult = matchHostedMeetingProjectedStageHandoff({
+      sharedSessionState: input.sharedSessionState ?? null,
+      hostedMeetingId: "meeting.temple.review",
+      currentStageId: projectionInput.currentStageId,
+      actionId,
+      ...(projectionInput.expectedActionId == null
+        ? {}
+        : { expectedActionId: projectionInput.expectedActionId }),
+      ...(projectionInput.matchesAction == null
+        ? {}
+        : { matchesAction: projectionInput.matchesAction }),
+      gameState: nextState,
+      characterDefinitions: input.characterDefinitions,
+      resolveProjection: projectionInput.resolveProjection,
+      projectSessionState: (hostedSessionState, projectionResult) =>
+        projectTempleHostedReviewStage({
           hostedSessionState,
-          projection: settlementResult.projection,
-          gameState: settlementResult.gameState,
+          projection: projectionResult.projection,
+          gameState: projectionResult.gameState,
           ...(input.textEntriesById == null
             ? {}
             : { textEntriesById: input.textEntriesById }),
@@ -4473,28 +4516,45 @@ function handleAction(
             : { houseModuleDefaults: input.houseModuleDefaults }),
           playerCharacterId: input.playerCharacterId,
         }),
-      };
-    },
+    });
+    if (handoffResult == null) {
+      return null;
+    }
+    return {
+      gameState: handoffResult.gameState,
+      characterDefinitions: handoffResult.characterDefinitions,
+      sessionState,
+      sharedSessionState: handoffResult.sharedSessionState,
+    };
+  };
+
+  const hostedAssignmentTableHandoff = hostedReviewProjectionHandoff({
+    currentStageId: "assignment-table",
+    expectedActionId: "close-review-assignment-table",
+    resolveProjection: () =>
+      settleTempleReviewAssignmentTable({
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+        houseDefinition: input.houseDefinition,
+        playerCharacter,
+        seniorMonkCharacter,
+        playerCharacterId: input.playerCharacterId,
+        textEntriesById: input.textEntriesById,
+        ...(input.houseModuleDefaults == null
+          ? {}
+          : { houseModuleDefaults: input.houseModuleDefaults }),
+      }),
   });
   if (hostedAssignmentTableHandoff != null) {
-    return {
-      gameState: hostedAssignmentTableHandoff.gameState,
-      characterDefinitions: hostedAssignmentTableHandoff.characterDefinitions,
-      sessionState,
-      sharedSessionState: hostedAssignmentTableHandoff.sharedSessionState,
-    };
+    return hostedAssignmentTableHandoff;
   }
 
-  const hostedRewardStageHandoff = matchHostedMeetingStageHandoff({
-    sharedSessionState: input.sharedSessionState ?? null,
-    hostedMeetingId: "meeting.temple.review",
+  const hostedRewardStageHandoff = hostedReviewProjectionHandoff({
     currentStageId: "reward",
-    actionId,
     expectedActionId: "close-temple-overlay",
-    gameState: nextState,
-    characterDefinitions: input.characterDefinitions,
-    handoff: (hostedSessionState) => {
-      const personnelProjection = createTemplePersonnelOrPraiseProjection({
+    resolveProjection: () =>
+      createTempleReviewOverlayCloseFollowupProjection({
+        currentStageId: "reward",
         gameState: nextState,
         characterDefinitions: input.characterDefinitions,
         houseDefinition: input.houseDefinition,
@@ -4505,95 +4565,40 @@ function handleAction(
         ...(input.houseModuleDefaults == null
           ? {}
           : { houseModuleDefaults: input.houseModuleDefaults }),
-      });
-      return {
-        gameState: personnelProjection.gameState,
-        characterDefinitions: personnelProjection.characterDefinitions,
-        sessionState: projectTempleHostedReviewStage({
-          hostedSessionState,
-          projection: personnelProjection.projection,
-          gameState: personnelProjection.gameState,
-          ...(input.textEntriesById == null
-            ? {}
-            : { textEntriesById: input.textEntriesById }),
-          ...(input.activityDefinitionsById == null
-            ? {}
-            : { activityDefinitionsById: input.activityDefinitionsById }),
-          ...(input.houseModuleDefaults == null
-            ? {}
-            : { houseModuleDefaults: input.houseModuleDefaults }),
-          playerCharacterId: input.playerCharacterId,
-        }),
-      };
-    },
+      }),
   });
   if (hostedRewardStageHandoff != null) {
-    return {
-      gameState: hostedRewardStageHandoff.gameState,
-      characterDefinitions: hostedRewardStageHandoff.characterDefinitions,
-      sessionState,
-      sharedSessionState: hostedRewardStageHandoff.sharedSessionState,
-    };
+    return hostedRewardStageHandoff;
   }
 
-  const hostedPersonnelStageHandoff = matchHostedMeetingStageHandoff({
-    sharedSessionState: input.sharedSessionState ?? null,
-    hostedMeetingId: "meeting.temple.review",
+  const hostedPersonnelStageHandoff = hostedReviewProjectionHandoff({
     currentStageId: "personnel",
-    actionId,
     expectedActionId: "close-temple-overlay",
-    gameState: nextState,
-    characterDefinitions: input.characterDefinitions,
-    handoff: (hostedSessionState) => {
-      const praiseProjection = createTemplePraiseProjection({
+    resolveProjection: () =>
+      createTempleReviewOverlayCloseFollowupProjection({
+        currentStageId: "personnel",
         gameState: nextState,
         characterDefinitions: input.characterDefinitions,
+        houseDefinition: input.houseDefinition,
         playerCharacter,
         seniorMonkCharacter,
         playerCharacterId: input.playerCharacterId,
         textEntriesById: input.textEntriesById,
-      });
-      return {
-        gameState: praiseProjection.gameState,
-        characterDefinitions: praiseProjection.characterDefinitions,
-        sessionState: projectTempleHostedReviewStage({
-          hostedSessionState,
-          projection: praiseProjection.projection,
-          gameState: praiseProjection.gameState,
-          ...(input.textEntriesById == null
-            ? {}
-            : { textEntriesById: input.textEntriesById }),
-          ...(input.activityDefinitionsById == null
-            ? {}
-            : { activityDefinitionsById: input.activityDefinitionsById }),
-          ...(input.houseModuleDefaults == null
-            ? {}
-            : { houseModuleDefaults: input.houseModuleDefaults }),
-          playerCharacterId: input.playerCharacterId,
-        }),
-      };
-    },
+        ...(input.houseModuleDefaults == null
+          ? {}
+          : { houseModuleDefaults: input.houseModuleDefaults }),
+      }),
   });
   if (hostedPersonnelStageHandoff != null) {
-    return {
-      gameState: hostedPersonnelStageHandoff.gameState,
-      characterDefinitions: hostedPersonnelStageHandoff.characterDefinitions,
-      sessionState,
-      sharedSessionState: hostedPersonnelStageHandoff.sharedSessionState,
-    };
+    return hostedPersonnelStageHandoff;
   }
 
-  const hostedAdviceStageHandoff = matchHostedMeetingStageHandoff({
-    sharedSessionState: input.sharedSessionState ?? null,
-    hostedMeetingId: "meeting.temple.review",
+  const hostedAdviceStageHandoff = hostedReviewProjectionHandoff({
     currentStageId: "advice",
-    actionId,
-    matchesAction: (actionId) =>
-      actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID ||
-      actionId === TEMPLE_REVIEW_STAY_SILENT_ACTION_ID,
-    gameState: nextState,
-    characterDefinitions: input.characterDefinitions,
-    handoff: (hostedSessionState) => {
+    matchesAction: (currentActionId) =>
+      currentActionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID ||
+      currentActionId === TEMPLE_REVIEW_STAY_SILENT_ACTION_ID,
+    resolveProjection: () => {
       const reviewWorkChoices = getReviewWorkChoices(
         nextState,
         input.playerCharacterId,
@@ -4616,48 +4621,28 @@ function handleAction(
         specialTaskHookResult.type === "none"
           ? []
           : specialTaskHookResult.descriptionLines;
-      const projection: TempleHostedReviewStageProjection = {
-        meetingStage: "assign-duty",
-        overlay: null,
-        dialogueLines: [
-          ...adviceResponseLines,
-          ...specialTaskLines,
-          ...getTempleAssignDutyLines(
-            nextState,
-            reviewWorkChoices,
-            input.textEntriesById,
-            input.houseModuleDefaults
-          ),
-        ],
-      };
       return {
         gameState: nextState,
         characterDefinitions: input.characterDefinitions,
-        sessionState: projectTempleHostedReviewStage({
-          hostedSessionState,
-          projection,
-          gameState: nextState,
-          playerCharacterId: input.playerCharacterId,
-          ...(input.activityDefinitionsById == null
-            ? {}
-            : { activityDefinitionsById: input.activityDefinitionsById }),
-          ...(input.textEntriesById == null
-            ? {}
-            : { textEntriesById: input.textEntriesById }),
-          ...(input.houseModuleDefaults == null
-            ? {}
-            : { houseModuleDefaults: input.houseModuleDefaults }),
-        }),
+        projection: {
+          meetingStage: "assign-duty",
+          overlay: null,
+          dialogueLines: [
+            ...adviceResponseLines,
+            ...specialTaskLines,
+            ...getTempleAssignDutyLines(
+              nextState,
+              reviewWorkChoices,
+              input.textEntriesById,
+              input.houseModuleDefaults
+            ),
+          ],
+        },
       };
     },
   });
   if (hostedAdviceStageHandoff != null) {
-    return {
-      gameState: hostedAdviceStageHandoff.gameState,
-      characterDefinitions: hostedAdviceStageHandoff.characterDefinitions,
-      sessionState,
-      sharedSessionState: hostedAdviceStageHandoff.sharedSessionState,
-    };
+    return hostedAdviceStageHandoff;
   }
   const hostedMeetingResult = resumeTempleHostedMeeting(
     {

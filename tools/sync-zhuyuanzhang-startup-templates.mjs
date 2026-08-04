@@ -6,6 +6,8 @@ import {
   ADDITIVE_SHARED_TEXT_ENTRY_PREFIXES,
   BUILTIN_TEMPLATE_ONLY_MANIFEST_FILE_KEYS,
   PLAYABLE_FAMILY_FILE_NAMES,
+  PUBLICATION_REVIEW_DIALOGUE_IDS,
+  PUBLICATION_REVIEW_EVENT_IDS,
   PUBLICATION_ONLY_MANIFEST_FILE_KEYS,
   PUBLICATION_SYNC_FILE_RULES,
   RUNTIME_BUILDING_SUPPORT_FILE_NAMES,
@@ -99,6 +101,46 @@ function syncCharacterStartupFields(runtimeCharacters, targetCharacters) {
   });
 }
 
+function projectSelectedRecordsForSync(sourceRecords, targetRecords, selectedIds) {
+  const sourceById = new Map(
+    (Array.isArray(sourceRecords) ? sourceRecords : []).map((record) => [
+      record.id,
+      record,
+    ])
+  );
+  const selectedIdSet = new Set(selectedIds);
+  const seenSelectedIds = new Set();
+  const nextRecords = [];
+
+  for (const targetRecord of Array.isArray(targetRecords) ? targetRecords : []) {
+    if (!selectedIdSet.has(targetRecord.id)) {
+      nextRecords.push(targetRecord);
+      continue;
+    }
+
+    const sourceRecord = sourceById.get(targetRecord.id);
+    if (sourceRecord == null) {
+      nextRecords.push(targetRecord);
+      continue;
+    }
+
+    nextRecords.push(sourceRecord);
+    seenSelectedIds.add(targetRecord.id);
+  }
+
+  for (const recordId of selectedIds) {
+    if (seenSelectedIds.has(recordId)) {
+      continue;
+    }
+    const sourceRecord = sourceById.get(recordId);
+    if (sourceRecord != null) {
+      nextRecords.push(sourceRecord);
+    }
+  }
+
+  return nextRecords;
+}
+
 export function projectTextEntriesForSync(sourceEntries, targetEntries) {
   const nextEntries = {};
   for (const key of Object.keys(targetEntries)) {
@@ -178,6 +220,25 @@ export function projectRuntimeEventsForSync(sourceEvents, targetEvents) {
   }
 
   return nextEvents;
+}
+
+export function projectPublicReviewEventsForSync(sourceEvents, targetEvents) {
+  return projectSelectedRecordsForSync(
+    sourceEvents,
+    targetEvents,
+    PUBLICATION_REVIEW_EVENT_IDS
+  );
+}
+
+export function projectPublicReviewDialoguesForSync(
+  sourceDialogues,
+  targetDialogues
+) {
+  return projectSelectedRecordsForSync(
+    sourceDialogues,
+    targetDialogues,
+    PUBLICATION_REVIEW_DIALOGUE_IDS
+  );
 }
 
 export function projectPublicPackManifestForSync(
@@ -443,6 +504,32 @@ async function buildTargetContents(sourceRoot, targetRoots) {
         targetRoot.includes("/public/")
           ? formatJson(canonicalPlayableFamily.playableShells)
           : null,
+      publicDialoguesPath:
+        targetRoot.includes("/public/")
+          ? path.join(targetRoot, "dialogues.json")
+          : null,
+      publicDialoguesContent:
+        targetRoot.includes("/public/")
+          ? formatJson(
+              projectPublicReviewDialoguesForSync(
+                canonicalRuntimeBuildingSupport.dialogues,
+                await readJson(path.join(targetRoot, "dialogues.json"))
+              )
+            )
+          : null,
+      publicEventsPath:
+        targetRoot.includes("/public/")
+          ? path.join(targetRoot, "events.json")
+          : null,
+      publicEventsContent:
+        targetRoot.includes("/public/")
+          ? formatJson(
+              projectPublicReviewEventsForSync(
+                canonicalRuntimeEvents,
+                await readJson(path.join(targetRoot, "events.json"))
+              )
+            )
+          : null,
       runtimePlayablesPath:
         targetRoot === runtimeRoot ? path.join(targetRoot, "playables.json") : null,
       runtimePlayablesContent:
@@ -681,6 +768,16 @@ async function main() {
         fileName: "playable-shells.json",
         filePath: target.publicPlayableShellsPath,
         content: target.publicPlayableShellsContent,
+      },
+      {
+        fileName: "dialogues.json",
+        filePath: target.publicDialoguesPath,
+        content: target.publicDialoguesContent,
+      },
+      {
+        fileName: "events.json",
+        filePath: target.publicEventsPath,
+        content: target.publicEventsContent,
       },
       {
         fileName: "playables.json",

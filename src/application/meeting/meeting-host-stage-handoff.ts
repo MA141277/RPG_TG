@@ -12,6 +12,12 @@ export type HostedMeetingStageHandoffResult = {
   sharedSessionState: HouseSharedSessionState | null;
 };
 
+export type HostedMeetingProjectionResult<TProjection> = {
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+  projection: TProjection;
+};
+
 export function matchHostedMeetingStageHandoff(input: {
   sharedSessionState: HouseSharedSessionState | null;
   hostedMeetingId: string;
@@ -61,4 +67,43 @@ export function matchHostedMeetingStageHandoff(input: {
       hostedMeeting: nextHostedMeeting,
     },
   };
+}
+
+export function matchHostedMeetingProjectedStageHandoff<TProjection>(input: {
+  sharedSessionState: HouseSharedSessionState | null;
+  hostedMeetingId: string;
+  currentStageId: string;
+  actionId: string;
+  expectedActionId?: string;
+  matchesAction?: ((actionId: string) => boolean) | undefined;
+  gameState: GameState;
+  characterDefinitions: CharacterDefinition[];
+  resolveProjection: () => HostedMeetingProjectionResult<TProjection>;
+  projectSessionState: (
+    sessionState: MeetingSessionState,
+    projectionResult: HostedMeetingProjectionResult<TProjection>
+  ) => MeetingSessionState | null;
+}): HostedMeetingStageHandoffResult | null {
+  return matchHostedMeetingStageHandoff({
+    sharedSessionState: input.sharedSessionState,
+    hostedMeetingId: input.hostedMeetingId,
+    currentStageId: input.currentStageId,
+    actionId: input.actionId,
+    ...(input.expectedActionId == null
+      ? {}
+      : { expectedActionId: input.expectedActionId }),
+    ...(input.matchesAction == null
+      ? {}
+      : { matchesAction: input.matchesAction }),
+    gameState: input.gameState,
+    characterDefinitions: input.characterDefinitions,
+    handoff: (sessionState) => {
+      const projectionResult = input.resolveProjection();
+      return {
+        gameState: projectionResult.gameState,
+        characterDefinitions: projectionResult.characterDefinitions,
+        sessionState: input.projectSessionState(sessionState, projectionResult),
+      };
+    },
+  });
 }

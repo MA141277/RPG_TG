@@ -117,6 +117,16 @@ export const PLAYABLE_FAMILY_OWNERSHIP = Object.freeze({
   publicPublicationDerivedFrom: "playable-shells.json",
 });
 
+export const PUBLICATION_REVIEW_EVENT_IDS = Object.freeze([
+  "event.building.template.house.temple.review",
+  "event.building.template.house.leader_residence.review",
+]);
+
+export const PUBLICATION_REVIEW_DIALOGUE_IDS = Object.freeze([
+  "scene.building.template.house.temple.review",
+  "scene.building.template.house.leader_residence.review",
+]);
+
 export const LEGACY_PUBLICATION_FILE_RULES = Object.freeze([]);
 
 export const PUBLICATION_ONLY_MANIFEST_FILE_KEYS = Object.freeze(
@@ -134,6 +144,18 @@ export const PUBLICATION_SYNC_FILE_RULES = Object.freeze([
     mode: "public-playable-shells-projection",
     reason:
       "public 发布层应同步暴露 canonical 的 playable-shells.json，默认模板导入不再依赖旧的 flow-playables 兼容文件。",
+  }),
+  Object.freeze({
+    fileName: "events.json",
+    mode: "public-review-event-projection",
+    reason:
+      "public 发布层中的 review 事件必须投影自 builtin template，避免旧 launchFlow authored 内容继续分叉。",
+  }),
+  Object.freeze({
+    fileName: "dialogues.json",
+    mode: "public-review-dialogue-projection",
+    reason:
+      "public 发布层中的 review 对话必须投影自 builtin template，保证默认模板导入拿到 canonical authored dialogues。",
   }),
 ]);
 

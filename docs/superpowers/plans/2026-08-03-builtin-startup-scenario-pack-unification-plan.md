@@ -87,6 +87,10 @@
   - Summary: `Added startup-loading-launcher so continue / restore / builtin start / scenario-pack preview all reuse one injected loading/request launcher seam, and src/main.ts now keeps only startup wiring, alerts, and runtime hooks.`
   - Verification: `pnpm run build:test; node --test tests/startup-session-coordinator.test.cjs; node --test --test-name-pattern "child 27 startup app-state factory builders no longer directly start story events|startup bootstrap owner is extracted from main.ts into a dedicated startup module|startup resolved session owner is extracted from the coordinator into a dedicated startup module|startup loading launcher owner is extracted from main.ts into a dedicated startup module" tests/robustness.test.cjs`
   - Next: `Treat startup-chain owner cleanup as frozen for now and move to source ownership unification, unless a concrete startup follow-up owner drift is found in runtime behavior.`
+- 2026-08-04
+  - Summary: `修正了 startup shell 的两处残留装配错误：startup app-state factory 现在重新接到 battle UI editor 的默认值工厂，MainUiFlow 也改为在 startup-loading-launcher 创建完各个 start*WithLoading 回调后再装配，避免 main.ts 在回调未声明前就绑定菜单入口。`
+  - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm exec tsc -p tsconfig.json --noEmit`; `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build`
+  - Next: `继续保持启动链行为冻结；若后续再处理 startup，仅限真实 runtime drift 或 owner 残留，不再回到壳层声明顺序问题。`
 
 ---
 

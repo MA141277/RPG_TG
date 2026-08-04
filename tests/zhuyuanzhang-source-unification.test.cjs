@@ -266,8 +266,16 @@ test("zhuyuanzhang source contract records publication-only manifest keys and bu
   });
   assert.deepEqual(
     contract.PUBLICATION_SYNC_FILE_RULES.map((rule) => rule.fileName),
-    ["pack.json", "playable-shells.json"]
+    ["pack.json", "playable-shells.json", "events.json", "dialogues.json"]
   );
+  assert.deepEqual(contract.PUBLICATION_REVIEW_EVENT_IDS, [
+    "event.building.template.house.temple.review",
+    "event.building.template.house.leader_residence.review",
+  ]);
+  assert.deepEqual(contract.PUBLICATION_REVIEW_DIALOGUE_IDS, [
+    "scene.building.template.house.temple.review",
+    "scene.building.template.house.leader_residence.review",
+  ]);
 });
 
 test("zhuyuanzhang source contract records runtime building-support mirror files", async () => {
@@ -440,6 +448,62 @@ test("zhuyuanzhang public playable-shells file is fully derived from builtin tem
   );
 
   assert.deepEqual(publicPlayableShells, builtinTemplatePlayableShells);
+});
+
+test("zhuyuanzhang public publication mirrors canonical review events and dialogues from builtin template", () => {
+  const builtinTemplateRoot = path.join(
+    process.cwd(),
+    "src",
+    "modules",
+    "script-editor",
+    "builtin-templates",
+    "zhuyuanzhang"
+  );
+  const publicTemplateRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+  const builtinEvents = JSON.parse(
+    fs.readFileSync(path.join(builtinTemplateRoot, "events.json"), "utf8")
+  );
+  const publicEvents = JSON.parse(
+    fs.readFileSync(path.join(publicTemplateRoot, "events.json"), "utf8")
+  );
+  const builtinDialogues = JSON.parse(
+    fs.readFileSync(path.join(builtinTemplateRoot, "dialogues.json"), "utf8")
+  );
+  const publicDialogues = JSON.parse(
+    fs.readFileSync(path.join(publicTemplateRoot, "dialogues.json"), "utf8")
+  );
+  const builtinEventById = new Map(
+    builtinEvents.map((record) => [record.id, record])
+  );
+  const publicEventById = new Map(publicEvents.map((record) => [record.id, record]));
+  const builtinDialogueById = new Map(
+    builtinDialogues.map((record) => [record.id, record])
+  );
+  const publicDialogueById = new Map(
+    publicDialogues.map((record) => [record.id, record])
+  );
+
+  for (const eventId of [
+    "event.building.template.house.temple.review",
+    "event.building.template.house.leader_residence.review",
+  ]) {
+    assert.deepEqual(publicEventById.get(eventId), builtinEventById.get(eventId));
+  }
+
+  for (const dialogueId of [
+    "scene.building.template.house.temple.review",
+    "scene.building.template.house.leader_residence.review",
+  ]) {
+    assert.deepEqual(
+      publicDialogueById.get(dialogueId),
+      builtinDialogueById.get(dialogueId)
+    );
+  }
 });
 
 test("zhuyuanzhang canonical playable family still resolves from builtin template playable-shells", async () => {

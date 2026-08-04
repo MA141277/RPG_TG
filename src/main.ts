@@ -609,7 +609,7 @@ const startupAppStateFactory = createStartupAppStateFactory({
     "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
     "battle-ui-screen": createDefaultBattleUiScreenLayout(),
   }),
-  createDefaultBattleUiValues,
+  createDefaultBattleUiValues: createDefaultBattleUiEditorValues,
 });
 
 const selectableCharacters = selectPlayableCharacters(
@@ -1050,26 +1050,6 @@ const appAudioController = createAppAudioController({
     BUILTIN_AUDIO_ASSET_URLS[assetPath] ??
     new URL(`../${assetPath}`, import.meta.url).href,
 });
-const mainUiFlow = new MainUiFlow({
-  overlayRoot: uiOverlayElement,
-  characters: selectableCharacters,
-  scenarioPacks: builtInScenarioPacks,
-  onStartGame: startMainGameWithLoading,
-  onContinueGame: startContinueGameWithLoading,
-  onStartScenarioPack: startScenarioPackWithLoading,
-  onStartLoadedScenarioPack: startLoadedScenarioPackWithLoading,
-  onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
-  onQueueButtonSound: queueButtonSoundEffect,
-  onExitRuntimePreview: exitScriptEditorRuntimePreview,
-  loadSaveData,
-  getAppState: () => appState,
-});
-
-syncGameViewport();
-window.addEventListener("resize", syncGameViewport);
-setGameVisibility(false);
-mainUiFlow.mount();
-mainUiFlow.showMainMenu();
 
 function getCurrentPlayerCharacter(): CharacterDefinition | null {
   return (
@@ -2548,6 +2528,27 @@ const {
   createRuntimePreviewScenarioPackSource,
   sanitizeScenarioPackForRuntimePreview,
 });
+
+const mainUiFlow = new MainUiFlow({
+  overlayRoot: uiOverlayElement,
+  characters: selectableCharacters,
+  scenarioPacks: builtInScenarioPacks,
+  onStartGame: startMainGameWithLoading,
+  onContinueGame: startContinueGameWithLoading,
+  onStartScenarioPack: startScenarioPackWithLoading,
+  onStartLoadedScenarioPack: startLoadedScenarioPackWithLoading,
+  onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
+  onQueueButtonSound: queueButtonSoundEffect,
+  onExitRuntimePreview: exitScriptEditorRuntimePreview,
+  loadSaveData,
+  getAppState: () => appState,
+});
+
+syncGameViewport();
+window.addEventListener("resize", syncGameViewport);
+setGameVisibility(false);
+mainUiFlow.mount();
+mainUiFlow.showMainMenu();
 
 function exitScriptEditorRuntimePreview(): void {
   resetMainGameRuntime();

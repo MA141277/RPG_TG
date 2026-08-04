@@ -470,5 +470,39 @@
         "textId": "runtime.zhu_yuanzhang.tavern.open.002"
       }
     ]
+  },
+  {
+    "id": "scene.building.template.house.temple.review",
+    "name": "皇觉寺 - 评定",
+    "nodes": [
+      {
+        "type": "narration",
+        "textId": "runtime.zhu_yuanzhang.temple.review.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_temple_abbot",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.temple.review.002"
+      }
+    ]
+  },
+  {
+    "id": "scene.building.template.house.leader_residence.review",
+    "name": "将领府邸 - 议事",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_liu_bowen",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.keep.audience.open.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_liu_bowen",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.keep.audience.open.002"
+      }
+    ]
   }
 ]

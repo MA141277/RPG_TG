@@ -98,18 +98,7 @@
       "building:house.template.leader_residence",
       "action:review"
     ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.leader_residence.review",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.leader_residence",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
+    "dialogueId": "scene.building.template.house.leader_residence.review"
   },
   {
     "id": "event.building.house.kulan.temple.enter",
@@ -133,18 +122,7 @@
       "building:house.template.temple",
       "action:review"
     ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.temple.review",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.temple",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
+    "dialogueId": "scene.building.template.house.temple.review"
   },
   {
     "id": "event.building.house.kulan.temple.work",

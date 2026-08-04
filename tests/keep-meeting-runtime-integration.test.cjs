@@ -440,6 +440,50 @@ test("keep review shared meeting should drive the existing keep shell view model
   assert.equal(viewModel.dialogue?.advanceActionId, "advance-meeting-stage");
 });
 
+test("keep review shared meeting should not keep a local keep-review session owner active", () => {
+  const meetingContent = createKeepMeetingContent();
+  const entered = keepHouseHouseModule.enter({
+    gameState: createKeepReviewDueState(),
+    characterDefinitions: createKeepCharacters(),
+    houseDefinition: createKeepHouseDefinition(),
+    playerCharacterId: "char.player",
+    sharedSessionState: null,
+    meetingDefinitionsById: meetingContent.meetingDefinitionsById,
+    meetingBindings: meetingContent.meetingBindings,
+    meetingPanelsById: meetingContent.meetingPanelsById,
+    meetingChoiceSetsById: meetingContent.meetingChoiceSetsById,
+    meetingActionSetsById: meetingContent.meetingActionSetsById,
+  });
+
+  assert.equal(entered.sharedSessionState?.hostedMeeting?.meetingId, "meeting.keep.review");
+  assert.equal(entered.sessionState?.mode, "audience");
+  assert.equal(entered.sessionState?.meetingStage, "finished");
+
+  const ignoredLegacyAdvance = keepHouseHouseModule.dispatch({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: createKeepHouseDefinition(),
+    playerCharacterId: "char.player",
+    sessionState: entered.sessionState,
+    sharedSessionState: entered.sharedSessionState,
+    meetingDefinitionsById: meetingContent.meetingDefinitionsById,
+    meetingBindings: meetingContent.meetingBindings,
+    meetingPanelsById: meetingContent.meetingPanelsById,
+    meetingChoiceSetsById: meetingContent.meetingChoiceSetsById,
+    meetingActionSetsById: meetingContent.meetingActionSetsById,
+    request: {
+      type: "action",
+      actionId: "advance-keep-dialogue",
+    },
+  });
+
+  assert.equal(
+    ignoredLegacyAdvance.sharedSessionState?.hostedMeeting?.sessionState.currentStageId,
+    "intro"
+  );
+  assert.equal(ignoredLegacyAdvance.sessionState?.dialoguePhase, "greeting");
+});
+
 test("keep review shared meeting should advance through keep dispatch actions", () => {
   const meetingContent = createKeepMeetingContent();
   const entered = keepHouseHouseModule.enter({

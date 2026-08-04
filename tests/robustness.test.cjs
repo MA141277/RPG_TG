@@ -10863,6 +10863,116 @@ test("temple review assignment scenario seeds are owned by a dedicated temple he
   );
 });
 
+test("temple review praise follow-up projection is owned by one helper across hosted and fallback paths", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const helperBlock =
+    functionBlocksByName.get("createTempleReviewPraiseFollowupProjectionSeed") ?? "";
+  const projectBlock =
+    functionBlocksByName.get("projectTempleHostedReviewStage") ?? "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+
+  assert.match(
+    helperBlock,
+    /function createTempleReviewPraiseFollowupProjectionSeed\(/
+  );
+  assert.match(helperBlock, /getTempleMeetingPolicyLines\(/);
+  assert.match(helperBlock, /createTempleReviewPolicyPanelOverlay\(/);
+  assert.match(helperBlock, /reviewAdvicePrompt/);
+  assert.match(projectBlock, /createTempleReviewPraiseFollowupProjectionSeed\(/);
+  assert.match(legacyBlock, /createTempleReviewPraiseFollowupProjectionSeed\(/);
+  assert.doesNotMatch(projectBlock, /getTempleMeetingPolicyLines\(/);
+  assert.doesNotMatch(projectBlock, /createTempleReviewPolicyPanelOverlay\(/);
+  assert.doesNotMatch(legacyBlock, /createTempleReviewPolicyPanelOverlay\(/);
+});
+
+test("temple review reward and personnel overlay-close follow-up projection is owned by one helper across hosted and fallback paths", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const helperBlock =
+    functionBlocksByName.get("createTempleReviewOverlayCloseFollowupProjection") ??
+    "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+  const hostedBlockMatch = moduleSource.match(
+    /const hostedRewardStageHandoff =[\s\S]*?const hostedAdviceStageHandoff =/
+  );
+  const hostedBlock = hostedBlockMatch?.[0] ?? "";
+
+  assert.match(
+    helperBlock,
+    /function createTempleReviewOverlayCloseFollowupProjection\(/
+  );
+  assert.match(helperBlock, /currentStageId: "reward" \| "personnel"/);
+  assert.match(helperBlock, /createTemplePersonnelOrPraiseProjection\(/);
+  assert.match(helperBlock, /createTemplePraiseProjection\(/);
+  assert.match(hostedBlock, /createTempleReviewOverlayCloseFollowupProjection\(/);
+  assert.match(legacyBlock, /createTempleReviewOverlayCloseFollowupProjection\(/);
+  assert.doesNotMatch(hostedBlock, /createTemplePersonnelOrPraiseProjection\(/);
+  assert.doesNotMatch(hostedBlock, /createTemplePraiseProjection\(/);
+  assert.doesNotMatch(legacyBlock, /createTemplePersonnelOrPraiseProjection\(/);
+  assert.doesNotMatch(legacyBlock, /createTemplePraiseProjection\(/);
+});
+
 test("temple and keep house content files no longer author pack task definitions", () => {
   const templeContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),

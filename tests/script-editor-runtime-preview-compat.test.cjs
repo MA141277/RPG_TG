@@ -211,6 +211,41 @@ test("script-editor URL import preserves canonical playable-shells from public t
   }
 });
 
+test("imported zhuyuanzhang public template keeps canonical review dialogues and dialogue-backed review events", async () => {
+  const templateRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+  const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
+  const project = await loadScriptEditorProjectFromScenarioPackFiles(files);
+
+  for (const [eventId, dialogueId] of [
+    [
+      "event.building.template.house.temple.review",
+      "scene.building.template.house.temple.review",
+    ],
+    [
+      "event.building.template.house.leader_residence.review",
+      "scene.building.template.house.leader_residence.review",
+    ],
+  ]) {
+    const eventRecord = project.events.find((record) => record.id === eventId);
+    const dialogueRecord = project.dialogues.find(
+      (record) => record.id === dialogueId
+    );
+
+    assert.notEqual(eventRecord, undefined);
+    assert.notEqual(dialogueRecord, undefined);
+    assert.deepEqual(eventRecord.actions, []);
+    assert.deepEqual(eventRecord.destination, {
+      family: "dialogue",
+      targetId: dialogueId,
+    });
+  }
+});
+
 test("zhuyuanzhang runtime and editor template startup profiles stay aligned", () => {
   const runtimeProfile = JSON.parse(
     fs.readFileSync(

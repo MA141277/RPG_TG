@@ -1027,6 +1027,15 @@ function handleAction(
     };
   }
 
+  if (hostedMeetingResult != null) {
+    return {
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+      sessionState: input.sessionState,
+      sharedSessionState: input.sharedSessionState ?? null,
+    };
+  }
+
   if (input.request.actionId === "close-alert") {
     return withSessionState(input, sessionState, {
       overlay: null,
@@ -1118,18 +1127,6 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       readNumericVariable(nextState, KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown, 0) <= 0;
 
     const lateExpelled = lateAttendance.resolution?.expelled === true;
-    const reviewHostSessionState = createInitialKeepHouseSessionState(
-      "meeting",
-      "intro",
-      lateAttendance.resolution == null
-        ? getMeetingIntroLines(textEntriesById)
-        : getLateMeetingIntroLines(
-            textEntriesById,
-            lateAttendance.resolution.lateDays,
-            lateAttendance.resolution.contributionPenalty
-          ),
-      contributionEntries
-    );
     const audienceSessionState = createInitialKeepHouseSessionState(
       "audience",
       "finished",
@@ -1147,7 +1144,7 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       const launchedMeetingResult = tryLaunchKeepReviewMeeting(
         input,
         nextState,
-        reviewHostSessionState
+        audienceSessionState
       );
       if (launchedMeetingResult != null) {
         return launchedMeetingResult;
@@ -1206,6 +1203,7 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
         createContributionEntries(nextState, input.characterDefinitions, lordCharacter.clanId)
       );
     const isHostedMeetingActive = input.sharedSessionState?.hostedMeeting != null;
+    const usesMeetingShell = isHostedMeetingActive || sessionState.mode === "meeting";
     const hostedMeetingPresenter = resumeKeepHostedMeeting(
       {
         gameState: nextState,
@@ -1237,7 +1235,7 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
         : resolveKeepTaskDefinition(input, sessionState.selectedTaskId);
     const shouldShowDialogue = sessionState.dialoguePhase !== "idle";
     const rosterEntries =
-      sessionState.mode === "meeting"
+      usesMeetingShell
         ? sessionState.contributionEntries.filter(
             (entry) => entry.characterId !== lordCharacter.id
           )
@@ -1259,7 +1257,7 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
         ? "none"
         : nextState.ui.mainHouseMissionText);
     const strategySubtitle =
-      sessionState.mode === "meeting"
+      usesMeetingShell
         ? "review / assembled officers"
         : `${lordCharacter.title ?? "lord"} / command`;
 
@@ -1275,7 +1273,7 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
           ? { actionId: entry.actionId }
           : {}),
         ...(entry.title == null ? {} : { title: entry.title }),
-        ...(sessionState.mode === "meeting"
+        ...(usesMeetingShell
           ? { isSelected: sessionState.contributionEntries[0]?.characterId === entry.characterId }
           : {}),
       })),

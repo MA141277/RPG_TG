@@ -2,6 +2,46 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-04 Zhuyuanzhang Review Publication Projection
+
+### Added
+- 在 `tools/zhuyuanzhang-source-sync-contract.mjs` 增加 public publication 的 review authored projection 合同，明确 `event.building.template.house.temple.review`、`event.building.template.house.leader_residence.review` 及其对应 dialogues 必须由 builtin template 投影到 public。
+
+### Changed
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 新增 public review event / dialogue projection，只替换受合同约束的 canonical review 记录，保留其余 public-only 发布层内容不变。
+- `public/script-editor-templates/zhuyuanzhang/events.json` 不再让 temple / leader residence review 停留在旧 `launchFlow` authored 形态，而是与 builtin template 的 dialogue-backed event 保持一致。
+- `public/script-editor-templates/zhuyuanzhang/dialogues.json` 现在会发布上述 canonical review dialogues，默认模板导入链不再缺失这部分 meeting/review authored 内容。
+
+### Impact
+- `zhuyuanzhang` 继续收口到“runtime pack canonical + builtin template 同步 + public 仅 publication layer”的 source-unification 目标，meeting/review 相关 authored 内容不再由 public 单独持有一套旧合同。
+- Script Editor 的 `使用模板 -> 导入 -> 运行预览/导出` 路径现在会从 public 默认模板拿到与 maintained packs 一致的 review dialogues/events，round-trip 风险更低。
+
+## 2026-08-04 Hosted Review Owner Narrowing
+
+### Changed
+- `src/application/meeting/meeting-host-stage-handoff.ts` 新增了通用的 projected-stage handoff helper，让宿主先结算再把结果投影回 hosted meeting 的场景，能够复用一条更正式的 shared seam，而不是在 house module 内重复拼接 hosted session 更新。
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 现在把 temple review 的 `assignment-table`、`reward`、`personnel`、`advice` 这几段 hosted projection 都收敛到同一类 shared projected handoff，继续压缩 `projectTempleHostedReviewStage(...)` 周边的重复 owner 组织方式。
+- `src/application/house-modules/keep-house/keep-house-house-module.ts` 不再为 hosted keep review 额外保留一份本地 `meeting` host session 起点；shared meeting 激活时，宿主 keep action 会直接停在 shared owner，不再让本地 review session 形成第二 owner。
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 进一步把 `praise -> situation / policy / advice` 这段后续投影 seed 收口到 `createTempleReviewPraiseFollowupProjectionSeed(...)`，让 hosted projection 和 no-meeting legacy fallback 共用同一份 owner，而不是各自再拼一遍 policy/advice 投影资源。
+
+### Added
+- `tests/meeting-host-stage-handoff.test.cjs` 锁住新的 projected hosted stage handoff 合同。
+- `tests/keep-meeting-runtime-integration.test.cjs` 新增回归，确认 keep review 进入 hosted meeting 后不会继续保留本地 keep-review session owner。
+- `tests/robustness.test.cjs` 新增结构回归，锁定 temple review 的 praise 后续投影不再在 hosted path 与 legacy fallback 内各自重复持有一份 seed。
+
+### Impact
+- temple / keep review 继续按 owner inventory 收口：宿主保留入口资格、return target 和必要 settlement seam；shared meeting 拥有阶段推进与 hosted session 更新；没有再把 review 逻辑塞回 `src/main.ts` 或宿主第二套状态机。
+
+## 2026-08-04 Startup Shell Wiring Fix
+
+### Changed
+- `src/main.ts` 把 startup app-state factory 传入的 battle UI 默认值工厂名修正为 `createDefaultBattleUiEditorValues`，不再引用不存在的 `createDefaultBattleUiValues` 标识符。
+- `src/main.ts` 现在在 `createStartupLoadingLauncher(...)` 返回各个 `start*WithLoading` 回调之后，再装配 `MainUiFlow`；启动壳不再在回调尚未建立前就把它们绑定进主菜单入口。
+
+### Impact
+- 启动链 owner 没有回退到 `main.ts` 业务分支，只是修正了壳层装配顺序和依赖名残留。
+- `pnpm exec tsc -p tsconfig.json --noEmit` 恢复通过，启动链统一计划里的 shell/launcher 收尾残留减少了一块。
+
 ## 2026-08-03 AI Collaboration Governance
 
 ### Changed
