@@ -1,7 +1,9 @@
 ﻿import type {
   ScriptEditorActivityRecord,
+  ScriptEditorDialogueRecord,
   ScriptEditorEntityRecord,
   ScriptEditorEventRecord,
+  ScriptEditorMinigameRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorProjectFileKey,
   ScriptEditorTextEntryRecord,
@@ -14,8 +16,6 @@ import {
 import {
   countScriptEditorLocationMenuEntries,
   formalizeScriptEditorProjectMenus,
-  listScriptEditorMenuModuleRecords,
-  listScriptEditorMountedMenus,
   listScriptEditorLocationMenuBundles,
 } from "./menu-authoring";
 import {
@@ -24,7 +24,8 @@ import {
 
 export type ScriptEditorWorkspaceFamily =
   | ScriptEditorProjectFileKey
-  | "stageConfiguration";
+  | "stageConfiguration"
+  | "menuItems";
 
 export type ScriptEditorWorkspaceSelection = {
   family: ScriptEditorWorkspaceFamily;
@@ -153,7 +154,6 @@ const FAMILY_LABELS: Record<string, string> = {
   progressTracks: "阶段轨道",
   progressTrackBindings: "轨道绑定",
   settlements: "结算",
-  menuResources: "菜单",
   storyPack: "剧本导出",
   people: "人物",
   portraits: "立绘资源",
@@ -162,10 +162,10 @@ const FAMILY_LABELS: Record<string, string> = {
   buildings: "建筑",
   events: "事件",
   quests: "任务",
-  items: "道具",
   activities: "活动",
   dialogues: "对话",
   minigames: "玩法",
+  menuItems: "菜单",
   storyNodes: "剧情节点",
   textEntries: "文本",
   conditionGroups: "条件组",
@@ -185,28 +185,22 @@ const TREE_GROUPS: Array<{
   {
     id: "world",
     label: "世界",
-    families: ["people", "cities", "buildings", "items"],
+    families: ["people", "cities", "buildings"],
   },
   {
     id: "narrative",
-    label: "剧本与文本",
-    families: [
-      "dialogues",
-      "textEntries",
-      "menuResources",
-      "minigames",
-      "settlements",
-    ],
+    label: "剧情与文本",
+    families: ["dialogues", "minigames", "settlements"],
   },
   {
     id: "gameplay",
     label: "玩法",
-    families: ["events", "stageConfiguration"],
+    families: ["events", "stageConfiguration", "menuItems"],
   },
   {
     id: "library",
     label: "资产库",
-    families: ["portraits", "portraitVariants"],
+    families: ["portraits", "portraitVariants", "textEntries"],
   },
 ];
 
@@ -244,13 +238,8 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
   selection?: ScriptEditorWorkspaceSelection | undefined;
   visibleFamilies?: readonly ScriptEditorProjectFileKey[] | undefined;
   auxiliaryPanelOpen?: boolean | undefined;
-  exportDiagnostics?: readonly ScriptEditorRuntimeExportDiagnostic[] | undefined;
-  projectIsFormalized?: boolean | undefined;
 }): ScriptEditorWorkspaceViewModel {
-  const project =
-    input.projectIsFormalized === true
-      ? input.project
-      : formalizeScriptEditorProjectMenus(input.project);
+  const project = formalizeScriptEditorProjectMenus(input.project);
   const visibleFamilies = new Set<ScriptEditorProjectFileKey>([
     "storyPack",
     ...(input.visibleFamilies ??
@@ -258,10 +247,7 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
         (family) => family !== STAGE_CONFIGURATION_FAMILY
       ) as ScriptEditorProjectFileKey[])),
   ]);
-  const exportDiagnostics =
-    input.exportDiagnostics == null
-      ? validateScriptEditorProjectForRuntimeExport(project)
-      : [...input.exportDiagnostics];
+  const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(project);
   const attentionFamilies = collectAttentionFamilies(exportDiagnostics);
   const selection = resolveSelection(project, input.selection, visibleFamilies);
   const compatibilityResidueCount = countCompatibilityResidue(project);
@@ -400,9 +386,7 @@ function createTreeNode(
     description:
       previewRecord == null
         ? createEmptyWorkspaceFamilyDescription(family)
-        : family === "menuResources"
-          ? describeMenuRecordSummary(project, previewRecord)
-          : describeRecord(previewRecord),
+        : describeRecord(previewRecord),
     itemCount: count,
     isSelected: selection.family === family,
     tone: hasAttention ? "warning" : "neutral",
@@ -455,12 +439,7 @@ function createInspector(
       },
       {
         label: "当前对象",
-        value:
-          selection.family === "menuResources"
-            ? selectedRecord == null
-              ? "未选择"
-              : readPrimaryLabel(selectedRecord)
-            : selectedRecord?.id ?? "none",
+        value: selectedRecord?.id ?? "none",
       },
       {
         label: "当前阶段",
@@ -483,10 +462,7 @@ function createInspector(
             {
               id: `record.${selectedRecord.id}`,
               title: "记录摘要",
-              body:
-                selection.family === "menuResources"
-                  ? createMenuRecordPreview(project, selectedRecord)
-                  : createRecordPreview(selectedRecord),
+              body: createRecordPreview(selectedRecord),
               tone: "neutral",
             },
             {
@@ -543,7 +519,7 @@ function createProjectInspector(
       {
         id: "project.progress",
         title: "创作进度",
-        body: `当前已收录人物 ${project.people.length} 条、文本 ${project.textEntries.length} 条、事件 ${project.events.length} 条。`,
+        body: `当前已收录人物 ${project.people.length} 条、文本 ${project.textEntries.length} 条、剧情节点 ${project.storyNodes.length} 条、事件 ${project.events.length} 条。`,
         tone: "neutral",
       },
       {
@@ -737,13 +713,7 @@ function createPreviewCards(
       body:
         selection.family === "storyPack"
           ? `开场场景 ${readStringField(project.storyPack, "scenarioProfile.id") ?? "未设置"}，默认主角 ${readStringField(project.storyPack, "scenarioProfile.playerCharacterId") ?? "未设置"}。`
-          : `${
-              FAMILY_LABELS[selection.family]
-            } 当前对象为 ${selectionLabel}，${
-              selection.family === "menuResources"
-                ? createMenuRecordPreview(project, selectedRecord ?? { id: "none" })
-                : createRecordPreview(selectedRecord ?? { id: "none" })
-            }。`,
+          : `${FAMILY_LABELS[selection.family]} 当前对象为 ${selectionLabel}，${createRecordPreview(selectedRecord ?? { id: "none" })}。`,
       tone: selectedRecord == null && selection.family !== "storyPack" ? "warning" : "neutral",
     },
     {
@@ -761,6 +731,7 @@ function createPreviewCards(
       body: exportPreview,
       tone:
         selection.family !== STAGE_CONFIGURATION_FAMILY &&
+        selection.family !== "menuItems" &&
         DEFERRED_EXPORT_TARGET_FAMILIES.has(selection.family)
           ? "warning"
           : "neutral",
@@ -774,11 +745,11 @@ function describeSelectionLinkPreview(
   entityId: string | null
 ): string {
   if (family === "storyPack") {
-    return `项目当前收录人物 ${project.people.length}、城市 ${project.cities.length}、事件 ${project.events.length}、玩法绑定 ${project.minigames.length}。`;
+    return `项目当前收录人物 ${project.people.length}、城市 ${project.cities.length}、事件 ${project.events.length}、玩法实例 ${project.minigames.length}。`;
   }
 
   if (family === STAGE_CONFIGURATION_FAMILY && entityId === "__stage_config_link__") {
-    return `当前已有 ${project.progressTrackBindings?.length ?? 0} 个配置对象，其中引用 ${project.progressTracks?.length ?? 0} 条阶段规则。`;
+    return `褰撳墠宸叉湁 ${project.progressTrackBindings?.length ?? 0} 涓厤缃璞★紝鍏朵腑寮曠敤 ${project.progressTracks?.length ?? 0} 鏉￠樁娈佃鍒欍€?`;
   }
 
   if (entityId == null) {
@@ -786,7 +757,7 @@ function describeSelectionLinkPreview(
   }
 
   if (family === STAGE_CONFIGURATION_FAMILY) {
-    return "阶段配置作为创作面的统一入口，底层仍分别落到 progress-tracks.json 与 progress-track-bindings.json。";
+    return "闃舵閰嶇疆浣滀负鍒涗綔闈㈢殑缁熶竴鍏ュ彛锛屽簳灞備粛鍒嗗埆钀藉埌 progress-tracks.json 涓?progress-track-bindings.json銆?";
   }
 
   if (family === "people") {
@@ -809,17 +780,12 @@ function describeSelectionLinkPreview(
         : project.buildings.find((record) => record.id === entityId);
     const menuEntryCount =
       location == null ? 0 : countScriptEditorLocationMenuEntries(project, family, location.id);
-    return `菜单组挂载菜单项 ${menuEntryCount} 条，访问状态 ${location?.access?.conditionExpression == null ? "default-allow" : "configured"}。`;
+    return `菜单入口 ${menuEntryCount} 条，访问状态 ${location?.access?.conditionExpression == null ? "default-allow" : "configured"}。`;
   }
 
   if (family === "dialogues") {
     const dialogue = project.dialogues.find((record) => record.id === entityId);
-    if (dialogue == null) {
-      return "当前未找到对应对话。";
-    }
-    return dialogue.mode === "choice"
-      ? `选择对话，选项 ${(dialogue.options ?? []).length} 条，出场人物 ${(dialogue.cast ?? []).length} 条。`
-      : `单屏对话，后续事件 ${dialogue.nextEventId?.length ? "已配置" : "未配置"}，出场人物 ${(dialogue.cast ?? []).length} 条。`;
+    return `节点 ${(dialogue?.nodes ?? []).length} 条，参与人物 ${(dialogue?.participantPersonIds ?? []).length} 条。`;
   }
 
   if (family === "quests") {
@@ -837,7 +803,7 @@ function describeSelectionLinkPreview(
 
   if (family === "minigames") {
     const minigame = project.minigames.find((record) => record.id === entityId);
-    return `玩法绑定 outcome ${(minigame?.outcomeRoutes ?? []).length} 条，launch payload ${(minigame?.launchPayload ?? []).length} 条。`;
+    return `玩法实例配置 ${(minigame?.configEntries ?? []).length} 条，结算路由 ${(minigame?.settlementRoutes ?? []).length} 条。`;
   }
 
   if (family === "storyNodes") {
@@ -854,7 +820,7 @@ function describeSelectionExportPreview(
   entityId: string | null
 ): string {
   if (family === STAGE_CONFIGURATION_FAMILY) {
-    return "阶段配置作为创作面的统一入口，底层仍分别落到 progress-tracks.json 与 progress-track-bindings.json。";
+    return "闃舵閰嶇疆浣滀负鍒涗綔闈㈢殑缁熶竴鍏ュ彛锛屽簳灞備粛鍒嗗埆钀藉埌 progress-tracks.json 涓?progress-track-bindings.json銆?";
   }
 
   if (family === "storyPack") {
@@ -889,7 +855,7 @@ function describeSelectionExportPreview(
   }
 
   if (family === "minigames") {
-    return "玩法绑定采用下沉导出原则，后续需挂到事件、对话或菜单的正式可调用结构，而不是独立新分表。";
+    return "玩法实例会下沉为 runtime playable integration，并由事件或菜单引用该导出标识。";
   }
 
   if (family === "storyNodes") {
@@ -898,10 +864,6 @@ function describeSelectionExportPreview(
 
   if (family === "textEntries") {
     return "文本条目会直接落到 text-entries.json，供对话与场景演出复用。";
-  }
-
-  if (family === "menuResources") {
-    return "菜单作者面会管理可挂载菜单项及其下级菜单路由，导出时仍收口到 menu-resources.json 与 menu-instances.json。";
   }
 
   return "当前家族尚未声明额外导出落点。";
@@ -1022,22 +984,22 @@ function collectLinkedValidationIssues(
   const menuInstanceById = Object.fromEntries(
     (project.menuInstances ?? []).map((instance) => [instance.id, instance] as const)
   );
-  for (const family of ["people", "cities", "buildings"] as const) {
-    for (const owner of project[family]) {
-      for (const mount of listScriptEditorMountedMenus(project, family, owner.id)) {
-        const trimmedInstanceId = mount.instanceId.trim();
+  for (const family of ["cities", "buildings"] as const) {
+    for (const location of project[family]) {
+      for (const menuInstanceId of location.menuInstanceIds ?? []) {
+        const trimmedInstanceId = menuInstanceId.trim();
         if (trimmedInstanceId.length === 0) {
           continue;
         }
         const menuInstance = menuInstanceById[trimmedInstanceId];
         if (menuInstance == null) {
           addMissingReferenceIssue({
-            id: `linked.${family}.menu-instance.${owner.id}.${trimmedInstanceId}`,
+            id: `linked.${family}.menu-instance.${location.id}.${trimmedInstanceId}`,
             severity: "attention",
-            title: "菜单项缺失",
-            message: `${FAMILY_LABELS[family]} ${owner.id} 引用的菜单项 ${trimmedInstanceId} 不存在。`,
+            title: "菜单实例缺失",
+            message: `${FAMILY_LABELS[family]} ${location.id} 引用的菜单实例 ${trimmedInstanceId} 不存在。`,
             targetFamily: family,
-            targetEntityId: owner.id,
+            targetEntityId: location.id,
             targetTab: "menus",
           });
           continue;
@@ -1046,21 +1008,17 @@ function collectLinkedValidationIssues(
         const menuResource = menuResourceById[resourceId];
         if (resourceId.length === 0 || menuResource == null) {
           addMissingReferenceIssue({
-            id: `linked.${family}.menu-resource.${owner.id}.${trimmedInstanceId}`,
+            id: `linked.${family}.menu-resource.${location.id}.${trimmedInstanceId}`,
             severity: "attention",
-            title: "菜单项资源缺失",
-            message: `${FAMILY_LABELS[family]} ${owner.id} 的菜单项 ${trimmedInstanceId} 指向的资源 ${resourceId || "(empty)"} 不存在。`,
+            title: "菜单资源缺失",
+            message: `${FAMILY_LABELS[family]} ${location.id} 的菜单实例 ${trimmedInstanceId} 指向的资源 ${resourceId || "(empty)"} 不存在。`,
             targetFamily: family,
-            targetEntityId: owner.id,
+            targetEntityId: location.id,
             targetTab: "menus",
           });
         }
       }
-    }
-  }
 
-  for (const family of ["cities", "buildings"] as const) {
-    for (const location of project[family]) {
       for (const bundle of listScriptEditorLocationMenuBundles(project, family, location.id)) {
         for (const entry of bundle.entries) {
           const targetFamily = resolveAuthoringTargetFamily(entry.targetFamily);
@@ -1080,27 +1038,6 @@ function collectLinkedValidationIssues(
             });
           }
         }
-      }
-    }
-  }
-
-  for (const menuRecord of listScriptEditorMenuModuleRecords(project)) {
-    for (const entry of menuRecord.entries) {
-      const targetFamily = resolveAuthoringTargetFamily(entry.targetFamily);
-      if (targetFamily == null || entry.targetId.trim().length === 0) {
-        continue;
-      }
-
-      if (!hasRecord(project, targetFamily, entry.targetId)) {
-        addMissingReferenceIssue({
-          id: `linked.menu.module.${menuRecord.id}.${entry.id}`,
-          severity: "attention",
-          title: "菜单功能目标缺失",
-          message: `菜单 ${menuRecord.title} 的菜单项 ${entry.label || entry.id} 指向的 ${entry.targetId} 不存在。`,
-          targetFamily: "menuResources",
-          targetEntityId: menuRecord.id,
-          targetTab: null,
-        });
       }
     }
   }
@@ -1239,25 +1176,6 @@ function collectLinkedValidationIssues(
           targetTab: "links",
         });
       }
-    }
-  }
-
-  for (const minigame of project.minigames) {
-    if (
-      minigame.ownerKind === "house" &&
-      typeof minigame.ownerId === "string" &&
-      minigame.ownerId.length > 0 &&
-      !hasRecord(project, "buildings", minigame.ownerId)
-    ) {
-      addMissingReferenceIssue({
-        id: `linked.minigames.owner.${minigame.id}`,
-        severity: "attention",
-        title: "玩法宿主缺失",
-        message: `玩法绑定 ${minigame.id} 指向的宿主建筑 ${minigame.ownerId} 不存在。`,
-        targetFamily: "minigames",
-        targetEntityId: minigame.id,
-        targetTab: "basics",
-      });
     }
   }
 
@@ -1464,10 +1382,10 @@ function resolveIssueTab(
   }
 
   if (family === "minigames") {
-    if (remainder.startsWith("launchPayload")) {
-      return "launch";
+    if (remainder.startsWith("configEntries")) {
+      return "config";
     }
-    if (remainder.startsWith("outcomeRoutes")) {
+    if (remainder.startsWith("settlementRoutes")) {
       return "settlement";
     }
     return "basics";
@@ -1533,16 +1451,16 @@ function createExportTargets(
     return [
       buildTarget(
         "export.stage-configuration-tracks",
-        "阶段规则",
+        "闃舵瑙勫垯",
         "progress-tracks.json",
-        "阶段规则会导出到 progress-tracks.json，用于承载可复用的阈值和阶段定义。",
+        "闃舵瑙勫垯浼氬鍑哄埌 progress-tracks.json锛岀敤浜庢壙杞藉彲澶嶇敤鐨勯槇鍊煎拰闃舵瀹氫箟銆?",
         blockedStatus
       ),
       buildTarget(
         "export.stage-configuration-bindings",
-        "应用对象",
+        "搴旂敤瀵硅薄",
         "progress-track-bindings.json",
-        "应用对象会导出到 progress-track-bindings.json，用于挂接具体对象与其使用的阶段规则。",
+        "搴旂敤瀵硅薄浼氬鍑哄埌 progress-track-bindings.json锛岀敤浜庢寕鎺ュ叿浣撳璞′笌鍏朵娇鐢ㄧ殑闃舵瑙勫垯銆?",
         blockedStatus
       ),
     ];
@@ -1637,9 +1555,9 @@ function createExportTargets(
       return [
         buildTarget(
           "export.minigames",
-          "玩法调用落点",
-          "events / dialogues / menu bindings",
-          "玩法绑定采用下沉导出，不会生成新的独立 runtime 分表。",
+          "玩法导出落点",
+          "playable integrations",
+          "玩法实例会派生为 runtime playable integration，并由事件或菜单引用该导出标识。",
           "deferred"
         ),
       ];
@@ -1660,6 +1578,16 @@ function createExportTargets(
           "文本落点",
           "text-entries.json",
           "文本条目直接进入 text-entries.json。",
+          blockedStatus
+        ),
+      ];
+    case "menuItems":
+      return [
+        buildTarget(
+          "export.menu-items",
+          "菜单项落点",
+          "menu-resources.json",
+          "菜单项会写入菜单资源分表，运行时通过城市或建筑引用的菜单入口使用。",
           blockedStatus
         ),
       ];
@@ -1707,6 +1635,12 @@ function isWorkspaceFamilyVisible(
       visibleFamilies.has(sourceFamily)
     );
   }
+  if (family === "menuItems") {
+    return (
+      visibleFamilies.has("menuResources") ||
+      (visibleFamilies as ReadonlySet<string>).has("menuItems")
+    );
+  }
 
   return visibleFamilies.has(family);
 }
@@ -1720,6 +1654,9 @@ function hasWorkspaceFamilyAttention(
       attentionFamilies.has(sourceFamily)
     );
   }
+  if (family === "menuItems") {
+    return attentionFamilies.has("menuResources") || attentionFamilies.has("menuInstances");
+  }
 
   return attentionFamilies.has(family);
 }
@@ -1729,6 +1666,7 @@ function isDeferredWorkspaceFamily(
 ): boolean {
   return (
     family !== STAGE_CONFIGURATION_FAMILY &&
+    family !== "menuItems" &&
     DEFERRED_SHELL_FAMILIES.has(family)
   );
 }
@@ -1739,6 +1677,9 @@ function getWorkspaceFamilyCount(
 ): number {
   if (family === STAGE_CONFIGURATION_FAMILY) {
     return project.progressTrackBindings?.length ?? 0;
+  }
+  if (family === "menuItems") {
+    return getWorkspaceMenuItemRecords(project).length;
   }
 
   return getFamilyCount(project, family);
@@ -1755,6 +1696,9 @@ function getWorkspaceFamilyPreviewRecord(
   if (family === STAGE_CONFIGURATION_FAMILY) {
     return project.progressTrackBindings?.[0] ?? null;
   }
+  if (family === "menuItems") {
+    return getWorkspaceMenuItemRecords(project)[0] ?? null;
+  }
 
   return getFamilyRecords(project, family)[0] ?? null;
 }
@@ -1763,10 +1707,10 @@ function createEmptyWorkspaceFamilyDescription(
   family: ScriptEditorWorkspaceFamily
 ): string {
   if (family === STAGE_CONFIGURATION_FAMILY) {
-    return "当前还没有阶段配置对象。";
+    return "褰撳墠杩樻病鏈夐樁娈甸厤缃璞°€?";
   }
 
-  return "当前分类还没有对象。";
+  return "褰撳墠瀹舵棌杩樻病鏈夊璞°€?";
 }
 
 function getWorkspaceFamilyRecords(
@@ -1780,8 +1724,22 @@ function getWorkspaceFamilyRecords(
   if (family === "storyPack") {
     return [];
   }
+  if (family === "menuItems") {
+    return getWorkspaceMenuItemRecords(project);
+  }
 
   return getFamilyRecords(project, family);
+}
+
+function getWorkspaceMenuItemRecords(
+  project: ScriptEditorProjectDefinition
+): ScriptEditorEntityRecord[] {
+  return (project.menuResources ?? []).flatMap((resource) =>
+    (resource.entries ?? []).map((entry, index) => ({
+      id: `${resource.id}:${index}`,
+      title: entry.label || "未命名菜单项",
+    }))
+  );
 }
 
 function getFamilyCount(
@@ -1822,8 +1780,6 @@ function getFamilyRecords(
       return project.progressTrackBindings ?? [];
     case "quests":
       return project.quests;
-    case "items":
-      return project.items;
     case "activities":
       return project.activities;
     case "dialogues":
@@ -1834,8 +1790,6 @@ function getFamilyRecords(
       return project.storyNodes;
     case "textEntries":
       return project.textEntries;
-    case "menuResources":
-      return project.menuInstances;
     case "conditionGroups":
       return project.conditionGroups;
     case "effectBundles":
@@ -1857,7 +1811,7 @@ function resolveAuthoringTargetFamily(
   family:
     | "dialogue"
     | "event"
-    | "menuInstance"
+    | "menu"
     | "task"
     | "person"
     | "city"
@@ -1873,8 +1827,6 @@ function resolveAuthoringTargetFamily(
       return "dialogues";
     case "event":
       return "events";
-    case "menuInstance":
-      return "menuResources";
     case "task":
       return "quests";
     case "city":
@@ -1914,37 +1866,6 @@ function createRecordPreview(record: Record<string, unknown>): string {
   }
 
   return lines.join(" | ");
-}
-
-function describeMenuRecordSummary(
-  project: ScriptEditorProjectDefinition,
-  record: Record<string, unknown>
-): string {
-  const menuRecord = listScriptEditorMenuModuleRecords(project).find(
-    (entry) => entry.id === record.id
-  );
-  if (menuRecord == null) {
-    return "菜单项对象已创建，可继续补齐功能绑定。";
-  }
-
-  return "当前菜单项可继续编排事件或下一级菜单。";
-}
-
-function createMenuRecordPreview(
-  project: ScriptEditorProjectDefinition,
-  record: Record<string, unknown>
-): string {
-  const menuRecord = listScriptEditorMenuModuleRecords(project).find(
-    (entry) => entry.id === record.id
-  );
-  if (menuRecord == null) {
-    return "当前菜单项尚未整理出可供创作参考的摘要信息。";
-  }
-
-  const menuLabel = menuRecord.entries[0]?.label?.trim?.() ?? menuRecord.title ?? "";
-  return menuLabel.length > 0
-    ? `当前菜单项名称为“${menuLabel}”，可继续配置目标。`
-    : "当前菜单项尚未命名，可继续配置目标。";
 }
 
 function readPrimarySummary(record: Record<string, unknown>): string | null {

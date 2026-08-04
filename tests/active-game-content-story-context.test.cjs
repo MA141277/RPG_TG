@@ -68,6 +68,51 @@ test("active game content context exposes richer story runtime families", () => 
         nodes: [],
       },
     ],
+    meetings: [
+      {
+        id: "meeting.test",
+        hostScope: {
+          family: "building",
+          templateId: "house.test",
+        },
+        initialStageId: "intro",
+        stageIds: ["intro"],
+        stagesById: {
+          intro: {
+            id: "intro",
+            type: "dialogue",
+            dialogueId: "dialogue.test",
+          },
+        },
+      },
+    ],
+    meetingBindings: [
+      {
+        id: "meeting-binding.test",
+        meetingId: "meeting.test",
+        owner: { family: "building", id: "house.test" },
+        trigger: { action: "building-container-item-action", itemId: "review" },
+      },
+    ],
+    meetingPanels: [
+      {
+        id: "meeting-panel.test",
+        title: "Meeting Panel",
+        sections: [],
+      },
+    ],
+    meetingChoiceSets: [
+      {
+        id: "meeting-choices.test",
+        choices: [],
+      },
+    ],
+    meetingActionSets: [
+      {
+        id: "meeting-actions.test",
+        actions: [],
+      },
+    ],
     eventBindings: [
       {
         id: "binding.test",
@@ -113,4 +158,143 @@ test("active game content context exposes richer story runtime families", () => 
   assert.equal(content.storyContent.progressTrackBindingsById["binding.track.test"]?.trackId, "track.test");
   assert.equal(content.storyContent.cityDefinitionsById["city.test"]?.name, "Test City");
   assert.equal(content.storyContent.houseDefinitionsById["house.test"]?.name, "Test House");
+  assert.equal(content.storyContent.meetingsById["meeting.test"]?.id, "meeting.test");
+  assert.equal(
+    content.storyContent.meetingBindingsById["meeting-binding.test"]?.meetingId,
+    "meeting.test"
+  );
+  assert.equal(
+    content.storyContent.meetingPanelsById["meeting-panel.test"]?.title,
+    "Meeting Panel"
+  );
+  assert.equal(
+    content.storyContent.meetingChoiceSetsById["meeting-choices.test"]?.id,
+    "meeting-choices.test"
+  );
+  assert.equal(
+    content.storyContent.meetingActionSetsById["meeting-actions.test"]?.id,
+    "meeting-actions.test"
+  );
+});
+
+test("active game content context treats playableShells as the canonical flow shell owner", () => {
+  const content = createActiveGameContentContext({
+    schemaVersion: 1,
+    id: "pack.test.playable-shells",
+    title: "Playable Shell Pack",
+    textEntries: {},
+    cities: [],
+    houses: [],
+    events: [],
+    scenes: [],
+    dialogues: [],
+    eventBindings: [],
+    settlements: [],
+    progressTracks: [],
+    progressTrackBindings: [],
+    activities: [],
+    tasks: [],
+    cards: [],
+    valuables: [],
+    characters: [],
+    playableShells: [
+      {
+        id: "flow.test.shell",
+        title: "Flow Test Shell",
+        initialNodeId: "node.start",
+        nodes: [
+          {
+            id: "node.start",
+            type: "text",
+            text: "start",
+            nextNodeId: "node.complete",
+          },
+          {
+            id: "node.complete",
+            type: "complete",
+            outcome: "success",
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(content.gameContent.playableShells[0]?.id, "flow.test.shell");
+  assert.equal(
+    content.gameContent.playableShellsById["flow.test.shell"]?.title,
+    "Flow Test Shell"
+  );
+  assert.equal(
+    content.storyContent.playableShellsById["flow.test.shell"]?.title,
+    "Flow Test Shell"
+  );
+  assert.equal(Object.hasOwn(content.gameContent, "flowPlayables"), false);
+  assert.equal(Object.hasOwn(content.gameContent, "flowPlayablesById"), false);
+  assert.equal(Object.hasOwn(content.storyContent, "flowPlayablesById"), false);
+});
+
+test("active game content context preserves runtime building support families for later mod execution", () => {
+  const content = createActiveGameContentContext({
+    schemaVersion: 1,
+    id: "pack.test.runtime-building-support",
+    title: "Runtime Building Support Pack",
+    textEntries: {},
+    cities: [],
+    houses: [],
+    events: [],
+    scenes: [],
+    dialogues: [],
+    eventBindings: [],
+    settlements: [],
+    progressTracks: [],
+    progressTrackBindings: [],
+    activities: [],
+    tasks: [],
+    cards: [],
+    valuables: [],
+    characters: [],
+    menuResources: [
+      {
+        id: "menu-resource.test.temple.primary",
+        title: "寺庙菜单",
+        entries: [],
+      },
+    ],
+    menuInstances: [
+      {
+        id: "menu-instance.test.temple.primary",
+        title: "寺庙菜单实例",
+        resourceId: "menu-resource.test.temple.primary",
+      },
+    ],
+    locationAccess: [
+      {
+        id: "location-access.test.temple",
+        targetFamily: "building",
+        targetId: "house.test.temple",
+        purpose: "enter",
+        blockedMessage: "闲人止步",
+        conditions: [],
+      },
+    ],
+    houseModuleDefaults: {
+      "temple-house": {
+        reviewEntryEventId: "event.building.template.house.temple.review",
+      },
+    },
+  });
+
+  assert.equal(
+    content.gameContent.menuResourcesById["menu-resource.test.temple.primary"]?.title,
+    "寺庙菜单"
+  );
+  assert.equal(
+    content.gameContent.menuInstancesById["menu-instance.test.temple.primary"]?.resourceId,
+    "menu-resource.test.temple.primary"
+  );
+  assert.equal(content.gameContent.locationAccess[0]?.targetId, "house.test.temple");
+  assert.equal(
+    content.gameContent.houseModuleDefaults?.["temple-house"]?.reviewEntryEventId,
+    "event.building.template.house.temple.review"
+  );
 });

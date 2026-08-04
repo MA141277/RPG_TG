@@ -3,6 +3,7 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import type { Effect } from "./effect";
 import type { RuntimeTaskInput } from "./runtime-result";
 
@@ -18,6 +19,7 @@ export type DialogueRuntimeInput = {
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   eventDefinitionsById: Record<string, EventDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  playableShellsById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
   taskInputs?: RuntimeTaskInput[] | undefined;
 };

@@ -13,11 +13,12 @@ import type {
   HouseActionViewModel,
   HouseModuleDefinition,
   HouseModuleDispatchInput,
+  HouseModuleEnterInput,
   HouseModuleTransitionResult,
+  HouseModuleViewModelInput,
   HouseModuleViewModel,
   HouseOverlayViewModel,
 } from "../../../domain/house-module";
-import type { ReviewAssignmentRow, ReviewPolicyPanel } from "../../../domain/review";
 import type {
   KeepHouseContributionEntry,
   KeepHouseOverlayState,
@@ -49,7 +50,17 @@ import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
+import {
+  completeMeetingToHost,
+  launchMeetingFromHostAction,
+  resumeMeetingFromHostSession,
+} from "../../meeting/meeting-host-bridge";
+import { matchHostedMeetingSettlementHandoff } from "../../meeting/meeting-host-settlement-handoff";
 import { createInitialKeepHouseSessionState } from "./keep-house-session-state";
+import {
+  resolveKeepReviewExpulsionSeed,
+  resolveKeepReviewTaskAssignmentSeed,
+} from "./keep-review-assignment-defaults";
 
 const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
 
@@ -368,9 +379,9 @@ function createContributionEntries(
     .sort((leftEntry, rightEntry) => rightEntry.contribution - leftEntry.contribution);
 }
 
-function createReviewAssignmentRows(
+function createKeepHostedReviewAssignmentRows(
   contributionEntries: KeepHouseContributionEntry[]
-): ReviewAssignmentRow[] {
+) {
   return contributionEntries.map((entry) => ({
     characterId: entry.characterId,
     characterName: entry.name,
@@ -378,18 +389,6 @@ function createReviewAssignmentRows(
     contribution: entry.contribution,
     grade: resolveReviewCompletionGrade(entry.contribution),
   }));
-}
-
-function createReviewPolicyPanel(
-  textEntriesById: Record<string, string>
-): ReviewPolicyPanel {
-  const strategyLines = getMeetingStrategyLines(textEntriesById);
-
-  return {
-    overallGoal: resolveKeepDefaultStrategyTitle(textEntriesById),
-    phaseGoal: strategyLines[1] ?? strategyLines[0] ?? "",
-    executionPlan: strategyLines[2] ?? strategyLines[1] ?? strategyLines[0] ?? "",
-  };
 }
 
 function createAlertOverlay(
@@ -402,30 +401,6 @@ function createAlertOverlay(
     title,
     paragraphs,
     ...(tone == null ? {} : { tone }),
-  };
-}
-
-function createReviewAssignmentTableOverlay(
-  rows: ReviewAssignmentRow[]
-): KeepHouseOverlayState {
-  return {
-    type: "review-assignment-table",
-    title: "委任",
-    rows,
-    confirmActionId: "close-review-assignment-table",
-    confirmLabel: "继续",
-  };
-}
-
-function createReviewPolicyPanelOverlay(
-  policy: ReviewPolicyPanel
-): KeepHouseOverlayState {
-  return {
-    type: "review-policy-panel",
-    title: "方略",
-    policy,
-    closeActionId: "close-review-policy-panel",
-    closeLabel: "关闭",
   };
 }
 
@@ -479,6 +454,195 @@ function isPlayersLord(
     lordCharacter.clanId != null &&
     playerCharacter.clanId === lordCharacter.clanId
   );
+}
+
+function getKeepMeetingParticipantIds(
+  houseCharacterIds: string[],
+  playerCharacterId: string,
+  lordCharacterId: string
+): string[] {
+  return [...new Set([playerCharacterId, lordCharacterId, ...houseCharacterIds])];
+}
+
+function tryLaunchKeepReviewMeeting(
+  input: HouseModuleEnterInput<"keep-house">,
+  gameState: GameState,
+  sessionState: KeepHouseSessionState
+): HouseModuleTransitionResult<"keep-house"> | null {
+  if (
+    input.meetingDefinitionsById == null ||
+    input.meetingBindings == null ||
+    input.houseDefinition.defaultCharacterId == null
+  ) {
+    return null;
+  }
+
+  const lordCharacter = getLordCharacter(
+    input.characterDefinitions,
+    input.houseDefinition.defaultCharacterId
+  );
+  const reviewMeetingDefinition =
+    input.meetingDefinitionsById?.["meeting.keep.review"] ?? null;
+  const reviewAssignmentRowsByPanelId =
+    reviewMeetingDefinition == null
+      ? null
+      : Object.fromEntries(
+          Object.values(reviewMeetingDefinition.stagesById)
+            .filter(
+              (stage) => stage.type === "assignment-table" && stage.panelId != null
+            )
+            .map((stage) => [
+              stage.panelId,
+              createKeepHostedReviewAssignmentRows(sessionState.contributionEntries),
+            ])
+        );
+  const launchedMeeting = launchMeetingFromHostAction({
+    hostContext: {
+      hostFamily: "building",
+      hostId: input.houseDefinition.id,
+      returnTarget: {
+        type: "building",
+        id: input.houseDefinition.id,
+      },
+      primarySpeakerCharacterId: lordCharacter.id,
+      participantCharacterIds: getKeepMeetingParticipantIds(
+        input.houseDefinition.characterIds,
+        input.playerCharacterId,
+        lordCharacter.id
+      ),
+    },
+    trigger: {
+      action: "building-container-item-action",
+      itemId: "review",
+    },
+    ...(reviewAssignmentRowsByPanelId == null
+      ? {}
+      : {
+          initialDerivedState: {
+            reviewAssignmentRowsByPanelId,
+          },
+        }),
+    hostSessionState: sessionState,
+    sharedSessionState: input.sharedSessionState ?? null,
+    gameState,
+    characterDefinitions: input.characterDefinitions,
+    meetingsById: input.meetingDefinitionsById,
+    meetingBindings: input.meetingBindings,
+    meetingPanelsById: input.meetingPanelsById,
+    meetingChoiceSetsById: input.meetingChoiceSetsById,
+    meetingActionSetsById: input.meetingActionSetsById,
+  });
+
+  if (launchedMeeting.sharedSessionState?.hostedMeeting == null) {
+    return null;
+  }
+
+  return {
+    gameState: launchedMeeting.gameState,
+    characterDefinitions: launchedMeeting.characterDefinitions,
+    sessionState: launchedMeeting.hostSessionState,
+    sharedSessionState: launchedMeeting.sharedSessionState,
+  };
+}
+
+function createKeepMeetingHostContext(
+  input: Pick<
+    HouseModuleViewModelInput<"keep-house">,
+    "houseDefinition" | "playerCharacterId" | "characterDefinitions"
+  >
+) {
+  if (input.houseDefinition.defaultCharacterId == null) {
+    return null;
+  }
+
+  const lordCharacter = getLordCharacter(
+    input.characterDefinitions,
+    input.houseDefinition.defaultCharacterId
+  );
+  return {
+    hostFamily: "building" as const,
+    hostId: input.houseDefinition.id,
+    returnTarget: {
+      type: "building" as const,
+      id: input.houseDefinition.id,
+    },
+    primarySpeakerCharacterId: lordCharacter.id,
+    participantCharacterIds: getKeepMeetingParticipantIds(
+      input.houseDefinition.characterIds,
+      input.playerCharacterId,
+      lordCharacter.id
+    ),
+  };
+}
+
+function resumeKeepHostedMeeting(
+  input: Pick<
+    HouseModuleViewModelInput<"keep-house">,
+    | "gameState"
+    | "characterDefinitions"
+    | "houseDefinition"
+    | "playerCharacterId"
+    | "sharedSessionState"
+    | "meetingDefinitionsById"
+    | "meetingBindings"
+    | "meetingPanelsById"
+    | "meetingChoiceSetsById"
+    | "meetingActionSetsById"
+  >,
+  sessionState: KeepHouseSessionState,
+  request?: { type: "advance" } | { type: "select-choice"; choiceId: string }
+) {
+  if (
+    input.sharedSessionState?.hostedMeeting == null ||
+    input.meetingDefinitionsById == null ||
+    input.meetingBindings == null
+  ) {
+    return null;
+  }
+
+  const hostContext = createKeepMeetingHostContext(input);
+  if (hostContext == null) {
+    return null;
+  }
+
+  return resumeMeetingFromHostSession({
+    hostContext,
+    hostSessionState: sessionState,
+    sharedSessionState: input.sharedSessionState,
+    gameState: input.gameState,
+    characterDefinitions: input.characterDefinitions,
+    meetingsById: input.meetingDefinitionsById,
+    meetingBindings: input.meetingBindings,
+    meetingPanelsById: input.meetingPanelsById,
+    meetingChoiceSetsById: input.meetingChoiceSetsById,
+    meetingActionSetsById: input.meetingActionSetsById,
+    ...(request == null ? {} : { request }),
+  });
+}
+
+function resolveKeepHostedMeetingRequest(
+  actionId: string,
+  actionContainer:
+    | HouseModuleViewModel["actionContainer"]
+    | null
+    | undefined
+): { type: "advance" } | { type: "select-choice"; choiceId: string } | null {
+  if (
+    actionId === "advance-meeting-stage" ||
+    actionId === "close-review-assignment-table" ||
+    actionId === "close-review-policy-panel"
+  ) {
+    return { type: "advance" };
+  }
+
+  if (actionContainer?.actions.some((action) => action.id === actionId)) {
+    return {
+      type: "select-choice",
+      choiceId: actionId,
+    };
+  }
+
+  return null;
 }
 
 function getReviewTaskChoices(
@@ -625,6 +789,7 @@ function applyKeepLateCouncilAttendancePenalty(
   let nextCharacterDefinitions = characterDefinitions;
 
   if (resolution.expelled) {
+    const expulsionSeed = resolveKeepReviewExpulsionSeed();
     const playerCharacter = getPlayerCharacter(characterDefinitions, playerCharacterId);
     const expelledPlayer: CharacterDefinition = {
       ...playerCharacter,
@@ -643,14 +808,15 @@ function applyKeepLateCouncilAttendancePenalty(
       },
       ui: {
         ...nextState.ui,
-        reviewDateText: formatReviewDateText(60),
-        mainHouseMissionText: "grain-procurement",
+        reviewDateText: formatReviewDateText(expulsionSeed.reviewCountdownDays),
+        mainHouseMissionText: expulsionSeed.fallbackMissionText,
       },
       runtime: {
         ...nextState.runtime,
         variables: {
           ...nextState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]:
+            expulsionSeed.reviewCountdownDays,
         },
       },
     };
@@ -666,82 +832,6 @@ function applyKeepLateCouncilAttendancePenalty(
   };
 }
 
-function getMeetingPraiseLines(
-  lordCharacter: CharacterDefinition,
-  contributionEntries: KeepHouseContributionEntry[],
-  textEntriesById: Record<string, string>
-): string[] {
-  const topEntries = contributionEntries.slice(0, 2);
-  if (topEntries.length === 0) {
-    return [
-      resolveKeepTemplateText(
-        textEntriesById,
-        "runtime.zhu_yuanzhang.keep.review.praise.none.001",
-        {
-          lordName: lordCharacter.name,
-        }
-      ),
-    ];
-  }
-
-  const praiseLines = topEntries.map((entry, index) =>
-    resolveKeepTemplateText(
-      textEntriesById,
-      `runtime.zhu_yuanzhang.keep.review.praise.rank.${String(index + 1).padStart(3, "0")}`,
-      {
-        lordName: lordCharacter.name,
-        entryName: entry.name,
-        contribution: entry.contribution,
-      }
-    )
-  );
-
-  return [
-    resolveKeepTemplateText(
-      textEntriesById,
-      "runtime.zhu_yuanzhang.keep.review.praise.header.001",
-      {
-        lordName: lordCharacter.name,
-      }
-    ),
-    ...praiseLines,
-  ];
-}
-
-function getMeetingStrategyLines(textEntriesById: Record<string, string>): string[] {
-  return keepHouseDefaultStrategy.lineTextIds.map((textId) =>
-    resolveKeepText(textEntriesById, textId)
-  );
-}
-
-function getAssignTaskLines(
-  textEntriesById: Record<string, string>,
-  playerCharacter: CharacterDefinition,
-  taskChoiceLabels: string[]
-): string[] {
-  return [
-    resolveKeepTemplateText(
-      textEntriesById,
-      "runtime.zhu_yuanzhang.keep.review.assign.001",
-      {
-        playerName: playerCharacter.name,
-      }
-    ),
-    resolveKeepTemplateText(
-      textEntriesById,
-      "runtime.zhu_yuanzhang.keep.review.assign.002",
-      {
-        playerName: playerCharacter.name,
-        availableTaskList:
-          taskChoiceLabels.length === 0
-            ? "none"
-            : taskChoiceLabels.join(", "),
-      }
-    ),
-    resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.review.assign.003"),
-  ];
-}
-
 function parseTaskActionId(actionId: string): string | null {
   return actionId.startsWith(ASSIGN_TASK_ACTION_PREFIX)
     ? actionId.slice(ASSIGN_TASK_ACTION_PREFIX.length)
@@ -752,6 +842,7 @@ function assignTaskToPlayer(
   input: HouseModuleDispatchInput<"keep-house">,
   taskDefinition: KeepHouseTaskDefinition
 ): HouseModuleTransitionResult<"keep-house"> {
+  const assignmentSeed = resolveKeepReviewTaskAssignmentSeed();
   const textEntriesById = getKeepTextEntries(input);
   const nextState = {
     ...input.gameState,
@@ -769,14 +860,15 @@ function assignTaskToPlayer(
     ui: {
       ...input.gameState.ui,
       activeMissionId: taskDefinition.missionId,
-      reviewDateText: formatReviewDateText(60),
+      reviewDateText: formatReviewDateText(assignmentSeed.reviewCountdownDays),
       mainHouseMissionText: taskDefinition.title,
     },
     runtime: {
       ...input.gameState.runtime,
       variables: {
         ...input.gameState.runtime.variables,
-        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]:
+          assignmentSeed.reviewCountdownDays,
         [KEEP_HOUSE_VARIABLE_KEYS.currentStrategy]:
           resolveKeepDefaultStrategyTitle(textEntriesById),
         [KEEP_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: taskDefinition.id,
@@ -799,7 +891,7 @@ function assignTaskToPlayer(
         ...taskDefinition.orderLines,
         resolveKeepTemplateText(
           textEntriesById,
-          "runtime.zhu_yuanzhang.keep.review.assignment.order.001",
+          assignmentSeed.orderSummaryTextId,
           {
             taskTitle: taskDefinition.title,
           }
@@ -808,12 +900,12 @@ function assignTaskToPlayer(
       overlay: createAlertOverlay(
         resolveKeepText(
           textEntriesById,
-          "runtime.zhu_yuanzhang.keep.review.assignment.overlay.title"
+          assignmentSeed.overlayTitleTextId
         ),
         [
           resolveKeepTemplateText(
             textEntriesById,
-            "runtime.zhu_yuanzhang.keep.review.assignment.overlay.001",
+            assignmentSeed.overlayBodyTemplateTextId,
             {
               taskTitle: taskDefinition.title,
               taskBriefing: taskDefinition.briefing,
@@ -821,7 +913,7 @@ function assignTaskToPlayer(
           ),
           resolveKeepText(
             textEntriesById,
-            "runtime.zhu_yuanzhang.keep.review.assignment.overlay.002"
+            assignmentSeed.overlaySharedTextId
           ),
         ],
         "success"
@@ -847,119 +939,125 @@ function handleAction(
     input.playerCharacterId
   );
   const textEntriesById = getKeepTextEntries(input);
-
-  if (input.request.actionId === "advance-keep-dialogue") {
-    if (sessionState.mode === "meeting") {
-      switch (sessionState.meetingStage) {
-        case "intro":
-          return withSessionState(input, sessionState, {
-            meetingStage: "assignment-table",
-            dialoguePhase: "open",
-            dialogueLines: ["看看大家这期间的进展吧。"],
-            overlay: createReviewAssignmentTableOverlay(
-              createReviewAssignmentRows(sessionState.contributionEntries)
-            ),
-          });
-        case "praise":
-          return withSessionState(input, sessionState, {
-            meetingStage: "situation",
-            dialoguePhase: "open",
-            dialogueLines: [
-              "这段时间大家辛苦了。",
-              ...getMeetingStrategyLines(textEntriesById).slice(0, 1),
-            ],
-          });
-        case "situation":
-          return withSessionState(input, sessionState, {
-            meetingStage: "policy",
-            dialoguePhase: "open",
-            dialogueLines: ["所以接下来的计划如下："],
-            overlay: createReviewPolicyPanelOverlay(
-              createReviewPolicyPanel(textEntriesById)
-            ),
-          });
-        case "policy":
-          return withSessionState(input, sessionState, {
-            meetingStage: "advice",
-            dialoguePhase: "open",
-            dialogueLines: ["有谁要进言吗？"],
-            overlay: createReviewPolicyPanelOverlay(
-              createReviewPolicyPanel(textEntriesById)
-            ),
-          });
-        default:
-          return createTransitionResult(input);
+  const hostedSettlementResult = matchHostedMeetingSettlementHandoff({
+    input,
+    sessionState,
+    hostedMeetingId: "meeting.keep.review",
+    resolvePayload: parseTaskActionId,
+    settle: (selectedTaskId) => {
+      const taskDefinition = resolveKeepTaskDefinition(input, selectedTaskId);
+      const taskChoice = getReviewTaskChoices(input, playerCharacter).find(
+        (choice) => choice.id === selectedTaskId
+      );
+      if (taskChoice?.disabled === true) {
+        return withSessionState(input, sessionState, {
+          overlay: createAlertOverlay(
+            "身份不足",
+            [`此委任最低身份为${taskChoice.minRankLabel}。`],
+            "warning"
+          ),
+        });
       }
-    }
 
-    return withSessionState(input, sessionState, {
-      meetingStage: "finished",
-      dialoguePhase: "open",
-      dialogueLines: getAudienceOpenLines(textEntriesById),
-    });
+      return assignTaskToPlayer(input, taskDefinition);
+    },
+  });
+  if (hostedSettlementResult != null) {
+    return hostedSettlementResult;
+  }
+  const hostedMeetingResult = resumeKeepHostedMeeting(
+    {
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+      houseDefinition: input.houseDefinition,
+      playerCharacterId: input.playerCharacterId,
+      sharedSessionState: input.sharedSessionState ?? null,
+      meetingDefinitionsById: input.meetingDefinitionsById,
+      meetingBindings: input.meetingBindings,
+      meetingPanelsById: input.meetingPanelsById,
+      meetingChoiceSetsById: input.meetingChoiceSetsById,
+      meetingActionSetsById: input.meetingActionSetsById,
+    },
+    sessionState
+  );
+  const hostedMeetingRequest =
+    hostedMeetingResult == null
+      ? null
+      : resolveKeepHostedMeetingRequest(
+          input.request.actionId,
+          hostedMeetingResult.presenterModel?.actionContainer
+        );
+  if (hostedMeetingResult != null && hostedMeetingRequest != null) {
+    const advancedMeetingResult = completeMeetingToHost(
+      resumeKeepHostedMeeting(
+        {
+          gameState: input.gameState,
+          characterDefinitions: input.characterDefinitions,
+          houseDefinition: input.houseDefinition,
+          playerCharacterId: input.playerCharacterId,
+          sharedSessionState: input.sharedSessionState ?? null,
+          meetingDefinitionsById: input.meetingDefinitionsById,
+          meetingBindings: input.meetingBindings,
+          meetingPanelsById: input.meetingPanelsById,
+          meetingChoiceSetsById: input.meetingChoiceSetsById,
+          meetingActionSetsById: input.meetingActionSetsById,
+        },
+        sessionState,
+        hostedMeetingRequest
+      ) ?? hostedMeetingResult
+    );
+
+    return {
+      gameState: advancedMeetingResult.gameState,
+      characterDefinitions: advancedMeetingResult.characterDefinitions,
+      sessionState:
+        advancedMeetingResult.sharedSessionState == null &&
+        advancedMeetingResult.completion?.type === "return-to-host"
+          ? {
+              ...createInitialKeepHouseSessionState(
+                "audience",
+                "finished",
+                getAudienceGreetingLines(textEntriesById),
+                sessionState.contributionEntries
+              ),
+              dialoguePhase: "idle",
+            }
+          : advancedMeetingResult.hostSessionState,
+      sharedSessionState: advancedMeetingResult.sharedSessionState,
+    };
   }
 
-  if (input.request.actionId === "close-review-assignment-table") {
-    if (sessionState.mode === "meeting" && sessionState.meetingStage === "assignment-table") {
-      return withSessionState(input, sessionState, {
-        meetingStage: "praise",
-        overlay: null,
-        dialoguePhase: "open",
-        dialogueLines: getMeetingPraiseLines(
-          lordCharacter,
-          sessionState.contributionEntries,
-          textEntriesById
-        ),
-      });
-    }
-
-    return withSessionState(input, sessionState, {
-      overlay: null,
-    });
-  }
-
-  if (input.request.actionId === "close-review-policy-panel") {
-    return withSessionState(input, sessionState, {
-      overlay: null,
-    });
+  if (hostedMeetingResult != null) {
+    return {
+      gameState: input.gameState,
+      characterDefinitions: input.characterDefinitions,
+      sessionState: input.sessionState,
+      sharedSessionState: input.sharedSessionState ?? null,
+    };
   }
 
   if (input.request.actionId === "close-alert") {
-    if (sessionState.mode === "meeting" && sessionState.meetingStage === "assigned") {
-      return withSessionState(input, sessionState, {
-        meetingStage: "finished",
-        overlay: null,
-        dialoguePhase: "idle",
-      });
-    }
-
     return withSessionState(input, sessionState, {
       overlay: null,
+      ...(sessionState.mode === "meeting" && sessionState.meetingStage === "assigned"
+        ? {
+            meetingStage: "finished",
+            dialoguePhase: "idle",
+          }
+        : {}),
     });
   }
 
   if (
-    input.request.actionId === "keep-review-give-advice" ||
-    input.request.actionId === "keep-review-stay-silent"
+    input.request.actionId === "advance-keep-dialogue" &&
+    sessionState.mode === "audience" &&
+    sessionState.meetingStage === "finished" &&
+    sessionState.dialoguePhase === "greeting"
   ) {
-    const taskChoices = getReviewTaskChoices(input, playerCharacter);
-    const adviceResponseLines =
-      input.request.actionId === "keep-review-give-advice"
-        ? ["此议暂且记下。"]
-        : [];
-
     return withSessionState(input, sessionState, {
-      meetingStage: "assign-task",
+      meetingStage: "finished",
       dialoguePhase: "open",
-      overlay: null,
-      dialogueLines: [
-        ...adviceResponseLines,
-        ...getAssignTaskLines(
-          textEntriesById,
-          playerCharacter,
-          taskChoices.map((taskChoice) => taskChoice.label)
-        ),
-      ],
+      dialogueLines: getAudienceOpenLines(textEntriesById),
     });
   }
 
@@ -976,24 +1074,6 @@ function handleAction(
     });
   }
 
-  const selectedTaskId = parseTaskActionId(input.request.actionId);
-  if (selectedTaskId != null) {
-    const taskDefinition = resolveKeepTaskDefinition(input, selectedTaskId);
-    const taskChoice = getReviewTaskChoices(input, playerCharacter).find(
-      (choice) => choice.id === selectedTaskId
-    );
-    if (taskChoice?.disabled === true) {
-      return withSessionState(input, sessionState, {
-        overlay: createAlertOverlay(
-          "身份不足",
-          [`此委任最低身份为${taskChoice.minRankLabel}。`],
-          "warning"
-        ),
-      });
-    }
-    return assignTaskToPlayer(input, taskDefinition);
-  }
-
   return createTransitionResult(input);
 }
 
@@ -1002,14 +1082,6 @@ function selectOverlayViewModel(
 ): HouseOverlayViewModel | null {
   if (overlay == null) {
     return null;
-  }
-
-  if (overlay.type === "review-assignment-table") {
-    return overlay;
-  }
-
-  if (overlay.type === "review-policy-panel") {
-    return overlay;
   }
 
   return {
@@ -1055,31 +1127,33 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       readNumericVariable(nextState, KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown, 0) <= 0;
 
     const lateExpelled = lateAttendance.resolution?.expelled === true;
+    const audienceSessionState = createInitialKeepHouseSessionState(
+      "audience",
+      "finished",
+      lateExpelled && lateAttendance.resolution != null
+        ? getLateExpulsionLines(
+            textEntriesById,
+            lateAttendance.resolution.lateDays,
+            lateAttendance.resolution.contributionPenalty
+          )
+        : getAudienceGreetingLines(textEntriesById),
+      contributionEntries
+    );
+
+    if (shouldStartMeeting) {
+      const launchedMeetingResult = tryLaunchKeepReviewMeeting(
+        input,
+        nextState,
+        audienceSessionState
+      );
+      if (launchedMeetingResult != null) {
+        return launchedMeetingResult;
+      }
+    }
+
     const baseSessionState = shouldStartMeeting
-      ? createInitialKeepHouseSessionState(
-          "meeting",
-          "intro",
-          lateAttendance.resolution == null
-            ? getMeetingIntroLines(textEntriesById)
-            : getLateMeetingIntroLines(
-                textEntriesById,
-                lateAttendance.resolution.lateDays,
-                lateAttendance.resolution.contributionPenalty
-              ),
-          contributionEntries
-        )
-      : createInitialKeepHouseSessionState(
-          "audience",
-          "finished",
-          lateExpelled && lateAttendance.resolution != null
-            ? getLateExpulsionLines(
-                textEntriesById,
-                lateAttendance.resolution.lateDays,
-                lateAttendance.resolution.contributionPenalty
-              )
-            : getAudienceGreetingLines(textEntriesById),
-          contributionEntries
-        );
+      ? audienceSessionState
+      : audienceSessionState;
 
     return {
       gameState: nextState,
@@ -1120,10 +1194,6 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       input.characterDefinitions,
       input.houseDefinition.defaultCharacterId
     );
-    const playerCharacter = getPlayerCharacter(
-      input.characterDefinitions,
-      input.playerCharacterId
-    );
     const sessionState =
       input.sessionState ??
       createInitialKeepHouseSessionState(
@@ -1132,6 +1202,23 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
         getAudienceGreetingLines(getKeepTextEntries(input)),
         createContributionEntries(nextState, input.characterDefinitions, lordCharacter.clanId)
       );
+    const isHostedMeetingActive = input.sharedSessionState?.hostedMeeting != null;
+    const usesMeetingShell = isHostedMeetingActive || sessionState.mode === "meeting";
+    const hostedMeetingPresenter = resumeKeepHostedMeeting(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+        houseDefinition: input.houseDefinition,
+        playerCharacterId: input.playerCharacterId,
+        sharedSessionState: input.sharedSessionState ?? null,
+        meetingDefinitionsById: input.meetingDefinitionsById,
+        meetingBindings: input.meetingBindings,
+        meetingPanelsById: input.meetingPanelsById,
+        meetingChoiceSetsById: input.meetingChoiceSetsById,
+        meetingActionSetsById: input.meetingActionSetsById,
+      },
+      sessionState
+    )?.presenterModel;
     const currentStrategy = readStringVariable(
       nextState,
       KEEP_HOUSE_VARIABLE_KEYS.currentStrategy,
@@ -1142,28 +1229,13 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
       0
     );
-    const taskChoices = getReviewTaskChoices(
-      {
-        ...input,
-        gameState: nextState,
-      },
-      playerCharacter
-    );
     const assignedTask =
       sessionState.selectedTaskId == null
         ? null
         : resolveKeepTaskDefinition(input, sessionState.selectedTaskId);
-    const shouldShowMeetingTasks =
-      sessionState.mode === "meeting" &&
-      sessionState.meetingStage === "assign-task" &&
-      sessionState.dialoguePhase === "open";
-    const shouldShowAdviceActions =
-      sessionState.mode === "meeting" &&
-      sessionState.meetingStage === "advice" &&
-      sessionState.dialoguePhase === "open";
     const shouldShowDialogue = sessionState.dialoguePhase !== "idle";
     const rosterEntries =
-      sessionState.mode === "meeting"
+      usesMeetingShell
         ? sessionState.contributionEntries.filter(
             (entry) => entry.characterId !== lordCharacter.id
           )
@@ -1185,7 +1257,7 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
         ? "none"
         : nextState.ui.mainHouseMissionText);
     const strategySubtitle =
-      sessionState.mode === "meeting"
+      usesMeetingShell
         ? "review / assembled officers"
         : `${lordCharacter.title ?? "lord"} / command`;
 
@@ -1201,58 +1273,37 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
           ? { actionId: entry.actionId }
           : {}),
         ...(entry.title == null ? {} : { title: entry.title }),
-        ...(sessionState.mode === "meeting"
+        ...(usesMeetingShell
           ? { isSelected: sessionState.contributionEntries[0]?.characterId === entry.characterId }
           : {}),
       })),
-      dialogue: !shouldShowDialogue
-        ? null
-        : {
-            mode: "character",
-            speakerName: lordCharacter.name,
-            characterId: lordCharacter.id,
-            position: "right",
-            textLines: sessionState.dialogueLines,
-            advanceActionId:
-              sessionState.overlay == null &&
-              ((sessionState.mode === "meeting" &&
-                ["intro", "praise", "situation", "policy"].includes(
-                  sessionState.meetingStage
-                )) ||
-                (sessionState.mode === "audience" &&
-                  sessionState.meetingStage === "finished" &&
-                  sessionState.dialoguePhase === "greeting"))
-                ? "advance-keep-dialogue"
-                : null,
-            advanceHintText:
-              sessionState.overlay == null &&
-              ((sessionState.mode === "meeting" &&
-                ["intro", "praise", "situation", "policy"].includes(
-                  sessionState.meetingStage
-                )) ||
-                (sessionState.mode === "audience" &&
-                  sessionState.meetingStage === "finished" &&
-                  sessionState.dialoguePhase === "greeting"))
-                ? "继续"
-                : null,
-          },
-      actionContainer: shouldShowAdviceActions
-        ? {
-            title: "进言",
-            actions: [
-              { id: "keep-review-give-advice", label: "发表意见" },
-              { id: "keep-review-stay-silent", label: "一言不发" },
-            ],
-          }
-        : shouldShowMeetingTasks
-        ? {
-            title: "委任",
-            actions: taskChoices.map<HouseActionViewModel>((taskChoice) => ({
-              id: `${ASSIGN_TASK_ACTION_PREFIX}${taskChoice.id}`,
-              label: taskChoice.label,
-              ...(taskChoice.disabled ? { disabled: true } : {}),
-            })),
-          }
+      dialogue: isHostedMeetingActive
+        ? hostedMeetingPresenter?.dialogue ?? null
+        : !shouldShowDialogue
+          ? null
+          : {
+              mode: "character",
+              speakerName: lordCharacter.name,
+              characterId: lordCharacter.id,
+              position: "right",
+              textLines: sessionState.dialogueLines,
+              advanceActionId:
+                sessionState.overlay == null &&
+                sessionState.mode === "audience" &&
+                sessionState.meetingStage === "finished" &&
+                sessionState.dialoguePhase === "greeting"
+                  ? "advance-keep-dialogue"
+                  : null,
+              advanceHintText:
+                sessionState.overlay == null &&
+                sessionState.mode === "audience" &&
+                sessionState.meetingStage === "finished" &&
+                sessionState.dialoguePhase === "greeting"
+                  ? "继续"
+                  : null,
+            },
+      actionContainer: isHostedMeetingActive
+        ? hostedMeetingPresenter?.actionContainer ?? null
         : sessionState.mode === "audience" && sessionState.dialoguePhase === "open"
           ? {
               title: "Audience Actions",
@@ -1272,7 +1323,9 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
           { label: "Current Duty", value: statusTaskText },
         ],
       },
-      overlay: selectOverlayViewModel(sessionState.overlay),
+      overlay: isHostedMeetingActive
+        ? hostedMeetingPresenter?.overlay ?? null
+        : selectOverlayViewModel(sessionState.overlay),
       leaveAction: {
         id: "leave-house",
         label: "Leave",
@@ -1281,4 +1334,3 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
     };
   },
 };
-

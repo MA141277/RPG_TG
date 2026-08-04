@@ -83,22 +83,40 @@ test("keep review source uses normalized Chinese review copy and advice choices"
   assert.doesNotMatch(source, /Contribution Report|Current Orders|Continue|Dismiss/);
 });
 
-test("temple review source uses normalized review table, policy panel, and advice choices", () => {
-  const source = readSource(
+test("temple review keeps overlay wiring in runtime source while authored copy lives in pack text entries", () => {
+  const runtimeSource = readSource(
     "src/application/house-modules/temple-house/temple-house-house-module.ts"
   );
-  for (const text of [
-    "\u8fd9\u6bb5\u65f6\u95f4\u5927\u5bb6\u8f9b\u82e6\u4e86",
-    "\u770b\u770b\u5927\u5bb6\u8fd9\u671f\u95f4\u7684\u8fdb\u5c55\u5427",
-    "\u6709\u8c01\u8981\u8fdb\u8a00\u5417",
-    "\u53d1\u8868\u610f\u89c1",
-    "\u4e00\u8a00\u4e0d\u53d1",
-    "review-assignment-table",
-    "review-policy-panel",
-  ]) {
-    assert.match(source, new RegExp(text));
+  const defaultsSource = readSource(
+    "src/content/scenario-packs/zhuyuanzhang/house-module-defaults.json"
+  );
+  const textEntriesSource = readSource(
+    "src/content/scenario-packs/zhuyuanzhang/text-entries.json"
+  );
+
+  for (const text of ["review-assignment-table", "review-policy-panel"]) {
+    assert.match(runtimeSource, new RegExp(text));
   }
-  assert.doesNotMatch(source, /\u4e0a\u671f\u5bfa\u4e2d\u8d21\u732e/);
+  for (const text of [
+    "这段时间大家辛苦了",
+    "看看大家这期间的进展吧。",
+    "有谁要进言吗？",
+    "发表意见",
+    "一言不发",
+  ]) {
+    assert.doesNotMatch(runtimeSource, new RegExp(text));
+    assert.match(textEntriesSource, new RegExp(text));
+  }
+  for (const textId of [
+    "runtime.zhu_yuanzhang.temple.ui.review.progress.lead",
+    "runtime.zhu_yuanzhang.temple.ui.review.praise.lead",
+    "runtime.zhu_yuanzhang.temple.ui.review.advice.prompt",
+    "runtime.zhu_yuanzhang.temple.ui.action_panel.advice.give",
+    "runtime.zhu_yuanzhang.temple.ui.action_panel.advice.silent",
+  ]) {
+    assert.match(defaultsSource, new RegExp(textId));
+  }
+  assert.doesNotMatch(runtimeSource, /\u4e0a\u671f\u5bfa\u4e2d\u8d21\u732e/);
 });
 
 test("review assignment table uses compact review popup and nine-slice action button", () => {

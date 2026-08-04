@@ -21,7 +21,12 @@
         }
       ]
     },
-    "tags": ["scenario", "fallback", "qte", "temple"]
+    "tags": [
+      "scenario",
+      "fallback",
+      "qte",
+      "temple"
+    ]
   },
   {
     "id": "activity.zhu_yuanzhang.temple.copy_scripture",
@@ -36,7 +41,12 @@
       "runtime.zhu_yuanzhang.temple.task.copy_scripture.order.001",
       "runtime.zhu_yuanzhang.temple.task.copy_scripture.order.002"
     ],
-    "tags": ["scenario", "temple", "task"]
+    "tags": [
+      "scenario",
+      "temple",
+      "task"
+    ],
+    "reviewMinRankId": "temple.laborer"
   },
   {
     "id": "activity.zhu_yuanzhang.temple.sweep_courtyard",
@@ -51,7 +61,12 @@
       "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.order.001",
       "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.order.002"
     ],
-    "tags": ["scenario", "temple", "task"]
+    "tags": [
+      "scenario",
+      "temple",
+      "task"
+    ],
+    "reviewMinRankId": "temple.laborer"
   },
   {
     "id": "activity.zhu_yuanzhang.temple.carry_water",
@@ -66,7 +81,12 @@
       "runtime.zhu_yuanzhang.temple.task.carry_water.order.001",
       "runtime.zhu_yuanzhang.temple.task.carry_water.order.002"
     ],
-    "tags": ["scenario", "temple", "task"]
+    "tags": [
+      "scenario",
+      "temple",
+      "task"
+    ],
+    "reviewMinRankId": "temple.laborer"
   },
   {
     "id": "activity.zhu_yuanzhang.temple.beg_alms",
@@ -81,7 +101,12 @@
       "runtime.zhu_yuanzhang.temple.task.beg_alms.order.001",
       "runtime.zhu_yuanzhang.temple.task.beg_alms.order.002"
     ],
-    "tags": ["scenario", "temple", "task"]
+    "tags": [
+      "scenario",
+      "temple",
+      "task"
+    ],
+    "reviewMinRankId": "temple.novice"
   },
   {
     "id": "activity.zhu_yuanzhang.temple.relief_refugees",
@@ -96,7 +121,12 @@
       "runtime.zhu_yuanzhang.temple.task.relief_refugees.order.001",
       "runtime.zhu_yuanzhang.temple.task.relief_refugees.order.002"
     ],
-    "tags": ["scenario", "temple", "task"]
+    "tags": [
+      "scenario",
+      "temple",
+      "task"
+    ],
+    "reviewMinRankId": "temple.itinerant"
   },
   {
     "id": "activity.zhu_yuanzhang.keep.grain_procurement",
@@ -112,7 +142,12 @@
       "runtime.zhu_yuanzhang.keep.task.grain_procurement.order.002"
     ],
     "keepMinTier": "runner",
-    "tags": ["scenario", "keep", "task"]
+    "tags": [
+      "scenario",
+      "keep",
+      "task"
+    ],
+    "reviewMinRankId": "red_turban.bodyguard"
   },
   {
     "id": "activity.zhu_yuanzhang.keep.market_inspection",
@@ -128,7 +163,12 @@
       "runtime.zhu_yuanzhang.keep.task.market_inspection.order.002"
     ],
     "keepMinTier": "officer",
-    "tags": ["scenario", "keep", "task"]
+    "tags": [
+      "scenario",
+      "keep",
+      "task"
+    ],
+    "reviewMinRankId": "red_turban.guard_captain"
   },
   {
     "id": "activity.zhu_yuanzhang.keep.militia_drill",
@@ -144,6 +184,11 @@
       "runtime.zhu_yuanzhang.keep.task.militia_drill.order.002"
     ],
     "keepMinTier": "commander",
-    "tags": ["scenario", "keep", "task"]
+    "tags": [
+      "scenario",
+      "keep",
+      "task"
+    ],
+    "reviewMinRankId": "red_turban.zhenfu"
   }
 ]

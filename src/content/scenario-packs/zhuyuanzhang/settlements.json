@@ -1,0 +1,21 @@
+[
+  {
+    "id": "settlement.playable.grain_accounting.failure_reward",
+    "title": "粮账核算失败结算",
+    "contents": [
+      {
+        "targetFamily": "person",
+        "targetId": "char.player",
+        "attributeKey": "stats.gold",
+        "attributeType": "number",
+        "operation": "add",
+        "value": 13
+      }
+    ]
+  },
+  {
+    "id": "settlement.playable.medicine_compounding.failure_reward",
+    "title": "药材炼制失败结算",
+    "contents": []
+  }
+]

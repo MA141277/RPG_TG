@@ -1,0 +1,73 @@
+[
+  {
+    "id": "panel.temple.review.assignment",
+    "title": "委任",
+    "type": "assignment-table",
+    "sections": [
+      {
+        "title": "寺中执事",
+        "value": "本轮差事已列定。"
+      }
+    ]
+  },
+  {
+    "id": "panel.temple.review.policy",
+    "title": "方略",
+    "type": "policy-panel",
+    "sections": [
+      {
+        "title": "总目标",
+        "value": "保全寺众"
+      },
+      {
+        "title": "阶段目标",
+        "value": "先稳住寺中杂务与口粮。"
+      },
+      {
+        "title": "执行方略",
+        "value": "依当前局势决定是留寺帮忙，还是外出化缘。"
+      }
+    ]
+  },
+  {
+    "id": "panel.keep.review.assignment",
+    "title": "委任",
+    "type": "assignment-table",
+    "sections": [
+      {
+        "title": "军中进展",
+        "value": "本轮军务进展已列定。"
+      }
+    ]
+  },
+  {
+    "id": "panel.keep.review.policy",
+    "title": "方略",
+    "type": "policy-panel",
+    "sections": [
+      {
+        "title": "总目标",
+        "value": "稳住粮道、整饬军伍"
+      },
+      {
+        "title": "阶段目标",
+        "value": "今后六十日，以稳住粮道、整饬军伍为先。"
+      },
+      {
+        "title": "执行计划",
+        "value": "市面要活，军粮要足，诸将不得各行其是。"
+      }
+    ]
+  },
+  {
+    "id": "panel.keep.review.assigned",
+    "title": "军令下达",
+    "type": "summary",
+    "sections": [
+      {
+        "title": "军令",
+        "value": "本次评定结束，下一次评定倒计时已重置为 60 天。"
+      }
+    ]
+  }
+]

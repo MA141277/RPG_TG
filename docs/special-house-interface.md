@@ -50,6 +50,13 @@ Registry wiring rules:
 - builtin fallback registrations may exist, but they must still be expressed through the same shared registration seam
 - core runtime, presenter lookup, and house renderer lookup must not each keep their own unrelated static table
 
+Meeting / review host rules:
+
+- a house module may delegate meeting or review execution to the shared meeting runtime
+- the house module remains the host and only owns launch eligibility, host context, shell projection, and safe return target
+- authored meeting content must live in scenario-pack meeting families, not in a concrete house-local stage switch
+- if a shared meeting presenter already owns the active meeting stage, the house shell must not fall back to a second local meeting dialogue/action owner
+
 ## Required Domain Contract
 
 Each special house must declare a stable module id.
@@ -191,6 +198,7 @@ export type HouseModuleTransitionResult<
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
   sessionState: HouseModuleSessionState<ModuleId> | null;
+  sharedSessionState?: HouseSharedSessionState | null;
   timeAdvanceCost?: number;
   councilArrivalNotice?: {
     speakerCharacterId?: string;
@@ -223,7 +231,10 @@ Typing rules:
 - do not leave shipped house `sessionState` as bare `unknown`
 - represent shared house session through a `moduleId -> sessionState` map
 - keep `GameState.ui.houseSession` as a discriminated union keyed by `moduleId`
+- if a host delegates a reusable subsystem such as the generic meeting runtime, keep that subsystem state in `sharedSessionState` instead of smuggling it into one concrete house's private `sessionState`
+- `sharedSessionState` is only for cross-host reusable runtime ownership; concrete house-local UI/menu/dialogue state still belongs in the typed module `sessionState`
 - generic wiring may pass the active session through runtime boundaries, but should not recover type safety with ad hoc `as` casting in the entrypoint
+- if a house needs to project pack-owned dialogue or narration into an existing house overlay, pass that authored content through shared runtime inputs such as `dialogueDefinitionsById`; do not move that ownership back into `main.ts` or re-hardcode the text inside one house module
 
 Minimum required lifecycle:
 

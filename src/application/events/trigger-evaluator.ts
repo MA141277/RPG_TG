@@ -17,11 +17,18 @@ export type TriggerEvaluatorContext = EventConditionContext & ParticipantResolve
 
 export function selectTriggeredEvents(
   state: GameState,
-  eventDefinitions: EventDefinition[],
+  eventDefinitions: readonly (EventDefinition | null | undefined)[],
   input: TriggerEvaluationInput,
   context: TriggerEvaluatorContext
 ): EventDefinition[] {
   return eventDefinitions
+    .filter((eventDefinition): eventDefinition is EventDefinition => eventDefinition != null)
+    .filter(
+      (
+        eventDefinition
+      ): eventDefinition is EventDefinition & { trigger: NonNullable<EventDefinition["trigger"]> } =>
+        eventDefinition.trigger != null
+    )
     .filter((eventDefinition) => eventDefinition.trigger.timing === input.timing)
     .filter((eventDefinition) => matchesTriggerScope(eventDefinition, input))
     .filter((eventDefinition) =>

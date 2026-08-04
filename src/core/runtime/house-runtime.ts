@@ -15,14 +15,21 @@ import {
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CityDefinition } from "../../domain/city";
 import type { EventBinding, EventDefinition } from "../../domain/event";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
+import type { MeetingActionSetDefinition } from "../../domain/meeting/meeting-action-set";
+import type { MeetingBindingDefinition } from "../../domain/meeting/meeting-binding";
+import type { MeetingChoiceSetDefinition } from "../../domain/meeting/meeting-choice-set";
+import type { MeetingDefinition } from "../../domain/meeting/meeting-definition";
+import type { MeetingPanelDefinition } from "../../domain/meeting/meeting-panel";
 import type {
   ActiveHouseModuleSession,
   HouseMapAutoAdvanceCompletion,
   HouseModuleId,
   HouseModuleSessionState,
   HouseModuleSideEffect,
+  HouseSharedSessionState,
   HouseModuleTransitionResult,
   MapAutoAdvanceSnapshot,
 } from "../../domain/house-module";
@@ -64,6 +71,12 @@ export type HouseRuntimeDependencies = {
   playerCharacterId: string;
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition> | undefined;
+  meetingDefinitionsById?: Record<string, MeetingDefinition> | undefined;
+  meetingBindings?: MeetingBindingDefinition[] | undefined;
+  meetingPanelsById?: Record<string, MeetingPanelDefinition> | undefined;
+  meetingChoiceSetsById?: Record<string, MeetingChoiceSetDefinition> | undefined;
+  meetingActionSetsById?: Record<string, MeetingActionSetDefinition> | undefined;
   eventBindingsById?: Record<string, EventBinding> | undefined;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   settlementDefinitionsById?: Record<
@@ -79,6 +92,7 @@ export type HouseRuntimeDependencies = {
   cityDefinitionsById?: Record<string, CityDefinition> | undefined;
   houseDefinitionsById?: Record<string, HouseDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
+  houseModuleDefaults?: Record<string, unknown> | undefined;
   houseModuleRegistry?: HouseModuleRegistry | undefined;
   syncCouncilPriorityAfterGameStateChange(
     previousGameState: GameState,
@@ -149,6 +163,9 @@ export function createHouseRuntimeBridge(
       ...(dependencies.textEntriesById == null
         ? {}
         : { textEntriesById: dependencies.textEntriesById }),
+      ...(dependencies.houseModuleDefaults == null
+        ? {}
+        : { houseModuleDefaults: dependencies.houseModuleDefaults }),
     };
   }
 
@@ -165,11 +182,13 @@ export function createHouseRuntimeBridge(
 
   function createActiveHouseSession<ModuleId extends HouseModuleId>(
     moduleId: ModuleId,
-    sessionState: HouseModuleSessionState<ModuleId>
+    sessionState: HouseModuleSessionState<ModuleId>,
+    sharedSessionState: HouseSharedSessionState | null
   ): ActiveHouseModuleSession {
     return {
       moduleId,
       state: sessionState,
+      sharedSessionState,
     } as ActiveHouseModuleSession;
   }
 
@@ -198,10 +217,20 @@ export function createHouseRuntimeBridge(
       emittedBy: "house-runtime",
       appliedBy: "runtime-settlement",
     }).state.core;
+    const previousSharedSessionState =
+      appState.gameState.ui.houseSession?.sharedSessionState ?? null;
+    const sharedSessionState =
+      result.sharedSessionState === undefined
+        ? previousSharedSessionState
+        : result.sharedSessionState;
     const houseSession =
       result.sessionState == null
         ? null
-        : createActiveHouseSession(moduleId, result.sessionState);
+        : createActiveHouseSession(
+            moduleId,
+            result.sessionState,
+            sharedSessionState
+          );
 
     dependencies.setAppState({
       ...appState,
@@ -266,8 +295,22 @@ export function createHouseRuntimeBridge(
       houseDefinition: activeHouse,
       playerCharacterId: dependencies.playerCharacterId,
       sessionState: appState.gameState.ui.houseSession?.state ?? null,
+      sharedSessionState:
+        appState.gameState.ui.houseSession?.sharedSessionState ?? null,
+      eventDefinitionsById: dependencies.eventDefinitionsById,
+      dialogueDefinitionsById: dependencies.dialogueDefinitionsById,
+      meetingDefinitionsById: dependencies.meetingDefinitionsById,
+      meetingBindings: dependencies.meetingBindings,
+      meetingPanelsById: dependencies.meetingPanelsById,
+      meetingChoiceSetsById: dependencies.meetingChoiceSetsById,
+      meetingActionSetsById: dependencies.meetingActionSetsById,
+      eventBindings:
+        dependencies.eventBindingsById == null
+          ? undefined
+          : Object.values(dependencies.eventBindingsById),
       activityDefinitionsById: dependencies.activityDefinitionsById,
       textEntriesById: dependencies.textEntriesById,
+      houseModuleDefaults: dependencies.houseModuleDefaults,
       request,
     });
 
@@ -385,8 +428,22 @@ export function createHouseRuntimeBridge(
         characterDefinitions: nextAppState.characterDefinitions,
         houseDefinition,
         playerCharacterId: dependencies.playerCharacterId,
+        sharedSessionState:
+          nextAppState.gameState.ui.houseSession?.sharedSessionState ?? null,
+        eventDefinitionsById: dependencies.eventDefinitionsById,
+        dialogueDefinitionsById: dependencies.dialogueDefinitionsById,
+        meetingDefinitionsById: dependencies.meetingDefinitionsById,
+        meetingBindings: dependencies.meetingBindings,
+        meetingPanelsById: dependencies.meetingPanelsById,
+        meetingChoiceSetsById: dependencies.meetingChoiceSetsById,
+        meetingActionSetsById: dependencies.meetingActionSetsById,
+        eventBindings:
+          dependencies.eventBindingsById == null
+            ? undefined
+            : Object.values(dependencies.eventBindingsById),
         activityDefinitionsById: dependencies.activityDefinitionsById,
         textEntriesById: dependencies.textEntriesById,
+        houseModuleDefaults: dependencies.houseModuleDefaults,
       });
       applyHouseModuleResult(houseDefinition, moduleId, result);
     }
@@ -461,8 +518,22 @@ export function createHouseRuntimeBridge(
         houseDefinition: activeHouse,
         playerCharacterId: dependencies.playerCharacterId,
         sessionState: appState.gameState.ui.houseSession?.state ?? null,
+        sharedSessionState:
+          appState.gameState.ui.houseSession?.sharedSessionState ?? null,
+        eventDefinitionsById: dependencies.eventDefinitionsById,
+        dialogueDefinitionsById: dependencies.dialogueDefinitionsById,
+        meetingDefinitionsById: dependencies.meetingDefinitionsById,
+        meetingBindings: dependencies.meetingBindings,
+        meetingPanelsById: dependencies.meetingPanelsById,
+        meetingChoiceSetsById: dependencies.meetingChoiceSetsById,
+        meetingActionSetsById: dependencies.meetingActionSetsById,
+        eventBindings:
+          dependencies.eventBindingsById == null
+            ? undefined
+            : Object.values(dependencies.eventBindingsById),
         activityDefinitionsById: dependencies.activityDefinitionsById,
         textEntriesById: dependencies.textEntriesById,
+        houseModuleDefaults: dependencies.houseModuleDefaults,
       });
       const councilTriggered = applyHouseModuleResult(
         activeHouse,

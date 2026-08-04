@@ -136,6 +136,38 @@ test("dialogue runtime runs dialogue definitions through the current scene carri
   assert.equal(result.session.eventId, "event.dialogue.opening");
 });
 
+test("dialogue runtime accepts events that only declare dialogueId", () => {
+  const content = createActiveGameContent({
+    ...createDialoguePack(),
+    events: [
+      {
+        id: "event.dialogue.dialogue-only",
+        chapterId: "chapter.test",
+        name: "Dialogue Only",
+        occurrence: "repeatable",
+        trigger: { timing: "manual" },
+        conditions: [],
+        entrySceneId: "",
+        dialogueId: "dialogue.opening",
+      },
+    ],
+  });
+  const eventDefinition =
+    content.eventDefinitionsById["event.dialogue.dialogue-only"];
+  const startedState = startEvent(createBaseState(), eventDefinition);
+  const result = runDialogueFromEvent({
+    state: startedState,
+    characterDefinitions: content.characters,
+    dialogueDefinitionsById: content.dialogueDefinitionsById,
+    eventDefinitionsById: content.eventDefinitionsById,
+  });
+
+  assert.equal(startedState.scene.activeSceneId, "dialogue.opening");
+  assert.equal(result.state.scene.activeSceneId, "dialogue.opening");
+  assert.equal(result.session?.dialogueId, "dialogue.opening");
+  assert.equal(result.session?.eventId, "event.dialogue.dialogue-only");
+});
+
 test(
   "scene runtime routes automatic nextEvent continuation through the shared event-router seam",
   { concurrency: false },

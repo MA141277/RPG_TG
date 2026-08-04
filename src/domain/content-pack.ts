@@ -13,6 +13,11 @@ import type {
 } from "./historical-character";
 import type { HouseDefinition, HouseAccessRefusalRule } from "./house";
 import type { MapDefinition } from "./map";
+import type { MeetingActionSetDefinition } from "./meeting/meeting-action-set";
+import type { MeetingBindingDefinition } from "./meeting/meeting-binding";
+import type { MeetingChoiceSetDefinition } from "./meeting/meeting-choice-set";
+import type { MeetingDefinition } from "./meeting/meeting-definition";
+import type { MeetingPanelDefinition } from "./meeting/meeting-panel";
 import type { RuntimeDialogueDefinition } from "./dialogue";
 import type { EventBinding } from "./event";
 import type { LocationAccessDefinition } from "./location-access";
@@ -56,11 +61,16 @@ export type ItemDefinition = {
   menuInstanceIds?: string[];
 };
 
+export type ContentPackAudioSettings = {
+  muted?: boolean;
+};
+
 export type ContentPackDefinition = {
   schemaVersion: 1;
   id: string;
   title: string;
   description?: string;
+  audioSettings?: ContentPackAudioSettings;
   textEntries?: Record<string, string>;
   maps?: MapDefinition[];
   cities?: CityDefinition[];
@@ -81,8 +91,15 @@ export type ContentPackDefinition = {
   menuResources?: MenuResourceDefinition[];
   menuInstances?: MenuInstanceDefinition[];
   dialogues?: RuntimeDialogueDefinition[];
+  meetings?: MeetingDefinition[];
+  meetingBindings?: MeetingBindingDefinition[];
+  meetingPanels?: MeetingPanelDefinition[];
+  meetingChoiceSets?: MeetingChoiceSetDefinition[];
+  meetingActionSets?: MeetingActionSetDefinition[];
   playables?: PlayableDefinition[];
   playableIntegrations?: PlayableIntegrationDefinition[];
+  playableShells?: FlowPlayableDefinition[];
+  flowPlayables?: FlowPlayableDefinition[];
   flows?: FlowPlayableDefinition[];
   eventBindings?: EventBinding[];
   settlements?: (SettlementDefinition & { id: string; title?: string; nextEventId?: string })[];

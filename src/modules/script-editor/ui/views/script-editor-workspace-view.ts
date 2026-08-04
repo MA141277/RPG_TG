@@ -1,5 +1,4 @@
 import type {
-  ScriptEditorWorkspaceInspectorCard,
   ScriptEditorWorkspaceTreeGroup,
   ScriptEditorWorkspaceTreeNode,
   ScriptEditorWorkspaceViewModel,
@@ -7,7 +6,8 @@ import type {
 
 export function renderScriptEditorWorkspaceView(
   model: ScriptEditorWorkspaceViewModel,
-  editorMarkup = ""
+  editorMarkup = "",
+  noticeMarkup = ""
 ): string {
   const sidebarGroups = splitWorkspaceTreeGroups(model.objectTreeGroups);
   const embeddedInspector = editorMarkup.includes("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->");
@@ -18,6 +18,7 @@ export function renderScriptEditorWorkspaceView(
   const suppressInspectorText = editorMarkup.includes(
     "<!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->"
   );
+  const skipInspector = editorMarkup.includes("data-script-editor-skip-inspector");
   const sanitizedEditorMarkup = editorMarkup
     .replace("<!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->", "")
     .replace(inspectorHeaderSlot.fullMatch, "");
@@ -26,13 +27,18 @@ export function renderScriptEditorWorkspaceView(
     headerSlot: inspectorHeaderSlot.content,
     hideHeaderText: suppressInspectorText,
   });
-  const stageContent = sanitizedEditorMarkup.includes("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->")
-    ? sanitizedEditorMarkup.replace("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->", inspectorMarkup)
-    : `${inspectorMarkup}${sanitizedEditorMarkup}`;
+  const stageContent = skipInspector
+    ? sanitizedEditorMarkup
+    : sanitizedEditorMarkup.includes("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->")
+      ? sanitizedEditorMarkup.replace("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->", inspectorMarkup)
+      : `${inspectorMarkup}${sanitizedEditorMarkup}`;
 
   return `
     <section class="c-script-editor-shell">
       <header class="c-script-editor-shell__header">
+        <div class="c-script-editor-shell__notice-slot">
+          ${noticeMarkup}
+        </div>
         <div class="c-script-editor-shell__toolbar">
           <button
             type="button"
@@ -164,27 +170,6 @@ function renderInspector(
         ${headerSlotMarkup}
       </div>
       ${inspectorDescriptionMarkup}
-      ${
-        options.compact
-          ? ""
-          : `
-            <dl class="c-script-editor-shell__stats">
-              ${inspector.stats
-                .map(
-                  (stat) => `
-                    <div class="c-script-editor-shell__stat">
-                      <dt>${escapeHtml(stat.label)}</dt>
-                      <dd>${escapeHtml(stat.value)}</dd>
-                    </div>
-                  `
-                )
-                .join("")}
-            </dl>
-            <div class="c-script-editor-shell__cards">
-              ${inspector.cards.map(renderInspectorCard).join("")}
-            </div>
-          `
-      }
     </section>
   `;
 }
@@ -211,17 +196,6 @@ function extractTemplateSlot(
     content: match[1] ?? "",
   };
 }
-
-function renderInspectorCard(card: ScriptEditorWorkspaceInspectorCard): string {
-  const toneClass = ` c-script-editor-shell__card--${card.tone}`;
-  return `
-    <article class="c-script-editor-shell__card${toneClass}">
-      <h3>${escapeHtml(card.title)}</h3>
-      <p>${escapeHtml(card.body)}</p>
-    </article>
-  `;
-}
-
 function escapeHtml(value: string | number | null | undefined): string {
   return String(value ?? "")
     .replaceAll("&", "&amp;")

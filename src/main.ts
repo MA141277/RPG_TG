@@ -127,11 +127,18 @@ import {
 } from "./application/audio/battle-sound";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
+import { resolveInitialCampaignMapIntroTitle } from "./application/runtime/campaign-map-intro-prompts";
 import {
   applyCouncilPriorityFollowUp,
+  createCouncilInsufficientTimeDialogue,
   createNavigationTimeFollowUpBridge,
+  createCouncilPriorityRefusalDialogue,
   type NavigationTimeFollowUpAppState,
 } from "./application/runtime/navigation-time-follow-up";
+import {
+  createBeggingStaminaRefusalDialogue,
+  createHaozhouShortageBeggingRefusalDialogue,
+} from "./application/runtime/city-begging-refusal-dialogues";
 import { selectLeaderResidenceOptions } from "./application/city-entries/select-leader-residence-options";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
@@ -161,14 +168,11 @@ import {
   type GridCoordinate,
   type HexCoordinateSystem,
 } from "./application/navigation/travel-to-coordinate";
-import {
-  revealCampaignMapHexesForCoordinate,
-} from "./application/map/campaign-map-exploration";
+import { revealCampaignMapHexesForCoordinate } from "./application/map/campaign-map-exploration";
 import {
   isCampaignMapCoordinateClickable,
   revealCampaignMapAroundCoordinate,
 } from "./application/navigation/campaign-map-exploration";
-import { createInitialState } from "./application/state/create-initial-state";
 import {
   createActiveGameContentContextFromModActivation,
   type ActiveGameContentContext,
@@ -187,13 +191,11 @@ import {
   type StartupSaveData,
   type StartupScenario,
   type StartupSessionBootstrap,
+  type StartupSessionRequest,
 } from "./application/startup/startup-session-coordinator";
+import { createStartupAppStateFactory } from "./application/startup/startup-app-state-factory";
+import { createStartupLoadingLauncher } from "./application/startup/startup-loading-launcher";
 import { sanitizeScenarioPackForRuntimePreview } from "./application/startup/scenario-preview-sanitizer";
-import {
-  applyStartupStoryBootstrap,
-  type StartupStoryBootstrap,
-} from "./application/startup/startup-story-bootstrap";
-import { createHaozhouReturnEncounterBattleState } from "./application/startup/haozhou-return-battle-state";
 import {
   createEnterCityRequest,
   routeNavigationRuntime,
@@ -205,9 +207,6 @@ import {
 } from "./core/runtime/time-runtime";
 import {
 } from "./core/runtime/event-runtime";
-import {
-  createPrototypeCharactersForStoryStage,
-} from "./content/prototype-world";
 import { createBaseGameContentPack } from "./content/base-game-content-pack";
 import { getZhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
 import {
@@ -594,28 +593,24 @@ function getRuntimeTemplateText(
   );
 }
 
-function bootstrapStartupStoryAppState(input: {
-  appState: AppState;
-  bootstrap: StartupStoryBootstrap | null;
-}): AppState {
-  return applyStartupStoryBootstrap({
-    appState: input.appState,
-    bootstrap: input.bootstrap,
-    content: {
-      eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
-      sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
-      activityDefinitionsById:
-        activeContentContext.storyContent.activityDefinitionsById,
-      textEntriesById: activeContentContext.storyContent.textEntriesById,
-    },
-  });
-}
-
 function setActiveContentContext(
   nextContentContext: ActiveGameContentContext
 ): void {
   activeContentContext = nextContentContext;
 }
+
+const startupAppStateFactory = createStartupAppStateFactory({
+  getContentContext: () => activeContentContext,
+  defaultPlayerCharacterId,
+  createDefaultUiLayouts: () => ({
+    "global-hud": createDefaultGlobalHudLayout(),
+    "start-screen": createDefaultStartScreenLayout(),
+    "character-select-screen": createDefaultCharacterSelectScreenLayout(),
+    "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
+    "battle-ui-screen": createDefaultBattleUiScreenLayout(),
+  }),
+  createDefaultBattleUiValues: createDefaultBattleUiEditorValues,
+});
 
 const selectableCharacters = selectPlayableCharacters(
   activeContentContext.gameContent.characters,
@@ -730,7 +725,7 @@ function createRuntimeCommitContext(input: {
 }
 
 let appState: AppState = applyPersistedBattleUiEditorValues(
-  createPrototypeAppState(currentPlayerCharacterId)
+  startupAppStateFactory.createPrototypeAppState(currentPlayerCharacterId)
 );
 let coinRewardDisplayValue: number | null = null;
 let coinRewardAnchorEditorState = {
@@ -1055,156 +1050,6 @@ const appAudioController = createAppAudioController({
     BUILTIN_AUDIO_ASSET_URLS[assetPath] ??
     new URL(`../${assetPath}`, import.meta.url).href,
 });
-const mainUiFlow = new MainUiFlow({
-  overlayRoot: uiOverlayElement,
-  characters: selectableCharacters,
-  scenarioPacks: builtInScenarioPacks,
-  onStartGame: startMainGameWithLoading,
-  onContinueGame: startContinueGameWithLoading,
-  onStartScenarioPack: startScenarioPackWithLoading,
-  onStartLoadedScenarioPack: startLoadedScenarioPackWithLoading,
-  onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
-  onQueueButtonSound: queueButtonSoundEffect,
-  onExitRuntimePreview: exitScriptEditorRuntimePreview,
-  loadSaveData,
-  getAppState: () => appState,
-});
-
-syncGameViewport();
-window.addEventListener("resize", syncGameViewport);
-setGameVisibility(false);
-mainUiFlow.mount();
-mainUiFlow.showMainMenu();
-
-function createPrototypeAppState(playerCharacterId: string): AppState {
-  const defaultMapDefinition =
-    activeContentContext.mapDefinitionById["map.yuanmo_campaign"] ??
-    activeContentContext.maps[0];
-  const defaultCityDefinition =
-    activeContentContext.cityDefinitionById["city.kulan"] ??
-    activeContentContext.cities[0];
-  assertExists(defaultMapDefinition, "Missing default map definition.");
-  assertExists(defaultCityDefinition, "Missing default city definition.");
-  const storyStage: ZhuYuanzhangStoryStage =
-    playerCharacterId === defaultPlayerCharacterId
-      ? ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-      : ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp;
-  const storyCharacterDefinitions =
-    createPrototypeCharactersForStoryStage(storyStage);
-  let nextAppState: AppState = {
-    gameState: ensureCityNpcPoolsForCurrentDay(
-      createInitialState({
-        currentMapId: defaultMapDefinition.id,
-        currentCityId: defaultCityDefinition.id,
-        currentHouseId: null,
-        playerCharacterId,
-        chapterId: "chapter.prototype",
-        year: 1567,
-        month: 1,
-        day: 1,
-        pinnedCharacterId: playerCharacterId,
-        reviewDateText: formatCouncilStatusText(40),
-        mainHouseMissionText: getRuntimeText(
-          "runtime.zhu_yuanzhang.prototype.main_mission.review_hall",
-        ),
-        cards: {
-          ownedCardIds: activeContentContext.cards.map(
-            (cardDefinition) => cardDefinition.id
-          ),
-          selectedCardId: activeContentContext.cards[0]?.id ?? null,
-        },
-        valuables: {
-          items: activeContentContext.gameContent.valuables,
-          selectedItemId: activeContentContext.gameContent.valuables[0]?.id ?? null,
-          equippedWeaponSet: {
-            swordId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "weapon"
-              )?.id ?? null,
-            armorId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "armor"
-              )?.id ?? null,
-          },
-        },
-        currentView: "map",
-      }),
-      activeContentContext.cityNpcPools
-    ),
-    characterDefinitions: storyCharacterDefinitions,
-    playerCoordinate: defaultMapDefinition.initialPlayerCoordinate ?? { x: 0, y: 0 },
-    campaignActorState: {
-      facingDegrees: 0,
-      isMoving: false,
-    },
-    campaignTravelState: null,
-    modalState: null,
-    locationDialogueState: null,
-    beggingMiniGameState: null,
-    cityMenuState: null,
-    cityDirectoryState: null,
-    autoAdvanceState: null,
-    uiLayouts: {
-      "global-hud": createDefaultGlobalHudLayout(),
-      "start-screen": createDefaultStartScreenLayout(),
-      "character-select-screen": createDefaultCharacterSelectScreenLayout(),
-      "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
-      "battle-ui-screen": createDefaultBattleUiScreenLayout(),
-    },
-    layoutEditor: {
-      isOpen: false,
-      selectedTargetId: "global-hud",
-      selectedComponentId: "status-board",
-      selectedElementId: null,
-      backgroundAssetQuery: "",
-      battleUiValues: createDefaultBattleUiEditorValues(),
-    },
-  };
-  nextAppState = {
-    ...nextAppState,
-    gameState: revealCampaignMapHexesForCoordinate(
-      nextAppState.gameState,
-      defaultMapDefinition,
-      nextAppState.playerCoordinate
-    ),
-  };
-
-  nextAppState = {
-    ...nextAppState,
-    gameState: {
-      ...nextAppState.gameState,
-      ui: {
-        ...nextAppState.gameState.ui,
-        reviewDateText:
-          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? formatCouncilStatusText(0)
-            : nextAppState.gameState.ui.reviewDateText,
-        mainHouseMissionText:
-          storyStage === ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-            ? getRuntimeText(
-                "runtime.zhu_yuanzhang.prototype.main_mission.temple_review"
-              )
-            : nextAppState.gameState.ui.mainHouseMissionText,
-      },
-      runtime: {
-        ...nextAppState.gameState.runtime,
-        variables: {
-          ...nextAppState.gameState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: storyStage,
-        },
-      },
-    },
-  };
-
-  return revealCampaignMapAroundAppCoordinate(
-    nextAppState,
-    nextAppState.playerCoordinate,
-    {
-      animateNewHexes: false,
-    }
-  );
-}
 
 function getCurrentPlayerCharacter(): CharacterDefinition | null {
   return (
@@ -1347,66 +1192,6 @@ function onBeggingGameComplete(result: CityBeggingGameCompletionResult): void {
   window.onBeggingGameComplete?.(result);
 }
 
-function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
-  const priorityModuleId = getCouncilPriorityHouseModuleId(appState.gameState);
-  const currentCityId = appState.gameState.world.currentCityId;
-
-  return (
-    activeContentContext.houses.find(
-      (houseDefinition) =>
-        houseDefinition.moduleId === priorityModuleId &&
-        houseDefinition.cityId === currentCityId
-    ) ??
-    activeContentContext.houses.find(
-      (houseDefinition) => houseDefinition.moduleId === priorityModuleId
-    ) ??
-    null
-  );
-}
-
-function createCouncilArrivalDialogue(
-  targetHouseId: string,
-  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
-): NonNullable<AppState["locationDialogueState"]> | null {
-  const priorityHouse = getCouncilPriorityHouseDefinition();
-  if (priorityHouse == null) {
-    return null;
-  }
-
-  const isTempleReview = priorityHouse.moduleId === "temple-house";
-  const defaultSpeakerCharacterId =
-    priorityHouse.defaultCharacterId ??
-    (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard");
-  const defaultTextLines = isTempleReview
-    ? [
-        getRuntimeTemplateText(
-          "runtime.zhu_yuanzhang.council_arrival.temple.001",
-          { targetHouseName: priorityHouse.name }
-        ),
-        getRuntimeText(
-          "runtime.zhu_yuanzhang.council_arrival.temple.002"
-        ),
-      ]
-    : [
-        getRuntimeTemplateText(
-          "runtime.zhu_yuanzhang.council_arrival.keep.001",
-          { targetHouseName: priorityHouse.name }
-        ),
-        getRuntimeText(
-          "runtime.zhu_yuanzhang.council_arrival.keep.002"
-        ),
-      ];
-
-  return {
-    type: "council-arrival-reminder",
-    speakerCharacterId:
-      councilArrivalNotice?.speakerCharacterId ?? defaultSpeakerCharacterId,
-    textLines: [...defaultTextLines, ...(councilArrivalNotice?.textLines ?? [])],
-    advanceHintText: councilArrivalNotice?.advanceHintText ?? "知道了",
-    targetHouseId,
-  };
-}
-
 function clearTransientUiForCouncilTrigger(): void {
   appState = {
     ...appState,
@@ -1441,37 +1226,14 @@ function syncCouncilPriorityAfterGameStateChange(
 }
 
 function showCouncilPriorityRefusal(): void {
-  const priorityHouse = getCouncilPriorityHouseDefinition();
-  const isTempleReview = priorityHouse?.moduleId === "temple-house";
-
   appState = {
     ...appState,
-    locationDialogueState: {
-      type: "house-access-refusal",
-      speakerCharacterId:
-        priorityHouse?.defaultCharacterId ??
-        (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
-      textLines: isTempleReview
-        ? [
-            getRuntimeTemplateText(
-              "runtime.zhu_yuanzhang.council_refusal.temple.001",
-              { targetHouseName: priorityHouse?.name ?? "皇觉寺" }
-            ),
-            getRuntimeText(
-              "runtime.zhu_yuanzhang.council_refusal.temple.002"
-            ),
-          ]
-        : [
-            getRuntimeTemplateText(
-              "runtime.zhu_yuanzhang.council_refusal.keep.001",
-              { targetHouseName: priorityHouse?.name ?? "帅府" }
-            ),
-            getRuntimeText(
-              "runtime.zhu_yuanzhang.council_refusal.keep.002"
-            ),
-          ],
-      advanceHintText: priorityHouse == null ? "知道了" : `前往${priorityHouse.name}`,
-    },
+    locationDialogueState: createCouncilPriorityRefusalDialogue({
+      gameState: appState.gameState,
+      houseDefinitions: activeContentContext.houses,
+      buildingArrangements: activeContentContext.buildingArrangements,
+      textEntriesById: activeContentContext.textEntriesById,
+    }),
   };
   renderApp();
 }
@@ -1481,63 +1243,18 @@ function showCouncilInsufficientTimeRefusal(
   durationDays: number,
   remainingDays: number
 ): void {
-  const priorityHouse = getCouncilPriorityHouseDefinition();
-  const isTempleReview = priorityHouse?.moduleId === "temple-house";
-  const targetName = priorityHouse?.name ?? (isTempleReview ? "皇觉寺" : "帅府");
-
   appState = {
     ...closeCityMenu(closeCityDirectory(appState)),
     beggingMiniGameState: null,
-    locationDialogueState: {
-      type: "house-access-refusal",
-      speakerCharacterId:
-        priorityHouse?.defaultCharacterId ??
-        (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
-      textLines: isTempleReview
-        ? remainingDays <= 0
-          ? [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.001",
-                { activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-          : [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.001",
-                { remainingDays, activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-        : remainingDays <= 0
-          ? [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.001",
-                { activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.002",
-                { targetHouseName: targetName }
-              ),
-            ]
-          : [
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.001",
-                { remainingDays, activityLabel, durationDays }
-              ),
-              getRuntimeTemplateText(
-                "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.002",
-                { targetHouseName: targetName }
-              ),
-            ],
-      advanceHintText: "知道了",
-    },
+    locationDialogueState: createCouncilInsufficientTimeDialogue({
+      gameState: appState.gameState,
+      houseDefinitions: activeContentContext.houses,
+      buildingArrangements: activeContentContext.buildingArrangements,
+      textEntriesById: activeContentContext.textEntriesById,
+      activityLabel,
+      durationDays,
+      remainingDays,
+    }),
   };
   renderApp();
 }
@@ -1681,21 +1398,9 @@ function openBeggingMiniGame(): void {
     stopCityBeggingMiniGameLoop();
     appState = {
       ...closeCityMenu(closeCityDirectory(appState)),
-      locationDialogueState: {
-        type: "house-access-refusal",
-        speakerCharacterId: "char.kulan_temple_abbot",
-        textLines: [
-          getRuntimeText(
-            "runtime.zhu_yuanzhang.haozhou_shortage.001"
-          ),
-          getRuntimeText(
-            "runtime.zhu_yuanzhang.haozhou_shortage.002"
-          ),
-        ],
-        advanceHintText: getRuntimeText(
-          "runtime.zhu_yuanzhang.haozhou_shortage.advance_hint"
-        ),
-      },
+      locationDialogueState: createHaozhouShortageBeggingRefusalDialogue({
+        textEntriesById: activeContentContext.textEntriesById,
+      }),
       beggingMiniGameState: null,
     };
     renderApp();
@@ -1706,24 +1411,10 @@ function openBeggingMiniGame(): void {
     stopCityBeggingMiniGameLoop();
     appState = {
       ...closeCityMenu(closeCityDirectory(appState)),
-      locationDialogueState: {
-        type: "house-access-refusal",
-        speakerCharacterId: "char.kulan_temple_abbot",
-        textLines: [
-          getRuntimeText(
-            "runtime.zhu_yuanzhang.begging_stamina_refusal.001"
-          ),
-          getRuntimeTemplateText(
-            "runtime.zhu_yuanzhang.begging_stamina_refusal.002",
-            {
-              requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST,
-            }
-          ),
-        ],
-        advanceHintText: getRuntimeText(
-          "runtime.zhu_yuanzhang.begging_stamina_refusal.advance_hint"
-        ),
-      },
+      locationDialogueState: createBeggingStaminaRefusalDialogue({
+        textEntriesById: activeContentContext.textEntriesById,
+        requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST,
+      }),
       beggingMiniGameState: null,
     };
     renderApp();
@@ -1779,6 +1470,8 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
     playerCharacterId: currentPlayerCharacterId,
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+    dialogueDefinitionsById:
+      activeContentContext.storyContent.dialogueDefinitionsById,
     eventBindingsById: activeContentContext.storyContent.eventBindingsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
@@ -1791,6 +1484,7 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
     cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
     houseDefinitionsById: activeContentContext.storyContent.houseDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,
+    houseModuleDefaults: activeContentContext.gameContent.houseModuleDefaults,
   });
 }
 
@@ -2750,15 +2444,17 @@ const startupSessionCoordinatorDeps = {
   activateBuiltinDefaultMod,
   restoreModFromSave,
   activateScenarioPackMod,
-  createPrototypeAppState,
-  createHaozhouReturnEncounterAppState,
-  createScenarioPackAppState,
+  createPrototypeAppState: startupAppStateFactory.createPrototypeAppState,
+  createHaozhouReturnEncounterAppState:
+    startupAppStateFactory.createHaozhouReturnEncounterAppState,
+  createScenarioPackAppState: startupAppStateFactory.createScenarioPackAppState,
   createStartupContentContext: (activationResult: ModActivationResult) =>
     createActiveGameContentContextFromModActivation({
       basePack: baseGameContentPack,
       activationResult,
     }),
-  bootstrapStartupStoryAppState,
+  bootstrapStartupStoryAppState:
+    startupAppStateFactory.bootstrapStartupStoryAppState,
 };
 
 function unwrapStartupSession(
@@ -2771,208 +2467,6 @@ function unwrapStartupSession(
   return result.session;
 }
 
-function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): void {
-  const saveData = loadSaveData();
-  const requestId = beginLoadingScreen();
-
-  simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
-  })
-    .then(async () => {
-      if (requestId !== loadingScreenRequestId) {
-        return;
-      }
-
-      const startupSession = unwrapStartupSession(
-        await runStartupSessionCoordinator(
-          {
-            type: "continue",
-            selectedCharacter,
-            saveData,
-          },
-          startupSessionCoordinatorDeps
-        )
-      );
-      applyActivatedModSession(startupSession);
-      await preloadInitialMapViewAssets(
-        appRoot,
-        createStartupPreloadProgressHandler(requestId)
-      );
-      endLoadingScreen(requestId);
-    })
-    .catch((error: unknown) => {
-      endLoadingScreen(requestId);
-      showStartupError(error);
-    });
-}
-
-function startRestoredGameWithLoading(
-  selectedCharacter: CharacterDefinition,
-  saveData: StartupSaveData
-): Promise<void> {
-  const requestId = beginLoadingScreen();
-
-  return simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
-  })
-    .then(async () => {
-      if (requestId !== loadingScreenRequestId) {
-        return;
-      }
-
-      const startupSession = unwrapStartupSession(
-        await runStartupSessionCoordinator(
-          {
-            type: "restore",
-            selectedCharacter,
-            saveData,
-          },
-          startupSessionCoordinatorDeps
-        )
-      );
-      applyActivatedModSession(startupSession);
-      await preloadInitialMapViewAssets(
-        appRoot,
-        createStartupPreloadProgressHandler(requestId)
-      );
-      endLoadingScreen(requestId);
-    })
-    .catch((error: unknown) => {
-      endLoadingScreen(requestId);
-      showStartupError(error);
-    });
-}
-
-function startMainGameWithLoading(
-  selectedCharacter: CharacterDefinition,
-  startupScenario: StartupScenario = "default"
-): void {
-  const requestId = beginLoadingScreen();
-
-  simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
-  }).then(async () => {
-    if (requestId !== loadingScreenRequestId) {
-      return "failed";
-    }
-
-    const startupSession = unwrapStartupSession(
-      await runStartupSessionCoordinator(
-        {
-          type: "builtin",
-          selectedCharacter,
-          startupScenario,
-        },
-        startupSessionCoordinatorDeps
-      )
-    );
-    applyActivatedModSession(startupSession);
-    await preloadInitialMapViewAssets(
-      appRoot,
-      createStartupPreloadProgressHandler(requestId)
-    );
-    endLoadingScreen(requestId);
-  }).catch((error: unknown) => {
-    endLoadingScreen(requestId);
-    showStartupError(error);
-  });
-}
-
-function runScenarioPackStartupRequestWithLoading(
-  request:
-    | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
-    | { type: "scenario-files"; files: File[] }
-    | {
-        type: "loaded-scenario-pack";
-        scenarioPack: ScenarioPackDefinition;
-        source: ModSourceDescriptor;
-      }
-): Promise<"started" | "failed"> {
-  const requestId = beginLoadingScreen();
-
-  return simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
-  }).then(async () => {
-    if (requestId !== loadingScreenRequestId) {
-      return "failed";
-    }
-
-    const startupSession = unwrapStartupSession(
-      await runStartupSessionCoordinator(request, startupSessionCoordinatorDeps)
-    );
-    applyActivatedModSession(startupSession);
-    await preloadInitialMapViewAssets(
-      appRoot,
-      createStartupPreloadProgressHandler(requestId)
-    );
-    endLoadingScreen(requestId);
-    return "started";
-  }).catch((error) => {
-    endLoadingScreen(requestId);
-    window.alert(
-      error instanceof Error
-        ? `JSON 寮€灞€璇诲彇澶辫触锛?{error.message}`
-        : "JSON 寮€灞€璇诲彇澶辫触銆?"
-    );
-    return "failed";
-  });
-}
-
-async function startScenarioPackWithLoading(
-  scenarioPack: ScenarioPackSummary
-): Promise<void> {
-  try {
-    await runScenarioPackStartupRequestWithLoading({
-      type: "scenario-summary",
-      scenarioPack,
-    });
-  } catch (error) {
-    window.alert(
-      error instanceof Error
-        ? `JSON 开局读取失败：${error.message}`
-        : "JSON 开局读取失败。"
-    );
-  }
-}
-
-async function startScenarioPackFilesWithLoading(
-  files: File[]
-): Promise<void> {
-  const importLabel =
-    files.find((file) => file.name === "pack.json")?.name ??
-    files[0]?.name ??
-    "scenario-pack";
-
-  try {
-    await runScenarioPackStartupRequestWithLoading({
-      type: "scenario-files",
-      files,
-    });
-  } catch (error) {
-    window.alert(
-      error instanceof Error
-        ? `JSON 开局读取失败（${importLabel}）：${error.message}`
-        : `JSON 开局读取失败（${importLabel}）。`
-    );
-  }
-}
-
 function createRuntimePreviewScenarioPackSource(
   scenarioPack: ScenarioPackDefinition
 ): ModSourceDescriptor {
@@ -2983,15 +2477,78 @@ function createRuntimePreviewScenarioPackSource(
   };
 }
 
-async function startLoadedScenarioPackWithLoading(
-  scenarioPack: ScenarioPackDefinition
-): Promise<"started" | "failed"> {
-  return runScenarioPackStartupRequestWithLoading({
-    type: "loaded-scenario-pack",
-    scenarioPack: sanitizeScenarioPackForRuntimePreview(scenarioPack),
-    source: createRuntimePreviewScenarioPackSource(scenarioPack),
-  });
+async function runStartupSessionRequest(
+  request: StartupSessionRequest
+): Promise<StartupSessionBootstrap> {
+  return unwrapStartupSession(
+    await runStartupSessionCoordinator(request, startupSessionCoordinatorDeps)
+  );
 }
+
+function showScenarioPackReadError(input: {
+  error: unknown;
+  importLabel?: string;
+}): void {
+  const messagePrefix =
+    input.importLabel == null
+      ? "JSON 开局读取失败"
+      : `JSON 开局读取失败（${input.importLabel}）`;
+  window.alert(
+    input.error instanceof Error
+      ? `${messagePrefix}：${input.error.message}`
+      : `${messagePrefix}。`
+  );
+}
+
+const {
+  startContinueGameWithLoading,
+  startRestoredGameWithLoading,
+  startMainGameWithLoading,
+  startScenarioPackWithLoading,
+  startScenarioPackFilesWithLoading,
+  startLoadedScenarioPackWithLoading,
+} = createStartupLoadingLauncher({
+  runStartupSession: runStartupSessionRequest,
+  loadSaveData,
+  beginLoadingScreen,
+  isLoadingRequestActive: (requestId: number) =>
+    requestId === loadingScreenRequestId,
+  setLoadingProgress: setActiveLoadingProgress,
+  simulateLoadingProgress,
+  startupLoadingSimulatedProgressCap: STARTUP_LOADING_SIMULATED_PROGRESS_CAP,
+  preloadInitialMapViewAssets: async (requestId: number) =>
+    preloadInitialMapViewAssets(
+      appRoot,
+      createStartupPreloadProgressHandler(requestId)
+    ),
+  endLoadingScreen,
+  applyActivatedModSession,
+  showStartupError,
+  showScenarioPackReadError,
+  createRuntimePreviewScenarioPackSource,
+  sanitizeScenarioPackForRuntimePreview,
+});
+
+const mainUiFlow = new MainUiFlow({
+  overlayRoot: uiOverlayElement,
+  characters: selectableCharacters,
+  scenarioPacks: builtInScenarioPacks,
+  onStartGame: startMainGameWithLoading,
+  onContinueGame: startContinueGameWithLoading,
+  onStartScenarioPack: startScenarioPackWithLoading,
+  onStartLoadedScenarioPack: startLoadedScenarioPackWithLoading,
+  onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
+  onQueueButtonSound: queueButtonSoundEffect,
+  onExitRuntimePreview: exitScriptEditorRuntimePreview,
+  loadSaveData,
+  getAppState: () => appState,
+});
+
+syncGameViewport();
+window.addEventListener("resize", syncGameViewport);
+setGameVisibility(false);
+mainUiFlow.mount();
+mainUiFlow.showMainMenu();
 
 function exitScriptEditorRuntimePreview(): void {
   resetMainGameRuntime();
@@ -3008,177 +2565,6 @@ function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {
     ...base.filter((definition) => !nextIds.has(definition.id)),
     ...next,
   ];
-}
-
-function createScenarioPackAppState(
-  scenarioPack: ScenarioPackDefinition
-): AppState {
-  const profile = scenarioPack.scenarioProfile;
-  const scenarioMapDefinition =
-    getMapDefinitionById(profile.initialLocation.mapId) ??
-    activeContentContext.maps[0];
-  assertExists(
-    scenarioMapDefinition,
-    `Missing scenario map "${profile.initialLocation.mapId}".`
-  );
-  const calendar = profile.initialCalendar ?? {
-    year: 1,
-    month: 1,
-    day: 1,
-  };
-  const playerCoordinate =
-    profile.initialPlayerCoordinate ??
-    activeContentContext.cityCoordinatesById[profile.initialLocation.cityId] ??
-    scenarioMapDefinition.initialPlayerCoordinate ??
-    { x: 0, y: 0 };
-
-  let nextAppState: AppState = {
-    gameState: ensureCityNpcPoolsForCurrentDay(
-      createInitialState({
-        currentMapId: profile.initialLocation.mapId,
-        currentCityId: profile.initialLocation.cityId,
-        currentHouseId: profile.initialLocation.houseId,
-        playerCharacterId: profile.playerCharacterId,
-        chapterId: profile.chapterId,
-        year: calendar.year,
-        month: calendar.month,
-        day: calendar.day,
-        pinnedCharacterId: profile.playerCharacterId,
-        reviewDateText: profile.initialUi?.reviewDateText ?? "JSON 开局",
-        mainHouseMissionText:
-          profile.initialUi?.mainHouseMissionText ?? scenarioPack.title,
-        cards: {
-          ownedCardIds: activeContentContext.cards.map(
-            (cardDefinition) => cardDefinition.id
-          ),
-          selectedCardId: activeContentContext.cards[0]?.id ?? null,
-        },
-        valuables: {
-          items: activeContentContext.gameContent.valuables,
-          selectedItemId:
-            activeContentContext.gameContent.valuables[0]?.id ?? null,
-          equippedWeaponSet: {
-            swordId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "weapon"
-              )?.id ?? null,
-            armorId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "armor"
-              )?.id ?? null,
-          },
-        },
-        currentView: profile.initialLocation.view,
-      }),
-      activeContentContext.cityNpcPools
-    ),
-    characterDefinitions: mergeCharacterDefinitions(
-      activeContentContext.gameContent.characters,
-      scenarioPack.characters ?? []
-    ),
-    playerCoordinate,
-    campaignActorState: {
-      facingDegrees: 0,
-      isMoving: false,
-    },
-    campaignTravelState: null,
-    modalState: null,
-    locationDialogueState: null,
-    beggingMiniGameState: null,
-    cityMenuState: null,
-    cityDirectoryState: null,
-    autoAdvanceState: null,
-    uiLayouts: {
-      "global-hud": createDefaultGlobalHudLayout(),
-      "start-screen": createDefaultStartScreenLayout(),
-      "character-select-screen": createDefaultCharacterSelectScreenLayout(),
-      "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
-      "battle-ui-screen": createDefaultBattleUiScreenLayout(),
-    },
-    layoutEditor: {
-      isOpen: false,
-      selectedTargetId: "global-hud",
-      selectedComponentId: "status-board",
-      selectedElementId: null,
-      backgroundAssetQuery: "",
-      battleUiValues: createDefaultBattleUiEditorValues(),
-    },
-  };
-
-  nextAppState = {
-    ...nextAppState,
-    gameState: revealCampaignMapHexesForCoordinate(
-      nextAppState.gameState,
-      scenarioMapDefinition,
-      nextAppState.playerCoordinate
-    ),
-  };
-
-  nextAppState = {
-    ...nextAppState,
-    gameState: {
-      ...nextAppState.gameState,
-      runtime: {
-        ...nextAppState.gameState.runtime,
-        flags: {
-          ...nextAppState.gameState.runtime.flags,
-          ...(profile.initialRuntime?.flags ?? {}),
-        },
-        variables: {
-          ...nextAppState.gameState.runtime.variables,
-          ...(profile.initialRuntime?.variables ?? {}),
-        },
-      },
-    },
-  };
-
-  return revealCampaignMapAroundAppCoordinate(
-    nextAppState,
-    nextAppState.playerCoordinate,
-    {
-      animateNewHexes: false,
-    }
-  );
-}
-
-function mergeCharacterDefinitions(
-  baseCharacters: CharacterDefinition[],
-  scenarioCharacters: CharacterDefinition[]
-): CharacterDefinition[] {
-  const scenarioCharacterIds = new Set(
-    scenarioCharacters.map((characterDefinition) => characterDefinition.id)
-  );
-
-  return [
-    ...baseCharacters.filter(
-      (characterDefinition) => !scenarioCharacterIds.has(characterDefinition.id)
-    ),
-    ...scenarioCharacters,
-  ];
-}
-
-function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
-  let nextAppState: AppState = {
-    ...baseState,
-    gameState: createHaozhouReturnEncounterBattleState({
-      state: baseState.gameState,
-      mainMissionText: getRuntimeText(
-        "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review"
-      ),
-      textEntriesById: activeContentContext.textEntriesById,
-    }),
-    characterDefinitions: createPrototypeCharactersForStoryStage(
-      ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
-    ),
-    modalState: null,
-    locationDialogueState: null,
-    cityMenuState: null,
-    cityDirectoryState: null,
-    beggingMiniGameState: null,
-    campaignTravelState: null,
-  };
-
-  return nextAppState;
 }
 
 function beginLoadingScreen(): number {
@@ -7226,7 +6612,9 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
   campaignMapDebugHomeState = { ...mapHomeState };
   syncCampaignMapDebugView();
   showMapIntroOverlay(
-    getRuntimeText("runtime.zhu_yuanzhang.chapter_intro.huai_xi_begging")
+    resolveInitialCampaignMapIntroTitle({
+      textEntriesById: activeContentContext.textEntriesById,
+    })
   );
 
   const animate = (timestamp: number) => {
@@ -7333,7 +6721,9 @@ function syncMapIntroOverlay(): void {
     activeMapIntroOverlay = null;
     if (isInitialCampaignMapDebugAnimating()) {
       showMapIntroOverlay(
-        getRuntimeText("runtime.zhu_yuanzhang.chapter_intro.huai_xi_begging")
+        resolveInitialCampaignMapIntroTitle({
+          textEntriesById: activeContentContext.textEntriesById,
+        })
       );
     }
   }

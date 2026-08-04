@@ -38,6 +38,52 @@ test("default script editor template url resolves to packaged static files", () 
   }
 });
 
+test("script editor default template import no longer depends on the public template url", () => {
+  const controllerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "kernel",
+      "script-editor-workflow-controller.ts"
+    ),
+    "utf8"
+  );
+  const builtinLoaderSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "application",
+      "default-template-project-loader.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    controllerSource,
+    /loadDefaultScriptEditorTemplateProject/
+  );
+  assert.doesNotMatch(
+    controllerSource,
+    /loadScriptEditorProjectFromScenarioPackUrl\(\s*DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL/
+  );
+  assert.match(
+    builtinLoaderSource,
+    /loadScriptEditorProjectFromScenarioPackFiles/
+  );
+  assert.match(
+    builtinLoaderSource,
+    /packManifestJson/
+  );
+  assert.match(
+    builtinLoaderSource,
+    /assets\/maps\/HD\.png\?url/
+  );
+});
+
 test("default script editor template map asset references resolve to packaged files", () => {
   const templateRoot = path.join(
     process.cwd(),

@@ -34,6 +34,30 @@ export type PlayableOutcome = "success" | "failure" | "cancelled";
 
 export type PlayableFactValue = string | number | boolean | null;
 
+export type PlayableMetricOperator = ">" | ">=" | "<" | "<=" | "=";
+
+export type PlayableMetricRule = {
+  metricKey: string;
+  operator: PlayableMetricOperator;
+  value: string | number | boolean;
+};
+
+export type PlayableSettlementRouteConditions = {
+  outcomeIn?: PlayableOutcome[] | undefined;
+  scoreMin?: number | undefined;
+  scoreMax?: number | undefined;
+  metricRules?: PlayableMetricRule[] | undefined;
+};
+
+export type PlayableSettlementRoute = {
+  id: string;
+  title: string;
+  targetEventId: string;
+  enabled?: boolean | undefined;
+  priority?: number | undefined;
+  conditions?: PlayableSettlementRouteConditions | undefined;
+};
+
 export type PlayableFactResult = {
   status: "completed" | "failed" | "cancelled" | "aborted";
   metrics?: Record<string, PlayableFactValue> | undefined;
@@ -47,6 +71,7 @@ export type PlayableOutcomeConfig = {
   handoffByOutcome?:
     | Partial<Record<PlayableOutcome, PlayableReturnPolicy>>
     | undefined;
+  settlementRoutes?: PlayableSettlementRoute[] | undefined;
 };
 
 export type PlayableDefinition = {

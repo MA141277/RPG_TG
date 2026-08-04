@@ -32,6 +32,13 @@ export type EventRuntimeAction =
       };
     };
 
+export type EventRouteCommand =
+  | EventRuntimeAction
+  | {
+      type: "openCityMenuPanel";
+      panelId: "overview" | "intel" | "locations" | "management";
+    };
+
 export type EventBindingOwner = {
   family: string;
   id?: string;
@@ -217,7 +224,7 @@ export type EventDefinition = {
   entrySceneId: SceneId;
   type?: "settlement";
   dialogueId?: string;
-  actions?: EventRuntimeAction[];
+  actions?: EventRouteCommand[];
   settlementId?: string;
   taskInputs?: RuntimeTaskInput[];
   nextEventId?: EventId;

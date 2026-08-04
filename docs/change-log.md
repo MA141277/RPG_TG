@@ -2,6 +2,314 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-05 Zhuyuanzhang Public Menu-Entry Omission Removal
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 已清空 `PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS`，不再把 `menu-entry.city.default.grain-accounting` 与 `menu-entry.city.default.medicine-compounding` 作为 public 特判过滤。
+- `public/script-editor-templates/zhuyuanzhang/menu-resources.json` 已重新由 sync tool 生成，当前与 builtin template 的 `menu-resources.json` 对齐，包含这两条 city minigame menu entries。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 与 `tests/script-editor-runtime-preview-compat.test.cjs` 已更新回归，分别锁定 public menu-resource projection 全量派生，以及 public 默认模板导入后会保留这两条 city minigame 菜单入口。
+
+### Impact
+- `C` 线当前显式 residual boundary 已进一步缩到只剩 2 条 builtin-only failure_reward settlement 事件。
+- 之后如果继续推进 source-unification，不应再把 menu-resources 视作 public 发布层的残留问题；重点应转向 publication-layer 保留策略，以及这 2 条 runtime/template-only settlement 事件是否需要继续保留。
+
+## 2026-08-05 Zhuyuanzhang Temple Copy-Scripture Round-Trip Contract Convergence
+
+### Changed
+- `src/core/registry/builtin-playable-definition-registry.ts` 与 `src/core/registry/builtin-playable-shell-registry.ts` 现在都把 `temple-copy-scripture` 记为 Script Editor 可识别、可导出的 builtin minigame playable，而不再只让 runtime 在 launch 时做兼容兜底。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 不再保留 `PUBLICATION_OMITTED_PLAYABLE_INTEGRATION_IDS` 的 temple-copy-scripture 例外；public `playable-integrations.json` 改为与 builtin template 全量对齐。
+- `public/script-editor-templates/zhuyuanzhang/playable-integrations.json` 已重新由 sync tool 生成，当前会完整发布 temple-copy-scripture / grain-accounting / medicine-compounding / activity-qte 这组 integration family。
+- `tests/script-editor-runtime-preview-compat.test.cjs` 与 `tests/zhuyuanzhang-source-unification.test.cjs` 已更新回归，锁定 public 默认模板导入会保留 temple-copy-scripture minigame，并且导入后的项目仍可再次导出与通过 runtime preview 兼容校验。
+
+### Impact
+- temple-copy-scripture 不再是 public playable family 的单条 publication omitted boundary；它已经进入 `runtime pack -> Script Editor import -> export -> runtime preview` 的闭环合同。
+- 这一步先把 `C` 线显式 residual boundary 缩小到 2 组；同日后续 menu-entry omission removal 已继续把边界收缩到只剩 2 条 builtin-only failure_reward settlement 事件。
+
+## 2026-08-05 Zhuyuanzhang Public Playable-Integration Safe Projection
+
+### Changed
+- `public/script-editor-templates/zhuyuanzhang/playable-integrations.json` 现在已由 `tools/sync-zhuyuanzhang-startup-templates.mjs` 生成，并从 builtin template 的 playable integrations 派生 editor-safe 子集，而不是继续完全缺失这类 family。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 不再把 `playableIntegrations` 记为 builtin-template-only manifest key，而是改成显式记录 `PUBLICATION_OMITTED_PLAYABLE_INTEGRATION_IDS`，当前只过滤 `playable.temple-copy-scripture.instance.template.temple-copy-scripture`。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 新增 public playable-integrations projection，只排除当前会让默认模板导入生成不可导出 minigame binding 的 temple-copy-scripture integration。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 与 `tests/script-editor-runtime-preview-compat.test.cjs` 新增回归，分别锁定 public playable-integrations 的安全投影合同，以及“public 默认模板导入不再出现 temple-copy-scripture minigame、但 grain/medicine/activity-qte integrations 仍然存在”的运行表现。
+
+### Impact
+- 这一步把 public playable family 与 builtin template 的差异先缩小到只剩 1 条不安全 integration；后续同日 importer/exporter 合同升级已进一步消除了这条 temple-copy-scripture omitted boundary。
+- 作为历史切片，它确认了问题焦点在 Script Editor round-trip 合同，而不是 grain-accounting、medicine-compounding 或 activity-qte 这类 integration family 本身。
+
+## 2026-08-05 Zhuyuanzhang Default Template Loader Owner Migration
+
+### Changed
+- `src/modules/script-editor/application/default-template-project-loader.ts` 新增 builtin template asset loader：它直接从 `src/modules/script-editor/builtin-templates/zhuyuanzhang/pack.json`、manifest family JSON 与地图 PNG 资源构造默认模板导入所需的 `File[]`，再复用现有 `loadScriptEditorProjectFromScenarioPackFiles(...)` 导入链生成 Script Editor 默认项目。
+- `src/modules/script-editor/kernel/script-editor-workflow-controller.ts` 的 `importTemplateProject()` 不再通过 `loadScriptEditorProjectFromScenarioPackUrl(DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL)` 走 public URL，而是改为调用 `loadDefaultScriptEditorTemplateProject()`。
+- `tests/script-editor-template-url.test.cjs` 新增结构回归，锁定“默认模板导入不再依赖 public template URL，但 public template URL 仍保留为打包静态资源入口”。
+- `src/types/static-assets.d.ts` 补充 `*.png?url` 静态资源声明，确保 builtin asset loader 在当前 test/build TypeScript 编译配置下可通过类型检查。
+
+### Impact
+- Script Editor 的默认模板导入 owner 已从 `public/script-editor-templates/zhuyuanzhang/pack.json` 脱离，public 发布层不再同时承担“默认模板导入真实数据源”这一职责。
+- 这一步没有移除 public URL 兼容入口；当前 public 仍保留为发布层与 URL 导入链依赖。后续如果继续推进 public retirement，应优先处理 publication-layer policy，而不是回到默认模板导入 owner。
+
+## 2026-08-05 Zhuyuanzhang Public Manifest Safe-Subset Convergence
+
+### Changed
+- `public/script-editor-templates/zhuyuanzhang/pack.json` 现在继续由 builtin template manifest 投影生成，并新增对 `playables.json` 与 `settlements.json` 的发布；`playable-shells.json` 继续保持为 canonical public playable family file。
+- `public/script-editor-templates/zhuyuanzhang/playables.json` 与 `settlements.json` 现由 `tools/sync-zhuyuanzhang-startup-templates.mjs` 直接从 builtin template 派生生成，不再缺失这两类 canonical family。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 把 `playableIntegrations` 明确缩回当前唯一的 builtin-template-only manifest key；同时把 `playables.json`、`settlements.json` 纳入 public publication derived contract。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 与 `tests/script-editor-runtime-preview-compat.test.cjs` 新增并更新回归，锁定 public manifest 的安全子集发布范围，以及默认模板导入/导出 round-trip 不能因 public family 扩张而回归。
+
+### Impact
+- public publication 与 builtin template 的 manifest 差异继续缩小，但不是无条件全量对齐：`playableIntegrations` 经过真实导入导出验证后，已被确认不能直接整份发布到 public，否则当前默认模板导入会产生不可导出的 minigame binding。
+- source-unification 在 pack manifest 这一层，已经先把“能安全派生到 public 的 family”和“暂时不能直接进 public 的 family”区分成了显式合同；同日后续切片已把 `playableIntegrations` 从“整份 builtin-only”进一步收口为“public 安全投影 + 1 条 omitted integration boundary”。
+
+## 2026-08-05 Zhuyuanzhang Public Support-Data Bulk Convergence
+
+### Changed
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/menu-resources.json` 一次性收回了此前仍停留在 `public` 的 template/home 默认菜单配置；builtin template 现在成为这组 menu-resource authored/support-data 的 maintained owner，同时保留 `menu-resource.city.default` 下 2 个 builtin-only minigame 入口。
+- `public/script-editor-templates/zhuyuanzhang/menu-resources.json` 与 `house-module-defaults.json` 不再继续手维护，而是由 `tools/sync-zhuyuanzhang-startup-templates.mjs` 从 builtin template 派生生成。
+- `public/script-editor-templates/zhuyuanzhang/house-module-defaults.json` 现在会同步包含 `temple-house` 默认配置，public 默认模板不再因为历史镜像缺项而与 builtin template 分叉。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 新增 `PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS`，并把 `menu-resources.json`、`house-module-defaults.json` 纳入 public publication derived contract。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 新增 public menu-resources / house-module-defaults 投影，其中 public menu-resources 只显式过滤 `menu-entry.city.default.grain-accounting` 与 `menu-entry.city.default.medicine-compounding` 这 2 个当前不支持的入口。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 新增回归，锁定 public 的 `menu-resources.json` / `house-module-defaults.json` 必须由 builtin template 派生，并锁定仅存在上述 2 个 menu entry 的 public omitted boundary。
+
+### Impact
+- source-unification 在 support-data 这一类文件上也已不再需要继续一刀一刀处理；public 默认模板的第三套 maintained owner 继续缩小，只剩更高层的 pack manifest / loader / publication policy 问题。
+- 当前显式 residual boundary 除 2 条 builtin-only failure_reward settlement 事件外，还包括 2 个 public-omitted 的 city minigame 菜单入口；后续若要继续收口，应直接处理发布层能力边界，而不是再回到单个 JSON 文件补差。
+
+## 2026-08-05 Zhuyuanzhang Public Authored Event Surface Bulk Convergence
+
+### Changed
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/events.json` 一次性收回了此前只存在于 `public` 的整组 authored event records：包括 keep / tea_house / market / grain_shop / medicine_house / inn 的 template action events、`temple.work`、`home.rest`、`home.leave` 等 26 条原 public-only 事件；builtin template 现在成为这类默认模板 authored events 的统一 maintained owner。
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/event-bindings.json` 同步收回了整份 public authored bindings；`public/script-editor-templates/zhuyuanzhang/event-bindings.json` 不再单独手维护，而是由 sync tool 派生生成。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 不再保留 `PUBLICATION_ONLY_EVENT_IDS` / `PUBLICATION_ONLY_DIALOGUE_IDS` 的残留 authored 列表；public 事件发布层现在只排除 2 条 `BUILTIN_ONLY_EVENT_IDS` failure_reward settlement 事件，并新增 `event-bindings.json` 的 public publication derived contract。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 现在会把 public 的 `events.json`、`dialogues.json`、`event-bindings.json` 统一视为 builtin template 派生输出；同时新增 runtime `event-bindings` 过滤镜像，只保留能命中 runtime mirrored events 的 bindings，避免 runtime pack 保留落不到 event owner 的 dangling bindings。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 相应升级为整组回归：public authored files 必须从 builtin template 派生，runtime `event-bindings` 必须被过滤到 mirrored runtime event 集合。
+
+### Impact
+- source-unification 在“同类型 authored event/binding 问题”这一层已经不再需要继续一刀一刀处理；public 默认模板在事件、对话、bindings 这三类 authored 文件上，已基本退出第三套 maintained owner 身份。
+- 当前剩余的 event 例外只剩 2 条 builtin-only failure_reward settlement 事件；后续主线应转向更高层的 publication/loader 决策，而不是继续补单个 event/binding drift。
+
+## 2026-08-05 Zhuyuanzhang Public Enter Publication Canonicalization
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 继续缩小 public publication 的 residual surface：`event.building.house.kulan.keep.enter`、`tea_house.enter`、`market.enter`、`grain_shop.enter`、`medicine_house.enter`、`inn.enter` 及其对应 6 条 dialogues，已从 `PUBLICATION_ONLY_*` 合同转入 `PUBLICATION_CANONICAL_*` 合同。
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/events.json` 与 `dialogues.json` 新增这 6 组 building-enter canonical records，builtin template 现在成为这些 public 默认模板 enter authored 内容的明确 maintained owner。
+- `public/script-editor-templates/zhuyuanzhang/events.json` 与 `dialogues.json` 继续通过 canonical projection 对齐 builtin template；这 6 条 enter records 不再作为 public-only 的第三套手维护 authored owner 存在。
+- 按现有 `RUNTIME_BUILDING_SUPPORT_FILE_NAMES` 镜像合同，执行 sync write 时同步刷新了 `src/content/scenario-packs/zhuyuanzhang/dialogues.json` 的 mirror 内容，但没有扩大 runtime event mirror 范围。
+
+### Impact
+- source-unification 的 public 层进一步向“publication layer only”收口，当前残留差异主要收缩到 enter 后续 template action records、home/temple.work publication-only 记录，以及未决的 publication-only event-bindings。
+- 这次变化不触碰 temple/keep runtime 业务逻辑，不改当前 UI、功能、剧情顺序或启动链，只收口 scenario-pack/template/public publication owner。
+
+## 2026-08-05 Zhuyuanzhang Public Donate Publication Convergence
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 将 public publication 的 canonical event/dialogue 子集从原先的 review-only 扩展到包含 `event.building.template.house.temple.donate` 与 `scene.building.template.house.temple.donate`，避免 public 默认模板在这条入口上继续保留旧 `launchFlow` authored 形态。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 相应改为投影这组更广的 canonical publication records；从 script-editor builtin template 向 public 发布时，temple donate 现在会与 maintained packs 保持同一份 dialogue-backed event/dialogue 合同。
+- `public/script-editor-templates/zhuyuanzhang/events.json` 与 `dialogues.json` 已重新由 sync tool 生成，`temple.donate` 不再停留在 public-only 的旧 drift 形态。
+
+### Impact
+- source-unification 的 public 层继续向“publication layer only”收口：review 之后，temple donate 也不再由 public 单独持有旧事件形态。
+- 默认模板导入链继续减少第三套 authored owner，且没有回到 temple/keep house runtime 业务逻辑。
+
+## 2026-08-05 Zhuyuanzhang Publication Residual Boundary Freeze
+
+### Added
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 新增显式 residual boundary 常量：`PUBLICATION_ONLY_EVENT_IDS`、`PUBLICATION_ONLY_DIALOGUE_IDS`、`BUILTIN_ONLY_EVENT_IDS`。前两者列出当前仍只留在 public 默认模板层的 enter/template authored 记录，后者列出只保留在 builtin template 的 settlement failure_reward 事件。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 新增回归，锁定这些 residual records 的当前归属：publication-only 记录必须只存在于 public，builtin-only failure_reward 必须只存在于 builtin template。
+
+### Impact
+- source-unification 的剩余 public/builtin 差异不再是隐性漂移，而是明确的合同边界。
+- 后续若继续 canonicalize keep/market/inn/grain/medicine/tea-house/home/temple.work 这批记录，可以逐条从这组 contract 中移出；若不继续，它们也会以显式 publication-only/builtin-only 形态被冻结。
+
+## 2026-08-04 Zhuyuanzhang Review Publication Projection
+
+### Added
+- 在 `tools/zhuyuanzhang-source-sync-contract.mjs` 增加 public publication 的 review authored projection 合同，明确 `event.building.template.house.temple.review`、`event.building.template.house.leader_residence.review` 及其对应 dialogues 必须由 builtin template 投影到 public。
+
+### Changed
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 新增 public review event / dialogue projection，只替换受合同约束的 canonical review 记录，保留其余 public-only 发布层内容不变。
+- `public/script-editor-templates/zhuyuanzhang/events.json` 不再让 temple / leader residence review 停留在旧 `launchFlow` authored 形态，而是与 builtin template 的 dialogue-backed event 保持一致。
+- `public/script-editor-templates/zhuyuanzhang/dialogues.json` 现在会发布上述 canonical review dialogues，默认模板导入链不再缺失这部分 meeting/review authored 内容。
+
+### Impact
+- `zhuyuanzhang` 继续收口到“runtime pack canonical + builtin template 同步 + public 仅 publication layer”的 source-unification 目标，meeting/review 相关 authored 内容不再由 public 单独持有一套旧合同。
+- Script Editor 的 `使用模板 -> 导入 -> 运行预览/导出` 路径现在会从 public 默认模板拿到与 maintained packs 一致的 review dialogues/events，round-trip 风险更低。
+
+## 2026-08-04 Hosted Review Owner Narrowing
+
+### Changed
+- `src/application/meeting/meeting-host-stage-handoff.ts` 新增了通用的 projected-stage handoff helper，让宿主先结算再把结果投影回 hosted meeting 的场景，能够复用一条更正式的 shared seam，而不是在 house module 内重复拼接 hosted session 更新。
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 现在把 temple review 的 `assignment-table`、`reward`、`personnel`、`advice` 这几段 hosted projection 都收敛到同一类 shared projected handoff，继续压缩 `projectTempleHostedReviewStage(...)` 周边的重复 owner 组织方式。
+- `src/application/house-modules/keep-house/keep-house-house-module.ts` 不再为 hosted keep review 额外保留一份本地 `meeting` host session 起点；shared meeting 激活时，宿主 keep action 会直接停在 shared owner，不再让本地 review session 形成第二 owner。
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 进一步把 `praise -> situation / policy / advice` 这段后续投影 seed 收口到 `createTempleReviewPraiseFollowupProjectionSeed(...)`，让 hosted projection 和 no-meeting legacy fallback 共用同一份 owner，而不是各自再拼一遍 policy/advice 投影资源。
+
+### Added
+- `tests/meeting-host-stage-handoff.test.cjs` 锁住新的 projected hosted stage handoff 合同。
+- `tests/keep-meeting-runtime-integration.test.cjs` 新增回归，确认 keep review 进入 hosted meeting 后不会继续保留本地 keep-review session owner。
+- `tests/robustness.test.cjs` 新增结构回归，锁定 temple review 的 praise 后续投影不再在 hosted path 与 legacy fallback 内各自重复持有一份 seed。
+
+### Impact
+- temple / keep review 继续按 owner inventory 收口：宿主保留入口资格、return target 和必要 settlement seam；shared meeting 拥有阶段推进与 hosted session 更新；没有再把 review 逻辑塞回 `src/main.ts` 或宿主第二套状态机。
+
+## 2026-08-04 Startup Shell Wiring Fix
+
+### Changed
+- `src/main.ts` 把 startup app-state factory 传入的 battle UI 默认值工厂名修正为 `createDefaultBattleUiEditorValues`，不再引用不存在的 `createDefaultBattleUiValues` 标识符。
+- `src/main.ts` 现在在 `createStartupLoadingLauncher(...)` 返回各个 `start*WithLoading` 回调之后，再装配 `MainUiFlow`；启动壳不再在回调尚未建立前就把它们绑定进主菜单入口。
+
+### Impact
+- 启动链 owner 没有回退到 `main.ts` 业务分支，只是修正了壳层装配顺序和依赖名残留。
+- `pnpm exec tsc -p tsconfig.json --noEmit` 恢复通过，启动链统一计划里的 shell/launcher 收尾残留减少了一块。
+
+## 2026-08-03 AI Collaboration Governance
+
+### Changed
+- 新增 `docs/ai-collaboration-governance.md`，把 scenario pack、Script Editor import/export/runtime preview、event routing、building/navigation、playable/minigame/QTE/story-battle、scenario-specific UI/code、以及已发货资源的 AI 协作边界收口为执行期治理规则。
+- 更新 `AGENTS.md`，要求 AI 在上述范围工作前先遵守该治理，并默认把非 mod framework / editor capability / shared mechanism 的请求视为 scenario-pack JSON 或数据创作。
+- 将 schema/contract versioning、stable id、deletion/migration audit、runtime preview acceptance、round-trip preservation、reference integrity、ownership、no silent duplication、acceptance evidence、localization/text、deterministic ordering、compatibility policy、asset size/format、external resource safety 与 base-pack dependency boundary 一并纳入治理规则。
+- 新增 `tests/ai-collaboration-governance.test.cjs`，并在 `package.json` 接入 `npm run lint:ai-collaboration-governance` 与测试入口，作为这套规则的聚焦守卫。
+
+### Impact
+- 之后凡是改 scenario pack、编辑器模板、事件导航、playable 生命周期或资源引用，都会先走同一套 AI-facing execution rule，而不是继续在共享 runtime 或 `main.ts` 里散落 scenario-specific 例外。
+
+## 2026-08-04 Startup Resolved Session Owner Extraction Slice
+
+### Changed
+- 新增 `src/application/startup/startup-app-state-factory.ts` 与 `src/application/startup/startup-session-resolution.ts` 两个启动 owner 模块：前者集中承接启动 app state 构造，后者集中承接已解析启动会话、scenario-pack 角色归一、启动 bootstrap 与 requestId 派生。
+- `src/main.ts` 现在通过 `createStartupAppStateFactory(...)` 注入默认 UI 布局与 battle-ui 初值，不再在主入口内联持有 `createPrototypeAppState(...)`、`createScenarioPackAppState(...)`、`createHaozhouReturnEncounterAppState(...)`、`bootstrapStartupStoryAppState(...)` 这组启动构造函数。
+- `src/application/startup/startup-session-coordinator.ts` 继续收口为“请求分发器”，不再内联 `resolveStartupScenarioPack(...)`、`readScenarioStartupStoryBootstrap(...)`、`createScenarioPackStartupSessionResult(...)` 这组已解析启动上下文 owner。
+- `tests/robustness.test.cjs` 新增结构回归，锁定 `main.ts` 与 `startup-session-coordinator.ts` 都已把对应 startup owner 抽到 dedicated startup module；`tests/startup-session-coordinator.test.cjs` 继续作为行为回归，确认 builtin / loaded-scenario-pack 的启动契约未变。
+
+### Impact
+- 这一步没有改 UI、没有改功能、没有改主线顺序和内容；变化只是在启动链 owner 上继续去主入口化、去协调器内联化。
+- 当前如果继续做 startup-chain 收口，下一层应是 `src/main.ts` 里重复的 loading/request launcher 壳；如果不继续，则可以把启动行为冻结在这里，转入 runtime 源 / builtin 源 / template 源 的统一工作。
+
+## 2026-08-04 Startup Loading Launcher Extraction Slice
+
+### Changed
+- 新增 `src/application/startup/startup-loading-launcher.ts`，把 continue / restore / builtin start / scenario-pack summary / scenario-pack files / runtime preview 这几条启动 loading 壳，统一收口到一个纯注入的 startup launcher。
+- `src/main.ts` 删除了内联的 `startContinueGameWithLoading(...)`、`startRestoredGameWithLoading(...)`、`startMainGameWithLoading(...)`、`runScenarioPackStartupRequestWithLoading(...)`、`startScenarioPackWithLoading(...)`、`startScenarioPackFilesWithLoading(...)`、`startLoadedScenarioPackWithLoading(...)`，改为只保留 `runStartupSessionRequest(...)`、错误提示和 runtime hook wiring。
+- `tests/robustness.test.cjs` 新增结构回归，锁定启动 loading launcher 已从 `main.ts` 抽到 dedicated startup module。
+
+### Impact
+- 这一步同样没有改 UI、没有改功能、没有改剧情顺序和内容；变化只是在启动壳 owner 上继续从 `main.ts` 收口。
+- 目前启动链在结构上已经拆到“主入口只保留 wiring”，后续如果没有新的启动行为漂移证据，可以把启动链 owner 清理先冻结，转去处理源统一。
+
+## 2026-08-04 Review Owner Freeze And Keep Legacy Trim Slice
+
+### Changed
+- 新增 `docs/superpowers/specs/2026-08-04-review-owner-inventory.md`，把 temple / keep 评议链的入口 owner、阶段 owner、结算 owner、authored content owner、legacy fallback owner 按文件与函数级别冻结下来，并明确哪些可以直接删、哪些必须先补 shared runtime、哪些只能暂时保留为 seam。
+- `src/domain/house-modules/keep-house-session.ts` 删除了 `KeepHouseReviewAssignmentTableOverlayState`、`KeepHouseReviewPolicyPanelOverlayState`，并把 `KeepHouseMeetingStage` 收窄到 keep 当前实际还在使用的 `intro / assigned / finished` 宿主壳状态。
+- `src/application/house-modules/keep-house/keep-house-house-module.ts` 删除了 `selectOverlayViewModel(...)` 里已经没有运行入口的本地 `review-assignment-table / review-policy-panel` 分支，确认 keep review 不再由第二套本地 overlay owner 兜底。
+
+### Impact
+- 这一步没有改 UI、没有改功能、没有改剧情顺序；变化只是在 keep 已经失效的本地评议兼容层继续变薄，并把后续 temple/keep 收口工作的 owner 边界正式写死。
+- 现在 keep 剩下的宿主评议 owner 主要只剩任务写回和 `assigned` 结果壳收尾；temple 的主要剩余工作也已经收敛到 `assignment -> reward -> personnel -> praise` 这条长链。
+
+## 2026-08-04 Temple Hosted Review Stage Projection Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 继续推进 temple review 的 hosted covered path：在已有 `assignment-table / reward / personnel` hosted handoff 基础上，`projectTempleHostedReviewStage(...)` 现在会把 praise 之后的动态文案、policy 弹层、advice 提示和 assign-duty 差事列表一起投影回 shared meeting presenter。
+- `src/application/meeting/meeting-presenter.ts` 补上了 `actionContainersByStageId` 派生态支持，允许宿主在不改现有 UI 壳的前提下，为特定 hosted stage 注入动态按钮集。
+- `src/application/meeting/meeting-host-stage-handoff.ts` 现在支持 `matchesAction(...)`，让 temple 这类“同一 stage 下需要按一组动作拦截再投影”的场景可以复用同一条 shared handoff seam，而不是回到宿主第二套主状态机。
+- `tests/temple-meeting-runtime-integration.test.cjs` 扩展为覆盖 temple hosted path 从 `assignment-table` 一直经过 `reward -> personnel -> praise -> situation -> policy -> advice -> assign-duty` 的阶段连续性。
+
+### Impact
+- temple review 当前的 covered path 已经可以在 shared meeting owner 下推进到 `assign-duty`，而不是在 advice 后重新落回宿主 action owner。
+- 这一步仍未改动当前 UI、当前功能或当前剧情顺序；宿主保留的主要 owner 已进一步收缩到结果写回、assigned 收尾，以及 no-meeting fallback。
+
+## 2026-08-04 Temple Assigned Settlement Seam Classification Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 现在在 `submitReviewWorkPlan(...)` 与 `meetingStage === "assigned"` 的 closeout 旁边明确标注：这一层是宿主 settlement seam，而不是后续默认继续下放到 shared meeting summary/complete 的目标。
+- `docs/superpowers/specs/2026-08-04-review-owner-inventory.md` 与 `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 同步把 temple 的 `submitReviewWorkPlan(...) + assigned 结果壳` 定性为正式宿主边界，避免后续再把这层当作待定 owner。
+
+### Impact
+- temple review 的 shared meeting covered path 继续止于 `assign-duty` 之后的选择回流；最终工作计划写回与 assigned 结果壳属于明确的宿主结算边界。
+- 这次没有改运行时行为，只是把 owner 决策正式固化下来，后续收口重点会留在 reward/personnel/praise 等真正仍在摇摆的 seam 上。
+
+## 2026-08-04 Temple Hosted Legacy Fallback Isolation Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 新增了对 `meeting.temple.review` hosted 会话的显式判定；当 shared meeting 已激活时，`handleAction(...)` 不再回落到 `handleLegacyTempleReviewFallback(...)`，避免宿主 legacy fallback 在 hosted covered path 期间重新接管评议推进。
+- `tests/temple-meeting-runtime-integration.test.cjs` 新增回归用例，锁定“shared meeting 激活时，legacy action 不会偷偷推动本地寺庙评议状态”这条 owner 边界。
+- `docs/superpowers/specs/2026-08-04-review-owner-inventory.md` 与 `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 同步更新，明确 `handleLegacyTempleReviewFallback(...)` 现在只服务于 no-meeting fallback，不再与 hosted covered path 并存为双 owner。
+
+### Impact
+- 这一步没有改当前 UI、功能和剧情顺序，但把寺庙评议 shared owner 的边界又收紧了一层：shared meeting 一旦接管，宿主 legacy fallback 就不会再偷偷改动本地评议状态。
+- 当前 temple 剩余的收口重点进一步收窄到 `settleTempleReviewAssignmentTable(...)`、`createTemplePersonnelOrPraiseTransition(...)`、`createTemplePraiseTransition(...)` 这些 reward/personnel/praise 相关 seam，而不是再反复处理 hosted path 与 legacy fallback 的双 owner 问题。
+
+## 2026-08-04 Temple Reward Personnel Praise Projection Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 里的 `settleTempleReviewAssignmentTable(...)`、`createTemplePersonnelOrPraiseProjection(...)`、`createTemplePraiseProjection(...)` 已统一改成返回“宿主结算 + shared meeting 投影结果”，不再返回本地评议 session 给调用方继续当作宿主状态机转场。
+- `projectTempleHostedReviewStage(...)` 现在直接消费投影结果；temple hosted handoff 与 legacy fallback 共用同一套投影应用函数，减少 reward / personnel / praise 这组三段的重复 owner 组织方式。
+- `docs/superpowers/specs/2026-08-04-review-owner-inventory.md` 与 `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 已同步把这组 seam 的当前归类更新为“宿主结算 seam + shared owner 投影”。
+
+### Impact
+- 这一步仍未改变当前 UI、功能和剧情顺序，但把寺庙评议中最重的一组宿主本地转场 helper 从“伪本地状态机”收紧成了“结算后投影给 shared meeting”。
+- temple 当前剩下的主要长期 seam，进一步只剩 no-meeting fallback 和 `projectTempleHostedReviewStage(...)` / `meeting-host-stage-handoff.ts` 这两层桥接，而不是 reward/personnel/praise 本身还在宿主本地推进。
+
+## 2026-08-04 Temple And Keep Review Fallback Convergence Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 与 `src/application/house-modules/keep-house/keep-house-house-module.ts` 现在都把“仅为评议兼容保留的本地动作分支”收口到各自单一 fallback helper，再由 `handleAction(...)` 在 hosted meeting 处理之后统一接管，避免评议 covered path 同时散落在宿主主分发函数和多个局部分支里。
+- 寺庙评议的 `advance-temple-dialogue`、`review advice`、`assignment-table`、`policy-panel`、`assigned/reward/personnel` 关闭动作，以及本地 `temple-review-assign-*` 回退委任，已经从 `handleAction(...)` 内联逻辑迁到 `handleLegacyTempleReviewFallback(...)`；帅府同类本地收尾分支此前也已收口到单入口 helper。
+- `tests/temple-meeting-runtime-integration.test.cjs`、`tests/keep-meeting-runtime-integration.test.cjs` 与 `tests/robustness.test.cjs` 继续作为本轮收口的回归锁，覆盖 hosted review 委任回流、评议阶段推进，以及寺庙/帅府评议相关稳健性路径。
+
+### Impact
+- 当前 temple / keep 的评议兼容代码已经从“宿主主流程里散落多段 owner”收紧成“hosted meeting 后的单入口 fallback”，后续可以按批继续删除，而不需要再回头梳理重复 owner。
+- 这次变化没有改动现有 UI 壳、操作入口、主线顺序或评议可见流程；变化只发生在 owner 收口和兼容代码组织方式上。
+
+## 2026-08-04 Keep Review Hosted Migration Slice
+
+### Changed
+- `src/application/house-modules/keep-house/keep-house-house-module.ts` 现在和寺庙一样，把帅府评议的入口、推进、返回都接到 shared meeting host bridge；`keep review` 的 covered path 不再由本地评议状态机正式驱动。
+- `src/application/meeting/meeting-presenter.ts` 补上了 `summary` stage 的共享投影，避免 hosted meeting 进入摘要阶段后回退到 house module 里的旧本地台词。
+- `src/application/meeting/meeting-host-settlement-handoff.ts` 新增集中式 hosted meeting 结算回流 helper，用同一条共享 handoff seam 承接“最终委任选择交回宿主现有结算 helper”这类过渡问题，而不是继续在 temple/keep 里各写一套会话清理逻辑。
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 与 `keep-house` 一起收紧了宿主壳规则：当 `sharedSessionState.hostedMeeting` 激活时，dialogue / action / overlay 以 shared meeting presenter 为唯一当前 owner，不再回退到本地评定文案。
+- `tests/keep-meeting-runtime-integration.test.cjs` 与 `tests/temple-meeting-runtime-integration.test.cjs` 新增并扩展了 hosted review 覆盖，锁定入口启动、壳层显示、阶段推进，以及“最终委任选择会回到现有宿主结算 helper”这条行为。
+
+### Impact
+- 帅府评议现在已经和寺庙评议一起走同一套 generic meeting runtime，同时保持当前 house UI 壳、交互入口和主线顺序不变。
+- 当前剩余工作不再是“让 keep 走 shared meeting”，而是继续清理寺庙和帅府里残留的本地评定兼容代码，并把目前仍借宿主 helper 完成的结算逻辑逐步下放到共享 meeting / 剧本包 owner。
+
+## 2026-08-04 Generic Meeting Host Bridge Slice
+
+### Changed
+- 新增 `src/application/meeting/meeting-host-bridge.ts`，集中承接 meeting binding 命中、host 发起 meeting、host session 恢复，以及 meeting 完成后返回 host target 的桥接逻辑。
+- `src/domain/house-module.ts` 与 `src/core/runtime/house-runtime.ts` 现在显式支持 `sharedSessionState`，让 concrete house 继续作为宿主，同时把 generic meeting 这类可复用、runtime-owned 的会话状态挂在统一 house session 边界上。
+- `src/ui/views/house/house-shared-view.ts` 对共享对话 action attribute 做了最小安全适配，使 authored meeting presenter 的 action id 继续走现有 house dialogue/action/overlay 壳。
+- 新增 `tests/meeting-host-bridge.test.cjs`，覆盖 `review` binding 启动 meeting、meeting session 跨 host runtime dispatch 边界恢复、以及 completed meeting 返回正确 host target 三条桥接契约。
+
+### Impact
+- 这一刀只落通用 host bridge 与 shared session wiring，不迁移 temple/keep 的具体评定流程，也不改现有可见 house UI shell。
+- 后续 temple review 的 generic migration 可以直接复用 `host session -> sharedSessionState.hostedMeeting -> return-to-host` 这条 seam，不需要把 meeting owner 再塞回具体 house module 或 `src/main.ts`。
+
+## 2026-08-04 Temple Pack-Event Front-Door Convergence Slice
+
+### Changed
+- `src/domain/house-module.ts`、`src/core/runtime/house-runtime.ts` 与 `src/main.ts` 现在会把 `dialogueDefinitionsById` 沿着共享 house runtime 输入链传给 `enter / dispatch / leave`，让 house 模块可以读取剧本包里的 authored 对话内容，而不必在入口层单独持有一份文案 owner。
+- `src/application/house/house-module-pack-event-runtime.ts` 新增按 `houseId + itemId` 解析与应用 pack event 的共享 helper，集中承接 building-container-item 这条前门，而不是让每个 house 模块各自写一套事件查找逻辑。
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 现在把寺庙的 `leave` 和 `donate` 也收口到与 `work` 相同的 pack 前门：`leave` 优先走 `itemId = "leave"` 的 pack 事件动作，`donate` 优先读取 `itemId = "donate"` 绑定事件上的 authored 对话段落，再投影进现有确认浮层。
+- 同一批里，寺庙 `review` 的开场文案也开始优先读取 `itemId = "review"` 绑定事件上的 authored 对话段落，再投影进现有评定会议壳；晚到评定和后续评定长链逻辑保持本地运行，不在这一刀里改 owner。
+- 新增并扩展 `tests/house-module-pack-event-runtime.test.cjs`，锁定“寺庙离开可通过 itemId 绑定事件关闭建筑”和“寺庙捐香火可投影 pack-owned 对话正文但保持现有浮层壳”的回归。
+
+### Impact
+- 寺庙 `work / donate / leave` 与 `review` 开场这四类入口现在都在向同一条 `building-container-item -> pack event / pack dialogue -> 当前 house 壳` 前门收口，owner 进一步往剧本包 / mod 框架收口，但现有 UI、功能和顺序不变。
+- 这次变化仍然没有启用 mirrored temple enter event，也没有改动寺庙长评定链；当前只是在不改外观和交互的前提下，减少 temple-house 自己额外持有的动态 owner。
+
+## 2026-08-03 mod-first-dev Merge Stabilization
+
+### Changed
+- `src/modules/script-editor/application/runtime-pack-export.ts` 现在会把 retained editor 里的 `launchFlow` 事件动作降级成派生的 `launchPlayable` runtime action；同时，`src/application/content/active-game-content.ts`、`src/application/story/story-runtime.ts`、`src/application/scene/scene-runner.ts`、`src/application/events/event-playable-runtime.ts`、`src/application/state/game-store.ts` 与对应 `core` scene/dialogue runtime contract 会继续透传 `flowPlayablesById`，让 runtime preview 里的 flow-backed 事件真正能启动。
+- `src/modules/script-editor/application/runtime-pack-import.ts` 现在会在 runtime-pack round trip 时把 `openCityMenuPanel` 重新归一回编辑器的 `destination.family = "menu"` 结构，并移除已被 destination 吸收的兼容 action，避免导出后再导回编辑器就失去菜单目的地。
+- 新增 `tests/script-editor-runtime-preview-compat.test.cjs`，锁定三条 merge 后必须继续成立的 retained editor 路径：模板可直接做 runtime preview、flow-backed 事件预览可启动、runtime-pack round trip 不会破坏菜单 destination。
+
+### Impact
+- `mod-first-dev` 保留下来的剧本/骨架编辑器现在不仅能从当前分支 UI 进入工作台并启动预览，还能对模板做“导出运行包 -> 再导回编辑器”而不丢失菜单类事件结构。
+- 当前分支保留的寺庙/house UI、属性面板、NPC 交互在这次 merge 稳定化过程中保持不变；本轮修复只收敛在 script-editor import/export 与 runtime preview 的有界兼容层。
+
 ## 2026-07-31 Playable Family Removal Slice
 
 ### Changed

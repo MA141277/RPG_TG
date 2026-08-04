@@ -1,4 +1,5 @@
-﻿import type {
+﻿import type { DialogueSide } from "../../../domain/dialogue";
+import type {
   ScriptEditorDialogueCastRecord,
   ScriptEditorDialogueFollowUp,
   ScriptEditorDialogueFollowUpTargetFamily,
@@ -65,6 +66,7 @@ const SCRIPT_EDITOR_COMPAT_EVENT_TRIGGER_TIMINGS: readonly ScriptEditorEventTrig
 
 export const SCRIPT_EDITOR_EVENT_TYPES: readonly ScriptEditorEventType[] = [
   "settlement",
+  "menu",
 ] as const;
 
 export const SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS: readonly ScriptEditorConditionGroupOperator[] = [
@@ -252,9 +254,9 @@ export const SCRIPT_EDITOR_CONDITION_NODE_TYPES = [
 export const SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES: readonly ScriptEditorEventDestinationFamily[] = [
   "dialogue",
   "event",
+  "menu",
   "minigame",
   "task",
-  "menuInstance",
 ] as const;
 
 export function createDefaultScriptEditorStoryNodeRecord(
@@ -425,30 +427,127 @@ export function normalizeScriptEditorDialogueRecord(
 ): ScriptEditorDialogueRecord {
   const normalizedCast = (record.cast ?? []).map(normalizeDialogueCastRecord);
   const normalizedOptions = (record.options ?? []).map(normalizeDialogueOptionRecord);
+  const normalizedNodes = (record.nodes ?? []).map(normalizeDialogueNodeRecord);
+  const normalizedFollowUps = Array.isArray(record.followUps)
+    ? record.followUps.map(normalizeDialogueFollowUp)
+    : [];
   const compatParticipantPersonIds = normalizeStringArray(record.participantPersonIds, {
     preserveEmptyEntries: true,
   });
+  const legacyMigration = migrateLegacyDialogueRecordToSingleScreen({
+    nodes: normalizedNodes,
+    followUps: normalizedFollowUps,
+    participantPersonIds: compatParticipantPersonIds,
+    hasPrimaryFields:
+      record.mode != null ||
+      record.textId != null ||
+      record.speakerPersonId != null ||
+      record.cast != null ||
+      record.nextEventId != null ||
+      record.options != null,
+  });
+  const {
+    participantPersonIds: _ignoredParticipantPersonIds,
+    nodes: _ignoredNodes,
+    followUps: _ignoredFollowUps,
+    ...recordWithoutLegacyDialogueFields
+  } = record;
+
   return {
-    ...record,
+    ...(legacyMigration.retireLegacyFields ? recordWithoutLegacyDialogueFields : record),
     title: normalizeString(record.title, record.id),
-    mode: normalizeDialogueMode(record.mode),
-    textId: normalizeOptionalTrimmedString(record.textId),
-    speakerPersonId: normalizeOptionalTrimmedString(record.speakerPersonId),
-    cast: normalizedCast,
-    nextEventId: normalizeOptionalTrimmedString(record.nextEventId),
-    options: normalizedOptions,
+    mode: legacyMigration.mode ?? normalizeDialogueMode(record.mode),
+    textId:
+      legacyMigration.textId ??
+      normalizeOptionalTrimmedString(record.textId),
+    speakerPersonId:
+      legacyMigration.speakerPersonId ??
+      normalizeOptionalTrimmedString(record.speakerPersonId),
+    cast: legacyMigration.cast ?? normalizedCast,
+    nextEventId:
+      legacyMigration.nextEventId ??
+      normalizeOptionalTrimmedString(record.nextEventId),
+    options: legacyMigration.options ?? normalizedOptions,
     ...(typeof record.storyNodeId === "string"
       ? { storyNodeId: normalizeOptionalString(record.storyNodeId) }
       : {}),
-    ...(compatParticipantPersonIds.length === 0
+    ...(legacyMigration.retireLegacyFields || compatParticipantPersonIds.length === 0
       ? {}
       : { participantPersonIds: compatParticipantPersonIds }),
-    ...((record.nodes ?? []).length === 0
+    ...(legacyMigration.retireLegacyFields || normalizedNodes.length === 0
       ? {}
-      : { nodes: (record.nodes ?? []).map(normalizeDialogueNodeRecord) }),
-    ...(Array.isArray(record.followUps) && record.followUps.length > 0
-      ? { followUps: record.followUps.map(normalizeDialogueFollowUp) }
-      : {}),
+      : { nodes: normalizedNodes }),
+    ...(legacyMigration.retireLegacyFields || normalizedFollowUps.length === 0
+      ? {}
+      : { followUps: normalizedFollowUps }),
+  };
+}
+
+type LegacyDialogueSingleScreenMigration = {
+  mode?: ScriptEditorDialogueMode;
+  textId?: string;
+  speakerPersonId?: string;
+  cast?: ScriptEditorDialogueCastRecord[];
+  nextEventId?: string;
+  options?: ScriptEditorDialogueOptionRecord[];
+  retireLegacyFields: boolean;
+};
+
+function migrateLegacyDialogueRecordToSingleScreen(input: {
+  nodes: ScriptEditorDialogueNodeRecord[];
+  followUps: ScriptEditorDialogueFollowUp[];
+  participantPersonIds: string[];
+  hasPrimaryFields: boolean;
+}): LegacyDialogueSingleScreenMigration {
+  if (input.hasPrimaryFields) {
+    return { retireLegacyFields: false };
+  }
+
+  if (input.nodes.length !== 1) {
+    return { retireLegacyFields: false };
+  }
+
+  const [node] = input.nodes;
+  if (node == null || node.nodeType !== "dialogue" || node.textId.length === 0) {
+    return { retireLegacyFields: false };
+  }
+  if (node.speakerPersonId.length === 0) {
+    return { retireLegacyFields: false };
+  }
+  if (
+    node.nextNodeId.length > 0 ||
+    node.choiceTargetNodeId.length > 0 ||
+    input.followUps.some((followUp) => followUp.targetFamily !== "event")
+  ) {
+    return { retireLegacyFields: false };
+  }
+
+  const safeNextEventId =
+    input.followUps.length === 1 ? input.followUps[0]?.targetId.trim() ?? "" : "";
+  if (input.followUps.length > 1) {
+    return { retireLegacyFields: false };
+  }
+
+  const cast =
+    input.participantPersonIds.length > 0
+      ? input.participantPersonIds
+          .slice(0, 2)
+          .map((personId, index) => ({
+            personId,
+            side: (index === 1 ? "right" : "left") as DialogueSide,
+          }))
+      : node.speakerPersonId.length > 0
+        ? [{ personId: node.speakerPersonId, side: "left" as const }]
+        : [];
+
+  return {
+    mode: "linear",
+    textId: node.textId,
+    speakerPersonId: node.speakerPersonId,
+    cast,
+    nextEventId: safeNextEventId,
+    options: [],
+    retireLegacyFields: true,
   };
 }
 
@@ -877,85 +976,6 @@ export function removeScriptEditorDialogueOption(
   };
 }
 
-export function appendScriptEditorDialogueParticipant(
-  record: ScriptEditorDialogueRecord
-): ScriptEditorDialogueRecord {
-  return {
-    ...record,
-    participantPersonIds: [...(record.participantPersonIds ?? []), ""],
-  };
-}
-
-export function updateScriptEditorDialogueParticipant(
-  record: ScriptEditorDialogueRecord,
-  index: number,
-  value: string
-): ScriptEditorDialogueRecord {
-  return {
-    ...record,
-    participantPersonIds: (record.participantPersonIds ?? []).map((entry, entryIndex) =>
-      entryIndex === index ? value.trim() : entry
-    ),
-  };
-}
-
-export function removeScriptEditorDialogueParticipant(
-  record: ScriptEditorDialogueRecord,
-  index: number
-): ScriptEditorDialogueRecord {
-  return {
-    ...record,
-    participantPersonIds: (record.participantPersonIds ?? []).filter(
-      (_, entryIndex) => entryIndex !== index
-    ),
-  };
-}
-
-export function appendScriptEditorDialogueNode(
-  record: ScriptEditorDialogueRecord
-): ScriptEditorDialogueRecord {
-  return {
-    ...record,
-    nodes: [...(record.nodes ?? []), createDefaultDialogueNode(record.nodes?.length ?? 0)],
-  };
-}
-
-export function updateScriptEditorDialogueNodeField(
-  record: ScriptEditorDialogueRecord,
-  index: number,
-  field: keyof ScriptEditorDialogueNodeRecord,
-  value: string
-): ScriptEditorDialogueRecord {
-  return {
-    ...record,
-    nodes: (record.nodes ?? []).map((node, nodeIndex) => {
-      if (nodeIndex !== index) {
-        return node;
-      }
-      if (field === "nodeType") {
-        return {
-          ...node,
-          nodeType: normalizeDialogueNodeType(value),
-        };
-      }
-      return {
-        ...node,
-        [field]: value.trim(),
-      };
-    }),
-  };
-}
-
-export function removeScriptEditorDialogueNode(
-  record: ScriptEditorDialogueRecord,
-  index: number
-): ScriptEditorDialogueRecord {
-  return {
-    ...record,
-    nodes: (record.nodes ?? []).filter((_, nodeIndex) => nodeIndex !== index),
-  };
-}
-
 export function updateScriptEditorEventField(
   record: ScriptEditorEventRecord,
   field: "id" | "title" | "description" | "type" | "settlementId" | "nextEventId",
@@ -973,6 +993,10 @@ export function updateScriptEditorEventField(
       const { type: _ignoredType, settlementId: _ignoredSettlementId, ...nextRecord } =
         record;
       return nextRecord;
+    }
+    if (nextType !== "settlement") {
+      const { settlementId: _ignoredSettlementId, ...nextRecord } = record;
+      return { ...nextRecord, type: nextType };
     }
     return { ...record, type: nextType };
   }
@@ -1266,17 +1290,6 @@ export function updateScriptEditorEventPreviewSummaryField(
   };
 }
 
-function createDefaultDialogueNode(index: number): ScriptEditorDialogueNodeRecord {
-  return {
-    id: `dialogue-node.${index + 1}`,
-    nodeType: "dialogue",
-    speakerPersonId: "",
-    textId: "",
-    nextNodeId: "",
-    choiceTargetNodeId: "",
-  };
-}
-
 function normalizeDialogueNodeRecord(node: ScriptEditorDialogueNodeRecord): ScriptEditorDialogueNodeRecord {
   return {
     id: normalizeString(node.id, "dialogue-node"),
@@ -1285,25 +1298,6 @@ function normalizeDialogueNodeRecord(node: ScriptEditorDialogueNodeRecord): Scri
     textId: normalizeOptionalString(node.textId),
     nextNodeId: normalizeOptionalString(node.nextNodeId),
     choiceTargetNodeId: normalizeOptionalString(node.choiceTargetNodeId),
-  };
-}
-
-function normalizeDialogueCastRecord(
-  value: ScriptEditorDialogueCastRecord
-): ScriptEditorDialogueCastRecord {
-  return {
-    personId: normalizeOptionalTrimmedString(value.personId),
-    side: normalizeDialogueSide(value.side),
-  };
-}
-
-function normalizeDialogueOptionRecord(
-  value: ScriptEditorDialogueOptionRecord
-): ScriptEditorDialogueOptionRecord {
-  return {
-    id: normalizeString(value.id, "option"),
-    textId: normalizeOptionalTrimmedString(value.textId),
-    nextEventId: normalizeOptionalTrimmedString(value.nextEventId),
   };
 }
 
@@ -1575,24 +1569,18 @@ function normalizeStoryProgressMode(value?: string): ScriptEditorStoryProgressMo
     : "block";
 }
 
+function normalizeDialogueMode(value: unknown): ScriptEditorDialogueMode {
+  return SCRIPT_EDITOR_DIALOGUE_MODES.includes(value as ScriptEditorDialogueMode)
+    ? (value as ScriptEditorDialogueMode)
+    : "linear";
+}
+
 function normalizeDialogueNodeType(value?: string): ScriptEditorDialogueNodeType {
   return SCRIPT_EDITOR_LEGACY_DIALOGUE_NODE_TYPES.includes(
     value as ScriptEditorDialogueNodeType
   )
     ? (value as ScriptEditorDialogueNodeType)
     : "dialogue";
-}
-
-function normalizeDialogueMode(value?: string): ScriptEditorDialogueMode {
-  return SCRIPT_EDITOR_DIALOGUE_MODES.includes(value as ScriptEditorDialogueMode)
-    ? (value as ScriptEditorDialogueMode)
-    : "linear";
-}
-
-function normalizeDialogueSide(value: unknown): "left" | "right" | "center" {
-  return value === "left" || value === "right" || value === "center"
-    ? value
-    : "left";
 }
 
 function normalizeDialogueFollowUpTargetFamily(
@@ -1605,12 +1593,35 @@ function normalizeDialogueFollowUpTargetFamily(
     : "event";
 }
 
+function normalizeDialogueSide(value: unknown): "left" | "right" | "center" {
+  return value === "right" || value === "center" ? value : "left";
+}
+
 function normalizeEventTriggerTiming(value?: string): ScriptEditorEventTriggerTiming {
   return SCRIPT_EDITOR_COMPAT_EVENT_TRIGGER_TIMINGS.includes(
     value as ScriptEditorEventTriggerTiming
   )
     ? (value as ScriptEditorEventTriggerTiming)
     : "manual";
+}
+
+function normalizeDialogueCastRecord(
+  record: Partial<ScriptEditorDialogueCastRecord> | undefined
+): ScriptEditorDialogueCastRecord {
+  return {
+    personId: normalizeOptionalTrimmedString(record?.personId),
+    side: normalizeDialogueSide(record?.side),
+  };
+}
+
+function normalizeDialogueOptionRecord(
+  record: Partial<ScriptEditorDialogueOptionRecord> | undefined
+): ScriptEditorDialogueOptionRecord {
+  return {
+    id: normalizeString(record?.id, "option.unknown"),
+    textId: normalizeOptionalTrimmedString(record?.textId),
+    nextEventId: normalizeOptionalTrimmedString(record?.nextEventId),
+  };
 }
 
 function createDefaultScriptEditorSettlementContentRecord(): ScriptEditorSettlementContentRecord {

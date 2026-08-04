@@ -4,8 +4,13 @@
 import {
   builtinPlayableIntegrationRegistry,
 } from "../../../core/registry/builtin-playable-integration-registry";
+import {
+  builtinPlayableShellRegistry,
+} from "../../../core/registry/builtin-playable-shell-registry";
 import type {
   ScriptEditorKeyValueEntry,
+  ScriptEditorPlayableConfigEntry,
+  ScriptEditorPlayableSettlementRoute,
   ScriptEditorMinigameOutcome,
   ScriptEditorMinigameOutcomeRoute,
   ScriptEditorMinigameOwnerKind,
@@ -44,7 +49,7 @@ export const SCRIPT_EDITOR_MINIGAME_OUTCOMES: readonly ScriptEditorMinigameOutco
 
 const BUILTIN_PLAYABLE_DEFINITIONS = Array.from(
   builtinPlayableDefinitionRegistry.entries()
-);
+).filter((definition) => builtinPlayableShellRegistry.get(definition.id) != null);
 
 const BUILTIN_PLAYABLE_INTEGRATIONS = Array.from(
   builtinPlayableIntegrationRegistry.entries()
@@ -64,6 +69,16 @@ export function listScriptEditorBuiltinMinigamePlayableOptions(): Array<{
     label: definition.id,
     commandPrefix: definition.commandPrefix,
   }));
+}
+
+export function isScriptEditorShellBackedMinigamePlayableId(
+  playableId: string | undefined
+): playableId is string {
+  if (typeof playableId !== "string" || playableId.trim().length === 0) {
+    return false;
+  }
+
+  return builtinPlayableShellRegistry.get(playableId.trim()) != null;
 }
 
 export function listScriptEditorBuiltinMinigameIntegrationOptions(
@@ -95,48 +110,186 @@ export function listScriptEditorBuiltinMinigameIntegrationOptions(
 export function createDefaultScriptEditorMinigameRecord(
   indexOrId: number | string
 ): ScriptEditorMinigameRecord {
-  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
+  const id =
+    typeof indexOrId === "string"
+      ? indexOrId
+      : createDefaultScriptEditorCanonicalId("minigames", indexOrId);
+  const suffix = readDefaultMinigameSequence(id, indexOrId);
   return {
-    id:
-      typeof indexOrId === "string"
-        ? indexOrId
-        : createDefaultScriptEditorCanonicalId("minigames", indexOrId),
-    title: `玩法绑定 ${suffix}`,
+    id,
+    title: `玩法 ${suffix}`,
     description: "",
     playableId: "activity-qte",
-    integrationId: "playable.activity-qte.dialogue.default",
-    ownerKind: "dialogue",
-    ownerId: "",
-    returnPolicy: "resume-owner",
-    triggerId: "trigger.playable.activity-qte.dialogue.default",
-    triggerSource: "manual",
-    triggerEvent: "legacy-activity-start",
-    launchPayload: [createDefaultKeyValueEntry(0)],
-    outcomeRoutes: SCRIPT_EDITOR_MINIGAME_OUTCOMES.map((outcome, outcomeIndex) =>
-      createDefaultOutcomeRoute(outcomeIndex, outcome)
-    ),
+    configEntries: [],
+    settlementRoutes: [],
     notes: "",
   };
+}
+
+function readDefaultMinigameSequence(id: string, indexOrId: number | string): number {
+  if (typeof indexOrId === "number") {
+    return indexOrId + 1;
+  }
+
+  const firstId = Number(createDefaultScriptEditorCanonicalId("minigames", 0));
+  const numericId = Number(id);
+  if (!Number.isSafeInteger(numericId) || numericId < firstId) {
+    return 1;
+  }
+  return numericId - firstId + 1;
 }
 
 export function normalizeScriptEditorMinigameRecord(
   record: Partial<ScriptEditorMinigameRecord> & { id: string }
 ): ScriptEditorMinigameRecord {
   return {
-    ...record,
+    id: record.id,
     title: normalizeString(record.title, record.id),
     description: normalizeOptionalString(record.description),
     playableId: normalizeOptionalString(record.playableId),
-    integrationId: normalizeOptionalString(record.integrationId),
-    ownerKind: normalizeOwnerKind(record.ownerKind),
-    ownerId: normalizeOptionalString(record.ownerId),
-    returnPolicy: normalizeReturnPolicy(record.returnPolicy),
-    triggerId: normalizeOptionalString(record.triggerId),
-    triggerSource: normalizeTriggerSource(record.triggerSource),
-    triggerEvent: normalizeOptionalString(record.triggerEvent),
-    launchPayload: normalizeKeyValueEntries(record.launchPayload),
-    outcomeRoutes: normalizeOutcomeRoutes(record.outcomeRoutes),
+    configEntries: normalizeConfigEntries(record.configEntries),
+    settlementRoutes: normalizeSettlementRoutes(record.settlementRoutes),
     notes: normalizeOptionalString(record.notes),
+  };
+}
+
+export function appendScriptEditorMinigameConfigEntry(
+  record: ScriptEditorMinigameRecord
+): ScriptEditorMinigameRecord {
+  return {
+    ...record,
+    configEntries: [
+      ...(record.configEntries ?? []),
+      createDefaultConfigEntry(record.configEntries?.length ?? 0),
+    ],
+  };
+}
+
+export function removeScriptEditorMinigameConfigEntry(
+  record: ScriptEditorMinigameRecord,
+  index: number
+): ScriptEditorMinigameRecord {
+  return {
+    ...record,
+    configEntries: (record.configEntries ?? []).filter(
+      (_, entryIndex) => entryIndex !== index
+    ),
+  };
+}
+
+export function updateScriptEditorMinigameConfigEntryField(
+  record: ScriptEditorMinigameRecord,
+  index: number,
+  field: keyof ScriptEditorPlayableConfigEntry,
+  value: string
+): ScriptEditorMinigameRecord {
+  return {
+    ...record,
+    configEntries: (record.configEntries ?? []).map((entry, entryIndex) => {
+      if (entryIndex !== index) {
+        return entry;
+      }
+      if (field === "valueType") {
+        return {
+          ...entry,
+          valueType: normalizeConfigValueType(value),
+        };
+      }
+      if (field === "value") {
+        return {
+          ...entry,
+          value: normalizeConfigEntryValue(entry.valueType, value),
+        };
+      }
+      return {
+        ...entry,
+        [field]: value.trim(),
+      };
+    }),
+  };
+}
+
+export function appendScriptEditorMinigameSettlementRoute(
+  record: ScriptEditorMinigameRecord
+): ScriptEditorMinigameRecord {
+  return {
+    ...record,
+    settlementRoutes: [
+      ...(record.settlementRoutes ?? []),
+      createDefaultSettlementRoute(record.settlementRoutes?.length ?? 0),
+    ],
+  };
+}
+
+export function removeScriptEditorMinigameSettlementRoute(
+  record: ScriptEditorMinigameRecord,
+  index: number
+): ScriptEditorMinigameRecord {
+  return {
+    ...record,
+    settlementRoutes: (record.settlementRoutes ?? []).filter(
+      (_, routeIndex) => routeIndex !== index
+    ),
+  };
+}
+
+export function updateScriptEditorMinigameSettlementRouteField(
+  record: ScriptEditorMinigameRecord,
+  index: number,
+  field:
+    | keyof ScriptEditorPlayableSettlementRoute
+    | "outcomeIn"
+    | "scoreMin"
+    | "scoreMax",
+  value: string
+): ScriptEditorMinigameRecord {
+  return {
+    ...record,
+    settlementRoutes: (record.settlementRoutes ?? []).map((route, routeIndex) => {
+      if (routeIndex !== index) {
+        return route;
+      }
+      if (field === "enabled") {
+        return {
+          ...route,
+          enabled: value === "true",
+        };
+      }
+      if (field === "outcomeIn") {
+        return {
+          ...route,
+          conditions: {
+            ...(route.conditions ?? {}),
+            ...(value.trim().length === 0
+              ? { outcomeIn: [] }
+              : {
+                  outcomeIn:
+                    value === "success" || value === "failure" || value === "cancelled"
+                      ? [value]
+                      : [],
+                }),
+          },
+        };
+      }
+      if (field === "scoreMin" || field === "scoreMax") {
+        const numericValue =
+          value.trim().length === 0 ? undefined : Number.parseFloat(value);
+        return {
+          ...route,
+          conditions: {
+            ...(route.conditions ?? {}),
+            [field]:
+              numericValue == null || Number.isNaN(numericValue)
+                ? undefined
+                : numericValue,
+          },
+        };
+      }
+      return {
+        ...route,
+        [field]: value.trim(),
+      };
+    }),
   };
 }
 
@@ -148,6 +301,7 @@ export function updateScriptEditorMinigameField(
     | "description"
     | "playableId"
     | "integrationId"
+    | "settlementId"
     | "ownerKind"
     | "ownerId"
     | "returnPolicy"
@@ -377,5 +531,143 @@ function normalizeOutcomeRoutes(
     handoffPolicy: normalizeReturnPolicy(route?.handoffPolicy),
     summary: normalizeOptionalString(route?.summary),
     effectHint: normalizeOptionalString(route?.effectHint),
+  }));
+}
+
+function createDefaultConfigEntry(index: number): ScriptEditorPlayableConfigEntry {
+  return {
+    id: `config.${index + 1}`,
+    label: "",
+    valueType: "text",
+    value: "",
+  };
+}
+
+function createDefaultSettlementRoute(
+  index: number
+): ScriptEditorPlayableSettlementRoute {
+  return {
+    id: `route.${index + 1}`,
+    title: "",
+    enabled: true,
+    targetEventId: "",
+    conditions: {},
+  };
+}
+
+function normalizeConfigEntries(
+  entries: readonly ScriptEditorPlayableConfigEntry[] | undefined
+): ScriptEditorPlayableConfigEntry[] {
+  return (entries ?? []).map((entry, index) => {
+    const valueType = normalizeConfigValueType(entry?.valueType);
+    const normalizedNotes = normalizeOptionalString(entry?.notes);
+    const enumOptions = normalizeEnumOptions(entry?.enumOptions);
+    return {
+      id: normalizeString(entry?.id, `config.${index + 1}`),
+      label: normalizeOptionalString(entry?.label),
+      valueType,
+      value: normalizeConfigEntryValue(valueType, entry?.value),
+      ...(normalizedNotes.length === 0 ? {} : { notes: normalizedNotes }),
+      ...(enumOptions == null ? {} : { enumOptions }),
+    };
+  });
+}
+
+function normalizeSettlementRoutes(
+  routes: readonly ScriptEditorPlayableSettlementRoute[] | undefined
+): ScriptEditorPlayableSettlementRoute[] {
+  return (routes ?? []).map((route, index) => ({
+    id: normalizeString(route?.id, `route.${index + 1}`),
+    title: normalizeOptionalString(route?.title),
+    enabled: route?.enabled !== false,
+    targetEventId: normalizeOptionalString(route?.targetEventId),
+    conditions:
+      route?.conditions != null &&
+      typeof route.conditions === "object" &&
+      !Array.isArray(route.conditions)
+        ? {
+            ...(Array.isArray(route.conditions.outcomeIn)
+              ? {
+                  outcomeIn: route.conditions.outcomeIn.map((outcome) =>
+                    normalizeOutcome(outcome)
+                  ),
+                }
+              : {}),
+            ...(typeof route.conditions.scoreMin === "number" &&
+            Number.isFinite(route.conditions.scoreMin)
+              ? { scoreMin: route.conditions.scoreMin }
+              : {}),
+            ...(typeof route.conditions.scoreMax === "number" &&
+            Number.isFinite(route.conditions.scoreMax)
+              ? { scoreMax: route.conditions.scoreMax }
+              : {}),
+            ...(Array.isArray(route.conditions.metricRules)
+              ? {
+                  metricRules: route.conditions.metricRules
+                    .filter(
+                      (rule) =>
+                        rule != null &&
+                        typeof rule.metricKey === "string" &&
+                        ["<", "<=", "=", ">", ">="].includes(
+                          String(rule.operator)
+                        )
+                    )
+                    .map((rule) => ({
+                      metricKey: rule.metricKey.trim(),
+                      operator: rule.operator,
+                      value:
+                        typeof rule.value === "string" ||
+                        typeof rule.value === "number" ||
+                        typeof rule.value === "boolean"
+                          ? rule.value
+                          : "",
+                    })),
+                }
+              : {}),
+          }
+        : {},
+  }));
+}
+
+function normalizeConfigValueType(value: unknown): ScriptEditorPlayableConfigEntry["valueType"] {
+  return value === "number" ||
+    value === "text" ||
+    value === "boolean" ||
+    value === "enum"
+    ? value
+    : "text";
+}
+
+function normalizeConfigEntryValue(
+  valueType: ScriptEditorPlayableConfigEntry["valueType"],
+  value: unknown
+): ScriptEditorPlayableConfigEntry["value"] {
+  if (value == null) {
+    return null;
+  }
+  if (valueType === "number") {
+    return typeof value === "number"
+      ? value
+      : Number.isFinite(Number(value))
+        ? Number(value)
+        : 0;
+  }
+  if (valueType === "boolean") {
+    return typeof value === "boolean" ? value : String(value).trim() === "true";
+  }
+  return typeof value === "string" ? value.trim() : String(value);
+}
+
+function normalizeEnumOptions(
+  options:
+    | ReadonlyArray<{ value: string; label: string }>
+    | undefined
+): Array<{ value: string; label: string }> | undefined {
+  if (!Array.isArray(options)) {
+    return undefined;
+  }
+  return options.map((option) => ({
+    value: normalizeOptionalString(option?.value),
+    label: normalizeOptionalString(option?.label),
   }));
 }

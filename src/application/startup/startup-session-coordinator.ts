@@ -14,14 +14,22 @@ import type {
   ScenarioPackSummary,
 } from "../../domain/scenario-pack";
 import type { StartupStoryBootstrap } from "./startup-story-bootstrap";
+import {
+  createResolvedScenarioPackStartupSession,
+  createResolvedStartupSession,
+  createScenarioPackStartupRequestId,
+  readActivatedContentSource,
+  readBuiltinStartupStoryBootstrap,
+  readScenarioStartupStoryBootstrap,
+  type StartupScenario,
+} from "./startup-session-resolution";
+export type { StartupScenario } from "./startup-session-resolution";
 
 export type StartupSaveData = {
   selectedCharacterId?: string | null;
   selectedModId?: string | null;
   selectedModSource?: ModSourceDescriptor | null;
 } | null;
-
-export type StartupScenario = "default" | "haozhou-return-encounter";
 
 export type StartupSessionRequest =
   | {
@@ -51,6 +59,7 @@ export type StartupSessionRequest =
       type: "loaded-scenario-pack";
       scenarioPack: ScenarioPackDefinition;
       source: ModSourceDescriptor;
+      selectedCharacterId?: string | null;
     };
 
 export type StartupSessionBootstrap = {
@@ -132,6 +141,7 @@ export async function runStartupSessionCoordinator(
         return createLoadedScenarioPackStartupSession(
           request.scenarioPack,
           request.source,
+          request.selectedCharacterId,
           deps
         );
       default:
@@ -154,20 +164,30 @@ async function createBuiltinStartupSession(
   const activationResult = await deps.activateBuiltinDefaultMod(
     `startup:builtin:${startupScenario}`
   );
-  return createStartupSessionResult({
+  const activatedContentSource = readActivatedContentSource(activationResult);
+  const startupScenarioPack =
+    startupScenario === "default" ? activatedContentSource : null;
+
+  if (isScenarioPackSource(startupScenarioPack)) {
+    return createResolvedScenarioPackStartupSession({
+      activationResult,
+      scenarioPack: startupScenarioPack,
+      selectedCharacterId: selectedCharacter.id,
+      deps,
+    });
+  }
+
+  return createResolvedStartupSession({
     activationResult,
-    contentContext: deps.createStartupContentContext(activationResult),
     playerCharacterId: selectedCharacter.id,
-    createAppState: createStartupAppStateBuilder(
-      () =>
-        startupScenario === "haozhou-return-encounter"
-          ? deps.createHaozhouReturnEncounterAppState(
-              deps.createPrototypeAppState(selectedCharacter.id)
-            )
-          : deps.createPrototypeAppState(selectedCharacter.id),
-      readBuiltinStartupStoryBootstrap(startupScenario),
-      deps
-    ),
+    createBaseAppState: () =>
+      startupScenario === "haozhou-return-encounter"
+        ? deps.createHaozhouReturnEncounterAppState(
+            deps.createPrototypeAppState(selectedCharacter.id)
+          )
+        : deps.createPrototypeAppState(selectedCharacter.id),
+    bootstrap: readBuiltinStartupStoryBootstrap(startupScenario),
+    deps,
   });
 }
 
@@ -187,35 +207,30 @@ async function createRestoreStartupSession(
 
   const activatedContentSource = readActivatedContentSource(activationResult);
   if (isScenarioPackSource(activatedContentSource)) {
-    return createStartupSessionResult({
-      activationResult,
-      contentContext: deps.createStartupContentContext(activationResult),
-      playerCharacterId:
-        saveData?.selectedCharacterId ??
-        activatedContentSource.scenarioProfile.playerCharacterId ??
-        selectedCharacter.id,
-      createAppState: createStartupAppStateBuilder(
-        () => deps.createScenarioPackAppState(activatedContentSource),
-        readScenarioStartupStoryBootstrap(activatedContentSource),
-        deps
-      ),
-    });
+  return createResolvedStartupSession({
+    activationResult,
+    playerCharacterId:
+      saveData?.selectedCharacterId ??
+      activatedContentSource.scenarioProfile.playerCharacterId ??
+      selectedCharacter.id,
+    createBaseAppState: () =>
+      deps.createScenarioPackAppState(activatedContentSource),
+    bootstrap: readScenarioStartupStoryBootstrap(activatedContentSource),
+    deps,
+  });
   }
 
   const playerCharacterId =
     saveData?.selectedCharacterId ?? selectedCharacter.id;
-  return createStartupSessionResult({
+  return createResolvedStartupSession({
     activationResult,
-    contentContext: deps.createStartupContentContext(activationResult),
     playerCharacterId,
-    createAppState: createStartupAppStateBuilder(
-      () =>
-        deps.createHaozhouReturnEncounterAppState(
-          deps.createPrototypeAppState(playerCharacterId)
-        ),
-      readBuiltinStartupStoryBootstrap("haozhou-return-encounter"),
-      deps
-    ),
+    createBaseAppState: () =>
+      deps.createHaozhouReturnEncounterAppState(
+        deps.createPrototypeAppState(playerCharacterId)
+      ),
+    bootstrap: readBuiltinStartupStoryBootstrap("haozhou-return-encounter"),
+    deps,
   });
 }
 
@@ -231,6 +246,7 @@ async function createScenarioSummaryStartupSession(
       name: scenarioPack.title,
       url: scenarioPack.url,
     },
+    undefined,
     deps
   );
 }
@@ -251,6 +267,7 @@ async function createScenarioFilesStartupSession(
       name: importLabel,
       filePath: importLabel,
     },
+    undefined,
     deps
   );
 }
@@ -258,92 +275,20 @@ async function createScenarioFilesStartupSession(
 async function createLoadedScenarioPackStartupSession(
   scenarioPack: ScenarioPackDefinition,
   source: ModSourceDescriptor,
+  selectedCharacterId: string | null | undefined,
   deps: StartupSessionCoordinatorDeps
 ): Promise<StartupSessionResult> {
   const activationResult = await deps.activateScenarioPackMod(
     scenarioPack,
     source,
-    `startup:${source.kind}:${scenarioPack.id}`
+    createScenarioPackStartupRequestId(source, scenarioPack)
   );
-  return createStartupSessionResult({
+  return createResolvedScenarioPackStartupSession({
     activationResult,
-    contentContext: deps.createStartupContentContext(activationResult),
-    playerCharacterId: scenarioPack.scenarioProfile.playerCharacterId,
-    createAppState: createStartupAppStateBuilder(
-      () => deps.createScenarioPackAppState(scenarioPack),
-      readScenarioStartupStoryBootstrap(scenarioPack),
-      deps
-    ),
+    scenarioPack,
+    selectedCharacterId,
+    deps,
   });
-}
-
-function createStartupAppStateBuilder(
-  createBaseAppState: () => AppState,
-  bootstrap: StartupStoryBootstrap | null,
-  deps: StartupSessionCoordinatorDeps
-): () => AppState {
-  return () =>
-    deps.bootstrapStartupStoryAppState({
-      appState: createBaseAppState(),
-      bootstrap,
-    });
-}
-
-function readBuiltinStartupStoryBootstrap(
-  startupScenario: StartupScenario
-): StartupStoryBootstrap | null {
-  if (startupScenario !== "haozhou-return-encounter") {
-    return null;
-  }
-
-  return {
-    eventId: "event.story.zhu_yuanzhang.haozhou_return_encounter",
-    sceneCursor: 4,
-  };
-}
-
-function readScenarioStartupStoryBootstrap(
-  scenarioPack: ScenarioPackDefinition
-): StartupStoryBootstrap | null {
-  const entryEventId = scenarioPack.scenarioProfile.entryEventId;
-  return entryEventId == null
-    ? null
-    : {
-        eventId: entryEventId,
-      };
-}
-
-function createStartupSessionResult(
-  session: StartupSessionBootstrap
-): StartupSessionResult {
-  if (!session.activationResult.ok) {
-    return {
-      ok: false,
-      error: new Error(session.activationResult.failure.message),
-    };
-  }
-
-  return {
-    ok: true,
-    session,
-  };
-}
-
-function readActivatedContentSource(
-  activationResult: ModActivationResult
-): ScenarioPackDefinition | null {
-  if (!activationResult.ok) {
-    return null;
-  }
-
-  const primarySource = activationResult.activatedMod.normalizedContentSources[0];
-  if (primarySource == null || typeof primarySource !== "object") {
-    return null;
-  }
-
-  return "scenarioProfile" in primarySource
-    ? (primarySource as ScenarioPackDefinition)
-    : null;
 }
 
 function isScenarioPackSource(

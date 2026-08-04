@@ -17,7 +17,14 @@ import type {
   HistoricalCityRoster,
 } from "../../domain/historical-character";
 import type { HouseAccessRefusalRule, HouseDefinition } from "../../domain/house";
+import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { MapDefinition, MapNode } from "../../domain/map";
+import type { MenuInstanceDefinition, MenuResourceDefinition } from "../../domain/menu";
+import type { MeetingActionSetDefinition } from "../../domain/meeting/meeting-action-set";
+import type { MeetingBindingDefinition } from "../../domain/meeting/meeting-binding";
+import type { MeetingChoiceSetDefinition } from "../../domain/meeting/meeting-choice-set";
+import type { MeetingDefinition } from "../../domain/meeting/meeting-definition";
+import type { MeetingPanelDefinition } from "../../domain/meeting/meeting-panel";
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import type {
   ProgressTrackBinding,
@@ -26,6 +33,7 @@ import type {
 import type { TaskDefinition } from "../../core/contracts/task-runtime";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import type { ValuableItemDefinition } from "../../domain/valuable-item";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import { createCompatibleSceneDefinitions } from "../../core/runtime/mod-first-compatibility";
 
 type Identified = { id: string };
@@ -54,8 +62,24 @@ export type ActiveGameContent = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   dialogueDefinitions: RuntimeDialogueDefinition[];
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
+  meetings: MeetingDefinition[];
+  meetingsById: Record<string, MeetingDefinition>;
+  meetingBindings: MeetingBindingDefinition[];
+  meetingBindingsById: Record<string, MeetingBindingDefinition>;
+  meetingPanels: MeetingPanelDefinition[];
+  meetingPanelsById: Record<string, MeetingPanelDefinition>;
+  meetingChoiceSets: MeetingChoiceSetDefinition[];
+  meetingChoiceSetsById: Record<string, MeetingChoiceSetDefinition>;
+  meetingActionSets: MeetingActionSetDefinition[];
+  meetingActionSetsById: Record<string, MeetingActionSetDefinition>;
+  playableShells: FlowPlayableDefinition[];
+  playableShellsById: Record<string, FlowPlayableDefinition>;
   eventBindings: EventBinding[];
   eventBindingsById: Record<string, EventBinding>;
+  menuResources: MenuResourceDefinition[];
+  menuResourcesById: Record<string, MenuResourceDefinition>;
+  menuInstances: MenuInstanceDefinition[];
+  menuInstancesById: Record<string, MenuInstanceDefinition>;
   settlementDefinitions: (SettlementDefinition & {
     id: string;
     title?: string;
@@ -82,6 +106,8 @@ export type ActiveGameContent = {
   valuables: ValuableItemDefinition[];
   items: ItemDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
+  locationAccess: LocationAccessDefinition[];
+  houseModuleDefaults: Record<string, unknown>;
   houseAccessRefusalRules: HouseAccessRefusalRule[];
   cityPortraits: Record<string, string>;
   historicalCharacterIdByCharacterId: Record<string, string>;
@@ -117,6 +143,11 @@ export type ActiveGameContentContext = {
     eventDefinitionsById: Record<string, EventDefinition>;
     sceneDefinitionsById: Record<string, SceneDefinition>;
     dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
+    meetingsById: Record<string, MeetingDefinition>;
+    meetingBindingsById: Record<string, MeetingBindingDefinition>;
+    meetingPanelsById: Record<string, MeetingPanelDefinition>;
+    meetingChoiceSetsById: Record<string, MeetingChoiceSetDefinition>;
+    meetingActionSetsById: Record<string, MeetingActionSetDefinition>;
     eventBindingsById: Record<string, EventBinding>;
     settlementDefinitionsById: Record<
       string,
@@ -130,6 +161,7 @@ export type ActiveGameContentContext = {
     progressTrackDefinitionsById: Record<string, ProgressTrackDefinition>;
     progressTrackBindingsById: Record<string, ProgressTrackBinding>;
     activityDefinitionsById: Record<string, ActivityDefinition>;
+    playableShellsById: Record<string, FlowPlayableDefinition>;
     cityDefinitionsById: Record<string, CityDefinition>;
     houseDefinitionsById: Record<string, HouseDefinition>;
     textEntriesById: Record<string, string>;
@@ -153,7 +185,22 @@ export function createActiveGameContent(
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
+  const meetings = resolvedPack.meetings ?? [];
+  const meetingBindings = resolvedPack.meetingBindings ?? [];
+  const meetingPanels = resolvedPack.meetingPanels ?? [];
+  const meetingChoiceSets = resolvedPack.meetingChoiceSets ?? [];
+  const meetingActionSets = resolvedPack.meetingActionSets ?? [];
+  const playableShells =
+    resolvedPack.playableShells ??
+    resolvedPack.flowPlayables ??
+    resolvedPack.flows ??
+    [];
+  const playableShellsById = Object.fromEntries(
+    playableShells.map((flowDefinition) => [flowDefinition.id, flowDefinition])
+  );
   const eventBindings = resolvedPack.eventBindings ?? [];
+  const menuResources = resolvedPack.menuResources ?? [];
+  const menuInstances = resolvedPack.menuInstances ?? [];
   const settlementDefinitions = resolvedPack.settlements ?? [];
   const progressTrackDefinitions = resolvedPack.progressTracks ?? [];
   const progressTrackBindings = resolvedPack.progressTrackBindings ?? [];
@@ -167,6 +214,7 @@ export function createActiveGameContent(
   const valuables = resolvedPack.valuables ?? [];
   const items = resolvedPack.items ?? [];
   const cityNpcPools = resolvedPack.cityNpcPools ?? [];
+  const locationAccess = resolvedPack.locationAccess ?? [];
   const houseAccessRefusalRules = resolvedPack.houseAccessRefusalRules ?? [];
   const historicalCharacters = resolvedPack.historicalCharacters ?? [];
   const historicalCityRosters = resolvedPack.historicalCityRosters ?? [];
@@ -222,9 +270,37 @@ export function createActiveGameContent(
         dialogueDefinition,
       ])
     ),
+    meetings,
+    meetingsById: Object.fromEntries(meetings.map((meeting) => [meeting.id, meeting])),
+    meetingBindings,
+    meetingBindingsById: Object.fromEntries(
+      meetingBindings.map((binding) => [binding.id, binding])
+    ),
+    meetingPanels,
+    meetingPanelsById: Object.fromEntries(
+      meetingPanels.map((panel) => [panel.id, panel])
+    ),
+    meetingChoiceSets,
+    meetingChoiceSetsById: Object.fromEntries(
+      meetingChoiceSets.map((choiceSet) => [choiceSet.id, choiceSet])
+    ),
+    meetingActionSets,
+    meetingActionSetsById: Object.fromEntries(
+      meetingActionSets.map((actionSet) => [actionSet.id, actionSet])
+    ),
+    playableShells,
+    playableShellsById,
     eventBindings,
     eventBindingsById: Object.fromEntries(
       eventBindings.map((eventBinding) => [eventBinding.id, eventBinding])
+    ),
+    menuResources,
+    menuResourcesById: Object.fromEntries(
+      menuResources.map((resource) => [resource.id, resource])
+    ),
+    menuInstances,
+    menuInstancesById: Object.fromEntries(
+      menuInstances.map((instance) => [instance.id, instance])
     ),
     settlementDefinitions,
     settlementDefinitionsById: Object.fromEntries(
@@ -259,6 +335,8 @@ export function createActiveGameContent(
     valuables,
     items,
     cityNpcPools,
+    locationAccess,
+    houseModuleDefaults: { ...(resolvedPack.houseModuleDefaults ?? {}) },
     houseAccessRefusalRules,
     cityPortraits: { ...(resolvedPack.cityPortraits ?? {}) },
     historicalCharacterIdByCharacterId: {
@@ -307,6 +385,12 @@ export function createActiveGameContentContext(
       eventDefinitionsById: gameContent.eventDefinitionsById,
       sceneDefinitionsById: gameContent.sceneDefinitionsById,
       dialogueDefinitionsById: gameContent.dialogueDefinitionsById,
+      meetingsById: gameContent.meetingsById,
+      meetingBindingsById: gameContent.meetingBindingsById,
+      meetingPanelsById: gameContent.meetingPanelsById,
+      meetingChoiceSetsById: gameContent.meetingChoiceSetsById,
+      meetingActionSetsById: gameContent.meetingActionSetsById,
+      playableShellsById: gameContent.playableShellsById,
       eventBindingsById: gameContent.eventBindingsById,
       settlementDefinitionsById: gameContent.settlementDefinitionsById,
       progressTrackDefinitionsById: gameContent.progressTrackDefinitionsById,
@@ -355,9 +439,34 @@ export function mergeContentPacks(
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
     scenes: mergeById(basePack.scenes ?? [], overridePack.scenes ?? []),
     dialogues: mergeById(basePack.dialogues ?? [], overridePack.dialogues ?? []),
+    meetings: mergeById(basePack.meetings ?? [], overridePack.meetings ?? []),
+    meetingBindings: mergeById(
+      basePack.meetingBindings ?? [],
+      overridePack.meetingBindings ?? []
+    ),
+    meetingPanels: mergeById(
+      basePack.meetingPanels ?? [],
+      overridePack.meetingPanels ?? []
+    ),
+    meetingChoiceSets: mergeById(
+      basePack.meetingChoiceSets ?? [],
+      overridePack.meetingChoiceSets ?? []
+    ),
+    meetingActionSets: mergeById(
+      basePack.meetingActionSets ?? [],
+      overridePack.meetingActionSets ?? []
+    ),
     eventBindings: mergeById(
       basePack.eventBindings ?? [],
       overridePack.eventBindings ?? []
+    ),
+    menuResources: mergeById(
+      basePack.menuResources ?? [],
+      overridePack.menuResources ?? []
+    ),
+    menuInstances: mergeById(
+      basePack.menuInstances ?? [],
+      overridePack.menuInstances ?? []
     ),
     settlements: mergeById(
       basePack.settlements ?? [],
@@ -377,6 +486,14 @@ export function mergeContentPacks(
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
     items: mergeById(basePack.items ?? [], overridePack.items ?? []),
     cityNpcPools: mergeCityNpcPools(basePack.cityNpcPools ?? [], overridePack.cityNpcPools ?? []),
+    locationAccess: mergeById(
+      basePack.locationAccess ?? [],
+      overridePack.locationAccess ?? []
+    ),
+    houseModuleDefaults: {
+      ...(basePack.houseModuleDefaults ?? {}),
+      ...(overridePack.houseModuleDefaults ?? {}),
+    },
     houseAccessRefusalRules: mergeById(
       basePack.houseAccessRefusalRules ?? [],
       overridePack.houseAccessRefusalRules ?? []
@@ -414,7 +531,14 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     events: pack.events ?? [],
     scenes: pack.scenes ?? [],
     dialogues: pack.dialogues ?? [],
+    meetings: pack.meetings ?? [],
+    meetingBindings: pack.meetingBindings ?? [],
+    meetingPanels: pack.meetingPanels ?? [],
+    meetingChoiceSets: pack.meetingChoiceSets ?? [],
+    meetingActionSets: pack.meetingActionSets ?? [],
     eventBindings: pack.eventBindings ?? [],
+    menuResources: pack.menuResources ?? [],
+    menuInstances: pack.menuInstances ?? [],
     settlements: pack.settlements ?? [],
     progressTracks: pack.progressTracks ?? [],
     progressTrackBindings: pack.progressTrackBindings ?? [],
@@ -424,6 +548,8 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     valuables: pack.valuables ?? [],
     items: pack.items ?? [],
     cityNpcPools: pack.cityNpcPools ?? [],
+    locationAccess: pack.locationAccess ?? [],
+    houseModuleDefaults: pack.houseModuleDefaults ?? {},
     houseAccessRefusalRules: pack.houseAccessRefusalRules ?? [],
     cityPortraits: pack.cityPortraits ?? {},
     historicalCharacterIdByCharacterId: pack.historicalCharacterIdByCharacterId ?? {},

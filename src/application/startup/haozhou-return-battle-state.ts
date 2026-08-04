@@ -5,13 +5,28 @@ import {
   ZHU_YUANZHANG_STORY_STAGES,
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
 } from "../../domain/zhu-yuanzhang-story";
+import { resolveTextEntry } from "../content/text-resolution";
 import { launchStoryBattlePlayable } from "../playables/story-battle/story-battle-definition";
+
+export function resolveHaozhouReturnEncounterBattleSeed(input: {
+  textEntriesById?: Record<string, string> | undefined;
+}): {
+  mainMissionText: string;
+} {
+  return {
+    mainMissionText: resolveTextEntry(
+      input.textEntriesById ?? {},
+      "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review",
+      "MISSING_TEXT:runtime.zhu_yuanzhang.main_mission.sundeya_battle_review"
+    ),
+  };
+}
 
 export function createHaozhouReturnEncounterBattleState(input: {
   state: GameState;
-  mainMissionText: string;
   textEntriesById?: Record<string, string> | undefined;
 }): GameState {
+  const seed = resolveHaozhouReturnEncounterBattleSeed(input);
   const preparedState: GameState = {
     ...input.state,
     world: {
@@ -24,7 +39,7 @@ export function createHaozhouReturnEncounterBattleState(input: {
       currentView: "battle",
       overlayView: null,
       houseSession: null,
-      mainHouseMissionText: input.mainMissionText,
+      mainHouseMissionText: seed.mainMissionText,
     },
     runtime: {
       ...input.state.runtime,
@@ -65,7 +80,7 @@ export function createHaozhouReturnEncounterBattleState(input: {
       battleIdVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId,
       resultVariableKey: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult,
       enterHouseId: "house.kulan.keep",
-      mainMissionText: input.mainMissionText,
+      mainMissionText: seed.mainMissionText,
     },
     textEntriesById: input.textEntriesById,
   });

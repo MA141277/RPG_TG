@@ -41,3 +41,23 @@ test("main.ts wires script editor runtime preview callbacks into MainUiFlow", ()
   assert.match(source, /onStartLoadedScenarioPack:/);
   assert.match(source, /onExitRuntimePreview:/);
 });
+
+test("runtime preview keeps the main ui overlay visible for the exit-preview banner", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "main-ui.css"),
+    "utf8"
+  );
+
+  assert.match(
+    source,
+    /\.c-main-ui-overlay:has\(\.c-main-ui-screen--runtime-preview\)\s*\{[\s\S]*pointer-events:\s*none;/
+  );
+  assert.match(
+    source,
+    /\.c-main-ui-runtime-preview-session-banner\s*\{[\s\S]*position:\s*fixed;[\s\S]*pointer-events:\s*auto;/
+  );
+  assert.match(
+    source,
+    /body\.is-game-visible\s+\.c-main-ui-overlay:not\(\.is-runtime-preview-active\)\s*\{[\s\S]*display:\s*none\s*!important;/
+  );
+});

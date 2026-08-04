@@ -25,6 +25,7 @@ export function runDialogueFromEvent(
     ),
     eventDefinitionsById: input.eventDefinitionsById,
     activityDefinitionsById: input.activityDefinitionsById,
+    playableShellsById: input.playableShellsById,
     characterDefinitions: input.characterDefinitions,
     textEntriesById: input.textEntriesById,
     continueFromSceneEvent: ({
@@ -57,6 +58,7 @@ export function runStoryDialogueTriggerRuntime(input: {
   eventDefinitionsById: Record<string, EventDefinition>;
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
+  playableShellsById?: Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
   textEntriesById?: Record<string, string>;
 }): {
   state: GameState;
@@ -88,6 +90,7 @@ export function runStoryDialogueTriggerRuntime(input: {
     dialogueDefinitionsById: input.dialogueDefinitionsById,
     eventDefinitionsById: input.eventDefinitionsById,
     activityDefinitionsById: input.activityDefinitionsById,
+    playableShellsById: input.playableShellsById,
     textEntriesById: input.textEntriesById,
   });
 }

@@ -1,0 +1,201 @@
+[
+  {
+    "id": "meeting.temple.review",
+    "hostScope": {
+      "family": "building",
+      "templateId": "house.template.temple"
+    },
+    "initialStageId": "intro",
+    "stageIds": [
+      "intro",
+      "assignment-table",
+      "reward",
+      "personnel",
+      "praise",
+      "situation",
+      "policy",
+      "advice",
+      "assign-duty",
+      "complete"
+    ],
+    "stagesById": {
+      "intro": {
+        "id": "intro",
+        "type": "dialogue",
+        "textLineIds": [
+          "（住持在殿前坐定）寺中诸僧与挂单人都已候在一旁。",
+          "“这一轮先看各人做了多少事，再定接下来该守院中还是出外求粮。”"
+        ],
+        "nextStageId": "assignment-table"
+      },
+      "assignment-table": {
+        "id": "assignment-table",
+        "type": "assignment-table",
+        "panelId": "panel.temple.review.assignment",
+        "textLineIds": [
+          "看看大家这期间的进展吧。"
+        ],
+        "nextStageId": "praise"
+      },
+      "reward": {
+        "id": "reward",
+        "type": "reward",
+        "textLineIds": [
+          "本轮委任已经核定。"
+        ],
+        "nextStageId": "personnel"
+      },
+      "personnel": {
+        "id": "personnel",
+        "type": "personnel-update",
+        "textLineIds": [
+          "首领会讲人事变动。"
+        ],
+        "nextStageId": "praise"
+      },
+      "praise": {
+        "id": "praise",
+        "type": "dialogue",
+        "textLineIds": [
+          "这段时间大家辛苦了。"
+        ],
+        "nextStageId": "situation"
+      },
+      "situation": {
+        "id": "situation",
+        "type": "dialogue",
+        "textLineIds": [
+          "所以接下来的计划如下："
+        ],
+        "nextStageId": "policy"
+      },
+      "policy": {
+        "id": "policy",
+        "type": "policy-panel",
+        "panelId": "panel.temple.review.policy",
+        "textLineIds": [
+          "所以接下来的计划如下："
+        ],
+        "nextStageId": "advice"
+      },
+      "advice": {
+        "id": "advice",
+        "type": "choice",
+        "choiceSetId": "choices.temple.review.advice",
+        "textLineIds": [
+          "有谁要进言吗？"
+        ]
+      },
+      "assign-duty": {
+        "id": "assign-duty",
+        "type": "choice",
+        "choiceSetId": "choices.temple.review.assignment",
+        "textLineIds": [
+          "这一轮差事已列在案前，领下之后便照着去做。"
+        ]
+      },
+      "complete": {
+        "id": "complete",
+        "type": "action",
+        "actionSetId": "actions.temple.review.complete"
+      }
+    },
+    "completion": {
+      "type": "return-to-host"
+    }
+  },
+  {
+    "id": "meeting.keep.review",
+    "hostScope": {
+      "family": "building",
+      "templateId": "house.template.keep"
+    },
+    "initialStageId": "intro",
+    "stageIds": [
+      "intro",
+      "assignment-table",
+      "praise",
+      "situation",
+      "policy",
+      "advice",
+      "assign-task",
+      "assigned",
+      "complete"
+    ],
+    "stagesById": {
+      "intro": {
+        "id": "intro",
+        "type": "dialogue",
+        "textLineIds": [
+          "（端坐主位）厅中诸将已经依次列坐。",
+          "“评定已到，今日先报功过，再定今后的方针与差事。”"
+        ],
+        "nextStageId": "assignment-table"
+      },
+      "assignment-table": {
+        "id": "assignment-table",
+        "type": "assignment-table",
+        "panelId": "panel.keep.review.assignment",
+        "textLineIds": [
+          "看看大家这期间的进展吧。"
+        ],
+        "nextStageId": "praise"
+      },
+      "praise": {
+        "id": "praise",
+        "type": "dialogue",
+        "textLineIds": [
+          "这段时间大家辛苦了。"
+        ],
+        "nextStageId": "situation"
+      },
+      "situation": {
+        "id": "situation",
+        "type": "dialogue",
+        "textLineIds": [
+          "郭子兴展开舆图，手指城中仓廪与市集。"
+        ],
+        "nextStageId": "policy"
+      },
+      "policy": {
+        "id": "policy",
+        "type": "policy-panel",
+        "panelId": "panel.keep.review.policy",
+        "textLineIds": [
+          "所以接下来的计划如下："
+        ],
+        "nextStageId": "advice"
+      },
+      "advice": {
+        "id": "advice",
+        "type": "choice",
+        "choiceSetId": "choices.keep.review.advice",
+        "textLineIds": [
+          "有谁要进言吗？"
+        ]
+      },
+      "assign-task": {
+        "id": "assign-task",
+        "type": "choice",
+        "choiceSetId": "choices.keep.review.assignment",
+        "textLineIds": [
+          "自己选一件，领了就立刻去办。"
+        ]
+      },
+      "assigned": {
+        "id": "assigned",
+        "type": "summary",
+        "panelId": "panel.keep.review.assigned",
+        "nextStageId": "complete"
+      },
+      "complete": {
+        "id": "complete",
+        "type": "action",
+        "actionSetId": "actions.keep.review.complete"
+      }
+    },
+    "completion": {
+      "type": "return-to-host"
+    }
+  }
+]

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "binding.temple.review",
+    "meetingId": "meeting.temple.review",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "action": "building-container-item-action",
+      "itemId": "review"
+    },
+    "priority": 100
+  },
+  {
+    "id": "binding.keep.review",
+    "meetingId": "meeting.keep.review",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.keep"
+    },
+    "trigger": {
+      "action": "building-container-item-action",
+      "itemId": "review"
+    },
+    "priority": 100
+  }
+]

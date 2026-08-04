@@ -10,7 +10,6 @@ export * from "./application/editor-project-save";
 export * from "./application/field-mapping";
 export * from "./application/flow-authoring";
 export * from "./application/location-access-authoring";
-export * from "./application/item-authoring";
 export * from "./application/menu-authoring";
 export * from "./application/minigame-binding-authoring";
 export * from "./application/minimal-workflow";

@@ -3,6 +3,7 @@ import type { SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import type { Effect } from "./effect";
 import type { RuntimeTaskInput } from "./runtime-result";
 
@@ -17,6 +18,7 @@ export type SceneRuntimeInput = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   eventDefinitionsById: Record<string, EventDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  playableShellsById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 

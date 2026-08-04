@@ -6,8 +6,7 @@ import { loadScriptEditorProjectFromFiles } from "../application/editor-project-
 import { serializeScriptEditorProjectToFiles } from "../application/editor-project-save";
 import { markScriptEditorProjectCompleteForExport } from "../application/project-completion-state";
 import { exportScriptEditorProjectToScenarioPackFiles } from "../application/runtime-pack-export";
-import { loadScriptEditorProjectFromScenarioPackUrl } from "../application/runtime-pack-import";
-import { DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL } from "../config";
+import { loadDefaultScriptEditorTemplateProject } from "../application/default-template-project-loader";
 import type { ScriptEditorProjectDefinition } from "../domain/script-editor-project";
 import {
   createTextImportFilesFromRecord,
@@ -223,7 +222,7 @@ export class ScriptEditorWorkflowController {
         message:
           error instanceof Error ? error.message : "Failed to open script editor project.",
       });
-      this.environment.setScreen("script-editor-workspace");
+      this.environment.setScreen("script-editor-landing");
     }
   }
 
@@ -252,18 +251,14 @@ export class ScriptEditorWorkflowController {
         message:
           error instanceof Error ? error.message : "打开剧本项目失败。",
       });
-      this.environment.setScreen("script-editor-workspace");
+      this.environment.setScreen("script-editor-landing");
     }
   }
 
   async importTemplateProject(): Promise<void> {
     try {
       this.environment.setProjectSource("imported");
-      this.environment.commitProject(
-        await loadScriptEditorProjectFromScenarioPackUrl(
-          DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL
-        )
-      );
+      this.environment.commitProject(await loadDefaultScriptEditorTemplateProject());
       this.environment.resetRecordListPages();
       this.environment.resetRecordSearch();
       this.environment.setSelection({
@@ -281,7 +276,7 @@ export class ScriptEditorWorkflowController {
         message:
           error instanceof Error ? error.message : "导入运行时剧本包失败。",
       });
-      this.environment.setScreen("script-editor-workspace");
+      this.environment.setScreen("script-editor-landing");
     }
   }
 

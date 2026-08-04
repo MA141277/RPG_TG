@@ -98,18 +98,7 @@
       "building:house.template.leader_residence",
       "action:review"
     ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.leader_residence.review",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.leader_residence",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
+    "dialogueId": "scene.building.template.house.leader_residence.review"
   },
   {
     "id": "event.building.house.kulan.temple.enter",
@@ -133,18 +122,7 @@
       "building:house.template.temple",
       "action:review"
     ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.temple.review",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.temple",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
+    "dialogueId": "scene.building.template.house.temple.review"
   },
   {
     "id": "event.building.house.kulan.temple.work",
@@ -183,15 +161,57 @@
     "actions": [
       {
         "type": "launchPlayable",
-        "playableId": "activity-qte",
-        "integrationId": "playable.activity-qte.house.temple",
+        "playableId": "temple-copy-scripture",
+        "integrationId": "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
           "returnPolicy": "resume-owner"
         },
         "payload": {
-          "activityId": "activity.zhu_yuanzhang.temple.copy_scripture"
+          "title": "抄写经卷",
+          "briefing": "在偏殿抄录残缺经卷，顺便替住持整理寺中的旧账与香火名册。",
+          "prompts": [
+            {
+              "id": "prompt-1",
+              "text": "静坐抄经，先定你的心，再定你的字。",
+              "choices": [
+                {
+                  "id": "trace",
+                  "label": "依字描摹"
+                },
+                {
+                  "id": "balance",
+                  "label": "稳腕正锋"
+                },
+                {
+                  "id": "review",
+                  "label": "核对残页"
+                }
+              ],
+              "expectedChoiceId": "trace"
+            },
+            {
+              "id": "prompt-2",
+              "text": "这桩事不见刀光，却最考验耐性。",
+              "choices": [
+                {
+                  "id": "trace",
+                  "label": "依字描摹"
+                },
+                {
+                  "id": "balance",
+                  "label": "稳腕正锋"
+                },
+                {
+                  "id": "review",
+                  "label": "核对残页"
+                }
+              ],
+              "expectedChoiceId": "balance"
+            }
+          ],
+          "requiredScore": 1
         }
       }
     ]
@@ -209,12 +229,16 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.house.kulan.temple.sweep_courtyard",
+        "type": "launchPlayable",
+        "playableId": "activity-qte",
+        "integrationId": "playable.activity-qte.instance.template.temple-sweep-courtyard",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
-          "returnPolicy": "reenter-owner"
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "activityId": "activity.zhu_yuanzhang.temple.sweep_courtyard"
         }
       }
     ]
@@ -246,18 +270,7 @@
       "building:house.template.temple",
       "action:donate"
     ],
-    "dialogueId": "",
-    "actions": [
-      {
-        "type": "launchFlow",
-        "flowId": "flow.building.template.house.temple.donate",
-        "ownerContext": {
-          "ownerKind": "house",
-          "ownerId": "house.template.temple",
-          "returnPolicy": "reenter-owner"
-        }
-      }
-    ]
+    "dialogueId": "scene.building.template.house.temple.donate"
   },
   {
     "id": "event.building.house.kulan.temple.carry_water",
@@ -272,12 +285,16 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.house.kulan.temple.carry_water",
+        "type": "launchPlayable",
+        "playableId": "activity-qte",
+        "integrationId": "playable.activity-qte.instance.template.temple-carry-water",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
-          "returnPolicy": "reenter-owner"
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "activityId": "activity.zhu_yuanzhang.temple.carry_water"
         }
       }
     ]

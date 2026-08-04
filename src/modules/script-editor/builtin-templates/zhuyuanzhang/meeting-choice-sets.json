@@ -1,0 +1,73 @@
+[
+  {
+    "id": "choices.temple.review.advice",
+    "title": "评定进言",
+    "choices": [
+      {
+        "id": "temple-review-give-advice",
+        "label": "进言",
+        "nextStageId": "assign-duty"
+      },
+      {
+        "id": "temple-review-stay-silent",
+        "label": "不发一言",
+        "nextStageId": "assign-duty"
+      }
+    ]
+  },
+  {
+    "id": "choices.temple.review.assignment",
+    "title": "差事分派",
+    "choices": [
+      {
+        "id": "temple-review-assign-indoor",
+        "label": "寺内帮忙",
+        "actionSetId": "actions.temple.review.assign.indoor",
+        "nextStageId": "complete"
+      },
+      {
+        "id": "temple-review-assign-beg-alms",
+        "label": "外出化缘",
+        "actionSetId": "actions.temple.review.assign.beg_alms",
+        "nextStageId": "complete"
+      }
+    ]
+  },
+  {
+    "id": "choices.keep.review.advice",
+    "title": "进言",
+    "choices": [
+      {
+        "id": "keep-review-give-advice",
+        "label": "发表意见",
+        "nextStageId": "assign-task"
+      },
+      {
+        "id": "keep-review-stay-silent",
+        "label": "一言不发",
+        "nextStageId": "assign-task"
+      }
+    ]
+  },
+  {
+    "id": "choices.keep.review.assignment",
+    "title": "委任",
+    "choices": [
+      {
+        "id": "assign-keep-task:grain-procurement",
+        "label": "采办军粮（最低身份：亲兵）",
+        "nextStageId": "assigned"
+      },
+      {
+        "id": "assign-keep-task:patrol-market",
+        "label": "巡看市面（最低身份：亲兵队长）",
+        "nextStageId": "assigned"
+      },
+      {
+        "id": "assign-keep-task:drill-troops",
+        "label": "整练军伍（最低身份：镇抚）",
+        "nextStageId": "assigned"
+      }
+    ]
+  }
+]

@@ -181,6 +181,10 @@ export type ModFirstEventRuntimeAction =
       type: "closeBuilding";
     }
   | {
+      type: "openCityMenuPanel";
+      panelId: "overview" | "intel" | "locations" | "management";
+    }
+  | {
       type: "launchPlayable";
       playableId: string;
       integrationId: string;

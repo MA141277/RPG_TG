@@ -43,7 +43,7 @@ function createScenarioPack(launchPolicy, entryEventId = "event.entry") {
   };
 }
 
-test("runtime preview strips deferred entry event policy from scenario packs", () => {
+test("runtime preview preserves deferred entry bootstrap metadata for the startup owner", () => {
   const sourcePack = createScenarioPack({
     characterSelection: "select",
     initialView: "map",
@@ -52,17 +52,13 @@ test("runtime preview strips deferred entry event policy from scenario packs", (
 
   const sanitized = sanitizeScenarioPackForRuntimePreview(sourcePack);
 
-  assert.notEqual(sanitized, sourcePack);
-  assert.equal(sanitized.scenarioProfile.entryEventId, undefined);
+  assert.equal(sanitized, sourcePack);
+  assert.equal(sanitized.scenarioProfile.entryEventId, "event.entry");
   assert.deepEqual(sanitized.scenarioProfile.launchPolicy, {
     characterSelection: "select",
     initialView: "map",
+    entryEventTiming: "after-map-entry",
   });
-  assert.equal(
-    sourcePack.scenarioProfile.entryEventId,
-    "event.entry",
-    "source pack should not be mutated"
-  );
 });
 
 test("runtime preview leaves immediate entry event scenario packs unchanged", () => {
@@ -74,11 +70,13 @@ test("runtime preview leaves immediate entry event scenario packs unchanged", ()
   assert.equal(sanitizeScenarioPackForRuntimePreview(sourcePack), sourcePack);
 });
 
-test("runtime preview removes empty launch policy after stripping deferred timing", () => {
+test("runtime preview leaves deferred entry timing-only launch policy unchanged", () => {
   const sanitized = sanitizeScenarioPackForRuntimePreview(
     createScenarioPack({ entryEventTiming: "after-map-entry" })
   );
 
-  assert.equal(sanitized.scenarioProfile.entryEventId, undefined);
-  assert.equal(sanitized.scenarioProfile.launchPolicy, undefined);
+  assert.equal(sanitized.scenarioProfile.entryEventId, "event.entry");
+  assert.deepEqual(sanitized.scenarioProfile.launchPolicy, {
+    entryEventTiming: "after-map-entry",
+  });
 });

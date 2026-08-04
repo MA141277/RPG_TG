@@ -359,3 +359,143 @@ function createCouncilArrivalDialogue(input: {
     targetHouseId: priorityHouse.id,
   };
 }
+
+export function createCouncilPriorityRefusalDialogue(input: {
+  gameState: GameState;
+  houseDefinitions: HouseDefinition[];
+  buildingArrangements?: readonly BuildingArrangementDefinition[];
+  textEntriesById: Record<string, string>;
+}): NonNullable<AppState["locationDialogueState"]> {
+  const priorityHouse = resolveCouncilPriorityHouseDefinition(
+    input.gameState,
+    input.houseDefinitions,
+    input.buildingArrangements
+  );
+  const isTempleReview = priorityHouse?.moduleId === "temple-house";
+  const targetHouseName =
+    priorityHouse?.name ?? (isTempleReview ? "皇觉寺" : "帅府");
+
+  return {
+    type: "house-access-refusal",
+    speakerCharacterId:
+      priorityHouse?.defaultCharacterId ??
+      (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
+    textLines: isTempleReview
+      ? [
+          resolveTextTemplateEntry(
+            input.textEntriesById,
+            "runtime.zhu_yuanzhang.council_refusal.temple.001",
+            { targetHouseName }
+          ),
+          resolveTextEntry(
+            input.textEntriesById,
+            "runtime.zhu_yuanzhang.council_refusal.temple.002"
+          ),
+        ]
+      : [
+          resolveTextTemplateEntry(
+            input.textEntriesById,
+            "runtime.zhu_yuanzhang.council_refusal.keep.001",
+            { targetHouseName }
+          ),
+          resolveTextEntry(
+            input.textEntriesById,
+            "runtime.zhu_yuanzhang.council_refusal.keep.002"
+          ),
+        ],
+    advanceHintText:
+      priorityHouse == null ? "知道了" : `前往${priorityHouse.name}`,
+  };
+}
+
+export function createCouncilInsufficientTimeDialogue(input: {
+  gameState: GameState;
+  houseDefinitions: HouseDefinition[];
+  buildingArrangements?: readonly BuildingArrangementDefinition[];
+  textEntriesById: Record<string, string>;
+  activityLabel: string;
+  durationDays: number;
+  remainingDays: number;
+}): NonNullable<AppState["locationDialogueState"]> {
+  const priorityHouse = resolveCouncilPriorityHouseDefinition(
+    input.gameState,
+    input.houseDefinitions,
+    input.buildingArrangements
+  );
+  const isTempleReview = priorityHouse?.moduleId === "temple-house";
+  const targetHouseName =
+    priorityHouse?.name ?? (isTempleReview ? "皇觉寺" : "帅府");
+
+  return {
+    type: "house-access-refusal",
+    speakerCharacterId:
+      priorityHouse?.defaultCharacterId ??
+      (isTempleReview ? "char.kulan_temple_abbot" : "char.kulan_guard"),
+    textLines: isTempleReview
+      ? input.remainingDays <= 0
+        ? [
+            resolveTextTemplateEntry(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.001",
+              {
+                activityLabel: input.activityLabel,
+                durationDays: input.durationDays,
+              }
+            ),
+            resolveTextTemplateEntry(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.council_insufficient_time.temple.arrived.002",
+              { targetHouseName }
+            ),
+          ]
+        : [
+            resolveTextTemplateEntry(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.001",
+              {
+                remainingDays: input.remainingDays,
+                activityLabel: input.activityLabel,
+                durationDays: input.durationDays,
+              }
+            ),
+            resolveTextTemplateEntry(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.council_insufficient_time.temple.remaining.002",
+              { targetHouseName }
+            ),
+          ]
+      : input.remainingDays <= 0
+        ? [
+            resolveTextTemplateEntry(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.001",
+              {
+                activityLabel: input.activityLabel,
+                durationDays: input.durationDays,
+              }
+            ),
+            resolveTextTemplateEntry(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.council_insufficient_time.keep.arrived.002",
+              { targetHouseName }
+            ),
+          ]
+        : [
+            resolveTextTemplateEntry(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.001",
+              {
+                remainingDays: input.remainingDays,
+                activityLabel: input.activityLabel,
+                durationDays: input.durationDays,
+              }
+            ),
+            resolveTextTemplateEntry(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.council_insufficient_time.keep.remaining.002",
+              { targetHouseName }
+            ),
+          ],
+    advanceHintText: "知道了",
+  };
+}

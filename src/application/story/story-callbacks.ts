@@ -14,6 +14,10 @@ import {
   launchStoryBattlePlayable,
 } from "../playables/story-battle/story-battle-definition";
 import { resolveTextEntry } from "../content/text-resolution";
+import {
+  resolveJoinGuoZixingCampStoryCallbackSeed,
+  resolveSundeyaRescueBattleStoryCallbackSeed,
+} from "./zhu-yuanzhang-story-callback-defaults";
 
 type StoryCallbackPayload = Record<string, unknown> | undefined;
 
@@ -85,7 +89,11 @@ function runPlaceholderBattleCallback(
 function runJoinGuoZixingCampCallback(
   runtime: StoryCallbackRuntime
 ): StoryCallbackRuntime {
-  const nextCouncilDate = addDaysToCalendarDate(runtime.state.calendar, 60);
+  const seed = resolveJoinGuoZixingCampStoryCallbackSeed();
+  const nextCouncilDate = addDaysToCalendarDate(
+    runtime.state.calendar,
+    seed.reviewCountdownDays
+  );
 
   return {
     state: {
@@ -104,19 +112,18 @@ function runJoinGuoZixingCampCallback(
       ui: {
         ...runtime.state.ui,
         activeMissionId: null,
-        reviewDateText: formatCouncilStatusText(60),
+        reviewDateText: formatCouncilStatusText(seed.reviewCountdownDays),
         mainHouseMissionText: getStoryCallbackText(
           runtime,
-          "runtime.zhu_yuanzhang.main_mission.guo_zixing_keep"
+          seed.missionTextId
         ),
       },
       runtime: {
         ...runtime.state.runtime,
         variables: {
           ...runtime.state.runtime.variables,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
-            ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: seed.stage,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: seed.reviewCountdownDays,
           [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "",
           [TEMPLE_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: "",
           [TEMPLE_HOUSE_VARIABLE_KEYS.beggingSubmittedFood]: 0,
@@ -131,21 +138,21 @@ function runJoinGuoZixingCampCallback(
             ...characterDefinition,
             title: getStoryCallbackText(
               runtime,
-              "runtime.zhu_yuanzhang.player.title.guo_zixing_camp"
+              seed.titleTextId
             ),
             occupation: getStoryCallbackText(
               runtime,
-              "runtime.zhu_yuanzhang.player.occupation.guo_zixing_camp"
+              seed.occupationTextId
             ),
             affiliationLabel: getStoryCallbackText(
               runtime,
-              "runtime.zhu_yuanzhang.player.affiliation.guo_zixing_camp"
+              seed.affiliationTextId
             ),
-            clanId: "clan.guo",
-            houseId: "house.kulan.keep",
+            clanId: seed.clanId,
+            houseId: seed.houseId,
             biography: getStoryCallbackText(
               runtime,
-              "runtime.zhu_yuanzhang.player.biography.guo_zixing_camp"
+              seed.biographyTextId
             ),
           }
     ),
@@ -156,6 +163,7 @@ function runStartSundeyaRescueBattleCallback(
   runtime: StoryCallbackRuntime,
   payload: StoryCallbackPayload
 ): StoryCallbackRuntime {
+  const seed = resolveSundeyaRescueBattleStoryCallbackSeed();
   const completedFlagKey = readStringPayloadValue(payload, "completedFlagKey");
   const winFlagKey = readStringPayloadValue(payload, "winFlagKey");
   const battleIdVariableKey = readStringPayloadValue(payload, "battleIdVariableKey");
@@ -179,10 +187,10 @@ function runStartSundeyaRescueBattleCallback(
         winFlagKey,
         battleIdVariableKey,
         resultVariableKey,
-        enterHouseId: "house.kulan.keep",
+        enterHouseId: seed.enterHouseId,
         mainMissionText: getStoryCallbackText(
           runtime,
-          "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review"
+          seed.mainMissionTextId
         ),
       },
       textEntriesById: runtime.textEntriesById,

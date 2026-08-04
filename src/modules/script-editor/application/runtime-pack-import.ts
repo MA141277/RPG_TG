@@ -1,5 +1,7 @@
-import { resolveContentPackMapAssetUrls } from "../../../application/content/content-pack-loader";
-import { parseScenarioPack } from "../../../application/scenario/scenario-pack-loader";
+﻿import {
+  loadScenarioPackFromUrl,
+  parseScenarioPack,
+} from "../../../application/scenario/scenario-pack-loader";
 import { parseScriptEditorProject } from "./editor-project-loader";
 import {
   normalizeScriptEditorBuildingRecord,
@@ -9,7 +11,11 @@ import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import {
   normalizeScriptEditorEventBindingRecord,
 } from "./story-dialogue-event-authoring";
+import {
+  createDefaultScriptEditorMinigameRecord,
+} from "./minigame-binding-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
+import type { ContentPackAudioSettings } from "../../../domain/content-pack";
 import {
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
   SCRIPT_EDITOR_PROJECT_KIND,
@@ -17,16 +23,12 @@ import {
   SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
   type ScriptEditorAccessRule,
   type ScriptEditorBuildingArrangementRecord,
-  type ScriptEditorDialogueRecord,
   type ScriptEditorDialogueOptionRecord,
+  type ScriptEditorDialogueRecord,
   type ScriptEditorEntityRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
   type ScriptEditorKeyValueEntry,
-  type ScriptEditorMinigameOutcome,
-  type ScriptEditorMinigameOutcomeRoute,
-  type ScriptEditorMinigameOwnerKind,
-  type ScriptEditorMinigameReturnPolicy,
   type ScriptEditorProjectDefinition,
   type ScriptEditorPersonSemanticBinding,
   type ScriptEditorRuntimePackSchemaVersion,
@@ -67,7 +69,7 @@ type RuntimePackManifestFiles = {
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
-  flowPlayables?: string;
+  playableShells?: string;
   cities?: string;
   houses?: string;
   buildingArrangements?: string;
@@ -78,7 +80,6 @@ type RuntimePackManifestFiles = {
   activities?: string;
   cards?: string;
   valuables?: string;
-  items?: string;
   cityNpcPools?: string;
   locationAccess?: string;
   houseModuleDefaults?: string;
@@ -102,6 +103,7 @@ type SettlementAttributeMetadata = {
 const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
   age: { attributeType: "number" },
   stamina: { attributeType: "number" },
+  "stats.gold": { attributeType: "number" },
   "stats.leadership": { attributeType: "number" },
   "stats.martial": { attributeType: "number" },
   "stats.intelligence": { attributeType: "number" },
@@ -128,6 +130,7 @@ type RuntimePackManifest = {
   id: string;
   title: string;
   description?: string;
+  audioSettings?: ContentPackAudioSettings;
   basePackId?: string;
   author?: string;
   version?: string;
@@ -212,26 +215,15 @@ export async function loadScriptEditorProjectFromScenarioPackFiles(
 export async function loadScriptEditorProjectFromScenarioPackUrl(
   url: string
 ): Promise<ScriptEditorProjectDefinition> {
-  const resolvedManifestUrl = resolveScenarioPackRuntimeImportUrl(url);
-  const response = await fetch(resolvedManifestUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to load scenario pack: ${response.status}`);
-  }
-
-  const rawPack = await response.json();
-  const hydratedPack = isScenarioPackManifest(rawPack)
-    ? await hydrateScenarioPackManifestFromUrl(rawPack, resolvedManifestUrl)
-    : rawPack;
-
-  return importScenarioPackToScriptEditorProject(hydratedPack);
+  return importScenarioPackToScriptEditorProject(
+    await loadScenarioPackFromUrl(url)
+  );
 }
 
 export function validateScenarioPackForScriptEditorImport(
   value: unknown
 ): ScriptEditorRuntimePackImportDiagnostic[] {
-  const pack = parseScenarioPack(
-    normalizeScenarioPackValueForScriptEditorImport(value)
-  );
+  const pack = parseScenarioPack(value);
   const rawPack = pack as Record<string, unknown>;
 
   return UNSUPPORTED_RUNTIME_FAMILY_MESSAGES.flatMap((entry) =>
@@ -250,9 +242,7 @@ export function validateScenarioPackForScriptEditorImport(
 export function importScenarioPackToScriptEditorProject(
   value: unknown
 ): ScriptEditorProjectDefinition {
-  const pack = parseScenarioPack(
-    normalizeScenarioPackValueForScriptEditorImport(value)
-  );
+  const pack = parseScenarioPack(value);
   const diagnostics = validateScenarioPackForScriptEditorImport(pack);
   if (diagnostics.length > 0) {
     throw new Error(formatDiagnostics(diagnostics));
@@ -298,14 +288,18 @@ export function importScenarioPackToScriptEditorProject(
     eventBindings: mapImportedEventBindings(rawPack),
     progressTracks: readProgressTrackFamily(rawPack),
     progressTrackBindings: readProgressTrackBindingFamily(rawPack),
-    menuResources: readMenuResourceFamily(rawPack),
+    menuResources: mapImportedMenuResources(rawPack, importedMinigames),
     menuInstances: readMenuInstanceFamily(rawPack),
-    dialogues: mapImportedRuntimeDialogues(rawPack),
+    dialogues: mapImportedRuntimeDialogues(
+      rawPack,
+      typeof pack.scenarioProfile.playerCharacterId === "string"
+        ? pack.scenarioProfile.playerCharacterId.trim()
+        : ""
+    ),
     quests: pack.tasks ?? [],
     activities: pack.activities ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
-    items: readItemFamily(rawPack),
     cityNpcPools,
     houseModuleDefaults: cloneObjectRecord(pack.houseModuleDefaults),
     portraits: readPortraitFamily(rawPack),
@@ -317,7 +311,7 @@ export function importScenarioPackToScriptEditorProject(
       pack.historicalCharacterIdByCharacterId
     ),
     minigames: importedMinigames,
-    flows: readFlowPlayablesFamily(rawPack),
+    flows: readPlayableShellsFamily(rawPack),
     storyNodes: [],
     textEntries: mapTextEntries(pack.textEntries),
     conditionGroups: [],
@@ -413,6 +407,12 @@ function createStoryPackRecord(
   pack: ReturnType<typeof parseScenarioPack>,
   rawPack: Record<string, unknown>
 ): ScriptEditorStoryPackRecord {
+  const rawAudioSettings =
+    rawPack.audioSettings != null &&
+    typeof rawPack.audioSettings === "object" &&
+    !Array.isArray(rawPack.audioSettings)
+      ? (rawPack.audioSettings as { muted?: unknown })
+      : null;
   return {
     id: pack.id,
     title: pack.title,
@@ -423,6 +423,13 @@ function createStoryPackRecord(
       : {}),
     ...(typeof rawPack.author === "string" ? { author: rawPack.author } : {}),
     ...(typeof rawPack.version === "string" ? { version: rawPack.version } : {}),
+    ...(rawAudioSettings != null
+      ? {
+          audioSettings: {
+            muted: rawAudioSettings.muted === true,
+          },
+        }
+      : {}),
     ...(Array.isArray(rawPack.tags) &&
     rawPack.tags.every((tag) => typeof tag === "string")
       ? { tags: [...rawPack.tags] as string[] }
@@ -441,15 +448,8 @@ function mapImportedEvents(
   events: EventDefinition[],
   importedMinigames: ScriptEditorProjectDefinition["minigames"]
 ): ScriptEditorEventRecord[] {
-  const importedMinigameIdByIntegrationId = new Map(
-    importedMinigames
-      .filter(
-        (minigame) =>
-          typeof minigame.integrationId === "string" &&
-          minigame.integrationId.length > 0
-      )
-      .map((minigame) => [minigame.integrationId as string, minigame.id] as const)
-  );
+  const importedMinigameIdByIntegrationId =
+    createImportedMinigameIdByIntegrationId(importedMinigames);
   return events.map((eventDefinition) => {
     const importedEvent = eventDefinition as EventDefinition & {
       title?: string;
@@ -465,6 +465,14 @@ function mapImportedEvents(
       (action): action is Extract<NonNullable<EventDefinition["actions"]>[number], { type: "launchPlayable" }> =>
         action.type === "launchPlayable"
     );
+    const importedMenuAction = (eventDefinition.actions ?? []).find(
+      (
+        action
+      ): action is Extract<
+        NonNullable<EventDefinition["actions"]>[number],
+        { type: "openCityMenuPanel" }
+      > => action.type === "openCityMenuPanel"
+    );
     const importedMinigameId =
       importedPlayableAction == null
         ? ""
@@ -474,13 +482,23 @@ function mapImportedEvents(
         ? "dialogue"
         : importedMinigameId.length > 0
           ? "minigame"
+          : importedMenuAction != null
+            ? "menu"
           : "event";
     const destinationTargetId =
       destinationFamily === "dialogue"
         ? importedDialogueId
         : destinationFamily === "minigame"
           ? importedMinigameId
+          : destinationFamily === "menu"
+            ? importedMenuAction?.panelId ?? ""
           : eventDefinition.nextEventId ?? "";
+    const importedActions =
+      destinationFamily === "menu"
+        ? (eventDefinition.actions ?? []).filter(
+            (action) => action.type !== "openCityMenuPanel"
+          )
+        : eventDefinition.actions ?? [];
 
     return {
       id: eventDefinition.id,
@@ -490,7 +508,7 @@ function mapImportedEvents(
       occurrence: eventDefinition.occurrence,
       ...(eventDefinition.type === "settlement" ? { type: "settlement" as const } : {}),
       participants: eventDefinition.participants ?? [],
-      actions: eventDefinition.actions ?? [],
+      actions: importedActions,
       ...(eventDefinition.type === "settlement" &&
       typeof eventDefinition.settlementId === "string"
         ? { settlementId: eventDefinition.settlementId }
@@ -523,6 +541,29 @@ function mapImportedEvents(
       },
     };
   });
+}
+
+function mapImportedMenuResources(
+  rawPack: Record<string, unknown>,
+  importedMinigames: ScriptEditorProjectDefinition["minigames"]
+): ScriptEditorProjectDefinition["menuResources"] {
+  const importedMinigameIdByIntegrationId =
+    createImportedMinigameIdByIntegrationId(importedMinigames);
+
+  return readMenuResourceFamily(rawPack).map((resource) => ({
+    ...resource,
+    entries: resource.entries.map((entry) => {
+      if (entry.targetFamily !== "minigame") {
+        return entry;
+      }
+      return {
+        ...entry,
+        targetId:
+          importedMinigameIdByIntegrationId.get(entry.targetId) ??
+          entry.targetId,
+      };
+    }),
+  }));
 }
 
 function mapImportedEventBindings(
@@ -562,7 +603,8 @@ function buildImportedEventDescription(
 }
 
 function mapImportedRuntimeDialogues(
-  rawPack: Record<string, unknown>
+  rawPack: Record<string, unknown>,
+  fallbackSpeakerPersonId: string
 ): ScriptEditorDialogueRecord[] {
   const importedDialogues = Array.isArray(rawPack.dialogues)
     ? rawPack.dialogues
@@ -617,7 +659,8 @@ function mapImportedRuntimeDialogues(
               return [
                 {
                   id:
-                    readString(option.id) || `option.imported.${dialogueIndex + 1}.${optionIndex + 1}`,
+                    readString(option.id) ||
+                    `option.imported.${dialogueIndex + 1}.${optionIndex + 1}`,
                   textId: readString(option.labelTextId),
                   nextEventId: readString(option.nextEventId),
                 },
@@ -670,10 +713,22 @@ function mapImportedRuntimeDialogues(
     );
     const firstDialogueNode = nodes.find((node) => node.nodeType === "dialogue");
     const firstTextNode = nodes.find((node) => node.textId.length > 0);
-    const migratedCast = participantPersonIds.slice(0, 2).map((personId, index) => ({
-      personId,
-      side: (index === 1 ? "right" : "left") as "left" | "right",
-    }));
+    const migratedSpeakerPersonId =
+      firstDialogueNode?.speakerPersonId ??
+      participantPersonIds[0] ??
+      fallbackSpeakerPersonId;
+    const migratedCastSourcePersonIds =
+      participantPersonIds.length > 0
+        ? participantPersonIds
+        : migratedSpeakerPersonId.length > 0
+          ? [migratedSpeakerPersonId]
+          : [];
+    const migratedCast = migratedCastSourcePersonIds
+      .slice(0, 2)
+      .map((personId, index) => ({
+        personId,
+        side: (index === 1 ? "right" : "left") as "left" | "right",
+      }));
     const migratedOptions = extractImportedLegacyDialogueOptions(
       rawNodes,
       dialogueIndex
@@ -684,7 +739,7 @@ function mapImportedRuntimeDialogues(
       title,
       mode: migratedOptions.length > 0 ? "choice" : "linear",
       textId: firstTextNode?.textId ?? "",
-      speakerPersonId: firstDialogueNode?.speakerPersonId ?? participantPersonIds[0] ?? "",
+      speakerPersonId: migratedSpeakerPersonId,
       cast: migratedCast,
       nextEventId: "",
       options: migratedOptions,
@@ -1188,6 +1243,8 @@ function mapImportedPlayableIntegrations(
 
     const integration = value as PlayableIntegrationDefinition & {
       editorRecordId?: string;
+      title?: string;
+      description?: string;
     };
     if (
       typeof integration.integrationId !== "string" ||
@@ -1196,44 +1253,50 @@ function mapImportedPlayableIntegrations(
       return [];
     }
 
-    const ownerDefaults = integration.ownerDefaults ?? {};
     const trigger = integration.trigger;
-    const ownerKind =
-      typeof ownerDefaults.ownerKind === "string"
-        ? ownerDefaults.ownerKind
-        : typeof trigger?.ownerKind === "string"
-          ? trigger.ownerKind
-          : "external";
-    if (!isSupportedImportedMinigameOwnerKind(ownerKind)) {
-      throw new Error(
-        `Imported playable integration "${integration.integrationId}" uses retired ownerKind "${ownerKind}".`
-      );
-    }
-    const returnPolicy =
-      typeof ownerDefaults.returnPolicy === "string"
-        ? ownerDefaults.returnPolicy
-        : "close-only";
+    const defaultRecord = createDefaultScriptEditorMinigameRecord(
+      typeof integration.editorRecordId === "string" &&
+        integration.editorRecordId.length > 0
+        ? integration.editorRecordId
+        : `minigame.imported.${index + 1}`
+    );
 
     return [
       {
-        id:
-          typeof integration.editorRecordId === "string" &&
-          integration.editorRecordId.length > 0
-            ? integration.editorRecordId
-            : `minigame.imported.${index + 1}`,
-        title: integration.integrationId,
-        description: "",
+        ...defaultRecord,
+        title:
+          typeof integration.title === "string" && integration.title.trim().length > 0
+            ? integration.title.trim()
+            : integration.integrationId,
+        description:
+          typeof integration.description === "string"
+            ? integration.description.trim()
+            : "",
         playableId: integration.playableId,
         integrationId: integration.integrationId,
-        ownerKind,
-        ownerId:
-          typeof ownerDefaults.ownerId === "string" ? ownerDefaults.ownerId : "",
-        returnPolicy: normalizeImportedReturnPolicy(returnPolicy),
-        triggerId: typeof trigger?.triggerId === "string" ? trigger.triggerId : "",
-        triggerSource: "manual",
-        triggerEvent: typeof trigger?.trigger === "string" ? trigger.trigger : "",
-        launchPayload: mapImportedLaunchPayload(trigger?.launchPayload),
-        outcomeRoutes: mapImportedOutcomeRoutes(integration.outcomeConfig),
+        ...(integration.ownerDefaults?.ownerKind != null ||
+        integration.trigger?.ownerKind != null
+          ? {
+              ownerKind:
+                integration.ownerDefaults?.ownerKind ??
+                integration.trigger?.ownerKind,
+            }
+          : {}),
+        ...(typeof integration.ownerDefaults?.ownerId === "string"
+          ? { ownerId: integration.ownerDefaults.ownerId }
+          : {}),
+        ...(typeof integration.ownerDefaults?.returnPolicy === "string"
+          ? { returnPolicy: integration.ownerDefaults.returnPolicy }
+          : {}),
+        ...(typeof integration.trigger?.triggerId === "string"
+          ? { triggerId: integration.trigger.triggerId }
+          : {}),
+        triggerSource: "event-destination",
+        ...(typeof integration.trigger?.trigger === "string"
+          ? { triggerEvent: integration.trigger.trigger }
+          : {}),
+        configEntries: mapImportedLaunchPayload(trigger?.launchPayload),
+        settlementRoutes: mapImportedSettlementRoutes(integration.outcomeConfig),
         notes: "Imported from runtime playable integration.",
       },
     ];
@@ -1242,52 +1305,136 @@ function mapImportedPlayableIntegrations(
 
 function mapImportedLaunchPayload(
   launchPayload: Record<string, unknown> | undefined
-): ScriptEditorKeyValueEntry[] {
+): NonNullable<ScriptEditorProjectDefinition["minigames"][number]["configEntries"]> {
   return Object.entries(launchPayload ?? {}).map(([key, value]) => ({
-    key,
-    value: typeof value === "string" ? value : JSON.stringify(value),
+    id: key,
+    label: key,
+    valueType: normalizeImportedConfigValueType(value),
+    value: normalizeImportedConfigValue(value),
   }));
 }
 
-function mapImportedOutcomeRoutes(
+function mapImportedSettlementRoutes(
   outcomeConfig: PlayableIntegrationDefinition["outcomeConfig"] | undefined
-): ScriptEditorMinigameOutcomeRoute[] {
-  return Object.entries(outcomeConfig?.handoffByOutcome ?? {}).map(
-    ([outcome, handoffPolicy], index) => ({
-      id: `outcome-route.${index + 1}`,
-      outcome: normalizeImportedOutcome(outcome),
-      handoffPolicy: normalizeImportedReturnPolicy(handoffPolicy),
-      summary: "",
-      effectHint: "",
+): NonNullable<ScriptEditorProjectDefinition["minigames"][number]["settlementRoutes"]> {
+  return (outcomeConfig?.settlementRoutes ?? []).map((route, index) => ({
+    id:
+      typeof route.id === "string" && route.id.length > 0
+        ? route.id
+        : `settlement-route.${index + 1}`,
+    title:
+      typeof route.title === "string" && route.title.length > 0
+        ? route.title
+        : `结算路由 ${index + 1}`,
+    enabled: route.enabled !== false,
+    targetEventId:
+      typeof route.targetEventId === "string" ? route.targetEventId : "",
+    conditions: {
+      ...(Array.isArray(route.conditions?.outcomeIn)
+        ? {
+            outcomeIn: route.conditions.outcomeIn.filter(
+              (value) =>
+                value === "success" || value === "failure" || value === "cancelled"
+            ),
+          }
+        : {}),
+      ...(typeof route.conditions?.scoreMin === "number"
+        ? { scoreMin: route.conditions.scoreMin }
+        : {}),
+      ...(typeof route.conditions?.scoreMax === "number"
+        ? { scoreMax: route.conditions.scoreMax }
+        : {}),
+      ...(Array.isArray(route.conditions?.metricRules)
+        ? {
+            metricRules: route.conditions.metricRules.flatMap((metricRule) => {
+              const metricKey =
+                typeof metricRule.metricKey === "string"
+                  ? metricRule.metricKey.trim()
+                  : "";
+              if (metricKey.length === 0) {
+                return [];
+              }
+              if (
+                metricRule.operator !== ">" &&
+                metricRule.operator !== ">=" &&
+                metricRule.operator !== "<" &&
+                metricRule.operator !== "<=" &&
+                metricRule.operator !== "="
+              ) {
+                return [];
+              }
+              return [
+                {
+                  metricKey,
+                  operator: metricRule.operator,
+                  value: normalizeImportedMetricRuleValue(metricRule.value),
+                },
+              ];
+            }),
+          }
+        : {}),
+    },
+  }));
+}
+
+function createImportedMinigameIdByIntegrationId(
+  importedMinigames: ScriptEditorProjectDefinition["minigames"]
+): Map<string, string> {
+  return new Map(
+    importedMinigames.flatMap((minigame) => {
+      const minigameId = typeof minigame.id === "string" ? minigame.id : "";
+      const integrationId =
+        typeof minigame.integrationId === "string" &&
+        minigame.integrationId.trim().length > 0
+          ? minigame.integrationId.trim()
+          : minigameId.length > 0 &&
+              typeof minigame.playableId === "string" &&
+              minigame.playableId.trim().length > 0
+            ? createDerivedMinigameIntegrationId(minigameId, minigame.playableId)
+            : "";
+      return integrationId.length > 0 ? [[integrationId, minigameId] as const] : [];
     })
   );
 }
 
-function isSupportedImportedMinigameOwnerKind(
-  value: string
-): value is ScriptEditorMinigameOwnerKind {
-  return (
-    value === "house" ||
-    value === "dialogue" ||
-    value === "task" ||
-    value === "external"
-  );
-}
-
-function normalizeImportedReturnPolicy(
+function normalizeImportedConfigValueType(
   value: unknown
-): ScriptEditorMinigameReturnPolicy {
-  return value === "resume-owner" || value === "reenter-owner" || value === "close-only"
-    ? value
-    : "close-only";
+): "number" | "text" | "boolean" {
+  if (typeof value === "number") {
+    return "number";
+  }
+  if (typeof value === "boolean") {
+    return "boolean";
+  }
+  return "text";
 }
 
-function normalizeImportedOutcome(
-  value: string
-): ScriptEditorMinigameOutcome {
-  return value === "success" || value === "failure" || value === "cancelled"
-    ? value
-    : "success";
+function normalizeImportedConfigValue(
+  value: unknown
+): string | number | boolean | null {
+  if (typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+  if (value == null) {
+    return null;
+  }
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function normalizeImportedMetricRuleValue(
+  value: unknown
+): string | number | boolean {
+  if (typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function createDerivedMinigameIntegrationId(
+  minigameId: string,
+  playableId: string
+): string {
+  return `playable.${playableId}.instance.${minigameId}`;
 }
 
 function readArrayFamily(
@@ -1307,16 +1454,21 @@ function readEntityArrayFamily(
   return readArrayFamily(rawPack, familyKey) as ScriptEditorEntityRecord[];
 }
 
-function readFlowPlayablesFamily(
+function readPlayableShellsFamily(
   rawPack: Record<string, unknown>
 ): ScriptEditorProjectDefinition["flows"] {
   if (rawPack.flowDefinitions != null) {
     throw new Error(
-      'Imported runtime pack still uses retired family "flowDefinitions"; use "flowPlayables" instead.'
+      'Imported runtime pack still uses retired family "flowDefinitions"; use "playableShells" instead.'
+    );
+  }
+  if (rawPack.flowPlayables != null) {
+    throw new Error(
+      'Imported runtime pack still uses retired family "flowPlayables"; use "playableShells" instead.'
     );
   }
 
-  const value = rawPack.flowPlayables;
+  const value = rawPack.playableShells;
   if (!Array.isArray(value)) {
     return [];
   }
@@ -1328,7 +1480,7 @@ function mapImportedFlowPlayable(
   index: number
 ): ScriptEditorProjectDefinition["flows"][number] {
   if (value == null || typeof value !== "object" || Array.isArray(value)) {
-    throw new Error(`Imported flowPlayables[${index}] must be an object.`);
+    throw new Error(`Imported playableShells[${index}] must be an object.`);
   }
 
   const flow = value as Record<string, unknown>;
@@ -1346,7 +1498,7 @@ function mapImportedFlowPlayable(
   ]) {
     if (Object.hasOwn(flow, retiredField)) {
       throw new Error(
-        `Imported flowPlayables[${index}] still carries retired routing field "${retiredField}".`
+        `Imported playableShells[${index}] still carries retired routing field "${retiredField}".`
       );
     }
   }
@@ -1411,12 +1563,6 @@ function readMenuInstanceFamily(
     rawPack,
     "menuInstances"
   ) as ScriptEditorProjectDefinition["menuInstances"];
-}
-
-function readItemFamily(
-  rawPack: Record<string, unknown>
-): ScriptEditorProjectDefinition["items"] {
-  return readArrayFamily(rawPack, "items") as ScriptEditorProjectDefinition["items"];
 }
 
 function readPortraitFamily(
@@ -1543,75 +1689,6 @@ function readString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function normalizeScenarioPackValueForScriptEditorImport(value: unknown): unknown {
-  if (value == null || typeof value !== "object" || Array.isArray(value)) {
-    return value;
-  }
-
-  const pack = value as Record<string, unknown>;
-  return Array.isArray(pack.scenes)
-    ? pack
-    : {
-        ...pack,
-        scenes: [],
-      };
-}
-
-function resolveScenarioPackRuntimeImportUrl(url: string): string {
-  if (/^(https?:|file:)/.test(url)) {
-    return url;
-  }
-
-  if (url.startsWith("/") && typeof window !== "undefined") {
-    return new URL(url, window.location.href).href;
-  }
-
-  return url;
-}
-
-async function hydrateScenarioPackManifestFromUrl(
-  manifest: RuntimePackManifest,
-  manifestUrl: string
-): Promise<unknown> {
-  const fileEntries = Object.entries(manifest.files);
-  const resolvedEntries = await Promise.all(
-    fileEntries.map(async ([key, relativePath]) => {
-      const response = await fetch(new URL(relativePath, manifestUrl).href);
-      if (!response.ok) {
-        throw new Error(`Failed to load scenario pack file "${key}": ${response.status}`);
-      }
-
-      return [key, await response.json()] as const;
-    })
-  );
-
-  const hydratedFields = Object.fromEntries(resolvedEntries);
-  const resolvedMaps = resolveContentPackMapAssetUrls(
-    hydratedFields.maps as Parameters<typeof resolveContentPackMapAssetUrls>[0],
-    manifestUrl
-  );
-
-  return {
-    schemaVersion: manifest.schemaVersion,
-    id: manifest.id,
-    title: manifest.title,
-    ...(manifest.description == null ? {} : { description: manifest.description }),
-    ...(manifest.basePackId == null ? {} : { basePackId: manifest.basePackId }),
-    ...(manifest.author == null ? {} : { author: manifest.author }),
-    ...(manifest.version == null ? {} : { version: manifest.version }),
-    ...(manifest.tags == null ? {} : { tags: [...manifest.tags] }),
-    ...(manifest.personAttributeSemantics == null
-      ? {}
-      : {
-          personAttributeSemantics: cloneJsonCompatibleValue(
-            manifest.personAttributeSemantics
-          ) as ScriptEditorPersonSemanticBinding[],
-        }),
-    ...hydratedFields,
-    ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
-  };
-}
-
 function readStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
@@ -1651,6 +1728,13 @@ async function hydrateScenarioPackManifestFromFiles(
     id: manifest.id,
     title: manifest.title,
     ...(manifest.description == null ? {} : { description: manifest.description }),
+    ...(manifest.audioSettings == null
+      ? {}
+      : {
+          audioSettings: {
+            muted: manifest.audioSettings.muted === true,
+          },
+        }),
     ...(manifest.basePackId == null ? {} : { basePackId: manifest.basePackId }),
     ...(manifest.author == null ? {} : { author: manifest.author }),
     ...(manifest.version == null ? {} : { version: manifest.version }),

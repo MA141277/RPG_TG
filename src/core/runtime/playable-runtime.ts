@@ -1,4 +1,7 @@
-import type { ActivityDefinition } from "../../domain/activity";
+import {
+  GENERIC_QTE_ACTIVITY_HANDLER_ID,
+  type ActivityDefinition,
+} from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
 import type { RuntimeResult } from "../contracts/runtime-result";
@@ -10,6 +13,7 @@ import type {
   PlayableIntegrationDefinition,
   PlayableIntegrationId,
   PlayableLaunchInput,
+  PlayableLaunchRequest,
   PlayableLaunchResolution,
   PlayableOwnerContext,
   PlayableSettlement,
@@ -22,6 +26,7 @@ import {
 import type { RuntimeState } from "../contracts/runtime-state";
 import {
   startActivityQtePlayable,
+  startActivityQtePlayableSession,
   adjustActivityQteWagerPlayable,
   chooseActivityQteCommandPlayable,
   exitActivityQtePlayable,
@@ -29,6 +34,7 @@ import {
   stopActivityQtePlayable,
   tickActivityQtePlayable,
 } from "../../application/playables/activity-qte/activity-qte-definition";
+import { createActivityQteSession } from "../../application/activity/activity-qte-runtime";
 import {
   completeCityBeggingPlayable,
   exitCityBeggingPlayable,
@@ -70,6 +76,7 @@ import {
 import { settleRuntimeCommands } from "./runtime-settlement";
 
 export const PLAYABLE_LAUNCH_EVENT_ID = "playable.launch";
+const TEMPLE_COPY_SCRIPTURE_PLAYABLE_ID = "temple-copy-scripture";
 
 export type PlayableRuntimeOutput = RuntimeResult & {
   handled: boolean;
@@ -228,7 +235,7 @@ export function runPlayableRuntime(input: {
   playerCharacterId?: string;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string> | undefined;
-  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
+  playableShellsById?: Record<string, FlowPlayableDefinition> | undefined;
 }): PlayableRuntimeOutput {
   const resolvedRequest = toPlayableRuntimeRequest(input.request);
   if (resolvedRequest == null) {
@@ -238,12 +245,12 @@ export function runPlayableRuntime(input: {
       handled: false,
       session: getActivePlayableSession(input.state, null),
     };
-  }
+    }
 
   if (resolvedRequest.phase === "launch") {
     const launchedFlowPlayable = resolveFlowPlayableDefinition(
       resolvedRequest.launch.launch.playableId,
-      input.flowPlayablesById
+      input.playableShellsById
     );
     if (launchedFlowPlayable != null) {
       const nextState = {
@@ -300,6 +307,23 @@ export function runPlayableRuntime(input: {
         handlerId,
         integrationId: resolvedRequest.launch.launch.integrationId,
         ownerContext: resolvedRequest.launch.launch.ownerContext,
+      });
+
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "activity-qte"),
+      };
+    }
+
+    if (
+      resolvedRequest.launch.launch.playableId ===
+      TEMPLE_COPY_SCRIPTURE_PLAYABLE_ID
+    ) {
+      const nextState = launchTempleCopyScriptureCompatPlayable({
+        state: input.state,
+        launch: resolvedRequest.launch.launch,
       });
 
       return {
@@ -446,7 +470,7 @@ export function runPlayableRuntime(input: {
   if (resolvedRequest.phase === "exit") {
     const activeFlowPlayable = resolveFlowPlayableDefinition(
       resolvedRequest.playableId,
-      input.flowPlayablesById
+      input.playableShellsById
     );
     if (
       activeFlowPlayable != null &&
@@ -534,7 +558,7 @@ export function runPlayableRuntime(input: {
   );
   const flowPlayable = resolveFlowPlayableDefinition(
     resolvedRequest.playableId,
-    input.flowPlayablesById
+    input.playableShellsById
   );
   if (activeFlowSession != null && flowPlayable != null) {
     const command = toFlowPlayableCommand(
@@ -1506,9 +1530,51 @@ function toPlayableOutcome(
 
 function resolveFlowPlayableDefinition(
   playableId: PlayableId,
-  flowPlayablesById?: Record<string, FlowPlayableDefinition>
+  playableShellsById?: Record<string, FlowPlayableDefinition>
 ): FlowPlayableDefinition | null {
-  return flowPlayablesById?.[playableId] ?? null;
+  return playableShellsById?.[playableId] ?? null;
+}
+
+function launchTempleCopyScriptureCompatPlayable(input: {
+  state: RuntimeState;
+  launch: PlayableLaunchRequest;
+}): RuntimeState {
+  const activityDefinition = createTempleCopyScriptureCompatActivityDefinition(
+    input.launch
+  );
+  const session = createActivityQteSession(
+    activityDefinition,
+    GENERIC_QTE_ACTIVITY_HANDLER_ID,
+    { variant: "fortune-board" }
+  );
+
+  return startActivityQtePlayableSession({
+    state: input.state,
+    session,
+    integrationId: input.launch.integrationId,
+    ownerContext: input.launch.ownerContext,
+  });
+}
+
+function createTempleCopyScriptureCompatActivityDefinition(
+  launch: PlayableLaunchRequest
+): ActivityDefinition {
+  const title =
+    typeof launch.payload?.title === "string" && launch.payload.title.trim().length > 0
+      ? launch.payload.title.trim()
+      : "抄写经卷";
+
+  return {
+    id: "activity.runtime.temple-copy-scripture.compat",
+    label: title,
+    handlerId: GENERIC_QTE_ACTIVITY_HANDLER_ID,
+    fallbackHandlerId: GENERIC_QTE_ACTIVITY_HANDLER_ID,
+    qte: {
+      totalRounds: 3,
+      requiredSuccesses: 2,
+    },
+    timeAdvanceCost: 0,
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
