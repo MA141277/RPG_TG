@@ -2,6 +2,125 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-05 Zhuyuanzhang Public Menu-Entry Omission Removal
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 已清空 `PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS`，不再把 `menu-entry.city.default.grain-accounting` 与 `menu-entry.city.default.medicine-compounding` 作为 public 特判过滤。
+- `public/script-editor-templates/zhuyuanzhang/menu-resources.json` 已重新由 sync tool 生成，当前与 builtin template 的 `menu-resources.json` 对齐，包含这两条 city minigame menu entries。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 与 `tests/script-editor-runtime-preview-compat.test.cjs` 已更新回归，分别锁定 public menu-resource projection 全量派生，以及 public 默认模板导入后会保留这两条 city minigame 菜单入口。
+
+### Impact
+- `C` 线当前显式 residual boundary 已进一步缩到只剩 2 条 builtin-only failure_reward settlement 事件。
+- 之后如果继续推进 source-unification，不应再把 menu-resources 视作 public 发布层的残留问题；重点应转向 publication-layer 保留策略，以及这 2 条 runtime/template-only settlement 事件是否需要继续保留。
+
+## 2026-08-05 Zhuyuanzhang Temple Copy-Scripture Round-Trip Contract Convergence
+
+### Changed
+- `src/core/registry/builtin-playable-definition-registry.ts` 与 `src/core/registry/builtin-playable-shell-registry.ts` 现在都把 `temple-copy-scripture` 记为 Script Editor 可识别、可导出的 builtin minigame playable，而不再只让 runtime 在 launch 时做兼容兜底。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 不再保留 `PUBLICATION_OMITTED_PLAYABLE_INTEGRATION_IDS` 的 temple-copy-scripture 例外；public `playable-integrations.json` 改为与 builtin template 全量对齐。
+- `public/script-editor-templates/zhuyuanzhang/playable-integrations.json` 已重新由 sync tool 生成，当前会完整发布 temple-copy-scripture / grain-accounting / medicine-compounding / activity-qte 这组 integration family。
+- `tests/script-editor-runtime-preview-compat.test.cjs` 与 `tests/zhuyuanzhang-source-unification.test.cjs` 已更新回归，锁定 public 默认模板导入会保留 temple-copy-scripture minigame，并且导入后的项目仍可再次导出与通过 runtime preview 兼容校验。
+
+### Impact
+- temple-copy-scripture 不再是 public playable family 的单条 publication omitted boundary；它已经进入 `runtime pack -> Script Editor import -> export -> runtime preview` 的闭环合同。
+- 这一步先把 `C` 线显式 residual boundary 缩小到 2 组；同日后续 menu-entry omission removal 已继续把边界收缩到只剩 2 条 builtin-only failure_reward settlement 事件。
+
+## 2026-08-05 Zhuyuanzhang Public Playable-Integration Safe Projection
+
+### Changed
+- `public/script-editor-templates/zhuyuanzhang/playable-integrations.json` 现在已由 `tools/sync-zhuyuanzhang-startup-templates.mjs` 生成，并从 builtin template 的 playable integrations 派生 editor-safe 子集，而不是继续完全缺失这类 family。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 不再把 `playableIntegrations` 记为 builtin-template-only manifest key，而是改成显式记录 `PUBLICATION_OMITTED_PLAYABLE_INTEGRATION_IDS`，当前只过滤 `playable.temple-copy-scripture.instance.template.temple-copy-scripture`。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 新增 public playable-integrations projection，只排除当前会让默认模板导入生成不可导出 minigame binding 的 temple-copy-scripture integration。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 与 `tests/script-editor-runtime-preview-compat.test.cjs` 新增回归，分别锁定 public playable-integrations 的安全投影合同，以及“public 默认模板导入不再出现 temple-copy-scripture minigame、但 grain/medicine/activity-qte integrations 仍然存在”的运行表现。
+
+### Impact
+- 这一步把 public playable family 与 builtin template 的差异先缩小到只剩 1 条不安全 integration；后续同日 importer/exporter 合同升级已进一步消除了这条 temple-copy-scripture omitted boundary。
+- 作为历史切片，它确认了问题焦点在 Script Editor round-trip 合同，而不是 grain-accounting、medicine-compounding 或 activity-qte 这类 integration family 本身。
+
+## 2026-08-05 Zhuyuanzhang Default Template Loader Owner Migration
+
+### Changed
+- `src/modules/script-editor/application/default-template-project-loader.ts` 新增 builtin template asset loader：它直接从 `src/modules/script-editor/builtin-templates/zhuyuanzhang/pack.json`、manifest family JSON 与地图 PNG 资源构造默认模板导入所需的 `File[]`，再复用现有 `loadScriptEditorProjectFromScenarioPackFiles(...)` 导入链生成 Script Editor 默认项目。
+- `src/modules/script-editor/kernel/script-editor-workflow-controller.ts` 的 `importTemplateProject()` 不再通过 `loadScriptEditorProjectFromScenarioPackUrl(DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL)` 走 public URL，而是改为调用 `loadDefaultScriptEditorTemplateProject()`。
+- `tests/script-editor-template-url.test.cjs` 新增结构回归，锁定“默认模板导入不再依赖 public template URL，但 public template URL 仍保留为打包静态资源入口”。
+- `src/types/static-assets.d.ts` 补充 `*.png?url` 静态资源声明，确保 builtin asset loader 在当前 test/build TypeScript 编译配置下可通过类型检查。
+
+### Impact
+- Script Editor 的默认模板导入 owner 已从 `public/script-editor-templates/zhuyuanzhang/pack.json` 脱离，public 发布层不再同时承担“默认模板导入真实数据源”这一职责。
+- 这一步没有移除 public URL 兼容入口；当前 public 仍保留为发布层与 URL 导入链依赖。后续如果继续推进 public retirement，应优先处理 publication-layer policy，而不是回到默认模板导入 owner。
+
+## 2026-08-05 Zhuyuanzhang Public Manifest Safe-Subset Convergence
+
+### Changed
+- `public/script-editor-templates/zhuyuanzhang/pack.json` 现在继续由 builtin template manifest 投影生成，并新增对 `playables.json` 与 `settlements.json` 的发布；`playable-shells.json` 继续保持为 canonical public playable family file。
+- `public/script-editor-templates/zhuyuanzhang/playables.json` 与 `settlements.json` 现由 `tools/sync-zhuyuanzhang-startup-templates.mjs` 直接从 builtin template 派生生成，不再缺失这两类 canonical family。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 把 `playableIntegrations` 明确缩回当前唯一的 builtin-template-only manifest key；同时把 `playables.json`、`settlements.json` 纳入 public publication derived contract。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 与 `tests/script-editor-runtime-preview-compat.test.cjs` 新增并更新回归，锁定 public manifest 的安全子集发布范围，以及默认模板导入/导出 round-trip 不能因 public family 扩张而回归。
+
+### Impact
+- public publication 与 builtin template 的 manifest 差异继续缩小，但不是无条件全量对齐：`playableIntegrations` 经过真实导入导出验证后，已被确认不能直接整份发布到 public，否则当前默认模板导入会产生不可导出的 minigame binding。
+- source-unification 在 pack manifest 这一层，已经先把“能安全派生到 public 的 family”和“暂时不能直接进 public 的 family”区分成了显式合同；同日后续切片已把 `playableIntegrations` 从“整份 builtin-only”进一步收口为“public 安全投影 + 1 条 omitted integration boundary”。
+
+## 2026-08-05 Zhuyuanzhang Public Support-Data Bulk Convergence
+
+### Changed
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/menu-resources.json` 一次性收回了此前仍停留在 `public` 的 template/home 默认菜单配置；builtin template 现在成为这组 menu-resource authored/support-data 的 maintained owner，同时保留 `menu-resource.city.default` 下 2 个 builtin-only minigame 入口。
+- `public/script-editor-templates/zhuyuanzhang/menu-resources.json` 与 `house-module-defaults.json` 不再继续手维护，而是由 `tools/sync-zhuyuanzhang-startup-templates.mjs` 从 builtin template 派生生成。
+- `public/script-editor-templates/zhuyuanzhang/house-module-defaults.json` 现在会同步包含 `temple-house` 默认配置，public 默认模板不再因为历史镜像缺项而与 builtin template 分叉。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 新增 `PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS`，并把 `menu-resources.json`、`house-module-defaults.json` 纳入 public publication derived contract。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 新增 public menu-resources / house-module-defaults 投影，其中 public menu-resources 只显式过滤 `menu-entry.city.default.grain-accounting` 与 `menu-entry.city.default.medicine-compounding` 这 2 个当前不支持的入口。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 新增回归，锁定 public 的 `menu-resources.json` / `house-module-defaults.json` 必须由 builtin template 派生，并锁定仅存在上述 2 个 menu entry 的 public omitted boundary。
+
+### Impact
+- source-unification 在 support-data 这一类文件上也已不再需要继续一刀一刀处理；public 默认模板的第三套 maintained owner 继续缩小，只剩更高层的 pack manifest / loader / publication policy 问题。
+- 当前显式 residual boundary 除 2 条 builtin-only failure_reward settlement 事件外，还包括 2 个 public-omitted 的 city minigame 菜单入口；后续若要继续收口，应直接处理发布层能力边界，而不是再回到单个 JSON 文件补差。
+
+## 2026-08-05 Zhuyuanzhang Public Authored Event Surface Bulk Convergence
+
+### Changed
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/events.json` 一次性收回了此前只存在于 `public` 的整组 authored event records：包括 keep / tea_house / market / grain_shop / medicine_house / inn 的 template action events、`temple.work`、`home.rest`、`home.leave` 等 26 条原 public-only 事件；builtin template 现在成为这类默认模板 authored events 的统一 maintained owner。
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/event-bindings.json` 同步收回了整份 public authored bindings；`public/script-editor-templates/zhuyuanzhang/event-bindings.json` 不再单独手维护，而是由 sync tool 派生生成。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 不再保留 `PUBLICATION_ONLY_EVENT_IDS` / `PUBLICATION_ONLY_DIALOGUE_IDS` 的残留 authored 列表；public 事件发布层现在只排除 2 条 `BUILTIN_ONLY_EVENT_IDS` failure_reward settlement 事件，并新增 `event-bindings.json` 的 public publication derived contract。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 现在会把 public 的 `events.json`、`dialogues.json`、`event-bindings.json` 统一视为 builtin template 派生输出；同时新增 runtime `event-bindings` 过滤镜像，只保留能命中 runtime mirrored events 的 bindings，避免 runtime pack 保留落不到 event owner 的 dangling bindings。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 相应升级为整组回归：public authored files 必须从 builtin template 派生，runtime `event-bindings` 必须被过滤到 mirrored runtime event 集合。
+
+### Impact
+- source-unification 在“同类型 authored event/binding 问题”这一层已经不再需要继续一刀一刀处理；public 默认模板在事件、对话、bindings 这三类 authored 文件上，已基本退出第三套 maintained owner 身份。
+- 当前剩余的 event 例外只剩 2 条 builtin-only failure_reward settlement 事件；后续主线应转向更高层的 publication/loader 决策，而不是继续补单个 event/binding drift。
+
+## 2026-08-05 Zhuyuanzhang Public Enter Publication Canonicalization
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 继续缩小 public publication 的 residual surface：`event.building.house.kulan.keep.enter`、`tea_house.enter`、`market.enter`、`grain_shop.enter`、`medicine_house.enter`、`inn.enter` 及其对应 6 条 dialogues，已从 `PUBLICATION_ONLY_*` 合同转入 `PUBLICATION_CANONICAL_*` 合同。
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/events.json` 与 `dialogues.json` 新增这 6 组 building-enter canonical records，builtin template 现在成为这些 public 默认模板 enter authored 内容的明确 maintained owner。
+- `public/script-editor-templates/zhuyuanzhang/events.json` 与 `dialogues.json` 继续通过 canonical projection 对齐 builtin template；这 6 条 enter records 不再作为 public-only 的第三套手维护 authored owner 存在。
+- 按现有 `RUNTIME_BUILDING_SUPPORT_FILE_NAMES` 镜像合同，执行 sync write 时同步刷新了 `src/content/scenario-packs/zhuyuanzhang/dialogues.json` 的 mirror 内容，但没有扩大 runtime event mirror 范围。
+
+### Impact
+- source-unification 的 public 层进一步向“publication layer only”收口，当前残留差异主要收缩到 enter 后续 template action records、home/temple.work publication-only 记录，以及未决的 publication-only event-bindings。
+- 这次变化不触碰 temple/keep runtime 业务逻辑，不改当前 UI、功能、剧情顺序或启动链，只收口 scenario-pack/template/public publication owner。
+
+## 2026-08-05 Zhuyuanzhang Public Donate Publication Convergence
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 将 public publication 的 canonical event/dialogue 子集从原先的 review-only 扩展到包含 `event.building.template.house.temple.donate` 与 `scene.building.template.house.temple.donate`，避免 public 默认模板在这条入口上继续保留旧 `launchFlow` authored 形态。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 相应改为投影这组更广的 canonical publication records；从 script-editor builtin template 向 public 发布时，temple donate 现在会与 maintained packs 保持同一份 dialogue-backed event/dialogue 合同。
+- `public/script-editor-templates/zhuyuanzhang/events.json` 与 `dialogues.json` 已重新由 sync tool 生成，`temple.donate` 不再停留在 public-only 的旧 drift 形态。
+
+### Impact
+- source-unification 的 public 层继续向“publication layer only”收口：review 之后，temple donate 也不再由 public 单独持有旧事件形态。
+- 默认模板导入链继续减少第三套 authored owner，且没有回到 temple/keep house runtime 业务逻辑。
+
+## 2026-08-05 Zhuyuanzhang Publication Residual Boundary Freeze
+
+### Added
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 新增显式 residual boundary 常量：`PUBLICATION_ONLY_EVENT_IDS`、`PUBLICATION_ONLY_DIALOGUE_IDS`、`BUILTIN_ONLY_EVENT_IDS`。前两者列出当前仍只留在 public 默认模板层的 enter/template authored 记录，后者列出只保留在 builtin template 的 settlement failure_reward 事件。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 新增回归，锁定这些 residual records 的当前归属：publication-only 记录必须只存在于 public，builtin-only failure_reward 必须只存在于 builtin template。
+
+### Impact
+- source-unification 的剩余 public/builtin 差异不再是隐性漂移，而是明确的合同边界。
+- 后续若继续 canonicalize keep/market/inn/grain/medicine/tea-house/home/temple.work 这批记录，可以逐条从这组 contract 中移出；若不继续，它们也会以显式 publication-only/builtin-only 形态被冻结。
+
 ## 2026-08-04 Zhuyuanzhang Review Publication Projection
 
 ### Added

@@ -6,8 +6,9 @@ import {
   ADDITIVE_SHARED_TEXT_ENTRY_PREFIXES,
   BUILTIN_TEMPLATE_ONLY_MANIFEST_FILE_KEYS,
   PLAYABLE_FAMILY_FILE_NAMES,
-  PUBLICATION_REVIEW_DIALOGUE_IDS,
-  PUBLICATION_REVIEW_EVENT_IDS,
+  PUBLICATION_OMITTED_EVENT_IDS,
+  PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS,
+  PUBLICATION_OMITTED_PLAYABLE_INTEGRATION_IDS,
   PUBLICATION_ONLY_MANIFEST_FILE_KEYS,
   PUBLICATION_SYNC_FILE_RULES,
   RUNTIME_BUILDING_SUPPORT_FILE_NAMES,
@@ -101,46 +102,6 @@ function syncCharacterStartupFields(runtimeCharacters, targetCharacters) {
   });
 }
 
-function projectSelectedRecordsForSync(sourceRecords, targetRecords, selectedIds) {
-  const sourceById = new Map(
-    (Array.isArray(sourceRecords) ? sourceRecords : []).map((record) => [
-      record.id,
-      record,
-    ])
-  );
-  const selectedIdSet = new Set(selectedIds);
-  const seenSelectedIds = new Set();
-  const nextRecords = [];
-
-  for (const targetRecord of Array.isArray(targetRecords) ? targetRecords : []) {
-    if (!selectedIdSet.has(targetRecord.id)) {
-      nextRecords.push(targetRecord);
-      continue;
-    }
-
-    const sourceRecord = sourceById.get(targetRecord.id);
-    if (sourceRecord == null) {
-      nextRecords.push(targetRecord);
-      continue;
-    }
-
-    nextRecords.push(sourceRecord);
-    seenSelectedIds.add(targetRecord.id);
-  }
-
-  for (const recordId of selectedIds) {
-    if (seenSelectedIds.has(recordId)) {
-      continue;
-    }
-    const sourceRecord = sourceById.get(recordId);
-    if (sourceRecord != null) {
-      nextRecords.push(sourceRecord);
-    }
-  }
-
-  return nextRecords;
-}
-
 export function projectTextEntriesForSync(sourceEntries, targetEntries) {
   const nextEntries = {};
   for (const key of Object.keys(targetEntries)) {
@@ -222,22 +183,88 @@ export function projectRuntimeEventsForSync(sourceEvents, targetEvents) {
   return nextEvents;
 }
 
-export function projectPublicReviewEventsForSync(sourceEvents, targetEvents) {
-  return projectSelectedRecordsForSync(
-    sourceEvents,
-    targetEvents,
-    PUBLICATION_REVIEW_EVENT_IDS
+export function projectRuntimeEventBindingsForSync(
+  sourceEventBindings,
+  runtimeEvents
+) {
+  const runtimeEventIds = new Set(
+    (Array.isArray(runtimeEvents) ? runtimeEvents : []).flatMap((record) => {
+      if (
+        record != null &&
+        typeof record === "object" &&
+        typeof record.id === "string" &&
+        record.id.trim().length > 0
+      ) {
+        return [record.id.trim()];
+      }
+      return [];
+    })
+  );
+
+  return (Array.isArray(sourceEventBindings) ? sourceEventBindings : []).filter(
+    (record) =>
+      record != null &&
+      typeof record === "object" &&
+      typeof record.eventId === "string" &&
+      runtimeEventIds.has(record.eventId)
   );
 }
 
-export function projectPublicReviewDialoguesForSync(
-  sourceDialogues,
-  targetDialogues
+export function projectPublicEventsForSync(sourceEvents) {
+  return (Array.isArray(sourceEvents) ? sourceEvents : []).filter(
+    (record) =>
+      record != null &&
+      typeof record === "object" &&
+      typeof record.id === "string" &&
+      !PUBLICATION_OMITTED_EVENT_IDS.includes(record.id)
+  );
+}
+
+export function projectPublicDialoguesForSync(sourceDialogues) {
+  return JSON.parse(JSON.stringify(Array.isArray(sourceDialogues) ? sourceDialogues : []));
+}
+
+export function projectPublicEventBindingsForSync(sourceEventBindings) {
+  return JSON.parse(
+    JSON.stringify(Array.isArray(sourceEventBindings) ? sourceEventBindings : [])
+  );
+}
+
+export function projectPublicMenuResourcesForSync(sourceMenuResources) {
+  return JSON.parse(
+    JSON.stringify(Array.isArray(sourceMenuResources) ? sourceMenuResources : [])
+  ).map((record) => {
+    if (record?.id !== "menu-resource.city.default") {
+      return record;
+    }
+
+    return {
+      ...record,
+      entries: (Array.isArray(record.entries) ? record.entries : []).filter(
+        (entry) =>
+          !PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS.includes(entry.id)
+      ),
+    };
+  });
+}
+
+export function projectPublicHouseModuleDefaultsForSync(
+  sourceHouseModuleDefaults
 ) {
-  return projectSelectedRecordsForSync(
-    sourceDialogues,
-    targetDialogues,
-    PUBLICATION_REVIEW_DIALOGUE_IDS
+  return JSON.parse(JSON.stringify(sourceHouseModuleDefaults ?? {}));
+}
+
+export function projectPublicPlayableIntegrationsForSync(
+  sourcePlayableIntegrations
+) {
+  return JSON.parse(
+    JSON.stringify(Array.isArray(sourcePlayableIntegrations) ? sourcePlayableIntegrations : [])
+  ).filter(
+    (record) =>
+      record != null &&
+      typeof record === "object" &&
+      typeof record.integrationId === "string" &&
+      !PUBLICATION_OMITTED_PLAYABLE_INTEGRATION_IDS.includes(record.integrationId)
   );
 }
 
@@ -454,6 +481,14 @@ async function buildTargetContents(sourceRoot, targetRoots) {
 
   const results = [];
   for (const targetRoot of targetRoots) {
+    const runtimeProjectedEvents =
+      targetRoot === runtimeRoot
+        ? projectRuntimeEventsForSync(
+            canonicalRuntimeEvents,
+            await readJson(path.join(targetRoot, "events.json"))
+          )
+        : null;
+
     const targetCharactersPath = path.join(targetRoot, "characters.json");
     const targetCharacters = await readJson(targetCharactersPath);
     const nextCharacters = syncCharacterStartupFields(
@@ -504,6 +539,26 @@ async function buildTargetContents(sourceRoot, targetRoots) {
         targetRoot.includes("/public/")
           ? formatJson(canonicalPlayableFamily.playableShells)
           : null,
+      publicPlayablesPath:
+        targetRoot.includes("/public/")
+          ? path.join(targetRoot, "playables.json")
+          : null,
+      publicPlayablesContent:
+        targetRoot.includes("/public/")
+          ? formatJson(canonicalPlayableFamily.playables)
+          : null,
+      publicPlayableIntegrationsPath:
+        targetRoot.includes("/public/")
+          ? path.join(targetRoot, "playable-integrations.json")
+          : null,
+      publicPlayableIntegrationsContent:
+        targetRoot.includes("/public/")
+          ? formatJson(
+              projectPublicPlayableIntegrationsForSync(
+                canonicalPlayableFamily.playableIntegrations
+              )
+            )
+          : null,
       publicDialoguesPath:
         targetRoot.includes("/public/")
           ? path.join(targetRoot, "dialogues.json")
@@ -511,9 +566,8 @@ async function buildTargetContents(sourceRoot, targetRoots) {
       publicDialoguesContent:
         targetRoot.includes("/public/")
           ? formatJson(
-              projectPublicReviewDialoguesForSync(
-                canonicalRuntimeBuildingSupport.dialogues,
-                await readJson(path.join(targetRoot, "dialogues.json"))
+              projectPublicDialoguesForSync(
+                canonicalRuntimeBuildingSupport.dialogues
               )
             )
           : null,
@@ -523,12 +577,51 @@ async function buildTargetContents(sourceRoot, targetRoots) {
           : null,
       publicEventsContent:
         targetRoot.includes("/public/")
+          ? formatJson(projectPublicEventsForSync(canonicalRuntimeEvents))
+          : null,
+      publicEventBindingsPath:
+        targetRoot.includes("/public/")
+          ? path.join(targetRoot, "event-bindings.json")
+          : null,
+      publicEventBindingsContent:
+        targetRoot.includes("/public/")
           ? formatJson(
-              projectPublicReviewEventsForSync(
-                canonicalRuntimeEvents,
-                await readJson(path.join(targetRoot, "events.json"))
+              projectPublicEventBindingsForSync(
+                canonicalRuntimeBuildingSupport.eventBindings
               )
             )
+          : null,
+      publicMenuResourcesPath:
+        targetRoot.includes("/public/")
+          ? path.join(targetRoot, "menu-resources.json")
+          : null,
+      publicMenuResourcesContent:
+        targetRoot.includes("/public/")
+          ? formatJson(
+              projectPublicMenuResourcesForSync(
+                canonicalRuntimeBuildingSupport.menuResources
+              )
+            )
+          : null,
+      publicHouseModuleDefaultsPath:
+        targetRoot.includes("/public/")
+          ? path.join(targetRoot, "house-module-defaults.json")
+          : null,
+      publicHouseModuleDefaultsContent:
+        targetRoot.includes("/public/")
+          ? formatJson(
+              projectPublicHouseModuleDefaultsForSync(
+                canonicalRuntimeBuildingSupport.houseModuleDefaults
+              )
+            )
+          : null,
+      publicSettlementsPath:
+        targetRoot.includes("/public/")
+          ? path.join(targetRoot, "settlements.json")
+          : null,
+      publicSettlementsContent:
+        targetRoot.includes("/public/")
+          ? formatJson(canonicalRuntimeBuildingSupport.settlements)
           : null,
       runtimePlayablesPath:
         targetRoot === runtimeRoot ? path.join(targetRoot, "playables.json") : null,
@@ -572,7 +665,12 @@ async function buildTargetContents(sourceRoot, targetRoots) {
           : null,
       runtimeEventBindingsContent:
         targetRoot === runtimeRoot
-          ? formatJson(canonicalRuntimeBuildingSupport.eventBindings)
+          ? formatJson(
+              projectRuntimeEventBindingsForSync(
+                canonicalRuntimeBuildingSupport.eventBindings,
+                runtimeProjectedEvents
+              )
+            )
           : null,
       runtimeHouseModuleDefaultsPath:
         targetRoot === runtimeRoot
@@ -618,12 +716,7 @@ async function buildTargetContents(sourceRoot, targetRoots) {
         targetRoot === runtimeRoot ? path.join(targetRoot, "events.json") : null,
       runtimeEventsContent:
         targetRoot === runtimeRoot
-          ? formatJson(
-              projectRuntimeEventsForSync(
-                canonicalRuntimeEvents,
-                await readJson(path.join(targetRoot, "events.json"))
-              )
-            )
+          ? formatJson(runtimeProjectedEvents)
           : null,
     });
   }
@@ -672,7 +765,13 @@ async function buildTargetContents(sourceRoot, targetRoots) {
       runtimeDialoguesContent: formatJson(canonicalRuntimeBuildingSupport.dialogues),
       runtimeEventBindingsPath: path.join(runtimeRoot, "event-bindings.json"),
       runtimeEventBindingsContent: formatJson(
-        canonicalRuntimeBuildingSupport.eventBindings
+        projectRuntimeEventBindingsForSync(
+          canonicalRuntimeBuildingSupport.eventBindings,
+          projectRuntimeEventsForSync(
+            canonicalRuntimeEvents,
+            await readJson(path.join(runtimeRoot, "events.json"))
+          )
+        )
       ),
       runtimeHouseModuleDefaultsPath: path.join(
         runtimeRoot,
@@ -765,9 +864,24 @@ async function main() {
         content: target.packManifestContent,
       },
       {
+        fileName: "playables.json",
+        filePath: target.publicPlayablesPath,
+        content: target.publicPlayablesContent,
+      },
+      {
+        fileName: "playable-integrations.json",
+        filePath: target.publicPlayableIntegrationsPath,
+        content: target.publicPlayableIntegrationsContent,
+      },
+      {
         fileName: "playable-shells.json",
         filePath: target.publicPlayableShellsPath,
         content: target.publicPlayableShellsContent,
+      },
+      {
+        fileName: "settlements.json",
+        filePath: target.publicSettlementsPath,
+        content: target.publicSettlementsContent,
       },
       {
         fileName: "dialogues.json",
@@ -778,6 +892,21 @@ async function main() {
         fileName: "events.json",
         filePath: target.publicEventsPath,
         content: target.publicEventsContent,
+      },
+      {
+        fileName: "event-bindings.json",
+        filePath: target.publicEventBindingsPath,
+        content: target.publicEventBindingsContent,
+      },
+      {
+        fileName: "menu-resources.json",
+        filePath: target.publicMenuResourcesPath,
+        content: target.publicMenuResourcesContent,
+      },
+      {
+        fileName: "house-module-defaults.json",
+        filePath: target.publicHouseModuleDefaultsPath,
+        content: target.publicHouseModuleDefaultsContent,
       },
       {
         fileName: "playables.json",

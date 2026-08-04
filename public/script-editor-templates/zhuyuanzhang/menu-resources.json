@@ -52,6 +52,26 @@
         "isVisible": true,
         "isEnabled": true,
         "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.grain-accounting",
+        "label": "粮账",
+        "menuFamily": "grain-accounting",
+        "targetFamily": "minigame",
+        "targetId": "playable.grain-accounting.instance.template.grain-accounting",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
+      },
+      {
+        "id": "menu-entry.city.default.medicine-compounding",
+        "label": "炼药",
+        "menuFamily": "medicine-compounding",
+        "targetFamily": "minigame",
+        "targetId": "playable.medicine-compounding.instance.template.medicine-compounding",
+        "isVisible": true,
+        "isEnabled": true,
+        "disabledHint": ""
       }
     ]
   },

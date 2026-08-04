@@ -43,6 +43,300 @@
       }
     ]
   },
+  "temple-house": {
+    "templeGreetingTextIds": [
+      "runtime.zhu_yuanzhang.temple.greeting.001",
+      "runtime.zhu_yuanzhang.temple.greeting.002"
+    ],
+    "templeOpenTextIds": [
+      "runtime.zhu_yuanzhang.temple.open.001",
+      "runtime.zhu_yuanzhang.temple.open.002"
+    ],
+    "templeRestMenuTextIds": [
+      "runtime.zhu_yuanzhang.temple.rest_menu.001",
+      "runtime.zhu_yuanzhang.temple.rest_menu.002"
+    ],
+    "templeMeetingIntroTextIds": [
+      "runtime.zhu_yuanzhang.temple.review.intro.001",
+      "runtime.zhu_yuanzhang.temple.review.intro.002"
+    ],
+    "templeLeaveRefusalTextIds": [
+      "runtime.zhu_yuanzhang.temple.leave_refusal.001"
+    ],
+    "templeWorkPlanTextIds": {
+      "templeHelp": "runtime.zhu_yuanzhang.temple.work_plan.temple_help.label",
+      "begAlmsDefault": "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.default.label",
+      "begAlmsLocked": "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.locked.label",
+      "begAlmsThirdWeek": "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.third_week.label",
+      "begAlmsFourthWeek": "runtime.zhu_yuanzhang.temple.work_plan.beg_alms.fourth_week.label"
+    },
+    "templeDonationTextIds": {
+      "confirmTitle": "runtime.zhu_yuanzhang.temple.donation.confirm.title",
+      "confirmBodyTemplate": "runtime.zhu_yuanzhang.temple.donation.confirm.001",
+      "confirmBodyFollowup": "runtime.zhu_yuanzhang.temple.donation.confirm.002",
+      "insufficientTitle": "runtime.zhu_yuanzhang.temple.donation.insufficient.title",
+      "insufficientBodyTemplate": "runtime.zhu_yuanzhang.temple.donation.insufficient.001",
+      "insufficientBodyFollowup": "runtime.zhu_yuanzhang.temple.donation.insufficient.002",
+      "resultTitle": "runtime.zhu_yuanzhang.temple.donation.result.title",
+      "resultFameTemplate": "runtime.zhu_yuanzhang.temple.donation.result.fame.001",
+      "resultFameFollowup": "runtime.zhu_yuanzhang.temple.donation.result.fame.002",
+      "resultNormalTemplate": "runtime.zhu_yuanzhang.temple.donation.result.normal.001",
+      "resultNormalFollowup": "runtime.zhu_yuanzhang.temple.donation.result.normal.002"
+    },
+    "templeReviewAssignmentTextIds": {
+      "thirdWeek": [
+        "runtime.zhu_yuanzhang.temple.review.assign.third_week.001",
+        "runtime.zhu_yuanzhang.temple.review.assign.third_week.002",
+        "runtime.zhu_yuanzhang.temple.review.assign.third_week.003"
+      ],
+      "fourthWeek": [
+        "runtime.zhu_yuanzhang.temple.review.assign.fourth_week.001",
+        "runtime.zhu_yuanzhang.temple.review.assign.fourth_week.002",
+        "runtime.zhu_yuanzhang.temple.review.assign.fourth_week.003"
+      ],
+      "defaultIntro": "runtime.zhu_yuanzhang.temple.review.assign.default.001",
+      "defaultAvailableTemplate": "runtime.zhu_yuanzhang.temple.review.assign.default.002",
+      "defaultEmpty": "runtime.zhu_yuanzhang.temple.review.assign.default.empty.001",
+      "defaultOutro": "runtime.zhu_yuanzhang.temple.review.assign.default.003",
+      "locked": [
+        "runtime.zhu_yuanzhang.temple.review.assignment.locked.001",
+        "runtime.zhu_yuanzhang.temple.review.assignment.locked.002"
+      ]
+    },
+    "templeBegAlmsStartOverlayTextIds": {
+      "defaultTitle": "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.default.title",
+      "defaultFollowup": "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.default.001",
+      "thirdWeekTitle": "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.third_week.title",
+      "thirdWeekLines": [
+        "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.third_week.001",
+        "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.third_week.002"
+      ],
+      "fourthWeekTitle": "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.fourth_week.title",
+      "fourthWeekLines": [
+        "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.fourth_week.001",
+        "runtime.zhu_yuanzhang.temple.work.start_beg_alms.overlay.fourth_week.002"
+      ]
+    },
+    "templeStatusCardTextIds": {
+      "eyebrow": "runtime.zhu_yuanzhang.temple.status.eyebrow",
+      "titleMonk": "runtime.zhu_yuanzhang.temple.status.title.monk",
+      "titleDaily": "runtime.zhu_yuanzhang.temple.status.title.daily",
+      "subtitleMeeting": "runtime.zhu_yuanzhang.temple.status.subtitle.meeting",
+      "subtitleDaily": "runtime.zhu_yuanzhang.temple.status.subtitle.daily",
+      "metricAbbot": "runtime.zhu_yuanzhang.temple.status.metric.abbot"
+    },
+    "templeRestSummaryTextIds": {
+      "interruptedCouncilTitle": "runtime.zhu_yuanzhang.temple.rest.interrupted.council.001",
+      "interruptedCouncilBody": "runtime.zhu_yuanzhang.temple.rest.interrupted.council.002",
+      "none": "runtime.zhu_yuanzhang.temple.rest.summary.none.001",
+      "days": "runtime.zhu_yuanzhang.temple.rest.summary.days.001",
+      "current": "runtime.zhu_yuanzhang.temple.rest.summary.current.001",
+      "normal": "runtime.zhu_yuanzhang.temple.rest.summary.normal.001",
+      "autoAdvanceTitleTemplate": "runtime.zhu_yuanzhang.temple.rest.summary.auto_advance.title"
+    },
+    "templeRestDaysOverlayTextIds": {
+      "title": "runtime.zhu_yuanzhang.temple.rest_days.title",
+      "body": "runtime.zhu_yuanzhang.temple.rest_days.001",
+      "confirmLabel": "runtime.zhu_yuanzhang.temple.rest_days.confirm.label",
+      "cancelLabel": "runtime.zhu_yuanzhang.temple.rest_days.cancel.label"
+    },
+    "templeLateReviewTextIds": {
+      "choiceLines": [
+        "runtime.zhu_yuanzhang.temple.review.late.choice.001",
+        "runtime.zhu_yuanzhang.temple.review.late.choice.002",
+        "runtime.zhu_yuanzhang.temple.review.late.choice.003"
+      ],
+      "heavyLines": [
+        "runtime.zhu_yuanzhang.temple.review.late.heavy.001",
+        "runtime.zhu_yuanzhang.temple.review.late.heavy.002"
+      ],
+      "lightLines": [
+        "runtime.zhu_yuanzhang.temple.review.late.light.001",
+        "runtime.zhu_yuanzhang.temple.review.late.light.002"
+      ]
+    },
+    "templeQteOverlayTextIds": {
+      "title": "runtime.zhu_yuanzhang.temple.qte.title",
+      "helperLines": [
+        "runtime.zhu_yuanzhang.temple.qte.001",
+        "runtime.zhu_yuanzhang.temple.qte.002"
+      ]
+    },
+    "templeBeggingFoodTextIds": {
+      "emptyTitle": "runtime.zhu_yuanzhang.temple.begging_food.empty.title",
+      "emptyLines": [
+        "runtime.zhu_yuanzhang.temple.begging_food.empty.001",
+        "runtime.zhu_yuanzhang.temple.begging_food.empty.002"
+      ],
+      "submitTitle": "runtime.zhu_yuanzhang.temple.begging_food.submit.title",
+      "submitLines": [
+        "runtime.zhu_yuanzhang.temple.begging_food.submit.001",
+        "runtime.zhu_yuanzhang.temple.begging_food.submit.002"
+      ],
+      "quantityLabel": "runtime.zhu_yuanzhang.temple.begging_food.submit.quantity.label",
+      "confirmLabel": "runtime.zhu_yuanzhang.temple.begging_food.submit.confirm.label",
+      "cancelLabel": "runtime.zhu_yuanzhang.temple.begging_food.submit.cancel.label",
+      "submittedMissionLabel": "runtime.zhu_yuanzhang.temple.main_mission.begging_submitted.label"
+    },
+    "templeUiTextIds": {
+      "activityConfirmLabel": "runtime.zhu_yuanzhang.temple.ui.activity_confirm.confirm",
+      "activityCancelLabel": "runtime.zhu_yuanzhang.temple.ui.activity_confirm.cancel",
+      "activityRelatedAbilityPending": "runtime.zhu_yuanzhang.temple.ui.activity_confirm.related_ability",
+      "activityQuickCompleteLabel": "runtime.zhu_yuanzhang.temple.ui.activity_confirm.quick_complete",
+      "alertConfirmLabel": "runtime.zhu_yuanzhang.temple.ui.alert.confirm",
+      "donateConfirmLabelTemplate": "runtime.zhu_yuanzhang.temple.ui.donate.confirm.label",
+      "donateCancelLabel": "runtime.zhu_yuanzhang.temple.ui.donate.cancel",
+      "resultConfirmLabel": "runtime.zhu_yuanzhang.temple.ui.result.confirm",
+      "leaveRefusalAdvanceHint": "runtime.zhu_yuanzhang.temple.ui.leave_refusal.advance",
+      "dialogueAdvanceHint": "runtime.zhu_yuanzhang.temple.ui.dialogue.advance",
+      "reviewAssignmentDefaultTitle": "runtime.zhu_yuanzhang.temple.ui.review.assignment.default_title",
+      "reviewPolicyOverallGoal": "runtime.zhu_yuanzhang.temple.ui.review.policy.overall_goal",
+      "reviewAssignmentOverlayTitle": "runtime.zhu_yuanzhang.temple.ui.review.assignment.overlay.title",
+      "reviewAssignmentOverlayConfirmLabel": "runtime.zhu_yuanzhang.temple.ui.review.assignment.overlay.confirm",
+      "reviewPolicyOverlayTitle": "runtime.zhu_yuanzhang.temple.ui.review.policy.overlay.title",
+      "reviewPolicyOverlayCloseLabel": "runtime.zhu_yuanzhang.temple.ui.review.policy.overlay.close",
+      "reviewRewardTitle": "runtime.zhu_yuanzhang.temple.ui.review.reward.title",
+      "reviewPersonnelNarration": "runtime.zhu_yuanzhang.temple.ui.review.personnel.narration",
+      "reviewPersonnelOverlayTitle": "runtime.zhu_yuanzhang.temple.ui.review.personnel.overlay.title",
+      "reviewAssignmentSettledLine": "runtime.zhu_yuanzhang.temple.ui.review.assignment.settled",
+      "reviewProgressLead": "runtime.zhu_yuanzhang.temple.ui.review.progress.lead",
+      "reviewPraiseLead": "runtime.zhu_yuanzhang.temple.ui.review.praise.lead",
+      "reviewPolicyLead": "runtime.zhu_yuanzhang.temple.ui.review.policy.lead",
+      "reviewAdvicePrompt": "runtime.zhu_yuanzhang.temple.ui.review.advice.prompt",
+      "reviewAdviceAcknowledge": "runtime.zhu_yuanzhang.temple.ui.review.advice.acknowledge",
+      "rootActionRest": "runtime.zhu_yuanzhang.temple.ui.root_action.rest",
+      "rootActionDonate": "runtime.zhu_yuanzhang.temple.ui.root_action.donate",
+      "rootActionDismiss": "runtime.zhu_yuanzhang.temple.ui.root_action.dismiss",
+      "rootActionWorkPending": "runtime.zhu_yuanzhang.temple.ui.root_action.work.pending",
+      "rootActionWorkReady": "runtime.zhu_yuanzhang.temple.ui.root_action.work.ready",
+      "rootActionSubmitFoodTemplate": "runtime.zhu_yuanzhang.temple.ui.root_action.submit_food",
+      "submitFoodActionLabel": "runtime.zhu_yuanzhang.temple.ui.root_action.submit_food.action_label",
+      "restMenuOneDay": "runtime.zhu_yuanzhang.temple.ui.rest_menu.one_day",
+      "restMenuCustomDays": "runtime.zhu_yuanzhang.temple.ui.rest_menu.custom_days",
+      "restMenuUntilCouncil": "runtime.zhu_yuanzhang.temple.ui.rest_menu.until_council",
+      "restMenuUntilRecovered": "runtime.zhu_yuanzhang.temple.ui.rest_menu.until_recovered",
+      "menuBack": "runtime.zhu_yuanzhang.temple.ui.menu.back",
+      "workMenuUnavailablePending": "runtime.zhu_yuanzhang.temple.ui.work_menu.unavailable.pending",
+      "workMenuUnavailableIdle": "runtime.zhu_yuanzhang.temple.ui.work_menu.unavailable.idle",
+      "actionPanelTitleMeetingMonk": "runtime.zhu_yuanzhang.temple.ui.action_panel.meeting.monk",
+      "actionPanelTitleMeetingDaily": "runtime.zhu_yuanzhang.temple.ui.action_panel.meeting.daily",
+      "actionPanelTitleAdvice": "runtime.zhu_yuanzhang.temple.ui.action_panel.advice.title",
+      "adviceActionGive": "runtime.zhu_yuanzhang.temple.ui.action_panel.advice.give",
+      "adviceActionSilent": "runtime.zhu_yuanzhang.temple.ui.action_panel.advice.silent",
+      "actionPanelTitleRest": "runtime.zhu_yuanzhang.temple.ui.action_panel.rest",
+      "actionPanelTitleWork": "runtime.zhu_yuanzhang.temple.ui.action_panel.work",
+      "actionPanelTitleTempleDaily": "runtime.zhu_yuanzhang.temple.ui.action_panel.temple_daily",
+      "statusCountdown": "runtime.zhu_yuanzhang.temple.ui.status.countdown",
+      "statusCountdownValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.countdown.value",
+      "statusContribution": "runtime.zhu_yuanzhang.temple.ui.status.contribution",
+      "statusContributionValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.contribution.value",
+      "statusWeek": "runtime.zhu_yuanzhang.temple.ui.status.week",
+      "statusWeekValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.week.value",
+      "statusDonationTotal": "runtime.zhu_yuanzhang.temple.ui.status.donation_total",
+      "statusDonationTotalValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.donation_total.value",
+      "statusCurrentTask": "runtime.zhu_yuanzhang.temple.ui.status.current_task",
+      "statusCurrentTaskNone": "runtime.zhu_yuanzhang.temple.ui.status.current_task.none",
+      "statusPlayerStamina": "runtime.zhu_yuanzhang.temple.ui.status.player_stamina",
+      "statusPlayerFood": "runtime.zhu_yuanzhang.temple.ui.status.player_food",
+      "statusSubmittedFood": "runtime.zhu_yuanzhang.temple.ui.status.submitted_food",
+      "statusPlayerGold": "runtime.zhu_yuanzhang.temple.ui.status.player_gold",
+      "statusPlayerGoldValueTemplate": "runtime.zhu_yuanzhang.temple.ui.status.player_gold.value",
+      "leaveActionLabel": "runtime.zhu_yuanzhang.temple.ui.leave_action.label"
+    },
+    "templeAlertTextIds": {
+      "lowStaminaTitle": "runtime.zhu_yuanzhang.temple.alert.low_stamina.title",
+      "lowStaminaBody": "runtime.zhu_yuanzhang.temple.alert.low_stamina.001",
+      "lowStaminaFollowup": "runtime.zhu_yuanzhang.temple.alert.low_stamina.002",
+      "insufficientTimeTitle": "runtime.zhu_yuanzhang.temple.alert.insufficient_time.title",
+      "insufficientTimeReached": "runtime.zhu_yuanzhang.temple.alert.insufficient_time.reached.001",
+      "insufficientTimeRemaining": "runtime.zhu_yuanzhang.temple.alert.insufficient_time.remaining.001",
+      "insufficientTimeFollowup": "runtime.zhu_yuanzhang.temple.alert.insufficient_time.002",
+      "invalidRestDaysTitle": "runtime.zhu_yuanzhang.temple.alert.invalid_rest_days.title",
+      "invalidRestDaysBody": "runtime.zhu_yuanzhang.temple.alert.invalid_rest_days.001",
+      "insufficientRankTitle": "runtime.zhu_yuanzhang.temple.alert.insufficient_rank.title",
+      "insufficientRankLines": [
+        "runtime.zhu_yuanzhang.temple.alert.insufficient_rank.001",
+        "runtime.zhu_yuanzhang.temple.alert.insufficient_rank.002"
+      ],
+      "noBestScoreTitle": "runtime.zhu_yuanzhang.temple.alert.no_best_score.title",
+      "noBestScoreBody": "runtime.zhu_yuanzhang.temple.alert.no_best_score.001"
+    },
+    "templeWorkResultTextIds": {
+      "lazyGrade": "runtime.zhu_yuanzhang.temple.work_result.lazy.grade",
+      "lazyLines": [
+        "runtime.zhu_yuanzhang.temple.work_result.lazy.001",
+        "runtime.zhu_yuanzhang.temple.work_result.lazy.002"
+      ],
+      "passGrade": "runtime.zhu_yuanzhang.temple.work_result.pass.grade",
+      "passLines": [
+        "runtime.zhu_yuanzhang.temple.work_result.pass.001",
+        "runtime.zhu_yuanzhang.temple.work_result.pass.002"
+      ],
+      "diligentGrade": "runtime.zhu_yuanzhang.temple.work_result.diligent.grade",
+      "diligentLines": [
+        "runtime.zhu_yuanzhang.temple.work_result.diligent.001",
+        "runtime.zhu_yuanzhang.temple.work_result.diligent.002"
+      ],
+      "unlockTitle": "runtime.zhu_yuanzhang.temple.work_result.unlock.title",
+      "normalTitle": "runtime.zhu_yuanzhang.temple.work_result.normal.title"
+    },
+    "templeReviewWorkPlanSeeds": {
+      "temple-help": {
+        "reviewCountdownDays": 30,
+        "dialogueTextIds": [
+          "runtime.zhu_yuanzhang.temple.review.assignment.indoor.001",
+          "runtime.zhu_yuanzhang.temple.review.assignment.indoor.002"
+        ],
+        "overlayTitleTextId": "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title",
+        "overlayBodyTextIds": [
+          "runtime.zhu_yuanzhang.temple.review.assignment.overlay.indoor.001",
+          "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001"
+        ]
+      },
+      "beg-alms-default": {
+        "reviewCountdownDays": 30,
+        "dialogueTextIds": [
+          "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.default.001",
+          "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.default.002"
+        ],
+        "overlayTitleTextId": "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title",
+        "overlayBodyTextIds": [
+          "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.default.001",
+          "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001"
+        ]
+      },
+      "beg-alms-third-week": {
+        "reviewCountdownDays": 30,
+        "dialogueTextIds": [
+          "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.third_week.001",
+          "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.third_week.002"
+        ],
+        "overlayTitleTextId": "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title",
+        "overlayBodyTextIds": [
+          "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.third_week.001",
+          "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001"
+        ]
+      },
+      "beg-alms-fourth-week": {
+        "reviewCountdownDays": 30,
+        "dialogueTextIds": [
+          "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.fourth_week.001",
+          "runtime.zhu_yuanzhang.temple.review.assignment.beg_alms.fourth_week.002"
+        ],
+        "overlayTitleTextId": "runtime.zhu_yuanzhang.temple.review.assignment.overlay.title",
+        "overlayBodyTextIds": [
+          "runtime.zhu_yuanzhang.temple.review.assignment.overlay.beg_alms.fourth_week.001",
+          "runtime.zhu_yuanzhang.temple.review.assignment.overlay.shared.001"
+        ]
+      }
+    },
+    "templeReviewTaskAssignmentSeed": {
+      "reviewCountdownDays": 30,
+      "overlayTitleTextId": "runtime.zhu_yuanzhang.temple.review.task_assignment.overlay.title",
+      "overlaySharedTextId": "runtime.zhu_yuanzhang.temple.review.task_assignment.overlay.shared.001",
+      "orderSummaryTextId": "runtime.zhu_yuanzhang.temple.review.task_assignment.order.001"
+    }
+  },
   "market-house": {
     "marketHouseBossOpenTextIds": [
       "runtime.zhu_yuanzhang.market_house.boss_open.001",

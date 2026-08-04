@@ -246,6 +246,68 @@ test("imported zhuyuanzhang public template keeps canonical review dialogues and
   }
 });
 
+test("imported zhuyuanzhang public template keeps canonical settlement family", async () => {
+  const templateRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+  const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
+  const project = await loadScriptEditorProjectFromScenarioPackFiles(files);
+  const templateSettlements = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "modules",
+        "script-editor",
+        "builtin-templates",
+        "zhuyuanzhang",
+        "settlements.json"
+      ),
+      "utf8"
+    )
+  );
+
+  assert.equal(project.settlements.length, templateSettlements.length);
+});
+
+test("imported zhuyuanzhang public template keeps temple-copy-scripture playable integrations", async () => {
+  const templateRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+  const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
+  const project = await loadScriptEditorProjectFromScenarioPackFiles(files);
+
+  assert.equal(
+    project.minigames.some((record) => record.playableId === "temple-copy-scripture"),
+    true
+  );
+  assert.equal(
+    project.minigames.some((record) => record.playableId === "grain-accounting"),
+    true
+  );
+  assert.equal(
+    project.minigames.some((record) => record.playableId === "medicine-compounding"),
+    true
+  );
+  const cityDefaultMenu = project.menuResources.find(
+    (record) => record.id === "menu-resource.city.default"
+  );
+  assert.equal(
+    cityDefaultMenu?.entries.some((entry) => entry.id === "menu-entry.city.default.grain-accounting"),
+    true
+  );
+  assert.equal(
+    cityDefaultMenu?.entries.some((entry) => entry.id === "menu-entry.city.default.medicine-compounding"),
+    true
+  );
+});
+
 test("zhuyuanzhang runtime and editor template startup profiles stay aligned", () => {
   const runtimeProfile = JSON.parse(
     fs.readFileSync(

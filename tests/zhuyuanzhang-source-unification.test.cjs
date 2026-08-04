@@ -248,11 +248,7 @@ test("zhuyuanzhang source contract records publication-only manifest keys and bu
   );
 
   assert.deepEqual(contract.PUBLICATION_ONLY_MANIFEST_FILE_KEYS, []);
-  assert.deepEqual(contract.BUILTIN_TEMPLATE_ONLY_MANIFEST_FILE_KEYS, [
-    "playables",
-    "playableIntegrations",
-    "settlements",
-  ]);
+  assert.deepEqual(contract.BUILTIN_TEMPLATE_ONLY_MANIFEST_FILE_KEYS, []);
   assert.deepEqual(contract.PLAYABLE_FAMILY_FILE_NAMES, [
     "playables.json",
     "playable-integrations.json",
@@ -266,15 +262,30 @@ test("zhuyuanzhang source contract records publication-only manifest keys and bu
   });
   assert.deepEqual(
     contract.PUBLICATION_SYNC_FILE_RULES.map((rule) => rule.fileName),
-    ["pack.json", "playable-shells.json", "events.json", "dialogues.json"]
+    [
+      "pack.json",
+      "playables.json",
+      "playable-integrations.json",
+      "playable-shells.json",
+      "settlements.json",
+      "events.json",
+      "dialogues.json",
+      "event-bindings.json",
+      "menu-resources.json",
+      "house-module-defaults.json",
+    ]
   );
-  assert.deepEqual(contract.PUBLICATION_REVIEW_EVENT_IDS, [
-    "event.building.template.house.temple.review",
-    "event.building.template.house.leader_residence.review",
+  assert.deepEqual(contract.PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS, []);
+  assert.deepEqual(contract.PUBLICATION_OMITTED_PLAYABLE_INTEGRATION_IDS, []);
+  assert.deepEqual(contract.PUBLICATION_ONLY_EVENT_IDS, []);
+  assert.deepEqual(contract.PUBLICATION_ONLY_DIALOGUE_IDS, []);
+  assert.deepEqual(contract.PUBLICATION_OMITTED_EVENT_IDS, [
+    "event.playable.grain_accounting.failure_reward",
+    "event.playable.medicine_compounding.failure_reward",
   ]);
-  assert.deepEqual(contract.PUBLICATION_REVIEW_DIALOGUE_IDS, [
-    "scene.building.template.house.temple.review",
-    "scene.building.template.house.leader_residence.review",
+  assert.deepEqual(contract.BUILTIN_ONLY_EVENT_IDS, [
+    "event.playable.grain_accounting.failure_reward",
+    "event.playable.medicine_compounding.failure_reward",
   ]);
 });
 
@@ -363,13 +374,19 @@ test("zhuyuanzhang public manifest now publishes playable-shells without legacy 
     false
   );
   assert.equal(Object.hasOwn(publicManifest.files, "flowPlayables"), false);
+  assert.equal(publicManifest.files.playables, "playables.json");
+  assert.equal(
+    publicManifest.files.playableIntegrations,
+    "playable-integrations.json"
+  );
   assert.equal(
     publicManifest.files.playableShells,
     "playable-shells.json"
   );
+  assert.equal(publicManifest.files.settlements, "settlements.json");
 });
 
-test("zhuyuanzhang manifest projection keeps canonical public playable-shells while omitting builtin-only playable keys", async () => {
+test("zhuyuanzhang manifest projection keeps canonical public playable and settlement keys", async () => {
   const syncTool = await importModule(
     "tools/sync-zhuyuanzhang-startup-templates.mjs"
   );
@@ -399,6 +416,7 @@ test("zhuyuanzhang manifest projection keeps canonical public playable-shells wh
       description: "Old public manifest",
       files: {
         activities: "activities.json",
+        playableIntegrations: "old-playable-integrations.json",
         playableShells: "playable-shells.json",
         textEntries: "text-entries.json",
       },
@@ -413,10 +431,103 @@ test("zhuyuanzhang manifest projection keeps canonical public playable-shells wh
     description: "Builtin template manifest",
     files: {
       activities: "activities.json",
+      playables: "playables.json",
+      playableIntegrations: "playable-integrations.json",
       playableShells: "playable-shells.json",
+      settlements: "settlements.json",
       textEntries: "text-entries.json",
     },
   });
+});
+
+test("zhuyuanzhang public playable and settlement files are fully derived from builtin template", () => {
+  const templateRoot = path.join(
+    process.cwd(),
+    "src",
+    "modules",
+    "script-editor",
+    "builtin-templates",
+    "zhuyuanzhang"
+  );
+  const publicRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+
+  for (const fileName of [
+    "playables.json",
+    "settlements.json",
+  ]) {
+    assert.deepEqual(
+      JSON.parse(fs.readFileSync(path.join(publicRoot, fileName), "utf8")),
+      JSON.parse(fs.readFileSync(path.join(templateRoot, fileName), "utf8"))
+    );
+  }
+});
+
+test("zhuyuanzhang public playable integrations are fully derived from builtin template", async () => {
+  const syncTool = await importModule(
+    "tools/sync-zhuyuanzhang-startup-templates.mjs"
+  );
+
+  assert.equal(typeof syncTool.projectPublicPlayableIntegrationsForSync, "function");
+
+  assert.deepEqual(
+    syncTool.projectPublicPlayableIntegrationsForSync([
+      {
+        integrationId:
+          "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+        playableId: "temple-copy-scripture",
+      },
+      {
+        integrationId:
+          "playable.grain-accounting.instance.template.grain-accounting",
+        playableId: "grain-accounting",
+      },
+    ]),
+    [
+      {
+        integrationId:
+          "playable.temple-copy-scripture.instance.template.temple-copy-scripture",
+        playableId: "temple-copy-scripture",
+      },
+      {
+        integrationId:
+          "playable.grain-accounting.instance.template.grain-accounting",
+        playableId: "grain-accounting",
+      },
+    ]
+  );
+
+  const templateRoot = path.join(
+    process.cwd(),
+    "src",
+    "modules",
+    "script-editor",
+    "builtin-templates",
+    "zhuyuanzhang"
+  );
+  const publicRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+  const builtinPlayableIntegrations = JSON.parse(
+    fs.readFileSync(path.join(templateRoot, "playable-integrations.json"), "utf8")
+  );
+  const publicPlayableIntegrations = JSON.parse(
+    fs.readFileSync(path.join(publicRoot, "playable-integrations.json"), "utf8")
+  );
+
+  assert.deepEqual(
+    publicPlayableIntegrations,
+    syncTool.projectPublicPlayableIntegrationsForSync(
+      builtinPlayableIntegrations
+    )
+  );
 });
 
 test("zhuyuanzhang public playable-shells file is fully derived from builtin template playable-shells", async () => {
@@ -450,7 +561,10 @@ test("zhuyuanzhang public playable-shells file is fully derived from builtin tem
   assert.deepEqual(publicPlayableShells, builtinTemplatePlayableShells);
 });
 
-test("zhuyuanzhang public publication mirrors canonical review events and dialogues from builtin template", () => {
+test("zhuyuanzhang public publication is fully derived from builtin template authored files", async () => {
+  const contract = await importModule(
+    "tools/zhuyuanzhang-source-sync-contract.mjs"
+  );
   const builtinTemplateRoot = path.join(
     process.cwd(),
     "src",
@@ -477,32 +591,124 @@ test("zhuyuanzhang public publication mirrors canonical review events and dialog
   const publicDialogues = JSON.parse(
     fs.readFileSync(path.join(publicTemplateRoot, "dialogues.json"), "utf8")
   );
-  const builtinEventById = new Map(
-    builtinEvents.map((record) => [record.id, record])
+  const builtinEventBindings = JSON.parse(
+    fs.readFileSync(path.join(builtinTemplateRoot, "event-bindings.json"), "utf8")
   );
-  const publicEventById = new Map(publicEvents.map((record) => [record.id, record]));
-  const builtinDialogueById = new Map(
-    builtinDialogues.map((record) => [record.id, record])
+  const publicEventBindings = JSON.parse(
+    fs.readFileSync(path.join(publicTemplateRoot, "event-bindings.json"), "utf8")
   );
-  const publicDialogueById = new Map(
-    publicDialogues.map((record) => [record.id, record])
+  const builtinMenuResources = JSON.parse(
+    fs.readFileSync(path.join(builtinTemplateRoot, "menu-resources.json"), "utf8")
+  );
+  const publicMenuResources = JSON.parse(
+    fs.readFileSync(path.join(publicTemplateRoot, "menu-resources.json"), "utf8")
+  );
+  const builtinHouseModuleDefaults = JSON.parse(
+    fs.readFileSync(
+      path.join(builtinTemplateRoot, "house-module-defaults.json"),
+      "utf8"
+    )
+  );
+  const publicHouseModuleDefaults = JSON.parse(
+    fs.readFileSync(
+      path.join(publicTemplateRoot, "house-module-defaults.json"),
+      "utf8"
+    )
   );
 
-  for (const eventId of [
-    "event.building.template.house.temple.review",
-    "event.building.template.house.leader_residence.review",
-  ]) {
-    assert.deepEqual(publicEventById.get(eventId), builtinEventById.get(eventId));
-  }
+  assert.deepEqual(
+    publicEvents,
+    builtinEvents.filter(
+      (record) => !contract.PUBLICATION_OMITTED_EVENT_IDS.includes(record.id)
+    )
+  );
+  assert.deepEqual(publicDialogues, builtinDialogues);
+  assert.deepEqual(publicEventBindings, builtinEventBindings);
+  assert.deepEqual(
+    publicMenuResources,
+    builtinMenuResources.map((record) => {
+      if (record.id !== "menu-resource.city.default") {
+        return record;
+      }
+      return {
+        ...record,
+        entries: record.entries.filter(
+          (entry) =>
+            !contract.PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS.includes(
+              entry.id
+            )
+        ),
+      };
+    })
+  );
+  assert.deepEqual(publicHouseModuleDefaults, builtinHouseModuleDefaults);
+});
 
-  for (const dialogueId of [
-    "scene.building.template.house.temple.review",
-    "scene.building.template.house.leader_residence.review",
-  ]) {
-    assert.deepEqual(
-      publicDialogueById.get(dialogueId),
-      builtinDialogueById.get(dialogueId)
-    );
+test("zhuyuanzhang contract freezes current publication-only and builtin-only residual records", async () => {
+  const contract = await importModule(
+    "tools/zhuyuanzhang-source-sync-contract.mjs"
+  );
+  const runtimeRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const builtinTemplateRoot = path.join(
+    process.cwd(),
+    "src",
+    "modules",
+    "script-editor",
+    "builtin-templates",
+    "zhuyuanzhang"
+  );
+  const publicTemplateRoot = path.join(
+    process.cwd(),
+    "public",
+    "script-editor-templates",
+    "zhuyuanzhang"
+  );
+  const runtimeEvents = JSON.parse(
+    fs.readFileSync(path.join(runtimeRoot, "events.json"), "utf8")
+  );
+  const builtinEvents = JSON.parse(
+    fs.readFileSync(path.join(builtinTemplateRoot, "events.json"), "utf8")
+  );
+  const publicEvents = JSON.parse(
+    fs.readFileSync(path.join(publicTemplateRoot, "events.json"), "utf8")
+  );
+  const runtimeDialogues = JSON.parse(
+    fs.readFileSync(path.join(runtimeRoot, "dialogues.json"), "utf8")
+  );
+  const builtinDialogues = JSON.parse(
+    fs.readFileSync(path.join(builtinTemplateRoot, "dialogues.json"), "utf8")
+  );
+  const publicDialogues = JSON.parse(
+    fs.readFileSync(path.join(publicTemplateRoot, "dialogues.json"), "utf8")
+  );
+
+  const runtimeEventIds = new Set(runtimeEvents.map((record) => record.id));
+  const builtinEventIds = new Set(builtinEvents.map((record) => record.id));
+  const publicEventIds = new Set(publicEvents.map((record) => record.id));
+  const runtimeDialogueIds = new Set(runtimeDialogues.map((record) => record.id));
+  const builtinDialogueIds = new Set(builtinDialogues.map((record) => record.id));
+  const publicDialogueIds = new Set(publicDialogues.map((record) => record.id));
+
+  assert.deepEqual(contract.PUBLICATION_ONLY_EVENT_IDS, []);
+  assert.deepEqual(contract.PUBLICATION_ONLY_DIALOGUE_IDS, []);
+  assert.deepEqual(
+    [...publicEventIds].sort(),
+    [...builtinEventIds]
+      .filter((eventId) => !contract.PUBLICATION_OMITTED_EVENT_IDS.includes(eventId))
+      .sort()
+  );
+  assert.deepEqual([...publicDialogueIds].sort(), [...builtinDialogueIds].sort());
+
+  for (const eventId of contract.BUILTIN_ONLY_EVENT_IDS) {
+    assert.equal(builtinEventIds.has(eventId), true);
+    assert.equal(runtimeEventIds.has(eventId), false);
+    assert.equal(publicEventIds.has(eventId), false);
   }
 });
 
@@ -594,7 +800,6 @@ test("zhuyuanzhang runtime pack mirrors template-owned runtime building-support 
   for (const [manifestKey, fileName] of [
     ["buildingArrangements", "building-arrangements.json"],
     ["dialogues", "dialogues.json"],
-    ["eventBindings", "event-bindings.json"],
     ["houseModuleDefaults", "house-module-defaults.json"],
     ["locationAccess", "location-access.json"],
     ["menuInstances", "menu-instances.json"],
@@ -606,6 +811,102 @@ test("zhuyuanzhang runtime pack mirrors template-owned runtime building-support 
       JSON.parse(fs.readFileSync(path.join(runtimeRoot, fileName), "utf8")),
       JSON.parse(fs.readFileSync(path.join(templateRoot, fileName), "utf8"))
     );
+  }
+
+  assert.equal(runtimeManifest.files.eventBindings, "event-bindings.json");
+});
+
+test("zhuyuanzhang runtime event-binding projection keeps only bindings backed by mirrored runtime events", async () => {
+  const syncTool = await importModule(
+    "tools/sync-zhuyuanzhang-startup-templates.mjs"
+  );
+
+  assert.equal(typeof syncTool.projectRuntimeEventBindingsForSync, "function");
+  assert.deepEqual(
+    syncTool.projectRuntimeEventBindingsForSync(
+      [
+        { id: "binding.keep", eventId: "event.runtime.keep" },
+        { id: "binding.drop", eventId: "event.template.only" },
+      ],
+      [
+        { id: "event.runtime.keep" },
+      ]
+    ),
+    [{ id: "binding.keep", eventId: "event.runtime.keep" }]
+  );
+});
+
+test("zhuyuanzhang public menu-resource projection is fully derived from builtin template", async () => {
+  const syncTool = await importModule(
+    "tools/sync-zhuyuanzhang-startup-templates.mjs"
+  );
+
+  assert.equal(typeof syncTool.projectPublicMenuResourcesForSync, "function");
+  assert.deepEqual(
+    syncTool.projectPublicMenuResourcesForSync([
+      {
+        id: "menu-resource.city.default",
+        entries: [
+          { id: "menu-entry.city.default.overview" },
+          { id: "menu-entry.city.default.grain-accounting" },
+          { id: "menu-entry.city.default.medicine-compounding" },
+        ],
+      },
+      {
+        id: "menu-resource.house.template.keep.primary",
+        entries: [{ id: "review" }],
+      },
+    ]),
+    [
+      {
+        id: "menu-resource.city.default",
+        entries: [
+          { id: "menu-entry.city.default.overview" },
+          { id: "menu-entry.city.default.grain-accounting" },
+          { id: "menu-entry.city.default.medicine-compounding" },
+        ],
+      },
+      {
+        id: "menu-resource.house.template.keep.primary",
+        entries: [{ id: "review" }],
+      },
+    ]
+  );
+});
+
+test("zhuyuanzhang runtime pack filters template event-bindings down to mirrored runtime events", async () => {
+  const runtimeRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const templateRoot = path.join(
+    process.cwd(),
+    "src",
+    "modules",
+    "script-editor",
+    "builtin-templates",
+    "zhuyuanzhang"
+  );
+  const runtimeEvents = JSON.parse(
+    fs.readFileSync(path.join(runtimeRoot, "events.json"), "utf8")
+  );
+  const runtimeEventBindings = JSON.parse(
+    fs.readFileSync(path.join(runtimeRoot, "event-bindings.json"), "utf8")
+  );
+  const templateEventBindings = JSON.parse(
+    fs.readFileSync(path.join(templateRoot, "event-bindings.json"), "utf8")
+  );
+  const runtimeEventIds = new Set(runtimeEvents.map((record) => record.id));
+  const templateBindingKeys = new Set(
+    templateEventBindings.map((record) => JSON.stringify(record))
+  );
+
+  for (const binding of runtimeEventBindings) {
+    assert.equal(runtimeEventIds.has(binding.eventId), true);
+    assert.equal(templateBindingKeys.has(JSON.stringify(binding)), true);
   }
 });
 
@@ -689,7 +990,7 @@ test("zhuyuanzhang runtime pack mirrors the safe temple event subset without ena
   );
 });
 
-test("zhuyuanzhang playable-family files now stay canonical in template pack, mirrored into runtime pack, and published to public only through approved shells", () => {
+test("zhuyuanzhang playable-family files now stay canonical in template pack, mirrored into runtime pack, and published to public through the safe subset", () => {
   const runtimeRoot = path.join(
     process.cwd(),
     "src",
@@ -727,7 +1028,7 @@ test("zhuyuanzhang playable-family files now stay canonical in template pack, mi
     );
     assert.equal(
       fs.existsSync(path.join(publicTemplateRoot, fileName)),
-      fileName === "playable-shells.json"
+      true
     );
   }
 

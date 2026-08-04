@@ -22,6 +22,10 @@ const builtinPlayableDefinitions: PlayableDefinition[] = [
     commandPrefix: "playable.medicine-compounding.",
   },
   {
+    id: "temple-copy-scripture",
+    commandPrefix: "playable.temple-copy-scripture.",
+  },
+  {
     id: "story-battle",
     commandPrefix: "interactive.story-battle.",
   },

@@ -3,6 +3,7 @@ const builtinPlayableShellIds = new Set([
   "city-begging",
   "grain-accounting",
   "medicine-compounding",
+  "temple-copy-scripture",
 ]);
 
 export const builtinPlayableShellRegistry = {

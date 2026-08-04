@@ -78,11 +78,7 @@ export const DEFERRED_SYNC_FILE_RULES = Object.freeze([
   }),
 ]);
 
-export const BUILTIN_TEMPLATE_ONLY_MANIFEST_FILE_KEYS = Object.freeze([
-  "playables",
-  "playableIntegrations",
-  "settlements",
-]);
+export const BUILTIN_TEMPLATE_ONLY_MANIFEST_FILE_KEYS = Object.freeze([]);
 
 export const PLAYABLE_FAMILY_FILE_NAMES = Object.freeze([
   "playables.json",
@@ -117,15 +113,20 @@ export const PLAYABLE_FAMILY_OWNERSHIP = Object.freeze({
   publicPublicationDerivedFrom: "playable-shells.json",
 });
 
-export const PUBLICATION_REVIEW_EVENT_IDS = Object.freeze([
-  "event.building.template.house.temple.review",
-  "event.building.template.house.leader_residence.review",
+export const PUBLICATION_ONLY_EVENT_IDS = Object.freeze([]);
+
+export const PUBLICATION_ONLY_DIALOGUE_IDS = Object.freeze([]);
+
+export const BUILTIN_ONLY_EVENT_IDS = Object.freeze([
+  "event.playable.grain_accounting.failure_reward",
+  "event.playable.medicine_compounding.failure_reward",
 ]);
 
-export const PUBLICATION_REVIEW_DIALOGUE_IDS = Object.freeze([
-  "scene.building.template.house.temple.review",
-  "scene.building.template.house.leader_residence.review",
-]);
+export const PUBLICATION_OMITTED_EVENT_IDS = BUILTIN_ONLY_EVENT_IDS;
+
+export const PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS = Object.freeze([]);
+
+export const PUBLICATION_OMITTED_PLAYABLE_INTEGRATION_IDS = Object.freeze([]);
 
 export const LEGACY_PUBLICATION_FILE_RULES = Object.freeze([]);
 
@@ -140,22 +141,58 @@ export const PUBLICATION_SYNC_FILE_RULES = Object.freeze([
     reason: "public 发布层清单应由 builtin 模板清单投影生成，并保留当前遗留发布专属键。",
   }),
   Object.freeze({
+    fileName: "playables.json",
+    mode: "public-derived-playables-projection",
+    reason:
+      "public 发布层中的 playables.json 应直接派生自 builtin template，避免默认模板导入在玩法定义上再缺一层。",
+  }),
+  Object.freeze({
+    fileName: "playable-integrations.json",
+    mode: "public-editor-safe-playable-integrations-projection",
+    reason:
+      "public 发布层中的 playable-integrations.json 应直接由 builtin template 派生，保持默认模板导入导出与运行预览使用同一份 integration family。",
+  }),
+  Object.freeze({
     fileName: "playable-shells.json",
     mode: "public-playable-shells-projection",
     reason:
       "public 发布层应同步暴露 canonical 的 playable-shells.json，默认模板导入不再依赖旧的 flow-playables 兼容文件。",
   }),
   Object.freeze({
-    fileName: "events.json",
-    mode: "public-review-event-projection",
+    fileName: "settlements.json",
+    mode: "public-derived-settlements-projection",
     reason:
-      "public 发布层中的 review 事件必须投影自 builtin template，避免旧 launchFlow authored 内容继续分叉。",
+      "public 发布层中的 settlements.json 应直接派生自 builtin template shared runtime support，避免默认模板导入再缺 settlement authored family。",
+  }),
+  Object.freeze({
+    fileName: "events.json",
+    mode: "public-derived-event-projection",
+    reason:
+      "public 发布层中的 events.json 应完全派生自 builtin template authored events，并只排除 builtin-only runtime settlement 事件。",
   }),
   Object.freeze({
     fileName: "dialogues.json",
-    mode: "public-review-dialogue-projection",
+    mode: "public-derived-dialogue-projection",
     reason:
-      "public 发布层中的 review 对话必须投影自 builtin template，保证默认模板导入拿到 canonical authored dialogues。",
+      "public 发布层中的 dialogues.json 应完全派生自 builtin template，避免第三套手维护 authored dialogue owner。",
+  }),
+  Object.freeze({
+    fileName: "event-bindings.json",
+    mode: "public-derived-event-binding-projection",
+    reason:
+      "public 发布层中的 event-bindings.json 应完全派生自 builtin template，避免 bindings 继续滞留在 public-only authored surface。",
+  }),
+  Object.freeze({
+    fileName: "menu-resources.json",
+    mode: "public-derived-menu-resource-projection",
+    reason:
+      "public 发布层中的 menu-resources.json 应以 builtin template 为 maintained owner，并只显式过滤当前 public 不支持的 minigame 菜单入口。",
+  }),
+  Object.freeze({
+    fileName: "house-module-defaults.json",
+    mode: "public-derived-house-module-defaults-projection",
+    reason:
+      "public 发布层中的 house-module-defaults.json 应直接派生自 builtin template，避免 house support defaults 继续滞留在历史拷贝里。",
   }),
 ]);
 
