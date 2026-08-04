@@ -153,8 +153,11 @@ test("card draw animator waits for trigger before resolving and settles on the r
     host,
     timings: {
       shakeMs: 6,
+      pauseAfterShakeMs: 0,
       liftMs: 6,
+      pauseAfterLiftMs: 0,
       flipMs: 6,
+      pauseAfterFlipMs: 0,
       settleMs: 6,
     },
     resultFormatter(value) {
@@ -206,8 +209,11 @@ test("card draw animator reacts to stack button click and uses random fallback i
     },
     timings: {
       shakeMs: 5,
+      pauseAfterShakeMs: 0,
       liftMs: 5,
+      pauseAfterLiftMs: 0,
       flipMs: 5,
+      pauseAfterFlipMs: 0,
       settleMs: 5,
     },
   });
@@ -230,8 +236,11 @@ test("card draw animator rejects overlapping play requests and rejects pending p
     host,
     timings: {
       shakeMs: 5,
+      pauseAfterShakeMs: 0,
       liftMs: 5,
+      pauseAfterLiftMs: 0,
       flipMs: 5,
+      pauseAfterFlipMs: 0,
       settleMs: 5,
     },
   });
@@ -266,8 +275,11 @@ test("card draw animator emits semantic audio events for shuffle pull flip and r
     host,
     timings: {
       shakeMs: 5,
+      pauseAfterShakeMs: 0,
       liftMs: 5,
+      pauseAfterLiftMs: 0,
       flipMs: 5,
+      pauseAfterFlipMs: 0,
       settleMs: 5,
     },
     soundPlayer: {
@@ -288,6 +300,55 @@ test("card draw animator emits semantic audio events for shuffle pull flip and r
 
   assert.equal(resolvedValue, 3);
   assert.deepEqual(playedEvents, ["shuffle", "pull", "flip", "return"]);
+});
+
+test("card draw animator pauses between shake lift flip and settle phases", async () => {
+  const { CardDrawAnimator } = await import("../src/ui/animations/card-draw-animation.ts");
+  const host = createFakeHost();
+  const animator = new CardDrawAnimator({
+    host,
+    timings: {
+      shakeMs: 10,
+      pauseAfterShakeMs: 60,
+      liftMs: 10,
+      pauseAfterLiftMs: 60,
+      flipMs: 10,
+      pauseAfterFlipMs: 60,
+      settleMs: 40,
+    },
+  });
+
+  const playPromise = animator.play({
+    resolveValue() {
+      return 5;
+    },
+  });
+  const { root } = getAnimatorNodes(host);
+
+  animator.trigger();
+  assert.equal(root.dataset.cardDrawPhase, "shake");
+
+  await wait(20);
+  assert.equal(root.dataset.cardDrawPhase, "shake");
+
+  await wait(60);
+  assert.equal(root.dataset.cardDrawPhase, "lift");
+
+  await wait(20);
+  assert.equal(root.dataset.cardDrawPhase, "lift");
+
+  await wait(60);
+  assert.equal(root.dataset.cardDrawPhase, "flip");
+
+  await wait(20);
+  assert.equal(root.dataset.cardDrawPhase, "flip");
+
+  await wait(40);
+  assert.equal(root.dataset.cardDrawPhase, "settle");
+
+  const resolvedValue = await playPromise;
+  assert.equal(resolvedValue, 5);
+  assert.equal(root.dataset.cardDrawPhase, "done");
 });
 
 test("stacked card layers stay opaque instead of fading by depth", () => {

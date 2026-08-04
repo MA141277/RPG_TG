@@ -4,8 +4,11 @@ export type CardDrawPhase = "idle" | "shake" | "lift" | "flip" | "settle" | "don
 
 export type CardDrawTimings = {
   shakeMs: number;
+  pauseAfterShakeMs: number;
   liftMs: number;
+  pauseAfterLiftMs: number;
   flipMs: number;
+  pauseAfterFlipMs: number;
   settleMs: number;
 };
 
@@ -44,8 +47,11 @@ type PendingPlay = {
 const DEFAULT_CARD_DRAW_VALUES = Object.freeze([1, 2, 3, 4, 5, 6]) as readonly number[];
 const DEFAULT_CARD_DRAW_TIMINGS: CardDrawTimings = Object.freeze({
   shakeMs: 340,
+  pauseAfterShakeMs: 500,
   liftMs: 280,
+  pauseAfterLiftMs: 500,
   flipMs: 520,
+  pauseAfterFlipMs: 500,
   settleMs: 420,
 });
 const DEFAULT_QUESTION_LABEL = "?";
@@ -86,8 +92,14 @@ function defaultCardDrawResultHintFormatter(value: number, label: string): strin
 function mergeCardDrawTimings(input: Partial<CardDrawTimings> | undefined): CardDrawTimings {
   return {
     shakeMs: input?.shakeMs ?? DEFAULT_CARD_DRAW_TIMINGS.shakeMs,
+    pauseAfterShakeMs:
+      input?.pauseAfterShakeMs ?? DEFAULT_CARD_DRAW_TIMINGS.pauseAfterShakeMs,
     liftMs: input?.liftMs ?? DEFAULT_CARD_DRAW_TIMINGS.liftMs,
+    pauseAfterLiftMs:
+      input?.pauseAfterLiftMs ?? DEFAULT_CARD_DRAW_TIMINGS.pauseAfterLiftMs,
     flipMs: input?.flipMs ?? DEFAULT_CARD_DRAW_TIMINGS.flipMs,
+    pauseAfterFlipMs:
+      input?.pauseAfterFlipMs ?? DEFAULT_CARD_DRAW_TIMINGS.pauseAfterFlipMs,
     settleMs: input?.settleMs ?? DEFAULT_CARD_DRAW_TIMINGS.settleMs,
   };
 }
@@ -278,13 +290,13 @@ export class CardDrawAnimator {
     this.applyPhase("shake");
     this.playSound("shuffle");
 
-    this.scheduleStep(token, this.timings.shakeMs, () => {
+    this.scheduleStep(token, this.timings.shakeMs + this.timings.pauseAfterShakeMs, () => {
       this.applyPhase("lift");
       this.playSound("pull");
-      this.scheduleStep(token, this.timings.liftMs, () => {
+      this.scheduleStep(token, this.timings.liftMs + this.timings.pauseAfterLiftMs, () => {
         this.applyPhase("flip");
         this.playSound("flip");
-        this.scheduleStep(token, this.timings.flipMs, () => {
+        this.scheduleStep(token, this.timings.flipMs + this.timings.pauseAfterFlipMs, () => {
           this.applyPhase("settle");
           this.playSound("return");
           this.scheduleStep(token, this.timings.settleMs, () => {
