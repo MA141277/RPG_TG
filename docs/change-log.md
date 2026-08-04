@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-04 Temple Assign-Duty Settlement Boundary Audit Slice
+
+### Changed
+- `src/application/house-modules/temple-house/temple-house-house-module.ts` 新增 `isTempleHostedReviewSettlementAction(...)`，把 hosted temple review 在 `assign-duty` 阶段的 `temple-review-assign-indoor` / `temple-review-assign-beg-alms` 两个最终选择，显式归到同一条 settlement seam。
+- `resolveTempleHostedReviewWorkPlanChoice(...)` 现在先经过这一个 helper 做 hosted settlement 动作识别，再把选择映射回现有宿主 `submitReviewWorkPlan(...)` 结算路径。
+
+### Added
+- `tests/robustness.test.cjs` 新增结构回归，锁定 temple review 的 `assign-duty` 选择在 hosted path 下继续只走 `matchHostedMeetingSettlementHandoff(...)`，而显式 work-plan 动作分支只剩 `handleLegacyTempleReviewFallback(...)` 持有本地 `select-review-work:*` fallback。
+
+### Impact
+- 这一步没有改变 temple review 的可见行为，也没有触碰 `assigned` 宿主 settlement seam；它只是把另一条剩余边界正式收口成“hosted 走统一 settlement seam、显式 owner 只剩 fallback”的可审计状态。
+- temple review 后续的窄切片重点进一步收窄到 no-meeting fallback 的长期保留范围，而不是再补新的 hosted assign-duty owner 分支。
+
 ## 2026-08-04 Temple Policy Close Boundary Audit Slice
 
 ### Changed

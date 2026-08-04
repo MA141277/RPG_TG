@@ -1737,18 +1737,25 @@ function parseReviewWorkActionId(actionId: string): "temple-help" | "beg-alms" |
   return workPlan === "temple-help" || workPlan === "beg-alms" ? workPlan : null;
 }
 
+function isTempleHostedReviewSettlementAction(actionId: string): boolean {
+  return (
+    actionId === "temple-review-assign-indoor" ||
+    actionId === "temple-review-assign-beg-alms"
+  );
+}
+
 function resolveTempleHostedReviewWorkPlanChoice(
   actionId: string
 ): "temple-help" | "beg-alms" | null {
+  if (!isTempleHostedReviewSettlementAction(actionId)) {
+    return null;
+  }
+
   if (actionId === "temple-review-assign-indoor") {
     return "temple-help";
   }
 
-  if (actionId === "temple-review-assign-beg-alms") {
-    return "beg-alms";
-  }
-
-  return null;
+  return "beg-alms";
 }
 
 function isBeggingUnlocked(gameState: GameState): boolean {

@@ -11127,6 +11127,72 @@ test("temple review policy close remains fallback-only while hosted path uses on
   assert.doesNotMatch(handleActionBlock, /const hostedPolicyStageHandoff =/);
 });
 
+test("temple review assign-duty choice remains fallback-only while hosted path uses one settlement seam", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const hostedSettlementHelperBlock =
+    functionBlocksByName.get("isTempleHostedReviewSettlementAction") ?? "";
+  const hostedPayloadResolverBlock =
+    functionBlocksByName.get("resolveTempleHostedReviewWorkPlanChoice") ?? "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+  const handleActionBlock = functionBlocksByName.get("handleAction") ?? "";
+
+  assert.match(
+    hostedSettlementHelperBlock,
+    /function isTempleHostedReviewSettlementAction\(actionId: string\)/
+  );
+  assert.match(hostedSettlementHelperBlock, /temple-review-assign-indoor/);
+  assert.match(hostedSettlementHelperBlock, /temple-review-assign-beg-alms/);
+  assert.match(handleActionBlock, /matchHostedMeetingSettlementHandoff\(/);
+  assert.match(
+    handleActionBlock,
+    /resolvePayload: resolveTempleHostedReviewWorkPlanChoice/
+  );
+  assert.match(
+    hostedPayloadResolverBlock,
+    /if \(!isTempleHostedReviewSettlementAction\(actionId\)\)/
+  );
+  assert.match(legacyBlock, /const selectedReviewWorkPlan = parseReviewWorkActionId\(actionId\)/);
+  assert.doesNotMatch(
+    handleActionBlock,
+    /if \(actionId === "temple-review-assign-indoor"\)/
+  );
+  assert.doesNotMatch(
+    handleActionBlock,
+    /if \(actionId === "temple-review-assign-beg-alms"\)/
+  );
+});
+
 test("temple and keep house content files no longer author pack task definitions", () => {
   const templeContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),
