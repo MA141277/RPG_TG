@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-04 Temple Advance Dialogue Fallback Boundary Audit Slice
+
+### Added
+- `tests/robustness.test.cjs` 新增结构回归，锁定 temple review 的 `advance-temple-dialogue` 仍只属于 `handleLegacyTempleReviewFallback(...)` 的 legacy / no-meeting fallback owner。
+
+### Changed
+- `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md` 同步记录这次 boundary audit：hosted path 继续只通过 `resolveTempleHostedMeetingRequest(...)` / `isTempleHostedMeetingAdvanceAction(...)` 识别 shared meeting advance seam，而不会单独接管 `advance-temple-dialogue`。
+
+### Impact
+- 这一步没有改动 temple review 的运行时代码、UI、剧情顺序或 `assigned` settlement seam；它只是把另一条剩余显式 legacy 动作边界正式审计成“fallback-only owner，hosted path 不新增 seam”。
+- temple review 后续的窄切片可以继续围绕 no-meeting fallback only 的长期保留范围，而不是重新引入新的 hosted `advance-temple-dialogue` wiring。
+
 ## 2026-08-04 Temple Assign-Duty Settlement Boundary Audit Slice
 
 ### Changed
