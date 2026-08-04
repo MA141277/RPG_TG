@@ -18647,17 +18647,19 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
   );
 });
 
-test("child 27 main.ts startup builders no longer directly start story events", () => {
-  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
-  const scenarioPackBlock = source.match(
-    /function createScenarioPackAppState\([\s\S]*?return nextAppState;\r?\n}\r?\n/
-  )?.[0] ?? "";
-  const haozhouBlock = source.match(
-    /function createHaozhouReturnEncounterAppState\([\s\S]*?return nextAppState;\r?\n}\r?\n/
-  )?.[0] ?? "";
+test("child 27 startup app-state factory builders no longer directly start story events", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "startup-app-state-factory.ts"
+    ),
+    "utf8"
+  );
 
-  assert.doesNotMatch(scenarioPackBlock, /startStoryEventById\(/);
-  assert.doesNotMatch(haozhouBlock, /startStoryEventById\(/);
+  assert.doesNotMatch(source, /startStoryEventById\(/);
 });
 
 test("child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup", async () => {
@@ -19053,13 +19055,118 @@ test("child 28 startup apply consumes session content context before app state b
   );
 });
 
+test("startup bootstrap owner is extracted from main.ts into a dedicated startup module", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const bootstrapOwnerPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "startup-app-state-factory.ts"
+  );
+
+  assert.equal(fs.existsSync(bootstrapOwnerPath), true);
+  assert.match(mainSource, /createStartupAppStateFactory/);
+  assert.doesNotMatch(
+    mainSource,
+    /function bootstrapStartupStoryAppState\(/
+  );
+  assert.doesNotMatch(mainSource, /function createPrototypeAppState\(/);
+  assert.doesNotMatch(mainSource, /function createScenarioPackAppState\(/);
+  assert.doesNotMatch(
+    mainSource,
+    /function createHaozhouReturnEncounterAppState\(/
+  );
+});
+
+test("startup resolved session owner is extracted from the coordinator into a dedicated startup module", () => {
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "startup-session-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const resolutionOwnerPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "startup-session-resolution.ts"
+  );
+
+  assert.equal(fs.existsSync(resolutionOwnerPath), true);
+  assert.match(coordinatorSource, /from "\.\/startup-session-resolution"/);
+  assert.doesNotMatch(
+    coordinatorSource,
+    /function createScenarioPackStartupSessionResult\(/
+  );
+  assert.doesNotMatch(
+    coordinatorSource,
+    /function createStartupSessionResult\(/
+  );
+  assert.doesNotMatch(
+    coordinatorSource,
+    /function resolveStartupScenarioPack\(/
+  );
+  assert.doesNotMatch(
+    coordinatorSource,
+    /function readScenarioStartupStoryBootstrap\(/
+  );
+});
+
+test("startup loading launcher owner is extracted from main.ts into a dedicated startup module", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const launcherOwnerPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "startup-loading-launcher.ts"
+  );
+
+  assert.equal(fs.existsSync(launcherOwnerPath), true);
+  assert.match(mainSource, /createStartupLoadingLauncher/);
+  assert.doesNotMatch(mainSource, /function startContinueGameWithLoading\(/);
+  assert.doesNotMatch(mainSource, /function startRestoredGameWithLoading\(/);
+  assert.doesNotMatch(mainSource, /function startMainGameWithLoading\(/);
+  assert.doesNotMatch(
+    mainSource,
+    /function runScenarioPackStartupRequestWithLoading\(/
+  );
+  assert.doesNotMatch(mainSource, /function startScenarioPackWithLoading\(/);
+  assert.doesNotMatch(
+    mainSource,
+    /function startScenarioPackFilesWithLoading\(/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function startLoadedScenarioPackWithLoading\(/
+  );
+});
+
 test("scenario-pack startup defaults are resolved through scenario-profile owner instead of inline main.ts literals", () => {
   const scenarioProfileSource = fs.readFileSync(
     path.join(process.cwd(), "src", "domain", "scenario-profile.ts"),
     "utf8"
   );
-  const mainSource = fs.readFileSync(
-    path.join(process.cwd(), "src", "main.ts"),
+  const startupFactorySource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "startup-app-state-factory.ts"
+    ),
     "utf8"
   );
 
@@ -19067,18 +19174,18 @@ test("scenario-pack startup defaults are resolved through scenario-profile owner
     scenarioProfileSource,
     /export function resolveScenarioProfileStartupDefaults\(/
   );
-  assert.match(mainSource, /resolveScenarioProfileStartupDefaults\(/);
+  assert.match(startupFactorySource, /resolveScenarioProfileStartupDefaults\(/);
   assert.doesNotMatch(
-    mainSource,
+    startupFactorySource,
     /reviewDateText:\s*profile\.initialUi\?\.reviewDateText\s*\?\?\s*"JSON 开局"/
   );
   assert.doesNotMatch(
-    mainSource,
+    startupFactorySource,
     /const calendar = profile\.initialCalendar \?\? \{\s*year:\s*1,\s*month:\s*1,\s*day:\s*1,\s*\}/
   );
 });
 
-test("prototype startup defaults are resolved through startup helper instead of inline main.ts stage literals", () => {
+test("prototype startup defaults are resolved through startup helper instead of inline startup-factory stage literals", () => {
   const helperSource = fs.readFileSync(
     path.join(
       process.cwd(),
@@ -19089,16 +19196,22 @@ test("prototype startup defaults are resolved through startup helper instead of 
     ),
     "utf8"
   );
-  const mainSource = fs.readFileSync(
-    path.join(process.cwd(), "src", "main.ts"),
+  const startupFactorySource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "startup-app-state-factory.ts"
+    ),
     "utf8"
   );
-  const prototypeBlock = mainSource.match(
+  const prototypeBlock = startupFactorySource.match(
     /function createPrototypeAppState\(playerCharacterId: string\): AppState \{[\s\S]*?return revealCampaignMapAroundAppCoordinate\([\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.match(helperSource, /export function resolvePrototypeStartupSeed\(/);
-  assert.match(mainSource, /resolvePrototypeStartupSeed\(/);
+  assert.match(startupFactorySource, /resolvePrototypeStartupSeed\(/);
   assert.doesNotMatch(
     prototypeBlock,
     /playerCharacterId === defaultPlayerCharacterId[\s\S]*huangjueTemple[\s\S]*guoZixingCamp/

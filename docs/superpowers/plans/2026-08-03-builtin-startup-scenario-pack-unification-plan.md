@@ -11,9 +11,9 @@
 ## Execution State
 
 - Status: `completed-but-open`
-- Last Updated: `2026-08-03`
-- Current Focus: `The approved scope for this child is complete: 开始游戏 and 剧本编辑器运行预览 now share the covered startup seam, and the remaining follow-up work belongs to source unification rather than startup-chain/owner cleanup.`
-- Next Step: `Use docs/superpowers/plans/2026-08-03-scenario-pack-source-unification-plan.md for the next branch-local phase: unify runtime source, builtin source, and template source ownership without changing UI, features, or pre-merge scenario content/order.`
+- Last Updated: `2026-08-04`
+- Current Focus: `启动 bootstrap owner、已解析启动上下文 owner、以及 loading/request launcher owner 都已经从 src/main.ts / startup-session-coordinator.ts 收口到 dedicated startup modules；当前 startup-chain 若继续深入，主要只剩是否还要单独处理 follow-up owner 的边界问题。`
+- Next Step: `Freeze the current startup behavior and switch to docs/superpowers/plans/2026-08-03-scenario-pack-source-unification-plan.md unless a remaining startup follow-up drift is explicitly identified and approved for another bounded slice.`
 - Verification: `pnpm run build:test; pnpm exec tsc -p tsconfig.json --noEmit; node --test tests/haozhou-return-battle-state.test.cjs tests/campaign-map-intro-prompts.test.cjs tests/city-begging-refusal-dialogues.test.cjs tests/navigation-time-follow-up.test.cjs tests/temple-review-assignment-defaults.test.cjs tests/keep-review-assignment-defaults.test.cjs tests/startup-session-coordinator.test.cjs tests/scenario-preview-sanitizer.test.cjs tests/script-editor-runtime-preview-compat.test.cjs; node --test --test-name-pattern "main.ts haozhou return entry no longer owns the sundeya battle review mission text id|main.ts map intro shell no longer owns the zhuyuanzhang chapter intro text id|main.ts city begging refusal shell no longer owns zhuyuanzhang shortage or stamina dialogue seeds|main.ts council dialogue shell no longer owns temple or keep default copy branches" tests/robustness.test.cjs; manual browser smoke for 开始游戏 and 模板运行预览.`
 - Notes: `Branch-local plan for the approved builtin startup convergence slice. It remains completed-but-open as a handoff record, and the next branch-local child is the source-unification follow-up plan rather than more startup-chain cleanup.`
 
@@ -79,6 +79,14 @@
   - Summary: `Final ownership audit completed: the startup-chain and owner cleanup phase is done within the approved scope, and follow-up work has been explicitly handed off to a new runtime/builtin/template source unification child plan.`
   - Verification: `Audit based on the verified regressions already recorded above; no new runtime behavior was introduced during this handoff-only update.`
   - Next: `Continue in docs/superpowers/plans/2026-08-03-scenario-pack-source-unification-plan.md and keep startup-chain behavior frozen while consolidating source ownership.`
+- 2026-08-04
+  - Summary: `Added startup-app-state-factory and startup-session-resolution as dedicated startup owners, so src/main.ts no longer owns startup app-state builders and startup-session-coordinator no longer inlines resolved scenario-pack session assembly.`
+  - Verification: `pnpm run build:test; node --test tests/startup-session-coordinator.test.cjs; node --test --test-name-pattern "child 27 startup app-state factory builders no longer directly start story events|startup bootstrap owner is extracted from main.ts into a dedicated startup module|startup resolved session owner is extracted from the coordinator into a dedicated startup module" tests/robustness.test.cjs`
+  - Next: `Continue one more bounded startup-shell slice only if duplicated loading/request launchers in src/main.ts are still active; otherwise freeze startup behavior here and move on to runtime/builtin/template source unification.`
+- 2026-08-04
+  - Summary: `Added startup-loading-launcher so continue / restore / builtin start / scenario-pack preview all reuse one injected loading/request launcher seam, and src/main.ts now keeps only startup wiring, alerts, and runtime hooks.`
+  - Verification: `pnpm run build:test; node --test tests/startup-session-coordinator.test.cjs; node --test --test-name-pattern "child 27 startup app-state factory builders no longer directly start story events|startup bootstrap owner is extracted from main.ts into a dedicated startup module|startup resolved session owner is extracted from the coordinator into a dedicated startup module|startup loading launcher owner is extracted from main.ts into a dedicated startup module" tests/robustness.test.cjs`
+  - Next: `Treat startup-chain owner cleanup as frozen for now and move to source ownership unification, unless a concrete startup follow-up owner drift is found in runtime behavior.`
 
 ---
 

@@ -13,6 +13,29 @@
 ### Impact
 - 之后凡是改 scenario pack、编辑器模板、事件导航、playable 生命周期或资源引用，都会先走同一套 AI-facing execution rule，而不是继续在共享 runtime 或 `main.ts` 里散落 scenario-specific 例外。
 
+## 2026-08-04 Startup Resolved Session Owner Extraction Slice
+
+### Changed
+- 新增 `src/application/startup/startup-app-state-factory.ts` 与 `src/application/startup/startup-session-resolution.ts` 两个启动 owner 模块：前者集中承接启动 app state 构造，后者集中承接已解析启动会话、scenario-pack 角色归一、启动 bootstrap 与 requestId 派生。
+- `src/main.ts` 现在通过 `createStartupAppStateFactory(...)` 注入默认 UI 布局与 battle-ui 初值，不再在主入口内联持有 `createPrototypeAppState(...)`、`createScenarioPackAppState(...)`、`createHaozhouReturnEncounterAppState(...)`、`bootstrapStartupStoryAppState(...)` 这组启动构造函数。
+- `src/application/startup/startup-session-coordinator.ts` 继续收口为“请求分发器”，不再内联 `resolveStartupScenarioPack(...)`、`readScenarioStartupStoryBootstrap(...)`、`createScenarioPackStartupSessionResult(...)` 这组已解析启动上下文 owner。
+- `tests/robustness.test.cjs` 新增结构回归，锁定 `main.ts` 与 `startup-session-coordinator.ts` 都已把对应 startup owner 抽到 dedicated startup module；`tests/startup-session-coordinator.test.cjs` 继续作为行为回归，确认 builtin / loaded-scenario-pack 的启动契约未变。
+
+### Impact
+- 这一步没有改 UI、没有改功能、没有改主线顺序和内容；变化只是在启动链 owner 上继续去主入口化、去协调器内联化。
+- 当前如果继续做 startup-chain 收口，下一层应是 `src/main.ts` 里重复的 loading/request launcher 壳；如果不继续，则可以把启动行为冻结在这里，转入 runtime 源 / builtin 源 / template 源 的统一工作。
+
+## 2026-08-04 Startup Loading Launcher Extraction Slice
+
+### Changed
+- 新增 `src/application/startup/startup-loading-launcher.ts`，把 continue / restore / builtin start / scenario-pack summary / scenario-pack files / runtime preview 这几条启动 loading 壳，统一收口到一个纯注入的 startup launcher。
+- `src/main.ts` 删除了内联的 `startContinueGameWithLoading(...)`、`startRestoredGameWithLoading(...)`、`startMainGameWithLoading(...)`、`runScenarioPackStartupRequestWithLoading(...)`、`startScenarioPackWithLoading(...)`、`startScenarioPackFilesWithLoading(...)`、`startLoadedScenarioPackWithLoading(...)`，改为只保留 `runStartupSessionRequest(...)`、错误提示和 runtime hook wiring。
+- `tests/robustness.test.cjs` 新增结构回归，锁定启动 loading launcher 已从 `main.ts` 抽到 dedicated startup module。
+
+### Impact
+- 这一步同样没有改 UI、没有改功能、没有改剧情顺序和内容；变化只是在启动壳 owner 上继续从 `main.ts` 收口。
+- 目前启动链在结构上已经拆到“主入口只保留 wiring”，后续如果没有新的启动行为漂移证据，可以把启动链 owner 清理先冻结，转去处理源统一。
+
 ## 2026-08-04 Review Owner Freeze And Keep Legacy Trim Slice
 
 ### Changed

@@ -13,16 +13,23 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "../../domain/scenario-pack";
-import { resolveScenarioProfileForCharacter } from "../../domain/scenario-profile";
 import type { StartupStoryBootstrap } from "./startup-story-bootstrap";
+import {
+  createResolvedScenarioPackStartupSession,
+  createResolvedStartupSession,
+  createScenarioPackStartupRequestId,
+  readActivatedContentSource,
+  readBuiltinStartupStoryBootstrap,
+  readScenarioStartupStoryBootstrap,
+  type StartupScenario,
+} from "./startup-session-resolution";
+export type { StartupScenario } from "./startup-session-resolution";
 
 export type StartupSaveData = {
   selectedCharacterId?: string | null;
   selectedModId?: string | null;
   selectedModSource?: ModSourceDescriptor | null;
 } | null;
-
-export type StartupScenario = "default" | "haozhou-return-encounter";
 
 export type StartupSessionRequest =
   | {
@@ -162,7 +169,7 @@ async function createBuiltinStartupSession(
     startupScenario === "default" ? activatedContentSource : null;
 
   if (isScenarioPackSource(startupScenarioPack)) {
-    return createScenarioPackStartupSessionResult({
+    return createResolvedScenarioPackStartupSession({
       activationResult,
       scenarioPack: startupScenarioPack,
       selectedCharacterId: selectedCharacter.id,
@@ -170,20 +177,17 @@ async function createBuiltinStartupSession(
     });
   }
 
-  return createStartupSessionResult({
+  return createResolvedStartupSession({
     activationResult,
-    contentContext: deps.createStartupContentContext(activationResult),
     playerCharacterId: selectedCharacter.id,
-    createAppState: createStartupAppStateBuilder(
-      () =>
-        startupScenario === "haozhou-return-encounter"
-          ? deps.createHaozhouReturnEncounterAppState(
-              deps.createPrototypeAppState(selectedCharacter.id)
-            )
-          : deps.createPrototypeAppState(selectedCharacter.id),
-      readBuiltinStartupStoryBootstrap(startupScenario),
-      deps
-    ),
+    createBaseAppState: () =>
+      startupScenario === "haozhou-return-encounter"
+        ? deps.createHaozhouReturnEncounterAppState(
+            deps.createPrototypeAppState(selectedCharacter.id)
+          )
+        : deps.createPrototypeAppState(selectedCharacter.id),
+    bootstrap: readBuiltinStartupStoryBootstrap(startupScenario),
+    deps,
   });
 }
 
@@ -203,35 +207,30 @@ async function createRestoreStartupSession(
 
   const activatedContentSource = readActivatedContentSource(activationResult);
   if (isScenarioPackSource(activatedContentSource)) {
-    return createStartupSessionResult({
-      activationResult,
-      contentContext: deps.createStartupContentContext(activationResult),
-      playerCharacterId:
-        saveData?.selectedCharacterId ??
-        activatedContentSource.scenarioProfile.playerCharacterId ??
-        selectedCharacter.id,
-      createAppState: createStartupAppStateBuilder(
-        () => deps.createScenarioPackAppState(activatedContentSource),
-        readScenarioStartupStoryBootstrap(activatedContentSource),
-        deps
-      ),
-    });
+  return createResolvedStartupSession({
+    activationResult,
+    playerCharacterId:
+      saveData?.selectedCharacterId ??
+      activatedContentSource.scenarioProfile.playerCharacterId ??
+      selectedCharacter.id,
+    createBaseAppState: () =>
+      deps.createScenarioPackAppState(activatedContentSource),
+    bootstrap: readScenarioStartupStoryBootstrap(activatedContentSource),
+    deps,
+  });
   }
 
   const playerCharacterId =
     saveData?.selectedCharacterId ?? selectedCharacter.id;
-  return createStartupSessionResult({
+  return createResolvedStartupSession({
     activationResult,
-    contentContext: deps.createStartupContentContext(activationResult),
     playerCharacterId,
-    createAppState: createStartupAppStateBuilder(
-      () =>
-        deps.createHaozhouReturnEncounterAppState(
-          deps.createPrototypeAppState(playerCharacterId)
-        ),
-      readBuiltinStartupStoryBootstrap("haozhou-return-encounter"),
-      deps
-    ),
+    createBaseAppState: () =>
+      deps.createHaozhouReturnEncounterAppState(
+        deps.createPrototypeAppState(playerCharacterId)
+      ),
+    bootstrap: readBuiltinStartupStoryBootstrap("haozhou-return-encounter"),
+    deps,
   });
 }
 
@@ -282,9 +281,9 @@ async function createLoadedScenarioPackStartupSession(
   const activationResult = await deps.activateScenarioPackMod(
     scenarioPack,
     source,
-    `startup:${source.kind}:${scenarioPack.id}`
+    createScenarioPackStartupRequestId(source, scenarioPack)
   );
-  return createScenarioPackStartupSessionResult({
+  return createResolvedScenarioPackStartupSession({
     activationResult,
     scenarioPack,
     selectedCharacterId,
@@ -292,131 +291,10 @@ async function createLoadedScenarioPackStartupSession(
   });
 }
 
-function createStartupAppStateBuilder(
-  createBaseAppState: () => AppState,
-  bootstrap: StartupStoryBootstrap | null,
-  deps: StartupSessionCoordinatorDeps
-): () => AppState {
-  return () =>
-    deps.bootstrapStartupStoryAppState({
-      appState: createBaseAppState(),
-      bootstrap,
-    });
-}
-
-function readBuiltinStartupStoryBootstrap(
-  startupScenario: StartupScenario
-): StartupStoryBootstrap | null {
-  if (startupScenario !== "haozhou-return-encounter") {
-    return null;
-  }
-
-  return {
-    eventId: "event.story.zhu_yuanzhang.haozhou_return_encounter",
-    sceneCursor: 4,
-  };
-}
-
-function readScenarioStartupStoryBootstrap(
-  scenarioPack: ScenarioPackDefinition
-): StartupStoryBootstrap | null {
-  if (
-    scenarioPack.scenarioProfile.launchPolicy?.entryEventTiming ===
-    "after-map-entry"
-  ) {
-    return null;
-  }
-
-  const entryEventId = scenarioPack.scenarioProfile.entryEventId;
-  return entryEventId == null
-    ? null
-    : {
-        eventId: entryEventId,
-      };
-}
-
-function createStartupSessionResult(
-  session: StartupSessionBootstrap
-): StartupSessionResult {
-  if (!session.activationResult.ok) {
-    return {
-      ok: false,
-      error: new Error(session.activationResult.failure.message),
-    };
-  }
-
-  return {
-    ok: true,
-    session,
-  };
-}
-
-function createScenarioPackStartupSessionResult(input: {
-  activationResult: ModActivationResult;
-  scenarioPack: ScenarioPackDefinition;
-  selectedCharacterId: string | null | undefined;
-  deps: StartupSessionCoordinatorDeps;
-}): StartupSessionResult {
-  const resolvedScenarioPack = resolveStartupScenarioPack(
-    input.scenarioPack,
-    input.selectedCharacterId
-  );
-
-  return createStartupSessionResult({
-    activationResult: input.activationResult,
-    contentContext: input.deps.createStartupContentContext(input.activationResult),
-    playerCharacterId: resolvedScenarioPack.scenarioProfile.playerCharacterId,
-    createAppState: createStartupAppStateBuilder(
-      () => input.deps.createScenarioPackAppState(resolvedScenarioPack),
-      readScenarioStartupStoryBootstrap(resolvedScenarioPack),
-      input.deps
-    ),
-  });
-}
-
-function readActivatedContentSource(
-  activationResult: ModActivationResult
-): ScenarioPackDefinition | null {
-  if (!activationResult.ok) {
-    return null;
-  }
-
-  const primarySource = activationResult.activatedMod.normalizedContentSources[0];
-  if (primarySource == null || typeof primarySource !== "object") {
-    return null;
-  }
-
-  return "scenarioProfile" in primarySource
-    ? (primarySource as ScenarioPackDefinition)
-    : null;
-}
-
 function isScenarioPackSource(
   value: ScenarioPackDefinition | null
 ): value is ScenarioPackDefinition {
   return value != null;
-}
-
-function resolveStartupScenarioPack(
-  scenarioPack: ScenarioPackDefinition,
-  selectedCharacterId?: string | null
-): ScenarioPackDefinition {
-  if (selectedCharacterId == null) {
-    return scenarioPack;
-  }
-
-  const resolvedProfile = resolveScenarioProfileForCharacter(
-    scenarioPack.scenarioProfile,
-    selectedCharacterId
-  );
-
-  return {
-    ...scenarioPack,
-    scenarioProfile: {
-      ...resolvedProfile,
-      playerCharacterId: selectedCharacterId,
-    },
-  };
 }
 
 function assertNeverRequest(request: never): never {

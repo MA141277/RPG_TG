@@ -168,14 +168,11 @@ import {
   type GridCoordinate,
   type HexCoordinateSystem,
 } from "./application/navigation/travel-to-coordinate";
-import {
-  revealCampaignMapHexesForCoordinate,
-} from "./application/map/campaign-map-exploration";
+import { revealCampaignMapHexesForCoordinate } from "./application/map/campaign-map-exploration";
 import {
   isCampaignMapCoordinateClickable,
   revealCampaignMapAroundCoordinate,
 } from "./application/navigation/campaign-map-exploration";
-import { createInitialState } from "./application/state/create-initial-state";
 import {
   createActiveGameContentContextFromModActivation,
   type ActiveGameContentContext,
@@ -194,14 +191,11 @@ import {
   type StartupSaveData,
   type StartupScenario,
   type StartupSessionBootstrap,
+  type StartupSessionRequest,
 } from "./application/startup/startup-session-coordinator";
-import { resolvePrototypeStartupSeed } from "./application/startup/prototype-startup-defaults";
+import { createStartupAppStateFactory } from "./application/startup/startup-app-state-factory";
+import { createStartupLoadingLauncher } from "./application/startup/startup-loading-launcher";
 import { sanitizeScenarioPackForRuntimePreview } from "./application/startup/scenario-preview-sanitizer";
-import {
-  applyStartupStoryBootstrap,
-  type StartupStoryBootstrap,
-} from "./application/startup/startup-story-bootstrap";
-import { createHaozhouReturnEncounterBattleState } from "./application/startup/haozhou-return-battle-state";
 import {
   createEnterCityRequest,
   routeNavigationRuntime,
@@ -213,9 +207,6 @@ import {
 } from "./core/runtime/time-runtime";
 import {
 } from "./core/runtime/event-runtime";
-import {
-  createPrototypeCharactersForStoryStage,
-} from "./content/prototype-world";
 import { createBaseGameContentPack } from "./content/base-game-content-pack";
 import { getZhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
 import {
@@ -299,10 +290,6 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "./domain/scenario-pack";
-import {
-  resolveScenarioProfileStartupDefaults,
-  resolveScenarioProfileStartupPresentation,
-} from "./domain/scenario-profile";
 import type {
   BackpackItemCategoryFilter,
   ItemActionId,
@@ -606,28 +593,24 @@ function getRuntimeTemplateText(
   );
 }
 
-function bootstrapStartupStoryAppState(input: {
-  appState: AppState;
-  bootstrap: StartupStoryBootstrap | null;
-}): AppState {
-  return applyStartupStoryBootstrap({
-    appState: input.appState,
-    bootstrap: input.bootstrap,
-    content: {
-      eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
-      sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
-      activityDefinitionsById:
-        activeContentContext.storyContent.activityDefinitionsById,
-      textEntriesById: activeContentContext.storyContent.textEntriesById,
-    },
-  });
-}
-
 function setActiveContentContext(
   nextContentContext: ActiveGameContentContext
 ): void {
   activeContentContext = nextContentContext;
 }
+
+const startupAppStateFactory = createStartupAppStateFactory({
+  getContentContext: () => activeContentContext,
+  defaultPlayerCharacterId,
+  createDefaultUiLayouts: () => ({
+    "global-hud": createDefaultGlobalHudLayout(),
+    "start-screen": createDefaultStartScreenLayout(),
+    "character-select-screen": createDefaultCharacterSelectScreenLayout(),
+    "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
+    "battle-ui-screen": createDefaultBattleUiScreenLayout(),
+  }),
+  createDefaultBattleUiValues,
+});
 
 const selectableCharacters = selectPlayableCharacters(
   activeContentContext.gameContent.characters,
@@ -742,7 +725,7 @@ function createRuntimeCommitContext(input: {
 }
 
 let appState: AppState = applyPersistedBattleUiEditorValues(
-  createPrototypeAppState(currentPlayerCharacterId)
+  startupAppStateFactory.createPrototypeAppState(currentPlayerCharacterId)
 );
 let coinRewardDisplayValue: number | null = null;
 let coinRewardAnchorEditorState = {
@@ -1087,127 +1070,6 @@ window.addEventListener("resize", syncGameViewport);
 setGameVisibility(false);
 mainUiFlow.mount();
 mainUiFlow.showMainMenu();
-
-function createPrototypeAppState(playerCharacterId: string): AppState {
-  const defaultMapDefinition =
-    activeContentContext.mapDefinitionById["map.yuanmo_campaign"] ??
-    activeContentContext.maps[0];
-  const defaultCityDefinition =
-    activeContentContext.cityDefinitionById["city.kulan"] ??
-    activeContentContext.cities[0];
-  assertExists(defaultMapDefinition, "Missing default map definition.");
-  assertExists(defaultCityDefinition, "Missing default city definition.");
-  const startupSeed = resolvePrototypeStartupSeed({
-    playerCharacterId,
-    defaultPlayerCharacterId,
-    defaultMapId: defaultMapDefinition.id,
-    defaultCityId: defaultCityDefinition.id,
-  });
-  const storyStage: ZhuYuanzhangStoryStage = startupSeed.storyStage;
-  const storyCharacterDefinitions =
-    createPrototypeCharactersForStoryStage(storyStage);
-  let nextAppState: AppState = {
-    gameState: ensureCityNpcPoolsForCurrentDay(
-      createInitialState({
-        currentMapId: startupSeed.currentMapId,
-        currentCityId: startupSeed.currentCityId,
-        currentHouseId: startupSeed.currentHouseId,
-        playerCharacterId,
-        chapterId: startupSeed.chapterId,
-        year: startupSeed.calendar.year,
-        month: startupSeed.calendar.month,
-        day: startupSeed.calendar.day,
-        pinnedCharacterId: playerCharacterId,
-        reviewDateText: formatCouncilStatusText(
-          startupSeed.reviewCountdownDaysForUi
-        ),
-        mainHouseMissionText: getRuntimeText(startupSeed.missionTextId),
-        cards: {
-          ownedCardIds: activeContentContext.cards.map(
-            (cardDefinition) => cardDefinition.id
-          ),
-          selectedCardId: activeContentContext.cards[0]?.id ?? null,
-        },
-        valuables: {
-          items: activeContentContext.gameContent.valuables,
-          selectedItemId: activeContentContext.gameContent.valuables[0]?.id ?? null,
-          equippedWeaponSet: {
-            swordId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "weapon"
-              )?.id ?? null,
-            armorId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "armor"
-              )?.id ?? null,
-          },
-        },
-        currentView: startupSeed.currentView,
-      }),
-      activeContentContext.cityNpcPools
-    ),
-    characterDefinitions: storyCharacterDefinitions,
-    playerCoordinate: defaultMapDefinition.initialPlayerCoordinate ?? { x: 0, y: 0 },
-    campaignActorState: {
-      facingDegrees: 0,
-      isMoving: false,
-    },
-    campaignTravelState: null,
-    modalState: null,
-    locationDialogueState: null,
-    beggingMiniGameState: null,
-    cityMenuState: null,
-    cityDirectoryState: null,
-    autoAdvanceState: null,
-    uiLayouts: {
-      "global-hud": createDefaultGlobalHudLayout(),
-      "start-screen": createDefaultStartScreenLayout(),
-      "character-select-screen": createDefaultCharacterSelectScreenLayout(),
-      "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
-      "battle-ui-screen": createDefaultBattleUiScreenLayout(),
-    },
-    layoutEditor: {
-      isOpen: false,
-      selectedTargetId: "global-hud",
-      selectedComponentId: "status-board",
-      selectedElementId: null,
-      backgroundAssetQuery: "",
-      battleUiValues: createDefaultBattleUiEditorValues(),
-    },
-  };
-  nextAppState = {
-    ...nextAppState,
-    gameState: revealCampaignMapHexesForCoordinate(
-      nextAppState.gameState,
-      defaultMapDefinition,
-      nextAppState.playerCoordinate
-    ),
-  };
-
-  nextAppState = {
-    ...nextAppState,
-    gameState: {
-      ...nextAppState.gameState,
-      runtime: {
-        ...nextAppState.gameState.runtime,
-        variables: {
-          ...nextAppState.gameState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]:
-            startupSeed.runtimeReviewCountdown,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: storyStage,
-        },
-      },
-    },
-  };
-
-  return revealCampaignMapAroundAppCoordinate(
-    nextAppState,
-    nextAppState.playerCoordinate,
-    {
-      animateNewHexes: false,
-    }
-  );
-}
 
 function getCurrentPlayerCharacter(): CharacterDefinition | null {
   return (
@@ -2602,15 +2464,17 @@ const startupSessionCoordinatorDeps = {
   activateBuiltinDefaultMod,
   restoreModFromSave,
   activateScenarioPackMod,
-  createPrototypeAppState,
-  createHaozhouReturnEncounterAppState,
-  createScenarioPackAppState,
+  createPrototypeAppState: startupAppStateFactory.createPrototypeAppState,
+  createHaozhouReturnEncounterAppState:
+    startupAppStateFactory.createHaozhouReturnEncounterAppState,
+  createScenarioPackAppState: startupAppStateFactory.createScenarioPackAppState,
   createStartupContentContext: (activationResult: ModActivationResult) =>
     createActiveGameContentContextFromModActivation({
       basePack: baseGameContentPack,
       activationResult,
     }),
-  bootstrapStartupStoryAppState,
+  bootstrapStartupStoryAppState:
+    startupAppStateFactory.bootstrapStartupStoryAppState,
 };
 
 function unwrapStartupSession(
@@ -2623,208 +2487,6 @@ function unwrapStartupSession(
   return result.session;
 }
 
-function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): void {
-  const saveData = loadSaveData();
-  const requestId = beginLoadingScreen();
-
-  simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
-  })
-    .then(async () => {
-      if (requestId !== loadingScreenRequestId) {
-        return;
-      }
-
-      const startupSession = unwrapStartupSession(
-        await runStartupSessionCoordinator(
-          {
-            type: "continue",
-            selectedCharacter,
-            saveData,
-          },
-          startupSessionCoordinatorDeps
-        )
-      );
-      applyActivatedModSession(startupSession);
-      await preloadInitialMapViewAssets(
-        appRoot,
-        createStartupPreloadProgressHandler(requestId)
-      );
-      endLoadingScreen(requestId);
-    })
-    .catch((error: unknown) => {
-      endLoadingScreen(requestId);
-      showStartupError(error);
-    });
-}
-
-function startRestoredGameWithLoading(
-  selectedCharacter: CharacterDefinition,
-  saveData: StartupSaveData
-): Promise<void> {
-  const requestId = beginLoadingScreen();
-
-  return simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
-  })
-    .then(async () => {
-      if (requestId !== loadingScreenRequestId) {
-        return;
-      }
-
-      const startupSession = unwrapStartupSession(
-        await runStartupSessionCoordinator(
-          {
-            type: "restore",
-            selectedCharacter,
-            saveData,
-          },
-          startupSessionCoordinatorDeps
-        )
-      );
-      applyActivatedModSession(startupSession);
-      await preloadInitialMapViewAssets(
-        appRoot,
-        createStartupPreloadProgressHandler(requestId)
-      );
-      endLoadingScreen(requestId);
-    })
-    .catch((error: unknown) => {
-      endLoadingScreen(requestId);
-      showStartupError(error);
-    });
-}
-
-function startMainGameWithLoading(
-  selectedCharacter: CharacterDefinition,
-  startupScenario: StartupScenario = "default"
-): void {
-  const requestId = beginLoadingScreen();
-
-  simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
-  }).then(async () => {
-    if (requestId !== loadingScreenRequestId) {
-      return "failed";
-    }
-
-    const startupSession = unwrapStartupSession(
-      await runStartupSessionCoordinator(
-        {
-          type: "builtin",
-          selectedCharacter,
-          startupScenario,
-        },
-        startupSessionCoordinatorDeps
-      )
-    );
-    applyActivatedModSession(startupSession);
-    await preloadInitialMapViewAssets(
-      appRoot,
-      createStartupPreloadProgressHandler(requestId)
-    );
-    endLoadingScreen(requestId);
-  }).catch((error: unknown) => {
-    endLoadingScreen(requestId);
-    showStartupError(error);
-  });
-}
-
-function runScenarioPackStartupRequestWithLoading(
-  request:
-    | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
-    | { type: "scenario-files"; files: File[] }
-    | {
-        type: "loaded-scenario-pack";
-        scenarioPack: ScenarioPackDefinition;
-        source: ModSourceDescriptor;
-      }
-): Promise<"started" | "failed"> {
-  const requestId = beginLoadingScreen();
-
-  return simulateLoadingProgress((progress) => {
-    if (requestId !== loadingScreenRequestId) {
-      return;
-    }
-
-    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
-  }).then(async () => {
-    if (requestId !== loadingScreenRequestId) {
-      return "failed";
-    }
-
-    const startupSession = unwrapStartupSession(
-      await runStartupSessionCoordinator(request, startupSessionCoordinatorDeps)
-    );
-    applyActivatedModSession(startupSession);
-    await preloadInitialMapViewAssets(
-      appRoot,
-      createStartupPreloadProgressHandler(requestId)
-    );
-    endLoadingScreen(requestId);
-    return "started";
-  }).catch((error) => {
-    endLoadingScreen(requestId);
-    window.alert(
-      error instanceof Error
-        ? `JSON 寮€灞€璇诲彇澶辫触锛?{error.message}`
-        : "JSON 寮€灞€璇诲彇澶辫触銆?"
-    );
-    return "failed";
-  });
-}
-
-async function startScenarioPackWithLoading(
-  scenarioPack: ScenarioPackSummary
-): Promise<void> {
-  try {
-    await runScenarioPackStartupRequestWithLoading({
-      type: "scenario-summary",
-      scenarioPack,
-    });
-  } catch (error) {
-    window.alert(
-      error instanceof Error
-        ? `JSON 开局读取失败：${error.message}`
-        : "JSON 开局读取失败。"
-    );
-  }
-}
-
-async function startScenarioPackFilesWithLoading(
-  files: File[]
-): Promise<void> {
-  const importLabel =
-    files.find((file) => file.name === "pack.json")?.name ??
-    files[0]?.name ??
-    "scenario-pack";
-
-  try {
-    await runScenarioPackStartupRequestWithLoading({
-      type: "scenario-files",
-      files,
-    });
-  } catch (error) {
-    window.alert(
-      error instanceof Error
-        ? `JSON 开局读取失败（${importLabel}）：${error.message}`
-        : `JSON 开局读取失败（${importLabel}）。`
-    );
-  }
-}
-
 function createRuntimePreviewScenarioPackSource(
   scenarioPack: ScenarioPackDefinition
 ): ModSourceDescriptor {
@@ -2835,15 +2497,57 @@ function createRuntimePreviewScenarioPackSource(
   };
 }
 
-async function startLoadedScenarioPackWithLoading(
-  scenarioPack: ScenarioPackDefinition
-): Promise<"started" | "failed"> {
-  return runScenarioPackStartupRequestWithLoading({
-    type: "loaded-scenario-pack",
-    scenarioPack: sanitizeScenarioPackForRuntimePreview(scenarioPack),
-    source: createRuntimePreviewScenarioPackSource(scenarioPack),
-  });
+async function runStartupSessionRequest(
+  request: StartupSessionRequest
+): Promise<StartupSessionBootstrap> {
+  return unwrapStartupSession(
+    await runStartupSessionCoordinator(request, startupSessionCoordinatorDeps)
+  );
 }
+
+function showScenarioPackReadError(input: {
+  error: unknown;
+  importLabel?: string;
+}): void {
+  const messagePrefix =
+    input.importLabel == null
+      ? "JSON 开局读取失败"
+      : `JSON 开局读取失败（${input.importLabel}）`;
+  window.alert(
+    input.error instanceof Error
+      ? `${messagePrefix}：${input.error.message}`
+      : `${messagePrefix}。`
+  );
+}
+
+const {
+  startContinueGameWithLoading,
+  startRestoredGameWithLoading,
+  startMainGameWithLoading,
+  startScenarioPackWithLoading,
+  startScenarioPackFilesWithLoading,
+  startLoadedScenarioPackWithLoading,
+} = createStartupLoadingLauncher({
+  runStartupSession: runStartupSessionRequest,
+  loadSaveData,
+  beginLoadingScreen,
+  isLoadingRequestActive: (requestId: number) =>
+    requestId === loadingScreenRequestId,
+  setLoadingProgress: setActiveLoadingProgress,
+  simulateLoadingProgress,
+  startupLoadingSimulatedProgressCap: STARTUP_LOADING_SIMULATED_PROGRESS_CAP,
+  preloadInitialMapViewAssets: async (requestId: number) =>
+    preloadInitialMapViewAssets(
+      appRoot,
+      createStartupPreloadProgressHandler(requestId)
+    ),
+  endLoadingScreen,
+  applyActivatedModSession,
+  showStartupError,
+  showScenarioPackReadError,
+  createRuntimePreviewScenarioPackSource,
+  sanitizeScenarioPackForRuntimePreview,
+});
 
 function exitScriptEditorRuntimePreview(): void {
   resetMainGameRuntime();
@@ -2860,172 +2564,6 @@ function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {
     ...base.filter((definition) => !nextIds.has(definition.id)),
     ...next,
   ];
-}
-
-function createScenarioPackAppState(
-  scenarioPack: ScenarioPackDefinition
-): AppState {
-  const profile = scenarioPack.scenarioProfile;
-  const startupPresentation = resolveScenarioProfileStartupPresentation(profile);
-  const scenarioMapDefinition =
-    getMapDefinitionById(profile.initialLocation.mapId) ??
-    activeContentContext.maps[0];
-  assertExists(
-    scenarioMapDefinition,
-    `Missing scenario map "${profile.initialLocation.mapId}".`
-  );
-  const startupDefaults = resolveScenarioProfileStartupDefaults(profile, {
-    fallbackMissionText: scenarioPack.title,
-  });
-  const playerCoordinate =
-    profile.initialPlayerCoordinate ??
-    activeContentContext.cityCoordinatesById[profile.initialLocation.cityId] ??
-    scenarioMapDefinition.initialPlayerCoordinate ??
-    { x: 0, y: 0 };
-
-  let nextAppState: AppState = {
-    gameState: ensureCityNpcPoolsForCurrentDay(
-      createInitialState({
-        currentMapId: profile.initialLocation.mapId,
-        currentCityId: profile.initialLocation.cityId,
-        currentHouseId: startupPresentation.currentHouseId,
-        playerCharacterId: profile.playerCharacterId,
-        chapterId: profile.chapterId,
-        year: startupDefaults.calendar.year,
-        month: startupDefaults.calendar.month,
-        day: startupDefaults.calendar.day,
-        pinnedCharacterId: profile.playerCharacterId,
-        reviewDateText: startupDefaults.reviewDateText,
-        mainHouseMissionText: startupDefaults.mainHouseMissionText,
-        cards: {
-          ownedCardIds: activeContentContext.cards.map(
-            (cardDefinition) => cardDefinition.id
-          ),
-          selectedCardId: activeContentContext.cards[0]?.id ?? null,
-        },
-        valuables: {
-          items: activeContentContext.gameContent.valuables,
-          selectedItemId:
-            activeContentContext.gameContent.valuables[0]?.id ?? null,
-          equippedWeaponSet: {
-            swordId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "weapon"
-              )?.id ?? null,
-            armorId:
-              activeContentContext.gameContent.valuables.find(
-                (valuableDefinition) => valuableDefinition.category === "armor"
-              )?.id ?? null,
-          },
-        },
-        currentView: startupPresentation.currentView,
-      }),
-      activeContentContext.cityNpcPools
-    ),
-    characterDefinitions: mergeCharacterDefinitions(
-      activeContentContext.gameContent.characters,
-      scenarioPack.characters ?? []
-    ),
-    playerCoordinate,
-    campaignActorState: {
-      facingDegrees: 0,
-      isMoving: false,
-    },
-    campaignTravelState: null,
-    modalState: null,
-    locationDialogueState: null,
-    beggingMiniGameState: null,
-    cityMenuState: null,
-    cityDirectoryState: null,
-    autoAdvanceState: null,
-    uiLayouts: {
-      "global-hud": createDefaultGlobalHudLayout(),
-      "start-screen": createDefaultStartScreenLayout(),
-      "character-select-screen": createDefaultCharacterSelectScreenLayout(),
-      "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
-      "battle-ui-screen": createDefaultBattleUiScreenLayout(),
-    },
-    layoutEditor: {
-      isOpen: false,
-      selectedTargetId: "global-hud",
-      selectedComponentId: "status-board",
-      selectedElementId: null,
-      backgroundAssetQuery: "",
-      battleUiValues: createDefaultBattleUiEditorValues(),
-    },
-  };
-
-  nextAppState = {
-    ...nextAppState,
-    gameState: revealCampaignMapHexesForCoordinate(
-      nextAppState.gameState,
-      scenarioMapDefinition,
-      nextAppState.playerCoordinate
-    ),
-  };
-
-  nextAppState = {
-    ...nextAppState,
-    gameState: {
-      ...nextAppState.gameState,
-      runtime: {
-        ...nextAppState.gameState.runtime,
-        flags: {
-          ...nextAppState.gameState.runtime.flags,
-          ...(profile.initialRuntime?.flags ?? {}),
-        },
-        variables: {
-          ...nextAppState.gameState.runtime.variables,
-          ...(profile.initialRuntime?.variables ?? {}),
-        },
-      },
-    },
-  };
-
-  return revealCampaignMapAroundAppCoordinate(
-    nextAppState,
-    nextAppState.playerCoordinate,
-    {
-      animateNewHexes: false,
-    }
-  );
-}
-
-function mergeCharacterDefinitions(
-  baseCharacters: CharacterDefinition[],
-  scenarioCharacters: CharacterDefinition[]
-): CharacterDefinition[] {
-  const scenarioCharacterIds = new Set(
-    scenarioCharacters.map((characterDefinition) => characterDefinition.id)
-  );
-
-  return [
-    ...baseCharacters.filter(
-      (characterDefinition) => !scenarioCharacterIds.has(characterDefinition.id)
-    ),
-    ...scenarioCharacters,
-  ];
-}
-
-function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
-  let nextAppState: AppState = {
-    ...baseState,
-    gameState: createHaozhouReturnEncounterBattleState({
-      state: baseState.gameState,
-      textEntriesById: activeContentContext.textEntriesById,
-    }),
-    characterDefinitions: createPrototypeCharactersForStoryStage(
-      ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
-    ),
-    modalState: null,
-    locationDialogueState: null,
-    cityMenuState: null,
-    cityDirectoryState: null,
-    beggingMiniGameState: null,
-    campaignTravelState: null,
-  };
-
-  return nextAppState;
 }
 
 function beginLoadingScreen(): number {
