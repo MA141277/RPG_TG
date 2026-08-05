@@ -37,6 +37,9 @@ export type EventRouteCommand =
   | {
       type: "openCityMenuPanel";
       panelId: "overview" | "intel" | "locations" | "management";
+      meta?: {
+        scriptEditorSource?: string;
+      };
     };
 
 export type EventBindingOwner = {

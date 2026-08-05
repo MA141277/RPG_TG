@@ -521,6 +521,50 @@ test("runtime-pack round trip keeps explicit launchPlayable actions on the paylo
   ]);
 });
 
+test("runtime-pack round trip keeps explicit openCityMenuPanel actions on the payload seam", async () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "event",
+            targetId: "",
+          },
+          actions: [
+            {
+              type: "openCityMenuPanel",
+              panelId: "intel",
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), []);
+
+  const exportedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const roundTripProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    Object.entries(exportedFiles).map(
+      ([relativePath, content]) => new File([content], relativePath)
+    )
+  );
+  const roundTripEvent = roundTripProject.events.find(
+    (eventRecord) => eventRecord.id === "event.opening"
+  );
+
+  assert.deepEqual(roundTripEvent?.destination, {
+    family: "event",
+    targetId: "",
+  });
+  assert.deepEqual(roundTripEvent?.actions, [
+    {
+      type: "openCityMenuPanel",
+      panelId: "intel",
+    },
+  ]);
+});
+
 test("event authoring normalization preserves runtime payload actions and task inputs", () => {
   const normalized = normalizeScriptEditorEventRecord({
     id: "event.runtime.payload.normalize",

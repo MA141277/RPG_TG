@@ -374,6 +374,31 @@ test("runtime-pack import keeps playable action rehydration off the destination 
   );
 });
 
+test("runtime-pack import keeps menu action rehydration off the destination seam", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/runtime-pack-import.ts"
+    ),
+    "utf8"
+  );
+  const mapImportedEventsBlock =
+    source.match(
+      /function mapImportedEvents\([\s\S]*?\n}\n\nfunction mapImportedMenuResources/
+    )?.[0] ?? "";
+
+  assert.doesNotMatch(
+    mapImportedEventsBlock,
+    /const importedMenuAction = \(eventDefinition\.actions \?\? \[\]\)\.find/
+  );
+  assert.match(source, /function readImportedMenuDestinationAction\(/);
+  assert.match(
+    mapImportedEventsBlock,
+    /readImportedMenuDestinationAction\(\s*eventDefinition\.actions \?\? \[\]/
+  );
+  assert.match(mapImportedEventsBlock, /action !== importedMenuDestinationAction/);
+});
+
 test("script editor items scenario pack loader hydrates items from manifest files", async () => {
   const loader = await import("../.test-dist/application/scenario/scenario-pack-loader.js");
   const files = [

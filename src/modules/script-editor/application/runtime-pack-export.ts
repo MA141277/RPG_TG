@@ -2379,6 +2379,13 @@ function lowerEventRouteCommands(
       actions.push({ type: "closeBuilding" });
       continue;
     }
+    if (action?.type === "openCityMenuPanel") {
+      actions.push({
+        type: "openCityMenuPanel",
+        panelId: action.panelId,
+      });
+      continue;
+    }
     if (
       action?.type === "launchFlow" &&
       typeof action.flowId === "string" &&
@@ -2463,7 +2470,7 @@ function lowerEventRouteCommands(
       code: "unsupported-lowering",
       fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
       message:
-        "Event export currently supports only closeBuilding, launchFlow, and launchPlayable runtime actions.",
+        "Event export currently supports only closeBuilding, openCityMenuPanel, launchFlow, and launchPlayable runtime actions.",
     });
     return null;
   }
@@ -2488,6 +2495,9 @@ function lowerEventDestinationMenuAction(
   return {
     type: "openCityMenuPanel",
     panelId,
+    meta: {
+      scriptEditorSource: SCRIPT_EDITOR_DERIVED_EVENT_DESTINATION_SOURCE,
+    },
   };
 }
 

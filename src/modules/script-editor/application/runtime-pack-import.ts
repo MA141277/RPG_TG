@@ -474,21 +474,17 @@ function mapImportedEvents(
             eventDefinition.actions ?? [],
             importedMinigameIdByIntegrationId
           );
-    const importedMenuAction = (eventDefinition.actions ?? []).find(
-      (
-        action
-      ): action is Extract<
-        NonNullable<EventDefinition["actions"]>[number],
-        { type: "openCityMenuPanel" }
-      > => action.type === "openCityMenuPanel"
-    );
+    const importedMenuDestinationAction =
+      importedDialogueId.length > 0 || importedMinigameDestination != null
+        ? null
+        : readImportedMenuDestinationAction(eventDefinition.actions ?? []);
     const importedMinigameId = importedMinigameDestination?.minigameId ?? "";
     const destinationFamily =
       importedDialogueId.length > 0
         ? "dialogue"
         : importedMinigameId.length > 0
           ? "minigame"
-          : importedMenuAction != null
+          : importedMenuDestinationAction != null
             ? "menu"
           : "event";
     const destinationTargetId =
@@ -497,13 +493,13 @@ function mapImportedEvents(
         : destinationFamily === "minigame"
           ? importedMinigameId
           : destinationFamily === "menu"
-            ? importedMenuAction?.panelId ?? ""
+            ? importedMenuDestinationAction?.panelId ?? ""
           : eventDefinition.nextEventId ?? "";
     const importedActions =
       destinationFamily === "menu"
         ? rehydrateImportedEventActions(
             (eventDefinition.actions ?? []).filter(
-              (action) => action.type !== "openCityMenuPanel"
+              (action) => action !== importedMenuDestinationAction
             ),
             importedFlowIdByIntegrationId
           )
@@ -1451,6 +1447,25 @@ function readImportedMinigameDestinationAction(
       continue;
     }
     return { action, minigameId };
+  }
+
+  return null;
+}
+
+function readImportedMenuDestinationAction(
+  actions: NonNullable<EventDefinition["actions"]>
+): Extract<NonNullable<EventDefinition["actions"]>[number], { type: "openCityMenuPanel" }> | null {
+  for (const action of actions) {
+    if (action.type !== "openCityMenuPanel") {
+      continue;
+    }
+    if (
+      action.meta == null ||
+      action.meta.scriptEditorSource !== SCRIPT_EDITOR_DERIVED_EVENT_DESTINATION_SOURCE
+    ) {
+      continue;
+    }
+    return action;
   }
 
   return null;
