@@ -147,6 +147,7 @@ type RuntimePackManifest = {
 };
 
 const RUNTIME_PACK_MANIFEST_FILE = "pack.json";
+const SCRIPT_EDITOR_DERIVED_EVENT_DESTINATION_SOURCE = "script-editor:event-destination";
 
 const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   scenarioProfile: "./scenario-profile.json",
@@ -2573,6 +2574,9 @@ function lowerEventDestinationLaunchAction(
       ownerKind: "external",
       ownerId: null,
       returnPolicy: "close-only",
+    },
+    payload: {
+      scriptEditorSource: SCRIPT_EDITOR_DERIVED_EVENT_DESTINATION_SOURCE,
     },
   };
 }

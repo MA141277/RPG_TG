@@ -52,6 +52,8 @@ export type ScriptEditorRuntimePackImportDiagnostic = {
   message: string;
 };
 
+const SCRIPT_EDITOR_DERIVED_EVENT_DESTINATION_SOURCE = "script-editor:event-destination";
+
 type RuntimePackImportFileEntry = {
   file: File;
   relativePath: string;
@@ -465,10 +467,13 @@ function mapImportedEvents(
       typeof importedEvent.dialogueId === "string" && importedEvent.dialogueId.length > 0
         ? importedEvent.dialogueId
         : "";
-    const importedPlayableAction = (eventDefinition.actions ?? []).find(
-      (action): action is Extract<NonNullable<EventDefinition["actions"]>[number], { type: "launchPlayable" }> =>
-        action.type === "launchPlayable"
-    );
+    const importedMinigameDestination =
+      importedDialogueId.length > 0
+        ? null
+        : readImportedMinigameDestinationAction(
+            eventDefinition.actions ?? [],
+            importedMinigameIdByIntegrationId
+          );
     const importedMenuAction = (eventDefinition.actions ?? []).find(
       (
         action
@@ -477,10 +482,7 @@ function mapImportedEvents(
         { type: "openCityMenuPanel" }
       > => action.type === "openCityMenuPanel"
     );
-    const importedMinigameId =
-      importedPlayableAction == null
-        ? ""
-        : importedMinigameIdByIntegrationId.get(importedPlayableAction.integrationId) ?? "";
+    const importedMinigameId = importedMinigameDestination?.minigameId ?? "";
     const destinationFamily =
       importedDialogueId.length > 0
         ? "dialogue"
@@ -505,6 +507,13 @@ function mapImportedEvents(
             ),
             importedFlowIdByIntegrationId
           )
+        : importedMinigameDestination != null
+          ? rehydrateImportedEventActions(
+              (eventDefinition.actions ?? []).filter(
+                (action) => action !== importedMinigameDestination.action
+              ),
+              importedFlowIdByIntegrationId
+            )
         : rehydrateImportedEventActions(
             eventDefinition.actions ?? [],
             importedFlowIdByIntegrationId
@@ -1418,6 +1427,33 @@ function createImportedFlowIdByIntegrationId(
         : [[createDerivedFlowIntegrationId(flowId), flowId] as const];
     })
   );
+}
+
+function readImportedMinigameDestinationAction(
+  actions: NonNullable<EventDefinition["actions"]>,
+  importedMinigameIdByIntegrationId: Map<string, string>
+): {
+  action: Extract<NonNullable<EventDefinition["actions"]>[number], { type: "launchPlayable" }>;
+  minigameId: string;
+} | null {
+  for (const action of actions) {
+    if (action.type !== "launchPlayable") {
+      continue;
+    }
+    if (
+      action.payload == null ||
+      action.payload.scriptEditorSource !== SCRIPT_EDITOR_DERIVED_EVENT_DESTINATION_SOURCE
+    ) {
+      continue;
+    }
+    const minigameId = importedMinigameIdByIntegrationId.get(action.integrationId) ?? "";
+    if (minigameId.length === 0) {
+      continue;
+    }
+    return { action, minigameId };
+  }
+
+  return null;
 }
 
 function rehydrateImportedEventActions(

@@ -13,6 +13,9 @@ const {
   validateScriptEditorProjectForRuntimeExport,
   exportScriptEditorProjectToScenarioPackFiles,
 } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
+const {
+  normalizeScriptEditorEventRecord,
+} = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 const workflow = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 const {
   createInitialState,
@@ -445,6 +448,135 @@ test("runtime-pack round trip preserves launchFlow event actions as flow-owned p
         ownerId: null,
         returnPolicy: "close-only",
       },
+    },
+  ]);
+});
+
+test("runtime-pack round trip keeps explicit launchPlayable actions on the payload seam", async () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const minigameRecord = {
+    ...workflow.createScriptEditorWorkflowRecordDraft("minigames", project),
+    id: "minigame.runtime.payload.roundtrip",
+    title: "Runtime Payload Minigame",
+    playableId: "activity-qte",
+  };
+  project.minigames = [...project.minigames, minigameRecord];
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "event",
+            targetId: "",
+          },
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "activity-qte",
+              integrationId: `playable.activity-qte.instance.${minigameRecord.id}`,
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+              payload: {
+                source: "event-action",
+              },
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), []);
+
+  const exportedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const roundTripProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    Object.entries(exportedFiles).map(
+      ([relativePath, content]) => new File([content], relativePath)
+    )
+  );
+  const roundTripEvent = roundTripProject.events.find(
+    (eventRecord) => eventRecord.id === "event.opening"
+  );
+
+  assert.deepEqual(roundTripEvent?.destination, {
+    family: "event",
+    targetId: "",
+  });
+  assert.deepEqual(roundTripEvent?.actions, [
+    {
+      type: "launchPlayable",
+      playableId: "activity-qte",
+      integrationId: `playable.activity-qte.instance.${minigameRecord.id}`,
+      ownerContext: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+      payload: {
+        source: "event-action",
+      },
+    },
+  ]);
+});
+
+test("event authoring normalization preserves runtime payload actions and task inputs", () => {
+  const normalized = normalizeScriptEditorEventRecord({
+    id: "event.runtime.payload.normalize",
+    title: "Runtime Payload Normalize",
+    description: "Preserve canonical runtime payload fields.",
+    triggerTiming: "manual",
+    repeatable: false,
+    nextEventId: "event.runtime.payload.followup",
+    destination: {
+      family: "event",
+      targetId: "event.runtime.payload.followup",
+    },
+    actions: [
+      {
+        type: "launchPlayable",
+        playableId: "playable.runtime.payload.normalize",
+        integrationId: "playable.runtime.payload.normalize.external.default",
+        ownerContext: {
+          ownerKind: "external",
+          ownerId: null,
+          returnPolicy: "close-only",
+        },
+        payload: {
+          source: "normalize-test",
+          retries: 2,
+        },
+      },
+    ],
+    taskInputs: [
+      {
+        type: "task.signal.runtime.normalize",
+        taskId: "task.runtime.normalize",
+      },
+    ],
+  });
+
+  assert.deepEqual(normalized.actions, [
+    {
+      type: "launchPlayable",
+      playableId: "playable.runtime.payload.normalize",
+      integrationId: "playable.runtime.payload.normalize.external.default",
+      ownerContext: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+      payload: {
+        source: "normalize-test",
+        retries: 2,
+      },
+    },
+  ]);
+  assert.deepEqual(normalized.taskInputs, [
+    {
+      type: "task.signal.runtime.normalize",
+      taskId: "task.runtime.normalize",
     },
   ]);
 });

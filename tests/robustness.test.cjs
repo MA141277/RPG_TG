@@ -340,6 +340,40 @@ test("runtime-pack import keeps derived flow launch actions on a dedicated rehyd
   assert.doesNotMatch(mapImportedEventsBlock, /actions:\s*eventDefinition\.actions \?\? \[\]/);
 });
 
+test("runtime-pack import keeps playable action rehydration off the destination seam", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/runtime-pack-import.ts"
+    ),
+    "utf8"
+  );
+  const mapImportedEventsBlock =
+    source.match(
+      /function mapImportedEvents\([\s\S]*?\n}\n\nfunction mapImportedMenuResources/
+    )?.[0] ?? "";
+  const importedDestinationBlock =
+    source.match(
+      /function readImportedMinigameDestinationAction\([\s\S]*?\n}\n\nfunction rehydrateImportedEventActions/
+    )?.[0] ?? "";
+
+  assert.match(source, /function readImportedMinigameDestinationAction\(/);
+  assert.match(
+    importedDestinationBlock,
+    /scriptEditorSource !== SCRIPT_EDITOR_DERIVED_EVENT_DESTINATION_SOURCE/
+  );
+  assert.match(importedDestinationBlock, /return \{ action, minigameId \}/);
+  assert.match(mapImportedEventsBlock, /const importedMinigameDestination =/);
+  assert.match(
+    mapImportedEventsBlock,
+    /readImportedMinigameDestinationAction\(\s*eventDefinition\.actions \?\? \[\]/
+  );
+  assert.match(
+    mapImportedEventsBlock,
+    /action !== importedMinigameDestination\.action/
+  );
+});
+
 test("script editor items scenario pack loader hydrates items from manifest files", async () => {
   const loader = await import("../.test-dist/application/scenario/scenario-pack-loader.js");
   const files = [
