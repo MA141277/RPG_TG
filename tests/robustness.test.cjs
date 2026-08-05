@@ -4771,6 +4771,114 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
   );
 });
 
+test("campaign cloud volume lighting uses explicit density and light transport helpers", () => {
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+
+  assert.match(
+    shaderSource,
+    /float sampleCloudBaseDistribution\(\s*vec3 point,\s*float time\s*\)/,
+    "Expected a named broad 3D cloud distribution helper."
+  );
+  assert.match(
+    shaderSource,
+    /vec3 curlWarpCloudPoint\(\s*vec3 point,\s*float time\s*\)/,
+    "Expected high-frequency detail to be curl-warped before erosion sampling."
+  );
+  assert.match(
+    shaderSource,
+    /float sampleCloudDetailErosion\(\s*vec3 point,\s*float time\s*\)/,
+    "Expected a named erosion helper for broken cloud edges and internal ridges."
+  );
+  assert.match(
+    shaderSource,
+    /float sampleCloudHeightEnvelope\(\s*float heightRatio\s*\)/,
+    "Expected height shaping to stay explicit instead of becoming a uniform fog sheet."
+  );
+  assert.match(
+    shaderSource,
+    /float sampleCloudDensity\(\s*MapSpaceCloudRay ray,\s*vec3 point,\s*vec3 columnPoint,\s*float time,\s*out float textureValue\s*\)/,
+    "Expected the final density helper to combine broad coverage, erosion, height, and texture signal."
+  );
+  assert.match(
+    shaderSource,
+    /float beerLambert\(\s*float opticalDepth\s*,\s*float extinction\s*\)/,
+    "Expected Beer-Lambert transmittance to drive thickness and light absorption."
+  );
+  assert.match(
+    shaderSource,
+    /float cloudPhaseFunction\(\s*float viewDotLight\s*,\s*float anisotropy\s*\)/,
+    "Expected a bounded phase function for directional cloud lighting."
+  );
+  assert.match(
+    shaderSource,
+    /float sampleLightOpticalDepth\(\s*vec3 point,\s*vec3 sunDirection,\s*float time\s*\)/,
+    "Expected a short lightmarch helper for cloud self-shadowing."
+  );
+  assert.match(
+    shaderSource,
+    /vec3 computeSingleScattering\(\s*float density,\s*float viewTransmittance,\s*float lightTransmittance,\s*float phase\s*\)/,
+    "Expected single scattering to be computed from density, view transmittance, light transmittance, and phase."
+  );
+  assert.match(
+    shaderSource,
+    /vec3 computeMultipleScatteringApprox\(\s*float density,\s*float lightOpticalDepth,\s*float viewDotLight\s*\)/,
+    "Expected multiple scattering to be an explicit fill-light approximation."
+  );
+  assert.match(
+    shaderSource,
+    /for \(int scatteringOctave = 0; scatteringOctave < MAX_CLOUD_SCATTERING_OCTAVES; scatteringOctave \+= 1\)/,
+    "Expected multiple scattering to use a bounded WebGL 1 octave loop."
+  );
+  assert.match(
+    shaderSource,
+    /const int MAX_CLOUD_LIGHT_STEPS = [345];/,
+    "Expected the lightmarch budget to stay short."
+  );
+  assert.match(
+    shaderSource,
+    /const int MAX_CLOUD_SCATTERING_OCTAVES = [234];/,
+    "Expected the multiple-scattering approximation to stay low-octave."
+  );
+  assert.match(
+    shaderSource,
+    /const int MAX_MAP_SPACE_CLOUD_STEPS = 8;/,
+    "The main raymarch budget must not be raised to hide flat density."
+  );
+});
+
+test("campaign cloud volume lighting preserves renderer boundaries", () => {
+  const cloudSource = readSource("src/ui/views/map/campaign-cloud-webgl.ts");
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+  const revealMaskSource = readSource("src/ui/views/map/campaign-cloud-reveal-mask.ts");
+  const mainSource = readSource("src/main.ts");
+
+  assert.doesNotMatch(
+    mainSource,
+    /sampleLightOpticalDepth|computeSingleScattering|computeMultipleScatteringApprox|MAX_CLOUD_LIGHT_STEPS/,
+    "main.ts must not participate in cloud lighting or scattering implementation."
+  );
+  assert.doesNotMatch(
+    cloudSource,
+    /sampleHeightAtUv|mapHeightUrl|data-map-height|map_heights/,
+    "Cloud renderer must not sample terrain height data while upgrading lighting."
+  );
+  assert.match(
+    shaderSource,
+    /vec4 sampleMapSpaceVolumetricCloud\(\s*MapSpaceCloudRay ray,\s*float time,\s*out float visibleTexture\s*\)/,
+    "The existing map-space cloud body path should remain the primary cloud integration point."
+  );
+  assert.match(
+    shaderSource,
+    /vec2 revealUv = getMapSpaceCloudRevealUv\(ray\);/,
+    "Reveal holes should still be derived from the same terrain-projected cloud ray."
+  );
+  assert.doesNotMatch(
+    revealMaskSource,
+    /sampleLightOpticalDepth|computeSingleScattering|computeMultipleScatteringApprox/,
+    "Reveal mask generation must not own lighting or scattering behavior."
+  );
+});
+
 test("campaign cloud texture scale has a dedicated runtime slider", () => {
   const mapViewSource = readSource("src/ui/views/map/map-view.ts");
   const mainSource = readSource("src/main.ts");

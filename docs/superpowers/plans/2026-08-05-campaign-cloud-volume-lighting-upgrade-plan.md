@@ -21,11 +21,11 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `running`
 - Last Updated: `2026-08-05`
-- Current Focus: `Plan created from the approved campaign cloud volume lighting spec.`
-- Next Step: `Choose Subagent-Driven or Inline Execution before implementation starts.`
-- Verification: `Plan authoring only; production code not modified.`
+- Current Focus: `Task 2: implement 3D cloud density and erosion.`
+- Next Step: `Start Task 2 from the first unchecked step.`
+- Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting" tests/robustness.test.cjs } failed as expected on missing sampleCloudBaseDistribution.`
 - Notes: `Do not mark this child closed until implementation verification, structured closeout, project-progress sync, and remote push success are recorded.`
 
 ## Progress Log
@@ -34,6 +34,10 @@
   - Summary: `Created the implementation plan for upgrading the existing campaign cloud shader density, single scattering, and multiple-scattering fill-light path.`
   - Verification: `Pending npm run lint:plans after plan creation.`
   - Next: `Ask the user to choose Subagent-Driven or Inline Execution.`
+- 2026-08-05
+  - Summary: `Started inline execution and added red source-contract tests for campaign cloud density, lightmarch, single scattering, and multiple-scattering ownership.`
+  - Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting" tests/robustness.test.cjs } failed as expected on missing sampleCloudBaseDistribution; boundary preservation test passed.`
+  - Next: `Implement Task 2 shader density and curl-warped erosion helpers.`
 
 ---
 
@@ -130,7 +134,7 @@
 - Consumes: existing `readSource(path)` helper in `tests/robustness.test.cjs`.
 - Produces: source-contract tests named `campaign cloud volume lighting uses explicit density and light transport helpers` and `campaign cloud volume lighting preserves renderer boundaries`.
 
-- [ ] **Step 1: Add the failing density and light transport test**
+- [x] **Step 1: Add the failing density and light transport test**
 
 Add this test near the existing campaign cloud tests in `tests/robustness.test.cjs`, after the map-space volumetric slab test:
 
@@ -211,7 +215,7 @@ test("campaign cloud volume lighting uses explicit density and light transport h
 });
 ```
 
-- [ ] **Step 2: Add the failing boundary preservation test**
+- [x] **Step 2: Add the failing boundary preservation test**
 
 Add this test near the same cloud test group:
 
@@ -250,7 +254,7 @@ test("campaign cloud volume lighting preserves renderer boundaries", () => {
 });
 ```
 
-- [ ] **Step 3: Run the targeted tests and confirm they fail**
+- [x] **Step 3: Run the targeted tests and confirm they fail**
 
 Run:
 
@@ -262,7 +266,7 @@ Expected:
 
 - `FAIL` because the new shader helpers do not exist yet.
 
-- [ ] **Step 4: Commit Task 1**
+- [x] **Step 4: Commit Task 1**
 
 Run:
 
@@ -275,7 +279,7 @@ Expected:
 
 - Commit succeeds.
 
-- [ ] **Step 5: Sync progress**
+- [x] **Step 5: Sync progress**
 
 Update this plan:
 
