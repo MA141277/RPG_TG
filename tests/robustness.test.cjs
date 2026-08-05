@@ -307,6 +307,39 @@ test("script editor items export to scenario pack files without legacy valuables
   assert.equal(Object.hasOwn(items[0], "count"), false);
 });
 
+test("runtime-pack import keeps derived flow launch actions on a dedicated rehydration seam", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "application",
+      "runtime-pack-import.ts"
+    ),
+    "utf8"
+  );
+  const mapImportedEventsBlock =
+    source.match(
+      /function mapImportedEvents\([\s\S]*?\n}\n\nfunction mapImportedMenuResources/
+    )?.[0] ?? "";
+  const rehydrateBlock =
+    source.match(
+      /function rehydrateImportedEventActions\([\s\S]*?\n}\n\nfunction normalizeImportedConfigValueType/
+    )?.[0] ?? "";
+  const importedFlowIndexBlock =
+    source.match(
+      /function createImportedFlowIdByIntegrationId\([\s\S]*?\n}\n\nfunction rehydrateImportedEventActions/
+    )?.[0] ?? "";
+
+  assert.match(source, /function createImportedFlowIdByIntegrationId\(/);
+  assert.match(source, /function rehydrateImportedEventActions\(/);
+  assert.match(importedFlowIndexBlock, /createDerivedFlowIntegrationId/);
+  assert.match(rehydrateBlock, /type:\s*"launchFlow"/);
+  assert.match(mapImportedEventsBlock, /rehydrateImportedEventActions\(/);
+  assert.doesNotMatch(mapImportedEventsBlock, /actions:\s*eventDefinition\.actions \?\? \[\]/);
+});
+
 test("script editor items scenario pack loader hydrates items from manifest files", async () => {
   const loader = await import("../.test-dist/application/scenario/scenario-pack-loader.js");
   const files = [

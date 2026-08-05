@@ -13,6 +13,7 @@ const {
   validateScriptEditorProjectForRuntimeExport,
   exportScriptEditorProjectToScenarioPackFiles,
 } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
+const workflow = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 const {
   createInitialState,
 } = require("../.test-dist/application/state/create-initial-state.js");
@@ -390,6 +391,62 @@ test("runtime-pack round trip preserves menu destinations for retained template 
     false
   );
   assert.deepEqual(validateScriptEditorProjectForRuntimeExport(roundTripProject), []);
+});
+
+test("runtime-pack round trip preserves launchFlow event actions as flow-owned payload actions", async () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const flowRecord = {
+    ...workflow.createScriptEditorWorkflowRecordDraft("flows", project),
+    id: "flow.runtime.roundtrip",
+    title: "Runtime Flow Round Trip",
+  };
+  project.flows = [...project.flows, flowRecord];
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "event",
+            targetId: "",
+          },
+          actions: [
+            {
+              type: "launchFlow",
+              flowId: flowRecord.id,
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), []);
+
+  const exportedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const roundTripProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    Object.entries(exportedFiles).map(
+      ([relativePath, content]) => new File([content], relativePath)
+    )
+  );
+  const roundTripEvent = roundTripProject.events.find(
+    (eventRecord) => eventRecord.id === "event.opening"
+  );
+
+  assert.deepEqual(roundTripEvent?.actions, [
+    {
+      type: "launchFlow",
+      flowId: flowRecord.id,
+      ownerContext: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+    },
+  ]);
 });
 
 test("template runtime-pack export preserves aligned zhuyuanzhang startup profile fields", async () => {

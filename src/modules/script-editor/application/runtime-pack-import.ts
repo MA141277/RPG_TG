@@ -259,6 +259,7 @@ export function importScenarioPackToScriptEditorProject(
     )
   );
   const importedMinigames = mapImportedPlayableIntegrations(rawPack);
+  const importedFlows = readPlayableShellsFamily(rawPack);
   const project = {
     schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
     kind: SCRIPT_EDITOR_PROJECT_KIND,
@@ -284,7 +285,7 @@ export function importScenarioPackToScriptEditorProject(
     buildingArrangements: readBuildingArrangementsFamily(rawPack),
     cityEntries: pack.cityEntries ?? [],
     settlements: mapImportedSettlements(rawPack),
-    events: mapImportedEvents(pack.events ?? [], importedMinigames),
+    events: mapImportedEvents(pack.events ?? [], importedMinigames, importedFlows),
     eventBindings: mapImportedEventBindings(rawPack),
     progressTracks: readProgressTrackFamily(rawPack),
     progressTrackBindings: readProgressTrackBindingFamily(rawPack),
@@ -311,7 +312,7 @@ export function importScenarioPackToScriptEditorProject(
       pack.historicalCharacterIdByCharacterId
     ),
     minigames: importedMinigames,
-    flows: readPlayableShellsFamily(rawPack),
+    flows: importedFlows,
     storyNodes: [],
     textEntries: mapTextEntries(pack.textEntries),
     conditionGroups: [],
@@ -446,10 +447,13 @@ function createStoryPackRecord(
 
 function mapImportedEvents(
   events: EventDefinition[],
-  importedMinigames: ScriptEditorProjectDefinition["minigames"]
+  importedMinigames: ScriptEditorProjectDefinition["minigames"],
+  importedFlows: ScriptEditorProjectDefinition["flows"]
 ): ScriptEditorEventRecord[] {
   const importedMinigameIdByIntegrationId =
     createImportedMinigameIdByIntegrationId(importedMinigames);
+  const importedFlowIdByIntegrationId =
+    createImportedFlowIdByIntegrationId(importedFlows);
   return events.map((eventDefinition) => {
     const importedEvent = eventDefinition as EventDefinition & {
       title?: string;
@@ -495,10 +499,16 @@ function mapImportedEvents(
           : eventDefinition.nextEventId ?? "";
     const importedActions =
       destinationFamily === "menu"
-        ? (eventDefinition.actions ?? []).filter(
-            (action) => action.type !== "openCityMenuPanel"
+        ? rehydrateImportedEventActions(
+            (eventDefinition.actions ?? []).filter(
+              (action) => action.type !== "openCityMenuPanel"
+            ),
+            importedFlowIdByIntegrationId
           )
-        : eventDefinition.actions ?? [];
+        : rehydrateImportedEventActions(
+            eventDefinition.actions ?? [],
+            importedFlowIdByIntegrationId
+          );
 
     return {
       id: eventDefinition.id,
@@ -1397,6 +1407,41 @@ function createImportedMinigameIdByIntegrationId(
   );
 }
 
+function createImportedFlowIdByIntegrationId(
+  importedFlows: ScriptEditorProjectDefinition["flows"]
+): Map<string, string> {
+  return new Map(
+    importedFlows.flatMap((flow) => {
+      const flowId = typeof flow.id === "string" ? flow.id.trim() : "";
+      return flowId.length === 0
+        ? []
+        : [[createDerivedFlowIntegrationId(flowId), flowId] as const];
+    })
+  );
+}
+
+function rehydrateImportedEventActions(
+  actions: NonNullable<EventDefinition["actions"]>,
+  importedFlowIdByIntegrationId: Map<string, string>
+): NonNullable<ScriptEditorEventRecord["actions"]> {
+  return actions.map((action) => {
+    if (action.type !== "launchPlayable") {
+      return action;
+    }
+
+    const flowId = importedFlowIdByIntegrationId.get(action.integrationId);
+    if (flowId == null) {
+      return action;
+    }
+
+    return {
+      type: "launchFlow",
+      flowId,
+      ownerContext: action.ownerContext,
+    };
+  });
+}
+
 function normalizeImportedConfigValueType(
   value: unknown
 ): "number" | "text" | "boolean" {
@@ -1435,6 +1480,10 @@ function createDerivedMinigameIntegrationId(
   playableId: string
 ): string {
   return `playable.${playableId}.instance.${minigameId}`;
+}
+
+function createDerivedFlowIntegrationId(flowId: string): string {
+  return `playable.${flowId}.default`;
 }
 
 function readArrayFamily(
