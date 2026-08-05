@@ -147,8 +147,18 @@ export function normalizeScriptEditorMinigameRecord(
     title: normalizeString(record.title, record.id),
     description: normalizeOptionalString(record.description),
     playableId: normalizeOptionalString(record.playableId),
+    integrationId: normalizeOptionalString(record.integrationId),
+    settlementId: normalizeOptionalString(record.settlementId),
+    ownerKind: normalizeOwnerKind(record.ownerKind),
+    ownerId: normalizeOptionalString(record.ownerId),
+    returnPolicy: normalizeReturnPolicy(record.returnPolicy),
+    triggerId: normalizeOptionalString(record.triggerId),
+    triggerSource: normalizeTriggerSource(record.triggerSource),
+    triggerEvent: normalizeOptionalString(record.triggerEvent),
+    launchPayload: normalizeKeyValueEntries(record.launchPayload),
     configEntries: normalizeConfigEntries(record.configEntries),
     settlementRoutes: normalizeSettlementRoutes(record.settlementRoutes),
+    outcomeRoutes: normalizeOutcomeRoutes(record.outcomeRoutes),
     notes: normalizeOptionalString(record.notes),
   };
 }

@@ -13,6 +13,8 @@
   type ScriptEditorStoryPackRecord,
 } from "../domain/script-editor-project";
 import { formalizeScriptEditorProjectMenus } from "./menu-authoring";
+import { normalizeScriptEditorFlowRecord } from "./flow-authoring";
+import { normalizeScriptEditorMinigameRecord } from "./minigame-binding-authoring";
 import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
@@ -226,11 +228,16 @@ export function parseScriptEditorProject(
     storyNodes: ((value.storyNodes) as ScriptEditorProjectDefinition["storyNodes"]).map(
       (storyNode) => normalizeScriptEditorStoryNodeRecord(storyNode)
     ),
+    minigames: (value.minigames as ScriptEditorProjectDefinition["minigames"]).map(
+      (minigame) => normalizeScriptEditorMinigameRecord(minigame)
+    ),
+    flows: ((value.flows ?? []) as ScriptEditorProjectDefinition["flows"]).map((flow) =>
+      normalizeScriptEditorFlowRecord(flow)
+    ),
     menuResources:
       (value.menuResources ?? []) as ScriptEditorProjectDefinition["menuResources"],
     menuInstances:
       (value.menuInstances ?? []) as ScriptEditorProjectDefinition["menuInstances"],
-    flows: (value.flows ?? []) as ScriptEditorProjectDefinition["flows"],
   });
 }
 

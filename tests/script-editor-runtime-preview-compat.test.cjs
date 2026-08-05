@@ -13,9 +13,15 @@ const {
   parseScriptEditorProject,
 } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
 const {
+  normalizeScriptEditorFlowRecord,
+} = require("../.test-dist/modules/script-editor/application/flow-authoring.js");
+const {
   validateScriptEditorProjectForRuntimeExport,
   exportScriptEditorProjectToScenarioPackFiles,
 } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
+const {
+  normalizeScriptEditorMinigameRecord,
+} = require("../.test-dist/modules/script-editor/application/minigame-binding-authoring.js");
 const {
   normalizeScriptEditorEventBindingRecord,
   normalizeScriptEditorEventRecord,
@@ -1373,6 +1379,170 @@ test("script-editor project parse normalizes story-node authoring at the entry s
       relatedEventIds: [" event.keep.raw "],
     },
   ]);
+});
+
+test("flow normalization preserves canonical launch headline fields", () => {
+  const normalized = normalizeScriptEditorFlowRecord({
+    id: " flow.runtime.normalize ",
+    title: " 玩法流程 ",
+    description: " 流程描述 ",
+    initialNodeId: " node.opening ",
+    nodes: [
+      { id: "node.opening", type: "text", text: "", nextNodeId: "node.complete" },
+      { id: "node.complete", type: "complete", outcome: "success", detail: {} },
+    ],
+    outcomeRoutes: [],
+    notes: " 流程备注 ",
+  });
+
+  assert.equal(normalized.id, "flow.runtime.normalize");
+  assert.equal(normalized.title, "玩法流程");
+  assert.equal(normalized.description, "流程描述");
+  assert.equal(normalized.initialNodeId, "node.opening");
+  assert.equal(normalized.notes, "流程备注");
+});
+
+test("minigame normalization preserves canonical launch headline fields", () => {
+  const normalized = normalizeScriptEditorMinigameRecord({
+    id: " minigame.runtime.normalize ",
+    title: " 小游戏 ",
+    description: " 玩法描述 ",
+    playableId: " activity-qte ",
+    integrationId: " playable.activity-qte.instance.runtime.normalize ",
+    settlementId: " settlement.runtime.normalize ",
+    ownerKind: "external",
+    ownerId: " runtime.normalize.owner ",
+    returnPolicy: "close-only",
+    triggerId: " trigger.runtime.normalize ",
+    triggerSource: "manual",
+    triggerEvent: " manual-launch ",
+    launchPayload: [{ key: " source ", value: " event-action " }],
+    configEntries: [],
+    settlementRoutes: [],
+    outcomeRoutes: [
+      {
+        id: " outcome-route.runtime.normalize ",
+        outcome: "success",
+        handoffPolicy: "close-only",
+        summary: " 成功 ",
+        effectHint: " 结果 ",
+      },
+    ],
+    notes: " 玩法备注 ",
+  });
+
+  assert.equal(normalized.id, " minigame.runtime.normalize ");
+  assert.equal(normalized.title, "小游戏");
+  assert.equal(normalized.description, "玩法描述");
+  assert.equal(normalized.playableId, "activity-qte");
+  assert.equal(
+    normalized.integrationId,
+    "playable.activity-qte.instance.runtime.normalize"
+  );
+  assert.equal(normalized.settlementId, "settlement.runtime.normalize");
+  assert.equal(normalized.ownerKind, "external");
+  assert.equal(normalized.ownerId, "runtime.normalize.owner");
+  assert.equal(normalized.returnPolicy, "close-only");
+  assert.equal(normalized.triggerId, "trigger.runtime.normalize");
+  assert.equal(normalized.triggerSource, "manual");
+  assert.equal(normalized.triggerEvent, "manual-launch");
+  assert.deepEqual(normalized.launchPayload, [
+    { key: "source", value: "event-action" },
+  ]);
+  assert.deepEqual(normalized.outcomeRoutes, [
+    {
+      id: "outcome-route.runtime.normalize",
+      outcome: "success",
+      handoffPolicy: "close-only",
+      summary: "成功",
+      effectHint: "结果",
+    },
+  ]);
+  assert.equal(normalized.notes, "玩法备注");
+});
+
+test("script-editor project parse normalizes minigame and flow authoring at the entry seam", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.flows = [
+    {
+      id: " flow.runtime.parse ",
+      title: " 玩法流程 ",
+      description: " 流程描述 ",
+      initialNodeId: " node.opening ",
+      nodes: [
+        { id: "node.opening", type: "text", text: "", nextNodeId: "node.complete" },
+        { id: "node.complete", type: "complete", outcome: "success", detail: {} },
+      ],
+      outcomeRoutes: [],
+      notes: " 流程备注 ",
+    },
+  ];
+  project.minigames = [
+    {
+      id: " minigame.runtime.parse ",
+      title: " 小游戏 ",
+      description: " 玩法描述 ",
+      playableId: " activity-qte ",
+      integrationId: " playable.activity-qte.instance.runtime.parse ",
+      settlementId: " settlement.runtime.parse ",
+      ownerKind: "external",
+      ownerId: " runtime.parse.owner ",
+      returnPolicy: "close-only",
+      triggerId: " trigger.runtime.parse ",
+      triggerSource: "manual",
+      triggerEvent: " manual-launch ",
+      launchPayload: [{ key: " source ", value: " event-action " }],
+      configEntries: [],
+      settlementRoutes: [],
+      outcomeRoutes: [
+        {
+          id: " outcome-route.runtime.parse ",
+          outcome: "success",
+          handoffPolicy: "close-only",
+          summary: " 成功 ",
+          effectHint: " 结果 ",
+        },
+      ],
+      notes: " 玩法备注 ",
+    },
+  ];
+
+  const parsed = parseScriptEditorProject(project);
+
+  assert.equal(parsed.flows[0]?.id, "flow.runtime.parse");
+  assert.equal(parsed.flows[0]?.title, "玩法流程");
+  assert.equal(parsed.flows[0]?.description, "流程描述");
+  assert.equal(parsed.flows[0]?.initialNodeId, "node.opening");
+  assert.equal(parsed.flows[0]?.notes, "流程备注");
+
+  assert.equal(parsed.minigames[0]?.id, " minigame.runtime.parse ");
+  assert.equal(parsed.minigames[0]?.title, "小游戏");
+  assert.equal(parsed.minigames[0]?.description, "玩法描述");
+  assert.equal(parsed.minigames[0]?.playableId, "activity-qte");
+  assert.equal(
+    parsed.minigames[0]?.integrationId,
+    "playable.activity-qte.instance.runtime.parse"
+  );
+  assert.equal(parsed.minigames[0]?.settlementId, "settlement.runtime.parse");
+  assert.equal(parsed.minigames[0]?.ownerKind, "external");
+  assert.equal(parsed.minigames[0]?.ownerId, "runtime.parse.owner");
+  assert.equal(parsed.minigames[0]?.returnPolicy, "close-only");
+  assert.equal(parsed.minigames[0]?.triggerId, "trigger.runtime.parse");
+  assert.equal(parsed.minigames[0]?.triggerSource, "manual");
+  assert.equal(parsed.minigames[0]?.triggerEvent, "manual-launch");
+  assert.deepEqual(parsed.minigames[0]?.launchPayload, [
+    { key: "source", value: "event-action" },
+  ]);
+  assert.deepEqual(parsed.minigames[0]?.outcomeRoutes, [
+    {
+      id: "outcome-route.runtime.parse",
+      outcome: "success",
+      handoffPolicy: "close-only",
+      summary: "成功",
+      effectHint: "结果",
+    },
+  ]);
+  assert.equal(parsed.minigames[0]?.notes, "玩法备注");
 });
 
 test("template runtime-pack export preserves aligned zhuyuanzhang startup profile fields", async () => {
