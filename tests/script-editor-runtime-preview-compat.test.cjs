@@ -822,6 +822,85 @@ test("runtime-pack export rejects openCityMenuPanel actions with unsupported pan
   ]);
 });
 
+test("runtime-pack export rejects launchPlayable actions that reference missing integrations", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "event",
+            targetId: "",
+          },
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "activity-qte",
+              integrationId: "playable.activity-qte.instance.missing",
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), [
+    {
+      code: "missing-reference",
+      fieldPath: "project.events[0].actions[0].integrationId",
+      message:
+        'Event "event.opening" references missing playable integration "playable.activity-qte.instance.missing".',
+    },
+  ]);
+});
+
+test("runtime-pack export rejects launchPlayable actions whose integration does not match playableId", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const minigameRecord = {
+    ...workflow.createScriptEditorWorkflowRecordDraft("minigames", project),
+    id: "minigame.runtime.integration.mismatch",
+    title: "Integration Mismatch Minigame",
+    playableId: "activity-qte",
+  };
+  project.minigames = [...project.minigames, minigameRecord];
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "event",
+            targetId: "",
+          },
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "grain-accounting",
+              integrationId: `playable.activity-qte.instance.${minigameRecord.id}`,
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), [
+    {
+      code: "invalid-field",
+      fieldPath: "project.events[0].actions[0]",
+      message:
+        'Event "event.opening" uses playable integration "playable.activity-qte.instance.minigame.runtime.integration.mismatch" with mismatched playableId "grain-accounting".',
+    },
+  ]);
+});
+
 test("event authoring normalization preserves runtime payload actions and task inputs", () => {
   const normalized = normalizeScriptEditorEventRecord({
     id: "event.runtime.payload.normalize",

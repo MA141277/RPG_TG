@@ -424,6 +424,8 @@ test("runtime-pack export fails closed on mixed destination and same-family payl
   assert.doesNotMatch(source, /if \(hasRuntimeEventActions\(eventRecord\)\) \{\n    return "";\n  \}/);
   assert.match(source, /references missing flow/);
   assert.match(source, /unsupported city menu panel/);
+  assert.match(source, /references missing playable integration/);
+  assert.match(source, /mismatched playableId/);
 });
 
 test("script editor items scenario pack loader hydrates items from manifest files", async () => {

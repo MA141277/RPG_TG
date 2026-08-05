@@ -1105,7 +1105,10 @@ function materializeScriptEditorPlayableRuntimeFamilies(
       });
       continue;
     }
-    const integrationId = createDerivedMinigameIntegrationId(minigame.id, playableId);
+    const integrationId = resolveScriptEditorMinigameIntegrationId(
+      minigame,
+      playableId
+    );
     const triggerId = createDerivedMinigameTriggerId(minigame.id, playableId);
     const triggerEvent = eventLaunchEventId.length > 0 ? eventLaunchEventId : "manual-launch";
 
@@ -1177,6 +1180,9 @@ function materializeScriptEditorPlayableRuntimeFamilies(
   for (const flow of playableShells) {
     const integrationId = createDerivedFlowIntegrationId(flow.id);
     if (integrationIds.has(integrationId)) {
+      if (playablesById.get(flow.id)?.id === flow.id) {
+        continue;
+      }
       diagnostics.push({
         code: "duplicate-id",
         fieldPath: `project.flows.${flow.id}.integrationId`,
@@ -1224,7 +1230,7 @@ function materializeRuntimeMenuResources(
         typeof minigame.playableId === "string" ? minigame.playableId.trim() : "";
       const integrationId =
         minigameId.length > 0 && playableId.length > 0
-          ? createDerivedMinigameIntegrationId(minigameId, playableId)
+          ? resolveScriptEditorMinigameIntegrationId(minigame, playableId)
           : "";
       return minigameId.length > 0 && integrationId.length > 0
         ? [[minigameId, integrationId] as const]
@@ -1524,6 +1530,19 @@ function createDerivedMinigameIntegrationId(
   playableId: string
 ): string {
   return `playable.${playableId}.instance.${minigameId}`;
+}
+
+function resolveScriptEditorMinigameIntegrationId(
+  minigame: ScriptEditorProjectDefinition["minigames"][number],
+  playableId: string
+): string {
+  const explicitIntegrationId =
+    typeof minigame.integrationId === "string"
+      ? minigame.integrationId.trim()
+      : "";
+  return explicitIntegrationId.length > 0
+    ? explicitIntegrationId
+    : createDerivedMinigameIntegrationId(minigame.id, playableId);
 }
 
 function createDerivedMinigameTriggerId(
@@ -1927,6 +1946,8 @@ function lowerEditorEventsToRuntimeEvents(
       .map((flowRecord) => flowRecord.id)
       .filter((flowId): flowId is string => typeof flowId === "string" && flowId.length > 0)
   );
+  const supportedPlayableIdByIntegrationId =
+    collectSupportedPlayableIdByIntegrationId(project);
   const sourceSettlementIds = new Set(
     project.settlements
       .map((settlementRecord) => settlementRecord.id)
@@ -1958,6 +1979,7 @@ function lowerEditorEventsToRuntimeEvents(
       sourceEventIds,
       sourceTaskIds,
       sourceFlowIds,
+      supportedPlayableIdByIntegrationId,
       sourceSettlementIds,
       minigamesById,
       flowStartEventIds,
@@ -2124,6 +2146,7 @@ function lowerEditorEventToRuntimeEvent(
   sourceEventIds: Set<string>,
   sourceTaskIds: Set<string>,
   sourceFlowIds: Set<string>,
+  supportedPlayableIdByIntegrationId: Map<string, string>,
   sourceSettlementIds: Set<string>,
   minigamesById: Map<string, ScriptEditorProjectDefinition["minigames"][number]>,
   flowStartEventIds: Set<string>,
@@ -2212,6 +2235,7 @@ function lowerEditorEventToRuntimeEvent(
     eventIndex,
     destinationMenuAction ?? destinationLaunchAction,
     sourceFlowIds,
+    supportedPlayableIdByIntegrationId,
     derivedFlowActions,
     diagnostics
   );
@@ -2373,6 +2397,42 @@ function hasRuntimeEventActions(eventRecord: ScriptEditorEventRecord): boolean {
   return Array.isArray(eventRecord.actions) && eventRecord.actions.length > 0;
 }
 
+function collectSupportedPlayableIdByIntegrationId(
+  project: ScriptEditorProjectDefinition
+): Map<string, string> {
+  const integrationIdByPlayableId = new Map<string, string>();
+
+  for (const minigame of project.minigames) {
+    const minigameId = typeof minigame.id === "string" ? minigame.id.trim() : "";
+    const playableId =
+      typeof minigame.playableId === "string" ? minigame.playableId.trim() : "";
+    if (minigameId.length === 0 || playableId.length === 0) {
+      continue;
+    }
+    const explicitIntegrationId =
+      typeof minigame.integrationId === "string"
+        ? minigame.integrationId.trim()
+        : "";
+    if (explicitIntegrationId.length > 0) {
+      integrationIdByPlayableId.set(explicitIntegrationId, playableId);
+    }
+    integrationIdByPlayableId.set(
+      createDerivedMinigameIntegrationId(minigameId, playableId),
+      playableId
+    );
+  }
+
+  for (const flow of project.flows) {
+    const flowId = typeof flow.id === "string" ? flow.id.trim() : "";
+    if (flowId.length === 0) {
+      continue;
+    }
+    integrationIdByPlayableId.set(createDerivedFlowIntegrationId(flowId), flowId);
+  }
+
+  return integrationIdByPlayableId;
+}
+
 function hasRouteOwningEventActions(
   actions: readonly NonNullable<ScriptEditorEventRecord["actions"]>[number][]
 ): boolean {
@@ -2441,6 +2501,7 @@ function lowerEventRouteCommands(
     | null
     | undefined,
   sourceFlowIds: Set<string>,
+  supportedPlayableIdByIntegrationId: Map<string, string>,
   derivedFlowActions: EventRouteCommand[],
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): EventRouteCommand[] | null {
@@ -2528,6 +2589,8 @@ function lowerEventRouteCommands(
       const ownerKind = action.ownerContext.ownerKind;
       const ownerId = action.ownerContext.ownerId;
       const returnPolicy = action.ownerContext.returnPolicy;
+      const playableId = action.playableId.trim();
+      const integrationId = action.integrationId.trim();
       if (
         (ownerKind !== "house" &&
           ownerKind !== "dialogue" &&
@@ -2542,10 +2605,30 @@ function lowerEventRouteCommands(
         });
         return null;
       }
+      const supportedPlayableId =
+        supportedPlayableIdByIntegrationId.get(integrationId);
+      if (supportedPlayableId == null) {
+        diagnostics.push({
+          code: "missing-reference",
+          fieldPath: `project.events[${eventIndex}].actions[${actionIndex}].integrationId`,
+          message:
+            `Event "${eventRecord.id}" references missing playable integration "${integrationId}".`,
+        });
+        return null;
+      }
+      if (supportedPlayableId !== playableId) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
+          message:
+            `Event "${eventRecord.id}" uses playable integration "${integrationId}" with mismatched playableId "${playableId}".`,
+        });
+        return null;
+      }
       actions.push({
         type: "launchPlayable",
-        playableId: action.playableId.trim(),
-        integrationId: action.integrationId.trim(),
+        playableId,
+        integrationId,
         ownerContext: {
           ownerKind,
           ownerId:
@@ -2666,7 +2749,10 @@ function lowerEventDestinationLaunchAction(
   if (playableId == null) {
     return null;
   }
-  const integrationId = createDerivedMinigameIntegrationId(minigame.id, playableId);
+  const integrationId = resolveScriptEditorMinigameIntegrationId(
+    minigame,
+    playableId
+  );
 
   return {
     type: "launchPlayable",
