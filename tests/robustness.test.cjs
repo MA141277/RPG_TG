@@ -399,6 +399,22 @@ test("runtime-pack import keeps menu action rehydration off the destination seam
   assert.match(mapImportedEventsBlock, /action !== importedMenuDestinationAction/);
 });
 
+test("script-editor project parse keeps event authoring normalization on one entry seam", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/editor-project-loader.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /normalizeScriptEditorEventRecord/);
+  assert.match(
+    source,
+    /events:\s*\(value\.events as ScriptEditorProjectDefinition\["events"\]\)\.map\(\(event\)\s*=>\s*normalizeScriptEditorEventRecord\(event\)\s*\)/
+  );
+});
+
 test("runtime-pack export fails closed on mixed destination and same-family payload actions", () => {
   const source = fs.readFileSync(
     path.join(

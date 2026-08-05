@@ -1,4 +1,6 @@
 ﻿import type { DialogueSide } from "../../../domain/dialogue";
+import type { EventRouteCommand } from "../../../domain/event";
+import type { RuntimeTaskInput } from "../../../core/contracts/runtime-result";
 import type {
   ScriptEditorDialogueCastRecord,
   ScriptEditorDialogueFollowUp,
@@ -573,8 +575,10 @@ export function normalizeScriptEditorEventRecord(
     tags: normalizeStringArray(record.tags),
     triggerTiming: normalizeEventTriggerTiming(record.triggerTiming),
     repeatable: record.repeatable === true,
-    nextEventId: normalizeOptionalString(record.nextEventId),
+    nextEventId: normalizeOptionalTrimmedString(record.nextEventId),
     destination: normalizeEventDestination(record.destination),
+    actions: normalizeEventRouteCommands(record.actions),
+    taskInputs: normalizeEventTaskInputs(record.taskInputs),
     relations: {
       storyNodeId: normalizeOptionalString(record.relations?.storyNodeId),
       personIds: normalizeStringArray(record.relations?.personIds, {
@@ -592,6 +596,117 @@ export function normalizeScriptEditorEventRecord(
       validationNotes: normalizeOptionalString(record.previewSummary?.validationNotes),
     },
   };
+}
+
+function normalizeEventRouteCommands(
+  actions: ScriptEditorEventRecord["actions"]
+): NonNullable<ScriptEditorEventRecord["actions"]> {
+  if (!Array.isArray(actions)) {
+    return [];
+  }
+
+  return actions.map((action) => normalizeEventRouteCommand(action));
+}
+
+function normalizeEventRouteCommand(action: EventRouteCommand): EventRouteCommand {
+  if (action == null || typeof action !== "object" || Array.isArray(action)) {
+    return action;
+  }
+
+  const actionRecord = action as Record<string, unknown>;
+  const actionType = normalizeOptionalTrimmedString(actionRecord.type);
+  if (actionType === "closeBuilding") {
+    return { type: "closeBuilding" };
+  }
+
+  if (actionType === "openCityMenuPanel") {
+    return {
+      ...actionRecord,
+      type: "openCityMenuPanel",
+      panelId: normalizeOptionalTrimmedString(actionRecord.panelId),
+    } as EventRouteCommand;
+  }
+
+  if (actionType === "launchFlow") {
+    return {
+      ...actionRecord,
+      type: "launchFlow",
+      flowId: normalizeOptionalTrimmedString(actionRecord.flowId),
+      ownerContext: normalizeEventActionOwnerContext(actionRecord.ownerContext),
+    } as EventRouteCommand;
+  }
+
+  if (actionType === "launchPlayable") {
+    return {
+      ...actionRecord,
+      type: "launchPlayable",
+      playableId: normalizeOptionalTrimmedString(actionRecord.playableId),
+      integrationId: normalizeOptionalTrimmedString(actionRecord.integrationId),
+      ownerContext: normalizeEventActionOwnerContext(actionRecord.ownerContext),
+    } as EventRouteCommand;
+  }
+
+  return {
+    ...actionRecord,
+    ...(actionType.length === 0 ? {} : { type: actionType }),
+  } as EventRouteCommand;
+}
+
+function normalizeEventActionOwnerContext(
+  value: unknown
+): Record<string, unknown> | undefined {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const ownerContext = value as Record<string, unknown>;
+  return {
+    ...ownerContext,
+    ...(typeof ownerContext.ownerKind === "string"
+      ? { ownerKind: ownerContext.ownerKind.trim() }
+      : {}),
+    ...(ownerContext.ownerId === null
+      ? { ownerId: null }
+      : typeof ownerContext.ownerId === "string"
+        ? { ownerId: normalizeOptionalTrimmedString(ownerContext.ownerId) }
+      : {}),
+    ...(typeof ownerContext.returnPolicy === "string"
+      ? { returnPolicy: ownerContext.returnPolicy.trim() }
+      : {}),
+  };
+}
+
+function normalizeEventTaskInputs(
+  taskInputs: ScriptEditorEventRecord["taskInputs"]
+): NonNullable<ScriptEditorEventRecord["taskInputs"]> {
+  if (!Array.isArray(taskInputs)) {
+    return [];
+  }
+
+  return taskInputs.map((taskInput) => normalizeEventTaskInput(taskInput));
+}
+
+function normalizeEventTaskInput(taskInput: RuntimeTaskInput): RuntimeTaskInput {
+  if (taskInput == null || typeof taskInput !== "object" || Array.isArray(taskInput)) {
+    return taskInput;
+  }
+
+  const taskInputRecord = taskInput as Record<string, unknown>;
+  return {
+    ...taskInputRecord,
+    ...(typeof taskInputRecord.type === "string"
+      ? { type: taskInputRecord.type.trim() }
+      : {}),
+    ...(typeof taskInputRecord.taskId === "string"
+      ? { taskId: taskInputRecord.taskId.trim() }
+      : {}),
+    ...(typeof taskInputRecord.source === "string"
+      ? { source: taskInputRecord.source.trim() }
+      : {}),
+    ...(typeof taskInputRecord.occurredAt === "string"
+      ? { occurredAt: taskInputRecord.occurredAt.trim() }
+      : {}),
+  } as RuntimeTaskInput;
 }
 
 export function normalizeScriptEditorSettlementRecord(
@@ -1559,7 +1674,7 @@ function omitEmptyEventBindingConditionItemFields(
 function normalizeEventDestination(destination?: ScriptEditorEventDestination): ScriptEditorEventDestination {
   return {
     family: normalizeEventDestinationFamily(destination?.family),
-    targetId: normalizeOptionalString(destination?.targetId),
+    targetId: normalizeOptionalTrimmedString(destination?.targetId),
   };
 }
 

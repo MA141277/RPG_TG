@@ -15,7 +15,10 @@
 import { formalizeScriptEditorProjectMenus } from "./menu-authoring";
 import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
-import { normalizeScriptEditorDialogueRecord } from "./story-dialogue-event-authoring";
+import {
+  normalizeScriptEditorDialogueRecord,
+  normalizeScriptEditorEventRecord,
+} from "./story-dialogue-event-authoring";
 
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
   "buildingArrangements",
@@ -190,6 +193,9 @@ export function parseScriptEditorProject(
     ),
     people: (value.people as Record<string, unknown>[]).map((person) =>
       normalizeScriptEditorPersonRecord(person, { portraitVariants })
+    ),
+    events: (value.events as ScriptEditorProjectDefinition["events"]).map((event) =>
+      normalizeScriptEditorEventRecord(event)
     ),
     dialogues: (value.dialogues as ScriptEditorProjectDefinition["dialogues"]).map(
       (dialogue) => normalizeScriptEditorDialogueRecord(dialogue)

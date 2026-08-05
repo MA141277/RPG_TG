@@ -10,6 +10,9 @@ const {
   loadScriptEditorProjectFromScenarioPackUrl,
 } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 const {
+  parseScriptEditorProject,
+} = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
+const {
   validateScriptEditorProjectForRuntimeExport,
   exportScriptEditorProjectToScenarioPackFiles,
 } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
@@ -915,13 +918,13 @@ test("event authoring normalization preserves runtime payload actions and task i
     },
     actions: [
       {
-        type: "launchPlayable",
-        playableId: "playable.runtime.payload.normalize",
-        integrationId: "playable.runtime.payload.normalize.external.default",
+        type: " launchPlayable ",
+        playableId: " playable.runtime.payload.normalize ",
+        integrationId: " playable.runtime.payload.normalize.external.default ",
         ownerContext: {
-          ownerKind: "external",
-          ownerId: null,
-          returnPolicy: "close-only",
+          ownerKind: " external ",
+          ownerId: " ",
+          returnPolicy: " close-only ",
         },
         payload: {
           source: "normalize-test",
@@ -931,8 +934,10 @@ test("event authoring normalization preserves runtime payload actions and task i
     ],
     taskInputs: [
       {
-        type: "task.signal.runtime.normalize",
-        taskId: "task.runtime.normalize",
+        type: " task.signal.runtime.normalize ",
+        taskId: " task.runtime.normalize ",
+        source: " event.runtime.payload.normalize ",
+        occurredAt: " runtime.now ",
       },
     ],
   });
@@ -944,7 +949,7 @@ test("event authoring normalization preserves runtime payload actions and task i
       integrationId: "playable.runtime.payload.normalize.external.default",
       ownerContext: {
         ownerKind: "external",
-        ownerId: null,
+        ownerId: "",
         returnPolicy: "close-only",
       },
       payload: {
@@ -957,6 +962,78 @@ test("event authoring normalization preserves runtime payload actions and task i
     {
       type: "task.signal.runtime.normalize",
       taskId: "task.runtime.normalize",
+      source: "event.runtime.payload.normalize",
+      occurredAt: "runtime.now",
+    },
+  ]);
+});
+
+test("script-editor project parse normalizes routed event payload authoring at the entry seam", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          nextEventId: " event.followup ",
+          destination: {
+            family: "event",
+            targetId: " event.followup ",
+          },
+          actions: [
+            {
+              type: " launchFlow ",
+              flowId: " flow.runtime.payload.normalize ",
+              ownerContext: {
+                ownerKind: " task ",
+                ownerId: " task.runtime.payload.normalize ",
+                returnPolicy: " resume-owner ",
+              },
+            },
+            {
+              type: " openCityMenuPanel ",
+              panelId: " overview ",
+            },
+          ],
+          taskInputs: [
+            {
+              type: " start ",
+              taskId: " task.runtime.payload.normalize ",
+              occurredAt: " now ",
+            },
+          ],
+        }
+  );
+
+  const parsed = parseScriptEditorProject(project);
+  const openingEvent = parsed.events.find((eventRecord) => eventRecord.id === "event.opening");
+
+  assert.ok(openingEvent);
+  assert.equal(openingEvent.nextEventId, "event.followup");
+  assert.deepEqual(openingEvent.destination, {
+    family: "event",
+    targetId: "event.followup",
+  });
+  assert.deepEqual(openingEvent.actions, [
+    {
+      type: "launchFlow",
+      flowId: "flow.runtime.payload.normalize",
+      ownerContext: {
+        ownerKind: "task",
+        ownerId: "task.runtime.payload.normalize",
+        returnPolicy: "resume-owner",
+      },
+    },
+    {
+      type: "openCityMenuPanel",
+      panelId: "overview",
+    },
+  ]);
+  assert.deepEqual(openingEvent.taskInputs, [
+    {
+      type: "start",
+      taskId: "task.runtime.payload.normalize",
+      occurredAt: "now",
     },
   ]);
 });
