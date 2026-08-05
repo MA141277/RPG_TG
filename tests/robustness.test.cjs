@@ -11084,6 +11084,55 @@ test("temple review assign-duty action container is owned by one helper across h
   assert.doesNotMatch(selectViewModelBlock, /reviewWorkChoices\.map/);
 });
 
+test("temple review assignment-table fallback projection is owned by one helper", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const helperBlock =
+    functionBlocksByName.get("createTempleReviewAssignmentTableProjection") ?? "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+
+  assert.match(
+    helperBlock,
+    /function createTempleReviewAssignmentTableProjection\(/
+  );
+  assert.match(helperBlock, /reviewProgressLead/);
+  assert.match(helperBlock, /createTempleReviewAssignmentRows\(/);
+  assert.match(helperBlock, /createTempleReviewAssignmentTableOverlay\(/);
+  assert.match(legacyBlock, /createTempleReviewAssignmentTableProjection\(/);
+  assert.doesNotMatch(legacyBlock, /reviewProgressLead/);
+  assert.doesNotMatch(legacyBlock, /createTempleReviewAssignmentTableOverlay\(/);
+});
+
 test("temple and keep house content files no longer author pack task definitions", () => {
   const templeContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),
