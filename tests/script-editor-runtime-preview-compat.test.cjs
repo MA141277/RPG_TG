@@ -565,6 +565,79 @@ test("runtime-pack round trip keeps explicit openCityMenuPanel actions on the pa
   ]);
 });
 
+test("runtime-pack export rejects mixed menu destination and menu action authoring", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "menu",
+            targetId: "intel",
+          },
+          actions: [
+            {
+              type: "openCityMenuPanel",
+              panelId: "overview",
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), [
+    {
+      code: "invalid-field",
+      fieldPath: "project.events[0].actions",
+      message:
+        'Event "event.opening" cannot combine destination.family="menu" with explicit openCityMenuPanel payload actions.',
+    },
+  ]);
+});
+
+test("runtime-pack export rejects mixed minigame destination and playable action authoring", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const minigameRecord = {
+    ...workflow.createScriptEditorWorkflowRecordDraft("minigames", project),
+    id: "minigame.runtime.destination.conflict",
+    title: "Destination Conflict Minigame",
+    playableId: "activity-qte",
+  };
+  project.minigames = [...project.minigames, minigameRecord];
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "minigame",
+            targetId: minigameRecord.id,
+          },
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "activity-qte",
+              integrationId: `playable.activity-qte.instance.${minigameRecord.id}`,
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), [
+    {
+      code: "invalid-field",
+      fieldPath: "project.events[0].actions",
+      message:
+        'Event "event.opening" cannot combine destination.family="minigame" with explicit playable payload actions.',
+    },
+  ]);
+});
+
 test("event authoring normalization preserves runtime payload actions and task inputs", () => {
   const normalized = normalizeScriptEditorEventRecord({
     id: "event.runtime.payload.normalize",

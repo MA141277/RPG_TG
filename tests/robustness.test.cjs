@@ -399,6 +399,25 @@ test("runtime-pack import keeps menu action rehydration off the destination seam
   assert.match(mapImportedEventsBlock, /action !== importedMenuDestinationAction/);
 });
 
+test("runtime-pack export fails closed on mixed destination and same-family payload actions", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/runtime-pack-export.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    source,
+    /cannot combine destination\.family="menu" with explicit openCityMenuPanel payload actions/
+  );
+  assert.match(
+    source,
+    /cannot combine destination\.family="minigame" with explicit playable payload actions/
+  );
+});
+
 test("script editor items scenario pack loader hydrates items from manifest files", async () => {
   const loader = await import("../.test-dist/application/scenario/scenario-pack-loader.js");
   const files = [

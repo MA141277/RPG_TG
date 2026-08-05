@@ -2155,6 +2155,15 @@ function lowerEditorEventToRuntimeEvent(
   if (destinationLaunchAction === null) {
     return null;
   }
+  if (
+    !validateExclusiveEventRouteSeams(
+      eventRecord,
+      eventIndex,
+      diagnostics
+    )
+  ) {
+    return null;
+  }
 
   const dialogueId = resolveEventDialogueId(
     eventRecord,
@@ -2355,6 +2364,42 @@ function resolveEventDialogueId(
 
 function hasRuntimeEventActions(eventRecord: ScriptEditorEventRecord): boolean {
   return Array.isArray(eventRecord.actions) && eventRecord.actions.length > 0;
+}
+
+function validateExclusiveEventRouteSeams(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): boolean {
+  const destinationFamily = eventRecord.destination?.family;
+  const actions = eventRecord.actions ?? [];
+  if (
+    destinationFamily === "menu" &&
+    actions.some((action) => action?.type === "openCityMenuPanel")
+  ) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `project.events[${eventIndex}].actions`,
+      message:
+        `Event "${eventRecord.id}" cannot combine destination.family="menu" with explicit openCityMenuPanel payload actions.`,
+    });
+    return false;
+  }
+
+  if (
+    destinationFamily === "minigame" &&
+    actions.some((action) => action?.type === "launchPlayable")
+  ) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `project.events[${eventIndex}].actions`,
+      message:
+        `Event "${eventRecord.id}" cannot combine destination.family="minigame" with explicit playable payload actions.`,
+    });
+    return false;
+  }
+
+  return true;
 }
 
 function lowerEventRouteCommands(
