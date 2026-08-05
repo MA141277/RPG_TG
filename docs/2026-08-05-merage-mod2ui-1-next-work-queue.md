@@ -13,17 +13,17 @@
 2. `B` 启动链统一收尾
 3. `C` 剧本包源统一收尾
 
-这三条线应按顺序推进，而不是混做：
+这三条线在 2026-08-05 后半段已经重新排序：
 
-- 先审计 `B`
-- 再收 `C`
-- `D` 按用户要求暂缓
+- `B` 已冻结观察
+- `C` 已进入 closeout / 文档同步
+- `D` 已明确恢复，并在当前分支继续推进
 
 原因：
 
-- `B` 当前功能风险较低，但仍有 `B4/B5` 的完整链路闭环问题。
-- `C` 已经进入 publication/sync 边界清点阶段，适合在前两条线收稳后集中收口。
-- `D` 虽然 owner 文档最完整，但当前已被明确延后，不应再作为默认下一批。
+- `B` 审计已经确认 covered startup path 未复现新的 runtime drift，当前不应继续默认开刀。
+- `C` 代码和合同已基本收口，剩余主要是 closeout 和记账，不再是默认 runtime 主线。
+- `D` 已恢复并连续推进多批 temple review seam convergence，当前离“只剩宿主 closeout 边界”最近。
 
 ## 执行顺序
 
@@ -133,18 +133,25 @@
 
 **目标**
 
-评议系统当前按用户要求暂缓；只有在你明确恢复这条线时，才重新回到 temple review 剩余 seam。
+继续把 temple review 剩余 shared/host seam 压到只剩明确的宿主 closeout / settlement 边界，然后决定是否结束 generic meeting 收敛，切到下一个 runtime/event 迁移计划。
 
 **入口文档**
 
 - `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md`
 - `docs/superpowers/specs/2026-08-04-review-owner-inventory.md`
 
-**恢复位置**
+**当前进展**
 
-- 从 temple 剩余 `reward / personnel / praise` seam 继续
-- 不把 `assigned` 宿主 settlement seam 重新纳入 shared 化目标
-- 恢复后再补定向测试与 plan 记账
+- `已恢复并连续推进`
+- 已完成的新增收口：
+  - `advice -> assign-duty` follow-up projection helper
+  - `assign-duty` action container helper
+  - fallback `intro -> assignment-table` projection helper
+  - 宿主 `assigned` settlement shell helper
+  - fallback `praise / situation / policy / close-policy-panel` projection helper
+- 当前边界：
+  - `assigned` 宿主 settlement seam 仍保留为宿主 owner
+  - 当前看起来只剩单路径 `finished/idle/root` closeout 需要确认是否仍值得继续抽
 
 ## 交接规则
 
@@ -165,12 +172,12 @@
 
 ## 当前建议
 
-如果下一步只做一件事，优先决定“恢复 `D` 线”还是“把当前 branch-local owner 状态切到 canonical progress”。
+如果下一步只做一件事，优先决定“把当前 branch-local owner 状态切到 canonical progress”还是“正式打开下一条 runtime/event 迁移计划”。
 
 原因：
 
 - `Batch 1` 已完成，startup 线当前没有复现新的 runtime drift。
-- 你已经明确要求先不处理评议系统。
 - `Batch 2` 当前也已完成到“代码与合同已收口”的状态。
-- source-unification plan、主线状态快照与 change-log 当前都已补到 closeout 级别，而且这一批 checkpoint commit / push 已完成。
-- 因此当前最合理的下一步不是再开新的 source-unification family，而是决定接下来要不要恢复 `D` 线，或者先把 branch-local owner 状态提升到 canonical `project-progress`。
+- `Batch 3` 已恢复并推进到 temple review 仅剩少量宿主 closeout 判断。
+- source-unification plan、generic meeting plan、主线状态快照与 change-log 当前都已经多次 checkpoint commit / push。
+- 因此当前最合理的下一步，不再是继续开新的 startup/source-unification family，而是把已恢复的 `D` 线进展同步到更稳定的 owner 文档，或者直接衔接下一个 runtime/event 主线。

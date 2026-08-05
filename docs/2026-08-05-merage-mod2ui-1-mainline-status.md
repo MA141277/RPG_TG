@@ -110,16 +110,18 @@
 
 - D1. owner 冻结与范围盘点：`已完成`
 - D2. keep review 收口到 shared meeting：`已完成`
-- D3. temple review 长链收口：`进行中`
-- D4. reward / personnel / praise 等阶段 owner 收口：`未完成`
+- D3. temple review 长链收口：`已推进到只剩少量宿主 closeout 边界`
+- D4. reward / personnel / praise 等阶段 owner 收口：`当前阶段基本完成`
 - D5. 评议 authored 内容继续下放到剧本包 / shared runtime：`未完成`
-- D6. legacy fallback 清理与全链路验收：`未完成`
+- D6. legacy fallback 清理与全链路验收：`进行中`
 
 判断：
 
-- D 线仍是当前分支里未收口体量最大的一条历史主线，但本轮执行已按用户要求暂停，不作为当前推进方向。
+- D 线已经恢复，且本轮连续推进了多批 temple review seam convergence。
 - 当前已确认 keep hosted review 不再保留第二套正式 owner。
-- temple hosted covered path 已推进到 `assign-duty`，但 reward / personnel / praise / no-meeting fallback / authored 下放 / 全链路验收仍未收口。
+- temple hosted covered path 与 legacy fallback 当前已新增多处单 seam helper：
+  `advice -> assign-duty`、`assign-duty` action container、fallback `intro -> assignment-table`、fallback praise-stage follow-up、以及宿主 `assigned` settlement shell。
+- 当前最可能剩余的仅是宿主单路径 `finished/idle/root` closeout 边界，以及后续 authored 内容继续下放 / 全链路验收。
 - temple `assigned` 结果壳已明确归类为宿主 settlement seam，不再作为默认 shared 化目标。
 
 ### E. 寺庙相关机制按 mod / 剧本包框架收口
