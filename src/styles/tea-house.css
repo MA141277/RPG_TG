@@ -281,9 +281,11 @@
 }
 
 .c-tavern-gamble__seat-melds {
-  display: grid;
-  gap: 6px;
-  justify-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px;
   width: 100%;
 }
 
@@ -291,7 +293,8 @@
   display: grid;
   gap: 4px;
   justify-items: center;
-  width: 100%;
+  flex: 0 0 auto;
+  width: auto;
 }
 
 .c-tavern-gamble__seat-meld-kind {
@@ -365,12 +368,14 @@
 .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-hidden-hand,
 .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-hidden-hand {
   position: absolute;
-  top: 42px;
-  inset-inline: 0;
+  top: 20px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-hidden-hand {
-  justify-content: flex-start;
+  left: -18px;
 }
 
 .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-summary,
@@ -394,15 +399,23 @@
   inset-inline: 0;
 }
 
-.c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-melds,
-.c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-meld-group {
-  justify-items: start;
+.c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-melds {
+  justify-content: flex-start;
 }
 
 .c-tavern-gamble__seat--short-2 {
   top: -2px;
   left: 50%;
   width: min(280px, calc(100% - 320px));
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    "summary hidden"
+    "discards discards"
+    "melds melds";
+  column-gap: 12px;
+  align-items: start;
+  justify-content: center;
   transform: translateX(-50%);
 }
 
@@ -422,12 +435,52 @@
 }
 
 .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-hidden-hand {
+  right: -18px;
+}
+
+.c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-melds {
   justify-content: flex-end;
 }
 
-.c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-melds,
-.c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-meld-group {
-  justify-items: end;
+.c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-hidden-hand .c-tavern-gamble__tile--hidden-hand,
+.c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-hidden-hand .c-tavern-gamble__tile--hidden-hand {
+  margin-inline-end: 0;
+  margin-block-end: calc(var(--tavern-short-hidden-hand-overlap) * -1);
+}
+
+.c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-hidden-hand .c-tavern-gamble__tile--hidden-hand:last-child,
+.c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-hidden-hand .c-tavern-gamble__tile--hidden-hand:last-child {
+  margin-block-end: 0;
+}
+
+.c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-discards,
+.c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-melds {
+  left: 30px;
+  right: 0;
+}
+
+.c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-discards,
+.c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-melds {
+  left: 0;
+  right: 30px;
+}
+
+.c-tavern-gamble__seat--short-2 .c-tavern-gamble__seat-summary {
+  grid-area: summary;
+}
+
+.c-tavern-gamble__seat--short-2 .c-tavern-gamble__seat-hidden-hand {
+  grid-area: hidden;
+  margin-top: 20px;
+  justify-self: start;
+}
+
+.c-tavern-gamble__seat--short-2 .c-tavern-gamble__seat-discards {
+  grid-area: discards;
+}
+
+.c-tavern-gamble__seat--short-2 .c-tavern-gamble__seat-melds {
+  grid-area: melds;
 }
 
 .c-tavern-gamble__seat--0 {
@@ -1310,6 +1363,8 @@
 
   .c-tavern-gamble__seat--short-2 {
     width: min(180px, calc(100% - 160px));
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 8px;
   }
 
   .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-discards,
@@ -1319,7 +1374,19 @@
 
   .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-hidden-hand,
   .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-hidden-hand {
-    top: 38px;
+    top: 16px;
+  }
+
+  .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-discards,
+  .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-melds {
+    left: 24px;
+    right: 0;
+  }
+
+  .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-discards,
+  .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-melds {
+    left: 0;
+    right: 24px;
   }
 
   .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-melds,
