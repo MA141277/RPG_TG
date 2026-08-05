@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-05 Tavern Short Hidden-Hand Layout
+
+### Changed
+- 酒馆短牌左右两侧 NPC 的暗牌 stack 现在改为沿座位外侧竖向重叠排列。
+- 酒馆短牌左右两侧 NPC 的公开弃牌区与吃 / 碰 / 杠区现在轻微向桌面中间收拢，同时保留原有名称与筹码文本锚点。
+- 酒馆短牌顶部 NPC 的暗牌 stack 现在显示在名称 / 筹码摘要块的正右侧，弃牌区与吃 / 碰 / 杠区继续保留在摘要块下方。
+
+### Impact
+- 这次改动仍然是 short-table 的 CSS-owned 布局调整；`hiddenHandTiles`、`meldGroups`、`discardTiles` 与 tavern short runtime 规则都没有变更。
+
 ## 2026-08-05 Tavern Short NPC Hidden Hand Overlay Contract
 
 ### Added
