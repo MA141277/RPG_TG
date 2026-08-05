@@ -228,16 +228,39 @@ function renderShortSeatMeldGroup(input: {
   `;
 }
 
+function renderShortSeatHiddenHand(
+  tiles: Array<{ id: string; tone: "top" | "mid" | "base" }>
+): string {
+  if (tiles.length === 0) {
+    return "";
+  }
+
+  return `
+    <div class="c-tavern-gamble__seat-hidden-hand">
+      ${tiles
+        .map(
+          (tile) => `
+            <span
+              class="c-tavern-gamble__tile c-tavern-gamble__tile--hidden-hand c-tavern-gamble__tile--hidden-hand-${tile.tone}"
+              aria-hidden="true"
+            ></span>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 function getShortSeatSectionOrder(
   tablePosition: "bottom" | "left" | "top" | "right"
-): Array<"summary" | "melds" | "discards"> {
+): Array<"summary" | "hiddenHand" | "melds" | "discards"> {
   if (tablePosition === "bottom") {
-    return ["discards", "melds", "summary"];
+    return ["discards", "melds", "hiddenHand", "summary"];
   }
   if (tablePosition === "left" || tablePosition === "right") {
-    return ["summary", "melds", "discards"];
+    return ["summary", "hiddenHand", "melds", "discards"];
   }
-  return ["summary", "discards", "melds"];
+  return ["summary", "hiddenHand", "discards", "melds"];
 }
 
 function renderShortSeat(
@@ -254,9 +277,10 @@ function renderShortSeat(
       label,
     }));
   const meldGroups = player.meldGroups ?? [];
+  const hiddenHandTiles = player.hiddenHandTiles ?? [];
   const statusLabel = player.statusLabel ?? `已投 ${player.committed}`;
   const tablePosition = player.tablePosition ?? "bottom";
-  const sectionMarkup: Record<"summary" | "melds" | "discards", string> = {
+  const sectionMarkup: Record<"summary" | "hiddenHand" | "melds" | "discards", string> = {
     summary: `
       <div class="c-tavern-gamble__seat-summary">
         <strong>${player.name}</strong>
@@ -264,6 +288,7 @@ function renderShortSeat(
         <small>${statusLabel}</small>
       </div>
     `,
+    hiddenHand: renderShortSeatHiddenHand(hiddenHandTiles),
     melds:
       meldGroups.length === 0
         ? ""

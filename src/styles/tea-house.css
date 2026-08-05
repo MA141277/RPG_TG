@@ -267,6 +267,14 @@
   gap: 0;
 }
 
+.c-tavern-gamble__seat-hidden-hand {
+  min-height: 40px;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 0;
+}
+
 .c-tavern-gamble__seats--short {
   inset: 24px 24px 152px;
   z-index: 2;
@@ -354,6 +362,17 @@
   justify-content: flex-start;
 }
 
+.c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-hidden-hand,
+.c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-hidden-hand {
+  position: absolute;
+  top: 42px;
+  inset-inline: 0;
+}
+
+.c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-hidden-hand {
+  justify-content: flex-start;
+}
+
 .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-summary,
 .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-summary {
   position: absolute;
@@ -399,6 +418,10 @@
 
 .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-discards,
 .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-meld-tiles {
+  justify-content: flex-end;
+}
+
+.c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-hidden-hand {
   justify-content: flex-end;
 }
 
@@ -457,6 +480,11 @@
   --tavern-short-tile-depth-side: rgb(221 223 218);
   --tavern-short-tile-depth-mid: rgb(173 176 179);
   --tavern-short-tile-depth-accent: rgb(62 171 214);
+  --tavern-short-hidden-hand-overlap: 20px;
+  --tavern-short-hidden-hand-top: var(--color-tavern-hidden-hand-top);
+  --tavern-short-hidden-hand-mid: var(--color-tavern-hidden-hand-mid);
+  --tavern-short-hidden-hand-base: var(--color-tavern-hidden-hand-base);
+  --tavern-short-hidden-hand-edge: var(--color-tavern-hidden-hand-edge);
   --tavern-short-seat-discard-height: calc(40px * 15 / 16);
   --tavern-short-seat-discard-depth-step-1: calc(var(--tavern-short-seat-discard-height) * 2 / 17);
   --tavern-short-seat-discard-depth-step-shift: calc(var(--tavern-short-seat-discard-height) * 9 / 136);
@@ -651,12 +679,44 @@
   isolation: isolate;
 }
 
-.c-tavern-gamble--short .c-tavern-gamble__tile:not(.c-tavern-gamble__tile--hand-public):not(.c-tavern-gamble__tile--discard-public):not(.is-covered) {
+.c-tavern-gamble--short .c-tavern-gamble__tile:not(.c-tavern-gamble__tile--hidden-hand):not(.c-tavern-gamble__tile--hand-public):not(.c-tavern-gamble__tile--discard-public):not(.is-covered) {
   background: rgb(221 223 218);
 }
 
 .c-tavern-gamble--short .c-tavern-gamble__tile--hand[aria-disabled="true"] {
   opacity: 1;
+}
+
+.c-tavern-gamble__tile--hidden-hand {
+  width: 30px;
+  min-width: 30px;
+  height: var(--tavern-short-seat-discard-height);
+  min-height: var(--tavern-short-seat-discard-height);
+  flex: 0 0 30px;
+  margin-inline-end: calc(var(--tavern-short-hidden-hand-overlap) * -1);
+  border-color: var(--tavern-short-hidden-hand-edge);
+  background: var(--tavern-short-hidden-hand-fill);
+  color: transparent;
+  font-size: 0;
+  box-shadow:
+    inset 0 0 0 2px rgb(255 255 255 / 16%),
+    0 2px 8px rgb(0 0 0 / 24%);
+}
+
+.c-tavern-gamble__tile--hidden-hand:last-child {
+  margin-inline-end: 0;
+}
+
+.c-tavern-gamble__tile--hidden-hand-top {
+  --tavern-short-hidden-hand-fill: var(--tavern-short-hidden-hand-top);
+}
+
+.c-tavern-gamble__tile--hidden-hand-mid {
+  --tavern-short-hidden-hand-fill: var(--tavern-short-hidden-hand-mid);
+}
+
+.c-tavern-gamble__tile--hidden-hand-base {
+  --tavern-short-hidden-hand-fill: var(--tavern-short-hidden-hand-base);
 }
 
 .c-tavern-gamble__tiles--public {
@@ -1255,6 +1315,11 @@
   .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-discards,
   .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-discards {
     top: 72px;
+  }
+
+  .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-hidden-hand,
+  .c-tavern-gamble__seat--short-3 .c-tavern-gamble__seat-hidden-hand {
+    top: 38px;
   }
 
   .c-tavern-gamble__seat--short-1 .c-tavern-gamble__seat-melds,

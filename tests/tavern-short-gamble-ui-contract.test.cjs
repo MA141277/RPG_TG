@@ -32,6 +32,7 @@ const {
 } = require("../.test-dist/domain/tavern-short-gambling.js");
 
 const teaHouseCss = fs.readFileSync("src/styles/tea-house.css", "utf8");
+const tokensCss = fs.readFileSync("src/styles/tokens.css", "utf8");
 const playerCharacterId = "char.player";
 const tavernHouse = prototypeHouses.find((house) => house.moduleId === "tavern");
 
@@ -824,6 +825,11 @@ test("tavern house view renders only the currently available short gameplay acti
               ],
             },
           ],
+          hiddenHandTiles: [
+            { id: "traveler-hidden-top", tone: "top" },
+            { id: "traveler-hidden-mid", tone: "mid" },
+            { id: "traveler-hidden-base", tone: "base" },
+          ],
           discardTiles: [{ id: "wan-8", label: "8万" }],
         },
         {
@@ -846,6 +852,11 @@ test("tavern house view renders only the currently available short gameplay acti
                 { id: "tiao-6", label: "T6" },
               ],
             },
+          ],
+          hiddenHandTiles: [
+            { id: "guard-hidden-top", tone: "top" },
+            { id: "guard-hidden-mid", tone: "mid" },
+            { id: "guard-hidden-base", tone: "base" },
           ],
           discardTiles: [{ id: "tong-9", label: "9筒" }],
         },
@@ -941,6 +952,10 @@ test("tavern house view renders only the currently available short gameplay acti
     'class="c-tavern-gamble__seat-melds"',
     travelerSeatIndex
   );
+  const travelerHiddenHandIndex = markup.indexOf(
+    'class="c-tavern-gamble__seat-hidden-hand"',
+    travelerSeatIndex
+  );
   const travelerDiscardRowIndex = markup.indexOf(
     'class="c-tavern-gamble__seat-discards"',
     travelerSeatIndex
@@ -952,6 +967,10 @@ test("tavern house view renders only the currently available short gameplay acti
   );
   const guardDiscardRowIndex = markup.indexOf(
     'class="c-tavern-gamble__seat-discards"',
+    guardSeatIndex
+  );
+  const guardHiddenHandIndex = markup.indexOf(
+    'class="c-tavern-gamble__seat-hidden-hand"',
     guardSeatIndex
   );
   const guardMeldRowIndex = markup.indexOf(
@@ -970,17 +989,30 @@ test("tavern house view renders only the currently available short gameplay acti
     'class="c-tavern-gamble__seat-summary"',
     playerSeatIndex
   );
+  const playerSeatMarkup = markup.slice(playerSeatIndex, nextSeatIndex);
+  const travelerSeatMarkup = markup.slice(travelerSeatIndex, guardSeatIndex);
   assert.ok(travelerSeatIndex >= 0);
   assert.ok(travelerSummaryIndex >= 0);
+  assert.ok(travelerHiddenHandIndex > travelerSummaryIndex);
+  assert.ok(travelerHiddenHandIndex < travelerMeldRowIndex);
   assert.ok(travelerMeldRowIndex >= 0);
   assert.ok(travelerMeldRowIndex > travelerSummaryIndex);
   assert.ok(travelerDiscardRowIndex > travelerMeldRowIndex);
   assert.ok(guardSeatIndex > travelerSeatIndex);
   assert.ok(guardSummaryIndex >= 0);
+  assert.ok(guardHiddenHandIndex > guardSummaryIndex);
+  assert.ok(guardHiddenHandIndex < guardMeldRowIndex);
   assert.ok(guardMeldRowIndex > guardSummaryIndex);
   assert.ok(guardDiscardRowIndex > guardMeldRowIndex);
   assert.ok(playerSeatIndex >= 0);
   assert.ok(nextSeatIndex > playerSeatIndex);
+  assert.doesNotMatch(playerSeatMarkup, /c-tavern-gamble__seat-hidden-hand/u);
+  assert.match(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-top/u);
+  assert.match(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-mid/u);
+  assert.match(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-base/u);
+  assert.doesNotMatch(travelerSeatMarkup, /traveler-hidden-top/u);
+  assert.doesNotMatch(travelerSeatMarkup, /traveler-hidden-mid/u);
+  assert.doesNotMatch(travelerSeatMarkup, /traveler-hidden-base/u);
   assert.ok(playerDiscardIndex > playerSeatIndex);
   assert.ok(playerMeldRowIndex > playerDiscardIndex);
   assert.ok(playerSummaryIndex > playerMeldRowIndex);
@@ -1850,6 +1882,41 @@ test("tavern short CSS keeps the public-card stage centered, floats active contr
   );
   assert.match(
     teaHouseCss,
+    /\.c-tavern-gamble__seat-hidden-hand\s*\{[^}]*display:\s*flex;[^}]*gap:\s*0;[^}]*\}/su
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble__tile--hidden-hand\s*\{[^}]*margin-inline-end:\s*calc\(var\(--tavern-short-hidden-hand-overlap\)\s*\*\s*-1\);/su
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile:not\([^)]*c-tavern-gamble__tile--hidden-hand[^)]*\):not\([^)]*c-tavern-gamble__tile--hand-public[^)]*\):not\([^)]*c-tavern-gamble__tile--discard-public[^)]*\):not\([^)]*is-covered[^)]*\)\s*\{/su
+  );
+  assert.match(
+    teaHouseCss,
+    /--tavern-short-hidden-hand-top:\s*var\(--color-tavern-hidden-hand-top\);/u
+  );
+  assert.match(
+    teaHouseCss,
+    /--tavern-short-hidden-hand-mid:\s*var\(--color-tavern-hidden-hand-mid\);/u
+  );
+  assert.match(
+    teaHouseCss,
+    /--tavern-short-hidden-hand-base:\s*var\(--color-tavern-hidden-hand-base\);/u
+  );
+  assert.match(
+    teaHouseCss,
+    /--tavern-short-hidden-hand-edge:\s*var\(--color-tavern-hidden-hand-edge\);/u
+  );
+  assert.match(tokensCss, /--color-tavern-hidden-hand-top:\s*rgb\(48 101 132\);/u);
+  assert.match(tokensCss, /--color-tavern-hidden-hand-mid:\s*rgb\(20 52 82\);/u);
+  assert.match(tokensCss, /--color-tavern-hidden-hand-base:\s*rgb\(94 104 112\);/u);
+  assert.match(tokensCss, /--color-tavern-hidden-hand-edge:\s*rgb\(221 223 218\);/u);
+  assert.match(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand-top/u);
+  assert.match(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand-mid/u);
+  assert.match(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand-base/u);
+  assert.match(
+    teaHouseCss,
     /@media \(width <= 760px\)\s*\{[\s\S]*?\.c-tavern-gamble__seat-discards\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble__seat-meld-tiles\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*width:\s*24px;[^}]*min-width:\s*24px;[^}]*height:\s*34px;[^}]*min-height:\s*34px;[^}]*flex:\s*0 0 24px;[^}]*font-size:\s*0\.66rem;/su
   );
   assert.match(
@@ -1905,7 +1972,7 @@ test("tavern short CSS renders stacked tile depth above hands and below table ca
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile:not\(\.c-tavern-gamble__tile--hand-public\):not\(\.c-tavern-gamble__tile--discard-public\):not\(\.is-covered\)\s*\{[^}]*background:\s*rgb\(221 223 218\);[^}]*\}/su
+    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile:not\(\.c-tavern-gamble__tile--hidden-hand\):not\(\.c-tavern-gamble__tile--hand-public\):not\(\.c-tavern-gamble__tile--discard-public\):not\(\.is-covered\)\s*\{[^}]*background:\s*rgb\(221 223 218\);[^}]*\}/su
   );
   assert.match(
     teaHouseCss,
