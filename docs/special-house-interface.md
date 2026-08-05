@@ -230,6 +230,8 @@ Typing rules:
 - represent shared house session through a `moduleId -> sessionState` map
 - keep `GameState.ui.houseSession` as a discriminated union keyed by `moduleId`
 - generic wiring may pass the active session through runtime boundaries, but should not recover type safety with ad hoc `as` casting in the entrypoint
+- house-owned debug / QA / test entry points must also flow through typed overlay option data plus typed house session state; do not bolt them on as ad hoc DOM buttons or `main.ts` branches
+- one-shot startup overrides such as “next hand only” debug presets must live under the house session branch and be consumed inside house-owned session startup, not hidden in globals or renderer-local scratch state
 
 Minimum required lifecycle:
 
@@ -514,6 +516,10 @@ If that same table summary must render each seat directly on the felt, expose se
 structured data such as `tablePosition`, `statusLabel`, `meldGroups`, and `discardTiles`
 instead of asking the renderer to parse packed strings back into tile models or infer seat
 placement from hardcoded NPC ids.
+If NPC seats need concealed-hand presence without revealing private cards, expose typed row data
+such as `hiddenHandTiles` with stable ids and render-facing tone/depth hints; keep the player row
+empty and keep draw-vs-claim incoming-card count rules in the application view-model builder, not
+in renderer-local inference.
 If a temporary incoming-card slot must keep some cards visible but unavailable for the follow-up
 discard step, expose that lock state as typed session data such as
 `pendingIncomingCard.lockedCardIds`, and omit discard `actionId`s for those locked cards in the
@@ -526,6 +532,10 @@ order, spacing, or DOM-only classes inside the renderer.
 If a table overlay needs local reordering, expose it through generic house action ids and
 data attributes; the entrypoint may dispatch the generic action, but must not understand the
 house-specific reorder semantics.
+If that reorder path is phase-gated, expose a typed overlay flag such as `handSortEnabled` and
+render it through generic sortable metadata like `data-house-drop-action-prefix`,
+`data-house-drop-before`, and `data-house-sort-enabled`; do not hardcode phase branches back into
+`src/main.ts` or a house-specific DOM runtime.
 If a table overlay supports staged tile selection, public tiles that are temporarily selected or
 permanently consumed must be exposed as structured tile view data such as `selected` and `spent`,
 with confirm/clear/pass action ids on the overlay. The UI may render selected public tiles as

@@ -25,6 +25,9 @@ const {
   chooseTavernShortDiscardCandidate,
   resolveTavernShortBetAction,
 } = require("../.test-dist/domain/tavern-short-gambling.js");
+const {
+  TavernShortNpcHiddenHandStackBuilder,
+} = require("../.test-dist/application/house-modules/tavern/tavern-short-npc-hidden-hand-stack-builder.js");
 
 const playerCharacterId = "char.player";
 const tavernHouse = prototypeHouses.find((house) => house.moduleId === "tavern");
@@ -173,6 +176,89 @@ test("tavern short buy-in exchanges gold to chips and charges stamina once per t
   );
 });
 
+test("tavern short hidden hand builder counts only NPC concealed cards plus pending draws", () => {
+  const table = createTavernShortTableSession({
+    playerName: "tester",
+    buyInGold: 100,
+    seed: 17,
+  });
+  const builder = new TavernShortNpcHiddenHandStackBuilder();
+  const hand = {
+    ...table.currentHand,
+    pendingIncomingCard: {
+      ownerSeatId: "traveler",
+      source: "draw",
+      card: { id: "drawn-wan-9", suit: "wan", rank: 9 },
+    },
+    players: table.currentHand.players.map((player) => {
+      if (player.seatId === "you") {
+        return {
+          ...player,
+          hand: [
+            { id: "wan-1", suit: "wan", rank: 1 },
+            { id: "wan-2", suit: "wan", rank: 2 },
+            { id: "wan-3", suit: "wan", rank: 3 },
+          ],
+        };
+      }
+      if (player.seatId === "traveler") {
+        return {
+          ...player,
+          hand: [
+            { id: "tong-1", suit: "tong", rank: 1 },
+            { id: "tong-2", suit: "tong", rank: 2 },
+            { id: "tong-3", suit: "tong", rank: 3 },
+            { id: "tong-4", suit: "tong", rank: 4 },
+          ],
+        };
+      }
+      if (player.seatId === "broker") {
+        return {
+          ...player,
+          hand: [
+            { id: "tiao-1", suit: "tiao", rank: 1 },
+            { id: "tiao-2", suit: "tiao", rank: 2 },
+            { id: "tiao-3", suit: "tiao", rank: 3 },
+          ],
+        };
+      }
+      return player;
+    }),
+  };
+
+  const youPlayer = hand.players.find((player) => player.seatId === "you");
+  const travelerPlayer = hand.players.find((player) => player.seatId === "traveler");
+  const brokerPlayer = hand.players.find((player) => player.seatId === "broker");
+  assert.ok(youPlayer);
+  assert.ok(travelerPlayer);
+  assert.ok(brokerPlayer);
+
+  assert.equal(
+    builder.buildForSeat({ hand, player: youPlayer, viewerSeatId: "you" }).length,
+    0
+  );
+  assert.deepEqual(
+    builder
+      .buildForSeat({ hand, player: travelerPlayer, viewerSeatId: "you" })
+      .map((tile) => tile.tone),
+    ["top", "mid", "base", "base", "base"]
+  );
+
+  const claimHand = {
+    ...hand,
+    pendingIncomingCard: {
+      ownerSeatId: "broker",
+      source: "claim",
+      card: { id: "claimed-wan-7", suit: "wan", rank: 7 },
+    },
+  };
+  assert.equal(
+    builder.buildForSeat({ hand: claimHand, player: brokerPlayer, viewerSeatId: "you" })
+      .length,
+    3
+  );
+});
+
 test("tavern short continue next hand reuses bankroll instead of charging gold again", () => {
   const started = openShortTable(createBaseState(), prototypeCharacters, 100);
   const afterContinue = tavernHouseModule.dispatch({
@@ -264,6 +350,56 @@ test("tavern short debug toggle starts a stable pong-kong-chow claim cycle acros
       .map((option) => option.kind),
     ["chow"]
   );
+});
+
+test("tavern short debug choice arms a one-shot chow-kong preset for the next hand only", () => {
+  const entered = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const opened = tavernHouseModule.dispatch({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+    request: { type: "action", actionId: "open-gamble" },
+  });
+  const selected = tavernHouseModule.dispatch({
+    gameState: opened.gameState,
+    characterDefinitions: opened.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: opened.sessionState,
+    request: {
+      type: "action",
+      actionId: "choose-short-table-debug-chow-kong",
+    },
+  });
+
+  assert.equal(selected.sessionState.currentGambleVariant, "short");
+  assert.equal(
+    selected.sessionState.pendingShortDebugPreset,
+    "claim-chow-then-kong"
+  );
+
+  const confirmed = tavernHouseModule.dispatch({
+    gameState: selected.gameState,
+    characterDefinitions: selected.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...selected.sessionState,
+      currentWager: 100,
+    },
+    request: { type: "action", actionId: "confirm-gamble" },
+  });
+
+  assert.equal(confirmed.sessionState.pendingShortDebugPreset, null);
+  assert.equal(confirmed.sessionState.shortDebugPresetMode, "off");
+  assert.equal(confirmed.sessionState.gambleSession.variant, "short");
 });
 
 test("tavern short claim countdown only starts for non-upstream pong-kong windows", () => {
@@ -535,6 +671,7 @@ test("tavern short house ignores repeated claim actions after the player has alr
   assert.ok(afterClaimPlayer);
   assert.equal(afterClaim.currentHand.phase, "draw-discard");
   assert.equal(afterClaimPlayer.meldHistory.length, 1);
+  assert.equal(afterClaimPlayer.hand.length, 3);
 
   const repeated = tavernHouseModule.dispatch({
     gameState: claimed.gameState,
@@ -674,6 +811,76 @@ test("tavern short lifted discard candidate starts a drop animation when the poi
   ]);
 });
 
+test("tavern short selected discard candidate starts a drop animation when the shared click-away action fires", () => {
+  const started = openShortTable(createBaseState(), prototypeCharacters, 100);
+  assert.equal(started.sessionState.gambleSession.variant, "short");
+
+  const table = started.sessionState.gambleSession.table;
+  const humanPlayer = table.currentHand.players.find((player) => player.seatId === "you");
+  assert.ok(humanPlayer);
+  const candidateCardId = humanPlayer.hand[0]?.id;
+  assert.ok(candidateCardId);
+
+  const drawDiscardHand = {
+    ...table.currentHand,
+    phase: "draw-discard",
+    actingSeatIndex: 0,
+    currentDrawTurnSeatId: "you",
+    pendingIncomingCard: {
+      ownerSeatId: "you",
+      source: "draw",
+      card: { id: "test-draw-card", suit: "wan", rank: 9 },
+    },
+    selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+  };
+
+  const selectedHand = chooseTavernShortDiscardCandidate(
+    drawDiscardHand,
+    "you",
+    candidateCardId
+  );
+  assert.equal(selectedHand.selectedDiscardCardId, candidateCardId);
+  assert.equal(selectedHand.liftedDiscardCardId, candidateCardId);
+
+  const cleared = tavernHouseModule.dispatch({
+    gameState: started.gameState,
+    characterDefinitions: started.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...started.sessionState,
+      gambleSession: {
+        ...started.sessionState.gambleSession,
+        table: {
+          ...table,
+          currentHand: selectedHand,
+        },
+      },
+    },
+    request: {
+      type: "action",
+      actionId: "gamble-clear-selected-discard",
+    },
+  });
+
+  const clearedHand = cleared.sessionState.gambleSession.table.currentHand;
+  assert.equal(clearedHand.selectedDiscardCardId, null);
+  assert.equal(clearedHand.liftedDiscardCardId, null);
+  assert.equal(clearedHand.droppingDiscardCardId, candidateCardId);
+  assert.deepEqual(cleared.sideEffects, [
+    { type: "stop-interval", intervalId: "tavern-gamble-npc-thinking" },
+    { type: "stop-interval", intervalId: "tavern-gamble-short-claim-timeout" },
+    { type: "stop-interval", intervalId: "tavern-gamble-short-drop-clear" },
+    {
+      type: "start-interval",
+      intervalId: "tavern-gamble-short-drop-clear",
+      everyMs: 180,
+      request: { type: "tick", tickId: "tavern-gamble-short-drop-clear" },
+    },
+  ]);
+});
+
 test("tavern short dropping discard candidate clears after the drop animation tick", () => {
   const started = openShortTable(createBaseState(), prototypeCharacters, 100);
   assert.equal(started.sessionState.gambleSession.variant, "short");
@@ -729,4 +936,98 @@ test("tavern short dropping discard candidate clears after the drop animation ti
     { type: "stop-interval", intervalId: "tavern-gamble-short-claim-timeout" },
     { type: "stop-interval", intervalId: "tavern-gamble-short-drop-clear" },
   ]);
+});
+
+test("tavern short house dispatch applies typed hand reorder only outside draw-discard", () => {
+  const started = openShortTable(createBaseState(), prototypeCharacters, 100);
+  assert.equal(started.sessionState.gambleSession.variant, "short");
+
+  const table = started.sessionState.gambleSession.table;
+  const cards = [
+    { id: "wan-2", suit: "wan", rank: 2 },
+    { id: "tong-3", suit: "tong", rank: 3 },
+    { id: "tong-4", suit: "tong", rank: 4 },
+    { id: "tiao-9", suit: "tiao", rank: 9 },
+    { id: "wan-6", suit: "wan", rank: 6 },
+  ];
+  const bettingTable = {
+    ...table,
+    currentHand: {
+      ...table.currentHand,
+      phase: "betting",
+      players: table.currentHand.players.map((player) =>
+        player.seatId !== "you"
+          ? player
+          : {
+              ...player,
+              hand: cards,
+            }
+      ),
+    },
+  };
+
+  const reordered = tavernHouseModule.dispatch({
+    gameState: started.gameState,
+    characterDefinitions: started.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...started.sessionState,
+      gambleSession: {
+        ...started.sessionState.gambleSession,
+        table: bettingTable,
+      },
+    },
+    request: {
+      type: "action",
+      actionId: "gamble-short-reorder:tong-4:wan-2",
+    },
+  });
+
+  assert.deepEqual(
+    reordered.sessionState.gambleSession.table.currentHand.players
+      .find((player) => player.seatId === "you")
+      ?.hand.map((card) => card.id),
+    ["tong-4", "wan-2", "tong-3", "tiao-9", "wan-6"]
+  );
+
+  const drawDiscardTable = {
+    ...bettingTable,
+    currentHand: {
+      ...bettingTable.currentHand,
+      phase: "draw-discard",
+      actingSeatIndex: 0,
+      currentDrawTurnSeatId: "you",
+      pendingIncomingCard: {
+        ownerSeatId: "you",
+        source: "draw",
+        card: { id: "tong-9", suit: "tong", rank: 9 },
+      },
+    },
+  };
+
+  const blocked = tavernHouseModule.dispatch({
+    gameState: started.gameState,
+    characterDefinitions: started.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...started.sessionState,
+      gambleSession: {
+        ...started.sessionState.gambleSession,
+        table: drawDiscardTable,
+      },
+    },
+    request: {
+      type: "action",
+      actionId: "gamble-short-reorder:tong-4:wan-2",
+    },
+  });
+
+  assert.deepEqual(
+    blocked.sessionState.gambleSession.table.currentHand.players
+      .find((player) => player.seatId === "you")
+      ?.hand.map((card) => card.id),
+    ["wan-2", "tong-3", "tong-4", "tiao-9", "wan-6"]
+  );
 });

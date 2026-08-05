@@ -2,6 +2,45 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-05 Tavern Short NPC Hidden Hand Overlay Contract
+
+### Added
+- 酒馆短牌 `gamble-table` overlay 的 `playerRows` 现在新增 typed `hiddenHandTiles` 字段，用于让 NPC 座位暴露“有几张暗手牌”和 `top / mid / base` 渲染 tone，而不暴露实际牌面。
+- 新增 application-owned `TavernShortNpcHiddenHandStackBuilder` 作为暗手牌 stack view model 的唯一计数/分层来源；玩家座位保持空 stack。
+
+### Changed
+- NPC 暗手牌数量现在由 application view model 按 `player.hand.length` 计算，并且只在同一 NPC 拥有 `pendingIncomingCard.source === "draw"` 时额外加一张；`source === "claim"` 不增加额外暗牌。
+
+### Impact
+- short-table renderer 后续应消费 `hiddenHandTiles`，不得从 DOM、座位 id、手牌数组长度或 incoming-card 布局自行推断 NPC 暗手牌数量与层次。
+
+## 2026-08-05 Tavern Short Tile Sorting Contract
+
+### Added
+- 新增共享 `src/ui/views/house/house-sortable-tile-runtime.ts`，把 house table 手牌的 hover 抬升、长按拖拽、placeholder 空位预览与 generic reorder action dispatch 从 `src/main.ts` 抽离成可复用 DOM runtime。
+- 酒馆短牌 overlay 新增 typed `handSortEnabled` 契约；renderer 现在通过 `data-house-drop-action-prefix="gamble-short-reorder:"`、`data-house-drop-before="end"` 与 `data-house-sort-enabled` 暴露是否允许理牌，而不是在 DOM 层自行猜测是否处于摸打阶段。
+- 新增 focused 回归覆盖 shared sortable runtime、短牌 typed reorder action、short hand sort gating 与 short hand sortable markup contract。
+
+### Changed
+- 酒馆短牌的人类 concealed hand 现在支持 typed `gamble-short-reorder:<cardId>:<beforeCardId>` 动作；纯域 helper `reorderTavernShortHand(...)` 只重排稳定手牌顺序，并在 `draw-discard` 阶段保持禁用。
+- shared tavern short hand CSS 不再依赖 draw-discard 直连 `:hover` 抬升规则；hover 抬升改为跟随 shared sortable runtime 的 `is-house-hover-lifted` class，从而让理牌 hover 只在 overlay 明确允许时生效。
+
+### Impact
+- house tile reorder 现在继续遵守 main shell / house interface 边界：`src/main.ts` 只挂载共享 sortable runtime，不理解 tavern short / long 的业务语义；短牌是否允许理牌、重排哪个 action id、以及重排后如何落回 session state，都由 tavern 自己持有。
+
+## 2026-08-05 Tavern Short Chow-Kong Debug Entry Contract
+
+### Added
+- 酒馆 gamble-choice 现在新增一个 tavern-owned 的“短牌测试：先吃后杠”入口；它仍通过 typed option 数据进入正常短牌下注流，而不是给 shared gamble overlay 再加一颗专用调试按钮。
+- TavernSessionState 新增 typed pendingShortDebugPreset，用于记录“只对下一手短牌生效”的一次性 debug 预设；新增 focused house/UI 回归，锁定该预设的设置、消费与清空边界。
+- 短牌 debug preset 定义现在支持可选 deckTopCardIds，并新增 claim-chow-then-kong 预设；对应 domain 回归锁定“同一手里先吃、后杠”的 deterministic 路径。
+
+### Changed
+- 酒馆短牌 confirm-gamble 现在会把一次性 pendingShortDebugPreset 只注入到首手 short-table startup，并在建手后立即清空；既有持久 claim-cycle 调试开关继续独立存在，不被这条一次性路径复用或替代。
+- 短牌 session startup 现在允许首手优先消费一个 firstHandDebugPreset，后续 continue / 新一手仍只回到既有 debugPresetMode 逻辑，不会把一次性预设泄漏到多手循环里。
+
+### Impact
+- 酒馆 QA/测试入口现在继续遵守 house interface contract：玩法测试入口、一次性启动覆写和固定牌局都由 tavern house/session/runtime 自己持有，src/main.ts 与 shared wager renderer 不需要新增业务分支。
 ## 2026-08-03 Tavern Short Table Draw-Discard UX Contract
 
 ### Added

@@ -1,11 +1,15 @@
 import type { TavernShortTableSession } from "../../../domain/house-modules/tavern-session";
 import type { HouseOverlayViewModel } from "../../../domain/house-module";
-import { getTavernShortCardLabel } from "../../../domain/tavern-short-gambling";
+import {
+  getTavernShortCardLabel,
+  type TavernShortCard,
+} from "../../../domain/tavern-short-gambling";
 import {
   getTavernShortClaimCountdownProgressPercent,
   getTavernShortClaimCountdownRemainingMs,
   getTavernShortClaimCountdownRemainingSeconds,
 } from "./tavern-short-claim-countdown";
+import { TavernShortNpcHiddenHandStackBuilder } from "./tavern-short-npc-hidden-hand-stack-builder";
 
 const SHORT_CHECK_ACTION_ID = "gamble-check";
 const SHORT_CALL_ACTION_ID = "gamble-call";
@@ -13,12 +17,14 @@ const SHORT_RAISE_ACTION_ID = "gamble-raise";
 const SHORT_FOLD_ACTION_ID = "gamble-fold";
 const SHORT_DRAW_ACTION_ID = "gamble-draw";
 const SHORT_CONFIRM_DISCARD_ACTION_ID = "gamble-confirm-discard";
+const SHORT_CLEAR_SELECTED_DISCARD_ACTION_ID = "gamble-clear-selected-discard";
 const SHORT_CASH_OUT_ACTION_ID = "gamble-short-cash-out";
 const SHORT_CONTINUE_ACTION_ID = "gamble-short-continue-hand";
 const SHORT_REBUY_ACTION_ID = "gamble-short-rebuy";
 const SHORT_CLAIM_ACTION_PREFIX = "gamble-meld:";
 const SHORT_CLEAR_LIFTED_TILE_ACTION_PREFIX = "gamble-clear-lifted-tile:";
 const SHORT_SKIP_CLAIM_ACTION_ID = "gamble-skip-meld";
+const hiddenHandStackBuilder = new TavernShortNpcHiddenHandStackBuilder();
 
 type TavernShortActiveHand = NonNullable<TavernShortTableSession["currentHand"]>;
 
@@ -39,6 +45,18 @@ function getShortLockedDiscardCardIds(
     }
   }
   return lockedCardIds;
+}
+
+function getShortVisibleHandCards(
+  hand: TavernShortActiveHand,
+  playerSeatId: string
+) {
+  const player = hand.players.find((candidate) => candidate.seatId === playerSeatId);
+  if (player == null) {
+    return [];
+  }
+  const lockedCardIds = getShortLockedDiscardCardIds(hand, playerSeatId);
+  return player.hand.filter((card) => !lockedCardIds.has(card.id));
 }
 
 function getShortSelectableDiscardCardIds(
@@ -188,7 +206,7 @@ function formatPotLabel(potId: string, amount: number): string {
 
 function getShortMeldLabel(input: {
   kind: "chow" | "pong" | "kong";
-  cards: Array<{ id: string; suit: "wan" | "bing" | "tong" | "tiao"; rank: number }>;
+  cards: TavernShortCard[];
 }): string {
   const prefix =
     input.kind === "chow"
@@ -237,12 +255,17 @@ export function selectTavernShortGambleOverlay(
 ): Extract<HouseOverlayViewModel, { type: "gamble-table"; variant: "short" }> {
   const nowMs = Date.now();
   const hand = table.currentHand ?? table.lastCompletedHand?.hand ?? null;
-  const human = hand?.players.find((player) => player.seatId === table.playerSeatId) ?? null;
+  const handSortEnabled =
+    table.currentHand != null &&
+    table.currentHand.phase !== "draw-discard" &&
+    table.currentHand.phase !== "finished";
   const isHumanClaimWindow = hand?.phase === "claim-window";
   const humanPendingIncoming =
     hand?.pendingIncomingCard?.ownerSeatId === table.playerSeatId
       ? hand.pendingIncomingCard
       : null;
+  const visibleHandCards =
+    hand == null ? [] : getShortVisibleHandCards(hand, table.playerSeatId);
   const pendingIncomingCard =
     humanPendingIncoming == null
       ? null
@@ -328,6 +351,9 @@ export function selectTavernShortGambleOverlay(
     type: "gamble-table",
     variant: "short",
     title: "\u9152\u9986\u77ed\u724c",
+    ...(armedDiscardCardId == null
+      ? {}
+      : { clickawayActionId: SHORT_CLEAR_SELECTED_DISCARD_ACTION_ID }),
     phase: getShortPhaseLabel(table),
     pot: hand?.pots.reduce((sum, pot) => sum + pot.amount, 0) ?? 0,
     currentBet: hand?.currentBet ?? 0,
@@ -336,9 +362,10 @@ export function selectTavernShortGambleOverlay(
       id: card.id,
       label: getTavernShortCardLabel(card),
     })),
+    handSortEnabled,
     handCards: [
-      ...(human?.hand ?? []),
-      ...(humanPendingIncoming == null ? [] : [humanPendingIncoming.card]),
+      ...visibleHandCards,
+      ...(humanPendingIncoming?.source === "draw" ? [humanPendingIncoming.card] : []),
     ].map((card) => ({
       id: card.id,
       label: getTavernShortCardLabel(card),
@@ -355,8 +382,7 @@ export function selectTavernShortGambleOverlay(
         : {}),
       ...(droppingDiscardCardId != null ||
       selectableDiscardCardIds.size === 0 ||
-      !selectableDiscardCardIds.has(card.id) ||
-      (armedDiscardCardId != null && armedDiscardCardId !== card.id)
+      !selectableDiscardCardIds.has(card.id)
         ? {}
         : { actionId: `gamble-play-tile:${card.id}` }),
     })),
@@ -379,6 +405,14 @@ export function selectTavernShortGambleOverlay(
       name: player.name,
       seatIndex: player.seatIndex,
       tablePosition: getShortTablePosition(player.seatIndex),
+      hiddenHandTiles:
+        hand == null
+          ? []
+          : hiddenHandStackBuilder.buildForSeat({
+              hand,
+              player,
+              viewerSeatId: table.playerSeatId,
+            }),
       stack: player.stack,
       committed: player.committedThisHand,
       folded: player.folded,

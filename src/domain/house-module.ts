@@ -178,6 +178,7 @@ type ShortGambleTableOverlay = {
   type: "gamble-table";
   variant: "short";
   title: string;
+  clickawayActionId?: string;
   phase: string;
   pot: number;
   currentBet: number;
@@ -186,6 +187,7 @@ type ShortGambleTableOverlay = {
     id: string;
     label: string;
   }>;
+  handSortEnabled: boolean;
   handCards: Array<{
     id: string;
     label: string;
@@ -240,6 +242,10 @@ type ShortGambleTableOverlay = {
     name: string;
     seatIndex: number;
     tablePosition?: "bottom" | "left" | "top" | "right";
+    hiddenHandTiles?: Array<{
+      id: string;
+      tone: "top" | "mid" | "base";
+    }>;
     stack: number;
     committed: number;
     folded: boolean;

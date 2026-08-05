@@ -3,6 +3,19 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 
 const {
+  createInitialState,
+} = require("../.test-dist/application/state/create-initial-state.js");
+const {
+  prototypeCards,
+  prototypeCharacters,
+  prototypeHouses,
+  prototypeMap,
+  prototypeValuables,
+} = require("../.test-dist/content/prototype-world.js");
+const {
+  tavernHouseModule,
+} = require("../.test-dist/application/house-modules/tavern/tavern-house-module.js");
+const {
   renderTavernHouseView,
 } = require("../.test-dist/ui/views/house/tavern-house-view.js");
 const {
@@ -19,6 +32,41 @@ const {
 } = require("../.test-dist/domain/tavern-short-gambling.js");
 
 const teaHouseCss = fs.readFileSync("src/styles/tea-house.css", "utf8");
+const playerCharacterId = "char.player";
+const tavernHouse = prototypeHouses.find((house) => house.moduleId === "tavern");
+
+function createBaseState() {
+  return createInitialState({
+    currentMapId: prototypeMap.id,
+    currentCityId: "city.kulan",
+    currentHouseId: tavernHouse.id,
+    playerCharacterId,
+    chapterId: "chapter.prototype",
+    year: 1567,
+    month: 1,
+    day: 1,
+    pinnedCharacterId: playerCharacterId,
+    reviewDateText: "test",
+    mainHouseMissionText: "test",
+    cards: {
+      ownedCardIds: prototypeCards.map((cardDefinition) => cardDefinition.id),
+      selectedCardId: prototypeCards[0]?.id ?? null,
+    },
+    valuables: {
+      items: prototypeValuables,
+      selectedItemId: prototypeValuables[0]?.id ?? null,
+      equippedWeaponSet: {
+        swordId:
+          prototypeValuables.find((valuableDefinition) => valuableDefinition.category === "weapon")
+            ?.id ?? null,
+        armorId:
+          prototypeValuables.find((valuableDefinition) => valuableDefinition.category === "armor")
+            ?.id ?? null,
+      },
+    },
+    currentView: "house",
+  });
+}
 
 test("tavern short overlay exposes pending incoming card, side pots, between-hand actions, and available actions", () => {
   const table = createTavernShortTableSession({
@@ -107,47 +155,44 @@ test("tavern house view renders an explicit short-table debug preset toggle in t
 });
 
 test("tavern house view keeps gamble-choice button layout but skins the button bodies", () => {
-  const markup = renderTavernHouseView({
-    moduleId: "tavern",
-    houseId: "house.tavern",
-    sceneTitle: "Tavern",
-    sceneSubtitle: "Preview",
-    standbyRoster: [],
-    dialogue: null,
-    actionContainer: null,
-    statusCard: null,
-    overlay: {
-      type: "gamble-choice",
-      title: "Choose Table",
-      options: [
-        {
-          actionId: "choose-short-table",
-          label: "Short Table",
-          description: "Fast round",
-        },
-        {
-          actionId: "choose-long-table",
-          label: "Long Table",
-          description: "Long round",
-        },
-      ],
-      cancelActionId: "cancel-choice",
-      cancelLabel: "Cancel",
-    },
-    leaveAction: { id: "leave-house", label: "Leave" },
+  const entered = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
   });
+  const opened = tavernHouseModule.dispatch({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+    request: { type: "action", actionId: "open-gamble" },
+  });
+  const viewModel = tavernHouseModule.selectViewModel({
+    gameState: opened.gameState,
+    characterDefinitions: opened.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: opened.sessionState,
+  });
+  const markup = renderTavernHouseView(viewModel);
 
   assert.match(
     markup,
-    /(?:class="[^"]*c-tavern-gamble__button-skin[^"]*"[^>]*data-house-action="choose-short-table"|data-house-action="choose-short-table"[^>]*class="[^"]*c-tavern-gamble__button-skin[^"]*")/u
+    /(?:class="[^"]*c-tavern-gamble__button-skin[^"]*"[^>]*data-house-action="select-gamble-variant:short"|data-house-action="select-gamble-variant:short"[^>]*class="[^"]*c-tavern-gamble__button-skin[^"]*")/u
   );
   assert.match(
     markup,
-    /(?:class="[^"]*c-tavern-gamble__button-skin[^"]*"[^>]*data-house-action="choose-long-table"|data-house-action="choose-long-table"[^>]*class="[^"]*c-tavern-gamble__button-skin[^"]*")/u
+    /(?:class="[^"]*c-tavern-gamble__button-skin[^"]*"[^>]*data-house-action="select-gamble-variant:long"|data-house-action="select-gamble-variant:long"[^>]*class="[^"]*c-tavern-gamble__button-skin[^"]*")/u
   );
   assert.match(
     markup,
-    /(?:class="[^"]*c-tavern-gamble__button-skin[^"]*"[^>]*data-house-action="cancel-choice"|data-house-action="cancel-choice"[^>]*class="[^"]*c-tavern-gamble__button-skin[^"]*")/u
+    /(?:class="[^"]*c-tavern-gamble__button-skin[^"]*"[^>]*data-house-action="choose-short-table-debug-chow-kong"|data-house-action="choose-short-table-debug-chow-kong"[^>]*class="[^"]*c-tavern-gamble__button-skin[^"]*")/u
+  );
+  assert.match(
+    markup,
+    /(?:class="[^"]*c-tavern-gamble__button-skin[^"]*"[^>]*data-house-action="cancel-overlay"|data-house-action="cancel-overlay"[^>]*class="[^"]*c-tavern-gamble__button-skin[^"]*")/u
   );
   assert.doesNotMatch(markup, /c-house-red-nine-slice-actions/u);
 });
@@ -254,7 +299,7 @@ test("tavern short overlay exposes a structured pass action when the player can 
   assert.equal(overlay.highlightAvailableActions, true);
 });
 
-test("tavern short overlay hides stale claim controls and locks meld cards during post-claim discard", () => {
+test("tavern short overlay hides stale claim controls and keeps locked claim cards inert during post-claim discard", () => {
   const table = createTavernShortTableSession({
     playerName: "tester",
     buyInGold: 100,
@@ -273,7 +318,7 @@ test("tavern short overlay hides stale claim controls and locks meld cards durin
           suit: "wan",
           rank: 7,
         },
-        lockedCardIds: ["wan-7", "bing-7", "tong-7"],
+        lockedCardIds: ["wan-7", "wan-7-2", "wan-7-3"],
       },
       players: table.currentHand.players.map((player) =>
         player.seatId !== "you"
@@ -281,11 +326,19 @@ test("tavern short overlay hides stale claim controls and locks meld cards durin
           : {
               ...player,
               hand: [
-                { id: "bing-7", suit: "bing", rank: 7 },
-                { id: "tong-7", suit: "tong", rank: 7 },
                 { id: "wan-2", suit: "wan", rank: 2 },
-                { id: "bing-3", suit: "bing", rank: 3 },
+                { id: "tong-3", suit: "tong", rank: 3 },
                 { id: "tong-4", suit: "tong", rank: 4 },
+              ],
+              meldHistory: [
+                {
+                  kind: "pong",
+                  cards: [
+                    { id: "wan-7", suit: "wan", rank: 7 },
+                    { id: "wan-7-2", suit: "wan", rank: 7 },
+                    { id: "wan-7-3", suit: "wan", rank: 7 },
+                  ],
+                },
               ],
             }
       ),
@@ -303,11 +356,11 @@ test("tavern short overlay hides stale claim controls and locks meld cards durin
         passedSeatIds: [],
         options: [
           {
-            id: "pong:you:wan-7:bing-7:tong-7",
+            id: "pong:you:wan-7:wan-7-2:wan-7-3",
             seatId: "you",
             kind: "pong",
             discardCardId: "wan-7",
-            consumeCardIds: ["bing-7", "tong-7"],
+            consumeCardIds: ["wan-7-2", "wan-7-3"],
             priority: 2,
           },
         ],
@@ -325,21 +378,20 @@ test("tavern short overlay hides stale claim controls and locks meld cards durin
 
   assert.equal(overlay.claimOptions.length, 0);
   assert.equal(overlay.claimPassAction, null);
-  assert.ok(
-    overlay.handCards.some(
-      (card) => card.id === "wan-7" && card.incoming === true
-    )
+  assert.deepEqual(
+    overlay.handCards.map((card) => card.id),
+    ["wan-2", "tong-3", "tong-4"]
   );
   assert.equal(
     overlay.handCards.find((card) => card.id === "wan-2")?.actionId,
     "gamble-play-tile:wan-2"
   );
-  assert.equal(overlay.handCards.find((card) => card.id === "bing-7")?.actionId, undefined);
-  assert.equal(overlay.handCards.find((card) => card.id === "tong-7")?.actionId, undefined);
-  assert.equal(overlay.handCards.find((card) => card.id === "wan-7")?.actionId, undefined);
+  assert.equal(overlay.handCards.find((card) => card.id === "wan-7-2"), undefined);
+  assert.equal(overlay.handCards.find((card) => card.id === "wan-7-3"), undefined);
+  assert.equal(overlay.handCards.find((card) => card.id === "wan-7"), undefined);
 });
 
-test("tavern short overlay keeps meld cards inert across later draw turns", () => {
+test("tavern short overlay keeps meld cards out of the visible hand across later draw turns", () => {
   const table = createTavernShortTableSession({
     playerName: "tester",
     buyInGold: 100,
@@ -366,9 +418,9 @@ test("tavern short overlay keeps meld cards inert across later draw turns", () =
               ...player,
               hand: [
                 { id: "wan-7", suit: "wan", rank: 7 },
-                { id: "bing-7", suit: "bing", rank: 7 },
-                { id: "tong-7", suit: "tong", rank: 7 },
-                { id: "bing-3", suit: "bing", rank: 3 },
+                { id: "wan-7-2", suit: "wan", rank: 7 },
+                { id: "wan-7-3", suit: "wan", rank: 7 },
+                { id: "tong-3", suit: "tong", rank: 3 },
                 { id: "tong-4", suit: "tong", rank: 4 },
               ],
               meldHistory: [
@@ -376,8 +428,8 @@ test("tavern short overlay keeps meld cards inert across later draw turns", () =
                   kind: "pong",
                   cards: [
                     { id: "wan-7", suit: "wan", rank: 7 },
-                    { id: "bing-7", suit: "bing", rank: 7 },
-                    { id: "tong-7", suit: "tong", rank: 7 },
+                    { id: "wan-7-2", suit: "wan", rank: 7 },
+                    { id: "wan-7-3", suit: "wan", rank: 7 },
                   ],
                 },
               ],
@@ -388,12 +440,12 @@ test("tavern short overlay keeps meld cards inert across later draw turns", () =
     },
   });
 
-  assert.equal(overlay.handCards.find((card) => card.id === "wan-7")?.actionId, undefined);
-  assert.equal(overlay.handCards.find((card) => card.id === "bing-7")?.actionId, undefined);
-  assert.equal(overlay.handCards.find((card) => card.id === "tong-7")?.actionId, undefined);
+  assert.equal(overlay.handCards.find((card) => card.id === "wan-7"), undefined);
+  assert.equal(overlay.handCards.find((card) => card.id === "wan-7-2"), undefined);
+  assert.equal(overlay.handCards.find((card) => card.id === "wan-7-3"), undefined);
   assert.equal(
-    overlay.handCards.find((card) => card.id === "bing-3")?.actionId,
-    "gamble-play-tile:bing-3"
+    overlay.handCards.find((card) => card.id === "tong-3")?.actionId,
+    "gamble-play-tile:tong-3"
   );
   assert.equal(
     overlay.handCards.find((card) => card.id === "tong-4")?.actionId,
@@ -430,10 +482,10 @@ test("tavern short overlay marks the incoming draw card and only arms discard co
             ...player,
             hand: [
               { id: "wan-2", suit: "wan", rank: 2 },
-              { id: "bing-3", suit: "bing", rank: 3 },
+              { id: "tong-3", suit: "tong", rank: 3 },
               { id: "tong-4", suit: "tong", rank: 4 },
               { id: "wan-5", suit: "wan", rank: 5 },
-              { id: "bing-6", suit: "bing", rank: 6 },
+              { id: "wan-6", suit: "wan", rank: 6 },
             ],
           }
     ),
@@ -453,8 +505,8 @@ test("tavern short overlay marks the incoming draw card and only arms discard co
     true
   );
   assert.equal(
-    idleOverlay.handCards.find((card) => card.id === "bing-3")?.actionId,
-    "gamble-play-tile:bing-3"
+    idleOverlay.handCards.find((card) => card.id === "tong-3")?.actionId,
+    "gamble-play-tile:tong-3"
   );
   assert.equal(
     idleOverlay.handCards.find((card) => card.id === "tong-4")?.actionId,
@@ -469,21 +521,22 @@ test("tavern short overlay marks the incoming draw card and only arms discard co
     ...table,
     currentHand: {
       ...drawDiscardHand,
-      selectedDiscardCardId: "bing-3",
+      selectedDiscardCardId: "tong-3",
     },
   });
   assert.deepEqual(armedOverlay.availableActions, ["confirm-discard"]);
+  assert.equal(armedOverlay.clickawayActionId, "gamble-clear-selected-discard");
   assert.equal(
-    armedOverlay.handCards.find((card) => card.id === "bing-3")?.actionId,
-    "gamble-play-tile:bing-3"
+    armedOverlay.handCards.find((card) => card.id === "tong-3")?.actionId,
+    "gamble-play-tile:tong-3"
   );
   assert.equal(
     armedOverlay.handCards.find((card) => card.id === "tong-4")?.actionId,
-    undefined
+    "gamble-play-tile:tong-4"
   );
   assert.equal(
     armedOverlay.handCards.find((card) => card.id === "tiao-9")?.actionId,
-    undefined
+    "gamble-play-tile:tiao-9"
   );
 });
 
@@ -521,11 +574,11 @@ test("tavern short overlay exposes claim countdown data for timed pong-kong wind
           passedSeatIds: [],
           options: [
             {
-              id: "pong:you:wan-7:wan-7a:wan-7b",
+              id: "pong:you:wan-7:wan-7-2:wan-7-3",
               seatId: "you",
               kind: "pong",
               discardCardId: "wan-7",
-              consumeCardIds: ["wan-7a", "wan-7b"],
+              consumeCardIds: ["wan-7-2", "wan-7-3"],
               priority: 2,
             },
           ],
@@ -571,8 +624,8 @@ test("tavern short overlay exposes structured seat tiles for meld and discard hi
                   kind: "pong",
                   cards: [
                     { id: "wan-7", suit: "wan", rank: 7 },
-                    { id: "bing-7", suit: "bing", rank: 7 },
-                    { id: "tong-7", suit: "tong", rank: 7 },
+                    { id: "wan-7-2", suit: "wan", rank: 7 },
+                    { id: "wan-7-3", suit: "wan", rank: 7 },
                   ],
                 },
               ],
@@ -584,8 +637,8 @@ test("tavern short overlay exposes structured seat tiles for meld and discard hi
   const brokerRow = overlay.playerRows.find((player) => player.id === "broker");
   const expectedLabels = [
     { id: "wan-7", suit: "wan", rank: 7 },
-    { id: "bing-7", suit: "bing", rank: 7 },
-    { id: "tong-7", suit: "tong", rank: 7 },
+    { id: "wan-7-2", suit: "wan", rank: 7 },
+    { id: "wan-7-3", suit: "wan", rank: 7 },
   ]
     .map(getTavernShortCardLabel)
     .flat();
@@ -599,6 +652,102 @@ test("tavern short overlay exposes structured seat tiles for meld and discard hi
     expectedLabels
   );
   assert.deepEqual(brokerRow.discardTiles, []);
+});
+
+test("tavern short overlay exposes NPC hidden-hand tile stacks without revealing the player hand", () => {
+  const table = createTavernShortTableSession({
+    playerName: "tester",
+    buyInGold: 100,
+    seed: 17,
+  });
+  const overlay = selectTavernShortGambleOverlay({
+    ...table,
+    currentHand: {
+      ...table.currentHand,
+      pendingIncomingCard: {
+        ownerSeatId: "traveler",
+        source: "draw",
+        card: { id: "tong-9", suit: "tong", rank: 9 },
+      },
+      players: table.currentHand.players.map((player) => {
+        if (player.seatId === "you") {
+          return {
+            ...player,
+            hand: [
+              { id: "wan-1", suit: "wan", rank: 1 },
+              { id: "wan-2", suit: "wan", rank: 2 },
+              { id: "wan-3", suit: "wan", rank: 3 },
+              { id: "wan-4", suit: "wan", rank: 4 },
+            ],
+          };
+        }
+        if (player.seatId === "traveler") {
+          return {
+            ...player,
+            hand: [
+              { id: "tong-1", suit: "tong", rank: 1 },
+              { id: "tong-2", suit: "tong", rank: 2 },
+              { id: "tong-3", suit: "tong", rank: 3 },
+              { id: "tong-4", suit: "tong", rank: 4 },
+            ],
+          };
+        }
+        if (player.seatId === "broker") {
+          return {
+            ...player,
+            hand: [
+              { id: "tiao-1", suit: "tiao", rank: 1 },
+              { id: "tiao-2", suit: "tiao", rank: 2 },
+              { id: "tiao-3", suit: "tiao", rank: 3 },
+              { id: "tiao-4", suit: "tiao", rank: 4 },
+            ],
+          };
+        }
+        return player;
+      }),
+    },
+  });
+
+  const youRow = overlay.playerRows.find((player) => player.id === "you");
+  const travelerRow = overlay.playerRows.find((player) => player.id === "traveler");
+  const brokerRow = overlay.playerRows.find((player) => player.id === "broker");
+  assert.ok(youRow);
+  assert.ok(travelerRow);
+  assert.ok(brokerRow);
+  assert.equal(youRow.hiddenHandTiles?.length ?? 0, 0);
+  assert.deepEqual(
+    travelerRow.hiddenHandTiles.map((tile) => tile.tone),
+    ["top", "mid", "base", "base", "base"]
+  );
+  assert.equal(brokerRow.hiddenHandTiles.length, 4);
+
+  const claimOverlay = selectTavernShortGambleOverlay({
+    ...table,
+    currentHand: {
+      ...table.currentHand,
+      pendingIncomingCard: {
+        ownerSeatId: "broker",
+        source: "claim",
+        card: { id: "wan-7", suit: "wan", rank: 7 },
+      },
+      players: table.currentHand.players.map((player) =>
+        player.seatId !== "broker"
+          ? player
+          : {
+              ...player,
+              hand: [
+                { id: "tiao-1", suit: "tiao", rank: 1 },
+                { id: "tiao-2", suit: "tiao", rank: 2 },
+                { id: "tiao-3", suit: "tiao", rank: 3 },
+                { id: "tiao-4", suit: "tiao", rank: 4 },
+              ],
+            }
+      ),
+    },
+  });
+  const claimBrokerRow = claimOverlay.playerRows.find((player) => player.id === "broker");
+  assert.ok(claimBrokerRow);
+  assert.equal(claimBrokerRow.hiddenHandTiles.length, 4);
 });
 
 test("tavern house view renders only the currently available short gameplay actions inside the hand area", () => {
@@ -620,8 +769,8 @@ test("tavern house view renders only the currently available short gameplay acti
       currentBet: 200,
       chipLabel: "chips",
       publicCards: [
-        { id: "wan-1", label: "A1" },
-        { id: "wan-13", label: "K1" },
+        { id: "wan-1", label: "1万" },
+        { id: "east", label: "东" },
       ],
       handCards: [{ id: "tong-8", label: "H8", selected: false, actionId: "pick" }],
       sidePotLabels: ["主池 800", "边池 400"],
@@ -670,8 +819,8 @@ test("tavern house view renders only the currently available short gameplay acti
               kind: "pong",
               cards: [
                 { id: "wan-7", label: "7万" },
-                { id: "bing-7", label: "7饼" },
-                { id: "tong-7", label: "7筒" },
+                { id: "wan-7-2", label: "7万" },
+                { id: "wan-7-3", label: "7万" },
               ],
             },
           ],
@@ -698,7 +847,7 @@ test("tavern house view renders only the currently available short gameplay acti
               ],
             },
           ],
-          discardTiles: [{ id: "bing-9", label: "B9" }],
+          discardTiles: [{ id: "tong-9", label: "9筒" }],
         },
       ],
       logLines: [],
@@ -1083,6 +1232,7 @@ test("tavern house view keeps draw-discard tiles armed without showing a discard
       type: "gamble-table",
       variant: "short",
       title: "Short Table",
+      clickawayActionId: "gamble-clear-selected-discard",
       phase: "draw-discard",
       pot: 800,
       currentBet: 200,
@@ -1141,7 +1291,7 @@ test("tavern house view keeps draw-discard tiles armed without showing a discard
   assert.doesNotMatch(markup, /data-house-action="fold"/u);
 });
 
-test("tavern house view locks draw-discard selection to one armed tile and only shows the discard button after selection", () => {
+test("tavern house view keeps draw-discard switching available and only shows the discard button after selection", () => {
   const markup = renderTavernHouseView({
     moduleId: "tavern",
     houseId: "house.tavern",
@@ -1155,6 +1305,7 @@ test("tavern house view locks draw-discard selection to one armed tile and only 
       type: "gamble-table",
       variant: "short",
       title: "Short Table",
+      clickawayActionId: "gamble-clear-selected-discard",
       phase: "draw-discard",
       pot: 800,
       currentBet: 200,
@@ -1173,6 +1324,7 @@ test("tavern house view locks draw-discard selection to one armed tile and only 
           label: "D9",
           selected: false,
           incoming: true,
+          actionId: "gamble-play-tile:drawn-card",
         },
       ],
       sidePotLabels: [],
@@ -1197,7 +1349,11 @@ test("tavern house view locks draw-discard selection to one armed tile and only 
   });
 
   const tileActions = markup.match(/data-house-action="gamble-play-tile:[^"]+"/gu) ?? [];
-  assert.deepEqual(tileActions, ['data-house-action="gamble-play-tile:free-discard"']);
+  assert.deepEqual(tileActions, [
+    'data-house-action="gamble-play-tile:free-discard"',
+    'data-house-action="gamble-play-tile:drawn-card"',
+  ]);
+  assert.match(markup, /data-house-clickaway-action="gamble-clear-selected-discard"/u);
   assert.match(markup, /has-selected-discard/u);
   assert.match(markup, /data-house-action="confirm-discard"/u);
   assert.doesNotMatch(markup, /data-house-action="draw"/u);
@@ -1217,6 +1373,7 @@ test("tavern house view keeps a deselected short-hand tile lifted without restor
       type: "gamble-table",
       variant: "short",
       title: "Short Table",
+      clickawayActionId: "gamble-clear-selected-discard",
       phase: "draw-discard",
       pot: 800,
       currentBet: 200,
@@ -1274,6 +1431,7 @@ test("tavern house view renders a dropping short-hand tile for the post-mouselea
       type: "gamble-table",
       variant: "short",
       title: "Short Table",
+      clickawayActionId: "gamble-clear-selected-discard",
       phase: "draw-discard",
       pot: 800,
       currentBet: 200,
@@ -1564,6 +1722,14 @@ test("tavern short CSS keeps the public-card stage centered, floats active contr
   );
   assert.match(
     teaHouseCss,
+    /\.c-tavern-gamble__seat--short-1\s+\.c-tavern-gamble__seat-melds\s*\{[^}]*justify-content:\s*flex-start;[^}]*\}/su
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble__seat--short-3\s+\.c-tavern-gamble__seat-melds\s*\{[^}]*justify-content:\s*flex-end;[^}]*\}/su
+  );
+  assert.match(
+    teaHouseCss,
     /\.c-tavern-gamble--short\s+\.c-tavern-gamble__hand-on-felt\s*\{[^}]*left:\s*50%;[^}]*right:\s*auto;[^}]*bottom:\s*42px;[^}]*transform:\s*translateX\(-50%\);[^}]*background:\s*none;[^}]*box-shadow:\s*none;/su
   );
   assert.match(
@@ -1592,7 +1758,7 @@ test("tavern short CSS keeps the public-card stage centered, floats active contr
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tiles--hand:not\(.has-selected-discard\)\s+\.c-tavern-gamble__tile--hand:not\(\[aria-disabled="true"\]\):hover\s*\{[^}]*--tile-lift-y:\s*-30px;/su
+    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile--hand\.is-house-hover-lifted\s*\{[^}]*--tile-lift-y:\s*-30px;/su
   );
   assert.match(
     teaHouseCss,
@@ -1664,11 +1830,11 @@ test("tavern short CSS keeps the public-card stage centered, floats active contr
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble__seat-melds\s*\{[^}]*display:\s*grid;[^}]*gap:\s*6px;[^}]*justify-items:\s*center;/su
+    /\.c-tavern-gamble__seat-melds\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;[^}]*justify-content:\s*center;[^}]*align-items:\s*flex-start;[^}]*gap:\s*4px;/su
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble__seat-meld-group\s*\{[^}]*display:\s*grid;[^}]*gap:\s*4px;[^}]*justify-items:\s*center;/su
+    /\.c-tavern-gamble__seat-meld-group\s*\{[^}]*display:\s*grid;[^}]*gap:\s*4px;[^}]*justify-items:\s*center;[^}]*flex:\s*0 0 auto;[^}]*width:\s*auto;/su
   );
   assert.match(
     teaHouseCss,
@@ -1910,6 +2076,106 @@ test("tavern short showdown keeps between-hand actions inside the settlement are
     markup,
     /(?:class="[^"]*c-grain-shop-button--gold[^"]*"[^>]*data-house-action="gamble-short-cash-out"|data-house-action="gamble-short-cash-out"[^>]*class="[^"]*c-grain-shop-button--gold[^"]*")/u
   );
+});
+
+test("tavern short overlay exposes hand sort gating outside and inside draw-discard", () => {
+  const table = createTavernShortTableSession({
+    playerName: "tester",
+    buyInGold: 100,
+    seed: 17,
+  });
+
+  const bettingOverlay = selectTavernShortGambleOverlay({
+    ...table,
+    currentHand: {
+      ...table.currentHand,
+      phase: "betting",
+    },
+  });
+  assert.equal(bettingOverlay.handSortEnabled, true);
+
+  const drawDiscardOverlay = selectTavernShortGambleOverlay({
+    ...table,
+    currentHand: {
+      ...table.currentHand,
+      phase: "draw-discard",
+      actingSeatIndex: 0,
+      currentDrawTurnSeatId: "you",
+      pendingIncomingCard: {
+        ownerSeatId: "you",
+        source: "draw",
+        card: {
+          id: "tiao-9",
+          suit: "tiao",
+          rank: 9,
+        },
+      },
+    },
+  });
+  assert.equal(drawDiscardOverlay.handSortEnabled, false);
+});
+
+test("tavern short hand markup emits sort metadata only when hand sorting is enabled", () => {
+  const table = createTavernShortTableSession({
+    playerName: "tester",
+    buyInGold: 100,
+    seed: 17,
+  });
+
+  const enabledMarkup = renderTavernHouseView({
+    moduleId: "tavern",
+    houseId: "house.tavern",
+    sceneTitle: "Tavern",
+    sceneSubtitle: "Preview",
+    standbyRoster: [],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: selectTavernShortGambleOverlay({
+      ...table,
+      currentHand: {
+        ...table.currentHand,
+        phase: "betting",
+      },
+    }),
+    leaveAction: { id: "leave-house", label: "Leave" },
+  });
+
+  assert.match(enabledMarkup, /data-house-drop-action-prefix="gamble-short-reorder:"/u);
+  assert.match(enabledMarkup, /data-house-drop-before="end"/u);
+  assert.match(enabledMarkup, /data-house-sort-enabled="true"/u);
+
+  const disabledMarkup = renderTavernHouseView({
+    moduleId: "tavern",
+    houseId: "house.tavern",
+    sceneTitle: "Tavern",
+    sceneSubtitle: "Preview",
+    standbyRoster: [],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: selectTavernShortGambleOverlay({
+      ...table,
+      currentHand: {
+        ...table.currentHand,
+        phase: "draw-discard",
+        actingSeatIndex: 0,
+        currentDrawTurnSeatId: "you",
+        pendingIncomingCard: {
+          ownerSeatId: "you",
+          source: "draw",
+          card: {
+            id: "tiao-9",
+            suit: "tiao",
+            rank: 9,
+          },
+        },
+      },
+    }),
+    leaveAction: { id: "leave-house", label: "Leave" },
+  });
+
+  assert.doesNotMatch(disabledMarkup, /data-house-sort-enabled="true"/u);
 });
 
 test("tavern long overlay still renders existing long-mode structure", () => {
