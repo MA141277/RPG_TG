@@ -431,6 +431,27 @@ test("script-editor project parse keeps event binding normalization on one entry
   );
 });
 
+test("script-editor project parse keeps progress normalization on one entry seam", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/editor-project-loader.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /normalizeScriptEditorProgressTrackRecord/);
+  assert.match(source, /normalizeScriptEditorProgressTrackBindingRecord/);
+  assert.match(
+    source,
+    /progressTracks:\s*\(\(value\.progressTracks \?\? \[\]\) as NonNullable<[\s\S]*?ScriptEditorProjectDefinition\["progressTracks"\][\s\S]*?>\)\.map\(\(track\)\s*=>\s*normalizeScriptEditorProgressTrackRecord\(track\)\)/
+  );
+  assert.match(
+    source,
+    /progressTrackBindings:\s*\(\(value\.progressTrackBindings \?\? \[\]\) as NonNullable<[\s\S]*?ScriptEditorProjectDefinition\["progressTrackBindings"\][\s\S]*?>\)\.map\(\(binding\)\s*=>[\s\S]*?normalizeScriptEditorProgressTrackBindingRecord\(binding\)/
+  );
+});
+
 test("runtime-pack export fails closed on mixed destination and same-family payload actions", () => {
   const source = fs.readFileSync(
     path.join(

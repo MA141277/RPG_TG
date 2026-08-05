@@ -19,6 +19,8 @@ import {
   normalizeScriptEditorDialogueRecord,
   normalizeScriptEditorEventBindingRecord,
   normalizeScriptEditorEventRecord,
+  normalizeScriptEditorProgressTrackBindingRecord,
+  normalizeScriptEditorProgressTrackRecord,
 } from "./story-dialogue-event-authoring";
 
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
@@ -209,13 +211,15 @@ export function parseScriptEditorProject(
     eventBindings: ((value.eventBindings ?? []) as ScriptEditorProjectDefinition["eventBindings"])
       .map((binding) => normalizeScriptEditorEventBindingRecord(binding)),
     progressTracks:
-      (value.progressTracks ?? []) as NonNullable<
+      ((value.progressTracks ?? []) as NonNullable<
         ScriptEditorProjectDefinition["progressTracks"]
-      >,
+      >).map((track) => normalizeScriptEditorProgressTrackRecord(track)),
     progressTrackBindings:
-      (value.progressTrackBindings ?? []) as NonNullable<
+      ((value.progressTrackBindings ?? []) as NonNullable<
         ScriptEditorProjectDefinition["progressTrackBindings"]
-      >,
+      >).map((binding) =>
+        normalizeScriptEditorProgressTrackBindingRecord(binding)
+      ),
     menuResources:
       (value.menuResources ?? []) as ScriptEditorProjectDefinition["menuResources"],
     menuInstances:

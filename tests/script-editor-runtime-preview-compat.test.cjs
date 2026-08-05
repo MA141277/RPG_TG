@@ -19,6 +19,8 @@ const {
 const {
   normalizeScriptEditorEventBindingRecord,
   normalizeScriptEditorEventRecord,
+  normalizeScriptEditorProgressTrackBindingRecord,
+  normalizeScriptEditorProgressTrackRecord,
 } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 const workflow = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 const {
@@ -1109,6 +1111,133 @@ test("script-editor project parse normalizes event binding authoring at the entr
         payloadSchemaId: "payload.runtime.parse",
       },
       priority: 2,
+      enabled: true,
+    },
+  ]);
+});
+
+test("progress track normalization preserves canonical threshold and target fields", () => {
+  const normalized = normalizeScriptEditorProgressTrackRecord({
+    id: " progress-track.runtime.normalize ",
+    title: " 进度轨道 ",
+    metricKey: " player.reputation ",
+    metricLabel: " 声望 ",
+    hostFamily: " city ",
+    allowDemotion: true,
+    tiers: [
+      {
+        id: " progress-tier.runtime.normalize ",
+        title: " 第一档 ",
+        threshold: " 12 ",
+        onEnterRepeatPolicy: "once-per-entry",
+        targetTierSettlementId: " settlement.runtime.normalize ",
+      },
+    ],
+  });
+
+  assert.deepEqual(normalized, {
+    id: "progress-track.runtime.normalize",
+    title: "进度轨道",
+    metricKey: "player.reputation",
+    metricLabel: "声望",
+    hostFamily: "city",
+    allowDemotion: true,
+    tiers: [
+      {
+        id: "progress-tier.runtime.normalize",
+        title: "第一档",
+        threshold: 12,
+        onEnterRepeatPolicy: "once-per-entry",
+        targetTierSettlementId: "settlement.runtime.normalize",
+      },
+    ],
+  });
+});
+
+test("progress track binding normalization preserves canonical host fields", () => {
+  const normalized = normalizeScriptEditorProgressTrackBindingRecord({
+    id: " progress-binding.runtime.normalize ",
+    trackId: " progress-track.runtime.normalize ",
+    host: {
+      family: " person ",
+      id: " hero.runtime.normalize ",
+    },
+    enabled: true,
+  });
+
+  assert.deepEqual(normalized, {
+    id: "progress-binding.runtime.normalize",
+    trackId: "progress-track.runtime.normalize",
+    host: {
+      family: "person",
+      id: "hero.runtime.normalize",
+    },
+    enabled: true,
+  });
+});
+
+test("script-editor project parse normalizes progress authoring at the entry seam", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.progressTracks = [
+    {
+      id: " progress-track.runtime.parse ",
+      title: " 进度轨道 ",
+      metricKey: " player.reputation ",
+      metricLabel: " 声望 ",
+      hostFamily: " city ",
+      allowDemotion: true,
+      tiers: [
+        {
+          id: " progress-tier.runtime.parse ",
+          title: " 第一档 ",
+          threshold: " 18 ",
+          onEnterRepeatPolicy: "once-per-entry",
+          targetTierSettlementId: " settlement.runtime.parse ",
+        },
+      ],
+    },
+  ];
+  project.progressTrackBindings = [
+    {
+      id: " progress-binding.runtime.parse ",
+      trackId: " progress-track.runtime.parse ",
+      host: {
+        family: " person ",
+        id: " hero.runtime.parse ",
+      },
+      enabled: true,
+    },
+  ];
+
+  const parsed = parseScriptEditorProject(project);
+
+  assert.deepEqual(parsed.progressTracks, [
+    {
+      id: "progress-track.runtime.parse",
+      title: "进度轨道",
+      metricKey: "player.reputation",
+      metricLabel: "声望",
+      hostFamily: "city",
+      allowDemotion: true,
+      tiers: [
+        {
+          id: "progress-tier.runtime.parse",
+          title: "第一档",
+          threshold: 18,
+          onEnterRepeatPolicy: "once-per-entry",
+          targetTierSettlementId: "settlement.runtime.parse",
+        },
+      ],
+    },
+  ]);
+  assert.deepEqual(parsed.progressTrackBindings, [
+    {
+      id: "progress-binding.runtime.parse",
+      trackId: "progress-track.runtime.parse",
+      host: {
+        family: "person",
+        id: "hero.runtime.parse",
+      },
       enabled: true,
     },
   ]);
