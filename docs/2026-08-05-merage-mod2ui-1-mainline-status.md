@@ -144,7 +144,7 @@
 判断：
 
 - F 线当前已把 source-unification / startup 冻结 / branch-local queue 同步到最新状态。
-- 当前剩余的治理差异主要只剩 canonical `project-progress` 仍停留在历史 child，以及这一批未形成正式 checkpoint commit/push。
+- 当前剩余的治理差异主要只剩 canonical `project-progress` 仍停留在历史 child；本轮 source-unification closeout 的 checkpoint commit/push 已完成。
 
 ## 当前优先级
 
@@ -178,7 +178,7 @@
 2. startup 审计已完成；在没有新 drift 前，将 startup 行为视为冻结。
 3. 进入 scenario-pack source unification，把三源减少到明确的双源模型。
 4. 评议系统收口暂缓；只有在你重新恢复这条线时，再回到 temple review 剩余 seam。
-5. 当前更合理的下一步是先把这批 branch-local closeout review / commit / push；只有在恢复 `D` 线或决定切换 canonical child 时，才再处理 `project-progress`。
+5. 当前更合理的下一步是决定是否恢复 `D` 线，或是否把当前 branch-local owner 状态正式切到 canonical `project-progress`；当前这批 closeout 的 checkpoint commit/push 已经完成。
 
 ## 对应执行队列
 

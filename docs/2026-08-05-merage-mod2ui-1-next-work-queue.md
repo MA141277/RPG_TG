@@ -165,12 +165,12 @@
 
 ## 当前建议
 
-如果下一步只做一件事，优先做 `F2/F4` 的 review + checkpoint commit/push。
+如果下一步只做一件事，优先决定“恢复 `D` 线”还是“把当前 branch-local owner 状态切到 canonical progress”。
 
 原因：
 
 - `Batch 1` 已完成，startup 线当前没有复现新的 runtime drift。
 - 你已经明确要求先不处理评议系统。
 - `Batch 2` 当前也已完成到“代码与合同已收口”的状态。
-- source-unification plan、主线状态快照与 change-log 当前都已补到 closeout 级别，剩余动作主要是把这一批 branch-local 收口做成正式 checkpoint。
-- 因此当前最合理的下一步不是再开新的 source-unification family，而是 review 当前 diff、提交并推送这一批，再决定是否恢复 `D` 线。
+- source-unification plan、主线状态快照与 change-log 当前都已补到 closeout 级别，而且这一批 checkpoint commit / push 已完成。
+- 因此当前最合理的下一步不是再开新的 source-unification family，而是决定接下来要不要恢复 `D` 线，或者先把 branch-local owner 状态提升到 canonical `project-progress`。
