@@ -18,6 +18,10 @@ import { normalizeScriptEditorMinigameRecord } from "./minigame-binding-authorin
 import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
+  normalizeScriptEditorBuildingRecord,
+  normalizeScriptEditorCityRecord,
+} from "./city-building-authoring";
+import {
   normalizeScriptEditorDialogueRecord,
   normalizeScriptEditorEventBindingRecord,
   normalizeScriptEditorEventRecord,
@@ -200,6 +204,12 @@ export function parseScriptEditorProject(
     ),
     people: (value.people as Record<string, unknown>[]).map((person) =>
       normalizeScriptEditorPersonRecord(person, { portraitVariants })
+    ),
+    cities: (value.cities as ScriptEditorProjectDefinition["cities"]).map((city) =>
+      normalizeScriptEditorCityRecord(city)
+    ),
+    buildings: (value.buildings as ScriptEditorProjectDefinition["buildings"]).map(
+      (building) => normalizeScriptEditorBuildingRecord(building)
     ),
     events: (value.events as ScriptEditorProjectDefinition["events"]).map((event) =>
       normalizeScriptEditorEventRecord(event)

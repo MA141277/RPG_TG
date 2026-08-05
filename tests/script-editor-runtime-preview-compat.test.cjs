@@ -13,6 +13,10 @@ const {
   parseScriptEditorProject,
 } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
 const {
+  normalizeScriptEditorBuildingRecord,
+  normalizeScriptEditorCityRecord,
+} = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
+const {
   normalizeScriptEditorFlowRecord,
 } = require("../.test-dist/modules/script-editor/application/flow-authoring.js");
 const {
@@ -1543,6 +1547,96 @@ test("script-editor project parse normalizes minigame and flow authoring at the 
     },
   ]);
   assert.equal(parsed.minigames[0]?.notes, "玩法备注");
+});
+
+test("city normalization preserves canonical location headline fields", () => {
+  const normalized = normalizeScriptEditorCityRecord({
+    id: " city.runtime.normalize ",
+    name: " 城池 ",
+    regionId: " region.runtime.normalize ",
+    mapNodeId: " map-node.runtime.normalize ",
+    description: " 城市描述 ",
+    backgroundId: " background.runtime.normalize ",
+    houseIds: [" house.a ", " house.b "],
+    neighbourCityIds: [" city.neighbor "],
+    menuInstanceIds: [" menu.instance.runtime.normalize "],
+  });
+
+  assert.equal(normalized.id, " city.runtime.normalize ");
+  assert.equal(normalized.name, "城池");
+  assert.equal(normalized.regionId, "region.runtime.normalize");
+  assert.equal(normalized.mapNodeId, "map-node.runtime.normalize");
+  assert.equal(normalized.description, "城市描述");
+  assert.equal(normalized.backgroundId, "background.runtime.normalize");
+  assert.deepEqual(normalized.houseIds, ["house.a", "house.b"]);
+  assert.deepEqual(normalized.neighbourCityIds, ["city.neighbor"]);
+  assert.deepEqual(normalized.menuInstanceIds, ["menu.instance.runtime.normalize"]);
+});
+
+test("building normalization preserves canonical location headline fields", () => {
+  const normalized = normalizeScriptEditorBuildingRecord({
+    id: " building.runtime.normalize ",
+    cityId: " city.runtime.normalize ",
+    name: " 建筑 ",
+    description: " 建筑描述 ",
+    backgroundId: " background.building.normalize ",
+    menuInstanceIds: [" menu.instance.building.normalize "],
+  });
+
+  assert.equal(normalized.id, " building.runtime.normalize ");
+  assert.equal(normalized.cityId, "city.runtime.normalize");
+  assert.equal(normalized.name, "建筑");
+  assert.equal(normalized.description, "建筑描述");
+  assert.equal(normalized.backgroundId, "background.building.normalize");
+  assert.deepEqual(normalized.menuInstanceIds, ["menu.instance.building.normalize"]);
+});
+
+test("script-editor project parse normalizes city and building authoring at the entry seam", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.cities = [
+    {
+      id: " city.runtime.parse ",
+      name: " 城池 ",
+      regionId: " region.runtime.parse ",
+      mapNodeId: " map-node.runtime.parse ",
+      description: " 城市描述 ",
+      backgroundId: " background.runtime.parse ",
+      houseIds: [" house.a "],
+      neighbourCityIds: [" city.neighbor "],
+      menuInstanceIds: [" menu.instance.runtime.parse "],
+    },
+  ];
+  project.buildings = [
+    {
+      id: " building.runtime.parse ",
+      cityId: " city.runtime.parse ",
+      name: " 建筑 ",
+      description: " 建筑描述 ",
+      backgroundId: " background.building.parse ",
+      menuInstanceIds: [" menu.instance.building.parse "],
+    },
+  ];
+
+  const parsed = parseScriptEditorProject(project);
+
+  assert.equal(parsed.cities[0]?.id, " city.runtime.parse ");
+  assert.equal(parsed.cities[0]?.name, "城池");
+  assert.equal(parsed.cities[0]?.regionId, "region.runtime.parse");
+  assert.equal(parsed.cities[0]?.mapNodeId, "map-node.runtime.parse");
+  assert.equal(parsed.cities[0]?.description, "城市描述");
+  assert.equal(parsed.cities[0]?.backgroundId, "background.runtime.parse");
+  assert.deepEqual(parsed.cities[0]?.houseIds, ["house.a"]);
+  assert.deepEqual(parsed.cities[0]?.neighbourCityIds, ["city.neighbor"]);
+  assert.deepEqual(parsed.cities[0]?.menuInstanceIds, ["menu.instance.runtime.parse"]);
+
+  assert.equal(parsed.buildings[0]?.id, " building.runtime.parse ");
+  assert.equal(parsed.buildings[0]?.cityId, "city.runtime.parse");
+  assert.equal(parsed.buildings[0]?.name, "建筑");
+  assert.equal(parsed.buildings[0]?.description, "建筑描述");
+  assert.equal(parsed.buildings[0]?.backgroundId, "background.building.parse");
+  assert.deepEqual(parsed.buildings[0]?.menuInstanceIds, [
+    "menu.instance.building.parse",
+  ]);
 });
 
 test("template runtime-pack export preserves aligned zhuyuanzhang startup profile fields", async () => {

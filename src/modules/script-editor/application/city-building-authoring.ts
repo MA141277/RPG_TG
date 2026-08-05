@@ -1604,7 +1604,7 @@ function normalizeString(value: unknown, fallback: string): string {
 }
 
 function normalizeOptionalString(value: unknown): string {
-  return typeof value === "string" ? value : "";
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function pickOptionalString<TKey extends string>(

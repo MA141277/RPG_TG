@@ -497,6 +497,19 @@ test("script-editor project parse keeps minigame and flow normalization on one e
   assert.match(source, /normalizeScriptEditorMinigameRecord/);
 });
 
+test("script-editor project parse keeps city and building normalization on one entry seam", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/editor-project-loader.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /normalizeScriptEditorCityRecord/);
+  assert.match(source, /normalizeScriptEditorBuildingRecord/);
+});
+
 test("runtime-pack export fails closed on mixed destination and same-family payload actions", () => {
   const source = fs.readFileSync(
     path.join(
