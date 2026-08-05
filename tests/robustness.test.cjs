@@ -415,6 +415,22 @@ test("script-editor project parse keeps event authoring normalization on one ent
   );
 });
 
+test("script-editor project parse keeps event binding normalization on one entry seam", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/editor-project-loader.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /normalizeScriptEditorEventBindingRecord/);
+  assert.match(
+    source,
+    /eventBindings:\s*\(\(value\.eventBindings \?\? \[\]\) as ScriptEditorProjectDefinition\["eventBindings"\]\)\s*\.map\(\(binding\)\s*=>\s*normalizeScriptEditorEventBindingRecord\(binding\)\)/
+  );
+});
+
 test("runtime-pack export fails closed on mixed destination and same-family payload actions", () => {
   const source = fs.readFileSync(
     path.join(

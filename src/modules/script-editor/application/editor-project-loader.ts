@@ -17,6 +17,7 @@ import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
   normalizeScriptEditorDialogueRecord,
+  normalizeScriptEditorEventBindingRecord,
   normalizeScriptEditorEventRecord,
 } from "./story-dialogue-event-authoring";
 
@@ -205,7 +206,8 @@ export function parseScriptEditorProject(
     buildingArrangements:
       (value.buildingArrangements ?? []) as ScriptEditorProjectDefinition["buildingArrangements"],
     settlements: (value.settlements ?? []) as ScriptEditorProjectDefinition["settlements"],
-    eventBindings: (value.eventBindings ?? []) as ScriptEditorProjectDefinition["eventBindings"],
+    eventBindings: ((value.eventBindings ?? []) as ScriptEditorProjectDefinition["eventBindings"])
+      .map((binding) => normalizeScriptEditorEventBindingRecord(binding)),
     progressTracks:
       (value.progressTracks ?? []) as NonNullable<
         ScriptEditorProjectDefinition["progressTracks"]

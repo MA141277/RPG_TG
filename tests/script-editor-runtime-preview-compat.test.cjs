@@ -17,6 +17,7 @@ const {
   exportScriptEditorProjectToScenarioPackFiles,
 } = require("../.test-dist/modules/script-editor/application/runtime-pack-export.js");
 const {
+  normalizeScriptEditorEventBindingRecord,
   normalizeScriptEditorEventRecord,
 } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 const workflow = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
@@ -1034,6 +1035,81 @@ test("script-editor project parse normalizes routed event payload authoring at t
       type: "start",
       taskId: "task.runtime.payload.normalize",
       occurredAt: "now",
+    },
+  ]);
+});
+
+test("event binding normalization preserves canonical trigger and owner contract fields", () => {
+  const normalized = normalizeScriptEditorEventBindingRecord({
+    id: "event-binding.runtime.normalize",
+    eventId: " event.runtime.normalize ",
+    owner: {
+      family: " building ",
+      id: " building.runtime.normalize ",
+    },
+    trigger: {
+      timing: " city-enter ",
+      action: " building-container-item-action ",
+      payloadSchemaId: " schema.runtime.normalize ",
+    },
+    priority: 4,
+    enabled: true,
+  });
+
+  assert.deepEqual(normalized, {
+    id: "event-binding.runtime.normalize",
+    eventId: "event.runtime.normalize",
+    owner: {
+      family: "building",
+      id: "building.runtime.normalize",
+    },
+    trigger: {
+      timing: "city-enter",
+      action: "building-container-item-action",
+      payloadSchemaId: "schema.runtime.normalize",
+    },
+    priority: 4,
+    enabled: true,
+  });
+});
+
+test("script-editor project parse normalizes event binding authoring at the entry seam", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.eventBindings = [
+    {
+      id: "event-binding.runtime.parse",
+      eventId: " event.opening ",
+      owner: {
+        family: " building ",
+        id: " building.runtime.parse ",
+      },
+      trigger: {
+        timing: " city-enter ",
+        action: " building-container-item-action ",
+        payloadSchemaId: " payload.runtime.parse ",
+      },
+      priority: 2,
+      enabled: true,
+    },
+  ];
+
+  const parsed = parseScriptEditorProject(project);
+
+  assert.deepEqual(parsed.eventBindings, [
+    {
+      id: "event-binding.runtime.parse",
+      eventId: "event.opening",
+      owner: {
+        family: "building",
+        id: "building.runtime.parse",
+      },
+      trigger: {
+        timing: "city-enter",
+        action: "building-container-item-action",
+        payloadSchemaId: "payload.runtime.parse",
+      },
+      priority: 2,
+      enabled: true,
     },
   ]);
 });
