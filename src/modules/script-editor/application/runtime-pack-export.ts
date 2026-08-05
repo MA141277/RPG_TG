@@ -2211,6 +2211,7 @@ function lowerEditorEventToRuntimeEvent(
     eventRecord,
     eventIndex,
     destinationMenuAction ?? destinationLaunchAction,
+    sourceFlowIds,
     derivedFlowActions,
     diagnostics
   );
@@ -2439,6 +2440,7 @@ function lowerEventRouteCommands(
       >
     | null
     | undefined,
+  sourceFlowIds: Set<string>,
   derivedFlowActions: EventRouteCommand[],
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): EventRouteCommand[] | null {
@@ -2482,6 +2484,14 @@ function lowerEventRouteCommands(
         return null;
       }
       const flowId = action.flowId.trim();
+      if (!sourceFlowIds.has(flowId)) {
+        diagnostics.push({
+          code: "missing-reference",
+          fieldPath: `project.events[${eventIndex}].actions[${actionIndex}].flowId`,
+          message: `Event "${eventRecord.id}" references missing flow "${flowId}".`,
+        });
+        return null;
+      }
       actions.push({
         type: "launchPlayable",
         playableId: flowId,

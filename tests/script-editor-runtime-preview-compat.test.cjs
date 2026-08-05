@@ -757,6 +757,41 @@ test("runtime-pack round trip preserves dialogue destination when actions are no
   ]);
 });
 
+test("runtime-pack export rejects launchFlow actions that reference missing flows", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "event",
+            targetId: "",
+          },
+          actions: [
+            {
+              type: "launchFlow",
+              flowId: "flow.missing.runtime",
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), [
+    {
+      code: "missing-reference",
+      fieldPath: "project.events[0].actions[0].flowId",
+      message:
+        'Event "event.opening" references missing flow "flow.missing.runtime".',
+    },
+  ]);
+});
+
 test("event authoring normalization preserves runtime payload actions and task inputs", () => {
   const normalized = normalizeScriptEditorEventRecord({
     id: "event.runtime.payload.normalize",
