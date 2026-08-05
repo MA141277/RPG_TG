@@ -2,23 +2,28 @@
 
 ## Current State
 
-- Current Stage: `House Local Gameplay`
+- Current Stage: `Map Renderer Architecture`
 - Current Stage Status: `running`
-- Current Task: `Tavern Work Red Nine-Slice`
+- Current Task: `Campaign Cloud Volume Lighting Upgrade`
 - Current Task Status: `completed-but-open`
-- Current Child: `Tavern Work Red Nine-Slice`
+- Current Child: `Campaign Cloud Volume Lighting Upgrade`
 - Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-tavern-work-red-nine-slice-and-push`
+- Next Required Action: `review-and-push-campaign-cloud-volume-lighting-upgrade`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-08-03-tavern-work-red-nine-slice-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-08-05-campaign-cloud-volume-lighting-upgrade-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, review docs/superpowers/plans/2026-08-03-tavern-work-red-nine-slice-plan.md, then decide whether to commit/push the completed-but-open tavern work UI batch or keep it local.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-08-05-campaign-cloud-volume-lighting-upgrade-plan.md; do not close until push succeeds.`
 
 ## Progress Log
+
+- 2026-08-05
+  - Summary: `Promoted the campaign cloud volume-lighting upgrade to the active completed-but-open child after implementing density restructuring, light optical depth, single scattering, and bounded multi-octave multiple-scattering fill in the existing campaign cloud shader.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud map-space volumetric slab|campaign cloud reveal cutouts|campaign cloud shader reuses one map-space ray|campaign cloud density uses height layers|campaign cloud freezes animation during map drag and zoom|campaign cloud render keeps flowing cloud animation timing" tests/robustness.test.cjs }`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check`; browser visual QA saved `.tmp/campaign-cloud-volume-lighting-upgrade.png` after confirming ready terrain/actor/cloud canvases and 9/9 nontransparent varied screenshot samples.
+  - Next: `Review and push docs/superpowers/plans/2026-08-05-campaign-cloud-volume-lighting-upgrade-plan.md with the cloud shader commits; do not mark the child closed until remote push succeeds.`
 
 - 2026-08-04
   - Summary: `Applied another local tavern short-gamble UI follow-up without changing the canonical current child: only the bottom player seat's discard lane and exposed meld lane now sit another 10px lower, while the bottom summary block, hand area, and the other three seat anchors stay unchanged.`

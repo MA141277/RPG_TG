@@ -21,11 +21,11 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-08-05`
-- Current Focus: `Task 4: add multiple scattering fill and verify visually.`
-- Next Step: `Start Task 4 from the first unchecked step.`
-- Verification: `Task 3 GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud reveal cutouts|campaign cloud shader reuses one map-space ray|campaign cloud render keeps flowing cloud animation timing" tests/robustness.test.cjs } passed 5/5.`
+- Current Focus: `Implementation and verification complete locally; review/push remain before closeout.`
+- Next Step: `Review final diff and push when requested; do not mark closed while remote push is absent.`
+- Verification: `Task 4 GREEN after code-review fixes: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud map-space volumetric slab|campaign cloud reveal cutouts|campaign cloud shader reuses one map-space ray|campaign cloud density uses height layers|campaign cloud freezes animation during map drag and zoom|campaign cloud render keeps flowing cloud animation timing" tests/robustness.test.cjs } passed 9/9; npm run typecheck exited 0; npm run build exited 0 with existing Vite warnings; npm run lint:plans exited 0; git diff --check exited 0; browser visual QA reached campaign map with terrain/actor/cloud canvases ready, saved .tmp/campaign-cloud-volume-lighting-upgrade.png, and sampled the screenshot as 1280x720 with 9/9 nontransparent varied points.`
 - Notes: `Do not mark this child closed until implementation verification, structured closeout, project-progress sync, and remote push success are recorded.`
 
 ## Progress Log
@@ -46,6 +46,14 @@
   - Summary: `Completed Task 3 by replacing the old height-color per-step lighting in sampleMapSpaceVolumetricCloud with light optical depth, Beer-Lambert transmittance, phase-based single scattering, and optical-depth alpha accumulation while preserving texture accumulation and reveal composition.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud reveal cutouts|campaign cloud shader reuses one map-space ray|campaign cloud render keeps flowing cloud animation timing" tests/robustness.test.cjs } passed 5/5.`
   - Next: `Add multiple-scattering fill, run full verification, update changelog, and perform browser visual QA.`
+- 2026-08-05
+  - Summary: `Completed Task 4 by adding the bounded multi-octave multiple-scattering fill into the existing map-space raymarch, updating the change log, syncing project progress, and capturing browser visual QA for the campaign map cloud layer.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud map-space volumetric slab|campaign cloud reveal cutouts|campaign cloud shader reuses one map-space ray|campaign cloud density uses height layers|campaign cloud freezes animation during map drag and zoom|campaign cloud render keeps flowing cloud animation timing" tests/robustness.test.cjs } passed 9/9; npm run typecheck exited 0; npm run build exited 0 with existing Vite warnings; npm run lint:plans exited 0; browser QA reached the campaign map, confirmed ready terrain/actor/cloud canvases, sampled the saved screenshot as 1280x720 with 9/9 nontransparent varied points, and saved .tmp/campaign-cloud-volume-lighting-upgrade.png.`
+  - Next: `Review and push when requested; keep this child completed-but-open until remote push succeeds.`
+- 2026-08-05
+  - Summary: `Addressed code review findings before the Task 4 commit: the light optical-depth helper now reuses sampleCloudDensity with the same map-space ray and column point as the visible cloud body, and single scattering now uses current-step transmittance instead of multiplying accumulated alpha twice. Shader cost remains bounded but is recorded as residual lower-end GPU risk.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud map-space volumetric slab|campaign cloud reveal cutouts|campaign cloud shader reuses one map-space ray|campaign cloud density uses height layers|campaign cloud freezes animation during map drag and zoom|campaign cloud render keeps flowing cloud animation timing" tests/robustness.test.cjs } passed 9/9; npm run typecheck exited 0; npm run build exited 0 with existing Vite warnings; npm run lint:plans exited 0; git diff --check exited 0; browser QA reached the campaign map, confirmed ready terrain/actor/cloud canvases, sampled the saved screenshot as 1280x720 with 9/9 nontransparent varied points, and saved .tmp/campaign-cloud-volume-lighting-upgrade.png.`
+  - Next: `Commit Task 4, then keep this child completed-but-open until remote push succeeds.`
 
 ---
 
@@ -187,8 +195,8 @@ test("campaign cloud volume lighting uses explicit density and light transport h
   );
   assert.match(
     shaderSource,
-    /float sampleLightOpticalDepth\(\s*vec3 point,\s*vec3 sunDirection,\s*float time\s*\)/,
-    "Expected a short lightmarch helper for cloud self-shadowing."
+    /float sampleLightOpticalDepth\(\s*MapSpaceCloudRay ray,\s*vec3 point,\s*vec3 columnPoint,\s*vec3 sunDirection,\s*float time\s*\)/,
+    "Expected a short lightmarch helper that shares the visible cloud ray and density field."
   );
   assert.match(
     shaderSource,
@@ -524,7 +532,13 @@ float cloudPhaseFunction(float viewDotLight, float anisotropy) {
 Add this helper after `cloudPhaseFunction`:
 
 ```glsl
-float sampleLightOpticalDepth(vec3 point, vec3 sunDirection, float time) {
+float sampleLightOpticalDepth(
+  MapSpaceCloudRay ray,
+  vec3 point,
+  vec3 columnPoint,
+  vec3 sunDirection,
+  float time
+) {
   float cloudBottom = MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS * uCloudProjection.z;
   float cloudTop = MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS * uCloudProjection.z;
   float maxDistance = max(cloudTop - cloudBottom, 0.0001) * 0.86;
@@ -534,13 +548,8 @@ float sampleLightOpticalDepth(vec3 point, vec3 sunDirection, float time) {
   for (int lightStep = 0; lightStep < MAX_CLOUD_LIGHT_STEPS; lightStep += 1) {
     float stepRatio = (float(lightStep) + 0.5) / float(MAX_CLOUD_LIGHT_STEPS);
     vec3 lightPoint = point + sunDirection * stepSize * (float(lightStep) + 0.5);
-    float heightRatio = clamp((lightPoint.z - cloudBottom) / max(cloudTop - cloudBottom, 0.0001), 0.0, 1.0);
-    float heightEnvelope = sampleCloudHeightEnvelope(heightRatio);
-    vec3 lightBasePoint = vec3(lightPoint.xy * 1.18, lightPoint.z * 0.92);
-    vec3 lightDetailPoint = vec3(lightPoint.xy * 1.92, lightPoint.z * 1.34);
-    float lightBase = sampleCloudBaseDistribution(lightBasePoint, time);
-    float lightErosion = sampleCloudDetailErosion(lightDetailPoint, time);
-    float lightDensity = clamp((lightBase - lightErosion * 0.36 - 0.24) * MAP_SPACE_CLOUD_DENSITY_SCALE * heightEnvelope, 0.0, 1.0);
+    float lightTextureValue = 0.0;
+    float lightDensity = sampleCloudDensity(ray, lightPoint, columnPoint, time, lightTextureValue);
     opticalDepth += lightDensity * stepSize * mix(1.0, 0.72, stepRatio);
   }
 
@@ -573,7 +582,13 @@ Inside `sampleMapSpaceVolumetricCloud`, replace the old per-step color block wit
 Use this structure inside the existing main loop:
 
 ```glsl
-float lightOpticalDepth = sampleLightOpticalDepth(point, CLOUD_SUN_DIRECTION, time);
+float lightOpticalDepth = sampleLightOpticalDepth(
+  ray,
+  point,
+  columnPoint,
+  CLOUD_SUN_DIRECTION,
+  time
+);
 float lightTransmittance = beerLambert(lightOpticalDepth, CLOUD_LIGHT_EXTINCTION);
 float viewDotLight = clamp(dot(-ray.direction, CLOUD_SUN_DIRECTION), -1.0, 1.0);
 float phase = cloudPhaseFunction(viewDotLight, 0.42);
@@ -582,7 +597,7 @@ float viewTransmittance = beerLambert(stepOpticalDepth, CLOUD_EXTINCTION);
 float stepAlpha = clamp((1.0 - viewTransmittance) * (1.0 - accumulatedAlpha), 0.0, 1.0);
 vec3 singleScattering = computeSingleScattering(
   density,
-  1.0 - accumulatedAlpha,
+  viewTransmittance,
   lightTransmittance,
   phase
 );
@@ -655,7 +670,7 @@ Update this plan:
 - Consumes: `sampleLightOpticalDepth`, `beerLambert`, `cloudPhaseFunction`, `computeSingleScattering`.
 - Produces: `MAX_CLOUD_SCATTERING_OCTAVES`, `computeMultipleScatteringApprox`, verified browser screenshot `.tmp/campaign-cloud-volume-lighting-upgrade.png`.
 
-- [ ] **Step 1: Add multiple scattering constants**
+- [x] **Step 1: Add multiple scattering constants**
 
 Add these constants near the single-scattering constants:
 
@@ -665,7 +680,7 @@ const float CLOUD_MULTI_SCATTER_ATTENUATION = 0.58;
 const float CLOUD_MULTI_EXTINCTION_ATTENUATION = 0.54;
 ```
 
-- [ ] **Step 2: Implement the multi-octave fill helper**
+- [x] **Step 2: Implement the multi-octave fill helper**
 
 Add this helper after `computeSingleScattering`:
 
@@ -693,7 +708,7 @@ vec3 computeMultipleScatteringApprox(
 }
 ```
 
-- [ ] **Step 3: Add the fill term to the raymarch**
+- [x] **Step 3: Add the fill term to the raymarch**
 
 Inside the main cloud raymarch loop, after `singleScattering` is computed, add:
 
@@ -713,7 +728,7 @@ stepColor += singleScattering + multipleScattering;
 
 If the Task 3 code already added `singleScattering` directly, remove the duplicate direct addition so `singleScattering` is counted once.
 
-- [ ] **Step 4: Run targeted cloud tests**
+- [x] **Step 4: Run targeted cloud tests**
 
 Run:
 
@@ -725,7 +740,7 @@ Expected:
 
 - All named tests pass.
 
-- [ ] **Step 5: Run typecheck, build, and plan lint**
+- [x] **Step 5: Run typecheck, build, and plan lint**
 
 Run:
 
@@ -741,7 +756,7 @@ Expected:
 - `npm run build` exits `0`. Existing Vite asset or chunk warnings are acceptable only if the exit code is `0`.
 - `npm run lint:plans` exits `0`.
 
-- [ ] **Step 6: Run browser visual verification**
+- [x] **Step 6: Run browser visual verification**
 
 Start or reuse the dev server:
 
@@ -767,7 +782,7 @@ Expected visual result:
 - Cloud layer no longer reads primarily as a flat sheet.
 - Markers, hover overlays, and global UI remain above the cloud layer.
 
-- [ ] **Step 7: Update the change log**
+- [x] **Step 7: Update the change log**
 
 Add this entry near the top of `docs/change-log.md`:
 
@@ -779,7 +794,7 @@ Add this entry near the top of `docs/change-log.md`:
 - A low-octave multiple-scattering approximation adds thick-cloud fill light after the single-scattering path, preserving reveal holes, interaction freeze, terrain chunk loading holds, texture-scale control, and the existing cloud renderer boundary.
 ```
 
-- [ ] **Step 8: Update project progress if this child is active**
+- [x] **Step 8: Update project progress if this child is active**
 
 If this child has been promoted to active implementation, update `docs/superpowers/project-progress.md`:
 
@@ -798,7 +813,7 @@ If this child has been promoted to active implementation, update `docs/superpowe
 
 If this child has not been promoted to active implementation, record in this plan's `Progress Log` that project progress was intentionally left unchanged.
 
-- [ ] **Step 9: Sync plan state**
+- [x] **Step 9: Sync plan state**
 
 Update this plan:
 
@@ -809,7 +824,7 @@ Update this plan:
 - Set `Execution State.Verification` to the exact commands and browser screenshot path from Steps 4-6.
 - Add a `Progress Log` entry with all verification results.
 
-- [ ] **Step 10: Commit Task 4**
+- [x] **Step 10: Commit Task 4**
 
 Run:
 
@@ -826,27 +841,27 @@ Expected:
 
 ## Exit Check
 
-- [ ] `campaign-cloud.frag.glsl` uses explicit broad distribution, detail erosion, height envelope, and final density helpers.
-- [ ] `campaign-cloud.frag.glsl` uses Beer-Lambert transmittance, phase function, light optical depth, and single scattering.
-- [ ] `campaign-cloud.frag.glsl` uses bounded multi-octave multiple-scattering fill after single scattering.
-- [ ] Main cloud raymarch remains bounded and does not increase just to hide flatness.
-- [ ] Existing reveal holes, dissolve behavior, interaction freeze, terrain chunk hold, texture-scale control, and `window.rpgCloud` behavior are preserved.
-- [ ] No cloud lighting or density behavior is added to `src/main.ts`.
-- [ ] Cloud renderer does not sample terrain height data or mutate gameplay state.
-- [ ] Targeted cloud tests pass.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run build` passes.
-- [ ] `npm run lint:plans` passes.
-- [ ] Browser visual verification is recorded.
-- [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] `campaign-cloud.frag.glsl` uses explicit broad distribution, detail erosion, height envelope, and final density helpers.
+- [x] `campaign-cloud.frag.glsl` uses Beer-Lambert transmittance, phase function, light optical depth, and single scattering.
+- [x] `campaign-cloud.frag.glsl` uses bounded multi-octave multiple-scattering fill after single scattering.
+- [x] Main cloud raymarch remains bounded and does not increase just to hide flatness.
+- [x] Existing reveal holes, dissolve behavior, interaction freeze, terrain chunk hold, texture-scale control, and `window.rpgCloud` behavior are preserved.
+- [x] No cloud lighting or density behavior is added to `src/main.ts`.
+- [x] Cloud renderer does not sample terrain height data or mutate gameplay state.
+- [x] Targeted cloud tests pass.
+- [x] `npm run typecheck` passes.
+- [x] `npm run build` passes.
+- [x] `npm run lint:plans` passes.
+- [x] Browser visual verification is recorded.
+- [x] Project progress sync is updated if the child state changed.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
@@ -854,12 +869,12 @@ Expected:
 - Parent Task: `Campaign Cloud Volume Lighting Upgrade`
 - Parent Stage: `Map Renderer Architecture`
 - Closeout Status: `completed-but-open`
-- Project Progress Synced: `no`
+- Project Progress Synced: `yes`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `choose-execution-mode`
+- Next Required Action: `review-and-push-campaign-cloud-volume-lighting-upgrade`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-08-05-campaign-cloud-volume-lighting-upgrade-plan.md`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open this plan, choose Subagent-Driven or Inline Execution, then begin Task 1.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-08-05-campaign-cloud-volume-lighting-upgrade-plan.md; do not close until push succeeds.`

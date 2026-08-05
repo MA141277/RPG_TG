@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-05 Campaign Cloud Volume Lighting Upgrade
+
+### Changed
+- `campaign-cloud.frag.glsl` now separates broad Worley fBm cloud distribution, curl-warped high-frequency erosion, and explicit height envelopes so the campaign cloud body has stronger internal density variation without raising the main raymarch budget.
+- The map-space cloud raymarch now estimates light optical depth with a short sun-direction lightmarch and uses Beer-Lambert transmittance, a bounded phase function, and single scattering for directional highlights and self-shadowed interiors.
+- A low-octave multiple-scattering approximation adds thick-cloud fill light after the single-scattering path, preserving reveal holes, interaction freeze, terrain chunk loading holds, texture-scale control, and the existing cloud renderer boundary.
+
+### Impact
+- 云层“体积感”现在主要来自密度场、侵蚀细节和高度包络，“光影感”来自光程、自阴影、单次散射和多 octave 补光；`src/main.ts`、探索揭示、地形 chunk、存档与玩法状态未参与云逻辑。
+
 ## 2026-08-03 Tavern Short Table Draw-Discard UX Contract
 
 ### Added

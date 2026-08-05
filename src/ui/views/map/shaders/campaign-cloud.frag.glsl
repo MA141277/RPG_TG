@@ -382,7 +382,13 @@ float cloudPhaseFunction(float viewDotLight, float anisotropy) {
   return clamp((1.0 - g * g) / pow(denom, 1.5), 0.0, 3.2);
 }
 
-float sampleLightOpticalDepth(vec3 point, vec3 sunDirection, float time) {
+float sampleLightOpticalDepth(
+  MapSpaceCloudRay ray,
+  vec3 point,
+  vec3 columnPoint,
+  vec3 sunDirection,
+  float time
+) {
   float cloudBottom = MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS * uCloudProjection.z;
   float cloudTop = MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS * uCloudProjection.z;
   float maxDistance = max(cloudTop - cloudBottom, 0.0001) * 0.86;
@@ -392,13 +398,8 @@ float sampleLightOpticalDepth(vec3 point, vec3 sunDirection, float time) {
   for (int lightStep = 0; lightStep < MAX_CLOUD_LIGHT_STEPS; lightStep += 1) {
     float stepRatio = (float(lightStep) + 0.5) / float(MAX_CLOUD_LIGHT_STEPS);
     vec3 lightPoint = point + sunDirection * stepSize * (float(lightStep) + 0.5);
-    float heightRatio = clamp((lightPoint.z - cloudBottom) / max(cloudTop - cloudBottom, 0.0001), 0.0, 1.0);
-    float heightEnvelope = sampleCloudHeightEnvelope(heightRatio);
-    vec3 lightBasePoint = vec3(lightPoint.xy * 1.18, lightPoint.z * 0.92);
-    vec3 lightDetailPoint = vec3(lightPoint.xy * 1.92, lightPoint.z * 1.34);
-    float lightBase = sampleCloudBaseDistribution(lightBasePoint, time);
-    float lightErosion = sampleCloudDetailErosion(lightDetailPoint, time);
-    float lightDensity = clamp((lightBase - lightErosion * 0.36 - 0.24) * MAP_SPACE_CLOUD_DENSITY_SCALE * heightEnvelope, 0.0, 1.0);
+    float lightTextureValue = 0.0;
+    float lightDensity = sampleCloudDensity(ray, lightPoint, columnPoint, time, lightTextureValue);
     opticalDepth += lightDensity * stepSize * mix(1.0, 0.72, stepRatio);
   }
 
@@ -466,7 +467,13 @@ vec4 sampleMapSpaceVolumetricCloud(
     float cloudBottom = MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS * uCloudProjection.z;
     float cloudTop = MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS * uCloudProjection.z;
     float heightRatio = clamp((point.z - cloudBottom) / max(cloudTop - cloudBottom, 0.0001), 0.0, 1.0);
-    float lightOpticalDepth = sampleLightOpticalDepth(point, CLOUD_SUN_DIRECTION, time);
+    float lightOpticalDepth = sampleLightOpticalDepth(
+      ray,
+      point,
+      columnPoint,
+      CLOUD_SUN_DIRECTION,
+      time
+    );
     float lightTransmittance = beerLambert(lightOpticalDepth, CLOUD_LIGHT_EXTINCTION);
     float viewDotLight = clamp(dot(-ray.direction, CLOUD_SUN_DIRECTION), -1.0, 1.0);
     float phase = cloudPhaseFunction(viewDotLight, 0.42);
@@ -475,16 +482,21 @@ vec4 sampleMapSpaceVolumetricCloud(
     float stepAlpha = clamp((1.0 - viewTransmittance) * (1.0 - accumulatedAlpha), 0.0, 1.0);
     vec3 singleScattering = computeSingleScattering(
       density,
-      1.0 - accumulatedAlpha,
+      viewTransmittance,
       lightTransmittance,
       phase
+    );
+    vec3 multipleScattering = computeMultipleScatteringApprox(
+      density,
+      lightOpticalDepth,
+      viewDotLight
     );
     float heightHighlight = smoothstep(0.36, 0.92, heightRatio) * lightTransmittance;
     float internalShadow = 1.0 - lightTransmittance;
     float stepTextureRidge = smoothstep(0.42, 0.88, textureValue) * smoothstep(0.18, 0.74, density);
     float stepTextureCrease = smoothstep(0.16, 0.70, (1.0 - textureValue) * density);
     vec3 stepColor = CLOUD_AMBIENT_COLOR * (0.28 + heightRatio * 0.18);
-    stepColor += singleScattering;
+    stepColor += singleScattering + multipleScattering;
     stepColor = mix(stepColor, vec3(0.34, 0.45, 0.50), internalShadow * density * 0.42);
     stepColor = mix(stepColor, vec3(0.43, 0.53, 0.56), stepTextureCrease * 0.26);
     stepColor = mix(stepColor, vec3(1.0, 0.98, 0.88), heightHighlight * (textureValue * 0.36 + stepTextureRidge * 0.22));

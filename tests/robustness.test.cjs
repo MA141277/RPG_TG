@@ -4816,8 +4816,8 @@ test("campaign cloud volume lighting uses explicit density and light transport h
   );
   assert.match(
     shaderSource,
-    /float sampleLightOpticalDepth\(\s*vec3 point,\s*vec3 sunDirection,\s*float time\s*\)/,
-    "Expected a short lightmarch helper for cloud self-shadowing."
+    /float sampleLightOpticalDepth\(\s*MapSpaceCloudRay ray,\s*vec3 point,\s*vec3 columnPoint,\s*vec3 sunDirection,\s*float time\s*\)/,
+    "Expected a short lightmarch helper that shares the visible cloud ray and density field."
   );
   assert.match(
     shaderSource,
@@ -4848,6 +4848,16 @@ test("campaign cloud volume lighting uses explicit density and light transport h
     shaderSource,
     /const int MAX_MAP_SPACE_CLOUD_STEPS = 8;/,
     "The main raymarch budget must not be raised to hide flat density."
+  );
+  assert.match(
+    shaderSource,
+    /float lightDensity = sampleCloudDensity\(ray,\s*lightPoint,\s*columnPoint,\s*time,\s*lightTextureValue\);/,
+    "Light optical-depth sampling must reuse the visible density helper so texture-scale and map-space projection stay aligned."
+  );
+  assert.match(
+    shaderSource,
+    /computeSingleScattering\(\s*density,\s*viewTransmittance,\s*lightTransmittance,\s*phase\s*\)/,
+    "Single scattering should use the current step transmittance, not the accumulated alpha that stepAlpha already applies."
   );
 });
 
