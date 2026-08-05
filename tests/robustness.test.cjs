@@ -10897,6 +10897,8 @@ test("temple review praise follow-up projection is owned by one helper across ho
 
   const helperBlock =
     functionBlocksByName.get("createTempleReviewPraiseFollowupProjectionSeed") ?? "";
+  const fallbackProjectionHelperBlock =
+    functionBlocksByName.get("createTempleReviewPraiseStageFollowupProjection") ?? "";
   const projectBlock =
     functionBlocksByName.get("projectTempleHostedReviewStage") ?? "";
   const legacyBlock =
@@ -10906,14 +10908,23 @@ test("temple review praise follow-up projection is owned by one helper across ho
     helperBlock,
     /function createTempleReviewPraiseFollowupProjectionSeed\(/
   );
+  assert.match(
+    fallbackProjectionHelperBlock,
+    /function createTempleReviewPraiseStageFollowupProjection\(/
+  );
   assert.match(helperBlock, /getTempleMeetingPolicyLines\(/);
   assert.match(helperBlock, /createTempleReviewPolicyPanelOverlay\(/);
   assert.match(helperBlock, /reviewAdvicePrompt/);
   assert.match(projectBlock, /createTempleReviewPraiseFollowupProjectionSeed\(/);
-  assert.match(legacyBlock, /createTempleReviewPraiseFollowupProjectionSeed\(/);
+  assert.match(
+    fallbackProjectionHelperBlock,
+    /createTempleReviewPraiseFollowupProjectionSeed\(/
+  );
+  assert.match(legacyBlock, /createTempleReviewPraiseStageFollowupProjection\(/);
   assert.doesNotMatch(projectBlock, /getTempleMeetingPolicyLines\(/);
   assert.doesNotMatch(projectBlock, /createTempleReviewPolicyPanelOverlay\(/);
   assert.doesNotMatch(legacyBlock, /createTempleReviewPolicyPanelOverlay\(/);
+  assert.doesNotMatch(legacyBlock, /createTempleReviewPraiseFollowupProjectionSeed\(/);
 });
 
 test("temple review reward and personnel overlay-close follow-up projection is owned by one helper across hosted and fallback paths", () => {
@@ -11181,6 +11192,56 @@ test("temple assigned settlement shell is owned by one helper across review sett
   assert.match(taskAssignmentBlock, /createTempleAssignedSettlementSessionState\(/);
   assert.doesNotMatch(reviewSettlementBlock, /meetingStage: "assigned"/);
   assert.doesNotMatch(taskAssignmentBlock, /meetingStage: "assigned"/);
+});
+
+test("temple praise-stage fallback follow-up projection is owned by one helper", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const helperBlock =
+    functionBlocksByName.get("createTempleReviewPraiseStageFollowupProjection") ?? "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+
+  assert.match(
+    helperBlock,
+    /function createTempleReviewPraiseStageFollowupProjection\(/
+  );
+  assert.match(helperBlock, /meetingStage: "situation"/);
+  assert.match(helperBlock, /meetingStage: "policy"/);
+  assert.match(helperBlock, /meetingStage: "advice"/);
+  assert.match(legacyBlock, /createTempleReviewPraiseStageFollowupProjection\(/);
+  assert.doesNotMatch(legacyBlock, /praiseFollowupSeed\.situationDialogueLines/);
+  assert.doesNotMatch(legacyBlock, /praiseFollowupSeed\.policyDialogueLines/);
+  assert.doesNotMatch(legacyBlock, /praiseFollowupSeed\.adviceDialogueLines/);
 });
 
 test("temple and keep house content files no longer author pack task definitions", () => {
