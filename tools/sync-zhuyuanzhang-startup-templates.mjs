@@ -1,11 +1,34 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 import {
   ADDITIVE_SHARED_TEXT_ENTRY_PREFIXES,
   BUILTIN_TEMPLATE_ONLY_MANIFEST_FILE_KEYS,
+  CITY_SHARED_FIELD_KEYS,
+  CITY_ENTRY_RUNTIME_LEADER_RESIDENCE_TARGET_HOUSE_ID_PREFIX,
+  CITY_ENTRY_RUNTIME_LEADER_RESIDENCE_TARGET_HOUSE_ID_SUFFIX,
+  CITY_ENTRY_TEMPLATE_LEADER_RESIDENCE_TARGET_HOUSE_ID,
+  CITY_ENTRY_TEMPLATE_ONLY_IDS,
+  EVENT_RUNTIME_CANONICAL_IDS,
+  EVENT_RUNTIME_STORY_FORMAT_GAP_IDS,
+  HOUSE_RUNTIME_CITY_SCOPED_SUFFIXES,
+  HOUSE_RUNTIME_HOME_ID_PREFIX,
+  HOUSE_RUNTIME_HOME_SPECIAL_IDS,
+  HOUSE_SHARED_FIELD_KEYS,
+  HOUSE_TEMPLATE_CONCRETE_SCENARIO_IDS,
+  HOUSE_TEMPLATE_GENERIC_IDS,
+  LEGACY_PUBLIC_TEMPLATE_PUBLICATION_ROOT,
+  MAP_RUNTIME_CANONICAL_IDS,
+  MAP_RUNTIME_ONLY_FIELD_KEYS,
+  MAP_TEMPLATE_PRESERVED_FIELD_KEYS,
+  PACK_MANIFEST_RUNTIME_ONLY_FILE_KEYS,
+  PACK_MANIFEST_SHARED_FILE_KEYS,
+  PACK_MANIFEST_TEMPLATE_ONLY_FILE_KEYS,
   PLAYABLE_FAMILY_FILE_NAMES,
+  REGISTERED_BUILTIN_TEMPLATE_ASSET_FILE_NAMES,
+  REGISTERED_BUILTIN_TEMPLATE_ASSET_PUBLICATION_ROOT,
   PUBLICATION_OMITTED_EVENT_IDS,
   PUBLICATION_OMITTED_MENU_RESOURCE_ENTRY_IDS,
   PUBLICATION_OMITTED_PLAYABLE_INTEGRATION_IDS,
@@ -55,6 +78,17 @@ async function readJson(filePath) {
 async function readJsonIfExists(filePath) {
   try {
     return await readJson(filePath);
+  } catch (error) {
+    if (error != null && typeof error === "object" && error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function readFileIfExists(filePath) {
+  try {
+    return await readFile(filePath);
   } catch (error) {
     if (error != null && typeof error === "object" && error.code === "ENOENT") {
       return null;
@@ -141,6 +175,407 @@ export function projectActivitiesForSync(sourceActivities, targetActivities) {
       ...sourceRecord,
     };
   });
+}
+
+function projectManifestMetadata(sourceManifest, targetManifest) {
+  const nextManifest = JSON.parse(JSON.stringify(targetManifest ?? {}));
+  nextManifest.schemaVersion = sourceManifest.schemaVersion;
+  nextManifest.kind = sourceManifest.kind;
+  nextManifest.id = sourceManifest.id;
+  nextManifest.title = sourceManifest.title;
+  if (sourceManifest.description == null) {
+    delete nextManifest.description;
+  } else {
+    nextManifest.description = sourceManifest.description;
+  }
+  return nextManifest;
+}
+
+function appendMissingManifestKeys(projectedFiles, sourceFiles, allowedKeys) {
+  for (const key of allowedKeys) {
+    if (
+      !Object.prototype.hasOwnProperty.call(projectedFiles, key) &&
+      typeof sourceFiles?.[key] === "string" &&
+      sourceFiles[key].length > 0
+    ) {
+      projectedFiles[key] = sourceFiles[key];
+    }
+  }
+}
+
+export function projectTemplatePackManifestForSync(
+  sourceManifest,
+  targetManifest
+) {
+  const nextManifest = projectManifestMetadata(sourceManifest, targetManifest);
+  const projectedFiles = {};
+
+  for (const key of Object.keys(targetManifest?.files ?? {})) {
+    if (
+      PACK_MANIFEST_SHARED_FILE_KEYS.includes(key) &&
+      typeof sourceManifest?.files?.[key] === "string"
+    ) {
+      projectedFiles[key] = sourceManifest.files[key];
+      continue;
+    }
+
+    if (
+      PACK_MANIFEST_TEMPLATE_ONLY_FILE_KEYS.includes(key) &&
+      typeof targetManifest?.files?.[key] === "string"
+    ) {
+      projectedFiles[key] = targetManifest.files[key];
+    }
+  }
+
+  appendMissingManifestKeys(
+    projectedFiles,
+    sourceManifest?.files ?? {},
+    PACK_MANIFEST_SHARED_FILE_KEYS
+  );
+  appendMissingManifestKeys(
+    projectedFiles,
+    targetManifest?.files ?? {},
+    PACK_MANIFEST_TEMPLATE_ONLY_FILE_KEYS
+  );
+
+  nextManifest.files = projectedFiles;
+  return nextManifest;
+}
+
+function projectTemplateCityHouseIdsForSync(sourceHouseIds) {
+  return (Array.isArray(sourceHouseIds) ? sourceHouseIds : []).map((houseId) => {
+    const templateHouseId = resolveTemplateHouseIdForRuntimeHouse({ id: houseId });
+    return templateHouseId ?? houseId;
+  });
+}
+
+function projectRuntimeCityHouseIdsForSync(sourceHouseIds, targetHouseIds) {
+  const runtimeHouseIdByTemplateId = new Map(
+    (Array.isArray(targetHouseIds) ? targetHouseIds : []).map((houseId) => [
+      resolveTemplateHouseIdForRuntimeHouse({ id: houseId }) ?? houseId,
+      houseId,
+    ])
+  );
+
+  return (Array.isArray(sourceHouseIds) ? sourceHouseIds : []).map((houseId) => {
+    return runtimeHouseIdByTemplateId.get(houseId) ?? houseId;
+  });
+}
+
+function cloneJsonCompatibleValue(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
+function getMapNodeIdentity(node) {
+  if (node == null || typeof node !== "object") {
+    return null;
+  }
+
+  if (typeof node.id === "string" && node.id.length > 0) {
+    return node.id;
+  }
+  if (typeof node.cityId === "string" && node.cityId.length > 0) {
+    return node.cityId;
+  }
+  return null;
+}
+
+function isCoordinateRecord(value) {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    typeof value.x === "number" &&
+    typeof value.y === "number"
+  );
+}
+
+function coordinatesMatch(left, right) {
+  return (
+    isCoordinateRecord(left) &&
+    isCoordinateRecord(right) &&
+    Math.abs(left.x - right.x) < 1e-6 &&
+    Math.abs(left.y - right.y) < 1e-6
+  );
+}
+
+function projectTemplateMapNodesForSync(sourceNodes, targetNodes) {
+  const targetNodeByIdentity = new Map(
+    (Array.isArray(targetNodes) ? targetNodes : []).flatMap((node) => {
+      const identity = getMapNodeIdentity(node);
+      return identity == null ? [] : [[identity, node]];
+    })
+  );
+
+  return (Array.isArray(sourceNodes) ? sourceNodes : []).map((sourceNode) => {
+    const nextNode = cloneJsonCompatibleValue(sourceNode);
+    const identity = getMapNodeIdentity(sourceNode);
+    const targetNode = identity == null ? null : targetNodeByIdentity.get(identity);
+    if (
+      targetNode != null &&
+      typeof targetNode.x === "number" &&
+      typeof targetNode.y === "number"
+    ) {
+      nextNode.x = targetNode.x;
+      nextNode.y = targetNode.y;
+    }
+    return nextNode;
+  });
+}
+
+function projectTemplateMapInitialPlayerCoordinateForSync(
+  sourceMap,
+  projectedNodes
+) {
+  if (!isCoordinateRecord(sourceMap?.initialPlayerCoordinate)) {
+    return undefined;
+  }
+
+  const sourceNode = (Array.isArray(sourceMap?.nodes) ? sourceMap.nodes : []).find((node) =>
+    coordinatesMatch(node, sourceMap.initialPlayerCoordinate)
+  );
+  const sourceNodeIdentity = getMapNodeIdentity(sourceNode);
+  if (sourceNodeIdentity == null) {
+    return cloneJsonCompatibleValue(sourceMap.initialPlayerCoordinate);
+  }
+
+  const projectedNode = (Array.isArray(projectedNodes) ? projectedNodes : []).find(
+    (node) => getMapNodeIdentity(node) === sourceNodeIdentity
+  );
+  if (
+    projectedNode != null &&
+    typeof projectedNode.x === "number" &&
+    typeof projectedNode.y === "number"
+  ) {
+    return {
+      x: projectedNode.x,
+      y: projectedNode.y,
+    };
+  }
+
+  return cloneJsonCompatibleValue(sourceMap.initialPlayerCoordinate);
+}
+
+function projectRuntimeMapToTemplateMap(sourceMap, targetMap) {
+  const nextMap = {};
+  for (const [key, value] of Object.entries(sourceMap ?? {})) {
+    if (
+      MAP_RUNTIME_ONLY_FIELD_KEYS.includes(key) ||
+      MAP_TEMPLATE_PRESERVED_FIELD_KEYS.includes(key)
+    ) {
+      continue;
+    }
+    if (key === "nodes") {
+      continue;
+    }
+    if (key === "initialPlayerCoordinate") {
+      continue;
+    }
+    nextMap[key] = cloneJsonCompatibleValue(value);
+  }
+
+  const projectedNodes = projectTemplateMapNodesForSync(
+    sourceMap?.nodes,
+    targetMap?.nodes
+  );
+  nextMap.nodes = projectedNodes;
+
+  const projectedInitialPlayerCoordinate =
+    projectTemplateMapInitialPlayerCoordinateForSync(sourceMap, projectedNodes);
+  if (projectedInitialPlayerCoordinate != null) {
+    nextMap.initialPlayerCoordinate = projectedInitialPlayerCoordinate;
+  }
+
+  for (const key of MAP_TEMPLATE_PRESERVED_FIELD_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(targetMap ?? {}, key)) {
+      nextMap[key] = cloneJsonCompatibleValue(targetMap[key]);
+    }
+  }
+
+  return nextMap;
+}
+
+export function projectTemplateMapsForSync(sourceMaps, targetMaps) {
+  const sourceById = new Map(
+    (Array.isArray(sourceMaps) ? sourceMaps : []).map((record) => [record.id, record])
+  );
+  const runtimeCanonicalIds = new Set(MAP_RUNTIME_CANONICAL_IDS);
+  const nextMaps = [];
+  const seenIds = new Set();
+
+  for (const targetMap of Array.isArray(targetMaps) ? targetMaps : []) {
+    if (
+      targetMap == null ||
+      typeof targetMap !== "object" ||
+      typeof targetMap.id !== "string"
+    ) {
+      nextMaps.push(targetMap);
+      continue;
+    }
+
+    if (!runtimeCanonicalIds.has(targetMap.id)) {
+      nextMaps.push(targetMap);
+      continue;
+    }
+
+    const sourceMap = sourceById.get(targetMap.id);
+    if (sourceMap == null) {
+      nextMaps.push(targetMap);
+      continue;
+    }
+
+    nextMaps.push(projectRuntimeMapToTemplateMap(sourceMap, targetMap));
+    seenIds.add(targetMap.id);
+  }
+
+  for (const mapId of MAP_RUNTIME_CANONICAL_IDS) {
+    if (seenIds.has(mapId)) {
+      continue;
+    }
+
+    const sourceMap = sourceById.get(mapId);
+    if (sourceMap != null) {
+      nextMaps.push(projectRuntimeMapToTemplateMap(sourceMap, null));
+    }
+  }
+
+  return nextMaps;
+}
+
+export function projectTemplateCitiesForSync(sourceCities, targetCities) {
+  const sourceById = new Map(
+    (Array.isArray(sourceCities) ? sourceCities : []).map((record) => [
+      record.id,
+      record,
+    ])
+  );
+
+  return (Array.isArray(targetCities) ? targetCities : []).map((targetCity) => {
+    const sourceCity = sourceById.get(targetCity.id);
+    if (sourceCity == null) {
+      return targetCity;
+    }
+
+    const nextCity = { ...targetCity };
+    for (const key of CITY_SHARED_FIELD_KEYS) {
+      if (Object.prototype.hasOwnProperty.call(sourceCity, key)) {
+        nextCity[key] = sourceCity[key];
+      }
+    }
+    nextCity.houseIds = projectTemplateCityHouseIdsForSync(sourceCity.houseIds);
+    return nextCity;
+  });
+}
+
+export function projectRuntimeCitiesForSync(sourceCities, targetCities) {
+  const sourceById = new Map(
+    (Array.isArray(sourceCities) ? sourceCities : []).map((record) => [
+      record.id,
+      record,
+    ])
+  );
+
+  return (Array.isArray(targetCities) ? targetCities : []).map((targetCity) => {
+    const sourceCity = sourceById.get(targetCity.id);
+    if (sourceCity == null) {
+      return targetCity;
+    }
+
+    const nextCity = { ...targetCity };
+    for (const key of CITY_SHARED_FIELD_KEYS) {
+      if (Object.prototype.hasOwnProperty.call(sourceCity, key)) {
+        nextCity[key] = sourceCity[key];
+      }
+    }
+    nextCity.houseIds = projectRuntimeCityHouseIdsForSync(
+      sourceCity.houseIds,
+      targetCity.houseIds
+    );
+    return nextCity;
+  });
+}
+
+function projectRuntimeEventToTemplateEvent(sourceEvent, targetEvent) {
+  if (sourceEvent == null || typeof sourceEvent !== "object") {
+    return targetEvent;
+  }
+
+  if (!EVENT_RUNTIME_STORY_FORMAT_GAP_IDS.includes(sourceEvent.id)) {
+    return JSON.parse(JSON.stringify(sourceEvent));
+  }
+
+  const nextEvent = {};
+  for (const key of ["id", "chapterId", "name", "occurrence", "tags", "actions"]) {
+    if (Object.prototype.hasOwnProperty.call(sourceEvent, key)) {
+      nextEvent[key] = JSON.parse(JSON.stringify(sourceEvent[key]));
+    }
+  }
+
+  if (typeof sourceEvent.dialogueId === "string" && sourceEvent.dialogueId.length > 0) {
+    nextEvent.dialogueId = sourceEvent.dialogueId;
+  } else if (
+    typeof sourceEvent.entrySceneId === "string" &&
+    sourceEvent.entrySceneId.length > 0
+  ) {
+    nextEvent.dialogueId = sourceEvent.entrySceneId;
+  } else if (
+    targetEvent != null &&
+    typeof targetEvent === "object" &&
+    typeof targetEvent.dialogueId === "string"
+  ) {
+    nextEvent.dialogueId = targetEvent.dialogueId;
+  }
+
+  return nextEvent;
+}
+
+export function projectTemplateEventsForSync(sourceEvents, targetEvents) {
+  const sourceById = new Map(
+    (Array.isArray(sourceEvents) ? sourceEvents : []).map((record) => [
+      record.id,
+      record,
+    ])
+  );
+  const runtimeCanonicalIds = new Set(EVENT_RUNTIME_CANONICAL_IDS);
+  const seenIds = new Set();
+  const nextEvents = [];
+
+  for (const targetEvent of Array.isArray(targetEvents) ? targetEvents : []) {
+    if (
+      targetEvent == null ||
+      typeof targetEvent !== "object" ||
+      typeof targetEvent.id !== "string"
+    ) {
+      nextEvents.push(targetEvent);
+      continue;
+    }
+
+    if (!runtimeCanonicalIds.has(targetEvent.id)) {
+      nextEvents.push(targetEvent);
+      continue;
+    }
+
+    const sourceEvent = sourceById.get(targetEvent.id);
+    if (sourceEvent == null) {
+      nextEvents.push(targetEvent);
+      continue;
+    }
+
+    nextEvents.push(projectRuntimeEventToTemplateEvent(sourceEvent, targetEvent));
+    seenIds.add(targetEvent.id);
+  }
+
+  for (const eventId of EVENT_RUNTIME_CANONICAL_IDS) {
+    if (seenIds.has(eventId)) {
+      continue;
+    }
+
+    const sourceEvent = sourceById.get(eventId);
+    if (sourceEvent != null) {
+      nextEvents.push(projectRuntimeEventToTemplateEvent(sourceEvent, null));
+    }
+  }
+
+  return nextEvents;
 }
 
 export function projectRuntimeEventsForSync(sourceEvents, targetEvents) {
@@ -303,27 +738,273 @@ export function projectRuntimePackManifestForSync(
   sourceManifest,
   targetManifest
 ) {
-  const nextManifest = JSON.parse(JSON.stringify(targetManifest ?? {}));
-  nextManifest.schemaVersion = sourceManifest.schemaVersion;
-  nextManifest.kind = sourceManifest.kind;
-  nextManifest.id = sourceManifest.id;
-  nextManifest.title = sourceManifest.title;
-  if (sourceManifest.description == null) {
-    delete nextManifest.description;
-  } else {
-    nextManifest.description = sourceManifest.description;
+  const nextManifest = projectManifestMetadata(sourceManifest, targetManifest);
+  const projectedFiles = {};
+
+  for (const key of Object.keys(targetManifest?.files ?? {})) {
+    if (
+      PACK_MANIFEST_SHARED_FILE_KEYS.includes(key) &&
+      typeof sourceManifest?.files?.[key] === "string"
+    ) {
+      projectedFiles[key] = sourceManifest.files[key];
+      continue;
+    }
+
+    if (
+      PACK_MANIFEST_RUNTIME_ONLY_FILE_KEYS.includes(key) &&
+      typeof targetManifest?.files?.[key] === "string"
+    ) {
+      projectedFiles[key] = targetManifest.files[key];
+    }
   }
-  nextManifest.files = {
-    ...(targetManifest?.files ?? {}),
-  };
+
+  appendMissingManifestKeys(
+    projectedFiles,
+    sourceManifest?.files ?? {},
+    PACK_MANIFEST_SHARED_FILE_KEYS
+  );
+  appendMissingManifestKeys(
+    projectedFiles,
+    targetManifest?.files ?? {},
+    PACK_MANIFEST_RUNTIME_ONLY_FILE_KEYS
+  );
 
   for (const [manifestKey, fileName] of Object.entries(
     runtimeMirrorManifestFileMap
   )) {
-    nextManifest.files[manifestKey] = fileName;
+    projectedFiles[manifestKey] = fileName;
   }
 
+  nextManifest.files = projectedFiles;
   return nextManifest;
+}
+
+function toRuntimeLeaderResidenceTargetHouseId(cityId) {
+  return `${CITY_ENTRY_RUNTIME_LEADER_RESIDENCE_TARGET_HOUSE_ID_PREFIX}${cityId.replace(
+    /^city\./,
+    ""
+  )}${CITY_ENTRY_RUNTIME_LEADER_RESIDENCE_TARGET_HOUSE_ID_SUFFIX}`;
+}
+
+export function projectRuntimeCityEntriesForSync(sourceEntries, targetEntries) {
+  const sourceById = new Map(
+    (Array.isArray(sourceEntries) ? sourceEntries : []).map((record) => [
+      record.id,
+      record,
+    ])
+  );
+  const nextEntries = [];
+  const seenIds = new Set();
+
+  for (const targetRecord of Array.isArray(targetEntries) ? targetEntries : []) {
+    const sourceRecord = sourceById.get(targetRecord.id);
+    if (
+      sourceRecord == null ||
+      CITY_ENTRY_TEMPLATE_ONLY_IDS.includes(targetRecord.id)
+    ) {
+      nextEntries.push(targetRecord);
+      seenIds.add(targetRecord.id);
+      continue;
+    }
+
+    if (sourceRecord.directoryType === "leader-residence") {
+      nextEntries.push({
+        ...sourceRecord,
+        targetHouseId: toRuntimeLeaderResidenceTargetHouseId(sourceRecord.cityId),
+      });
+      seenIds.add(targetRecord.id);
+      continue;
+    }
+
+    nextEntries.push(sourceRecord);
+    seenIds.add(targetRecord.id);
+  }
+
+  for (const sourceRecord of Array.isArray(sourceEntries) ? sourceEntries : []) {
+    if (
+      seenIds.has(sourceRecord.id) ||
+      CITY_ENTRY_TEMPLATE_ONLY_IDS.includes(sourceRecord.id)
+    ) {
+      continue;
+    }
+    nextEntries.push(
+      sourceRecord.directoryType === "leader-residence"
+        ? {
+            ...sourceRecord,
+            targetHouseId: toRuntimeLeaderResidenceTargetHouseId(sourceRecord.cityId),
+          }
+        : sourceRecord
+    );
+  }
+
+  return nextEntries;
+}
+
+export function projectTemplateCityEntriesForSync(sourceEntries, targetEntries) {
+  const sourceById = new Map(
+    (Array.isArray(sourceEntries) ? sourceEntries : []).map((record) => [
+      record.id,
+      record,
+    ])
+  );
+  const nextEntries = [];
+  const seenIds = new Set();
+
+  for (const targetRecord of Array.isArray(targetEntries) ? targetEntries : []) {
+    if (CITY_ENTRY_TEMPLATE_ONLY_IDS.includes(targetRecord.id)) {
+      nextEntries.push(targetRecord);
+      seenIds.add(targetRecord.id);
+      continue;
+    }
+
+    const sourceRecord = sourceById.get(targetRecord.id);
+    if (sourceRecord == null) {
+      nextEntries.push(targetRecord);
+      seenIds.add(targetRecord.id);
+      continue;
+    }
+
+    nextEntries.push(
+      sourceRecord.directoryType === "leader-residence"
+        ? {
+            ...sourceRecord,
+            targetHouseId: CITY_ENTRY_TEMPLATE_LEADER_RESIDENCE_TARGET_HOUSE_ID,
+          }
+        : sourceRecord
+    );
+    seenIds.add(targetRecord.id);
+  }
+
+  for (const sourceRecord of Array.isArray(sourceEntries) ? sourceEntries : []) {
+    if (seenIds.has(sourceRecord.id)) {
+      continue;
+    }
+    nextEntries.push(
+      sourceRecord.directoryType === "leader-residence"
+        ? {
+            ...sourceRecord,
+            targetHouseId: CITY_ENTRY_TEMPLATE_LEADER_RESIDENCE_TARGET_HOUSE_ID,
+          }
+        : sourceRecord
+    );
+  }
+
+  return nextEntries;
+}
+
+function resolveRuntimeHouseIdForTemplateHouse(templateHouse) {
+  if (templateHouse == null || typeof templateHouse !== "object") {
+    return null;
+  }
+
+  if (HOUSE_TEMPLATE_CONCRETE_SCENARIO_IDS.includes(templateHouse.id)) {
+    return templateHouse.id;
+  }
+
+  if (templateHouse.id === "home.template") {
+    return HOUSE_RUNTIME_HOME_SPECIAL_IDS[0] ?? null;
+  }
+
+  if (
+    typeof templateHouse.id !== "string" ||
+    !HOUSE_TEMPLATE_GENERIC_IDS.includes(templateHouse.id) ||
+    typeof templateHouse.cityId !== "string" ||
+    !templateHouse.cityId.startsWith("city.") ||
+    !templateHouse.id.startsWith("house.template.")
+  ) {
+    return null;
+  }
+
+  const citySlug = templateHouse.cityId.slice("city.".length);
+  const suffix = templateHouse.id.slice("house.template".length);
+  return `house.${citySlug}${suffix}`;
+}
+
+function resolveTemplateHouseIdForRuntimeHouse(runtimeHouse) {
+  if (runtimeHouse == null || typeof runtimeHouse !== "object") {
+    return null;
+  }
+
+  if (HOUSE_TEMPLATE_CONCRETE_SCENARIO_IDS.includes(runtimeHouse.id)) {
+    return runtimeHouse.id;
+  }
+
+  if (
+    runtimeHouse.id === HOUSE_RUNTIME_HOME_SPECIAL_IDS[0] ||
+    (typeof runtimeHouse.id === "string" &&
+      runtimeHouse.id.startsWith(HOUSE_RUNTIME_HOME_ID_PREFIX))
+  ) {
+    return "home.template";
+  }
+
+  if (typeof runtimeHouse.id !== "string" || !runtimeHouse.id.startsWith("house.")) {
+    return null;
+  }
+
+  const suffix = HOUSE_RUNTIME_CITY_SCOPED_SUFFIXES.find((candidate) =>
+    runtimeHouse.id.endsWith(candidate)
+  );
+  if (suffix == null) {
+    return null;
+  }
+
+  return `house.template${suffix}`;
+}
+
+export function projectTemplateHousesForSync(sourceHouses, targetHouses) {
+  const sourceById = new Map(
+    (Array.isArray(sourceHouses) ? sourceHouses : []).map((record) => [
+      record.id,
+      record,
+    ])
+  );
+
+  return (Array.isArray(targetHouses) ? targetHouses : []).map((targetHouse) => {
+    const runtimeHouseId = resolveRuntimeHouseIdForTemplateHouse(targetHouse);
+    const sourceHouse =
+      runtimeHouseId == null ? null : sourceById.get(runtimeHouseId) ?? null;
+    if (sourceHouse == null) {
+      return targetHouse;
+    }
+
+    const nextHouse = { ...targetHouse };
+
+    for (const key of HOUSE_SHARED_FIELD_KEYS) {
+      if (Object.prototype.hasOwnProperty.call(sourceHouse, key)) {
+        nextHouse[key] = sourceHouse[key];
+      }
+    }
+
+    return nextHouse;
+  });
+}
+
+export function projectRuntimeHousesForSync(sourceHouses, targetHouses) {
+  const sourceById = new Map(
+    (Array.isArray(sourceHouses) ? sourceHouses : []).map((record) => [
+      record.id,
+      record,
+    ])
+  );
+
+  return (Array.isArray(targetHouses) ? targetHouses : []).map((targetHouse) => {
+    const templateHouseId = resolveTemplateHouseIdForRuntimeHouse(targetHouse);
+    const sourceHouse =
+      templateHouseId == null ? null : sourceById.get(templateHouseId) ?? null;
+    if (sourceHouse == null) {
+      return targetHouse;
+    }
+
+    const nextHouse = { ...targetHouse };
+
+    for (const key of HOUSE_SHARED_FIELD_KEYS) {
+      if (Object.prototype.hasOwnProperty.call(sourceHouse, key)) {
+        nextHouse[key] = sourceHouse[key];
+      }
+    }
+
+    return nextHouse;
+  });
 }
 
 export async function resolveCanonicalPlayableFamilyForSync(
@@ -410,6 +1091,19 @@ export async function resolveCanonicalRuntimeEventsForSync(
   return readJson(path.join(builtinTemplateRoot, "events.json"));
 }
 
+export async function resolveCanonicalRuntimeMapsForSync(
+  repoRootPath,
+  sourceRoot,
+  sourceMaps
+) {
+  if (!sourceRoot.includes("/builtin-templates/") && Array.isArray(sourceMaps)) {
+    return cloneJsonCompatibleValue(sourceMaps);
+  }
+
+  const { runtimeRoot } = resolveZhuyuanzhangPackRoots(repoRootPath);
+  return readJson(path.join(runtimeRoot, "maps.json"));
+}
+
 async function buildTargetContents(sourceRoot, targetRoots) {
   const { runtimeRoot } = resolveZhuyuanzhangPackRoots(repoRoot);
   const sourceScenarioProfile = await readJson(
@@ -419,8 +1113,47 @@ async function buildTargetContents(sourceRoot, targetRoots) {
   const sourceTextEntries = await readJson(path.join(sourceRoot, "text-entries.json"));
   const sourceActivities = await readJson(path.join(sourceRoot, "activities.json"));
   const sourcePackManifest = await readJson(path.join(sourceRoot, "pack.json"));
+  const sourceCities = await readJson(path.join(sourceRoot, "cities.json"));
+  const sourceMaps = await readJson(path.join(sourceRoot, "maps.json"));
+  const sourceCityEntries = await readJson(path.join(sourceRoot, "city-entries.json"));
+  const sourceEvents = await readJson(path.join(sourceRoot, "events.json"));
+  const sourceHouses = await readJson(path.join(sourceRoot, "houses.json"));
   const { builtinTemplateRoot } = resolveZhuyuanzhangPackRoots(repoRoot);
+  const legacyPublicTemplateRoot = path.join(
+    repoRoot,
+    LEGACY_PUBLIC_TEMPLATE_PUBLICATION_ROOT
+  );
+  async function readTargetJsonForBuild(targetRoot, fileName, fallbackValue) {
+    const targetPath = path.join(targetRoot, fileName);
+    const directValue = await readJsonIfExists(targetPath);
+    if (directValue != null) {
+      return directValue;
+    }
+
+    return fallbackValue == null
+      ? null
+      : JSON.parse(JSON.stringify(fallbackValue));
+  }
+  async function readPublicationJsonForBuild(fileName, fallbackValue = null) {
+    for (const candidateRoot of [
+      builtinTemplateRoot,
+      sourceRoot,
+    ]) {
+      const value = await readJsonIfExists(path.join(candidateRoot, fileName));
+      if (value != null) {
+        return value;
+      }
+    }
+
+    return fallbackValue == null
+      ? null
+      : JSON.parse(JSON.stringify(fallbackValue));
+  }
   const canonicalRuntimeMirrorManifestSource =
+    sourceRoot.includes("/builtin-templates/")
+      ? sourcePackManifest
+      : await readJson(path.join(builtinTemplateRoot, "pack.json"));
+  const canonicalPublicationManifestSource =
     sourceRoot.includes("/builtin-templates/")
       ? sourcePackManifest
       : await readJson(path.join(builtinTemplateRoot, "pack.json"));
@@ -478,6 +1211,11 @@ async function buildTargetContents(sourceRoot, targetRoots) {
       ? await readJson(path.join(sourceRoot, "events.json"))
       : null
   );
+  const canonicalRuntimeMaps = await resolveCanonicalRuntimeMapsForSync(
+    repoRoot,
+    sourceRoot,
+    sourceMaps
+  );
 
   const results = [];
   for (const targetRoot of targetRoots) {
@@ -490,11 +1228,122 @@ async function buildTargetContents(sourceRoot, targetRoots) {
         : null;
 
     const targetCharactersPath = path.join(targetRoot, "characters.json");
-    const targetCharacters = await readJson(targetCharactersPath);
+    const targetCharacters =
+      (await readTargetJsonForBuild(targetRoot, "characters.json", sourceCharacters)) ??
+      sourceCharacters;
     const nextCharacters = syncCharacterStartupFields(
       sourceCharacters,
       targetCharacters
     );
+
+    const nextPackManifest =
+      targetRoot === runtimeRoot
+        ? projectRuntimePackManifestForSync(
+            canonicalRuntimeMirrorManifestSource,
+            (await readTargetJsonForBuild(targetRoot, "pack.json", {})) ?? {}
+          )
+        : path.basename(targetRoot) === "zhuyuanzhang" &&
+            targetRoot.includes("/public/")
+        ? projectPublicPackManifestForSync(
+            canonicalPublicationManifestSource,
+            (await readTargetJsonForBuild(targetRoot, "pack.json", {})) ?? {}
+          )
+        : targetRoot === builtinTemplateRoot
+        ? projectTemplatePackManifestForSync(
+            sourcePackManifest,
+            (await readTargetJsonForBuild(targetRoot, "pack.json", {})) ?? {}
+          )
+        : (await readTargetJsonForBuild(targetRoot, "pack.json", {})) ?? {};
+    const nextCities =
+      targetRoot === runtimeRoot
+        ? projectRuntimeCitiesForSync(
+            sourceCities,
+            (await readTargetJsonForBuild(targetRoot, "cities.json", [])) ?? []
+          )
+        : targetRoot === builtinTemplateRoot
+        ? projectTemplateCitiesForSync(
+            sourceCities,
+            (await readTargetJsonForBuild(targetRoot, "cities.json", [])) ?? []
+          )
+        : null;
+    const nextMaps =
+      targetRoot === builtinTemplateRoot || targetRoot.includes("/public/")
+        ? projectTemplateMapsForSync(
+            canonicalRuntimeMaps,
+            (await readTargetJsonForBuild(targetRoot, "maps.json", [])) ?? []
+          )
+        : null;
+    const nextEvents =
+      targetRoot === builtinTemplateRoot
+        ? projectTemplateEventsForSync(
+            sourceEvents,
+            (await readTargetJsonForBuild(targetRoot, "events.json", [])) ?? []
+          )
+        : null;
+    const nextCityEntries =
+      targetRoot === runtimeRoot
+        ? projectRuntimeCityEntriesForSync(
+            sourceCityEntries,
+            (await readTargetJsonForBuild(targetRoot, "city-entries.json", [])) ?? []
+          )
+        : targetRoot === builtinTemplateRoot
+        ? projectTemplateCityEntriesForSync(
+            sourceCityEntries,
+            (await readTargetJsonForBuild(targetRoot, "city-entries.json", [])) ?? []
+          )
+        : null;
+    const nextHouses =
+      targetRoot === runtimeRoot
+        ? projectRuntimeHousesForSync(
+            sourceHouses,
+            (await readTargetJsonForBuild(targetRoot, "houses.json", [])) ?? []
+          )
+        : targetRoot === builtinTemplateRoot
+        ? projectTemplateHousesForSync(
+            sourceHouses,
+            (await readTargetJsonForBuild(targetRoot, "houses.json", [])) ?? []
+          )
+        : null;
+    const explicitlyManagedPublicFileNames = new Set([
+      "scenario-profile.json",
+      "characters.json",
+      "text-entries.json",
+      "activities.json",
+      "pack.json",
+      "maps.json",
+      "playables.json",
+      "playable-integrations.json",
+      "playable-shells.json",
+      "settlements.json",
+      "dialogues.json",
+      "events.json",
+      "event-bindings.json",
+      "menu-resources.json",
+      "house-module-defaults.json",
+    ]);
+    const supplementalPublicFiles =
+      targetRoot.includes("/public/")
+        ? await Promise.all(
+            Object.values(nextPackManifest.files ?? {})
+              .filter(
+                (fileName) =>
+                  typeof fileName === "string" &&
+                  fileName.endsWith(".json") &&
+                  !explicitlyManagedPublicFileNames.has(fileName)
+              )
+              .map(async (fileName) => ({
+                fileName,
+                filePath: path.join(targetRoot, fileName),
+                publicationManaged: true,
+                content: formatJson(
+                  (await readPublicationJsonForBuild(
+                    fileName,
+                    await readTargetJsonForBuild(targetRoot, fileName, null)
+                  )) ?? []
+                ),
+              }))
+          )
+        : [];
 
     results.push({
       targetRoot,
@@ -506,31 +1355,39 @@ async function buildTargetContents(sourceRoot, targetRoots) {
       textEntriesContent: formatJson(
         projectTextEntriesForSync(
           sourceTextEntries,
-          await readJson(path.join(targetRoot, "text-entries.json"))
+          (await readTargetJsonForBuild(
+            targetRoot,
+            "text-entries.json",
+            sourceTextEntries
+          )) ?? sourceTextEntries
         )
       ),
       activitiesPath: path.join(targetRoot, "activities.json"),
       activitiesContent: formatJson(
         projectActivitiesForSync(
           sourceActivities,
-          await readJson(path.join(targetRoot, "activities.json"))
+          (await readTargetJsonForBuild(
+            targetRoot,
+            "activities.json",
+            sourceActivities
+          )) ?? sourceActivities
         )
       ),
+      citiesPath: nextCities == null ? null : path.join(targetRoot, "cities.json"),
+      citiesContent: nextCities == null ? null : formatJson(nextCities),
+      mapsPath: nextMaps == null ? null : path.join(targetRoot, "maps.json"),
+      mapsContent: nextMaps == null ? null : formatJson(nextMaps),
+      eventsPath: nextEvents == null ? null : path.join(targetRoot, "events.json"),
+      eventsContent: nextEvents == null ? null : formatJson(nextEvents),
       packManifestPath: path.join(targetRoot, "pack.json"),
-      packManifestContent: formatJson(
-        targetRoot === runtimeRoot
-          ? projectRuntimePackManifestForSync(
-              canonicalRuntimeMirrorManifestSource,
-              await readJson(path.join(targetRoot, "pack.json"))
-            )
-          : path.basename(targetRoot) === "zhuyuanzhang" &&
-              targetRoot.includes("/public/")
-          ? projectPublicPackManifestForSync(
-              sourcePackManifest,
-              await readJson(path.join(targetRoot, "pack.json"))
-            )
-          : await readJson(path.join(targetRoot, "pack.json"))
-      ),
+      packManifestContent: formatJson(nextPackManifest),
+      cityEntriesPath:
+        nextCityEntries == null ? null : path.join(targetRoot, "city-entries.json"),
+      cityEntriesContent:
+        nextCityEntries == null ? null : formatJson(nextCityEntries),
+      housesPath: nextHouses == null ? null : path.join(targetRoot, "houses.json"),
+      housesContent: nextHouses == null ? null : formatJson(nextHouses),
+      supplementalPublicFiles,
       publicPlayableShellsPath:
         targetRoot.includes("/public/")
           ? path.join(targetRoot, "playable-shells.json")
@@ -813,11 +1670,19 @@ function areJsonValuesEqual(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function areBinaryValuesEqual(left, right) {
+  if (!Buffer.isBuffer(left) || !Buffer.isBuffer(right)) {
+    return false;
+  }
+  return left.equals(right);
+}
+
 async function main() {
   const checkMode = process.argv.includes("--check");
   const writeMode = !checkMode || process.argv.includes("--write");
   const sourceArg = process.argv.find((arg) => arg.startsWith("--source="));
-  const source = sourceArg?.slice("--source=".length) ?? "builtin-runtime-pack";
+  const source =
+    sourceArg?.slice("--source=".length) ?? "script-editor-template-pack";
   const updates = [];
   const { sourceRoot, targetRoots } = resolveZhuyuanzhangSyncDirection(
     repoRoot,
@@ -859,9 +1724,34 @@ async function main() {
         content: target.activitiesContent,
       },
       {
+        fileName: "cities.json",
+        filePath: target.citiesPath,
+        content: target.citiesContent,
+      },
+      {
+        fileName: "maps.json",
+        filePath: target.mapsPath,
+        content: target.mapsContent,
+      },
+      {
+        fileName: "events.json",
+        filePath: target.eventsPath,
+        content: target.eventsContent,
+      },
+      {
         fileName: "pack.json",
         filePath: target.packManifestPath,
         content: target.packManifestContent,
+      },
+      {
+        fileName: "city-entries.json",
+        filePath: target.cityEntriesPath,
+        content: target.cityEntriesContent,
+      },
+      {
+        fileName: "houses.json",
+        filePath: target.housesPath,
+        content: target.housesContent,
       },
       {
         fileName: "playables.json",
@@ -968,6 +1858,9 @@ async function main() {
         filePath: target.runtimeEventsPath,
         content: target.runtimeEventsContent,
       },
+      ...(Array.isArray(target.supplementalPublicFiles)
+        ? target.supplementalPublicFiles
+        : []),
     ]) {
       if (
         typeof file.filePath !== "string" ||
@@ -977,7 +1870,8 @@ async function main() {
       }
       if (
         target.targetRoot.includes("/public/") &&
-        publicationFileNames.has(file.fileName)
+        (publicationFileNames.has(file.fileName) ||
+          file.publicationManaged === true)
       ) {
         if (file.fileName === "pack.json" && source !== "script-editor-template-pack") {
           continue;
@@ -1031,6 +1925,40 @@ async function main() {
           await writeFile(file.filePath, file.content, "utf8");
         }
       }
+    }
+  }
+
+  const { builtinTemplateRoot } = resolveZhuyuanzhangPackRoots(repoRoot);
+  const registeredBuiltinTemplateAssetPublicationRoot = path.join(
+    repoRoot,
+    REGISTERED_BUILTIN_TEMPLATE_ASSET_PUBLICATION_ROOT
+  );
+  const legacyPublicTemplateRoot = path.join(
+    repoRoot,
+    LEGACY_PUBLIC_TEMPLATE_PUBLICATION_ROOT
+  );
+  for (const relativePath of REGISTERED_BUILTIN_TEMPLATE_ASSET_FILE_NAMES) {
+    const sourceAssetPath = path.join(builtinTemplateRoot, relativePath);
+    const targetAssetPath = path.join(
+      registeredBuiltinTemplateAssetPublicationRoot,
+      relativePath
+    );
+    const sourceBuffer = await readFile(sourceAssetPath);
+    const existingBuffer = await readFileIfExists(targetAssetPath);
+    if (areBinaryValuesEqual(existingBuffer, sourceBuffer)) {
+      continue;
+    }
+    updates.push(targetAssetPath);
+    if (writeMode) {
+      await mkdir(path.dirname(targetAssetPath), { recursive: true });
+      await writeFile(targetAssetPath, sourceBuffer);
+    }
+  }
+
+  if (existsSync(legacyPublicTemplateRoot)) {
+    updates.push(legacyPublicTemplateRoot);
+    if (writeMode) {
+      await rm(legacyPublicTemplateRoot, { recursive: true, force: true });
     }
   }
 

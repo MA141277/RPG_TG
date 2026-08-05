@@ -19791,8 +19791,8 @@ test("main.ts map intro shell no longer owns the zhuyuanzhang chapter intro text
   );
 });
 
-test("main.ts haozhou return entry no longer owns the sundeya battle review mission text id", () => {
-  const startupSource = fs.readFileSync(
+test("startup app-state factory no longer owns the sundeya battle review mission text id inline", () => {
+  const startupSeedSource = fs.readFileSync(
     path.join(
       process.cwd(),
       "src",
@@ -19802,17 +19802,26 @@ test("main.ts haozhou return entry no longer owns the sundeya battle review miss
     ),
     "utf8"
   );
-  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const startupFactorySource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "startup-app-state-factory.ts"
+    ),
+    "utf8"
+  );
   const encounterBlock =
-    mainSource.match(
-      /function createHaozhouReturnEncounterAppState\(baseState: AppState\): AppState \{[\s\S]*?\n}\n\nfunction beginLoadingScreen/
+    startupFactorySource.match(
+      /function createHaozhouReturnEncounterAppState\(baseState: AppState\): AppState \{[\s\S]*?\n  }\n\n  function bootstrapStartupStoryAppState/
     )?.[0] ?? "";
 
   assert.match(
-    startupSource,
+    startupSeedSource,
     /export function resolveHaozhouReturnEncounterBattleSeed\(/
   );
-  assert.match(mainSource, /createHaozhouReturnEncounterBattleState\(\{/);
+  assert.match(startupFactorySource, /createHaozhouReturnEncounterBattleState\(\{/);
   assert.doesNotMatch(
     encounterBlock,
     /runtime\.zhu_yuanzhang\.main_mission\.sundeya_battle_review/

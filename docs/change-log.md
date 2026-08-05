@@ -2,6 +2,228 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-05 Agent Immediate Execution Workflow Governance
+
+### Changed
+- 新增 `docs/agent-immediate-execution-workflow.md`，把“识别出下一刀后不得先用 final answer 汇报、而是必须立即执行，除非存在明确阻塞条件”固定为仓库级 agent 执行工作流约束。
+- `AGENTS.md` 已新增 `Immediate Execution Workflow Governance` 入口，要求可在当前工作区直接推进的任务默认受这份文档约束，并明确 final answer 只能用于“没有可执行下一刀”或“存在真实阻塞”的场景。
+- `docs/agent-immediate-execution-workflow.md` 现已补充 `Final Answer Precheck Rule`：任何 final answer 前都必须先判断是否仍存在明确且安全的可执行下一刀；若存在则禁止 final answer，必须继续执行，否则必须明确记录阻塞条件。
+- `AGENTS.md` 的同一节已同步加入 `Final Answer Precheck Summary`，避免只保留“立即执行”口号而缺少 final 前置检查门，也避免把它误解成平台内置概念。
+- 上述 precheck 语义已进一步收紧：这里要求继续执行的，明确包括 agent 在当前回复里已经主动提出、建议、承诺、或点名的“下一刀”，避免 agent 先提出下一步再错误收尾。
+
+### Impact
+- 这条规则现在不再依赖口头提醒；后续 agent 在本仓库中执行可落地任务时，需要优先继续推进已明确的下一刀，而不是把它当作收尾建议停在 final answer。
+- 现在这条约束不仅要求“识别出下一刀后继续执行”，还要求在每次准备收尾时显式做一次 final precheck，降低再次在存在下一刀时错误收尾的概率。
+
+## 2026-08-05 Zhuyuanzhang Maps Projection Sync Activation
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 现已把 `maps.json` 从 deferred sync family 正式转入 `SHARED_SYNC_FILE_RULES`，同步模式为 `map-projection`；对应 deferred family 现已清空。
+- 同一份 contract 里现已明确冻结 `maps.json` 的三层边界：
+  runtime-canonical 的 2 条 map ids，
+  3 条 runtime-only campaign 扩展字段（`campaignHexGridUrl`、`campaignVegetationRulesUrl`、`campaignStructureProfileId`），
+  以及 3 条 template-preserved asset surface 字段（`layers`、`primaryImageUrl`、`regionOverlayImageUrl`）。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 已新增 `projectTemplateMapsForSync(...)` 与 `resolveCanonicalRuntimeMapsForSync(...)`，并把 builtin template / public `maps.json` 都提升为显式 managed 输出：当前 projection 会用 runtime 的 canonical node/stats 内容重写 template/public maps，同时保留 template/public 现有自包含 asset surface。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 已更新 shared sync whitelist / deferred family 回归，并新增 map owner 边界、projection helper 行为、以及“当前真实 template maps.json 已匹配 runtime-first projection”断言；`tests/script-editor-runtime-preview-compat.test.cjs` 与 `tests/script-editor-template-url.test.cjs` 也已通过，确认默认模板导入 / 运行预览兼容链未被这次 maps 收口破坏。
+- `src/modules/script-editor/builtin-templates/zhuyuanzhang/maps.json` 与 `public/builtin-script-editor-templates/zhuyuanzhang/maps.json` 已由 sync tool 重写：
+  `map.yuanmo_campaign` 不再保留 950 条 editor fort/resource/settlement surface，而是改为承接 runtime 的 96 条 canonical node 集与 0 fort / 0 resource 统计；
+  共享 settlement 节点优先继续落到 template/public 现有坐标锚点，运行时专属新增节点则保留 runtime 坐标。
+
+### Impact
+- `C4` 线的 deferred family 已从 1 类缩到 0 类；当前 source-unification 代码面已不存在仍停留在 deferred state 的 pack family。
+- 用户要求的“内容以运行时为主，格式以剧本编辑器位置”为 `maps.json` 真正落地：runtime 成为 canonical map content owner，template/public 则退回到 runtime-first 内容上的自包含 authoring/publication surface。
+
+## 2026-08-05 Zhuyuanzhang Events Projection Sync Activation
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 现已把 `events.json` 从 deferred sync family 正式转入 `SHARED_SYNC_FILE_RULES`，同步模式为 `event-projection`；对应 deferred family 现只剩 `maps.json`。
+- 同一份 contract 里现已明确冻结 `events.json` 的三层边界：
+  runtime-canonical 的 11 条 shared event ids，
+  仍被 template `event-bindings.json` / runtime `menu-resources.json` 消费的 38 条 template-only active event ids，
+  以及 5 条 story event 的 template-format gap ids。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 已新增 `projectRuntimeEventToTemplateEvent(...)` 与 `projectTemplateEventsForSync(...)`，用于把 runtime-canonical 事件按 template authored shape 投影回 builtin template，同时保留 template-only event surface，不再把这类差异停留在口头判断。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 已更新 shared sync whitelist / deferred family 回归，并新增事件 owner 边界、活跃引用、story format gap、projection helper 行为、以及“当前真实 template events.json 已匹配 runtime-first projection”断言。
+
+### Impact
+- `C4` 线的 deferred family 已进一步从 2 类缩到 1 类：`maps.json`。
+- `events.json` 现在已经进入 sync tool 的可执行 projection 合同；后续 source-unification 不需要再把事件家族当成待判断项，而应直接集中到最后剩余的 `maps.json` owner / 映射收口。
+
+## 2026-08-05 Zhuyuanzhang Pack Manifest And City-Entry Projection Sync Activation
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 现已把 `pack.json` 与 `city-entries.json` 从 deferred sync family 正式转入 `SHARED_SYNC_FILE_RULES`：前者使用 `pack-manifest-projection`，后者使用 `city-entry-projection`。
+- 同一份 contract 里已明确冻结 `pack.json` 的三类 file-key owner 边界：
+  shared keys、runtime-only keys（`houseAccessRefusalRules`、`scenes`）、template-only keys（`portraits`、`portraitVariants`）。
+- 同一份 contract 里也已明确冻结 `city-entries.json` 的两类映射边界：
+  template-only 的 `kulan` building entries，以及 leader-residence 的 generic template targetHouseId -> runtime city-specific targetHouseId 映射。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 新增 `projectTemplatePackManifestForSync(...)`、强化 `projectRuntimePackManifestForSync(...)`，并新增 `projectRuntimeCityEntriesForSync(...)` / `projectTemplateCityEntriesForSync(...)`，使 runtime/template 双向同步不再停留在纯文档约定。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 新增回归，锁定 shared sync whitelist 已扩到 `pack.json` 与 `city-entries.json`，并锁定上述 pack manifest / city-entry projection helper 的具体行为。
+
+### Impact
+- `C4` 线的 deferred family 已从 6 类缩到 4 类：`cities.json`、`events.json`、`houses.json`、`maps.json`。
+- `pack.json` 与 `city-entries.json` 现在不再只是“边界已冻结”的待办项，而是已经进入 sync tool 的可执行 projection 合同，后续收口可以直接转向剩余 4 类更难的 owner/mapping family。
+
+## 2026-08-05 Zhuyuanzhang Houses Independent Deferred Mapping Contract
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 现已把 `houses.json` 的独立 deferred 边界下沉成机器可读常量，而不是继续只靠状态文档口头描述。
+- 新增的合同覆盖了 4 层事实：
+  template generic house ids，
+  template concrete scenario house `house.kulan.temple`，
+  runtime home id 规则（`home.` 前缀与 `home_001` 特例），
+  以及 runtime city-scoped house suffix 集。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 已新增对应回归，锁定 `houses.json` 继续保持为独立 deferred generic-template mapping family，而不是被误并入 `cities.json` 或被误当成普通 shared sync 文件。
+
+### Impact
+- 这条变更把 `houses.json` 与 `cities.json` 的关系重新压回“相互引用但 owner 独立”的状态。
+- 后续如果继续推进 `houses.json`，可以直接在这组独立边界上决定是继续 deferred 还是补最小 projection helper，而不需要再先争论它是否必须和 `cities.json` 绑成同一刀。
+
+## 2026-08-05 Zhuyuanzhang Runtime-To-Template House Collapse Helper
+
+### Changed
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 现已新增 `projectTemplateHousesForSync(...)`，用于把 runtime concrete houses 折回 Script Editor builtin template 的 house 集合。
+- 这条 helper 使用已经冻结在 contract 里的 `houses.json` 边界常量：
+  generic template house ids、
+  concrete scenario house `house.kulan.temple`、
+  runtime `home_001` 特例、
+  以及 city-scoped house suffix 规则。
+- helper 当前只覆盖 `HOUSE_SHARED_FIELD_KEYS`，并保留 template-only 的 `menuInstanceIds` 和 pack-specific 字段；runtime-only 的 `onEnterEventId` 不会被带回 template。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 已新增两条回归：
+  一条锁住 helper 的字段覆盖行为，
+  一条锁住当前真实 template `houses.json` 已可被 runtime -> template 折叠结果原样重建。
+
+### Impact
+- `houses.json` 先具备了独立的 **runtime -> template** 折叠能力，不再完全停留在口头/文档级合同。
+- 同日后续切片已继续补齐 `template -> runtime` 展开合同；当前这条记录保留为单向 helper 首次落地的历史节点。
+
+## 2026-08-05 Zhuyuanzhang Houses Projection Sync Activation
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 现已把 `houses.json` 从 deferred sync family 正式转入 `SHARED_SYNC_FILE_RULES`，同步模式为 `house-projection`；对应 deferred family 现只剩 `cities.json`、`events.json`、`maps.json`。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 新增 `projectRuntimeHousesForSync(...)`，以现有 runtime concrete houses 为宿主，把 template generic houses 的 shared fields 展开覆盖回 runtime houses，同时保留 runtime-only 的 `onEnterEventId` 与 pack-specific 字段。
+- 同一工具里的既有 `projectTemplateHousesForSync(...)` 继续承担反向的 runtime -> template collapse，因此 `houses.json` 当前已形成独立的双向 asymmetric projection，而不是和 `cities.json` 绑定成同一组生成逻辑。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 已更新 shared sync whitelist / deferred family 回归，并新增 template -> runtime helper 行为回归与“当前真实 runtime houses.json 已可被 projection 原样重建”断言。
+
+### Impact
+- `C4` 线的 deferred family 已进一步从 4 类缩到 3 类：`cities.json`、`events.json`、`maps.json`。
+- `houses.json` 现在已经进入 sync tool 的可执行 projection 合同；后续 source-unification 不需要再停留在 houses 上判断是否补反向 helper，而应直接转向剩余 3 个 family。
+
+## 2026-08-05 Zhuyuanzhang Cities Projection Sync Activation
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 现已把 `cities.json` 从 deferred sync family 正式转入 `SHARED_SYNC_FILE_RULES`，同步模式为 `city-projection`；对应 deferred family 现只剩 `events.json` 与 `maps.json`。
+- 同一份 contract 里现已明确冻结 `cities.json` 的边界：shared fields 不包含 `name`，template-only editor fields 为 `mountedBuildings`、`mapPlacement`、`menuInstanceIds`，`houseIds` 则通过 generic-template <-> runtime-concrete 映射单独投影。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 新增 `projectTemplateCitiesForSync(...)` 与 `projectRuntimeCitiesForSync(...)`，并复用 `houses` 的 id 映射语义处理 `city.houseIds`，使 runtime/template 双向同步不再停留在口头判断。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 已更新 shared sync whitelist / deferred family 回归，并新增 cities field-boundary、template/runtime helper 行为、以及“当前真实 runtime/template cities.json 已可被 projection 原样重建”断言。
+
+### Impact
+- `C4` 线的 deferred family 已进一步从 3 类缩到 2 类：`events.json`、`maps.json`。
+- `cities.json` 现在也已进入 sync tool 的可执行 projection 合同；后续 source-unification 可以直接集中到形态差异更大的 `events.json` 与 `maps.json`。
+
+## 2026-08-05 Zhuyuanzhang Legacy Public Publication Retirement
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 现在把 published pack roots 收缩为单一的 `public/builtin-script-editor-templates/zhuyuanzhang`，并把旧 `"/script-editor-templates/zhuyuanzhang/pack.json"` 明确记成已退役的 legacy URL，而不是继续保留 alias 模式。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 不再把旧 `public/script-editor-templates/zhuyuanzhang/**` 当作 direct sync target 或 mirror target；如果检测到这个 legacy physical root 仍存在，`--write` 会递归删除，`--check` 会直接报脏。
+- `src/application/scenario/registered-scenario-pack-publications.ts` 已移除 legacy public manifest URL 的 registered seam；当前仓库只接受 `"/builtin-script-editor-templates/zhuyuanzhang/pack.json"` 作为默认模板 manifest 入口。
+- `tests/zhuyuanzhang-source-unification.test.cjs`、`tests/script-editor-template-url.test.cjs`、`tests/script-editor-runtime-preview-compat.test.cjs`、`tests/temple-meeting-content-contract.test.cjs` 已完成同类切换：public publication 合同现在只针对 `public/builtin-script-editor-templates/zhuyuanzhang/**`，旧 public root 只保留“physical root 已退场”断言，不再保留 legacy URL 导入回归。
+- `public/script-editor-templates/zhuyuanzhang/**` 已从仓库中删除；对应 legacy `https://example.test/script-editor-templates/zhuyuanzhang/pack.json` 导入合同也已随同退役。
+
+### Impact
+- 旧 `public/script-editor-templates/zhuyuanzhang/**` 和旧 manifest URL 现在都已退场；仓库内不再保留这棵实体发布树，也不再保留同名 URL alias 兼容。
+- 剧本包源统一这条线在 publication layer 这一层已经收口到单一出口：当前只剩一个实际 public self-contained package，即 `public/builtin-script-editor-templates/zhuyuanzhang/**`。
+
+## 2026-08-05 Zhuyuanzhang Registered Builtin Self-Contained Publication Package
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 现在显式把 `public/builtin-script-editor-templates/zhuyuanzhang` 记成第二个 published pack root；默认 sync/check source 也切到 `script-editor-template-pack`，与当前 publication canonical owner 对齐。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 不再只给 registered builtin publication 写少数投影文件，而是会按 public `pack.json` 补齐整套 manifest 引用 JSON，并继续同步地图资产；public publication 在双向 `--check` 下都会稳定对齐到 builtin template canonical owner，不再因为 runtime source 而误报 publication drift。
+- `public/builtin-script-editor-templates/zhuyuanzhang/**` 现已生成完整自包含包：除原有 `assets/maps/**` 外，`maps.json`、`meetings.json`、`meeting-*`、`cities.json`、`houses.json`、`city-entries.json`、`menu-instances.json`、`cards.json`、`valuables.json`、`city-npc-pools.json`、`location-access.json`、`city-portraits.json`、`historical-*`、`portraits*.json` 等 manifest 文件族都已落地。
+- `tests/script-editor-runtime-preview-compat.test.cjs`、`tests/temple-meeting-content-contract.test.cjs`、`tests/zhuyuanzhang-source-unification.test.cjs` 已把“目录导入/自包含包”验证迁到新的 `public/builtin-script-editor-templates/zhuyuanzhang/**` 根，并新增回归锁定该根必须保持 folder-import 自包含。
+- `src/application/scenario/registered-scenario-pack-publications.ts` 里的 registered maps 投影已补上显式 map record/layer 类型，修复 `pnpm run build:test` 暴露的 TS 类型错误。
+
+### Impact
+- `public/builtin-script-editor-templates/zhuyuanzhang/**` 现在已经承担了“可浏览器加载、也可目录导入”的新自包含 publication package 角色，不再只是 registered manifest + 地图资产出口。
+- 这一步为旧 public 实体根和旧 manifest URL 的同步退场提供了完整替代包；当前未决问题已不再是 legacy URL 保留策略，而是双源共享规则与最终文档收口。
+
+## 2026-08-05 Zhuyuanzhang Registered Template Asset Outlet Convergence
+
+### Changed
+- `src/application/scenario/registered-scenario-pack-publications.ts` 里的 registered builtin template maps 现在不再把图片层资产指向旧的 `/script-editor-templates/zhuyuanzhang/assets/maps/**`，而是改为指向新的 `"/builtin-script-editor-templates/zhuyuanzhang/assets/maps/**"`。
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 新增 registered builtin template asset publication 常量，并冻结当前 10 个地图资产文件的发布清单。
+- `tools/sync-zhuyuanzhang-startup-templates.mjs` 现在会把这 10 个 builtin template 地图资产同步到 `public/builtin-script-editor-templates/zhuyuanzhang/assets/maps/**`，并在 `--check` 模式下一并校验，不再依赖手工复制。
+- `tests/script-editor-template-url.test.cjs` 与 `tests/zhuyuanzhang-source-unification.test.cjs` 已新增/更新回归，锁定 registered builtin publication 解析出的地图资产 URL 必须命中新 outlet，且对应 public 文件必须真实存在。
+- 同轮审计也已把 legacy public 目录不能直接退场的剩余原因正式写进合同：`public/script-editor-templates/zhuyuanzhang/maps.json` 当前仍必须保持相对资产路径和包内自包含，因为 Script Editor 的 folder-import 会把这棵目录作为完整导入包读取；如果把它改成外部绝对 URL，就会把 legacy 兼容目录变成依赖外链资产的半状态。
+
+### Impact
+- “换出口”第二阶段已落地：registered builtin publication 现在不仅接管了 manifest URL owner，也拥有了独立于旧 `script-editor-templates/zhuyuanzhang/**` 的地图资产发布出口。
+- 当前 public 旧树的剩余职责继续收缩到 legacy compatibility 层，而不是 registered builtin publication 的必经静态资产 owner；当前真正未退场的只剩 legacy folder-import 的自包含兼容面。
+
+## 2026-08-05 Zhuyuanzhang Registered Template Publication Legacy-URL Convergence
+
+### Changed
+- `src/application/scenario/registered-scenario-pack-publications.ts` 现在同时接管两条模板 manifest URL：默认的 `"/builtin-script-editor-templates/zhuyuanzhang/pack.json"`，以及 legacy 兼容入口 `"/script-editor-templates/zhuyuanzhang/pack.json"`。
+- `src/application/scenario/scenario-pack-loader.ts` 继续优先走 registered publication seam，因此上述两条 URL 在当前仓库内都不再依赖 fetch public `pack.json` 才能导入 scenario pack。
+- `tests/script-editor-template-url.test.cjs` 与 `tests/script-editor-runtime-preview-compat.test.cjs` 已新增/更新回归，锁定 default URL 和 legacy public URL 导入都会直接命中 registered seam，且不再 fetch public manifest。
+- `tests/scenario-pack-playable-shells-contract.test.cjs` 中原先借用 `.../script-editor-templates/zhuyuanzhang/pack.json` 模拟 generic legacy flowPlayables manifest 的用例，已切到独立测试 URL，避免和当前仓库保留的 legacy compatibility seam 冲突。
+
+### Impact
+- 这一步把“换出口”的第一阶段真正推进到了 legacy URL 兼容层：默认模板 URL 和旧 public manifest URL 现在都统一落到同一个 registered builtin publication owner，而不是继续让 legacy URL 实际依赖 public `pack.json`。
+- `public/script-editor-templates/zhuyuanzhang/**` 仍未完全退场，但当前剩余职责已经收缩到地图等静态资产发布，以及是否继续保留目录级/静态文件级兼容入口，而不再是 manifest owner。
+
+## 2026-08-05 Zhuyuanzhang Builtin-Template Obsolete House-Content Mirror Removal
+
+### Changed
+- 删除了 `src/modules/script-editor/builtin-templates/zhuyuanzhang/house-content/home-house-content.json` 与 `keep-house-content.json` 这两份 builtin template 旧镜像文件。
+- 审计确认这两份文件不在 builtin template `pack.json` manifest 中，地图资源也不引用它们，仓库里没有任何 Script Editor / import-export / preview / sync-tool 消费方；真实 owner 仍在 runtime maintained pack 的 `house-content/*.json` 与 `src/content/pack-content-access.ts` 这一层。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 已新增回归，锁定 builtin template 不再继续携带这组无 owner 的非 manifest house-content 镜像。
+
+### Impact
+- `C5` 线继续按同类型批处理清掉了一组 maintained-pack 侧的历史垃圾文件，避免 builtin template 看起来还保留一层未进入 authoring/publication 合同的隐性第三套内容面。
+- 这一步不影响当前 Script Editor 默认模板导入、运行预览或 source sync 合同；它只是删除没有入口、没有消费方的旧镜像。
+
+## 2026-08-05 Zhuyuanzhang Public Obsolete House-Content Mirror Removal
+
+### Changed
+- 删除了 `public/script-editor-templates/zhuyuanzhang/house-content/home-house-content.json` 与 `keep-house-content.json` 这两份旧镜像文件。
+- 审计确认这两份文件既不在 public `pack.json` manifest 里，也没有任何 runtime / Script Editor / publication loader 消费方；真实 owner 仍在 maintained packs 下的 `house-content/*.json` 与对应 pack-content access seam。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 已新增回归，锁定 public 发布层不再继续携带这组无 owner 的历史 house-content 镜像。
+
+### Impact
+- `C5` 线又清掉了一组真正的 public 旧镜像残留，而不是继续保留“看起来像第三棵包树”的无引用文件。
+- 这一步不影响当前 public publication 合同；它只是去掉未进入 manifest、未被任何入口消费的历史垃圾文件。
+
+## 2026-08-05 Zhuyuanzhang Public Publication-Retirement Audit
+
+### Changed
+- 审计确认 `public/script-editor-templates/zhuyuanzhang/**` 当前仍不能直接删除。虽然 Script Editor 的默认模板导入 owner 已迁到 builtin template asset loader，生产代码里对 `DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL` 的最后一条死引用也已清掉，但仓库仍保留 `loadScriptEditorProjectFromScenarioPackUrl(...)` 这条浏览器 URL 导入合同。
+- 现有回归仍显式覆盖 `https://example.test/script-editor-templates/zhuyuanzhang/pack.json` 这类 manifest URL 导入场景，说明 public 树当前仍承担“浏览器可加载 scenario-pack publication”职责，而不仅仅是历史镜像或测试噪音。
+
+### Impact
+- `public/script-editor-templates/zhuyuanzhang/**` 现在的定位应视为“已生成化的浏览器 publication layer”，不是默认模板导入 owner，也不是可立即退场的无用目录。
+- 后续如果要真正 retirement，必须先补出 public 之外的等价 browser-loadable template coverage，再同步更新 `config.ts`、source contract 与相关 URL-import 回归；在此之前，不应继续把删除 public 作为当前批次动作。
+
+## 2026-08-05 Script Editor Public Template URL Dead-Import Cleanup
+
+### Changed
+- `tests/script-editor-template-url.test.cjs` 新增结构回归，锁定 `src/modules/script-editor/ui/main-ui-script-editor-module.js` 不再直接导入 `DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL`。
+- `src/modules/script-editor/ui/main-ui-script-editor-module.js` 已移除这条未使用的 bridge 常量解构；当前生产代码里只剩 `src/modules/script-editor/config.ts` 继续导出这个 public URL 字面量，用于保留打包发布入口与相关兼容测试。
+
+### Impact
+- Script Editor 生产导入链里最后一条显式的默认模板 public URL 常量引用已清掉；public `pack.json` 当前进一步收缩为“浏览器可加载的发布层出口”，而不是业务代码里的直接 owner 依赖。
+- `C` 线后续如继续推进，应转向 public 发布层本身的保留/退场策略，而不是再清理生产代码里的 URL 残留引用。
+
+## 2026-08-05 Zhuyuanzhang Failure-Reward Settlement Event Publication Convergence
+
+### Changed
+- `tools/zhuyuanzhang-source-sync-contract.mjs` 已清空 `BUILTIN_ONLY_EVENT_IDS` 与 `PUBLICATION_OMITTED_EVENT_IDS`，不再把 `event.playable.grain_accounting.failure_reward` 和 `event.playable.medicine_compounding.failure_reward` 视为 public 发布层特判。
+- `public/script-editor-templates/zhuyuanzhang/events.json` 已重新由 sync tool 生成，当前会与 builtin template 一样发布这两条 settlement-only failure_reward 事件。
+- `tests/zhuyuanzhang-source-unification.test.cjs` 已更新回归，锁定 source contract 不再保留这组 builtin-only/public-omitted event 边界。
+
+### Impact
+- `C` 线的显式 publication omitted / builtin-only residual boundary 已清空。
+- 之后如果继续推进 source-unification，重点应转向 public 发布层本身是否还需要继续长期存在，而不是再围绕某一类 authored/support-data 文件补最后几条差异。
+
 ## 2026-08-05 Zhuyuanzhang Public Menu-Entry Omission Removal
 
 ### Changed
@@ -10,8 +232,8 @@
 - `tests/zhuyuanzhang-source-unification.test.cjs` 与 `tests/script-editor-runtime-preview-compat.test.cjs` 已更新回归，分别锁定 public menu-resource projection 全量派生，以及 public 默认模板导入后会保留这两条 city minigame 菜单入口。
 
 ### Impact
-- `C` 线当前显式 residual boundary 已进一步缩到只剩 2 条 builtin-only failure_reward settlement 事件。
-- 之后如果继续推进 source-unification，不应再把 menu-resources 视作 public 发布层的残留问题；重点应转向 publication-layer 保留策略，以及这 2 条 runtime/template-only settlement 事件是否需要继续保留。
+- 这一步先把 `C` 线显式 residual boundary 缩小到只剩 2 条 builtin-only failure_reward settlement 事件；同日后续 failure-reward settlement event publication convergence 已继续把这组边界清空。
+- 作为历史切片，它确认 menu-resources 不再是 public 发布层残留问题；后续重点应转向 publication-layer 保留策略，而不是菜单投影本身。
 
 ## 2026-08-05 Zhuyuanzhang Temple Copy-Scripture Round-Trip Contract Convergence
 

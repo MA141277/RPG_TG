@@ -132,7 +132,7 @@ test("imported zhuyuanzhang script-editor template stays exportable for runtime 
   const templateRoot = path.join(
     process.cwd(),
     "public",
-    "script-editor-templates",
+    "builtin-script-editor-templates",
     "zhuyuanzhang"
   );
   assert.equal(fs.existsSync(templateRoot), true);
@@ -144,11 +144,11 @@ test("imported zhuyuanzhang script-editor template stays exportable for runtime 
   assert.deepEqual(diagnostics, []);
 });
 
-test("imported zhuyuanzhang public template imports canonical playable-shells during script-editor import", async () => {
+test("imported zhuyuanzhang registered builtin template imports canonical playable-shells during script-editor import", async () => {
   const templateRoot = path.join(
     process.cwd(),
     "public",
-    "script-editor-templates",
+    "builtin-script-editor-templates",
     "zhuyuanzhang"
   );
   const canonicalPlayableShells = JSON.parse(
@@ -165,57 +165,11 @@ test("imported zhuyuanzhang public template imports canonical playable-shells du
   assert.equal(project.flows[0]?.id, canonicalPlayableShells[0]?.id);
 });
 
-test("script-editor URL import preserves canonical playable-shells from public template manifest", async () => {
+test("imported zhuyuanzhang registered builtin template keeps canonical review dialogues and dialogue-backed review events", async () => {
   const templateRoot = path.join(
     process.cwd(),
     "public",
-    "script-editor-templates",
-    "zhuyuanzhang"
-  );
-  const manifest = JSON.parse(
-    fs.readFileSync(path.join(templateRoot, "pack.json"), "utf8")
-  );
-  const canonicalPlayableShells = JSON.parse(
-    fs.readFileSync(path.join(templateRoot, "playable-shells.json"), "utf8")
-  );
-  const originalFetch = global.fetch;
-
-  global.fetch = async (input) => {
-    const url = typeof input === "string" ? input : input.url;
-    const fileName = url.split("/").pop();
-    if (fileName == null) {
-      return { ok: false, status: 404 };
-    }
-
-    if (fileName === "pack.json") {
-      return createJsonResponse(manifest);
-    }
-
-    const filePath = path.join(templateRoot, fileName);
-    if (!fs.existsSync(filePath)) {
-      return { ok: false, status: 404 };
-    }
-
-    return createJsonResponse(JSON.parse(fs.readFileSync(filePath, "utf8")));
-  };
-
-  try {
-    const project = await loadScriptEditorProjectFromScenarioPackUrl(
-      "https://example.test/script-editor-templates/zhuyuanzhang/pack.json"
-    );
-
-    assert.equal(project.flows.length, canonicalPlayableShells.length);
-    assert.equal(project.flows[0]?.id, canonicalPlayableShells[0]?.id);
-  } finally {
-    global.fetch = originalFetch;
-  }
-});
-
-test("imported zhuyuanzhang public template keeps canonical review dialogues and dialogue-backed review events", async () => {
-  const templateRoot = path.join(
-    process.cwd(),
-    "public",
-    "script-editor-templates",
+    "builtin-script-editor-templates",
     "zhuyuanzhang"
   );
   const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
@@ -246,11 +200,11 @@ test("imported zhuyuanzhang public template keeps canonical review dialogues and
   }
 });
 
-test("imported zhuyuanzhang public template keeps canonical settlement family", async () => {
+test("imported zhuyuanzhang registered builtin template keeps canonical settlement family", async () => {
   const templateRoot = path.join(
     process.cwd(),
     "public",
-    "script-editor-templates",
+    "builtin-script-editor-templates",
     "zhuyuanzhang"
   );
   const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
@@ -273,11 +227,11 @@ test("imported zhuyuanzhang public template keeps canonical settlement family", 
   assert.equal(project.settlements.length, templateSettlements.length);
 });
 
-test("imported zhuyuanzhang public template keeps temple-copy-scripture playable integrations", async () => {
+test("imported zhuyuanzhang registered builtin template keeps temple-copy-scripture playable integrations", async () => {
   const templateRoot = path.join(
     process.cwd(),
     "public",
-    "script-editor-templates",
+    "builtin-script-editor-templates",
     "zhuyuanzhang"
   );
   const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
@@ -341,7 +295,7 @@ test("zhuyuanzhang runtime and editor template startup profiles stay aligned", (
       path.join(
         process.cwd(),
         "public",
-        "script-editor-templates",
+        "builtin-script-editor-templates",
         "zhuyuanzhang",
         "scenario-profile.json"
       ),
@@ -375,7 +329,7 @@ test("zhuyuanzhang default player startup presentation stays aligned across runt
     path.join(
       process.cwd(),
       "public",
-      "script-editor-templates",
+      "builtin-script-editor-templates",
       "zhuyuanzhang",
       "characters.json"
     ),
@@ -412,7 +366,7 @@ test("runtime-pack round trip preserves menu destinations for retained template 
   const templateRoot = path.join(
     process.cwd(),
     "public",
-    "script-editor-templates",
+    "builtin-script-editor-templates",
     "zhuyuanzhang"
   );
   assert.equal(fs.existsSync(templateRoot), true);
@@ -442,7 +396,7 @@ test("template runtime-pack export preserves aligned zhuyuanzhang startup profil
   const templateRoot = path.join(
     process.cwd(),
     "public",
-    "script-editor-templates",
+    "builtin-script-editor-templates",
     "zhuyuanzhang"
   );
   const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);

@@ -1,10 +1,15 @@
 import { resolveContentPackMapAssetUrls } from "../content/content-pack-loader";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
+import { loadRegisteredScenarioPackFromUrl } from "./registered-scenario-pack-publications";
 
 export async function loadScenarioPackFromUrl(
   url: string
 ): Promise<ScenarioPackDefinition> {
   const resolvedManifestUrl = resolveScenarioPackManifestUrl(url);
+  const registeredPack = loadRegisteredScenarioPackFromUrl(resolvedManifestUrl);
+  if (registeredPack != null) {
+    return parseScenarioPack(registeredPack);
+  }
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to load scenario pack: ${response.status}`);

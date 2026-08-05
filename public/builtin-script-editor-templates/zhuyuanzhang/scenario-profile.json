@@ -65,5 +65,9 @@
     "characterSelection": "select",
     "initialView": "map"
   },
-  "tags": ["built-in", "main-story", "temple"]
+  "tags": [
+    "built-in",
+    "main-story",
+    "temple"
+  ]
 }

@@ -406,7 +406,7 @@ test("scenario pack loader rejects retired manifest flowPlayables publication en
     await assert.rejects(
       () =>
         loadScenarioPackFromUrl(
-          "https://example.test/script-editor-templates/zhuyuanzhang/pack.json"
+          "https://example.test/legacy-flow-playables/pack.json"
         ),
       /files\.flowPlayables is retired; use files\.playableShells instead/i
     );

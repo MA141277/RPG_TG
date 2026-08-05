@@ -903,5 +903,23 @@
       "action:leave"
     ],
     "dialogueId": ""
+  },
+  {
+    "id": "event.playable.grain_accounting.failure_reward",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "粮账核算 - 失败结算",
+    "occurrence": "repeatable",
+    "type": "settlement",
+    "settlementId": "settlement.playable.grain_accounting.failure_reward",
+    "dialogueId": ""
+  },
+  {
+    "id": "event.playable.medicine_compounding.failure_reward",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "药材炼制 - 失败结算",
+    "occurrence": "repeatable",
+    "type": "settlement",
+    "settlementId": "settlement.playable.medicine_compounding.failure_reward",
+    "dialogueId": ""
   }
 ]

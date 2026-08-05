@@ -90,8 +90,44 @@
 - 已把同类型 support-data residual 也一并收回 builtin template：`menu-resources.json` 与 `house-module-defaults.json` 现都由 builtin template canonical 持有，grain-accounting / medicine-compounding 两条 city minigame 菜单入口也已重新纳入 public publication。
 - 已把 pack manifest/public family 再往前收了一层：public 现发布 `playables.json`、`playable-shells.json`、`settlements.json`、`playable-integrations.json`，且 `temple-copy-scripture` 这条 integration 已通过 Script Editor importer/exporter 合同升级纳入 round-trip 闭环，不再需要 public omitted 特判。
 - 已把 default template loader owner 也收了一层：Script Editor 的“使用模板”不再直接依赖 public `pack.json`，而是直接从 builtin template 资产构造默认项目；public URL 现主要服务发布层和兼容入口。
-- 当前显式 residual boundary 已缩到 1 组：2 条 builtin-only failure_reward settlement 事件。
-- 当前这类问题已不再需要继续按单个 building、单个 binding 或单个 support-data 文件切片；下一步应转去更高层的 publication-layer 保留策略，并判断这 2 条 builtin-only failure_reward settlement 事件是否还值得继续保留在 runtime/template-only 边界。
+- 已把生产代码里的默认模板 public URL 死引用也清掉：`main-ui-script-editor-module.js` 不再解构 `DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL`，当前只保留 `config.ts` 导出的打包入口常量和对应兼容测试。
+- 已把 publication replacement 推到最终态：默认模板 URL 现只保留 `"/builtin-script-editor-templates/zhuyuanzhang/pack.json"`；legacy `"/script-editor-templates/zhuyuanzhang/pack.json"` URL seam 与对应兼容回归均已退役，不再作为当前仓库入口。
+- 已把 asset/publication outlet 也推进到下一层：registered builtin publication 解析出的地图资产 URL 已切到 `"/builtin-script-editor-templates/zhuyuanzhang/assets/maps/**"`，且 sync tool 会自动同步这 10 个资产文件到对应 public outlet。
+- 已把新的 replacement package 也真正落地：`public/builtin-script-editor-templates/zhuyuanzhang/**` 现在已补齐完整 manifest 文件族与 maps 资产，不再只是 registered manifest + outlet；对应目录导入 / runtime preview / temple meeting skeleton 合同回归也都已迁到这个新根。
+- 已把同步语义与 physical root 一并收口：旧 `public/script-editor-templates/zhuyuanzhang/**` 不再作为 direct sync target，也不再作为 mirror target；sync tool 现在会把这个 legacy physical root 视为脏状态并在 `--write` 时递归删除。
+- 因此当前 retirement audit 已经完成这一路 public 兼容退场：问题已经不再是“缺少替代自包含包”、也不再是 legacy URL alias 何时退场；现在剩余的是 `C4/C6/C7` 的双源共享规则、最终文档和 contract wording 收口。
+- 当前 `C4` 的真实边界也已经从工具常量层明确下来：已冻结的共享同步现有 10 类
+  `scenario-profile.json`、`characters.json`、`text-entries.json`、`activities.json`、`pack.json`、`cities.json`、`maps.json`、`events.json`、`city-entries.json`、`houses.json`。
+- 这一轮又把最后 6 类 deferred/generic mapping family 全部推进成 shared projection sync
+  `pack.json`、`cities.json`、`maps.json`、`events.json`、`city-entries.json`、`houses.json` 现在都已由 sync tool 执行 projection，而不再只是 deferred 记账项。
+- 当前 deferred family 已清空，不再需要靠口头记忆
+  当前 source-unification 已不存在仍停留在 deferred state 的 pack family。
+- `pack.json` 当前已落实 shared/runtime-only/template-only file-key 边界；
+  `cities.json` 当前已落实 shared fields、template-only editor fields 与 `houseIds` generic-template <-> runtime-concrete 映射边界；
+  `maps.json` 当前已落实 runtime-canonical 2 条 shared map ids、3 条 runtime-only campaign 扩展字段，以及 3 条 template-preserved asset surface 字段；builtin template / public maps 已改为 runtime-first node/stats 内容 + template/public 自包含 asset surface；
+  `events.json` 当前已落实 runtime-canonical 11 条 shared ids、38 条 template-only active event surface、以及 5 条 story event 的 template-format gap 边界；
+  `city-entries.json` 当前已落实 template-only `kulan` building entries 与 leader-residence targetHouseId 映射边界。
+- 最新审计确认 `houses.json` 不能按小范围 drift 处理，但也不需要默认和 `cities.json` 绑成同一刀：
+  `houses.json` 自己就是 generic template houses / `home.template`
+  对 runtime concrete houses / `home.<city>` / `home_001` 的独立映射问题。
+- 这层独立边界现在已经写进 contract：
+  generic template house ids、
+  `house.kulan.temple` 这条 template concrete scenario house、
+  runtime `home.` 前缀 / `home_001` 特例、
+  以及 city-scoped house suffix 集都已固定。
+- 这一轮已经把 `houses.json` 的双向 helper 一次补齐：
+  `projectTemplateHousesForSync(...)` 会把 runtime concrete houses 折回 template houses，
+  `projectRuntimeHousesForSync(...)` 会把 template generic houses 展开覆盖回现有 runtime concrete houses。
+- 这两条 helper 都只覆盖 shared fields，并分别保留 template-only / runtime-only / pack-specific 字段；
+  双向 `--check` 也已证明当前真实 `houses.json` 两侧都能被 projection 原样重建。
+- 已顺手清掉一组真正无 owner 的 public 旧镜像：`house-content/home-house-content.json` 与 `house-content/keep-house-content.json` 不在 manifest、也没有消费方，现已从 public 发布层删除。
+- 已继续按同类型清理 builtin template 侧同类残留：`src/modules/script-editor/builtin-templates/zhuyuanzhang/house-content/home-house-content.json` 与 `keep-house-content.json` 也不在 manifest、无消费方，现已删除。
+- 已把这类清理升级成通用约束：public 与 builtin template 现在都由测试锁定为“只允许 manifest 文件 + maps 引用资产”，因此后续不会再悄悄长回同类历史垃圾文件。
+- 当前显式 residual boundary 已清空。
+- `maps.json` 这一刀也已经收口：
+  template/public 的 `map.yuanmo_campaign` 不再继续保留 950 条 editor fort/resource/settlement surface，而是只承接 runtime 的 96 条 canonical node 集与 0 fort / 0 resource 统计；
+  共享 settlement 节点仍优先落到 template 现有坐标锚点，运行时专属新增节点则保留 runtime 坐标，因此“内容以 runtime 为主、格式沿 template asset surface”已经真正落地。
+- 当前这类问题已不再需要继续按单个 building、单个 binding、单个 support-data 文件，或单个 maps family 切片；source-unification 代码面当前只剩 closeout，不再有新的 family owner/mapping 待判。
 
 ### Batch 3: D 线恢复入口
 
@@ -129,10 +165,12 @@
 
 ## 当前建议
 
-如果下一步只做一件事，优先做 `Batch 2`。
+如果下一步只做一件事，优先做 `F2/F4` 的 review + checkpoint commit/push。
 
 原因：
 
 - `Batch 1` 已完成，startup 线当前没有复现新的 runtime drift。
 - 你已经明确要求先不处理评议系统。
-- 因此最合理的下一步就是继续 source-unification 收尾，而不是重复进入 startup 审计。
+- `Batch 2` 当前也已完成到“代码与合同已收口”的状态。
+- source-unification plan、主线状态快照与 change-log 当前都已补到 closeout 级别，剩余动作主要是把这一批 branch-local 收口做成正式 checkpoint。
+- 因此当前最合理的下一步不是再开新的 source-unification family，而是 review 当前 diff、提交并推送这一批，再决定是否恢复 `D` 线。

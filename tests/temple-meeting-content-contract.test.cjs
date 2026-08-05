@@ -6,7 +6,7 @@ const test = require("node:test");
 const ROOTS = [
   "src/content/scenario-packs/zhuyuanzhang",
   "src/modules/script-editor/builtin-templates/zhuyuanzhang",
-  "public/script-editor-templates/zhuyuanzhang",
+  "public/builtin-script-editor-templates/zhuyuanzhang",
 ];
 
 const EXPECTED_STAGE_IDS = [

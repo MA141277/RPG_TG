@@ -3,11 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { test } = require("node:test");
 
-function readJson(relativePath) {
-  return JSON.parse(fs.readFileSync(path.join(process.cwd(), relativePath), "utf8"));
-}
-
-test("default script editor template url resolves to packaged static files", () => {
+test("default script editor template url resolves to the registered builtin template publication", () => {
   const projectRoot = process.cwd();
   const configSource = fs.readFileSync(
     path.join(projectRoot, "src", "modules", "script-editor", "config.ts"),
@@ -20,21 +16,38 @@ test("default script editor template url resolves to packaged static files", () 
   assert.ok(urlMatch, "default template URL should be declared as a string literal");
   assert.equal(
     urlMatch[1],
-    "/script-editor-templates/zhuyuanzhang/pack.json",
-    "default template URL should remain a public static template URL"
+    "/builtin-script-editor-templates/zhuyuanzhang/pack.json",
+    "default template URL should resolve to the registered builtin template publication"
   );
+});
 
-  const templateRoot = path.join(projectRoot, "public", "script-editor-templates", "zhuyuanzhang");
-  const manifestPath = path.join(templateRoot, "pack.json");
-  assert.equal(fs.existsSync(manifestPath), true, "public template manifest should exist");
+test("default script editor template url imports through the registered builtin template publication without fetching a public manifest", async () => {
+  const configSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "modules", "script-editor", "config.ts"),
+    "utf8"
+  );
+  const urlMatch = configSource.match(
+    /DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL\s*=\s*\r?\n\s*"([^"]+)"/
+  );
+  assert.ok(urlMatch, "default template URL should be declared as a string literal");
 
-  const manifest = readJson("public/script-editor-templates/zhuyuanzhang/pack.json");
-  for (const [key, relativePath] of Object.entries(manifest.files)) {
-    assert.equal(
-      fs.existsSync(path.join(templateRoot, relativePath)),
-      true,
-      `public template file for ${key} should exist`
-    );
+  const {
+    loadScriptEditorProjectFromScenarioPackUrl,
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
+  const originalFetch = global.fetch;
+
+  global.fetch = async (input) => {
+    const url = typeof input === "string" ? input : input?.url;
+    throw new Error(`unexpected fetch for registered builtin template publication: ${url}`);
+  };
+
+  try {
+    const project = await loadScriptEditorProjectFromScenarioPackUrl(urlMatch[1]);
+    assert.equal(project.id, "scenario-pack.zhu_yuanzhang.monk_opening");
+    assert.equal(project.flows.length > 0, true);
+    assert.equal(project.maps.length > 0, true);
+  } finally {
+    global.fetch = originalFetch;
   }
 });
 
@@ -84,14 +97,49 @@ test("script editor default template import no longer depends on the public temp
   );
 });
 
-test("default script editor template map asset references resolve to packaged files", () => {
-  const templateRoot = path.join(
+test("production script editor module no longer imports the default template public url constant", () => {
+  const mainUiModuleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "ui",
+      "main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    mainUiModuleSource,
+    /DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL/
+  );
+});
+
+test("registered builtin template publication resolves map asset references to browser-loadable absolute urls", async () => {
+  const { loadScenarioPackFromUrl } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const registeredAssetRoot = path.join(
     process.cwd(),
     "public",
-    "script-editor-templates",
+    "builtin-script-editor-templates",
     "zhuyuanzhang"
   );
-  const maps = readJson("public/script-editor-templates/zhuyuanzhang/maps.json");
+  const originalFetch = global.fetch;
+
+  global.fetch = async (input) => {
+    const url = typeof input === "string" ? input : input?.url;
+    throw new Error(`unexpected fetch while loading registered builtin template pack: ${url}`);
+  };
+
+  let maps;
+  try {
+    const pack = await loadScenarioPackFromUrl(
+      "/builtin-script-editor-templates/zhuyuanzhang/pack.json"
+    );
+    maps = pack.maps;
+  } finally {
+    global.fetch = originalFetch;
+  }
 
   for (const mapDefinition of maps) {
     for (const imageUrl of [
@@ -99,14 +147,24 @@ test("default script editor template map asset references resolve to packaged fi
       mapDefinition.regionOverlayImageUrl,
       ...(mapDefinition.layers ?? []).map((layer) => layer.imageUrl),
     ]) {
-      if (typeof imageUrl !== "string" || imageUrl.length === 0 || /^(https?:|data:|\/)/.test(imageUrl)) {
+      if (imageUrl == null) {
         continue;
       }
-
+      assert.equal(typeof imageUrl, "string");
+      assert.notEqual(imageUrl.length, 0);
+      assert.match(
+        imageUrl,
+        /^\/builtin-script-editor-templates\/zhuyuanzhang\/assets\/maps\//
+      );
       assert.equal(
-        fs.existsSync(path.join(templateRoot, imageUrl)),
+        fs.existsSync(
+          path.join(
+            registeredAssetRoot,
+            imageUrl.replace(/^\/builtin-script-editor-templates\/zhuyuanzhang\//, "")
+          )
+        ),
         true,
-        `public template map asset should exist: ${imageUrl}`
+        `registered builtin template asset should exist: ${imageUrl}`
       );
     }
   }

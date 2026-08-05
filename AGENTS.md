@@ -2,6 +2,23 @@
 
 This repository uses strict module-boundary rules for any new `house` implementation.
 
+## Immediate Execution Workflow Governance
+
+AI collaborators must read and follow `docs/agent-immediate-execution-workflow.md` for repository tasks that are executable in the current workspace.
+
+Core rule:
+
+- once the next executable slice is identified, do not stop and report it as a final answer
+- execute that slice immediately unless a documented blocker applies
+- only use final answer when no executable next slice remains, or a real blocker prevents further execution
+
+Final Answer Precheck Summary:
+
+- before any final answer, run a precheck: if a clear and safe next slice still exists, especially one the agent has already proposed or recommended in the current reply, do not answer finally and continue execution instead
+- if that slice is not executed, record the blocker explicitly
+
+This workflow constraint does not override a user request to stop at discussion, planning, review, or explanation only.
+
 ## AI Collaboration Governance
 
 AI collaborators must follow `docs/ai-collaboration-governance.md` before changing scenario packs, Script Editor import/export/runtime preview, event routing, building arrangements, navigation, playable/minigame/QTE/story-battle behavior, scenario-specific UI/code, or shipped assets/resources.

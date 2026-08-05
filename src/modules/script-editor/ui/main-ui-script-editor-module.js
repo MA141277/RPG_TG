@@ -9,7 +9,6 @@ import { loadScenarioPackFromFiles } from "../../../application/scenario/scenari
 import * as scriptEditorMainUiBridge from "../main-ui-bridge";
 
 const {
-  DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL,
   SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES,
   SCRIPT_EDITOR_BUILDING_LAYOUT_ACTION_FILTERS,
   SCRIPT_EDITOR_BUILDING_LAYOUT_CHARACTER_FILTERS,
