@@ -792,6 +792,36 @@ test("runtime-pack export rejects launchFlow actions that reference missing flow
   ]);
 });
 
+test("runtime-pack export rejects openCityMenuPanel actions with unsupported panel ids", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "event",
+            targetId: "",
+          },
+          actions: [
+            {
+              type: "openCityMenuPanel",
+              panelId: "begging",
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), [
+    {
+      code: "invalid-field",
+      fieldPath: "project.events[0].actions[0].panelId",
+      message:
+        'Event "event.opening" carries unsupported city menu panel "begging".',
+    },
+  ]);
+});
+
 test("event authoring normalization preserves runtime payload actions and task inputs", () => {
   const normalized = normalizeScriptEditorEventRecord({
     id: "event.runtime.payload.normalize",

@@ -2454,9 +2454,19 @@ function lowerEventRouteCommands(
       continue;
     }
     if (action?.type === "openCityMenuPanel") {
+      const panelId = normalizeCityMenuPanelId(action.panelId);
+      if (panelId == null) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `project.events[${eventIndex}].actions[${actionIndex}].panelId`,
+          message:
+            `Event "${eventRecord.id}" carries unsupported city menu panel "${String(action.panelId)}".`,
+        });
+        return null;
+      }
       actions.push({
         type: "openCityMenuPanel",
-        panelId: action.panelId,
+        panelId,
       });
       continue;
     }

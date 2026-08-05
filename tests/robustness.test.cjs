@@ -423,6 +423,7 @@ test("runtime-pack export fails closed on mixed destination and same-family payl
   assert.match(source, /function hasRouteOwningEventActions\(/);
   assert.doesNotMatch(source, /if \(hasRuntimeEventActions\(eventRecord\)\) \{\n    return "";\n  \}/);
   assert.match(source, /references missing flow/);
+  assert.match(source, /unsupported city menu panel/);
 });
 
 test("script editor items scenario pack loader hydrates items from manifest files", async () => {
