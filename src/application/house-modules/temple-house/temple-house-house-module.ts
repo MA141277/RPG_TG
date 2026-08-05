@@ -2275,32 +2275,24 @@ function projectTempleHostedReviewStage(input: {
   }
 
   if (nextStageId === "assign-duty") {
-    const uiTextIds = resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds;
-    const reviewWorkChoices = getReviewWorkChoices(
-      input.gameState,
-      input.playerCharacterId,
-      input.activityDefinitionsById,
-      input.textEntriesById,
-      input.houseModuleDefaults
-    );
-    nextActionContainersByStageId["assign-duty"] = {
-      title: resolveTempleText(
-        input.textEntriesById,
-        isMonkStoryStage(input.gameState)
-          ? uiTextIds.actionPanelTitleMeetingMonk
-          : uiTextIds.actionPanelTitleMeetingDaily
-      ),
-      actions: reviewWorkChoices.map<HouseActionViewModel>((workChoice) => ({
-        id:
-          workChoice.id === "temple-help"
+    nextActionContainersByStageId["assign-duty"] =
+      createTempleReviewAssignDutyActionContainer({
+        gameState: input.gameState,
+        playerCharacterId: input.playerCharacterId,
+        ...(input.activityDefinitionsById == null
+          ? {}
+          : { activityDefinitionsById: input.activityDefinitionsById }),
+        ...(input.textEntriesById == null
+          ? {}
+          : { textEntriesById: input.textEntriesById }),
+        ...(input.houseModuleDefaults == null
+          ? {}
+          : { houseModuleDefaults: input.houseModuleDefaults }),
+        resolveActionId: (workChoiceId) =>
+          workChoiceId === "temple-help"
             ? "temple-review-assign-indoor"
             : "temple-review-assign-beg-alms",
-        label: workChoice.label,
-        ...(workChoice.disabled == null ? {} : { disabled: workChoice.disabled }),
-        ...(workChoice.tone == null ? {} : { tone: workChoice.tone }),
-        buttonSound: "light",
-      })),
-    };
+      });
   }
 
   const nextDerivedState = {
@@ -2336,6 +2328,40 @@ function applyTempleHostedReviewProjectionToSessionState(
     dialogueLines: projection.dialogueLines,
     overlay: projection.overlay,
   });
+}
+
+function createTempleReviewAssignDutyActionContainer(input: {
+  gameState: GameState;
+  playerCharacterId: string;
+  activityDefinitionsById?: Record<string, ActivityDefinition>;
+  textEntriesById?: Record<string, string>;
+  houseModuleDefaults?: Record<string, unknown>;
+  resolveActionId: (workChoiceId: "temple-help" | "beg-alms") => string;
+}): HouseActionContainerViewModel {
+  const uiTextIds = resolveTempleStaticTextDefaults(input.houseModuleDefaults).uiTextIds;
+  const reviewWorkChoices = getReviewWorkChoices(
+    input.gameState,
+    input.playerCharacterId,
+    input.activityDefinitionsById,
+    input.textEntriesById,
+    input.houseModuleDefaults
+  );
+
+  return {
+    title: resolveTempleText(
+      input.textEntriesById,
+      isMonkStoryStage(input.gameState)
+        ? uiTextIds.actionPanelTitleMeetingMonk
+        : uiTextIds.actionPanelTitleMeetingDaily
+    ),
+    actions: reviewWorkChoices.map<HouseActionViewModel>((workChoice) => ({
+      id: input.resolveActionId(workChoice.id),
+      label: workChoice.label,
+      ...(workChoice.disabled == null ? {} : { disabled: workChoice.disabled }),
+      ...(workChoice.tone == null ? {} : { tone: workChoice.tone }),
+      buttonSound: "light",
+    })),
+  };
 }
 
 function getTempleContributionEntries(
@@ -6171,13 +6197,6 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       input.activityDefinitionsById,
       input.textEntriesById
     );
-    const reviewWorkChoices = getReviewWorkChoices(
-      nextState,
-      input.playerCharacterId,
-      input.activityDefinitionsById,
-      input.textEntriesById,
-      input.houseModuleDefaults
-    );
     const templeTaskDefinitions = getTempleTaskDefinitions(
       input.activityDefinitionsById,
       input.textEntriesById
@@ -6341,23 +6360,21 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       actionContainer: isHostedMeetingActive
         ? hostedMeetingPresenter?.actionContainer ?? null
         : shouldShowMeetingTasks
-          ? {
-              title: resolveTempleText(
-                input.textEntriesById,
-                isMonkStoryStage(nextState)
-                  ? uiTextIds.actionPanelTitleMeetingMonk
-                  : uiTextIds.actionPanelTitleMeetingDaily
-              ),
-              actions: reviewWorkChoices.map<HouseActionViewModel>((workChoice) => ({
-                id: `${SELECT_REVIEW_WORK_ACTION_PREFIX}${workChoice.id}`,
-                label: workChoice.label,
-                ...(workChoice.disabled == null
-                  ? {}
-                  : { disabled: workChoice.disabled }),
-                ...(workChoice.tone == null ? {} : { tone: workChoice.tone }),
-                buttonSound: "light",
-              })),
-            }
+          ? createTempleReviewAssignDutyActionContainer({
+              gameState: nextState,
+              playerCharacterId: input.playerCharacterId,
+              ...(input.activityDefinitionsById == null
+                ? {}
+                : { activityDefinitionsById: input.activityDefinitionsById }),
+              ...(input.textEntriesById == null
+                ? {}
+                : { textEntriesById: input.textEntriesById }),
+              ...(input.houseModuleDefaults == null
+                ? {}
+                : { houseModuleDefaults: input.houseModuleDefaults }),
+              resolveActionId: (workChoiceId) =>
+                `${SELECT_REVIEW_WORK_ACTION_PREFIX}${workChoiceId}`,
+            })
           : shouldShowMeetingAdvice
             ? {
                 title: resolveTempleText(

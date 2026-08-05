@@ -11029,6 +11029,61 @@ test("temple review advice-to-assign-duty follow-up projection is owned by one h
   assert.doesNotMatch(legacyBlock, /getTempleAssignDutyLines\(/);
 });
 
+test("temple review assign-duty action container is owned by one helper across hosted and fallback shells", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const helperBlock =
+    functionBlocksByName.get("createTempleReviewAssignDutyActionContainer") ?? "";
+  const hostedProjectBlock =
+    functionBlocksByName.get("projectTempleHostedReviewStage") ?? "";
+  const selectViewModelStart = moduleSource.indexOf(
+    "selectViewModel(input): HouseModuleViewModel {"
+  );
+  const selectViewModelBlock =
+    selectViewModelStart === -1 ? "" : moduleSource.slice(selectViewModelStart);
+
+  assert.match(
+    helperBlock,
+    /function createTempleReviewAssignDutyActionContainer\(/
+  );
+  assert.match(helperBlock, /getReviewWorkChoices\(/);
+  assert.match(helperBlock, /workChoice\.label/);
+  assert.match(helperBlock, /buttonSound: "light"/);
+  assert.match(hostedProjectBlock, /createTempleReviewAssignDutyActionContainer\(/);
+  assert.match(selectViewModelBlock, /createTempleReviewAssignDutyActionContainer\(/);
+  assert.doesNotMatch(hostedProjectBlock, /reviewWorkChoices\.map/);
+  assert.doesNotMatch(selectViewModelBlock, /reviewWorkChoices\.map/);
+});
+
 test("temple and keep house content files no longer author pack task definitions", () => {
   const templeContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),
