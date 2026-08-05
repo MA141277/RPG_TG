@@ -4711,8 +4711,13 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
   );
   assert.match(
     shaderSource,
-    /vec3 noisePoint = vec3\(columnTexturePoint\.xy \* \(2\.35 \* worldTextureScale\) \+ wind, columnTexturePoint\.z \* 3\.0\);/,
-    "Expected map-space cloud density noise to stay isotropic, column-stable, and controlled by the texture frequency slider."
+    /vec3 basePoint = vec3\(columnTexturePoint\.xy \* \(1\.18 \* worldTextureScale\), columnTexturePoint\.z \* 0\.92\);/,
+    "Expected broad map-space cloud density to stay column-stable and controlled by the texture frequency slider."
+  );
+  assert.match(
+    shaderSource,
+    /vec3 detailPoint = vec3\(pointTexturePoint\.xy \* \(1\.92 \* worldTextureScale\), pointTexturePoint\.z \* 1\.34\);/,
+    "Expected high-frequency erosion to sample true per-step 3D detail instead of a flat column texture."
   );
   assert.doesNotMatch(
     shaderSource,
@@ -5282,8 +5287,8 @@ test("campaign cloud density uses height layers without directional texture shea
   );
   assert.match(
     shaderSource,
-    /float density = sampleMapSpaceCloudDensity\(ray, point, columnPoint, time, textureValue\);/,
-    "Every raymarch step should reuse the same column texture field while varying only height envelopes."
+    /float density = sampleCloudDensity\(ray, point, columnPoint, time, textureValue\);/,
+    "Every raymarch step should use the new density helper while preserving the stable column point input."
   );
   assert.match(
     shaderSource,
@@ -5292,8 +5297,8 @@ test("campaign cloud density uses height layers without directional texture shea
   );
   assert.match(
     shaderSource,
-    /vec3 noisePoint = vec3\(columnTexturePoint\.xy \* \(2\.35 \* worldTextureScale\) \+ wind, columnTexturePoint\.z \* 3\.0\);/,
-    "Base cloud texture coordinates should stay isotropic and stable across height steps instead of skewing every layer in one direction."
+    /vec3 basePoint = vec3\(columnTexturePoint\.xy \* \(1\.18 \* worldTextureScale\), columnTexturePoint\.z \* 0\.92\);/,
+    "Base cloud texture coordinates should stay stable across height steps instead of skewing every layer in one direction."
   );
   assert.doesNotMatch(
     shaderSource,
@@ -5317,18 +5322,18 @@ test("campaign cloud density uses height layers without directional texture shea
   );
   assert.match(
     shaderSource,
-    /float density = lowDensity \* 0\.38 \+ midDensity \* 0\.44 \+ highDensity \* 0\.18;/,
-    "Expected final density to blend separate low, middle, and high layer responses."
+    /float layeredShape = baseDistribution \* \(0\.72 \+ lowLayer \* 0\.20 \+ midLayer \* 0\.18\) - erosion \* \(0\.28 \+ highLayer \* 0\.20\);/,
+    "Expected final density to combine broad coverage, low/mid/high layer response, and detail erosion."
   );
   assert.match(
     shaderSource,
-    /float visibleTextureLayer = smoothstep\(0\.24, 0\.56, heightRatio\) \* \(1\.0 - smoothstep\(0\.62, 0\.90, heightRatio\)\);/,
+    /float visibleTextureLayer = smoothstep\(0\.20, 0\.56, heightRatio\) \* \(1\.0 - smoothstep\(0\.62, 0\.92, heightRatio\)\);/,
     "Expected visible cloud texture to be concentrated in one middle layer instead of repeated through every height slice."
   );
   assert.match(
     shaderSource,
-    /float contrastTexture = clamp\(\(detail \* 0\.68 \+ billowed \* 0\.32 - 0\.24\) \* 3\.05, 0\.0, 1\.0\);[\s\S]*?textureValue = mix\(\s*contrastTexture,\s*clamp\(\(contrastTexture - 0\.10\) \* 1\.72, 0\.0, 1\.0\),\s*visibleTextureLayer\s*\);/s,
-    "Expected visible texture to use a high-contrast detail signal while low and high cloud layers affect density only."
+    /float carvedDetail = clamp\(\(erosion - 0\.18\) \* 1\.48, 0\.0, 1\.0\);[\s\S]*?float cellularRidge = clamp\(\(baseDistribution - 0\.36\) \* 1\.36, 0\.0, 1\.0\);[\s\S]*?textureValue = mix\(/s,
+    "Expected visible texture to use high-contrast erosion and broad-density ridge signals."
   );
   assert.doesNotMatch(
     shaderSource,

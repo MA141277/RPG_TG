@@ -23,9 +23,9 @@
 
 - Status: `running`
 - Last Updated: `2026-08-05`
-- Current Focus: `Task 2: implement 3D cloud density and erosion.`
-- Next Step: `Start Task 2 from the first unchecked step.`
-- Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting" tests/robustness.test.cjs } failed as expected on missing sampleCloudBaseDistribution.`
+- Current Focus: `Task 3: implement single scattering and light optical depth.`
+- Next Step: `Start Task 3 from the first unchecked step.`
+- Verification: `Task 2 GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud density uses height layers|campaign cloud map-space volumetric slab" tests/robustness.test.cjs } passed 5/5.`
 - Notes: `Do not mark this child closed until implementation verification, structured closeout, project-progress sync, and remote push success are recorded.`
 
 ## Progress Log
@@ -38,6 +38,10 @@
   - Summary: `Started inline execution and added red source-contract tests for campaign cloud density, lightmarch, single scattering, and multiple-scattering ownership.`
   - Verification: `RED: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting" tests/robustness.test.cjs } failed as expected on missing sampleCloudBaseDistribution; boundary preservation test passed.`
   - Next: `Implement Task 2 shader density and curl-warped erosion helpers.`
+- 2026-08-05
+  - Summary: `Completed Task 2 shader density restructuring: broad Worley fBm distribution, curl-warped erosion, explicit height envelope, and the new sampleCloudDensity path now drive the existing map-space cloud raymarch. Because the Task 1 contract also required future lighting helpers, real unintegrated Beer-Lambert, phase, lightmarch, single-scattering, and multiple-scattering helper functions were added early for source-contract continuity.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud density uses height layers|campaign cloud map-space volumetric slab" tests/robustness.test.cjs } passed 5/5.`
+  - Next: `Connect the existing single-scattering and light optical-depth helpers into sampleMapSpaceVolumetricCloud.`
 
 ---
 
@@ -300,7 +304,7 @@ Update this plan:
 - Consumes: `MapSpaceCloudRay`, `getMapSpaceCloudTexturePoint`, `proceduralFbm`, `worleyNoise`, `billow`, `textureFbm`, and `sampleMapSpaceVolumetricCloud`.
 - Produces: `sampleCloudBaseDistribution`, `curlWarpCloudPoint`, `sampleCloudDetailErosion`, `sampleCloudHeightEnvelope`, `sampleCloudDensity`.
 
-- [ ] **Step 1: Move the old density helper to the new signature**
+- [x] **Step 1: Move the old density helper to the new signature**
 
 In `src/ui/views/map/shaders/campaign-cloud.frag.glsl`, rename the existing `sampleMapSpaceCloudDensity` function to `sampleCloudDensity` and keep the same parameters:
 
@@ -336,7 +340,7 @@ float sampleMapSpaceCloudDensity(
 }
 ```
 
-- [ ] **Step 2: Add the broad Worley fBm helper**
+- [x] **Step 2: Add the broad Worley fBm helper**
 
 Add this helper before `sampleCloudDensity`:
 
@@ -355,7 +359,7 @@ float sampleCloudBaseDistribution(vec3 point, float time) {
 }
 ```
 
-- [ ] **Step 3: Add curl-warped detail helpers**
+- [x] **Step 3: Add curl-warped detail helpers**
 
 Add these helpers before `sampleCloudDetailErosion`:
 
@@ -381,7 +385,7 @@ float sampleCloudDetailErosion(vec3 point, float time) {
 }
 ```
 
-- [ ] **Step 4: Add the explicit height envelope helper**
+- [x] **Step 4: Add the explicit height envelope helper**
 
 Add this helper:
 
@@ -396,7 +400,7 @@ float sampleCloudHeightEnvelope(float heightRatio) {
 }
 ```
 
-- [ ] **Step 5: Implement the final density composition**
+- [x] **Step 5: Implement the final density composition**
 
 Set the body of `sampleCloudDensity` to this composition, preserving `columnPoint` stability:
 
@@ -437,7 +441,7 @@ textureValue = mix(
 return density;
 ```
 
-- [ ] **Step 6: Run targeted tests for density contracts**
+- [x] **Step 6: Run targeted tests for density contracts**
 
 Run:
 
@@ -450,7 +454,7 @@ Expected:
 - The new density helper assertions pass.
 - Existing map-space slab and height-layer tests pass or fail only on exact regexes that need to be updated to the new helper names without weakening the behavior.
 
-- [ ] **Step 7: Commit Task 2**
+- [x] **Step 7: Commit Task 2**
 
 Run:
 
@@ -463,7 +467,7 @@ Expected:
 
 - Commit succeeds.
 
-- [ ] **Step 8: Sync progress**
+- [x] **Step 8: Sync progress**
 
 Update this plan:
 

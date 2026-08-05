@@ -190,6 +190,16 @@ const float MAP_SPACE_CLOUD_ALPHA_LIMIT = 0.965;
 const vec2 MAP_SPACE_CLOUD_WIND = vec2(0.018, -0.011);
 const float MAP_SPACE_CLOUD_PARALLAX_MIN_STRENGTH = 0.18;
 const float MAP_SPACE_CLOUD_PARALLAX_MAX_STRENGTH = 0.36;
+const int MAX_CLOUD_LIGHT_STEPS = 4;
+const int MAX_CLOUD_SCATTERING_OCTAVES = 3;
+const vec3 CLOUD_SUN_DIRECTION = normalize(vec3(-0.42, -0.28, 0.86));
+const vec3 CLOUD_SUN_COLOR = vec3(1.0, 0.94, 0.82);
+const vec3 CLOUD_AMBIENT_COLOR = vec3(0.50, 0.62, 0.66);
+const float CLOUD_EXTINCTION = 1.38;
+const float CLOUD_LIGHT_EXTINCTION = 1.12;
+const float CLOUD_SCATTERING_STRENGTH = 0.72;
+const float CLOUD_MULTI_SCATTER_ATTENUATION = 0.58;
+const float CLOUD_MULTI_EXTINCTION_ATTENUATION = 0.54;
 
 struct MapSpaceCloudRay {
   vec3 origin;
@@ -266,7 +276,49 @@ vec3 getMapSpaceCloudTexturePoint(MapSpaceCloudRay ray, vec3 point) {
   return vec3(parallaxPoint, point.z);
 }
 
-float sampleMapSpaceCloudDensity(
+float sampleCloudBaseDistribution(vec3 point, float time) {
+  vec2 wind = MAP_SPACE_CLOUD_WIND * time;
+  vec3 p = vec3(point.xy * 0.78 + wind * 0.42, point.z * 0.72);
+  vec2 w0 = worleyNoise(p.xy + vec2(p.z * 0.19, -p.z * 0.13));
+  vec2 w1 = worleyNoise(p.xy * 1.93 + vec2(17.1, -9.4) + vec2(p.z * 0.31, p.z * 0.23));
+  vec2 w2 = worleyNoise(p.xy * 3.87 + vec2(-5.3, 21.7) + vec2(-p.z * 0.11, p.z * 0.37));
+  float cellular = (1.0 - w0.x) * 0.56 + (1.0 - w1.x) * 0.30 + (1.0 - w2.x) * 0.14;
+  float gaps = smoothstep(0.24, 0.92, w0.y - w0.x);
+  float billowedField = billow(proceduralFbm(p.xy * 0.62 + vec2(p.z * 0.17, -p.z * 0.09)));
+
+  return clamp(cellular * 0.76 + gaps * 0.16 + billowedField * 0.08, 0.0, 1.0);
+}
+
+vec3 curlWarpCloudPoint(vec3 point, float time) {
+  vec3 p = point * 3.4 + vec3(MAP_SPACE_CLOUD_WIND * time * 2.1, time * 0.035);
+  float e = 0.117;
+  float n1 = proceduralFbm(p.xy + vec2(p.z, -p.z));
+  float n2 = proceduralFbm(p.xy + vec2(e + p.z * 0.73, -p.z * 0.41));
+  float n3 = proceduralFbm(p.xy + vec2(-p.z * 0.37, e + p.z * 0.29));
+  vec2 curl = vec2(n3 - n1, n1 - n2);
+
+  return point + vec3(curl * 0.105, (n2 - n3) * 0.045);
+}
+
+float sampleCloudDetailErosion(vec3 point, float time) {
+  vec3 warped = curlWarpCloudPoint(point, time);
+  float worleyDetail = 1.0 - worleyNoise(warped.xy * 6.2 + vec2(warped.z * 0.51, -warped.z * 0.34)).x;
+  float highFbm = proceduralFbm(warped.xy * 9.7 + vec2(warped.z * 0.83, warped.z * 0.47));
+  float textureDetail = textureFbm(warped.xy * (5.4 * CLOUD_TEXTURE_SAMPLE_SCALE));
+
+  return clamp(worleyDetail * 0.48 + highFbm * 0.34 + textureDetail * 0.18, 0.0, 1.0);
+}
+
+float sampleCloudHeightEnvelope(float heightRatio) {
+  float bottomFade = smoothstep(0.02, 0.24, heightRatio);
+  float topFade = 1.0 - smoothstep(0.74, 0.98, heightRatio);
+  float middleBody = smoothstep(0.10, 0.42, heightRatio) * (1.0 - smoothstep(0.58, 0.90, heightRatio));
+  float baseWeight = 0.78 + middleBody * 0.28;
+
+  return clamp(bottomFade * topFade * baseWeight, 0.0, 1.0);
+}
+
+float sampleCloudDensity(
   MapSpaceCloudRay ray,
   vec3 point,
   vec3 columnPoint,
@@ -281,34 +333,110 @@ float sampleMapSpaceCloudDensity(
     0.0,
     1.0
   );
-  vec2 wind = MAP_SPACE_CLOUD_WIND * time;
   float worldTextureScale = clamp(
     uCloudTextureScaleBoost,
     0.50,
     MAP_SPACE_CLOUD_TEXTURE_SCALE_MAX
   );
   vec3 columnTexturePoint = getMapSpaceCloudTexturePoint(ray, columnPoint);
-  vec3 noisePoint = vec3(columnTexturePoint.xy * (2.35 * worldTextureScale) + wind, columnTexturePoint.z * 3.0);
-  float broad = proceduralFbm(noisePoint.xy + vec2(noisePoint.z * 0.37, -noisePoint.z * 0.21));
-  float billowed = billow(proceduralFbm(noisePoint.xy * 2.15 + vec2(noisePoint.z * 0.51, noisePoint.z * 0.28)));
-  float detail = textureFbm(noisePoint.xy * (3.80 * CLOUD_TEXTURE_SAMPLE_SCALE) + wind * 1.7);
-  float heightEnvelope = smoothstep(0.0, 0.25, heightRatio) * (1.0 - smoothstep(0.76, 1.0, heightRatio));
+  vec3 pointTexturePoint = getMapSpaceCloudTexturePoint(ray, point);
+  vec3 basePoint = vec3(columnTexturePoint.xy * (1.18 * worldTextureScale), columnTexturePoint.z * 0.92);
+  vec3 detailPoint = vec3(pointTexturePoint.xy * (1.92 * worldTextureScale), pointTexturePoint.z * 1.34);
+  float baseDistribution = sampleCloudBaseDistribution(basePoint, time);
+  float erosion = sampleCloudDetailErosion(detailPoint, time);
+  float heightEnvelope = sampleCloudHeightEnvelope(heightRatio);
   float lowLayer = smoothstep(0.00, 0.34, heightRatio) * (1.0 - smoothstep(0.42, 0.72, heightRatio));
   float midLayer = smoothstep(0.18, 0.50, heightRatio) * (1.0 - smoothstep(0.62, 0.92, heightRatio));
   float highLayer = smoothstep(0.48, 0.88, heightRatio);
-  float lowDensity = (broad * 0.64 + billowed * 0.24 + detail * 0.12) * (0.62 + lowLayer * 0.55);
-  float midDensity = (broad * 0.38 + billowed * 0.42 + detail * 0.20) * (0.72 + midLayer * 0.46);
-  float highDensity = (broad * 0.22 + billowed * 0.30 + detail * 0.48) * (0.34 + highLayer * 0.42);
-  float density = lowDensity * 0.38 + midDensity * 0.44 + highDensity * 0.18;
-  float visibleTextureLayer = smoothstep(0.24, 0.56, heightRatio) * (1.0 - smoothstep(0.62, 0.90, heightRatio));
-  float contrastTexture = clamp((detail * 0.68 + billowed * 0.32 - 0.24) * 3.05, 0.0, 1.0);
+  float layeredShape = baseDistribution * (0.72 + lowLayer * 0.20 + midLayer * 0.18) - erosion * (0.28 + highLayer * 0.20);
+  float density = clamp((layeredShape - 0.28) * MAP_SPACE_CLOUD_DENSITY_SCALE * heightEnvelope, 0.0, 1.0);
+  float visibleTextureLayer = smoothstep(0.20, 0.56, heightRatio) * (1.0 - smoothstep(0.62, 0.92, heightRatio));
+  float carvedDetail = clamp((erosion - 0.18) * 1.48, 0.0, 1.0);
+  float cellularRidge = clamp((baseDistribution - 0.36) * 1.36, 0.0, 1.0);
   textureValue = mix(
-    contrastTexture,
-    clamp((contrastTexture - 0.10) * 1.72, 0.0, 1.0),
+    clamp(carvedDetail * 0.72 + cellularRidge * 0.28, 0.0, 1.0),
+    clamp((carvedDetail * 0.46 + cellularRidge * 0.54 - 0.08) * 1.42, 0.0, 1.0),
     visibleTextureLayer
   );
 
-  return clamp((density - 0.39) * MAP_SPACE_CLOUD_DENSITY_SCALE * heightEnvelope, 0.0, 1.0);
+  return density;
+}
+
+float sampleMapSpaceCloudDensity(
+  MapSpaceCloudRay ray,
+  vec3 point,
+  vec3 columnPoint,
+  float time,
+  out float textureValue
+) {
+  return sampleCloudDensity(ray, point, columnPoint, time, textureValue);
+}
+
+float beerLambert(float opticalDepth, float extinction) {
+  return exp(-max(opticalDepth, 0.0) * max(extinction, 0.0));
+}
+
+float cloudPhaseFunction(float viewDotLight, float anisotropy) {
+  float g = clamp(anisotropy, -0.72, 0.72);
+  float denom = max(1.0 + g * g - 2.0 * g * viewDotLight, 0.08);
+  return clamp((1.0 - g * g) / pow(denom, 1.5), 0.0, 3.2);
+}
+
+float sampleLightOpticalDepth(vec3 point, vec3 sunDirection, float time) {
+  float cloudBottom = MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS * uCloudProjection.z;
+  float cloudTop = MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS * uCloudProjection.z;
+  float maxDistance = max(cloudTop - cloudBottom, 0.0001) * 0.86;
+  float stepSize = maxDistance / float(MAX_CLOUD_LIGHT_STEPS);
+  float opticalDepth = 0.0;
+
+  for (int lightStep = 0; lightStep < MAX_CLOUD_LIGHT_STEPS; lightStep += 1) {
+    float stepRatio = (float(lightStep) + 0.5) / float(MAX_CLOUD_LIGHT_STEPS);
+    vec3 lightPoint = point + sunDirection * stepSize * (float(lightStep) + 0.5);
+    float heightRatio = clamp((lightPoint.z - cloudBottom) / max(cloudTop - cloudBottom, 0.0001), 0.0, 1.0);
+    float heightEnvelope = sampleCloudHeightEnvelope(heightRatio);
+    vec3 lightBasePoint = vec3(lightPoint.xy * 1.18, lightPoint.z * 0.92);
+    vec3 lightDetailPoint = vec3(lightPoint.xy * 1.92, lightPoint.z * 1.34);
+    float lightBase = sampleCloudBaseDistribution(lightBasePoint, time);
+    float lightErosion = sampleCloudDetailErosion(lightDetailPoint, time);
+    float lightDensity = clamp((lightBase - lightErosion * 0.36 - 0.24) * MAP_SPACE_CLOUD_DENSITY_SCALE * heightEnvelope, 0.0, 1.0);
+    opticalDepth += lightDensity * stepSize * mix(1.0, 0.72, stepRatio);
+  }
+
+  return opticalDepth;
+}
+
+vec3 computeSingleScattering(
+  float density,
+  float viewTransmittance,
+  float lightTransmittance,
+  float phase
+) {
+  vec3 directLight = CLOUD_SUN_COLOR * phase * lightTransmittance;
+  vec3 ambientLift = CLOUD_AMBIENT_COLOR * (0.18 + 0.22 * lightTransmittance);
+
+  return (directLight + ambientLift) * density * viewTransmittance * CLOUD_SCATTERING_STRENGTH;
+}
+
+vec3 computeMultipleScatteringApprox(
+  float density,
+  float lightOpticalDepth,
+  float viewDotLight
+) {
+  vec3 scattered = vec3(0.0);
+  float octaveWeight = 0.48;
+  float octaveExtinction = CLOUD_LIGHT_EXTINCTION;
+  float octaveAnisotropy = 0.22;
+
+  for (int scatteringOctave = 0; scatteringOctave < MAX_CLOUD_SCATTERING_OCTAVES; scatteringOctave += 1) {
+    float octavePhase = cloudPhaseFunction(viewDotLight, octaveAnisotropy);
+    float octaveLight = beerLambert(lightOpticalDepth, octaveExtinction);
+    scattered += CLOUD_SUN_COLOR * octaveLight * octavePhase * octaveWeight;
+    octaveWeight *= CLOUD_MULTI_SCATTER_ATTENUATION;
+    octaveExtinction *= CLOUD_MULTI_EXTINCTION_ATTENUATION;
+    octaveAnisotropy *= 0.46;
+  }
+
+  return scattered * density * 0.22;
 }
 
 vec4 sampleMapSpaceVolumetricCloud(
@@ -334,7 +462,7 @@ vec4 sampleMapSpaceVolumetricCloud(
     float stepRatio = (float(stepIndex) + 0.5) / float(MAX_MAP_SPACE_CLOUD_STEPS);
     vec3 point = ray.origin + ray.direction * (segment.x + stepSize * (float(stepIndex) + 0.5));
     float textureValue = 0.0;
-    float density = sampleMapSpaceCloudDensity(ray, point, columnPoint, time, textureValue);
+    float density = sampleCloudDensity(ray, point, columnPoint, time, textureValue);
     float cloudBottom = MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS * uCloudProjection.z;
     float cloudTop = MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS * uCloudProjection.z;
     float heightRatio = clamp((point.z - cloudBottom) / max(cloudTop - cloudBottom, 0.0001), 0.0, 1.0);
