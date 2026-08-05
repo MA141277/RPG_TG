@@ -638,6 +638,81 @@ test("runtime-pack export rejects mixed minigame destination and playable action
   ]);
 });
 
+test("runtime-pack export rejects mixed dialogue destination and menu action authoring", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const dialogueId = project.dialogues[0]?.id ?? "";
+  assert.notEqual(dialogueId, "");
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "dialogue",
+            targetId: dialogueId,
+          },
+          actions: [
+            {
+              type: "openCityMenuPanel",
+              panelId: "overview",
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), [
+    {
+      code: "invalid-field",
+      fieldPath: "project.events[0].actions",
+      message:
+        'Event "event.opening" cannot combine destination.family="dialogue" with route-owning payload actions.',
+    },
+  ]);
+});
+
+test("runtime-pack export rejects mixed dialogue destination and flow action authoring", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const dialogueId = project.dialogues[0]?.id ?? "";
+  assert.notEqual(dialogueId, "");
+  const flowRecord = {
+    ...workflow.createScriptEditorWorkflowRecordDraft("flows", project),
+    id: "flow.runtime.dialogue-conflict",
+    title: "Dialogue Conflict Flow",
+  };
+  project.flows = [...project.flows, flowRecord];
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "dialogue",
+            targetId: dialogueId,
+          },
+          actions: [
+            {
+              type: "launchFlow",
+              flowId: flowRecord.id,
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), [
+    {
+      code: "invalid-field",
+      fieldPath: "project.events[0].actions",
+      message:
+        'Event "event.opening" cannot combine destination.family="dialogue" with route-owning payload actions.',
+    },
+  ]);
+});
+
 test("event authoring normalization preserves runtime payload actions and task inputs", () => {
   const normalized = normalizeScriptEditorEventRecord({
     id: "event.runtime.payload.normalize",

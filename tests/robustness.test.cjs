@@ -416,6 +416,10 @@ test("runtime-pack export fails closed on mixed destination and same-family payl
     source,
     /cannot combine destination\.family="minigame" with explicit playable payload actions/
   );
+  assert.match(
+    source,
+    /cannot combine destination\.family="dialogue" with route-owning payload actions/
+  );
 });
 
 test("script editor items scenario pack loader hydrates items from manifest files", async () => {

@@ -2373,6 +2373,20 @@ function validateExclusiveEventRouteSeams(
 ): boolean {
   const destinationFamily = eventRecord.destination?.family;
   const actions = eventRecord.actions ?? [];
+  const hasRouteOwningAction = actions.some((action) =>
+    action?.type === "openCityMenuPanel" ||
+    action?.type === "launchPlayable" ||
+    action?.type === "launchFlow"
+  );
+  if (destinationFamily === "dialogue" && hasRouteOwningAction) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `project.events[${eventIndex}].actions`,
+      message:
+        `Event "${eventRecord.id}" cannot combine destination.family="dialogue" with route-owning payload actions.`,
+    });
+    return false;
+  }
   if (
     destinationFamily === "menu" &&
     actions.some((action) => action?.type === "openCityMenuPanel")
