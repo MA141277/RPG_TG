@@ -1,6 +1,10 @@
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
-import { startEvent } from "./event-runner";
+import type { RuntimeEventEntity } from "../../core/contracts/event-router";
+import type { RuntimeState } from "../../core/contracts/runtime-state";
+import { createEventRouteActivationHandlers } from "../../core/runtime/event-route-activation";
+import { createRuntimeEventEntity } from "../../core/runtime/event-entity-projection";
+import { dispatchEventRoute } from "../../core/runtime/event-router";
 
 export type EventContinuationResult = {
   state: GameState;
@@ -75,7 +79,24 @@ export function continueToEvent(input: {
   }
 
   return {
-    state: startEvent(input.state, continuation.eventDefinition),
+    state: dispatchEventRoute({
+      state: toEventContinuationRuntimeState(input.state),
+      eventId: continuation.eventDefinition.id,
+      context: {
+        repository: {
+          resolveById: (eventId) => {
+            const eventDefinition = input.eventDefinitionsById[eventId];
+            return eventDefinition == null
+              ? null
+              : toEventContinuationEventEntity(eventDefinition);
+          },
+        },
+        handlers: createEventRouteActivationHandlers({
+          eventDefinitionsById: input.eventDefinitionsById,
+          fallbackEventDefinition: continuation.eventDefinition,
+        }),
+      },
+    }).state.core,
     eventDefinition: continuation.eventDefinition,
     visitedEventIds: continuation.visitedEventIds,
   };
@@ -88,4 +109,30 @@ function normalizeEventId(eventId: string | null | undefined): string | null {
 
   const normalizedEventId = eventId.trim();
   return normalizedEventId.length === 0 ? null : normalizedEventId;
+}
+
+function toEventContinuationRuntimeState(state: GameState): RuntimeState {
+  return {
+    core: state,
+    app: {
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
+    },
+    view: {},
+  };
+}
+
+function toEventContinuationEventEntity(
+  eventDefinition: EventDefinition
+): RuntimeEventEntity {
+  const { emitEventIds } = eventDefinition;
+  return createRuntimeEventEntity({
+    ...eventDefinition,
+    ...(emitEventIds == null ? {} : { emitEventIds }),
+  });
 }

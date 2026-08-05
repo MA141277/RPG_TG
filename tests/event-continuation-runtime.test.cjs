@@ -399,6 +399,67 @@ test(
 );
 
 test(
+  "continueToEvent routes fallback continuation through the shared event-router seam",
+  { concurrency: false },
+  () => {
+    const continuationPath = require.resolve(
+      "../.test-dist/application/events/event-continuation.js"
+    );
+    const eventRouterPath = require.resolve(
+      "../.test-dist/core/runtime/event-router.js"
+    );
+
+    delete require.cache[continuationPath];
+    delete require.cache[eventRouterPath];
+
+    const eventRouterModule = require(eventRouterPath);
+    const originalDispatchEventRoute = eventRouterModule.dispatchEventRoute;
+    let dispatchEventRouteCalls = 0;
+
+    eventRouterModule.dispatchEventRoute = (...args) => {
+      dispatchEventRouteCalls += 1;
+      return originalDispatchEventRoute(...args);
+    };
+
+    try {
+      const { continueToEvent: continueToEventWithPatchedRouter } = require(
+        continuationPath
+      );
+      const continuation = continueToEventWithPatchedRouter({
+        state: createBaseState(),
+        eventDefinitionsById: {
+          "event.continue.source": createEvent(
+            "event.continue.source",
+            "scene.continue.source"
+          ),
+          "event.continue.target": createEvent(
+            "event.continue.target",
+            "scene.continue.target"
+          ),
+        },
+        sourceEventId: "event.continue.source",
+        targetEventId: "event.continue.target",
+        visitedEventIds: ["event.continue.source"],
+      });
+
+      assert.notEqual(continuation, null);
+      assert.equal(
+        continuation.state.runtime.eventHistory["event.continue.target"]?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchEventRouteCalls > 0,
+        "continueToEvent should route fallback continuation through dispatchEventRoute instead of starting the follow-up event locally"
+      );
+    } finally {
+      eventRouterModule.dispatchEventRoute = originalDispatchEventRoute;
+      delete require.cache[continuationPath];
+      delete require.cache[eventRouterPath];
+    }
+  }
+);
+
+test(
   "advanceStorySceneStep routes automatic scene-end continuation through the shared router seam",
   { concurrency: false },
   () => {

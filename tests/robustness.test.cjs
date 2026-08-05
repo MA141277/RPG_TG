@@ -16934,7 +16934,7 @@ test("scene dialogue runtime continuation route convergence keeps owner wrappers
   );
 });
 
-test("event continuation contract narrowing keeps pure resolution separate from compatibility start", () => {
+test("event continuation contract narrowing keeps pure resolution separate from routed compatibility continuation", () => {
   const continuationSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/events/event-continuation.ts"),
     "utf8"
@@ -16958,7 +16958,9 @@ test("event continuation contract narrowing keeps pure resolution separate from 
 
   assert.doesNotMatch(resolveEventContinuationBlock, /\bstartEvent\s*\(/);
   assert.match(continueToEventBlock, /\bresolveEventContinuation\s*\(/);
-  assert.match(continueToEventBlock, /\bstartEvent\s*\(/);
+  assert.match(continueToEventBlock, /\bdispatchEventRoute\s*\(/);
+  assert.match(continueToEventBlock, /\bcreateEventRouteActivationHandlers\s*\(/);
+  assert.doesNotMatch(continueToEventBlock, /\bstartEvent\s*\(/);
   assert.match(storyRuntimeSource, /\bresolveEventContinuation\s*\(/);
   assert.match(sceneRunnerSource, /\bresolveEventContinuation\s*\(/);
 });
