@@ -22,6 +22,7 @@ const {
   normalizeScriptEditorProgressTrackBindingRecord,
   normalizeScriptEditorProgressTrackRecord,
   normalizeScriptEditorSettlementRecord,
+  normalizeScriptEditorStoryNodeRecord,
 } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 const workflow = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 const {
@@ -1315,6 +1316,61 @@ test("script-editor project parse normalizes settlement authoring at the entry s
           value: 42,
         },
       ],
+    },
+  ]);
+});
+
+test("story node normalization preserves canonical headline fields", () => {
+  const normalized = normalizeScriptEditorStoryNodeRecord({
+    id: " story-node.runtime.normalize ",
+    title: " 故事节点 ",
+    chapterId: " chapter.runtime.normalize ",
+    summary: " 节点摘要 ",
+    progressMode: "wait",
+    relatedPersonIds: [" person.keep.raw "],
+    relatedDialogueIds: [" dialogue.keep.raw "],
+    relatedEventIds: [" event.keep.raw "],
+  });
+
+  assert.deepEqual(normalized, {
+    id: " story-node.runtime.normalize ",
+    title: "故事节点",
+    chapterId: " chapter.runtime.normalize ",
+    summary: " 节点摘要 ",
+    progressMode: "wait",
+    relatedPersonIds: [" person.keep.raw "],
+    relatedDialogueIds: [" dialogue.keep.raw "],
+    relatedEventIds: [" event.keep.raw "],
+  });
+});
+
+test("script-editor project parse normalizes story-node authoring at the entry seam", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.storyNodes = [
+    {
+      id: " story-node.runtime.parse ",
+      title: " 故事节点 ",
+      chapterId: " chapter.runtime.parse ",
+      summary: " 节点摘要 ",
+      progressMode: "wait",
+      relatedPersonIds: [" person.keep.raw "],
+      relatedDialogueIds: [" dialogue.keep.raw "],
+      relatedEventIds: [" event.keep.raw "],
+    },
+  ];
+
+  const parsed = parseScriptEditorProject(project);
+
+  assert.deepEqual(parsed.storyNodes, [
+    {
+      id: " story-node.runtime.parse ",
+      title: "故事节点",
+      chapterId: " chapter.runtime.parse ",
+      summary: " 节点摘要 ",
+      progressMode: "wait",
+      relatedPersonIds: [" person.keep.raw "],
+      relatedDialogueIds: [" dialogue.keep.raw "],
+      relatedEventIds: [" event.keep.raw "],
     },
   ]);
 });
