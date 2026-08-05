@@ -665,16 +665,16 @@ float sampleMountainEdgeNoise(
   return broad * 0.56 + medium * 0.32 + fine * 0.12;
 }
 
-float getLocalMountainEdgeInset(
+float getNeighborMountainMaterialAmount(
   vec2 point,
   vec2 cell,
-  vec2 neighborOffset,
-  float currentMountain
+  vec2 neighborOffset
 ) {
+  float currentMountain = getMaterialSemanticMountainAtCell(cell);
   float neighborMountain = getMaterialSemanticMountainAtCell(cell + neighborOffset);
-  float exposedEdge = currentMountain * (1.0 - neighborMountain);
-  if (exposedEdge < 0.5) {
-    return 1.0;
+  float neighborEdge = (1.0 - currentMountain) * neighborMountain;
+  if (neighborEdge < 0.5) {
+    return 0.0;
   }
 
   vec2 center = hexToPixel(cell);
@@ -687,12 +687,30 @@ float getLocalMountainEdgeInset(
   float edgeNoise = sampleMountainEdgeNoise(point, cell, neighborOffset, edgeCenter, edgeTangent);
   float endpointGuard = 1.0 - smoothstep(0.43, 0.64, alongEdge);
   float raggedDepth = edgeDepth +
-    (edgeNoise - 0.5) * 0.34 +
-    (valueNoise(point * 7.20 + hash(cell + neighborOffset) * 19.0) - 0.5) * 0.10;
-  float insetWidth = mix(0.22, 0.46, edgeNoise);
-  float inset = smoothstep(0.04, insetWidth, raggedDepth);
+    (edgeNoise - 0.5) * 0.22 +
+    (valueNoise(point * 7.20 + hash(cell + neighborOffset) * 19.0) - 0.5) * 0.07;
+  float blendWidth = mix(0.30, 0.62, edgeNoise);
+  float edgeBlend = 1.0 - smoothstep(0.02, blendWidth, raggedDepth);
 
-  return mix(1.0, inset, endpointGuard * exposedEdge);
+  return edgeBlend * endpointGuard * neighborEdge;
+}
+
+float getMountainCellRockBodyAmount(
+  vec2 point,
+  vec2 cell,
+  float currentMountain,
+  float height,
+  vec3 normal
+) {
+  float coarse = valueNoise(point * 2.40 + hash(cell * 2.17) * 17.0);
+  float fine = valueNoise(point * 8.60 + hash(cell * 5.13) * 31.0);
+  float rockNoise = coarse * 0.72 + fine * 0.28;
+  float altitudeRock = smoothstep(0.23, 0.48, height + (rockNoise - 0.5) * 0.10);
+  float steepRock = smoothstep(0.12, 0.46, 1.0 - normal.z);
+  float ridgeRock = smoothstep(0.56, 0.82, rockNoise);
+  float rockBody = max(altitudeRock * 0.84, max(steepRock, ridgeRock * 0.76));
+
+  return currentMountain * clamp(rockBody, 0.18, 1.0);
 }
 
 float getMountainTerrainAmount(
@@ -701,21 +719,29 @@ float getMountainTerrainAmount(
   float hexScale,
   float mapAspect,
   float visualLandWater,
-  float sandMask
+  float sandMask,
+  float height,
+  vec3 normal
 ) {
   float currentMountain = getMaterialSemanticMountainAtCell(cell);
-  float edgeInset = 1.0;
+  float currentRock = getMountainCellRockBodyAmount(
+    point,
+    cell,
+    currentMountain,
+    height,
+    normal
+  );
+  float neighborMountain = 0.0;
 
-  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(1.0, 0.0), currentMountain));
-  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(-1.0, 0.0), currentMountain));
-  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(0.0, 1.0), currentMountain));
-  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(0.0, -1.0), currentMountain));
-  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(1.0, -1.0), currentMountain));
-  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(-1.0, 1.0), currentMountain));
+  neighborMountain = max(neighborMountain, getNeighborMountainMaterialAmount(point, cell, vec2(1.0, 0.0)));
+  neighborMountain = max(neighborMountain, getNeighborMountainMaterialAmount(point, cell, vec2(-1.0, 0.0)));
+  neighborMountain = max(neighborMountain, getNeighborMountainMaterialAmount(point, cell, vec2(0.0, 1.0)));
+  neighborMountain = max(neighborMountain, getNeighborMountainMaterialAmount(point, cell, vec2(0.0, -1.0)));
+  neighborMountain = max(neighborMountain, getNeighborMountainMaterialAmount(point, cell, vec2(1.0, -1.0)));
+  neighborMountain = max(neighborMountain, getNeighborMountainMaterialAmount(point, cell, vec2(-1.0, 1.0)));
 
   return clamp(
-    currentMountain *
-      edgeInset *
+    max(currentRock, neighborMountain * 0.74) *
       (1.0 - visualLandWater) *
       (1.0 - sandMask * 0.86),
     0.0,
@@ -1002,7 +1028,9 @@ void main() {
     hexScale,
     mapAspect,
     visualLandWater,
-    sandMaterialMask
+    sandMaterialMask,
+    vHeight,
+    terrainNormal
   );
   float rockReliefNoise = valueNoise(hexPoint * 3.10 + hash(visualLandCell) * 11.0);
   vec3 rockTint = mix(vec3(0.83, 0.87, 0.82), vec3(1.05, 1.02, 0.92), rockReliefNoise);
@@ -1013,8 +1041,9 @@ void main() {
     1.0
   );
   landTexture = mix(landTexture, rockLandTexture, mountainAmount);
+  float mountainSnowMask = getMaterialSemanticMountainAtCell(hexCell);
   float snowAmount = getMountainSnowAmount(
-    mountainAmount,
+    mountainSnowMask,
     hexPoint,
     hexCell,
     vHeight,

@@ -2940,6 +2940,50 @@ test("vite static runtime asset publisher stages ui and troop texture roots to d
     fs.existsSync(path.join(outputRoot, "src", "faxian", "leg", "cavalry", "project.json")),
     true
   );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "ui", "battle", "red_man", "material-202606150823-001.png")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "ui", "battle", "战斗", "archer_trail_effect.png")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "tools", "spine-new-recovered-project.generated.js")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "prototypes", "battle-demo", "spine-runtime-math.js")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "src", "assets", "audio", "battle", "battle-bgm.mp3")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "src", "assets", "yuanmo-units", "yuan-infantry-strat.png")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(outputRoot, "src", "assets", "yuanmo-unit-animations", "strat_named_with_army", "walk.json")
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(outputRoot, "src", "assets", "campaign-structures", "fort-wall", "fort-hex-wall.json")
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "src", "assets", "campaign-structures", "fort-wall", "brick1.jpg")),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(outputRoot, "src", "assets", "campaign-structures", "fort-wall", "Brick.jpg")),
+    true
+  );
 });
 
 test("yuanmo hex map editor has a standalone vite entry", () => {
@@ -4425,23 +4469,54 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(rendererSource, /getMountainBoundaryHeightFactor/);
   assert.match(rendererSource, /isMountainHexCell/);
   assert.match(rendererSource, /createMountainHeightAtPoint/);
+  assert.match(rendererSource, /createMountainHeightAtPoint\(\s*point,\s*terrainBaseHeights\[index\] \?\? mountainReferenceStrength,\s*mountainReferenceStrength,\s*1\s*\)/s);
   assert.match(rendererSource, /terrainBaseAmount \+/);
   assert.match(rendererSource, /mountainDeltaScale/);
   assert.match(rendererSource, /sampleMountainPeakFieldAtPoint/);
   assert.match(rendererSource, /createMountainPeakCenter/);
   assert.match(rendererSource, /getHexLocalMountainFrame/);
   assert.match(rendererSource, /getMountainHeightSourceAmount/);
+  assert.match(rendererSource, /MOUNTAIN_REFERENCE_STRENGTH_FLOOR/);
+  assert.match(rendererSource, /MOUNTAIN_REFERENCE_STRENGTH_RANDOM_MIN/);
+  assert.match(rendererSource, /MOUNTAIN_REFERENCE_STRENGTH_RANDOM_MAX/);
+  assert.match(rendererSource, /MOUNTAIN_REFERENCE_STRENGTH_FLOOR = 0\.48/);
+  assert.match(rendererSource, /MOUNTAIN_REFERENCE_STRENGTH_RANDOM_MIN = 0\.48/);
+  assert.match(rendererSource, /MOUNTAIN_REFERENCE_STRENGTH_RANDOM_MAX = 0\.76/);
+  assert.match(rendererSource, /getMountainReferenceStrengthForCell/);
+  assert.match(rendererSource, /createStableMountainReferenceStrength/);
+  assert.match(
+    rendererSource,
+    /const mountainReferenceStrength = getMountainReferenceStrengthForCell/
+  );
+  assert.match(rendererSource, /createMountainRangeReliefAtPoint\(point, referenceAmount\)/);
   assert.match(rendererSource, /sampleMountainErodedFbm/);
   assert.match(rendererSource, /createMountainRangeReliefAtPoint/);
   assert.match(rendererSource, /sampleOrientedMountainRangeRidge/);
   assert.match(rendererSource, /MOUNTAIN_HEIGHT_DELTA_REFERENCE_SCALE/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_PEAK_STRENGTH = 0\.66/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_RIDGE_STRENGTH = 0\.46/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_VALLEY_STRENGTH = 0\.0/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_VALLEY_PEAK_GUARD/);
   assert.match(rendererSource, /MOUNTAIN_HEIGHT_PEAK_FIELD_SPACING/);
   assert.match(rendererSource, /const SMOOTH_TERRAIN_MESH_STEP = 1/);
   assert.match(rendererSource, /sampleValueNoiseWithGradient/);
   assert.match(rendererSource, /createMountainRidgeAmount/);
   assert.match(rendererSource, /roundMountainSummitHeight/);
+  assert.doesNotMatch(rendererSource, /return roundMountainSummitHeight\(/);
   assert.match(rendererSource, /MOUNTAIN_HEIGHT_ERODED_FBM_GRADIENT_DAMPING/);
   assert.match(rendererSource, /MOUNTAIN_HEIGHT_SUMMIT_ROUNDING_STRENGTH/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_CONTINUITY_BLEND = 0\.22/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_SUMMIT_ROUNDING_STRENGTH = 0\.02/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_EDGE_INSET_MIN = 0\.10/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_EDGE_INSET_MAX = 0\.34/);
+  assert.match(rendererSource, /createMountainRidgeAmount\(sample\.value, 1\.72\)/);
+  assert.match(rendererSource, /const guardedValley/);
+  assert.match(rendererSource, /const peakRidgeGuard/);
+  assert.match(rendererSource, /const guardedDetail/);
+  assert.match(rendererSource, /const summitErosionGuard/);
+  assert.match(rendererSource, /const constructiveDetail/);
+  assert.match(rendererSource, /const erosiveDetail/);
+  assert.match(rendererSource, /const erosiveValley/);
   assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MIN/);
   assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MAX/);
   assert.doesNotMatch(rendererSource, /createMountainCellRelief/);
@@ -4461,7 +4536,7 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   );
   assert.match(
     rendererSource,
-    /CAMPAIGN_TERRAIN_CHUNK_ALGORITHM_VERSION = "2026-07-28-runtime-hex-point-bounds-v1"/
+    /CAMPAIGN_TERRAIN_CHUNK_ALGORITHM_VERSION = "2026-08-02-solid-ridge-mountains-v1"/
   );
   assert.match(rendererSource, /createCampaignTerrainChunkData/);
   assert.match(rendererSource, /ensureCampaignTerrainChunkKeys/);
@@ -4522,7 +4597,8 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /getSemanticLandAmountAtCell/);
   assert.match(terrainFragmentSource, /getMaterialSemanticMountainAtCell/);
   assert.match(terrainFragmentSource, /getMountainTerrainAmount/);
-  assert.match(terrainFragmentSource, /getLocalMountainEdgeInset/);
+  assert.match(terrainFragmentSource, /getNeighborMountainMaterialAmount/);
+  assert.match(terrainFragmentSource, /getMountainCellRockBodyAmount/);
   assert.match(terrainFragmentSource, /sampleRockMaterial/);
   assert.match(terrainFragmentSource, /sampleSnowMaterial/);
   assert.match(terrainFragmentSource, /getMountainSnowAmount/);
@@ -4530,7 +4606,16 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(rendererSource, /TERRAIN_SNOW_HEIGHT_START/);
   assert.match(rendererSource, /mapSnowTextureUrl/);
   assert.match(terrainFragmentSource, /semanticMountain/);
-  assert.match(terrainFragmentSource, /currentMountain \*\s*edgeInset/s);
+  assert.match(terrainFragmentSource, /\(1\.0 - currentMountain\) \* neighborMountain/);
+  assert.match(terrainFragmentSource, /float blendWidth = mix\(0\.30, 0\.62, edgeNoise\);/);
+  assert.match(terrainFragmentSource, /return edgeBlend \* endpointGuard \* neighborEdge;/);
+  assert.match(terrainFragmentSource, /float currentRock = getMountainCellRockBodyAmount/);
+  assert.match(terrainFragmentSource, /max\(currentRock, neighborMountain \* 0\.74\)/);
+  assert.doesNotMatch(terrainFragmentSource, /max\(currentMountain, neighborMountain/);
+  assert.match(terrainFragmentSource, /float mountainSnowMask = getMaterialSemanticMountainAtCell\(hexCell\);/);
+  assert.match(terrainFragmentSource, /getMountainSnowAmount\(\s*mountainSnowMask,/s);
+  assert.doesNotMatch(terrainFragmentSource, /getLocalMountainEdgeInset/);
+  assert.doesNotMatch(terrainFragmentSource, /currentMountain \*\s*edgeInset/s);
   assert.doesNotMatch(terrainFragmentSource, /mountainBody/);
   assert.doesNotMatch(terrainFragmentSource, /sampleSoftMountainDisk/);
   assert.match(terrainFragmentSource, /uShorelineDistanceTexture/);

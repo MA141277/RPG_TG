@@ -7,7 +7,6 @@ import building42Mesh from "../assets/campaign-structures/fort-city/building-42-
 import building45Mesh from "../assets/campaign-structures/fort-city/building-45-part-01-main-building.json";
 import building46Mesh from "../assets/campaign-structures/fort-city/building-46-1b59f0c93fa9.json";
 import fortCityRules from "../assets/campaign-structures/fort-city/fort-city-rules.json";
-import fortWallMeshUrl from "../assets/campaign-structures/fort-wall/fort-hex-wall.json?url";
 import type {
   CampaignFortCityRulesDefinition,
   CampaignVegetationMeshDefinition,
@@ -16,7 +15,8 @@ import { registerCampaignFortCityAsset } from "../ui/views/map/campaign-fort-cit
 
 export const BUILTIN_YUANMO_FORT_CITY_ASSET_ID = "builtin.yuanmo.fort-city";
 
-export const builtinYuanmoFortWallMeshUrl: string = fortWallMeshUrl;
+export const builtinYuanmoFortWallMeshUrl =
+  "/src/assets/campaign-structures/fort-wall/fort-hex-wall.json";
 
 registerCampaignFortCityAsset(BUILTIN_YUANMO_FORT_CITY_ASSET_ID, {
   rules: fortCityRules as CampaignFortCityRulesDefinition,

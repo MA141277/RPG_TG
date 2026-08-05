@@ -13,6 +13,20 @@ const REQUIRED_DIST_ASSET_PATHS = [
   "src/faxian/leg/spearman/project.json",
   "src/faxian/leg/spearman/head.png",
   "src/faxian/leg/cavalry/project.json",
+  "ui/battle/red_man/material-202606150823-001.png",
+  "ui/battle/red_horse/material-202606150817-001.png",
+  "ui/battle/战斗/20260702-195702.png",
+  "ui/battle/战斗/archer_trail_effect.png",
+  "tools/spine-new-recovered-project.generated.js",
+  "prototypes/battle-demo/spine-runtime-math.js",
+  "src/assets/audio/ui/troop-selection.mp3",
+  "src/assets/audio/battle/battle-bgm.mp3",
+  "src/assets/yuanmo-units/zhu-yuanzhang-monk-strat.json",
+  "src/assets/yuanmo-units/yuan-infantry-strat.png",
+  "src/assets/yuanmo-unit-animations/strat_named_with_army/walk.json",
+  "src/assets/campaign-structures/fort-wall/fort-hex-wall.json",
+  "src/assets/campaign-structures/fort-wall/brick1.jpg",
+  "src/assets/campaign-structures/fort-wall/Brick.jpg",
 ];
 
 export async function createWebStandalonePackage({

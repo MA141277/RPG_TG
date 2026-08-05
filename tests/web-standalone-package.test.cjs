@@ -167,6 +167,20 @@ function createRequiredDistAssets(distRoot) {
     path.join("src", "faxian", "leg", "spearman", "project.json"),
     path.join("src", "faxian", "leg", "spearman", "head.png"),
     path.join("src", "faxian", "leg", "cavalry", "project.json"),
+    path.join("ui", "battle", "red_man", "material-202606150823-001.png"),
+    path.join("ui", "battle", "red_horse", "material-202606150817-001.png"),
+    path.join("ui", "battle", "战斗", "20260702-195702.png"),
+    path.join("ui", "battle", "战斗", "archer_trail_effect.png"),
+    path.join("tools", "spine-new-recovered-project.generated.js"),
+    path.join("prototypes", "battle-demo", "spine-runtime-math.js"),
+    path.join("src", "assets", "audio", "ui", "troop-selection.mp3"),
+    path.join("src", "assets", "audio", "battle", "battle-bgm.mp3"),
+    path.join("src", "assets", "yuanmo-units", "zhu-yuanzhang-monk-strat.json"),
+    path.join("src", "assets", "yuanmo-units", "yuan-infantry-strat.png"),
+    path.join("src", "assets", "yuanmo-unit-animations", "strat_named_with_army", "walk.json"),
+    path.join("src", "assets", "campaign-structures", "fort-wall", "fort-hex-wall.json"),
+    path.join("src", "assets", "campaign-structures", "fort-wall", "brick1.jpg"),
+    path.join("src", "assets", "campaign-structures", "fort-wall", "Brick.jpg"),
   ];
 
   for (const relativePath of requiredFiles) {

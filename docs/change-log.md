@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-02 Campaign Mountain Reference Strength
+
+### Changed
+- Campaign terrain mountain height generation now derives an effective mountain reference strength for `terrain: "山脉"` cells before creating peak, ridge, valley, and detail relief. Low original `referenceHeight` cells, including manually painted mountains on flat land, receive a stable per-cell strength floor/range while preserving higher source heights.
+- Mountain reference strength, peak weight, ridge weight, summit rounding, and continuity smoothing were adjusted to make generated mountains taller, steeper, and more angular while keeping internal mountain neighbors uncompressed.
+- Mountain rock material transition now applies to adjacent non-mountain land cells near shared mountain edges instead of fading the rock texture inside the mountain hex. Mountain cells no longer render as a 100% rock sheet; their rock body is driven by height, slope, and noise, while shared mountain edges can still form a harder rock strip and snow remains limited to cells whose semantic terrain is mountain.
+- Valley relief is no longer allowed to subtract mountain height, negative detail noise is suppressed near strong peaks and ridges, and summit rounding is bypassed so local erosion noise cannot carve crater-like concave pits into mountain summits.
+- Terrain chunk cache algorithm version was bumped so existing IndexedDB chunks generated without the mountain strength, steepness, foothill, and valley-guard compensation are not reused.
+
+### Impact
+- This is a visual terrain-height change only. It does not alter Hex JSON, land/water semantics, navigation, exploration, editor export data, or `src/main.ts`.
+- Manually painted mountain regions should now rise into visible continuous mountain bodies and sharper ridges instead of staying flat when their source height layer is low; their rock texture transition into flat land should sit on neighboring non-mountain cells and mountain shared edges instead of hollowing out the mountain cells or turning the whole mountain hex into a uniform rock tile.
+
 ## 2026-08-01 Temple Work Fortune Cards
 
 ### Changed
@@ -23,6 +36,19 @@
 
 ### Impact
 - The long-distance begging flow now points the player out of Haozhou without adding a house-specific branch to `src/main.ts`; Huangjue Temple remains enterable for temple return flow.
+
+## 2026-08-01 Battle And Strategy Unit Static Assets
+
+### Changed
+- Web dist publishing now also copies `ui/battle`, battle-demo helper scripts, raw battle audio, and Yuanmo strategy unit model/animation assets into `dist`, covering the battle performance and strategy-map unit paths that still load through runtime URLs.
+- Campaign structure assets now publish as raw static assets as well, including `fort-wall/fort-hex-wall.json` and its sibling brick textures, so the fort wall mesh can resolve material textures from the same folder in standalone builds.
+- Battle Spine placement constants for swordsman, archer, spearman, and cavalry were restored to the tested/backup-aligned scale and offset values; cavalry's project default action now points back to the dash clip instead of the slash clip.
+- `package:web` now fails before packaging if representative battle sprites, battle effects, battle audio, battle demo helper scripts, or strategy unit raw assets are absent from `dist`.
+
+### Impact
+- Local standalone packages should no longer lose battle chess sprites, battle performance effects, Yuanmo strategy unit assets, or battle-demo Spine runtime helpers.
+- Fort wall modeling should keep both geometry and brick materials because the runtime mesh URL now resolves relative textures against the raw static asset folder.
+- The battle formation Spine units should use the same size and baseline placement as the authored demo instead of the smaller shifted runtime values.
 
 ## 2026-07-31 Web Dist Runtime Asset Publishing
 

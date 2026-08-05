@@ -423,7 +423,7 @@ const CAMPAIGN_TERRAIN_CHUNK_MIN_COLUMNS = 32;
 const CAMPAIGN_TERRAIN_CHUNK_MIN_ROWS = 32;
 const CAMPAIGN_TERRAIN_CHUNK_CACHE_DB_NAME = "campaign-terrain-cache-v1";
 const CAMPAIGN_TERRAIN_CHUNK_CACHE_STORE_NAME = "chunks";
-const CAMPAIGN_TERRAIN_CHUNK_ALGORITHM_VERSION = "2026-07-28-runtime-hex-point-bounds-v1";
+const CAMPAIGN_TERRAIN_CHUNK_ALGORITHM_VERSION = "2026-08-02-solid-ridge-mountains-v1";
 const SMOOTH_TERRAIN_PASSES = 2;
 const SMOOTH_TERRAIN_LAND_BLEND = 0.65;
 const SMOOTH_TERRAIN_COAST_BLEND = 0.35;
@@ -433,23 +433,27 @@ const NON_MOUNTAIN_HEIGHT_EDGE_FADE_END = 0.50;
 const NON_MOUNTAIN_HEIGHT_SMOOTH_STRENGTH = 0.34;
 const MOUNTAIN_FLOOR_DIFFUSION_PASSES = 48;
 const MOUNTAIN_FLOOR_SMOOTH_PASSES = 4;
+const MOUNTAIN_REFERENCE_STRENGTH_FLOOR = 0.48;
+const MOUNTAIN_REFERENCE_STRENGTH_RANDOM_MIN = 0.48;
+const MOUNTAIN_REFERENCE_STRENGTH_RANDOM_MAX = 0.76;
 const MOUNTAIN_HEIGHT_DELTA_MIN = 0.070;
 const MOUNTAIN_HEIGHT_DELTA_REFERENCE_SCALE = 0.28;
 const MOUNTAIN_HEIGHT_BODY_STRENGTH = 0.46;
-const MOUNTAIN_HEIGHT_PEAK_STRENGTH = 0.52;
-const MOUNTAIN_HEIGHT_RIDGE_STRENGTH = 0.32;
-const MOUNTAIN_HEIGHT_VALLEY_STRENGTH = 0.22;
-const MOUNTAIN_HEIGHT_DETAIL_STRENGTH = 0.090;
+const MOUNTAIN_HEIGHT_PEAK_STRENGTH = 0.66;
+const MOUNTAIN_HEIGHT_RIDGE_STRENGTH = 0.46;
+const MOUNTAIN_HEIGHT_VALLEY_STRENGTH = 0.0;
+const MOUNTAIN_HEIGHT_VALLEY_PEAK_GUARD = 1.24;
+const MOUNTAIN_HEIGHT_DETAIL_STRENGTH = 0.058;
 const MOUNTAIN_HEIGHT_PEAK_FIELD_SPACING = 1.9;
-const MOUNTAIN_HEIGHT_EDGE_INSET_MIN = 0.18;
-const MOUNTAIN_HEIGHT_EDGE_INSET_MAX = 0.56;
-const MOUNTAIN_HEIGHT_CONTINUITY_BLEND = 0.36;
+const MOUNTAIN_HEIGHT_EDGE_INSET_MIN = 0.10;
+const MOUNTAIN_HEIGHT_EDGE_INSET_MAX = 0.34;
+const MOUNTAIN_HEIGHT_CONTINUITY_BLEND = 0.22;
 const MOUNTAIN_HEIGHT_ERODED_FBM_GAIN = 0.48;
 const MOUNTAIN_HEIGHT_ERODED_FBM_LACUNARITY = 2.03;
 const MOUNTAIN_HEIGHT_ERODED_FBM_GRADIENT_DAMPING = 0.58;
 const MOUNTAIN_HEIGHT_ERODED_FBM_GRADIENT_EPSILON = 0.018;
 const MOUNTAIN_HEIGHT_SUMMIT_ROUNDING_START = 0.64;
-const MOUNTAIN_HEIGHT_SUMMIT_ROUNDING_STRENGTH = 0.18;
+const MOUNTAIN_HEIGHT_SUMMIT_ROUNDING_STRENGTH = 0.02;
 const TERRAIN_GRID_LAND_OPACITY = 0.08;
 const TERRAIN_GRID_WATER_OPACITY = 0.015;
 const TERRAIN_NORMAL_SAMPLE_RADIUS_PIXELS = 4;
@@ -4501,7 +4505,6 @@ function createCampaignTerrainChunkHeightSamples(
     columns,
     rows
   );
-
   return smoothCampaignTerrainChunkHeightSamples(
     mountainHeights,
     columns,
@@ -4535,20 +4538,15 @@ function createCampaignMountainHeightSamples(
         continue;
       }
 
-      const referenceHeight = getCampaignTerrainReferenceHeightForCell(
+      const mountainReferenceStrength = getMountainReferenceStrengthForCell(
         materialSemanticModel,
-        cell
-      );
-      const boundaryFactor = getMountainBoundaryHeightFactor(
-        materialSemanticModel,
-        point,
         cell
       );
       mountainHeights[index] = createMountainHeightAtPoint(
         point,
-        terrainBaseHeights[index] ?? referenceHeight,
-        referenceHeight,
-        boundaryFactor
+        terrainBaseHeights[index] ?? mountainReferenceStrength,
+        mountainReferenceStrength,
+        1
       );
     }
   }
@@ -5169,17 +5167,16 @@ function createCampaignTerrainChunkHeightAtPoint(
     materialSemanticModel,
     cell
   );
-  const boundaryFactor = getMountainBoundaryHeightFactor(
+  const mountainReferenceStrength = getMountainReferenceStrengthForCell(
     materialSemanticModel,
-    point,
     cell
   );
 
   return createMountainHeightAtPoint(
     point,
     terrainBaseHeight,
-    referenceHeight,
-    boundaryFactor
+    mountainReferenceStrength,
+    1
   );
 }
 
@@ -5235,6 +5232,34 @@ function getCampaignTerrainReferenceHeightForCell(
   cell: GridCoordinate
 ): number {
   return materialSemanticModel.referenceHeightByCellKey.get(getHexCellKey(cell.x, cell.y)) ?? 0;
+}
+
+function getMountainReferenceStrengthForCell(
+  materialSemanticModel: CampaignMaterialSemanticModel,
+  cell: GridCoordinate
+): number {
+  const referenceHeight = getCampaignTerrainReferenceHeightForCell(
+    materialSemanticModel,
+    cell
+  );
+
+  return Math.max(
+    referenceHeight,
+    MOUNTAIN_REFERENCE_STRENGTH_FLOOR,
+    createStableMountainReferenceStrength(cell)
+  );
+}
+
+function createStableMountainReferenceStrength(cell: GridCoordinate): number {
+  const noise = hash2d(cell.x * 1.37 + 19.11, cell.y * 1.73 - 42.07);
+  const shapedNoise = smoothstepRange(0.08, 0.92, noise);
+
+  return (
+    MOUNTAIN_REFERENCE_STRENGTH_RANDOM_MIN +
+    (MOUNTAIN_REFERENCE_STRENGTH_RANDOM_MAX -
+      MOUNTAIN_REFERENCE_STRENGTH_RANDOM_MIN) *
+      shapedNoise
+  );
 }
 
 function getCampaignTerrainMountainFloorHeightForCell(
@@ -10394,14 +10419,30 @@ function createMountainHeightAtPoint(
     0.94
   );
   const boundaryAmount = Math.pow(clamp(boundaryFactor, 0, 1), 1.18);
+  const summitErosionGuard = clamp(
+    Math.max(rangeRelief.peak, rangeRelief.ridge) * 1.35,
+    0,
+    0.98
+  );
+  const detailScale =
+    MOUNTAIN_HEIGHT_DETAIL_STRENGTH *
+    (0.72 + referenceAmount * 0.28);
+  const constructiveDetail = Math.max(rangeRelief.detail, 0) * detailScale;
+  const erosiveDetail =
+    Math.min(rangeRelief.detail, 0) *
+    detailScale *
+    (1 - summitErosionGuard);
+  const erosiveValley =
+    rangeRelief.valley *
+    MOUNTAIN_HEIGHT_VALLEY_STRENGTH *
+    (1 - summitErosionGuard);
   const normalizedRelief = clamp(
     rangeRelief.body * MOUNTAIN_HEIGHT_BODY_STRENGTH +
       rangeRelief.peak * MOUNTAIN_HEIGHT_PEAK_STRENGTH +
       rangeRelief.ridge * MOUNTAIN_HEIGHT_RIDGE_STRENGTH -
-      rangeRelief.valley * MOUNTAIN_HEIGHT_VALLEY_STRENGTH +
-      rangeRelief.detail *
-        MOUNTAIN_HEIGHT_DETAIL_STRENGTH *
-        (0.72 + referenceAmount * 0.28),
+      erosiveValley +
+      constructiveDetail +
+      erosiveDetail,
     0,
     1
   );
@@ -10409,11 +10450,7 @@ function createMountainHeightAtPoint(
     terrainBaseAmount +
     mountainDeltaScale * normalizedRelief * boundaryAmount;
 
-  return roundMountainSummitHeight(
-    clamp(mountainHeight, terrainBaseAmount, heightCap),
-    terrainBaseAmount,
-    heightCap
-  );
+  return clamp(mountainHeight, terrainBaseAmount, heightCap);
 }
 
 function getMountainHeightSourceAmount(sourceHeight: number): number {
@@ -10492,8 +10529,22 @@ function createMountainRangeReliefAtPoint(
     0,
     1
   );
+  const guardedValley =
+    valley.ridge *
+    body *
+    (1 - clamp(Math.max(peakField.peak, ridgeAmount) * MOUNTAIN_HEIGHT_VALLEY_PEAK_GUARD, 0, 0.98));
+  const peakRidgeGuard = clamp(
+    Math.max(peakField.peak, ridgeAmount) * MOUNTAIN_HEIGHT_VALLEY_PEAK_GUARD,
+    0,
+    0.98
+  );
+  const detailValue = detailFbm.value - 0.5;
+  const guardedDetail =
+    detailValue < 0
+      ? detailValue * (1 - peakRidgeGuard)
+      : detailValue;
   const erodedDetail =
-    (detailFbm.value - 0.5) *
+    guardedDetail *
     (1 - clamp(detailFbm.erosionAmount * 0.52, 0, 0.52)) *
     (0.64 + referenceAmount * 0.36);
 
@@ -10501,7 +10552,7 @@ function createMountainRangeReliefAtPoint(
     body,
     peak: peakField.peak,
     ridge: ridgeAmount,
-    valley: valley.ridge * body,
+    valley: guardedValley,
     detail: erodedDetail,
   };
 }
@@ -10601,7 +10652,7 @@ function sampleOrientedMountainRangeRidge(
     5
   );
   const ridge =
-    createMountainRidgeAmount(sample.value, 1.28) *
+    createMountainRidgeAmount(sample.value, 1.72) *
     (1 - clamp(sample.erosionAmount * 0.40, 0, 0.40));
 
   return {

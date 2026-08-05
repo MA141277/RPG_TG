@@ -10,8 +10,36 @@ export const STATIC_RUNTIME_ASSET_ROUTES = [
     publicRoot: "/ui/yuansu",
   },
   {
+    sourceRoot: "ui/battle",
+    publicRoot: "/ui/battle",
+  },
+  {
     sourceRoot: "src/faxian/leg",
     publicRoot: "/src/faxian/leg",
+  },
+  {
+    sourceRoot: "src/assets/yuanmo-units",
+    publicRoot: "/src/assets/yuanmo-units",
+  },
+  {
+    sourceRoot: "src/assets/yuanmo-unit-animations",
+    publicRoot: "/src/assets/yuanmo-unit-animations",
+  },
+  {
+    sourceRoot: "src/assets/audio",
+    publicRoot: "/src/assets/audio",
+  },
+  {
+    sourceRoot: "src/assets/campaign-structures",
+    publicRoot: "/src/assets/campaign-structures",
+  },
+  {
+    sourceRoot: "tools/spine-new-recovered-project.generated.js",
+    publicRoot: "/tools/spine-new-recovered-project.generated.js",
+  },
+  {
+    sourceRoot: "prototypes/battle-demo/spine-runtime-math.js",
+    publicRoot: "/prototypes/battle-demo/spine-runtime-math.js",
   },
 ] as const;
 
@@ -46,6 +74,7 @@ export function publishStaticRuntimeAssetsToDir(
       throw new Error(`Missing static runtime asset root: ${sourceRoot}`);
     }
 
+    mkdirSync(dirname(publishedRoot), { recursive: true });
     cpSync(sourceRoot, publishedRoot, {
       recursive: true,
       force: true,
