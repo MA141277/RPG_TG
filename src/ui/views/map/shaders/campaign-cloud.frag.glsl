@@ -466,37 +466,28 @@ vec4 sampleMapSpaceVolumetricCloud(
     float cloudBottom = MAP_SPACE_CLOUD_BOTTOM_HEIGHT_UNITS * uCloudProjection.z;
     float cloudTop = MAP_SPACE_CLOUD_TOP_HEIGHT_UNITS * uCloudProjection.z;
     float heightRatio = clamp((point.z - cloudBottom) / max(cloudTop - cloudBottom, 0.0001), 0.0, 1.0);
-    float shadow = smoothstep(0.18, 0.88, density) * (1.0 - heightRatio * 0.36);
-    vec3 bottomColor = vec3(0.56, 0.65, 0.66);
-    vec3 midColor = vec3(0.84, 0.90, 0.88);
-    vec3 topColor = vec3(1.0, 0.99, 0.93);
-    vec3 stepColor = mix(bottomColor, topColor, heightRatio);
-    stepColor = mix(stepColor, midColor, 0.26 + stepRatio * 0.18);
-    stepColor = mix(stepColor, bottomColor, shadow * 0.44);
-    float internalShadow = smoothstep(
-      0.30,
-      0.82,
-      density * (1.0 - abs(heightRatio - 0.38) * 1.55)
-    ) * (1.0 - smoothstep(0.68, 0.96, heightRatio));
-    stepColor = mix(stepColor, vec3(0.52, 0.61, 0.62), internalShadow * 0.18);
-    float stepTextureRidge = smoothstep(
-      0.42,
-      0.88,
-      textureValue
-    ) * smoothstep(0.18, 0.74, density);
-    float stepTextureCrease = smoothstep(
-      0.16,
-      0.70,
-      (1.0 - textureValue) * density
+    float lightOpticalDepth = sampleLightOpticalDepth(point, CLOUD_SUN_DIRECTION, time);
+    float lightTransmittance = beerLambert(lightOpticalDepth, CLOUD_LIGHT_EXTINCTION);
+    float viewDotLight = clamp(dot(-ray.direction, CLOUD_SUN_DIRECTION), -1.0, 1.0);
+    float phase = cloudPhaseFunction(viewDotLight, 0.42);
+    float stepOpticalDepth = density * stepSize;
+    float viewTransmittance = beerLambert(stepOpticalDepth, CLOUD_EXTINCTION);
+    float stepAlpha = clamp((1.0 - viewTransmittance) * (1.0 - accumulatedAlpha), 0.0, 1.0);
+    vec3 singleScattering = computeSingleScattering(
+      density,
+      1.0 - accumulatedAlpha,
+      lightTransmittance,
+      phase
     );
-    stepColor = mix(stepColor, vec3(0.43, 0.53, 0.56), stepTextureCrease * 0.38);
-    float cloudTopHighlight = smoothstep(
-      0.34,
-      0.86,
-      textureValue * density + heightRatio * 0.32
-    ) * smoothstep(0.24, 0.92, heightRatio);
-    stepColor = mix(stepColor, vec3(1.0, 0.99, 0.92), cloudTopHighlight * 0.22 + stepTextureRidge * 0.36);
-    float stepAlpha = clamp(density * 0.38 * (1.0 - accumulatedAlpha), 0.0, 1.0);
+    float heightHighlight = smoothstep(0.36, 0.92, heightRatio) * lightTransmittance;
+    float internalShadow = 1.0 - lightTransmittance;
+    float stepTextureRidge = smoothstep(0.42, 0.88, textureValue) * smoothstep(0.18, 0.74, density);
+    float stepTextureCrease = smoothstep(0.16, 0.70, (1.0 - textureValue) * density);
+    vec3 stepColor = CLOUD_AMBIENT_COLOR * (0.28 + heightRatio * 0.18);
+    stepColor += singleScattering;
+    stepColor = mix(stepColor, vec3(0.34, 0.45, 0.50), internalShadow * density * 0.42);
+    stepColor = mix(stepColor, vec3(0.43, 0.53, 0.56), stepTextureCrease * 0.26);
+    stepColor = mix(stepColor, vec3(1.0, 0.98, 0.88), heightHighlight * (textureValue * 0.36 + stepTextureRidge * 0.22));
 
     accumulatedColor += stepColor * stepAlpha;
     accumulatedAlpha += stepAlpha;

@@ -23,9 +23,9 @@
 
 - Status: `running`
 - Last Updated: `2026-08-05`
-- Current Focus: `Task 3: implement single scattering and light optical depth.`
-- Next Step: `Start Task 3 from the first unchecked step.`
-- Verification: `Task 2 GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud density uses height layers|campaign cloud map-space volumetric slab" tests/robustness.test.cjs } passed 5/5.`
+- Current Focus: `Task 4: add multiple scattering fill and verify visually.`
+- Next Step: `Start Task 4 from the first unchecked step.`
+- Verification: `Task 3 GREEN: npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud reveal cutouts|campaign cloud shader reuses one map-space ray|campaign cloud render keeps flowing cloud animation timing" tests/robustness.test.cjs } passed 5/5.`
 - Notes: `Do not mark this child closed until implementation verification, structured closeout, project-progress sync, and remote push success are recorded.`
 
 ## Progress Log
@@ -42,6 +42,10 @@
   - Summary: `Completed Task 2 shader density restructuring: broad Worley fBm distribution, curl-warped erosion, explicit height envelope, and the new sampleCloudDensity path now drive the existing map-space cloud raymarch. Because the Task 1 contract also required future lighting helpers, real unintegrated Beer-Lambert, phase, lightmarch, single-scattering, and multiple-scattering helper functions were added early for source-contract continuity.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud density uses height layers|campaign cloud map-space volumetric slab" tests/robustness.test.cjs } passed 5/5.`
   - Next: `Connect the existing single-scattering and light optical-depth helpers into sampleMapSpaceVolumetricCloud.`
+- 2026-08-05
+  - Summary: `Completed Task 3 by replacing the old height-color per-step lighting in sampleMapSpaceVolumetricCloud with light optical depth, Beer-Lambert transmittance, phase-based single scattering, and optical-depth alpha accumulation while preserving texture accumulation and reveal composition.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign cloud volume lighting|campaign cloud reveal cutouts|campaign cloud shader reuses one map-space ray|campaign cloud render keeps flowing cloud animation timing" tests/robustness.test.cjs } passed 5/5.`
+  - Next: `Add multiple-scattering fill, run full verification, update changelog, and perform browser visual QA.`
 
 ---
 
@@ -487,7 +491,7 @@ Update this plan:
 - Consumes: `sampleCloudDensity`, `MapSpaceCloudRay`, current `sampleMapSpaceVolumetricCloud`.
 - Produces: `beerLambert`, `cloudPhaseFunction`, `sampleLightOpticalDepth`, `computeSingleScattering`.
 
-- [ ] **Step 1: Add lighting constants and transmittance helpers**
+- [x] **Step 1: Add lighting constants and transmittance helpers**
 
 Add these constants near the cloud slab constants:
 
@@ -515,7 +519,7 @@ float cloudPhaseFunction(float viewDotLight, float anisotropy) {
 }
 ```
 
-- [ ] **Step 2: Add the short lightmarch helper**
+- [x] **Step 2: Add the short lightmarch helper**
 
 Add this helper after `cloudPhaseFunction`:
 
@@ -544,7 +548,7 @@ float sampleLightOpticalDepth(vec3 point, vec3 sunDirection, float time) {
 }
 ```
 
-- [ ] **Step 3: Add single scattering helper**
+- [x] **Step 3: Add single scattering helper**
 
 Add:
 
@@ -562,7 +566,7 @@ vec3 computeSingleScattering(
 }
 ```
 
-- [ ] **Step 4: Change the raymarch accumulation to optical depth**
+- [x] **Step 4: Change the raymarch accumulation to optical depth**
 
 Inside `sampleMapSpaceVolumetricCloud`, replace the old per-step color block with optical-depth accumulation. Keep existing `textureValue`, `accumulatedTexture`, and early exit logic.
 
@@ -603,7 +607,7 @@ if (accumulatedAlpha >= MAP_SPACE_CLOUD_ALPHA_LIMIT) {
 }
 ```
 
-- [ ] **Step 5: Run targeted tests for single scattering**
+- [x] **Step 5: Run targeted tests for single scattering**
 
 Run:
 
@@ -616,7 +620,7 @@ Expected:
 - New single-scattering contract assertions pass.
 - Reveal composition and one-ray-per-fragment tests still pass.
 
-- [ ] **Step 6: Commit Task 3**
+- [x] **Step 6: Commit Task 3**
 
 Run:
 
@@ -629,7 +633,7 @@ Expected:
 
 - Commit succeeds.
 
-- [ ] **Step 7: Sync progress**
+- [x] **Step 7: Sync progress**
 
 Update this plan:
 
