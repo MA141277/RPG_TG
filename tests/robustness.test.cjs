@@ -11133,6 +11133,56 @@ test("temple review assignment-table fallback projection is owned by one helper"
   assert.doesNotMatch(legacyBlock, /createTempleReviewAssignmentTableOverlay\(/);
 });
 
+test("temple assigned settlement shell is owned by one helper across review settlement paths", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const helperBlock =
+    functionBlocksByName.get("createTempleAssignedSettlementSessionState") ?? "";
+  const reviewSettlementBlock =
+    functionBlocksByName.get("submitReviewWorkPlan") ?? "";
+  const taskAssignmentBlock = functionBlocksByName.get("assignTempleTask") ?? "";
+
+  assert.match(
+    helperBlock,
+    /function createTempleAssignedSettlementSessionState\(/
+  );
+  assert.match(helperBlock, /meetingStage: "assigned"/);
+  assert.match(helperBlock, /createAlertOverlay\(/);
+  assert.match(reviewSettlementBlock, /createTempleAssignedSettlementSessionState\(/);
+  assert.match(taskAssignmentBlock, /createTempleAssignedSettlementSessionState\(/);
+  assert.doesNotMatch(reviewSettlementBlock, /meetingStage: "assigned"/);
+  assert.doesNotMatch(taskAssignmentBlock, /meetingStage: "assigned"/);
+});
+
 test("temple and keep house content files no longer author pack task definitions", () => {
   const templeContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),

@@ -2750,6 +2750,34 @@ function createTempleReviewAssignmentTableProjection(input: {
   };
 }
 
+function createTempleAssignedSettlementSessionState(input: {
+  sessionState: TempleHouseSessionState;
+  mode: "daily" | "meeting";
+  selectedTaskId: string | null;
+  selectedWorkPlan?: TempleHouseWorkPlan | null;
+  dialogueLines: string[];
+  overlayTitle: string;
+  overlayLines: string[];
+}): TempleHouseSessionState {
+  return {
+    ...input.sessionState,
+    mode: input.mode,
+    meetingStage: "assigned",
+    dialoguePhase: "open",
+    selectedTaskId: input.selectedTaskId,
+    ...(input.selectedWorkPlan === undefined
+      ? {}
+      : { selectedWorkPlan: input.selectedWorkPlan }),
+    ...(input.mode === "daily" ? { dailyActionPanel: "root" as const } : {}),
+    dialogueLines: input.dialogueLines,
+    overlay: createAlertOverlay(
+      input.overlayTitle,
+      input.overlayLines,
+      "success"
+    ),
+  };
+}
+
 function settleTempleReviewAssignmentTable(input: {
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
@@ -3423,28 +3451,22 @@ function submitReviewWorkPlan(
   return {
     gameState: nextState,
     characterDefinitions: input.characterDefinitions,
-    sessionState: {
-      ...sessionState,
+    sessionState: createTempleAssignedSettlementSessionState({
+      sessionState,
       mode: "daily",
-      meetingStage: "assigned",
-      dialoguePhase: "open",
       selectedTaskId: null,
       selectedWorkPlan: nextWorkPlan,
-      dailyActionPanel: "root",
       dialogueLines: resolvedAssignmentSeed.dialogueTextIds.map((textId) =>
         resolveTempleText(input.textEntriesById, textId)
       ),
-      overlay: createAlertOverlay(
-        resolveTempleText(
-          input.textEntriesById,
-          resolvedAssignmentSeed.overlayTitleTextId
-        ),
-        resolvedAssignmentSeed.overlayBodyTextIds.map((textId) =>
-          resolveTempleText(input.textEntriesById, textId)
-        ),
-        "success"
+      overlayTitle: resolveTempleText(
+        input.textEntriesById,
+        resolvedAssignmentSeed.overlayTitleTextId
       ),
-    },
+      overlayLines: resolvedAssignmentSeed.overlayBodyTextIds.map((textId) =>
+        resolveTempleText(input.textEntriesById, textId)
+      ),
+    }),
   };
 }
 
@@ -3498,11 +3520,9 @@ function assignTempleTask(
   return {
     gameState: nextState,
     characterDefinitions: input.characterDefinitions,
-    sessionState: {
-      ...sessionState,
+    sessionState: createTempleAssignedSettlementSessionState({
+      sessionState,
       mode: "meeting",
-      meetingStage: "assigned",
-      dialoguePhase: "open",
       selectedTaskId: taskDefinition.id,
       dialogueLines: [
         ...taskDefinition.orderLines,
@@ -3512,21 +3532,18 @@ function assignTempleTask(
           { taskTitle: taskDefinition.title }
         ),
       ],
-      overlay: createAlertOverlay(
+      overlayTitle: resolveTempleText(
+        input.textEntriesById,
+        assignmentSeed.overlayTitleTextId
+      ),
+      overlayLines: [
+        taskDefinition.briefing,
         resolveTempleText(
           input.textEntriesById,
-          assignmentSeed.overlayTitleTextId
+          assignmentSeed.overlaySharedTextId
         ),
-        [
-          taskDefinition.briefing,
-          resolveTempleText(
-            input.textEntriesById,
-            assignmentSeed.overlaySharedTextId
-          ),
-        ],
-        "success"
-      ),
-    },
+      ],
+    }),
   };
 }
 
