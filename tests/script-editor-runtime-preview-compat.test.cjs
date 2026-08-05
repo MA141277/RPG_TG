@@ -713,6 +713,50 @@ test("runtime-pack export rejects mixed dialogue destination and flow action aut
   ]);
 });
 
+test("runtime-pack round trip preserves dialogue destination when actions are non-route-owning", async () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  const dialogueId = project.dialogues[0]?.id ?? "";
+  assert.notEqual(dialogueId, "");
+  project.events = project.events.map((eventRecord) =>
+    eventRecord.id !== "event.opening"
+      ? eventRecord
+      : {
+          ...eventRecord,
+          destination: {
+            family: "dialogue",
+            targetId: dialogueId,
+          },
+          actions: [
+            {
+              type: "closeBuilding",
+            },
+          ],
+        }
+  );
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), []);
+
+  const exportedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const roundTripProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    Object.entries(exportedFiles).map(
+      ([relativePath, content]) => new File([content], relativePath)
+    )
+  );
+  const roundTripEvent = roundTripProject.events.find(
+    (eventRecord) => eventRecord.id === "event.opening"
+  );
+
+  assert.deepEqual(roundTripEvent?.destination, {
+    family: "dialogue",
+    targetId: dialogueId,
+  });
+  assert.deepEqual(roundTripEvent?.actions, [
+    {
+      type: "closeBuilding",
+    },
+  ]);
+});
+
 test("event authoring normalization preserves runtime payload actions and task inputs", () => {
   const normalized = normalizeScriptEditorEventRecord({
     id: "event.runtime.payload.normalize",

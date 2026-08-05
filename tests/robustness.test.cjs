@@ -420,6 +420,8 @@ test("runtime-pack export fails closed on mixed destination and same-family payl
     source,
     /cannot combine destination\.family="dialogue" with route-owning payload actions/
   );
+  assert.match(source, /function hasRouteOwningEventActions\(/);
+  assert.doesNotMatch(source, /if \(hasRuntimeEventActions\(eventRecord\)\) \{\n    return "";\n  \}/);
 });
 
 test("script editor items scenario pack loader hydrates items from manifest files", async () => {

@@ -2325,7 +2325,13 @@ function resolveEventDialogueId(
   hasDestinationLaunchAction: boolean,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): string | null {
-  if (hasRuntimeEventActions(eventRecord)) {
+  const actions = eventRecord.actions ?? [];
+  const destinationFamily = eventRecord.destination?.family;
+  if (hasRouteOwningEventActions(actions)) {
+    return "";
+  }
+
+  if (actions.length > 0 && destinationFamily !== "dialogue") {
     return "";
   }
 
@@ -2366,6 +2372,17 @@ function hasRuntimeEventActions(eventRecord: ScriptEditorEventRecord): boolean {
   return Array.isArray(eventRecord.actions) && eventRecord.actions.length > 0;
 }
 
+function hasRouteOwningEventActions(
+  actions: readonly NonNullable<ScriptEditorEventRecord["actions"]>[number][]
+): boolean {
+  return actions.some(
+    (action) =>
+      action?.type === "openCityMenuPanel" ||
+      action?.type === "launchPlayable" ||
+      action?.type === "launchFlow"
+  );
+}
+
 function validateExclusiveEventRouteSeams(
   eventRecord: ScriptEditorEventRecord,
   eventIndex: number,
@@ -2373,11 +2390,7 @@ function validateExclusiveEventRouteSeams(
 ): boolean {
   const destinationFamily = eventRecord.destination?.family;
   const actions = eventRecord.actions ?? [];
-  const hasRouteOwningAction = actions.some((action) =>
-    action?.type === "openCityMenuPanel" ||
-    action?.type === "launchPlayable" ||
-    action?.type === "launchFlow"
-  );
+  const hasRouteOwningAction = hasRouteOwningEventActions(actions);
   if (destinationFamily === "dialogue" && hasRouteOwningAction) {
     diagnostics.push({
       code: "invalid-field",
