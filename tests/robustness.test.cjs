@@ -10973,6 +10973,62 @@ test("temple review reward and personnel overlay-close follow-up projection is o
   assert.doesNotMatch(legacyBlock, /createTemplePraiseProjection\(/);
 });
 
+test("temple review advice-to-assign-duty follow-up projection is owned by one helper across hosted and fallback paths", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "house-modules",
+      "temple-house",
+      "temple-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  const sourceFile = ts.createSourceFile(
+    "temple-house-house-module.ts",
+    moduleSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const functionBlocksByName = new Map();
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isFunctionDeclaration(statement) || statement.name == null) {
+      continue;
+    }
+
+    functionBlocksByName.set(
+      statement.name.text,
+      moduleSource.slice(statement.pos, statement.end)
+    );
+  }
+
+  const helperBlock =
+    functionBlocksByName.get("createTempleReviewAdviceFollowupProjection") ?? "";
+  const legacyBlock =
+    functionBlocksByName.get("handleLegacyTempleReviewFallback") ?? "";
+  const hostedBlockMatch = moduleSource.match(
+    /const hostedAdviceStageHandoff =[\s\S]*?if \(hostedAdviceStageHandoff != null\) \{/
+  );
+  const hostedBlock = hostedBlockMatch?.[0] ?? "";
+
+  assert.match(
+    helperBlock,
+    /function createTempleReviewAdviceFollowupProjection\(/
+  );
+  assert.match(helperBlock, /getReviewWorkChoices\(/);
+  assert.match(helperBlock, /getTempleAssignDutyLines\(/);
+  assert.match(helperBlock, /reviewAdviceAcknowledge/);
+  assert.match(hostedBlock, /createTempleReviewAdviceFollowupProjection\(/);
+  assert.match(legacyBlock, /createTempleReviewAdviceFollowupProjection\(/);
+  assert.doesNotMatch(hostedBlock, /getReviewWorkChoices\(/);
+  assert.doesNotMatch(hostedBlock, /getTempleAssignDutyLines\(/);
+  assert.doesNotMatch(legacyBlock, /getReviewWorkChoices\(/);
+  assert.doesNotMatch(legacyBlock, /getTempleAssignDutyLines\(/);
+});
+
 test("temple and keep house content files no longer author pack task definitions", () => {
   const templeContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),
