@@ -17,6 +17,10 @@ const {
   normalizeScriptEditorCityRecord,
 } = require("../.test-dist/modules/script-editor/application/city-building-authoring.js");
 const {
+  normalizeScriptEditorPortraitRecord,
+  normalizeScriptEditorPortraitVariantRecord,
+} = require("../.test-dist/modules/script-editor/application/portrait-authoring.js");
+const {
   normalizeScriptEditorFlowRecord,
 } = require("../.test-dist/modules/script-editor/application/flow-authoring.js");
 const {
@@ -1637,6 +1641,68 @@ test("script-editor project parse normalizes city and building authoring at the 
   assert.deepEqual(parsed.buildings[0]?.menuInstanceIds, [
     "menu.instance.building.parse",
   ]);
+});
+
+test("portrait normalization preserves canonical asset headline fields", () => {
+  const normalized = normalizeScriptEditorPortraitRecord({
+    id: " portrait.runtime.normalize ",
+    label: " 立绘资源 ",
+    portraitImage: " /assets/portrait.runtime.normalize.png ",
+    avatarImage: " /assets/avatar.runtime.normalize.png ",
+  });
+
+  assert.equal(normalized.id, " portrait.runtime.normalize ");
+  assert.equal(normalized.label, "立绘资源");
+  assert.equal(normalized.portraitImage, "/assets/portrait.runtime.normalize.png");
+  assert.equal(normalized.avatarImage, "/assets/avatar.runtime.normalize.png");
+});
+
+test("portrait variant normalization preserves canonical portrait reference fields", () => {
+  const normalized = normalizeScriptEditorPortraitVariantRecord({
+    id: " portrait-variant.runtime.normalize ",
+    label: " 立绘变体 ",
+    parentPortraitId: " portrait.parent.runtime.normalize ",
+    portraitId: " portrait.runtime.normalize ",
+  });
+
+  assert.equal(normalized.id, " portrait-variant.runtime.normalize ");
+  assert.equal(normalized.label, "立绘变体");
+  assert.equal(normalized.parentPortraitId, "portrait.parent.runtime.normalize");
+  assert.equal(normalized.portraitId, "portrait.runtime.normalize");
+});
+
+test("script-editor project parse normalizes portrait authoring at the entry seam", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.portraits = [
+    {
+      id: " portrait.runtime.parse ",
+      label: " 立绘资源 ",
+      portraitImage: " /assets/portrait.runtime.parse.png ",
+      avatarImage: " /assets/avatar.runtime.parse.png ",
+    },
+  ];
+  project.portraitVariants = [
+    {
+      id: " portrait-variant.runtime.parse ",
+      label: " 立绘变体 ",
+      parentPortraitId: " portrait.parent.runtime.parse ",
+      portraitId: " portrait.runtime.parse ",
+    },
+  ];
+
+  const parsed = parseScriptEditorProject(project);
+
+  assert.equal(parsed.portraits[0]?.id, " portrait.runtime.parse ");
+  assert.equal(parsed.portraits[0]?.label, "立绘资源");
+  assert.equal(parsed.portraits[0]?.portraitImage, "/assets/portrait.runtime.parse.png");
+  assert.equal(parsed.portraits[0]?.avatarImage, "/assets/avatar.runtime.parse.png");
+  assert.equal(parsed.portraitVariants[0]?.id, " portrait-variant.runtime.parse ");
+  assert.equal(parsed.portraitVariants[0]?.label, "立绘变体");
+  assert.equal(
+    parsed.portraitVariants[0]?.parentPortraitId,
+    "portrait.parent.runtime.parse"
+  );
+  assert.equal(parsed.portraitVariants[0]?.portraitId, "portrait.runtime.parse");
 });
 
 test("template runtime-pack export preserves aligned zhuyuanzhang startup profile fields", async () => {

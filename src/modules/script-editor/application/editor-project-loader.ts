@@ -16,6 +16,10 @@ import { formalizeScriptEditorProjectMenus } from "./menu-authoring";
 import { normalizeScriptEditorFlowRecord } from "./flow-authoring";
 import { normalizeScriptEditorMinigameRecord } from "./minigame-binding-authoring";
 import { normalizeScriptEditorPersonRecord } from "./person-authoring";
+import {
+  normalizeScriptEditorPortraitRecord,
+  normalizeScriptEditorPortraitVariantRecord,
+} from "./portrait-authoring";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
   normalizeScriptEditorBuildingRecord,
@@ -195,7 +199,9 @@ export function parseScriptEditorProject(
   );
 
   const portraitVariants =
-    (value.portraitVariants ?? []) as ScriptEditorProjectDefinition["portraitVariants"];
+    ((value.portraitVariants ?? []) as ScriptEditorProjectDefinition["portraitVariants"]).map(
+      (variant) => normalizeScriptEditorPortraitVariantRecord(variant as Record<string, unknown>)
+    );
 
   return formalizeScriptEditorProjectMenus({
     ...(value as ScriptEditorProjectDefinition),
@@ -217,7 +223,9 @@ export function parseScriptEditorProject(
     dialogues: (value.dialogues as ScriptEditorProjectDefinition["dialogues"]).map(
       (dialogue) => normalizeScriptEditorDialogueRecord(dialogue)
     ),
-    portraits: (value.portraits ?? []) as ScriptEditorProjectDefinition["portraits"],
+    portraits: ((value.portraits ?? []) as ScriptEditorProjectDefinition["portraits"]).map(
+      (portrait) => normalizeScriptEditorPortraitRecord(portrait as Record<string, unknown>)
+    ),
     portraitVariants,
     buildingArrangements:
       (value.buildingArrangements ?? []) as ScriptEditorProjectDefinition["buildingArrangements"],

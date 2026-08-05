@@ -12,9 +12,9 @@ export function normalizeScriptEditorPortraitRecord(
 ): ScriptEditorPortraitResourceRecord {
   return {
     id: readString(value.id, "portrait.new"),
-    label: readString(value.label, ""),
-    portraitImage: readString(value.portraitImage, ""),
-    avatarImage: readString(value.avatarImage, ""),
+    label: readTrimmedString(value.label, ""),
+    portraitImage: readTrimmedString(value.portraitImage, ""),
+    avatarImage: readTrimmedString(value.avatarImage, ""),
   };
 }
 
@@ -49,9 +49,9 @@ export function normalizeScriptEditorPortraitVariantRecord(
 ): ScriptEditorPortraitVariantRecord {
   return {
     id: readString(value.id, "portrait-variant.new"),
-    label: readString(value.label, ""),
-    parentPortraitId: readString(value.parentPortraitId, ""),
-    portraitId: readString(value.portraitId, ""),
+    label: readTrimmedString(value.label, ""),
+    parentPortraitId: readTrimmedString(value.parentPortraitId, ""),
+    portraitId: readTrimmedString(value.portraitId, ""),
   };
 }
 
@@ -83,4 +83,8 @@ export function updateScriptEditorPortraitVariantField(
 
 function readString(value: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
+}
+
+function readTrimmedString(value: unknown, fallback: string): string {
+  return typeof value === "string" ? value.trim() : fallback;
 }

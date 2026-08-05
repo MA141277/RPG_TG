@@ -510,6 +510,19 @@ test("script-editor project parse keeps city and building normalization on one e
   assert.match(source, /normalizeScriptEditorBuildingRecord/);
 });
 
+test("script-editor project parse keeps portrait normalization on one entry seam", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/editor-project-loader.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /normalizeScriptEditorPortraitRecord/);
+  assert.match(source, /normalizeScriptEditorPortraitVariantRecord/);
+});
+
 test("runtime-pack export fails closed on mixed destination and same-family payload actions", () => {
   const source = fs.readFileSync(
     path.join(
