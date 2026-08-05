@@ -452,6 +452,22 @@ test("script-editor project parse keeps progress normalization on one entry seam
   );
 });
 
+test("script-editor project parse keeps settlement normalization on one entry seam", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/editor-project-loader.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /normalizeScriptEditorSettlementRecord/);
+  assert.match(
+    source,
+    /settlements:\s*\(\(value\.settlements \?\? \[\]\) as ScriptEditorProjectDefinition\["settlements"\]\)\s*\.map\(\(settlement\)\s*=>\s*normalizeScriptEditorSettlementRecord\(settlement\)\)/
+  );
+});
+
 test("runtime-pack export fails closed on mixed destination and same-family payload actions", () => {
   const source = fs.readFileSync(
     path.join(

@@ -21,6 +21,7 @@ const {
   normalizeScriptEditorEventRecord,
   normalizeScriptEditorProgressTrackBindingRecord,
   normalizeScriptEditorProgressTrackRecord,
+  normalizeScriptEditorSettlementRecord,
 } = require("../.test-dist/modules/script-editor/application/story-dialogue-event-authoring.js");
 const workflow = require("../.test-dist/modules/script-editor/application/minimal-workflow.js");
 const {
@@ -1239,6 +1240,81 @@ test("script-editor project parse normalizes progress authoring at the entry sea
         id: "hero.runtime.parse",
       },
       enabled: true,
+    },
+  ]);
+});
+
+test("settlement normalization preserves canonical next-event and content fields", () => {
+  const normalized = normalizeScriptEditorSettlementRecord({
+    id: " settlement.runtime.normalize ",
+    title: " 结算条目 ",
+    nextEventId: " event.runtime.normalize ",
+    contents: [
+      {
+        targetFamily: "person",
+        targetId: " hero.runtime.normalize ",
+        attributeKey: " stats.gold ",
+        attributeType: "number",
+        operation: "set",
+        value: " 30 ",
+      },
+    ],
+  });
+
+  assert.deepEqual(normalized, {
+    id: "settlement.runtime.normalize",
+    title: "结算条目",
+    nextEventId: "event.runtime.normalize",
+    contents: [
+      {
+        targetFamily: "person",
+        targetId: "hero.runtime.normalize",
+        attributeKey: "stats.gold",
+        attributeType: "number",
+        operation: "set",
+        value: 30,
+      },
+    ],
+  });
+});
+
+test("script-editor project parse normalizes settlement authoring at the entry seam", () => {
+  const project = workflow.createDefaultScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: " settlement.runtime.parse ",
+      title: " 结算条目 ",
+      nextEventId: " event.runtime.parse ",
+      contents: [
+        {
+          targetFamily: "person",
+          targetId: " hero.runtime.parse ",
+          attributeKey: " stats.gold ",
+          attributeType: "number",
+          operation: "set",
+          value: " 42 ",
+        },
+      ],
+    },
+  ];
+
+  const parsed = parseScriptEditorProject(project);
+
+  assert.deepEqual(parsed.settlements, [
+    {
+      id: "settlement.runtime.parse",
+      title: "结算条目",
+      nextEventId: "event.runtime.parse",
+      contents: [
+        {
+          targetFamily: "person",
+          targetId: "hero.runtime.parse",
+          attributeKey: "stats.gold",
+          attributeType: "number",
+          operation: "set",
+          value: 42,
+        },
+      ],
     },
   ]);
 });

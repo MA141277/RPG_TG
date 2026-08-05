@@ -21,6 +21,7 @@ import {
   normalizeScriptEditorEventRecord,
   normalizeScriptEditorProgressTrackBindingRecord,
   normalizeScriptEditorProgressTrackRecord,
+  normalizeScriptEditorSettlementRecord,
 } from "./story-dialogue-event-authoring";
 
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
@@ -207,7 +208,8 @@ export function parseScriptEditorProject(
     portraitVariants,
     buildingArrangements:
       (value.buildingArrangements ?? []) as ScriptEditorProjectDefinition["buildingArrangements"],
-    settlements: (value.settlements ?? []) as ScriptEditorProjectDefinition["settlements"],
+    settlements: ((value.settlements ?? []) as ScriptEditorProjectDefinition["settlements"])
+      .map((settlement) => normalizeScriptEditorSettlementRecord(settlement)),
     eventBindings: ((value.eventBindings ?? []) as ScriptEditorProjectDefinition["eventBindings"])
       .map((binding) => normalizeScriptEditorEventBindingRecord(binding)),
     progressTracks:
