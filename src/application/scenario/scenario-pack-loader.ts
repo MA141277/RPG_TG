@@ -469,7 +469,7 @@ async function resolveImportedScenarioPackVegetationRulesUrl(
   indexedFiles: Record<string, ScenarioPackImportFileEntry>,
   assetUrlCache: Record<string, string>
 ): Promise<string> {
-  if (/^(https?:|file:|blob:|\/)/.test(value)) {
+  if (isInlineOrAbsoluteScenarioPackAssetUrl(value)) {
     return value;
   }
 
@@ -532,7 +532,7 @@ function resolveImportedScenarioPackAssetUrl(
   indexedFiles: Record<string, ScenarioPackImportFileEntry>,
   assetUrlCache: Record<string, string>
 ): string {
-  if (/^(https?:|file:|blob:|\/)/.test(value)) {
+  if (isInlineOrAbsoluteScenarioPackAssetUrl(value)) {
     return value;
   }
 
@@ -549,6 +549,10 @@ function resolveImportedScenarioPackAssetUrl(
   const nextAssetUrl = URL.createObjectURL(importedFile.file);
   assetUrlCache[importedFile.relativePath] = nextAssetUrl;
   return nextAssetUrl;
+}
+
+function isInlineOrAbsoluteScenarioPackAssetUrl(value: string): boolean {
+  return /^(data:|https?:|file:|blob:|\/)/.test(value);
 }
 
 function resolveScenarioPackImportedFileEntry(

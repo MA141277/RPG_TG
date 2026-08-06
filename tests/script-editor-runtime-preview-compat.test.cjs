@@ -10,6 +10,9 @@ const {
   loadScriptEditorProjectFromScenarioPackUrl,
 } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
 const {
+  loadScenarioPackFromFiles,
+} = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+const {
   parseScriptEditorProject,
 } = require("../.test-dist/modules/script-editor/application/editor-project-loader.js");
 const {
@@ -168,6 +171,37 @@ test("imported zhuyuanzhang script-editor template stays exportable for runtime 
   const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
 
   assert.deepEqual(diagnostics, []);
+});
+
+test("runtime preview can load exported zhuyuanzhang template packs that inline map assets as data urls", async () => {
+  const templateRoot = path.join(
+    process.cwd(),
+    "public",
+    "builtin-script-editor-templates",
+    "zhuyuanzhang"
+  );
+  assert.equal(fs.existsSync(templateRoot), true);
+
+  const files = await createScenarioPackFilesFromTemplateDirectory(templateRoot);
+  const project = await loadScriptEditorProjectFromScenarioPackFiles(files);
+  const exportedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const importedFiles = Object.entries(exportedFiles).map(
+    ([relativePath, content]) => new File([content], relativePath)
+  );
+
+  const pack = await loadScenarioPackFromFiles(importedFiles);
+  const yuanmoCampaignMap = pack.maps.find(
+    (mapRecord) => mapRecord.id === "map.yuanmo_campaign"
+  );
+
+  assert.equal(pack.id, "scenario-pack.zhu_yuanzhang.monk_opening");
+  assert.ok(yuanmoCampaignMap);
+  assert.equal(
+    typeof yuanmoCampaignMap.primaryImageUrl === "string" &&
+      (yuanmoCampaignMap.primaryImageUrl.startsWith("blob:") ||
+        yuanmoCampaignMap.primaryImageUrl.startsWith("data:image/")),
+    true
+  );
 });
 
 test("imported zhuyuanzhang registered builtin template imports canonical playable-shells during script-editor import", async () => {
