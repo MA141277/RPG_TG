@@ -29,6 +29,7 @@ const {
 } = require("../.test-dist/domain/tavern-gambling.js");
 const {
   getTavernShortCardLabel,
+  syncTavernShortDisplayOrderEntries,
 } = require("../.test-dist/domain/tavern-short-gambling.js");
 
 const teaHouseCss = fs.readFileSync("src/styles/tea-house.css", "utf8");
@@ -380,8 +381,21 @@ test("tavern short overlay hides stale claim controls and keeps locked claim car
   assert.equal(overlay.claimOptions.length, 0);
   assert.equal(overlay.claimPassAction, null);
   assert.deepEqual(
-    overlay.handCards.map((card) => card.id),
+    overlay.handCards
+      .filter((card) => card.role === "public-ghost")
+      .map((card) => card.id),
+    ["east", "tiao-4-2"]
+  );
+  assert.deepEqual(
+    overlay.handCards
+      .filter((card) => card.role === "hand")
+      .map((card) => card.id),
     ["wan-2", "tong-3", "tong-4"]
+  );
+  assert.equal(overlay.handCards.find((card) => card.id === "east")?.actionId ?? null, null);
+  assert.equal(
+    overlay.handCards.find((card) => card.id === "tiao-4-2")?.actionId ?? null,
+    null
   );
   assert.equal(
     overlay.handCards.find((card) => card.id === "wan-2")?.actionId,
@@ -538,6 +552,130 @@ test("tavern short overlay marks the incoming draw card and only arms discard co
   assert.equal(
     armedOverlay.handCards.find((card) => card.id === "tiao-9")?.actionId,
     "gamble-play-tile:tiao-9"
+  );
+});
+
+test("tavern short overlay projects public ghosts into the hand row without making them playable", () => {
+  const table = createTavernShortTableSession({
+    playerName: "tester",
+    buyInGold: 100,
+    seed: 17,
+  });
+  const drawDiscardHand = syncTavernShortDisplayOrderEntries(
+    {
+      ...table.currentHand,
+      phase: "draw-discard",
+      pendingIncomingCard: {
+        ownerSeatId: "you",
+        source: "draw",
+        card: {
+          id: "tiao-9",
+          suit: "tiao",
+          rank: 9,
+        },
+      },
+      publicCards: [
+        { id: "wan-7", suit: "wan", rank: 7 },
+        { id: "tong-8", suit: "tong", rank: 8 },
+      ],
+      players: table.currentHand.players.map((player) =>
+        player.seatId !== "you"
+          ? player
+          : {
+              ...player,
+              hand: [
+                { id: "wan-2", suit: "wan", rank: 2 },
+                { id: "tong-3", suit: "tong", rank: 3 },
+                { id: "tong-4", suit: "tong", rank: 4 },
+                { id: "wan-5", suit: "wan", rank: 5 },
+                { id: "wan-6", suit: "wan", rank: 6 },
+              ],
+            }
+      ),
+      claimChain: null,
+      lastVisibleDiscard: null,
+      selectedDiscardCardId: null,
+    },
+    "you"
+  );
+  drawDiscardHand.displayOrderEntries = [
+    { kind: "hand", cardId: "wan-2" },
+    { kind: "public-ghost", cardId: "wan-7" },
+    { kind: "hand", cardId: "tong-3" },
+    { kind: "public-ghost", cardId: "tong-8" },
+    { kind: "hand", cardId: "tong-4" },
+    { kind: "hand", cardId: "wan-5" },
+    { kind: "hand", cardId: "wan-6" },
+    { kind: "incoming-draw", cardId: "tiao-9" },
+  ];
+
+  const overlay = selectTavernShortGambleOverlay({
+    ...table,
+    currentHand: drawDiscardHand,
+  });
+
+  assert.equal(overlay.handSortEnabled, true);
+  assert.deepEqual(
+    overlay.publicCards.map((card) => card.id),
+    ["wan-7", "tong-8"]
+  );
+  assert.deepEqual(
+    overlay.handCards.map((card) => ({
+      id: card.id,
+      role: card.role,
+      sortEntryId: card.sortEntryId,
+      actionId: card.actionId ?? null,
+    })),
+    [
+      {
+        id: "wan-2",
+        role: "hand",
+        sortEntryId: "hand|wan-2",
+        actionId: "gamble-play-tile:wan-2",
+      },
+      {
+        id: "wan-7",
+        role: "public-ghost",
+        sortEntryId: "public-ghost|wan-7",
+        actionId: null,
+      },
+      {
+        id: "tong-3",
+        role: "hand",
+        sortEntryId: "hand|tong-3",
+        actionId: "gamble-play-tile:tong-3",
+      },
+      {
+        id: "tong-8",
+        role: "public-ghost",
+        sortEntryId: "public-ghost|tong-8",
+        actionId: null,
+      },
+      {
+        id: "tong-4",
+        role: "hand",
+        sortEntryId: "hand|tong-4",
+        actionId: "gamble-play-tile:tong-4",
+      },
+      {
+        id: "wan-5",
+        role: "hand",
+        sortEntryId: "hand|wan-5",
+        actionId: "gamble-play-tile:wan-5",
+      },
+      {
+        id: "wan-6",
+        role: "hand",
+        sortEntryId: "hand|wan-6",
+        actionId: "gamble-play-tile:wan-6",
+      },
+      {
+        id: "tiao-9",
+        role: "incoming-draw",
+        sortEntryId: "incoming-draw|tiao-9",
+        actionId: "gamble-play-tile:tiao-9",
+      },
+    ]
   );
 });
 
@@ -1045,7 +1183,10 @@ test("tavern house view renders only the currently available short gameplay acti
   assert.ok(brokerSummaryIndex >= 0);
   assert.ok(brokerHiddenHandIndex > brokerSummaryIndex);
   assert.ok(brokerDiscardRowIndex > brokerHiddenHandIndex);
-  assert.match(brokerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-top/u);
+  assert.match(
+    brokerSeatMarkup,
+    /c-tavern-gamble__tile--discard c-tavern-gamble__tile--depth-bottom/u
+  );
   assert.ok(guardSeatIndex > travelerSeatIndex);
   assert.ok(guardSummaryIndex >= 0);
   assert.ok(guardHiddenHandIndex > guardSummaryIndex);
@@ -1055,9 +1196,11 @@ test("tavern house view renders only the currently available short gameplay acti
   assert.ok(playerSeatIndex >= 0);
   assert.ok(nextSeatIndex > playerSeatIndex);
   assert.doesNotMatch(playerSeatMarkup, /c-tavern-gamble__seat-hidden-hand/u);
-  assert.match(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-top/u);
-  assert.match(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-mid/u);
-  assert.match(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-base/u);
+  assert.match(travelerSeatMarkup, /c-tavern-gamble__tile--discard c-tavern-gamble__tile--depth-bottom/u);
+  assert.doesNotMatch(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand/u);
+  assert.doesNotMatch(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-top/u);
+  assert.doesNotMatch(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-mid/u);
+  assert.doesNotMatch(travelerSeatMarkup, /c-tavern-gamble__tile--hidden-hand-base/u);
   assert.doesNotMatch(travelerSeatMarkup, /traveler-hidden-top/u);
   assert.doesNotMatch(travelerSeatMarkup, /traveler-hidden-mid/u);
   assert.doesNotMatch(travelerSeatMarkup, /traveler-hidden-base/u);
@@ -1922,11 +2065,11 @@ test("tavern short CSS keeps the public-card stage centered, floats active contr
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble__seat-discards\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble__seat-meld-tiles\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*width:\s*30px;[^}]*min-width:\s*30px;[^}]*height:\s*40px;[^}]*min-height:\s*40px;[^}]*flex:\s*0 0 30px;[^}]*font-size:\s*0\.72rem;/su
+    /\.c-tavern-gamble__seat-discards\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble__seat-meld-tiles\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*width:\s*30px;[^}]*min-width:\s*30px;[^}]*height:\s*40px;[^}]*min-height:\s*40px;[^}]*flex:\s*0 0 30px;[^}]*font-size:\s*0\.72rem;/su
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__seat-discards\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble--short\s+\.c-tavern-gamble__seat-meld-tiles\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*height:\s*var\(--tavern-short-seat-discard-height\);[^}]*min-height:\s*var\(--tavern-short-seat-discard-height\);[^}]*--tavern-short-tile-depth-local-step-1:\s*var\(--tavern-short-seat-discard-depth-step-1\);[^}]*--tavern-short-tile-depth-local-step-shift:\s*var\(--tavern-short-seat-discard-depth-step-shift\);[^}]*--tavern-short-tile-depth-local-accent-offset:\s*var\(--tavern-short-seat-discard-depth-accent-offset\);/su
+    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__seat-discards\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble--short\s+\.c-tavern-gamble__seat-meld-tiles\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble--short\s+\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*height:\s*var\(--tavern-short-seat-discard-height\);[^}]*min-height:\s*var\(--tavern-short-seat-discard-height\);[^}]*--tavern-short-tile-depth-local-step-1:\s*var\(--tavern-short-seat-discard-depth-step-1\);[^}]*--tavern-short-tile-depth-local-step-shift:\s*var\(--tavern-short-seat-discard-depth-step-shift\);[^}]*--tavern-short-tile-depth-local-accent-offset:\s*var\(--tavern-short-seat-discard-depth-accent-offset\);/su
   );
   assert.match(
     teaHouseCss,
@@ -1934,11 +2077,19 @@ test("tavern short CSS keeps the public-card stage centered, floats active contr
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble__seat--short-1\s+\.c-tavern-gamble__seat-hidden-hand,\s*\.c-tavern-gamble__seat--short-3\s+\.c-tavern-gamble__seat-hidden-hand\s*\{[^}]*flex-direction:\s*column;[^}]*align-items:\s*center;[^}]*\}/su
+    /\.c-tavern-gamble__seat--short-1\s+\.c-tavern-gamble__seat-hidden-hand,\s*\.c-tavern-gamble__seat--short-3\s+\.c-tavern-gamble__seat-hidden-hand\s*\{[^}]*top:\s*90px;[^}]*flex-direction:\s*column;[^}]*align-items:\s*center;[^}]*\}/su
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble__seat--short-1\s+\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--hidden-hand,\s*\.c-tavern-gamble__seat--short-3\s+\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--hidden-hand\s*\{[^}]*margin-inline-end:\s*0;[^}]*margin-block-end:\s*calc\(var\(--tavern-short-hidden-hand-overlap\)\s*\*\s*-1\);[^}]*\}/su
+    /--tavern-short-side-hidden-hand-layer-2-stack:\s*5px;/u
+  );
+  assert.match(
+    teaHouseCss,
+    /--tavern-short-side-hidden-hand-layer-3-stack:\s*10px;/u
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble__seat--short-1\s+\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble__seat--short-3\s+\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*box-shadow:\s*calc\(var\(--tavern-short-side-hidden-hand-layer-2-stack\)\s*\*\s*-1\)\s+0\s+0\s+0\s+var\(--color-tavern-hidden-hand-middle-layer\),\s*calc\(var\(--tavern-short-side-hidden-hand-layer-3-stack\)\s*\*\s*-1\)\s+0\s+0\s+0\s+var\(--tavern-short-tile-depth-side\);[^}]*rotate:\s*270deg;[^}]*margin-inline-end:\s*0;[^}]*margin-block-end:\s*calc\(30px\s*-\s*var\(--tavern-short-seat-discard-height\)\);[^}]*\}/su
   );
   assert.match(
     teaHouseCss,
@@ -1962,38 +2113,43 @@ test("tavern short CSS keeps the public-card stage centered, floats active contr
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble__tile--hidden-hand\s*\{[^}]*margin-inline-end:\s*calc\(var\(--tavern-short-hidden-hand-overlap\)\s*\*\s*-1\);/su
+    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile:not\([^)]*c-tavern-gamble__tile--hand-public[^)]*\):not\([^)]*c-tavern-gamble__tile--hand-public-ghost[^)]*\):not\([^)]*c-tavern-gamble__tile--discard-public[^)]*\):not\([^)]*c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--discard[^)]*\):not\([^)]*is-covered[^)]*\)\s*\{/su
   );
-  assert.match(
-    teaHouseCss,
-    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile:not\([^)]*c-tavern-gamble__tile--hidden-hand[^)]*\):not\([^)]*c-tavern-gamble__tile--hand-public[^)]*\):not\([^)]*c-tavern-gamble__tile--discard-public[^)]*\):not\([^)]*is-covered[^)]*\)\s*\{/su
-  );
-  assert.match(
+  assert.doesNotMatch(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand/u);
+  assert.doesNotMatch(
     teaHouseCss,
     /--tavern-short-hidden-hand-top:\s*var\(--color-tavern-hidden-hand-top\);/u
   );
-  assert.match(
+  assert.doesNotMatch(
     teaHouseCss,
     /--tavern-short-hidden-hand-mid:\s*var\(--color-tavern-hidden-hand-mid\);/u
   );
-  assert.match(
+  assert.doesNotMatch(
     teaHouseCss,
     /--tavern-short-hidden-hand-base:\s*var\(--color-tavern-hidden-hand-base\);/u
   );
-  assert.match(
+  assert.doesNotMatch(
     teaHouseCss,
     /--tavern-short-hidden-hand-edge:\s*var\(--color-tavern-hidden-hand-edge\);/u
   );
-  assert.match(tokensCss, /--color-tavern-hidden-hand-top:\s*rgb\(48 101 132\);/u);
-  assert.match(tokensCss, /--color-tavern-hidden-hand-mid:\s*rgb\(20 52 82\);/u);
-  assert.match(tokensCss, /--color-tavern-hidden-hand-base:\s*rgb\(94 104 112\);/u);
-  assert.match(tokensCss, /--color-tavern-hidden-hand-edge:\s*rgb\(221 223 218\);/u);
-  assert.match(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand-top/u);
-  assert.match(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand-mid/u);
-  assert.match(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand-base/u);
+  assert.match(
+    tokensCss,
+    /--color-tavern-hidden-hand-top:\s*rgb\(62 187 235\);/u
+  );
+  assert.match(
+    tokensCss,
+    /--color-tavern-hidden-hand-top-highlight:\s*rgb\(112 217 255\);/u
+  );
+  assert.match(
+    tokensCss,
+    /--color-tavern-hidden-hand-middle-layer:\s*rgb\(62 171 214\);/u
+  );
+  assert.doesNotMatch(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand-top/u);
+  assert.doesNotMatch(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand-mid/u);
+  assert.doesNotMatch(teaHouseCss, /\.c-tavern-gamble__tile--hidden-hand-base/u);
   assert.match(
     teaHouseCss,
-    /@media \(width <= 760px\)\s*\{[\s\S]*?\.c-tavern-gamble__seat-discards\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble__seat-meld-tiles\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*width:\s*24px;[^}]*min-width:\s*24px;[^}]*height:\s*34px;[^}]*min-height:\s*34px;[^}]*flex:\s*0 0 24px;[^}]*font-size:\s*0\.66rem;/su
+    /@media \(width <= 760px\)\s*\{[\s\S]*?\.c-tavern-gamble__seat-discards\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble__seat-meld-tiles\s+\.c-tavern-gamble__tile--discard,\s*\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*width:\s*24px;[^}]*min-width:\s*24px;[^}]*height:\s*34px;[^}]*min-height:\s*34px;[^}]*flex:\s*0 0 24px;[^}]*font-size:\s*0\.66rem;/su
   );
   assert.match(
     teaHouseCss,
@@ -2009,7 +2165,7 @@ test("tavern short CSS keeps the public-card stage centered, floats active contr
   );
   assert.match(
     teaHouseCss,
-    /@media \(width <= 760px\)\s*\{[\s\S]*?\.c-tavern-gamble__seat--short-1\s+\.c-tavern-gamble__seat-hidden-hand,\s*\.c-tavern-gamble__seat--short-3\s+\.c-tavern-gamble__seat-hidden-hand\s*\{[^}]*top:\s*16px;[^}]*\}/su
+    /@media \(width <= 760px\)\s*\{[\s\S]*?\.c-tavern-gamble__seat--short-1\s+\.c-tavern-gamble__seat-hidden-hand,\s*\.c-tavern-gamble__seat--short-3\s+\.c-tavern-gamble__seat-hidden-hand\s*\{[^}]*top:\s*86px;[^}]*\}/su
   );
   assert.match(
     teaHouseCss,
@@ -2064,11 +2220,23 @@ test("tavern short CSS renders stacked tile depth above hands and below table ca
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile:not\(\.c-tavern-gamble__tile--hidden-hand\):not\(\.c-tavern-gamble__tile--hand-public\):not\(\.c-tavern-gamble__tile--discard-public\):not\(\.is-covered\)\s*\{[^}]*background:\s*rgb\(221 223 218\);[^}]*\}/su
+    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile:not\(\.c-tavern-gamble__tile--hand-public\):not\(\.c-tavern-gamble__tile--hand-public-ghost\):not\(\.c-tavern-gamble__tile--discard-public\):not\(\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--discard\):not\(\.is-covered\)\s*\{[^}]*background:\s*rgb\(221 223 218\);[^}]*\}/su
   );
   assert.match(
     teaHouseCss,
-    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile--hand\[aria-disabled="true"\]\s*\{[^}]*opacity:\s*1;[^}]*\}/su
+    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile--hand\[aria-disabled="true"\]:not\(\.c-tavern-gamble__tile--hand-public-ghost\)\s*\{[^}]*opacity:\s*1;[^}]*\}/su
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble__tile--hand-public-ghost\s*\{[^}]*border-color:\s*rgb\(173 176 179\);[^}]*background:\s*rgb\(221 223 218\);[^}]*color:\s*rgb\(36 22 10\);[^}]*opacity:\s*0\.38;[^}]*\}/su
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*background:\s*var\(--color-tavern-hidden-hand-top\);[^}]*border-color:\s*var\(--color-tavern-hidden-hand-top-highlight\);[^}]*box-shadow:\s*0\s+calc\(var\(--tavern-short-tile-depth-local-step-1\)\s*\*\s*-1\)\s+0\s+0\s+var\(--color-tavern-hidden-hand-middle-layer\),\s*0\s+calc\(var\(--tavern-short-tile-depth-local-accent-offset\)\s*\*\s*-1\)\s+0\s+0\s+var\(--tavern-short-tile-depth-side\);[^}]*color:\s*transparent;[^}]*\}/su
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--discard\s*\{[^}]*transform-origin:\s*center;[^}]*rotate:\s*180deg;[^}]*\}/su
   );
   assert.match(
     teaHouseCss,
@@ -2097,6 +2265,14 @@ test("tavern short CSS renders stacked tile depth above hands and below table ca
   assert.match(
     teaHouseCss,
     /\.c-tavern-gamble--short\s+\.c-tavern-gamble__tile--depth-bottom::after\s*\{[^}]*transform:\s*translateY\(var\(--tavern-short-tile-depth-local-accent-offset\)\);[^}]*\}/su
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--depth-bottom::before\s*\{[^}]*z-index:\s*-2;[^}]*background:\s*transparent;[^}]*box-shadow:\s*none;[^}]*transform:\s*none;[^}]*\}/su
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble--short\s+\.c-tavern-gamble__seat-hidden-hand\s+\.c-tavern-gamble__tile--depth-bottom::after\s*\{[^}]*z-index:\s*-1;[^}]*background:\s*transparent;[^}]*transform:\s*none;[^}]*\}/su
   );
   assert.match(
     teaHouseCss,
@@ -2271,10 +2447,33 @@ test("tavern short overlay exposes hand sort gating outside and inside draw-disc
       },
     },
   });
-  assert.equal(drawDiscardOverlay.handSortEnabled, false);
+  assert.equal(drawDiscardOverlay.handSortEnabled, true);
+  const claimWindowOverlay = selectTavernShortGambleOverlay({
+    ...table,
+    currentHand: {
+      ...table.currentHand,
+      phase: "claim-window",
+      claimChain: null,
+    },
+  });
+  assert.equal(claimWindowOverlay.handSortEnabled, true);
+
+  const betweenHandOverlay = selectTavernShortGambleOverlay({
+    ...table,
+    currentHand: null,
+    lastCompletedHand: {
+      handNumber: 1,
+      hand: {
+        ...table.currentHand,
+        phase: "finished",
+      },
+    },
+    prompt: "continue-or-cashout",
+  });
+  assert.equal(betweenHandOverlay.handSortEnabled, false);
 });
 
-test("tavern short hand markup emits sort metadata only when hand sorting is enabled", () => {
+test("tavern short hand markup emits display-order sort metadata for active hands and disables it between hands", () => {
   const table = createTavernShortTableSession({
     playerName: "tester",
     buyInGold: 100,
@@ -2304,6 +2503,83 @@ test("tavern short hand markup emits sort metadata only when hand sorting is ena
   assert.match(enabledMarkup, /data-house-drop-before="end"/u);
   assert.match(enabledMarkup, /data-house-sort-enabled="true"/u);
 
+  const drawDiscardHand = syncTavernShortDisplayOrderEntries(
+    {
+      ...table.currentHand,
+      phase: "draw-discard",
+      pendingIncomingCard: {
+        ownerSeatId: "you",
+        source: "draw",
+        card: {
+          id: "tiao-9",
+          suit: "tiao",
+          rank: 9,
+        },
+      },
+      publicCards: [
+        { id: "wan-7", suit: "wan", rank: 7 },
+      ],
+      players: table.currentHand.players.map((player) =>
+        player.seatId !== "you"
+          ? player
+          : {
+              ...player,
+              hand: [
+                { id: "wan-2", suit: "wan", rank: 2 },
+                { id: "tong-3", suit: "tong", rank: 3 },
+                { id: "tong-4", suit: "tong", rank: 4 },
+                { id: "wan-5", suit: "wan", rank: 5 },
+                { id: "wan-6", suit: "wan", rank: 6 },
+              ],
+            }
+      ),
+    },
+    "you"
+  );
+  drawDiscardHand.displayOrderEntries = [
+    { kind: "hand", cardId: "wan-2" },
+    { kind: "public-ghost", cardId: "wan-7" },
+    { kind: "hand", cardId: "tong-3" },
+    { kind: "hand", cardId: "tong-4" },
+    { kind: "hand", cardId: "wan-5" },
+    { kind: "hand", cardId: "wan-6" },
+    { kind: "incoming-draw", cardId: "tiao-9" },
+  ];
+
+  const drawDiscardMarkup = renderTavernHouseView({
+    moduleId: "tavern",
+    houseId: "house.tavern",
+    sceneTitle: "Tavern",
+    sceneSubtitle: "Preview",
+    standbyRoster: [],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: selectTavernShortGambleOverlay({
+      ...table,
+      currentHand: drawDiscardHand,
+    }),
+    leaveAction: { id: "leave-house", label: "Leave" },
+  });
+
+  assert.match(drawDiscardMarkup, /data-house-sort-enabled="true"/u);
+  assert.match(drawDiscardMarkup, /data-house-drag-payload="public-ghost\|wan-7"/u);
+  assert.match(drawDiscardMarkup, /c-tavern-gamble__tile--hand-public-ghost/u);
+  assert.doesNotMatch(drawDiscardMarkup, /data-house-hover-lift-enabled="true"/u);
+  const publicGhostButtonMarkup =
+    drawDiscardMarkup.match(
+      /<button[^>]*data-house-drag-payload="public-ghost\|wan-7"[\s\S]*?<\/button>/u
+    )?.[0] ?? "";
+  assert.notEqual(publicGhostButtonMarkup.length, 0);
+  assert.doesNotMatch(
+    publicGhostButtonMarkup,
+    /c-tavern-gamble__tile--hand-public(?!-ghost)/u
+  );
+  assert.doesNotMatch(
+    publicGhostButtonMarkup,
+    /data-house-action="gamble-play-tile:[^"]+"/u
+  );
+
   const disabledMarkup = renderTavernHouseView({
     moduleId: "tavern",
     houseId: "house.tavern",
@@ -2315,26 +2591,20 @@ test("tavern short hand markup emits sort metadata only when hand sorting is ena
     statusCard: null,
     overlay: selectTavernShortGambleOverlay({
       ...table,
-      currentHand: {
-        ...table.currentHand,
-        phase: "draw-discard",
-        actingSeatIndex: 0,
-        currentDrawTurnSeatId: "you",
-        pendingIncomingCard: {
-          ownerSeatId: "you",
-          source: "draw",
-          card: {
-            id: "tiao-9",
-            suit: "tiao",
-            rank: 9,
-          },
+      currentHand: null,
+      lastCompletedHand: {
+        handNumber: 1,
+        hand: {
+          ...table.currentHand,
+          phase: "finished",
         },
       },
+      prompt: "continue-or-cashout",
     }),
     leaveAction: { id: "leave-house", label: "Leave" },
   });
 
-  assert.doesNotMatch(disabledMarkup, /data-house-sort-enabled="true"/u);
+  assert.match(disabledMarkup, /data-house-sort-enabled="false"/u);
 });
 
 test("tavern long overlay still renders existing long-mode structure", () => {

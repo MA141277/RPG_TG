@@ -21,6 +21,7 @@ export function createInitialTavernSessionState(
     overlay: null,
     currentWager: tavernDefaultWager,
     currentGambleVariant: "short",
+    pendingShortDebugPreset: null,
     shortDebugPresetMode: "off",
     gambleSession: null,
   };

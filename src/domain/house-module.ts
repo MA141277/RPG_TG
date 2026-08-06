@@ -191,6 +191,8 @@ type ShortGambleTableOverlay = {
   handCards: Array<{
     id: string;
     label: string;
+    sortEntryId: string;
+    role: "hand" | "incoming-draw" | "public-ghost";
     selected: boolean;
     lifted?: boolean;
     dropping?: boolean;

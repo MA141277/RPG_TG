@@ -536,6 +536,12 @@ If that reorder path is phase-gated, expose a typed overlay flag such as `handSo
 render it through generic sortable metadata like `data-house-drop-action-prefix`,
 `data-house-drop-before`, and `data-house-sort-enabled`; do not hardcode phase branches back into
 `src/main.ts` or a house-specific DOM runtime.
+If a reordered tile can be display-only instead of playable
+(for example tavern short public ghosts),
+encode a stable typed entry id such as `public-ghost|wan-7` in the overlay view model and let the
+shared sortable runtime forward that payload opaquely. Keep non-playable entries distinguishable in
+typed tile data such as `role`, and do not let the renderer synthesize play/discard actions for
+entries whose action id is intentionally omitted.
 If a table overlay supports staged tile selection, public tiles that are temporarily selected or
 permanently consumed must be exposed as structured tile view data such as `selected` and `spent`,
 with confirm/clear/pass action ids on the overlay. The UI may render selected public tiles as

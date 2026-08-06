@@ -22,12 +22,12 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `completed-but-open`
 - Last Updated: `2026-08-05`
-- Current Focus: `Waiting for execution start after the approved hidden-hand layout spec was converted into an implementation plan.`
-- Next Step: `Open docs/superpowers/project-progress.md and decide whether this child should be promoted above Tavern Short Tile Sorting or executed as a local non-canonical child.`
-- Verification: `Plan creation self-review complete; tools/lint-superpowers-plans.mjs PASS.`
-- Notes: `This child intentionally keeps the existing short-table data/renderer seam and targets CSS-first layout adjustments plus UI contract updates only.`
+- Current Focus: `Implementation and targeted verification are complete in the local working tree; the batch still needs clean staging or fold-in with the canonical short-table child before any commit/push decision.`
+- Next Step: `Decide whether to split the overlapping short-table file changes into a clean hidden-hand-layout commit or fold this local batch into the canonical Tavern Short Tile Sorting child.`
+- Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-ui-contract.test.cjs`; `git diff --check` all PASS, with `git diff --check` reporting only LF-to-CRLF working-copy warnings and no whitespace errors.`
+- Notes: `This child intentionally kept the existing short-table data/renderer seam and finished as a CSS-first layout pass plus UI contract updates only; the task-local commit steps were deferred because the same files already contain unrelated local short-table changes.`
 
 ## Progress Log
 
@@ -35,6 +35,10 @@
   - Summary: `Created the implementation plan for the approved tavern short hidden-hand layout pass, kept the work CSS-first, preserved the current hiddenHandTiles contract, and finished the required self-review plus plan lint before execution handoff.`
   - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs (PASS)`
   - Next: `Wait for the user to choose an execution mode, then start Task 1 RED.`
+- 2026-08-05
+  - Summary: `Executed the local hidden-hand layout batch without changing the canonical current child: Task 1 added a top-seat broker fixture plus side/top hidden-hand layout assertions, confirmed RED against the missing CSS anchors, and then updated the short-table CSS so side concealed stacks turn vertical, side public rows move inward, and the top concealed stack sits to the right of the summary block. Task 2 synchronized change-log/project-progress and recorded the child as completed-but-open because the affected files already carry unrelated local short-table edits that still need clean staging strategy.`
+  - Verification: `RED -> C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-ui-contract.test.cjs` FAIL on the new hidden-hand layout CSS assertion. GREEN -> `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-ui-contract.test.cjs` PASS (29/29). Final -> `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `git diff --check` PASS with only LF-to-CRLF warnings.`
+  - Next: `Decide whether to isolate these verified hidden-hand layout hunks into their own commit or fold them into the canonical Tavern Short Tile Sorting batch before any push.`
 
 ---
 
@@ -135,7 +139,7 @@
 - Produces:
   - a CSS-only layout contract where side concealed-hand strips become vertical columns, side public rows move inward, and the top seat becomes a summary+hidden-hand header row without adding a new overlay field
 
-- [ ] **Step 1: Write the failing UI contract assertions**
+- [x] **Step 1: Write the failing UI contract assertions**
 
 Extend `tests/tavern-short-gamble-ui-contract.test.cjs` in two places:
 
@@ -228,7 +232,7 @@ Extend `tests/tavern-short-gamble-ui-contract.test.cjs` in two places:
   );
 ```
 
-- [ ] **Step 2: Run the contract test to confirm RED**
+- [x] **Step 2: Run the contract test to confirm RED**
 
 Run:
 
@@ -243,7 +247,7 @@ Expected:
 - `tests\tavern-short-gamble-ui-contract.test.cjs` FAIL
 - failures point at the missing top-seat fixture/CSS contract and the missing side-seat vertical/inward layout rules
 
-- [ ] **Step 3: Implement the minimal CSS layout change**
+- [x] **Step 3: Implement the minimal CSS layout change**
 
 Update `src/styles/tea-house.css` without changing the renderer contract. Keep the current short-table seat markup and add the seat-position-specific rules below:
 
@@ -344,7 +348,7 @@ Add the matching mobile-safe adjustments under `@media (width <= 760px)`:
   }
 ```
 
-- [ ] **Step 4: Re-run the UI contract to confirm GREEN**
+- [x] **Step 4: Re-run the UI contract to confirm GREEN**
 
 Run:
 
@@ -384,7 +388,7 @@ git commit -m "feat: adjust tavern short hidden-hand layout"
   - synchronized child execution state for either local non-canonical execution or canonical promotion
   - a resumable `completed-but-open` governance state until push/branch handling is explicitly decided
 
-- [ ] **Step 1: Write the doc updates**
+- [x] **Step 1: Write the doc updates**
 
 1. Add a short change-log entry near the top of `docs/change-log.md`:
 
@@ -412,7 +416,7 @@ git commit -m "feat: adjust tavern short hidden-hand layout"
 - `Progress Log` -> append the completed implementation batch
 - `Completion Checklist` -> mark everything done except push/closeout
 
-- [ ] **Step 2: Run the final verification set**
+- [x] **Step 2: Run the final verification set**
 
 Run:
 
@@ -428,7 +432,7 @@ Expected:
 - `PASS`
 - `git diff --check` may report LF-to-CRLF working-copy warnings, but no whitespace errors
 
-- [ ] **Step 3: Record the child state as completed-but-open**
+- [x] **Step 3: Record the child state as completed-but-open**
 
 Write the final child-local governance state:
 
@@ -455,20 +459,20 @@ git commit -m "docs: record tavern short hidden-hand layout"
 
 ## Exit Check
 
-- [ ] Side-seat concealed-hand stacks render vertically.
-- [ ] Side-seat public discard and meld lanes move inward without moving summary text.
-- [ ] The top-seat concealed-hand strip sits to the right of the summary block.
-- [ ] The top-seat discard and meld lanes remain below the summary area.
-- [ ] The player seat remains unchanged.
-- [ ] Final verification commands pass.
-- [ ] Project progress is synchronized if child execution status changed.
+- [x] Side-seat concealed-hand stacks render vertically.
+- [x] Side-seat public discard and meld lanes move inward without moving summary text.
+- [x] The top-seat concealed-hand strip sits to the right of the summary block.
+- [x] The top-seat discard and meld lanes remain below the summary area.
+- [x] The player seat remains unchanged.
+- [x] Final verification commands pass.
+- [x] Project progress is synchronized if child execution status changed.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
@@ -476,12 +480,12 @@ git commit -m "docs: record tavern short hidden-hand layout"
 - Parent Task: `Tavern Short Hidden-Hand Layout`
 - Parent Stage: `House Local Gameplay`
 - Closeout Status: `not-closed`
-- Project Progress Synced: `no`
+- Project Progress Synced: `yes`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `Decide whether to promote or locally execute this child before implementation starts.`
+- Next Required Action: `Split or fold the verified hidden-hand layout hunks into a clean commit strategy before any push or canonical closeout.`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-08-05-tavern-short-hidden-hand-layout-plan.md`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then decide whether this child becomes canonical or stays a local non-canonical execution batch before starting Task 1 RED.`
+- Resume From: `Open docs/superpowers/project-progress.md, confirm the canonical child is still Tavern Short Tile Sorting, then decide whether to split these verified hidden-hand layout edits into their own commit or fold them into that canonical local batch.`

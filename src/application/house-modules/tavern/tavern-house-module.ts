@@ -71,11 +71,14 @@ import {
   claimTavernShortDiscard,
   clearTavernShortDroppingDiscardCandidate,
   clearTavernShortLiftedDiscardCandidate,
+  clearTavernShortSelectedDiscardCandidate,
   confirmTavernShortDiscard,
   drawTavernShortIncomingCard,
   passTavernShortClaim,
+  reorderTavernShortDisplayOrderEntries,
   resolveTavernShortBetAction,
   type TavernShortBetActionKind,
+  type TavernShortDisplayOrderEntryId,
 } from "../../../domain/tavern-short-gambling";
 import { assertExists } from "../../../shared/assert";
 import {
@@ -128,13 +131,18 @@ const TAVERN_WORK_MARKER_STEP = 7;
 const GAMBLE_MELD_ACTION_PREFIX = "gamble-meld:";
 const GAMBLE_DISCARD_ACTION_PREFIX = "gamble-discard:";
 const GAMBLE_REORDER_ACTION_PREFIX = "gamble-reorder:";
+const GAMBLE_SHORT_REORDER_ACTION_PREFIX = "gamble-short-reorder:";
 const GAMBLE_CLEAR_LIFTED_TILE_ACTION_PREFIX = "gamble-clear-lifted-tile:";
+const GAMBLE_CLEAR_SELECTED_DISCARD_ACTION_ID = "gamble-clear-selected-discard";
 const GAMBLE_PLAY_TILE_ACTION_PREFIX = "gamble-play-tile:";
 const SELECT_GAMBLE_VARIANT_ACTION_PREFIX = "select-gamble-variant:";
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
 const GAMBLE_SHORT_CONTINUE_ACTION_ID = "gamble-short-continue-hand";
 const GAMBLE_SHORT_REBUY_ACTION_ID = "gamble-short-rebuy";
 const GAMBLE_SHORT_CASH_OUT_ACTION_ID = "gamble-short-cash-out";
+const SELECT_SHORT_DEBUG_CHOW_KONG_ACTION_ID =
+  "choose-short-table-debug-chow-kong";
+const SHORT_DEBUG_CHOW_KONG_PRESET = "claim-chow-then-kong" as const;
 const TOGGLE_SHORT_DEBUG_PRESET_ACTION_ID = "toggle-short-debug-claim-cycle";
 const TAVERN_WORK_ACTION_CONTAINER_CLASS_NAME =
   "c-house-red-nine-slice-actions c-tavern-work-actions";
@@ -332,6 +340,12 @@ function getWorkCapacity(playerFame: number): number {
 
 function parseActionId(actionId: string, prefix: string): string | null {
   return actionId.startsWith(prefix) ? actionId.slice(prefix.length) : null;
+}
+
+function isTavernShortDisplayOrderEntryId(
+  value: string
+): value is TavernShortDisplayOrderEntryId {
+  return /^(hand|incoming-draw|public-ghost)\|.+$/u.test(value);
 }
 
 function randomTargetStart(round: number): number {
@@ -1850,6 +1864,14 @@ function handleShortGambleTableAction(
       confirmTavernShortDiscard(currentHand, table.playerSeatId)
     );
   }
+  if (actionId === GAMBLE_CLEAR_SELECTED_DISCARD_ACTION_ID) {
+    return withUpdatedShortTableHand(
+      input,
+      sessionState,
+      table,
+      clearTavernShortSelectedDiscardCandidate(currentHand, table.playerSeatId)
+    );
+  }
   if (actionId === "gamble-skip-meld") {
     if (currentHand.phase !== "claim-window") {
       return createTransitionResult(input);
@@ -1886,6 +1908,37 @@ function handleShortGambleTableAction(
         currentHand,
         table.playerSeatId,
         clearLiftedTileId
+      )
+    );
+  }
+  const reorderPayload = parseActionId(actionId, GAMBLE_SHORT_REORDER_ACTION_PREFIX);
+  if (reorderPayload != null) {
+    const [entryId, beforeEntryId] = reorderPayload.split(":");
+    if (
+      entryId == null ||
+      entryId.length === 0 ||
+      !isTavernShortDisplayOrderEntryId(entryId)
+    ) {
+      return createTransitionResult(input);
+    }
+    const nextBeforeEntryId =
+      beforeEntryId == null || beforeEntryId === "end"
+        ? null
+        : isTavernShortDisplayOrderEntryId(beforeEntryId)
+          ? beforeEntryId
+          : null;
+    if (beforeEntryId != null && beforeEntryId !== "end" && nextBeforeEntryId == null) {
+      return createTransitionResult(input);
+    }
+    return withUpdatedShortTableHand(
+      input,
+      sessionState,
+      table,
+      reorderTavernShortDisplayOrderEntries(
+        currentHand,
+        table.playerSeatId,
+        entryId,
+        nextBeforeEntryId
       )
     );
   }
@@ -1955,6 +2008,12 @@ function handleGambleAction(
             description: "5 手牌 + 2 公共牌，下注沿用德州，弃牌可被吃碰杠抢走。",
             actionId: `${SELECT_GAMBLE_VARIANT_ACTION_PREFIX}short`,
           },
+          {
+            id: "short-debug-chow-kong",
+            label: "短牌测试：先吃后锁牌",
+            description: "仅下一手生效，固定演示先吃后锁牌，后续不能再碰/杠。",
+            actionId: SELECT_SHORT_DEBUG_CHOW_KONG_ACTION_ID,
+          },
         ],
         cancelActionId: "cancel-overlay",
       },
@@ -1973,8 +2032,27 @@ function handleGambleAction(
     return withSessionState(input, sessionState, {
       currentWager,
       currentGambleVariant: selectedVariant,
+      pendingShortDebugPreset: null,
       overlay: createGambleOverlayState({
         variant: selectedVariant,
+        wager: currentWager,
+        playerGold: playerCharacter.stats.gold,
+        shortDebugPresetMode: sessionState?.shortDebugPresetMode ?? "off",
+      }),
+    });
+  }
+
+  if (input.request.actionId === SELECT_SHORT_DEBUG_CHOW_KONG_ACTION_ID) {
+    const currentWager = clampWager(
+      sessionState?.currentWager ?? tavernDefaultWager,
+      playerCharacter.stats.gold
+    );
+    return withSessionState(input, sessionState, {
+      currentWager,
+      currentGambleVariant: "short",
+      pendingShortDebugPreset: SHORT_DEBUG_CHOW_KONG_PRESET,
+      overlay: createGambleOverlayState({
+        variant: "short",
         wager: currentWager,
         playerGold: playerCharacter.stats.gold,
         shortDebugPresetMode: sessionState?.shortDebugPresetMode ?? "off",
@@ -2222,11 +2300,15 @@ function handleGambleAction(
         gameState: goldMutation.state,
         characterDefinitions: goldMutation.characterDefinitions,
       },
-      sessionState,
+      {
+        ...sessionState,
+        pendingShortDebugPreset: null,
+      },
       createTavernShortTableSession({
         playerName: playerCharacter.name,
         buyInGold: wager,
         seed,
+        firstHandDebugPreset: sessionState.pendingShortDebugPreset,
         debugPresetMode: sessionState.shortDebugPresetMode,
       })
     );
@@ -2745,6 +2827,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       input.request.actionId === "open-gamble" ||
       input.request.actionId === "decrease-wager" ||
       input.request.actionId === "increase-wager" ||
+      input.request.actionId === SELECT_SHORT_DEBUG_CHOW_KONG_ACTION_ID ||
       input.request.actionId === TOGGLE_SHORT_DEBUG_PRESET_ACTION_ID ||
       input.request.actionId === "confirm-gamble" ||
       input.request.actionId.startsWith(SELECT_GAMBLE_VARIANT_ACTION_PREFIX) ||
@@ -2764,9 +2847,11 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       input.request.actionId === GAMBLE_SHORT_CASH_OUT_ACTION_ID ||
       input.request.actionId.startsWith(GAMBLE_MELD_ACTION_PREFIX) ||
       input.request.actionId.startsWith(GAMBLE_DISCARD_ACTION_PREFIX) ||
+      input.request.actionId.startsWith(GAMBLE_SHORT_REORDER_ACTION_PREFIX) ||
       input.request.actionId.startsWith(GAMBLE_REORDER_ACTION_PREFIX) ||
       input.request.actionId.startsWith(GAMBLE_CLEAR_LIFTED_TILE_ACTION_PREFIX) ||
       input.request.actionId.startsWith(GAMBLE_PLAY_TILE_ACTION_PREFIX) ||
+      input.request.actionId === GAMBLE_CLEAR_SELECTED_DISCARD_ACTION_ID ||
       input.request.actionId === "gamble-confirm-discard" ||
       input.request.actionId === "gamble-push-hu" ||
       input.request.actionId === "gamble-pass-hu"

@@ -131,6 +131,8 @@ function renderTileButton(
     tone?: "hand" | "public";
     entering?: boolean;
     revealIndex?: number;
+    sortEntryId?: string;
+    role?: "hand" | "incoming-draw" | "public-ghost";
     actionId?: string | undefined;
     mouseleaveActionId?: string | undefined;
   },
@@ -139,16 +141,16 @@ function renderTileButton(
 ): string {
   const action =
     tile.actionId ??
-    (mode === "select"
+    (mode === "select" && tile.role !== "public-ghost"
       ? `gamble-play-tile:${tile.id}`
       : "");
   return `
     <button
       type="button"
-      class="c-tavern-gamble__tile c-tavern-gamble__tile--hand${extraClassName == null ? "" : ` ${extraClassName}`}${tile.tone === "public" ? " c-tavern-gamble__tile--hand-public" : ""}${tile.selected ? " is-selected" : ""}${tile.lifted ? " is-lifted" : ""}${tile.dropping ? " is-dropping" : ""}${tile.incoming ? " is-incoming" : ""}${tile.covered ? " is-covered" : ""}${tile.entering ? " is-entering" : ""}"
+      class="c-tavern-gamble__tile c-tavern-gamble__tile--hand${extraClassName == null ? "" : ` ${extraClassName}`}${tile.tone === "public" && tile.role !== "public-ghost" ? " c-tavern-gamble__tile--hand-public" : ""}${tile.role === "public-ghost" ? " c-tavern-gamble__tile--hand-public-ghost" : ""}${tile.selected ? " is-selected" : ""}${tile.lifted ? " is-lifted" : ""}${tile.dropping ? " is-dropping" : ""}${tile.incoming ? " is-incoming" : ""}${tile.covered ? " is-covered" : ""}${tile.entering ? " is-entering" : ""}"
       data-house-sortable-tile="true"
-      data-house-drag-payload="${tile.id}"
-      data-house-drop-before="${tile.id}"
+      data-house-drag-payload="${tile.sortEntryId ?? tile.id}"
+      data-house-drop-before="${tile.sortEntryId ?? tile.id}"
       ${action.length > 0 ? `data-house-action="${action}"` : ""}
       ${tile.mouseleaveActionId == null ? "" : `data-house-mouseleave-action="${tile.mouseleaveActionId}"`}
       ${mode === "idle" || action.length === 0 ? 'aria-disabled="true"' : ""}
@@ -239,9 +241,9 @@ function renderShortSeatHiddenHand(
     <div class="c-tavern-gamble__seat-hidden-hand">
       ${tiles
         .map(
-          (tile) => `
+          () => `
             <span
-              class="c-tavern-gamble__tile c-tavern-gamble__tile--hidden-hand c-tavern-gamble__tile--hidden-hand-${tile.tone}"
+              class="c-tavern-gamble__tile c-tavern-gamble__tile--discard c-tavern-gamble__tile--depth-bottom"
               aria-hidden="true"
             ></span>
           `
@@ -325,6 +327,12 @@ function renderShortGambleTableOverlay(
   const shortHasSelectedDiscard = overlay.handCards.some(
     (tile) => tile.selected || tile.lifted === true
   );
+  const shortHoverLiftEnabled =
+    overlay.pendingIncomingCard != null &&
+    !overlay.handSortEnabled &&
+    overlay.handCards.some((tile) =>
+      (tile.actionId ?? "").startsWith("gamble-play-tile:")
+    );
   const showShortPlayPanel =
     (isShortActionTurn && overlay.claimOptions.length > 0) ||
     (isShortActionTurn &&
@@ -498,7 +506,7 @@ function renderShortGambleTableOverlay(
           `;
 
   return `
-    <div class="c-grain-shop-overlay c-tavern-gamble-overlay c-tavern-gamble-overlay--short" data-house-overlay="gamble-table">
+    <div class="c-grain-shop-overlay c-tavern-gamble-overlay c-tavern-gamble-overlay--short" data-house-overlay="gamble-table"${overlay.clickawayActionId == null ? "" : ` data-house-clickaway-action="${overlay.clickawayActionId}"`}>
       <div class="c-grain-shop-modal c-grain-shop-skin-panel c-tavern-gamble c-tavern-gamble--short" role="dialog" aria-modal="true">
         <div class="c-grain-shop-modal__actions c-tavern-gamble__actions c-tavern-gamble__actions--top">
           ${renderShortActionButton({
@@ -530,15 +538,22 @@ function renderShortGambleTableOverlay(
             </section>
             <section class="c-tavern-gamble__hand-on-felt" aria-label="手牌区域">
               ${shortPlayPanelMarkup}
-              <div class="c-tavern-gamble__tiles c-tavern-gamble__tiles--hand${shortHasSelectedDiscard ? " has-selected-discard" : ""}">
+              <div
+                class="c-tavern-gamble__tiles c-tavern-gamble__tiles--hand${shortHasSelectedDiscard ? " has-selected-discard" : ""}"
+                data-house-drop-action-prefix="gamble-short-reorder:"
+                data-house-drop-before="end"
+                data-house-sort-enabled="${overlay.handSortEnabled ? "true" : "false"}"
+                ${shortHoverLiftEnabled ? 'data-house-hover-lift-enabled="true"' : ""}
+              >
                 ${overlay.handCards
-                  .map((tile) =>
-                    renderTileButton(
-                      {
-                        ...tile,
-                        mouseleaveActionId:
-                          tile.mouseleaveActionId ??
-                          (tile.lifted && !tile.selected
+                    .map((tile) =>
+                      renderTileButton(
+                        {
+                          ...tile,
+                          tone: tile.role === "public-ghost" ? "public" : "hand",
+                          mouseleaveActionId:
+                            tile.mouseleaveActionId ??
+                            (tile.lifted && !tile.selected
                             ? `gamble-clear-lifted-tile:${tile.id}`
                             : undefined),
                       },

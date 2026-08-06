@@ -38,6 +38,21 @@
 ### Impact
 - house tile reorder 现在继续遵守 main shell / house interface 边界：`src/main.ts` 只挂载共享 sortable runtime，不理解 tavern short / long 的业务语义；短牌是否允许理牌、重排哪个 action id、以及重排后如何落回 session state，都由 tavern 自己持有。
 
+## 2026-08-05 Tavern Short Public Ghost Sorting Contract
+
+### Added
+- Tavern short hand state 现在新增 typed `displayOrderEntries`，可同时表示真实手牌、`incoming-draw` 与 `public-ghost` 三类可排序 entry，并通过 separator-safe entry id（如 `hand|wan-2`、`public-ghost|wan-7`）跨过 shared sortable runtime。
+- 短牌手牌 renderer 现在为投影进手牌行的 public ghost 添加专用 `c-tavern-gamble__tile--hand-public-ghost` 样式钩子，用于在保留厚度结构的前提下做更柔和的 ghost 呈现。
+- 新增 focused 回归覆盖 tavern short mixed hand-row projection、entry-id reorder house dispatch、以及 shared sortable runtime 对 `public-ghost|...` payload 的透明转发。
+
+### Changed
+- 酒馆短牌 overlay 现在在保留中央 `publicCards` 公牌区的同时，也把已揭示公牌投影进 `handCards`，并用 typed `role` / `sortEntryId` 区分真实手牌、incoming draw 与 public ghost。
+- `gamble-short-reorder:` 现在改为接收 typed display-order entry id，而不是 raw card id；短牌理牌在 active-hand phases（含 `draw-discard` 与 `claim-window`）保持可用，但 public ghost 仍然不会获得 `gamble-play-tile:*` 动作。
+
+### Impact
+- 共享 sortable runtime 继续保持 tavern-agnostic：它只搬运 opaque payload，不理解 tavern short 公牌、摸牌或弃牌语义。
+- tavern short 的“公牌可插入手牌理牌，但绝不可打出”边界现在由 typed session/view-model contract、house dispatch 与 renderer 测试共同锁定，不需要把业务判断重新塞回 `src/main.ts`。
+
 ## 2026-08-05 Tavern Short Chow-Kong Debug Entry Contract
 
 ### Added

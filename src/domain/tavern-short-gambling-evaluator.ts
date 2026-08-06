@@ -1,3 +1,8 @@
+import {
+  getTavernShortCardKey,
+  getTavernShortCardSortValue,
+  isTavernShortSuitedCard,
+} from "./tavern-short-gambling-tiles";
 import type {
   TavernShortBestFive,
   TavernShortCard,
@@ -14,7 +19,6 @@ const CATEGORY_STRENGTH: Record<TavernShortBestFive["category"], number> = {
   "full-house": 6,
   "four-of-a-kind": 7,
   "straight-flush": 8,
-  "royal-flush": 9,
 };
 
 const CATEGORY_LABELS: Record<TavernShortBestFive["category"], string> = {
@@ -27,14 +31,7 @@ const CATEGORY_LABELS: Record<TavernShortBestFive["category"], string> = {
   "full-house": "葫芦",
   "four-of-a-kind": "四条",
   "straight-flush": "同花顺",
-  "royal-flush": "皇家同花顺",
 };
-
-type RankedCard = TavernShortCard & { value: number };
-
-function getRankValue(rank: number): number {
-  return rank === 1 ? 14 : rank;
-}
 
 function compareNumberLists(left: readonly number[], right: readonly number[]): number {
   const maxLength = Math.max(left.length, right.length);
@@ -50,36 +47,32 @@ function compareNumberLists(left: readonly number[], right: readonly number[]): 
 
 function sortCardsForDisplay(cards: readonly TavernShortCard[]): TavernShortCard[] {
   return [...cards].sort((left, right) => {
-    const rankDiff = getRankValue(right.rank) - getRankValue(left.rank);
-    if (rankDiff !== 0) {
-      return rankDiff;
+    const valueDiff =
+      getTavernShortCardSortValue(right) - getTavernShortCardSortValue(left);
+    if (valueDiff !== 0) {
+      return valueDiff;
     }
-    return left.suit.localeCompare(right.suit);
+    const copyDiff = (right.copy ?? 1) - (left.copy ?? 1);
+    if (copyDiff !== 0) {
+      return copyDiff;
+    }
+    return right.id.localeCompare(left.id);
   });
 }
 
-function getStraightHigh(values: readonly number[]): number | null {
-  const uniqueDescending = [...new Set(values)].sort((left, right) => right - left);
-  if (uniqueDescending.length !== 5) {
+function getStraightHigh(ranks: readonly number[]): number | null {
+  const uniqueAscending = [...new Set(ranks)].sort((left, right) => left - right);
+  if (uniqueAscending.length !== 5) {
     return null;
   }
-  const isWheel =
-    uniqueDescending[0] === 14 &&
-    uniqueDescending[1] === 5 &&
-    uniqueDescending[2] === 4 &&
-    uniqueDescending[3] === 3 &&
-    uniqueDescending[4] === 2;
-  if (isWheel) {
-    return 5;
-  }
-  for (let index = 1; index < uniqueDescending.length; index += 1) {
-    const previous = uniqueDescending[index - 1];
-    const current = uniqueDescending[index];
-    if (previous == null || current == null || previous !== current + 1) {
+  for (let index = 1; index < uniqueAscending.length; index += 1) {
+    const previous = uniqueAscending[index - 1];
+    const current = uniqueAscending[index];
+    if (previous == null || current == null || current !== previous + 1) {
       return null;
     }
   }
-  return uniqueDescending[0] ?? null;
+  return uniqueAscending[uniqueAscending.length - 1] ?? null;
 }
 
 function getFiveCardCombinations(cards: readonly TavernShortCard[]): TavernShortCard[][] {
@@ -107,30 +100,31 @@ function getFiveCardCombinations(cards: readonly TavernShortCard[]): TavernShort
 }
 
 function evaluateFiveCardHand(cards: readonly TavernShortCard[]): TavernShortBestFive {
-  const rankedCards: RankedCard[] = cards.map((card) => ({
-    ...card,
-    value: getRankValue(card.rank),
-  }));
-  const valuesDescending = rankedCards
-    .map((card) => card.value)
-    .sort((left, right) => right - left);
-  const isFlush = cards.every((card) => card.suit === cards[0]?.suit);
-  const straightHigh = getStraightHigh(valuesDescending);
+  const orderedCards = sortCardsForDisplay(cards);
+  const valuesDescending = orderedCards.map(getTavernShortCardSortValue);
+  const suitedCards = cards.filter(isTavernShortSuitedCard);
+  const allSuited = suitedCards.length === cards.length;
+  const straightHigh = allSuited ? getStraightHigh(suitedCards.map((card) => card.rank)) : null;
+  const isFlush =
+    allSuited &&
+    suitedCards.every((card) => card.suit === suitedCards[0]?.suit);
 
-  const groupsByValue = new Map<number, RankedCard[]>();
-  for (const card of rankedCards) {
-    const group = groupsByValue.get(card.value);
+  const groupsByKey = new Map<string, TavernShortCard[]>();
+  for (const card of cards) {
+    const key = getTavernShortCardKey(card);
+    const group = groupsByKey.get(key);
     if (group == null) {
-      groupsByValue.set(card.value, [card]);
+      groupsByKey.set(key, [card]);
     } else {
       group.push(card);
     }
   }
 
-  const groups = [...groupsByValue.entries()]
-    .map(([value, groupCards]) => ({
-      value,
+  const groups = [...groupsByKey.entries()]
+    .map(([key, groupCards]) => ({
+      key,
       count: groupCards.length,
+      value: Math.max(...groupCards.map(getTavernShortCardSortValue)),
       cards: groupCards,
     }))
     .sort((left, right) => {
@@ -140,15 +134,11 @@ function evaluateFiveCardHand(cards: readonly TavernShortCard[]): TavernShortBes
       return right.value - left.value;
     });
 
-  const orderedCards = sortCardsForDisplay(cards);
-
   if (isFlush && straightHigh != null) {
-    const isRoyal = straightHigh === 14 && valuesDescending.includes(10);
-    const category = isRoyal ? "royal-flush" : "straight-flush";
     return {
-      category,
-      label: CATEGORY_LABELS[category],
-      scoreKey: [CATEGORY_STRENGTH[category], straightHigh],
+      category: "straight-flush",
+      label: CATEGORY_LABELS["straight-flush"],
+      scoreKey: [CATEGORY_STRENGTH["straight-flush"], straightHigh],
       cards: orderedCards,
     };
   }
@@ -274,9 +264,11 @@ export function evaluateBestTavernShortShowdown(
 export function buildTavernShortPots(
   contributions: ReadonlyArray<{ seatId: string; committed: number; folded: boolean }>
 ): TavernShortPot[] {
-  const tiers = [...new Set(contributions.map((entry) => entry.committed).filter((amount) => amount > 0))].sort(
-    (left, right) => left - right
-  );
+  const tiers = [
+    ...new Set(
+      contributions.map((entry) => entry.committed).filter((amount) => amount > 0)
+    ),
+  ].sort((left, right) => left - right);
   const pots: TavernShortPot[] = [];
   let previousTier = 0;
 

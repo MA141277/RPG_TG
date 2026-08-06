@@ -42,3 +42,12 @@ test("generic house mouseleave actions dispatch through the shared top-level mou
     /appElement\.addEventListener\("mouseout", \(event\) => \{[\s\S]*const houseMouseleaveActionButton = targetElement\.closest<HTMLElement>\(\s*"\[data-house-mouseleave-action\]"\s*\);[\s\S]*houseMouseleaveActionId != null[\s\S]*dispatchHouseRuntimeRequest\(houseRuntime, \{[\s\S]*type: "action",[\s\S]*actionId: houseMouseleaveActionId,[\s\S]*\}[\s\S]*const cityMapBuildingLabel = targetElement\.closest<HTMLElement>\(/s
   );
 });
+
+test("generic house click-away actions dispatch through the shared top-level click wiring", () => {
+  const source = readSource("src/main.ts");
+
+  assert.match(
+    source,
+    /appElement\.addEventListener\(\s*"click",[\s\S]*const houseActionButton = targetElement\.closest<HTMLElement>\(\s*"\[data-house-action\]"\s*\);[\s\S]*const houseClickawayRegion = targetElement\.closest<HTMLElement>\(\s*"\[data-house-clickaway-action\]"\s*\);[\s\S]*houseClickawayActionId != null[\s\S]*dispatchHouseRuntimeRequest\(houseRuntime, \{[\s\S]*type: "action",[\s\S]*actionId: houseClickawayActionId,[\s\S]*\}[\s\S]*const leaveHouseButton = targetElement\.closest<HTMLElement>\(/s
+  );
+});

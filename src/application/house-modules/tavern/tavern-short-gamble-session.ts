@@ -8,6 +8,7 @@ import {
   createTavernShortHand,
   drawTavernShortIncomingCard,
   passTavernShortClaim,
+  syncTavernShortDisplayOrderEntries,
   type TavernShortDebugHandPreset,
   type TavernShortHandState,
 } from "../../../domain/tavern-short-gambling";
@@ -126,6 +127,9 @@ function getNextShortClaimCountdown(
 function getDebugHandPreset(
   session: TavernShortTableSession
 ): TavernShortDebugHandPreset | null {
+  if (session.firstHandDebugPreset != null) {
+    return session.firstHandDebugPreset;
+  }
   if (session.debugPresetMode !== "claim-cycle") {
     return null;
   }
@@ -143,15 +147,21 @@ function normalizeTavernShortActiveHand(
   session: TavernShortTableSession,
   hand: TavernShortHandState
 ): TavernShortHandState {
-  if (hand.phase !== "draw-discard" || hand.pendingIncomingCard != null) {
-    return hand;
+  let normalizedHand = hand;
+  if (normalizedHand.phase === "draw-discard" && normalizedHand.pendingIncomingCard == null) {
+    const actingPlayer =
+      normalizedHand.players.find((player) => player.seatIndex === normalizedHand.actingSeatIndex) ?? null;
+    if (actingPlayer?.seatId === session.playerSeatId) {
+      normalizedHand = drawTavernShortIncomingCard(
+        normalizedHand,
+        session.playerSeatId
+      );
+    }
   }
-  const actingPlayer =
-    hand.players.find((player) => player.seatIndex === hand.actingSeatIndex) ?? null;
-  if (actingPlayer?.seatId !== session.playerSeatId) {
-    return hand;
-  }
-  return drawTavernShortIncomingCard(hand, session.playerSeatId);
+  return syncTavernShortDisplayOrderEntries(
+    normalizedHand,
+    session.playerSeatId
+  );
 }
 
 function startShortTableHand(
@@ -174,6 +184,7 @@ function startShortTableHand(
     ...session,
     dealerSeatIndex: input.dealerSeatIndex,
     handCount: session.handCount + 1,
+    firstHandDebugPreset: null,
     claimCountdown: null,
     bankrollBySeatId: toBankrollBySeatId(currentHand.players),
     currentHand,
@@ -187,6 +198,7 @@ export function createTavernShortTableSession(input: {
   buyInGold: number;
   seed: number;
   debugPresetMode?: TavernShortTableDebugPresetMode;
+  firstHandDebugPreset?: TavernShortDebugHandPreset | null;
 }): TavernShortTableSession {
   const buyInGold = Math.max(1, Math.floor(input.buyInGold));
   const openingChips = buyInGold * SHORT_TABLE_CHIPS_PER_GOLD;
@@ -197,6 +209,7 @@ export function createTavernShortTableSession(input: {
     variant: "short",
     playerSeatId: "you",
     debugPresetMode: input.debugPresetMode ?? "off",
+    firstHandDebugPreset: input.firstHandDebugPreset ?? null,
     claimCountdown: null,
     bankrollBySeatId,
     npcBaselineChips: openingChips,

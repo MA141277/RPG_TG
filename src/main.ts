@@ -373,6 +373,7 @@ import {
 import { mountCityStageDomRuntime } from "./ui/views/city/city-stage-dom-runtime";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
 import { syncDialogueTypewriterRuntime } from "./ui/components/dialogue/dialogue-typewriter-runtime";
+import { mountHouseSortableTileRuntime } from "./ui/views/house/house-sortable-tile-runtime";
 import { syncTavernClaimCountdownDomRuntime } from "./ui/views/house/tavern-claim-countdown-dom";
 import { syncTroopEditorInteractions } from "./ui/views/troop-editor/troop-editor-interactions";
 import { syncTroopManagementBattlePreview } from "./ui/views/troop-editor/troop-management-battle-preview";
@@ -925,24 +926,6 @@ let recentPointerDispatchedActivityAction:
       timestamp: number;
     }
   | null = null;
-let houseDragPayload: string | null = null;
-let houseTileDragState:
-  | {
-      pointerId: number;
-      payload: string;
-      root: HTMLElement;
-      sourceTile: HTMLElement;
-      ghostTile: HTMLElement;
-      startClientX: number;
-      startClientY: number;
-      offsetX: number;
-      offsetY: number;
-      didMove: boolean;
-      currentBeforeId: string | null;
-      restingBeforeId: string | null;
-    }
-  | null = null;
-let suppressHouseClickUntilMs = 0;
 let layoutEditorDragState:
   | {
       mode: "component" | "element" | "component-size" | "element-size";
@@ -1231,6 +1214,16 @@ function syncCoinRewardAnchorEditorView(): void {
 }
 
 let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
+mountHouseSortableTileRuntime({
+  appElement,
+  dispatchReorderAction(actionId) {
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "action",
+      actionId,
+    });
+    renderApp();
+  },
+});
 const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
   getAppState: () => appState,
   setAppState: (nextAppState) => {
@@ -4963,228 +4956,6 @@ appElement.addEventListener("pointerup", endCampaignMapDrag);
 appElement.addEventListener("pointercancel", endCampaignMapDrag);
 appElement.addEventListener("pointerleave", hideCampaignHoverHexOutline);
 
-function clearHouseTileDropMarkers(): void {
-  appRoot
-    .querySelectorAll<HTMLElement>(
-      ".is-house-drop-before, .is-house-drop-after, .is-house-drag-origin"
-    )
-    .forEach((element) => {
-      element.classList.remove(
-        "is-house-drop-before",
-        "is-house-drop-after",
-        "is-house-drag-origin"
-      );
-    });
-}
-
-function endHouseTileDrag(): void {
-  if (houseTileDragState == null) {
-    return;
-  }
-  houseTileDragState.ghostTile.remove();
-  clearHouseTileDropMarkers();
-  houseTileDragState = null;
-}
-
-function updateHouseTileDropMarker(clientX: number, clientY: number): void {
-  if (houseTileDragState == null) {
-    return;
-  }
-  clearHouseTileDropMarkers();
-  houseTileDragState.sourceTile.classList.add("is-house-drag-origin");
-  const rootRect = houseTileDragState.root.getBoundingClientRect();
-  const outsideRecognitionRange =
-    clientX < rootRect.left - 32 ||
-    clientX > rootRect.right + 32 ||
-    clientY < rootRect.top - 36 ||
-    clientY > rootRect.bottom + 36;
-  if (outsideRecognitionRange) {
-    houseTileDragState.currentBeforeId = houseTileDragState.restingBeforeId;
-    return;
-  }
-  const tiles = [...houseTileDragState.root.querySelectorAll<HTMLElement>("[data-house-drop-before]")].filter(
-    (tile) =>
-      tile !== houseTileDragState?.sourceTile &&
-      tile.dataset.houseDropBefore !== "end"
-  );
-  let currentBeforeId: string | null = null;
-  let previousTile: HTMLElement | null = null;
-  let nextTile: HTMLElement | null = null;
-  for (const tile of tiles) {
-    const rect = tile.getBoundingClientRect();
-    const midpoint = rect.left + rect.width / 2;
-    if (clientX < midpoint) {
-      currentBeforeId = tile.dataset.houseDropBefore ?? null;
-      nextTile = tile;
-      break;
-    }
-    previousTile = tile;
-  }
-  if (currentBeforeId === houseTileDragState.restingBeforeId) {
-    houseTileDragState.currentBeforeId = currentBeforeId;
-    return;
-  }
-  previousTile?.classList.add("is-house-drop-after");
-  nextTile?.classList.add("is-house-drop-before");
-  houseTileDragState.currentBeforeId = currentBeforeId;
-}
-
-appElement.addEventListener("pointermove", (event) => {
-  if (houseTileDragState == null || houseTileDragState.pointerId !== event.pointerId) {
-    return;
-  }
-  const deltaX = event.clientX - houseTileDragState.startClientX;
-  const deltaY = event.clientY - houseTileDragState.startClientY;
-  if (!houseTileDragState.didMove && Math.abs(deltaX) + Math.abs(deltaY) < 6) {
-    return;
-  }
-  houseTileDragState.didMove = true;
-  houseTileDragState.ghostTile.style.left = `${event.clientX - houseTileDragState.offsetX}px`;
-  houseTileDragState.ghostTile.style.top = `${event.clientY - houseTileDragState.offsetY}px`;
-  updateHouseTileDropMarker(event.clientX, event.clientY);
-});
-
-appElement.addEventListener("pointerup", (event) => {
-  if (houseTileDragState == null || houseTileDragState.pointerId !== event.pointerId) {
-    return;
-  }
-  const dragState = houseTileDragState;
-  const didMove = dragState.didMove;
-  const beforeId = dragState.currentBeforeId;
-  endHouseTileDrag();
-  if (!didMove) {
-    return;
-  }
-  if (beforeId === dragState.restingBeforeId) {
-    return;
-  }
-  suppressHouseClickUntilMs = window.performance.now() + 250;
-  dispatchHouseRuntimeRequest(houseRuntime, {
-    type: "action",
-    actionId: `${dragState.root.dataset.houseDropActionPrefix}${dragState.payload}:${beforeId ?? "end"}`,
-  });
-  renderApp();
-});
-
-appElement.addEventListener("pointercancel", () => {
-  endHouseTileDrag();
-});
-
-appElement.addEventListener("pointerdown", (event) => {
-  if (event.button !== 0) {
-    return;
-  }
-  const targetElement = event.target;
-  if (!(targetElement instanceof HTMLElement)) {
-    return;
-  }
-  const tile = targetElement.closest<HTMLElement>("[data-house-sortable-tile='true'][data-house-drag-payload]");
-  const root = targetElement.closest<HTMLElement>("[data-house-drop-action-prefix]");
-  const payload = tile?.dataset.houseDragPayload;
-  const actionPrefix = root?.dataset.houseDropActionPrefix;
-  if (tile == null || root == null || payload == null || actionPrefix == null) {
-    return;
-  }
-  const rect = tile.getBoundingClientRect();
-  const sortableTiles = [...root.querySelectorAll<HTMLElement>("[data-house-drop-before]")].filter(
-    (candidateTile) => candidateTile.dataset.houseDropBefore !== "end"
-  );
-  const sourceIndex = sortableTiles.indexOf(tile);
-  const restingBeforeId =
-    sourceIndex >= 0 && sourceIndex < sortableTiles.length - 1
-      ? sortableTiles[sourceIndex + 1]?.dataset.houseDropBefore ?? null
-      : null;
-  const ghostTile = tile.cloneNode(true) as HTMLElement;
-  ghostTile.removeAttribute("data-house-action");
-  ghostTile.style.position = "fixed";
-  ghostTile.style.left = `${rect.left}px`;
-  ghostTile.style.top = `${rect.top}px`;
-  ghostTile.style.width = `${rect.width}px`;
-  ghostTile.style.height = `${rect.height}px`;
-  ghostTile.style.pointerEvents = "none";
-  ghostTile.style.zIndex = "9999";
-  ghostTile.style.opacity = "0.96";
-  ghostTile.style.transform = "translateY(-10px) scale(1.03)";
-  ghostTile.style.boxShadow = "0 16px 28px rgb(0 0 0 / 28%)";
-  ghostTile.classList.add("is-house-drag-ghost");
-  document.body.appendChild(ghostTile);
-  houseTileDragState = {
-    pointerId: event.pointerId,
-    payload,
-    root,
-    sourceTile: tile,
-    ghostTile,
-    startClientX: event.clientX,
-    startClientY: event.clientY,
-    offsetX: event.clientX - rect.left,
-    offsetY: event.clientY - rect.top,
-    didMove: false,
-    currentBeforeId: restingBeforeId,
-    restingBeforeId,
-  };
-});
-
-appElement.addEventListener("dragstart", (event) => {
-  const targetElement = event.target;
-  if (!(targetElement instanceof HTMLElement)) {
-    return;
-  }
-  if (targetElement.closest("[data-house-sortable-tile='true']") != null) {
-    event.preventDefault();
-    return;
-  }
-  const dragElement = targetElement.closest<HTMLElement>("[data-house-drag-payload]");
-  const payload = dragElement?.dataset.houseDragPayload;
-  if (payload == null) {
-    return;
-  }
-  houseDragPayload = payload;
-  event.dataTransfer?.setData("text/plain", payload);
-  if (event.dataTransfer != null) {
-    event.dataTransfer.effectAllowed = "move";
-  }
-});
-
-appElement.addEventListener("dragover", (event) => {
-  const targetElement = event.target;
-  if (!(targetElement instanceof HTMLElement) || houseDragPayload == null) {
-    return;
-  }
-  const dropElement = targetElement.closest<HTMLElement>("[data-house-drop-before]");
-  if (dropElement == null) {
-    return;
-  }
-  event.preventDefault();
-  if (event.dataTransfer != null) {
-    event.dataTransfer.dropEffect = "move";
-  }
-});
-
-appElement.addEventListener("drop", (event) => {
-  const targetElement = event.target;
-  if (!(targetElement instanceof HTMLElement)) {
-    return;
-  }
-  const dropElement = targetElement.closest<HTMLElement>("[data-house-drop-before]");
-  const actionRoot = targetElement.closest<HTMLElement>("[data-house-drop-action-prefix]");
-  const payload = houseDragPayload ?? event.dataTransfer?.getData("text/plain") ?? null;
-  const before = dropElement?.dataset.houseDropBefore;
-  const actionPrefix = actionRoot?.dataset.houseDropActionPrefix;
-  houseDragPayload = null;
-  if (payload == null || before == null || actionPrefix == null) {
-    return;
-  }
-  event.preventDefault();
-  dispatchHouseRuntimeRequest(houseRuntime, {
-    type: "action",
-    actionId: `${actionPrefix}${payload}:${before}`,
-  });
-});
-
-appElement.addEventListener("dragend", () => {
-  houseDragPayload = null;
-});
-
 window.addEventListener("message", (event) => {
   handleBattleDemoResultMessage(event.data);
   handleBattleDemoAudioMessage(event.data);
@@ -6041,12 +5812,6 @@ appElement.addEventListener("click", (event) => {
     "[data-house-action]"
   );
   if (houseActionButton != null) {
-    if (window.performance.now() < suppressHouseClickUntilMs) {
-      event.preventDefault();
-      event.stopPropagation();
-      suppressHouseClickUntilMs = 0;
-      return;
-    }
     const actionId = houseActionButton.dataset.houseAction;
     if (actionId != null) {
       if (shouldSuppressPointerDispatchedHouseClick(actionId)) {
@@ -6064,6 +5829,18 @@ appElement.addEventListener("click", (event) => {
         },
       });
     }
+    return;
+  }
+
+  const houseClickawayRegion = targetElement.closest<HTMLElement>(
+    "[data-house-clickaway-action]"
+  );
+  const houseClickawayActionId = houseClickawayRegion?.dataset.houseClickawayAction;
+  if (houseClickawayActionId != null) {
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "action",
+      actionId: houseClickawayActionId,
+    });
     return;
   }
 

@@ -9,24 +9,34 @@ import {
   claimTavernShortDiscard,
   clearTavernShortDroppingDiscardCandidate,
   clearTavernShortLiftedDiscardCandidate,
+  clearTavernShortSelectedDiscardCandidate,
   chooseTavernShortDiscardCandidate,
   confirmTavernShortDiscard,
   createTavernShortHand,
   drawTavernShortIncomingCard,
   passTavernShortClaim,
+  reorderTavernShortDisplayOrderEntries,
+  reorderTavernShortHand,
   resolveTavernShortBetAction,
   settleTavernShortShowdown,
+  syncTavernShortDisplayOrderEntries,
   TAVERN_SHORT_BIG_BLIND,
   TAVERN_SHORT_SMALL_BLIND,
+  toTavernShortDisplayOrderEntryId,
 } from "./tavern-short-gambling-runtime";
-
-export type TavernShortSuit = "wan" | "bing" | "tong" | "tiao";
-
-export type TavernShortCard = {
-  id: string;
-  suit: TavernShortSuit;
-  rank: number;
-};
+export {
+  createTavernShortDeck,
+  getTavernShortCardKey,
+  getTavernShortCardLabel,
+  getTavernShortCardSortValue,
+  isTavernShortSuitedCard,
+  parseTavernShortCardId,
+  shuffleTavernShortDeck,
+  type TavernShortCard,
+  type TavernShortHonor,
+  type TavernShortSuit,
+} from "./tavern-short-gambling-tiles";
+import type { TavernShortCard } from "./tavern-short-gambling-tiles";
 
 export type TavernShortBestFive = {
   category:
@@ -38,8 +48,7 @@ export type TavernShortBestFive = {
     | "flush"
     | "full-house"
     | "four-of-a-kind"
-    | "straight-flush"
-    | "royal-flush";
+    | "straight-flush";
   label: string;
   scoreKey: number[];
   cards: TavernShortCard[];
@@ -57,7 +66,18 @@ export type TavernShortClaimStage = "kong-pong-chow" | "pong-chow" | "chow";
 export type TavernShortDebugHandPreset =
   | "claim-pong"
   | "claim-kong"
-  | "claim-chow";
+  | "claim-chow"
+  | "claim-chow-then-kong";
+export type TavernShortDisplayOrderEntryKind =
+  | "hand"
+  | "incoming-draw"
+  | "public-ghost";
+export type TavernShortDisplayOrderEntry = {
+  kind: TavernShortDisplayOrderEntryKind;
+  cardId: string;
+};
+export type TavernShortDisplayOrderEntryId =
+  `${TavernShortDisplayOrderEntryKind}|${string}`;
 export type TavernShortHandPhase =
   | "betting"
   | "draw-discard"
@@ -133,6 +153,7 @@ export type TavernShortHandState = {
   phase: TavernShortHandPhase;
   players: TavernShortPlayerState[];
   publicCards: TavernShortCard[];
+  displayOrderEntries: TavernShortDisplayOrderEntry[];
   deck: TavernShortCard[];
   currentBet: number;
   lastFullRaise: number;
@@ -150,54 +171,13 @@ export type TavernShortHandState = {
   lastVisibleDiscard: { seatId: string; card: TavernShortCard } | null;
 };
 
-const SUITS: TavernShortSuit[] = ["wan", "bing", "tong", "tiao"];
-
-const SUIT_LABELS: Record<TavernShortSuit, string> = {
-  wan: "万",
-  bing: "饼",
-  tong: "筒",
-  tiao: "条",
-};
-
-export function createTavernShortDeck(): TavernShortCard[] {
-  return SUITS.flatMap((suit) =>
-    Array.from({ length: 13 }, (_, index) => ({
-      id: `${suit}-${index + 1}`,
-      suit,
-      rank: index + 1,
-    }))
-  );
-}
-
-export function shuffleTavernShortDeck(
-  deck: readonly TavernShortCard[],
-  seed: number
-): TavernShortCard[] {
-  const shuffled = [...deck];
-  let cursor = seed <= 0 ? 1 : seed;
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    cursor = (cursor * 1664525 + 1013904223) >>> 0;
-    const swapIndex = cursor % (index + 1);
-    const current = shuffled[index];
-    const swap = shuffled[swapIndex];
-    if (current != null && swap != null) {
-      shuffled[index] = swap;
-      shuffled[swapIndex] = current;
-    }
-  }
-  return shuffled;
-}
-
-export function getTavernShortCardLabel(card: TavernShortCard): string {
-  return `${card.rank}${SUIT_LABELS[card.suit]}`;
-}
-
 export {
   advanceTavernShortNpcAction,
   buildTavernShortPots,
   claimTavernShortDiscard,
   clearTavernShortDroppingDiscardCandidate,
   clearTavernShortLiftedDiscardCandidate,
+  clearTavernShortSelectedDiscardCandidate,
   chooseTavernShortDiscardCandidate,
   compareTavernShortBestFives,
   confirmTavernShortDiscard,
@@ -205,9 +185,13 @@ export {
   drawTavernShortIncomingCard,
   evaluateBestTavernShortShowdown,
   passTavernShortClaim,
+  reorderTavernShortDisplayOrderEntries,
+  reorderTavernShortHand,
   resolveTavernShortBetAction,
   settleTavernShortShowdown,
+  syncTavernShortDisplayOrderEntries,
   splitTavernShortPot,
   TAVERN_SHORT_BIG_BLIND,
   TAVERN_SHORT_SMALL_BLIND,
+  toTavernShortDisplayOrderEntryId,
 };

@@ -4,6 +4,15 @@ import {
   evaluateBestTavernShortShowdown,
   splitTavernShortPot,
 } from "./tavern-short-gambling-evaluator";
+import {
+  createTavernShortDeck,
+  getTavernShortCardKey,
+  getTavernShortCardLabel,
+  getTavernShortCardSortValue,
+  isTavernShortSuitedCard,
+  parseTavernShortCardId,
+  shuffleTavernShortDeck,
+} from "./tavern-short-gambling-tiles";
 import type {
   TavernShortBetActionKind,
   TavernShortCard,
@@ -12,6 +21,8 @@ import type {
   TavernShortClaimOption,
   TavernShortClaimStage,
   TavernShortDebugHandPreset,
+  TavernShortDisplayOrderEntry,
+  TavernShortDisplayOrderEntryId,
   TavernShortHandState,
   TavernShortPlayerState,
   TavernShortPot,
@@ -30,19 +41,8 @@ type TavernShortDebugHandDefinition = {
     TavernShortSeatId,
     [string, string, string, string, string]
   >;
+  deckTopCardIds?: string[];
 };
-const SHORT_SUIT_LABELS = {
-  wan: "万",
-  bing: "饼",
-  tong: "筒",
-  tiao: "条",
-} as const;
-const SHORT_SUIT_ORDER = {
-  wan: 0,
-  bing: 1,
-  tong: 2,
-  tiao: 3,
-} as const;
 const SEAT_NAME_FALLBACKS = {
   you: "你",
   traveler: "行脚客",
@@ -54,75 +54,63 @@ const DEBUG_HAND_PRESETS: Record<
   TavernShortDebugHandDefinition
 > = {
   "claim-pong": {
-    publicCardIds: ["bing-10", "tiao-10"],
+    publicCardIds: ["tong-1", "east"],
     handCardIdsBySeatId: {
-      you: ["bing-7", "tong-7", "wan-2", "bing-3", "tong-9"],
-      traveler: ["wan-7", "tiao-2", "tiao-3", "tiao-8", "bing-11"],
-      broker: ["wan-1", "wan-4", "bing-5", "tong-8", "tiao-12"],
-      guard: ["wan-9", "bing-1", "tong-2", "tiao-5", "wan-13"],
+      you: ["wan-7", "wan-7-2", "tong-2", "tiao-4", "zhong"],
+      traveler: ["wan-7-3", "tiao-2", "tiao-3", "tiao-8", "fa"],
+      broker: ["wan-1", "wan-4", "tong-5", "tong-8", "south"],
+      guard: ["wan-9", "tong-1-2", "tong-2-2", "tiao-5", "north"],
     },
   },
   "claim-kong": {
-    publicCardIds: ["tong-10", "tiao-10"],
+    publicCardIds: ["tong-3", "fa"],
     handCardIdsBySeatId: {
-      you: ["wan-4", "bing-4", "tong-4", "wan-2", "bing-9"],
-      traveler: ["wan-1", "bing-2", "tong-3", "tiao-5", "wan-7"],
-      broker: ["tiao-4", "wan-6", "bing-8", "tong-11", "tiao-13"],
-      guard: ["bing-1", "tong-2", "tiao-6", "wan-9", "bing-12"],
+      you: ["tong-4", "tong-4-2", "tong-4-3", "wan-2", "east"],
+      traveler: ["south", "wan-1", "tong-3-2", "tiao-5", "wan-7"],
+      broker: ["tong-4-4", "wan-6", "tong-8", "zhong", "bai"],
+      guard: ["wan-3", "tong-2", "tiao-6", "wan-9", "north"],
     },
   },
   "claim-chow": {
-    publicCardIds: ["wan-4", "tiao-9"],
+    publicCardIds: ["tong-9", "bai"],
     handCardIdsBySeatId: {
-      you: ["tong-4", "tong-5", "wan-2", "bing-9", "tiao-11"],
-      traveler: ["wan-1", "bing-2", "tong-3", "tiao-7", "wan-9"],
-      broker: ["bing-1", "tong-8", "tiao-3", "wan-10", "bing-13"],
-      guard: ["tong-6", "wan-8", "bing-10", "tiao-12", "wan-13"],
+      you: ["wan-5", "wan-6", "tong-4", "tiao-8", "east"],
+      traveler: ["fa", "wan-1", "tong-3", "tiao-7", "wan-9"],
+      broker: ["south", "tong-8", "tiao-3", "wan-2", "zhong"],
+      guard: ["wan-4", "tong-6", "tiao-6", "wan-8", "north"],
     },
+  },
+  "claim-chow-then-kong": {
+    publicCardIds: ["tong-7", "zhong"],
+    handCardIdsBySeatId: {
+      you: ["wan-5", "wan-6", "tong-6", "tong-6-2", "east"],
+      traveler: ["fa", "wan-1", "tiao-2", "tiao-3", "wan-9"],
+      broker: ["south", "tong-8", "tiao-7", "wan-2", "bai"],
+      guard: ["wan-4", "tong-6-3", "wan-8", "tiao-6", "north"],
+    },
+    deckTopCardIds: ["tong-6-4", "wan-3", "tong-2", "wan-8-2", "tiao-9"],
   },
 };
 
 function createDeck(seed: number): TavernShortCard[] {
-  const deck: TavernShortCard[] = [];
-  for (const suit of ["wan", "bing", "tong", "tiao"] as const) {
-    for (let rank = 1; rank <= 13; rank += 1) {
-      deck.push({ id: `${suit}-${rank}`, suit, rank });
-    }
-  }
-  const shuffled = [...deck];
-  let cursor = seed <= 0 ? 1 : seed;
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    cursor = (cursor * 1664525 + 1013904223) >>> 0;
-    const swapIndex = cursor % (index + 1);
-    const current = shuffled[index];
-    const swap = shuffled[swapIndex];
-    if (current != null && swap != null) {
-      shuffled[index] = swap;
-      shuffled[swapIndex] = current;
-    }
-  }
-  return shuffled;
+  return shuffleTavernShortDeck(createTavernShortDeck(), seed);
 }
 
 function createCardFromId(id: string): TavernShortCard {
-  const match = /^(wan|bing|tong|tiao)-(\d+)/u.exec(id);
-  const suit = match?.[1];
-  const rankText = match?.[2];
-  if (suit !== "wan" && suit !== "bing" && suit !== "tong" && suit !== "tiao") {
-    throw new Error(`Invalid tavern short suit in debug preset card "${id}".`);
-  }
-  const rank = Number.parseInt(rankText ?? "", 10);
-  if (!Number.isInteger(rank) || rank < 1 || rank > 13) {
-    throw new Error(`Invalid tavern short rank in debug preset card "${id}".`);
-  }
-  return { id, suit, rank };
+  return parseTavernShortCardId(id);
 }
 
 function compareMeldCards(a: TavernShortCard, b: TavernShortCard): number {
-  if (a.rank !== b.rank) {
-    return a.rank - b.rank;
+  const sortDiff =
+    getTavernShortCardSortValue(a) - getTavernShortCardSortValue(b);
+  if (sortDiff !== 0) {
+    return sortDiff;
   }
-  return SHORT_SUIT_ORDER[a.suit] - SHORT_SUIT_ORDER[b.suit];
+  const copyDiff = (a.copy ?? 1) - (b.copy ?? 1);
+  if (copyDiff !== 0) {
+    return copyDiff;
+  }
+  return a.id.localeCompare(b.id);
 }
 
 function buildExposedMeldCards(
@@ -137,6 +125,31 @@ function buildExposedMeldCards(
   return [visibleDiscard, ...consumedCards].sort(compareMeldCards);
 }
 
+function removeCardsByIds(
+  cards: readonly TavernShortCard[],
+  cardIds: readonly string[]
+): TavernShortCard[] {
+  const removedCardIds = new Set(cardIds);
+  return cards.filter((card) => !removedCardIds.has(card.id));
+}
+
+function getShowdownCards(
+  player: TavernShortPlayerState,
+  publicCards: readonly TavernShortCard[]
+): TavernShortCard[] {
+  const cardsById = new Map<string, TavernShortCard>();
+  for (const card of [
+    ...player.hand,
+    ...player.meldHistory.flatMap((meld) => meld.cards),
+    ...publicCards,
+  ]) {
+    if (!cardsById.has(card.id)) {
+      cardsById.set(card.id, card);
+    }
+  }
+  return [...cardsById.values()];
+}
+
 function buildDebugPresetHandData(input: {
   playerName: string;
   openingStacks: [number, number, number, number];
@@ -148,6 +161,7 @@ function buildDebugPresetHandData(input: {
 } {
   const definition = DEBUG_HAND_PRESETS[input.debugPreset];
   const publicCards = definition.publicCardIds.map(createCardFromId);
+  const deckTopCards = (definition.deckTopCardIds ?? []).map(createCardFromId);
   const players: TavernShortPlayerState[] = SEAT_IDS.map((seatId, index) => ({
     seatId,
     name: index === 0 ? input.playerName : NPC_NAMES[index - 1]!,
@@ -167,13 +181,16 @@ function buildDebugPresetHandData(input: {
   const usedCardIds = new Set([
     ...publicCards.map((card) => card.id),
     ...players.flatMap((player) => player.hand.map((card) => card.id)),
+    ...deckTopCards.map((card) => card.id),
   ]);
-  if (usedCardIds.size !== 22) {
+  const expectedUsedCardCount = 22 + deckTopCards.length;
+  if (usedCardIds.size !== expectedUsedCardCount) {
     throw new Error(
-      `Tavern short debug preset "${input.debugPreset}" must define 22 unique cards.`
+      `Tavern short debug preset "${input.debugPreset}" must define ${expectedUsedCardCount} unique cards.`
     );
   }
-  const deck = createDeck(1).filter((card) => !usedCardIds.has(card.id));
+  const remainingDeck = createDeck(1).filter((card) => !usedCardIds.has(card.id));
+  const deck = [...deckTopCards, ...remainingDeck];
   return {
     players,
     publicCards,
@@ -234,7 +251,7 @@ function getBroadcastSeatName(hand: TavernShortHandState, seatId: string): strin
 }
 
 function getBroadcastCardLabel(card: TavernShortCard): string {
-  return `${card.rank}${SHORT_SUIT_LABELS[card.suit]}`;
+  return getTavernShortCardLabel(card);
 }
 
 function getBroadcastClaimKindLabel(kind: TavernShortClaimKind): string {
@@ -414,21 +431,31 @@ function buildChowOptions(
   discardCard: TavernShortCard,
   player: TavernShortPlayerState
 ): TavernShortClaimOption[] {
+  if (!isTavernShortSuitedCard(discardCard)) {
+    return [];
+  }
   const options: TavernShortClaimOption[] = [];
+  const unlockedClaimCards = getUnlockedClaimCards(player);
   const sequences: Array<[number, number]> = [
     [discardCard.rank - 2, discardCard.rank - 1],
     [discardCard.rank - 1, discardCard.rank + 1],
     [discardCard.rank + 1, discardCard.rank + 2],
   ];
   for (const [leftRank, rightRank] of sequences) {
-    if (leftRank < 1 || rightRank > 13) {
+    if (leftRank < 1 || rightRank > 9) {
       continue;
     }
-    const leftCard = player.hand.find(
-      (card) => card.suit === discardCard.suit && card.rank === leftRank
+    const leftCard = unlockedClaimCards.find(
+      (card) =>
+        isTavernShortSuitedCard(card) &&
+        card.suit === discardCard.suit &&
+        card.rank === leftRank
     );
-    const rightCard = player.hand.find(
-      (card) => card.suit === discardCard.suit && card.rank === rightRank
+    const rightCard = unlockedClaimCards.find(
+      (card) =>
+        isTavernShortSuitedCard(card) &&
+        card.suit === discardCard.suit &&
+        card.rank === rightRank
     );
     if (leftCard == null || rightCard == null) {
       continue;
@@ -449,27 +476,30 @@ function buildPongOrKongOption(
   discardCard: TavernShortCard,
   player: TavernShortPlayerState
 ): TavernShortClaimOption[] {
-  const sameRankCards = player.hand.filter((card) => card.rank === discardCard.rank);
-  if (sameRankCards.length >= 3) {
+  const discardCardKey = getTavernShortCardKey(discardCard);
+  const sameTileCards = getUnlockedClaimCards(player).filter(
+    (card) => getTavernShortCardKey(card) === discardCardKey
+  );
+  if (sameTileCards.length >= 3) {
     return [
       {
-        id: `kong:${player.seatId}:${discardCard.id}:${sameRankCards[0]!.id}:${sameRankCards[1]!.id}:${sameRankCards[2]!.id}`,
+        id: `kong:${player.seatId}:${discardCard.id}:${sameTileCards[0]!.id}:${sameTileCards[1]!.id}:${sameTileCards[2]!.id}`,
         seatId: player.seatId,
         kind: "kong",
         discardCardId: discardCard.id,
-        consumeCardIds: [sameRankCards[0]!.id, sameRankCards[1]!.id, sameRankCards[2]!.id],
+        consumeCardIds: [sameTileCards[0]!.id, sameTileCards[1]!.id, sameTileCards[2]!.id],
         priority: 3,
       },
     ];
   }
-  if (sameRankCards.length >= 2) {
+  if (sameTileCards.length >= 2) {
     return [
       {
-        id: `pong:${player.seatId}:${discardCard.id}:${sameRankCards[0]!.id}:${sameRankCards[1]!.id}`,
+        id: `pong:${player.seatId}:${discardCard.id}:${sameTileCards[0]!.id}:${sameTileCards[1]!.id}`,
         seatId: player.seatId,
         kind: "pong",
         discardCardId: discardCard.id,
-        consumeCardIds: [sameRankCards[0]!.id, sameRankCards[1]!.id],
+        consumeCardIds: [sameTileCards[0]!.id, sameTileCards[1]!.id],
         priority: 2,
       },
     ];
@@ -491,7 +521,9 @@ function buildClaimOptions(
     const pongOrKong = buildPongOrKongOption(discardCard, player);
     const chow =
       player.seatId === nextSeatId ? buildChowOptions(discardCard, player) : [];
-    return [...pongOrKong, ...chow];
+    return [...pongOrKong, ...chow].filter((option) =>
+      leavesUnlockedDiscardAfterClaim(player, option, discardCard)
+    );
   });
   return normalizeClaimOptions(options, discarderSeatId);
 }
@@ -628,6 +660,100 @@ function completeResolvedDiscard(
   };
 }
 
+export function toTavernShortDisplayOrderEntryId(
+  entry: TavernShortDisplayOrderEntry
+): TavernShortDisplayOrderEntryId {
+  return `${entry.kind}|${entry.cardId}`;
+}
+
+function buildVisibleHandDisplayEntries(
+  hand: TavernShortHandState,
+  seatId: string
+): TavernShortDisplayOrderEntry[] {
+  const player = hand.players.find((candidate) => candidate.seatId === seatId);
+  if (player == null) {
+    return [];
+  }
+  const lockedCardIds = getLockedDiscardCardIds(hand, player);
+  return player.hand
+    .filter((card) => !lockedCardIds.has(card.id))
+    .map((card) => ({
+      kind: "hand" as const,
+      cardId: card.id,
+    }));
+}
+
+function buildPublicGhostDisplayEntries(
+  hand: TavernShortHandState
+): TavernShortDisplayOrderEntry[] {
+  return hand.publicCards.map((card) => ({
+    kind: "public-ghost" as const,
+    cardId: card.id,
+  }));
+}
+
+function buildIncomingDrawDisplayEntries(
+  hand: TavernShortHandState,
+  seatId: string
+): TavernShortDisplayOrderEntry[] {
+  if (
+    hand.pendingIncomingCard == null ||
+    hand.pendingIncomingCard.ownerSeatId !== seatId ||
+    hand.pendingIncomingCard.source !== "draw"
+  ) {
+    return [];
+  }
+  return [
+    {
+      kind: "incoming-draw",
+      cardId: hand.pendingIncomingCard.card.id,
+    },
+  ];
+}
+
+function buildCanonicalDisplayOrderEntries(
+  hand: TavernShortHandState,
+  seatId: string
+): TavernShortDisplayOrderEntry[] {
+  return [
+    ...buildVisibleHandDisplayEntries(hand, seatId),
+    ...buildPublicGhostDisplayEntries(hand),
+    ...buildIncomingDrawDisplayEntries(hand, seatId),
+  ];
+}
+
+export function syncTavernShortDisplayOrderEntries(
+  hand: TavernShortHandState,
+  seatId: string
+): TavernShortHandState {
+  const canonicalEntries = buildCanonicalDisplayOrderEntries(hand, seatId);
+  const canonicalEntryIds = new Set(
+    canonicalEntries.map(toTavernShortDisplayOrderEntryId)
+  );
+  const nextDisplayOrderEntries: TavernShortDisplayOrderEntry[] = [];
+  const seenEntryIds = new Set<string>();
+  for (const entry of hand.displayOrderEntries ?? []) {
+    const entryId = toTavernShortDisplayOrderEntryId(entry);
+    if (!canonicalEntryIds.has(entryId) || seenEntryIds.has(entryId)) {
+      continue;
+    }
+    nextDisplayOrderEntries.push(entry);
+    seenEntryIds.add(entryId);
+  }
+  for (const entry of canonicalEntries) {
+    const entryId = toTavernShortDisplayOrderEntryId(entry);
+    if (seenEntryIds.has(entryId)) {
+      continue;
+    }
+    nextDisplayOrderEntries.push(entry);
+    seenEntryIds.add(entryId);
+  }
+  return {
+    ...hand,
+    displayOrderEntries: nextDisplayOrderEntries,
+  };
+}
+
 function commitChips(
   player: TavernShortPlayerState,
   amount: number
@@ -698,7 +824,8 @@ export function createTavernShortHand(input: {
     }
   );
   const pendingBetSeatIds = getActionableBetSeatIds(nextPlayers, bigBlindSeatIndex + 1);
-  return {
+  return syncTavernShortDisplayOrderEntries(
+    {
     dealerSeatIndex: input.dealerSeatIndex,
     actingSeatIndex: pendingBetSeatIds.length > 0 ? seatIndexOf(pendingBetSeatIds[0]!) : 0,
     bettingRoundIndex: 0,
@@ -706,6 +833,7 @@ export function createTavernShortHand(input: {
     phase: "betting",
     players: nextPlayers,
     publicCards,
+    displayOrderEntries: [],
     deck: remainingDeck,
     currentBet: Math.min(TAVERN_SHORT_BIG_BLIND, input.openingStacks[bigBlindSeatIndex] ?? TAVERN_SHORT_BIG_BLIND),
     lastFullRaise: TAVERN_SHORT_BIG_BLIND,
@@ -721,7 +849,9 @@ export function createTavernShortHand(input: {
     pendingDrawSeatIds: [],
     currentDrawTurnSeatId: null,
     lastVisibleDiscard: null,
-  };
+    },
+    "you"
+  );
 }
 
 export function resolveTavernShortBetAction(
@@ -882,6 +1012,24 @@ function getLockedMeldCardIds(player: TavernShortPlayerState): Set<string> {
   );
 }
 
+function getUnlockedClaimCards(player: TavernShortPlayerState): TavernShortCard[] {
+  const lockedCardIds = getLockedMeldCardIds(player);
+  return player.hand.filter((card) => !lockedCardIds.has(card.id));
+}
+
+function leavesUnlockedDiscardAfterClaim(
+  player: TavernShortPlayerState,
+  option: TavernShortClaimOption,
+  discardCard: TavernShortCard
+): boolean {
+  const lockedCardIds = getLockedMeldCardIds(player);
+  lockedCardIds.add(discardCard.id);
+  for (const cardId of option.consumeCardIds) {
+    lockedCardIds.add(cardId);
+  }
+  return [...player.hand, discardCard].some((card) => !lockedCardIds.has(card.id));
+}
+
 function getLockedDiscardCardIds(
   hand: TavernShortHandState,
   player: TavernShortPlayerState
@@ -933,18 +1081,41 @@ export function chooseTavernShortDiscardCandidate(
       droppingDiscardCardId: null,
     };
   }
-  if (
-    hand.selectedDiscardCardId != null &&
-    hand.selectedDiscardCardId !== cardId
-  ) {
-    return hand;
-  }
   return {
     ...hand,
     actingSeatIndex: seatIndexOf(seatId),
     selectedDiscardCardId: cardId,
     liftedDiscardCardId: cardId,
     droppingDiscardCardId: null,
+  };
+}
+
+export function clearTavernShortSelectedDiscardCandidate(
+  hand: TavernShortHandState,
+  seatId: string
+): TavernShortHandState {
+  const player = hand.players.find((candidate) => candidate.seatId === seatId);
+  const selectedDiscardCardId = hand.selectedDiscardCardId;
+  if (
+    hand.phase !== "draw-discard" ||
+    player == null ||
+    hand.pendingIncomingCard?.ownerSeatId !== seatId ||
+    selectedDiscardCardId == null
+  ) {
+    return hand;
+  }
+  const selectableCardIds = new Set(
+    getSelectableDiscardCards(hand, player).map((card) => card.id)
+  );
+  if (!selectableCardIds.has(selectedDiscardCardId)) {
+    return hand;
+  }
+  return {
+    ...hand,
+    actingSeatIndex: seatIndexOf(seatId),
+    selectedDiscardCardId: null,
+    liftedDiscardCardId: null,
+    droppingDiscardCardId: selectedDiscardCardId,
   };
 }
 
@@ -996,6 +1167,101 @@ export function clearTavernShortDroppingDiscardCandidate(
   };
 }
 
+export function reorderTavernShortHand(
+  hand: TavernShortHandState,
+  seatId: string,
+  cardId: string,
+  beforeCardId: string | null
+): TavernShortHandState {
+  const player = hand.players.find((candidate) => candidate.seatId === seatId);
+  if (
+    hand.phase === "draw-discard" ||
+    player == null ||
+    cardId.length === 0 ||
+    beforeCardId === cardId
+  ) {
+    return hand;
+  }
+
+  const movingCard = player.hand.find((card) => card.id === cardId);
+  if (movingCard == null) {
+    return hand;
+  }
+
+  const withoutMoving = player.hand.filter((card) => card.id !== cardId);
+  if (beforeCardId != null && !withoutMoving.some((card) => card.id === beforeCardId)) {
+    return hand;
+  }
+  const insertIndex =
+    beforeCardId == null
+      ? withoutMoving.length
+      : withoutMoving.findIndex((card) => card.id === beforeCardId);
+  if (insertIndex < 0) {
+    return hand;
+  }
+
+  const nextPlayer: TavernShortPlayerState = {
+    ...player,
+    hand: [
+      ...withoutMoving.slice(0, insertIndex),
+      movingCard,
+      ...withoutMoving.slice(insertIndex),
+    ],
+  };
+  return {
+    ...hand,
+    players: replacePlayer(hand.players, nextPlayer),
+  };
+}
+
+export function reorderTavernShortDisplayOrderEntries(
+  hand: TavernShortHandState,
+  seatId: string,
+  entryId: TavernShortDisplayOrderEntryId,
+  beforeEntryId: TavernShortDisplayOrderEntryId | null
+): TavernShortHandState {
+  const normalizedHand = syncTavernShortDisplayOrderEntries(hand, seatId);
+  if (entryId.length === 0 || beforeEntryId === entryId) {
+    return normalizedHand;
+  }
+
+  const movingEntry = normalizedHand.displayOrderEntries.find(
+    (entry) => toTavernShortDisplayOrderEntryId(entry) === entryId
+  );
+  if (movingEntry == null) {
+    return normalizedHand;
+  }
+
+  const withoutMoving = normalizedHand.displayOrderEntries.filter(
+    (entry) => toTavernShortDisplayOrderEntryId(entry) !== entryId
+  );
+  if (
+    beforeEntryId != null &&
+    !withoutMoving.some(
+      (entry) => toTavernShortDisplayOrderEntryId(entry) === beforeEntryId
+    )
+  ) {
+    return normalizedHand;
+  }
+  const insertIndex =
+    beforeEntryId == null
+      ? withoutMoving.length
+      : withoutMoving.findIndex(
+          (entry) => toTavernShortDisplayOrderEntryId(entry) === beforeEntryId
+        );
+  if (insertIndex < 0) {
+    return normalizedHand;
+  }
+  return {
+    ...normalizedHand,
+    displayOrderEntries: [
+      ...withoutMoving.slice(0, insertIndex),
+      movingEntry,
+      ...withoutMoving.slice(insertIndex),
+    ],
+  };
+}
+
 export function confirmTavernShortDiscard(
   hand: TavernShortHandState,
   seatId: string
@@ -1026,9 +1292,12 @@ export function confirmTavernShortDiscard(
     isDiscardingIncoming
       ? incoming.card
       : player.hand.find((card) => card.id === selectedDiscardCardId) ?? incoming.card;
-  const nextHandCards = isDiscardingIncoming
-    ? player.hand
-    : [...player.hand.filter((card) => card.id !== discardedCard.id), incoming.card];
+  const nextHandCards =
+    incoming.source === "claim"
+      ? player.hand.filter((card) => card.id !== discardedCard.id)
+      : isDiscardingIncoming
+        ? player.hand
+        : [...player.hand.filter((card) => card.id !== discardedCard.id), incoming.card];
   const nextPlayer: TavernShortPlayerState = {
     ...player,
     hand: nextHandCards,
@@ -1126,6 +1395,7 @@ export function claimTavernShortDiscard(
     }
     return {
       ...player,
+      hand: removeCardsByIds(player.hand, option.consumeCardIds),
       autoBetPending: true,
       meldHistory: [
         ...player.meldHistory,
@@ -1233,7 +1503,9 @@ export function settleTavernShortShowdown(hand: TavernShortHandState): TavernSho
   const activePlayers = hand.players.filter((player) => !player.folded);
   const evaluated = hand.players.map((player) => ({
     player,
-    bestFive: evaluateBestTavernShortShowdown([...player.hand, ...hand.publicCards]),
+    bestFive: evaluateBestTavernShortShowdown(
+      getShowdownCards(player, hand.publicCards)
+    ),
   }));
   const payouts = new Map<string, number>();
   const winningPotIds = new Map<string, string[]>();

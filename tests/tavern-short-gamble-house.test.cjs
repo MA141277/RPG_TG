@@ -24,6 +24,8 @@ const {
   advanceTavernShortNpcAction,
   chooseTavernShortDiscardCandidate,
   resolveTavernShortBetAction,
+  syncTavernShortDisplayOrderEntries,
+  toTavernShortDisplayOrderEntryId,
 } = require("../.test-dist/domain/tavern-short-gambling.js");
 const {
   TavernShortNpcHiddenHandStackBuilder,
@@ -163,6 +165,17 @@ function syncShortTableToHumanClaimWindow(table) {
     table,
     advanceShortHandToHumanClaimWindow(table.currentHand)
   );
+}
+
+function moveEntryIdBefore(entryIds, movingEntryId, beforeEntryId) {
+  const withoutMoving = entryIds.filter((entryId) => entryId !== movingEntryId);
+  const insertIndex = beforeEntryId == null ? withoutMoving.length : withoutMoving.indexOf(beforeEntryId);
+  assert.notEqual(insertIndex, -1);
+  return [
+    ...withoutMoving.slice(0, insertIndex),
+    movingEntryId,
+    ...withoutMoving.slice(insertIndex),
+  ];
 }
 
 test("tavern short buy-in exchanges gold to chips and charges stamina once per table", () => {
@@ -938,7 +951,7 @@ test("tavern short dropping discard candidate clears after the drop animation ti
   ]);
 });
 
-test("tavern short house dispatch applies typed hand reorder only outside draw-discard", () => {
+test("tavern short house dispatch reorders mixed display-order entry ids without mutating the true hand", () => {
   const started = openShortTable(createBaseState(), prototypeCharacters, 100);
   assert.equal(started.sessionState.gambleSession.variant, "short");
 
@@ -950,11 +963,14 @@ test("tavern short house dispatch applies typed hand reorder only outside draw-d
     { id: "tiao-9", suit: "tiao", rank: 9 },
     { id: "wan-6", suit: "wan", rank: 6 },
   ];
-  const bettingTable = {
-    ...table,
-    currentHand: {
+  const bettingHand = syncTavernShortDisplayOrderEntries(
+    {
       ...table.currentHand,
       phase: "betting",
+      publicCards: [
+        { id: "wan-7", suit: "wan", rank: 7 },
+        { id: "tong-8", suit: "tong", rank: 8 },
+      ],
       players: table.currentHand.players.map((player) =>
         player.seatId !== "you"
           ? player
@@ -964,6 +980,20 @@ test("tavern short house dispatch applies typed hand reorder only outside draw-d
             }
       ),
     },
+    "you"
+  );
+  bettingHand.displayOrderEntries = [
+    { kind: "hand", cardId: "wan-2" },
+    { kind: "hand", cardId: "tong-3" },
+    { kind: "public-ghost", cardId: "wan-7" },
+    { kind: "hand", cardId: "tong-4" },
+    { kind: "hand", cardId: "tiao-9" },
+    { kind: "hand", cardId: "wan-6" },
+    { kind: "public-ghost", cardId: "tong-8" },
+  ];
+  const bettingTable = {
+    ...table,
+    currentHand: bettingHand,
   };
 
   const reordered = tavernHouseModule.dispatch({
@@ -980,33 +1010,81 @@ test("tavern short house dispatch applies typed hand reorder only outside draw-d
     },
     request: {
       type: "action",
-      actionId: "gamble-short-reorder:tong-4:wan-2",
+      actionId: "gamble-short-reorder:public-ghost|wan-7:hand|tong-3",
     },
   });
 
   assert.deepEqual(
+    reordered.sessionState.gambleSession.table.currentHand.displayOrderEntries.map(
+      toTavernShortDisplayOrderEntryId
+    ),
+    [
+      "hand|wan-2",
+      "public-ghost|wan-7",
+      "hand|tong-3",
+      "hand|tong-4",
+      "hand|tiao-9",
+      "hand|wan-6",
+      "public-ghost|tong-8",
+    ]
+  );
+  assert.deepEqual(
     reordered.sessionState.gambleSession.table.currentHand.players
       .find((player) => player.seatId === "you")
       ?.hand.map((card) => card.id),
-    ["tong-4", "wan-2", "tong-3", "tiao-9", "wan-6"]
+    ["wan-2", "tong-3", "tong-4", "tiao-9", "wan-6"]
   );
+});
 
-  const drawDiscardTable = {
-    ...bettingTable,
-    currentHand: {
-      ...bettingTable.currentHand,
+test("tavern short house dispatch accepts entry-id reorders during draw-discard and claim-window without disturbing discard state", () => {
+  const started = openShortTable(createBaseState(), prototypeCharacters, 100, true);
+  const table = started.sessionState.gambleSession.table;
+
+  const drawDiscardHand = syncTavernShortDisplayOrderEntries(
+    {
+      ...table.currentHand,
       phase: "draw-discard",
       actingSeatIndex: 0,
       currentDrawTurnSeatId: "you",
+      publicCards: [
+        { id: "wan-7", suit: "wan", rank: 7 },
+        { id: "tong-8", suit: "tong", rank: 8 },
+      ],
       pendingIncomingCard: {
         ownerSeatId: "you",
         source: "draw",
         card: { id: "tong-9", suit: "tong", rank: 9 },
       },
+      players: table.currentHand.players.map((player) =>
+        player.seatId !== "you"
+          ? player
+          : {
+              ...player,
+              hand: [
+                { id: "wan-2", suit: "wan", rank: 2 },
+                { id: "tong-3", suit: "tong", rank: 3 },
+                { id: "tong-4", suit: "tong", rank: 4 },
+                { id: "tiao-9", suit: "tiao", rank: 9 },
+                { id: "wan-6", suit: "wan", rank: 6 },
+              ],
+            }
+      ),
+      selectedDiscardCardId: "tong-4",
     },
-  };
+    "you"
+  );
+  drawDiscardHand.displayOrderEntries = [
+    { kind: "hand", cardId: "wan-2" },
+    { kind: "hand", cardId: "tong-3" },
+    { kind: "public-ghost", cardId: "wan-7" },
+    { kind: "hand", cardId: "tong-4" },
+    { kind: "hand", cardId: "tiao-9" },
+    { kind: "hand", cardId: "wan-6" },
+    { kind: "public-ghost", cardId: "tong-8" },
+    { kind: "incoming-draw", cardId: "tong-9" },
+  ];
 
-  const blocked = tavernHouseModule.dispatch({
+  const drawDiscardReordered = tavernHouseModule.dispatch({
     gameState: started.gameState,
     characterDefinitions: started.characterDefinitions,
     houseDefinition: tavernHouse,
@@ -1015,19 +1093,78 @@ test("tavern short house dispatch applies typed hand reorder only outside draw-d
       ...started.sessionState,
       gambleSession: {
         ...started.sessionState.gambleSession,
-        table: drawDiscardTable,
+        table: {
+          ...table,
+          currentHand: drawDiscardHand,
+        },
       },
     },
     request: {
       type: "action",
-      actionId: "gamble-short-reorder:tong-4:wan-2",
+      actionId: "gamble-short-reorder:public-ghost|wan-7:hand|tong-3",
     },
   });
 
+  assert.equal(
+    drawDiscardReordered.sessionState.gambleSession.table.currentHand.selectedDiscardCardId,
+    "tong-4"
+  );
   assert.deepEqual(
-    blocked.sessionState.gambleSession.table.currentHand.players
-      .find((player) => player.seatId === "you")
-      ?.hand.map((card) => card.id),
-    ["wan-2", "tong-3", "tong-4", "tiao-9", "wan-6"]
+    drawDiscardReordered.sessionState.gambleSession.table.currentHand.displayOrderEntries.map(
+      toTavernShortDisplayOrderEntryId
+    ),
+    [
+      "hand|wan-2",
+      "public-ghost|wan-7",
+      "hand|tong-3",
+      "hand|tong-4",
+      "hand|tiao-9",
+      "hand|wan-6",
+      "public-ghost|tong-8",
+      "incoming-draw|tong-9",
+    ]
+  );
+
+  const claimTable = syncShortTableToHumanClaimWindow(table);
+  const claimHand = syncTavernShortDisplayOrderEntries(claimTable.currentHand, "you");
+  const claimEntryIds = claimHand.displayOrderEntries.map(toTavernShortDisplayOrderEntryId);
+  const claimMovingEntryId =
+    claimEntryIds.find((entryId) => entryId.startsWith("public-ghost|")) ??
+    claimEntryIds.at(-1);
+  const claimBeforeEntryId =
+    claimEntryIds.find((entryId) => entryId !== claimMovingEntryId) ?? null;
+  assert.ok(claimMovingEntryId);
+  assert.ok(claimBeforeEntryId);
+
+  const claimReordered = tavernHouseModule.dispatch({
+    gameState: started.gameState,
+    characterDefinitions: started.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: {
+      ...started.sessionState,
+      gambleSession: {
+        ...started.sessionState.gambleSession,
+        table: {
+          ...claimTable,
+          currentHand: claimHand,
+        },
+      },
+    },
+    request: {
+      type: "action",
+      actionId: `gamble-short-reorder:${claimMovingEntryId}:${claimBeforeEntryId}`,
+    },
+  });
+
+  assert.equal(
+    claimReordered.sessionState.gambleSession.table.currentHand.phase,
+    "claim-window"
+  );
+  assert.deepEqual(
+    claimReordered.sessionState.gambleSession.table.currentHand.displayOrderEntries.map(
+      toTavernShortDisplayOrderEntryId
+    ),
+    moveEntryIdBefore(claimEntryIds, claimMovingEntryId, claimBeforeEntryId)
   );
 });

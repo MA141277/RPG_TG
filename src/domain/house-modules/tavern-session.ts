@@ -1,9 +1,16 @@
 import type { HouseActivityConfirmOverlayState } from "../house-activity";
 import type { TavernWorkOffer } from "../tavern";
 import type { TavernGambleSession, TavernGambleVariant } from "../tavern-gambling";
-import type { TavernShortHandState } from "../tavern-short-gambling";
+import type {
+  TavernShortDebugHandPreset,
+  TavernShortHandState,
+} from "../tavern-short-gambling";
 
 export type TavernShortTableDebugPresetMode = "off" | "claim-cycle";
+export type TavernPendingShortDebugPreset = "claim-chow-then-kong" | null;
+export type TavernGambleChoiceOptionId =
+  | TavernGambleVariant
+  | "short-debug-chow-kong";
 
 export type TavernShortClaimCountdownState = {
   totalSeconds: number;
@@ -55,7 +62,7 @@ export type TavernGambleChoiceOverlayState = {
   type: "gamble-choice";
   title: string;
   options: Array<{
-    id: TavernGambleVariant;
+    id: TavernGambleChoiceOptionId;
     label: string;
     description: string;
     actionId: string;
@@ -76,6 +83,7 @@ export type TavernShortTableSession = {
   variant: "short";
   playerSeatId: string;
   debugPresetMode: TavernShortTableDebugPresetMode;
+  firstHandDebugPreset: TavernShortDebugHandPreset | null;
   claimCountdown: TavernShortClaimCountdownState | null;
   bankrollBySeatId: Record<string, number>;
   npcBaselineChips: number;
@@ -158,6 +166,7 @@ export type TavernSessionState = {
   overlay: TavernOverlayState;
   currentWager: number;
   currentGambleVariant: TavernGambleVariant;
+  pendingShortDebugPreset: TavernPendingShortDebugPreset;
   shortDebugPresetMode: TavernShortTableDebugPresetMode;
   gambleSession: TavernActiveGambleSession | null;
   availableOffers: TavernWorkOffer[];

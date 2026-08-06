@@ -4,21 +4,80 @@
 
 - Current Stage: `House Local Gameplay`
 - Current Stage Status: `running`
-- Current Task: `Tavern Work Red Nine-Slice`
+- Current Task: `Tavern Short Public Ghost Sorting`
 - Current Task Status: `completed-but-open`
-- Current Child: `Tavern Work Red Nine-Slice`
+- Current Child: `Tavern Short Public Ghost Sorting`
 - Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-tavern-work-red-nine-slice-and-push`
+- Next Required Action: `review-local-diff-and-decide-keep-local-vs-commit-push-for-tavern-short-public-ghost-sorting`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-08-03-tavern-work-red-nine-slice-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-08-05-tavern-short-public-ghost-sorting-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, review docs/superpowers/plans/2026-08-03-tavern-work-red-nine-slice-plan.md, then decide whether to commit/push the completed-but-open tavern work UI batch or keep it local.`
+- Resume From: `Open docs/superpowers/project-progress.md, review docs/superpowers/plans/2026-08-05-tavern-short-public-ghost-sorting-plan.md, then decide whether to keep the verified tavern short public-ghost sorting batch local or commit/push it.`
 
 ## Progress Log
+
+- 2026-08-06
+  - Summary: `Applied a local visual follow-up to Tavern Short Public Ghost Sorting: short hand-row public ghost tiles no longer inherit the short-hand opaque overrides and now render as permanent whole-card semi-transparent placeholder ghosts across the full tile stack, while the typed display-order / non-playable reorder contract stays unchanged. The child remains completed-but-open because the verified batch is still local and not pushed.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs` PASS (30 tests, 30 pass, 0 fail)
+  - Next: `Review the verified local diff, then decide whether to keep this completed-but-open child local or commit/push it.`
+
+- 2026-08-05
+  - Summary: `Completed the local Tavern Short Public Ghost Sorting batch: short hands now own typed mixed display-order entries, revealed public cards project into the hand row as sortable non-playable ghosts, short reorder dispatch now uses separator-safe entry ids across betting/draw-discard/claim-window, shared sortable runtime coverage proves the payload stays opaque, and the Task 2 scoped review gaps were closed with a dedicated ghost style hook plus stronger UI contract assertions. The child remains completed-but-open because the verified batch is still local and not pushed.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/tavern-short-gamble-display-order-domain.test.cjs tests/tavern-short-gamble-reorder-domain.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs tests/house-sortable-tile-runtime.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` all PASS
+  - Next: `Review the verified local diff, then decide whether to keep this completed-but-open child local or commit/push it.`
+
+- 2026-08-05
+  - Summary: `Switched canonical progress from Tavern Short Tile Sorting to Tavern Short Public Ghost Sorting after the user approved Subagent-Driven execution in the current workspace. The new child now owns the tavern short public-ghost hand-row work, and its dedicated SDD workspace/Task 1 brief are the next execution seam.`
+  - Verification: `docs/superpowers/plans/2026-08-05-tavern-short-public-ghost-sorting-plan.md` promoted to `running`; `.superpowers/sdd/2026-08-05-tavern-short-public-ghost-sorting-plan/` initialized with `progress.md` and `task-1-brief.md`
+  - Next: `Dispatch the Task 1 implementer and confirm the missing tavern short display-order state fails RED before any production code changes land.`
+
+- 2026-08-05
+  - Summary: `Executed Tavern Short Hidden-Hand Layout as another local non-canonical child: the short-table UI contract now includes a top-seat broker fixture plus explicit side/top hidden-hand layout assertions, and the short-table CSS now moves side hidden hands into vertical outer stacks, pulls side public rows inward, and anchors the top hidden-hand strip to the right of the summary block while the canonical current child remains Tavern Short Tile Sorting.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-ui-contract.test.cjs` PASS for the local working tree batch.`
+  - Next: `Keep the canonical current child on Tavern Short Tile Sorting, then decide whether to fold the local hidden-hand layout batch into that child or stage it separately once the overlapping short-table file changes are split cleanly.`
+
+- 2026-08-05
+  - Summary: `Executed Tavern Short NPC Hidden Hand as a local non-canonical child: Task 1 added TavernShortNpcHiddenHandStackBuilder plus the shared hiddenHandTiles contract/doc sync in 42f88b4, Task 2 rendered NPC concealed-hand strips with tokenized palette-backed seat tiles and UI contract coverage in 9e5f3ad, and the canonical current child remains Tavern Short Tile Sorting.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-house.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-ui-contract.test.cjs`; `git diff --check` all PASS, with `git diff --check` reporting only LF-to-CRLF working-copy warnings and no whitespace errors.`
+  - Next: `Keep the canonical current child on Tavern Short Tile Sorting, then decide whether to leave the hidden-hand commits local, fold them into the canonical tavern short child, or separately stage the still-local hidden-hand plan/spec docs before any push.`
+
+- 2026-08-05
+  - Summary: `Completed the local Tavern Short Tile Sorting feature slice: shared house tile dragging now lives in a reusable sortable runtime, tavern short hands expose typed handSortEnabled gating plus gamble-short-reorder actions, and draw-discard remains the authoritative phase that disables sorting.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none --test-name-pattern "shared house sortable runtime|typed hand reorder|hand sort gating|sort metadata|reorder moves only|reorder ignores" tests/house-sortable-tile-runtime.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-ui-contract.test.cjs tests/tavern-short-gamble-reorder-domain.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` all PASS
+  - Next: `Review whether to leave the child at targeted-green or expand scope to repair the unrelated existing short-table full-file test drift (hidden-hand stack / legacy debug harness).`
+
+- 2026-08-05
+  - Summary: `Completed Task 1 locally for Tavern Short Tile Sorting: wrote the shared sortable-runtime RED tests, confirmed they failed because the runtime module did not exist yet, then implemented src/ui/views/house/house-sortable-tile-runtime.ts and rewired src/main.ts off the old inline house drag state until the focused runtime suite turned green.`
+  - Verification: `RED -> C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/house-sortable-tile-runtime.test.cjs` FAIL with missing `../.test-dist/ui/views/house/house-sortable-tile-runtime.js`. GREEN -> `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/house-sortable-tile-runtime.test.cjs` PASS (4 tests, 4 pass, 0 fail).`
+  - Next: `Write the failing short-hand reorder domain/house/UI tests, then confirm Task 2 RED before adding tavern short reorder code.`
+
+- 2026-08-05
+  - Summary: `Applied another local tavern short-gamble rule/UI follow-up without changing the canonical current child: once a short-table chow/pong/kong is formed, the exposed cards now leave the hidden hand immediately, the visible hand stays permanently reduced for the rest of that hand, forced-discard selection only uses the remaining concealed cards, and showdown still scores concealed cards plus exposed melds plus the two public cards together.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-domain.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-house.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-ui-contract.test.cjs`
+  - Next: `Refresh the local client and confirm that after a short-table chow/pong/kong, the player's visible hand count drops immediately and stays reduced through later draw turns, while the exposed meld still appears in the seat meld lane and still contributes at showdown; canonical current task remains Tavern Short Tile Sorting until the user asks to switch it.`
+
+- 2026-08-05
+  - Summary: `Promoted the new Tavern Short Tile Sorting child to the canonical running task after the user approved the written spec and allowed inline execution in the current workspace. The next batch is the Task 1 RED pass for extracting the shared house sortable runtime out of src/main.ts before any production refactor begins.`
+  - Verification: `docs/superpowers/specs/2026-08-05-tavern-short-tile-sorting-design.md` written and user-approved; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs` PASS for the new child plan
+  - Next: `Write tests/house-sortable-tile-runtime.test.cjs, run the targeted .test-dist commands, and confirm the missing shared runtime fails RED.`
+
+- 2026-08-05
+  - Summary: `Applied another local tavern short-gamble rule follow-up without changing the canonical current child: exposed short-table chow/pong/kong cards now stay permanently unusable for later claim generation while still remaining in-hand for final 7-card showdown scoring, impossible follow-up claim windows that would leave no discardable card are filtered out, and the one-shot short debug preset copy now explains the new post-chow lock behavior instead of promising a later kong.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-domain.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-house.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\tavern-short-gamble-ui-contract.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `git diff --check`
+  - Next: `Refresh the local client and confirm that once a short-table chow/pong/kong is formed, those exposed cards can still score at showdown but no longer reopen later human pong/kong windows or impossible claim prompts; canonical current task remains Tavern Short Chow-Kong Debug Entry until the user asks to switch it.`
+
+- 2026-08-05
+  - Summary: `Completed the local Tavern Short Chow-Kong Debug Entry batch: tavern gamble-choice now includes a one-shot chow-kong debug entry, short-table startup consumes that preset on the first hand only, short debug hand definitions can pin deck-top cards, and the new deterministic preset now reaches a human chow window first and a human kong window later in the same hand. Shared docs were synchronized and the child now remains completed-but-open only because the batch has not been committed or pushed.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/tavern-short-gamble-ui-contract.test.cjs tests/tavern-short-gamble-house.test.cjs tests/tavern-short-gamble-domain.test.cjs`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` all PASS
+  - Next: `Review the local diff, then decide whether to commit/push this completed-but-open tavern short chow-kong batch or keep it local.`
+- 2026-08-05
+  - Summary: `Switched canonical progress from the previously completed-but-open tavern work UI child to the Tavern Short Chow-Kong Debug Entry child after the user selected Subagent-Driven execution in the current workspace; the new child is now the active running task and uses its own SDD workspace plus Task 1 brief.`
+  - Verification: `docs/superpowers/plans/2026-08-05-tavern-short-chow-kong-debug-entry-plan.md` now records `Status: running`; `.superpowers/sdd/2026-08-05-tavern-short-chow-kong-debug-entry-plan/` created with `task-1-brief.md`
+  - Next: `Dispatch the Task 1 implementer subagent and execute the RED test pass for the gamble-choice entry plus one-shot tavern session contract.`
 
 - 2026-08-04
   - Summary: `Applied another local tavern short-gamble UI follow-up without changing the canonical current child: only the bottom player seat's discard lane and exposed meld lane now sit another 10px lower, while the bottom summary block, hand area, and the other three seat anchors stay unchanged.`

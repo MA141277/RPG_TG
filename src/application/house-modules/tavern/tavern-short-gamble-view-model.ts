@@ -2,6 +2,8 @@ import type { TavernShortTableSession } from "../../../domain/house-modules/tave
 import type { HouseOverlayViewModel } from "../../../domain/house-module";
 import {
   getTavernShortCardLabel,
+  syncTavernShortDisplayOrderEntries,
+  toTavernShortDisplayOrderEntryId,
   type TavernShortCard,
 } from "../../../domain/tavern-short-gambling";
 import {
@@ -27,6 +29,10 @@ const SHORT_SKIP_CLAIM_ACTION_ID = "gamble-skip-meld";
 const hiddenHandStackBuilder = new TavernShortNpcHiddenHandStackBuilder();
 
 type TavernShortActiveHand = NonNullable<TavernShortTableSession["currentHand"]>;
+type TavernShortHandCardViewModel = Extract<
+  HouseOverlayViewModel,
+  { type: "gamble-table"; variant: "short" }
+>["handCards"][number];
 
 function getShortLockedDiscardCardIds(
   hand: TavernShortActiveHand,
@@ -57,6 +63,112 @@ function getShortVisibleHandCards(
   }
   const lockedCardIds = getShortLockedDiscardCardIds(hand, playerSeatId);
   return player.hand.filter((card) => !lockedCardIds.has(card.id));
+}
+
+function projectShortHandCards(
+  hand: TavernShortActiveHand,
+  playerSeatId: string,
+  humanPendingIncoming: TavernShortActiveHand["pendingIncomingCard"] | null,
+  armedDiscardCardId: string | null,
+  liftedDiscardCardId: string | null,
+  droppingDiscardCardId: string | null,
+  selectableDiscardCardIds: Set<string>
+): TavernShortHandCardViewModel[] {
+  const visibleHandCards = getShortVisibleHandCards(hand, playerSeatId);
+  const visibleHandCardsById = new Map(
+    visibleHandCards.map((card) => [card.id, card])
+  );
+  const publicCardsById = new Map(
+    hand.publicCards.map((card) => [card.id, card])
+  );
+  return hand.displayOrderEntries.flatMap((entry) => {
+    const sortEntryId = toTavernShortDisplayOrderEntryId(entry);
+    if (entry.kind === "public-ghost") {
+      const card = publicCardsById.get(entry.cardId);
+      if (card == null) {
+        return [];
+      }
+      const projected: TavernShortHandCardViewModel = {
+        id: card.id,
+        label: getTavernShortCardLabel(card),
+        sortEntryId,
+        role: "public-ghost",
+        selected: false,
+      };
+      return [
+        {
+          ...projected,
+        },
+      ];
+    }
+    if (entry.kind === "incoming-draw") {
+      if (
+        humanPendingIncoming == null ||
+        humanPendingIncoming.source !== "draw" ||
+        humanPendingIncoming.card.id !== entry.cardId
+      ) {
+        return [];
+      }
+      const card = humanPendingIncoming.card;
+      const projected: TavernShortHandCardViewModel = {
+        id: card.id,
+        label: getTavernShortCardLabel(card),
+        sortEntryId,
+        role: "incoming-draw",
+        selected: armedDiscardCardId === card.id,
+        lifted: liftedDiscardCardId === card.id,
+        dropping: droppingDiscardCardId === card.id,
+        incoming: true,
+        ...(liftedDiscardCardId === card.id &&
+        droppingDiscardCardId == null &&
+        armedDiscardCardId !== card.id
+          ? {
+              mouseleaveActionId: `${SHORT_CLEAR_LIFTED_TILE_ACTION_PREFIX}${card.id}`,
+            }
+          : {}),
+        ...(droppingDiscardCardId != null ||
+        selectableDiscardCardIds.size === 0 ||
+        !selectableDiscardCardIds.has(card.id)
+          ? {}
+          : { actionId: `gamble-play-tile:${card.id}` }),
+      };
+      return [
+        {
+          ...projected,
+        },
+      ];
+    }
+    const card = visibleHandCardsById.get(entry.cardId);
+    if (card == null) {
+      return [];
+    }
+    const projected: TavernShortHandCardViewModel = {
+      id: card.id,
+      label: getTavernShortCardLabel(card),
+      sortEntryId,
+      role: "hand",
+      selected: armedDiscardCardId === card.id,
+      lifted: liftedDiscardCardId === card.id,
+      dropping: droppingDiscardCardId === card.id,
+      ...(liftedDiscardCardId === card.id &&
+      droppingDiscardCardId == null &&
+      armedDiscardCardId !== card.id
+        ? {
+            mouseleaveActionId: `${SHORT_CLEAR_LIFTED_TILE_ACTION_PREFIX}${card.id}`,
+          }
+        : {}),
+      ...(droppingDiscardCardId != null ||
+      selectableDiscardCardIds.size === 0 ||
+      !selectableDiscardCardIds.has(card.id)
+        ? {}
+        : { actionId: `gamble-play-tile:${card.id}` }),
+    };
+    return [
+      {
+        ...projected,
+      },
+    ];
+  });
 }
 
 function getShortSelectableDiscardCardIds(
@@ -254,18 +366,17 @@ export function selectTavernShortGambleOverlay(
   table: TavernShortTableSession
 ): Extract<HouseOverlayViewModel, { type: "gamble-table"; variant: "short" }> {
   const nowMs = Date.now();
-  const hand = table.currentHand ?? table.lastCompletedHand?.hand ?? null;
+  const rawHand = table.currentHand ?? table.lastCompletedHand?.hand ?? null;
+  const hand =
+    rawHand == null ? null : syncTavernShortDisplayOrderEntries(rawHand, table.playerSeatId);
   const handSortEnabled =
     table.currentHand != null &&
-    table.currentHand.phase !== "draw-discard" &&
     table.currentHand.phase !== "finished";
   const isHumanClaimWindow = hand?.phase === "claim-window";
   const humanPendingIncoming =
     hand?.pendingIncomingCard?.ownerSeatId === table.playerSeatId
       ? hand.pendingIncomingCard
       : null;
-  const visibleHandCards =
-    hand == null ? [] : getShortVisibleHandCards(hand, table.playerSeatId);
   const pendingIncomingCard =
     humanPendingIncoming == null
       ? null
@@ -363,29 +474,18 @@ export function selectTavernShortGambleOverlay(
       label: getTavernShortCardLabel(card),
     })),
     handSortEnabled,
-    handCards: [
-      ...visibleHandCards,
-      ...(humanPendingIncoming?.source === "draw" ? [humanPendingIncoming.card] : []),
-    ].map((card) => ({
-      id: card.id,
-      label: getTavernShortCardLabel(card),
-      selected: armedDiscardCardId === card.id,
-      lifted: liftedDiscardCardId === card.id,
-      dropping: droppingDiscardCardId === card.id,
-      incoming: humanPendingIncoming?.card.id === card.id,
-      ...(liftedDiscardCardId === card.id &&
-      droppingDiscardCardId == null &&
-      armedDiscardCardId !== card.id
-        ? {
-            mouseleaveActionId: `${SHORT_CLEAR_LIFTED_TILE_ACTION_PREFIX}${card.id}`,
-          }
-        : {}),
-      ...(droppingDiscardCardId != null ||
-      selectableDiscardCardIds.size === 0 ||
-      !selectableDiscardCardIds.has(card.id)
-        ? {}
-        : { actionId: `gamble-play-tile:${card.id}` }),
-    })),
+    handCards:
+      hand == null
+        ? []
+        : projectShortHandCards(
+            hand,
+            table.playerSeatId,
+            humanPendingIncoming,
+            armedDiscardCardId,
+            liftedDiscardCardId,
+            droppingDiscardCardId,
+            selectableDiscardCardIds
+          ),
     sidePotLabels: (hand?.pots ?? []).map((pot) => formatPotLabel(pot.id, pot.amount)),
     pendingIncomingCard,
     visibleDiscard,
