@@ -227,6 +227,10 @@ type ShortGambleTableOverlay = {
     progressPercent: number;
     label: string;
   } | null;
+  stageNotice: {
+    key: string;
+    label: string;
+  } | null;
   availableActions: Array<
     | "check"
     | "call"

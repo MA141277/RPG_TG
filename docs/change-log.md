@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-06 Tavern Short Stage Notice Contract
+
+### Added
+- 酒馆短牌 `gamble-table` overlay 现在新增 typed `stageNotice` 字段，携带一次性阶段提示的 `label` 与稳定重播 `key`，用于驱动“请下注 / 请出牌 / 可碰”等中央提示。
+- 短局 table DOM runtime 现在在既有碰 / 杠倒计时同步之外，额外接管 stage notice 的一次性动画重播；它只在 `stageNotice.key` 变化时重播，不再依赖 renderer 每次重绘自动重复闪烁。
+
+### Changed
+- 酒馆短牌 view model 现在会只在玩家进入新的可操作阶段时暴露 `stageNotice`，并按下注、摸打、吃 / 碰 / 杠机会生成不同提示文案；NPC 回合和局间继续/补码提示不会再触发中央提示。
+- 短局 renderer 现在在桌面中央渲染独立的 stage notice 节点，按钮面板与播报区继续保持各自职责，不再把阶段提示绑定到按钮显隐或播报文本上。
+
+### Impact
+- 这次改动把“一次性阶段提示”正式纳入 shared typed overlay contract：后续如果其他 house/table 也需要类似的中央提示，应复用同样的 typed `label + replay key` 方式，而不是重新在 DOM 或 `src/main.ts` 里做按钮文案推断。
+
 ## 2026-08-05 Tavern Short Hidden-Hand Layout
 
 ### Changed

@@ -20,6 +20,9 @@
   --color-tavern-hidden-hand-base: rgb(94 104 112);
   --color-tavern-hidden-hand-edge: rgb(221 223 218);
   --color-tavern-hidden-hand-middle-layer: rgb(62 171 214);
+  --color-tavern-stage-notice: #f5d28d;
+  --color-tavern-stage-notice-panel-deep: rgb(25 16 10 / 72%);
+  --color-tavern-stage-notice-panel-soft: rgb(188 143 66 / 16%);
   --font-ui: "Zhuque Fangsong", "Noto Serif SC", "Source Han Serif SC", serif;
   --font-title: "Zhuque Fangsong", "STKaiti", "KaiTi", serif;
   --space-1: 4px;

@@ -29,10 +29,13 @@ const SHORT_SKIP_CLAIM_ACTION_ID = "gamble-skip-meld";
 const hiddenHandStackBuilder = new TavernShortNpcHiddenHandStackBuilder();
 
 type TavernShortActiveHand = NonNullable<TavernShortTableSession["currentHand"]>;
-type TavernShortHandCardViewModel = Extract<
+type TavernShortOverlayViewModel = Extract<
   HouseOverlayViewModel,
   { type: "gamble-table"; variant: "short" }
->["handCards"][number];
+>;
+type TavernShortHandCardViewModel = TavernShortOverlayViewModel["handCards"][number];
+type TavernShortAvailableActions = TavernShortOverlayViewModel["availableActions"];
+type TavernShortStageNotice = TavernShortOverlayViewModel["stageNotice"];
 
 function getShortLockedDiscardCardIds(
   hand: TavernShortActiveHand,
@@ -232,10 +235,7 @@ function getDroppingShortDiscardCardId(
 function getShortBettingActions(
   hand: TavernShortActiveHand,
   playerSeatId: string
-): Extract<
-  HouseOverlayViewModel,
-  { type: "gamble-table"; variant: "short" }
->["availableActions"] {
+): TavernShortAvailableActions {
   const player = hand.players.find((candidate) => candidate.seatId === playerSeatId);
   if (player == null || player.folded || player.allIn) {
     return [];
@@ -246,10 +246,7 @@ function getShortBettingActions(
 
 function getShortAvailableActions(
   table: TavernShortTableSession
-): Extract<
-  HouseOverlayViewModel,
-  { type: "gamble-table"; variant: "short" }
->["availableActions"] {
+): TavernShortAvailableActions {
   if (table.prompt === "continue-or-cashout") {
     return ["continue", "cash-out"];
   }
@@ -273,6 +270,15 @@ function getShortAvailableActions(
   return [];
 }
 
+function isHumanShortActionTurn(
+  hand: TavernShortActiveHand,
+  playerSeatId: string
+): boolean {
+  const actingPlayer =
+    hand.players.find((player) => player.seatIndex === hand.actingSeatIndex) ?? null;
+  return actingPlayer?.seatId === playerSeatId;
+}
+
 function shouldHighlightShortAvailableActions(table: TavernShortTableSession): boolean {
   if (table.prompt != null) {
     return true;
@@ -290,9 +296,7 @@ function shouldHighlightShortAvailableActions(table: TavernShortTableSession): b
     return false;
   }
 
-  const actingPlayer =
-    hand.players.find((player) => player.seatIndex === hand.actingSeatIndex) ?? null;
-  return actingPlayer?.seatId === table.playerSeatId;
+  return isHumanShortActionTurn(hand, table.playerSeatId);
 }
 
 function getShortPhaseLabel(table: TavernShortTableSession): string {
@@ -327,6 +331,69 @@ function getShortMeldLabel(input: {
         ? "\u78b0"
         : "\u6760";
   return `${prefix} ${input.cards.map(getTavernShortCardLabel).join("")}`;
+}
+
+function getShortClaimStageNoticeLabel(
+  claimOptions: Array<{
+    kind: "chow" | "pong" | "kong";
+  }>
+): string {
+  const uniqueKindLabels = [
+    ...new Set(
+      claimOptions.map((option) =>
+        option.kind === "chow" ? "吃" : option.kind === "pong" ? "碰" : "杠"
+      )
+    ),
+  ];
+  return uniqueKindLabels.length === 1
+    ? `可${uniqueKindLabels[0]}`
+    : `可${uniqueKindLabels.join(" / ")}`;
+}
+
+function getShortStageNotice(input: {
+  table: TavernShortTableSession;
+  hand: TavernShortActiveHand | null;
+  claimOptions: TavernShortOverlayViewModel["claimOptions"];
+  availableActions: TavernShortAvailableActions;
+}): TavernShortStageNotice {
+  const { table, hand, claimOptions, availableActions } = input;
+  if (table.prompt != null || hand == null || !isHumanShortActionTurn(hand, table.playerSeatId)) {
+    return null;
+  }
+
+  if (hand.phase === "betting") {
+    const player = hand.players.find((candidate) => candidate.seatId === table.playerSeatId);
+    if (player == null) {
+      return null;
+    }
+    return {
+      key: `betting:${table.handCount}:${hand.bettingRoundIndex}:${hand.currentBet}:${player.committedThisRound}:${availableActions.join(",")}`,
+      label: "请下注",
+    };
+  }
+
+  if (hand.phase === "draw-discard") {
+    const incoming = hand.pendingIncomingCard;
+    if (incoming == null || incoming.ownerSeatId !== table.playerSeatId) {
+      return null;
+    }
+    return {
+      key: `discard:${table.handCount}:${hand.drawRoundIndex}:${incoming.source}:${incoming.card.id}:${hand.currentDrawTurnSeatId ?? "none"}`,
+      label: "请出牌",
+    };
+  }
+
+  if (hand.phase === "claim-window" && claimOptions.length > 0) {
+    const discardId = hand.claimChain?.visibleDiscard.id ?? hand.lastVisibleDiscard?.card.id ?? "none";
+    return {
+      key: `claim:${table.handCount}:${discardId}:${hand.claimChain?.chainDepth ?? 0}:${claimOptions
+        .map((option) => option.kind)
+        .join(",")}`,
+      label: getShortClaimStageNoticeLabel(claimOptions),
+    };
+  }
+
+  return null;
 }
 
 function getShortTablePosition(
@@ -364,7 +431,7 @@ function getShortSeatStatusLabel(input: {
 
 export function selectTavernShortGambleOverlay(
   table: TavernShortTableSession
-): Extract<HouseOverlayViewModel, { type: "gamble-table"; variant: "short" }> {
+): TavernShortOverlayViewModel {
   const nowMs = Date.now();
   const rawHand = table.currentHand ?? table.lastCompletedHand?.hand ?? null;
   const hand =
@@ -457,6 +524,14 @@ export function selectTavernShortGambleOverlay(
             label: `\u5269\u4f59 ${remainingSeconds} \u79d2`,
           };
         })();
+  const availableActions = getShortAvailableActions(table);
+  const highlightAvailableActions = shouldHighlightShortAvailableActions(table);
+  const stageNotice = getShortStageNotice({
+    table,
+    hand,
+    claimOptions,
+    availableActions,
+  });
 
   return {
     type: "gamble-table",
@@ -498,8 +573,9 @@ export function selectTavernShortGambleOverlay(
             actionId: SHORT_SKIP_CLAIM_ACTION_ID,
             label: "\u8df3\u8fc7",
           },
-    availableActions: getShortAvailableActions(table),
-    highlightAvailableActions: shouldHighlightShortAvailableActions(table),
+    stageNotice,
+    availableActions,
+    highlightAvailableActions,
     playerRows: (hand?.players ?? []).map((player) => ({
       id: player.seatId,
       name: player.name,

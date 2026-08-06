@@ -487,6 +487,11 @@ If that timed response can auto-expire, keep the countdown itself under the type
 session and advance it through shared `tick` requests plus `start-interval` / `stop-interval`
 side effects. Seat-priority exceptions and immediate teardown after the player accepts the staged
 response must stay in module rules, not in renderer-local timers or DOM callbacks.
+If the same staged table flow needs a one-shot center-screen prompt when the viewer enters a new
+actionable step, expose a typed overlay payload with both a user-facing label and a stable replay
+key (for example `stageNotice.key`). The house DOM runtime may replay the animation when that key
+changes, but it must not infer the prompt from currently visible button text or keep hidden
+business counters in renderer-local state.
 If a table flow has a mode picker before configuration, expose that picker as a structured overlay
 such as `gamble-choice`; the UI may render mode buttons, but the selected mode must be dispatched
 through normal house action ids and stored in the typed module session.

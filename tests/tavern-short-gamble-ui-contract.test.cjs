@@ -101,6 +101,7 @@ test("tavern short overlay exposes pending incoming card, side pots, between-han
   assert.ok(overlay.sidePotLabels[1].endsWith("400"));
   assert.deepEqual(overlay.availableActions, ["continue", "cash-out"]);
   assert.equal(overlay.highlightAvailableActions, true);
+  assert.equal(overlay.stageNotice, null);
   assert.equal(
     overlay.betweenHandActions.cashOutActionId,
     "gamble-short-cash-out"
@@ -217,6 +218,7 @@ test("tavern short overlay suppresses action highlight when another seat is acti
 
   assert.deepEqual(overlay.availableActions, ["fold", "call", "raise"]);
   assert.equal(overlay.highlightAvailableActions, false);
+  assert.equal(overlay.stageNotice, null);
 });
 
 test("tavern short overlay switches to check and bet after the player has matched the current stake", () => {
@@ -246,6 +248,8 @@ test("tavern short overlay switches to check and bet after the player has matche
 
   assert.deepEqual(overlay.availableActions, ["check", "raise"]);
   assert.equal(overlay.highlightAvailableActions, true);
+  assert.equal(overlay.stageNotice?.label, "请下注");
+  assert.match(overlay.stageNotice?.key ?? "", /^betting:/u);
 });
 
 test("tavern short overlay exposes a structured pass action when the player can claim a discard", () => {
@@ -299,6 +303,8 @@ test("tavern short overlay exposes a structured pass action when the player can 
   assert.equal(overlay.claimPassAction?.actionId, "gamble-skip-meld");
   assert.ok((overlay.claimPassAction?.label ?? "").length > 0);
   assert.equal(overlay.highlightAvailableActions, true);
+  assert.equal(overlay.stageNotice?.label, "可碰");
+  assert.match(overlay.stageNotice?.key ?? "", /^claim:/u);
 });
 
 test("tavern short overlay hides stale claim controls and keeps locked claim cards inert during post-claim discard", () => {
@@ -734,13 +740,46 @@ test("tavern short overlay exposes claim countdown data for timed pong-kong wind
     });
 
     assert.equal(overlay.claimCountdown?.totalSeconds, 10);
-    assert.equal(overlay.claimCountdown?.remainingSeconds, 6);
-    assert.equal(overlay.claimCountdown?.remainingMs, 6_000);
-    assert.equal(overlay.claimCountdown?.progressPercent, 60);
-    assert.equal(overlay.claimCountdown?.label, "\u5269\u4f59 6 \u79d2");
+  assert.equal(overlay.claimCountdown?.remainingSeconds, 6);
+  assert.equal(overlay.claimCountdown?.remainingMs, 6_000);
+  assert.equal(overlay.claimCountdown?.progressPercent, 60);
+  assert.equal(overlay.claimCountdown?.label, "\u5269\u4f59 6 \u79d2");
+  assert.equal(overlay.stageNotice?.label, "可碰");
+  assert.match(overlay.stageNotice?.key ?? "", /^claim:/u);
   } finally {
     Date.now = originalDateNow;
   }
+});
+
+test("tavern short overlay emits a discard notice once the player is choosing a tile to throw", () => {
+  const table = createTavernShortTableSession({
+    playerName: "tester",
+    buyInGold: 100,
+    seed: 17,
+  });
+  const overlay = selectTavernShortGambleOverlay({
+    ...table,
+    prompt: null,
+    currentHand: {
+      ...table.currentHand,
+      phase: "draw-discard",
+      actingSeatIndex: 0,
+      currentDrawTurnSeatId: "you",
+      pendingIncomingCard: {
+        ownerSeatId: "you",
+        source: "draw",
+        card: {
+          id: "tiao-9",
+          suit: "tiao",
+          rank: 9,
+        },
+      },
+    },
+  });
+
+  assert.equal(overlay.highlightAvailableActions, true);
+  assert.equal(overlay.stageNotice?.label, "请出牌");
+  assert.match(overlay.stageNotice?.key ?? "", /^discard:/u);
 });
 
 test("tavern short overlay exposes structured seat tiles for meld and discard history", () => {
@@ -1259,6 +1298,62 @@ test("tavern house view renders check and bet controls when no call is owed", ()
   assert.match(markup, />\s*过牌\s*</u);
   assert.match(markup, />\s*下注\s*</u);
   assert.doesNotMatch(markup, />\s*加注\s*</u);
+});
+
+test("tavern house view renders a centered short-table stage notice hook", () => {
+  const markup = renderTavernHouseView({
+    moduleId: "tavern",
+    houseId: "house.tavern",
+    sceneTitle: "Tavern",
+    sceneSubtitle: "Preview",
+    standbyRoster: [],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: {
+      type: "gamble-table",
+      variant: "short",
+      title: "Short Table",
+      phase: "betting",
+      pot: 800,
+      currentBet: 200,
+      chipLabel: "chips",
+      publicCards: [],
+      handCards: [],
+      sidePotLabels: [],
+      pendingIncomingCard: null,
+      visibleDiscard: null,
+      claimOptions: [],
+      stageNotice: {
+        key: "betting:1:0",
+        label: "请下注",
+      },
+      availableActions: ["check", "raise"],
+      highlightAvailableActions: true,
+      playerRows: [],
+      logLines: [],
+      showdownRows: [],
+      actionIds: {
+        check: "check",
+        call: "call",
+        raise: "raise",
+        fold: "fold",
+        close: "close",
+      },
+    },
+    leaveAction: { id: "leave-house", label: "Leave" },
+  });
+
+  const centerIndex = markup.indexOf('class="c-tavern-gamble__center c-tavern-gamble__center--short"');
+  const noticeIndex = markup.indexOf('class="c-tavern-gamble__stage-notice"');
+  const logIndex = markup.indexOf('class="c-tavern-gamble__log"');
+
+  assert.match(markup, /data-house-stage-notice="true"/u);
+  assert.match(markup, /data-house-stage-notice-key="betting:1:0"/u);
+  assert.match(markup, /请下注/u);
+  assert.ok(centerIndex >= 0);
+  assert.ok(noticeIndex > centerIndex);
+  assert.ok(logIndex > noticeIndex);
 });
 
 test("tavern short table markup adds top depth to hand tiles and bottom depth to table tiles", () => {
@@ -2050,6 +2145,30 @@ test("tavern short CSS keeps the public-card stage centered, floats active contr
   assert.match(
     teaHouseCss,
     /\.c-tavern-gamble__claim-countdown-fill\s*\{[^}]*will-change:\s*width;[^}]*\}/su
+  );
+  assert.match(
+    tokensCss,
+    /--color-tavern-stage-notice:\s*#[0-9a-fA-F]{3,6};/u
+  );
+  assert.match(
+    tokensCss,
+    /--color-tavern-stage-notice-panel-deep:\s*rgb\([^)]+\);/u
+  );
+  assert.match(
+    tokensCss,
+    /--color-tavern-stage-notice-panel-soft:\s*rgb\([^)]+\);/u
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble__stage-notice\s*\{[^}]*position:\s*absolute;[^}]*left:\s*50%;[^}]*top:\s*calc\(50%\s*-\s*40px\);[^}]*z-index:\s*3;[^}]*display:\s*inline-grid;[^}]*width:\s*fit-content;[^}]*max-width:\s*min\(320px,\s*calc\(100%\s*-\s*48px\)\);[^}]*padding:\s*8px 18px;[^}]*border-radius:\s*999px;[^}]*background:\s*linear-gradient\(90deg,\s*var\(--color-tavern-stage-notice-panel-deep\)\s*0%,\s*var\(--color-tavern-stage-notice-panel-deep\)\s*48%,\s*var\(--color-tavern-stage-notice-panel-soft\)\s*100%\);[^}]*box-shadow:\s*inset 0 0 0 1px rgb\(255 232 184 \/ 8%\),\s*0 8px 18px rgb\(0 0 0 \/ 22%\);[^}]*pointer-events:\s*none;[^}]*opacity:\s*0;[^}]*transform:\s*translate\(-50%,\s*-50%\);[^}]*text-shadow:\s*0 3px 10px rgb\(0 0 0 \/ 56%\),\s*0 1px 0 rgb\(0 0 0 \/ 72%\),\s*0 -1px 0 rgb\(0 0 0 \/ 48%\);/su
+  );
+  assert.match(
+    teaHouseCss,
+    /\.c-tavern-gamble__stage-notice\.is-playing\s*\{[^}]*animation:\s*tavern-short-stage-notice 1\.4s linear both;[^}]*\}/su
+  );
+  assert.match(
+    teaHouseCss,
+    /@keyframes tavern-short-stage-notice\s*\{[\s\S]*0%\s*\{[\s\S]*opacity:\s*0;[\s\S]*\}[\s\S]*14\.2857%\s*\{[\s\S]*opacity:\s*1;[\s\S]*\}[\s\S]*85\.7143%\s*\{[\s\S]*opacity:\s*1;[\s\S]*\}[\s\S]*100%\s*\{[\s\S]*opacity:\s*0;[\s\S]*\}/su
   );
   assert.match(
     teaHouseCss,

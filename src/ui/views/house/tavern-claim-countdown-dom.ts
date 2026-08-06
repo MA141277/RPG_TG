@@ -2,6 +2,8 @@ const CLAIM_COUNTDOWN_SELECTOR = '[data-house-claim-countdown="true"]';
 const CLAIM_COUNTDOWN_LABEL_SELECTOR = '[data-house-claim-countdown-label="true"]';
 const CLAIM_COUNTDOWN_TRACK_SELECTOR = '[data-house-claim-countdown-track="true"]';
 const CLAIM_COUNTDOWN_FILL_SELECTOR = '[data-house-claim-countdown-fill="true"]';
+const STAGE_NOTICE_SELECTOR = '[data-house-stage-notice="true"]';
+const STAGE_NOTICE_ANIMATION_TOTAL_MS = 1_400;
 
 function readCountdownMs(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -93,21 +95,84 @@ class TavernClaimCountdownDomRuntime {
   };
 }
 
+type TavernStageNoticePlaybackState = {
+  key: string;
+  startedAtEpochMs: number;
+};
+
 let tavernClaimCountdownDomRuntime: TavernClaimCountdownDomRuntime | null = null;
+let tavernStageNoticeLastPlayedKey: string | null = null;
+let tavernStageNoticePlaybackState: TavernStageNoticePlaybackState | null = null;
+
+function syncTavernStageNoticeDomRuntime(root: ParentNode): void {
+  const stageNoticeElement = root.querySelector<HTMLElement>(STAGE_NOTICE_SELECTOR);
+  if (stageNoticeElement == null) {
+    return;
+  }
+
+  const noticeKey = stageNoticeElement.dataset.houseStageNoticeKey?.trim() ?? "";
+  if (noticeKey.length === 0) {
+    stageNoticeElement.classList.remove("is-playing");
+    stageNoticeElement.style.animationDelay = "";
+    return;
+  }
+
+  const nowMs = Date.now();
+  if (tavernStageNoticePlaybackState?.key === noticeKey) {
+    applyTavernStageNoticePlayback(stageNoticeElement, nowMs);
+    return;
+  }
+
+  if (tavernStageNoticeLastPlayedKey === noticeKey) {
+    stageNoticeElement.classList.remove("is-playing");
+    stageNoticeElement.style.animationDelay = "";
+    return;
+  }
+
+  tavernStageNoticeLastPlayedKey = noticeKey;
+  tavernStageNoticePlaybackState = {
+    key: noticeKey,
+    startedAtEpochMs: nowMs,
+  };
+  applyTavernStageNoticePlayback(stageNoticeElement, nowMs);
+}
+
+function applyTavernStageNoticePlayback(
+  stageNoticeElement: HTMLElement,
+  nowMs: number
+): void {
+  const playbackState = tavernStageNoticePlaybackState;
+  if (playbackState == null) {
+    stageNoticeElement.classList.remove("is-playing");
+    stageNoticeElement.style.animationDelay = "";
+    return;
+  }
+
+  const elapsedMs = Math.max(0, nowMs - playbackState.startedAtEpochMs);
+  if (elapsedMs >= STAGE_NOTICE_ANIMATION_TOTAL_MS) {
+    stageNoticeElement.classList.remove("is-playing");
+    stageNoticeElement.style.animationDelay = "";
+    return;
+  }
+
+  stageNoticeElement.classList.remove("is-playing");
+  stageNoticeElement.style.animationDelay = "";
+  void stageNoticeElement.offsetWidth;
+  stageNoticeElement.style.animationDelay = `-${elapsedMs}ms`;
+  stageNoticeElement.classList.add("is-playing");
+}
 
 export function syncTavernClaimCountdownDomRuntime(root: ParentNode): void {
   const countdownElement = root.querySelector<HTMLElement>(CLAIM_COUNTDOWN_SELECTOR);
   if (countdownElement == null) {
     tavernClaimCountdownDomRuntime?.destroy();
     tavernClaimCountdownDomRuntime = null;
-    return;
-  }
-
-  if (tavernClaimCountdownDomRuntime?.matches(countdownElement)) {
+  } else if (tavernClaimCountdownDomRuntime?.matches(countdownElement)) {
     tavernClaimCountdownDomRuntime.syncRoot(countdownElement);
-    return;
+  } else {
+    tavernClaimCountdownDomRuntime?.destroy();
+    tavernClaimCountdownDomRuntime = new TavernClaimCountdownDomRuntime(countdownElement);
   }
 
-  tavernClaimCountdownDomRuntime?.destroy();
-  tavernClaimCountdownDomRuntime = new TavernClaimCountdownDomRuntime(countdownElement);
+  syncTavernStageNoticeDomRuntime(root);
 }

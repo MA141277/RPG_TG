@@ -504,6 +504,19 @@ function renderShortGambleTableOverlay(
               <span>池 ${overlay.pot}</span>
             </div>
           `;
+  const shortStageNoticeMarkup =
+    overlay.stageNotice == null
+      ? ""
+      : `
+          <div
+            class="c-tavern-gamble__stage-notice"
+            data-house-stage-notice="true"
+            data-house-stage-notice-key="${overlay.stageNotice.key}"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >${overlay.stageNotice.label}</div>
+        `;
 
   return `
     <div class="c-grain-shop-overlay c-tavern-gamble-overlay c-tavern-gamble-overlay--short" data-house-overlay="gamble-table"${overlay.clickawayActionId == null ? "" : ` data-house-clickaway-action="${overlay.clickawayActionId}"`}>
@@ -533,6 +546,7 @@ function renderShortGambleTableOverlay(
                   .join("")}
               </div>
             </div>
+            ${shortStageNoticeMarkup}
             <section class="c-tavern-gamble__log">
               ${overlay.logLines.map((line) => `<p>${line}</p>`).join("")}
             </section>
