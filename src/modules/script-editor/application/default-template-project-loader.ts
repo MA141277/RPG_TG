@@ -50,6 +50,16 @@ type RuntimePackManifestFileMap = {
   files?: Record<string, string>;
 };
 
+type BuiltinTemplateMapRecord = {
+  primaryImageUrl?: string;
+  regionOverlayImageUrl?: string;
+  campaignHexGridUrl?: string;
+  campaignVegetationRulesUrl?: string;
+  layers?: Array<{
+    imageUrl?: string;
+  }>;
+};
+
 const builtinTemplateJsonFileContentsByRelativePath = Object.freeze({
   "activities.json": activitiesJson,
   "building-arrangements.json": buildingArrangementsJson,
@@ -108,12 +118,45 @@ function createBuiltinTemplateManifestRelativePaths(): string[] {
   return [
     "pack.json",
     ...new Set(
-      Object.values(manifestFileMap).filter(
-        (relativePath): relativePath is string =>
-          typeof relativePath === "string" && relativePath.length > 0
-      )
+      [
+        ...Object.values(manifestFileMap).filter(
+          (relativePath): relativePath is string =>
+            typeof relativePath === "string" && relativePath.length > 0
+        ),
+        ...collectBuiltinTemplateMapAssetRelativePaths(),
+      ]
     ),
   ];
+}
+
+function collectBuiltinTemplateMapAssetRelativePaths(): string[] {
+  const assetPaths = new Set<string>();
+
+  for (const mapRecord of Array.isArray(mapsJson)
+    ? (mapsJson as BuiltinTemplateMapRecord[])
+    : []) {
+    for (const assetPath of [
+      mapRecord?.primaryImageUrl,
+      mapRecord?.regionOverlayImageUrl,
+      mapRecord?.campaignHexGridUrl,
+      mapRecord?.campaignVegetationRulesUrl,
+      ...(Array.isArray(mapRecord?.layers)
+        ? mapRecord.layers.map((layer) => layer?.imageUrl)
+        : []),
+    ]) {
+      if (
+        typeof assetPath !== "string" ||
+        assetPath.length === 0 ||
+        /^(https?:|data:|blob:|\/)/.test(assetPath)
+      ) {
+        continue;
+      }
+
+      assetPaths.add(assetPath.replace(/^\.\//, ""));
+    }
+  }
+
+  return [...assetPaths];
 }
 
 async function createBuiltinTemplateImportFile(

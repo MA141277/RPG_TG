@@ -97,6 +97,33 @@ test("script editor default template import no longer depends on the public temp
   );
 });
 
+test("default script editor template import stages map-referenced builtin assets for local folder import", () => {
+  const builtinLoaderSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "application",
+      "default-template-project-loader.ts"
+    ),
+    "utf8"
+  );
+  const createRelativePathsBlock =
+    builtinLoaderSource.match(
+      /function createBuiltinTemplateManifestRelativePaths\(\): string\[\] \{[\s\S]*?\n}\n/
+    )?.[0] ?? "";
+  const collectMapAssetsBlock =
+    builtinLoaderSource.match(
+      /function collectBuiltinTemplateMapAssetRelativePaths\(\): string\[\] \{[\s\S]*?\n}\n/
+    )?.[0] ?? "";
+
+  assert.match(createRelativePathsBlock, /collectBuiltinTemplateMapAssetRelativePaths/);
+  assert.match(collectMapAssetsBlock, /mapsJson/);
+  assert.match(collectMapAssetsBlock, /primaryImageUrl|regionOverlayImageUrl|imageUrl/);
+  assert.match(collectMapAssetsBlock, /assetPath\.replace\(\/\^\\\.\\\//);
+});
+
 test("production script editor module no longer imports the default template public url constant", () => {
   const mainUiModuleSource = fs.readFileSync(
     path.join(
