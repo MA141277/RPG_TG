@@ -1,5 +1,5 @@
-import { loadScenarioPackFromFiles } from "../../../application/scenario/scenario-pack-loader";
 import * as scriptEditorMainUiBridge from "../main-ui-bridge";
+import { createLoadedScenarioPackPreviewHost } from "../host/loaded-scenario-pack-preview-host";
 import { renderScriptEditorLandingView } from "./views/script-editor-landing-view";
 import {
   SCRIPT_EDITOR_BUILDING_DEFAULT_BACKGROUND_OPTIONS,
@@ -54,7 +54,6 @@ const {
   createScriptEditorWorkflowController,
   createScriptEditorWorkspaceShellViewModel,
   createScriptEditorWorkflowRecordDraft,
-  createTextImportFilesFromRecord,
   exportScriptEditorProjectToScenarioPackFiles,
   createScriptEditorProjectLibraryEntry,
   formalizeScriptEditorProjectMenus,
@@ -861,22 +860,10 @@ export function installMainUiFlowScriptEditorModule(host, options) {
     host.previewHost == null &&
     typeof options?.onStartLoadedScenarioPack === "function"
   ) {
-    host.previewHost = {
-      startPreview: async (request) => {
-        const scenarioPack = await loadScenarioPackFromFiles(
-          createTextImportFilesFromRecord(request.serializedPackFiles)
-        );
-        const startResult = await options.onStartLoadedScenarioPack(scenarioPack);
-        if (startResult === "failed") {
-          throw new Error("Runtime preview startup failed.");
-        }
-        return {
-          exit: () => {
-            options?.onExitRuntimePreview?.();
-          },
-        };
-      },
-    };
+    host.previewHost = createLoadedScenarioPackPreviewHost({
+      onStartLoadedScenarioPack: options.onStartLoadedScenarioPack,
+      onExitRuntimePreview: options.onExitRuntimePreview,
+    });
   }
     host.scriptEditorProject = null;
     host.scriptEditorSelection = {

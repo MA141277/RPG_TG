@@ -193,7 +193,29 @@ test("embedded script editor session keeps loaded-scenario-pack preview adaptati
   assert.doesNotMatch(sessionSource, /createTextImportFilesFromRecord/);
   assert.doesNotMatch(sessionSource, /onStartLoadedScenarioPack/);
   assert.match(mainUiSource, /onStartLoadedScenarioPack/);
-  assert.match(mainUiSource, /loadScenarioPackFromFiles/);
+  assert.match(mainUiSource, /loaded-scenario-pack-preview-host/);
+});
+
+test("loaded-scenario-pack preview host helper keeps scenario-pack loader outside the ui module", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainUiSource, /application\/scenario\/scenario-pack-loader/);
+  assert.match(mainUiSource, /loaded-scenario-pack-preview-host/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/host/loaded-scenario-pack-preview-host.ts"
+      )
+    ),
+    true
+  );
 });
 
 test("imported zhuyuanzhang script-editor template stays exportable for runtime preview", async () => {
