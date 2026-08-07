@@ -2,23 +2,28 @@
 
 ## Current State
 
-- Current Stage: `Map Renderer Architecture`
+- Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
-- Current Task: `Campaign Hex Runtime Grid Architecture`
-- Current Task Status: `completed-but-open`
-- Current Child: `Campaign Hex Runtime Grid Architecture`
-- Current Child Status: `completed-but-open`
+- Current Task: `Next Approved Child Selection`
+- Current Task Status: `running`
+- Current Child: `none`
+- Current Child Status: `none`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-and-push-campaign-hex-runtime-grid-architecture`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-28-campaign-hex-runtime-grid-architecture-plan.md`
-- Last Closed Item: `none`
-- Push Status: `not-pushed`
-- Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-28-campaign-hex-runtime-grid-architecture-plan.md; do not close until final review and push succeed.`
+- Next Owner Document: `none`
+- Last Closed Item: `Scenario-Pack Source Unification`
+- Push Status: `success`
+- Push Commit: `aaad59af`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved runtime/event child from the current pushed post-merge stabilization baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 
 ## Progress Log
+
+- 2026-08-08
+  - Summary: `Canonical governance was advanced from source-unification closeout into an empty current-child state. Source-unification is now recorded as the latest closed child, startup remains frozen after the 2026-08-05 audit, and review-system work stays paused by current owner choice instead of silently reoccupying the canonical queue.`
+  - Verification: `Governance/documentation-only sync; reused the already recorded source-unification and startup verification history, then reran pnpm run lint:plans and git diff --check during closeout sync.`
+  - Next: `Open the next approved runtime/event child from the current pushed baseline.`
 
 - 2026-07-06
   - Summary: `Created the first fail-closed progress-driven governance spec and started replacing the old weekly-governance entry surfaces.`
@@ -103,4 +108,18 @@
 
 ## Latest Closeout
 
-No structured child closeout has been recorded for this governance migration batch yet.
+## Child Closeout
+
+- Closed Child: `Scenario-Pack Source Unification`
+- Parent Task: `Post-Merge Branch Stabilization`
+- Parent Stage: `Post-Merge Branch Stabilization`
+- Closeout Status: `closed`
+- Project Progress Synced: `yes`
+- Next Child: `none`
+- Next Child Status: `none`
+- Next Required Action: `open-next-approved-child`
+- Next Entry Document: `docs/superpowers/project-progress.md`
+- Next Owner Document: `none`
+- Push Status: `success`
+- Push Commit: `aaad59af`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved runtime/event child from the pushed source-unification baseline.`

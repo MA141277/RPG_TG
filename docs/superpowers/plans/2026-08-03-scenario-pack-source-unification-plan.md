@@ -10,14 +10,19 @@
 
 ## Execution State
 
-- Status: `completed-but-open`
-- Last Updated: `2026-08-05`
-- Current Focus: `source-unification 代码与合同收口已完成，Task 4/5 的 closeout 文档与定向验证也已补齐；branch-local checkpoint commit/push 已完成，child 继续保持 completed-but-open。`
-- Next Step: `Decide whether to reopen temple review work on this branch or to promote the branch-local owner state into canonical project-progress; do not close this child until that governance decision and any further integration steps are recorded.`
+- Status: `closed`
+- Last Updated: `2026-08-08`
+- Current Focus: `none`
+- Next Step: `Open the next approved runtime/event child from docs/superpowers/project-progress.md.`
 - Verification: `PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run lint:plans; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build:test; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/script-editor-runtime-preview-compat.test.cjs tests/script-editor-template-url.test.cjs tests/zhuyuanzhang-source-unification.test.cjs tests/temple-meeting-content-contract.test.cjs tests/scenario-pack-playable-shells-contract.test.cjs; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=builtin-runtime-pack; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node tools/sync-zhuyuanzhang-startup-templates.mjs --check --source=script-editor-template-pack; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run typecheck; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" pnpm run build; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test tests/startup-session-coordinator.test.cjs tests/scenario-preview-sanitizer.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/navigation-time-follow-up.test.cjs; PATH="/Users/ms/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node --test --test-name-pattern "startup bootstrap owner is extracted from main.ts into a dedicated startup module|startup resolved session owner is extracted from the coordinator into a dedicated startup module|startup loading launcher owner is extracted from main.ts into a dedicated startup module|main.ts map intro shell no longer owns the zhuyuanzhang chapter intro text id|main.ts city begging refusal shell no longer owns zhuyuanzhang shortage or stamina dialogue seeds|main.ts council dialogue shell no longer owns temple or keep default copy branches|startup app-state factory no longer owns the sundeya battle review mission text id inline" tests/robustness.test.cjs`
-- Notes: `Branch-local follow-up plan to the completed startup-chain unification child. It is intentionally not promoted into docs/superpowers/project-progress.md because that canonical governance track currently points at an unrelated child. The 2026-08-05 slice confirms public publication can keep shrinking toward canonical projection without touching temple/keep runtime business logic.`
+- Notes: `This child is closed as a documented pushed baseline. Startup remains frozen after the 2026-08-05 audit, and review-system work remains intentionally paused rather than being reopened by source-unification closeout.`
 
 ## Progress Log
+
+- 2026-08-08
+  - Summary: `Canonical governance sync and child closeout are now complete. docs/superpowers/project-progress.md no longer treats source-unification as the active current child; instead it records this line as the latest closed child and leaves the branch waiting for the next approved runtime/event child. Startup stays frozen after the 2026-08-05 audit, and review-system work remains paused by current owner choice.`
+  - Verification: `Governance/documentation-only sync; reused the already recorded source-unification and startup verification history, then reran pnpm run lint:plans and git diff --check during closeout sync.`
+  - Next: `Open the next approved runtime/event child from docs/superpowers/project-progress.md rather than reopening source-unification or review-system work by default.`
 
 - 2026-08-05
   - Summary: `补齐了 source-unification 的最终 closeout：Task 4 已明确记账为“保留 public/builtin-script-editor-templates/zhuyuanzhang/** 作为唯一生成 publication root，并确认旧 legacy public root / legacy manifest URL 已按 deletion gate 退场”；Task 5 也补跑了 lint:plans、build:test、source-unification 定向测试、三条 sync --check、typecheck、build，以及一组 startup/preview owner 回归。随后 branch-local owner 文档、执行队列、checkpoint commit 与远端 push 也都已完成，当前只剩是否恢复 D 线或是否切 canonical progress 的治理决定。`
@@ -712,7 +717,7 @@ Update `Execution State`, append a `Progress Log` entry, and leave an explicit n
 - [x] `The public deletion question is resolved with a documented keep-or-delete gate rather than left ambiguous.`
 - [x] `Current UI, feature behavior, and pre-merge scenario order/content remain unchanged.`
 - [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
@@ -723,16 +728,16 @@ Update `Execution State`, append a `Progress Log` entry, and leave an explicit n
 
 ## Child Closeout
 
-- Closed Child: `Replace when closing.`
-- Parent Task: `Replace when closing.`
-- Parent Stage: `Replace when closing.`
+- Closed Child: `Scenario-Pack Source Unification`
+- Parent Task: `Post-Merge Branch Stabilization`
+- Parent Stage: `Post-Merge Branch Stabilization`
 - Closeout Status: `closed`
-- Project Progress Synced: `yes/no`
-- Next Child: `Replace when closing.`
-- Next Child Status: `waiting/running/blocked/none`
-- Next Required Action: `Replace when closing.`
+- Project Progress Synced: `yes`
+- Next Child: `none`
+- Next Child Status: `none`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `Replace when closing.`
-- Push Status: `success/failure/not-pushed`
-- Push Commit: `commit-sha-or-none`
-- Resume From: `Replace when closing.`
+- Next Owner Document: `none`
+- Push Status: `success`
+- Push Commit: `aaad59af`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved runtime/event child from the pushed source-unification baseline.`

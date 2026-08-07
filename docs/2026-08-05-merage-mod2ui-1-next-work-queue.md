@@ -7,23 +7,23 @@
 
 ## 当前判断
 
-当前分支剩余工作跨三个独立子线：
+当前分支剩余工作仍可拆成三个独立子线：
 
 1. `D` 评议系统收口
 2. `B` 启动链统一收尾
 3. `C` 剧本包源统一收尾
 
-这三条线在 2026-08-05 后半段已经重新排序：
+这三条线在 2026-08-08 的 canonical 治理同步后，当前排序如下：
 
 - `B` 已冻结观察
-- `C` 已进入 closeout / 文档同步
-- `D` 已明确恢复，并在当前分支继续推进
+- `C` 已 closed
+- `D` 按当前 owner 要求继续暂停
 
 原因：
 
 - `B` 审计已经确认 covered startup path 未复现新的 runtime drift，当前不应继续默认开刀。
-- `C` 代码和合同已基本收口，剩余主要是 closeout 和记账，不再是默认 runtime 主线。
-- `D` 已恢复并连续推进多批 temple review seam convergence，当前离“只剩宿主 closeout 边界”最近。
+- `C` 代码、合同和 closeout 已完成，`docs/superpowers/project-progress.md` 现已转到“等待下一条 approved child”的空 current-child 状态。
+- `D` 虽然 branch-local 文档仍保留历史推进记录，但当前 owner 已明确要求先不处理评议系统，不应再被默认当作下一批执行目标。
 
 ## 执行顺序
 
@@ -58,11 +58,11 @@
 - 结论：covered startup path 未复现新的 runtime drift；唯一暴露问题是一条仍指向旧 `main.ts` owner 形状的结构回归测试，已修正到 `startup-app-state-factory`。
 - 后续动作：startup 线转为冻结观察，只有出现新的 runtime drift 再重开。
 
-### Batch 2: C 线 source-unification 收尾清点
+### Batch 2: C 线 source-unification closeout 归档
 
 **目标**
 
-继续只在 runtime/builtin/public/sync-tool 这一条线上清点 public publication drift，避免再把 temple/keep house runtime 改动混进 source-unification。
+记录 `source-unification` 这一条线已经收口到 pushed baseline，并明确它不再作为默认 active child 继续开刀。
 
 **入口文档**
 
@@ -71,21 +71,18 @@
 
 **执行批次**
 
-1. 盘点 public 默认模板里还存在的 publication-only authored 记录。
-2. 区分：
-   - 应继续做 projection contract 的 canonical 记录
-   - 应保留为 publication layer 外层兼容的记录
-   - 可以直接删除的旧镜像文件或键
-3. 如果需要，再开一刀小的 projection/sync slice，但不回到 temple/keep runtime 逻辑。
+1. 把 source-unification 的 shared/projection/publication 结果同步到 canonical owner 文档。
+2. 把 child 从 completed-but-open 改成 closed。
+3. 把 canonical `project-progress` 切到“无当前 child、等待下一条 approved child”的状态。
 
 **完成判据**
 
-- public layer 的剩余差异变成明确清单，而不是隐性第三套 maintained pack。
-- 下一步是“继续 projection”还是“冻结 publication layer”有清楚判断。
+- source-unification 不再占用 current child。
+- 下一步不是继续切 family，而是从 canonical 入口打开新的 approved child。
 
 **当前进展**
 
-- `已完成同类型批处理`
+- `已 closed`
 - 已把整组剩余 public-only authored event surface 一次性收回 builtin template：包括 26 条 template/home/temple.work events、对应 enter events，以及整份 public `event-bindings.json`。
 - 已把同类型 support-data residual 也一并收回 builtin template：`menu-resources.json` 与 `house-module-defaults.json` 现都由 builtin template canonical 持有，grain-accounting / medicine-compounding 两条 city minigame 菜单入口也已重新纳入 public publication。
 - 已把 pack manifest/public family 再往前收了一层：public 现发布 `playables.json`、`playable-shells.json`、`settlements.json`、`playable-integrations.json`，且 `temple-copy-scripture` 这条 integration 已通过 Script Editor importer/exporter 合同升级纳入 round-trip 闭环，不再需要 public omitted 特判。
@@ -127,31 +124,27 @@
 - `maps.json` 这一刀也已经收口：
   template/public 的 `map.yuanmo_campaign` 不再继续保留 950 条 editor fort/resource/settlement surface，而是只承接 runtime 的 96 条 canonical node 集与 0 fort / 0 resource 统计；
   共享 settlement 节点仍优先落到 template 现有坐标锚点，运行时专属新增节点则保留 runtime 坐标，因此“内容以 runtime 为主、格式沿 template asset surface”已经真正落地。
-- 当前这类问题已不再需要继续按单个 building、单个 binding、单个 support-data 文件，或单个 maps family 切片；source-unification 代码面当前只剩 closeout，不再有新的 family owner/mapping 待判。
+- 当前这类问题已不再需要继续按单个 building、单个 binding、单个 support-data 文件，或单个 maps family 切片；source-unification 代码与治理当前都已 closed，不再有新的 family owner/mapping 待判。
 
-### Batch 3: D 线恢复入口
+### Batch 3: 下一条 runtime/event child 入口
 
 **目标**
 
-继续把 temple review 剩余 shared/host seam 压到只剩明确的宿主 closeout / settlement 边界，然后决定是否结束 generic meeting 收敛，切到下一个 runtime/event 迁移计划。
+在 `source-unification` 不再继续默认开刀的前提下，决定下一条应被正式打开的 runtime/event child，而不是让 branch-local 快照继续长期代替 canonical queue。
 
 **入口文档**
 
-- `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md`
-- `docs/superpowers/specs/2026-08-04-review-owner-inventory.md`
+- `docs/superpowers/project-progress.md`
+- `docs/superpowers/plans/2026-08-03-scenario-pack-source-unification-plan.md`
 
 **当前进展**
 
-- `已恢复并连续推进`
-- 已完成的新增收口：
-  - `advice -> assign-duty` follow-up projection helper
-  - `assign-duty` action container helper
-  - fallback `intro -> assignment-table` projection helper
-  - 宿主 `assigned` settlement shell helper
-  - fallback `praise / situation / policy / close-policy-panel` projection helper
-- 当前边界：
-  - `assigned` 宿主 settlement seam 仍保留为宿主 owner
-  - 当前看起来只剩单路径 `finished/idle/root` closeout 需要确认是否仍值得继续抽
+- `待正式打开`
+- 当前判断：
+  - startup 不应继续默认开刀
+  - source-unification 不应继续默认开新的 family slice
+  - review-system 按当前 owner 选择继续暂停
+- 因此下一条 child 必须是一个新的、明确批准的 runtime/event 方向，而不是回到旧的 D 线默认续推
 
 ## 交接规则
 
@@ -159,7 +152,7 @@
 
 1. 先读 [docs/2026-08-05-merage-mod2ui-1-mainline-status.md](/Users/ms/Desktop/workspace/RPG_TG/docs/2026-08-05-merage-mod2ui-1-mainline-status.md:1)
 2. 再按本队列选择当前批次
-3. 最后打开对应 owner plan，而不是直接从 `project-progress.md` 开始误入旧 child
+3. 最后回到 canonical `project-progress.md` 指向的 owner plan，而不是绕开它另找 branch-local 入口
 
 ## 不要做的事
 
@@ -172,12 +165,11 @@
 
 ## 当前建议
 
-如果下一步只做一件事，优先决定“把当前 branch-local owner 状态切到 canonical progress”还是“正式打开下一条 runtime/event 迁移计划”。
+如果下一步只做一件事，优先在 canonical `project-progress` 入口下直接打开下一条新的 runtime/event child。
 
 原因：
 
 - `Batch 1` 已完成，startup 线当前没有复现新的 runtime drift。
-- `Batch 2` 当前也已完成到“代码与合同已收口”的状态。
-- `Batch 3` 已恢复并推进到 temple review 仅剩少量宿主 closeout 判断。
-- source-unification plan、generic meeting plan、主线状态快照与 change-log 当前都已经多次 checkpoint commit / push。
-- 因此当前最合理的下一步，不再是继续开新的 startup/source-unification family，而是把已恢复的 `D` 线进展同步到更稳定的 owner 文档，或者直接衔接下一个 runtime/event 主线。
+- `Batch 2` 已 closed，不再是当前 child。
+- `D` 线当前按 owner 要求暂停，不应继续作为默认推进面。
+- 因此当前最合理的下一步，不再是继续开新的 startup/source-unification family，也不是默认恢复 review-system，而是直接衔接下一条新的 runtime/event 主线。

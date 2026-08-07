@@ -3,7 +3,7 @@
 记录时间：2026-08-05
 
 > 说明：这是一份分支本地进度快照，用于汇总当前会话主线、分支真实任务状态与建议优先级。
-> 它**不是** `docs/superpowers/project-progress.md` 的替代品，也**不是** canonical resume truth。
+> 它**不是** `docs/superpowers/project-progress.md` 的替代品；自 2026-08-08 起 canonical resume truth 已重新同步回 `docs/superpowers/project-progress.md`。
 
 ## 当前分支事实
 
@@ -13,12 +13,10 @@
 
 ## 当前真实 owner 文档
 
-当前分支的真实进行中任务，与 canonical `project-progress` 记录并不一致。
-
 - `docs/superpowers/project-progress.md`
-  - 当前仍停留在 `2026-07-28 Campaign Hex Runtime Grid Architecture`
-  - 这反映的是历史 canonical child，不是当前分支真实主线
-- 当前分支最接近真实执行状态的 owner 文档：
+  - 当前已完成 `Scenario-Pack Source Unification` closeout
+  - 它现在记录的是“无当前 child，等待下一条 approved child”的 canonical resume truth
+- 当前分支的 branch-local 配套 owner 文档：
   - `docs/superpowers/plans/2026-08-04-generic-meeting-review-module-plan.md`
   - `docs/superpowers/plans/2026-08-03-post-merge-stabilization-plan.md`
   - `docs/superpowers/plans/2026-08-03-builtin-startup-scenario-pack-unification-plan.md`
@@ -104,7 +102,7 @@
 - 进一步同类审计后，builtin template 侧两份同样未进入 manifest、也没有任何 Script Editor / sync / preview 消费方的 `house-content/*.json` 旧镜像也已删除；当前 maintained packs 里这类无 owner house-content 残留已清空。
 - 当前 `public/script-editor-templates/zhuyuanzhang/**` 与 `src/modules/script-editor/builtin-templates/zhuyuanzhang/**` 都已达到“只剩 manifest 文件 + maps 引用资产”的干净态，并已有通用回归锁住；同类问题下一步只可能再出现在 runtime pack 的 intentional extra asset / pack-content owner 上，而不是 public / builtin template 的历史垃圾文件上。
 - 当前显式 residual boundary 已清空；卡点已不再是任何未合同化 JSON family，也不再是 legacy public URL 的保留策略。
-- `C4` 代码面当前已完成，`C6/C7` 也已经进入“文档与治理关账”阶段；如果继续推进 source-unification，下一步应主要落在 owner 文档同步、阶段性提交与最终 closeout，而不是再开新的数据 family 切片。
+- `C4` 代码面当前已完成，`C6/C7` 也已完成到 closeout；当前这条线不再是 active child，而是已关闭的 pushed baseline。
 
 ### D. 评议系统收口
 
@@ -146,41 +144,40 @@
 判断：
 
 - F 线当前已把 source-unification / startup 冻结 / branch-local queue 同步到最新状态。
-- 当前剩余的治理差异主要只剩 canonical `project-progress` 仍停留在历史 child；本轮 source-unification closeout 的 checkpoint commit/push 已完成。
+- 当前剩余的治理动作已变成“从 canonical `project-progress` 打开下一条 approved child”，而不是继续在 branch-local 快照里停留。
 
 ## 当前优先级
 
 ### P1
 
-- C. 剧本包源统一
-  - 重点是 default template loader、public publication 边界、旧镜像删除、最终双源收口
+- F4. 治理关账
+  - `source-unification` 现已正式 closeout
+  - 当前重点变成从 canonical `project-progress` 打开下一条 approved runtime/event child
 
 ### P2
+
+- C. 剧本包源统一
+  - 已 closed
+  - 后续不再默认继续切新的 family owner/mapping
+
+### P3
 
 - B. 启动链统一
   - 当前按冻结观察处理
   - 只有在复现新的 runtime drift 时，才再开 startup 子切片
 
-### P3
+### 暂缓项
 
 - D. 评议系统收口
-  - 当前按用户要求延后，不作为下一批执行目标
-  - 后续恢复时，仍从 temple 剩余 reward / personnel / praise seam 开始
-
-### 持续项
-
-- F4. 文档同步
-  - merge ledger
-  - startup/source-unification/review 相关计划与变更日志
-  - 必要时再决定是否把 canonical `project-progress` 正式切到当前分支真实主线
+  - 当前按用户要求暂停
+  - 不作为这一批 canonical 治理同步后的默认下一步
 
 ## 下一批建议执行顺序
 
-1. 回到 startup 统一，专门审计 `B4/B5` 还未统一的 request/context/follow-up owner。
-2. startup 审计已完成；在没有新 drift 前，将 startup 行为视为冻结。
-3. 进入 scenario-pack source unification，把三源减少到明确的双源模型。
-4. 评议系统收口暂缓；只有在你重新恢复这条线时，再回到 temple review 剩余 seam。
-5. 当前更合理的下一步是决定是否恢复 `D` 线，或是否把当前 branch-local owner 状态正式切到 canonical `project-progress`；当前这批 closeout 的 checkpoint commit/push 已经完成。
+1. 以 `docs/superpowers/project-progress.md` 作为唯一入口继续。
+2. 从当前“无当前 child”的 canonical 状态，打开下一条 approved runtime/event child。
+3. startup 审计已完成；在没有新 drift 前，将 startup 行为视为冻结。
+4. 评议系统收口继续暂缓；只有在你重新恢复这条线时，再回到 temple review 剩余 seam。
 
 ## 对应执行队列
 
