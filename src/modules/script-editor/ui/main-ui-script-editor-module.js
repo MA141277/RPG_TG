@@ -1,12 +1,10 @@
 import {
-  renderEntryShellScriptEditorLanding,
-} from "../../../ui/entry-shell/entry-shell-view";
-import {
   BUILDING_DEFAULT_BACKGROUND_OPTIONS,
   CITY_DEFAULT_BACKGROUND_OPTIONS,
 } from "../../../ui/location-backgrounds";
 import { loadScenarioPackFromFiles } from "../../../application/scenario/scenario-pack-loader";
 import * as scriptEditorMainUiBridge from "../main-ui-bridge";
+import { renderScriptEditorLandingView } from "./views/script-editor-landing-view";
 
 const {
   SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES,
@@ -972,7 +970,7 @@ class MainUiFlowScriptEditorModule {
   renderLegacyScriptEditorLanding() {
     const hasSession = this.scriptEditorProject != null;
 
-    return renderEntryShellScriptEditorLanding({
+    return renderScriptEditorLandingView({
       hasSession,
       noticeMarkup: this.renderScriptEditorNotice(),
       fileInputsMarkup: this.renderScriptEditorFileInputs(),
@@ -982,7 +980,7 @@ class MainUiFlowScriptEditorModule {
   renderScriptEditorLanding() {
     const projectLibraryEntries = this.getScriptEditorProjectLibraryEntries();
 
-    return renderEntryShellScriptEditorLanding({
+    return renderScriptEditorLandingView({
       hasSession: false,
       noticeMarkup: this.renderScriptEditorNotice(),
       projectLibraryMarkup: this.renderScriptEditorProjectLibrary(projectLibraryEntries),

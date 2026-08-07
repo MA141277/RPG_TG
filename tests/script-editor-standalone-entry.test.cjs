@@ -36,3 +36,34 @@ test("standalone script editor bootstrap exists", () => {
     true
   );
 });
+
+test("script editor landing view stays package-local instead of importing entry-shell view", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "ui",
+      "main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(moduleSource, /entry-shell\/entry-shell-view/);
+  assert.match(moduleSource, /script-editor-landing-view/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "modules",
+        "script-editor",
+        "ui",
+        "views",
+        "script-editor-landing-view.ts"
+      )
+    ),
+    true
+  );
+});
