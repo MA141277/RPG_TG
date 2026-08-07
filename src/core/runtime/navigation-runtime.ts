@@ -21,6 +21,7 @@ import type { RuntimeState } from "../contracts/runtime-state";
 import { createRuntimeEventEntity } from "./event-entity-projection";
 import { dispatchEventRoute } from "./event-router";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
+import { dispatchRuntimeRequest } from "./runtime-dispatch";
 
 type NavigationRuntimeResult = {
   state: GameState;
@@ -194,20 +195,35 @@ function routeHouseEnterEvent(
     return state;
   }
 
-  return dispatchEventRoute({
+  return dispatchRuntimeRequest({
     state: toNavigationRuntimeState(state),
-    eventId,
+    request: {
+      family: "external",
+      type: "external",
+      eventId,
+    },
     context: {
-      repository: {
-        resolveById: (resolvedEventId) => {
-          const resolved = eventDefinitionsById[resolvedEventId];
-          return resolved == null ? null : toNavigationRuntimeEventEntity(resolved);
-        },
+      router: {
+        route: ({ state }) =>
+          dispatchEventRoute({
+            state,
+            eventId,
+            context: {
+              repository: {
+                resolveById: (resolvedEventId) => {
+                  const resolved = eventDefinitionsById[resolvedEventId];
+                  return resolved == null
+                    ? null
+                    : toNavigationRuntimeEventEntity(resolved);
+                },
+              },
+              handlers: createEventRouteActivationHandlers({
+                eventDefinitionsById,
+                fallbackEventDefinition: eventDefinition,
+              }),
+            },
+          }),
       },
-      handlers: createEventRouteActivationHandlers({
-        eventDefinitionsById,
-        fallbackEventDefinition: eventDefinition,
-      }),
     },
   }).state.core;
 }

@@ -16889,7 +16889,7 @@ test("navigation enter-house convergence keeps on-enter event activation on the 
 
   assert.doesNotMatch(enterHouseSource, /\bstartEvent\s*\(/);
   assert.match(navigationRuntimeSource, /\brouteHouseEnterEvent\s*\(/);
-  assert.match(routeHouseEnterEventBlock, /\bdispatchEventRoute\s*\(/);
+  assert.match(routeHouseEnterEventBlock, /\bdispatchRuntimeRequest\s*\(/);
 });
 
 test("story runtime state-only binding route convergence keeps applyTriggeredStoryEvent on the shared direct-entry seam", () => {

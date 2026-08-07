@@ -151,26 +151,27 @@ test("navigation runtime blocks enter-house when location access denies the buil
 });
 
 test(
-  "navigation runtime routes house on-enter events through the shared event-router seam",
+  "navigation runtime routes house on-enter events through the shared runtime-dispatch seam",
   { concurrency: false },
   () => {
-    const eventRouterPath = require.resolve(
-      "../.test-dist/core/runtime/event-router.js"
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
     );
     const navigationRuntimePath = require.resolve(
       "../.test-dist/core/runtime/navigation-runtime.js"
     );
 
     delete require.cache[navigationRuntimePath];
-    delete require.cache[eventRouterPath];
+    delete require.cache[runtimeDispatchPath];
 
-    const patchedEventRouter = require(eventRouterPath);
-    const originalDispatchEventRoute = patchedEventRouter.dispatchEventRoute;
-    let dispatchEventRouteCalls = 0;
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
 
-    patchedEventRouter.dispatchEventRoute = (...args) => {
-      dispatchEventRouteCalls += 1;
-      return originalDispatchEventRoute(...args);
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
     };
 
     try {
@@ -204,13 +205,14 @@ test(
         houseId: "house.temple",
       });
       assert.ok(
-        dispatchEventRouteCalls > 0,
-        "navigation enter-house should route onEnterEventId through dispatchEventRoute instead of starting it locally"
+        dispatchRuntimeRequestCalls > 0,
+        "navigation enter-house should route onEnterEventId through dispatchRuntimeRequest instead of stopping on the route-only seam"
       );
     } finally {
-      patchedEventRouter.dispatchEventRoute = originalDispatchEventRoute;
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
       delete require.cache[navigationRuntimePath];
-      delete require.cache[eventRouterPath];
+      delete require.cache[runtimeDispatchPath];
     }
   }
 );
