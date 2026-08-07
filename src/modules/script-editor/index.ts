@@ -10,5 +10,5 @@ export type {
   ScriptEditorPersonAttributeMapping,
   ScriptEditorPersonAttributeValue,
   ScriptEditorPersonSemanticBinding,
-} from "../../core/contracts/script-editor-person-attributes";
+} from "./domain/script-editor-person-attribute-contract";
 export * as scriptEditorMainUiBridge from "./main-ui-bridge";

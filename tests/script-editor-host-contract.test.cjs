@@ -199,3 +199,75 @@ test("script editor runtime-result contract is consumed through a package-local 
     true
   );
 });
+
+test("script editor domain contracts consume progression and person-attribute contracts through package-local seams", () => {
+  const projectDomainSource = readSource(
+    "src/modules/script-editor/domain/script-editor-project.ts"
+  );
+  const scriptEditorIndexSource = readSource("src/modules/script-editor/index.ts");
+
+  assert.doesNotMatch(
+    projectDomainSource,
+    /core\/contracts\/progression-runtime/
+  );
+  assert.doesNotMatch(
+    projectDomainSource,
+    /core\/contracts\/script-editor-person-attributes/
+  );
+  assert.doesNotMatch(
+    scriptEditorIndexSource,
+    /core\/contracts\/script-editor-person-attributes/
+  );
+  assert.match(
+    projectDomainSource,
+    /script-editor-progression-runtime-contract/
+  );
+  assert.match(
+    projectDomainSource,
+    /script-editor-person-attribute-contract/
+  );
+  assert.match(
+    scriptEditorIndexSource,
+    /script-editor-person-attribute-contract/
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/domain/script-editor-progression-runtime-contract.ts"
+      )
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/domain/script-editor-person-attribute-contract.ts"
+      )
+    ),
+    true
+  );
+});
+
+test("script editor shared rule compiler consumes effect and task contracts through a package-local seam", () => {
+  const sharedRuleCompilerSource = readSource(
+    "src/modules/script-editor/application/shared-rule-compiler.ts"
+  );
+
+  assert.doesNotMatch(sharedRuleCompilerSource, /core\/contracts\/effect/);
+  assert.doesNotMatch(sharedRuleCompilerSource, /core\/contracts\/task-runtime/);
+  assert.match(
+    sharedRuleCompilerSource,
+    /script-editor-shared-rule-contract/
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/application/script-editor-shared-rule-contract.ts"
+      )
+    ),
+    true
+  );
+});

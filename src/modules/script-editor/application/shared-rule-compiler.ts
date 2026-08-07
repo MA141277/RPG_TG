@@ -1,9 +1,9 @@
-﻿import type { Effect } from "../../../core/contracts/effect";
-import type {
+﻿import type {
+  Effect,
   TaskCondition,
   TaskDefinition,
   TaskStatus,
-} from "../../../core/contracts/task-runtime";
+} from "./script-editor-shared-rule-contract";
 import type {
   ScriptEditorConditionGroup,
   ScriptEditorConditionNode,

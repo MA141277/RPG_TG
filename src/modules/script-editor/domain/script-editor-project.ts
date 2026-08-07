@@ -19,7 +19,7 @@ import type {
   ProgressTierDefinition,
   ProgressTrackBinding,
   ProgressTrackDefinition,
-} from "../../../core/contracts/progression-runtime";
+} from "./script-editor-progression-runtime-contract";
 import type {
   MenuEntryDefinition,
   MenuInstanceDefinition,
@@ -31,12 +31,12 @@ import type {
   ScriptEditorPersonAttributeMapping,
   ScriptEditorPersonAttributeValue,
   ScriptEditorPersonSemanticBinding,
-} from "../../../core/contracts/script-editor-person-attributes";
+} from "./script-editor-person-attribute-contract";
 export type {
   ScriptEditorPersonAttributeMapping,
   ScriptEditorPersonAttributeValue,
   ScriptEditorPersonSemanticBinding,
-} from "../../../core/contracts/script-editor-person-attributes";
+} from "./script-editor-person-attribute-contract";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
