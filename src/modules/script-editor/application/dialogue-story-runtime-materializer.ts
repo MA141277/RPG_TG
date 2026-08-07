@@ -2,7 +2,7 @@
   RuntimeDialogueCastMember,
   RuntimeDialogueDefinition,
   RuntimeDialogueNode,
-} from "../../../domain/dialogue";
+} from "../domain/script-editor-dialogue-contract";
 import type {
   ScriptEditorDialogueCastRecord,
   ScriptEditorDialogueRecord,

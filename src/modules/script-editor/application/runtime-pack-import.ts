@@ -15,7 +15,7 @@ import {
   createDefaultScriptEditorMinigameRecord,
 } from "./minigame-binding-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
-import type { ContentPackAudioSettings } from "../../../domain/content-pack";
+import type { ContentPackAudioSettings } from "./script-editor-content-pack-contract";
 import {
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
   SCRIPT_EDITOR_PROJECT_KIND,
@@ -38,8 +38,8 @@ import {
   type ScriptEditorTextEntryRecord,
   type ScriptEditorTypedAttributeRecord,
 } from "../domain/script-editor-project";
-import type { EventDefinition } from "../../../domain/event";
-import type { LocationAccessDefinition } from "../../../domain/location-access";
+import type { EventDefinition } from "../domain/script-editor-event-contract";
+import type { LocationAccessDefinition } from "../domain/script-editor-location-access-contract";
 import type { PlayableIntegrationDefinition } from "./script-editor-playable-runtime-contract";
 
 export type ScriptEditorRuntimePackImportDiagnostic = {

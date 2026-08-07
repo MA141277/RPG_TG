@@ -271,3 +271,99 @@ test("script editor shared rule compiler consumes effect and task contracts thro
     true
   );
 });
+
+test("script editor runtime import-export consumes scenario dialogue event flow and content contracts through package-local seams", () => {
+  const runtimePackExportSource = readSource(
+    "src/modules/script-editor/application/runtime-pack-export.ts"
+  );
+  const runtimePackImportSource = readSource(
+    "src/modules/script-editor/application/runtime-pack-import.ts"
+  );
+  const dialogueMaterializerSource = readSource(
+    "src/modules/script-editor/application/dialogue-story-runtime-materializer.ts"
+  );
+
+  for (const source of [
+    runtimePackExportSource,
+    runtimePackImportSource,
+    dialogueMaterializerSource,
+  ]) {
+    assert.doesNotMatch(source, /domain\/dialogue/);
+    assert.doesNotMatch(source, /domain\/event/);
+  }
+  assert.doesNotMatch(runtimePackExportSource, /domain\/scenario-profile/);
+  assert.doesNotMatch(runtimePackExportSource, /domain\/content-pack/);
+  assert.doesNotMatch(runtimePackExportSource, /domain\/playables\/flow/);
+  assert.doesNotMatch(runtimePackExportSource, /domain\/game-state/);
+  assert.doesNotMatch(runtimePackImportSource, /domain\/content-pack/);
+  assert.doesNotMatch(runtimePackImportSource, /domain\/location-access/);
+
+  assert.match(runtimePackExportSource, /script-editor-dialogue-contract/);
+  assert.match(runtimePackExportSource, /script-editor-event-contract/);
+  assert.match(runtimePackExportSource, /script-editor-flow-contract/);
+  assert.match(runtimePackExportSource, /script-editor-scenario-profile-contract/);
+  assert.match(runtimePackExportSource, /script-editor-content-pack-contract/);
+  assert.match(runtimePackExportSource, /script-editor-game-state-contract/);
+  assert.match(runtimePackImportSource, /script-editor-event-contract/);
+  assert.match(runtimePackImportSource, /script-editor-location-access-contract/);
+  assert.match(runtimePackImportSource, /script-editor-content-pack-contract/);
+  assert.match(dialogueMaterializerSource, /script-editor-dialogue-contract/);
+
+  for (const file of [
+    "src/modules/script-editor/domain/script-editor-dialogue-contract.ts",
+    "src/modules/script-editor/domain/script-editor-event-contract.ts",
+    "src/modules/script-editor/domain/script-editor-flow-contract.ts",
+    "src/modules/script-editor/domain/script-editor-location-access-contract.ts",
+    "src/modules/script-editor/application/script-editor-scenario-profile-contract.ts",
+    "src/modules/script-editor/application/script-editor-content-pack-contract.ts",
+    "src/modules/script-editor/application/script-editor-game-state-contract.ts",
+  ]) {
+    assert.equal(fs.existsSync(path.join(process.cwd(), file)), true);
+  }
+});
+
+test("script editor domain and authoring consume menu location-access dialogue and event contracts through package-local seams", () => {
+  const projectDomainSource = readSource(
+    "src/modules/script-editor/domain/script-editor-project.ts"
+  );
+  const storyDialogueAuthoringSource = readSource(
+    "src/modules/script-editor/application/story-dialogue-event-authoring.ts"
+  );
+  const menuAuthoringSource = readSource(
+    "src/modules/script-editor/application/menu-authoring.ts"
+  );
+  const locationAccessAuthoringSource = readSource(
+    "src/modules/script-editor/application/location-access-authoring.ts"
+  );
+
+  for (const source of [
+    projectDomainSource,
+    storyDialogueAuthoringSource,
+    menuAuthoringSource,
+    locationAccessAuthoringSource,
+  ]) {
+    assert.doesNotMatch(source, /domain\/dialogue/);
+    assert.doesNotMatch(source, /domain\/event/);
+  }
+  assert.doesNotMatch(projectDomainSource, /domain\/menu/);
+  assert.doesNotMatch(projectDomainSource, /domain\/location-access/);
+  assert.doesNotMatch(projectDomainSource, /domain\/playables\/flow/);
+  assert.doesNotMatch(menuAuthoringSource, /domain\/menu/);
+  assert.doesNotMatch(locationAccessAuthoringSource, /domain\/location-access/);
+
+  assert.match(projectDomainSource, /script-editor-dialogue-contract/);
+  assert.match(projectDomainSource, /script-editor-event-contract/);
+  assert.match(projectDomainSource, /script-editor-menu-contract/);
+  assert.match(projectDomainSource, /script-editor-location-access-contract/);
+  assert.match(projectDomainSource, /script-editor-flow-contract/);
+  assert.match(storyDialogueAuthoringSource, /script-editor-dialogue-contract/);
+  assert.match(storyDialogueAuthoringSource, /script-editor-event-contract/);
+  assert.match(menuAuthoringSource, /script-editor-menu-contract/);
+  assert.match(locationAccessAuthoringSource, /script-editor-location-access-contract/);
+
+  for (const file of [
+    "src/modules/script-editor/domain/script-editor-menu-contract.ts",
+  ]) {
+    assert.equal(fs.existsSync(path.join(process.cwd(), file)), true);
+  }
+});

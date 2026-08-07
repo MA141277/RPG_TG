@@ -1,7 +1,7 @@
 ﻿import type {
   LocationAccessConditionExpression,
   LocationAccessValueRef,
-} from "../../../domain/location-access";
+} from "../domain/script-editor-location-access-contract";
 
 export type LocationAccessConditionSourceFamily = "event" | "person" | "time";
 

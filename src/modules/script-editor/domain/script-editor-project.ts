@@ -3,14 +3,14 @@ import type {
   EventOccurrence,
   EventParticipant,
   EventRouteCommand,
-} from "../../../domain/event";
+} from "./script-editor-event-contract";
 import type {
   LocationAccessConditionExpression,
   LocationAccessConditionSubject,
   LocationAccessValueRef,
-} from "../../../domain/location-access";
+} from "./script-editor-location-access-contract";
 import type { RuntimeTaskInput } from "./script-editor-runtime-result-contract";
-import type { FlowNode } from "../../../domain/playables/flow";
+import type { FlowNode } from "./script-editor-flow-contract";
 import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
@@ -25,8 +25,8 @@ import type {
   MenuInstanceDefinition,
   MenuResourceDefinition,
   MenuTargetFamily,
-} from "../../../domain/menu";
-import type { DialogueSide } from "../../../domain/dialogue";
+} from "./script-editor-menu-contract";
+import type { DialogueSide } from "./script-editor-dialogue-contract";
 import type {
   ScriptEditorPersonAttributeMapping,
   ScriptEditorPersonAttributeValue,

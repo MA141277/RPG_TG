@@ -5,7 +5,7 @@ import type {
   LocationAccessDefinition,
   LocationAccessPurpose,
   LocationAccessTargetFamily,
-} from "../../../domain/location-access";
+} from "../domain/script-editor-location-access-contract";
 import type {
   CityNpcDefinition,
   CityNpcPoolDefinition,

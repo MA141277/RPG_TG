@@ -3,7 +3,7 @@
   MenuInstanceDefinition,
   MenuResourceDefinition,
   MenuTargetFamily,
-} from "../../../domain/menu";
+} from "../domain/script-editor-menu-contract";
 import type {
   ScriptEditorBuildingArrangementRecord,
   ScriptEditorBuildingRecord,

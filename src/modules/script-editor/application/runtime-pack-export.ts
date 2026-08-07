@@ -25,15 +25,15 @@ import type {
   ScriptEditorTypedAttributeRecord,
 } from "../domain/script-editor-project";
 import { SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION } from "../domain/script-editor-project";
-import type { ScenarioProfileDefinition } from "../../../domain/scenario-profile";
-import { GAME_VIEW_NAMES, isViewName } from "../../../domain/game-state";
-import type { ContentPackAudioSettings } from "../../../domain/content-pack";
-import type { RuntimeDialogueDefinition } from "../../../domain/dialogue";
+import type { ScenarioProfileDefinition } from "./script-editor-scenario-profile-contract";
+import { GAME_VIEW_NAMES, isViewName } from "./script-editor-game-state-contract";
+import type { ContentPackAudioSettings } from "./script-editor-content-pack-contract";
+import type { RuntimeDialogueDefinition } from "../domain/script-editor-dialogue-contract";
 import type {
   EventBinding,
   EventDefinition,
   EventRouteCommand,
-} from "../../../domain/event";
+} from "../domain/script-editor-event-contract";
 import type { RuntimeTaskInput } from "../domain/script-editor-runtime-result-contract";
 import type {
   PlayableDefinition,
@@ -42,7 +42,7 @@ import type {
   PlayableSettlementRoute,
   PlayableReturnPolicy,
 } from "./script-editor-playable-runtime-contract";
-import type { FlowPlayableDefinition } from "../../../domain/playables/flow";
+import type { FlowPlayableDefinition } from "../domain/script-editor-flow-contract";
 import {
   isSupportedEventBindingOwnerFamily,
   isSupportedEventBindingTrigger,

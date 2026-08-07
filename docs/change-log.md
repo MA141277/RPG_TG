@@ -20,6 +20,8 @@
 - `src/modules/script-editor/domain/script-editor-runtime-result-contract.ts` 现已成为 script-editor 包内统一的 runtime-result contract seam；`runtime-pack-export.ts`、`story-dialogue-event-authoring.ts` 与 `domain/script-editor-project.ts` 不再直连外部 `core/contracts/runtime-result`。
 - `src/modules/script-editor/domain/script-editor-progression-runtime-contract.ts` 与 `src/modules/script-editor/domain/script-editor-person-attribute-contract.ts` 现已成为 script-editor domain 层统一的 progression / person-attribute contract seam；`domain/script-editor-project.ts` 与对外 `index.ts` 不再直连外部 `core/contracts/progression-runtime` 或 `core/contracts/script-editor-person-attributes`。
 - `src/modules/script-editor/application/script-editor-shared-rule-contract.ts` 现已成为 script-editor shared-rule compiler 的 contract seam；`shared-rule-compiler.ts` 不再直连外部 `core/contracts/effect` 或 `core/contracts/task-runtime`。
+- `src/modules/script-editor/domain/script-editor-dialogue-contract.ts`、`script-editor-event-contract.ts`、`script-editor-flow-contract.ts`、`script-editor-location-access-contract.ts` 与 `script-editor-menu-contract.ts` 现已成为 script-editor domain/shared authoring 统一的 narrative/runtime contract seam；`runtime-pack-export.ts`、`runtime-pack-import.ts`、`story-dialogue-event-authoring.ts`、`dialogue-story-runtime-materializer.ts`、`location-access-authoring.ts`、`menu-authoring.ts` 与 `domain/script-editor-project.ts` 不再直连外部 `domain/dialogue`、`domain/event`、`domain/location-access`、`domain/menu` 或 `domain/playables/flow`。
+- `src/modules/script-editor/application/script-editor-scenario-profile-contract.ts`、`script-editor-content-pack-contract.ts` 与 `script-editor-game-state-contract.ts` 现已成为 runtime import/export 对 `scenario-profile`、`content-pack` 与 `game-state` 的 package 内 seam；`runtime-pack-export.ts` 与 `runtime-pack-import.ts` 不再直连这些外部 domain 合同。
 - `prototypes/script-editor/index.html`、`src/modules/script-editor/standalone/script-editor-standalone.ts`、`src/modules/script-editor/standalone/script-editor-standalone-host.ts` 与 `vite.config.ts` 现已提供独立的 standalone 剧本编辑器入口，同时保持嵌入态与 standalone 复用同一套会话 owner。
 - `tsconfig.test.json` 现已把 `src/modules/**/*.ts` 纳入 `.test-dist` 编译范围；依赖 `.test-dist/modules/**` 的 Script Editor module 行为测试不再读取历史残留产物。
 - 这一轮还补齐了 `tests/script-editor-host-contract.test.cjs`、`tests/script-editor-embedded-session.test.cjs`、`tests/script-editor-standalone-entry.test.cjs`、`tests/script-editor-publication-boundary.test.cjs` 和 `tests/script-editor-runtime-preview-compat.test.cjs` 的包边界回归，并通过浏览器 smoke 验证了嵌入态预览链路和 standalone fail-closed 行为。
@@ -39,6 +41,8 @@
 - runtime-result contract 收口后，script-editor 的事件/对话/任务结果字段不再跨 application 与 domain 多点直连外部 shared contract；后续如果任务输入或结果 payload 继续调整，可以先只替换这一个 domain seam。
 - progression / person-attribute contract 收口后，script-editor domain 对 shared type contract 的外部入口也已经集中到 package 内两条 seam；对外 `index.ts` 也不再把 core contract 路径暴露成公开入口。
 - shared-rule contract 收口后，script-editor 生产实现层对 `core/contracts/**` 的直接引用已经基本退出，只剩少数 seam 文件自己承担外部桥接职责；后续继续独立 package 化时，外部 contract 迁移点已经高度集中。
+- 这轮 narrative/runtime domain seam 收口后，script-editor 的生产实现层已经基本不再直接依赖外部 shared domain contract；剩余仍在包外的主要是 intentional seam 文件自身，以及地图/城市场景等底层结构类型。
+- runtime import/export 对 `scenario-profile`、`content-pack` 与 `game-state` 的外部 owner 现在也已经集中到 package 内单 seam；后续如果预览宿主或导出协议继续裁边界，不需要再改 import/export 主体实现。
 - `tsconfig.test.json` 补上 `src/modules/**/*.ts` 之后，module 行为测试终于和当前源码同构；后续继续拆 package 时，像 `playable-family-removal` 这类测试不会再被旧 `.test-dist` 假绿或假红误导。
 
 ## 2026-08-05 Agent Immediate Execution Workflow Governance

@@ -1,5 +1,5 @@
-﻿import type { DialogueSide } from "../../../domain/dialogue";
-import type { EventRouteCommand } from "../../../domain/event";
+﻿import type { DialogueSide } from "../domain/script-editor-dialogue-contract";
+import type { EventRouteCommand } from "../domain/script-editor-event-contract";
 import type { RuntimeTaskInput } from "../domain/script-editor-runtime-result-contract";
 import type {
   ScriptEditorDialogueCastRecord,
