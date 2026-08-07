@@ -10,8 +10,7 @@ import {
   renderEntryShellScenarioSelect,
 } from "../entry-shell/entry-shell-view";
 import {
-  createScriptEditorWorkflowController,
-  installMainUiFlowScriptEditorModule,
+  createEmbeddedScriptEditorSession,
 } from "../../modules/script-editor";
 
 const startScreenLayoutBindings = [
@@ -218,69 +217,9 @@ export class MainUiFlow {
     this.characterDetailTransitionToken = 0;
     this.characterDetailTransitionTimer = 0;
     this.destroyOpeningBackgroundAnimation = null;
-    installMainUiFlowScriptEditorModule(this, options);
-    this.scriptEditorWorkflowController = createScriptEditorWorkflowController({
-      getProject: () => this.scriptEditorProject,
-      getProjectSource: () => this.scriptEditorProjectSource,
-      setProjectSource: (source) => {
-        this.scriptEditorProjectSource = source;
-      },
-      commitProject: (project) => {
-        this.commitScriptEditorProject(project);
-      },
-      getProjectDirectoryHandle: () => this.scriptEditorProjectDirectoryHandle,
-      setProjectDirectoryHandle: (handle) => {
-        this.scriptEditorProjectDirectoryHandle = handle;
-      },
-      getExportDirectoryHandle: () => this.scriptEditorExportDirectoryHandle,
-      setExportDirectoryHandle: (handle) => {
-        this.scriptEditorExportDirectoryHandle = handle;
-      },
-      rememberProjectPackageLocation: (result) => {
-        this.rememberScriptEditorProjectPackageLocation(result);
-      },
-      resetRecordListPages: () => {
-        this.resetScriptEditorRecordListPages();
-      },
-      resetRecordSearch: () => {
-        this.resetScriptEditorRecordSearch();
-      },
-      setSelection: (selection) => {
-        this.scriptEditorSelection = selection;
-      },
-      setAuxiliaryPanelOpen: (isOpen) => {
-        this.scriptEditorAuxiliaryPanelOpen = isOpen;
-      },
-      setPendingDeleteProjectId: (projectId) => {
-        this.scriptEditorPendingDeleteProjectId = projectId;
-      },
-      resetNoticeTimeline: () => {
-        this.resetScriptEditorNoticeTimeline();
-      },
-      recordNotice: (notice) => {
-        this.recordScriptEditorNotice(notice);
-      },
-      setScreen: (screen) => {
-        this.setScreen(screen);
-      },
-      captureRuntimePreviewReturnContext: () =>
-        this.captureScriptEditorRuntimePreviewReturnContext(),
-      restoreRuntimePreviewReturnContext: (returnContext) => {
-        this.restoreScriptEditorRuntimePreviewReturnContext(returnContext);
-      },
-      getRuntimePreviewSession: () => this.scriptEditorRuntimePreviewSession,
-      setRuntimePreviewSession: (session) => {
-        this.scriptEditorRuntimePreviewSession = session;
-      },
-      startLoadedScenarioPack: (scenarioPack) => {
-        if (this.onStartLoadedScenarioPack == null) {
-          throw new Error("Runtime preview startup is unavailable.");
-        }
-        return this.onStartLoadedScenarioPack(scenarioPack);
-      },
-      exitRuntimePreview: () => {
-        this.onExitRuntimePreview?.();
-      },
+    this.scriptEditorSession = createEmbeddedScriptEditorSession({
+      host: this,
+      hostOptions: options,
     });
   }
 
@@ -305,6 +244,8 @@ export class MainUiFlow {
     this.destroyInkParticleSystem();
     this.destroyOpeningBackgroundAnimation?.();
     this.destroyOpeningBackgroundAnimation = null;
+    this.scriptEditorSession?.dispose?.();
+    this.scriptEditorSession = null;
     this.clearCharacterDetailTransitionTimer();
     this.overlayRoot.className = "";
     this.overlayRoot.innerHTML = "";

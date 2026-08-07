@@ -1,12 +1,14 @@
-import type { ScriptEditorHost } from "../host/script-editor-host";
 import {
-  mountScriptEditor,
+  mountScriptEditorSession,
+  type MountScriptEditorSessionOptions,
   type ScriptEditorInitialAction,
   type ScriptEditorMountHandle,
-} from "./mount-script-editor";
+} from "../kernel/script-editor-session";
 
-export type OpenScriptEditorOptions = {
-  host: ScriptEditorHost;
+export type OpenScriptEditorOptions = Omit<
+  MountScriptEditorSessionOptions,
+  "container"
+> & {
   mountPoint: HTMLElement;
   initialAction?: ScriptEditorInitialAction;
 };
@@ -18,7 +20,7 @@ export type ScriptEditorSessionHandle = ScriptEditorMountHandle & {
 export async function openScriptEditor(
   options: OpenScriptEditorOptions
 ): Promise<ScriptEditorSessionHandle> {
-  const mountHandle = mountScriptEditor({
+  const mountHandle = mountScriptEditorSession({
     host: options.host,
     container: options.mountPoint,
     initialAction: options.initialAction ?? "landing",
