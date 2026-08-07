@@ -3,12 +3,25 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import { applyEffects } from "../effects/effect-applier";
-import { continueToEvent } from "../events/event-continuation";
+import {
+  continueToEvent,
+  resolveEventContinuation,
+} from "../events/event-continuation";
 
 export type ChoiceResolutionContext = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
   eventDefinitionsById: Record<string, EventDefinition>;
   characterDefinitions: CharacterDefinition[];
+  continueFromChoiceEvent?:
+    | ((input: {
+        state: GameState;
+        characterDefinitions: CharacterDefinition[];
+        eventDefinition: EventDefinition;
+      }) => {
+        state: GameState;
+        characterDefinitions: CharacterDefinition[];
+      })
+    | undefined;
 };
 
 export type ChoiceResolutionResult = {
@@ -36,20 +49,44 @@ export function resolveChoiceOption(
   if (selectedOption.nextEventId != null) {
     const targetEvent = context.eventDefinitionsById[selectedOption.nextEventId];
     if (targetEvent != null) {
-      const continuation = continueToEvent({
-        state: nextState,
-        eventDefinitionsById: context.eventDefinitionsById,
-        sourceEventId: nextState.scene.activeEventId,
-        targetEventId: targetEvent.id,
-        visitedEventIds:
-          nextState.scene.activeEventId == null
-            ? []
-            : [nextState.scene.activeEventId],
-      });
-      nextState =
-        continuation == null
-          ? finishChoiceScene(nextState)
-          : continuation.state;
+      if (context.continueFromChoiceEvent != null) {
+        const continuation = resolveEventContinuation({
+          state: nextState,
+          eventDefinitionsById: context.eventDefinitionsById,
+          sourceEventId: nextState.scene.activeEventId,
+          targetEventId: targetEvent.id,
+          visitedEventIds:
+            nextState.scene.activeEventId == null
+              ? []
+              : [nextState.scene.activeEventId],
+        });
+        if (continuation == null) {
+          nextState = finishChoiceScene(nextState);
+        } else {
+          const continuedRuntime = context.continueFromChoiceEvent({
+            state: nextState,
+            characterDefinitions: nextCharacterDefinitions,
+            eventDefinition: continuation.eventDefinition,
+          });
+          nextState = continuedRuntime.state;
+          nextCharacterDefinitions = continuedRuntime.characterDefinitions;
+        }
+      } else {
+        const continuation = continueToEvent({
+          state: nextState,
+          eventDefinitionsById: context.eventDefinitionsById,
+          sourceEventId: nextState.scene.activeEventId,
+          targetEventId: targetEvent.id,
+          visitedEventIds:
+            nextState.scene.activeEventId == null
+              ? []
+              : [nextState.scene.activeEventId],
+        });
+        nextState =
+          continuation == null
+            ? finishChoiceScene(nextState)
+            : continuation.state;
+      }
     }
   } else if (selectedOption.nextSceneId != null) {
     nextState = {

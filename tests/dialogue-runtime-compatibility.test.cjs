@@ -169,26 +169,27 @@ test("dialogue runtime accepts events that only declare dialogueId", () => {
 });
 
 test(
-  "scene runtime routes automatic nextEvent continuation through the shared event-router seam",
+  "scene runtime routes automatic nextEvent continuation through the shared runtime-dispatch seam",
   { concurrency: false },
   () => {
-    const eventRouterPath = require.resolve(
-      "../.test-dist/core/runtime/event-router.js"
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
     );
     const sceneRuntimePath = require.resolve(
       "../.test-dist/core/runtime/scene-runtime.js"
     );
 
     delete require.cache[sceneRuntimePath];
-    delete require.cache[eventRouterPath];
+    delete require.cache[runtimeDispatchPath];
 
-    const patchedEventRouter = require(eventRouterPath);
-    const originalDispatchEventRoute = patchedEventRouter.dispatchEventRoute;
-    let dispatchEventRouteCalls = 0;
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
 
-    patchedEventRouter.dispatchEventRoute = (...args) => {
-      dispatchEventRouteCalls += 1;
-      return originalDispatchEventRoute(...args);
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
     };
 
     try {
@@ -244,38 +245,40 @@ test(
         1
       );
       assert.ok(
-        dispatchEventRouteCalls > 0,
-        "runSceneFromEvent should route continuation through dispatchEventRoute instead of leaving scene-runner on the local continuation fallback"
+        dispatchRuntimeRequestCalls > 0,
+        "runSceneFromEvent should route continuation through dispatchRuntimeRequest instead of leaving scene-runtime continuation on the route-only seam"
       );
     } finally {
-      patchedEventRouter.dispatchEventRoute = originalDispatchEventRoute;
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
       delete require.cache[sceneRuntimePath];
-      delete require.cache[eventRouterPath];
+      delete require.cache[runtimeDispatchPath];
     }
   }
 );
 
 test(
-  "dialogue runtime routes automatic nextEvent continuation through the shared event-router seam",
+  "dialogue runtime routes automatic nextEvent continuation through the shared runtime-dispatch seam",
   { concurrency: false },
   () => {
-    const eventRouterPath = require.resolve(
-      "../.test-dist/core/runtime/event-router.js"
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
     );
     const dialogueRuntimePath = require.resolve(
       "../.test-dist/core/runtime/dialogue-runtime.js"
     );
 
     delete require.cache[dialogueRuntimePath];
-    delete require.cache[eventRouterPath];
+    delete require.cache[runtimeDispatchPath];
 
-    const patchedEventRouter = require(eventRouterPath);
-    const originalDispatchEventRoute = patchedEventRouter.dispatchEventRoute;
-    let dispatchEventRouteCalls = 0;
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
 
-    patchedEventRouter.dispatchEventRoute = (...args) => {
-      dispatchEventRouteCalls += 1;
-      return originalDispatchEventRoute(...args);
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
     };
 
     try {
@@ -333,13 +336,14 @@ test(
         1
       );
       assert.ok(
-        dispatchEventRouteCalls > 0,
-        "runDialogueFromEvent should route continuation through dispatchEventRoute instead of leaving scene-runner on the local continuation fallback"
+        dispatchRuntimeRequestCalls > 0,
+        "runDialogueFromEvent should route continuation through dispatchRuntimeRequest instead of leaving dialogue-runtime continuation on the route-only seam"
       );
     } finally {
-      patchedEventRouter.dispatchEventRoute = originalDispatchEventRoute;
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
       delete require.cache[dialogueRuntimePath];
-      delete require.cache[eventRouterPath];
+      delete require.cache[runtimeDispatchPath];
     }
   }
 );

@@ -14,6 +14,7 @@ import { runStoryEventRuntime } from "./event-runtime";
 import { createRuntimeEventEntity } from "./event-entity-projection";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { dispatchEventRoute } from "./event-router";
+import { dispatchRuntimeRequest } from "./runtime-dispatch";
 import { createSceneSession } from "./scene-session";
 
 export function runSceneFromEvent(input: SceneRuntimeInput): SceneRuntimeResult {
@@ -96,22 +97,37 @@ export function routeSceneRuntimeContinuationEvent(input: {
   eventDefinition: EventDefinition;
   eventDefinitionsById: Record<string, EventDefinition>;
 }): GameState {
-  return dispatchEventRoute({
+  const eventId = input.eventDefinition.id;
+
+  return dispatchRuntimeRequest({
     state: toSceneRuntimeState(input.state),
-    eventId: input.eventDefinition.id,
+    request: {
+      family: "external",
+      type: "external",
+      eventId,
+    },
     context: {
-      repository: {
-        resolveById: (eventId) => {
-          const eventDefinition = input.eventDefinitionsById[eventId];
-          return eventDefinition == null
-            ? null
-            : toSceneRuntimeEventEntity(eventDefinition);
-        },
+      router: {
+        route: ({ state }) =>
+          dispatchEventRoute({
+            state,
+            eventId,
+            context: {
+              repository: {
+                resolveById: (eventId) => {
+                  const eventDefinition = input.eventDefinitionsById[eventId];
+                  return eventDefinition == null
+                    ? null
+                    : toSceneRuntimeEventEntity(eventDefinition);
+                },
+              },
+              handlers: createEventRouteActivationHandlers({
+                eventDefinitionsById: input.eventDefinitionsById,
+                fallbackEventDefinition: input.eventDefinition,
+              }),
+            },
+          }),
       },
-      handlers: createEventRouteActivationHandlers({
-        eventDefinitionsById: input.eventDefinitionsById,
-        fallbackEventDefinition: input.eventDefinition,
-      }),
     },
   }).state.core;
 }

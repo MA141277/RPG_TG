@@ -16926,7 +16926,7 @@ test("scene dialogue runtime continuation route convergence keeps owner wrappers
 
   assert.match(sceneRuntimeSource, /export function routeSceneRuntimeContinuationEvent/);
   assert.match(sceneRuntimeSource, /continueFromSceneEvent:/);
-  assert.match(sceneRuntimeSource, /dispatchEventRoute\(/);
+  assert.match(sceneRuntimeSource, /dispatchRuntimeRequest\(/);
   assert.match(dialogueRuntimeSource, /continueFromSceneEvent:/);
   assert.match(
     dialogueRuntimeSource,
@@ -16963,6 +16963,17 @@ test("event continuation contract narrowing keeps pure resolution separate from 
   assert.doesNotMatch(continueToEventBlock, /\bstartEvent\s*\(/);
   assert.match(storyRuntimeSource, /\bresolveEventContinuation\s*\(/);
   assert.match(sceneRunnerSource, /\bresolveEventContinuation\s*\(/);
+});
+
+test("game store keeps scene and choice continuation on a shared runtime-dispatch seam", () => {
+  const gameStoreSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/state/game-store.ts"),
+    "utf8"
+  );
+
+  assert.match(gameStoreSource, /\bdispatchRuntimeRequest\s*\(/);
+  assert.match(gameStoreSource, /continueFromSceneEvent/);
+  assert.match(gameStoreSource, /continueFromChoiceEvent/);
 });
 
 test("runtime route activation seam convergence keeps owner runtimes on shared activation handlers", () => {

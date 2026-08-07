@@ -31,6 +31,19 @@ function createBaseState() {
   });
 }
 
+function createEvent(id, entrySceneId, nextEventId) {
+  return {
+    id,
+    chapterId: "chapter.test",
+    name: id,
+    occurrence: "repeatable",
+    trigger: { timing: "manual" },
+    conditions: [],
+    entrySceneId,
+    ...(nextEventId == null ? {} : { nextEventId }),
+  };
+}
+
 function configureFlowRuntimeRegistries() {
   configureDefaultPlayableRuntimeRegistriesFromActivatedMod({
     modId: "mod.test.game-store-playable-shells",
@@ -150,3 +163,183 @@ test("game store accepts playableShellsById as the canonical flow shell owner", 
     resetDefaultPlayableRuntimeRegistries();
   }
 });
+
+test(
+  "game store syncScene routes scene start-event continuation through dispatchRuntimeRequest",
+  { concurrency: false },
+  () => {
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
+    );
+    const gameStorePath = require.resolve(
+      "../.test-dist/application/state/game-store.js"
+    );
+
+    delete require.cache[gameStorePath];
+    delete require.cache[runtimeDispatchPath];
+
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const { createGameStore: createGameStoreWithPatchedDispatch } = require(
+        gameStorePath
+      );
+      const store = createGameStoreWithPatchedDispatch(createBaseState(), {
+        characterDefinitions: [{ id: "char.player", name: "Player" }],
+        eventDefinitionsById: {
+          "event.store.flow-preview": createEvent(
+            "event.store.flow-preview",
+            "scene.store.flow-preview"
+          ),
+          "event.store.followup": createEvent(
+            "event.store.followup",
+            "scene.store.followup"
+          ),
+        },
+        sceneDefinitionsById: {
+          "scene.store.flow-preview": {
+            id: "scene.store.flow-preview",
+            name: "Store Start Event",
+            actions: [
+              {
+                type: "start-event",
+                eventId: "event.store.followup",
+              },
+            ],
+          },
+          "scene.store.followup": {
+            id: "scene.store.followup",
+            name: "Store Follow-up Event",
+            actions: [],
+          },
+        },
+      });
+
+      dispatchRuntimeRequestCalls = 0;
+      const snapshot = store.syncScene();
+
+      assert.equal(
+        snapshot.state.runtime.eventHistory["event.store.followup"]?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "game store syncScene should route scene start-event continuation through dispatchRuntimeRequest instead of relying on the compatibility seam only"
+      );
+    } finally {
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
+      delete require.cache[gameStorePath];
+      delete require.cache[runtimeDispatchPath];
+    }
+  }
+);
+
+test(
+  "game store chooseOption routes nextEvent continuation through dispatchRuntimeRequest",
+  { concurrency: false },
+  () => {
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
+    );
+    const gameStorePath = require.resolve(
+      "../.test-dist/application/state/game-store.js"
+    );
+
+    delete require.cache[gameStorePath];
+    delete require.cache[runtimeDispatchPath];
+
+    const patchedRuntimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      patchedRuntimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    patchedRuntimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const { createGameStore: createGameStoreWithPatchedDispatch } = require(
+        gameStorePath
+      );
+      const store = createGameStoreWithPatchedDispatch(
+        {
+          ...createBaseState(),
+          scene: {
+            activeEventId: "event.store.choice",
+            activeSceneId: "scene.store.choice",
+            cursor: 0,
+            status: "waiting-choice",
+          },
+        },
+        {
+          characterDefinitions: [{ id: "char.player", name: "Player" }],
+          eventDefinitionsById: {
+            "event.store.choice": createEvent(
+              "event.store.choice",
+              "scene.store.choice"
+            ),
+            "event.store.choice-followup": createEvent(
+              "event.store.choice-followup",
+              "scene.store.choice-followup"
+            ),
+          },
+          sceneDefinitionsById: {
+            "scene.store.choice": {
+              id: "scene.store.choice",
+              name: "Store Choice Event",
+              actions: [
+                {
+                  type: "choice",
+                  options: [
+                    {
+                      id: "option.store.followup",
+                      label: "Follow-up",
+                      nextEventId: "event.store.choice-followup",
+                    },
+                  ],
+                },
+              ],
+            },
+            "scene.store.choice-followup": {
+              id: "scene.store.choice-followup",
+              name: "Store Choice Follow-up Event",
+              actions: [],
+            },
+          },
+        }
+      );
+
+      dispatchRuntimeRequestCalls = 0;
+      const snapshot = store.chooseOption({
+        id: "option.store.followup",
+        label: "Follow-up",
+        nextEventId: "event.store.choice-followup",
+      });
+
+      assert.equal(
+        snapshot.state.runtime.eventHistory["event.store.choice-followup"]
+          ?.firedCount,
+        1
+      );
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "game store chooseOption should route nextEvent continuation through dispatchRuntimeRequest instead of relying on the compatibility seam only"
+      );
+    } finally {
+      patchedRuntimeDispatch.dispatchRuntimeRequest =
+        originalDispatchRuntimeRequest;
+      delete require.cache[gameStorePath];
+      delete require.cache[runtimeDispatchPath];
+    }
+  }
+);
