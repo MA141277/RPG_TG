@@ -1,4 +1,4 @@
-import { loadScenarioPackFromFiles } from "../../../application/scenario/scenario-pack-loader";
+import { loadScenarioPackFromFiles } from "../application/script-editor-scenario-pack-codec";
 import { createTextImportFilesFromRecord } from "./browser-file-system";
 import type { ScriptEditorPreviewHost } from "./script-editor-host";
 

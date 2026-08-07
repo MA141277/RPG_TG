@@ -1,4 +1,4 @@
-﻿import { parseScenarioPack } from "../../../application/scenario/scenario-pack-loader";
+﻿import { parseScenarioPack } from "./script-editor-scenario-pack-codec";
 import {
   parseScriptEditorProject,
 } from "./editor-project-loader";

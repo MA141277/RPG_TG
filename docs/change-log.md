@@ -11,6 +11,7 @@
 - `src/modules/script-editor/ui/views/script-editor-landing-view.ts` 现已成为剧本编辑器入口 landing 的 package 内部 view owner；`src/modules/script-editor/ui/main-ui-script-editor-module.js` 不再从 `ui/entry-shell/entry-shell-view` 反向借用剧本编辑入口视图。
 - `src/modules/script-editor/ui/views/script-editor-location-background-options.ts` 现已成为剧本编辑器“默认背景”选项的 package 内部 owner；`src/modules/script-editor/ui/main-ui-script-editor-module.js` 不再从 `ui/location-backgrounds` 反向借用城市/建筑背景下拉选项常量。
 - `src/modules/script-editor/host/loaded-scenario-pack-preview-host.ts` 现已成为当前仓库 legacy `loaded-scenario-pack` 运行预览适配的宿主 helper owner；`src/modules/script-editor/ui/main-ui-script-editor-module.js` 自身不再直接导入 `application/scenario/scenario-pack-loader`。
+- `src/modules/script-editor/application/script-editor-scenario-pack-codec.ts` 现已成为 script-editor 包内统一的 scenario-pack codec owner；`runtime-pack-import.ts`、`runtime-pack-export.ts` 和 `loaded-scenario-pack-preview-host.ts` 不再各自直接导入外部 `application/scenario/scenario-pack-loader`。
 - `src/modules/script-editor/host/script-editor-template-catalog.ts` 与 `src/modules/script-editor/host/script-editor-publication-catalog.ts` 现已承接默认模板导入和 registered builtin publication hydration；相关 builtin/publication 入口不再从 runtime 侧被剧本编辑器硬编码反向拉入。
 - `prototypes/script-editor/index.html`、`src/modules/script-editor/standalone/script-editor-standalone.ts`、`src/modules/script-editor/standalone/script-editor-standalone-host.ts` 与 `vite.config.ts` 现已提供独立的 standalone 剧本编辑器入口，同时保持嵌入态与 standalone 复用同一套会话 owner。
 - 这一轮还补齐了 `tests/script-editor-host-contract.test.cjs`、`tests/script-editor-embedded-session.test.cjs`、`tests/script-editor-standalone-entry.test.cjs`、`tests/script-editor-publication-boundary.test.cjs` 和 `tests/script-editor-runtime-preview-compat.test.cjs` 的包边界回归，并通过浏览器 smoke 验证了嵌入态预览链路和 standalone fail-closed 行为。
@@ -22,6 +23,7 @@
 - landing 入口视图本地化后，standalone 和 embedded 现在共享同一份 package 内入口 view；后续继续收敛 UI owner 时，可以直接围绕 script-editor 自己的 views 目录推进，而不必再先拆主壳 entry-shell。
 - 背景选项列表本地化后，剧本编辑器对共享 UI 壳资源 owner 的依赖进一步缩小；后续如果继续把 location/profile 编辑面板收成 package，可直接在 script-editor 自己的 UI surface 上继续切，不必先把整份 `ui/location-backgrounds` 一起搬入。
 - `loaded-scenario-pack` 预览 helper 下沉到 host 目录后，script-editor 的 UI 层已经不再直接依赖外部 application loader；后续如果继续做 embedded host 与 standalone host 的分离，可以直接围绕 `host/**` 目录推进。
+- scenario-pack codec 收口后，script-editor 包内与 scenario-pack 解析/加载相关的外部依赖现在只剩单一入口；后续如果要进一步把 import/export 能力完全独立出来，可以直接替换这一个 codec seam，而不用再扫三处调用点。
 
 ## 2026-08-05 Agent Immediate Execution Workflow Governance
 

@@ -1,7 +1,7 @@
 ﻿import {
   loadScenarioPackFromUrl,
   parseScenarioPack,
-} from "../../../application/scenario/scenario-pack-loader";
+} from "./script-editor-scenario-pack-codec";
 import { parseScriptEditorProject } from "./editor-project-loader";
 import {
   normalizeScriptEditorBuildingRecord,

@@ -218,6 +218,55 @@ test("loaded-scenario-pack preview host helper keeps scenario-pack loader outsid
   );
 });
 
+test("script editor package centralizes scenario-pack loader usage behind a local codec file", () => {
+  const runtimePackImportSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/runtime-pack-import.ts"
+    ),
+    "utf8"
+  );
+  const runtimePackExportSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/application/runtime-pack-export.ts"
+    ),
+    "utf8"
+  );
+  const loadedPreviewHostSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/host/loaded-scenario-pack-preview-host.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    runtimePackImportSource,
+    /application\/scenario\/scenario-pack-loader/
+  );
+  assert.doesNotMatch(
+    runtimePackExportSource,
+    /application\/scenario\/scenario-pack-loader/
+  );
+  assert.doesNotMatch(
+    loadedPreviewHostSource,
+    /application\/scenario\/scenario-pack-loader/
+  );
+  assert.match(runtimePackImportSource, /script-editor-scenario-pack-codec/);
+  assert.match(runtimePackExportSource, /script-editor-scenario-pack-codec/);
+  assert.match(loadedPreviewHostSource, /script-editor-scenario-pack-codec/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/application/script-editor-scenario-pack-codec.ts"
+      )
+    ),
+    true
+  );
+});
+
 test("imported zhuyuanzhang script-editor template stays exportable for runtime preview", async () => {
   const templateRoot = path.join(
     process.cwd(),
