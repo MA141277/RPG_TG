@@ -4,22 +4,26 @@
 
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
-- Current Task: `none`
-- Current Task Status: `none`
-- Current Child: `none`
-- Current Child Status: `none`
+- Current Task: `Event Trigger Runtime Module Dispatch`
+- Current Task Status: `running`
+- Current Child: `Event Trigger Runtime Module Dispatch`
+- Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `open-next-approved-child`
+- Next Required Action: `execute-event-trigger-runtime-module-dispatch-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `none`
+- Next Owner Document: `docs/superpowers/plans/2026-08-08-event-trigger-runtime-module-dispatch-plan.md`
 - Last Closed Item: `Mod-First Event Binding Candidate Task Input Payload Consumption`
-- Push Status: `success`
-- Push Commit: `c5af4ea4`
-- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed mod-first event-binding task-input baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Push Status: `not-pushed`
+- Push Commit: `none`
+- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-08-08-event-trigger-runtime-module-dispatch-plan.md from Task 1; registry/notification work, startup, and review-system remain out of scope unless explicitly resumed.`
 
 ## Progress Log
 
+- 2026-08-08
+  - Summary: `Opened the Event Trigger Runtime Module Dispatch child as the next approved post-merge stabilization slice. The child keeps event as the public module boundary and adds only an event-runtime internal adapter to dispatchRuntimeRequest(...), while dispatchEventRoute(...) remains the event route owner and registry/notification work stays out of scope.`
+  - Verification: `Spec and plan created locally from source audit; implementation verification not run yet for this child.`
+  - Next: `Execute docs/superpowers/plans/2026-08-08-event-trigger-runtime-module-dispatch-plan.md from Task 1.`
 - 2026-08-08
   - Summary: `Closed the Mod-First Event Binding Candidate Task Input Payload Consumption child after pushing the verified implementation checkpoint. The canonical queue is back to no active child; startup remains frozen and review-system work remains paused.`
   - Verification: `Implementation push reached c5af4ea4; npm run lint:plans; git diff --check`
