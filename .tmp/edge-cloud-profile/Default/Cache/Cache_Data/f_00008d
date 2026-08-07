@@ -1,0 +1,979 @@
+[
+  {
+    "id": "map.prototype_frontier",
+    "name": "边境地图",
+    "backgroundId": "bg.map.prototype_frontier",
+    "nodes": [
+      {
+        "cityId": "city.kulan",
+        "x": 2,
+        "y": 2
+      }
+    ]
+  },
+  {
+    "id": "map.yuanmo_campaign",
+    "name": "Yuanmo Campaign Atlas",
+    "backgroundId": "bg.map.yuanmo_campaign",
+    "mode": "campaign",
+    "initialPlayerCoordinate": {
+      "x": 239.4025425908469,
+      "y": 280.2456647398844
+    },
+    "coordinateSpace": {
+      "width": 509,
+      "height": 451
+    },
+    "displaySize": {
+      "width": 1484,
+      "height": 1060
+    },
+    "nodes": [
+      {
+        "id": "settlement.huangcun",
+        "label": "荒村",
+        "x": 239.4025425908469,
+        "y": 280.2456647398844,
+        "kind": "settlement",
+        "cityId": "city.huangcun",
+        "summary": "Abandoned rural village near the opening position"
+      },
+      {
+        "id": "settlement.ryukyu_province",
+        "label": "首里城",
+        "x": 455.0805090018701,
+        "y": 162.93352601156067,
+        "kind": "city",
+        "summary": "Region: 琉球王国 | Owner: slave | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.taiwan_province",
+        "label": "琉球",
+        "x": 317.04661049881526,
+        "y": 116.00867052023122,
+        "kind": "city",
+        "summary": "Region: 台湾地区 | Owner: slave | Level: large_town | Type: castle"
+      },
+      {
+        "id": "settlement.lanxang_province",
+        "label": "琅勃拉邦（Luang-Prabang）",
+        "x": 10.783898195162296,
+        "y": 14.338150289017321,
+        "kind": "city",
+        "summary": "Region: 澜沧王国 | Owner: slave | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.shenglong_province",
+        "label": "东都-升龙府（Đông Đô）",
+        "x": 38.82203382859531,
+        "y": 72.9942196531792,
+        "kind": "city",
+        "summary": "Region: 升龙地区 | Owner: aztecs | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.hatinh_province",
+        "label": "河静（Ha Tinh）",
+        "x": 34.50847450037483,
+        "y": 26.0693641618497,
+        "kind": "city",
+        "summary": "Region: 河静地区 | Owner: aztecs | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.ningxia_province",
+        "label": "宁夏府路",
+        "x": 60.38983046969762,
+        "y": 354.5433526011561,
+        "kind": "city",
+        "summary": "Region: 甘肃行省 | Owner: byzantium | Level: large_city | Type: castle"
+      },
+      {
+        "id": "settlement.xian_province",
+        "label": "奉元路★咸宁",
+        "x": 109.99576274423296,
+        "y": 311.528901734104,
+        "kind": "city",
+        "cityId": "city.fengyuan",
+        "summary": "Region: 陕西行省 | Owner: france | Level: large_city | Type: town"
+      },
+      {
+        "id": "settlement.hanzhong_province",
+        "label": "兴元路※南郑",
+        "x": 79.80084744668972,
+        "y": 288.06647398843927,
+        "kind": "city",
+        "summary": "Region: 陕西行省 | Owner: sicily | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.yansui_province",
+        "label": "延安路●绥德州",
+        "x": 118.6228814006739,
+        "y": 381.9161849710983,
+        "kind": "city",
+        "summary": "Region: 陕西行省 | Owner: moors | Level: large_city | Type: castle"
+      },
+      {
+        "id": "settlement.yanan_province",
+        "label": "延安路※肤施",
+        "x": 101.36864408779205,
+        "y": 350.6329479768786,
+        "kind": "city",
+        "summary": "Region: 陕西行省 | Owner: moors | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.gongchang_province",
+        "label": "巩昌路※陇西",
+        "x": 23.72457617982369,
+        "y": 311.528901734104,
+        "kind": "city",
+        "cityId": "city.gongchang",
+        "summary": "Region: 陕西行省 | Owner: hre | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.guangzhou_province",
+        "label": "广州路※南海",
+        "x": 181.1694916598706,
+        "y": 112.09826589595377,
+        "kind": "city",
+        "summary": "Region: 广东道宣慰司 | Owner: byzantium | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.chaozhou_province",
+        "label": "潮州路※海阳",
+        "x": 222.14830527796505,
+        "y": 116.00867052023122,
+        "kind": "city",
+        "summary": "Region: 广东道宣慰司 | Owner: timurids | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.zhaoqing_province",
+        "label": "肇庆路※高要",
+        "x": 133.72033904944556,
+        "y": 88.63583815028902,
+        "kind": "city",
+        "summary": "Region: 广东道宣慰司 | Owner: byzantium | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.qiongzhou_province",
+        "label": "乾宁安抚司※琼山",
+        "x": 116.46610173656367,
+        "y": 33.890173410404635,
+        "kind": "city",
+        "summary": "Region: 湖广行省 | Owner: slave | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.guiling_province",
+        "label": "静江路※临桂",
+        "x": 131.56355938533528,
+        "y": 139.47109826589596,
+        "kind": "city",
+        "summary": "Region: 湖广行省 | Owner: byzantium | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.nanning_province",
+        "label": "南宁路※宣化",
+        "x": 75.48728811846924,
+        "y": 108.18786127167628,
+        "kind": "city",
+        "summary": "Region: 广西两江道宣慰司 | Owner: byzantium | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.liuzhou_province",
+        "label": "柳州路※柳城",
+        "x": 109.99576274423296,
+        "y": 116.00867052023122,
+        "kind": "city",
+        "summary": "Region: 湖广行省 | Owner: byzantium | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.guiyang_province",
+        "label": "顺元宣抚司※贵阳",
+        "x": 60.38983046969762,
+        "y": 159.02312138728323,
+        "kind": "city",
+        "summary": "Region: 顺元宣慰司 | Owner: slave | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.tongren_province",
+        "label": "播州宣抚司",
+        "x": 99.21186442368182,
+        "y": 182.485549132948,
+        "kind": "city",
+        "summary": "Region: 播州宣慰司 | Owner: slave | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.chendu_province",
+        "label": "成都路★成都",
+        "x": 12.940677859272517,
+        "y": 237.23121387283237,
+        "kind": "city",
+        "cityId": "city.chengdu",
+        "summary": "Region: 四川行省 | Owner: sicily | Level: large_city | Type: town"
+      },
+      {
+        "id": "settlement.jianchang_province",
+        "label": "建昌路※建安州",
+        "x": 17.254237187492993,
+        "y": 190.30635838150286,
+        "kind": "city",
+        "summary": "Region: 罗罗斯宣慰司 | Owner: sicily | Level: town | Type: town"
+      },
+      {
+        "id": "settlement.kuizhou_province",
+        "label": "夔州路※奉节",
+        "x": 92.7415254313511,
+        "y": 241.14161849710982,
+        "kind": "city",
+        "summary": "Region: 四川行省 | Owner: scotland | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.chongqing_province",
+        "label": "重庆路※巴县",
+        "x": 60.38983046969762,
+        "y": 221.58959537572255,
+        "kind": "city",
+        "cityId": "city.chongqing",
+        "summary": "Region: 四川行省 | Owner: sicily | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.shunqing_province",
+        "label": "顺庆路※南充",
+        "x": 30.19491517215439,
+        "y": 268.514450867052,
+        "kind": "city",
+        "summary": "Region: 四川行省 | Owner: sicily | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.wuchang_province",
+        "label": "武昌路★江夏",
+        "x": 191.95338998042178,
+        "y": 248.96242774566474,
+        "kind": "city",
+        "cityId": "city.wuchang",
+        "summary": "剧情: 陈汉核心城 | 阵营: 陈汉 | 所有者: 陈友谅集团 | 相关NPC: 张定边、陈理、罗复仁、陈友直 | 注记: 朱元璋早年尚未控制此地"
+      },
+      {
+        "id": "settlement.xiangyang_province",
+        "label": "襄阳路※襄阳",
+        "x": 144.5042373699967,
+        "y": 272.4248554913295,
+        "kind": "city",
+        "summary": "Region: 河南江北行省 | Owner: scotland | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.hengzhou_province",
+        "label": "衡州路※衡阳",
+        "x": 168.22881367520924,
+        "y": 159.02312138728323,
+        "kind": "city",
+        "summary": "Region: 湖广行省 | Owner: scotland | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.shizhou_province",
+        "label": "沿边溪洞招讨司",
+        "x": 129.40677972122506,
+        "y": 205.94797687861274,
+        "kind": "city",
+        "summary": "Region: 四川行省 | Owner: slave | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.jingzhou_province",
+        "label": "中兴路※江陵",
+        "x": 148.81779669821717,
+        "y": 248.96242774566474,
+        "kind": "city",
+        "summary": "Region: 河南江北行省 | Owner: scotland | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.yuezhou_province",
+        "label": "岳州路※巴陵",
+        "x": 174.69915266753995,
+        "y": 225.5,
+        "kind": "city",
+        "summary": "Region: 湖广行省 | Owner: scotland | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.changsha_province",
+        "label": "天临路※长沙",
+        "x": 176.85593233165017,
+        "y": 198.1271676300578,
+        "kind": "city",
+        "summary": "Region: 湖广行省 | Owner: scotland | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.nanchang_province",
+        "label": "龙兴路★南昌",
+        "x": 226.4618646061855,
+        "y": 209.85838150289018,
+        "kind": "city",
+        "cityId": "city.nanchang",
+        "summary": "剧情: 洪都前线 | 阵营: 吴军后期据点 | 所有者: 朱元璋集团 | 相关NPC: 朱文正、花云、沐英、冯胜 | 注记: 和尚时期暂不归朱元璋，后续成为对陈汉前线"
+      },
+      {
+        "id": "settlement.jian_province",
+        "label": "吉安路※庐陵",
+        "x": 211.3644069574139,
+        "y": 159.02312138728323,
+        "kind": "city",
+        "summary": "Region: 江西行省 | Owner: scotland | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.fuuzhou_province",
+        "label": "抚州路※临川",
+        "x": 237.2457629267367,
+        "y": 182.485549132948,
+        "kind": "city",
+        "summary": "Region: 江西行省 | Owner: papal_states | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.fuzhou_province",
+        "label": "福州路※闽县",
+        "x": 286.85169520127204,
+        "y": 162.93352601156067,
+        "kind": "city",
+        "cityId": "city.fuzhou",
+        "summary": "Region: 江浙行省 | Owner: spain | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.jianning_province",
+        "label": "延平路※南平",
+        "x": 260.97033923194925,
+        "y": 170.7543352601156,
+        "kind": "city",
+        "summary": "Region: 江浙行省 | Owner: spain | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.zhangzhou_province",
+        "label": "漳州路※龙溪",
+        "x": 243.71610191906737,
+        "y": 131.65028901734104,
+        "kind": "city",
+        "summary": "Region: 江浙行省 | Owner: spain | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.quanzhou_province",
+        "label": "泉州路※晋江",
+        "x": 258.813559567839,
+        "y": 143.3815028901734,
+        "kind": "city",
+        "summary": "Region: 江浙行省 | Owner: spain | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.hangzhou_province",
+        "label": "杭州路★钱塘",
+        "x": 291.1652545294925,
+        "y": 225.5,
+        "kind": "city",
+        "summary": "Region: 江浙行省 | Owner: venice | Level: large_city | Type: town"
+      },
+      {
+        "id": "settlement.ningbo_province",
+        "label": "庆元路※鄞县",
+        "x": 325.6737291552562,
+        "y": 217.67919075144508,
+        "kind": "city",
+        "cityId": "city.ningbo",
+        "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.wenzhou_province",
+        "label": "温州路※永嘉",
+        "x": 291.1652545294925,
+        "y": 194.21676300578036,
+        "kind": "city",
+        "cityId": "city.wenzhou",
+        "summary": "Region: 江浙行省 | Owner: milan | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.shaoxing_province",
+        "label": "绍兴路※会稽",
+        "x": 308.4194918423744,
+        "y": 217.67919075144508,
+        "kind": "city",
+        "summary": "Region: 江浙行省 | Owner: venice | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.yingtian_province",
+        "label": "集庆路★上元",
+        "x": 278.2245765448311,
+        "y": 248.96242774566474,
+        "kind": "city",
+        "cityId": "city.yingtian",
+        "summary": "剧情: 集庆路，后改应天府 | 阵营: 元廷江南重镇，后属朱元璋吴军 | 所有者: 早期为元廷/地方守臣，后为朱元璋 | 相关NPC: 朱元璋、李善长、徐达、常遇春、刘基 | 注记: 朱元璋当和尚时尚未入主"
+      },
+      {
+        "id": "settlement.songjiang_province",
+        "label": "松江府※华亭",
+        "x": 323.516949491146,
+        "y": 252.8728323699422,
+        "kind": "city",
+        "summary": "Region: 江浙行省 | Owner: venice | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.suzhou_province",
+        "label": "平江路※吴县",
+        "x": 304.1059325141539,
+        "y": 256.78323699421964,
+        "kind": "city",
+        "cityId": "city.suzhou",
+        "summary": "Region: 江浙行省 | Owner: venice | Level: large_city | Type: town"
+      },
+      {
+        "id": "settlement.yangzhou_province",
+        "label": "扬州路※江都",
+        "x": 293.32203419360275,
+        "y": 276.33526011560696,
+        "kind": "city",
+        "cityId": "city.yangzhou",
+        "summary": "剧情: 淮东盐运重镇 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、李伯升、饶介、施耐庵 | 注记: 朱元璋早期北东侧竞争者"
+      },
+      {
+        "id": "settlement.huizhou_province",
+        "label": "徽州路※歙县",
+        "x": 254.50000023961857,
+        "y": 229.41040462427745,
+        "kind": "city",
+        "summary": "Region: 江浙行省 | Owner: papal_states | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.anqing_province",
+        "label": "安庆路※怀宁",
+        "x": 232.9322035985162,
+        "y": 245.05202312138732,
+        "kind": "city",
+        "cityId": "city.anqing",
+        "summary": "剧情: 江淮西线通道 | 阵营: 元末多方争夺，后属朱元璋吴军 | 所有者: 早期不稳，后为朱元璋集团 | 相关NPC: 汤和、邓愈、李文忠、丁普郎 | 注记: 可作为从濠州南下江南的过渡节点"
+      },
+      {
+        "id": "settlement.changzhou_province",
+        "label": "常州路※晋陵",
+        "x": 289.0084748653823,
+        "y": 260.69364161849705,
+        "kind": "city",
+        "summary": "Region: 江浙行省 | Owner: papal_states | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.fenyang_province",
+        "label": "濠州",
+        "x": 245.87288158317762,
+        "y": 291.97687861271675,
+        "kind": "city",
+        "cityId": "city.kulan",
+        "visualKind": "structure",
+        "structureVisual": {
+          "kind": "settlement-building"
+        },
+        "summary": "剧情: 朱元璋和尚时期起点，钟离/皇觉寺附近 | 阵营: 红巾军/小明王宋 | 所有者: 郭子兴部，名义尊小明王韩林儿 | 相关NPC: 朱元璋、郭子兴、马氏、汤和、韩林儿 | 注记: 适合作为早年主线出生点"
+      },
+      {
+        "id": "settlement.huaian_province",
+        "label": "高邮府※高邮军",
+        "x": 278.2245765448311,
+        "y": 303.7080924855491,
+        "kind": "city",
+        "cityId": "city.huaian",
+        "summary": "剧情: 淮东门户 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、施耐庵、潘元绍 | 注记: 与濠州、扬州形成早期江淮压力线"
+      },
+      {
+        "id": "settlement.kaifeng_province",
+        "label": "定远",
+        "x": 258.813559567839,
+        "y": 284.15606936416185,
+        "kind": "city",
+        "cityId": "city.kaifeng",
+        "summary": "剧情: 河南元军重镇 | 阵营: 元廷/扩廓帖木儿系 | 所有者: 元廷河南势力 | 相关NPC: 扩廓帖木儿、脱因帖木儿、阎思孝、陈秉直 | 注记: 朱元璋早期北方强敌"
+      },
+      {
+        "id": "settlement.henan_province",
+        "label": "河南府路※洛阳",
+        "x": 166.07203401109902,
+        "y": 311.528901734104,
+        "kind": "city",
+        "summary": "Region: 河南江北行省 | Owner: turks | Level: huge_city | Type: town"
+      },
+      {
+        "id": "settlement.nanyang_province",
+        "label": "南阳府※南阳",
+        "x": 166.07203401109902,
+        "y": 288.06647398843927,
+        "kind": "city",
+        "summary": "Region: 河南江北行省 | Owner: turks | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.runing_province",
+        "label": "颍州",
+        "x": 204.8940679650832,
+        "y": 272.4248554913295,
+        "kind": "city",
+        "cityId": "city.runing",
+        "summary": "剧情: 红巾军活动区 | 阵营: 小明王宋 | 所有者: 刘福通/韩林儿系 | 相关NPC: 刘福通、韩童、杜遵道、白不信 | 注记: 可连接濠州早年起义线"
+      },
+      {
+        "id": "settlement.jinan_province",
+        "label": "济南路※历城",
+        "x": 245.87288158317762,
+        "y": 362.36416184971097,
+        "kind": "city",
+        "summary": "Region: 中书省 | Owner: turks | Level: large_city | Type: town"
+      },
+      {
+        "id": "settlement.dengzhou_province",
+        "label": "莱州※掖县",
+        "x": 314.88983083470504,
+        "y": 362.36416184971097,
+        "kind": "city",
+        "summary": "Region: 山东东西道宣慰司 | Owner: turks | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.yanzhou_province",
+        "label": "济宁路※巨野",
+        "x": 248.02966124728786,
+        "y": 327.1705202312139,
+        "kind": "city",
+        "summary": "Region: 中书省 | Owner: slave | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.qingzhou_province",
+        "label": "益都路※益都",
+        "x": 282.53813587305154,
+        "y": 342.8121387283237,
+        "kind": "city",
+        "summary": "Region: 山东东西道宣慰司 | Owner: portugal | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.taiyuan_province",
+        "label": "冀宁路※太原",
+        "x": 161.75847468287853,
+        "y": 381.9161849710983,
+        "kind": "city",
+        "summary": "Region: 河东山西道宣慰司 | Owner: turks | Level: large_city | Type: town"
+      },
+      {
+        "id": "settlement.pingyang_province",
+        "label": "晋宁路※平阳",
+        "x": 157.4449153546581,
+        "y": 342.8121387283237,
+        "kind": "city",
+        "summary": "Region: 河东山西道宣慰司 | Owner: turks | Level: city | Type: town"
+      },
+      {
+        "id": "settlement.datong_province",
+        "label": "大同路※大同",
+        "x": 181.1694916598706,
+        "y": 417.10982658959534,
+        "kind": "city",
+        "summary": "Region: 河东山西道宣慰司 | Owner: moors | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.shuntian_province",
+        "label": "大都路★大都",
+        "x": 258.813559567839,
+        "y": 409.2890173410405,
+        "kind": "city",
+        "cityId": "city.dadu",
+        "summary": "Region: 中书省 | Owner: byzantium | Level: huge_city | Type: town"
+      },
+      {
+        "id": "settlement.daming_province",
+        "label": "大名路※大名",
+        "x": 207.0508476291934,
+        "y": 362.36416184971097,
+        "kind": "city",
+        "summary": "Region: 中书省 | Owner: turks | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.baoding_province",
+        "label": "保定路※清苑",
+        "x": 222.14830527796505,
+        "y": 389.7369942196532,
+        "kind": "city",
+        "summary": "Region: 中书省 | Owner: moors | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.xuanfu_province",
+        "label": "宣德府※宣德州",
+        "x": 219.99152561385483,
+        "y": 424.9306358381503,
+        "kind": "city",
+        "summary": "Region: 中书省 | Owner: moors | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.qujing_province",
+        "label": "曲靖路总管府※南宁州",
+        "x": 15.097457523382737,
+        "y": 131.65028901734104,
+        "kind": "city",
+        "summary": "Region: 云南行省 | Owner: saxons | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.hanseong_province",
+        "label": "汉城府（Hanseong）",
+        "x": 420.57203437610644,
+        "y": 366.27456647398844,
+        "kind": "city",
+        "summary": "Region: 畿湖地区 | Owner: russia | Level: large_city | Type: town"
+      },
+      {
+        "id": "settlement.gyeongju_province",
+        "label": "庆州府（Gyeongju）",
+        "x": 446.4533903454292,
+        "y": 334.9913294797688,
+        "kind": "city",
+        "summary": "Region: 岭南地区 | Owner: russia | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.pyeongyang_province",
+        "label": "平壤府（Pyeongyang）",
+        "x": 427.04237336843715,
+        "y": 424.9306358381503,
+        "kind": "city",
+        "summary": "Region: 关北地区 | Owner: russia | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.haeju_province",
+        "label": "海州府（Haeju）",
+        "x": 403.31779706322465,
+        "y": 381.9161849710983,
+        "kind": "city",
+        "summary": "Region: 关西地区 | Owner: russia | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.jeonju_province",
+        "label": "全州府（Jeonju）",
+        "x": 416.2584750478859,
+        "y": 327.1705202312139,
+        "kind": "city",
+        "summary": "Region: 湖南地区 | Owner: russia | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.gangneung_province",
+        "label": "江陵大都护府（Gangneung）",
+        "x": 442.13983101720873,
+        "y": 374.09537572254334,
+        "kind": "city",
+        "summary": "Region: 关东地区 | Owner: russia | Level: town | Type: town"
+      },
+      {
+        "id": "settlement.satsuma_province",
+        "label": "鹿儿岛城（Kagoshima）",
+        "x": 489.58898362763387,
+        "y": 264.6040462427746,
+        "kind": "city",
+        "summary": "Region: 萨摩藩 | Owner: slave | Level: town | Type: town"
+      },
+      {
+        "id": "settlement.saga_province",
+        "label": "长崎（Nagasaki）",
+        "x": 472.33474631475207,
+        "y": 288.06647398843927,
+        "kind": "city",
+        "summary": "Region: 佐贺藩 | Owner: denmark | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.hetuala_province",
+        "label": "辽阳路●五老山城",
+        "x": 379.593220758012,
+        "y": 440.57225433526014,
+        "kind": "city",
+        "summary": "Region: 辽阳行省 | Owner: byzantium | Level: town | Type: town"
+      },
+      {
+        "id": "settlement.gaizhou_province",
+        "label": "辽阳路●盖州",
+        "x": 342.9279664681381,
+        "y": 413.1994219653179,
+        "kind": "city",
+        "summary": "Region: 辽阳行省 | Owner: byzantium | Level: town | Type: town"
+      },
+      {
+        "id": "settlement.guangning_province",
+        "label": "大宁路●锦州城",
+        "x": 321.36016982703575,
+        "y": 436.66184971098266,
+        "kind": "city",
+        "summary": "Region: 辽阳行省 | Owner: byzantium | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.tieling_province",
+        "label": "安丰路※安丰",
+        "x": 222.14830527796505,
+        "y": 280.2456647398844,
+        "kind": "city",
+        "cityId": "city.anfeng",
+        "summary": "剧情: 小明王宋政权据点 | 阵营: 红巾军/小明王宋 | 所有者: 韩林儿、刘福通 | 相关NPC: 刘福通、韩林儿、盛文郁、白不信 | 注记: 朱元璋早年名义上的上级势力"
+      },
+      {
+        "id": "settlement.liaoyang_province",
+        "label": "辽阳路★东宁府",
+        "x": 340.7711868040279,
+        "y": 448.393063583815,
+        "kind": "city",
+        "summary": "Region: 辽阳行省 | Owner: byzantium | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.tumed_province",
+        "label": "大同路●云内州",
+        "x": 146.66101703410692,
+        "y": 432.7514450867052,
+        "kind": "city",
+        "summary": "Region: 中书省 | Owner: moors | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.cahar_province",
+        "label": "上都路※开平",
+        "x": 202.73728830097298,
+        "y": 448.393063583815,
+        "kind": "city",
+        "summary": "Region: 中书省 | Owner: byzantium | Level: town | Type: town"
+      },
+      {
+        "id": "settlement.ihjuuaimag_province",
+        "label": "延安路※河套",
+        "x": 94.89830509546132,
+        "y": 409.2890173410405,
+        "kind": "city",
+        "summary": "Region: 陕西行省 | Owner: byzantium | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.alasan_province",
+        "label": "兀剌海路※兀剌海城",
+        "x": 25.88135584393391,
+        "y": 409.2890173410405,
+        "kind": "city",
+        "summary": "Region: 甘肃行省 | Owner: byzantium | Level: town | Type: town"
+      },
+      {
+        "id": "settlement.taiping_province",
+        "label": "太平路※当涂",
+        "x": 265.2838985601697,
+        "y": 248.96242774566474,
+        "kind": "city",
+        "cityId": "city.taiping",
+        "summary": "剧情: 南下江南跳板 | 阵营: 朱元璋吴军后期据点 | 所有者: 朱元璋集团 | 相关NPC: 徐达、常遇春、李善长、胡惟庸 | 注记: 和尚时期未控制，起兵后逐步纳入"
+      },
+      {
+        "id": "settlement.luzhou_province",
+        "label": "庐州路※合肥",
+        "x": 252.3432205755083,
+        "y": 264.6040462427746,
+        "kind": "city",
+        "cityId": "city.luzhou",
+        "summary": "剧情: 江淮枢纽 | 阵营: 朱元璋吴军后期控制区 | 所有者: 早期多方争夺，后为朱元璋集团 | 相关NPC: 蓝玉、傅友德、耿炳文、徐达 | 注记: 适合放置从濠州转入军事集团的过渡事件"
+      },
+      {
+        "id": "settlement.lanzhou_province",
+        "label": "兰州※皋兰",
+        "x": 34.50847450037483,
+        "y": 346.7225433526012,
+        "kind": "city",
+        "summary": "Region: 陕西行省 | Owner: hre | Level: large_town | Type: town"
+      },
+      {
+        "id": "settlement.ganzhou_province",
+        "label": "甘州路★张掖",
+        "x": 38.82203382859531,
+        "y": 346.7225433526012,
+        "kind": "city",
+        "summary": "Region: 甘肃行省 | Owner: byzantium | Level: large_city | Type: castle"
+      },
+      {
+        "id": "settlement.city.city",
+        "label": "滁州",
+        "x": 278.2245765448311,
+        "y": 280.2456647398844,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.2",
+        "label": "汝宁",
+        "x": 191.95338998042178,
+        "y": 288.06647398843927,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.3",
+        "label": "六安",
+        "x": 235.08898326262647,
+        "y": 264.6040462427746,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.4",
+        "label": "固始",
+        "x": 219.99152561385483,
+        "y": 268.514450867052,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.5",
+        "label": "光州",
+        "x": 196.2669493086423,
+        "y": 264.6040462427746,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.6",
+        "label": "汴梁路",
+        "x": 209.20762729330366,
+        "y": 319.34971098265896,
+        "kind": "city"
+      },
+      {
+        "id": "settlement.city.city.7",
+        "label": "鹿邑",
+        "x": 232.9322035985162,
+        "y": 307.6184971098266,
+        "kind": "city"
+      }
+    ],
+    "layers": [
+      {
+        "id": "map_FE",
+        "label": "Front-end campaign map",
+        "width": 1484,
+        "height": 1060,
+        "description": "HD.png",
+        "imageUrl": "./assets/maps/HD.png"
+      },
+      {
+        "id": "map_material_texture",
+        "label": "Material detail texture",
+        "width": 1331,
+        "height": 1181,
+        "description": "tie1.png",
+        "imageUrl": "./assets/maps/tie1.png"
+      },
+      {
+        "id": "map_hex_texture_atlas",
+        "label": "Hex texture atlas",
+        "width": 1024,
+        "height": 1024,
+        "description": "tietu.png 4x4",
+        "imageUrl": "./assets/maps/tietu.png"
+      },
+      {
+        "id": "map_regions",
+        "label": "Province color mask",
+        "width": 509,
+        "height": 451,
+        "description": "map_regions.tga",
+        "imageUrl": "./assets/maps/yuanmo-map-regions.png"
+      },
+      {
+        "id": "map_heights",
+        "label": "Height map",
+        "width": 1019,
+        "height": 903,
+        "description": "map_heights.tga",
+        "imageUrl": "./assets/maps/yuanmo-map-heights.png"
+      },
+      {
+        "id": "map_ground_types",
+        "label": "Ground types",
+        "width": 1019,
+        "height": 903,
+        "description": "map_ground_types.tga",
+        "imageUrl": "./assets/maps/yuanmo-map-ground-types.png"
+      },
+      {
+        "id": "map_grass_texture",
+        "label": "Campaign grass texture",
+        "width": 1254,
+        "height": 1254,
+        "description": "grass.png",
+        "imageUrl": "./assets/maps/campaign-grass-texture.png"
+      },
+      {
+        "id": "map_grass_normal_texture",
+        "label": "Campaign grass normal texture",
+        "width": 1254,
+        "height": 1254,
+        "description": "gassuv.png",
+        "imageUrl": "./assets/maps/campaign-grass-normal-texture.png"
+      },
+      {
+        "id": "map_sand_texture",
+        "label": "Campaign sand texture",
+        "width": 1254,
+        "height": 1254,
+        "description": "sand.png",
+        "imageUrl": "./assets/maps/campaign-sand-texture.png"
+      },
+      {
+        "id": "map_village_ground_texture",
+        "label": "Campaign village ground texture",
+        "width": 1024,
+        "height": 1024,
+        "description": "field.png",
+        "imageUrl": "./assets/maps/campaign-village-ground-texture.png"
+      },
+      {
+        "id": "map_city_ground_texture",
+        "label": "Campaign city ground texture",
+        "width": 1024,
+        "height": 1024,
+        "description": "land.png",
+        "imageUrl": "./assets/maps/campaign-city-ground-texture.png"
+      },
+      {
+        "id": "map_rock_texture",
+        "label": "Campaign rock texture",
+        "width": 1254,
+        "height": 1254,
+        "description": "rock.png",
+        "imageUrl": "./assets/maps/campaign-rock-texture.png"
+      },
+      {
+        "id": "map_snow_texture",
+        "label": "Campaign snow texture",
+        "width": 768,
+        "height": 768,
+        "description": "snow.png",
+        "imageUrl": "./assets/maps/campaign-snow-texture.png"
+      },
+      {
+        "id": "map_water_noise",
+        "label": "Water noise texture",
+        "width": 512,
+        "height": 512,
+        "description": "tileable ancient-map water ripple noise",
+        "imageUrl": "./assets/maps/yuanmo-water-noise.png"
+      },
+      {
+        "id": "map_fog_noise",
+        "label": "Fog noise texture",
+        "width": 640,
+        "height": 640,
+        "description": "tileable campaign fog noise",
+        "imageUrl": "./assets/maps/yuanmo-fog-noise.png"
+      },
+      {
+        "id": "map_trade_routes",
+        "label": "Trade routes",
+        "width": 509,
+        "height": 451,
+        "description": "map_trade_routes.tga",
+        "imageUrl": "./assets/maps/yuanmo-map-trade-routes.png"
+      },
+      {
+        "id": "map_climates",
+        "label": "Climate map",
+        "width": 1019,
+        "height": 903,
+        "description": "map_climates.tga",
+        "imageUrl": "./assets/maps/yuanmo-map-climates.png"
+      }
+    ],
+    "stats": {
+      "regionCount": 200,
+      "settlementCount": 97,
+      "fortCount": 0,
+      "resourceCount": 0,
+      "resourceSummary": ""
+    },
+    "primaryImageUrl": "./assets/maps/HD.png",
+    "regionOverlayImageUrl": "./assets/maps/yuanmo-map-regions.png",
+    "campaignHexGridUrl": "./assets/maps/yuanmo-campaign-hex-grid-map2-runtime.json",
+    "campaignVegetationRulesUrl": "./assets/maps/yuanmo-campaign-vegetation-rules.json",
+    "campaignStructureProfileId": "yuanmo.campaign-structures"
+  }
+]

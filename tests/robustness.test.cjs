@@ -4495,8 +4495,18 @@ test("campaign map render keeps a unified low-resolution budget during zoom", ()
   );
   assert.match(
     cloudRendererSource,
-    /const CLOUD_RENDER_MAX_LONG_EDGE_PX = 960;/,
+    /const CLOUD_RENDER_MAX_LONG_EDGE_PX = 1120;/,
     "Expected the procedural volumetric cloud pass to render below the terrain canvas budget."
+  );
+  assert.match(
+    cloudRendererSource,
+    /let campaignCloudShaderEnabled = false;/,
+    "Expected campaign map clouds to stay hidden by default while the visual pass is under review."
+  );
+  assert.match(
+    cloudRendererSource,
+    /window\.rpgCloud = \(command = "status"\) => [\s\S]*?command === "on" \|\| command === true[\s\S]*?setCampaignCloudShaderEnabled\(true\)/,
+    "Expected the cloud shader to remain manually re-enableable for later visual tuning."
   );
   assert.match(
     cloudRendererSource,
@@ -4711,12 +4721,12 @@ test("campaign cloud map-space volumetric slab uses terrain projection uniforms 
   );
   assert.match(
     shaderSource,
-    /vec3 basePoint = vec3\(columnTexturePoint\.xy \* \(1\.18 \* worldTextureScale\), columnTexturePoint\.z \* 0\.92\);/,
-    "Expected broad map-space cloud density to stay column-stable and controlled by the texture frequency slider."
+    /float broadLayerScale = mix\(4\.20, 6\.20, smoothstep\(0\.50, 4\.00, worldTextureScale\)\);[\s\S]*?vec3 basePoint = vec3\(columnTexturePoint\.xy \* broadLayerScale, columnTexturePoint\.z \* 0\.72\);/,
+    "Expected broad map-space cloud density to stay column-stable while keeping cloud lobes smaller than the whole visible map."
   );
   assert.match(
     shaderSource,
-    /vec3 detailPoint = vec3\(pointTexturePoint\.xy \* \(1\.92 \* worldTextureScale\), pointTexturePoint\.z \* 1\.34\);/,
+    /float detailLayerScale = mix\(5\.60, 8\.20, smoothstep\(0\.50, 4\.00, worldTextureScale\)\);[\s\S]*?vec3 detailPoint = vec3\(pointTexturePoint\.xy \* detailLayerScale, pointTexturePoint\.z \* 1\.08\);/,
     "Expected high-frequency erosion to sample true per-step 3D detail instead of a flat column texture."
   );
   assert.doesNotMatch(
@@ -4858,6 +4868,47 @@ test("campaign cloud volume lighting uses explicit density and light transport h
     shaderSource,
     /computeSingleScattering\(\s*density,\s*viewTransmittance,\s*lightTransmittance,\s*phase\s*\)/,
     "Single scattering should use the current step transmittance, not the accumulated alpha that stepAlpha already applies."
+  );
+});
+
+test("campaign cloud density keeps broad cloud layers instead of small cellular speckles", () => {
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+  const cloudSource = readSource("src/ui/views/map/campaign-cloud-webgl.ts");
+
+  assert.match(
+    shaderSource,
+    /float broadLayerScale = mix\(/,
+    "Expected the broad cloud layer to have its own low-frequency scale instead of directly using the texture slider."
+  );
+  assert.match(
+    shaderSource,
+    /float detailLayerScale = mix\(/,
+    "Expected high-frequency detail to have a separate scale so it cannot break the whole cloud body into small speckles."
+  );
+  assert.match(
+    shaderSource,
+    /float edgeErosionMask = smoothstep\(/,
+    "Expected high-frequency erosion to be masked to cloud edges instead of cutting the whole cloud core."
+  );
+  assert.match(
+    shaderSource,
+    /float coreDensity = broadCoverage \* layerBody \* heightEnvelope;/,
+    "Expected the final density to be anchored by broad coverage before applying edge erosion."
+  );
+  assert.match(
+    shaderSource,
+    /float density = clamp\(\(coreDensity - edgeCarve\) \* MAP_SPACE_CLOUD_DENSITY_SCALE/,
+    "Expected edge erosion to subtract from broad cloud density rather than becoming the primary density signal."
+  );
+  assert.match(
+    shaderSource,
+    /return scattered \* density \* 0\.1[02468];/,
+    "Expected multiple scattering fill to stay restrained so it does not wash out internal cloud mass."
+  );
+  assert.match(
+    cloudSource,
+    /const CLOUD_RENDER_MAX_LONG_EDGE_PX = 1120;/,
+    "Expected the cloud canvas not to downsample a 1280px map view all the way to a 960px texture."
   );
 });
 
@@ -5033,8 +5084,8 @@ test("campaign cloud reveal cutouts align without screen-space cloud resampling"
   );
   assert.match(
     articleCloudSeaBody,
-    /float cloudPresence = smoothstep\([^;]*mapSpaceCloud\.a[^;]*\);/s,
-    "Reveal edge mist should be gated by the map-space cloud body's presence."
+    /float cloudPresence = smoothstep\(0\.025, 0\.14, mapSpaceCloud\.a\);/,
+    "Reveal edge mist should be gated by map-space cloud presence without dropping medium-opacity cloud bodies."
   );
   assert.match(
     articleCloudSeaBody,
@@ -5063,13 +5114,51 @@ test("campaign cloud reveal cutouts align without screen-space cloud resampling"
   );
   assert.match(
     articleCloudSeaBody,
-    /float bodyAlphaTexture = mix\(0\.46, 1\.34, smoothstep\(0\.14, 0\.88, mapSpaceTexture\)\);[\s\S]*?float bodyAlpha = ARTICLE_BODY_ALPHA \* mapSpaceCloud\.a \* deepZone \* bodyAlphaTexture;/,
-    "The map-space cloud body must stay visible while preserving texture breakup in dense alpha."
+    /float bodyAlphaTexture = mix\(0\.68, 1\.65, smoothstep\(0\.14, 0\.88, mapSpaceTexture\)\);[\s\S]*?float densityVisibility = mix\(0\.68, 1\.0, cloudDensity\);[\s\S]*?float bodyAlpha = ARTICLE_BODY_ALPHA \* mapSpaceCloud\.a \* densityVisibility \* deepZone \* bodyAlphaTexture;/,
+    "The map-space cloud body must keep medium-density clouds visible without letting low-density fields become a full-screen fog blanket."
   );
   assert.doesNotMatch(
     articleCloudSeaBody,
     /float bodyAlpha =[^;]*cloudLobe[^;]*;/,
     "Cloud lobe shaping should not hard-gate the only remaining cloud body alpha."
+  );
+});
+
+test("campaign cloud reveal sampling does not clamp map-exterior pixels into giant cutouts", () => {
+  const shaderSource = readSource("src/ui/views/map/shaders/campaign-cloud.frag.glsl");
+  const terrainUvStart = shaderSource.indexOf("vec2 mapSpaceGroundPointToTerrainUv");
+  const terrainUvEnd = shaderSource.indexOf("vec2 getMapSpaceCloudRevealUv", terrainUvStart);
+  const revealSamplerStart = shaderSource.indexOf("vec2 sampleRevealTextureFields");
+  const revealSamplerEnd = shaderSource.indexOf("vec2 samplePreviousRevealTextureFields", revealSamplerStart);
+  const previousRevealSamplerEnd = shaderSource.indexOf("vec2 sampleRevealFields", revealSamplerEnd);
+
+  assert.ok(
+    terrainUvStart >= 0 && terrainUvEnd > terrainUvStart,
+    "Expected campaign cloud shader to expose map-space terrain UV conversion."
+  );
+  assert.ok(
+    revealSamplerStart >= 0 && revealSamplerEnd > revealSamplerStart,
+    "Expected campaign cloud shader to expose reveal texture sampling."
+  );
+
+  const terrainUvBody = shaderSource.slice(terrainUvStart, terrainUvEnd);
+  const revealSamplerBody = shaderSource.slice(revealSamplerStart, revealSamplerEnd);
+  const previousRevealSamplerBody = shaderSource.slice(revealSamplerEnd, previousRevealSamplerEnd);
+
+  assert.doesNotMatch(
+    terrainUvBody,
+    /return clamp\(/,
+    "Map-space reveal UVs must not clamp exterior map pixels to the nearest map edge because that smears revealed border data into huge cloud holes."
+  );
+  assert.match(
+    revealSamplerBody,
+    /if \(\s*uv\.x < 0\.0 \|\| uv\.x > 1\.0 \|\| uv\.y < 0\.0 \|\| uv\.y > 1\.0\s*\) \{\s*return vec2\(0\.0\);\s*\}/s,
+    "Current reveal sampling should treat map-exterior pixels as unrevealed instead of sampling a clamped border texel."
+  );
+  assert.match(
+    previousRevealSamplerBody,
+    /if \(\s*uv\.x < 0\.0 \|\| uv\.x > 1\.0 \|\| uv\.y < 0\.0 \|\| uv\.y > 1\.0\s*\) \{\s*return vec2\(0\.0\);\s*\}/s,
+    "Previous reveal sampling should use the same map-exterior guard during reveal transitions."
   );
 });
 
@@ -5126,28 +5215,23 @@ test("campaign cloud density tuning keeps clouds visibly substantial", () => {
 
   assert.match(
     shaderSource,
-    /const float MAP_SPACE_CLOUD_DENSITY_SCALE = 1\.74;/,
-    "Expected the reduced-step cloud pass to compensate with stronger density."
+    /const float MAP_SPACE_CLOUD_DENSITY_SCALE = 2\.08;/,
+    "Expected the broad density pass to keep enough source density for visible cloud bodies."
   );
   assert.match(
     shaderSource,
-    /const float ARTICLE_BODY_ALPHA = 1\.78;/,
+    /const float ARTICLE_BODY_ALPHA = 3\.00;/,
     "Expected final cloud composition to be less transparent."
   );
   assert.match(
     shaderSource,
-    /float stepAlpha = clamp\(density \* 0\.38 \* \(1\.0 - accumulatedAlpha\), 0\.0, 1\.0\);/,
-    "Expected each raymarch step to contribute enough opacity after the 8-step budget cut."
+    /const float CLOUD_EXTINCTION = 2\.05;/,
+    "Expected the volume raymarch itself to produce enough alpha before final composition."
   );
   assert.match(
     shaderSource,
-    /float contrastTexture = clamp\(\(detail \* 0\.68 \+ billowed \* 0\.32 - 0\.24\) \* 3\.05, 0\.0, 1\.0\);/,
-    "Expected visible cloud texture to use a high-contrast detail signal instead of the mostly saturated density field."
-  );
-  assert.match(
-    shaderSource,
-    /textureValue = mix\(\s*contrastTexture,\s*clamp\(\(contrastTexture - 0\.10\) \* 1\.72, 0\.0, 1\.0\),\s*visibleTextureLayer\s*\);/s,
-    "Expected the visible texture to keep dark troughs and bright ridges in dense clouds."
+    /float stepAlpha = clamp\(\(1\.0 - viewTransmittance\) \* \(1\.0 - accumulatedAlpha\), 0\.0, 1\.0\);/,
+    "Expected each raymarch step to derive opacity from Beer-Lambert transmittance instead of a flat post multiplier."
   );
   assert.doesNotMatch(
     shaderSource,
@@ -5161,8 +5245,38 @@ test("campaign cloud density tuning keeps clouds visibly substantial", () => {
   );
   assert.match(
     shaderSource,
-    /float bodyAlphaTexture = mix\(0\.46, 1\.34, smoothstep\(0\.14, 0\.88, mapSpaceTexture\)\);/,
+    /float bodyAlphaTexture = mix\(0\.68, 1\.65, smoothstep\(0\.14, 0\.88, mapSpaceTexture\)\);/,
     "Expected dense cloud alpha to keep some texture breakup instead of saturating to one flat opacity."
+  );
+  assert.match(
+    shaderSource,
+    /float opaqueCoreMask = smoothstep\(0\.36, 0\.92, cloudDensity \+ mapSpaceTexture \* 0\.48\);/,
+    "Expected dense cloud cores to receive a near-opaque alpha floor instead of staying fog-transparent."
+  );
+  assert.match(
+    shaderSource,
+    /float solidBodyMask = cloudPresence \* smoothstep\(0\.26, 0\.74, cloudDensity \+ mapSpaceTexture \* 0\.32\);/,
+    "Expected the main cloud body, not only the brightest core, to stop reading as transparent fog."
+  );
+  assert.match(
+    shaderSource,
+    /alpha = max\(alpha, cloudMask \* solidBodyMask \* 0\.92\);/,
+    "Expected medium-density cloud bodies to become mostly opaque while still respecting reveal cutouts."
+  );
+  assert.match(
+    shaderSource,
+    /float visibleCloudMassMask = cloudPresence \* smoothstep\(0\.14, 0\.56, cloudDensity \+ mapSpaceTexture \* 0\.36 \+ mapSpaceCloud\.a \* 0\.44\);/,
+    "Expected all visible cloud masses, not just dense cores, to receive an opaque alpha floor."
+  );
+  assert.match(
+    shaderSource,
+    /alpha = max\(alpha, cloudMask \* visibleCloudMassMask \* 0\.985\);/,
+    "Expected visible cloud masses to stop showing terrain through the cloud body."
+  );
+  assert.match(
+    shaderSource,
+    /alpha = max\(alpha, cloudMask \* deepZone \* opaqueCoreMask \* 0\.98\);/,
+    "Expected only dense cloud cores, not soft edges, to become close to opaque."
   );
   assert.match(
     shaderSource,
@@ -5181,43 +5295,28 @@ test("campaign cloud density tuning keeps clouds visibly substantial", () => {
   );
   assert.match(
     shaderSource,
-    /float internalShadow = smoothstep\(\s*0\.30,\s*0\.82,\s*density \* \(1\.0 - abs\(heightRatio - 0\.38\) \* 1\.55\)\s*\) \*\s*\(1\.0 - smoothstep\(0\.68, 0\.96, heightRatio\)\);/s,
-    "Expected a simple internal shadow term so dense cloud cores read with more volume."
-  );
-  assert.match(
-    shaderSource,
-    /stepColor = mix\(stepColor, vec3\(0\.52, 0\.61, 0\.62\), internalShadow \* 0\.18\);/,
-    "Expected internal shadows to darken dense middle cloud cores without making the whole body muddy."
-  );
-  assert.match(
-    shaderSource,
-    /float cloudTopHighlight = smoothstep\(\s*0\.34,\s*0\.86,\s*textureValue \* density \+ heightRatio \* 0\.32\s*\) \*\s*smoothstep\(0\.24, 0\.92, heightRatio\);/s,
-    "Expected cloud tops to get a restrained height-aware highlight."
-  );
-  assert.match(
-    shaderSource,
-    /float stepTextureRidge = smoothstep\(\s*0\.42,\s*0\.88,\s*textureValue\s*\) \* smoothstep\(0\.18, 0\.74, density\);/s,
+    /float stepTextureRidge = smoothstep\(0\.42, 0\.88, textureValue\) \* smoothstep\(0\.18, 0\.74, density\);/,
     "Expected per-step raymarch color to preserve bright dense texture ridges before accumulated color is averaged."
   );
   assert.match(
     shaderSource,
-    /float stepTextureCrease = smoothstep\(\s*0\.16,\s*0\.70,\s*\(1\.0 - textureValue\) \* density\s*\);/s,
+    /float stepTextureCrease = smoothstep\(0\.16, 0\.70, \(1\.0 - textureValue\) \* density\);/,
     "Expected per-step raymarch color to preserve darker dense texture creases before accumulated color is averaged."
   );
   assert.match(
     shaderSource,
-    /stepColor = mix\(stepColor, vec3\(0\.43, 0\.53, 0\.56\), stepTextureCrease \* 0\.38\);/,
+    /stepColor = mix\(stepColor, vec3\(0\.34, 0\.44, 0\.48\), stepTextureCrease \* 0\.30\);/,
     "Expected dense texture troughs to be visible inside the volumetric raymarch itself."
   );
   assert.match(
     shaderSource,
-    /stepColor = mix\(stepColor, vec3\(1\.0, 0\.99, 0\.92\), cloudTopHighlight \* 0\.22 \+ stepTextureRidge \* 0\.36\);/,
+    /stepColor = mix\(stepColor, vec3\(1\.0, 0\.98, 0\.88\), heightHighlight \* \(textureValue \* 0\.26 \+ stepTextureRidge \* 0\.16\)\);/,
     "Expected cloud highlights to restore visible contrast against the internal shadow."
   );
   assert.match(
     shaderSource,
-    /\(0\.20 \+ cloudDensity \* 0\.26 \+ cloudDetail \* 0\.10\);/,
-    "Expected the shallow reveal mist layer to be denser and less transparent."
+    /\(0\.34 \+ cloudDensity \* 0\.46 \+ cloudDetail \* 0\.20\);/,
+    "Expected reveal-edge cloud cover to read as cloud mass instead of transparent mist."
   );
   assert.match(
     shaderSource,
@@ -5266,8 +5365,8 @@ test("campaign cloud density tuning keeps clouds visibly substantial", () => {
   );
   assert.match(
     shaderSource,
-    /return clamp\(\(density - 0\.39\) \* MAP_SPACE_CLOUD_DENSITY_SCALE \* heightEnvelope, 0\.0, 1\.0\);/,
-    "Expected cloud coverage to be denser without increasing raymarch resolution."
+    /float density = clamp\(\(coreDensity - edgeCarve\) \* MAP_SPACE_CLOUD_DENSITY_SCALE, 0\.0, 1\.0\);/,
+    "Expected cloud coverage to stay anchored in broad core density while allowing stronger volume opacity."
   );
   assert.match(
     shaderSource,
@@ -5307,7 +5406,7 @@ test("campaign cloud density uses height layers without directional texture shea
   );
   assert.match(
     shaderSource,
-    /vec3 basePoint = vec3\(columnTexturePoint\.xy \* \(1\.18 \* worldTextureScale\), columnTexturePoint\.z \* 0\.92\);/,
+    /vec3 basePoint = vec3\(columnTexturePoint\.xy \* broadLayerScale, columnTexturePoint\.z \* 0\.72\);/,
     "Base cloud texture coordinates should stay stable across height steps instead of skewing every layer in one direction."
   );
   assert.doesNotMatch(
@@ -5332,8 +5431,8 @@ test("campaign cloud density uses height layers without directional texture shea
   );
   assert.match(
     shaderSource,
-    /float layeredShape = baseDistribution \* \(0\.72 \+ lowLayer \* 0\.20 \+ midLayer \* 0\.18\) - erosion \* \(0\.28 \+ highLayer \* 0\.20\);/,
-    "Expected final density to combine broad coverage, low/mid/high layer response, and detail erosion."
+    /float broadCoverage = smoothstep\(0\.55, 0\.82, baseDistribution\);[\s\S]*?float coreDensity = broadCoverage \* layerBody \* heightEnvelope;[\s\S]*?float edgeCarve = pow\(erosion, 1\.18\)/s,
+    "Expected final density to anchor on broad coverage and apply detail erosion as an edge carve."
   );
   assert.match(
     shaderSource,
@@ -5342,7 +5441,7 @@ test("campaign cloud density uses height layers without directional texture shea
   );
   assert.match(
     shaderSource,
-    /float carvedDetail = clamp\(\(erosion - 0\.18\) \* 1\.48, 0\.0, 1\.0\);[\s\S]*?float cellularRidge = clamp\(\(baseDistribution - 0\.36\) \* 1\.36, 0\.0, 1\.0\);[\s\S]*?textureValue = mix\(/s,
+    /float carvedDetail = clamp\(\(erosion - 0\.24\) \* \(0\.96 \+ edgeErosionMask \* 0\.72\), 0\.0, 1\.0\);[\s\S]*?float cellularRidge = clamp\(\(baseDistribution - 0\.34\) \* 1\.22, 0\.0, 1\.0\);[\s\S]*?textureValue = mix\(/s,
     "Expected visible texture to use high-contrast erosion and broad-density ridge signals."
   );
   assert.doesNotMatch(

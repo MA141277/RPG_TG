@@ -13,7 +13,7 @@ import cloudFragmentShaderRaw from "./shaders/campaign-cloud.frag.glsl?raw";
 import cloudVertexShaderRaw from "./shaders/campaign-cloud.vert.glsl?raw";
 
 const CLOUD_RENDER_MAX_DEVICE_PIXEL_RATIO = 1;
-const CLOUD_RENDER_MAX_LONG_EDGE_PX = 960;
+const CLOUD_RENDER_MAX_LONG_EDGE_PX = 1120;
 const CLOUD_REVEAL_DISSOLVE_DURATION_MS = 1400;
 const CLOUD_REVEAL_TERRAIN_LOAD_BUFFER_MS = 700;
 const CLOUD_ANIMATION_FRAME_INTERVAL_MS = 1000 / 12;
@@ -42,7 +42,7 @@ type CampaignCloudConsoleCommand = (
 const activeCloudRenderers = new Map<HTMLCanvasElement, CampaignCloudRenderer>();
 const pendingCloudRendererCanvases = new Set<HTMLCanvasElement>();
 const activeCloudInteractionReasons = new Set<string>();
-let campaignCloudShaderEnabled = true;
+let campaignCloudShaderEnabled = false;
 let campaignCloudTextureScaleBoost = DEFAULT_CAMPAIGN_CLOUD_TEXTURE_SCALE_BOOST;
 
 declare global {
