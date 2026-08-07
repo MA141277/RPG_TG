@@ -624,6 +624,88 @@ export function createEmbeddedScriptEditorSession(
         return true;
       }
 
+      if (target.matches("[data-script-editor-minigame-field]")) {
+        const field = target.dataset.scriptEditorMinigameField;
+        if (
+          [
+            "id",
+            "title",
+            "description",
+            "playableId",
+            "integrationId",
+            "ownerKind",
+            "ownerId",
+            "returnPolicy",
+            "triggerId",
+            "triggerSource",
+            "triggerEvent",
+            "notes",
+          ].includes(field ?? "")
+        ) {
+          host.applyScriptEditorMinigameField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-minigame-integration]")) {
+        host.applyScriptEditorMinigameIntegration(target.value);
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-minigame-launch-field]")) {
+        const field = target.dataset.scriptEditorMinigameLaunchField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorMinigameLaunchIndex ?? "-1",
+          10
+        );
+        if ((field === "key" || field === "value") && Number.isInteger(index) && index >= 0) {
+          host.applyScriptEditorMinigameLaunchField(index, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-minigame-outcome-field]")) {
+        const field = target.dataset.scriptEditorMinigameOutcomeField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorMinigameOutcomeIndex ?? "-1",
+          10
+        );
+        if (
+          ["id", "outcome", "handoffPolicy", "summary", "effectHint"].includes(
+            field ?? ""
+          ) &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorMinigameOutcomeField(index, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches('[data-script-editor-relation-kind^="story-related-"]')) {
+        const relationKind = target.dataset.scriptEditorRelationKind;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorRelationIndex ?? "-1",
+          10
+        );
+        if (Number.isInteger(index) && index >= 0 && relationKind != null) {
+          host.applyScriptEditorStoryRelationField(relationKind, index, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches('[data-script-editor-relation-kind^="event-related-"]')) {
+        const relationKind = target.dataset.scriptEditorRelationKind;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorRelationIndex ?? "-1",
+          10
+        );
+        if (Number.isInteger(index) && index >= 0 && relationKind != null) {
+          host.applyScriptEditorEventRelationField(relationKind, index, target.value);
+        }
+        return true;
+      }
+
       if (target.matches("[data-script-editor-building-entry-field]")) {
         const field = target.dataset.scriptEditorBuildingEntryField;
         if (field === "defaultPersonId" || field === "returnTarget") {

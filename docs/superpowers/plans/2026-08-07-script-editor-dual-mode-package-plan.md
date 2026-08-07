@@ -13,9 +13,9 @@
 - Status: `running`
 - Last Updated: `2026-08-07`
 - Current Focus: `Task 2: move script editor session ownership out of MainUiFlow.`
-- Next Step: `Continue Task 2 by moving script editor change/input ownership out of MainUiFlow and into the session path.`
+- Next Step: `Continue Task 2 by moving the remaining person-trade/location/building change-routing ownership out of MainUiFlow and into the session path.`
 - Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 checkpoints passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck`
-- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 has cut over workflow/session construction and direct click routing into script-editor/kernel, but MainUiFlow still owns direct editor change/input routing that must be removed in the next slice.`
+- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 has cut over workflow/session construction plus click/input/event/minigame/relation change routing into script-editor/kernel, but MainUiFlow still owns the remaining person-trade/location/building editor change paths that must be removed in the next slice.`
 
 ## Progress Log
 
@@ -55,6 +55,10 @@
   - Summary: `Extended Task 2 again by moving the event change-routing group out of MainUiFlow and into script-editor/kernel/script-editor-session, including repeatable/destination/story-node/preview/binding authoring paths.`
   - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
   - Next: `Continue Task 2 by moving the remaining minigame/relation/location/building change-routing branches out of MainUiFlow.`
+- 2026-08-07
+  - Summary: `Extended Task 2 again by moving the minigame and story/event relation change-routing groups out of MainUiFlow and into script-editor/kernel/script-editor-session.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
+  - Next: `Continue Task 2 by moving the remaining person-trade/location/building change-routing branches out of MainUiFlow.`
 
 ---
 

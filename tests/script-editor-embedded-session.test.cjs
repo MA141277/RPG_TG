@@ -74,6 +74,8 @@ test("main ui flow no longer owns direct script editor change routing", () => {
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-event-field/);
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-event-repeatable/);
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-event-binding-field/);
+  assert.doesNotMatch(mainUiFlowSource, /data-script-editor-minigame-field/);
+  assert.doesNotMatch(mainUiFlowSource, /data-script-editor-relation-kind\^="story-related-"/);
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-settlement-field/);
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-progress-track-field/);
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-building-entry-field/);
@@ -84,6 +86,8 @@ test("main ui flow no longer owns direct script editor change routing", () => {
   assert.match(sessionSource, /data-script-editor-event-field/);
   assert.match(sessionSource, /data-script-editor-event-repeatable/);
   assert.match(sessionSource, /data-script-editor-event-binding-field/);
+  assert.match(sessionSource, /data-script-editor-minigame-field/);
+  assert.match(sessionSource, /data-script-editor-relation-kind\^="story-related-"/);
   assert.match(sessionSource, /data-script-editor-settlement-field/);
   assert.match(sessionSource, /data-script-editor-progress-track-field/);
   assert.match(sessionSource, /data-script-editor-building-entry-field/);
