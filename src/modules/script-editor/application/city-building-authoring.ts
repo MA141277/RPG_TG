@@ -22,11 +22,11 @@
 } from "../domain/script-editor-project";
 import type { HouseDefinition } from "../../../domain/house";
 import {
-  BUILDING_LAYOUT_TEMPLATE_IDS,
-  createDefaultBuildingLayoutDefinition,
-  normalizeBuildingLayoutTemplateId,
-  resolveBuildingLayoutDefinition,
-} from "../../../application/building/building-layout-templates";
+  SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS as BUILDING_LAYOUT_TEMPLATE_IDS,
+  createDefaultScriptEditorBuildingLayoutDefinition as createDefaultBuildingLayoutDefinition,
+  normalizeScriptEditorBuildingLayoutTemplateId as normalizeBuildingLayoutTemplateId,
+  resolveScriptEditorBuildingLayoutDefinition as resolveBuildingLayoutDefinition,
+} from "./script-editor-building-layout-templates";
 import {
   appendScriptEditorLocationAccessCondition,
   normalizeScriptEditorLocationAccessConditionExpression,

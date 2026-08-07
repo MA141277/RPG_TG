@@ -98,3 +98,33 @@ test("script editor background option lists stay package-local instead of import
     true
   );
 });
+
+test("script editor building layout templates stay package-local instead of importing shared building templates", () => {
+  const authoringSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "application",
+      "city-building-authoring.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(authoringSource, /application\/building\/building-layout-templates/);
+  assert.match(authoringSource, /script-editor-building-layout-templates/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "modules",
+        "script-editor",
+        "application",
+        "script-editor-building-layout-templates.ts"
+      )
+    ),
+    true
+  );
+});
