@@ -16,6 +16,7 @@ import type {
   MapNode,
   MapStats,
 } from "../../../domain/map";
+import type { CivilizationSandboxMapOverlay } from "../../../application/civilization-sandbox/map-overlay-presenter";
 import {
   resolveCampaignStructureVisualProfile,
   type CampaignStructureVisualProfile,
@@ -82,6 +83,7 @@ export type MapViewModel = {
   revealedHexKeys: string[];
   campaignStructureProfile: CampaignStructureVisualProfile | null;
   campaignMarkers: CampaignMarker[];
+  civilizationSandboxOverlay: CivilizationSandboxMapOverlay | null;
   layers: MapLayer[];
   stats: MapStats | null;
 };
@@ -96,6 +98,7 @@ export function createMapViewModel(input: {
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
   mapExplorationState?: MapExplorationState | null;
+  civilizationSandboxOverlay?: CivilizationSandboxMapOverlay | null;
 }): MapViewModel {
   const mode = input.mapDefinition.mode ?? "grid";
   const coordinateSpace = input.mapDefinition.coordinateSpace ?? {
@@ -247,6 +250,7 @@ export function createMapViewModel(input: {
         };
       })
       .filter((marker) => marker.kind !== "landmark"),
+    civilizationSandboxOverlay: input.civilizationSandboxOverlay ?? null,
     layers: input.mapDefinition.layers ?? [],
     stats: input.mapDefinition.stats ?? null,
   };
@@ -322,6 +326,23 @@ function renderCampaignMarkerRuntimeSource(model: MapViewModel): string {
   return `
     <script type="application/json" data-campaign-marker-source="true">${escapeJsonForHtmlScript(JSON.stringify(markerSource))}</script>
     <div class="c-campaign-marker-layer" data-campaign-marker-layer="true"></div>
+  `;
+}
+
+function renderCivilizationSandboxOverlay(
+  overlay: CivilizationSandboxMapOverlay | null
+): string {
+  if (overlay == null || !overlay.enabled) {
+    return "";
+  }
+
+  return `
+    <script type="application/json" data-civilization-sandbox-source="true">${escapeJsonForHtmlScript(JSON.stringify(overlay))}</script>
+    <div
+      class="c-civilization-sandbox-overlay"
+      data-civilization-sandbox-overlay="true"
+      data-civilization-sandbox-view-mode="${overlay.viewMode}"
+    ></div>
   `;
 }
 
@@ -532,6 +553,7 @@ function renderCampaignMap(model: MapViewModel): string {
         >
           <polygon data-campaign-hover-hex-polygon="true" points=""></polygon>
         </svg>
+        ${renderCivilizationSandboxOverlay(model.civilizationSandboxOverlay)}
         <div class="c-campaign-map__tiltshift" aria-hidden="true">
           ${renderCampaignMapVisualLayer(model, {
             transformClassName: "c-campaign-map__transform c-campaign-map__transform--tiltshift",

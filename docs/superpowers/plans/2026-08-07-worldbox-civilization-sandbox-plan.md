@@ -12,12 +12,17 @@
 
 - Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 2 placement and simulation core implementation is complete pending the Task 2 commit.`
-- Next Step: `Commit Task 2, then continue Task 3 map overlay presenter and view-model wiring.`
-- Verification: `npm run build:test; node --test --test-isolation=none tests/civilization-sandbox-domain.test.cjs; npm run typecheck`
+- Current Focus: `Task 3 map overlay presenter and view-model wiring is complete pending the Task 3 commit.`
+- Next Step: `Commit Task 3, then continue Task 4 validation UI actions and boundary guard.`
+- Verification: `npm run build:test; node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs; npm run typecheck`
 - Notes: `docs/superpowers/project-progress.md still points to the campaign-cloud completed-but-open child; this sandbox execution was started by explicit user direction on a dedicated branch without changing the canonical progress entry.`
 
 ## Progress Log
+
+- 2026-08-07
+  - Summary: `Completed Task 3 for the Worldbox civilization sandbox: added a map overlay presenter and wired civilization sandbox overlay data through app render into the map view model.`
+  - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs`; `npm run typecheck`
+  - Next: `Commit Task 3, then continue with validation UI actions and main-shell boundary guards.`
 
 - 2026-08-07
   - Summary: `Completed Task 2 for the Worldbox civilization sandbox: placing a lord now creates a civilization, settlement, household, starting individuals, and claimed land; sandbox ticks create rural-house and farm structures, expand territory, and add child records.`
@@ -1157,7 +1162,7 @@ Expected:
 - domain tests pass
 - typecheck passes
 
-- [ ] **Step 6: Commit Task 2**
+- [x] **Step 6: Commit Task 2**
 
 Run:
 
@@ -1179,7 +1184,7 @@ git commit -m "feat: add civilization sandbox simulation core"
 - Produces: `createCivilizationSandboxMapOverlay(state: CivilizationSandboxState): CivilizationSandboxMapOverlay`
 - Produces: `MapViewModel.civilizationSandboxOverlay`
 
-- [ ] **Step 1: Write failing overlay presenter and map source tests**
+- [x] **Step 1: Write failing overlay presenter and map source tests**
 
 Create `tests/civilization-sandbox-map-overlay.test.cjs`:
 
@@ -1229,7 +1234,7 @@ test("map view model and app render expose civilization sandbox overlay without 
 });
 ```
 
-- [ ] **Step 2: Run the failing overlay tests**
+- [x] **Step 2: Run the failing overlay tests**
 
 Run:
 
@@ -1242,7 +1247,7 @@ Expected:
 
 - tests fail because `map-overlay-presenter` and map-view overlay fields do not exist
 
-- [ ] **Step 3: Implement overlay presenter**
+- [x] **Step 3: Implement overlay presenter**
 
 Create `src/application/civilization-sandbox/map-overlay-presenter.ts`:
 
@@ -1330,7 +1335,7 @@ export function createCivilizationSandboxMapOverlay(
 }
 ```
 
-- [ ] **Step 4: Extend map view model types and inputs**
+- [x] **Step 4: Extend map view model types and inputs**
 
 Modify `src/ui/views/map/map-view.ts`:
 
@@ -1356,7 +1361,7 @@ Add to the returned model:
 civilizationSandboxOverlay: input.civilizationSandboxOverlay ?? null,
 ```
 
-- [ ] **Step 5: Render data-driven sandbox overlay markup**
+- [x] **Step 5: Render data-driven sandbox overlay markup**
 
 In `src/ui/views/map/map-view.ts`, add a helper before `renderCampaignMap`:
 
@@ -1387,7 +1392,7 @@ Call it inside `renderCampaignMap` within `.c-campaign-map`, after the hover hex
 ${renderCivilizationSandboxOverlay(model.civilizationSandboxOverlay)}
 ```
 
-- [ ] **Step 6: Project overlay in app render**
+- [x] **Step 6: Project overlay in app render**
 
 Modify `src/ui/app-render.ts`:
 
@@ -1403,7 +1408,7 @@ civilizationSandboxOverlay: createCivilizationSandboxMapOverlay(
 ),
 ```
 
-- [ ] **Step 7: Run tests for Task 3**
+- [x] **Step 7: Run tests for Task 3**
 
 Run:
 

@@ -65,6 +65,7 @@ import { formatCardDrawResultLabel } from "./animations/card-draw-animation";
 import { resolveCharacterFactionLabel } from "../application/faction/faction-affiliation-runtime";
 import { defaultEquipmentLoadoutService } from "../domain/equipment/equipment-loadout-service";
 import type { EquipmentSlotId } from "../domain/equipment/equipment-slot-registry";
+import { createCivilizationSandboxMapOverlay } from "../application/civilization-sandbox/map-overlay-presenter";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
 
@@ -540,6 +541,9 @@ function renderStage(
         input.appState.gameState.runtime.mapExplorationByMapId[
           input.mapDefinition.id
         ] ?? null,
+      civilizationSandboxOverlay: createCivilizationSandboxMapOverlay(
+        input.appState.gameState.runtime.civilizationSandbox
+      ),
     };
     const mapViewModel = createMapViewModel(mapViewModelInput);
 
