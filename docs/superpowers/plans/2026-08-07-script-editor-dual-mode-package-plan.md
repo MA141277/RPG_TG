@@ -12,10 +12,10 @@
 
 - Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 4: add a real standalone script editor entry.`
-- Next Step: `Write the failing standalone-entry test, then add the standalone prototype entry and standalone host bootstrap.`
-- Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck. Task 3 passed: npm run build:test; node --test tests/script-editor-runtime-preview-compat.test.cjs --test-name-pattern "preview fails closed when no previewHost is injected|runtime preview can load exported zhuyuanzhang template packs that inline map assets as data urls"`; `npm run typecheck``
-- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 is complete: MainUiFlow no longer owns direct script-editor data-action/data-change/data-input routing, and the embedded session is now the editor interaction owner. Task 3 is complete: the workflow controller now starts preview only through injected previewHost capability, while the embedded host adapts legacy runtime startup callbacks behind that injected capability boundary.`
+- Current Focus: `Task 5: move template and publication behavior behind injected catalogs.`
+- Next Step: `Write the failing publication-boundary test, then remove remaining builtin template/publication ownership from runtime-side imports.`
+- Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck. Task 3 passed: npm run build:test; node --test tests/script-editor-runtime-preview-compat.test.cjs --test-name-pattern "preview fails closed when no previewHost is injected|runtime preview can load exported zhuyuanzhang template packs that inline map assets as data urls"`; `npm run typecheck`. Task 4 passed: `npm run build:test`; `node --test tests/script-editor-standalone-entry.test.cjs`; `npm run typecheck`; `npm run build```
+- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 is complete: MainUiFlow no longer owns direct script-editor data-action/data-change/data-input routing, and the embedded session is now the editor interaction owner. Task 3 is complete: the workflow controller now starts preview only through injected previewHost capability, while the embedded host adapts legacy runtime startup callbacks behind that injected capability boundary. Task 4 is complete: Vite now exposes a standalone script editor entry, and the standalone bootstrap mounts the script editor through a standalone host without moving runtime preview into the package.`
 
 ## Progress Log
 
@@ -67,6 +67,10 @@
   - Summary: `Completed Task 3 by changing the workflow controller to require injected previewHost capability for runtime preview, while moving legacy embedded runtime startup adaptation behind the embedded host/session boundary.`
   - Verification: `npm run build:test`; `node --test tests/script-editor-runtime-preview-compat.test.cjs --test-name-pattern "preview fails closed when no previewHost is injected|runtime preview can load exported zhuyuanzhang template packs that inline map assets as data urls"`; `npm run typecheck`
   - Next: `Start Task 4 and add the standalone script editor entry.`
+- 2026-08-07
+  - Summary: `Completed Task 4 by adding a standalone script editor prototype entry, a standalone host/bootstrap path, and a dedicated Vite multi-entry build target.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-standalone-entry.test.cjs`; `npm run typecheck`; `npm run build`
+  - Next: `Start Task 5 and move template/publication behavior fully behind injected catalogs.`
 
 ---
 
@@ -505,7 +509,7 @@ git commit -m "refactor: inject script editor preview host"
 - Modify: `vite.config.ts`
 - Test: `tests/script-editor-standalone-entry.test.cjs`
 
-- [ ] **Step 1: Write the failing standalone-entry test**
+- [x] **Step 1: Write the failing standalone-entry test**
 
 Create `tests/script-editor-standalone-entry.test.cjs`:
 
@@ -528,7 +532,7 @@ test("standalone script editor prototype exists", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 
@@ -542,7 +546,7 @@ Expected:
 - `FAIL`
 - no standalone script editor entry exists yet
 
-- [ ] **Step 3: Create the standalone bootstrap**
+- [x] **Step 3: Create the standalone bootstrap**
 
 Create the entry and standalone host:
 
@@ -574,7 +578,7 @@ input: {
 },
 ```
 
-- [ ] **Step 4: Re-run the standalone-entry test and build**
+- [x] **Step 4: Re-run the standalone-entry test and build**
 
 Run:
 
@@ -589,7 +593,7 @@ Expected:
 - `PASS`
 - Vite builds the standalone script editor entry
 
-- [ ] **Step 5: Commit the standalone entry**
+- [x] **Step 5: Commit the standalone entry**
 
 ```bash
 git add prototypes/script-editor/index.html src/modules/script-editor/standalone/script-editor-standalone.ts src/modules/script-editor/standalone/script-editor-standalone-host.ts vite.config.ts tests/script-editor-standalone-entry.test.cjs
