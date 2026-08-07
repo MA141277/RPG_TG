@@ -22,6 +22,8 @@ import buildingBackgroundTiejiangpuUrl from "../../ui/background/tiejiangpu.png?
 import buildingBackgroundWuguanUrl from "../../ui/background/wuguan.png?url";
 import buildingBackgroundZizhaiUrl from "../../ui/background/zizhai.png?url";
 
+export const DEFAULT_CITY_BACKGROUND_ID = "chengzhen";
+
 export type LocationBackgroundOption = {
   value: string;
   label: string;
@@ -96,6 +98,16 @@ export function resolveLocationBackgroundImageUrl(
   }
 
   return LOCATION_BACKGROUND_IMAGE_URLS[backgroundId] ?? null;
+}
+
+export function resolveCityBackgroundImageUrl(
+  backgroundId: string | null | undefined
+): string {
+  return (
+    resolveLocationBackgroundImageUrl(backgroundId) ??
+    LOCATION_BACKGROUND_IMAGE_URLS[DEFAULT_CITY_BACKGROUND_ID] ??
+    cityBackgroundChengzhenUrl
+  );
 }
 
 export function resolveDialogueBackgroundPreviewImageUrl(

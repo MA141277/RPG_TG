@@ -3434,6 +3434,63 @@ test(
 );
 
 test(
+  "scenario pack file import preserves packaged app protocol map assets",
+  async () => {
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const packagedMapUrl =
+      "rpgtg://app/script-editor-templates/zhuyuanzhang/assets/maps/HD.png";
+    const importedFiles = createImportedFilesFromSerializedJsonRecord(
+      {
+        "pack.json": JSON.stringify({
+          schemaVersion: 1,
+          kind: "scenario-pack",
+          id: "scenario-pack.test.rpgtg-assets",
+          title: "RPGTG Assets",
+          files: {
+            scenarioProfile: "./scenario-profile.json",
+            maps: "./maps.json",
+            characters: "./characters.json",
+            events: "./events.json",
+            dialogues: "./dialogues.json",
+          },
+        }),
+        "scenario-profile.json": JSON.stringify({
+          id: "scenario.test.rpgtg-assets",
+          title: "RPGTG Assets",
+          playerCharacterId: "char.test",
+          chapterId: "chapter.test",
+          initialLocation: {
+            mapId: "map.test",
+            cityId: "city.test",
+            houseId: null,
+            view: "map",
+          },
+        }),
+        "maps.json": JSON.stringify([
+          {
+            id: "map.test",
+            name: "Map Test",
+            backgroundId: "bg.map.test",
+            nodes: [],
+            primaryImageUrl: packagedMapUrl,
+          },
+        ]),
+        "characters.json": JSON.stringify([{ id: "char.test", name: "Tester" }]),
+        "events.json": JSON.stringify([]),
+        "dialogues.json": JSON.stringify([]),
+      },
+      "rpgtg-pack"
+    );
+
+    const pack = await loadScenarioPackFromFiles(importedFiles);
+
+    assert.equal(pack.maps[0].primaryImageUrl, packagedMapUrl);
+  }
+);
+
+test(
   "scenario pack loader normalizes legacy octet-stream data image map assets",
   async () => {
     const {
@@ -12601,6 +12658,60 @@ test("script editor imports built-in zhuyuanzhang template from the published ma
     global.fetch = previousFetch;
     global.window = previousWindow;
   }
+});
+
+test("script editor runtime pack import preserves packaged app protocol map assets", async () => {
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/modules/script-editor/application/runtime-pack-import.js");
+  const packagedMapUrl =
+    "rpgtg://app/script-editor-templates/zhuyuanzhang/assets/maps/HD.png";
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.test.editor-rpgtg-assets",
+        title: "Editor RPGTG Assets",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          maps: "./maps.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          dialogues: "./dialogues.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.test.editor-rpgtg-assets",
+        title: "Editor RPGTG Assets",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "map",
+        },
+      }),
+      "maps.json": JSON.stringify([
+        {
+          id: "map.test",
+          name: "Map Test",
+          backgroundId: "bg.map.test",
+          nodes: [],
+          primaryImageUrl: packagedMapUrl,
+        },
+      ]),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Tester" }]),
+      "events.json": JSON.stringify([]),
+      "dialogues.json": JSON.stringify([]),
+    },
+    "editor-rpgtg-pack"
+  );
+
+  const project = await loadScriptEditorProjectFromScenarioPackFiles(importedFiles);
+
+  assert.equal(project.maps[0].primaryImageUrl, packagedMapUrl);
 });
 
 test("script editor built-in zhuyuanzhang template wraps city-begging prototype as a minigame instance", async () => {

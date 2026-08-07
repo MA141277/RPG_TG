@@ -14,8 +14,8 @@
     "scaffold:scenario-pack": "node tools/scaffold-scenario-pack.mjs",
     "validate:playables": "node tools/validate-playables.mjs",
     "validate:scenario-packs": "node tools/validate-scenario-packs.mjs",
-    "desktop:dir": "npm run build && electron-builder --dir",
-    "desktop:build": "npm run build && electron-builder --win portable",
+    "desktop:dir": "npm run build && node tools/run-electron-builder.mjs --dir",
+    "desktop:build": "npm run build && node tools/run-electron-builder.mjs --win portable",
     "kb:history:build": "node tools/build-history-kb.mjs",
     "kb:history:search": "node tools/search-history-kb.mjs",
     "kb:yuanmo-person-pool:build": "node tools/build-yuanmo-person-pool.mjs",
@@ -24,7 +24,7 @@
     "spine:replace-pieces": "node tools/replace-faxian-spine-pieces.mjs",
     "serve:prod": "node scripts/serve-static.mjs",
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
-    "test": "npm run build:test && node --test tests/robustness.test.cjs tests/story-runtime-progression-timing.test.cjs tests/browser-stage-settlement-smoke.test.cjs tests/browser-script-editor-module-smoke.test.cjs tests/browser-script-editor-deep-actions-smoke.test.cjs tests/city-building-mount-authoring.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs tests/ai-collaboration-governance.test.cjs tests/blueprint-governance-lint.test.cjs tests/blueprint-version-governance.test.cjs tests/blueprint-skill-sync.test.cjs tests/build-test-regression.test.cjs tests/commit-message-governance.test.cjs",
+    "test": "npm run build:test && node --test tests/robustness.test.cjs tests/story-runtime-progression-timing.test.cjs tests/browser-stage-settlement-smoke.test.cjs tests/browser-script-editor-module-smoke.test.cjs tests/browser-script-editor-deep-actions-smoke.test.cjs tests/city-building-mount-authoring.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs tests/ai-collaboration-governance.test.cjs tests/blueprint-governance-lint.test.cjs tests/blueprint-version-governance.test.cjs tests/blueprint-skill-sync.test.cjs tests/build-test-regression.test.cjs tests/commit-message-governance.test.cjs tests/electron-builder-mirror-script.test.cjs tests/electron-app-protocol.test.cjs tests/desktop-runtime-polish.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "blueprint:governance:check": "node tools/blueprint-version-governance.mjs check",
     "blueprint:governance:sync": "node tools/blueprint-version-governance.mjs sync",
@@ -60,7 +60,7 @@
   },
   "build": {
     "appId": "com.rpgtg.desktop",
-    "productName": "RPG_TG",
+    "productName": "朱元璋",
     "asar": true,
     "npmRebuild": false,
     "directories": {
@@ -75,6 +75,7 @@
       "package.json"
     ],
     "win": {
+      "icon": "electron/assets/app-icon.ico",
       "target": [
         {
           "target": "portable",

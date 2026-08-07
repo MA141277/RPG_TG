@@ -168,3 +168,52 @@ For work tracked under `docs/superpowers/plans/`:
 6. Do not mark a child or task `closed` unless structured closeout, project-progress sync, next-step sync, and repository sync result are all recorded. Remote push failure must be recorded as sync result, but must not block child/task closeout or the next lawful queue/child handoff.
 7. Do not leave a `blocked` plan without recording the blocker in `Progress Log`.
 8. When creating or materially restructuring a plan, run `npm run lint:plans`.
+
+## Continuous Agent Execution Rule
+
+When executing a user request, an agent must not stop after merely identifying the next useful work slice. If the next slice is lawful, safe, and unblocked under the current instructions, execute that slice in the same turn instead of reporting it as a final answer.
+
+Use this loop for implementation, review, verification, and coordination work:
+
+1. Inspect the current state.
+2. Decide the smallest useful next slice.
+3. Execute the slice if it is safe and unblocked.
+4. Verify or inspect the result.
+5. Reassess whether another lawful slice remains.
+6. Repeat until a stop condition is met.
+
+Allowed stop conditions are:
+
+- the user's requested goal is complete;
+- further progress requires user input that cannot be safely inferred;
+- permission, approval, credentials, or external access is required;
+- continuing would risk destructive, unrelated, or governance-violating changes;
+- no safe executable next slice remains.
+
+The following are not valid stop conditions:
+
+- a next step has merely been identified;
+- a partial plan has been written but not executed;
+- one subagent has completed while other spawned subagents remain pending;
+- a wait operation timed out but the task is otherwise still active.
+
+Use progress updates for intermediate status. Reserve the final answer for completion, a real blocker, or an explicit user request to stop.
+
+## Subagent Orchestration Rule
+
+When an agent spawns one or more subagents for a user request, the main agent becomes the orchestrator for those subagents.
+
+The orchestrator must:
+
+1. Record every spawned subagent id.
+2. Maintain a pending subagent list.
+3. Use `wait_agent` with all pending subagent ids when waiting for results.
+4. Remove completed, closed, or explicitly abandoned subagents from the pending list.
+5. Process each completed subagent result before deciding the next slice.
+6. Use `send_input` when a subagent needs context that can be provided safely.
+7. Spawn follow-up reviewer or fixer subagents only when their write scopes are safe and bounded.
+8. Close subagents that are no longer needed.
+
+The orchestrator must not send a final answer while pending subagents remain unless the user explicitly asks to stop waiting or the subagents are formally abandoned with the reason stated.
+
+If `wait_agent` times out, the orchestrator must not treat the timeout itself as completion. It should continue waiting, perform non-overlapping local work, send a progress update, or report a real blocker.

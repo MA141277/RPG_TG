@@ -11,8 +11,7 @@ import type {
   CityEntryOption,
 } from "../../../domain/city-entry";
 import type { CitySceneMapping } from "../../../domain/city-scene-mapping";
-import { resolveLocationBackgroundImageUrl } from "../../location-backgrounds";
-import cityBackgroundVideoUrl from "../../../../ui/background/city.mp4?url";
+import { resolveCityBackgroundImageUrl } from "../../location-backgrounds";
 
 function getCityEntryArtworkClass(cityEntry: CityEntryDefinition): string {
   switch (cityEntry.artworkId) {
@@ -124,31 +123,16 @@ function renderCityMenuButtons(cityMenuEntries: CityMenuEntryViewModel[]): strin
 }
 
 function renderCityBackground(cityDefinition: CityDefinition): string {
-  const backgroundImageUrl = resolveLocationBackgroundImageUrl(
+  const backgroundImageUrl = resolveCityBackgroundImageUrl(
     cityDefinition.backgroundId
   );
 
-  if (backgroundImageUrl != null) {
-    return `
-      <div
-        class="c-kulan-city__background-image"
-        style="background-image:url('${backgroundImageUrl}')"
-        aria-hidden="true"
-      ></div>
-    `;
-  }
-
   return `
-    <video
-      class="c-kulan-city__background-video"
-      autoplay
-      muted
-      loop
-      playsinline
+    <div
+      class="c-kulan-city__background-image"
+      style="background-image:url('${backgroundImageUrl}')"
       aria-hidden="true"
-    >
-      <source src="${cityBackgroundVideoUrl}" type="video/mp4" />
-    </video>
+    ></div>
   `;
 }
 

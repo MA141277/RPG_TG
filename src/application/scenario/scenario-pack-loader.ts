@@ -1484,7 +1484,7 @@ function resolveImportedScenarioPackAssetUrl(
     return normalizeImageDataUrlMime(value);
   }
 
-  if (/^(https?:|file:|blob:|\/)/.test(value)) {
+  if (/^(https?:|file:|blob:|rpgtg:|\/)/.test(value)) {
     return value;
   }
 

@@ -5,6 +5,26 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-08-05 Packaged Script Editor Preview Asset Protocol
+
+### Changed
+- Updated [src/modules/script-editor/application/runtime-pack-import.ts](/D:/workspace/project/RPG_TG/src/modules/script-editor/application/runtime-pack-import.ts:1) and [src/application/scenario/scenario-pack-loader.ts](/D:/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts:1) so manifest-driven file imports preserve `rpgtg:` map asset URLs as packaged-app absolute resources instead of resolving them as missing relative files.
+- Added focused coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) for both runtime scenario-pack file import and Script Editor runtime-pack import with `rpgtg://app/...` map assets.
+
+### Impact
+- The packaged exe path `Script Editor -> Use Template -> Run Preview` can reuse built-in template assets served by the Electron app protocol without requiring those assets to be duplicated into the in-memory preview export.
+
+## 2026-08-05 Desktop App Name And Icon
+
+### Changed
+- Added packaged desktop icon assets at [electron/assets/app-icon.png](/D:/workspace/project/RPG_TG/electron/assets/app-icon.png:1) and [electron/assets/app-icon.ico](/D:/workspace/project/RPG_TG/electron/assets/app-icon.ico:1) using a red-gold game emblem with the `朱` mark.
+- Updated [electron/main.cjs](/D:/workspace/project/RPG_TG/electron/main.cjs:1) and [index.html](/D:/workspace/project/RPG_TG/index.html:1) so the Electron app name, window title, document title, and window icon use `朱元璋`.
+- Updated [package.json](/D:/workspace/project/RPG_TG/package.json:1) so electron-builder packages the app as `朱元璋` and uses the Windows icon asset.
+- Extended [tests/electron-app-protocol.test.cjs](/D:/workspace/project/RPG_TG/tests/electron-app-protocol.test.cjs:1) to guard the desktop app name and icon wiring.
+
+### Impact
+- The packaged Windows executable now presents as `朱元璋` and uses a game-specific icon instead of the generic Electron/default app identity.
+
 ## 2026-08-03 AI Collaboration Governance
 
 ### Changed
