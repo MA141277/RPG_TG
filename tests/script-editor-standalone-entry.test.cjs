@@ -63,7 +63,7 @@ test("script editor landing view stays package-local instead of importing entry-
       "modules",
       "script-editor",
       "ui",
-      "main-ui-script-editor-module.js"
+      "script-editor-session-ui.js"
     ),
     "utf8"
   );
@@ -94,7 +94,7 @@ test("script editor background option lists stay package-local instead of import
       "modules",
       "script-editor",
       "ui",
-      "main-ui-script-editor-module.js"
+      "script-editor-session-ui.js"
     ),
     "utf8"
   );

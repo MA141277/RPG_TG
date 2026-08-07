@@ -359,7 +359,7 @@ test("dialogue editor source collapses the main path to the basic single-screen 
   const source = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      "src/modules/script-editor/ui/script-editor-session-ui.js"
     ),
     "utf8"
   );
@@ -397,7 +397,7 @@ test("dialogue editor source removes legacy participant editing remnants from th
   const uiSource = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      "src/modules/script-editor/ui/script-editor-session-ui.js"
     ),
     "utf8"
   );
@@ -417,7 +417,7 @@ test("dialogue editor source exposes a help entry with usage guidance and exampl
   const source = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      "src/modules/script-editor/ui/script-editor-session-ui.js"
     ),
     "utf8"
   );
@@ -433,7 +433,7 @@ test("dialogue route panel no longer renders a dedicated route title label", () 
   const source = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      "src/modules/script-editor/ui/script-editor-session-ui.js"
     ),
     "utf8"
   );
@@ -450,7 +450,7 @@ test("dialogue editor binds helper render methods onto the host before opening t
   const source = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      "src/modules/script-editor/ui/script-editor-session-ui.js"
     ),
     "utf8"
   );
@@ -476,7 +476,7 @@ test("dialogue is no longer exposed as a primary event-binding owner or trigger 
   const uiSource = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      "src/modules/script-editor/ui/script-editor-session-ui.js"
     ),
     "utf8"
   );

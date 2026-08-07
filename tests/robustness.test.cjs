@@ -658,7 +658,7 @@ test("script editor story nodes are hidden from creator module navigation", asyn
     "../.test-dist/modules/script-editor/application/workspace-shell.js"
   );
   const uiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/modules/script-editor/ui/main-ui-script-editor-module.js"),
+    path.join(process.cwd(), "src/modules/script-editor/ui/script-editor-session-ui.js"),
     "utf8"
   );
 
@@ -681,7 +681,7 @@ test("script editor story nodes are hidden from creator module navigation", asyn
 
 test("script editor item authoring is a creator-facing workbench form", () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/modules/script-editor/ui/main-ui-script-editor-module.js"),
+    path.join(process.cwd(), "src/modules/script-editor/ui/script-editor-session-ui.js"),
     "utf8"
   );
   const branchStart = source.indexOf('if (family === "items")');
@@ -1038,7 +1038,7 @@ test("script editor workspace shell can skip menu formalization for committed pr
 
 test("script editor workspace navigation uses a local refresh path", () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/modules/script-editor/ui/main-ui-script-editor-module.js"),
+    path.join(process.cwd(), "src/modules/script-editor/ui/script-editor-session-ui.js"),
     "utf8"
   );
 

@@ -181,7 +181,7 @@ test("script editor embedded and standalone shells both consume package mount/op
 
 test("script editor ui owner no longer imports the deleted main-ui bridge file", () => {
   const moduleSource = readSource(
-    "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    "src/modules/script-editor/ui/script-editor-session-ui.js"
   );
 
   assert.doesNotMatch(moduleSource, /main-ui-bridge/);

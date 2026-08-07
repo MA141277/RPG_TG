@@ -132,7 +132,7 @@ test("production script editor module no longer imports the default template pub
       "modules",
       "script-editor",
       "ui",
-      "main-ui-script-editor-module.js"
+      "script-editor-session-ui.js"
     ),
     "utf8"
   );

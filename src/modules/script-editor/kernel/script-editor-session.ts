@@ -3,7 +3,7 @@ import type { ScriptEditorFileSystemHost } from "../host/script-editor-file-syst
 import type { ScriptEditorHost } from "../host/script-editor-host";
 import type { ScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
 import type { ScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
-import { installMainUiFlowScriptEditorModule } from "../ui/main-ui-script-editor-module";
+import { installMainUiFlowScriptEditorModule } from "../ui/script-editor-session-ui";
 import {
   createScriptEditorWorkflowController,
   type ScriptEditorWorkflowController,

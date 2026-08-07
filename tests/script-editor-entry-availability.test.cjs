@@ -8,7 +8,7 @@ test("script editor entry assets remain present in source", () => {
   const expectedPaths = [
     "src/modules/script-editor/index.ts",
     "src/modules/script-editor/entries/open-script-editor.ts",
-    "src/modules/script-editor/ui/main-ui-script-editor-module.js",
+    "src/modules/script-editor/ui/script-editor-session-ui.js",
     "src/styles/script-editor.css",
   ];
 
@@ -27,8 +27,10 @@ test("main ui flow still wires the script editor entry", () => {
     "utf8"
   );
 
-  assert.match(source, /installMainUiFlowScriptEditorModule/);
-  assert.match(source, /createScriptEditorWorkflowController/);
+  assert.match(source, /openScriptEditor/);
+  assert.match(source, /createLoadedScenarioPackPreviewHost/);
+  assert.doesNotMatch(source, /installMainUiFlowScriptEditorModule/);
+  assert.doesNotMatch(source, /createScriptEditorWorkflowController/);
   assert.match(source, /open-script-editor/);
 });
 
