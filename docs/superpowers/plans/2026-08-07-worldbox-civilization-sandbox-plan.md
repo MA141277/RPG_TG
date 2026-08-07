@@ -12,12 +12,17 @@
 
 - Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 3 map overlay presenter and view-model wiring is complete pending the Task 3 commit.`
-- Next Step: `Commit Task 3, then continue Task 4 validation UI actions and boundary guard.`
-- Verification: `npm run build:test; node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs; npm run typecheck`
+- Current Focus: `Task 4 validation UI actions and boundary guard are complete pending the Task 4 commit.`
+- Next Step: `Commit Task 4, then continue Task 5 visual overlay rendering and styles.`
+- Verification: `npm run build:test; node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs; node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs; npm run typecheck`
 - Notes: `docs/superpowers/project-progress.md still points to the campaign-cloud completed-but-open child; this sandbox execution was started by explicit user direction on a dedicated branch without changing the canonical progress entry.`
 
 ## Progress Log
+
+- 2026-08-07
+  - Summary: `Completed Task 4 for the Worldbox civilization sandbox: added validation controls, an action coordinator, main-shell boundary guards, and a temporary main-shell coordinator call that does not import or execute sandbox business helpers directly.`
+  - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs`; `node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs`; `npm run typecheck`
+  - Next: `Commit Task 4, then continue with visual overlay rendering and styles.`
 
 - 2026-08-07
   - Summary: `Completed Task 3 for the Worldbox civilization sandbox: added a map overlay presenter and wired civilization sandbox overlay data through app render into the map view model.`
@@ -1423,7 +1428,7 @@ Expected:
 - overlay tests pass
 - typecheck passes
 
-- [ ] **Step 8: Commit Task 3**
+- [x] **Step 8: Commit Task 3**
 
 Run:
 
@@ -1446,7 +1451,7 @@ git commit -m "feat: project civilization sandbox map overlay"
 - Produces: `handleCivilizationSandboxAction(input: CivilizationSandboxActionInput): CivilizationSandboxActionResult`
 - Produces: map markup with `data-civilization-sandbox-action`
 
-- [ ] **Step 1: Add failing source guard tests**
+- [x] **Step 1: Add failing source guard tests**
 
 Append this test to `tests/civilization-sandbox-map-overlay.test.cjs`:
 
@@ -1478,7 +1483,7 @@ test("civilization sandbox does not add concrete business logic to main shell", 
 });
 ```
 
-- [ ] **Step 2: Run the failing guard tests**
+- [x] **Step 2: Run the failing guard tests**
 
 Run:
 
@@ -1493,7 +1498,7 @@ Expected:
 - map overlay test fails because the coordinator file and action markup do not exist
 - robustness test passes if `src/main.ts` is still clean
 
-- [ ] **Step 3: Add the action coordinator**
+- [x] **Step 3: Add the action coordinator**
 
 Create `src/application/runtime/coordinators/civilization-sandbox-action-coordinator.ts`:
 
@@ -1571,7 +1576,7 @@ export function handleCivilizationSandboxAction(
 }
 ```
 
-- [ ] **Step 4: Add validation controls to map view**
+- [x] **Step 4: Add validation controls to map view**
 
 In `src/ui/views/map/map-view.ts`, add a helper:
 
@@ -1596,7 +1601,7 @@ Call it inside `renderCampaignMap`, near `.c-campaign-map-actions`:
 ${renderCivilizationSandboxControls()}
 ```
 
-- [ ] **Step 5: Wire coordinator through the existing application action layer**
+- [x] **Step 5: Wire coordinator through the existing application action layer**
 
 Prefer adding the coordinator to the existing application action coordinator or transition layer already used by this branch. If that owner is unclear at execution time, create a small transition adapter under `src/application/runtime/coordinators/` and keep `src/main.ts` to generic event forwarding only.
 
@@ -1624,7 +1629,7 @@ if (result.handled) {
 
 Do not add branches in `src/main.ts` that call `placeSandboxLord` or `tickCivilizationSandbox`.
 
-- [ ] **Step 6: Run guard tests**
+- [x] **Step 6: Run guard tests**
 
 Run:
 

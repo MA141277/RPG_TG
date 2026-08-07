@@ -2,6 +2,21 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-07 Worldbox Civilization Sandbox Validation Slice
+
+### Added
+- 新增 `GameState.runtime.civilizationSandbox`，用于隔离保存 WorldBox-like 验证沙盒的文明、个体、家庭、营地、结构、领土和最近事件，不写入玩家属性、背包或源地图 JSON。
+- 新增文明沙盒的三族模板、命名器、领袖放置、确定性 tick 模拟、地图 overlay presenter 和 validation action coordinator。
+- 地图 view model 现在可以携带 `civilizationSandboxOverlay`，map view 暴露 `data-civilization-sandbox-source`、`data-civilization-sandbox-overlay` 和验证按钮 action hook。
+
+### Changed
+- `src/main.ts` 只新增过渡期的 sandbox action coordinator 调用，用于把 `data-civilization-sandbox-action` 转成统一 runtime state 替换；入口不直接 import 或调用 `placeSandboxLord` / `tickCivilizationSandbox`，也不读取 sandbox 内部文明表。
+- 该接线的目标归属是后续统一 app action coordinator；当前保留在入口点击流中是因为仓库现有 map/city/backpack 点击分发仍未完全抽离。
+
+### Impact
+- 现在可以在地图层验证放置 `吴同`、`于晴晴`、`陈倚晗` 后产生独立 sandbox 文明数据，并通过单步 tick 推进房屋、农田、领土和繁殖数据。
+- 后续视觉渲染应继续读取 `civilizationSandboxOverlay` 的结构化数据，不得在 UI 层从人物名、DOM class 或资源路径反推种族/行为。
+
 ## 2026-08-05 Campaign Cloud Volume Lighting Upgrade
 
 ### Changed

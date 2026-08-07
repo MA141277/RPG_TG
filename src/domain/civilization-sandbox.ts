@@ -136,6 +136,7 @@ export type CivilizationSandboxState = {
   viewMode: CivilizationSandboxViewMode;
   mapId: MapId | null;
   tick: number;
+  selectedEntityId: string | null;
   civilizationsById: Record<
     CivilizationSandboxCivilizationId,
     CivilizationSandboxCivilizationState
@@ -162,6 +163,7 @@ export function createInitialCivilizationSandboxState(): CivilizationSandboxStat
     viewMode: "normal",
     mapId: null,
     tick: 0,
+    selectedEntityId: null,
     civilizationsById: {},
     individualsById: {},
     householdsById: {},

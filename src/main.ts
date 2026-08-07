@@ -136,6 +136,10 @@ import {
 } from "./application/audio/battle-sound";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
+import {
+  createCivilizationSandboxActionFromUiInput,
+  handleCivilizationSandboxAction,
+} from "./application/runtime/coordinators/civilization-sandbox-action-coordinator";
 import { declaredScrollRestoration } from "./ui/runtime/declared-scroll-restoration";
 import {
   applyCouncilPriorityFollowUp,
@@ -5268,6 +5272,41 @@ appElement.addEventListener("click", (event) => {
   }
   if (handleLayoutEditorClick(targetElement)) {
     return;
+  }
+
+  const civilizationSandboxActionButton = targetElement.closest<HTMLElement>(
+    "[data-civilization-sandbox-action]"
+  );
+  if (civilizationSandboxActionButton != null) {
+    const sandboxAction = createCivilizationSandboxActionFromUiInput({
+      actionType:
+        civilizationSandboxActionButton.dataset.civilizationSandboxAction,
+      raceId: civilizationSandboxActionButton.dataset.sandboxRaceId,
+      entityId: civilizationSandboxActionButton.dataset.sandboxEntityId,
+      hex: appState.playerCoordinate,
+    });
+
+    if (sandboxAction != null) {
+      const result = handleCivilizationSandboxAction({
+        state: appState.gameState.runtime.civilizationSandbox,
+        action: sandboxAction,
+      });
+
+      if (result.handled) {
+        appState = {
+          ...appState,
+          gameState: {
+            ...appState.gameState,
+            runtime: {
+              ...appState.gameState.runtime,
+              civilizationSandbox: result.state,
+            },
+          },
+        };
+        renderApp();
+        return;
+      }
+    }
   }
 
   const confirmBeggingResultButton = targetElement.closest<HTMLElement>(

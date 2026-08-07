@@ -396,6 +396,19 @@ function renderMapStageActions(): string {
   `;
 }
 
+function renderCivilizationSandboxControls(): string {
+  return `
+    <div class="c-civilization-sandbox-controls" aria-label="文明沙盒验证">
+      <button type="button" data-civilization-sandbox-action="place-lord" data-sandbox-race-id="wu-tong">吴同</button>
+      <button type="button" data-civilization-sandbox-action="place-lord" data-sandbox-race-id="yu-qingqing">于晴晴</button>
+      <button type="button" data-civilization-sandbox-action="place-lord" data-sandbox-race-id="chen-yihan">陈倚晗</button>
+      <button type="button" data-civilization-sandbox-action="tick">单步</button>
+      <button type="button" data-civilization-sandbox-action="toggle-territory-view">领土</button>
+      <button type="button" data-civilization-sandbox-action="clear">清空</button>
+    </div>
+  `;
+}
+
 function renderCampaignMapVisualLayer(
   model: MapViewModel,
   options: {
@@ -565,6 +578,7 @@ function renderCampaignMap(model: MapViewModel): string {
         <div class="c-campaign-map__vignette" aria-hidden="true"></div>
       </div>
       <div class="c-campaign-map-actions" aria-label="主地图操作">
+        ${renderCivilizationSandboxControls()}
         <label class="c-campaign-cloud-control">
           <span>云纹理</span>
           <input

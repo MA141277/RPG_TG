@@ -47,7 +47,7 @@ export function createCivilizationSandboxMapOverlay(
   return {
     enabled: state.enabled,
     viewMode: state.viewMode,
-    selectedEntityId: null,
+    selectedEntityId: state.selectedEntityId,
     individuals: Object.values(state.individualsById).map((individual) => ({
       id: individual.id,
       name: individual.name,

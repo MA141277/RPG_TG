@@ -19527,6 +19527,14 @@ test("global NPC interaction does not add concrete house business branches to ma
   assert.match(mainSource, /data-npc-action/);
 });
 
+test("civilization sandbox does not add concrete business logic to main shell", () => {
+  const source = fs.readFileSync("src/main.ts", "utf8");
+
+  assert.doesNotMatch(source, /placeSandboxLord/);
+  assert.doesNotMatch(source, /tickCivilizationSandbox/);
+  assert.doesNotMatch(source, /civilizationSandbox\.civilizationsById/);
+});
+
 test("campaign coordinate travel builds a multi-step adjacent hex path", () => {
   const coordinateSpace = { width: 509, height: 451 };
   const currentCoordinate = { x: 334, y: 318 };

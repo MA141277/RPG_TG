@@ -46,3 +46,17 @@ test("map view model and app render expose civilization sandbox overlay without 
   assert.match(mapViewSource, /data-civilization-sandbox-overlay/);
   assert.match(appRenderSource, /createCivilizationSandboxMapOverlay/);
 });
+
+test("civilization sandbox action handling stays outside main shell", () => {
+  const mainSource = fs.readFileSync("src/main.ts", "utf8");
+  const mapViewSource = fs.readFileSync("src/ui/views/map/map-view.ts", "utf8");
+  const coordinatorSource = fs.readFileSync(
+    "src/application/runtime/coordinators/civilization-sandbox-action-coordinator.ts",
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /placeSandboxLord/);
+  assert.doesNotMatch(mainSource, /tickCivilizationSandbox/);
+  assert.match(mapViewSource, /data-civilization-sandbox-action/);
+  assert.match(coordinatorSource, /handleCivilizationSandboxAction/);
+});
