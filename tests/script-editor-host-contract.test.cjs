@@ -83,3 +83,27 @@ test("script editor playable authoring and export use a package-local playable c
     true
   );
 });
+
+test("script editor runtime pack export uses a package-local event-binding seam", () => {
+  const runtimePackExportSource = readSource(
+    "src/modules/script-editor/application/runtime-pack-export.ts"
+  );
+
+  assert.doesNotMatch(
+    runtimePackExportSource,
+    /core\/runtime\/event-binding-contract/
+  );
+  assert.match(
+    runtimePackExportSource,
+    /script-editor-event-binding-contract/
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/application/script-editor-event-binding-contract.ts"
+      )
+    ),
+    true
+  );
+});

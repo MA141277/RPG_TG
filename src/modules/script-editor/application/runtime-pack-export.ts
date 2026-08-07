@@ -46,7 +46,7 @@ import type { FlowPlayableDefinition } from "../../../domain/playables/flow";
 import {
   isSupportedEventBindingOwnerFamily,
   isSupportedEventBindingTrigger,
-} from "../../../core/runtime/event-binding-contract";
+} from "./script-editor-event-binding-contract";
 import {
   isScriptEditorShellBackedMinigamePlayableId,
 } from "./minigame-binding-authoring";
