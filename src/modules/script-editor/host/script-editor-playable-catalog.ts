@@ -1,7 +1,7 @@
 import type {
   PlayableDefinition,
   PlayableIntegrationDefinition,
-} from "../../../core/contracts/playable-runtime";
+} from "../application/script-editor-playable-runtime-contract";
 import {
   builtinPlayableDefinitionRegistry,
 } from "../../../core/registry/builtin-playable-definition-registry";

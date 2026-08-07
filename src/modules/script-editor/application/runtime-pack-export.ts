@@ -41,7 +41,7 @@ import type {
   PlayableOutcome,
   PlayableSettlementRoute,
   PlayableReturnPolicy,
-} from "../../../core/contracts/playable-runtime";
+} from "./script-editor-playable-runtime-contract";
 import type { FlowPlayableDefinition } from "../../../domain/playables/flow";
 import {
   isSupportedEventBindingOwnerFamily,

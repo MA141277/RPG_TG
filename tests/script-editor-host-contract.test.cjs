@@ -107,3 +107,49 @@ test("script editor runtime pack export uses a package-local event-binding seam"
     true
   );
 });
+
+test("script editor playable runtime contract is consumed through a package-local seam", () => {
+  const runtimePackExportSource = readSource(
+    "src/modules/script-editor/application/runtime-pack-export.ts"
+  );
+  const runtimePackImportSource = readSource(
+    "src/modules/script-editor/application/runtime-pack-import.ts"
+  );
+  const playableCatalogSource = readSource(
+    "src/modules/script-editor/host/script-editor-playable-catalog.ts"
+  );
+
+  assert.doesNotMatch(
+    runtimePackExportSource,
+    /core\/contracts\/playable-runtime/
+  );
+  assert.doesNotMatch(
+    runtimePackImportSource,
+    /core\/contracts\/playable-runtime/
+  );
+  assert.doesNotMatch(
+    playableCatalogSource,
+    /core\/contracts\/playable-runtime/
+  );
+  assert.match(
+    runtimePackExportSource,
+    /script-editor-playable-runtime-contract/
+  );
+  assert.match(
+    runtimePackImportSource,
+    /script-editor-playable-runtime-contract/
+  );
+  assert.match(
+    playableCatalogSource,
+    /script-editor-playable-runtime-contract/
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/application/script-editor-playable-runtime-contract.ts"
+      )
+    ),
+    true
+  );
+});

@@ -40,7 +40,7 @@ import {
 } from "../domain/script-editor-project";
 import type { EventDefinition } from "../../../domain/event";
 import type { LocationAccessDefinition } from "../../../domain/location-access";
-import type { PlayableIntegrationDefinition } from "../../../core/contracts/playable-runtime";
+import type { PlayableIntegrationDefinition } from "./script-editor-playable-runtime-contract";
 
 export type ScriptEditorRuntimePackImportDiagnostic = {
   code:
