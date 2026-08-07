@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Plan written from the approved final package hard-cut spec; execution has not started yet.`
-- Next Step: `Choose execution mode, then start Task 1 and do not leave any split owner or compatibility state behind between batches.`
-- Verification: `Not run`
+- Current Focus: `Task 3 removes the remaining main-ui-bridge/internal bridge path after the current-project host hard-cut landed cleanly.`
+- Next Step: `Delete or inline the remaining main-ui-bridge dependency inside the package so the final package api and internal owner path no longer mention the old bridge file.`
+- Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs tests/script-editor-final-package-boundary.test.cjs tests/script-editor-host-contract.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `npm run typecheck`; `npm run build`
 - Notes: `This child inherits the spec hard rules: no transitional architecture, no compatibility layer, no split ownership, no old/new entry coexistence. Batches may be committed separately only if each batch already reflects one coherent final owner state.`
 
 ## Progress Log
@@ -23,6 +23,14 @@
   - Summary: `Plan created from the approved script editor final package hard-cut spec.`
   - Verification: `Not run`
   - Next: `Choose execution mode and start Task 1.`
+- 2026-08-07
+  - Summary: `Task 1 added the failing hard-cut boundary tests and confirmed the current red state: MainUiFlow still installs the old script-editor module surface, and the package index still exports bridge/install internals.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs tests/script-editor-final-package-boundary.test.cjs` (failed as expected: main-ui-flow.js still references installMainUiFlowScriptEditorModule/captureScriptEditorScrollPosition/renderScriptEditorWorkspace, and src/modules/script-editor/index.ts still exports installMainUiFlowScriptEditorModule, scriptEditorMainUiBridge, and ./main-ui-bridge)`
+  - Next: `Start Task 2 and remove the old owner/install surfaces in one hard-cut batch without leaving split ownership behind.`
+- 2026-08-07
+  - Summary: `Task 2 hard-cut current-project ownership: MainUiFlow now opens the script editor through the package entry, package-owned mounted session logic now owns render/input handling, standalone host mounts through the same package entry, runtime-preview adaptation moved out of the ui install path, and the public index no longer exports install/bridge internals.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs tests/script-editor-final-package-boundary.test.cjs tests/script-editor-host-contract.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `npm run typecheck`; `npm run build`
+  - Next: `Start Task 3 and remove the remaining main-ui-bridge/internal bridge file without reintroducing any split owner state.`
 
 ---
 
@@ -262,7 +270,7 @@ export function createCurrentProjectScriptEditorHost(input: {
 
 If no dedicated file is needed, skip file creation and construct the same shape inline in `MainUiFlow`.
 
-- [ ] **Step 2: Change MainUiFlow to import only final package entry/host assembly**
+- [x] **Step 2: Change MainUiFlow to import only final package entry/host assembly**
 
 Replace the current script-editor import at the top of `src/ui/main-ui/main-ui-flow.js` with only final package usage:
 
@@ -295,7 +303,7 @@ this.scriptEditorHost = createCurrentProjectScriptEditorHost({
 
 The exact helper names may differ, but the resulting `MainUiFlow` state must not store editor-local render/state/install methods anymore.
 
-- [ ] **Step 3: Remove editor-local render/state/install methods from MainUiFlow**
+- [x] **Step 3: Remove editor-local render/state/install methods from MainUiFlow**
 
 Delete remaining shell-owned editor methods/fields such as:
 
@@ -310,7 +318,7 @@ this.renderRuntimePreviewSessionBanner
 
 And delete any matching `scriptEditor*` local state fields that are meaningful only inside the editor package rather than as host capabilities.
 
-- [ ] **Step 4: Rework script-editor-session so embedded and standalone still use one owner without MainUiFlow install hooks**
+- [x] **Step 4: Rework script-editor-session so embedded and standalone still use one owner without MainUiFlow install hooks**
 
 Update `src/modules/script-editor/kernel/script-editor-session.ts` so the package-owned session continues to own click/change/input/composition handling, but no longer expects shell-installed methods to exist on the host. Replace implicit host method calls with explicit package-owned methods and only keep host capability calls for:
 
@@ -331,7 +339,7 @@ Either:
 
 The batch must not end with both `MainUiFlow` final host invocation and the old install-module owner path active together.
 
-- [ ] **Step 6: Run the ownership tests and typecheck**
+- [x] **Step 6: Run the ownership tests and typecheck**
 
 Run:
 
@@ -366,7 +374,7 @@ If `current-project-script-editor-host.ts` or the old module files do not exist 
 - Modify: `tests/script-editor-host-contract.test.cjs`
 - Modify: `tests/script-editor-final-package-boundary.test.cjs`
 
-- [ ] **Step 1: Narrow index.ts to final reusable surfaces only**
+- [x] **Step 1: Narrow index.ts to final reusable surfaces only**
 
 Rewrite `src/modules/script-editor/index.ts` so it no longer exports bridge/install internals. The final shape should resemble:
 

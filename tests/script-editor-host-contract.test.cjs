@@ -162,17 +162,21 @@ test("script editor session consumes template catalog through a host resolver se
   );
 });
 
-test("script editor session kernel no longer installs the concrete main-ui module directly", () => {
+test("script editor embedded and standalone shells both consume package mount/open entries instead of installing the ui module", () => {
   const sessionSource = readSource(
     "src/modules/script-editor/kernel/script-editor-session.ts"
   );
+  const mainUiSource = readSource("src/ui/main-ui/main-ui-flow.js");
   const standaloneHostSource = readSource(
     "src/modules/script-editor/standalone/script-editor-standalone-host.ts"
   );
 
-  assert.doesNotMatch(sessionSource, /installMainUiFlowScriptEditorModule/);
-  assert.match(standaloneHostSource, /installMainUiFlowScriptEditorModule/);
-  assert.match(standaloneHostSource, /createEmbeddedScriptEditorSession/);
+  assert.match(sessionSource, /installMainUiFlowScriptEditorModule/);
+  assert.match(mainUiSource, /openScriptEditor/);
+  assert.doesNotMatch(mainUiSource, /installMainUiFlowScriptEditorModule/);
+  assert.match(standaloneHostSource, /mountScriptEditor/);
+  assert.doesNotMatch(standaloneHostSource, /installMainUiFlowScriptEditorModule/);
+  assert.doesNotMatch(standaloneHostSource, /createEmbeddedScriptEditorSession/);
 });
 
 test("script editor workflow controller consumes file-system host instead of browser file-system helpers directly", () => {

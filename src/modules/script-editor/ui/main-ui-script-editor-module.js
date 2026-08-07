@@ -1,5 +1,4 @@
 import * as scriptEditorMainUiBridge from "../main-ui-bridge";
-import { createLoadedScenarioPackPreviewHost } from "../host/loaded-scenario-pack-preview-host";
 import {
   createBuiltinScriptEditorPublicationCatalog,
   setDefaultScriptEditorPublicationCatalog,
@@ -869,15 +868,6 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
 
 export function installMainUiFlowScriptEditorModule(host, options) {
   host.onScriptEditorProjectChanged = options?.onScriptEditorProjectChanged;
-  if (
-    host.previewHost == null &&
-    typeof options?.onStartLoadedScenarioPack === "function"
-  ) {
-    host.previewHost = createLoadedScenarioPackPreviewHost({
-      onStartLoadedScenarioPack: options.onStartLoadedScenarioPack,
-      onExitRuntimePreview: options.onExitRuntimePreview,
-    });
-  }
   host.playableCatalog ??= createBuiltinScriptEditorPlayableCatalog();
   host.publicationCatalog ??= createBuiltinScriptEditorPublicationCatalog();
   host.templateCatalog ??= createBuiltinScriptEditorTemplateCatalog();

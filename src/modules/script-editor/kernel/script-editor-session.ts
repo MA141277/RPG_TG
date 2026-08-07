@@ -3,6 +3,7 @@ import type { ScriptEditorFileSystemHost } from "../host/script-editor-file-syst
 import type { ScriptEditorHost } from "../host/script-editor-host";
 import type { ScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
 import type { ScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
+import { installMainUiFlowScriptEditorModule } from "../ui/main-ui-script-editor-module";
 import {
   createScriptEditorWorkflowController,
   type ScriptEditorWorkflowController,
@@ -57,11 +58,150 @@ export type ScriptEditorEmbeddedSession = {
   dispose(): void;
 };
 
+type ScriptEditorManagedMountOptions = MountScriptEditorSessionOptions & {
+  onExit?: (() => void) | undefined;
+};
+
+type ScriptEditorManagedHost = ScriptEditorEmbeddedSessionHost &
+  Record<string, any> & {
+    overlayRoot: HTMLElement;
+    currentScreen: string;
+    scriptEditorSession: ScriptEditorEmbeddedSession | null;
+    render(): void;
+    setScreen(screen: string): void;
+    showMainMenu(): void;
+    handleClick(event: Event): void;
+    handleChange(event: Event): void;
+    handleInput(event: Event): void;
+    handleCompositionEnd(event: Event): void;
+  };
+
+function renderManagedScriptEditorHost(host: ScriptEditorManagedHost) {
+  host.captureScriptEditorScrollPosition?.();
+  const hasRuntimePreviewSession = host.scriptEditorRuntimePreviewSession != null;
+  host.overlayRoot.classList.add("c-main-ui-overlay");
+  host.overlayRoot.classList.toggle(
+    "is-runtime-preview-active",
+    hasRuntimePreviewSession
+  );
+
+  const screenMarkup =
+    host.currentScreen === "script-editor-landing"
+      ? host.renderScriptEditorLanding()
+      : host.currentScreen === "runtime-preview"
+        ? host.renderRuntimePreviewOverlay()
+        : host.renderScriptEditorWorkspace();
+  const runtimePreviewSessionMarkup = hasRuntimePreviewSession
+    ? host.renderRuntimePreviewSessionBanner()
+    : "";
+
+  host.overlayRoot.innerHTML = `${screenMarkup}${runtimePreviewSessionMarkup}`;
+  host.restoreScriptEditorScrollPosition?.();
+}
+
+function createManagedScriptEditorHost(
+  options: ScriptEditorManagedMountOptions
+): ScriptEditorManagedHost {
+  const host = {
+    ...options.host,
+    overlayRoot: options.container,
+    currentScreen: "script-editor-landing",
+    scriptEditorSession: null,
+    render() {
+      renderManagedScriptEditorHost(host);
+    },
+    setScreen(screen: string) {
+      host.currentScreen = screen;
+      host.render();
+    },
+    showMainMenu() {
+      if (typeof options.onExit === "function") {
+        options.onExit();
+        return;
+      }
+      host.setScreen("script-editor-landing");
+    },
+    handleClick(event: Event) {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      event.stopPropagation();
+      void host.scriptEditorSession?.handleClickTarget?.(target);
+    },
+    handleChange(event: Event) {
+      const target = event.target;
+      if (
+        !(
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLSelectElement ||
+          target instanceof HTMLTextAreaElement
+        )
+      ) {
+        return;
+      }
+      event.stopPropagation();
+      void host.scriptEditorSession?.handleChangeTarget?.(target);
+    },
+    handleInput(event: Event) {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) {
+        return;
+      }
+      event.stopPropagation();
+      host.scriptEditorSession?.handleInputTarget?.(
+        target,
+        (event as InputEvent).isComposing === true
+      );
+    },
+    handleCompositionEnd(event: Event) {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) {
+        return;
+      }
+      event.stopPropagation();
+      host.scriptEditorSession?.handleCompositionEndTarget?.(target);
+    },
+  } as ScriptEditorManagedHost;
+
+  installMainUiFlowScriptEditorModule(host);
+  host.scriptEditorSession = createEmbeddedScriptEditorSession({ host });
+  return host;
+}
+
 export function mountScriptEditorSession(
   options: MountScriptEditorSessionOptions
 ): ScriptEditorMountHandle {
   const initialAction = options.initialAction ?? "landing";
+  const managedOptions = options as ScriptEditorManagedMountOptions;
+  const managedHost = createManagedScriptEditorHost(managedOptions);
   options.container.dataset.scriptEditorMount = initialAction;
+  options.container.addEventListener("click", managedHost.handleClick);
+  options.container.addEventListener("change", managedHost.handleChange);
+  options.container.addEventListener("input", managedHost.handleInput);
+  options.container.addEventListener(
+    "compositionend",
+    managedHost.handleCompositionEnd
+  );
+
+  if (options.initialProject != null) {
+    managedHost.commitScriptEditorProject(options.initialProject);
+    managedHost.setScreen("script-editor-workspace");
+  } else {
+    managedHost.setScreen("script-editor-landing");
+  }
+
+  if (options.initialProject == null && initialAction !== "landing") {
+    queueMicrotask(() => {
+      const action =
+        initialAction === "new-project"
+          ? "new-project"
+          : initialAction === "open-project"
+            ? "open-project"
+            : "use-template";
+      void managedHost.handleScriptEditorAction?.(action);
+    });
+  }
 
   return {
     host: options.host,
@@ -69,7 +209,21 @@ export function mountScriptEditorSession(
     initialProject: options.initialProject ?? null,
     initialAction,
     dispose() {
+      options.container.removeEventListener("click", managedHost.handleClick);
+      options.container.removeEventListener("change", managedHost.handleChange);
+      options.container.removeEventListener("input", managedHost.handleInput);
+      options.container.removeEventListener(
+        "compositionend",
+        managedHost.handleCompositionEnd
+      );
+      managedHost.scriptEditorSession?.dispose();
+      managedHost.scriptEditorSession = null;
       delete options.container.dataset.scriptEditorMount;
+      options.container.classList.remove(
+        "c-main-ui-overlay",
+        "is-runtime-preview-active"
+      );
+      options.container.innerHTML = "";
     },
   };
 }

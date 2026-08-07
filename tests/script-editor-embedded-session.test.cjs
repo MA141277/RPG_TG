@@ -7,12 +7,14 @@ function readSource(relativePath) {
   return fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
 }
 
-test("main ui flow delegates script editor session ownership to kernel script-editor-session", () => {
+test("main ui flow delegates script editor ownership to package open-script-editor entry", () => {
   const source = readSource("src/ui/main-ui/main-ui-flow.js");
 
-  assert.match(source, /createEmbeddedScriptEditorSession/);
+  assert.match(source, /openScriptEditor/);
+  assert.doesNotMatch(source, /createEmbeddedScriptEditorSession/);
   assert.doesNotMatch(source, /createScriptEditorWorkflowController/);
   assert.doesNotMatch(source, /installMainUiFlowScriptEditorModule/);
+  assert.doesNotMatch(source, /scriptEditorRuntimePreviewSession/);
 });
 
 test("script editor entry helpers use kernel script-editor-session", () => {

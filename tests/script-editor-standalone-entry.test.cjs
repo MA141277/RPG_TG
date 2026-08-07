@@ -37,6 +37,24 @@ test("standalone script editor bootstrap exists", () => {
   );
 });
 
+test("standalone script editor host mounts through the package entry surface", () => {
+  const hostSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "standalone",
+      "script-editor-standalone-host.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(hostSource, /mountScriptEditor/);
+  assert.doesNotMatch(hostSource, /installMainUiFlowScriptEditorModule/);
+  assert.doesNotMatch(hostSource, /createEmbeddedScriptEditorSession/);
+});
+
 test("script editor landing view stays package-local instead of importing entry-shell view", () => {
   const moduleSource = fs.readFileSync(
     path.join(

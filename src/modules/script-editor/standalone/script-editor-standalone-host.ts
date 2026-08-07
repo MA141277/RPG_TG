@@ -1,15 +1,9 @@
 import {
-  createEmbeddedScriptEditorSession,
-  type ScriptEditorEmbeddedSession,
-} from "../kernel/script-editor-session";
-import { installMainUiFlowScriptEditorModule } from "../ui/main-ui-script-editor-module";
+  mountScriptEditor,
+} from "../entries/mount-script-editor";
+import { createBrowserScriptEditorHost } from "../host/browser-script-editor-host";
 
 type StandaloneScriptEditorHost = {
-  overlayRoot: HTMLElement;
-  currentScreen: string;
-  scriptEditorSession: ScriptEditorEmbeddedSession | null;
-  setScreen(screen: string): void;
-  render(): void;
   mount(): void;
   dispose(): void;
 };
@@ -17,93 +11,32 @@ type StandaloneScriptEditorHost = {
 export function createStandaloneScriptEditorHost(
   mountPoint: HTMLElement
 ): StandaloneScriptEditorHost {
+  let mountHandle: ReturnType<typeof mountScriptEditor> | null = null;
+  const browserHost = createBrowserScriptEditorHost({
+    projectStorage: {
+      async createProject() {
+        return null;
+      },
+      async openProject() {
+        return null;
+      },
+    },
+  });
+
   const host = {
-    overlayRoot: mountPoint,
-    currentScreen: "script-editor-landing",
-    scriptEditorSession: null,
-    setScreen(screen: string) {
-      host.currentScreen = screen;
-      host.render();
-    },
-    render() {
-      host.captureScriptEditorScrollPosition?.();
-      const hasRuntimePreviewSession = host.scriptEditorRuntimePreviewSession != null;
-      host.overlayRoot.classList.add("c-main-ui-overlay");
-      host.overlayRoot.classList.toggle(
-        "is-runtime-preview-active",
-        hasRuntimePreviewSession
-      );
-
-      const screenMarkup =
-        host.currentScreen === "script-editor-landing"
-          ? host.renderScriptEditorLanding()
-          : host.renderScriptEditorWorkspace();
-      const runtimePreviewSessionMarkup = hasRuntimePreviewSession
-        ? host.renderRuntimePreviewSessionBanner()
-        : "";
-
-      host.overlayRoot.innerHTML = `${screenMarkup}${runtimePreviewSessionMarkup}`;
-      host.restoreScriptEditorScrollPosition?.();
-    },
     mount() {
-      installMainUiFlowScriptEditorModule(host as never);
-      host.scriptEditorSession = createEmbeddedScriptEditorSession({
-        host: host as never,
+      mountHandle?.dispose();
+      mountHandle = mountScriptEditor({
+        host: browserHost,
+        container: mountPoint,
+        initialAction: "landing",
       });
-
-      mountPoint.addEventListener("click", host.handleClick);
-      mountPoint.addEventListener("change", host.handleChange);
-      mountPoint.addEventListener("input", host.handleInput);
-      mountPoint.addEventListener("compositionend", host.handleCompositionEnd);
-      host.setScreen("script-editor-landing");
     },
     dispose() {
-      mountPoint.removeEventListener("click", host.handleClick);
-      mountPoint.removeEventListener("change", host.handleChange);
-      mountPoint.removeEventListener("input", host.handleInput);
-      mountPoint.removeEventListener("compositionend", host.handleCompositionEnd);
-      host.scriptEditorSession?.dispose();
-      host.scriptEditorSession = null;
-      host.overlayRoot.innerHTML = "";
+      mountHandle?.dispose();
+      mountHandle = null;
     },
-    handleClick: (event: Event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) {
-        return;
-      }
-      void host.scriptEditorSession?.handleClickTarget?.(target);
-    },
-    handleChange: (event: Event) => {
-      const target = event.target;
-      if (
-        !(
-          target instanceof HTMLInputElement ||
-          target instanceof HTMLSelectElement ||
-          target instanceof HTMLTextAreaElement
-        )
-      ) {
-        return;
-      }
-      void host.scriptEditorSession?.handleChangeTarget?.(target);
-    },
-    handleInput: (event: Event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLInputElement)) {
-        return;
-      }
-      host.scriptEditorSession?.handleInputTarget?.(
-        target,
-        (event as InputEvent).isComposing === true
-      );
-    },
-    handleCompositionEnd: (event: Event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLInputElement)) {
-        return;
-      }
-      host.scriptEditorSession?.handleCompositionEndTarget?.(target);
-    },
-  } as StandaloneScriptEditorHost & Record<string, any>;
+  };
 
   return host;
 }

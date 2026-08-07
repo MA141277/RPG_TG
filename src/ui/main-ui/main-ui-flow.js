@@ -10,9 +10,9 @@ import {
   renderEntryShellScenarioSelect,
 } from "../entry-shell/entry-shell-view";
 import {
-  createEmbeddedScriptEditorSession,
-  installMainUiFlowScriptEditorModule,
+  openScriptEditor,
 } from "../../modules/script-editor";
+import { createLoadedScenarioPackPreviewHost } from "../../modules/script-editor/host/loaded-scenario-pack-preview-host";
 
 const startScreenLayoutBindings = [
   { componentId: "main-menu-content", selector: ".c-main-ui-main-menu__content" },
@@ -218,11 +218,8 @@ export class MainUiFlow {
     this.characterDetailTransitionToken = 0;
     this.characterDetailTransitionTimer = 0;
     this.destroyOpeningBackgroundAnimation = null;
-    installMainUiFlowScriptEditorModule(this, options);
-    this.scriptEditorSession = createEmbeddedScriptEditorSession({
-      host: this,
-      hostOptions: options,
-    });
+    this.scriptEditorHandle = null;
+    this.scriptEditorMountPoint = null;
   }
 
   mount() {
@@ -246,8 +243,7 @@ export class MainUiFlow {
     this.destroyInkParticleSystem();
     this.destroyOpeningBackgroundAnimation?.();
     this.destroyOpeningBackgroundAnimation = null;
-    this.scriptEditorSession?.dispose?.();
-    this.scriptEditorSession = null;
+    this.closeScriptEditorOverlay();
     this.clearCharacterDetailTransitionTimer();
     this.overlayRoot.className = "";
     this.overlayRoot.innerHTML = "";
@@ -281,22 +277,81 @@ export class MainUiFlow {
   }
 
   setScreen(screen) {
+    if (screen !== this.currentScreen) {
+      this.closeScriptEditorOverlay();
+    }
     this.currentScreen = screen;
     this.overlayRoot.classList.toggle("is-hidden", screen === "hidden");
     this.render();
   }
 
+  createScriptEditorHost() {
+    const previewHost =
+      typeof this.onStartLoadedScenarioPack === "function"
+        ? createLoadedScenarioPackPreviewHost({
+            onStartLoadedScenarioPack: this.onStartLoadedScenarioPack,
+            onExitRuntimePreview: this.onExitRuntimePreview,
+          })
+        : undefined;
+
+    return {
+      projectStorage: {
+        async createProject() {
+          return null;
+        },
+        async openProject() {
+          return null;
+        },
+      },
+      ...(previewHost == null ? {} : { previewHost }),
+    };
+  }
+
+  closeScriptEditorOverlay() {
+    this.scriptEditorHandle?.close?.();
+    this.scriptEditorHandle = null;
+    this.scriptEditorMountPoint?.remove();
+    this.scriptEditorMountPoint = null;
+  }
+
+  async openScriptEditorOverlay() {
+    if (this.scriptEditorHandle != null || this.scriptEditorMountPoint != null) {
+      return;
+    }
+
+    const mountPoint = document.createElement("div");
+    mountPoint.dataset.mainUiScriptEditorMount = "true";
+    this.scriptEditorMountPoint = mountPoint;
+    this.overlayRoot.append(mountPoint);
+
+    try {
+      const handle = await openScriptEditor({
+        host: this.createScriptEditorHost(),
+        mountPoint,
+        initialAction: "landing",
+        onExit: () => {
+          this.closeScriptEditorOverlay();
+        },
+      });
+
+      if (this.scriptEditorMountPoint !== mountPoint) {
+        handle.close();
+        return;
+      }
+
+      this.scriptEditorHandle = handle;
+    } catch (error) {
+      console.error("Failed to open script editor.", error);
+      this.closeScriptEditorOverlay();
+    }
+  }
+
   render() {
-    this.captureScriptEditorScrollPosition();
     this.destroyInkParticleSystem();
     this.destroyOpeningBackgroundAnimation?.();
     this.destroyOpeningBackgroundAnimation = null;
     this.clearCharacterDetailTransitionTimer();
-    const hasRuntimePreviewSession = this.scriptEditorRuntimePreviewSession != null;
-    this.overlayRoot.classList.toggle(
-      "is-runtime-preview-active",
-      hasRuntimePreviewSession
-    );
+    this.closeScriptEditorOverlay();
 
     if (this.currentScreen === "hidden") {
       this.overlayRoot.innerHTML = "";
@@ -308,18 +363,8 @@ export class MainUiFlow {
         ? this.renderMainMenu()
         : this.currentScreen === "scenario-select"
           ? this.renderScenarioSelect()
-          : this.currentScreen === "script-editor-landing"
-            ? this.renderScriptEditorLanding()
-            : this.currentScreen === "script-editor-workspace"
-              ? this.renderScriptEditorWorkspace()
-              : this.currentScreen === "runtime-preview"
-                ? this.renderRuntimePreviewOverlay()
-                : this.renderCharacterSelect();
-    const runtimePreviewSessionMarkup = hasRuntimePreviewSession
-      ? this.renderRuntimePreviewSessionBanner()
-      : "";
-    this.overlayRoot.innerHTML = `${screenMarkup}${runtimePreviewSessionMarkup}`;
-    this.restoreScriptEditorScrollPosition();
+          : this.renderCharacterSelect();
+    this.overlayRoot.innerHTML = screenMarkup;
     if (this.currentScreen === "main-menu") {
       this.destroyOpeningBackgroundAnimation = mountOpeningBackgroundAnimation(this.overlayRoot);
       this.syncStartScreenLayout();
@@ -524,7 +569,7 @@ export class MainUiFlow {
       }
 
       if (action === "open-script-editor") {
-        this.showScriptEditorLanding();
+        await this.openScriptEditorOverlay();
         return;
       }
 
@@ -596,9 +641,6 @@ export class MainUiFlow {
       }
     }
 
-    if (await this.scriptEditorSession?.handleClickTarget?.(target)) {
-      return;
-    }
   }
 
   async onChange(event) {
@@ -624,10 +666,6 @@ export class MainUiFlow {
       return;
     }
 
-    if (await this.scriptEditorSession?.handleChangeTarget?.(target)) {
-      return;
-    }
-
   }
 
   onInput(event) {
@@ -636,9 +674,6 @@ export class MainUiFlow {
       return;
     }
 
-    if (this.scriptEditorSession?.handleInputTarget?.(target, event.isComposing === true)) {
-      return;
-    }
   }
 
   onCompositionEnd(event) {
@@ -647,9 +682,6 @@ export class MainUiFlow {
       return;
     }
 
-    if (this.scriptEditorSession?.handleCompositionEndTarget?.(target)) {
-      return;
-    }
   }
 
   scheduleCharacterDetailTransitionCleanup() {

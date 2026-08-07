@@ -184,7 +184,7 @@ test("embedded script editor session keeps loaded-scenario-pack preview adaptati
   const mainUiSource = fs.readFileSync(
     path.join(
       process.cwd(),
-      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+      "src/ui/main-ui/main-ui-flow.js"
     ),
     "utf8"
   );
@@ -192,16 +192,14 @@ test("embedded script editor session keeps loaded-scenario-pack preview adaptati
   assert.doesNotMatch(sessionSource, /loadScenarioPackFromFiles/);
   assert.doesNotMatch(sessionSource, /createTextImportFilesFromRecord/);
   assert.doesNotMatch(sessionSource, /onStartLoadedScenarioPack/);
+  assert.doesNotMatch(sessionSource, /loaded-scenario-pack-preview-host/);
   assert.match(mainUiSource, /onStartLoadedScenarioPack/);
   assert.match(mainUiSource, /loaded-scenario-pack-preview-host/);
 });
 
-test("loaded-scenario-pack preview host helper keeps scenario-pack loader outside the ui module", () => {
+test("loaded-scenario-pack preview host helper keeps scenario-pack loader outside the current project shell", () => {
   const mainUiSource = fs.readFileSync(
-    path.join(
-      process.cwd(),
-      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
-    ),
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
   );
 
