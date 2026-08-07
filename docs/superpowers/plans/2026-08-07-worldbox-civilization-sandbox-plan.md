@@ -10,14 +10,20 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 5 visual overlay rendering and styles are complete pending the Task 5 commit.`
-- Next Step: `Commit Task 5, then run Task 6 final verification and manual sandbox check.`
-- Verification: `npm run build:test; node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs; node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs; npm run typecheck`
-- Notes: `docs/superpowers/project-progress.md still points to the campaign-cloud completed-but-open child; this sandbox execution was started by explicit user direction on a dedicated branch without changing the canonical progress entry.`
+- Current Focus: `Implementation complete with automated verification passing; browser plugin click automation was limited during final smoke testing.`
+- Next Step: `Review the running validation slice at http://127.0.0.1:5174/, then push if requested before any closed status is written.`
+- Verification: `npm run build:test; node --test --test-isolation=none tests/civilization-sandbox-domain.test.cjs tests/civilization-sandbox-map-overlay.test.cjs; node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
+- Notes: `docs/superpowers/project-progress.md still points to the campaign-cloud completed-but-open child; this sandbox execution was started by explicit user direction on a dedicated branch without changing the canonical progress entry. In-app browser automation loaded the 5174 app and controls, but final repeated click smoke was blocked by stale/coordinate limitations in the Codex browser wrapper; action/render/name uniqueness paths are covered by tests.`
 
 ## Progress Log
+
+- 2026-08-07
+  - Summary: `Completed the first Worldbox civilization sandbox validation slice and fixed race child naming so generated individuals remain unique while preserving Wu/Yu/Chen naming rules.`
+  - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-domain.test.cjs tests/civilization-sandbox-map-overlay.test.cjs`; `node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check`
+  - Manual Check: `Dev server is running at http://127.0.0.1:5174/. Browser automation loaded the app and controls, but the final repeated click smoke was blocked by Codex browser wrapper stale-node/coordinate limitations after the naming fix.`
+  - Next: `Review the final diff and running validation slice; push if requested before marking this child closed.`
 
 - 2026-08-07
   - Summary: `Completed Task 5 for the Worldbox civilization sandbox: map overlay now renders territory hexes, visible individuals using walker sprites, rural-house structures, farm overlays, and token-based sandbox styles.`
@@ -1847,7 +1853,7 @@ Expected:
 - visual/source tests pass
 - typecheck passes
 
-- [ ] **Step 7: Commit Task 5**
+- [x] **Step 7: Commit Task 5**
 
 Run:
 
@@ -1866,7 +1872,7 @@ git commit -m "feat: render civilization sandbox map visuals"
 - Consumes: all previous tasks
 - Produces: verified first validation slice ready for review
 
-- [ ] **Step 1: Run targeted verification**
+- [x] **Step 1: Run targeted verification**
 
 Run:
 
@@ -1880,7 +1886,7 @@ Expected:
 
 - all targeted sandbox tests pass
 
-- [ ] **Step 2: Run baseline verification**
+- [x] **Step 2: Run baseline verification**
 
 Run:
 
@@ -1914,7 +1920,9 @@ Open `http://localhost:5173/` and verify:
 - territory view colors claimed hexes by selected civilization
 - `src/main.ts` remains free of sandbox business calls
 
-- [ ] **Step 4: Update plan progress**
+Result note: `The dev server is running on http://127.0.0.1:5174/. Codex in-app browser automation loaded the app and detected the validation controls, but final repeated click automation was blocked by stale DOM node and coordinate-translation limitations in the browser wrapper. Earlier browser smoke on 5174 verified the overlay controls before the final name-uniqueness fix; the late fix is covered by domain tests.`
+
+- [x] **Step 4: Update plan progress**
 
 Append a progress log entry:
 
@@ -1936,7 +1944,7 @@ Update `Execution State`:
 - Notes: `Do not mark closed until project-progress sync and remote push are complete.`
 ```
 
-- [ ] **Step 5: Commit Task 6**
+- [x] **Step 5: Commit Task 6**
 
 Run:
 
@@ -1951,22 +1959,22 @@ If `docs/superpowers/project-progress.md` was not changed because this plan was 
 
 - [ ] Placing each of the three lords creates a visible civilization.
 - [ ] Many individuals move on the existing campaign hex map.
-- [ ] Individuals use existing four-direction city ambient walker art.
-- [ ] The three race templates affect behavior and naming.
-- [ ] Houses visibly create rural-house structures.
-- [ ] Farms visibly create farm ground overlays.
-- [ ] Territory view colors claimed hexes by civilization after selecting an entity.
-- [ ] Sandbox state remains isolated from player stats, inventory, and source map data.
-- [ ] No sandbox business logic is added to `src/main.ts`.
+- [x] Individuals use existing four-direction city ambient walker art.
+- [x] The three race templates affect behavior and naming.
+- [x] Houses visibly create rural-house structures.
+- [x] Farms visibly create farm ground overlays.
+- [x] Territory view colors claimed hexes by civilization after selecting an entity.
+- [x] Sandbox state remains isolated from player stats, inventory, and source map data.
+- [x] No sandbox business logic is added to `src/main.ts`.
 - [ ] Project progress sync is updated if this child becomes canonical.
 - [ ] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 - [ ] Remote push completed before any `closed` status is written
 
 ## Child Closeout

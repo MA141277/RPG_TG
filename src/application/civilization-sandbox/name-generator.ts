@@ -62,23 +62,51 @@ function createFallbackName(
   return `${founderName}${usedNames.length + 2}世`;
 }
 
+function findUnusedCandidate(
+  candidates: readonly string[],
+  birthIndex: number,
+  usedNames: readonly string[]
+): string | null {
+  const usedNameSet = new Set(usedNames);
+
+  for (let offset = 0; offset < candidates.length; offset += 1) {
+    const candidate = candidates[(birthIndex + offset) % candidates.length];
+    if (candidate != null && !usedNameSet.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
 export function generateSandboxChildName(
   input: GenerateSandboxChildNameInput
 ): string {
   if (input.raceId === "wu-tong") {
-    const middleName =
-      WU_COMMON_MIDDLE_NAMES[input.birthIndex % WU_COMMON_MIDDLE_NAMES.length];
-    return `吴${middleName}同`;
+    const candidate = findUnusedCandidate(
+      WU_COMMON_MIDDLE_NAMES.map((middleName) => `吴${middleName}同`),
+      input.birthIndex,
+      input.usedNames
+    );
+    return candidate ?? createFallbackName(input.raceId, input.usedNames);
   }
 
   if (input.raceId === "yu-qingqing") {
-    const childName =
-      YU_REDuplicated_NAMES[input.birthIndex % YU_REDuplicated_NAMES.length];
-    return `于${childName}`;
+    const candidate = findUnusedCandidate(
+      YU_REDuplicated_NAMES.map((childName) => `于${childName}`),
+      input.birthIndex,
+      input.usedNames
+    );
+    return candidate ?? createFallbackName(input.raceId, input.usedNames);
   }
 
-  if (input.birthIndex < 99) {
-    return `陈${input.birthIndex + 1}晗`;
+  const candidate = findUnusedCandidate(
+    Array.from({ length: 99 }, (_, index) => `陈${index + 1}晗`),
+    input.birthIndex,
+    input.usedNames
+  );
+  if (candidate != null) {
+    return candidate;
   }
 
   return createFallbackName(input.raceId, input.usedNames);

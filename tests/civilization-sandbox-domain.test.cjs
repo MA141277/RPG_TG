@@ -71,6 +71,22 @@ test("civilization sandbox name generators use race-specific child names and fal
     }),
     "陈倚晗二世"
   );
+  assert.equal(
+    generateSandboxChildName({
+      raceId: "wu-tong",
+      birthIndex: 0,
+      usedNames: ["吴安同"],
+    }),
+    "吴明同"
+  );
+  assert.equal(
+    generateSandboxChildName({
+      raceId: "yu-qingqing",
+      birthIndex: 0,
+      usedNames: ["于晶晶"],
+    }),
+    "于臭臭"
+  );
 });
 
 test("createInitialState initializes civilization sandbox runtime state", () => {
@@ -165,4 +181,8 @@ test("sandbox tick creates visible house farm and child records from starting ci
     )
   );
   assert.ok(Object.keys(state.claimedHexByKey).length > 1);
+  const names = Object.values(state.individualsById).map(
+    (individual) => individual.name
+  );
+  assert.equal(new Set(names).size, names.length);
 });
