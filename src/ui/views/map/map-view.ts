@@ -373,6 +373,9 @@ function renderCivilizationSandboxOverlay(
           class="c-civilization-sandbox-territory"
           points="${formatSandboxPolygonPoints(entry.hex, coordinateSpace)}"
           style="--sandbox-territory-color:var(--color-${escapeHtml(entry.colorToken)});"
+          data-terrain-projected-polygon="true"
+          data-map-hex-x="${entry.hex.x}"
+          data-map-hex-y="${entry.hex.y}"
           data-sandbox-civilization-id="${escapeHtml(entry.civilizationId)}"
           aria-hidden="true"
         ></polygon>
@@ -386,6 +389,9 @@ function renderCivilizationSandboxOverlay(
         <polygon
           class="${getCivilizationSandboxStructureClassName(structure.kind)}"
           points="${formatSandboxPolygonPoints(structure.hex, coordinateSpace)}"
+          data-terrain-projected-polygon="true"
+          data-map-hex-x="${structure.hex.x}"
+          data-map-hex-y="${structure.hex.y}"
           data-sandbox-civilization-id="${escapeHtml(structure.civilizationId)}"
           aria-hidden="true"
         ></polygon>
@@ -559,6 +565,44 @@ function renderOptionalMapStageActions(model: MapViewModel): string {
   return isCivilizationSandboxActive(model) ? "" : renderMapStageActions();
 }
 
+function renderCampaignPlayerMarkup(model: MapViewModel): string {
+  if (isCivilizationSandboxActive(model)) {
+    return "";
+  }
+
+  const playerHeightX = model.playerCoordinate.x / model.coordinateSpace.width;
+  const playerHeightY = 1 - model.playerCoordinate.y / model.coordinateSpace.height;
+  const playerClassName = model.playerIsMoving
+    ? "c-campaign-player is-moving has-actor-model"
+    : "c-campaign-player has-actor-model";
+
+  return `
+    <span
+      class="${playerClassName}"
+      data-campaign-player="true"
+      data-campaign-player-sprite-url="${redTurbanMarkerUrl}"
+      data-campaign-player-model-url="${campaignUnitAssets.friendly.modelUrl}"
+      data-campaign-player-texture-url="${campaignUnitAssets.friendly.textureUrl}"
+      data-campaign-player-idle-animation-url="${campaignUnitAssets.friendly.idleAnimationUrl}"
+      data-campaign-player-walk-animation-url="${campaignUnitAssets.friendly.walkAnimationUrl}"
+      data-campaign-player-facing-deg="${model.playerFacingDegrees.toFixed(2)}"
+      data-campaign-player-moving="${model.playerIsMoving ? "true" : "false"}"
+      data-terrain-projected-point="true"
+      data-map-height-u="${playerHeightX.toFixed(5)}"
+      data-map-height-v="${playerHeightY.toFixed(5)}"
+      style="
+        --campaign-player-image:url('${redTurbanMarkerUrl}');
+        --campaign-player-facing-deg:${model.playerFacingDegrees.toFixed(2)}deg;
+      "
+      title="Player (${model.playerCoordinate.x}, ${model.playerCoordinate.y})"
+    >
+      <span class="c-campaign-player__gait" aria-hidden="true">
+        <span class="c-campaign-player__sprite"></span>
+      </span>
+    </span>
+  `;
+}
+
 function renderCampaignMapVisualLayer(
   model: MapViewModel,
   options: {
@@ -630,15 +674,10 @@ function renderCampaignMapVisualLayer(
     model.regionOverlayImageUrl == null || canRenderWebGlTerrain
       ? ""
       : `<img class="c-campaign-map__regions" src="${model.regionOverlayImageUrl}" alt="">`;
-  const playerHeightX = model.playerCoordinate.x / model.coordinateSpace.width;
-  const playerHeightY = 1 - model.playerCoordinate.y / model.coordinateSpace.height;
   const transformClassName = options.transformClassName ?? "c-campaign-map__transform";
   const transformDataAttribute =
     options.transformDataAttribute ?? 'data-campaign-map-transform="true"';
   const ariaHiddenAttribute = options.ariaHidden === true ? ' aria-hidden="true"' : "";
-  const playerClassName = model.playerIsMoving
-    ? "c-campaign-player is-moving has-actor-model"
-    : "c-campaign-player has-actor-model";
 
   return `
     <div class="${transformClassName}" ${transformDataAttribute}${ariaHiddenAttribute}>
@@ -650,29 +689,7 @@ function renderCampaignMapVisualLayer(
           ? `
             ${renderCampaignMarkerRuntimeSource(model)}
             ${actorCanvasMarkup}
-            <span
-              class="${playerClassName}"
-              data-campaign-player="true"
-              data-campaign-player-sprite-url="${redTurbanMarkerUrl}"
-              data-campaign-player-model-url="${campaignUnitAssets.friendly.modelUrl}"
-              data-campaign-player-texture-url="${campaignUnitAssets.friendly.textureUrl}"
-              data-campaign-player-idle-animation-url="${campaignUnitAssets.friendly.idleAnimationUrl}"
-              data-campaign-player-walk-animation-url="${campaignUnitAssets.friendly.walkAnimationUrl}"
-              data-campaign-player-facing-deg="${model.playerFacingDegrees.toFixed(2)}"
-              data-campaign-player-moving="${model.playerIsMoving ? "true" : "false"}"
-              data-terrain-projected-point="true"
-              data-map-height-u="${playerHeightX.toFixed(5)}"
-              data-map-height-v="${playerHeightY.toFixed(5)}"
-              style="
-                --campaign-player-image:url('${redTurbanMarkerUrl}');
-                --campaign-player-facing-deg:${model.playerFacingDegrees.toFixed(2)}deg;
-              "
-              title="Player (${model.playerCoordinate.x}, ${model.playerCoordinate.y})"
-            >
-              <span class="c-campaign-player__gait" aria-hidden="true">
-                <span class="c-campaign-player__sprite"></span>
-              </span>
-            </span>
+            ${renderCampaignPlayerMarkup(model)}
             ${renderCivilizationSandboxOverlay(
               model.civilizationSandboxOverlay,
               model.coordinateSpace

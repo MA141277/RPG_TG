@@ -76,6 +76,7 @@ test("civilization sandbox view exposes individuals houses farms and territory v
   assert.match(mapViewSource, /c-civilization-sandbox-structure--farm/);
   assert.match(mapViewSource, /c-civilization-sandbox-territory/);
   assert.match(mapViewSource, /data-terrain-projected-point/);
+  assert.match(mapViewSource, /data-terrain-projected-polygon/);
   assert.match(mapViewSource, /data-map-height-u/);
   assert.match(mapViewSource, /hexToCoordinate/);
   assert.match(mapViewSource, /hexToCoordinatePolygon/);
@@ -195,6 +196,11 @@ test("civilization sandbox enabled map hides legacy campaign markers and backpac
   );
   assert.match(mapViewSource, /renderCampaignMapActions/);
   assert.match(mapViewSource, /renderOptionalMapStageActions/);
+  assert.match(mapViewSource, /renderCampaignPlayerMarkup/);
+  assert.match(
+    mapViewSource,
+    /if \(isCivilizationSandboxActive\(model\)\) \{[\s\S]*?return ""/
+  );
 });
 
 test("app render hides global hud while civilization sandbox validation is active", () => {
@@ -202,4 +208,16 @@ test("app render hides global hud while civilization sandbox validation is activ
 
   assert.match(appRenderSource, /civilizationSandbox\.enabled/);
   assert.match(appRenderSource, /shouldRenderGlobalHud/);
+});
+
+test("civilization sandbox territory polygons are synchronized by terrain projection", () => {
+  const terrainSource = fs.readFileSync(
+    "src/ui/views/map/campaign-terrain-webgl.ts",
+    "utf8"
+  );
+
+  assert.match(terrainSource, /syncProjectedPolygons/);
+  assert.match(terrainSource, /data-terrain-projected-polygon/);
+  assert.match(terrainSource, /REVEAL_HEX_CORNER_OFFSETS/);
+  assert.match(terrainSource, /polygon\.setAttribute\([\s\S]*?"points"/);
 });

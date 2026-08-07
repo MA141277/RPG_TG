@@ -20,6 +20,11 @@
 ## Progress Log
 
 - 2026-08-07
+  - Summary: `Adjusted sandbox validation to start active before any race is placed, hide the campaign player marker/model from the first frame, and synchronize territory/farm hex polygons through the terrain projection path so they follow camera movement.`
+  - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-domain.test.cjs tests/civilization-sandbox-map-overlay.test.cjs`; `node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check`
+  - Next: `Review the running validation slice; push if requested before marking this child closed.`
+
+- 2026-08-07
   - Summary: `Refined the validation slice by hiding legacy HUD/backpack/troop controls and source campaign city/settlement/fort markers while the civilization sandbox is active, and changed NPC tick movement so walkers continue from their current claimed hex instead of snapping back to the home hex.`
   - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs`; `node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check`
   - Next: `Review the running validation slice; push if requested before marking this child closed.`

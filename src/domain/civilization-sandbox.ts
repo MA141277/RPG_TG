@@ -158,7 +158,7 @@ export function getSandboxHexKey(hex: SandboxHexCoordinate): string {
 
 export function createInitialCivilizationSandboxState(): CivilizationSandboxState {
   return {
-    enabled: false,
+    enabled: true,
     mode: "validation",
     viewMode: "normal",
     mapId: null,

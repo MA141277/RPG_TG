@@ -1,14 +1,14 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-test("civilization sandbox initial state is empty and disabled", () => {
+test("civilization sandbox initial state starts validation active with no civilizations", () => {
   const {
     createInitialCivilizationSandboxState,
   } = require("../.test-dist/domain/civilization-sandbox.js");
 
   const state = createInitialCivilizationSandboxState();
 
-  assert.equal(state.enabled, false);
+  assert.equal(state.enabled, true);
   assert.equal(state.tick, 0);
   assert.equal(state.mode, "validation");
   assert.equal(state.viewMode, "normal");
@@ -116,7 +116,7 @@ test("createInitialState initializes civilization sandbox runtime state", () => 
     },
   });
 
-  assert.equal(state.runtime.civilizationSandbox.enabled, false);
+  assert.equal(state.runtime.civilizationSandbox.enabled, true);
   assert.equal(state.runtime.civilizationSandbox.mode, "validation");
 });
 

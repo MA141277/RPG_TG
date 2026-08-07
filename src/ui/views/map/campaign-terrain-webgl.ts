@@ -9137,6 +9137,12 @@ function syncProjectedPoints(input: {
   const matrix = createTerrainMatrix(
     input.canvas.width / Math.max(input.canvas.height, 1)
   );
+  syncProjectedPolygons({
+    stage,
+    matrix,
+    materialSemanticModel: input.materialSemanticModel,
+    sampleHeightAtUv: input.sampleHeightAtUv,
+  });
   const points = stage.querySelectorAll<HTMLElement>("[data-terrain-projected-point]");
   for (const point of points) {
     const uv = readTerrainProjectedPointUv(
@@ -9195,6 +9201,71 @@ function syncProjectedPoints(input: {
     } else {
       point.style.zIndex = `${20 + depthLayer}`;
     }
+  }
+}
+
+function syncProjectedPolygons(input: {
+  stage: HTMLElement;
+  matrix: Mat4;
+  materialSemanticModel: CampaignMaterialSemanticModel;
+  sampleHeightAtUv: (u: number, v: number) => number;
+}): void {
+  const polygons = input.stage.querySelectorAll<SVGPolygonElement>(
+    "[data-terrain-projected-polygon]"
+  );
+
+  for (const polygon of polygons) {
+    const hexX = Number(polygon.dataset.mapHexX);
+    const hexY = Number(polygon.dataset.mapHexY);
+    if (!Number.isFinite(hexX) || !Number.isFinite(hexY)) {
+      polygon.removeAttribute("data-terrain-projection-ready");
+      polygon.toggleAttribute("hidden", true);
+      continue;
+    }
+
+    const center = hexToPixel(hexX, hexY);
+    const projectedPoints = REVEAL_HEX_CORNER_OFFSETS.map((corner) => {
+      const u = hexPointToTerrainU(
+        center.x + corner.x * 0.96,
+        input.materialSemanticModel.coordinateSystem
+      );
+      const v = hexPointToTerrainV(
+        center.y + corner.y * 0.96,
+        input.materialSemanticModel.coordinateSystem
+      );
+      const height = input.sampleHeightAtUv(u, v);
+      const worldPoint = createTerrainWorldPoint(
+        u,
+        v,
+        height,
+        input.materialSemanticModel.worldScale
+      );
+      const screenPoint = projectPoint(input.matrix, worldPoint);
+      const left = ((screenPoint.x + 1) / 2) * 100;
+      const bottom = ((screenPoint.y + 1) / 2) * 100;
+
+      return {
+        point: `${left.toFixed(3)},${(100 - bottom).toFixed(3)}`,
+        visible:
+          screenPoint.w > 0 &&
+          screenPoint.z >= -1 &&
+          screenPoint.z <= 1 &&
+          left >= -20 &&
+          left <= 120 &&
+          bottom >= -20 &&
+          bottom <= 120,
+      };
+    });
+
+    polygon.setAttribute(
+      "points",
+      projectedPoints.map((projectedPoint) => projectedPoint.point).join(" ")
+    );
+    polygon.setAttribute("data-terrain-projection-ready", "true");
+    polygon.toggleAttribute(
+      "hidden",
+      !projectedPoints.some((projectedPoint) => projectedPoint.visible)
+    );
   }
 }
 
