@@ -9,6 +9,7 @@ import type {
 import { createDefaultTroopRuntimeState } from "../../domain/troop-editor";
 import type { TaskRuntimeState } from "../../core/contracts/task-runtime";
 import { createInitialCampaignMapExplorationState } from "../map/campaign-map-exploration";
+import { createInitialCivilizationSandboxState } from "../../domain/civilization-sandbox";
 
 type LegacyEquippedWeaponSet = {
   swordId: ValuableItemId | null;
@@ -146,6 +147,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       activitySession: null,
       troops: createDefaultTroopRuntimeState(input.playerCharacterId),
       mapExploration: createInitialCampaignMapExplorationState(),
+      civilizationSandbox: createInitialCivilizationSandboxState(),
       eventHistory: {},
     },
   };

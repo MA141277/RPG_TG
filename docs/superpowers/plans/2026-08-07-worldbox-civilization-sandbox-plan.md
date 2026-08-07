@@ -10,14 +10,19 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Plan created after user approval; waiting because docs/superpowers/project-progress.md currently points to the completed-but-open Campaign Cloud Volume Lighting Upgrade child.`
-- Next Step: `After the current campaign-cloud child is closed or explicitly superseded, open docs/superpowers/project-progress.md, promote this plan if appropriate, then start Task 1.`
-- Verification: `npm run lint:plans passed for plan creation`
-- Notes: `Do not start implementation from this plan while the canonical project progress document still points to the campaign-cloud closeout path.`
+- Current Focus: `Task 1 domain state and race naming implementation is complete pending the Task 1 commit.`
+- Next Step: `Commit Task 1, then continue Task 2 placement and simulation core from this plan.`
+- Verification: `npm run build:test; node --test --test-isolation=none tests/civilization-sandbox-domain.test.cjs; npm run typecheck`
+- Notes: `docs/superpowers/project-progress.md still points to the campaign-cloud completed-but-open child; this sandbox execution was started by explicit user direction on a dedicated branch without changing the canonical progress entry.`
 
 ## Progress Log
+
+- 2026-08-07
+  - Summary: `Completed Task 1 for the Worldbox civilization sandbox: added the runtime state, three founding race templates, deterministic child naming, and createInitialState integration.`
+  - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-domain.test.cjs`; `npm run typecheck`
+  - Next: `Commit Task 1, then continue with placement and tick simulation.`
 
 - 2026-08-07
   - Summary: `Created the executable implementation plan for the approved Worldbox Civilization Sandbox design.`
@@ -160,7 +165,7 @@
 - Produces: `GameState["runtime"]["civilizationSandbox"]`
 - Consumes: no sandbox code from earlier tasks
 
-- [ ] **Step 1: Write failing domain and naming tests**
+- [x] **Step 1: Write failing domain and naming tests**
 
 Create `tests/civilization-sandbox-domain.test.cjs` with these tests:
 
@@ -231,7 +236,7 @@ test("civilization sandbox name generators use race-specific child names and fal
 });
 ```
 
-- [ ] **Step 2: Run the failing tests**
+- [x] **Step 2: Run the failing tests**
 
 Run:
 
@@ -245,7 +250,7 @@ Expected:
 - `npm run build:test` passes.
 - `node --test` fails because `src/domain/civilization-sandbox` and related modules do not exist.
 
-- [ ] **Step 3: Add the domain state module**
+- [x] **Step 3: Add the domain state module**
 
 Create `src/domain/civilization-sandbox.ts`:
 
@@ -393,7 +398,7 @@ export function createInitialCivilizationSandboxState(): CivilizationSandboxStat
 }
 ```
 
-- [ ] **Step 4: Add race templates**
+- [x] **Step 4: Add race templates**
 
 Create `src/application/civilization-sandbox/race-templates.ts`:
 
@@ -461,7 +466,7 @@ export const SANDBOX_RACE_TEMPLATES: Record<SandboxRaceId, SandboxRaceTemplate> 
 };
 ```
 
-- [ ] **Step 5: Add deterministic name generation**
+- [x] **Step 5: Add deterministic name generation**
 
 Create `src/application/civilization-sandbox/name-generator.ts`:
 
@@ -557,7 +562,7 @@ function generateFallbackName(raceId: SandboxRaceId, birthIndex: number): string
 }
 ```
 
-- [ ] **Step 6: Add runtime state to GameState**
+- [x] **Step 6: Add runtime state to GameState**
 
 Modify `src/domain/game-state.ts` by importing the type and adding the runtime field:
 
@@ -571,7 +576,7 @@ Add this inside `runtime`:
 civilizationSandbox: CivilizationSandboxState;
 ```
 
-- [ ] **Step 7: Initialize sandbox runtime state**
+- [x] **Step 7: Initialize sandbox runtime state**
 
 Modify `src/application/state/create-initial-state.ts`:
 
@@ -585,7 +590,7 @@ Add this inside the returned `runtime` object:
 civilizationSandbox: createInitialCivilizationSandboxState(),
 ```
 
-- [ ] **Step 8: Run tests for Task 1**
+- [x] **Step 8: Run tests for Task 1**
 
 Run:
 

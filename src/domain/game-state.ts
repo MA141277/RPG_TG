@@ -20,6 +20,7 @@ import type { TaskRuntimeState } from "../core/contracts/task-runtime";
 import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
 import type { CampaignMapExplorationState } from "./map-exploration";
 import type { RuntimeProgressState } from "../core/contracts/progression-runtime";
+import type { CivilizationSandboxState } from "./civilization-sandbox";
 
 export type ViewName =
   | "map"
@@ -109,6 +110,7 @@ export type GameState = {
     activitySession: ActiveActivitySession;
     troops: TroopRuntimeState;
     mapExploration: CampaignMapExplorationState;
+    civilizationSandbox: CivilizationSandboxState;
     progression?: RuntimeProgressState;
     eventHistory: Record<
       EventId,
