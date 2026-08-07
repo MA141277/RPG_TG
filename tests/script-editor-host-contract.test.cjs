@@ -149,7 +149,8 @@ test("script editor session consumes template catalog through a host resolver se
   );
 
   assert.doesNotMatch(sessionSource, /createBuiltinScriptEditorTemplateCatalog/);
-  assert.match(sessionSource, /resolveScriptEditorTemplateCatalog/);
+  assert.doesNotMatch(sessionSource, /resolveScriptEditorTemplateCatalog/);
+  assert.match(sessionSource, /getTemplateCatalog: \(\) => host\.templateCatalog \?\? null/);
   assert.equal(
     fs.existsSync(
       path.join(
@@ -184,7 +185,8 @@ test("script editor workflow controller consumes file-system host instead of bro
 
   assert.doesNotMatch(workflowControllerSource, /host\/browser-file-system/);
   assert.match(workflowControllerSource, /getFileSystemHost/);
-  assert.match(sessionSource, /resolveScriptEditorFileSystemHost/);
+  assert.doesNotMatch(sessionSource, /resolveScriptEditorFileSystemHost/);
+  assert.match(sessionSource, /file-system host is not installed/);
   assert.equal(
     fs.existsSync(
       path.join(

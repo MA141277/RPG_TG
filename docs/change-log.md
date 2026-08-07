@@ -30,6 +30,7 @@
 - `src/modules/script-editor/host/script-editor-template-catalog.ts` 现已成为 script-editor 内统一的 template catalog 默认解析点：宿主可注入 `templateCatalog`，未注入时才回落到 builtin catalog；`kernel/script-editor-session.ts` 不再直接创建 builtin template catalog，`ui/main-ui-script-editor-module.js` 会在宿主安装阶段设置当前默认 template catalog。
 - `src/modules/script-editor/kernel/script-editor-session.ts` 现已退出对 `ui/main-ui-script-editor-module.js` 的直接安装耦合；standalone 装配改由 `src/modules/script-editor/standalone/script-editor-standalone-host.ts` 先安装 main-ui script-editor module，再创建 embedded session，因此 session kernel 只保留 workflow/runtime owner 责任。
 - `src/modules/script-editor/host/script-editor-file-system-host.ts` 现已成为 script-editor 内统一的 file-system host seam；`kernel/script-editor-workflow-controller.ts` 不再直接导入 `host/browser-file-system.ts`，改为只通过宿主注入/默认 resolver 消费 `writeTextFiles`、`pickDirectory`、`readFilesFromDirectoryHandle` 三类文件能力。`ui/main-ui-script-editor-module.js` 会在宿主安装阶段默认注入 browser file-system host。
+- `src/modules/script-editor/kernel/script-editor-session.ts` 现已进一步退出 file-system/template resolver 责任：session kernel 不再自己解析默认 `fileSystemHost` 或 `templateCatalog`，而是只消费宿主安装阶段已经准备好的能力；缺失 `fileSystemHost` 时会 fail-closed 抛出显式错误。
 - `prototypes/script-editor/index.html`、`src/modules/script-editor/standalone/script-editor-standalone.ts`、`src/modules/script-editor/standalone/script-editor-standalone-host.ts` 与 `vite.config.ts` 现已提供独立的 standalone 剧本编辑器入口，同时保持嵌入态与 standalone 复用同一套会话 owner。
 - `tsconfig.test.json` 现已把 `src/modules/**/*.ts` 纳入 `.test-dist` 编译范围；依赖 `.test-dist/modules/**` 的 Script Editor module 行为测试不再读取历史残留产物。
 - 这一轮还补齐了 `tests/script-editor-host-contract.test.cjs`、`tests/script-editor-embedded-session.test.cjs`、`tests/script-editor-standalone-entry.test.cjs`、`tests/script-editor-publication-boundary.test.cjs` 和 `tests/script-editor-runtime-preview-compat.test.cjs` 的包边界回归，并通过浏览器 smoke 验证了嵌入态预览链路和 standalone fail-closed 行为。
@@ -58,6 +59,7 @@
 - template catalog 也完成相同收口后，默认模板导入链的 owner 关系已经从 kernel 退出，只剩 host seam 负责默认解析；后续如果宿主要换默认模板来源，不需要再改 session/workflow 本体。
 - session kernel 退出具体 main-ui 安装耦合后，后续如果继续把 script-editor 做成独立 package，embedded session 与 standalone host 的边界会更清晰：kernel 不需要知道具体 UI 安装器是谁，宿主只需要在装配阶段先注入它自己的 host module。
 - workflow-controller 退出 `browser-file-system` 直连后，script-editor 的 kernel/workflow 层已经不再把浏览器文件系统实现当作内建 owner；后续如果要把编辑器挂到别的容器、桌面壳或者自定义存储宿主，只需要替换 `fileSystemHost`，不用再改 workflow 本体。
+- session kernel 也退出 host 默认 resolver 之后，当前 script-editor 的 kernel 基本已经只负责 workflow/runtime 协调，不再承担“发现并补默认宿主能力”的装配责任；这一步让宿主安装层和运行内核之间的边界更接近最终 package 形态。
 - `tsconfig.test.json` 补上 `src/modules/**/*.ts` 之后，module 行为测试终于和当前源码同构；后续继续拆 package 时，像 `playable-family-removal` 这类测试不会再被旧 `.test-dist` 假绿或假红误导。
 
 ## 2026-08-05 Agent Immediate Execution Workflow Governance

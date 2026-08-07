@@ -2,8 +2,7 @@ import type { ScriptEditorProjectDefinition } from "../domain/script-editor-proj
 import type { ScriptEditorFileSystemHost } from "../host/script-editor-file-system-host";
 import type { ScriptEditorHost } from "../host/script-editor-host";
 import type { ScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
-import { resolveScriptEditorFileSystemHost } from "../host/script-editor-file-system-host";
-import { resolveScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
+import type { ScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
 import {
   createScriptEditorWorkflowController,
   type ScriptEditorWorkflowController,
@@ -34,6 +33,7 @@ type ScriptEditorEmbeddedSessionHost = {
   [key: string]: unknown;
   fileSystemHost?: ScriptEditorFileSystemHost;
   playableCatalog?: ScriptEditorPlayableCatalog;
+  templateCatalog?: ScriptEditorTemplateCatalog;
   previewHost?: ScriptEditorHost["previewHost"];
   setScreen(screen: string): void;
 };
@@ -120,11 +120,15 @@ export function createEmbeddedScriptEditorSession(
     recordNotice: (notice) => {
       host.recordScriptEditorNotice(notice);
     },
-    getFileSystemHost: () => resolveScriptEditorFileSystemHost(host.fileSystemHost),
+    getFileSystemHost: () => {
+      if (host.fileSystemHost == null) {
+        throw new Error("Script editor file-system host is not installed.");
+      }
+      return host.fileSystemHost;
+    },
     getPlayableCatalog: () => host.playableCatalog ?? null,
     getPreviewHost: () => host.previewHost ?? null,
-    getTemplateCatalog: () =>
-      resolveScriptEditorTemplateCatalog(host.templateCatalog),
+    getTemplateCatalog: () => host.templateCatalog ?? null,
     setScreen: (screen) => {
       host.setScreen(screen);
     },
