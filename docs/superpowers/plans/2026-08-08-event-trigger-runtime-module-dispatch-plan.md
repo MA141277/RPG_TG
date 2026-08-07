@@ -10,10 +10,10 @@
 
 ## Execution State
 
-- Status: `completed-but-open`
+- Status: `closed`
 - Last Updated: `2026-08-08`
-- Current Focus: `Implementation and full verification are complete locally. The child is ready for implementation checkpoint commit/push, followed by structured closeout.`
-- Next Step: `Commit and push the verified implementation checkpoint, then update closeout state to closed.`
+- Current Focus: `Child is closed after verified implementation checkpoint f3a9e5c0 was pushed to origin/merage-mod2ui-1.`
+- Next Step: `Return to docs/superpowers/project-progress.md and open the next approved stabilization child.`
 - Verification: `npm run build:test; node --test --test-name-pattern "runStoryEventRuntime routes activated trigger events through the shared runtime-dispatch seam|event trigger runtime keeps owner-paced emitted follow-up events out of immediate event-chain" tests/event-router-runtime.test.cjs; node --test --test-name-pattern "event trigger runtime route convergence keeps trigger activation on the shared event module dispatch adapter|event binding runtime route convergence" tests/robustness.test.cjs; node --test tests/event-router-runtime.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
 - Notes: `Do not implement registry/notification semantics in this child. Do not touch event-binding-runtime, Script Editor, scenario packs, playable, building, startup, review-system, closeBuilding, or launchFlow.`
 
@@ -35,6 +35,10 @@
   - Summary: `Completed full verification for the implementation checkpoint. The verified slice changes only event-runtime trigger dispatch, event-router tests, robustness guards, change log, spec, plan, and project progress; registered notification/handler-registry work and event-binding-runtime remain out of scope.`
   - Verification: `npm run build:test; node --test --test-name-pattern "runStoryEventRuntime routes activated trigger events through the shared runtime-dispatch seam|event trigger runtime keeps owner-paced emitted follow-up events out of immediate event-chain" tests/event-router-runtime.test.cjs; node --test --test-name-pattern "event trigger runtime route convergence keeps trigger activation on the shared event module dispatch adapter|event binding runtime route convergence" tests/robustness.test.cjs; node --test tests/event-router-runtime.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
   - Next: `Commit and push the verified implementation checkpoint, then record structured child closeout.`
+- 2026-08-08
+  - Summary: `Committed and pushed the verified implementation checkpoint f3a9e5c0 to origin/merage-mod2ui-1, then closed the child with structured project-progress sync.`
+  - Verification: `git push origin merage-mod2ui-1`
+  - Next: `Return to docs/superpowers/project-progress.md and open the next approved stabilization child.`
 
 ---
 
@@ -248,7 +252,7 @@ Expected:
 
 Update this plan to `completed-but-open`, append the verification log, update `docs/superpowers/project-progress.md` to `completed-but-open`, and add a `docs/change-log.md` entry for the event trigger runtime module dispatch change.
 
-- [ ] **Step 3: Commit and push implementation**
+- [x] **Step 3: Commit and push implementation**
 
 Commit all implementation, tests, spec, plan, change-log, and project-progress changes with:
 
@@ -261,7 +265,7 @@ Summary:
 - Sync governed plan and change-log state for the verified child.
 ```
 
-- [ ] **Step 4: Close the child**
+- [x] **Step 4: Close the child**
 
 Update this plan to `closed`, update project progress to no active child, record push commit, run:
 
@@ -289,7 +293,7 @@ Summary:
 - [x] No registered notification bus or handler registry is introduced.
 - [x] No scenario-pack JSON, Script Editor, playable, building, startup, review-system, `closeBuilding`, or `launchFlow` changes are made.
 - [x] Project progress sync is updated.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
@@ -300,16 +304,16 @@ Summary:
 
 ## Child Closeout
 
-- Closed Child: `Replace when closing.`
+- Closed Child: `Event Trigger Runtime Module Dispatch`
 - Parent Task: `Post-Merge Branch Stabilization`
 - Parent Stage: `Post-Merge Branch Stabilization`
 - Closeout Status: `closed`
-- Project Progress Synced: `yes/no`
-- Next Child: `Replace when closing.`
-- Next Child Status: `waiting/running/blocked/none`
-- Next Required Action: `Replace when closing.`
+- Project Progress Synced: `yes`
+- Next Child: `none`
+- Next Child Status: `none`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `Replace when closing.`
-- Push Status: `success/failure/not-pushed`
-- Push Commit: `commit-sha-or-none`
-- Resume From: `Replace when closing.`
+- Next Owner Document: `none`
+- Push Status: `success`
+- Push Commit: `f3a9e5c0`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed event-trigger runtime module dispatch baseline; registry/notification work, startup, and review-system remain out of scope unless explicitly resumed.`
