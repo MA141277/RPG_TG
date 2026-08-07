@@ -5,6 +5,8 @@ dist/
 .codex-runtime/
 .worktrees/
 tmp/
+.codex-temp/
+.tmp-electron-*/
 
 # Local agent scratch notes
 .superpowers/brainstorm/
@@ -12,6 +14,7 @@ tmp/
 
 # Local build/package outputs
 release/
+dist.zip
 
 # Local server and dev logs
 *.log
