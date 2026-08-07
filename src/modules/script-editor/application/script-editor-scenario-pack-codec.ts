@@ -1,6 +1,9 @@
 import type { MapDefinition } from "./script-editor-map-contract";
 import type { ScenarioPackDefinition } from "../domain/script-editor-scenario-pack-contract";
-import { createBuiltinScriptEditorPublicationCatalog } from "../host/script-editor-publication-catalog";
+import {
+  resolveScriptEditorPublicationCatalog,
+  type ScriptEditorPublicationCatalog,
+} from "../host/script-editor-publication-catalog";
 
 type ScenarioPackManifestFiles = {
   scenarioProfile: string;
@@ -57,17 +60,18 @@ type ScenarioPackImportFileEntry = {
   relativePath: string;
 };
 
-const builtinScriptEditorPublicationCatalog =
-  createBuiltinScriptEditorPublicationCatalog();
-
 export async function loadScenarioPackFromUrl(
-  url: string
+  url: string,
+  options: {
+    publicationCatalog?: ScriptEditorPublicationCatalog | undefined;
+  } = {}
 ): Promise<ScenarioPackDefinition> {
+  const publicationCatalog = resolveScriptEditorPublicationCatalog(
+    options.publicationCatalog
+  );
   const resolvedManifestUrl = resolveScenarioPackManifestUrl(url);
   const registeredPack =
-    builtinScriptEditorPublicationCatalog.loadScenarioPackFromUrl(
-      resolvedManifestUrl
-    );
+    publicationCatalog.loadScenarioPackFromUrl(resolvedManifestUrl);
   if (registeredPack != null) {
     return parseScenarioPack(registeredPack);
   }

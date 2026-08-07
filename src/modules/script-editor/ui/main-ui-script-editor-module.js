@@ -1,6 +1,10 @@
 import * as scriptEditorMainUiBridge from "../main-ui-bridge";
 import { createLoadedScenarioPackPreviewHost } from "../host/loaded-scenario-pack-preview-host";
 import {
+  createBuiltinScriptEditorPublicationCatalog,
+  setDefaultScriptEditorPublicationCatalog,
+} from "../host/script-editor-publication-catalog";
+import {
   createBuiltinScriptEditorPlayableCatalog,
   setDefaultScriptEditorPlayableCatalog,
 } from "../host/script-editor-playable-catalog";
@@ -870,7 +874,9 @@ export function installMainUiFlowScriptEditorModule(host, options) {
     });
   }
   host.playableCatalog ??= createBuiltinScriptEditorPlayableCatalog();
+  host.publicationCatalog ??= createBuiltinScriptEditorPublicationCatalog();
   setDefaultScriptEditorPlayableCatalog(host.playableCatalog);
+  setDefaultScriptEditorPublicationCatalog(host.publicationCatalog);
     host.scriptEditorProject = null;
     host.scriptEditorSelection = {
       family: "storyPack",

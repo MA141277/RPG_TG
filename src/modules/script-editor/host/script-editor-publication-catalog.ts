@@ -58,6 +58,9 @@ export type ScriptEditorPublicationCatalog = {
   getBuiltinTemplateManifestUrl(): string;
 };
 
+let defaultScriptEditorPublicationCatalog: ScriptEditorPublicationCatalog | null =
+  null;
+
 const BUILTIN_TEMPLATE_REGISTERED_MANIFEST_URL =
   "/builtin-script-editor-templates/zhuyuanzhang/pack.json";
 const REGISTERED_BUILTIN_TEMPLATE_ASSET_ROOT =
@@ -216,4 +219,20 @@ export function createBuiltinScriptEditorPublicationCatalog(): ScriptEditorPubli
       return BUILTIN_TEMPLATE_REGISTERED_MANIFEST_URL;
     },
   };
+}
+
+export function setDefaultScriptEditorPublicationCatalog(
+  publicationCatalog: ScriptEditorPublicationCatalog
+): void {
+  defaultScriptEditorPublicationCatalog = publicationCatalog;
+}
+
+export function resolveScriptEditorPublicationCatalog(
+  publicationCatalog?: ScriptEditorPublicationCatalog | null
+): ScriptEditorPublicationCatalog {
+  return (
+    publicationCatalog ??
+    defaultScriptEditorPublicationCatalog ??
+    createBuiltinScriptEditorPublicationCatalog()
+  );
 }

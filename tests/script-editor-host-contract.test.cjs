@@ -118,6 +118,30 @@ test("script editor runtime pack export uses a package-local event-binding seam"
   );
 });
 
+test("script editor scenario pack codec consumes publication catalog through a host resolver seam", () => {
+  const scenarioPackCodecSource = readSource(
+    "src/modules/script-editor/application/script-editor-scenario-pack-codec.ts"
+  );
+
+  assert.doesNotMatch(
+    scenarioPackCodecSource,
+    /createBuiltinScriptEditorPublicationCatalog/
+  );
+  assert.match(
+    scenarioPackCodecSource,
+    /resolveScriptEditorPublicationCatalog/
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/host/script-editor-publication-catalog.ts"
+      )
+    ),
+    true
+  );
+});
+
 test("script editor playable runtime contract is consumed through a package-local seam", () => {
   const runtimePackExportSource = readSource(
     "src/modules/script-editor/application/runtime-pack-export.ts"
