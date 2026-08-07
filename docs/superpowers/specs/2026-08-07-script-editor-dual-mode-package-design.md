@@ -105,6 +105,19 @@ Standalone mode and embedded mode must reuse the same editor kernel and UI state
 
 The only intended difference between the two modes is which host implementation gets injected.
 
+### 5.6 Boundary-And-Terminology-Freeze Principle
+
+The boundary decisions and repository terminology used in this design are frozen for the downstream plan and implementation.
+
+Required rules:
+
+- do not change the architecture boundary defined in this design unless a separate explicit redesign is approved first
+- do not rename the existing repository concepts just to make the design sound cleaner
+- do not introduce new top-level terms when an existing repository term already names the same responsibility
+- plan and implementation documents must prefer the repository's current vocabulary such as script editor, runtime preview, scenario pack, host, startup, publication, template, standalone mode, embedded mode, and shared contract
+
+This rule exists to prevent a second conceptual migration from being mixed into the package migration.
+
 ## 6. Target Architecture
 
 ### 6.1 Package Shape
