@@ -601,3 +601,49 @@ test("main runtime orchestrator consumes event bindings and progression settleme
     },
   });
 });
+
+test("main runtime orchestrator applies story settlement from routed settlement metadata", () => {
+  let appState = createAppState();
+  const storyContent = createEventBindingProgressionContent({
+    eventId: "event.test.routed-settlement",
+    entrySceneId: "scene.test.routed-settlement",
+    settlementId: "settlement.test.routed-settlement",
+  });
+  const orchestrator = createMainRuntimeOrchestrator({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    setPlayerCharacterId: () => {},
+    getStoryContent: () => storyContent,
+    resetMainGameRuntime: () => {},
+    setActiveContentContext: () => {},
+    recreateHouseRuntime: () => {},
+    setGameVisibility: () => {},
+    hideMainUiFlow: () => {},
+  });
+
+  const result = orchestrator.execute({
+    type: "trigger-story-events",
+    timing: "city-enter",
+    state: {
+      ...appState.gameState,
+      world: {
+        ...appState.gameState.world,
+        currentCityId: targetCity.id,
+      },
+    },
+    characterDefinitions: appState.characterDefinitions,
+  });
+
+  assert.equal(
+    result.gameState.runtime.eventHistory["event.test.routed-settlement"]
+      ?.firedCount,
+    1
+  );
+  assert.deepEqual(result.cityStatusById?.[targetCity.id], {
+    valuePatch: {
+      prosperity: targetCity.prosperity + 5,
+    },
+  });
+});

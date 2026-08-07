@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-08 Story Settlement Canonical Settlement Id
+
+### Changed
+- `src/application/story/story-runtime.ts` 现已在 event binding 已启动的 story event 路径上传递 routed runtime event entity，确保 settlement metadata 通过 `readRuntimeEventSettlementId(...)` 进入 story settlement continuation。
+- `src/application/story/story-runtime.ts` 的 `readStorySettlement(...)` 与 `src/application/story/story-settlement-continuation.ts` 的 `applyStorySettlementEvent(...)` 不再从 authored `eventDefinition.settlementId` 读取 covered fallback；covered story settlement path 只接受 routed `settlementId` metadata。
+- 新增并收紧 `tests/story-settlement-continuation.test.cjs`、`tests/indoor-screen-story-runtime.test.cjs` 与 `tests/robustness.test.cjs` 的 canonical-first 覆盖，锁定无 routed metadata 时不应用 authored fallback，同时保留 event binding/router 路径的 settlement/progression 行为。
+
+### Impact
+- story settlement runtime/event seam 现在与当前 canonical routed payload 模型一致，后续 regression 不能再靠 authored `eventDefinition.settlementId` fallback 静默通过 covered path。
+- 本次没有改 scenario-pack JSON、Script Editor import/export/preview 合同、startup 链路或 review-system；只是收紧当前 story runtime/event owner 的 settlement metadata 消费路径。
+
 ## 2026-08-08 Mod-First-Dev Residual Intent Backfill Task 1
 
 ### Changed

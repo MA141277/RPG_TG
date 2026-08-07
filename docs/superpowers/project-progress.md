@@ -5,21 +5,25 @@
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
 - Current Task: `Story Settlement Canonical Settlement Id`
-- Current Task Status: `running`
+- Current Task Status: `completed-but-open`
 - Current Child: `Story Settlement Canonical Settlement Id`
-- Current Child Status: `running`
+- Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-story-settlement-canonical-settlement-id-child`
+- Next Required Action: `commit-push-and-close-story-settlement-canonical-settlement-id-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-08-08-story-settlement-canonical-settlement-id-plan.md`
 - Last Closed Item: `Mod-First-Dev Residual Intent Backfill`
-- Push Status: `success`
-- Push Commit: `b9ab4805`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue in docs/superpowers/plans/2026-08-08-story-settlement-canonical-settlement-id-plan.md from Task 1; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Push Status: `not-pushed`
+- Push Commit: `none`
+- Resume From: `Open docs/superpowers/project-progress.md, then commit and push the verified Story Settlement Canonical Settlement Id implementation before recording final closeout; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 
 ## Progress Log
 
+- 2026-08-08
+  - Summary: `Completed the Story Settlement Canonical Settlement Id implementation locally. Covered story settlement runtime no longer accepts authored eventDefinition.settlementId fallback, and event-binding-started story settlement events now pass routed event metadata into story runtime.`
+  - Verification: `npm run build:test; node --test tests/story-settlement-continuation.test.cjs tests/indoor-screen-story-runtime.test.cjs; node --test --test-name-pattern "story settlement canonical settlement id|runtime event settlement id payload consumption|story settlement runtime owner convergence|story settlement next-event convergence" tests/robustness.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
+  - Next: `Commit and push the verified child implementation, then record structured closeout.`
 - 2026-08-08
   - Summary: `Opened the Story Settlement Canonical Settlement Id child as the next approved post-merge stabilization slice. The new child targets the remaining story settlement authored-fallback residual on the runtime/event seam, while startup stays frozen, source-unification stays closed, and review-system work remains paused.`
   - Verification: `Spec committed as b9ab4805; plan drafted locally; implementation verification not run yet for this child.`

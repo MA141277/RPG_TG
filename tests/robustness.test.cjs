@@ -16538,7 +16538,7 @@ test("story settlement next-event convergence keeps settlement follow-up on the 
   );
   const applyTriggeredStoryEventBlock =
     storyRuntimeSource.match(
-      /function applyTriggeredStoryEvent\([\s\S]*?\n}\n\nfunction createScopedTriggerContext/
+      /function applyTriggeredStoryEvent\([\s\S]*?\r?\n}\r?\n\r?\nfunction createScopedTriggerContext/
     )?.[0] ?? "";
 
   assert.match(applyTriggeredStoryEventBlock, /\breadStorySettlement\s*\(/);
@@ -16814,7 +16814,7 @@ test("runtime event settlement id payload consumption keeps story-runtime settle
   );
   const applyTriggeredStoryEventBlock =
     storyRuntimeSource.match(
-      /function applyTriggeredStoryEvent\([\s\S]*?\n}\n\nfunction readStorySettlement/
+      /function applyTriggeredStoryEvent\([\s\S]*?\r?\n}\r?\n\r?\nfunction readStorySettlement/
     )?.[0] ?? "";
 
   assert.match(projectionSource, /export function readRuntimeEventSettlementId\(/);
@@ -16826,6 +16826,30 @@ test("runtime event settlement id payload consumption keeps story-runtime settle
     applyTriggeredStoryEventBlock,
     /const settlementId =\s*\n\s*typeof eventDefinition\.settlementId/
   );
+});
+
+test("story settlement canonical settlement id removes authored fallback from covered story functions", () => {
+  const storyRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-runtime.ts"),
+    "utf8"
+  );
+  const storySettlementSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/story/story-settlement-continuation.ts"),
+    "utf8"
+  );
+  const readStorySettlementBlock =
+    storyRuntimeSource.match(
+      /function readStorySettlement\([\s\S]*?\r?\n}\r?\n\r?\nfunction createScopedTriggerContext/
+    )?.[0] ?? "";
+  const applyStorySettlementEventBlock =
+    storySettlementSource.match(
+      /export function applyStorySettlementEvent\([\s\S]*?\r?\n}\r?\n/
+    )?.[0] ?? "";
+
+  assert.match(readStorySettlementBlock, /options\.settlementId/);
+  assert.match(applyStorySettlementEventBlock, /options\.settlementId/);
+  assert.doesNotMatch(readStorySettlementBlock, /eventDefinition\.settlementId/);
+  assert.doesNotMatch(applyStorySettlementEventBlock, /eventDefinition\.settlementId/);
 });
 
 test("runtime event dialogue id payload consumption keeps state-only classification on the routed payload seam", () => {

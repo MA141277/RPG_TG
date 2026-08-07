@@ -99,6 +99,9 @@ test("applyStorySettlementEvent applies person city and building settlement targ
       entrySceneId: "scene.settlement.shared",
       type: "settlement",
       settlementId: "settlement.shared.reward",
+    },
+    {
+      settlementId: "settlement.shared.reward",
     }
   );
 
@@ -190,6 +193,9 @@ test(
           entrySceneId: "scene.settlement.shared",
           type: "settlement",
           settlementId: "settlement.shared.reward",
+        },
+        {
+          settlementId: "settlement.shared.reward",
         }
       );
 
@@ -211,6 +217,61 @@ test(
     }
   }
 );
+
+test("applyStorySettlementEvent ignores authored settlement-id fallback without routed metadata", () => {
+  const characterDefinitions = prototypeCharacters.map((character) =>
+    character.id === "char.player"
+      ? {
+          ...character,
+          stamina: 100,
+        }
+      : character
+  );
+
+  const result = applyStorySettlementEvent(
+    {
+      state: createBaseState(),
+      characterDefinitions,
+      cityDefinitions: prototypeCities,
+      houseDefinitions: prototypeHouses,
+    },
+    {
+      settlementDefinitionsById: {
+        "settlement.shared.reward": {
+          id: "settlement.shared.reward",
+          title: "Shared Reward",
+          contents: [
+            {
+              targetFamily: "person",
+              targetId: "char.player",
+              attributeKey: "stamina",
+              attributeType: "number",
+              operation: "add",
+              value: 10,
+            },
+          ],
+        },
+      },
+    },
+    {
+      id: "event.settlement.shared",
+      chapterId: "chapter.prototype",
+      name: "Settlement",
+      occurrence: "repeatable",
+      trigger: { timing: "manual" },
+      conditions: [],
+      entrySceneId: "scene.settlement.shared",
+      type: "settlement",
+      settlementId: "settlement.shared.reward",
+    }
+  );
+
+  assert.equal(
+    result.characterDefinitions.find((character) => character.id === "char.player")
+      ?.stamina,
+    100
+  );
+});
 
 test("applyStorySettlementEvent accepts a routed settlement-id override", () => {
   const characterDefinitions = prototypeCharacters.map((character) =>

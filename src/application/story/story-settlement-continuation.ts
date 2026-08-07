@@ -41,8 +41,6 @@ export function applyStorySettlementEvent(
   const settlementId =
     typeof options.settlementId === "string" && options.settlementId.trim().length > 0
       ? options.settlementId.trim()
-      : typeof eventDefinition.settlementId === "string"
-        ? eventDefinition.settlementId.trim()
       : "";
   if (settlementId.length === 0) {
     return runtime;

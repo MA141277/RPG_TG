@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-08-08`
-- Current Focus: `Plan created from the new stabilization spec. The active child is now the story settlement canonical-settlement-id slice, and the next implementation step is to prove the remaining authored fallback reads with focused RED coverage.`
-- Next Step: `Execute Task 1 and Task 2, then remove the covered authored settlement-id fallback from story-runtime and story-settlement-continuation.`
-- Verification: `Spec committed as b9ab4805. Implementation verification has not run yet for this child.`
+- Current Focus: `Implementation is complete and locally verified. Covered story settlement runtime no longer accepts authored eventDefinition.settlementId fallback, and event-binding-started settlement events now pass routed event metadata into story runtime.`
+- Next Step: `Commit and push the implementation checkpoint, then record structured closeout with the pushed commit.`
+- Verification: `npm run build:test; node --test tests/story-settlement-continuation.test.cjs tests/indoor-screen-story-runtime.test.cjs; node --test --test-name-pattern "story settlement canonical settlement id|runtime event settlement id payload consumption|story settlement runtime owner convergence|story settlement next-event convergence" tests/robustness.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
 - Notes: `This child is canonical-queue work for merage-mod2ui-1. Do not reuse historical runtime-only queue governance or reopen B/C/D lines through this slice.`
 
 ## Progress Log
@@ -23,6 +23,14 @@
   - Summary: `Opened the story settlement canonical-settlement-id child from the canonical no-child state after auditing current runtime/event residuals. Design chose a new narrow stabilization child instead of reviving the old runtime-only settlement-id payload plan, because the old line intentionally preserved authored fallback and belonged to a different queue.`
   - Verification: `Spec committed as b9ab4805; source audit confirmed direct authored fallback remains in src/application/story/story-runtime.ts and src/application/story/story-settlement-continuation.ts.`
   - Next: `Add focused RED coverage that proves the covered story settlement path must rely on routed settlement metadata instead of eventDefinition.settlementId fallback.`
+- 2026-08-08
+  - Summary: `Completed Task 1 audit. The covered authored fallback reads are limited to readStorySettlement(...) in src/application/story/story-runtime.ts and applyStorySettlementEvent(...) in src/application/story/story-settlement-continuation.ts. Existing routed settlement metadata is projected through createRuntimeEventEntity(...) and consumed through readRuntimeEventSettlementId(...), so this child remains a narrow story runtime/event seam cleanup rather than a generic payload migration.`
+  - Verification: `rg -n "settlementId|readRuntimeEventSettlementId|readStorySettlement|applyStorySettlementEvent|story settlement|settlement" src/application/story src/core/runtime tests/story-settlement-continuation.test.cjs tests/indoor-screen-story-runtime.test.cjs tests/robustness.test.cjs`
+  - Next: `Execute Task 2 and add focused RED coverage for canonical-only story settlement consumption.`
+- 2026-08-08
+  - Summary: `Completed implementation locally. Added RED coverage proving applyStorySettlementEvent no longer accepts authored settlement-id fallback without routed metadata, added a routed story settlement runtime assertion, removed covered authored fallback from story-runtime and story-settlement-continuation, and threaded routed event metadata through the event-binding-started story path.`
+  - Verification: `npm run build:test; node --test tests/story-settlement-continuation.test.cjs tests/indoor-screen-story-runtime.test.cjs; node --test --test-name-pattern "story settlement canonical settlement id|runtime event settlement id payload consumption|story settlement runtime owner convergence|story settlement next-event convergence" tests/robustness.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
+  - Next: `Commit and push the implementation checkpoint, then sync closeout metadata.`
 
 ---
 
@@ -113,11 +121,11 @@
 - Read: `tests/indoor-screen-story-runtime.test.cjs`
 - Modify: `docs/superpowers/plans/2026-08-08-story-settlement-canonical-settlement-id-plan.md`
 
-- [ ] **Step 1: Record every covered authored settlement-id fallback read**
+- [x] **Step 1: Record every covered authored settlement-id fallback read**
 
 Confirm exactly which runtime path still consumes `eventDefinition.settlementId` directly and which routed runtime tests already cover settlement application/continuation behavior.
 
-- [ ] **Step 2: Lock the child boundary**
+- [x] **Step 2: Lock the child boundary**
 
 Record in this plan that the child removes covered authored fallback only on the story settlement runtime path and does not widen into a generic payload/fallback migration batch.
 
@@ -128,7 +136,7 @@ Record in this plan that the child removes covered authored fallback only on the
 - Modify: `tests/indoor-screen-story-runtime.test.cjs`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add focused failing coverage**
+- [x] **Step 1: Add focused failing coverage**
 
 Add coverage that proves:
 
@@ -136,7 +144,7 @@ Add coverage that proves:
 - a covered routed story path still applies settlement data through routed settlement metadata
 - robustness guards no longer allow `typeof eventDefinition.settlementId` fallback in the covered functions
 
-- [ ] **Step 2: Run RED verification**
+- [x] **Step 2: Run RED verification**
 
 Run:
 
@@ -158,11 +166,11 @@ Expected:
 - Modify: `tests/indoor-screen-story-runtime.test.cjs`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Remove fallback from story settlement lookup/application**
+- [x] **Step 1: Remove fallback from story settlement lookup/application**
 
 Make the covered story settlement runtime path consume routed settlement metadata only, and keep settlement application ownership on the shared runtime-settlement seam.
 
-- [ ] **Step 2: Keep covered continuation behavior green**
+- [x] **Step 2: Keep covered continuation behavior green**
 
 If a test reveals a legitimate covered caller that is not yet threading routed settlement metadata, fix that caller on the same story runtime seam instead of reintroducing authored fallback.
 
@@ -172,7 +180,7 @@ If a test reveals a legitimate covered caller that is not yet threading routed s
 - Modify: `docs/superpowers/project-progress.md`
 - Modify: `docs/superpowers/plans/2026-08-08-story-settlement-canonical-settlement-id-plan.md`
 
-- [ ] **Step 1: Run the focused verification batch**
+- [x] **Step 1: Run the focused verification batch**
 
 Run the full verification set from `Verification Plan`.
 

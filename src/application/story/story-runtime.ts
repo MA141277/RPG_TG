@@ -318,8 +318,6 @@ function readStorySettlement(
   const settlementId =
     typeof options.settlementId === "string" && options.settlementId.trim().length > 0
       ? options.settlementId.trim()
-      : typeof eventDefinition.settlementId === "string"
-        ? eventDefinition.settlementId.trim()
       : "";
   return settlementId.length === 0
     ? undefined
@@ -816,6 +814,7 @@ function triggerStoryEventBindings(
     eventDefinition,
     {
       eventAlreadyStarted: !isStateOnlyRuntimeActionEvent(eventDefinition),
+      routedEvent: toStoryRuntimeEventEntity(eventDefinition),
     }
   );
 }
