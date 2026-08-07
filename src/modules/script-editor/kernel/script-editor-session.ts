@@ -421,6 +421,86 @@ export function createEmbeddedScriptEditorSession(
         return true;
       }
 
+      if (target.matches("[data-script-editor-settlement-field]")) {
+        const field = target.dataset.scriptEditorSettlementField;
+        if (field === "title" || field === "nextEventId") {
+          host.applyScriptEditorSettlementField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-settlement-content-field]")) {
+        const field = target.dataset.scriptEditorSettlementContentField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorSettlementContentIndex ?? "-1",
+          10
+        );
+        if (
+          (
+            field === "targetFamily" ||
+            field === "targetId" ||
+            field === "attributeKey" ||
+            field === "operation" ||
+            field === "value"
+          ) &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorSettlementContentField(index, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-progress-track-field]")) {
+        const field = target.dataset.scriptEditorProgressTrackField;
+        if (
+          field === "title" ||
+          field === "metricKey" ||
+          field === "metricLabel" ||
+          field === "hostFamily" ||
+          field === "allowDemotion"
+        ) {
+          const nextValue =
+            field === "allowDemotion" && target instanceof HTMLInputElement
+              ? target.checked
+              : target.value;
+          host.applyScriptEditorProgressTrackField(field, nextValue);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-progress-track-tier-field]")) {
+        const field = target.dataset.scriptEditorProgressTrackTierField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorProgressTrackTierIndex ?? "-1",
+          10
+        );
+        if (
+          ["title", "threshold", "onEnterRepeatPolicy", "targetTierSettlementId"].includes(
+            field ?? ""
+          ) &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorProgressTrackTierField(index, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-progress-binding-field]")) {
+        const field = target.dataset.scriptEditorProgressBindingField;
+        if (
+          ["trackId", "hostFamily", "hostId", "enabled"].includes(field ?? "")
+        ) {
+          const nextValue =
+            field === "enabled" && target instanceof HTMLInputElement
+              ? target.checked
+              : target.value;
+          host.applyScriptEditorProgressTrackBindingField(field, nextValue);
+        }
+        return true;
+      }
+
       if (target.matches("[data-script-editor-event-field]")) {
         const field = target.dataset.scriptEditorEventField;
         if (

@@ -72,11 +72,15 @@ test("main ui flow no longer owns direct script editor change routing", () => {
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-person-field/);
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-dialogue-field/);
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-event-field/);
+  assert.doesNotMatch(mainUiFlowSource, /data-script-editor-settlement-field/);
+  assert.doesNotMatch(mainUiFlowSource, /data-script-editor-progress-track-field/);
   assert.doesNotMatch(mainUiFlowSource, /data-script-editor-building-entry-field/);
   assert.match(sessionSource, /data-script-editor-project-file/);
   assert.match(sessionSource, /data-script-editor-project-field/);
   assert.match(sessionSource, /data-script-editor-person-field/);
   assert.match(sessionSource, /data-script-editor-dialogue-field/);
   assert.match(sessionSource, /data-script-editor-event-field/);
+  assert.match(sessionSource, /data-script-editor-settlement-field/);
+  assert.match(sessionSource, /data-script-editor-progress-track-field/);
   assert.match(sessionSource, /data-script-editor-building-entry-field/);
 });
