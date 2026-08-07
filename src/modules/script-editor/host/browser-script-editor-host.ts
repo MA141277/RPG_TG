@@ -7,7 +7,13 @@ export function createBrowserScriptEditorHost(
 ): ScriptEditorHost {
   return {
     projectStorage: options.projectStorage,
-    previewRuntime: options.previewRuntime,
+    ...(options.previewHost == null ? {} : { previewHost: options.previewHost }),
+    ...(options.templateCatalog == null
+      ? {}
+      : { templateCatalog: options.templateCatalog }),
+    ...(options.publicationCatalog == null
+      ? {}
+      : { publicationCatalog: options.publicationCatalog }),
     ...(options.notify == null ? {} : { notify: options.notify }),
     ...(options.confirm == null ? {} : { confirm: options.confirm }),
   };

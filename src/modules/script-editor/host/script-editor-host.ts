@@ -1,4 +1,6 @@
 import type { ScriptEditorProjectDefinition } from "../domain/script-editor-project";
+import type { ScriptEditorTemplateCatalog } from "./script-editor-template-catalog";
+import type { ScriptEditorPublicationCatalog } from "./script-editor-publication-catalog";
 
 export type ScriptEditorProjectStorageProject = {
   project: ScriptEditorProjectDefinition;
@@ -21,7 +23,7 @@ export type ScriptEditorPreviewSession = {
   exit(): Promise<void> | void;
 };
 
-export type ScriptEditorPreviewRuntime = {
+export type ScriptEditorPreviewHost = {
   startPreview(
     request: ScriptEditorPreviewRequest
   ): Promise<ScriptEditorPreviewSession>;
@@ -29,7 +31,9 @@ export type ScriptEditorPreviewRuntime = {
 
 export type ScriptEditorHost = {
   projectStorage: ScriptEditorProjectStorage;
-  previewRuntime: ScriptEditorPreviewRuntime;
+  previewHost?: ScriptEditorPreviewHost;
+  templateCatalog?: ScriptEditorTemplateCatalog;
+  publicationCatalog?: ScriptEditorPublicationCatalog;
   notify?: (
     message: string,
     kind?: "info" | "error" | "success" | "warning"

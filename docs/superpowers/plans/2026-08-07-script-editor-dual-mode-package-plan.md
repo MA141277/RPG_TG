@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Plan written from the frozen dual-mode package design.`
-- Next Step: `Choose an execution mode, then start Task 1 by locking the host contract and neutral shared contract boundary.`
-- Verification: `Not run`
-- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation.`
+- Current Focus: `Task 2: move script editor session ownership out of MainUiFlow.`
+- Next Step: `Create the embedded session ownership test, verify it fails, then move session ownership into script-editor/kernel.`
+- Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck`
+- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Plan created from the approved script editor dual-mode package design.`
   - Verification: `Not run`
   - Next: `Choose an execution mode and start Task 1.`
+- 2026-08-07
+  - Summary: `Completed Task 1 by locking the script editor host contract to injected previewHost/templateCatalog/publicationCatalog fields and keeping shared person-attribute contract ownership under core/contracts.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs`; `npm run typecheck`
+  - Next: `Start Task 2 and move script editor session ownership out of MainUiFlow.`
 
 ---
 
@@ -150,7 +154,7 @@
 - Modify: `src/modules/script-editor/index.ts`
 - Test: `tests/script-editor-host-contract.test.cjs`
 
-- [ ] **Step 1: Write the failing host-boundary test**
+- [x] **Step 1: Write the failing host-boundary test**
 
 Create `tests/script-editor-host-contract.test.cjs` with checks like:
 
@@ -183,7 +187,7 @@ test("runtime person attribute support no longer imports from modules\\/script-e
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 
@@ -198,7 +202,7 @@ Expected:
 - `previewRuntime` still exists in the host contract
 - `person-attribute-runtime.ts` still imports from `modules/script-editor`
 
-- [ ] **Step 3: Implement the neutral shared contract and new host fields**
+- [x] **Step 3: Implement the neutral shared contract and new host fields**
 
 Create and wire the neutral contract:
 
@@ -237,7 +241,7 @@ export type ScriptEditorHost = {
 
 Update `person-attribute-runtime.ts` to import from the neutral contract file instead of `modules/script-editor`.
 
-- [ ] **Step 4: Run the focused contract tests again**
+- [x] **Step 4: Run the focused contract tests again**
 
 Run:
 

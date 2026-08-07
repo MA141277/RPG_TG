@@ -1,7 +1,7 @@
 import type {
   ScriptEditorPersonAttributeMapping,
   ScriptEditorPersonAttributeValue,
-} from "../../modules/script-editor";
+} from "../../core/contracts/script-editor-person-attributes";
 
 export type RuntimePersonAttributeCarrier = {
   attributeMappings?: ScriptEditorPersonAttributeMapping[] | undefined;

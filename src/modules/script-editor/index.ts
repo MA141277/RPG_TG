@@ -9,5 +9,5 @@ export type {
   ScriptEditorPersonAttributeMapping,
   ScriptEditorPersonAttributeValue,
   ScriptEditorPersonSemanticBinding,
-} from "./domain/script-editor-project";
+} from "../../core/contracts/script-editor-person-attributes";
 export * as scriptEditorMainUiBridge from "./main-ui-bridge";

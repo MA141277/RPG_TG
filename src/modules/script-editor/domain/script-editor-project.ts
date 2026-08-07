@@ -27,6 +27,16 @@ import type {
   MenuTargetFamily,
 } from "../../../domain/menu";
 import type { DialogueSide } from "../../../domain/dialogue";
+import type {
+  ScriptEditorPersonAttributeMapping,
+  ScriptEditorPersonAttributeValue,
+  ScriptEditorPersonSemanticBinding,
+} from "../../../core/contracts/script-editor-person-attributes";
+export type {
+  ScriptEditorPersonAttributeMapping,
+  ScriptEditorPersonAttributeValue,
+  ScriptEditorPersonSemanticBinding,
+} from "../../../core/contracts/script-editor-person-attributes";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
@@ -152,26 +162,6 @@ export type ScriptEditorPersonAttributeGroup = {
   title: string;
   order: number;
   attributeKeys: string[];
-};
-
-export type ScriptEditorPersonAttributeMapping = {
-  key: string;
-  keyName: string;
-  semanticKey?: string | undefined;
-  type: "number" | "string" | "boolean" | "enum";
-  options?: string[] | undefined;
-};
-
-export type ScriptEditorPersonAttributeValue = {
-  key: string;
-  value: string | number | boolean;
-};
-
-export type ScriptEditorPersonSemanticBinding = {
-  semanticKey: string;
-  keyName: string;
-  type: "number" | "string" | "boolean" | "enum";
-  options?: string[] | undefined;
 };
 
 export type ScriptEditorPortraitResourceRecord = PortraitResourceDefinition;
