@@ -103,3 +103,66 @@ test("createInitialState initializes civilization sandbox runtime state", () => 
   assert.equal(state.runtime.civilizationSandbox.enabled, false);
   assert.equal(state.runtime.civilizationSandbox.mode, "validation");
 });
+
+test("placing a sandbox lord creates civilization settlement household and claimed land", () => {
+  const {
+    createInitialCivilizationSandboxState,
+  } = require("../.test-dist/domain/civilization-sandbox.js");
+  const {
+    placeSandboxLord,
+  } = require("../.test-dist/application/civilization-sandbox/placement.js");
+
+  const state = placeSandboxLord({
+    state: createInitialCivilizationSandboxState(),
+    raceId: "wu-tong",
+    hex: { x: 4, y: -2 },
+  });
+
+  assert.equal(state.enabled, true);
+  assert.equal(Object.keys(state.civilizationsById).length, 1);
+  assert.equal(Object.keys(state.settlementsById).length, 1);
+  assert.equal(Object.keys(state.householdsById).length, 1);
+  assert.equal(Object.keys(state.individualsById).length, 4);
+  assert.equal(state.claimedHexByKey["4,-2"], "civ.wu-tong.1");
+  assert.equal(state.individualsById["individual.wu-tong.1"]?.name, "吴同");
+  assert.equal(state.individualsById["individual.wu-tong.1"]?.role, "lord");
+});
+
+test("sandbox tick creates visible house farm and child records from starting civilization", () => {
+  const {
+    createInitialCivilizationSandboxState,
+  } = require("../.test-dist/domain/civilization-sandbox.js");
+  const {
+    placeSandboxLord,
+  } = require("../.test-dist/application/civilization-sandbox/placement.js");
+  const {
+    tickCivilizationSandbox,
+  } = require("../.test-dist/application/civilization-sandbox/simulation.js");
+
+  let state = placeSandboxLord({
+    state: createInitialCivilizationSandboxState(),
+    raceId: "yu-qingqing",
+    hex: { x: 0, y: 0 },
+  });
+
+  for (let index = 0; index < 8; index += 1) {
+    state = tickCivilizationSandbox(state);
+  }
+
+  assert.ok(
+    Object.values(state.structuresById).some(
+      (structure) => structure.kind === "rural-house"
+    )
+  );
+  assert.ok(
+    Object.values(state.structuresById).some(
+      (structure) => structure.kind === "farm"
+    )
+  );
+  assert.ok(
+    Object.values(state.individualsById).some(
+      (individual) => individual.name === "于晶晶"
+    )
+  );
+  assert.ok(Object.keys(state.claimedHexByKey).length > 1);
+});

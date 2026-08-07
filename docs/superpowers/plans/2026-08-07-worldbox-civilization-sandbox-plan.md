@@ -12,12 +12,17 @@
 
 - Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 1 domain state and race naming implementation is complete pending the Task 1 commit.`
-- Next Step: `Commit Task 1, then continue Task 2 placement and simulation core from this plan.`
+- Current Focus: `Task 2 placement and simulation core implementation is complete pending the Task 2 commit.`
+- Next Step: `Commit Task 2, then continue Task 3 map overlay presenter and view-model wiring.`
 - Verification: `npm run build:test; node --test --test-isolation=none tests/civilization-sandbox-domain.test.cjs; npm run typecheck`
 - Notes: `docs/superpowers/project-progress.md still points to the campaign-cloud completed-but-open child; this sandbox execution was started by explicit user direction on a dedicated branch without changing the canonical progress entry.`
 
 ## Progress Log
+
+- 2026-08-07
+  - Summary: `Completed Task 2 for the Worldbox civilization sandbox: placing a lord now creates a civilization, settlement, household, starting individuals, and claimed land; sandbox ticks create rural-house and farm structures, expand territory, and add child records.`
+  - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-domain.test.cjs`; `npm run typecheck`
+  - Next: `Commit Task 2, then continue with map overlay projection.`
 
 - 2026-08-07
   - Summary: `Completed Task 1 for the Worldbox civilization sandbox: added the runtime state, three founding race templates, deterministic child naming, and createInitialState integration.`
@@ -605,7 +610,7 @@ Expected:
 - domain tests pass
 - typecheck passes
 
-- [ ] **Step 9: Commit Task 1**
+- [x] **Step 9: Commit Task 1**
 
 Run:
 
@@ -627,7 +632,7 @@ git commit -m "feat: add civilization sandbox runtime state"
 - Produces: `placeSandboxLord(input: PlaceSandboxLordInput): CivilizationSandboxState`
 - Produces: `tickCivilizationSandbox(state: CivilizationSandboxState): CivilizationSandboxState`
 
-- [ ] **Step 1: Add failing placement and tick tests**
+- [x] **Step 1: Add failing placement and tick tests**
 
 Append these tests to `tests/civilization-sandbox-domain.test.cjs`:
 
@@ -690,7 +695,7 @@ test("sandbox tick creates visible house farm and child records from starting ci
 });
 ```
 
-- [ ] **Step 2: Run tests and confirm placement modules are missing**
+- [x] **Step 2: Run tests and confirm placement modules are missing**
 
 Run:
 
@@ -704,7 +709,7 @@ Expected:
 - build succeeds
 - tests fail because `placement` and `simulation` modules do not exist
 
-- [ ] **Step 3: Implement lord placement**
+- [x] **Step 3: Implement lord placement**
 
 Create `src/application/civilization-sandbox/placement.ts`:
 
@@ -877,7 +882,7 @@ function createIndividual(input: {
 }
 ```
 
-- [ ] **Step 4: Implement deterministic simulation tick**
+- [x] **Step 4: Implement deterministic simulation tick**
 
 Create `src/application/civilization-sandbox/simulation.ts`:
 
@@ -1137,7 +1142,7 @@ function getCivilizationCenterHex(
 }
 ```
 
-- [ ] **Step 5: Run tests for Task 2**
+- [x] **Step 5: Run tests for Task 2**
 
 Run:
 

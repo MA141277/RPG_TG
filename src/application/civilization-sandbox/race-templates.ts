@@ -13,6 +13,8 @@ export type CivilizationSandboxRaceTemplate = {
   id: CivilizationSandboxRaceId;
   founderName: string;
   color: string;
+  colorToken: string;
+  preferredLordSprites: string[];
   behavior: CivilizationSandboxBehaviorProfile;
 };
 
@@ -24,6 +26,8 @@ export const SANDBOX_RACE_TEMPLATES: Record<
     id: "wu-tong",
     founderName: "吴同",
     color: "red",
+    colorToken: "sandbox-civilization-wu",
+    preferredLordSprites: ["noble1", "noble2"],
     behavior: {
       combat: 3,
       expansion: 3,
@@ -37,6 +41,8 @@ export const SANDBOX_RACE_TEMPLATES: Record<
     id: "yu-qingqing",
     founderName: "于晴晴",
     color: "green",
+    colorToken: "sandbox-civilization-yu",
+    preferredLordSprites: ["commoner1", "commoner2"],
     behavior: {
       combat: 1,
       expansion: 1,
@@ -50,6 +56,8 @@ export const SANDBOX_RACE_TEMPLATES: Record<
     id: "chen-yihan",
     founderName: "陈倚晗",
     color: "blue",
+    colorToken: "sandbox-civilization-chen",
+    preferredLordSprites: ["scholar1", "official1"],
     behavior: {
       combat: 1,
       expansion: 2,
