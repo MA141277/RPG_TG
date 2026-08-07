@@ -48,11 +48,9 @@ import {
   isSupportedEventBindingTrigger,
 } from "../../../core/runtime/event-binding-contract";
 import {
-  builtinPlayableDefinitionRegistry,
-} from "../../../core/registry/builtin-playable-definition-registry";
-import {
   isScriptEditorShellBackedMinigamePlayableId,
 } from "./minigame-binding-authoring";
+import { createBuiltinScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
 
 export type ScriptEditorRuntimeExportDiagnostic = {
   code:
@@ -66,6 +64,9 @@ export type ScriptEditorRuntimeExportDiagnostic = {
   fieldPath: string;
   message: string;
 };
+
+const builtinScriptEditorPlayableCatalog =
+  createBuiltinScriptEditorPlayableCatalog();
 
 type RuntimePackManifestFiles = {
   scenarioProfile: string;
@@ -1113,7 +1114,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     const triggerEvent = eventLaunchEventId.length > 0 ? eventLaunchEventId : "manual-launch";
 
     const definition = usesBuiltinPlayableShell
-      ? builtinPlayableDefinitionRegistry.get(playableId)
+      ? builtinScriptEditorPlayableCatalog.getPlayableDefinition(playableId)
       : {
           id: playableId,
           commandPrefix: `playable.${playableId}.`,
@@ -2722,7 +2723,8 @@ function lowerEventDestinationLaunchAction(
 
   const minigame = minigamesById.get(targetId);
   if (minigame == null) {
-    const playableDefinition = builtinPlayableDefinitionRegistry.get(targetId);
+    const playableDefinition =
+      builtinScriptEditorPlayableCatalog.getPlayableDefinition(targetId);
     if (playableDefinition != null) {
       diagnostics.push({
         code: "missing-reference",

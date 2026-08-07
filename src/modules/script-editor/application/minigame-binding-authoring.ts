@@ -1,13 +1,4 @@
-﻿import {
-  builtinPlayableDefinitionRegistry,
-} from "../../../core/registry/builtin-playable-definition-registry";
-import {
-  builtinPlayableIntegrationRegistry,
-} from "../../../core/registry/builtin-playable-integration-registry";
-import {
-  builtinPlayableShellRegistry,
-} from "../../../core/registry/builtin-playable-shell-registry";
-import type {
+﻿import type {
   ScriptEditorKeyValueEntry,
   ScriptEditorPlayableConfigEntry,
   ScriptEditorPlayableSettlementRoute,
@@ -18,6 +9,7 @@ import type {
   ScriptEditorMinigameReturnPolicy,
   ScriptEditorMinigameTriggerSource,
 } from "../domain/script-editor-project";
+import { createBuiltinScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
 import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_MINIGAME_OWNER_KINDS: readonly ScriptEditorMinigameOwnerKind[] = [
@@ -47,12 +39,14 @@ export const SCRIPT_EDITOR_MINIGAME_OUTCOMES: readonly ScriptEditorMinigameOutco
   "cancelled",
 ] as const;
 
-const BUILTIN_PLAYABLE_DEFINITIONS = Array.from(
-  builtinPlayableDefinitionRegistry.entries()
-).filter((definition) => builtinPlayableShellRegistry.get(definition.id) != null);
+const builtinScriptEditorPlayableCatalog =
+  createBuiltinScriptEditorPlayableCatalog();
+
+const BUILTIN_PLAYABLE_DEFINITIONS =
+  builtinScriptEditorPlayableCatalog.listPlayableDefinitions();
 
 const BUILTIN_PLAYABLE_INTEGRATIONS = Array.from(
-  builtinPlayableIntegrationRegistry.entries()
+  builtinScriptEditorPlayableCatalog.listPlayableIntegrations()
 ).filter((integration) =>
   BUILTIN_PLAYABLE_DEFINITIONS.some(
     (definition) => definition.id === integration.playableId
@@ -78,7 +72,7 @@ export function isScriptEditorShellBackedMinigamePlayableId(
     return false;
   }
 
-  return builtinPlayableShellRegistry.get(playableId.trim()) != null;
+  return builtinScriptEditorPlayableCatalog.hasPlayableShell(playableId.trim());
 }
 
 export function listScriptEditorBuiltinMinigameIntegrationOptions(

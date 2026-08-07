@@ -11,6 +11,7 @@
     "src/core/**/*.ts",
     "src/application/**/*.ts",
     "src/domain/**/*.ts",
+    "src/modules/**/*.ts",
     "src/shared/**/*.ts",
     "src/types/**/*.d.ts",
     "src/ui/components/**/*.ts",

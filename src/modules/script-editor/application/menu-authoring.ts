@@ -13,12 +13,7 @@ import type {
   ScriptEditorMinigameRecord,
   ScriptEditorProjectDefinition,
 } from "../domain/script-editor-project";
-import {
-  builtinPlayableDefinitionRegistry,
-} from "../../../core/registry/builtin-playable-definition-registry";
-import {
-  builtinPlayableIntegrationRegistry,
-} from "../../../core/registry/builtin-playable-integration-registry";
+import { createBuiltinScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
 import { allocateNextScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 type ScriptEditorLocationFamily = "cities" | "buildings";
@@ -40,6 +35,9 @@ type ScriptEditorMenuEntryEditableField =
   | "targetFamily"
   | "targetId"
   | "disabledHint";
+
+const builtinScriptEditorPlayableCatalog =
+  createBuiltinScriptEditorPlayableCatalog();
 
 const DEFAULT_CITY_MENU_FAMILIES = ["overview", "intel", "locations", "management"];
 const DEFAULT_BUILDING_MENU_FAMILIES = ["dialogue", "trade", "work", "rest"];
@@ -987,15 +985,17 @@ function resolveMenuEntryMinigamePrototypeDestination(
   if (playableId.length === 0 || projectMinigameIds.has(playableId)) {
     return null;
   }
-  const playableDefinition = builtinPlayableDefinitionRegistry.get(playableId);
+  const playableDefinition =
+    builtinScriptEditorPlayableCatalog.getPlayableDefinition(playableId);
   if (playableDefinition == null) {
     return null;
   }
 
   const minigameId = allocateNextScriptEditorCanonicalId("minigames", minigames);
-  const builtinIntegration = Array.from(
-    builtinPlayableIntegrationRegistry.entries()
-  ).find((integration) => integration.playableId === playableId);
+  const builtinIntegration =
+    builtinScriptEditorPlayableCatalog
+      .listPlayableIntegrations()
+      .find((integration) => integration.playableId === playableId);
   const ownerKind =
     builtinIntegration?.ownerDefaults.ownerKind ??
     builtinIntegration?.trigger.ownerKind ??

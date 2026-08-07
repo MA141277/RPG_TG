@@ -14,7 +14,9 @@
 - `src/modules/script-editor/application/script-editor-scenario-pack-codec.ts` 现已成为 script-editor 包内统一的 scenario-pack codec owner；`runtime-pack-import.ts`、`runtime-pack-export.ts` 和 `loaded-scenario-pack-preview-host.ts` 不再各自直接导入外部 `application/scenario/scenario-pack-loader`。
 - `src/modules/script-editor/application/script-editor-building-layout-templates.ts` 现已成为 script-editor 包内建筑布局模板 owner；`city-building-authoring.ts` 不再从外部 `application/building/building-layout-templates` 借用模板列表、默认布局和模板归一化逻辑。
 - `src/modules/script-editor/host/script-editor-template-catalog.ts` 与 `src/modules/script-editor/host/script-editor-publication-catalog.ts` 现已承接默认模板导入和 registered builtin publication hydration；相关 builtin/publication 入口不再从 runtime 侧被剧本编辑器硬编码反向拉入。
+- `src/modules/script-editor/host/script-editor-playable-catalog.ts` 现已成为 script-editor 包内统一的 builtin playable seam owner；`menu-authoring.ts`、`minigame-binding-authoring.ts` 与 `runtime-pack-export.ts` 不再直连外部 `core/registry/builtin-playable-*`。
 - `prototypes/script-editor/index.html`、`src/modules/script-editor/standalone/script-editor-standalone.ts`、`src/modules/script-editor/standalone/script-editor-standalone-host.ts` 与 `vite.config.ts` 现已提供独立的 standalone 剧本编辑器入口，同时保持嵌入态与 standalone 复用同一套会话 owner。
+- `tsconfig.test.json` 现已把 `src/modules/**/*.ts` 纳入 `.test-dist` 编译范围；依赖 `.test-dist/modules/**` 的 Script Editor module 行为测试不再读取历史残留产物。
 - 这一轮还补齐了 `tests/script-editor-host-contract.test.cjs`、`tests/script-editor-embedded-session.test.cjs`、`tests/script-editor-standalone-entry.test.cjs`、`tests/script-editor-publication-boundary.test.cjs` 和 `tests/script-editor-runtime-preview-compat.test.cjs` 的包边界回归，并通过浏览器 smoke 验证了嵌入态预览链路和 standalone fail-closed 行为。
 
 ### Impact
@@ -26,6 +28,8 @@
 - `loaded-scenario-pack` 预览 helper 下沉到 host 目录后，script-editor 的 UI 层已经不再直接依赖外部 application loader；后续如果继续做 embedded host 与 standalone host 的分离，可以直接围绕 `host/**` 目录推进。
 - scenario-pack codec 收口后，script-editor 包内与 scenario-pack 解析/加载相关的外部依赖现在只剩单一入口；后续如果要进一步把 import/export 能力完全独立出来，可以直接替换这一个 codec seam，而不用再扫三处调用点。
 - 建筑布局模板本地化后，script-editor authoring 层对外部 application 依赖进一步缩到 scenario-pack codec 这一条；后续如果继续把 package 完全独立出来，剩余真正的替换点已经更集中。
+- playable catalog 收口后，script-editor authoring / export 层里与 builtin playable 注册表相关的外部依赖也已经集中到单一 host seam；后续如果要把玩法定义改成注入式 owner，只需要替换这一个 catalog。
+- `tsconfig.test.json` 补上 `src/modules/**/*.ts` 之后，module 行为测试终于和当前源码同构；后续继续拆 package 时，像 `playable-family-removal` 这类测试不会再被旧 `.test-dist` 假绿或假红误导。
 
 ## 2026-08-05 Agent Immediate Execution Workflow Governance
 

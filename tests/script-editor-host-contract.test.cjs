@@ -34,3 +34,52 @@ test("neutral script editor person attribute contract file exists under core con
     true
   );
 });
+
+test("script editor playable authoring and export use a package-local playable catalog seam", () => {
+  const menuAuthoringSource = readSource(
+    "src/modules/script-editor/application/menu-authoring.ts"
+  );
+  const minigameBindingSource = readSource(
+    "src/modules/script-editor/application/minigame-binding-authoring.ts"
+  );
+  const runtimePackExportSource = readSource(
+    "src/modules/script-editor/application/runtime-pack-export.ts"
+  );
+
+  assert.doesNotMatch(
+    menuAuthoringSource,
+    /core\/registry\/builtin-playable-definition-registry/
+  );
+  assert.doesNotMatch(
+    menuAuthoringSource,
+    /core\/registry\/builtin-playable-integration-registry/
+  );
+  assert.doesNotMatch(
+    minigameBindingSource,
+    /core\/registry\/builtin-playable-definition-registry/
+  );
+  assert.doesNotMatch(
+    minigameBindingSource,
+    /core\/registry\/builtin-playable-integration-registry/
+  );
+  assert.doesNotMatch(
+    minigameBindingSource,
+    /core\/registry\/builtin-playable-shell-registry/
+  );
+  assert.doesNotMatch(
+    runtimePackExportSource,
+    /core\/registry\/builtin-playable-definition-registry/
+  );
+  assert.match(menuAuthoringSource, /script-editor-playable-catalog/);
+  assert.match(minigameBindingSource, /script-editor-playable-catalog/);
+  assert.match(runtimePackExportSource, /script-editor-playable-catalog/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/host/script-editor-playable-catalog.ts"
+      )
+    ),
+    true
+  );
+});
