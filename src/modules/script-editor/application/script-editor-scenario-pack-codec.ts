@@ -1,5 +1,5 @@
-import type { MapDefinition } from "../../../domain/map";
-import type { ScenarioPackDefinition } from "../../../domain/scenario-pack";
+import type { MapDefinition } from "./script-editor-map-contract";
+import type { ScenarioPackDefinition } from "../domain/script-editor-scenario-pack-contract";
 import { createBuiltinScriptEditorPublicationCatalog } from "../host/script-editor-publication-catalog";
 
 type ScenarioPackManifestFiles = {

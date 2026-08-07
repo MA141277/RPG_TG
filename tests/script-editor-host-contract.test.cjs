@@ -367,3 +367,90 @@ test("script editor domain and authoring consume menu location-access dialogue a
     assert.equal(fs.existsSync(path.join(process.cwd(), file)), true);
   }
 });
+
+test("script editor structural contracts consume city building character portrait map and scenario-pack types through package-local seams", () => {
+  const cityBuildingRuntimeSource = readSource(
+    "src/modules/script-editor/application/city-building-runtime-materializer.ts"
+  );
+  const buildingLayoutTemplateSource = readSource(
+    "src/modules/script-editor/application/script-editor-building-layout-templates.ts"
+  );
+  const personAuthoringSource = readSource(
+    "src/modules/script-editor/application/person-authoring.ts"
+  );
+  const fieldMappingSource = readSource(
+    "src/modules/script-editor/application/field-mapping.ts"
+  );
+  const portraitAuthoringSource = readSource(
+    "src/modules/script-editor/application/portrait-authoring.ts"
+  );
+  const scenarioPackCodecSource = readSource(
+    "src/modules/script-editor/application/script-editor-scenario-pack-codec.ts"
+  );
+  const publicationCatalogSource = readSource(
+    "src/modules/script-editor/host/script-editor-publication-catalog.ts"
+  );
+  const projectDomainSource = readSource(
+    "src/modules/script-editor/domain/script-editor-project.ts"
+  );
+  const cityBuildingAuthoringSource = readSource(
+    "src/modules/script-editor/application/city-building-authoring.ts"
+  );
+
+  for (const source of [
+    cityBuildingRuntimeSource,
+    buildingLayoutTemplateSource,
+    personAuthoringSource,
+    fieldMappingSource,
+    portraitAuthoringSource,
+    scenarioPackCodecSource,
+    publicationCatalogSource,
+    projectDomainSource,
+    cityBuildingAuthoringSource,
+  ]) {
+    assert.doesNotMatch(source, /domain\/house/);
+  }
+
+  assert.doesNotMatch(cityBuildingRuntimeSource, /domain\/city-entry/);
+  assert.doesNotMatch(cityBuildingRuntimeSource, /domain\/building-arrangement/);
+  assert.doesNotMatch(cityBuildingRuntimeSource, /domain\/city-npc/);
+  assert.doesNotMatch(cityBuildingRuntimeSource, /domain\/city/);
+  assert.doesNotMatch(buildingLayoutTemplateSource, /domain\/building-arrangement/);
+  assert.doesNotMatch(personAuthoringSource, /domain\/character/);
+  assert.doesNotMatch(fieldMappingSource, /domain\/character/);
+  assert.doesNotMatch(portraitAuthoringSource, /domain\/portrait-resource/);
+  assert.doesNotMatch(projectDomainSource, /domain\/portrait-resource/);
+  assert.doesNotMatch(scenarioPackCodecSource, /domain\/map/);
+  assert.doesNotMatch(scenarioPackCodecSource, /domain\/scenario-pack/);
+  assert.doesNotMatch(publicationCatalogSource, /domain\/scenario-pack/);
+
+  assert.match(cityBuildingRuntimeSource, /script-editor-city-entry-contract/);
+  assert.match(cityBuildingRuntimeSource, /script-editor-building-arrangement-contract/);
+  assert.match(cityBuildingRuntimeSource, /script-editor-city-contract/);
+  assert.match(cityBuildingRuntimeSource, /script-editor-city-npc-contract/);
+  assert.match(cityBuildingRuntimeSource, /script-editor-house-contract/);
+  assert.match(buildingLayoutTemplateSource, /script-editor-building-arrangement-contract/);
+  assert.match(personAuthoringSource, /script-editor-character-contract/);
+  assert.match(fieldMappingSource, /script-editor-character-contract/);
+  assert.match(portraitAuthoringSource, /script-editor-portrait-resource-contract/);
+  assert.match(projectDomainSource, /script-editor-portrait-resource-contract/);
+  assert.match(projectDomainSource, /script-editor-house-contract/);
+  assert.match(cityBuildingAuthoringSource, /script-editor-house-contract/);
+  assert.match(scenarioPackCodecSource, /script-editor-map-contract/);
+  assert.match(scenarioPackCodecSource, /script-editor-scenario-pack-contract/);
+  assert.match(publicationCatalogSource, /script-editor-scenario-pack-contract/);
+
+  for (const file of [
+    "src/modules/script-editor/application/script-editor-building-arrangement-contract.ts",
+    "src/modules/script-editor/application/script-editor-city-contract.ts",
+    "src/modules/script-editor/application/script-editor-city-entry-contract.ts",
+    "src/modules/script-editor/application/script-editor-city-npc-contract.ts",
+    "src/modules/script-editor/application/script-editor-map-contract.ts",
+    "src/modules/script-editor/domain/script-editor-character-contract.ts",
+    "src/modules/script-editor/domain/script-editor-house-contract.ts",
+    "src/modules/script-editor/domain/script-editor-portrait-resource-contract.ts",
+    "src/modules/script-editor/domain/script-editor-scenario-pack-contract.ts",
+  ]) {
+    assert.equal(fs.existsSync(path.join(process.cwd(), file)), true);
+  }
+});

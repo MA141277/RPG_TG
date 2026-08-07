@@ -20,7 +20,7 @@
   ScriptEditorTypedAttributeRecord,
   ScriptEditorTypedAttributeType,
 } from "../domain/script-editor-project";
-import type { HouseDefinition } from "../../../domain/house";
+import type { HouseDefinition } from "../domain/script-editor-house-contract";
 import {
   SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS as BUILDING_LAYOUT_TEMPLATE_IDS,
   createDefaultScriptEditorBuildingLayoutDefinition as createDefaultBuildingLayoutDefinition,

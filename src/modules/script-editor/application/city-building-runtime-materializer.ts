@@ -1,6 +1,6 @@
-﻿import type { CityEntryDefinition } from "../../../domain/city-entry";
-import type { BuildingArrangementDefinition } from "../../../domain/building-arrangement";
-import type { CityDefinition } from "../../../domain/city";
+﻿import type { CityEntryDefinition } from "./script-editor-city-entry-contract";
+import type { BuildingArrangementDefinition } from "./script-editor-building-arrangement-contract";
+import type { CityDefinition } from "./script-editor-city-contract";
 import type {
   LocationAccessDefinition,
   LocationAccessPurpose,
@@ -9,8 +9,8 @@ import type {
 import type {
   CityNpcDefinition,
   CityNpcPoolDefinition,
-} from "../../../domain/city-npc";
-import type { HouseDefinition } from "../../../domain/house";
+} from "./script-editor-city-npc-contract";
+import type { HouseDefinition } from "../domain/script-editor-house-contract";
 import type {
   ScriptEditorAccessRule,
   ScriptEditorBuildingRecord,

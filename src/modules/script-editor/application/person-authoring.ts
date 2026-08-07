@@ -2,7 +2,7 @@
   CharacterDefinition,
   CharacterStats,
   SkillKey,
-} from "../../../domain/character";
+} from "../domain/script-editor-character-contract";
 import type {
   ScriptEditorPersonRecord,
   ScriptEditorPersonLegacyFieldSet,

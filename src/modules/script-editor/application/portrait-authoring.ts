@@ -1,7 +1,7 @@
 ﻿import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
-} from "../../../domain/portrait-resource";
+} from "../domain/script-editor-portrait-resource-contract";
 import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 export type ScriptEditorPortraitResourceRecord = PortraitResourceDefinition;

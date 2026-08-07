@@ -2,7 +2,7 @@
   SKILL_LABELS,
   type CharacterStatKey,
   type SkillKey,
-} from "../../../domain/character";
+} from "../domain/script-editor-character-contract";
 
 export const SCRIPT_EDITOR_FIELD_VALUE_TYPES = [
   "string",

@@ -1,4 +1,4 @@
-import type { HouseDefinition } from "../../../domain/house";
+import type { HouseDefinition } from "./script-editor-house-contract";
 import type {
   EventOccurrence,
   EventParticipant,
@@ -14,7 +14,7 @@ import type { FlowNode } from "./script-editor-flow-contract";
 import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
-} from "../../../domain/portrait-resource";
+} from "./script-editor-portrait-resource-contract";
 import type {
   ProgressTierDefinition,
   ProgressTrackBinding,

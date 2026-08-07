@@ -2,7 +2,7 @@ import type {
   BuildingLayoutDefinition,
   BuildingLayoutNodeDefinition,
   BuildingLayoutTemplateId,
-} from "../../../domain/building-arrangement";
+} from "./script-editor-building-arrangement-contract";
 
 export type ScriptEditorBuildingLayoutTemplateDefinition = {
   id: BuildingLayoutTemplateId;

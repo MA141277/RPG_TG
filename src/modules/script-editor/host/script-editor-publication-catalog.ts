@@ -1,4 +1,4 @@
-import type { ScenarioPackDefinition } from "../../../domain/scenario-pack";
+import type { ScenarioPackDefinition } from "../domain/script-editor-scenario-pack-contract";
 import * as activitiesJson from "../builtin-templates/zhuyuanzhang/activities.json";
 import * as buildingArrangementsJson from "../builtin-templates/zhuyuanzhang/building-arrangements.json";
 import * as cardsJson from "../builtin-templates/zhuyuanzhang/cards.json";
