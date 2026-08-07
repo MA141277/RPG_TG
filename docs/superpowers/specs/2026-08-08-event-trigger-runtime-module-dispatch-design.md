@@ -29,8 +29,6 @@ runEventRuntime(...)
     -> dispatchRuntimeRequest(...)
       -> router.route(...)
         -> dispatchEventRoute(...)
-      -> router.routeEventChain(...)
-        -> dispatchEventRoute(...)
 ```
 
 This keeps external callers using the event runtime API. It does not expose `dispatchRuntimeRequest(...)` to callers and does not move runtime-dispatch settlement logic into the event module.
@@ -59,16 +57,17 @@ This keeps external callers using the event runtime API. It does not expose `dis
 - `state: toEventRuntimeState(state)`
 - `request: createEventTriggerRequest(eventDefinition.id)`
 - `context.router.route(...)` delegating to `dispatchEventRoute(...)`
-- `context.router.routeEventChain(...)` delegating to `dispatchEventRoute(...)`
 
 The runtime request event id should be the activated event id, not the trigger family id such as `story.city-enter`.
+
+This child intentionally does not provide `context.router.routeEventChain(...)` for trigger events. Current authored events project to owner-paced `dialogue` or `settlement` runtime event kinds, and `event-chain-runtime` rejects immediate chaining for those kinds. Keeping trigger-event emitted follow-ups out of immediate chaining preserves the existing owner-paced continuation contract while still routing the activated trigger event through runtime-dispatch.
 
 ## Acceptance Criteria
 
 - `runStoryEventRuntime(...)` still exposes the same public API and result shape.
 - Trigger-event activation calls `dispatchRuntimeRequest(...)` from inside `event-runtime.ts`.
 - The dispatch router path inside `event-runtime.ts` still calls `dispatchEventRoute(...)`.
-- Follow-up events emitted by a triggered event can be routed through runtime-dispatch event-chain handling.
+- Owner-paced follow-up events emitted by a triggered event are not forced through immediate event-chain handling.
 - `event-binding-runtime.ts` remains unchanged by this child.
 - No registered notification bus or handler registry is introduced.
 - Governance docs and `docs/change-log.md` record the shared runtime/event wiring change.
@@ -76,11 +75,12 @@ The runtime request event id should be the activated event id, not the trigger f
 ## Verification
 
 - RED/GREEN behavior coverage in `tests/event-router-runtime.test.cjs` for trigger events using `dispatchRuntimeRequest(...)`.
+- Behavior coverage proving owner-paced emitted follow-up events are not forced into immediate event-chain handling by this adapter.
 - Robustness guard in `tests/robustness.test.cjs` proving `routeTriggeredEvent(...)` uses both `dispatchRuntimeRequest(...)` and `dispatchEventRoute(...)`, and does not call `startEvent(...)`.
 - Existing binding route tests remain green to prove binding ownership was not widened.
 - Required commands:
   - `npm run build:test`
-  - `node --test --test-name-pattern "runStoryEventRuntime routes activated trigger events through the shared runtime-dispatch seam|event trigger runtime dispatches emitted follow-up events through runtime-dispatch" tests/event-router-runtime.test.cjs`
+  - `node --test --test-name-pattern "runStoryEventRuntime routes activated trigger events through the shared runtime-dispatch seam|event trigger runtime keeps owner-paced emitted follow-up events out of immediate event-chain" tests/event-router-runtime.test.cjs`
   - `node --test --test-name-pattern "event trigger runtime route convergence keeps trigger activation on the shared event module dispatch adapter|event binding runtime route convergence" tests/robustness.test.cjs`
   - `node --test tests/event-router-runtime.test.cjs`
   - `npm run typecheck`

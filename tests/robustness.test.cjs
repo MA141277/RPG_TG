@@ -16618,22 +16618,24 @@ test("scene runner scene-end continuation convergence keeps one shared continuat
   assert.doesNotMatch(sceneRunnerSource, /continueFromStartEvent/);
 });
 
-test("event trigger runtime route convergence keeps trigger activation on the shared event-router seam", () => {
+test("event trigger runtime route convergence keeps trigger activation on the shared event module dispatch adapter", () => {
   const eventRuntimeSource = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
     "utf8"
   );
   const runEventRuntimeBlock =
     eventRuntimeSource.match(
-      /export function runEventRuntime\([\s\S]*?\n}\n\nexport function runStoryEventRuntime/
+      /export function runEventRuntime\([\s\S]*?\r?\n}\r?\n\r?\nexport function runStoryEventRuntime/
     )?.[0] ?? "";
   const routeTriggeredEventBlock =
     eventRuntimeSource.match(
-      /function routeTriggeredEvent\([\s\S]*?\n}\n\nfunction toEventRuntimeEventEntity/
+      /function routeTriggeredEvent\([\s\S]*?\r?\n}\r?\n\r?\nfunction toEventRuntimeEventEntity/
     )?.[0] ?? "";
 
   assert.match(runEventRuntimeBlock, /\brouteTriggeredEvent\s*\(/);
+  assert.match(routeTriggeredEventBlock, /\bdispatchRuntimeRequest\s*\(/);
   assert.match(routeTriggeredEventBlock, /\bdispatchEventRoute\s*\(/);
+  assert.doesNotMatch(routeTriggeredEventBlock, /\bstartEvent\s*\(/);
   assert.doesNotMatch(
     runEventRuntimeBlock,
     /return\s*\{[\s\S]*state:\s*startEvent\(/

@@ -5,21 +5,25 @@
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
 - Current Task: `Event Trigger Runtime Module Dispatch`
-- Current Task Status: `running`
+- Current Task Status: `completed-but-open`
 - Current Child: `Event Trigger Runtime Module Dispatch`
-- Current Child Status: `running`
+- Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-event-trigger-runtime-module-dispatch-child`
+- Next Required Action: `commit-and-push-event-trigger-runtime-module-dispatch-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-08-08-event-trigger-runtime-module-dispatch-plan.md`
 - Last Closed Item: `Mod-First Event Binding Candidate Task Input Payload Consumption`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-08-08-event-trigger-runtime-module-dispatch-plan.md from Task 1; registry/notification work, startup, and review-system remain out of scope unless explicitly resumed.`
+- Resume From: `Open docs/superpowers/project-progress.md, then commit and push the verified implementation checkpoint for docs/superpowers/plans/2026-08-08-event-trigger-runtime-module-dispatch-plan.md; registry/notification work, startup, and review-system remain out of scope unless explicitly resumed.`
 
 ## Progress Log
 
+- 2026-08-08
+  - Summary: `Completed the Event Trigger Runtime Module Dispatch implementation locally. routeTriggeredEvent(...) now routes activated trigger events through an event-runtime internal dispatchRuntimeRequest(...) adapter while preserving dispatchEventRoute(...) as the event route owner and keeping owner-paced emitted follow-ups out of immediate event-chain handling.`
+  - Verification: `npm run build:test; node --test --test-name-pattern "runStoryEventRuntime routes activated trigger events through the shared runtime-dispatch seam|event trigger runtime keeps owner-paced emitted follow-up events out of immediate event-chain" tests/event-router-runtime.test.cjs; node --test --test-name-pattern "event trigger runtime route convergence keeps trigger activation on the shared event module dispatch adapter|event binding runtime route convergence" tests/robustness.test.cjs; node --test tests/event-router-runtime.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
+  - Next: `Commit and push the verified implementation checkpoint, then record structured closeout.`
 - 2026-08-08
   - Summary: `Opened the Event Trigger Runtime Module Dispatch child as the next approved post-merge stabilization slice. The child keeps event as the public module boundary and adds only an event-runtime internal adapter to dispatchRuntimeRequest(...), while dispatchEventRoute(...) remains the event route owner and registry/notification work stays out of scope.`
   - Verification: `Spec and plan created locally from source audit; implementation verification not run yet for this child.`

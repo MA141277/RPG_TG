@@ -253,7 +253,7 @@ test(
     );
     const eventEntityProjectionBlock =
       source.match(
-        /function toEventRuntimeEventEntity\([\s\S]*?\n}\n\nfunction createScopedTriggerContext/
+        /function toEventRuntimeEventEntity\([\s\S]*?\r?\n}\r?\n\r?\nfunction createScopedTriggerContext/
       )?.[0] ?? "";
 
     assert.match(eventEntityProjectionBlock, /emitEventIds/);
@@ -658,6 +658,122 @@ test(
       delete require.cache[eventRuntimePath];
       delete require.cache[eventRouterPath];
     }
+  }
+);
+
+test(
+  "runStoryEventRuntime routes activated trigger events through the shared runtime-dispatch seam",
+  { concurrency: false },
+  () => {
+    const runtimeDispatchPath = require.resolve(
+      "../.test-dist/core/runtime/runtime-dispatch.js"
+    );
+    const eventRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/event-runtime.js"
+    );
+
+    delete require.cache[eventRuntimePath];
+
+    const runtimeDispatch = require(runtimeDispatchPath);
+    const originalDispatchRuntimeRequest =
+      runtimeDispatch.dispatchRuntimeRequest;
+    let dispatchRuntimeRequestCalls = 0;
+
+    runtimeDispatch.dispatchRuntimeRequest = (...args) => {
+      dispatchRuntimeRequestCalls += 1;
+      return originalDispatchRuntimeRequest(...args);
+    };
+
+    try {
+      const {
+        runStoryEventRuntime: runStoryEventRuntimeWithPatchedDispatch,
+      } = require(eventRuntimePath);
+      const result = runStoryEventRuntimeWithPatchedDispatch({
+        timing: "city-enter",
+        state: createBaseStoryState(),
+        characterDefinitions: prototypeCharacters,
+        eventDefinitionsById: {
+          "event.router.triggered.dispatch": createStoryEvent(
+            "event.router.triggered.dispatch",
+            "scene.router.triggered.dispatch",
+            {
+              timing: "city-enter",
+              scope: {
+                cityId: "city.kulan",
+              },
+            }
+          ),
+        },
+      });
+
+      assert.equal(
+        result.activation?.activeEventId,
+        "event.router.triggered.dispatch"
+      );
+      assert.equal(
+        result.state.scene.activeEventId,
+        "event.router.triggered.dispatch"
+      );
+      assert.ok(
+        dispatchRuntimeRequestCalls > 0,
+        "runStoryEventRuntime should route activated trigger events through dispatchRuntimeRequest from inside event-runtime"
+      );
+    } finally {
+      runtimeDispatch.dispatchRuntimeRequest = originalDispatchRuntimeRequest;
+      delete require.cache[eventRuntimePath];
+    }
+  }
+);
+
+test(
+  "event trigger runtime keeps owner-paced emitted follow-up events out of immediate event-chain",
+  () => {
+    const result = runStoryEventRuntime({
+      timing: "city-enter",
+      state: createBaseStoryState(),
+      characterDefinitions: prototypeCharacters,
+      eventDefinitionsById: {
+        "event.router.triggered.emit": {
+          ...createStoryEvent(
+            "event.router.triggered.emit",
+            "scene.router.triggered.emit",
+            {
+              timing: "city-enter",
+              scope: {
+                cityId: "city.kulan",
+              },
+            }
+          ),
+          emitEventIds: ["event.router.triggered.follow-up"],
+        },
+        "event.router.triggered.follow-up": createStoryEvent(
+          "event.router.triggered.follow-up",
+          "scene.router.triggered.follow-up",
+          {
+            timing: "manual",
+          }
+        ),
+      },
+    });
+
+    assert.equal(
+      result.state.runtime.eventHistory["event.router.triggered.emit"]
+        ?.firedCount,
+      1
+    );
+    assert.equal(
+      result.state.runtime.eventHistory["event.router.triggered.follow-up"]
+        ?.firedCount,
+      undefined
+    );
+    assert.equal(
+      result.state.scene.activeEventId,
+      "event.router.triggered.emit"
+    );
+    assert.equal(
+      result.state.scene.activeSceneId,
+      "scene.router.triggered.emit"
+    );
   }
 );
 

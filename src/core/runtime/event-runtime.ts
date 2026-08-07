@@ -1,5 +1,4 @@
 import { buildStoryTriggerInput } from "../../application/story/story-runtime";
-import { startEvent } from "../../application/events/event-runner";
 import {
   selectTriggeredEvents,
   type TriggerEvaluatorContext,
@@ -24,6 +23,7 @@ import { selectEventCandidate } from "./event-candidate-selector";
 import { createEventRouteActivationHandlers } from "./event-route-activation";
 import { canActivateEvent } from "./event-condition-evaluator";
 import { dispatchEventRoute } from "./event-router";
+import { dispatchRuntimeRequest } from "./runtime-dispatch";
 
 export type EventRuntimeResult = {
   state: GameState;
@@ -128,22 +128,40 @@ function routeTriggeredEvent(
   eventDefinition: EventDefinition,
   eventDefinitionsById: Record<string, EventDefinition>
 ): GameState {
-  return dispatchEventRoute({
-    state: toEventRuntimeState(state),
-    eventId: eventDefinition.id,
-    context: {
-      repository: {
-        resolveById: (eventId) => {
-          const resolved = eventDefinitionsById[eventId];
-          return resolved == null ? null : toEventRuntimeEventEntity(resolved);
-        },
-      },
-      handlers: createEventRouteActivationHandlers({
-        eventDefinitionsById,
-        fallbackEventDefinition: eventDefinition,
-      }),
+  const repository = {
+    resolveById: (eventId: string) => {
+      const resolved = eventDefinitionsById[eventId];
+      return resolved == null ? null : toEventRuntimeEventEntity(resolved);
     },
-  }).state.core;
+  };
+  const handlers = createEventRouteActivationHandlers({
+    eventDefinitionsById,
+    fallbackEventDefinition: eventDefinition,
+  });
+  const routeEvent = (runtimeState: RuntimeState, eventId: string) =>
+    dispatchEventRoute({
+      state: runtimeState,
+      eventId,
+      context: {
+        repository,
+        handlers,
+      },
+    });
+  const routed = dispatchRuntimeRequest({
+    state: toEventRuntimeState(state),
+    request: createEventTriggerRequest(eventDefinition.id),
+    context: {
+      router: {
+        route: ({ state: runtimeState, request }) =>
+          routeEvent(
+            runtimeState,
+            request.family === "external" ? request.eventId : eventDefinition.id
+          ),
+      },
+    },
+  });
+
+  return routed.state.core;
 }
 
 function toEventRuntimeState(state: GameState): RuntimeState {

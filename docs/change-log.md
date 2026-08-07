@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-08 Event Trigger Runtime Module Dispatch
+
+### Changed
+- `src/core/runtime/event-runtime.ts` now routes triggered event activation through an event-runtime internal `dispatchRuntimeRequest(...)` adapter while preserving `dispatchEventRoute(...)` as the event routing owner.
+- `tests/event-router-runtime.test.cjs` now covers trigger-event runtime-dispatch routing and preserves the owner-paced boundary for emitted dialogue/settlement follow-ups.
+- `tests/robustness.test.cjs` now guards the trigger-event route helper so it keeps both `dispatchRuntimeRequest(...)` and `dispatchEventRoute(...)` in the event module adapter path.
+
+### Impact
+- Triggered events enter the same runtime-dispatch lifecycle seam used by adjacent scene/dialogue/navigation convergence work without exposing runtime-dispatch to external event callers.
+- This does not introduce a registered notification bus or handler registry, does not change `event-binding-runtime.ts`, and does not change scenario-pack JSON, Script Editor import/export/preview, playable runtime, building behavior, startup, review-system, `closeBuilding`, or `launchFlow`.
+
 ## 2026-08-08 Mod-First Event Binding Candidate Task Input Payload Consumption
 
 ### Changed
