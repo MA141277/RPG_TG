@@ -96,6 +96,10 @@
   - Summary: `Resolved final review findings for the campaign hex runtime grid architecture child: chunk cache signatures include coordinate-system bounds, shader soft shoreline sampling uses hexPointBounds size, and override tests assert exact one-to-one runtime cells. Final re-review found no Critical or Important issues.`
   - Verification: `node --test --test-name-pattern "map3 runtime export keeps gameplay hex size|campaign terrain renderer uses loaded hex point bounds|runtime grid paths do not use default hex conversion|dynamic shoreline|loaded hex grid coordinate system" tests\robustness.test.cjs`; `npm run typecheck --silent`; `npm run build:test --silent`; `npm run build`; `npm run lint:plans`; browser smoke reached 濠州 with terrain visible and no console errors; final re-review reran targeted robustness subset with 5 pass, 0 fail.
   - Next: `Push/review before child closeout; do not close while remote push is absent.`
+- 2026-08-07
+  - Summary: `Completed the script editor final package hard-cut child on branch merage-mod2ui-1: embedded and standalone now share the same package entry/session owner, current-project shell ownership is removed, old bridge/module file paths are retired, and browser smoke confirmed embedded preview plus standalone fail-closed behavior. This child remains child-local and does not change the current canonical map-renderer queue ownership.`
+  - Verification: `npm run lint:plans`; `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs tests/script-editor-embedded-session.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/script-editor-final-package-boundary.test.cjs tests/script-editor-entry-availability.test.cjs`; `npm run typecheck`; `npm run build`; in-app browser smoke at http://localhost:5173/ and http://localhost:5173/prototypes/script-editor/`
+  - Next: `Keep the canonical map-renderer queue unchanged unless this script-editor child is explicitly promoted later.`
 
 ## Latest Closeout
 

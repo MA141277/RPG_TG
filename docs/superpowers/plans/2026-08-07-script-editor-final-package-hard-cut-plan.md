@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 4 final verification and browser smoke close the hard-cut batch with governance sync.`
-- Next Step: `Run the full focused verification set, then verify embedded and standalone editor behavior in the browser before writing final docs sync.`
-- Verification: `npm run lint:plans`; `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs tests/script-editor-embedded-session.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/script-editor-final-package-boundary.test.cjs`; `npm run typecheck`; `npm run build`
+- Current Focus: `Governance docs are synced; remaining closeout action is the final docs push/close marker update.`
+- Next Step: `Commit and push the governance sync batch, then mark this child closed in a final closeout metadata update.`
+- Verification: `npm run lint:plans`; `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs tests/script-editor-embedded-session.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/script-editor-final-package-boundary.test.cjs tests/script-editor-entry-availability.test.cjs`; `npm run typecheck`; `npm run build`; in-app browser smoke: embedded path reached runtime map after 剧本编辑 -> 使用模板 -> 运行预览, standalone path stayed in workspace without entering runtime preview when previewHost was absent`
 - Notes: `This child inherits the spec hard rules: no transitional architecture, no compatibility layer, no split ownership, no old/new entry coexistence. Batches may be committed separately only if each batch already reflects one coherent final owner state.`
 
 ## Progress Log
@@ -35,6 +35,10 @@
   - Summary: `Task 3 removed src/modules/script-editor/main-ui-bridge.ts from the package path, switched the remaining package-owned ui owner to src/modules/script-editor/internal.ts, and tightened boundary tests so the deleted bridge file cannot silently reappear.`
   - Verification: `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs tests/script-editor-final-package-boundary.test.cjs`; `npm run typecheck`; `npm run build`
   - Next: `Start Task 4, run the full focused verification set, then perform embedded and standalone browser smoke before final governance sync.`
+- 2026-08-07
+  - Summary: `Task 4 verification passed: lint/build/typecheck/focused contract tests all passed, embedded browser smoke reached runtime map UI from the script editor preview path, standalone browser smoke loaded the workspace through the same package entry and remained fail-closed when previewHost was absent, and the final old file path main-ui-script-editor-module has been retired in favor of the package-owned script-editor-session-ui path.`
+  - Verification: `npm run lint:plans`; `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs tests/script-editor-embedded-session.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/script-editor-final-package-boundary.test.cjs tests/script-editor-entry-availability.test.cjs`; `npm run typecheck`; `npm run build`; in-app browser smoke at http://localhost:5173/ and http://localhost:5173/prototypes/script-editor/`
+  - Next: `Push the governance sync batch, then record final closeout metadata and close the child.`
 
 ---
 
@@ -164,7 +168,7 @@
 - Read: `src/modules/script-editor/ui/main-ui-script-editor-module.js`
 - Read: `src/ui/main-ui/main-ui-flow.js`
 
-- [ ] **Step 1: Add the failing final-boundary test file**
+- [x] **Step 1: Add the failing final-boundary test file**
 
 Create `tests/script-editor-final-package-boundary.test.cjs` with exact assertions that capture the hard-cut rules:
 
@@ -201,7 +205,7 @@ test("main-ui bridge is removed or no longer referenced by package public surfac
 });
 ```
 
-- [ ] **Step 2: Tighten the embedded ownership test so it rejects method installation**
+- [x] **Step 2: Tighten the embedded ownership test so it rejects method installation**
 
 Append an assertion like this to `tests/script-editor-embedded-session.test.cjs`:
 
@@ -210,7 +214,7 @@ assert.doesNotMatch(source, /installMainUiFlowScriptEditorModule/);
 assert.doesNotMatch(source, /scriptEditorRuntimePreviewSession/);
 ```
 
-- [ ] **Step 3: Run the focused failing tests**
+- [x] **Step 3: Run the focused failing tests**
 
 Run:
 
@@ -225,7 +229,7 @@ Expected:
 - `MainUiFlow` still imports/installs `installMainUiFlowScriptEditorModule`
 - `index.ts` still exports bridge/install surfaces
 
-- [ ] **Step 4: Record the failure point in the plan before implementation**
+- [x] **Step 4: Record the failure point in the plan before implementation**
 
 Update this plan:
 
@@ -244,7 +248,7 @@ Update this plan:
 - Delete or Modify: `src/modules/script-editor/ui/main-ui-script-editor-module.js`
 - Delete: `src/modules/script-editor/ui/main-ui-script-editor-module.d.ts`
 
-- [ ] **Step 1: Add a thin current-project host factory only if host assembly cannot live inline**
+- [x] **Step 1: Add a thin current-project host factory only if host assembly cannot live inline**
 
 If current-project-specific host assembly remains necessary, create `src/modules/script-editor/host/current-project-script-editor-host.ts` with a package-facing factory like:
 
@@ -334,7 +338,7 @@ getPlayableCatalog()
 recordNotice(...)
 ```
 
-- [ ] **Step 5: Delete or thin `main-ui-script-editor-module.js` in the same batch**
+- [x] **Step 5: Delete or thin `main-ui-script-editor-module.js` in the same batch**
 
 Either:
 
@@ -359,7 +363,7 @@ Expected:
 - `MainUiFlow` no longer imports/uses the old install surface
 - no split owner state remains
 
-- [ ] **Step 7: Commit the hard-cut of current-project ownership**
+- [x] **Step 7: Commit the hard-cut of current-project ownership**
 
 Run:
 
@@ -432,7 +436,7 @@ Expected:
 - package public API no longer leaks bridge/install internals
 - build still succeeds with standalone and embedded entries
 
-- [ ] **Step 4: Commit the package API hard-cut**
+- [x] **Step 4: Commit the package API hard-cut**
 
 Run:
 
@@ -448,7 +452,7 @@ git commit -m "refactor: narrow script editor package api"
 - Modify: `docs/superpowers/plans/2026-08-07-script-editor-final-package-hard-cut-plan.md`
 - Optionally Modify: `docs/superpowers/project-progress.md`
 
-- [ ] **Step 1: Run the full focused verification set**
+- [x] **Step 1: Run the full focused verification set**
 
 Run:
 
@@ -467,7 +471,7 @@ Expected:
 - typecheck green
 - build green
 
-- [ ] **Step 2: Re-run embedded browser smoke**
+- [x] **Step 2: Re-run embedded browser smoke**
 
 Verify in the in-app browser at `http://localhost:5173/`:
 
@@ -477,7 +481,7 @@ Verify in the in-app browser at `http://localhost:5173/`:
 
 Record any runtime errors from the browser logs and fix them before continuing.
 
-- [ ] **Step 3: Re-run standalone browser smoke**
+- [x] **Step 3: Re-run standalone browser smoke**
 
 Verify at `http://localhost:5173/prototypes/script-editor/`:
 
@@ -485,7 +489,7 @@ Verify at `http://localhost:5173/prototypes/script-editor/`:
 - `使用模板` still opens the workspace
 - preview action fails closed if no `previewHost` is injected
 
-- [ ] **Step 4: Record governance and change-log updates**
+- [x] **Step 4: Record governance and change-log updates**
 
 Update:
 
@@ -511,31 +515,31 @@ If `docs/superpowers/project-progress.md` was intentionally not changed, omit it
 
 ## Exit Check
 
-- [ ] `MainUiFlow` no longer installs or owns script editor internal methods, state, or DOM vocabulary.
-- [ ] `main-ui-script-editor-module.js` is either deleted or reduced to pure host assembly with no editor ownership.
-- [ ] `main-ui-bridge.ts` is deleted or no longer part of any final public package path.
-- [ ] `src/modules/script-editor/index.ts` exposes only final reusable package surfaces.
-- [ ] Embedded and standalone still run through the same package kernel.
-- [ ] Embedded browser smoke still supports `剧本编辑 -> 使用模板 -> 运行预览`.
-- [ ] Standalone browser smoke still boots and fail-closes preview when preview host is absent.
-- [ ] No compatibility layer or split owner state remains in the repository.
-- [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] `MainUiFlow` no longer installs or owns script editor internal methods, state, or DOM vocabulary.
+- [x] `main-ui-script-editor-module.js` is either deleted or reduced to pure host assembly with no editor ownership.
+- [x] `main-ui-bridge.ts` is deleted or no longer part of any final public package path.
+- [x] `src/modules/script-editor/index.ts` exposes only final reusable package surfaces.
+- [x] Embedded and standalone still run through the same package kernel.
+- [x] Embedded browser smoke still supports `剧本编辑 -> 使用模板 -> 运行预览`.
+- [x] Standalone browser smoke still boots and fail-closes preview when preview host is absent.
+- [x] No compatibility layer or split owner state remains in the repository.
+- [x] Project progress sync is updated if the child state changed.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
 - Closed Child: `Script Editor Final Package Hard-Cut`
 - Parent Task: `Script Editor Package Migration`
 - Parent Stage: `Script Editor Package Migration`
-- Closeout Status: `closed`
-- Project Progress Synced: `no`
+- Closeout Status: `completed-but-open`
+- Project Progress Synced: `yes`
 - Next Child: `none`
 - Next Child Status: `none`
 - Next Required Action: `open-next-approved-child`
@@ -543,4 +547,4 @@ If `docs/superpowers/project-progress.md` was intentionally not changed, omit it
 - Next Owner Document: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue from this child-local plan until the hard-cut package boundary is fully verified and pushed.`
+- Resume From: `Push the docs closeout batch, then flip this child from completed-but-open to closed with the final push metadata.`

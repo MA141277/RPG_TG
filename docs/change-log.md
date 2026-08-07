@@ -2,6 +2,25 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-07 Script Editor Final Package Hard-Cut
+
+### Changed
+- `src/ui/main-ui/main-ui-flow.js` 现已不再安装或持有剧本编辑器内部 render/state/input owner；主壳只通过 `openScriptEditor(...)` 打开嵌入态 editor，并仅注入 `previewHost` 级别的宿主能力。
+- `src/modules/script-editor/kernel/script-editor-session.ts` 现已承接嵌入态与 standalone 共同使用的 mounted session owner：点击、输入、组合输入、局部渲染与 `runtime-preview` banner 都由 package 内会话 owner 负责，外层壳层不再理解 `data-script-editor-*` 词汇。
+- `src/modules/script-editor/standalone/script-editor-standalone-host.ts` 现已改为通过 `mountScriptEditor(...)` 启动 standalone，而不是复用旧的 `MainUiFlow` 安装路径。
+- `src/modules/script-editor/index.ts` 已删除 install / bridge 内部导出；公开 surface 现只保留可复用的 host + entry + kernel surface。
+- `src/modules/script-editor/main-ui-bridge.ts` 已删除并改名为 package 内 `src/modules/script-editor/internal.ts`；旧 bridge 文件名不再存在于公开 API 或内部 owner 路径里。
+- `src/modules/script-editor/ui/main-ui-script-editor-module.js` 已从旧文件路径迁到 `src/modules/script-editor/ui/script-editor-session-ui.js`；旧 `main-ui-script-editor-module` 文件名已从代码和测试里清除。
+- 新增并收紧了 `tests/script-editor-final-package-boundary.test.cjs`、`tests/script-editor-embedded-session.test.cjs`、`tests/script-editor-host-contract.test.cjs`、`tests/script-editor-standalone-entry.test.cjs`、`tests/script-editor-runtime-preview-compat.test.cjs` 与 `tests/script-editor-entry-availability.test.cjs`，锁定当前 package hard-cut 边界。
+- 2026-08-07 浏览器烟测已验证：
+  - 嵌入态 `http://localhost:5173/` 可走通 `剧本编辑 -> 使用模板 -> 运行预览`，并进入运行时地图/背包/部队 UI。
+  - standalone `http://localhost:5173/prototypes/script-editor/` 可走通 `使用模板` 进入工作台，未注入 `previewHost` 时不会进入 runtime preview。
+
+### Impact
+- 当前剧本编辑器已经形成单一 package 入口模型：嵌入态和 standalone 共用同一套 entry/kernel/session owner，主项目不再拥有 editor 内部词汇和交互路径。
+- runtime preview 已正式收敛为宿主注入能力，而不是剧本编辑器内建子系统；这满足“独立运行，也可被其他项目调用，预览由外界注入”的目标边界。
+- 旧 `main-ui-bridge` / `main-ui-script-editor-module` 路径名已经从最终代码路径中退出；后续如果继续物理拆包，剩余工作将集中在包输出形态，而不是再清理壳层兼容痕迹。
+
 ## 2026-08-07 Script Editor Host Convergence Follow-Up
 
 ### Changed
