@@ -10,10 +10,10 @@
 
 ## Execution State
 
-- Status: `completed-but-open`
+- Status: `closed`
 - Last Updated: `2026-08-08`
-- Current Focus: `Implementation and verification are complete locally. The child is ready for implementation checkpoint commit/push, followed by structured closeout.`
-- Next Step: `Commit and push the verified implementation checkpoint, then update closeout state to closed.`
+- Current Focus: `Child is closed after verified implementation checkpoint c5af4ea4 was pushed to origin/merage-mod2ui-1.`
+- Next Step: `Return to docs/superpowers/project-progress.md and open the next approved stabilization child.`
 - Verification: `npm run build:test; node --test --test-name-pattern "task input|candidate" tests/event-binding-start-runtime.test.cjs (RED before implementation, GREEN after implementation); node --test tests/event-binding-start-runtime.test.cjs; node --test --test-name-pattern "mod-first event binding candidate task input|runtime event binding action payload consumption|runtime event task input payload consumption|event binding runtime route convergence" tests/robustness.test.cjs; npm run typecheck; npm run lint:plans; git diff --check; npm run build`
 - Notes: `This child is canonical-queue work for merage-mod2ui-1. Do not reuse historical runtime-only queue governance or reopen startup, source-unification, review-system, Script Editor, playable, closeBuilding, or launchFlow work through this slice.`
 
@@ -39,6 +39,10 @@
   - Summary: `Completed Task 4 verification for the implementation checkpoint. The verified slice changes only runtime/event candidate task-input projection plus focused tests, change log, and governed progress docs; startup, review-system, source-unification, Script Editor, playable runtime, closeBuilding, launchFlow, and scenario-pack JSON remain out of scope.`
   - Verification: `npm run build:test; node --test tests/event-binding-start-runtime.test.cjs; node --test --test-name-pattern "mod-first event binding candidate task input|runtime event binding action payload consumption|runtime event task input payload consumption|event binding runtime route convergence" tests/robustness.test.cjs; npm run typecheck; npm run lint:plans; git diff --check; npm run build`
   - Next: `Commit and push the verified implementation checkpoint, then record structured child closeout.`
+- 2026-08-08
+  - Summary: `Committed and pushed the verified implementation checkpoint c5af4ea4 to origin/merage-mod2ui-1, then closed the child with structured project-progress sync.`
+  - Verification: `git push origin merage-mod2ui-1`
+  - Next: `Return to docs/superpowers/project-progress.md and open the next approved stabilization child.`
 
 ---
 
@@ -190,7 +194,7 @@ Run the full verification set from `Verification Plan`.
 
 Update this plan's `Execution State`, `Progress Log`, checklists, and canonical `project-progress` state so the next resume point is explicit whether the child is still running, completed-but-open, or closed.
 
-- [ ] **Step 3: Commit and push when the slice is complete**
+- [x] **Step 3: Commit and push when the slice is complete**
 
 Create one coherent checkpoint for this child and push it to `origin/merage-mod2ui-1`.
 
@@ -200,7 +204,7 @@ Create one coherent checkpoint for this child and push it to `origin/merage-mod2
 - [x] Runtime-event payload metadata still reaches event-binding candidate and activation behavior.
 - [x] Startup, review-system, source-unification, Script Editor, playable, UI, map, backpack, and style boundaries remain untouched.
 - [x] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
@@ -211,16 +215,16 @@ Create one coherent checkpoint for this child and push it to `origin/merage-mod2
 
 ## Child Closeout
 
-- Closed Child: `Replace when closing.`
-- Parent Task: `Replace when closing.`
-- Parent Stage: `Replace when closing.`
+- Closed Child: `Mod-First Event Binding Candidate Task Input Payload Consumption`
+- Parent Task: `Post-Merge Branch Stabilization`
+- Parent Stage: `Post-Merge Branch Stabilization`
 - Closeout Status: `closed`
-- Project Progress Synced: `yes/no`
-- Next Child: `Replace when closing.`
-- Next Child Status: `waiting/running/blocked/none`
-- Next Required Action: `Replace when closing.`
+- Project Progress Synced: `yes`
+- Next Child: `none`
+- Next Child Status: `none`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `Replace when closing.`
-- Push Status: `success/failure/not-pushed`
-- Push Commit: `commit-sha-or-none`
-- Resume From: `Replace when closing.`
+- Next Owner Document: `none`
+- Push Status: `success`
+- Push Commit: `c5af4ea4`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed mod-first event-binding task-input baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`

@@ -4,22 +4,26 @@
 
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
-- Current Task: `Mod-First Event Binding Candidate Task Input Payload Consumption`
-- Current Task Status: `completed-but-open`
-- Current Child: `Mod-First Event Binding Candidate Task Input Payload Consumption`
-- Current Child Status: `completed-but-open`
+- Current Task: `none`
+- Current Task Status: `none`
+- Current Child: `none`
+- Current Child Status: `none`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `commit-and-push-mod-first-event-binding-candidate-task-input-child`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md`
-- Last Closed Item: `Story Settlement Canonical Settlement Id`
-- Push Status: `not-pushed`
-- Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then commit and push the verified implementation checkpoint for docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Next Owner Document: `none`
+- Last Closed Item: `Mod-First Event Binding Candidate Task Input Payload Consumption`
+- Push Status: `success`
+- Push Commit: `c5af4ea4`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed mod-first event-binding task-input baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 
 ## Progress Log
 
+- 2026-08-08
+  - Summary: `Closed the Mod-First Event Binding Candidate Task Input Payload Consumption child after pushing the verified implementation checkpoint. The canonical queue is back to no active child; startup remains frozen and review-system work remains paused.`
+  - Verification: `Implementation push reached c5af4ea4; npm run lint:plans; git diff --check`
+  - Next: `Open the next approved stabilization child from docs/superpowers/project-progress.md.`
 - 2026-08-08
   - Summary: `Completed the Mod-First Event Binding Candidate Task Input Payload Consumption implementation locally. toModFirstEventBindingRuntimeCandidate(...) now consumes taskInputs through RuntimeEventEntity payload projection, with focused event-binding and robustness coverage guarding candidate and activation behavior.`
   - Verification: `npm run build:test; node --test --test-name-pattern "task input|candidate" tests/event-binding-start-runtime.test.cjs (RED before implementation, GREEN after implementation); node --test tests/event-binding-start-runtime.test.cjs; node --test --test-name-pattern "mod-first event binding candidate task input|runtime event binding action payload consumption|runtime event task input payload consumption|event binding runtime route convergence" tests/robustness.test.cjs; npm run typecheck; npm run lint:plans; git diff --check; npm run build`
@@ -142,7 +146,7 @@
 
 ## Child Closeout
 
-- Closed Child: `Story Settlement Canonical Settlement Id`
+- Closed Child: `Mod-First Event Binding Candidate Task Input Payload Consumption`
 - Parent Task: `Post-Merge Branch Stabilization`
 - Parent Stage: `Post-Merge Branch Stabilization`
 - Closeout Status: `closed`
@@ -153,5 +157,5 @@
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `none`
 - Push Status: `success`
-- Push Commit: `1d8c80f3`
-- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed story-settlement baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Push Commit: `c5af4ea4`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed mod-first event-binding task-input baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
