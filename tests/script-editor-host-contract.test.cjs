@@ -160,6 +160,19 @@ test("script editor session consumes template catalog through a host resolver se
   );
 });
 
+test("script editor session kernel no longer installs the concrete main-ui module directly", () => {
+  const sessionSource = readSource(
+    "src/modules/script-editor/kernel/script-editor-session.ts"
+  );
+  const standaloneHostSource = readSource(
+    "src/modules/script-editor/standalone/script-editor-standalone-host.ts"
+  );
+
+  assert.doesNotMatch(sessionSource, /installMainUiFlowScriptEditorModule/);
+  assert.match(standaloneHostSource, /installMainUiFlowScriptEditorModule/);
+  assert.match(standaloneHostSource, /createEmbeddedScriptEditorSession/);
+});
+
 test("script editor playable runtime contract is consumed through a package-local seam", () => {
   const runtimePackExportSource = readSource(
     "src/modules/script-editor/application/runtime-pack-export.ts"

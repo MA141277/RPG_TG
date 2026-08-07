@@ -6,7 +6,6 @@ import {
   createScriptEditorWorkflowController,
   type ScriptEditorWorkflowController,
 } from "./script-editor-workflow-controller";
-import { installMainUiFlowScriptEditorModule } from "../ui/main-ui-script-editor-module";
 
 export type ScriptEditorInitialAction =
   | "landing"
@@ -38,7 +37,6 @@ type ScriptEditorEmbeddedSessionHost = {
 
 export type CreateEmbeddedScriptEditorSessionOptions = {
   host: ScriptEditorEmbeddedSessionHost;
-  hostOptions?: unknown;
 };
 
 export type ScriptEditorEmbeddedSession = {
@@ -77,8 +75,6 @@ export function createEmbeddedScriptEditorSession(
   options: CreateEmbeddedScriptEditorSessionOptions
 ): ScriptEditorEmbeddedSession {
   const host = options.host as Record<string, any>;
-
-  installMainUiFlowScriptEditorModule(host, options.hostOptions);
 
   const workflowController = createScriptEditorWorkflowController({
     getProject: () => host.scriptEditorProject,

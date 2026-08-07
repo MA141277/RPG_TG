@@ -1,4 +1,4 @@
 export function installMainUiFlowScriptEditorModule(
   host: object,
-  options: unknown
+  options?: unknown
 ): void;

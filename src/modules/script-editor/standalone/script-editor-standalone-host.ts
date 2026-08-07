@@ -2,6 +2,7 @@ import {
   createEmbeddedScriptEditorSession,
   type ScriptEditorEmbeddedSession,
 } from "../kernel/script-editor-session";
+import { installMainUiFlowScriptEditorModule } from "../ui/main-ui-script-editor-module";
 
 type StandaloneScriptEditorHost = {
   overlayRoot: HTMLElement;
@@ -45,6 +46,7 @@ export function createStandaloneScriptEditorHost(
       host.restoreScriptEditorScrollPosition?.();
     },
     mount() {
+      installMainUiFlowScriptEditorModule(host as never);
       host.scriptEditorSession = createEmbeddedScriptEditorSession({
         host: host as never,
       });
