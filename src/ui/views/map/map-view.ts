@@ -318,7 +318,7 @@ function escapeJsonForHtmlScript(value: string): string {
 }
 
 function renderCampaignMarkerRuntimeSource(model: MapViewModel): string {
-  const markerSource = model.campaignMarkers.map((marker) => ({
+  const markerSource = getVisibleCampaignMarkers(model).map((marker) => ({
     ...marker,
     left: (marker.x / model.coordinateSpace.width) * 100,
     bottom: (marker.y / model.coordinateSpace.height) * 100,
@@ -330,6 +330,14 @@ function renderCampaignMarkerRuntimeSource(model: MapViewModel): string {
     <script type="application/json" data-campaign-marker-source="true">${escapeJsonForHtmlScript(JSON.stringify(markerSource))}</script>
     <div class="c-campaign-marker-layer" data-campaign-marker-layer="true"></div>
   `;
+}
+
+function isCivilizationSandboxActive(model: MapViewModel): boolean {
+  return model.civilizationSandboxOverlay?.enabled === true;
+}
+
+function getVisibleCampaignMarkers(model: MapViewModel): CampaignMarker[] {
+  return isCivilizationSandboxActive(model) ? [] : model.campaignMarkers;
 }
 
 function renderCivilizationSandboxOverlay(
@@ -399,7 +407,7 @@ function renderCivilizationSandboxOverlay(
           data-sandbox-entity-id="${escapeHtml(individual.id)}"
           style="${position.style}"
           ${position.projectionAttributes}
-          title="${escapeHtml(individual.name)} · ${escapeHtml(individual.taskLabel)}"
+          title="${escapeHtml(individual.name)}"
         >
           ${
             spriteUrl == null
@@ -547,6 +555,10 @@ function renderCivilizationSandboxControls(): string {
   `;
 }
 
+function renderOptionalMapStageActions(model: MapViewModel): string {
+  return isCivilizationSandboxActive(model) ? "" : renderMapStageActions();
+}
+
 function renderCampaignMapVisualLayer(
   model: MapViewModel,
   options: {
@@ -672,6 +684,39 @@ function renderCampaignMapVisualLayer(
   `;
 }
 
+function renderCampaignMapActions(model: MapViewModel): string {
+  return `
+    <div class="c-campaign-map-actions" aria-label="主地图操作">
+      ${renderCivilizationSandboxControls()}
+      <label class="c-campaign-cloud-control">
+        <span>云纹理</span>
+        <input
+          type="range"
+          min="0.5"
+          max="50"
+          step="0.01"
+          value="2.72"
+          data-campaign-cloud-texture-scale-input="true"
+        >
+        <strong data-campaign-cloud-texture-scale-value="true">2.72x</strong>
+      </label>
+      ${
+        isCivilizationSandboxActive(model)
+          ? ""
+          : `
+            <button
+              class="c-campaign-map-actions__button"
+              type="button"
+              data-action="open-backpack"
+            >
+              背包
+            </button>
+          `
+      }
+    </div>
+  `;
+}
+
 function renderCampaignMap(model: MapViewModel): string {
   const playerLeft = (model.playerCoordinate.x / model.coordinateSpace.width) * 100;
   const playerBottom = (model.playerCoordinate.y / model.coordinateSpace.height) * 100;
@@ -718,28 +763,7 @@ function renderCampaignMap(model: MapViewModel): string {
         </div>
         <div class="c-campaign-map__vignette" aria-hidden="true"></div>
       </div>
-      <div class="c-campaign-map-actions" aria-label="主地图操作">
-        ${renderCivilizationSandboxControls()}
-        <label class="c-campaign-cloud-control">
-          <span>云纹理</span>
-          <input
-            type="range"
-            min="0.5"
-            max="50"
-            step="0.01"
-            value="2.72"
-            data-campaign-cloud-texture-scale-input="true"
-          >
-          <strong data-campaign-cloud-texture-scale-value="true">2.72x</strong>
-        </label>
-        <button
-          class="c-campaign-map-actions__button"
-          type="button"
-          data-action="open-backpack"
-        >
-          背包
-        </button>
-      </div>
+      ${renderCampaignMapActions(model)}
     </div>
   `;
 }
@@ -749,7 +773,7 @@ export function renderMapView(model: MapViewModel): string {
     return `
       <section class="view-map view-map--campaign">
         ${renderCampaignMap(model)}
-        ${renderMapStageActions()}
+        ${renderOptionalMapStageActions(model)}
       </section>
     `;
   }

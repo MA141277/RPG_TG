@@ -763,6 +763,11 @@ export function renderApp(input: AppRenderInput): string {
       : { coinAnchorEditor: input.coinRewardAnchorEditor }),
   };
   const stageMarkup = renderStage(input, playerCharacter);
+  const isCivilizationSandboxValidationActive =
+    input.appState.gameState.runtime.civilizationSandbox.enabled;
+  const shouldRenderGlobalHud =
+    input.presenterOutput.overlay.shouldShowGlobalHud &&
+    !isCivilizationSandboxValidationActive;
 
   return `
     <div class="l-viewport">
@@ -774,7 +779,7 @@ export function renderApp(input: AppRenderInput): string {
               <div class="l-overlay-ui">
                 ${renderCampaignTravelBanner(input.presenterOutput.overlay.campaignTravelState)}
                 ${
-                  input.presenterOutput.overlay.shouldShowGlobalHud
+                  shouldRenderGlobalHud
                     ? `${renderGlobalPlayerPanel(
                         playerPanelModel,
                         input.appState.uiLayouts["global-hud"]
@@ -798,7 +803,11 @@ export function renderApp(input: AppRenderInput): string {
             ${renderCityCardDrawTestOverlay(input)}
             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
             <div class="p-ui-coin-reward-layer" data-ui-coin-reward-layer aria-hidden="true"></div>
-            ${renderOverlay(input, playerCharacter)}
+            ${
+              isCivilizationSandboxValidationActive
+                ? ""
+                : renderOverlay(input, playerCharacter)
+            }
             ${renderLayoutEditor(input.appState)}
           </div>
         </div>

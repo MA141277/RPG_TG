@@ -150,3 +150,56 @@ test("civilization sandbox tick moves non-leader individuals across claimed hexe
     "Expected at least one non-leader sandbox individual to move to another hex."
   );
 });
+
+test("civilization sandbox tick keeps walkers away from their home hex once land is claimed", () => {
+  const {
+    createInitialCivilizationSandboxState,
+  } = require("../.test-dist/domain/civilization-sandbox.js");
+  const {
+    placeSandboxLord,
+  } = require("../.test-dist/application/civilization-sandbox/placement.js");
+  const {
+    tickCivilizationSandbox,
+  } = require("../.test-dist/application/civilization-sandbox/simulation.js");
+
+  let state = placeSandboxLord({
+    state: createInitialCivilizationSandboxState(),
+    raceId: "yu-qingqing",
+    hex: { x: 2, y: 2 },
+  });
+
+  state = tickCivilizationSandbox(state);
+  state = tickCivilizationSandbox(state);
+  state = tickCivilizationSandbox(state);
+
+  const civilization = Object.values(state.civilizationsById)[0];
+  const walkers = Object.values(state.individualsById).filter(
+    (individual) => !individual.isLeader
+  );
+
+  assert.ok(civilization.claimedHexKeys.length > 1);
+  assert.ok(
+    walkers.every((individual) => individual.hexKey !== civilization.homeHexKey),
+    "Expected non-leader sandbox walkers to keep moving on claimed hexes instead of snapping back home."
+  );
+});
+
+test("civilization sandbox enabled map hides legacy campaign markers and backpack entry", () => {
+  const mapViewSource = fs.readFileSync("src/ui/views/map/map-view.ts", "utf8");
+
+  assert.match(mapViewSource, /isCivilizationSandboxActive/);
+  assert.match(mapViewSource, /getVisibleCampaignMarkers/);
+  assert.match(
+    mapViewSource,
+    /model\.civilizationSandboxOverlay\?\.enabled === true/
+  );
+  assert.match(mapViewSource, /renderCampaignMapActions/);
+  assert.match(mapViewSource, /renderOptionalMapStageActions/);
+});
+
+test("app render hides global hud while civilization sandbox validation is active", () => {
+  const appRenderSource = fs.readFileSync("src/ui/app-render.ts", "utf8");
+
+  assert.match(appRenderSource, /civilizationSandbox\.enabled/);
+  assert.match(appRenderSource, /shouldRenderGlobalHud/);
+});

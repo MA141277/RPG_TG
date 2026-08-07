@@ -30,11 +30,26 @@ export function tickCivilizationSandbox(
   };
 
   for (const civilization of Object.values(nextState.civilizationsById)) {
-    nextState = ensureCivilizationHouse(nextState, civilization);
-    nextState = ensureCivilizationFarm(nextState, civilization);
-    nextState = claimNextAdjacentHex(nextState, civilization);
-    nextState = moveCivilizationIndividuals(nextState, civilization);
-    nextState = reproduceIfReady(nextState, civilization);
+    let currentCivilization =
+      nextState.civilizationsById[civilization.id] ?? civilization;
+
+    nextState = ensureCivilizationHouse(nextState, currentCivilization);
+    currentCivilization =
+      nextState.civilizationsById[civilization.id] ?? currentCivilization;
+
+    nextState = ensureCivilizationFarm(nextState, currentCivilization);
+    currentCivilization =
+      nextState.civilizationsById[civilization.id] ?? currentCivilization;
+
+    nextState = claimNextAdjacentHex(nextState, currentCivilization);
+    currentCivilization =
+      nextState.civilizationsById[civilization.id] ?? currentCivilization;
+
+    nextState = moveCivilizationIndividuals(nextState, currentCivilization);
+    currentCivilization =
+      nextState.civilizationsById[civilization.id] ?? currentCivilization;
+
+    nextState = reproduceIfReady(nextState, currentCivilization);
   }
 
   return nextState;
@@ -222,6 +237,14 @@ function moveCivilizationIndividuals(
     return state;
   }
 
+  const walkingHexes = claimedHexes.filter(
+    (hex) => getSandboxHexKey(hex) !== civilization.homeHexKey
+  );
+
+  if (walkingHexes.length <= 0) {
+    return state;
+  }
+
   const nextIndividuals = { ...state.individualsById };
   let changed = false;
   const members = Object.values(state.individualsById)
@@ -232,10 +255,14 @@ function moveCivilizationIndividuals(
     .sort((left, right) => left.id.localeCompare(right.id));
 
   for (const [memberIndex, individual] of members.entries()) {
-    const targetHex =
-      claimedHexes[
-        (state.tick + individual.birthIndex + memberIndex) % claimedHexes.length
-      ];
+    const currentWalkingIndex = walkingHexes.findIndex(
+      (hex) => getSandboxHexKey(hex) === individual.hexKey
+    );
+    const targetIndex =
+      currentWalkingIndex < 0
+        ? memberIndex % walkingHexes.length
+        : (currentWalkingIndex + 1) % walkingHexes.length;
+    const targetHex = walkingHexes[targetIndex];
     if (targetHex == null || getSandboxHexKey(targetHex) === individual.hexKey) {
       continue;
     }

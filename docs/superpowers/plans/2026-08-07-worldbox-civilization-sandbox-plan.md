@@ -20,6 +20,11 @@
 ## Progress Log
 
 - 2026-08-07
+  - Summary: `Refined the validation slice by hiding legacy HUD/backpack/troop controls and source campaign city/settlement/fort markers while the civilization sandbox is active, and changed NPC tick movement so walkers continue from their current claimed hex instead of snapping back to the home hex.`
+  - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs`; `node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check`
+  - Next: `Review the running validation slice; push if requested before marking this child closed.`
+
+- 2026-08-07
   - Summary: `Fixed the validation slice so sandbox placement converts map coordinates to campaign hexes, individuals move between claimed hexes on tick, and rural-house structures feed the campaign terrain settlementVillage model channel instead of rendering as screen-space DOM blocks.`
   - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs`; `node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `git diff --check`
   - Next: `Review the running validation slice at http://127.0.0.1:5174/ and push if requested before marking this child closed.`

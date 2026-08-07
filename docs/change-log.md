@@ -9,6 +9,7 @@
 - 沙盒 overlay 移入 campaign map transform 内部，人物使用 `data-terrain-projected-point` 与 `data-map-hex-x/y` 交给地形 WebGL runtime 投影，不再作为外层屏幕贴片漂浮。
 - 沙盒 `rural-house` 结构现在进入 campaign terrain 的 `settlementVillage` 模型实例通道，并同步写入 village structure-ground 语义；农田继续作为 hex ground polygon 表达地块开垦。
 - 沙盒 tick 现在会移动非领袖个体到已占领 hex，并更新方向与任务，避免所有个体一直停在出生点。
+- 沙盒启用后会隐藏全局属性/任务 HUD、背包入口、部队入口和原 campaign 城/村/堡 marker 数据，只保留领袖放置、单步、领土切换以及 NPC 新建出的沙盒建筑；NPC 连续单步移动改为从当前位置推进并避开 home hex，不再按 tick 重新抽点回原地乱跳。
 
 ### Added
 - 新增 `GameState.runtime.civilizationSandbox`，用于隔离保存 WorldBox-like 验证沙盒的文明、个体、家庭、营地、结构、领土和最近事件，不写入玩家属性、背包或源地图 JSON。
