@@ -67,3 +67,34 @@ test("script editor landing view stays package-local instead of importing entry-
     true
   );
 });
+
+test("script editor background option lists stay package-local instead of importing shared ui location backgrounds", () => {
+  const moduleSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "script-editor",
+      "ui",
+      "main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(moduleSource, /ui\/location-backgrounds/);
+  assert.match(moduleSource, /script-editor-location-background-options/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "modules",
+        "script-editor",
+        "ui",
+        "views",
+        "script-editor-location-background-options.ts"
+      )
+    ),
+    true
+  );
+});

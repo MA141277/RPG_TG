@@ -1,10 +1,10 @@
-import {
-  BUILDING_DEFAULT_BACKGROUND_OPTIONS,
-  CITY_DEFAULT_BACKGROUND_OPTIONS,
-} from "../../../ui/location-backgrounds";
 import { loadScenarioPackFromFiles } from "../../../application/scenario/scenario-pack-loader";
 import * as scriptEditorMainUiBridge from "../main-ui-bridge";
 import { renderScriptEditorLandingView } from "./views/script-editor-landing-view";
+import {
+  SCRIPT_EDITOR_BUILDING_DEFAULT_BACKGROUND_OPTIONS,
+  SCRIPT_EDITOR_CITY_DEFAULT_BACKGROUND_OPTIONS,
+} from "./views/script-editor-location-background-options";
 
 const {
   SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES,
@@ -4319,8 +4319,8 @@ class MainUiFlowScriptEditorModule {
   renderScriptEditorLocationProfilePanel(family, location) {
     const isCityFamily = family === "cities";
     const backgroundOptions = isCityFamily
-      ? CITY_DEFAULT_BACKGROUND_OPTIONS
-      : BUILDING_DEFAULT_BACKGROUND_OPTIONS;
+      ? SCRIPT_EDITOR_CITY_DEFAULT_BACKGROUND_OPTIONS
+      : SCRIPT_EDITOR_BUILDING_DEFAULT_BACKGROUND_OPTIONS;
     const mapPlacement =
       isCityFamily && location.mapPlacement != null && typeof location.mapPlacement === "object"
         ? location.mapPlacement
