@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 6: final verification and governance sync.`
-- Next Step: `Run the full package-migration verification set, then update closeout state and push the final Task 6 checkpoint.`
-- Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck. Task 3 passed: npm run build:test; node --test tests/script-editor-runtime-preview-compat.test.cjs --test-name-pattern "preview fails closed when no previewHost is injected|runtime preview can load exported zhuyuanzhang template packs that inline map assets as data urls"`; `npm run typecheck`. Task 4 passed: `npm run build:test`; `node --test tests/script-editor-standalone-entry.test.cjs`; `npm run typecheck`; `npm run build`. Task 5 passed: `node --test tests/script-editor-publication-boundary.test.cjs tests/script-editor-template-url.test.cjs`; `npm run build:test`; `npm run typecheck```
-- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 is complete: MainUiFlow no longer owns direct script-editor data-action/data-change/data-input routing, and the embedded session is now the editor interaction owner. Task 3 is complete: the workflow controller now starts preview only through injected previewHost capability, while the embedded host adapts legacy runtime startup callbacks behind that injected capability boundary. Task 4 is complete: Vite now exposes a standalone script editor entry, and the standalone bootstrap mounts the script editor through a standalone host without moving runtime preview into the package. Task 5 is complete: default template import and registered builtin publication hydration now flow through explicit template/publication catalogs instead of direct runtime-side builtin imports.`
+- Current Focus: `Task 6 is complete locally. The script editor now runs as both an embedded session and a standalone entry, runtime preview remains injected host capability only, and template/publication loading now flows through explicit catalogs instead of runtime-owned imports.`
+- Next Step: `Commit and push the verified Task 6 governance checkpoint, then open the next approved child from this dual-mode package baseline.`
+- Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck. Task 3 passed: npm run build:test; node --test tests/script-editor-runtime-preview-compat.test.cjs --test-name-pattern "preview fails closed when no previewHost is injected|runtime preview can load exported zhuyuanzhang template packs that inline map assets as data urls"`; npm run typecheck. Task 4 passed: npm run build:test; node --test tests/script-editor-standalone-entry.test.cjs; npm run typecheck; npm run build. Task 5 passed: node --test tests/script-editor-publication-boundary.test.cjs tests/script-editor-template-url.test.cjs; npm run build:test; npm run typecheck. Task 6 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs tests/script-editor-embedded-session.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-publication-boundary.test.cjs tests/script-editor-runtime-preview-compat.test.cjs; npm run typecheck; npm run build; browser smoke at http://localhost:5173/ and http://localhost:5173/prototypes/script-editor/.`
+- Notes: `Boundary and terminology remain frozen by the approved design spec. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 is complete: MainUiFlow no longer owns direct script-editor data-action/data-change/data-input routing, and the embedded session is now the editor interaction owner. Task 3 is complete: the workflow controller now starts preview only through injected previewHost capability, while the embedded host adapts legacy runtime startup callbacks behind that injected capability boundary. Task 4 is complete: Vite now exposes a standalone script editor entry, and the standalone bootstrap mounts the script editor through a standalone host without moving runtime preview into the package. Task 5 is complete: default template import and registered builtin publication hydration now flow through explicit template/publication catalogs instead of direct runtime-side builtin imports. docs/superpowers/project-progress.md remains intentionally unchanged because this child was not promoted into the canonical active queue.`
 
 ## Progress Log
 
@@ -75,6 +75,10 @@
   - Summary: `Completed Task 5 by routing default template import through templateCatalog and moving registered builtin scenario-pack hydration behind script-editor-publication-catalog.`
   - Verification: `node --test tests/script-editor-publication-boundary.test.cjs tests/script-editor-template-url.test.cjs`; `npm run build:test`; `npm run typecheck`
   - Next: `Start Task 6 and run the final package-migration verification set.`
+- 2026-08-07
+  - Summary: `Completed Task 6 locally by running the full focused verification set, then smoke-testing both entry modes in the in-app browser. The embedded route still opens 剧本编辑, loads the builtin template, and enters runtime preview into the main map runtime; the standalone route loads its own script editor shell, imports the same builtin template, and stays fail-closed on 运行预览 because no previewHost is injected.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs tests/script-editor-embedded-session.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-publication-boundary.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `npm run typecheck`; `npm run build`; browser smoke at `http://localhost:5173/` verified `剧本编辑 -> 使用模板 -> 运行预览` enters the map runtime with no app console errors; browser smoke at `http://localhost:5173/prototypes/script-editor/` verified standalone shell load plus `使用模板 -> 运行预览` staying on the editor workflow with no runtime handoff and no app console errors.`
+  - Next: `Commit and push this completed-but-open child checkpoint, then continue from the dual-mode package baseline.`
 
 ---
 
@@ -693,7 +697,7 @@ git commit -m "refactor: inject script editor template and publication catalogs"
 - Modify: `docs/change-log.md`
 - Modify: `docs/superpowers/project-progress.md` if this child is promoted into canonical execution
 
-- [ ] **Step 1: Run the focused verification set**
+- [x] **Step 1: Run the focused verification set**
 
 Run:
 
@@ -710,7 +714,7 @@ Expected:
 - typecheck `PASS`
 - build `PASS`
 
-- [ ] **Step 2: Run browser smoke for both modes**
+- [x] **Step 2: Run browser smoke for both modes**
 
 Verify:
 
@@ -719,7 +723,7 @@ Verify:
 - standalone path loads its own script editor shell
 - standalone path without preview host fails closed on preview action
 
-- [ ] **Step 3: Sync governance docs**
+- [x] **Step 3: Sync governance docs**
 
 Update:
 
@@ -741,34 +745,34 @@ git commit -m "docs: record script editor dual-mode package migration"
 
 ## Exit Check
 
-- [ ] `MainUiFlow` no longer owns script editor internal DOM/state behavior.
-- [ ] Script editor can run through a standalone entry.
-- [ ] Script editor can run through an embedded session.
-- [ ] Runtime preview is only available through injected host capability.
-- [ ] Runtime/shared code no longer import `modules/script-editor` as a shared contract owner.
-- [ ] Template/publication behavior is no longer hardwired as editor-owned runtime registration.
-- [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] `MainUiFlow` no longer owns script editor internal DOM/state behavior.
+- [x] Script editor can run through a standalone entry.
+- [x] Script editor can run through an embedded session.
+- [x] Runtime preview is only available through injected host capability.
+- [x] Runtime/shared code no longer import `modules/script-editor` as a shared contract owner.
+- [x] Template/publication behavior is no longer hardwired as editor-owned runtime registration.
+- [x] Project progress sync is updated if the child state changed.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
 - Closed Child: `Script Editor Dual-Mode Package`
 - Parent Task: `Script Editor Package Migration`
 - Parent Stage: `Script Editor Package Migration`
-- Closeout Status: `closed`
-- Project Progress Synced: `yes/no`
+- Closeout Status: `completed-but-open`
+- Project Progress Synced: `no`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `close-task`
+- Next Required Action: `commit-push-script-editor-dual-mode-package-and-open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `none`
-- Push Status: `success/failure/not-pushed`
-- Push Commit: `commit-sha-or-none`
-- Resume From: `Open docs/superpowers/project-progress.md, then close the task or promote the next approved child.`
+- Push Status: `not-pushed`
+- Push Commit: `none`
+- Resume From: `Promote this completed-but-open dual-mode package checkpoint into branch history, then open the next approved child from the pushed baseline.`
