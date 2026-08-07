@@ -12,9 +12,9 @@
 
 - Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 3 removes the remaining main-ui-bridge/internal bridge path after the current-project host hard-cut landed cleanly.`
-- Next Step: `Delete or inline the remaining main-ui-bridge dependency inside the package so the final package api and internal owner path no longer mention the old bridge file.`
-- Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs tests/script-editor-final-package-boundary.test.cjs tests/script-editor-host-contract.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `npm run typecheck`; `npm run build`
+- Current Focus: `Task 4 final verification and browser smoke close the hard-cut batch with governance sync.`
+- Next Step: `Run the full focused verification set, then verify embedded and standalone editor behavior in the browser before writing final docs sync.`
+- Verification: `npm run lint:plans`; `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs tests/script-editor-embedded-session.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/script-editor-final-package-boundary.test.cjs`; `npm run typecheck`; `npm run build`
 - Notes: `This child inherits the spec hard rules: no transitional architecture, no compatibility layer, no split ownership, no old/new entry coexistence. Batches may be committed separately only if each batch already reflects one coherent final owner state.`
 
 ## Progress Log
@@ -31,6 +31,10 @@
   - Summary: `Task 2 hard-cut current-project ownership: MainUiFlow now opens the script editor through the package entry, package-owned mounted session logic now owns render/input handling, standalone host mounts through the same package entry, runtime-preview adaptation moved out of the ui install path, and the public index no longer exports install/bridge internals.`
   - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs tests/script-editor-final-package-boundary.test.cjs tests/script-editor-host-contract.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `npm run typecheck`; `npm run build`
   - Next: `Start Task 3 and remove the remaining main-ui-bridge/internal bridge file without reintroducing any split owner state.`
+- 2026-08-07
+  - Summary: `Task 3 removed src/modules/script-editor/main-ui-bridge.ts from the package path, switched the remaining package-owned ui owner to src/modules/script-editor/internal.ts, and tightened boundary tests so the deleted bridge file cannot silently reappear.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs tests/script-editor-final-package-boundary.test.cjs`; `npm run typecheck`; `npm run build`
+  - Next: `Start Task 4, run the full focused verification set, then perform embedded and standalone browser smoke before final governance sync.`
 
 ---
 
@@ -401,7 +405,7 @@ export { installMainUiFlowScriptEditorModule } ...
 export * as scriptEditorMainUiBridge ...
 ```
 
-- [ ] **Step 2: Delete `main-ui-bridge.ts`**
+- [x] **Step 2: Delete `main-ui-bridge.ts`**
 
 Remove:
 
@@ -411,7 +415,7 @@ rm src/modules/script-editor/main-ui-bridge.ts
 
 Only do this in the same batch where all remaining imports have already moved to final package surfaces.
 
-- [ ] **Step 3: Re-run boundary tests and build**
+- [x] **Step 3: Re-run boundary tests and build**
 
 Run:
 

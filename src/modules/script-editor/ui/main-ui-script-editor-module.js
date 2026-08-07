@@ -1,4 +1,4 @@
-import * as scriptEditorMainUiBridge from "../main-ui-bridge";
+import * as scriptEditorMainUiBridge from "../internal";
 import {
   createBuiltinScriptEditorPublicationCatalog,
   setDefaultScriptEditorPublicationCatalog,

@@ -179,6 +179,21 @@ test("script editor embedded and standalone shells both consume package mount/op
   assert.doesNotMatch(standaloneHostSource, /createEmbeddedScriptEditorSession/);
 });
 
+test("script editor ui owner no longer imports the deleted main-ui bridge file", () => {
+  const moduleSource = readSource(
+    "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+  );
+
+  assert.doesNotMatch(moduleSource, /main-ui-bridge/);
+  assert.match(moduleSource, /"\.\.\/internal"/);
+  assert.equal(
+    fs.existsSync(
+      path.join(process.cwd(), "src/modules/script-editor/main-ui-bridge.ts")
+    ),
+    false
+  );
+});
+
 test("script editor workflow controller consumes file-system host instead of browser file-system helpers directly", () => {
   const workflowControllerSource = readSource(
     "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"

@@ -24,7 +24,14 @@ test("current project shell no longer depends on script editor bridge or install
   assert.doesNotMatch(source, /renderScriptEditorWorkspace/);
 });
 
-test("main-ui bridge is removed or no longer referenced by package public surfaces", () => {
+test("main-ui bridge file is deleted and no package public surface references it", () => {
   const indexSource = readSource("src/modules/script-editor/index.ts");
+
   assert.doesNotMatch(indexSource, /main-ui-bridge/);
+  assert.equal(
+    fs.existsSync(
+      path.join(process.cwd(), "src/modules/script-editor/main-ui-bridge.ts")
+    ),
+    false
+  );
 });
