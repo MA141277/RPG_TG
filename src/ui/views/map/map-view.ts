@@ -1,6 +1,8 @@
 ﻿import {
   coordinateToRoundedHex,
   getHexKey,
+  hexToCoordinate,
+  hexToCoordinatePolygon,
   type GridCoordinate,
 } from "../../../application/navigation/travel-to-coordinate";
 import type { CityDefinition } from "../../../domain/city";
@@ -341,38 +343,53 @@ function renderCivilizationSandboxOverlay(
     return "";
   }
 
-  const createPositionStyle = (hex: { x: number; y: number }) =>
-    `--sandbox-left:${formatSandboxMapPercent(hex.x, coordinateSpace.width)}%; --sandbox-bottom:${formatSandboxMapPercent(hex.y, coordinateSpace.height)}%;`;
+  const createProjectedPosition = (hex: { x: number; y: number }) => {
+    const coordinate = hexToCoordinate(hex, coordinateSpace);
+    const left = formatSandboxMapPercent(coordinate.x, coordinateSpace.width);
+    const bottom = formatSandboxMapPercent(coordinate.y, coordinateSpace.height);
+    const u = formatSandboxUnit(coordinate.x, coordinateSpace.width);
+    const v = formatSandboxUnit(
+      coordinateSpace.height - coordinate.y,
+      coordinateSpace.height
+    );
+
+    return {
+      style: `--sandbox-left:${left}%; --sandbox-bottom:${bottom}%;`,
+      projectionAttributes: `data-terrain-projected-point="true" data-map-height-u="${u}" data-map-height-v="${v}" data-map-hex-x="${hex.x}" data-map-hex-y="${hex.y}"`,
+    };
+  };
   const territoryMarkup = overlay.claimedHexes
     .map(
       (entry) => `
-        <span
+        <polygon
           class="c-civilization-sandbox-territory"
-          style="${createPositionStyle(entry.hex)} --sandbox-territory-color:var(--color-${escapeHtml(entry.colorToken)});"
+          points="${formatSandboxPolygonPoints(entry.hex, coordinateSpace)}"
+          style="--sandbox-territory-color:var(--color-${escapeHtml(entry.colorToken)});"
           data-sandbox-civilization-id="${escapeHtml(entry.civilizationId)}"
           aria-hidden="true"
-        ></span>
+        ></polygon>
       `
     )
     .join("");
-  const structuresMarkup = overlay.structures
-    .map(
-      (structure) => `
-        <span
+  const farmGroundMarkup = overlay.structures
+    .filter((structure) => structure.kind === "farm")
+    .map((structure) => {
+      return `
+        <polygon
           class="${getCivilizationSandboxStructureClassName(structure.kind)}"
-          style="${createPositionStyle(structure.hex)}"
+          points="${formatSandboxPolygonPoints(structure.hex, coordinateSpace)}"
           data-sandbox-civilization-id="${escapeHtml(structure.civilizationId)}"
-          title="${escapeHtml(structure.kind)}"
           aria-hidden="true"
-        ></span>
-      `
-    )
+        ></polygon>
+      `;
+    })
     .join("");
   const individualsMarkup = overlay.individuals
     .map((individual) => {
       const spriteUrl = resolveCivilizationSandboxSpriteUrl(
         individual.spriteResourceId
       );
+      const position = createProjectedPosition(individual.hex);
 
       return `
         <button
@@ -380,7 +397,8 @@ function renderCivilizationSandboxOverlay(
           class="c-civilization-sandbox-individual"
           data-civilization-sandbox-action="select"
           data-sandbox-entity-id="${escapeHtml(individual.id)}"
-          style="${createPositionStyle(individual.hex)}"
+          style="${position.style}"
+          ${position.projectionAttributes}
           title="${escapeHtml(individual.name)} · ${escapeHtml(individual.taskLabel)}"
         >
           ${
@@ -400,8 +418,16 @@ function renderCivilizationSandboxOverlay(
       data-civilization-sandbox-overlay="true"
       data-civilization-sandbox-view-mode="${overlay.viewMode}"
     >
-      ${overlay.viewMode === "territory" ? territoryMarkup : ""}
-      ${structuresMarkup}
+      <svg
+        class="c-civilization-sandbox-ground"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        focusable="false"
+      >
+        ${overlay.viewMode === "territory" ? territoryMarkup : ""}
+        ${farmGroundMarkup}
+      </svg>
       ${individualsMarkup}
     </div>
   `;
@@ -425,6 +451,37 @@ function formatSandboxMapPercent(value: number, total: number): string {
   }
 
   return ((value / total) * 100).toFixed(3);
+}
+
+function formatSandboxUnit(value: number, total: number): string {
+  if (!Number.isFinite(value) || !Number.isFinite(total) || total <= 0) {
+    return "0.00000";
+  }
+
+  return Math.min(Math.max(value / total, 0), 1).toFixed(5);
+}
+
+function formatSandboxPolygonPoints(
+  hex: { x: number; y: number },
+  coordinateSpace: {
+    width: number;
+    height: number;
+  }
+): string {
+  return hexToCoordinatePolygon({
+    hex,
+    coordinateSpace,
+    radiusScale: 0.96,
+  })
+    .map((point) => {
+      const x = formatSandboxMapPercent(point.x, coordinateSpace.width);
+      const y = formatSandboxMapPercent(
+        coordinateSpace.height - point.y,
+        coordinateSpace.height
+      );
+      return `${x},${y}`;
+    })
+    .join(" ");
 }
 
 export function renderCampaignLayers(layers: MapLayer[]): string {
@@ -604,6 +661,10 @@ function renderCampaignMapVisualLayer(
                 <span class="c-campaign-player__sprite"></span>
               </span>
             </span>
+            ${renderCivilizationSandboxOverlay(
+              model.civilizationSandboxOverlay,
+              model.coordinateSpace
+            )}
           `
           : ""
       }
@@ -647,10 +708,6 @@ function renderCampaignMap(model: MapViewModel): string {
         >
           <polygon data-campaign-hover-hex-polygon="true" points=""></polygon>
         </svg>
-        ${renderCivilizationSandboxOverlay(
-          model.civilizationSandboxOverlay,
-          model.coordinateSpace
-        )}
         <div class="c-campaign-map__tiltshift" aria-hidden="true">
           ${renderCampaignMapVisualLayer(model, {
             transformClassName: "c-campaign-map__transform c-campaign-map__transform--tiltshift",

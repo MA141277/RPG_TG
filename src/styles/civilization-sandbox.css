@@ -5,13 +5,33 @@
   pointer-events: none;
 }
 
-.c-civilization-sandbox-individual,
-.c-civilization-sandbox-structure,
-.c-civilization-sandbox-territory {
+.c-civilization-sandbox-ground {
   position: absolute;
-  left: var(--sandbox-left);
-  bottom: var(--sandbox-bottom);
-  transform: translate(-50%, 50%);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.c-civilization-sandbox-individual,
+.c-civilization-sandbox-structure {
+  position: absolute;
+  left: var(--terrain-point-left, var(--sandbox-left));
+  top: var(--terrain-point-top, auto);
+  bottom: var(--terrain-point-bottom, var(--sandbox-bottom));
+  transform:
+    translate(
+      calc(-50% + var(--terrain-point-offset-x, 0px)),
+      calc(50% + var(--terrain-point-offset-y, 0px))
+    )
+    scale(var(--terrain-point-perspective-scale, 1));
+  transform-origin: center bottom;
+}
+
+.c-civilization-sandbox-individual[data-terrain-projected-point]:not([data-terrain-projection-ready]),
+.c-civilization-sandbox-structure[data-terrain-projected-point]:not([data-terrain-projection-ready]) {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .c-civilization-sandbox-individual {
@@ -41,30 +61,34 @@
 }
 
 .c-civilization-sandbox-structure {
-  width: var(--space-6);
-  height: var(--space-6);
+  width: var(--space-8);
+  height: var(--space-8);
   pointer-events: none;
 }
 
 .c-civilization-sandbox-structure--rural-house {
-  background: var(--color-paper);
-  border: var(--border-panel);
-  border-radius: var(--radius-panel);
-  box-shadow: var(--shadow-panel);
+  filter: drop-shadow(var(--shadow-panel));
+}
+
+.c-civilization-sandbox-structure__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .c-civilization-sandbox-structure--farm {
-  background: var(--color-map-farm);
-  border: var(--border-panel);
+  fill: var(--color-map-farm);
+  stroke: var(--color-border-muted);
+  stroke-width: 0.12;
+  opacity: 0.72;
 }
 
 .c-civilization-sandbox-territory {
-  width: var(--space-8);
-  height: var(--space-8);
-  background: var(--sandbox-territory-color);
+  fill: var(--sandbox-territory-color);
+  stroke: var(--sandbox-territory-color);
+  stroke-width: 0.1;
   opacity: 0.35;
   pointer-events: none;
-  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
 }
 
 .c-civilization-sandbox-controls {

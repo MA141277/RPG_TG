@@ -20,6 +20,11 @@
 ## Progress Log
 
 - 2026-08-07
+  - Summary: `Fixed the validation slice so sandbox placement converts map coordinates to campaign hexes, individuals move between claimed hexes on tick, and rural-house structures feed the campaign terrain settlementVillage model channel instead of rendering as screen-space DOM blocks.`
+  - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs`; `node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `git diff --check`
+  - Next: `Review the running validation slice at http://127.0.0.1:5174/ and push if requested before marking this child closed.`
+
+- 2026-08-07
   - Summary: `Completed the first Worldbox civilization sandbox validation slice and fixed race child naming so generated individuals remain unique while preserving Wu/Yu/Chen naming rules.`
   - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-domain.test.cjs tests/civilization-sandbox-map-overlay.test.cjs`; `node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs`; `npm run typecheck`; `npm run build`; `npm run lint:plans`; `git diff --check`
   - Manual Check: `Dev server is running at http://127.0.0.1:5174/. Browser automation loaded the app and controls, but the final repeated click smoke was blocked by Codex browser wrapper stale-node/coordinate limitations after the naming fix.`

@@ -3,6 +3,12 @@ import {
   type CivilizationSandboxState,
   type SandboxRaceId,
 } from "../../../domain/civilization-sandbox";
+import {
+  coordinateToRoundedHex,
+  type CoordinateSpace,
+  type GridCoordinate,
+  type HexCoordinateSystem,
+} from "../../navigation/travel-to-coordinate";
 import { placeSandboxLord } from "../../civilization-sandbox/placement";
 import { tickCivilizationSandbox } from "../../civilization-sandbox/simulation";
 
@@ -34,10 +40,9 @@ export function createCivilizationSandboxActionFromUiInput(input: {
   actionType: string | undefined;
   raceId: string | undefined;
   entityId: string | undefined;
-  hex: {
-    x: number;
-    y: number;
-  };
+  coordinate: GridCoordinate;
+  coordinateSpace?: CoordinateSpace | null;
+  coordinateSystem?: HexCoordinateSystem | null;
 }): CivilizationSandboxAction | null {
   if (input.actionType === "place-lord") {
     if (
@@ -51,7 +56,14 @@ export function createCivilizationSandboxActionFromUiInput(input: {
     return {
       type: "place-lord",
       raceId: input.raceId,
-      hex: input.hex,
+      hex:
+        input.coordinateSpace == null
+          ? input.coordinate
+          : coordinateToRoundedHex(
+              input.coordinate,
+              input.coordinateSpace,
+              input.coordinateSystem ?? undefined
+            ),
     };
   }
 

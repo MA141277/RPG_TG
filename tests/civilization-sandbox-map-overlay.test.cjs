@@ -75,8 +75,78 @@ test("civilization sandbox view exposes individuals houses farms and territory v
   );
   assert.match(mapViewSource, /c-civilization-sandbox-structure--farm/);
   assert.match(mapViewSource, /c-civilization-sandbox-territory/);
+  assert.match(mapViewSource, /data-terrain-projected-point/);
+  assert.match(mapViewSource, /data-map-height-u/);
+  assert.match(mapViewSource, /hexToCoordinate/);
+  assert.match(mapViewSource, /hexToCoordinatePolygon/);
+  assert.match(mapViewSource, /points=\"\$\{formatSandboxPolygonPoints/);
   assert.doesNotMatch(mapViewSource, /ui\/npc\/city-ambient-walkers/);
   assert.match(styleSource, /c-civilization-sandbox-overlay/);
   assert.doesNotMatch(styleSource, /#[0-9a-fA-F]{3,8}\b/);
   assert.doesNotMatch(styleSource, /z-index\s*:\s*\d+/);
+});
+
+test("civilization sandbox rural houses feed the campaign terrain model channel", () => {
+  const terrainSource = fs.readFileSync(
+    "src/ui/views/map/campaign-terrain-webgl.ts",
+    "utf8"
+  );
+
+  assert.match(terrainSource, /readCivilizationSandboxRuralHouseStructures/);
+  assert.match(terrainSource, /data-civilization-sandbox-source/);
+  assert.match(terrainSource, /settlementVillageInstances/);
+  assert.match(terrainSource, /setCampaignStructureGroundSemanticCell/);
+  assert.match(terrainSource, /"rural-house"/);
+});
+
+test("civilization sandbox placement action converts map coordinates to hex coordinates", () => {
+  const {
+    createCivilizationSandboxActionFromUiInput,
+  } = require("../.test-dist/application/runtime/coordinators/civilization-sandbox-action-coordinator.js");
+
+  const action = createCivilizationSandboxActionFromUiInput({
+    actionType: "place-lord",
+    raceId: "wu-tong",
+    entityId: undefined,
+    coordinate: { x: 5, y: 5 },
+    coordinateSpace: { width: 10, height: 10 },
+    coordinateSystem: null,
+  });
+
+  assert.equal(action.type, "place-lord");
+  assert.deepEqual(action.hex, { x: 0, y: 0 });
+});
+
+test("civilization sandbox tick moves non-leader individuals across claimed hexes", () => {
+  const {
+    createInitialCivilizationSandboxState,
+  } = require("../.test-dist/domain/civilization-sandbox.js");
+  const {
+    placeSandboxLord,
+  } = require("../.test-dist/application/civilization-sandbox/placement.js");
+  const {
+    tickCivilizationSandbox,
+  } = require("../.test-dist/application/civilization-sandbox/simulation.js");
+
+  let state = placeSandboxLord({
+    state: createInitialCivilizationSandboxState(),
+    raceId: "yu-qingqing",
+    hex: { x: 2, y: 2 },
+  });
+  const initialById = Object.fromEntries(
+    Object.values(state.individualsById).map((individual) => [
+      individual.id,
+      individual.hexKey,
+    ])
+  );
+
+  state = tickCivilizationSandbox(tickCivilizationSandbox(state));
+
+  assert.ok(
+    Object.values(state.individualsById).some(
+      (individual) =>
+        !individual.isLeader && initialById[individual.id] !== individual.hexKey
+    ),
+    "Expected at least one non-leader sandbox individual to move to another hex."
+  );
 });

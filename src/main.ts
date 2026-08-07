@@ -5278,12 +5278,18 @@ appElement.addEventListener("click", (event) => {
     "[data-civilization-sandbox-action]"
   );
   if (civilizationSandboxActionButton != null) {
+    const currentMapDefinition = getCurrentMapDefinition();
     const sandboxAction = createCivilizationSandboxActionFromUiInput({
       actionType:
         civilizationSandboxActionButton.dataset.civilizationSandboxAction,
       raceId: civilizationSandboxActionButton.dataset.sandboxRaceId,
       entityId: civilizationSandboxActionButton.dataset.sandboxEntityId,
-      hex: appState.playerCoordinate,
+      coordinate: appState.playerCoordinate,
+      coordinateSpace:
+        currentMapDefinition?.mode === "campaign"
+          ? currentMapDefinition.coordinateSpace ?? null
+          : null,
+      coordinateSystem: getCurrentCampaignHexCoordinateSystem(),
     });
 
     if (sandboxAction != null) {

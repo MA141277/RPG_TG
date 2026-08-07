@@ -317,6 +317,20 @@ type CampaignRuntimeMarker = {
   } | null;
 };
 
+type CampaignCivilizationSandboxSource = {
+  enabled: boolean;
+  structures: CampaignCivilizationSandboxStructureSource[];
+};
+
+type CampaignCivilizationSandboxStructureSource = {
+  id: string;
+  kind: string;
+  hex: {
+    x: number;
+    y: number;
+  };
+};
+
 type ActorBoneAsset = {
   name: string;
   parentIndex: number | null;
@@ -745,6 +759,10 @@ const shorelineChainEdgesBySemanticModel = new WeakMap<
   ShorelineChainEdge[]
 >();
 const campaignMarkerSourceCache = new WeakMap<HTMLScriptElement, CampaignRuntimeMarker[]>();
+const civilizationSandboxSourceCache = new WeakMap<
+  HTMLScriptElement,
+  CampaignCivilizationSandboxSource
+>();
 let campaignTerrainChunkCacheDbPromise: Promise<IDBDatabase | null> | null = null;
 
 type ShorelineChainEdge = {
@@ -3905,6 +3923,7 @@ function getCampaignTerrainSemanticDataSignature(
     input.campaignHexGridUrl ?? "",
     getCampaignHexGridContentSignature(campaignHexGrid),
     getCampaignMarkerSourceSignature(input.canvas),
+    getCivilizationSandboxSourceSignature(input.canvas),
     fortCityRules?.fortifiedNodeIds?.join(",") ?? "",
     fortCityRules?.settlementVillage == null ? "" : "settlement-village",
   ].join("|");
@@ -3996,6 +4015,15 @@ function getCampaignMarkerSourceSignature(canvas: HTMLCanvasElement): string {
   return sourceElement?.textContent ?? "";
 }
 
+function getCivilizationSandboxSourceSignature(canvas: HTMLCanvasElement): string {
+  const stage = canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  const sourceElement = stage?.querySelector<HTMLScriptElement>(
+    "script[data-civilization-sandbox-source]"
+  );
+
+  return sourceElement?.textContent ?? "";
+}
+
 function applyCampaignStructureGroundSemanticOverlay(
   materialSemanticModel: CampaignMaterialSemanticModel,
   canvas: HTMLCanvasElement,
@@ -4036,6 +4064,21 @@ function applyCampaignStructureGroundSemanticOverlay(
 
     if (marker.kind === "settlement" && !cityCells.has(cellKey)) {
       setCampaignStructureGroundSemanticCell(materialSemanticModel, cell, "village");
+    }
+  }
+
+  for (const structure of readCivilizationSandboxRuralHouseStructures(stage)) {
+    if (!isPlainTerrainHexCell(materialSemanticModel, structure.hex)) {
+      continue;
+    }
+
+    const cellKey = getHexCellKey(structure.hex.x, structure.hex.y);
+    if (!cityCells.has(cellKey)) {
+      setCampaignStructureGroundSemanticCell(
+        materialSemanticModel,
+        structure.hex,
+        "village"
+      );
     }
   }
 }
@@ -6418,6 +6461,76 @@ function isCampaignRuntimeMarker(value: unknown): value is CampaignRuntimeMarker
   );
 }
 
+function readCivilizationSandboxRuralHouseStructures(
+  stage: HTMLElement
+): CampaignCivilizationSandboxStructureSource[] {
+  const source = readCivilizationSandboxSource(stage);
+  if (!source.enabled) {
+    return [];
+  }
+
+  return source.structures.filter((structure) => structure.kind === "rural-house");
+}
+
+function readCivilizationSandboxSource(
+  stage: HTMLElement
+): CampaignCivilizationSandboxSource {
+  const sourceElement = stage.querySelector<HTMLScriptElement>(
+    "script[data-civilization-sandbox-source]"
+  );
+  if (sourceElement == null) {
+    return { enabled: false, structures: [] };
+  }
+
+  const cachedSource = civilizationSandboxSourceCache.get(sourceElement);
+  if (cachedSource != null) {
+    return cachedSource;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(sourceElement.textContent ?? "{}");
+  } catch (error) {
+    console.error("Failed to parse civilization sandbox source.", error);
+    const emptySource = { enabled: false, structures: [] };
+    civilizationSandboxSourceCache.set(sourceElement, emptySource);
+    return emptySource;
+  }
+
+  if (parsed == null || typeof parsed !== "object") {
+    const emptySource = { enabled: false, structures: [] };
+    civilizationSandboxSourceCache.set(sourceElement, emptySource);
+    return emptySource;
+  }
+
+  const candidate = parsed as Partial<CampaignCivilizationSandboxSource>;
+  const source: CampaignCivilizationSandboxSource = {
+    enabled: candidate.enabled === true,
+    structures: Array.isArray(candidate.structures)
+      ? candidate.structures.filter(isCampaignCivilizationSandboxStructureSource)
+      : [],
+  };
+  civilizationSandboxSourceCache.set(sourceElement, source);
+  return source;
+}
+
+function isCampaignCivilizationSandboxStructureSource(
+  value: unknown
+): value is CampaignCivilizationSandboxStructureSource {
+  if (value == null || typeof value !== "object") {
+    return false;
+  }
+
+  const structure = value as Partial<CampaignCivilizationSandboxStructureSource>;
+  return (
+    typeof structure.id === "string" &&
+    typeof structure.kind === "string" &&
+    structure.hex != null &&
+    Number.isFinite(structure.hex.x) &&
+    Number.isFinite(structure.hex.y)
+  );
+}
+
 function renderCampaignRuntimeMarker(marker: CampaignRuntimeMarker): string {
   const displayName = getCampaignMarkerDisplayName(marker.name);
   const markerName = escapeHtml(marker.name);
@@ -6737,6 +6850,33 @@ function readCampaignSettlementVillageInstances(input: {
       u: hexPointToTerrainU(center.x, input.materialSemanticModel.terrainCoordinates),
       v: hexPointToTerrainV(center.y, input.materialSemanticModel.terrainCoordinates),
       key: hexKey,
+      x: hexCell.x,
+      y: hexCell.y,
+    });
+  }
+
+  for (const structure of readCivilizationSandboxRuralHouseStructures(stage)) {
+    const hexCell = structure.hex;
+    const hexKey = getHexCellKey(hexCell.x, hexCell.y);
+    if (
+      cityHexKeys.has(hexKey) ||
+      !isPlainTerrainHexCell(input.materialSemanticModel, hexCell)
+    ) {
+      continue;
+    }
+
+    const chunkKey = getCampaignTerrainChunkKey(
+      getCampaignTerrainChunkForHexCell(hexCell)
+    );
+    if (!input.loadedChunkKeys.has(chunkKey)) {
+      continue;
+    }
+
+    const center = hexToPixel(hexCell.x, hexCell.y);
+    instancesByHexKey.set(`sandbox:${structure.id}:${hexKey}`, {
+      u: hexPointToTerrainU(center.x, input.materialSemanticModel.terrainCoordinates),
+      v: hexPointToTerrainV(center.y, input.materialSemanticModel.terrainCoordinates),
+      key: `sandbox:${structure.id}:${hexKey}`,
       x: hexCell.x,
       y: hexCell.y,
     });
@@ -8999,17 +9139,19 @@ function syncProjectedPoints(input: {
   );
   const points = stage.querySelectorAll<HTMLElement>("[data-terrain-projected-point]");
   for (const point of points) {
-    const u = Number(point.dataset.mapHeightU);
-    const v = Number(point.dataset.mapHeightV);
-    if (!Number.isFinite(u) || !Number.isFinite(v)) {
+    const uv = readTerrainProjectedPointUv(
+      point,
+      input.materialSemanticModel.coordinateSystem
+    );
+    if (uv == null) {
       point.removeAttribute("data-terrain-projection-ready");
       continue;
     }
 
-    const height = input.sampleHeightAtUv(u, v);
+    const height = input.sampleHeightAtUv(uv.u, uv.v);
     const worldPoint = createTerrainWorldPoint(
-      u,
-      v,
+      uv.u,
+      uv.v,
       height,
       input.materialSemanticModel.worldScale
     );
@@ -9054,6 +9196,29 @@ function syncProjectedPoints(input: {
       point.style.zIndex = `${20 + depthLayer}`;
     }
   }
+}
+
+function readTerrainProjectedPointUv(
+  point: HTMLElement,
+  coordinateSystem: CampaignTerrainCoordinateSystem | CampaignHexGridAsset["coordinateSystem"]
+): { u: number; v: number } | null {
+  const hexX = Number(point.dataset.mapHexX);
+  const hexY = Number(point.dataset.mapHexY);
+  if (Number.isFinite(hexX) && Number.isFinite(hexY)) {
+    const center = hexToPixel(hexX, hexY);
+    return {
+      u: hexPointToTerrainU(center.x, coordinateSystem),
+      v: hexPointToTerrainV(center.y, coordinateSystem),
+    };
+  }
+
+  const u = Number(point.dataset.mapHeightU);
+  const v = Number(point.dataset.mapHeightV);
+  if (!Number.isFinite(u) || !Number.isFinite(v)) {
+    return null;
+  }
+
+  return { u, v };
 }
 
 function sampleHeightAt(

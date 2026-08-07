@@ -33,6 +33,7 @@ export function tickCivilizationSandbox(
     nextState = ensureCivilizationHouse(nextState, civilization);
     nextState = ensureCivilizationFarm(nextState, civilization);
     nextState = claimNextAdjacentHex(nextState, civilization);
+    nextState = moveCivilizationIndividuals(nextState, civilization);
     nextState = reproduceIfReady(nextState, civilization);
   }
 
@@ -209,6 +210,58 @@ function reproduceIfReady(
   };
 }
 
+function moveCivilizationIndividuals(
+  state: CivilizationSandboxState,
+  civilization: SandboxCivilization
+): CivilizationSandboxState {
+  const claimedHexes = civilization.claimedHexKeys
+    .map(parseSandboxHexKey)
+    .filter((hex): hex is { x: number; y: number } => hex != null);
+
+  if (claimedHexes.length <= 1) {
+    return state;
+  }
+
+  const nextIndividuals = { ...state.individualsById };
+  let changed = false;
+  const members = Object.values(state.individualsById)
+    .filter(
+      (individual) =>
+        individual.civilizationId === civilization.id && !individual.isLeader
+    )
+    .sort((left, right) => left.id.localeCompare(right.id));
+
+  for (const [memberIndex, individual] of members.entries()) {
+    const targetHex =
+      claimedHexes[
+        (state.tick + individual.birthIndex + memberIndex) % claimedHexes.length
+      ];
+    if (targetHex == null || getSandboxHexKey(targetHex) === individual.hexKey) {
+      continue;
+    }
+
+    nextIndividuals[individual.id] = {
+      ...individual,
+      hex: targetHex,
+      hexKey: getSandboxHexKey(targetHex),
+      direction: getDirectionBetweenHexes(individual.hex, targetHex),
+      task: {
+        type: individual.role === "farmer" ? "farm" : "patrol",
+        targetHex,
+        progress: 1,
+      },
+    };
+    changed = true;
+  }
+
+  return changed
+    ? {
+        ...state,
+        individualsById: nextIndividuals,
+      }
+    : state;
+}
+
 function addStructure(
   state: CivilizationSandboxState,
   civilization: SandboxCivilization,
@@ -277,4 +330,30 @@ function getCivilizationCenterHex(
 } {
   const settlement = state.settlementsById[civilization.settlementIds[0] ?? ""];
   return settlement?.centerHex ?? { x: 0, y: 0 };
+}
+
+function parseSandboxHexKey(hexKey: string): { x: number; y: number } | null {
+  const parts = hexKey.split(",");
+  const x = Number(parts[0]);
+  const y = Number(parts[1]);
+  return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
+}
+
+function getDirectionBetweenHexes(
+  from: { x: number; y: number },
+  to: { x: number; y: number }
+) {
+  if (to.x >= from.x && to.y <= from.y) {
+    return "right-up";
+  }
+
+  if (to.x >= from.x) {
+    return "right-down";
+  }
+
+  if (to.y <= from.y) {
+    return "left-up";
+  }
+
+  return "left-down";
 }
