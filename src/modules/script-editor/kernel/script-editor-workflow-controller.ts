@@ -1,4 +1,3 @@
-import { loadScenarioPackFromFiles } from "../../../application/scenario/scenario-pack-loader";
 import {
   createDefaultScriptEditorProjectDefinition,
 } from "../application/minimal-workflow";
@@ -8,8 +7,11 @@ import { markScriptEditorProjectCompleteForExport } from "../application/project
 import { exportScriptEditorProjectToScenarioPackFiles } from "../application/runtime-pack-export";
 import { loadDefaultScriptEditorTemplateProject } from "../application/default-template-project-loader";
 import type { ScriptEditorProjectDefinition } from "../domain/script-editor-project";
+import type {
+  ScriptEditorPreviewHost,
+  ScriptEditorPreviewSession,
+} from "../host/script-editor-host";
 import {
-  createTextImportFilesFromRecord,
   pickScriptEditorDirectory,
   readFilesFromDirectoryHandle,
   type ScriptEditorWriteResult,
@@ -22,7 +24,7 @@ export type ScriptEditorWorkflowNotice = {
 };
 
 export type ScriptEditorRuntimePreviewSessionState = {
-  returnContext: unknown;
+  previewSession: ScriptEditorPreviewSession;
   startedAt: number;
 };
 
@@ -45,17 +47,12 @@ export type ScriptEditorWorkflowEnvironment = {
   setPendingDeleteProjectId(projectId: string | null): void;
   resetNoticeTimeline(): void;
   recordNotice(notice: ScriptEditorWorkflowNotice): void;
+  getPreviewHost(): ScriptEditorPreviewHost | null;
   setScreen(screen: string): void;
-  captureRuntimePreviewReturnContext(): unknown;
-  restoreRuntimePreviewReturnContext(returnContext: unknown): void;
   getRuntimePreviewSession(): ScriptEditorRuntimePreviewSessionState | null;
   setRuntimePreviewSession(
     session: ScriptEditorRuntimePreviewSessionState | null
   ): void;
-  startLoadedScenarioPack(
-    scenarioPack: unknown
-  ): Promise<"started" | "failed" | string | void>;
-  exitRuntimePreview(): void;
 };
 
 export class ScriptEditorWorkflowController {
@@ -159,33 +156,32 @@ export class ScriptEditorWorkflowController {
       return;
     }
 
-    const returnContext = this.environment.captureRuntimePreviewReturnContext();
+    const previewHost = this.environment.getPreviewHost();
+    if (previewHost == null) {
+      this.environment.recordNotice({
+        tone: "warning",
+        message: "当前宿主未提供运行预览能力。",
+      });
+      return;
+    }
+
     try {
       const serializedPackFiles = exportScriptEditorProjectToScenarioPackFiles(project);
-      const scenarioPack = await loadScenarioPackFromFiles(
-        createTextImportFilesFromRecord(serializedPackFiles)
-      );
+      const previewSession = await previewHost.startPreview({
+        project,
+        serializedPackFiles,
+      });
       this.environment.setRuntimePreviewSession({
-        returnContext,
+        previewSession,
         startedAt: Date.now(),
       });
-      const startResult = await this.environment.startLoadedScenarioPack(scenarioPack);
-      if (startResult === "started") {
-        this.environment.setScreen("runtime-preview");
-        return;
-      }
-      if (startResult === "failed") {
-        throw new Error("Runtime preview startup failed.");
-      }
     } catch (error) {
       this.environment.setRuntimePreviewSession(null);
-      this.environment.restoreRuntimePreviewReturnContext(returnContext);
       this.environment.recordNotice({
         tone: "warning",
         message:
           error instanceof Error ? error.message : "Failed to start runtime preview.",
       });
-      this.environment.setScreen("script-editor-workspace");
     }
   }
 
@@ -281,19 +277,14 @@ export class ScriptEditorWorkflowController {
   }
 
   enterRuntimePreviewSession(): void {
-    if (this.environment.getRuntimePreviewSession() == null) {
-      return;
-    }
-
-    this.environment.setScreen("runtime-preview");
+    return;
   }
 
-  exitRuntimePreviewSession(): void {
-    const returnContext =
-      this.environment.getRuntimePreviewSession()?.returnContext ?? null;
+  async exitRuntimePreviewSession(): Promise<void> {
+    const previewSession =
+      this.environment.getRuntimePreviewSession()?.previewSession ?? null;
     this.environment.setRuntimePreviewSession(null);
-    this.environment.exitRuntimePreview();
-    this.environment.restoreRuntimePreviewReturnContext(returnContext);
+    await previewSession?.exit?.();
   }
 }
 

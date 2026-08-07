@@ -157,6 +157,22 @@ function configureFlowRuntimeRegistries() {
   });
 }
 
+test("script editor preview fails closed when no previewHost is injected", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /getPreviewHost\(\)/);
+  assert.doesNotMatch(source, /setScreen\\("runtime-preview"\\)/);
+  assert.doesNotMatch(source, /captureRuntimePreviewReturnContext/);
+  assert.doesNotMatch(source, /restoreRuntimePreviewReturnContext/);
+  assert.doesNotMatch(source, /startLoadedScenarioPack/);
+});
+
 test("imported zhuyuanzhang script-editor template stays exportable for runtime preview", async () => {
   const templateRoot = path.join(
     process.cwd(),

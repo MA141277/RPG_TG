@@ -12,10 +12,10 @@
 
 - Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 2: move script editor session ownership out of MainUiFlow.`
-- Next Step: `Continue Task 2 by moving the remaining person-trade/location/building change-routing ownership out of MainUiFlow and into the session path.`
-- Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 checkpoints passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck`
-- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 has cut over workflow/session construction plus click/input/event/minigame/relation change routing into script-editor/kernel, but MainUiFlow still owns the remaining person-trade/location/building editor change paths that must be removed in the next slice.`
+- Current Focus: `Task 4: add a real standalone script editor entry.`
+- Next Step: `Write the failing standalone-entry test, then add the standalone prototype entry and standalone host bootstrap.`
+- Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck. Task 3 passed: npm run build:test; node --test tests/script-editor-runtime-preview-compat.test.cjs --test-name-pattern "preview fails closed when no previewHost is injected|runtime preview can load exported zhuyuanzhang template packs that inline map assets as data urls"`; `npm run typecheck``
+- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 is complete: MainUiFlow no longer owns direct script-editor data-action/data-change/data-input routing, and the embedded session is now the editor interaction owner. Task 3 is complete: the workflow controller now starts preview only through injected previewHost capability, while the embedded host adapts legacy runtime startup callbacks behind that injected capability boundary.`
 
 ## Progress Log
 
@@ -59,6 +59,14 @@
   - Summary: `Extended Task 2 again by moving the minigame and story/event relation change-routing groups out of MainUiFlow and into script-editor/kernel/script-editor-session.`
   - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
   - Next: `Continue Task 2 by moving the remaining person-trade/location/building change-routing branches out of MainUiFlow.`
+- 2026-08-07
+  - Summary: `Completed Task 2 by moving the remaining person-trade/location/building change-routing branches out of MainUiFlow and into script-editor/kernel/script-editor-session; MainUiFlow no longer owns direct script-editor selector routing.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
+  - Next: `Start Task 3 and move runtime preview startup behind injected previewHost capability only.`
+- 2026-08-07
+  - Summary: `Completed Task 3 by changing the workflow controller to require injected previewHost capability for runtime preview, while moving legacy embedded runtime startup adaptation behind the embedded host/session boundary.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-runtime-preview-compat.test.cjs --test-name-pattern "preview fails closed when no previewHost is injected|runtime preview can load exported zhuyuanzhang template packs that inline map assets as data urls"`; `npm run typecheck`
+  - Next: `Start Task 4 and add the standalone script editor entry.`
 
 ---
 
@@ -303,7 +311,7 @@ git commit -m "refactor: freeze script editor host contract"
 - Modify: `src/ui/main-ui/main-ui-flow.js`
 - Test: `tests/script-editor-embedded-session.test.cjs`
 
-- [ ] **Step 1: Write the failing embedded-ownership test**
+- [x] **Step 1: Write the failing embedded-ownership test**
 
 Create `tests/script-editor-embedded-session.test.cjs` with checks like:
 
@@ -325,7 +333,7 @@ test("MainUiFlow mounts the script editor instead of owning its DOM action vocab
 });
 ```
 
-- [ ] **Step 2: Run the failing ownership test**
+- [x] **Step 2: Run the failing ownership test**
 
 Run:
 
@@ -339,7 +347,7 @@ Expected:
 - `FAIL`
 - `MainUiFlow` still contains script editor action selectors and direct apply handlers
 
-- [ ] **Step 3: Implement the real script editor session owner**
+- [x] **Step 3: Implement the real script editor session owner**
 
 Create a session owner that holds editor-local state and event handling:
 
@@ -361,7 +369,7 @@ export function createScriptEditorSession(input: {
 
 Update `mount-script-editor.ts` and `open-script-editor.ts` to construct and return this session, and reduce `main-ui-script-editor-module.js` to an embedded adapter that delegates into the session instead of owning editor-local workflow itself.
 
-- [ ] **Step 4: Simplify MainUiFlow to host-only behavior**
+- [x] **Step 4: Simplify MainUiFlow to host-only behavior**
 
 Update `MainUiFlow` so the script editor path only:
 
@@ -379,7 +387,7 @@ And remove:
 - direct `applyScriptEditor...` state mutation methods
 - editor-local screen ownership outside the mounted session
 
-- [ ] **Step 5: Re-run the embedded ownership test**
+- [x] **Step 5: Re-run the embedded ownership test**
 
 Run:
 
@@ -392,7 +400,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 6: Commit the session-owner cutover**
+- [x] **Step 6: Commit the session-owner cutover**
 
 ```bash
 git add src/modules/script-editor/kernel/script-editor-session.ts src/modules/script-editor/entries/mount-script-editor.ts src/modules/script-editor/entries/open-script-editor.ts src/modules/script-editor/ui/main-ui-script-editor-module.js src/ui/main-ui/main-ui-flow.js tests/script-editor-embedded-session.test.cjs
@@ -407,7 +415,7 @@ git commit -m "refactor: move script editor ownership out of MainUiFlow"
 - Modify: `src/modules/script-editor/host/browser-script-editor-host.ts`
 - Test: `tests/script-editor-runtime-preview-compat.test.cjs`
 
-- [ ] **Step 1: Write the failing preview-injection test**
+- [x] **Step 1: Write the failing preview-injection test**
 
 Add a focused test case to `tests/script-editor-runtime-preview-compat.test.cjs` similar to:
 
@@ -424,7 +432,7 @@ test("script editor preview fails closed when no previewHost is injected", async
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 
@@ -438,7 +446,7 @@ Expected:
 - `FAIL`
 - workflow controller still references main-shell preview vocabulary
 
-- [ ] **Step 3: Change preview flow to injected capability only**
+- [x] **Step 3: Change preview flow to injected capability only**
 
 Refactor `previewProjectRuntime()` toward:
 
@@ -468,7 +476,7 @@ Remove main-shell concepts such as:
 - preview return-context capture/restore
 - direct startup result switching in the controller
 
-- [ ] **Step 4: Re-run preview compatibility tests**
+- [x] **Step 4: Re-run preview compatibility tests**
 
 Run:
 
@@ -481,7 +489,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Commit the preview-host change**
+- [x] **Step 5: Commit the preview-host change**
 
 ```bash
 git add src/modules/script-editor/kernel/script-editor-workflow-controller.ts src/modules/script-editor/host/script-editor-host.ts src/modules/script-editor/host/browser-script-editor-host.ts tests/script-editor-runtime-preview-compat.test.cjs

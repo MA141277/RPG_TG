@@ -1,5 +1,7 @@
 import type { ScriptEditorProjectDefinition } from "../domain/script-editor-project";
 import type { ScriptEditorHost } from "../host/script-editor-host";
+import { loadScenarioPackFromFiles } from "../../../application/scenario/scenario-pack-loader";
+import { createTextImportFilesFromRecord } from "../host/browser-file-system";
 import {
   createScriptEditorWorkflowController,
   type ScriptEditorWorkflowController,
@@ -29,6 +31,7 @@ export type ScriptEditorMountHandle = {
 
 type ScriptEditorEmbeddedSessionHost = {
   [key: string]: unknown;
+  previewHost?: ScriptEditorHost["previewHost"];
   setScreen(screen: string): void;
   onStartLoadedScenarioPack?: (
     scenarioPack: unknown
@@ -121,26 +124,36 @@ export function createEmbeddedScriptEditorSession(
     recordNotice: (notice) => {
       host.recordScriptEditorNotice(notice);
     },
+    getPreviewHost: () => {
+      if (host.previewHost != null) {
+        return host.previewHost;
+      }
+      if (host.onStartLoadedScenarioPack == null) {
+        return null;
+      }
+      return {
+        startPreview: async (request) => {
+          const scenarioPack = await loadScenarioPackFromFiles(
+            createTextImportFilesFromRecord(request.serializedPackFiles)
+          );
+          const startResult = await host.onStartLoadedScenarioPack?.(scenarioPack);
+          if (startResult === "failed") {
+            throw new Error("Runtime preview startup failed.");
+          }
+          return {
+            exit: () => {
+              host.onExitRuntimePreview?.();
+            },
+          };
+        },
+      };
+    },
     setScreen: (screen) => {
       host.setScreen(screen);
-    },
-    captureRuntimePreviewReturnContext: () =>
-      host.captureScriptEditorRuntimePreviewReturnContext(),
-    restoreRuntimePreviewReturnContext: (returnContext) => {
-      host.restoreScriptEditorRuntimePreviewReturnContext(returnContext);
     },
     getRuntimePreviewSession: () => host.scriptEditorRuntimePreviewSession,
     setRuntimePreviewSession: (session) => {
       host.scriptEditorRuntimePreviewSession = session;
-    },
-    startLoadedScenarioPack: (scenarioPack) => {
-      if (host.onStartLoadedScenarioPack == null) {
-        throw new Error("Runtime preview startup is unavailable.");
-      }
-      return host.onStartLoadedScenarioPack(scenarioPack);
-    },
-    exitRuntimePreview: () => {
-      host.onExitRuntimePreview?.();
     },
   });
 
@@ -702,6 +715,346 @@ export function createEmbeddedScriptEditorSession(
         );
         if (Number.isInteger(index) && index >= 0 && relationKind != null) {
           host.applyScriptEditorEventRelationField(relationKind, index, target.value);
+        }
+        return true;
+      }
+
+      if (
+        target instanceof HTMLInputElement &&
+        target.matches("[data-script-editor-person-trade-enabled]")
+      ) {
+        host.applyScriptEditorPersonTradeEnabled(target.checked);
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-location-field]")) {
+        const field = target.dataset.scriptEditorLocationField;
+        if (typeof field === "string" && field.length > 0) {
+          host.applyScriptEditorLocationField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-city-mounted-building]")) {
+        const index = Number.parseInt(
+          target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+          10
+        );
+        if (Number.isInteger(index) && index >= 0) {
+          host.applyScriptEditorCityMountedBuilding(index, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-building-arrangement-field]")) {
+        const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+        const field = target.dataset.scriptEditorBuildingArrangementField;
+        if (
+          arrangementId.length > 0 &&
+          ["id", "cityId", "buildingId", "displayName", "description", "backgroundId"].includes(
+            field ?? ""
+          )
+        ) {
+          host.applyScriptEditorBuildingArrangementField(
+            arrangementId,
+            field,
+            target.value
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-building-arrangement-npc]")) {
+        const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+        const npcIndex = Number.parseInt(
+          target.dataset.scriptEditorBuildingArrangementNpcIndex ?? "-1",
+          10
+        );
+        if (arrangementId.length > 0 && Number.isInteger(npcIndex) && npcIndex >= 0) {
+          host.applyScriptEditorBuildingArrangementNpc(
+            arrangementId,
+            npcIndex,
+            target.value
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-building-arrangement-primary-npc]")) {
+        const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+        if (arrangementId.length > 0) {
+          host.applyScriptEditorBuildingArrangementPrimaryNpc(
+            arrangementId,
+            target.value
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-building-layout-field]")) {
+        const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+        const field = target.dataset.scriptEditorBuildingLayoutField;
+        if (
+          arrangementId.length > 0 &&
+          ["templateId", "shellClassNames"].includes(field ?? "")
+        ) {
+          host.applyScriptEditorBuildingLayoutField(arrangementId, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-building-layout-node-field]")) {
+        const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+        const nodeIndex = Number.parseInt(
+          target.dataset.scriptEditorBuildingLayoutNodeIndex ?? "-1",
+          10
+        );
+        const field = target.dataset.scriptEditorBuildingLayoutNodeField;
+        if (
+          arrangementId.length > 0 &&
+          Number.isInteger(nodeIndex) &&
+          nodeIndex >= 0 &&
+          [
+            "id",
+            "kind",
+            "regionId",
+            "sourceContainerId",
+            "sourceContainerType",
+            "presentation",
+            "characterFilter",
+            "actionFilter",
+            "clickActionId",
+          ].includes(field ?? "")
+        ) {
+          host.applyScriptEditorBuildingLayoutNodeField(
+            arrangementId,
+            nodeIndex,
+            field,
+            target.value
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-building-container-field]")) {
+        const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+        const containerIndex = Number.parseInt(
+          target.dataset.scriptEditorBuildingContainerIndex ?? "-1",
+          10
+        );
+        const field = target.dataset.scriptEditorBuildingContainerField;
+        if (
+          arrangementId.length > 0 &&
+          Number.isInteger(containerIndex) &&
+          containerIndex >= 0 &&
+          ["id", "type", "title"].includes(field ?? "")
+        ) {
+          host.applyScriptEditorBuildingContainerField(
+            arrangementId,
+            containerIndex,
+            field,
+            target.value
+          );
+        }
+        return true;
+      }
+
+      if (
+        target instanceof HTMLInputElement &&
+        target.matches("[data-script-editor-building-layout-node-flag]")
+      ) {
+        const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+        const nodeIndex = Number.parseInt(
+          target.dataset.scriptEditorBuildingLayoutNodeIndex ?? "-1",
+          10
+        );
+        const field = target.dataset.scriptEditorBuildingLayoutNodeFlag;
+        if (
+          arrangementId.length > 0 &&
+          Number.isInteger(nodeIndex) &&
+          nodeIndex >= 0 &&
+          ["previewSelectable", "previewDraggable", "previewDropTarget"].includes(
+            field ?? ""
+          )
+        ) {
+          host.applyScriptEditorBuildingLayoutNodeFlag(
+            arrangementId,
+            nodeIndex,
+            field,
+            target.checked
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-city-mounted-building-npc]")) {
+        const buildingIndex = Number.parseInt(
+          target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+          10
+        );
+        const npcIndex = Number.parseInt(
+          target.dataset.scriptEditorCityMountedBuildingNpcIndex ?? "-1",
+          10
+        );
+        if (
+          Number.isInteger(buildingIndex) &&
+          buildingIndex >= 0 &&
+          Number.isInteger(npcIndex) &&
+          npcIndex >= 0
+        ) {
+          host.applyScriptEditorCityMountedBuildingNpc(
+            buildingIndex,
+            npcIndex,
+            target.value
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-city-primary-npc]")) {
+        const buildingIndex = Number.parseInt(
+          target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+          10
+        );
+        if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
+          host.applyScriptEditorCityMountedBuildingPrimaryNpc(
+            buildingIndex,
+            target.value
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-location-menu-field]")) {
+        const field = target.dataset.scriptEditorLocationMenuField;
+        const instanceId = target.dataset.scriptEditorLocationMenuInstanceId ?? "";
+        const index = Number.parseInt(
+          target.dataset.scriptEditorLocationMenuIndex ?? "-1",
+          10
+        );
+        if (
+          ["id", "label", "menuFamily", "targetFamily", "targetId", "disabledHint"].includes(
+            field ?? ""
+          ) &&
+          instanceId.length > 0 &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorLocationMenuField(instanceId, index, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-location-menu-instance-field]")) {
+        const field = target.dataset.scriptEditorLocationMenuInstanceField;
+        const instanceId = target.dataset.scriptEditorLocationMenuInstanceId ?? "";
+        if (field === "title" && instanceId.length > 0) {
+          host.applyScriptEditorLocationMenuInstanceField(instanceId, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-location-menu-resource-field]")) {
+        const field = target.dataset.scriptEditorLocationMenuResourceField;
+        const resourceId = target.dataset.scriptEditorLocationMenuResourceId ?? "";
+        if (field === "title" && resourceId.length > 0) {
+          host.applyScriptEditorLocationMenuResourceField(resourceId, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-location-attribute-field]")) {
+        const field = target.dataset.scriptEditorLocationAttributeField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorLocationAttributeIndex ?? "-1",
+          10
+        );
+        if (
+          (
+            field === "key" ||
+            field === "label" ||
+            field === "type" ||
+            field === "value" ||
+            field === "options"
+          ) &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorLocationAttributeField(index, field, target.value);
+        }
+        return true;
+      }
+
+      if (
+        target instanceof HTMLInputElement &&
+        target.matches("[data-script-editor-location-menu-flag]")
+      ) {
+        const field = target.dataset.scriptEditorLocationMenuFlag;
+        const instanceId = target.dataset.scriptEditorLocationMenuInstanceId ?? "";
+        const index = Number.parseInt(
+          target.dataset.scriptEditorLocationMenuIndex ?? "-1",
+          10
+        );
+        if (
+          (field === "isVisible" || field === "isEnabled") &&
+          instanceId.length > 0 &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorLocationMenuFlag(
+            instanceId,
+            index,
+            field,
+            target.checked
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-location-access-field]")) {
+        const field = target.dataset.scriptEditorLocationAccessField;
+        if (
+          field === "blockedDialogueId" ||
+          field === "conditionExpression" ||
+          field === "leaveConditionExpression"
+        ) {
+          host.applyScriptEditorLocationAccessField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-location-access-condition-field]")) {
+        const index = Number.parseInt(
+          target.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
+          10
+        );
+        const field = target.dataset.scriptEditorLocationAccessConditionField;
+        if (
+          Number.isInteger(index) &&
+          index >= 0 &&
+          (field === "factor" ||
+            field === "eventId" ||
+            field === "eventState" ||
+            field === "personId" ||
+            field === "personField" ||
+            field === "timeField" ||
+            field === "sourceField" ||
+            field === "operator" ||
+            field === "literalValue")
+        ) {
+          const conditionScope = target.closest(
+            "[data-script-editor-location-access-condition-scope]"
+          );
+          const conditionField =
+            (conditionScope instanceof HTMLElement
+              ? conditionScope.dataset.scriptEditorLocationAccessConditionScope
+              : null) ?? "conditionExpression";
+          host.applyScriptEditorLocationAccessConditionField(
+            index,
+            field,
+            target.value,
+            conditionField
+          );
         }
         return true;
       }
