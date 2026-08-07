@@ -10,10 +10,10 @@
 
 ## Execution State
 
-- Status: `completed-but-open`
+- Status: `completed`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 6 is complete locally. The script editor now runs as both an embedded session and a standalone entry, runtime preview remains injected host capability only, and template/publication loading now flows through explicit catalogs instead of runtime-owned imports.`
-- Next Step: `Commit and push the verified Task 6 governance checkpoint, then open the next approved child from this dual-mode package baseline.`
+- Current Focus: `This child is verified, committed, and pushed at b557e442. The script editor now runs as both an embedded session and a standalone entry, runtime preview remains injected host capability only, and template/publication loading now flows through explicit catalogs instead of runtime-owned imports.`
+- Next Step: `Open the next approved child from the pushed dual-mode package baseline.`
 - Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck. Task 3 passed: npm run build:test; node --test tests/script-editor-runtime-preview-compat.test.cjs --test-name-pattern "preview fails closed when no previewHost is injected|runtime preview can load exported zhuyuanzhang template packs that inline map assets as data urls"`; npm run typecheck. Task 4 passed: npm run build:test; node --test tests/script-editor-standalone-entry.test.cjs; npm run typecheck; npm run build. Task 5 passed: node --test tests/script-editor-publication-boundary.test.cjs tests/script-editor-template-url.test.cjs; npm run build:test; npm run typecheck. Task 6 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs tests/script-editor-embedded-session.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-publication-boundary.test.cjs tests/script-editor-runtime-preview-compat.test.cjs; npm run typecheck; npm run build; browser smoke at http://localhost:5173/ and http://localhost:5173/prototypes/script-editor/.`
 - Notes: `Boundary and terminology remain frozen by the approved design spec. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 is complete: MainUiFlow no longer owns direct script-editor data-action/data-change/data-input routing, and the embedded session is now the editor interaction owner. Task 3 is complete: the workflow controller now starts preview only through injected previewHost capability, while the embedded host adapts legacy runtime startup callbacks behind that injected capability boundary. Task 4 is complete: Vite now exposes a standalone script editor entry, and the standalone bootstrap mounts the script editor through a standalone host without moving runtime preview into the package. Task 5 is complete: default template import and registered builtin publication hydration now flow through explicit template/publication catalogs instead of direct runtime-side builtin imports. docs/superpowers/project-progress.md remains intentionally unchanged because this child was not promoted into the canonical active queue.`
 
@@ -79,6 +79,10 @@
   - Summary: `Completed Task 6 locally by running the full focused verification set, then smoke-testing both entry modes in the in-app browser. The embedded route still opens 剧本编辑, loads the builtin template, and enters runtime preview into the main map runtime; the standalone route loads its own script editor shell, imports the same builtin template, and stays fail-closed on 运行预览 because no previewHost is injected.`
   - Verification: `npm run build:test`; `node --test tests/script-editor-host-contract.test.cjs tests/script-editor-embedded-session.test.cjs tests/script-editor-standalone-entry.test.cjs tests/script-editor-publication-boundary.test.cjs tests/script-editor-runtime-preview-compat.test.cjs`; `npm run typecheck`; `npm run build`; browser smoke at `http://localhost:5173/` verified `剧本编辑 -> 使用模板 -> 运行预览` enters the map runtime with no app console errors; browser smoke at `http://localhost:5173/prototypes/script-editor/` verified standalone shell load plus `使用模板 -> 运行预览` staying on the editor workflow with no runtime handoff and no app console errors.`
   - Next: `Commit and push this completed-but-open child checkpoint, then continue from the dual-mode package baseline.`
+- 2026-08-07
+  - Summary: `Pushed the verified dual-mode package governance checkpoint to origin/merage-mod2ui-1 at b557e442 and closed this child locally without promoting it into docs/superpowers/project-progress.md.`
+  - Verification: `git push origin merage-mod2ui-1`
+  - Next: `Open the next approved child from the pushed dual-mode package baseline.`
 
 ---
 
@@ -736,7 +740,7 @@ Update:
 
 If this child becomes the canonical active child, also update `docs/superpowers/project-progress.md`.
 
-- [ ] **Step 4: Commit the verified package migration batch**
+- [x] **Step 4: Commit the verified package migration batch**
 
 ```bash
 git add docs/superpowers/plans/2026-08-07-script-editor-dual-mode-package-plan.md docs/change-log.md docs/superpowers/project-progress.md
@@ -766,13 +770,13 @@ git commit -m "docs: record script editor dual-mode package migration"
 - Closed Child: `Script Editor Dual-Mode Package`
 - Parent Task: `Script Editor Package Migration`
 - Parent Stage: `Script Editor Package Migration`
-- Closeout Status: `completed-but-open`
+- Closeout Status: `closed`
 - Project Progress Synced: `no`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `commit-push-script-editor-dual-mode-package-and-open-next-approved-child`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `none`
-- Push Status: `not-pushed`
-- Push Commit: `none`
-- Resume From: `Promote this completed-but-open dual-mode package checkpoint into branch history, then open the next approved child from the pushed baseline.`
+- Push Status: `success`
+- Push Commit: `b557e442`
+- Resume From: `Open the next approved child from the pushed dual-mode package baseline.`
