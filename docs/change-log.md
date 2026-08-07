@@ -7,6 +7,7 @@
 ### Changed
 - `src/modules/script-editor/kernel/script-editor-session.ts` 现已成为剧本编辑器的真实会话 owner；`src/ui/main-ui/main-ui-flow.js` 不再直接持有剧本编辑器内部 `data-script-editor-*` 路由和本地状态分支。
 - `src/modules/script-editor/kernel/script-editor-workflow-controller.ts` 现已只通过注入的 `previewHost` 启动运行预览；运行时预览不再作为剧本编辑器内部自有子系统存在。
+- 当前嵌入态 legacy `loaded-scenario-pack` 预览适配也已从 `src/modules/script-editor/kernel/script-editor-session.ts` 退出，改由 `src/modules/script-editor/ui/main-ui-script-editor-module.js` 在宿主安装阶段把 `onStartLoadedScenarioPack` / `onExitRuntimePreview` 包装成 `previewHost`；session kernel 不再直接导入 `application/scenario/scenario-pack-loader`。
 - `src/modules/script-editor/host/script-editor-template-catalog.ts` 与 `src/modules/script-editor/host/script-editor-publication-catalog.ts` 现已承接默认模板导入和 registered builtin publication hydration；相关 builtin/publication 入口不再从 runtime 侧被剧本编辑器硬编码反向拉入。
 - `prototypes/script-editor/index.html`、`src/modules/script-editor/standalone/script-editor-standalone.ts`、`src/modules/script-editor/standalone/script-editor-standalone-host.ts` 与 `vite.config.ts` 现已提供独立的 standalone 剧本编辑器入口，同时保持嵌入态与 standalone 复用同一套会话 owner。
 - 这一轮还补齐了 `tests/script-editor-host-contract.test.cjs`、`tests/script-editor-embedded-session.test.cjs`、`tests/script-editor-standalone-entry.test.cjs`、`tests/script-editor-publication-boundary.test.cjs` 和 `tests/script-editor-runtime-preview-compat.test.cjs` 的包边界回归，并通过浏览器 smoke 验证了嵌入态预览链路和 standalone fail-closed 行为。
@@ -14,6 +15,7 @@
 ### Impact
 - 剧本编辑器当前已经具备双模式运行能力：既可以被当前主应用以嵌入态挂载，也可以作为单独入口独立运行。
 - 运行预览能力现在明确退回到宿主注入边界；后续如果继续把剧本编辑器收敛成 package，不需要再把 runtime preview 一起打包进编辑器内部。
+- 预览适配从 session kernel 退出后，后续继续做 package 拆分时，可以先围绕宿主安装层和 host contract 收敛，而不用再让 kernel 反向依赖运行时 scenario-pack loader。
 
 ## 2026-08-05 Agent Immediate Execution Workflow Governance
 

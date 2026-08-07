@@ -173,6 +173,29 @@ test("script editor preview fails closed when no previewHost is injected", () =>
   assert.doesNotMatch(source, /startLoadedScenarioPack/);
 });
 
+test("embedded script editor session keeps loaded-scenario-pack preview adaptation outside the kernel", () => {
+  const sessionSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/kernel/script-editor-session.ts"
+    ),
+    "utf8"
+  );
+  const mainUiSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/modules/script-editor/ui/main-ui-script-editor-module.js"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(sessionSource, /loadScenarioPackFromFiles/);
+  assert.doesNotMatch(sessionSource, /createTextImportFilesFromRecord/);
+  assert.doesNotMatch(sessionSource, /onStartLoadedScenarioPack/);
+  assert.match(mainUiSource, /onStartLoadedScenarioPack/);
+  assert.match(mainUiSource, /loadScenarioPackFromFiles/);
+});
+
 test("imported zhuyuanzhang script-editor template stays exportable for runtime preview", async () => {
   const templateRoot = path.join(
     process.cwd(),

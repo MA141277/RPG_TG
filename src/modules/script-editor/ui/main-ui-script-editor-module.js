@@ -859,6 +859,27 @@ const SCRIPT_EDITOR_MODULE_METHOD_NAMES = [
 
 export function installMainUiFlowScriptEditorModule(host, options) {
   host.onScriptEditorProjectChanged = options?.onScriptEditorProjectChanged;
+  if (
+    host.previewHost == null &&
+    typeof options?.onStartLoadedScenarioPack === "function"
+  ) {
+    host.previewHost = {
+      startPreview: async (request) => {
+        const scenarioPack = await loadScenarioPackFromFiles(
+          createTextImportFilesFromRecord(request.serializedPackFiles)
+        );
+        const startResult = await options.onStartLoadedScenarioPack(scenarioPack);
+        if (startResult === "failed") {
+          throw new Error("Runtime preview startup failed.");
+        }
+        return {
+          exit: () => {
+            options?.onExitRuntimePreview?.();
+          },
+        };
+      },
+    };
+  }
     host.scriptEditorProject = null;
     host.scriptEditorSelection = {
       family: "storyPack",

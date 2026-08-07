@@ -1,7 +1,5 @@
 import type { ScriptEditorProjectDefinition } from "../domain/script-editor-project";
 import type { ScriptEditorHost } from "../host/script-editor-host";
-import { loadScenarioPackFromFiles } from "../../../application/scenario/scenario-pack-loader";
-import { createTextImportFilesFromRecord } from "../host/browser-file-system";
 import { createBuiltinScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
 import {
   createScriptEditorWorkflowController,
@@ -34,10 +32,6 @@ type ScriptEditorEmbeddedSessionHost = {
   [key: string]: unknown;
   previewHost?: ScriptEditorHost["previewHost"];
   setScreen(screen: string): void;
-  onStartLoadedScenarioPack?: (
-    scenarioPack: unknown
-  ) => Promise<"started" | "failed" | string | void>;
-  onExitRuntimePreview?: (() => void) | undefined;
 };
 
 export type CreateEmbeddedScriptEditorSessionOptions = {
@@ -125,30 +119,7 @@ export function createEmbeddedScriptEditorSession(
     recordNotice: (notice) => {
       host.recordScriptEditorNotice(notice);
     },
-    getPreviewHost: () => {
-      if (host.previewHost != null) {
-        return host.previewHost;
-      }
-      if (host.onStartLoadedScenarioPack == null) {
-        return null;
-      }
-      return {
-        startPreview: async (request) => {
-          const scenarioPack = await loadScenarioPackFromFiles(
-            createTextImportFilesFromRecord(request.serializedPackFiles)
-          );
-          const startResult = await host.onStartLoadedScenarioPack?.(scenarioPack);
-          if (startResult === "failed") {
-            throw new Error("Runtime preview startup failed.");
-          }
-          return {
-            exit: () => {
-              host.onExitRuntimePreview?.();
-            },
-          };
-        },
-      };
-    },
+    getPreviewHost: () => host.previewHost ?? null,
     getTemplateCatalog: () =>
       host.templateCatalog ?? createBuiltinScriptEditorTemplateCatalog(),
     setScreen: (screen) => {
