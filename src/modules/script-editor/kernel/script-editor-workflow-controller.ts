@@ -5,12 +5,12 @@ import { loadScriptEditorProjectFromFiles } from "../application/editor-project-
 import { serializeScriptEditorProjectToFiles } from "../application/editor-project-save";
 import { markScriptEditorProjectCompleteForExport } from "../application/project-completion-state";
 import { exportScriptEditorProjectToScenarioPackFiles } from "../application/runtime-pack-export";
-import { loadDefaultScriptEditorTemplateProject } from "../application/default-template-project-loader";
 import type { ScriptEditorProjectDefinition } from "../domain/script-editor-project";
 import type {
   ScriptEditorPreviewHost,
   ScriptEditorPreviewSession,
 } from "../host/script-editor-host";
+import type { ScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
 import {
   pickScriptEditorDirectory,
   readFilesFromDirectoryHandle,
@@ -48,6 +48,7 @@ export type ScriptEditorWorkflowEnvironment = {
   resetNoticeTimeline(): void;
   recordNotice(notice: ScriptEditorWorkflowNotice): void;
   getPreviewHost(): ScriptEditorPreviewHost | null;
+  getTemplateCatalog(): ScriptEditorTemplateCatalog | null;
   setScreen(screen: string): void;
   getRuntimePreviewSession(): ScriptEditorRuntimePreviewSessionState | null;
   setRuntimePreviewSession(
@@ -252,9 +253,18 @@ export class ScriptEditorWorkflowController {
   }
 
   async importTemplateProject(): Promise<void> {
+    const templateCatalog = this.environment.getTemplateCatalog();
+    if (templateCatalog == null) {
+      this.environment.recordNotice({
+        tone: "warning",
+        message: "当前宿主未提供默认模板能力。",
+      });
+      return;
+    }
+
     try {
       this.environment.setProjectSource("imported");
-      this.environment.commitProject(await loadDefaultScriptEditorTemplateProject());
+      this.environment.commitProject(await templateCatalog.loadDefaultProject());
       this.environment.resetRecordListPages();
       this.environment.resetRecordSearch();
       this.environment.setSelection({

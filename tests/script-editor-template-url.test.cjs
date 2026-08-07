@@ -77,11 +77,11 @@ test("script editor default template import no longer depends on the public temp
 
   assert.match(
     controllerSource,
-    /loadDefaultScriptEditorTemplateProject/
+    /getTemplateCatalog\(\)/
   );
   assert.doesNotMatch(
     controllerSource,
-    /loadScriptEditorProjectFromScenarioPackUrl\(\s*DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL/
+    /loadDefaultScriptEditorTemplateProject/
   );
   assert.match(
     builtinLoaderSource,

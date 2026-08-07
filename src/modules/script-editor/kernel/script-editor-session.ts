@@ -2,6 +2,7 @@ import type { ScriptEditorProjectDefinition } from "../domain/script-editor-proj
 import type { ScriptEditorHost } from "../host/script-editor-host";
 import { loadScenarioPackFromFiles } from "../../../application/scenario/scenario-pack-loader";
 import { createTextImportFilesFromRecord } from "../host/browser-file-system";
+import { createBuiltinScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
 import {
   createScriptEditorWorkflowController,
   type ScriptEditorWorkflowController,
@@ -148,6 +149,8 @@ export function createEmbeddedScriptEditorSession(
         },
       };
     },
+    getTemplateCatalog: () =>
+      host.templateCatalog ?? createBuiltinScriptEditorTemplateCatalog(),
     setScreen: (screen) => {
       host.setScreen(screen);
     },
