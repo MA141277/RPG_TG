@@ -8,6 +8,7 @@ tmp/
 
 # Local agent scratch notes
 .superpowers/brainstorm/
+.codex/config.toml
 
 # Local build/package outputs
 release/
