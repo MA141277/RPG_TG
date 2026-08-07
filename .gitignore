@@ -3,6 +3,7 @@ dist/
 .test-dist/
 .runtime/
 .codex-runtime/
+.codex-temp/
 .codex/config.toml
 .worktrees/
 tmp/
@@ -11,9 +12,13 @@ dev-server-codex.log
 
 # Local build/package outputs
 release/
+dist.zip
 
 # Local server and dev logs
 *.log
+
+# Electron local debug profiles
+.tmp-electron-*/
 
 # Large external/reference checkouts and downloaded mod assets
 cloud_tool/
