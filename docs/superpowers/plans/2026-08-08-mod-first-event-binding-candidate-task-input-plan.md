@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-08-08`
-- Current Focus: `Plan created from the next runtime/event residual audit. The active child is now the mod-first event-binding candidate task-input slice, and the next implementation step is to prove the authored candidate taskInputs reread with focused RED coverage.`
-- Next Step: `Execute Task 1 and Task 2, then move toModFirstEventBindingRuntimeCandidate(...) onto readRuntimeEventTaskInputs(createRuntimeEventEntity(...)).`
-- Verification: `Source audit only: rg over runtime/event sources and event-binding tests confirmed toModFirstEventBindingRuntimeCandidate(...) still reads eventDefinition.taskInputs ?? []; implementation verification has not run yet for this child.`
+- Current Focus: `Implementation and verification are complete locally. The child is ready for implementation checkpoint commit/push, followed by structured closeout.`
+- Next Step: `Commit and push the verified implementation checkpoint, then update closeout state to closed.`
+- Verification: `npm run build:test; node --test --test-name-pattern "task input|candidate" tests/event-binding-start-runtime.test.cjs (RED before implementation, GREEN after implementation); node --test tests/event-binding-start-runtime.test.cjs; node --test --test-name-pattern "mod-first event binding candidate task input|runtime event binding action payload consumption|runtime event task input payload consumption|event binding runtime route convergence" tests/robustness.test.cjs; npm run typecheck; npm run lint:plans; git diff --check; npm run build`
 - Notes: `This child is canonical-queue work for merage-mod2ui-1. Do not reuse historical runtime-only queue governance or reopen startup, source-unification, review-system, Script Editor, playable, closeBuilding, or launchFlow work through this slice.`
 
 ## Progress Log
@@ -23,6 +23,22 @@
   - Summary: `Opened the mod-first event-binding candidate task-input child from the canonical no-child state after auditing current runtime/event residuals. Design chose a new narrow stabilization child instead of reviving the old event-runtime candidate plan, because the current residual is in mod-first event-binding candidate projection rather than event-runtime candidate projection.`
   - Verification: `rg -n "eventDefinition\\.(dialogueId|settlementId|taskInputs|actions|entrySceneId|nextEventId|emitEventIds)|fallbackEventDefinition|closeBuilding|launchFlow|readRuntimeEvent(DialogueId|SettlementId|TaskInputs|Actions)|createRuntimeEventEntity\\(" src/application src/core tests`
   - Next: `Add focused RED coverage that proves mod-first event-binding candidate task inputs must rely on runtime-event payload projection instead of eventDefinition.taskInputs.`
+- 2026-08-08
+  - Summary: `Completed Task 1 audit. The covered authored reread is limited to taskInputs: eventDefinition.taskInputs ?? [] inside toModFirstEventBindingRuntimeCandidate(...) in src/core/runtime/mod-first-compatibility.ts. Adjacent event-runtime candidate taskInputs, story routed taskInputs, event-binding action application, and state-only dialogue-id classification already consume runtime-event payload readers, so this child remains a narrow mod-first event-binding candidate projection cleanup.`
+  - Verification: `rg -n "toModFirstEventBindingRuntimeCandidate|selectModFirstEventBindingCandidate|runModFirstEventBindingRuntime|taskInputs" tests/event-binding-start-runtime.test.cjs tests/event-router-runtime.test.cjs tests/robustness.test.cjs src/core/runtime/mod-first-compatibility.ts src/core/runtime/event-binding-runtime.ts`
+  - Next: `Execute Task 2 and add focused RED coverage for payload-owned mod-first event-binding candidate taskInputs.`
+- 2026-08-08
+  - Summary: `Completed Task 2 RED coverage. tests/event-binding-start-runtime.test.cjs now proves candidate and activation taskInputs consume the routed runtime-event payload seam, and tests/robustness.test.cjs guards toModFirstEventBindingRuntimeCandidate(...) against reverting to eventDefinition.taskInputs.`
+  - Verification: `npm run build:test; node --test --test-name-pattern "task input|candidate" tests/event-binding-start-runtime.test.cjs failed before implementation with candidate taskInputs [] instead of the payload seam value.`
+  - Next: `Execute Task 3 by moving toModFirstEventBindingRuntimeCandidate(...) onto readRuntimeEventTaskInputs(createRuntimeEventEntity(...)).`
+- 2026-08-08
+  - Summary: `Completed Task 3 implementation. src/core/runtime/mod-first-compatibility.ts now creates a RuntimeEventEntity from the authored event and reads candidate taskInputs through readRuntimeEventTaskInputs(...), keeping the candidate projection on the shared payload-owned runtime/event seam.`
+  - Verification: `node --test --test-name-pattern "task input|candidate" tests/event-binding-start-runtime.test.cjs passed after implementation.`
+  - Next: `Run the full focused verification batch and sync governed state.`
+- 2026-08-08
+  - Summary: `Completed Task 4 verification for the implementation checkpoint. The verified slice changes only runtime/event candidate task-input projection plus focused tests, change log, and governed progress docs; startup, review-system, source-unification, Script Editor, playable runtime, closeBuilding, launchFlow, and scenario-pack JSON remain out of scope.`
+  - Verification: `npm run build:test; node --test tests/event-binding-start-runtime.test.cjs; node --test --test-name-pattern "mod-first event binding candidate task input|runtime event binding action payload consumption|runtime event task input payload consumption|event binding runtime route convergence" tests/robustness.test.cjs; npm run typecheck; npm run lint:plans; git diff --check; npm run build`
+  - Next: `Commit and push the verified implementation checkpoint, then record structured child closeout.`
 
 ---
 
@@ -111,11 +127,11 @@
 - Read: `tests/event-binding-start-runtime.test.cjs`
 - Modify: `docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md`
 
-- [ ] **Step 1: Record the covered authored taskInputs reread**
+- [x] **Step 1: Record the covered authored taskInputs reread**
 
 Confirm that `toModFirstEventBindingRuntimeCandidate(...)` is the covered runtime/event candidate path that still consumes `eventDefinition.taskInputs ?? []` directly.
 
-- [ ] **Step 2: Lock the child boundary**
+- [x] **Step 2: Lock the child boundary**
 
 Record that this child changes only mod-first event-binding candidate task-input projection and does not widen into `closeBuilding`, `launchFlow`, Script Editor, startup, review-system, or playable work.
 
@@ -125,14 +141,14 @@ Record that this child changes only mod-first event-binding candidate task-input
 - Modify: `tests/event-binding-start-runtime.test.cjs`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Add focused failing coverage**
+- [x] **Step 1: Add focused failing coverage**
 
 Add coverage that proves:
 
 - `runEventBindingRuntime(...)` candidate and activation taskInputs consume `readRuntimeEventTaskInputs(...)`
 - the source guard no longer allows `taskInputs: eventDefinition.taskInputs ?? []` in `toModFirstEventBindingRuntimeCandidate(...)`
 
-- [ ] **Step 2: Run RED verification**
+- [x] **Step 2: Run RED verification**
 
 Run:
 
@@ -152,11 +168,11 @@ Expected:
 - Modify: `tests/event-binding-start-runtime.test.cjs`
 - Modify: `tests/robustness.test.cjs`
 
-- [ ] **Step 1: Update the candidate projection**
+- [x] **Step 1: Update the candidate projection**
 
 Import the shared projection helpers and make `toModFirstEventBindingRuntimeCandidate(...)` read task inputs from `readRuntimeEventTaskInputs(createRuntimeEventEntity(eventDefinition))`.
 
-- [ ] **Step 2: Keep event-binding activation behavior green**
+- [x] **Step 2: Keep event-binding activation behavior green**
 
 If a test reveals a legitimate covered caller that is not yet compatible with runtime-event projection, fix that caller on the same runtime/event seam instead of reintroducing authored rereads.
 
@@ -166,11 +182,11 @@ If a test reveals a legitimate covered caller that is not yet compatible with ru
 - Modify: `docs/superpowers/project-progress.md`
 - Modify: `docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md`
 
-- [ ] **Step 1: Run the focused verification batch**
+- [x] **Step 1: Run the focused verification batch**
 
 Run the full verification set from `Verification Plan`.
 
-- [ ] **Step 2: Sync the child state**
+- [x] **Step 2: Sync the child state**
 
 Update this plan's `Execution State`, `Progress Log`, checklists, and canonical `project-progress` state so the next resume point is explicit whether the child is still running, completed-but-open, or closed.
 
@@ -180,18 +196,18 @@ Create one coherent checkpoint for this child and push it to `origin/merage-mod2
 
 ## Exit Check
 
-- [ ] Covered mod-first event-binding candidate task inputs no longer depend on authored `eventDefinition.taskInputs` reread.
-- [ ] Runtime-event payload metadata still reaches event-binding candidate and activation behavior.
-- [ ] Startup, review-system, source-unification, Script Editor, playable, UI, map, backpack, and style boundaries remain untouched.
-- [ ] Project progress sync is updated if the child state changed.
+- [x] Covered mod-first event-binding candidate task inputs no longer depend on authored `eventDefinition.taskInputs` reread.
+- [x] Runtime-event payload metadata still reaches event-binding candidate and activation behavior.
+- [x] Startup, review-system, source-unification, Script Editor, playable, UI, map, backpack, and style boundaries remain untouched.
+- [x] Project progress sync is updated if the child state changed.
 - [ ] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 

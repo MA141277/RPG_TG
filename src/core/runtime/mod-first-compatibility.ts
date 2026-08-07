@@ -19,6 +19,10 @@ import type { PlayableReturnPolicy } from "../contracts/playable-runtime";
 import type { RuntimeTaskInput } from "../contracts/runtime-result";
 import type { NavigationRouteTarget } from "../contracts/navigation";
 import { matchesCanonicalBuildingOwnerId } from "./building-owner-canonicalization";
+import {
+  createRuntimeEventEntity,
+  readRuntimeEventTaskInputs,
+} from "./event-entity-projection";
 
 export function createCompatibleSceneDefinitions(input: {
   sceneDefinitions?: readonly SceneDefinition[];
@@ -515,11 +519,12 @@ function toModFirstEventBindingRuntimeCandidate(
   binding: ModFirstEventBinding,
   eventDefinition: ModFirstEventDefinition
 ): ModFirstEventBindingRuntimeCandidate {
+  const runtimeEvent = createRuntimeEventEntity(eventDefinition);
   return {
     bindingId: binding.id,
     eventId: eventDefinition.id,
     priority: binding.priority ?? 0,
-    taskInputs: eventDefinition.taskInputs ?? [],
+    taskInputs: readRuntimeEventTaskInputs(runtimeEvent),
   };
 }
 

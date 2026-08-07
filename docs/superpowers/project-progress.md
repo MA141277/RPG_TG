@@ -5,21 +5,25 @@
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
 - Current Task: `Mod-First Event Binding Candidate Task Input Payload Consumption`
-- Current Task Status: `running`
+- Current Task Status: `completed-but-open`
 - Current Child: `Mod-First Event Binding Candidate Task Input Payload Consumption`
-- Current Child Status: `running`
+- Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-mod-first-event-binding-candidate-task-input-child`
+- Next Required Action: `commit-and-push-mod-first-event-binding-candidate-task-input-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md`
 - Last Closed Item: `Story Settlement Canonical Settlement Id`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue in docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md from Task 1; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Resume From: `Open docs/superpowers/project-progress.md, then commit and push the verified implementation checkpoint for docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 
 ## Progress Log
 
+- 2026-08-08
+  - Summary: `Completed the Mod-First Event Binding Candidate Task Input Payload Consumption implementation locally. toModFirstEventBindingRuntimeCandidate(...) now consumes taskInputs through RuntimeEventEntity payload projection, with focused event-binding and robustness coverage guarding candidate and activation behavior.`
+  - Verification: `npm run build:test; node --test --test-name-pattern "task input|candidate" tests/event-binding-start-runtime.test.cjs (RED before implementation, GREEN after implementation); node --test tests/event-binding-start-runtime.test.cjs; node --test --test-name-pattern "mod-first event binding candidate task input|runtime event binding action payload consumption|runtime event task input payload consumption|event binding runtime route convergence" tests/robustness.test.cjs; npm run typecheck; npm run lint:plans; git diff --check; npm run build`
+  - Next: `Commit and push the verified implementation checkpoint, then record structured closeout.`
 - 2026-08-08
   - Summary: `Opened the Mod-First Event Binding Candidate Task Input Payload Consumption child as the next approved post-merge stabilization slice. The child targets the remaining mod-first event-binding candidate taskInputs authored reread on the runtime/event seam, while startup stays frozen, source-unification stays closed, review-system work remains paused, and closeBuilding/launchFlow compatibility cleanup stays out of scope.`
   - Verification: `Spec and plan created locally from source audit; implementation verification not run yet for this child.`

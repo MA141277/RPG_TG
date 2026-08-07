@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-08 Mod-First Event Binding Candidate Task Input Payload Consumption
+
+### Changed
+- `src/core/runtime/mod-first-compatibility.ts` 现已让 `toModFirstEventBindingRuntimeCandidate(...)` 通过 `createRuntimeEventEntity(...)` 和 `readRuntimeEventTaskInputs(...)` 读取 candidate taskInputs，不再直接使用 authored `eventDefinition.taskInputs ?? []`。
+- 新增并收紧 `tests/event-binding-start-runtime.test.cjs` 与 `tests/robustness.test.cjs` 覆盖，锁定 event-binding candidate / activation taskInputs 来自 runtime-event payload seam。
+
+### Impact
+- mod-first event-binding candidate metadata 与当前 runtime-event payload 模型对齐，后续不能再绕过 `RuntimeEventEntity.payload.taskInputs` 直接读 authored event shape。
+- 本次没有改 scenario-pack JSON、Script Editor import/export/preview 合同、startup 链路、review-system、playable runtime、`closeBuilding` 或 `launchFlow` 兼容边界。
+
 ## 2026-08-08 Story Settlement Canonical Settlement Id
 
 ### Changed

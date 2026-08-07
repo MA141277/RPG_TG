@@ -364,3 +364,84 @@ test(
     }
   }
 );
+
+test(
+  "event binding runtime candidate task inputs consume the payload task-input seam",
+  { concurrency: false },
+  () => {
+    const projectionPath = require.resolve(
+      "../.test-dist/core/runtime/event-entity-projection.js"
+    );
+    const modFirstCompatibilityPath = require.resolve(
+      "../.test-dist/core/runtime/mod-first-compatibility.js"
+    );
+    const eventBindingRuntimePath = require.resolve(
+      "../.test-dist/core/runtime/event-binding-runtime.js"
+    );
+
+    delete require.cache[projectionPath];
+    delete require.cache[modFirstCompatibilityPath];
+    delete require.cache[eventBindingRuntimePath];
+
+    const projectionModule = require(projectionPath);
+    const originalReadRuntimeEventTaskInputs =
+      projectionModule.readRuntimeEventTaskInputs;
+
+    projectionModule.readRuntimeEventTaskInputs = (event) =>
+      event?.id === "event.payload.task-input"
+        ? [
+            {
+              taskId: "task.payload.binding",
+              source: "event-binding-runtime-test",
+            },
+          ]
+        : [];
+
+    try {
+      const {
+        runEventBindingRuntime: runEventBindingRuntimeWithPatchedProjection,
+      } = require(eventBindingRuntimePath);
+      const state = createBaseState();
+      const result = runEventBindingRuntimeWithPatchedProjection({
+        state,
+        eventDefinitionsById: {
+          "event.payload.task-input": createEventDefinition(
+            "event.payload.task-input"
+          ),
+        },
+        eventBindings: [
+          {
+            id: "binding.payload.task-input",
+            eventId: "event.payload.task-input",
+            owner: { family: "building", id: "building.temple" },
+            trigger: { timing: "after", action: "building-enter" },
+          },
+        ],
+        triggerContext: {
+          timing: "after",
+          action: "building-enter",
+          owner: { family: "building", id: "building.temple" },
+        },
+      });
+
+      assert.deepEqual(result.candidate.taskInputs, [
+        {
+          taskId: "task.payload.binding",
+          source: "event-binding-runtime-test",
+        },
+      ]);
+      assert.deepEqual(result.activation.taskInputs, [
+        {
+          taskId: "task.payload.binding",
+          source: "event-binding-runtime-test",
+        },
+      ]);
+    } finally {
+      projectionModule.readRuntimeEventTaskInputs =
+        originalReadRuntimeEventTaskInputs;
+      delete require.cache[projectionPath];
+      delete require.cache[modFirstCompatibilityPath];
+      delete require.cache[eventBindingRuntimePath];
+    }
+  }
+);

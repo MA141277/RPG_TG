@@ -16647,11 +16647,11 @@ test("event binding runtime route convergence keeps binding activation on the sh
   );
   const runEventBindingRuntimeBlock =
     eventBindingRuntimeSource.match(
-      /export function runEventBindingRuntime\([\s\S]*?\n}\n\nexport function selectEventBindingActivation/
+      /export function runEventBindingRuntime\([\s\S]*?\r?\n}\r?\n\r?\nexport function selectEventBindingActivation/
     )?.[0] ?? "";
   const routeBindingEventBlock =
     eventBindingRuntimeSource.match(
-      /function routeBindingEvent\([\s\S]*?\n}\n\nfunction toEventBindingRuntimeState/
+      /function routeBindingEvent\([\s\S]*?\r?\n}\r?\n\r?\nfunction toEventBindingRuntimeState/
     )?.[0] ?? "";
 
   assert.match(runEventBindingRuntimeBlock, /\brouteBindingEvent\s*\(/);
@@ -16889,12 +16889,27 @@ test("runtime event binding action payload consumption keeps binding-owned actio
   );
   const applyEventRuntimeActionsBlock =
     eventBindingRuntimeSource.match(
-      /export function applyEventRuntimeActions\([\s\S]*?\n}\n\nexport function applyRuntimeActions/
+      /export function applyEventRuntimeActions\([\s\S]*?\r?\n}\r?\n\r?\nexport function applyRuntimeActions/
     )?.[0] ?? "";
 
   assert.match(applyEventRuntimeActionsBlock, /createRuntimeEventEntity/);
   assert.match(applyEventRuntimeActionsBlock, /readRuntimeEventActions/);
   assert.doesNotMatch(applyEventRuntimeActionsBlock, /eventDefinition\.actions/);
+});
+
+test("mod-first event binding candidate task input payload consumption keeps candidate projection on the routed payload seam", () => {
+  const modFirstCompatibilitySource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/mod-first-compatibility.ts"),
+    "utf8"
+  );
+  const candidateProjectionBlock =
+    modFirstCompatibilitySource.match(
+      /function toModFirstEventBindingRuntimeCandidate\([\s\S]*?\r?\n}\r?\n\r?\nfunction compareModFirstCandidates/
+    )?.[0] ?? "";
+
+  assert.match(candidateProjectionBlock, /createRuntimeEventEntity/);
+  assert.match(candidateProjectionBlock, /readRuntimeEventTaskInputs/);
+  assert.doesNotMatch(candidateProjectionBlock, /eventDefinition\.taskInputs/);
 });
 
 test("navigation enter-house convergence keeps on-enter event activation on the shared event-router seam", () => {
