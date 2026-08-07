@@ -4,22 +4,26 @@
 
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
-- Current Task: `Post-Merge Branch Stabilization`
+- Current Task: `Mod-First Event Binding Candidate Task Input Payload Consumption`
 - Current Task Status: `running`
-- Current Child: `none`
-- Current Child Status: `none`
+- Current Child: `Mod-First Event Binding Candidate Task Input Payload Consumption`
+- Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `open-next-approved-child`
+- Next Required Action: `execute-mod-first-event-binding-candidate-task-input-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `none`
+- Next Owner Document: `docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md`
 - Last Closed Item: `Story Settlement Canonical Settlement Id`
-- Push Status: `success`
-- Push Commit: `1d8c80f3`
-- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed story-settlement baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Push Status: `not-pushed`
+- Push Commit: `none`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue in docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md from Task 1; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 
 ## Progress Log
 
+- 2026-08-08
+  - Summary: `Opened the Mod-First Event Binding Candidate Task Input Payload Consumption child as the next approved post-merge stabilization slice. The child targets the remaining mod-first event-binding candidate taskInputs authored reread on the runtime/event seam, while startup stays frozen, source-unification stays closed, review-system work remains paused, and closeBuilding/launchFlow compatibility cleanup stays out of scope.`
+  - Verification: `Spec and plan created locally from source audit; implementation verification not run yet for this child.`
+  - Next: `Execute docs/superpowers/plans/2026-08-08-mod-first-event-binding-candidate-task-input-plan.md from Task 1.`
 - 2026-08-08
   - Summary: `Closed the Story Settlement Canonical Settlement Id child after pushing the implementation checkpoint. The canonical queue is back to no active child; startup remains frozen and review-system work remains paused.`
   - Verification: `Implementation push reached 1d8c80f3; npm run lint:plans; git diff --check`
