@@ -199,6 +199,228 @@ export function createEmbeddedScriptEditorSession(
         return true;
       }
 
+      if (target.matches("[data-script-editor-project-field]")) {
+        const field = target.dataset.scriptEditorProjectField;
+        if (field != null) {
+          host.applyScriptEditorProjectField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-startup-field]")) {
+        const startupField = target.dataset.scriptEditorStartupField;
+        const startupFieldToProjectField: Record<string, string | string[]> = {
+          initialView: [
+            "scenarioProfile.launchPolicy.initialView",
+            "scenarioProfile.initialLocation.view",
+          ],
+          characterSelection: "scenarioProfile.launchPolicy.characterSelection",
+          playerCharacterId: "scenarioProfile.playerCharacterId",
+          cityId: "scenarioProfile.initialLocation.cityId",
+          houseId: "scenarioProfile.initialLocation.houseId",
+        };
+        if (startupField == null) {
+          return true;
+        }
+        const fields = startupFieldToProjectField[startupField];
+        for (const field of Array.isArray(fields) ? fields : [fields]) {
+          if (field == null) {
+            continue;
+          }
+          host.applyScriptEditorProjectField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-person-field]")) {
+        const field = target.dataset.scriptEditorPersonField;
+        if (field != null) {
+          host.applyScriptEditorPersonField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-item-field]")) {
+        const field = target.dataset.scriptEditorItemField;
+        if (field != null) {
+          host.applyScriptEditorItemField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-item-display-field]")) {
+        const field = target.dataset.scriptEditorItemDisplayField;
+        if (field != null) {
+          host.applyScriptEditorItemDisplayField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-item-stack-field]")) {
+        const field = target.dataset.scriptEditorItemStackField;
+        if (field != null) {
+          host.applyScriptEditorItemStackField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-item-custom-property-field]")) {
+        const field = target.dataset.scriptEditorItemCustomPropertyField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorItemCustomPropertyIndex ?? "-1",
+          10
+        );
+        if (field != null && Number.isInteger(index) && index >= 0) {
+          host.applyScriptEditorItemCustomPropertyField(index, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-person-attribute-field]")) {
+        const field = target.dataset.scriptEditorPersonAttributeField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorPersonAttributeIndex ?? "-1",
+          10
+        );
+        if (
+          (field === "key-name" || field === "type" || field === "value") &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorPersonAttributeField(index, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-person-attribute-group-field]")) {
+        const field = target.dataset.scriptEditorPersonAttributeGroupField;
+        const groupId = target.dataset.scriptEditorPersonAttributeGroupId ?? "";
+        if (field === "title" && groupId.length > 0) {
+          host.applyScriptEditorPersonAttributeGroupField(groupId, field, target.value);
+        }
+        return true;
+      }
+
+      if (
+        target instanceof HTMLInputElement &&
+        target.matches("[data-script-editor-person-attribute-group-attribute-key]")
+      ) {
+        const groupId = target.dataset.scriptEditorPersonAttributeGroupId ?? "";
+        const attributeKey =
+          target.dataset.scriptEditorPersonAttributeGroupAttributeKey ?? "";
+        if (groupId.length > 0 && attributeKey.length > 0) {
+          host.applyScriptEditorPersonAttributeGroupItem(
+            groupId,
+            attributeKey,
+            target.checked
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-portrait-field]")) {
+        const field = target.dataset.scriptEditorPortraitField;
+        if (
+          field === "id" ||
+          field === "label" ||
+          field === "portraitImage" ||
+          field === "avatarImage"
+        ) {
+          host.applyScriptEditorPortraitField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-portrait-variant-field]")) {
+        const field = target.dataset.scriptEditorPortraitVariantField;
+        if (
+          field === "id" ||
+          field === "label" ||
+          field === "parentPortraitId" ||
+          field === "portraitId"
+        ) {
+          host.applyScriptEditorPortraitVariantField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-person-relation-family]")) {
+        const family = target.dataset.scriptEditorPersonRelationFamily;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorPersonRelationIndex ?? "-1",
+          10
+        );
+        if (
+          (family === "dialogueIds" || family === "eventIds") &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorPersonRelationField(index, family, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-story-field]")) {
+        const field = target.dataset.scriptEditorStoryField;
+        if (
+          field === "id" ||
+          field === "title" ||
+          field === "chapterId" ||
+          field === "summary" ||
+          field === "progressMode"
+        ) {
+          host.applyScriptEditorStoryField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-dialogue-field]")) {
+        const field = target.dataset.scriptEditorDialogueField;
+        if (
+          field === "id" ||
+          field === "title" ||
+          field === "mode" ||
+          field === "textId" ||
+          field === "speakerPersonId" ||
+          field === "nextEventId"
+        ) {
+          host.applyScriptEditorDialogueField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-dialogue-cast-field]")) {
+        const field = target.dataset.scriptEditorDialogueCastField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorDialogueCastIndex ?? "-1",
+          10
+        );
+        if (
+          (field === "personId" || field === "side") &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorDialogueCastField(index, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-dialogue-option-field]")) {
+        const field = target.dataset.scriptEditorDialogueOptionField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorDialogueOptionIndex ?? "-1",
+          10
+        );
+        if (
+          (field === "id" || field === "textId" || field === "nextEventId") &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorDialogueOptionField(index, field, target.value);
+        }
+        return true;
+      }
+
       if (target.matches("[data-script-editor-event-field]")) {
         const field = target.dataset.scriptEditorEventField;
         if (
