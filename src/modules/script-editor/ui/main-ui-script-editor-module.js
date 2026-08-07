@@ -57,6 +57,7 @@ const {
   appendScriptEditorStoryNodeRelation,
   canContinueScriptEditorProjectEntry,
   countScriptEditorLocationMenuEntries,
+  createBrowserScriptEditorFileSystemHost,
   createDefaultScriptEditorEventBindingRecord,
   createDefaultScriptEditorPortraitRecord,
   createDefaultScriptEditorPortraitVariantRecord,
@@ -880,6 +881,7 @@ export function installMainUiFlowScriptEditorModule(host, options) {
   host.playableCatalog ??= createBuiltinScriptEditorPlayableCatalog();
   host.publicationCatalog ??= createBuiltinScriptEditorPublicationCatalog();
   host.templateCatalog ??= createBuiltinScriptEditorTemplateCatalog();
+  host.fileSystemHost ??= createBrowserScriptEditorFileSystemHost();
   setDefaultScriptEditorPlayableCatalog(host.playableCatalog);
   setDefaultScriptEditorPublicationCatalog(host.publicationCatalog);
   setDefaultScriptEditorTemplateCatalog(host.templateCatalog);

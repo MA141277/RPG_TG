@@ -1,15 +1,50 @@
-export type ScriptEditorSerializedTextFiles = Record<string, string>;
-
-export type ScriptEditorDirectoryPickOptions = {
-  mode?: "read" | "readwrite";
-};
-
-export type ScriptEditorWriteResult = {
-  mode: "download" | "directory";
-  directoryHandle: FileSystemDirectoryHandle | null;
-};
+import type {
+  ScriptEditorDirectoryPickOptions,
+  ScriptEditorFileSystemHost,
+  ScriptEditorSerializedTextFiles,
+  ScriptEditorWriteResult,
+} from "./script-editor-file-system-host";
 
 export async function writeTextFilesWithDirectoryPicker(
+  files: ScriptEditorSerializedTextFiles,
+  options: {
+    directoryHandle?: FileSystemDirectoryHandle | null;
+    suggestedName?: string | null;
+    downloadPrefix?: string;
+  } = {}
+): Promise<ScriptEditorWriteResult> {
+  return createBrowserScriptEditorFileSystemHost().writeTextFiles(files, options);
+}
+
+export async function pickScriptEditorDirectory(
+  options: ScriptEditorDirectoryPickOptions = {}
+): Promise<FileSystemDirectoryHandle> {
+  return createBrowserScriptEditorFileSystemHost().pickDirectory(options);
+}
+
+export async function readFilesFromDirectoryHandle(
+  directoryHandle: FileSystemDirectoryHandle
+): Promise<File[]> {
+  return createBrowserScriptEditorFileSystemHost().readFilesFromDirectoryHandle(
+    directoryHandle
+  );
+}
+
+export function createBrowserScriptEditorFileSystemHost(): ScriptEditorFileSystemHost {
+  return {
+    writeTextFiles(files, options = {}) {
+      return writeTextFilesWithDirectoryPickerInternal(files, options);
+    },
+    pickDirectory(options = {}) {
+      return pickScriptEditorDirectoryInternal(options);
+    },
+    readFilesFromDirectoryHandle(directoryHandle) {
+      return readFilesFromDirectoryHandleInternal(directoryHandle);
+    },
+  };
+}
+
+async function writeTextFilesWithDirectoryPickerInternal(
   files: ScriptEditorSerializedTextFiles,
   options: {
     directoryHandle?: FileSystemDirectoryHandle | null;
@@ -42,7 +77,7 @@ export async function writeTextFilesWithDirectoryPicker(
   };
 }
 
-export async function pickScriptEditorDirectory(
+async function pickScriptEditorDirectoryInternal(
   options: ScriptEditorDirectoryPickOptions = {}
 ): Promise<FileSystemDirectoryHandle> {
   const directoryPicker = getScriptEditorDirectoryPicker();
@@ -56,7 +91,7 @@ export async function pickScriptEditorDirectory(
   });
 }
 
-export async function readFilesFromDirectoryHandle(
+async function readFilesFromDirectoryHandleInternal(
   directoryHandle: FileSystemDirectoryHandle
 ): Promise<File[]> {
   const files: File[] = [];

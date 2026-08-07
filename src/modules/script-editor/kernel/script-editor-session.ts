@@ -1,6 +1,8 @@
 import type { ScriptEditorProjectDefinition } from "../domain/script-editor-project";
+import type { ScriptEditorFileSystemHost } from "../host/script-editor-file-system-host";
 import type { ScriptEditorHost } from "../host/script-editor-host";
 import type { ScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
+import { resolveScriptEditorFileSystemHost } from "../host/script-editor-file-system-host";
 import { resolveScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
 import {
   createScriptEditorWorkflowController,
@@ -30,6 +32,7 @@ export type ScriptEditorMountHandle = {
 
 type ScriptEditorEmbeddedSessionHost = {
   [key: string]: unknown;
+  fileSystemHost?: ScriptEditorFileSystemHost;
   playableCatalog?: ScriptEditorPlayableCatalog;
   previewHost?: ScriptEditorHost["previewHost"];
   setScreen(screen: string): void;
@@ -117,6 +120,7 @@ export function createEmbeddedScriptEditorSession(
     recordNotice: (notice) => {
       host.recordScriptEditorNotice(notice);
     },
+    getFileSystemHost: () => resolveScriptEditorFileSystemHost(host.fileSystemHost),
     getPlayableCatalog: () => host.playableCatalog ?? null,
     getPreviewHost: () => host.previewHost ?? null,
     getTemplateCatalog: () =>

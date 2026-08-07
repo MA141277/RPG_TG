@@ -7,6 +7,7 @@ export function createBrowserScriptEditorHost(
 ): ScriptEditorHost {
   return {
     projectStorage: options.projectStorage,
+    ...(options.fileSystemHost == null ? {} : { fileSystemHost: options.fileSystemHost }),
     ...(options.previewHost == null ? {} : { previewHost: options.previewHost }),
     ...(options.playableCatalog == null
       ? {}

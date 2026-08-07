@@ -7,9 +7,10 @@ function readSource(relativePath) {
   return fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
 }
 
-test("script editor host contract uses injected previewHost playableCatalog templateCatalog and publicationCatalog fields", () => {
+test("script editor host contract uses injected fileSystemHost previewHost playableCatalog templateCatalog and publicationCatalog fields", () => {
   const source = readSource("src/modules/script-editor/host/script-editor-host.ts");
 
+  assert.match(source, /fileSystemHost\?: ScriptEditorFileSystemHost/);
   assert.match(source, /previewHost\?: ScriptEditorPreviewHost/);
   assert.match(source, /playableCatalog\?: ScriptEditorPlayableCatalog/);
   assert.match(source, /templateCatalog\?: ScriptEditorTemplateCatalog/);
@@ -171,6 +172,28 @@ test("script editor session kernel no longer installs the concrete main-ui modul
   assert.doesNotMatch(sessionSource, /installMainUiFlowScriptEditorModule/);
   assert.match(standaloneHostSource, /installMainUiFlowScriptEditorModule/);
   assert.match(standaloneHostSource, /createEmbeddedScriptEditorSession/);
+});
+
+test("script editor workflow controller consumes file-system host instead of browser file-system helpers directly", () => {
+  const workflowControllerSource = readSource(
+    "src/modules/script-editor/kernel/script-editor-workflow-controller.ts"
+  );
+  const sessionSource = readSource(
+    "src/modules/script-editor/kernel/script-editor-session.ts"
+  );
+
+  assert.doesNotMatch(workflowControllerSource, /host\/browser-file-system/);
+  assert.match(workflowControllerSource, /getFileSystemHost/);
+  assert.match(sessionSource, /resolveScriptEditorFileSystemHost/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/host/script-editor-file-system-host.ts"
+      )
+    ),
+    true
+  );
 });
 
 test("script editor playable runtime contract is consumed through a package-local seam", () => {

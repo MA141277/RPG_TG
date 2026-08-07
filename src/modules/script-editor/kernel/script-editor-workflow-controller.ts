@@ -10,14 +10,12 @@ import type {
   ScriptEditorPreviewHost,
   ScriptEditorPreviewSession,
 } from "../host/script-editor-host";
+import type {
+  ScriptEditorFileSystemHost,
+  ScriptEditorWriteResult,
+} from "../host/script-editor-file-system-host";
 import type { ScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
 import type { ScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
-import {
-  pickScriptEditorDirectory,
-  readFilesFromDirectoryHandle,
-  type ScriptEditorWriteResult,
-  writeTextFilesWithDirectoryPicker,
-} from "../host/browser-file-system";
 
 export type ScriptEditorWorkflowNotice = {
   tone: "success" | "warning";
@@ -48,6 +46,7 @@ export type ScriptEditorWorkflowEnvironment = {
   setPendingDeleteProjectId(projectId: string | null): void;
   resetNoticeTimeline(): void;
   recordNotice(notice: ScriptEditorWorkflowNotice): void;
+  getFileSystemHost(): ScriptEditorFileSystemHost;
   getPlayableCatalog(): ScriptEditorPlayableCatalog | null;
   getPreviewHost(): ScriptEditorPreviewHost | null;
   getTemplateCatalog(): ScriptEditorTemplateCatalog | null;
@@ -70,9 +69,10 @@ export class ScriptEditorWorkflowController {
     if (project == null) {
       return;
     }
+    const fileSystemHost = this.environment.getFileSystemHost();
 
     try {
-      const result = await writeTextFilesWithDirectoryPicker(
+      const result = await fileSystemHost.writeTextFiles(
         serializeScriptEditorProjectToFiles(project),
         {
           directoryHandle: this.environment.getProjectDirectoryHandle(),
@@ -101,10 +101,11 @@ export class ScriptEditorWorkflowController {
   }
 
   async createProjectAtSavePath(): Promise<void> {
+    const fileSystemHost = this.environment.getFileSystemHost();
     const project = createDefaultScriptEditorProjectDefinition({
       playableCatalog: this.environment.getPlayableCatalog() ?? undefined,
     });
-    const result = await writeTextFilesWithDirectoryPicker(
+    const result = await fileSystemHost.writeTextFiles(
       serializeScriptEditorProjectToFiles(project),
       {
         directoryHandle: null,
@@ -124,10 +125,11 @@ export class ScriptEditorWorkflowController {
     if (project == null) {
       return;
     }
+    const fileSystemHost = this.environment.getFileSystemHost();
 
     this.environment.setAuxiliaryPanelOpen(true);
     try {
-      const result = await writeTextFilesWithDirectoryPicker(
+      const result = await fileSystemHost.writeTextFiles(
         exportScriptEditorProjectToScenarioPackFiles(project, {
           playableCatalog: this.environment.getPlayableCatalog() ?? undefined,
         }),
@@ -195,11 +197,12 @@ export class ScriptEditorWorkflowController {
   }
 
   async openProjectFromDirectory(): Promise<void> {
+    const fileSystemHost = this.environment.getFileSystemHost();
     try {
-      const directoryHandle = await pickScriptEditorDirectory({
+      const directoryHandle = await fileSystemHost.pickDirectory({
         mode: "readwrite",
       });
-      const files = await readFilesFromDirectoryHandle(directoryHandle);
+      const files = await fileSystemHost.readFilesFromDirectoryHandle(directoryHandle);
       this.environment.setProjectSource("opened");
       this.environment.commitProject(
         await loadScriptEditorProjectFromFiles(files, {
