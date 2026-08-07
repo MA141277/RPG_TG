@@ -10,10 +10,10 @@
 
 ## Execution State
 
-- Status: `completed-but-open`
+- Status: `closed`
 - Last Updated: `2026-08-08`
-- Current Focus: `Implementation is complete and locally verified. Covered story settlement runtime no longer accepts authored eventDefinition.settlementId fallback, and event-binding-started settlement events now pass routed event metadata into story runtime.`
-- Next Step: `Commit and push the implementation checkpoint, then record structured closeout with the pushed commit.`
+- Current Focus: `Story Settlement Canonical Settlement Id child is implemented, verified, pushed, and closed.`
+- Next Step: `Open docs/superpowers/project-progress.md and select the next approved stabilization child; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 - Verification: `npm run build:test; node --test tests/story-settlement-continuation.test.cjs tests/indoor-screen-story-runtime.test.cjs; node --test --test-name-pattern "story settlement canonical settlement id|runtime event settlement id payload consumption|story settlement runtime owner convergence|story settlement next-event convergence" tests/robustness.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
 - Notes: `This child is canonical-queue work for merage-mod2ui-1. Do not reuse historical runtime-only queue governance or reopen B/C/D lines through this slice.`
 
@@ -31,6 +31,10 @@
   - Summary: `Completed implementation locally. Added RED coverage proving applyStorySettlementEvent no longer accepts authored settlement-id fallback without routed metadata, added a routed story settlement runtime assertion, removed covered authored fallback from story-runtime and story-settlement-continuation, and threaded routed event metadata through the event-binding-started story path.`
   - Verification: `npm run build:test; node --test tests/story-settlement-continuation.test.cjs tests/indoor-screen-story-runtime.test.cjs; node --test --test-name-pattern "story settlement canonical settlement id|runtime event settlement id payload consumption|story settlement runtime owner convergence|story settlement next-event convergence" tests/robustness.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
   - Next: `Commit and push the implementation checkpoint, then sync closeout metadata.`
+- 2026-08-08
+  - Summary: `Closed the Story Settlement Canonical Settlement Id child after pushing the implementation checkpoint to origin/merage-mod2ui-1. The branch is back to no active child; startup remains frozen and review-system work remains paused.`
+  - Verification: `Implementation push reached 1d8c80f3; npm run lint:plans; git diff --check`
+  - Next: `Open the next approved stabilization child from docs/superpowers/project-progress.md.`
 
 ---
 
@@ -184,41 +188,41 @@ If a test reveals a legitimate covered caller that is not yet threading routed s
 
 Run the full verification set from `Verification Plan`.
 
-- [ ] **Step 2: Sync the child state**
+- [x] **Step 2: Sync the child state**
 
 Update this plan’s `Execution State`, `Progress Log`, checklists, and canonical `project-progress` state so the next resume point is explicit whether the child is still running, completed-but-open, or closed.
 
-- [ ] **Step 3: Commit and push when the slice is complete**
+- [x] **Step 3: Commit and push when the slice is complete**
 
 Create one coherent checkpoint for this child and push it to `origin/merage-mod2ui-1`.
 
 ## Exit Check
 
-- [ ] Covered story settlement runtime no longer depends on authored `eventDefinition.settlementId` fallback.
-- [ ] Routed settlement metadata still drives the intended covered settlement application and continuation behavior.
-- [ ] Startup, review-system, and source-unification boundaries remain untouched.
-- [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] Covered story settlement runtime no longer depends on authored `eventDefinition.settlementId` fallback.
+- [x] Routed settlement metadata still drives the intended covered settlement application and continuation behavior.
+- [x] Startup, review-system, and source-unification boundaries remain untouched.
+- [x] Project progress sync is updated if the child state changed.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
-- Closed Child: `Replace when closing.`
-- Parent Task: `Replace when closing.`
-- Parent Stage: `Replace when closing.`
+- Closed Child: `Story Settlement Canonical Settlement Id`
+- Parent Task: `Post-Merge Branch Stabilization`
+- Parent Stage: `Post-Merge Branch Stabilization`
 - Closeout Status: `closed`
-- Project Progress Synced: `yes/no`
-- Next Child: `Replace when closing.`
-- Next Child Status: `waiting/running/blocked/none`
-- Next Required Action: `Replace when closing.`
+- Project Progress Synced: `yes`
+- Next Child: `none`
+- Next Child Status: `none`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `Replace when closing.`
-- Push Status: `success/failure/not-pushed`
-- Push Commit: `commit-sha-or-none`
-- Resume From: `Replace when closing.`
+- Next Owner Document: `none`
+- Push Status: `success`
+- Push Commit: `1d8c80f3`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed story-settlement baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`

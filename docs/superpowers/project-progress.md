@@ -4,22 +4,26 @@
 
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
-- Current Task: `Story Settlement Canonical Settlement Id`
-- Current Task Status: `completed-but-open`
-- Current Child: `Story Settlement Canonical Settlement Id`
-- Current Child Status: `completed-but-open`
+- Current Task: `Post-Merge Branch Stabilization`
+- Current Task Status: `running`
+- Current Child: `none`
+- Current Child Status: `none`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `commit-push-and-close-story-settlement-canonical-settlement-id-child`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-08-08-story-settlement-canonical-settlement-id-plan.md`
-- Last Closed Item: `Mod-First-Dev Residual Intent Backfill`
-- Push Status: `not-pushed`
-- Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then commit and push the verified Story Settlement Canonical Settlement Id implementation before recording final closeout; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Next Owner Document: `none`
+- Last Closed Item: `Story Settlement Canonical Settlement Id`
+- Push Status: `success`
+- Push Commit: `1d8c80f3`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed story-settlement baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 
 ## Progress Log
 
+- 2026-08-08
+  - Summary: `Closed the Story Settlement Canonical Settlement Id child after pushing the implementation checkpoint. The canonical queue is back to no active child; startup remains frozen and review-system work remains paused.`
+  - Verification: `Implementation push reached 1d8c80f3; npm run lint:plans; git diff --check`
+  - Next: `Open the next approved stabilization child from docs/superpowers/project-progress.md.`
 - 2026-08-08
   - Summary: `Completed the Story Settlement Canonical Settlement Id implementation locally. Covered story settlement runtime no longer accepts authored eventDefinition.settlementId fallback, and event-binding-started story settlement events now pass routed event metadata into story runtime.`
   - Verification: `npm run build:test; node --test tests/story-settlement-continuation.test.cjs tests/indoor-screen-story-runtime.test.cjs; node --test --test-name-pattern "story settlement canonical settlement id|runtime event settlement id payload consumption|story settlement runtime owner convergence|story settlement next-event convergence" tests/robustness.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
@@ -130,7 +134,7 @@
 
 ## Child Closeout
 
-- Closed Child: `Mod-First-Dev Residual Intent Backfill`
+- Closed Child: `Story Settlement Canonical Settlement Id`
 - Parent Task: `Post-Merge Branch Stabilization`
 - Parent Stage: `Post-Merge Branch Stabilization`
 - Closeout Status: `closed`
@@ -141,5 +145,5 @@
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `none`
 - Push Status: `success`
-- Push Commit: `874605fe`
-- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed residual-intent baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Push Commit: `1d8c80f3`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed story-settlement baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
