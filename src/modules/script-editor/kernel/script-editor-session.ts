@@ -45,6 +45,12 @@ export type ScriptEditorEmbeddedSession = {
   host: ScriptEditorEmbeddedSessionHost;
   workflowController: ScriptEditorWorkflowController;
   handleClickTarget(target: Element): Promise<boolean>;
+  handleChangeTarget(
+    target:
+      | HTMLInputElement
+      | HTMLSelectElement
+      | HTMLTextAreaElement
+  ): Promise<boolean>;
   handleInputTarget(target: HTMLInputElement, isComposing: boolean): boolean;
   handleCompositionEndTarget(target: HTMLInputElement): boolean;
   dispose(): void;
@@ -171,6 +177,47 @@ export function createEmbeddedScriptEditorSession(
         const recordId = scriptEditorRecordElement.dataset.scriptEditorRecordId;
         if (recordId != null) {
           host.selectScriptEditorRecord(recordId);
+        }
+        return true;
+      }
+
+      return false;
+    },
+    async handleChangeTarget(target) {
+      if (target.matches("[data-script-editor-project-file]")) {
+        const files = Array.from(
+          target instanceof HTMLInputElement ? target.files ?? [] : []
+        );
+        if (target instanceof HTMLInputElement) {
+          target.value = "";
+        }
+        if (files.length === 0) {
+          return true;
+        }
+
+        await host.handleScriptEditorProjectFileImport(files);
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-event-field]")) {
+        const field = target.dataset.scriptEditorEventField;
+        if (
+          field === "id" ||
+          field === "title" ||
+          field === "description" ||
+          field === "type" ||
+          field === "settlementId" ||
+          field === "nextEventId"
+        ) {
+          host.applyScriptEditorEventField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-building-entry-field]")) {
+        const field = target.dataset.scriptEditorBuildingEntryField;
+        if (field === "defaultPersonId" || field === "returnTarget") {
+          host.applyScriptEditorBuildingEntryField(field, target.value);
         }
         return true;
       }

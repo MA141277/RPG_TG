@@ -622,14 +622,7 @@ export class MainUiFlow {
       return;
     }
 
-    if (target.matches("[data-script-editor-project-file]")) {
-      const files = Array.from(target.files ?? []);
-      target.value = "";
-      if (files.length === 0) {
-        return;
-      }
-
-      await this.handleScriptEditorProjectFileImport(files);
+    if (await this.scriptEditorSession?.handleChangeTarget?.(target)) {
       return;
     }
 
@@ -924,21 +917,6 @@ export class MainUiFlow {
             ? target.checked
             : target.value;
         this.applyScriptEditorProgressTrackBindingField(field, nextValue);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-event-field]")) {
-      const field = target.dataset.scriptEditorEventField;
-      if (
-        field === "id" ||
-        field === "title" ||
-        field === "description" ||
-        field === "type" ||
-        field === "settlementId" ||
-        field === "nextEventId"
-      ) {
-        this.applyScriptEditorEventField(field, target.value);
       }
       return;
     }
@@ -1474,12 +1452,6 @@ export class MainUiFlow {
         );
       }
       return;
-    }
-    if (target.matches("[data-script-editor-building-entry-field]")) {
-      const field = target.dataset.scriptEditorBuildingEntryField;
-      if (field === "defaultPersonId" || field === "returnTarget") {
-        this.applyScriptEditorBuildingEntryField(field, target.value);
-      }
     }
   }
 
