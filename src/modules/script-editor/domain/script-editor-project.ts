@@ -9,7 +9,7 @@ import type {
   LocationAccessConditionSubject,
   LocationAccessValueRef,
 } from "../../../domain/location-access";
-import type { RuntimeTaskInput } from "../../../core/contracts/runtime-result";
+import type { RuntimeTaskInput } from "./script-editor-runtime-result-contract";
 import type { FlowNode } from "../../../domain/playables/flow";
 import type {
   PortraitResourceDefinition,

@@ -17,6 +17,7 @@
 - `src/modules/script-editor/host/script-editor-playable-catalog.ts` 现已成为 script-editor 包内统一的 builtin playable seam owner；`menu-authoring.ts`、`minigame-binding-authoring.ts` 与 `runtime-pack-export.ts` 不再直连外部 `core/registry/builtin-playable-*`。
 - `src/modules/script-editor/application/script-editor-event-binding-contract.ts` 现已成为 script-editor 包内统一的 event-binding contract seam；`runtime-pack-export.ts` 不再直连外部 `core/runtime/event-binding-contract`。
 - `src/modules/script-editor/application/script-editor-playable-runtime-contract.ts` 现已成为 script-editor 包内统一的 playable runtime contract seam；`runtime-pack-export.ts`、`runtime-pack-import.ts` 与 `host/script-editor-playable-catalog.ts` 不再直连外部 `core/contracts/playable-runtime`。
+- `src/modules/script-editor/domain/script-editor-runtime-result-contract.ts` 现已成为 script-editor 包内统一的 runtime-result contract seam；`runtime-pack-export.ts`、`story-dialogue-event-authoring.ts` 与 `domain/script-editor-project.ts` 不再直连外部 `core/contracts/runtime-result`。
 - `prototypes/script-editor/index.html`、`src/modules/script-editor/standalone/script-editor-standalone.ts`、`src/modules/script-editor/standalone/script-editor-standalone-host.ts` 与 `vite.config.ts` 现已提供独立的 standalone 剧本编辑器入口，同时保持嵌入态与 standalone 复用同一套会话 owner。
 - `tsconfig.test.json` 现已把 `src/modules/**/*.ts` 纳入 `.test-dist` 编译范围；依赖 `.test-dist/modules/**` 的 Script Editor module 行为测试不再读取历史残留产物。
 - 这一轮还补齐了 `tests/script-editor-host-contract.test.cjs`、`tests/script-editor-embedded-session.test.cjs`、`tests/script-editor-standalone-entry.test.cjs`、`tests/script-editor-publication-boundary.test.cjs` 和 `tests/script-editor-runtime-preview-compat.test.cjs` 的包边界回归，并通过浏览器 smoke 验证了嵌入态预览链路和 standalone fail-closed 行为。
@@ -33,6 +34,7 @@
 - playable catalog 收口后，script-editor authoring / export 层里与 builtin playable 注册表相关的外部依赖也已经集中到单一 host seam；后续如果要把玩法定义改成注入式 owner，只需要替换这一个 catalog。
 - event-binding contract 收口后，script-editor export 层对 `core/runtime/**` 的直接依赖又缩掉了一条；后续如果事件绑定 owner 继续下沉到 package 内部，只需要替换这一个 seam，而不用再扫 `runtime-pack-export.ts` 的实现细节。
 - playable runtime contract 收口后，script-editor 在玩法 import/export 与 builtin playable host catalog 之间已经不再散落外部 contract 字段引用；后续如果玩法运行时 contract 要改名、裁剪或转成宿主注入，这一层只需要替换 package 内单 seam。
+- runtime-result contract 收口后，script-editor 的事件/对话/任务结果字段不再跨 application 与 domain 多点直连外部 shared contract；后续如果任务输入或结果 payload 继续调整，可以先只替换这一个 domain seam。
 - `tsconfig.test.json` 补上 `src/modules/**/*.ts` 之后，module 行为测试终于和当前源码同构；后续继续拆 package 时，像 `playable-family-removal` 这类测试不会再被旧 `.test-dist` 假绿或假红误导。
 
 ## 2026-08-05 Agent Immediate Execution Workflow Governance

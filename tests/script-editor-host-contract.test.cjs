@@ -153,3 +153,49 @@ test("script editor playable runtime contract is consumed through a package-loca
     true
   );
 });
+
+test("script editor runtime-result contract is consumed through a package-local seam", () => {
+  const runtimePackExportSource = readSource(
+    "src/modules/script-editor/application/runtime-pack-export.ts"
+  );
+  const storyDialogueAuthoringSource = readSource(
+    "src/modules/script-editor/application/story-dialogue-event-authoring.ts"
+  );
+  const projectDomainSource = readSource(
+    "src/modules/script-editor/domain/script-editor-project.ts"
+  );
+
+  assert.doesNotMatch(
+    runtimePackExportSource,
+    /core\/contracts\/runtime-result/
+  );
+  assert.doesNotMatch(
+    storyDialogueAuthoringSource,
+    /core\/contracts\/runtime-result/
+  );
+  assert.doesNotMatch(
+    projectDomainSource,
+    /core\/contracts\/runtime-result/
+  );
+  assert.match(
+    runtimePackExportSource,
+    /script-editor-runtime-result-contract/
+  );
+  assert.match(
+    storyDialogueAuthoringSource,
+    /script-editor-runtime-result-contract/
+  );
+  assert.match(
+    projectDomainSource,
+    /script-editor-runtime-result-contract/
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/domain/script-editor-runtime-result-contract.ts"
+      )
+    ),
+    true
+  );
+});

@@ -34,7 +34,7 @@ import type {
   EventDefinition,
   EventRouteCommand,
 } from "../../../domain/event";
-import type { RuntimeTaskInput } from "../../../core/contracts/runtime-result";
+import type { RuntimeTaskInput } from "../domain/script-editor-runtime-result-contract";
 import type {
   PlayableDefinition,
   PlayableIntegrationDefinition,
