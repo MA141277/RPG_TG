@@ -1,7 +1,7 @@
 import type { ScriptEditorProjectDefinition } from "../domain/script-editor-project";
 import type { ScriptEditorHost } from "../host/script-editor-host";
 import type { ScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
-import { createBuiltinScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
+import { resolveScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
 import {
   createScriptEditorWorkflowController,
   type ScriptEditorWorkflowController,
@@ -124,7 +124,7 @@ export function createEmbeddedScriptEditorSession(
     getPlayableCatalog: () => host.playableCatalog ?? null,
     getPreviewHost: () => host.previewHost ?? null,
     getTemplateCatalog: () =>
-      host.templateCatalog ?? createBuiltinScriptEditorTemplateCatalog(),
+      resolveScriptEditorTemplateCatalog(host.templateCatalog),
     setScreen: (screen) => {
       host.setScreen(screen);
     },

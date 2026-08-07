@@ -8,6 +8,10 @@ import {
   createBuiltinScriptEditorPlayableCatalog,
   setDefaultScriptEditorPlayableCatalog,
 } from "../host/script-editor-playable-catalog";
+import {
+  createBuiltinScriptEditorTemplateCatalog,
+  setDefaultScriptEditorTemplateCatalog,
+} from "../host/script-editor-template-catalog";
 import { renderScriptEditorLandingView } from "./views/script-editor-landing-view";
 import {
   SCRIPT_EDITOR_BUILDING_DEFAULT_BACKGROUND_OPTIONS,
@@ -875,8 +879,10 @@ export function installMainUiFlowScriptEditorModule(host, options) {
   }
   host.playableCatalog ??= createBuiltinScriptEditorPlayableCatalog();
   host.publicationCatalog ??= createBuiltinScriptEditorPublicationCatalog();
+  host.templateCatalog ??= createBuiltinScriptEditorTemplateCatalog();
   setDefaultScriptEditorPlayableCatalog(host.playableCatalog);
   setDefaultScriptEditorPublicationCatalog(host.publicationCatalog);
+  setDefaultScriptEditorTemplateCatalog(host.templateCatalog);
     host.scriptEditorProject = null;
     host.scriptEditorSelection = {
       family: "storyPack",

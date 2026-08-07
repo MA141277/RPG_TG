@@ -27,6 +27,7 @@
 - `src/modules/script-editor/host/script-editor-host.ts` 现已把 `playableCatalog` 提升为显式宿主注入字段；`kernel/script-editor-session.ts`、`kernel/script-editor-workflow-controller.ts`、`workspace-shell.ts`、`runtime-pack-export.ts`、`editor-project-loader.ts`、`minimal-workflow.ts`、`menu-authoring.ts` 与 `minigame-binding-authoring.ts` 不再在 application/kernel 内直接创建 builtin playable catalog。
 - `src/modules/script-editor/host/script-editor-playable-catalog.ts` 现已成为 script-editor 内统一的 playable catalog 默认解析点：宿主可注入 `playableCatalog`，未注入时才回落到 builtin catalog；`ui/main-ui-script-editor-module.js` 则负责在宿主安装阶段设置当前默认 catalog。
 - `src/modules/script-editor/host/script-editor-publication-catalog.ts` 现已成为 script-editor 内统一的 publication catalog 默认解析点：宿主可注入 `publicationCatalog`，未注入时才回落到 builtin catalog；`application/script-editor-scenario-pack-codec.ts` 不再直接创建 builtin publication catalog，`ui/main-ui-script-editor-module.js` 会在宿主安装阶段设置当前默认 publication catalog。
+- `src/modules/script-editor/host/script-editor-template-catalog.ts` 现已成为 script-editor 内统一的 template catalog 默认解析点：宿主可注入 `templateCatalog`，未注入时才回落到 builtin catalog；`kernel/script-editor-session.ts` 不再直接创建 builtin template catalog，`ui/main-ui-script-editor-module.js` 会在宿主安装阶段设置当前默认 template catalog。
 - `prototypes/script-editor/index.html`、`src/modules/script-editor/standalone/script-editor-standalone.ts`、`src/modules/script-editor/standalone/script-editor-standalone-host.ts` 与 `vite.config.ts` 现已提供独立的 standalone 剧本编辑器入口，同时保持嵌入态与 standalone 复用同一套会话 owner。
 - `tsconfig.test.json` 现已把 `src/modules/**/*.ts` 纳入 `.test-dist` 编译范围；依赖 `.test-dist/modules/**` 的 Script Editor module 行为测试不再读取历史残留产物。
 - 这一轮还补齐了 `tests/script-editor-host-contract.test.cjs`、`tests/script-editor-embedded-session.test.cjs`、`tests/script-editor-standalone-entry.test.cjs`、`tests/script-editor-publication-boundary.test.cjs` 和 `tests/script-editor-runtime-preview-compat.test.cjs` 的包边界回归，并通过浏览器 smoke 验证了嵌入态预览链路和 standalone fail-closed 行为。
@@ -52,6 +53,7 @@
 - 这轮底层结构类型 seam 收口后，script-editor 生产实现层对外部 domain/core 结构合同的直接依赖面已经进一步压缩到少数 intentional seam 文件；后续如果继续把剧本编辑器完全收成 package，剩余要替换的桥接点会更集中，也更容易在模块化完成后统一删除 seam 引用。
 - playable catalog 也完成宿主注入后，script-editor 的 application/kernel 层对 builtin playable registry 的 owner 关系已经收回到单一 host seam；后续如果要把 builtin playable 列表替换成外部项目提供的 catalog，不需要再扫 authoring/export 主体实现。
 - publication catalog 也进入相同模式后，scenario-pack codec 对 registered builtin publication 的 owner 关系也已经回收到单一 host seam；后续如果要换成外部项目自己的 publication catalog，导入逻辑只需要替换宿主注入，不需要再改 codec 主体。
+- template catalog 也完成相同收口后，默认模板导入链的 owner 关系已经从 kernel 退出，只剩 host seam 负责默认解析；后续如果宿主要换默认模板来源，不需要再改 session/workflow 本体。
 - `tsconfig.test.json` 补上 `src/modules/**/*.ts` 之后，module 行为测试终于和当前源码同构；后续继续拆 package 时，像 `playable-family-removal` 这类测试不会再被旧 `.test-dist` 假绿或假红误导。
 
 ## 2026-08-05 Agent Immediate Execution Workflow Governance

@@ -142,6 +142,24 @@ test("script editor scenario pack codec consumes publication catalog through a h
   );
 });
 
+test("script editor session consumes template catalog through a host resolver seam", () => {
+  const sessionSource = readSource(
+    "src/modules/script-editor/kernel/script-editor-session.ts"
+  );
+
+  assert.doesNotMatch(sessionSource, /createBuiltinScriptEditorTemplateCatalog/);
+  assert.match(sessionSource, /resolveScriptEditorTemplateCatalog/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src/modules/script-editor/host/script-editor-template-catalog.ts"
+      )
+    ),
+    true
+  );
+});
+
 test("script editor playable runtime contract is consumed through a package-local seam", () => {
   const runtimePackExportSource = readSource(
     "src/modules/script-editor/application/runtime-pack-export.ts"
