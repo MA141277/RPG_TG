@@ -13,9 +13,9 @@
 - Status: `running`
 - Last Updated: `2026-08-07`
 - Current Focus: `Task 2: move script editor session ownership out of MainUiFlow.`
-- Next Step: `Continue Task 2 by moving script editor click/change ownership out of MainUiFlow and into the session path.`
-- Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 checkpoint passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck`
-- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 has cut over workflow/session construction into script-editor/kernel, but MainUiFlow still owns direct editor event routing that must be removed in the next slice.`
+- Next Step: `Continue Task 2 by moving script editor change/input ownership out of MainUiFlow and into the session path.`
+- Verification: `Task 1 passed: npm run build:test; node --test tests/script-editor-host-contract.test.cjs; npm run typecheck. Task 2 checkpoints passed: npm run build:test; node --test tests/script-editor-embedded-session.test.cjs; npm run typecheck`
+- Notes: `Boundary and terminology are frozen by the approved design spec; do not add compatibility seams or new top-level terminology during implementation. Task 1 is complete and the shared person-attribute contract now lives under core/contracts. Task 2 has cut over workflow/session construction and direct click routing into script-editor/kernel, but MainUiFlow still owns direct editor change/input routing that must be removed in the next slice.`
 
 ## Progress Log
 
@@ -31,6 +31,10 @@
   - Summary: `Started Task 2 by introducing script-editor/kernel/script-editor-session, moving workflow-controller construction out of MainUiFlow, and routing entry helpers through the session file.`
   - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
   - Next: `Continue Task 2 by removing direct script editor event-routing ownership from MainUiFlow.`
+- 2026-08-07
+  - Summary: `Extended Task 2 by moving direct script editor click routing for action/family/record targets out of MainUiFlow and into script-editor/kernel/script-editor-session.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
+  - Next: `Continue Task 2 by moving direct script editor change/input routing out of MainUiFlow.`
 
 ---
 

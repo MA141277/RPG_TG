@@ -44,6 +44,7 @@ export type CreateEmbeddedScriptEditorSessionOptions = {
 export type ScriptEditorEmbeddedSession = {
   host: ScriptEditorEmbeddedSessionHost;
   workflowController: ScriptEditorWorkflowController;
+  handleClickTarget(target: Element): Promise<boolean>;
   dispose(): void;
 };
 
@@ -140,6 +141,40 @@ export function createEmbeddedScriptEditorSession(
   return {
     host: options.host,
     workflowController,
+    async handleClickTarget(target) {
+      const scriptEditorActionElement = target.closest("[data-script-editor-action]");
+      if (scriptEditorActionElement instanceof HTMLElement) {
+        const action = scriptEditorActionElement.dataset.scriptEditorAction;
+        if (action != null) {
+          await host.handleScriptEditorAction(action, scriptEditorActionElement);
+        }
+        return true;
+      }
+
+      const scriptEditorFamilyElement = target.closest("[data-script-editor-family]");
+      if (scriptEditorFamilyElement instanceof HTMLElement) {
+        const family = scriptEditorFamilyElement.dataset.scriptEditorFamily;
+        const entityId =
+          scriptEditorFamilyElement.dataset.scriptEditorEntityId ?? null;
+        if (family != null) {
+          host.selectScriptEditorFamily(family, entityId);
+        }
+        return true;
+      }
+
+      const scriptEditorRecordElement = target.closest(
+        "[data-script-editor-record-id]"
+      );
+      if (scriptEditorRecordElement instanceof HTMLElement) {
+        const recordId = scriptEditorRecordElement.dataset.scriptEditorRecordId;
+        if (recordId != null) {
+          host.selectScriptEditorRecord(recordId);
+        }
+        return true;
+      }
+
+      return false;
+    },
     dispose() {
       if (host.scriptEditorWorkflowController === workflowController) {
         host.scriptEditorWorkflowController = null;

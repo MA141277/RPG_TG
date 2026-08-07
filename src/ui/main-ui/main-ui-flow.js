@@ -594,31 +594,8 @@ export class MainUiFlow {
       }
     }
 
-    const scriptEditorActionElement = target.closest("[data-script-editor-action]");
-    if (scriptEditorActionElement != null) {
-      const action = scriptEditorActionElement.dataset.scriptEditorAction;
-      if (action != null) {
-        await this.handleScriptEditorAction(action, scriptEditorActionElement);
-      }
+    if (await this.scriptEditorSession?.handleClickTarget?.(target)) {
       return;
-    }
-
-    const scriptEditorFamilyElement = target.closest("[data-script-editor-family]");
-    if (scriptEditorFamilyElement != null) {
-      const family = scriptEditorFamilyElement.dataset.scriptEditorFamily;
-      const entityId = scriptEditorFamilyElement.dataset.scriptEditorEntityId ?? null;
-      if (family != null) {
-        this.selectScriptEditorFamily(family, entityId);
-      }
-      return;
-    }
-
-    const scriptEditorRecordElement = target.closest("[data-script-editor-record-id]");
-    if (scriptEditorRecordElement != null) {
-      const recordId = scriptEditorRecordElement.dataset.scriptEditorRecordId;
-      if (recordId != null) {
-        this.selectScriptEditorRecord(recordId);
-      }
     }
   }
 

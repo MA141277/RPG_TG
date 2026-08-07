@@ -34,3 +34,17 @@ test("kernel script-editor-session exists", () => {
     true
   );
 });
+
+test("main ui flow no longer owns direct script editor click routing", () => {
+  const mainUiFlowSource = readSource("src/ui/main-ui/main-ui-flow.js");
+  const sessionSource = readSource(
+    "src/modules/script-editor/kernel/script-editor-session.ts"
+  );
+
+  assert.doesNotMatch(mainUiFlowSource, /scriptEditorActionElement/);
+  assert.doesNotMatch(mainUiFlowSource, /scriptEditorFamilyElement/);
+  assert.doesNotMatch(mainUiFlowSource, /scriptEditorRecordElement/);
+  assert.match(sessionSource, /data-script-editor-action/);
+  assert.match(sessionSource, /data-script-editor-family/);
+  assert.match(sessionSource, /data-script-editor-record-id/);
+});
