@@ -17,6 +17,7 @@ import type {
   MapStats,
 } from "../../../domain/map";
 import type { CivilizationSandboxMapOverlay } from "../../../application/civilization-sandbox/map-overlay-presenter";
+import { resolveCivilizationSandboxSpriteUrl } from "./civilization-sandbox-assets";
 import {
   resolveCampaignStructureVisualProfile,
   type CampaignStructureVisualProfile,
@@ -330,11 +331,67 @@ function renderCampaignMarkerRuntimeSource(model: MapViewModel): string {
 }
 
 function renderCivilizationSandboxOverlay(
-  overlay: CivilizationSandboxMapOverlay | null
+  overlay: CivilizationSandboxMapOverlay | null,
+  coordinateSpace: {
+    width: number;
+    height: number;
+  }
 ): string {
   if (overlay == null || !overlay.enabled) {
     return "";
   }
+
+  const createPositionStyle = (hex: { x: number; y: number }) =>
+    `--sandbox-left:${formatSandboxMapPercent(hex.x, coordinateSpace.width)}%; --sandbox-bottom:${formatSandboxMapPercent(hex.y, coordinateSpace.height)}%;`;
+  const territoryMarkup = overlay.claimedHexes
+    .map(
+      (entry) => `
+        <span
+          class="c-civilization-sandbox-territory"
+          style="${createPositionStyle(entry.hex)} --sandbox-territory-color:var(--color-${escapeHtml(entry.colorToken)});"
+          data-sandbox-civilization-id="${escapeHtml(entry.civilizationId)}"
+          aria-hidden="true"
+        ></span>
+      `
+    )
+    .join("");
+  const structuresMarkup = overlay.structures
+    .map(
+      (structure) => `
+        <span
+          class="${getCivilizationSandboxStructureClassName(structure.kind)}"
+          style="${createPositionStyle(structure.hex)}"
+          data-sandbox-civilization-id="${escapeHtml(structure.civilizationId)}"
+          title="${escapeHtml(structure.kind)}"
+          aria-hidden="true"
+        ></span>
+      `
+    )
+    .join("");
+  const individualsMarkup = overlay.individuals
+    .map((individual) => {
+      const spriteUrl = resolveCivilizationSandboxSpriteUrl(
+        individual.spriteResourceId
+      );
+
+      return `
+        <button
+          type="button"
+          class="c-civilization-sandbox-individual"
+          data-civilization-sandbox-action="select"
+          data-sandbox-entity-id="${escapeHtml(individual.id)}"
+          style="${createPositionStyle(individual.hex)}"
+          title="${escapeHtml(individual.name)} · ${escapeHtml(individual.taskLabel)}"
+        >
+          ${
+            spriteUrl == null
+              ? '<span class="c-civilization-sandbox-individual__fallback"></span>'
+              : `<img src="${spriteUrl}" alt="" class="c-civilization-sandbox-individual__sprite">`
+          }
+        </button>
+      `;
+    })
+    .join("");
 
   return `
     <script type="application/json" data-civilization-sandbox-source="true">${escapeJsonForHtmlScript(JSON.stringify(overlay))}</script>
@@ -342,8 +399,32 @@ function renderCivilizationSandboxOverlay(
       class="c-civilization-sandbox-overlay"
       data-civilization-sandbox-overlay="true"
       data-civilization-sandbox-view-mode="${overlay.viewMode}"
-    ></div>
+    >
+      ${overlay.viewMode === "territory" ? territoryMarkup : ""}
+      ${structuresMarkup}
+      ${individualsMarkup}
+    </div>
   `;
+}
+
+function getCivilizationSandboxStructureClassName(kind: string): string {
+  if (kind === "rural-house") {
+    return "c-civilization-sandbox-structure c-civilization-sandbox-structure--rural-house";
+  }
+
+  if (kind === "farm") {
+    return "c-civilization-sandbox-structure c-civilization-sandbox-structure--farm";
+  }
+
+  return "c-civilization-sandbox-structure";
+}
+
+function formatSandboxMapPercent(value: number, total: number): string {
+  if (!Number.isFinite(value) || !Number.isFinite(total) || total <= 0) {
+    return "0";
+  }
+
+  return ((value / total) * 100).toFixed(3);
 }
 
 export function renderCampaignLayers(layers: MapLayer[]): string {
@@ -566,7 +647,10 @@ function renderCampaignMap(model: MapViewModel): string {
         >
           <polygon data-campaign-hover-hex-polygon="true" points=""></polygon>
         </svg>
-        ${renderCivilizationSandboxOverlay(model.civilizationSandboxOverlay)}
+        ${renderCivilizationSandboxOverlay(
+          model.civilizationSandboxOverlay,
+          model.coordinateSpace
+        )}
         <div class="c-campaign-map__tiltshift" aria-hidden="true">
           ${renderCampaignMapVisualLayer(model, {
             transformClassName: "c-campaign-map__transform c-campaign-map__transform--tiltshift",

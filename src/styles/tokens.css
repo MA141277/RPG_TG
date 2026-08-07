@@ -23,12 +23,18 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
+  --space-8: 64px;
   --radius-panel: 10px;
   --radius-button: 999px;
   --shadow-panel: 0 12px 30px var(--color-shadow);
   --border-panel: 1px solid rgb(106 76 42 / 72%);
   --z-global-ui: 100;
+  --z-map-overlay: 120;
   --z-scene-overlay: 200;
+  --color-map-farm: #7fa35c;
+  --color-sandbox-civilization-wu: rgb(192 65 55 / 42%);
+  --color-sandbox-civilization-yu: rgb(80 146 88 / 42%);
+  --color-sandbox-civilization-chen: rgb(73 112 180 / 42%);
   --duration-fast: 160ms;
   --duration-mid: 280ms;
   --game-width: 1600px;

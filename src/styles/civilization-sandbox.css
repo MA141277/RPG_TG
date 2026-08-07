@@ -1,0 +1,90 @@
+.c-civilization-sandbox-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-map-overlay);
+  pointer-events: none;
+}
+
+.c-civilization-sandbox-individual,
+.c-civilization-sandbox-structure,
+.c-civilization-sandbox-territory {
+  position: absolute;
+  left: var(--sandbox-left);
+  bottom: var(--sandbox-bottom);
+  transform: translate(-50%, 50%);
+}
+
+.c-civilization-sandbox-individual {
+  width: var(--space-7);
+  height: var(--space-7);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.c-civilization-sandbox-individual__sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.c-civilization-sandbox-individual__fallback {
+  display: block;
+  width: var(--space-4);
+  height: var(--space-4);
+  margin: var(--space-3) auto 0;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: var(--shadow-panel);
+}
+
+.c-civilization-sandbox-structure {
+  width: var(--space-6);
+  height: var(--space-6);
+  pointer-events: none;
+}
+
+.c-civilization-sandbox-structure--rural-house {
+  background: var(--color-paper);
+  border: var(--border-panel);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.c-civilization-sandbox-structure--farm {
+  background: var(--color-map-farm);
+  border: var(--border-panel);
+}
+
+.c-civilization-sandbox-territory {
+  width: var(--space-8);
+  height: var(--space-8);
+  background: var(--sandbox-territory-color);
+  opacity: 0.35;
+  pointer-events: none;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+}
+
+.c-civilization-sandbox-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.c-civilization-sandbox-controls button {
+  min-width: var(--space-7);
+  min-height: var(--space-5);
+  border: var(--border-panel);
+  border-radius: var(--radius-panel);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.c-civilization-sandbox-controls button:hover {
+  background: var(--color-paper-deep);
+}

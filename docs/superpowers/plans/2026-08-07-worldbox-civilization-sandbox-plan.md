@@ -12,12 +12,17 @@
 
 - Status: `running`
 - Last Updated: `2026-08-07`
-- Current Focus: `Task 4 validation UI actions and boundary guard are complete pending the Task 4 commit.`
-- Next Step: `Commit Task 4, then continue Task 5 visual overlay rendering and styles.`
+- Current Focus: `Task 5 visual overlay rendering and styles are complete pending the Task 5 commit.`
+- Next Step: `Commit Task 5, then run Task 6 final verification and manual sandbox check.`
 - Verification: `npm run build:test; node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs; node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs; npm run typecheck`
 - Notes: `docs/superpowers/project-progress.md still points to the campaign-cloud completed-but-open child; this sandbox execution was started by explicit user direction on a dedicated branch without changing the canonical progress entry.`
 
 ## Progress Log
+
+- 2026-08-07
+  - Summary: `Completed Task 5 for the Worldbox civilization sandbox: map overlay now renders territory hexes, visible individuals using walker sprites, rural-house structures, farm overlays, and token-based sandbox styles.`
+  - Verification: `npm run build:test`; `node --test --test-isolation=none tests/civilization-sandbox-map-overlay.test.cjs tests/civilization-sandbox-domain.test.cjs`; `node --test --test-name-pattern "civilization sandbox" tests/robustness.test.cjs`; `npm run typecheck`
+  - Next: `Commit Task 5, then run final verification and browser check.`
 
 - 2026-08-07
   - Summary: `Completed Task 4 for the Worldbox civilization sandbox: added validation controls, an action coordinator, main-shell boundary guards, and a temporary main-shell coordinator call that does not import or execute sandbox business helpers directly.`
@@ -1646,7 +1651,7 @@ Expected:
 - robustness guard passes
 - typecheck passes
 
-- [ ] **Step 7: Commit Task 4**
+- [x] **Step 7: Commit Task 4**
 
 Run:
 
@@ -1668,7 +1673,7 @@ git commit -m "feat: add civilization sandbox validation controls"
 - Produces: UI resource resolver `resolveCivilizationSandboxSpriteUrl(resourceId: string): string | null`
 - Produces: rendered individual markers, rural-house markers, farm overlays, and territory overlays from view-model data
 
-- [ ] **Step 1: Add failing view/source tests for visual affordances**
+- [x] **Step 1: Add failing view/source tests for visual affordances**
 
 Append to `tests/civilization-sandbox-map-overlay.test.cjs`:
 
@@ -1690,7 +1695,7 @@ test("civilization sandbox view exposes individuals houses farms and territory v
 });
 ```
 
-- [ ] **Step 2: Run the failing visual tests**
+- [x] **Step 2: Run the failing visual tests**
 
 Run:
 
@@ -1703,7 +1708,7 @@ Expected:
 
 - tests fail because visual hooks and styles are not implemented
 
-- [ ] **Step 3: Add UI asset resolver**
+- [x] **Step 3: Add UI asset resolver**
 
 Create `src/ui/views/map/civilization-sandbox-assets.ts`:
 
@@ -1729,7 +1734,7 @@ export function resolveCivilizationSandboxSpriteUrl(
 
 If the repo does not currently expose these PNGs under `src/assets`, copy or register them through the existing asset pipeline in a separate preparatory commit before this step. Keep the simulation/application layers referencing resource ids only.
 
-- [ ] **Step 4: Render overlay elements from JSON source**
+- [x] **Step 4: Render overlay elements from JSON source**
 
 Modify `renderCivilizationSandboxOverlay` in `src/ui/views/map/map-view.ts` so it emits server-rendered fallback elements:
 
@@ -1771,7 +1776,7 @@ Use these classes:
 - `c-civilization-sandbox-structure--farm`
 - `c-civilization-sandbox-territory`
 
-- [ ] **Step 5: Add token-based styles**
+- [x] **Step 5: Add token-based styles**
 
 Modify `src/styles/views.css` or the current map-specific style file with token-based rules:
 
@@ -1827,7 +1832,7 @@ Modify `src/styles/views.css` or the current map-specific style file with token-
 
 If a referenced token such as `--z-map-overlay` or `--color-map-farm` does not exist, add it to the token file instead of hardcoding colors or z-index values in the view stylesheet.
 
-- [ ] **Step 6: Run visual/source tests**
+- [x] **Step 6: Run visual/source tests**
 
 Run:
 

@@ -60,3 +60,23 @@ test("civilization sandbox action handling stays outside main shell", () => {
   assert.match(mapViewSource, /data-civilization-sandbox-action/);
   assert.match(coordinatorSource, /handleCivilizationSandboxAction/);
 });
+
+test("civilization sandbox view exposes individuals houses farms and territory visual hooks", () => {
+  const mapViewSource = fs.readFileSync("src/ui/views/map/map-view.ts", "utf8");
+  const styleSource = fs.readFileSync(
+    "src/styles/civilization-sandbox.css",
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /c-civilization-sandbox-individual/);
+  assert.match(
+    mapViewSource,
+    /c-civilization-sandbox-structure--rural-house/
+  );
+  assert.match(mapViewSource, /c-civilization-sandbox-structure--farm/);
+  assert.match(mapViewSource, /c-civilization-sandbox-territory/);
+  assert.doesNotMatch(mapViewSource, /ui\/npc\/city-ambient-walkers/);
+  assert.match(styleSource, /c-civilization-sandbox-overlay/);
+  assert.doesNotMatch(styleSource, /#[0-9a-fA-F]{3,8}\b/);
+  assert.doesNotMatch(styleSource, /z-index\s*:\s*\d+/);
+});
