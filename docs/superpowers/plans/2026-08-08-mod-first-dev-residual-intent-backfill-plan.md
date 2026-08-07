@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `closed`
 - Last Updated: `2026-08-08`
-- Current Focus: `Tasks 1-3 implementation is complete on the local branch. Residual playable-catalog and authored-navigation gaps are backfilled on current owners, governance coverage is confirmed, and the child now waits for review/commit/push before it can be formally closed under plan governance.`
-- Next Step: `Review the local diff, then commit/push this child when requested. Do not mark the child closed before remote push success is recorded.`
-- Verification: `Spec committed as 78d172a4. Task 1-3 verification passed with npm run build:test; node --test tests/script-editor-playable-catalog.test.cjs tests/script-editor-host-contract.test.cjs tests/playable-runtime-registries.test.cjs tests/navigation-runtime-access.test.cjs tests/event-binding-start-runtime.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/zhuyuanzhang-source-unification.test.cjs tests/ai-collaboration-governance.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check. A broad robustness subset remains unsuitable as a success gate because unrelated baseline failures still exist outside this child.`
+- Current Focus: `Residual intent backfill is implemented, verified, committed, and pushed. Governance state is synchronized so the branch returns to the canonical no-child state until the next approved stabilization child is opened.`
+- Next Step: `Open docs/superpowers/project-progress.md and start the next approved child only when the user selects one. Startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Verification: `Spec committed as 78d172a4. Implementation landed in 5d99cecd and branch push reached 874605fe. Task 1-3 verification passed with npm run build:test; node --test tests/script-editor-playable-catalog.test.cjs tests/script-editor-host-contract.test.cjs tests/playable-runtime-registries.test.cjs tests/navigation-runtime-access.test.cjs tests/event-binding-start-runtime.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/zhuyuanzhang-source-unification.test.cjs tests/ai-collaboration-governance.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check. Governance closeout sync will additionally require clean plan lint and diff checks.`
 - Notes: `This child intentionally targets intent parity, not old commit parity. Do not restore deleted runtime/navigation helper files or old blueprint queue history just to resemble origin/mod-first-dev.`
 
 ## Progress Log
@@ -31,6 +31,10 @@
   - Summary: `Completed Task 2 and Task 3 on the current owner graph. Added focused regressions for canonical navigate targets, backfilled event/runtime/export owners to route leaveBuilding and reenterBuilding through navigation-runtime, normalized legacy closeBuilding authoring into navigate.leaveBuilding, migrated zhuyuanzhang runtime/template/public event data to the canonical navigate shape, and confirmed AI governance was already covered by AGENTS.md + docs + the dedicated governance test.`
   - Verification: `npm run build:test; node --test tests/navigation-runtime-access.test.cjs tests/event-binding-start-runtime.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/zhuyuanzhang-source-unification.test.cjs tests/ai-collaboration-governance.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
   - Next: `Review local diff, then commit/push before child closeout.`
+- 2026-08-08
+  - Summary: `Committed and pushed the residual-intent child, then synchronized plan-governance state so this child closes cleanly from the pushed merage-mod2ui-1 baseline. The branch now returns to the canonical no-child state while startup stays frozen and review-system work remains paused by user instruction.`
+  - Verification: `git log --oneline -3; npm run lint:plans; git diff --check`
+  - Next: `Open docs/superpowers/project-progress.md and choose the next approved stabilization child before any new implementation slice.`
 
 ---
 
@@ -283,7 +287,7 @@ Expected:
 - clean plan lint
 - no whitespace/conflict residue
 
-- [ ] **Step 3: Sync governance and close the child**
+- [x] **Step 3: Sync governance and close the child**
 
 Update:
 
@@ -297,37 +301,37 @@ The canonical result should be:
 - this child recorded as the latest closed item
 - current child reset only if no immediately approved follow-up child exists
 
-- [ ] **Step 4: Commit and push the completed child**
+- [x] **Step 4: Commit and push the completed child**
 
 Create one coherent checkpoint for the residual-intent backfill child and push it to `origin/merage-mod2ui-1`.
 
 ## Exit Check
 
-- [ ] Line A no longer has an unresolved current-architecture playable-registry/browser-safe residual gap.
-- [ ] Line B no longer has an unresolved covered authored-navigation-through-runtime residual gap.
-- [ ] AI governance residual intent is explicitly confirmed as already covered, or a real minimal gap is fixed and recorded.
-- [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] Line A no longer has an unresolved current-architecture playable-registry/browser-safe residual gap.
+- [x] Line B no longer has an unresolved covered authored-navigation-through-runtime residual gap.
+- [x] AI governance residual intent is explicitly confirmed as already covered, or a real minimal gap is fixed and recorded.
+- [x] Project progress sync is updated if the child state changed.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
-- Closed Child: `Replace when closing.`
-- Parent Task: `Replace when closing.`
-- Parent Stage: `Replace when closing.`
+- Closed Child: `Mod-First-Dev Residual Intent Backfill`
+- Parent Task: `Post-Merge Branch Stabilization`
+- Parent Stage: `Post-Merge Branch Stabilization`
 - Closeout Status: `closed`
-- Project Progress Synced: `yes/no`
-- Next Child: `Replace when closing.`
-- Next Child Status: `waiting/running/blocked/none`
-- Next Required Action: `Replace when closing.`
+- Project Progress Synced: `yes`
+- Next Child: `none`
+- Next Child Status: `none`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `Replace when closing.`
-- Push Status: `success/failure/not-pushed`
-- Push Commit: `commit-sha-or-none`
-- Resume From: `Replace when closing.`
+- Next Owner Document: `none`
+- Push Status: `success`
+- Push Commit: `874605fe`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed residual-intent baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`

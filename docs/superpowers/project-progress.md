@@ -4,22 +4,26 @@
 
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
-- Current Task: `Mod-First-Dev Residual Intent Backfill`
+- Current Task: `Post-Merge Branch Stabilization`
 - Current Task Status: `running`
-- Current Child: `Mod-First-Dev Residual Intent Backfill`
-- Current Child Status: `running`
+- Current Child: `none`
+- Current Child Status: `none`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-commit-push-residual-intent-backfill-child`
+- Next Required Action: `open-next-approved-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-08-08-mod-first-dev-residual-intent-backfill-plan.md`
-- Last Closed Item: `Scenario-Pack Source Unification`
-- Push Status: `not-pushed`
-- Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue in docs/superpowers/plans/2026-08-08-mod-first-dev-residual-intent-backfill-plan.md from the post-verification review/commit/push step; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Next Owner Document: `none`
+- Last Closed Item: `Mod-First-Dev Residual Intent Backfill`
+- Push Status: `success`
+- Push Commit: `874605fe`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed residual-intent baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 
 ## Progress Log
 
+- 2026-08-08
+  - Summary: `Closed the Mod-First-Dev Residual Intent Backfill child after the implementation commit and follow-up branch hygiene commit were both pushed to origin/merage-mod2ui-1. The canonical governance state now returns to no active child, with startup still frozen and review-system work still paused by user instruction.`
+  - Verification: `Implementation push reached 5d99cecd and branch tip push reached 874605fe; npm run lint:plans; git diff --check`
+  - Next: `Open the next approved stabilization child from docs/superpowers/project-progress.md.`
 - 2026-08-08
   - Summary: `Opened the Mod-First-Dev Residual Intent Backfill child from the canonical no-child state after the user approved the new spec. This child will backfill current-architecture intent parity for playable registry/browser-safe behavior and authored navigation-through-runtime behavior, while AI governance remains a coverage confirmation line only.`
   - Verification: `Spec committed as 78d172a4; implementation plan drafted locally; implementation verification not run yet for this child.`
@@ -118,7 +122,7 @@
 
 ## Child Closeout
 
-- Closed Child: `Scenario-Pack Source Unification`
+- Closed Child: `Mod-First-Dev Residual Intent Backfill`
 - Parent Task: `Post-Merge Branch Stabilization`
 - Parent Stage: `Post-Merge Branch Stabilization`
 - Closeout Status: `closed`
@@ -129,5 +133,5 @@
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `none`
 - Push Status: `success`
-- Push Commit: `aaad59af`
-- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved runtime/event child from the pushed source-unification baseline.`
+- Push Commit: `874605fe`
+- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed residual-intent baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
