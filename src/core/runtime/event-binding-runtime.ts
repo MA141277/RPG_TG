@@ -25,6 +25,10 @@ import {
   type ModFirstTriggerContext,
   type RuntimeTriggerContextInput,
 } from "./mod-first-compatibility";
+import {
+  createNavigateRequest,
+  runNavigationRuntime,
+} from "./navigation-runtime";
 
 export {
   createRuntimeTriggerContext,
@@ -192,20 +196,18 @@ export function applyRuntimeActions(
   actions: readonly EventRuntimeAction[]
 ): GameState {
   return actions.reduce((currentState, action) => {
+    if (action.type === "navigate") {
+      return runNavigationRuntime({
+        state: currentState,
+        request: createNavigateRequest(action.target),
+      }).state;
+    }
+
     if (action.type === "closeBuilding") {
-      return {
-        ...currentState,
-        world: {
-          ...currentState.world,
-          currentHouseId: null,
-        },
-        ui: {
-          ...currentState.ui,
-          currentView: "city",
-          overlayView: null,
-          houseSession: null,
-        },
-      };
+      return runNavigationRuntime({
+        state: currentState,
+        request: createNavigateRequest({ kind: "leaveBuilding" }),
+      }).state;
     }
 
     return currentState;

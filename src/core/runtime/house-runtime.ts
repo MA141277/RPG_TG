@@ -53,6 +53,10 @@ import type { RuntimeState } from "../contracts/runtime-state";
 import type { SettlementCommand } from "../contracts/settlement-command";
 import { createInteractiveRuntimeState } from "./state-sync-runtime";
 import { settleRuntimeCommands } from "./runtime-settlement";
+import {
+  createNavigateRequest,
+  runNavigationRuntime,
+} from "./navigation-runtime";
 
 export type HouseRuntimeDependencies = {
   getAppState(): AppState;
@@ -622,7 +626,24 @@ export function createHouseRuntimeBridge(
     interactive: Exclude<NonNullable<RuntimeInteractiveSignal>, { type: "none" }>
   ): RuntimeState {
     if (interactive.type === "reenter-house") {
-      enterHouseById(interactive.houseId, { render: false });
+      const appState = dependencies.getAppState();
+      const nextGameState = runNavigationRuntime({
+        state: appState.gameState,
+        request: createNavigateRequest({
+          kind: "reenterBuilding",
+          houseId: interactive.houseId,
+        }),
+      }).state;
+      dependencies.setAppState({
+        ...appState,
+        gameState: {
+          ...nextGameState,
+          ui: {
+            ...nextGameState.ui,
+            npcInteractionSession: null,
+          },
+        },
+      });
     }
 
     return createInteractiveRuntimeState(dependencies.getAppState());

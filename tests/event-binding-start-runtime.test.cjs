@@ -178,6 +178,56 @@ test("event binding runtime applies state-only runtime actions without opening a
   assert.equal(result.state.scene.activeSceneId, null);
 });
 
+test("event binding runtime applies canonical navigate leaveBuilding actions without opening a scene", () => {
+  const state = createBaseState({
+    ui: {
+      ...createBaseState().ui,
+      currentView: "house",
+      overlayView: "detail",
+      houseSession: { moduleId: "module.test", state: {} },
+    },
+  });
+  const result = runEventBindingRuntime({
+    state,
+    eventDefinitionsById: {
+      "event.navigate.leave-building": createEventDefinition(
+        "event.navigate.leave-building",
+        {
+          actions: [
+            {
+              type: "navigate",
+              target: {
+                kind: "leaveBuilding",
+              },
+            },
+          ],
+        }
+      ),
+    },
+    eventBindings: [
+      {
+        id: "binding.navigate.leave-building",
+        eventId: "event.navigate.leave-building",
+        owner: { family: "building", id: "building.temple" },
+        trigger: { timing: "after", action: "building-exit" },
+      },
+    ],
+    triggerContext: {
+      timing: "after",
+      action: "building-exit",
+      owner: { family: "building", id: "building.temple" },
+    },
+  });
+
+  assert.equal(result.activation.activeEventId, "event.navigate.leave-building");
+  assert.equal(result.state.world.currentHouseId, null);
+  assert.equal(result.state.ui.currentView, "city");
+  assert.equal(result.state.ui.overlayView, null);
+  assert.equal(result.state.ui.houseSession, null);
+  assert.equal(result.state.scene.activeEventId, null);
+  assert.equal(result.state.scene.activeSceneId, null);
+});
+
 test(
   "event binding runtime state-only classification consumes the payload dialogue-id seam",
   { concurrency: false },

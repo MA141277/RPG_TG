@@ -4,26 +4,34 @@
 
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
-- Current Task: `Next Approved Child Selection`
+- Current Task: `Mod-First-Dev Residual Intent Backfill`
 - Current Task Status: `running`
-- Current Child: `none`
-- Current Child Status: `none`
+- Current Child: `Mod-First-Dev Residual Intent Backfill`
+- Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `open-next-approved-child`
+- Next Required Action: `review-commit-push-residual-intent-backfill-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `none`
+- Next Owner Document: `docs/superpowers/plans/2026-08-08-mod-first-dev-residual-intent-backfill-plan.md`
 - Last Closed Item: `Scenario-Pack Source Unification`
-- Push Status: `success`
-- Push Commit: `aaad59af`
-- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved runtime/event child from the current pushed post-merge stabilization baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Push Status: `not-pushed`
+- Push Commit: `none`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue in docs/superpowers/plans/2026-08-08-mod-first-dev-residual-intent-backfill-plan.md from the post-verification review/commit/push step; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 
 ## Progress Log
 
 - 2026-08-08
-  - Summary: `Canonical governance was advanced from source-unification closeout into an empty current-child state. Source-unification is now recorded as the latest closed child, startup remains frozen after the 2026-08-05 audit, and review-system work stays paused by current owner choice instead of silently reoccupying the canonical queue.`
-  - Verification: `Governance/documentation-only sync; reused the already recorded source-unification and startup verification history, then reran pnpm run lint:plans and git diff --check during closeout sync.`
-  - Next: `Open the next approved runtime/event child from the current pushed baseline.`
+  - Summary: `Opened the Mod-First-Dev Residual Intent Backfill child from the canonical no-child state after the user approved the new spec. This child will backfill current-architecture intent parity for playable registry/browser-safe behavior and authored navigation-through-runtime behavior, while AI governance remains a coverage confirmation line only.`
+  - Verification: `Spec committed as 78d172a4; implementation plan drafted locally; implementation verification not run yet for this child.`
+  - Next: `Execute Task 1 in docs/superpowers/plans/2026-08-08-mod-first-dev-residual-intent-backfill-plan.md.`
+- 2026-08-08
+  - Summary: `Completed Task 1 of the residual-intent child. Script-editor builtin playable catalog behavior is now aligned with current authoring canonical format: builtin definitions use playable-family prefixes on the authoring seam, retired building-flow builtin exposure is removed, and runtime registry bootstrap was confirmed already browser-safe without further bootstrap changes.`
+  - Verification: `npm run build:test; node --test tests/script-editor-playable-catalog.test.cjs tests/script-editor-host-contract.test.cjs tests/playable-runtime-registries.test.cjs tests/script-editor-runtime-preview-compat.test.cjs; git diff --check`
+  - Next: `Execute Task 2 in docs/superpowers/plans/2026-08-08-mod-first-dev-residual-intent-backfill-plan.md.`
+- 2026-08-08
+  - Summary: `Completed the remaining residual-intent implementation locally. Authored leave-building navigation now uses canonical navigate targets on current runtime/export owners, story/scene/house follow-up owners reuse navigation-runtime instead of hand-writing view flips, zhuyuanzhang runtime/template/public event data no longer author legacy closeBuilding actions, and AI governance coverage was confirmed unchanged.`
+  - Verification: `npm run build:test; node --test tests/navigation-runtime-access.test.cjs tests/event-binding-start-runtime.test.cjs tests/script-editor-runtime-preview-compat.test.cjs tests/zhuyuanzhang-source-unification.test.cjs tests/ai-collaboration-governance.test.cjs; npm run typecheck; npm run build; npm run lint:plans; git diff --check`
+  - Next: `Review local diff, then commit/push the residual-intent child before closing it.`
 
 - 2026-07-06
   - Summary: `Created the first fail-closed progress-driven governance spec and started replacing the old weekly-governance entry surfaces.`

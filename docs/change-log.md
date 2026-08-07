@@ -2,6 +2,26 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-08 Mod-First-Dev Residual Intent Backfill Task 1
+
+### Changed
+- `src/core/registry/builtin-playable-definition-registry.ts` 现已明确回到 script-editor authoring canonical 前缀：`activity-qte`、`city-begging` 与 `story-battle` 的 builtin definition 不再暴露旧 `interactive.*` 前缀，而是统一使用 `playable.*` 形式；同时已移除 retired `building-flow` builtin definition。
+- `src/core/registry/builtin-playable-integration-registry.ts` 现已删除 retired `playable.building-flow.house.default` builtin integration，避免 script-editor 默认 playable catalog 再把旧 building-flow 当作当前 builtin authoring surface 暴露出去。
+- 新增 `tests/script-editor-playable-catalog.test.cjs`，锁定 script-editor 默认 builtin playable catalog 的 authoring canonical 行为：builtin definitions 必须使用当前 `playable.*` 前缀，且不得再暴露 retired `building-flow` builtin integration。
+- `src/core/contracts/navigation.ts`、`src/core/runtime/navigation-runtime.ts` 与 `src/domain/event.ts` 现已补齐 canonical `navigate` route target：当前 runtime 支持 `leaveBuilding` / `reenterBuilding`，并保留 `city` / `building` / `map` target 形状；event runtime action 也新增 `navigate` 形态。
+- `src/core/runtime/event-binding-runtime.ts` 现已把 canonical `navigate` action 直接复用到 `navigation-runtime` 上；legacy `closeBuilding` 继续被兼容映射为 `navigate.leaveBuilding`，避免再保留第二套 state patch 逻辑。
+- `src/modules/script-editor/application/story-dialogue-event-authoring.ts` 与 `src/modules/script-editor/application/runtime-pack-export.ts` 现已接受 canonical `navigate` action，并把 legacy `closeBuilding` authoring/export 统一折叠为 `navigate.leaveBuilding`；对应 runtime-pack round-trip 测试也已改为锁定 canonical `navigate` 形状。
+- `src/application/story/story-runtime.ts`、`src/application/scene/scene-runner.ts`、`src/application/scene/choice-resolver.ts` 与 `src/core/runtime/house-runtime.ts` 现已停止手写 `currentView/currentHouseId` 的 house/city 回退逻辑，改为通过 `navigation-runtime` 统一恢复 owner 导航状态。
+- `src/content/scenario-packs/zhuyuanzhang/events.json`、`src/modules/script-editor/builtin-templates/zhuyuanzhang/events.json` 与 `public/builtin-script-editor-templates/zhuyuanzhang/events.json` 中的 legacy `closeBuilding` authored action 已迁成 canonical `navigate.leaveBuilding`，保持 runtime/template/public 对称。
+- 新增并收紧了 `tests/navigation-runtime-access.test.cjs`、`tests/event-binding-start-runtime.test.cjs` 与 `tests/script-editor-runtime-preview-compat.test.cjs` 的 canonical navigate 回归，同时 `tests/zhuyuanzhang-source-unification.test.cjs` 已通过，确认三份事件源在当前 owner 下保持一致。
+
+### Impact
+- 当前 script-editor 默认 playable catalog 与现行 runtime/template `playables.json` authoring 格式重新对齐；后续继续做剧本包/编辑器对称时，不会再被 authoring seam 上的旧 `interactive.*` 前缀误导。
+- `building-flow` 这条已经从当前 runtime builtin family 退场的旧入口，不再继续从 script-editor 默认 builtin catalog 泄漏到 authoring / export / preview 路径里。
+- 这一刀没有重写当前 runtime playable registry bootstrap；Task 1 已确认当前分支上的 bootstrap 本身已经 browser-safe，残留缺口主要在 authoring-facing builtin catalog 的旧前缀和旧 builtin 暴露口。
+- 当前 authored leave-building 导航已正式收口到 `navigate -> navigation-runtime`；event binding、story scene 收尾、choice 收尾、house interactive follow-up 和 zhuyuanzhang 三份事件数据不再依赖分散的 `closeBuilding` / `currentView = ...` 逻辑。
+- AI governance 这一线本轮没有新增实现要求；`AGENTS.md`、`docs/ai-collaboration-governance.md` 与 `tests/ai-collaboration-governance.test.cjs` 已足以覆盖 residual governance intent。
+
 ## 2026-08-07 Script Editor Final Package Hard-Cut
 
 ### Changed

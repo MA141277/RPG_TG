@@ -1,4 +1,5 @@
 import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
+import type { NavigationRouteTarget } from "../core/contracts/navigation";
 
 export type EventId = string;
 export type ChapterId = string;
@@ -8,6 +9,10 @@ type CityId = string;
 type HouseId = string;
 
 export type EventRuntimeAction =
+  | {
+      type: "navigate";
+      target: NavigationRouteTarget;
+    }
   | {
       type: "closeBuilding";
     }

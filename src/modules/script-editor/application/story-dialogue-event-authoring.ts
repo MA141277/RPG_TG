@@ -615,8 +615,21 @@ function normalizeEventRouteCommand(action: EventRouteCommand): EventRouteComman
 
   const actionRecord = action as Record<string, unknown>;
   const actionType = normalizeOptionalTrimmedString(actionRecord.type);
+  if (actionType === "navigate") {
+    return {
+      ...actionRecord,
+      type: "navigate",
+      target: normalizeNavigationRouteTarget(actionRecord.target),
+    } as EventRouteCommand;
+  }
+
   if (actionType === "closeBuilding") {
-    return { type: "closeBuilding" };
+    return {
+      type: "navigate",
+      target: {
+        kind: "leaveBuilding",
+      },
+    };
   }
 
   if (actionType === "openCityMenuPanel") {
@@ -650,6 +663,31 @@ function normalizeEventRouteCommand(action: EventRouteCommand): EventRouteComman
     ...actionRecord,
     ...(actionType.length === 0 ? {} : { type: actionType }),
   } as EventRouteCommand;
+}
+
+function normalizeNavigationRouteTarget(
+  value: unknown
+): Record<string, unknown> | undefined {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const target = value as Record<string, unknown>;
+  return {
+    ...target,
+    ...(typeof target.kind === "string"
+      ? { kind: target.kind.trim() }
+      : {}),
+    ...(typeof target.cityId === "string"
+      ? { cityId: normalizeOptionalTrimmedString(target.cityId) }
+      : {}),
+    ...(typeof target.houseId === "string"
+      ? { houseId: normalizeOptionalTrimmedString(target.houseId) }
+      : {}),
+    ...(typeof target.mapId === "string"
+      ? { mapId: normalizeOptionalTrimmedString(target.mapId) }
+      : {}),
+  };
 }
 
 function normalizeEventActionOwnerContext(

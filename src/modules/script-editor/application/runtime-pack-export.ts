@@ -2550,8 +2550,30 @@ function lowerEventRouteCommands(
     actions.push(destinationAction);
   }
   for (const [actionIndex, action] of (eventRecord.actions ?? []).entries()) {
+    if (action?.type === "navigate") {
+      const target = normalizeNavigationRouteTarget(action.target);
+      if (target == null) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `project.events[${eventIndex}].actions[${actionIndex}].target`,
+          message:
+            `Event "${eventRecord.id}" carries unsupported navigation target.`,
+        });
+        return null;
+      }
+      actions.push({
+        type: "navigate",
+        target,
+      });
+      continue;
+    }
     if (action?.type === "closeBuilding") {
-      actions.push({ type: "closeBuilding" });
+      actions.push({
+        type: "navigate",
+        target: {
+          kind: "leaveBuilding",
+        },
+      });
       continue;
     }
     if (action?.type === "openCityMenuPanel") {
@@ -2685,7 +2707,7 @@ function lowerEventRouteCommands(
       code: "unsupported-lowering",
       fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
       message:
-        "Event export currently supports only closeBuilding, openCityMenuPanel, launchFlow, and launchPlayable runtime actions.",
+        "Event export currently supports only navigate, closeBuilding, openCityMenuPanel, launchFlow, and launchPlayable runtime actions.",
     });
     return null;
   }
@@ -2736,6 +2758,41 @@ function normalizeCityMenuPanelId(
     default:
       return null;
   }
+}
+
+function normalizeNavigationRouteTarget(
+  value: unknown
+): Extract<EventRouteCommand, { type: "navigate" }>["target"] | null {
+  if (value == null || typeof value !== "object") {
+    return null;
+  }
+
+  const target = value as Record<string, unknown>;
+  if (target.kind === "leaveBuilding") {
+    return { kind: "leaveBuilding" };
+  }
+  if (target.kind === "city" && typeof target.cityId === "string") {
+    return { kind: "city", cityId: target.cityId.trim() };
+  }
+  if (target.kind === "building" && typeof target.houseId === "string") {
+    return { kind: "building", houseId: target.houseId.trim() };
+  }
+  if (
+    target.kind === "reenterBuilding" &&
+    typeof target.houseId === "string"
+  ) {
+    return { kind: "reenterBuilding", houseId: target.houseId.trim() };
+  }
+  if (
+    target.kind === "map" &&
+    (target.mapId == null || typeof target.mapId === "string")
+  ) {
+    return target.mapId == null
+      ? { kind: "map" }
+      : { kind: "map", mapId: target.mapId.trim() };
+  }
+
+  return null;
 }
 
 function lowerEventDestinationLaunchAction(

@@ -7,11 +7,11 @@ import {
 const builtinPlayableDefinitions: PlayableDefinition[] = [
   {
     id: "activity-qte",
-    commandPrefix: "interactive.activity-qte.",
+    commandPrefix: "playable.activity-qte.",
   },
   {
     id: "city-begging",
-    commandPrefix: "interactive.city-begging.",
+    commandPrefix: "playable.city-begging.",
   },
   {
     id: "grain-accounting",
@@ -27,11 +27,7 @@ const builtinPlayableDefinitions: PlayableDefinition[] = [
   },
   {
     id: "story-battle",
-    commandPrefix: "interactive.story-battle.",
-  },
-  {
-    id: "building-flow",
-    commandPrefix: "playable.building-flow.",
+    commandPrefix: "playable.story-battle.",
   },
 ];
 

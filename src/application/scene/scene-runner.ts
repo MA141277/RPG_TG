@@ -13,6 +13,10 @@ import {
 } from "../events/event-continuation";
 import { runEventPlayableRuntime } from "../events/event-playable-runtime";
 import { runStoryCallback } from "../story/story-callbacks";
+import {
+  createNavigateRequest,
+  runNavigationRuntime,
+} from "../../core/runtime/navigation-runtime";
 
 export type SceneRunnerContext = {
   sceneDefinitionsById: Record<string, SceneDefinition>;
@@ -265,24 +269,41 @@ function finishScene(
   state: GameState,
   characterDefinitions: CharacterDefinition[]
 ): SceneStepResult {
+  const navigationState = resolveSceneOwnerNavigationState(state);
   return {
     state: {
-      ...state,
+      ...navigationState,
       scene: {
-        ...state.scene,
+        ...navigationState.scene,
         activeEventId: null,
         activeSceneId: null,
         cursor: 0,
         status: "idle",
       },
-      ui: {
-        ...state.ui,
-        currentView: state.world.currentHouseId == null ? "city" : "house",
-      },
     },
     characterDefinitions,
     currentAction: null,
   };
+}
+
+function resolveSceneOwnerNavigationState(state: GameState): GameState {
+  if (state.world.currentHouseId == null) {
+    return runNavigationRuntime({
+      state,
+      request: createNavigateRequest({
+        kind: "city",
+        cityId: state.world.currentCityId,
+      }),
+    }).state;
+  }
+
+  return runNavigationRuntime({
+    state,
+    request: createNavigateRequest({
+      kind: "reenterBuilding",
+      houseId: state.world.currentHouseId,
+    }),
+  }).state;
 }
 
 function continueSceneEvent(

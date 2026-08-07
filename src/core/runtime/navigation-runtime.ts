@@ -11,7 +11,10 @@ import type {
   LocationAccessResult,
 } from "../../domain/location-access";
 import type { RuntimeEventEntity } from "../contracts/event-router";
-import type { NavigationTarget } from "../contracts/navigation";
+import type {
+  NavigationRouteTarget,
+  NavigationTarget,
+} from "../contracts/navigation";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
   RuntimeFollowUpOutcome,
@@ -48,6 +51,17 @@ export function createEnterHouseRequest(houseId: string): RuntimeRequest {
   };
 }
 
+export function createNavigateRequest(
+  target: NavigationRouteTarget
+): RuntimeRequest {
+  return {
+    family: "external",
+    type: "external",
+    eventId: "navigation.navigate",
+    payload: { target },
+  };
+}
+
 export function runNavigationRuntime(input: {
   state: GameState;
   request: RuntimeRequest;
@@ -57,27 +71,20 @@ export function runNavigationRuntime(input: {
   characterDefinitions?: readonly CharacterDefinition[];
   locationAccessDefinitions?: readonly LocationAccessDefinition[];
 }): NavigationRuntimeResult {
-  if (input.request.type !== "external") {
+  const target = resolveNavigationRouteTarget(input.request);
+  if (target == null) {
     return {
       state: input.state,
       navigation: null,
     };
   }
 
-  if (input.request.eventId === "navigation.enter-city") {
-    const cityId = input.request.payload?.cityId;
-    if (typeof cityId !== "string") {
-      return {
-        state: input.state,
-        navigation: null,
-      };
-    }
-
+  if (target.kind === "city") {
     const access = evaluateLocationAccess({
       state: input.state,
       targetFamily: "city",
-      targetId: cityId,
-      targetCity: input.cityDefinitionsById?.[cityId] ?? null,
+      targetId: target.cityId,
+      targetCity: input.cityDefinitionsById?.[target.cityId] ?? null,
       characterDefinitions: input.characterDefinitions ?? [],
       locationAccessDefinitions: input.locationAccessDefinitions ?? [],
     });
@@ -90,17 +97,17 @@ export function runNavigationRuntime(input: {
     }
 
     return {
-      state: enterCity(input.state, cityId),
-      navigation: { view: "city", cityId },
+      state: enterCity(input.state, target.cityId),
+      navigation: { view: "city", cityId: target.cityId },
       outcome: {
         type: "navigation.entered-city",
-        cityId,
+        cityId: target.cityId,
       },
     };
   }
 
   if (
-    input.request.eventId === "navigation.enter-house" &&
+    target.kind === "building" &&
     input.houseDefinition != null &&
     input.eventDefinitionsById != null
   ) {
@@ -133,10 +140,124 @@ export function runNavigationRuntime(input: {
     };
   }
 
+  if (target.kind === "reenterBuilding") {
+    return {
+      state: {
+        ...input.state,
+        world: {
+          ...input.state.world,
+          currentHouseId: target.houseId,
+        },
+        ui: {
+          ...input.state.ui,
+          currentView: "house",
+          overlayView: null,
+          houseSession: null,
+        },
+      },
+      navigation: {
+        view: "house",
+        houseId: target.houseId,
+      },
+    };
+  }
+
+  if (target.kind === "leaveBuilding") {
+    return {
+      state: {
+        ...input.state,
+        world: {
+          ...input.state.world,
+          currentHouseId: null,
+        },
+        ui: {
+          ...input.state.ui,
+          currentView: "city",
+          overlayView: null,
+          houseSession: null,
+        },
+      },
+      navigation: {
+        view: "city",
+        cityId: input.state.world.currentCityId,
+      },
+    };
+  }
+
+  if (target.kind === "map") {
+    return {
+      state: {
+        ...input.state,
+        world: {
+          ...input.state.world,
+          ...(target.mapId == null ? {} : { currentMapId: target.mapId }),
+          currentHouseId: null,
+        },
+        ui: {
+          ...input.state.ui,
+          currentView: "map",
+          overlayView: null,
+          houseSession: null,
+        },
+      },
+      navigation: {
+        view: "map",
+        ...(target.mapId == null ? {} : { mapId: target.mapId }),
+      },
+    };
+  }
+
   return {
     state: input.state,
     navigation: null,
   };
+}
+
+function resolveNavigationRouteTarget(
+  request: RuntimeRequest
+): NavigationRouteTarget | null {
+  if (request.type !== "external") {
+    return null;
+  }
+
+  if (request.eventId === "navigation.enter-city") {
+    const cityId = request.payload?.cityId;
+    return typeof cityId === "string" ? { kind: "city", cityId } : null;
+  }
+
+  if (request.eventId === "navigation.enter-house") {
+    const houseId = request.payload?.houseId;
+    return typeof houseId === "string" ? { kind: "building", houseId } : null;
+  }
+
+  if (request.eventId !== "navigation.navigate") {
+    return null;
+  }
+
+  const target = request.payload?.target;
+  return isNavigationRouteTarget(target) ? target : null;
+}
+
+function isNavigationRouteTarget(value: unknown): value is NavigationRouteTarget {
+  if (value == null || typeof value !== "object" || !("kind" in value)) {
+    return false;
+  }
+
+  const target = value as Record<string, unknown>;
+  if (target.kind === "city") {
+    return typeof target.cityId === "string";
+  }
+  if (target.kind === "building" || target.kind === "reenterBuilding") {
+    return typeof target.houseId === "string";
+  }
+  if (target.kind === "leaveBuilding") {
+    return true;
+  }
+  if (target.kind === "map") {
+    return target.mapId == null || typeof target.mapId === "string";
+  }
+
+  return false;
 }
 
 export function routeNavigationRuntime(input: {

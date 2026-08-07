@@ -17,6 +17,7 @@ import type {
 import type { GameState } from "../../domain/game-state";
 import type { PlayableReturnPolicy } from "../contracts/playable-runtime";
 import type { RuntimeTaskInput } from "../contracts/runtime-result";
+import type { NavigationRouteTarget } from "../contracts/navigation";
 import { matchesCanonicalBuildingOwnerId } from "./building-owner-canonicalization";
 
 export function createCompatibleSceneDefinitions(input: {
@@ -177,6 +178,10 @@ export type ModFirstTriggerContext = {
 };
 
 export type ModFirstEventRuntimeAction =
+  | {
+      type: "navigate";
+      target: NavigationRouteTarget;
+    }
   | {
       type: "closeBuilding";
     }

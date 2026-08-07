@@ -62,6 +62,10 @@ import {
   selectDialogueScreenOption,
   type DialogueScreenResult,
 } from "../../core/runtime/dialogue-screen-runtime";
+import {
+  createNavigateRequest,
+  runNavigationRuntime,
+} from "../../core/runtime/navigation-runtime";
 
 type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
@@ -564,21 +568,7 @@ export function chooseStorySceneOption(
       if (continuation == null) {
         return syncStoryScene(
           {
-            state: {
-              ...nextState,
-              scene: {
-                ...nextState.scene,
-                activeEventId: null,
-                activeSceneId: null,
-                cursor: 0,
-                status: "idle",
-              },
-              ui: {
-                ...nextState.ui,
-                currentView:
-                  nextState.world.currentHouseId == null ? "city" : "house",
-              },
-            },
+            state: closeStoryScene(nextState),
             characterDefinitions: nextCharacterDefinitions,
             ...createRuntimeWorldDefinitionContext(runtime),
           },
@@ -639,20 +629,37 @@ function getActiveSingleScreenDialogue(
 }
 
 function closeStoryScene(state: GameState): GameState {
+  const navigationState = resolveStoryOwnerNavigationState(state);
   return {
-    ...state,
+    ...navigationState,
     scene: {
-      ...state.scene,
+      ...navigationState.scene,
       activeEventId: null,
       activeSceneId: null,
       cursor: 0,
       status: "idle",
     },
-    ui: {
-      ...state.ui,
-      currentView: state.world.currentHouseId == null ? "city" : "house",
-    },
   };
+}
+
+function resolveStoryOwnerNavigationState(state: GameState): GameState {
+  if (state.world.currentHouseId == null) {
+    return runNavigationRuntime({
+      state,
+      request: createNavigateRequest({
+        kind: "city",
+        cityId: state.world.currentCityId,
+      }),
+    }).state;
+  }
+
+  return runNavigationRuntime({
+    state,
+    request: createNavigateRequest({
+      kind: "reenterBuilding",
+      houseId: state.world.currentHouseId,
+    }),
+  }).state;
 }
 
 function applyDialogueScreenResult(

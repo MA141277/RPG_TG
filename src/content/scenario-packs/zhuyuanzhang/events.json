@@ -270,7 +270,10 @@
     "occurrence": "repeatable",
     "actions": [
       {
-        "type": "closeBuilding"
+        "type": "navigate",
+        "target": {
+          "kind": "leaveBuilding"
+        }
       }
     ],
     "tags": [

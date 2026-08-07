@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 
 const {
+  createNavigateRequest,
   createEnterCityRequest,
   createEnterHouseRequest,
   runNavigationRuntime,
@@ -67,6 +68,55 @@ test("navigation runtime preserves enter-city behavior when access definitions a
     cityId: "city.next",
   });
   assert.equal(result.access, undefined);
+});
+
+test("navigation runtime supports canonical leaveBuilding route targets", () => {
+  const baseState = createInitialState({
+    currentMapId: "map.test",
+    currentCityId: "city.start",
+    currentHouseId: "house.temple",
+    playerCharacterId: "hero",
+    chapterId: "chapter.test",
+    year: 1560,
+    month: 1,
+    day: 1,
+    pinnedCharacterId: "hero",
+    reviewDateText: "",
+    mainHouseMissionText: "",
+    cards: { ownedCardIds: [] },
+    valuables: { ownedItemIds: [] },
+    currentView: "house",
+  });
+
+  const result = runNavigationRuntime({
+    state: baseState,
+    request: createNavigateRequest({ kind: "leaveBuilding" }),
+  });
+
+  assert.equal(result.state.world.currentHouseId, null);
+  assert.equal(result.state.ui.currentView, "city");
+  assert.equal(result.state.ui.overlayView, null);
+  assert.equal(result.state.ui.houseSession, null);
+  assert.deepEqual(result.navigation, { view: "city", cityId: "city.start" });
+});
+
+test("navigation runtime supports canonical reenterBuilding route targets", () => {
+  const result = runNavigationRuntime({
+    state: createBaseState(),
+    request: createNavigateRequest({
+      kind: "reenterBuilding",
+      houseId: "house.temple",
+    }),
+  });
+
+  assert.equal(result.state.world.currentHouseId, "house.temple");
+  assert.equal(result.state.ui.currentView, "house");
+  assert.equal(result.state.ui.overlayView, null);
+  assert.equal(result.state.ui.houseSession, null);
+  assert.deepEqual(result.navigation, {
+    view: "house",
+    houseId: "house.temple",
+  });
 });
 
 test("navigation runtime blocks enter-city when location access denies the target", () => {
