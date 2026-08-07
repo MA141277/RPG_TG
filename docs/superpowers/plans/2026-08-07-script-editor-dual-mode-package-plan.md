@@ -254,7 +254,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Commit the boundary lock**
+- [x] **Step 5: Commit the boundary lock**
 
 ```bash
 git add src/core/contracts/script-editor-person-attributes.ts src/modules/script-editor/host/script-editor-host.ts src/modules/script-editor/host/browser-script-editor-host.ts src/application/character/person-attribute-runtime.ts src/modules/script-editor/index.ts tests/script-editor-host-contract.test.cjs
