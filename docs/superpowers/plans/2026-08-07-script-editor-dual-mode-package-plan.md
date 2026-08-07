@@ -35,6 +35,10 @@
   - Summary: `Extended Task 2 by moving direct script editor click routing for action/family/record targets out of MainUiFlow and into script-editor/kernel/script-editor-session.`
   - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
   - Next: `Continue Task 2 by moving direct script editor change/input routing out of MainUiFlow.`
+- 2026-08-07
+  - Summary: `Extended Task 2 again by moving direct script editor input/composition search and inline field-routing out of MainUiFlow and into script-editor/kernel/script-editor-session.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
+  - Next: `Continue Task 2 by moving the remaining direct script editor change routing out of MainUiFlow.`
 
 ---
 

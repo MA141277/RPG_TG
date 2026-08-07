@@ -1489,104 +1489,7 @@ export class MainUiFlow {
       return;
     }
 
-    if (target.matches("[data-script-editor-record-search-family]")) {
-      if (event.isComposing === true) {
-        return;
-      }
-      const family = target.dataset.scriptEditorRecordSearchFamily;
-      if (family != null) {
-        this.setScriptEditorRecordSearchValue(family, target.value);
-      }
-    }
-
-    if (target.matches("[data-script-editor-city-mounted-building-search]")) {
-      if (event.isComposing === true) {
-        return;
-      }
-      const buildingIndex = Number.parseInt(
-        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
-        10
-      );
-      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
-        this.setScriptEditorCityMountedBuildingSearchValue(buildingIndex, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-location-access-condition-field]")) {
-      const index = Number.parseInt(
-        target.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
-        10
-      );
-      const field = target.dataset.scriptEditorLocationAccessConditionField;
-      const conditionField =
-        target
-          .closest("[data-script-editor-location-access-condition-scope]")
-          ?.dataset.scriptEditorLocationAccessConditionScope ??
-        "conditionExpression";
-      if (
-        Number.isInteger(index) &&
-        index >= 0 &&
-        (field === "literalValue" ||
-          field === "personField" ||
-          field === "timeField")
-      ) {
-        this.applyScriptEditorLocationAccessConditionField(
-          index,
-          field,
-          target.value,
-          conditionField
-        );
-      }
-    }
-
-    if (target.matches("[data-script-editor-settlement-field]")) {
-      const field = target.dataset.scriptEditorSettlementField;
-      if (field === "title" || field === "nextEventId") {
-        this.applyScriptEditorSettlementField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-settlement-content-field]")) {
-      const field = target.dataset.scriptEditorSettlementContentField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorSettlementContentIndex ?? "-1",
-        10
-      );
-      if (
-        (
-          field === "targetFamily" ||
-          field === "targetId" ||
-          field === "attributeKey" ||
-          field === "operation" ||
-          field === "value"
-        ) &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorSettlementContentField(index, field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-progress-track-field]")) {
-      const field = target.dataset.scriptEditorProgressTrackField;
-      if (field === "title" || field === "metricKey" || field === "metricLabel") {
-        this.applyScriptEditorProgressTrackField(field, target.value);
-      }
-      return;
-    }
-
-    if (target.matches("[data-script-editor-progress-track-tier-field]")) {
-      const field = target.dataset.scriptEditorProgressTrackTierField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorProgressTrackTierIndex ?? "-1",
-        10
-      );
-      if (field === "threshold" && Number.isInteger(index) && index >= 0) {
-        this.applyScriptEditorProgressTrackTierField(index, field, target.value);
-      }
+    if (this.scriptEditorSession?.handleInputTarget?.(target, event.isComposing === true)) {
       return;
     }
   }
@@ -1597,21 +1500,8 @@ export class MainUiFlow {
       return;
     }
 
-    if (target.matches("[data-script-editor-record-search-family]")) {
-      const family = target.dataset.scriptEditorRecordSearchFamily;
-      if (family != null) {
-        this.setScriptEditorRecordSearchValue(family, target.value);
-      }
-    }
-
-    if (target.matches("[data-script-editor-city-mounted-building-search]")) {
-      const buildingIndex = Number.parseInt(
-        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
-        10
-      );
-      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
-        this.setScriptEditorCityMountedBuildingSearchValue(buildingIndex, target.value);
-      }
+    if (this.scriptEditorSession?.handleCompositionEndTarget?.(target)) {
+      return;
     }
   }
 

@@ -48,3 +48,15 @@ test("main ui flow no longer owns direct script editor click routing", () => {
   assert.match(sessionSource, /data-script-editor-family/);
   assert.match(sessionSource, /data-script-editor-record-id/);
 });
+
+test("main ui flow no longer owns direct script editor input routing", () => {
+  const mainUiFlowSource = readSource("src/ui/main-ui/main-ui-flow.js");
+  const sessionSource = readSource(
+    "src/modules/script-editor/kernel/script-editor-session.ts"
+  );
+
+  assert.doesNotMatch(mainUiFlowSource, /data-script-editor-record-search-family/);
+  assert.doesNotMatch(mainUiFlowSource, /data-script-editor-city-mounted-building-search/);
+  assert.match(sessionSource, /data-script-editor-record-search-family/);
+  assert.match(sessionSource, /data-script-editor-city-mounted-building-search/);
+});

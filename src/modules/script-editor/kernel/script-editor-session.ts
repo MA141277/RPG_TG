@@ -45,6 +45,8 @@ export type ScriptEditorEmbeddedSession = {
   host: ScriptEditorEmbeddedSessionHost;
   workflowController: ScriptEditorWorkflowController;
   handleClickTarget(target: Element): Promise<boolean>;
+  handleInputTarget(target: HTMLInputElement, isComposing: boolean): boolean;
+  handleCompositionEndTarget(target: HTMLInputElement): boolean;
   dispose(): void;
 };
 
@@ -169,6 +171,143 @@ export function createEmbeddedScriptEditorSession(
         const recordId = scriptEditorRecordElement.dataset.scriptEditorRecordId;
         if (recordId != null) {
           host.selectScriptEditorRecord(recordId);
+        }
+        return true;
+      }
+
+      return false;
+    },
+    handleInputTarget(target, isComposing) {
+      if (target.matches("[data-script-editor-record-search-family]")) {
+        if (isComposing) {
+          return true;
+        }
+        const family = target.dataset.scriptEditorRecordSearchFamily;
+        if (family != null) {
+          host.setScriptEditorRecordSearchValue(family, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-city-mounted-building-search]")) {
+        if (isComposing) {
+          return true;
+        }
+        const buildingIndex = Number.parseInt(
+          target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+          10
+        );
+        if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
+          host.setScriptEditorCityMountedBuildingSearchValue(
+            buildingIndex,
+            target.value
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-location-access-condition-field]")) {
+        const index = Number.parseInt(
+          target.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
+          10
+        );
+        const field = target.dataset.scriptEditorLocationAccessConditionField;
+        const conditionScope = target.closest(
+          "[data-script-editor-location-access-condition-scope]"
+        );
+        const conditionField =
+          (conditionScope instanceof HTMLElement
+            ? conditionScope.dataset.scriptEditorLocationAccessConditionScope
+            : null) ??
+          "conditionExpression";
+        if (
+          Number.isInteger(index) &&
+          index >= 0 &&
+          (field === "literalValue" ||
+            field === "personField" ||
+            field === "timeField")
+        ) {
+          host.applyScriptEditorLocationAccessConditionField(
+            index,
+            field,
+            target.value,
+            conditionField
+          );
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-settlement-field]")) {
+        const field = target.dataset.scriptEditorSettlementField;
+        if (field === "title" || field === "nextEventId") {
+          host.applyScriptEditorSettlementField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-settlement-content-field]")) {
+        const field = target.dataset.scriptEditorSettlementContentField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorSettlementContentIndex ?? "-1",
+          10
+        );
+        if (
+          (
+            field === "targetFamily" ||
+            field === "targetId" ||
+            field === "attributeKey" ||
+            field === "operation" ||
+            field === "value"
+          ) &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorSettlementContentField(index, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-progress-track-field]")) {
+        const field = target.dataset.scriptEditorProgressTrackField;
+        if (field === "title" || field === "metricKey" || field === "metricLabel") {
+          host.applyScriptEditorProgressTrackField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-progress-track-tier-field]")) {
+        const field = target.dataset.scriptEditorProgressTrackTierField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorProgressTrackTierIndex ?? "-1",
+          10
+        );
+        if (field === "threshold" && Number.isInteger(index) && index >= 0) {
+          host.applyScriptEditorProgressTrackTierField(index, field, target.value);
+        }
+        return true;
+      }
+
+      return false;
+    },
+    handleCompositionEndTarget(target) {
+      if (target.matches("[data-script-editor-record-search-family]")) {
+        const family = target.dataset.scriptEditorRecordSearchFamily;
+        if (family != null) {
+          host.setScriptEditorRecordSearchValue(family, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-city-mounted-building-search]")) {
+        const buildingIndex = Number.parseInt(
+          target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+          10
+        );
+        if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
+          host.setScriptEditorCityMountedBuildingSearchValue(
+            buildingIndex,
+            target.value
+          );
         }
         return true;
       }
