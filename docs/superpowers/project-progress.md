@@ -4,22 +4,26 @@
 
 - Current Stage: `Post-Merge Branch Stabilization`
 - Current Stage Status: `running`
-- Current Task: `Post-Merge Branch Stabilization`
+- Current Task: `Story Settlement Canonical Settlement Id`
 - Current Task Status: `running`
-- Current Child: `none`
-- Current Child Status: `none`
+- Current Child: `Story Settlement Canonical Settlement Id`
+- Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `open-next-approved-child`
+- Next Required Action: `execute-story-settlement-canonical-settlement-id-child`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `none`
+- Next Owner Document: `docs/superpowers/plans/2026-08-08-story-settlement-canonical-settlement-id-plan.md`
 - Last Closed Item: `Mod-First-Dev Residual Intent Backfill`
 - Push Status: `success`
-- Push Commit: `874605fe`
-- Resume From: `Open docs/superpowers/project-progress.md, then open the next approved stabilization child from the pushed residual-intent baseline; startup remains frozen and review-system work stays paused unless explicitly resumed.`
+- Push Commit: `b9ab4805`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue in docs/superpowers/plans/2026-08-08-story-settlement-canonical-settlement-id-plan.md from Task 1; startup remains frozen and review-system work stays paused unless explicitly resumed.`
 
 ## Progress Log
 
+- 2026-08-08
+  - Summary: `Opened the Story Settlement Canonical Settlement Id child as the next approved post-merge stabilization slice. The new child targets the remaining story settlement authored-fallback residual on the runtime/event seam, while startup stays frozen, source-unification stays closed, and review-system work remains paused.`
+  - Verification: `Spec committed as b9ab4805; plan drafted locally; implementation verification not run yet for this child.`
+  - Next: `Execute docs/superpowers/plans/2026-08-08-story-settlement-canonical-settlement-id-plan.md from Task 1.`
 - 2026-08-08
   - Summary: `Closed the Mod-First-Dev Residual Intent Backfill child after the implementation commit and follow-up branch hygiene commit were both pushed to origin/merage-mod2ui-1. The canonical governance state now returns to no active child, with startup still frozen and review-system work still paused by user instruction.`
   - Verification: `Implementation push reached 5d99cecd and branch tip push reached 874605fe; npm run lint:plans; git diff --check`
