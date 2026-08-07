@@ -34,6 +34,10 @@ import {
   normalizeScriptEditorSettlementRecord,
   normalizeScriptEditorStoryNodeRecord,
 } from "./story-dialogue-event-authoring";
+import {
+  resolveScriptEditorPlayableCatalog,
+  type ScriptEditorPlayableCatalog,
+} from "../host/script-editor-playable-catalog";
 
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
   "buildingArrangements",
@@ -54,7 +58,10 @@ type ScriptEditorProjectImportFileEntry = {
 };
 
 export async function loadScriptEditorProjectFromFiles(
-  files: readonly File[]
+  files: readonly File[],
+  options: {
+    playableCatalog?: ScriptEditorPlayableCatalog | undefined;
+  } = {}
 ): Promise<ScriptEditorProjectDefinition> {
   if (files.length === 0) {
     throw new Error("Script editor project import must include at least one file.");
@@ -67,7 +74,8 @@ export async function loadScriptEditorProjectFromFiles(
   );
 
   return parseScriptEditorProject(
-    await hydrateManifestFromFiles(manifest, manifestFileEntry.relativePath, indexedFiles)
+    await hydrateManifestFromFiles(manifest, manifestFileEntry.relativePath, indexedFiles),
+    options
   );
 }
 
@@ -109,8 +117,14 @@ export function parseScriptEditorProjectManifest(
 }
 
 export function parseScriptEditorProject(
-  value: unknown
+  value: unknown,
+  options: {
+    playableCatalog?: ScriptEditorPlayableCatalog | undefined;
+  } = {}
 ): ScriptEditorProjectDefinition {
+  const playableCatalog = resolveScriptEditorPlayableCatalog(
+    options.playableCatalog
+  );
   assertObject(value, "script editor project");
   if (value.schemaVersion !== SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION) {
     throw new Error(
@@ -256,7 +270,7 @@ export function parseScriptEditorProject(
       (value.menuResources ?? []) as ScriptEditorProjectDefinition["menuResources"],
     menuInstances:
       (value.menuInstances ?? []) as ScriptEditorProjectDefinition["menuInstances"],
-  });
+  }, playableCatalog);
 }
 
 export const validateScriptEditorProjectDefinition = parseScriptEditorProject;

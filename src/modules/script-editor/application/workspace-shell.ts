@@ -21,6 +21,7 @@ import {
 import {
   readScriptEditorPersonStringArrayField,
 } from "./person-authoring";
+import type { ScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
 
 export type ScriptEditorWorkspaceFamily =
   | ScriptEditorProjectFileKey
@@ -235,11 +236,15 @@ const ISSUE_SEVERITY_ORDER: Record<
 
 export function createScriptEditorWorkspaceShellViewModel(input: {
   project: ScriptEditorProjectDefinition;
+  playableCatalog: ScriptEditorPlayableCatalog;
   selection?: ScriptEditorWorkspaceSelection | undefined;
   visibleFamilies?: readonly ScriptEditorProjectFileKey[] | undefined;
   auxiliaryPanelOpen?: boolean | undefined;
 }): ScriptEditorWorkspaceViewModel {
-  const project = formalizeScriptEditorProjectMenus(input.project);
+  const project = formalizeScriptEditorProjectMenus(
+    input.project,
+    input.playableCatalog
+  );
   const visibleFamilies = new Set<ScriptEditorProjectFileKey>([
     "storyPack",
     ...(input.visibleFamilies ??
@@ -247,7 +252,9 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
         (family) => family !== STAGE_CONFIGURATION_FAMILY
       ) as ScriptEditorProjectFileKey[])),
   ]);
-  const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(project, {
+    playableCatalog: input.playableCatalog,
+  });
   const attentionFamilies = collectAttentionFamilies(exportDiagnostics);
   const selection = resolveSelection(project, input.selection, visibleFamilies);
   const compatibilityResidueCount = countCompatibilityResidue(project);

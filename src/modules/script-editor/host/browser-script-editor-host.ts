@@ -8,6 +8,9 @@ export function createBrowserScriptEditorHost(
   return {
     projectStorage: options.projectStorage,
     ...(options.previewHost == null ? {} : { previewHost: options.previewHost }),
+    ...(options.playableCatalog == null
+      ? {}
+      : { playableCatalog: options.playableCatalog }),
     ...(options.templateCatalog == null
       ? {}
       : { templateCatalog: options.templateCatalog }),

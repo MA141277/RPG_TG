@@ -1,5 +1,9 @@
 import * as scriptEditorMainUiBridge from "../main-ui-bridge";
 import { createLoadedScenarioPackPreviewHost } from "../host/loaded-scenario-pack-preview-host";
+import {
+  createBuiltinScriptEditorPlayableCatalog,
+  setDefaultScriptEditorPlayableCatalog,
+} from "../host/script-editor-playable-catalog";
 import { renderScriptEditorLandingView } from "./views/script-editor-landing-view";
 import {
   SCRIPT_EDITOR_BUILDING_DEFAULT_BACKGROUND_OPTIONS,
@@ -865,6 +869,8 @@ export function installMainUiFlowScriptEditorModule(host, options) {
       onExitRuntimePreview: options.onExitRuntimePreview,
     });
   }
+  host.playableCatalog ??= createBuiltinScriptEditorPlayableCatalog();
+  setDefaultScriptEditorPlayableCatalog(host.playableCatalog);
     host.scriptEditorProject = null;
     host.scriptEditorSelection = {
       family: "storyPack",
@@ -984,6 +990,7 @@ class MainUiFlowScriptEditorModule {
 
     const workspace = createScriptEditorWorkspaceShellViewModel({
       project: this.scriptEditorProject,
+      playableCatalog: this.playableCatalog,
       selection: this.scriptEditorSelection,
       visibleFamilies: getScriptEditorWorkflowVisibleFamilies(),
       auxiliaryPanelOpen: this.scriptEditorAuxiliaryPanelOpen,
@@ -7660,7 +7667,9 @@ class MainUiFlowScriptEditorModule {
   }
 
   renderScriptEditorMinigameTabPanel(minigame) {
-    const playableOptions = listScriptEditorBuiltinMinigamePlayableOptions();
+    const playableOptions = listScriptEditorBuiltinMinigamePlayableOptions(
+      this.playableCatalog
+    );
     const eventOptions = this.getScriptEditorCreatorRecordOptions("events");
 
     if (this.scriptEditorMinigameTab === "config") {
@@ -11775,7 +11784,10 @@ class MainUiFlowScriptEditorModule {
 
     this.scriptEditorAuxiliaryPanelOpen = true;
     const diagnostics = validateScriptEditorProjectForRuntimeExport(
-      this.scriptEditorProject
+      this.scriptEditorProject,
+      {
+        playableCatalog: this.playableCatalog,
+      }
     );
     this.recordScriptEditorNotice(
       diagnostics.length === 0
@@ -11797,7 +11809,10 @@ class MainUiFlowScriptEditorModule {
     }
 
     const diagnostics = validateScriptEditorProjectForRuntimeExport(
-      this.scriptEditorProject
+      this.scriptEditorProject,
+      {
+        playableCatalog: this.playableCatalog,
+      }
     );
     if (diagnostics.length === 0) {
       return false;
@@ -12649,7 +12664,10 @@ class MainUiFlowScriptEditorModule {
   }
 
   commitScriptEditorProject(project) {
-    this.scriptEditorProject = formalizeScriptEditorProjectMenus(project);
+    this.scriptEditorProject = formalizeScriptEditorProjectMenus(
+      project,
+      this.playableCatalog
+    );
     this.scriptEditorProjectLibrary = upsertScriptEditorProjectLibraryEntry(
       this.scriptEditorProjectLibrary,
       createScriptEditorProjectLibraryEntry(

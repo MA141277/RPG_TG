@@ -1,4 +1,5 @@
 import type { ScriptEditorProjectDefinition } from "../domain/script-editor-project";
+import type { ScriptEditorPlayableCatalog } from "./script-editor-playable-catalog";
 import type { ScriptEditorTemplateCatalog } from "./script-editor-template-catalog";
 import type { ScriptEditorPublicationCatalog } from "./script-editor-publication-catalog";
 
@@ -32,6 +33,7 @@ export type ScriptEditorPreviewHost = {
 export type ScriptEditorHost = {
   projectStorage: ScriptEditorProjectStorage;
   previewHost?: ScriptEditorPreviewHost;
+  playableCatalog?: ScriptEditorPlayableCatalog;
   templateCatalog?: ScriptEditorTemplateCatalog;
   publicationCatalog?: ScriptEditorPublicationCatalog;
   notify?: (

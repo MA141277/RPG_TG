@@ -10,6 +10,7 @@ import type {
   ScriptEditorPreviewHost,
   ScriptEditorPreviewSession,
 } from "../host/script-editor-host";
+import type { ScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
 import type { ScriptEditorTemplateCatalog } from "../host/script-editor-template-catalog";
 import {
   pickScriptEditorDirectory,
@@ -47,6 +48,7 @@ export type ScriptEditorWorkflowEnvironment = {
   setPendingDeleteProjectId(projectId: string | null): void;
   resetNoticeTimeline(): void;
   recordNotice(notice: ScriptEditorWorkflowNotice): void;
+  getPlayableCatalog(): ScriptEditorPlayableCatalog | null;
   getPreviewHost(): ScriptEditorPreviewHost | null;
   getTemplateCatalog(): ScriptEditorTemplateCatalog | null;
   setScreen(screen: string): void;
@@ -99,7 +101,9 @@ export class ScriptEditorWorkflowController {
   }
 
   async createProjectAtSavePath(): Promise<void> {
-    const project = createDefaultScriptEditorProjectDefinition();
+    const project = createDefaultScriptEditorProjectDefinition({
+      playableCatalog: this.environment.getPlayableCatalog() ?? undefined,
+    });
     const result = await writeTextFilesWithDirectoryPicker(
       serializeScriptEditorProjectToFiles(project),
       {
@@ -124,7 +128,9 @@ export class ScriptEditorWorkflowController {
     this.environment.setAuxiliaryPanelOpen(true);
     try {
       const result = await writeTextFilesWithDirectoryPicker(
-        exportScriptEditorProjectToScenarioPackFiles(project),
+        exportScriptEditorProjectToScenarioPackFiles(project, {
+          playableCatalog: this.environment.getPlayableCatalog() ?? undefined,
+        }),
         {
           directoryHandle: this.environment.getExportDirectoryHandle(),
           suggestedName: project.storyPack.id,
@@ -167,7 +173,9 @@ export class ScriptEditorWorkflowController {
     }
 
     try {
-      const serializedPackFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+      const serializedPackFiles = exportScriptEditorProjectToScenarioPackFiles(project, {
+        playableCatalog: this.environment.getPlayableCatalog() ?? undefined,
+      });
       const previewSession = await previewHost.startPreview({
         project,
         serializedPackFiles,
@@ -193,7 +201,11 @@ export class ScriptEditorWorkflowController {
       });
       const files = await readFilesFromDirectoryHandle(directoryHandle);
       this.environment.setProjectSource("opened");
-      this.environment.commitProject(await loadScriptEditorProjectFromFiles(files));
+      this.environment.commitProject(
+        await loadScriptEditorProjectFromFiles(files, {
+          playableCatalog: this.environment.getPlayableCatalog() ?? undefined,
+        })
+      );
       this.environment.resetRecordListPages();
       this.environment.resetRecordSearch();
       this.environment.setSelection({
@@ -226,7 +238,11 @@ export class ScriptEditorWorkflowController {
   async importProjectFiles(files: readonly File[]): Promise<void> {
     try {
       this.environment.setProjectSource("opened");
-      this.environment.commitProject(await loadScriptEditorProjectFromFiles(files));
+      this.environment.commitProject(
+        await loadScriptEditorProjectFromFiles(files, {
+          playableCatalog: this.environment.getPlayableCatalog() ?? undefined,
+        })
+      );
       this.environment.resetRecordListPages();
       this.environment.resetRecordSearch();
       this.environment.setSelection({

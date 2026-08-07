@@ -13,7 +13,10 @@ import type {
   ScriptEditorMinigameRecord,
   ScriptEditorProjectDefinition,
 } from "../domain/script-editor-project";
-import { createBuiltinScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
+import {
+  resolveScriptEditorPlayableCatalog,
+  type ScriptEditorPlayableCatalog,
+} from "../host/script-editor-playable-catalog";
 import { allocateNextScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 type ScriptEditorLocationFamily = "cities" | "buildings";
@@ -36,9 +39,6 @@ type ScriptEditorMenuEntryEditableField =
   | "targetId"
   | "disabledHint";
 
-const builtinScriptEditorPlayableCatalog =
-  createBuiltinScriptEditorPlayableCatalog();
-
 const DEFAULT_CITY_MENU_FAMILIES = ["overview", "intel", "locations", "management"];
 const DEFAULT_BUILDING_MENU_FAMILIES = ["dialogue", "trade", "work", "rest"];
 const MENU_FAMILY_LABELS: Record<string, string> = {
@@ -58,8 +58,10 @@ const MENU_FAMILY_LABELS: Record<string, string> = {
 };
 
 export function formalizeScriptEditorProjectMenus(
-  project: ScriptEditorProjectDefinition
+  project: ScriptEditorProjectDefinition,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorProjectDefinition {
+  const resolvedPlayableCatalog = resolveScriptEditorPlayableCatalog(playableCatalog);
   const legacyActionMenuItemsError = findLegacyArrangementActionMenuItemsError(
     project.buildingArrangements ?? []
   );
@@ -69,7 +71,10 @@ export function formalizeScriptEditorProjectMenus(
   const locationFormalizedProject = formalizeLocationProjectMenus(project);
   const arrangementFormalizedProject =
     formalizeBuildingArrangementProjectMenus(locationFormalizedProject);
-  return formalizeMenuEntriesThroughEvents(arrangementFormalizedProject);
+  return formalizeMenuEntriesThroughEvents(
+    arrangementFormalizedProject,
+    resolvedPlayableCatalog
+  );
 }
 
 function formalizeLocationProjectMenus(
@@ -153,9 +158,10 @@ function formalizeBuildingArrangementProjectMenus(
 export function listScriptEditorLocationMenuBundles(
   project: ScriptEditorProjectDefinition,
   family: ScriptEditorLocationFamily,
-  locationId: string
+  locationId: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorLocationMenuBundle[] {
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
+  const formalizedProject = formalizeScriptEditorProjectMenus(project, playableCatalog);
   const location = getProjectLocation(formalizedProject, family, locationId);
   if (location == null) {
     return [];
@@ -193,9 +199,15 @@ export function listScriptEditorLocationMenuBundles(
 export function countScriptEditorLocationMenuEntries(
   project: ScriptEditorProjectDefinition,
   family: ScriptEditorLocationFamily,
-  locationId: string
+  locationId: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): number {
-  return listScriptEditorLocationMenuBundles(project, family, locationId).reduce(
+  return listScriptEditorLocationMenuBundles(
+    project,
+    family,
+    locationId,
+    playableCatalog
+  ).reduce(
     (count, bundle) => count + bundle.entries.length,
     0
   );
@@ -204,9 +216,10 @@ export function countScriptEditorLocationMenuEntries(
 export function updateScriptEditorLocationMenuInstanceTitle(
   project: ScriptEditorProjectDefinition,
   instanceId: string,
-  value: string
+  value: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorProjectDefinition {
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
+  const formalizedProject = formalizeScriptEditorProjectMenus(project, playableCatalog);
   return {
     ...formalizedProject,
     menuInstances: (formalizedProject.menuInstances ?? []).map((instance) =>
@@ -223,9 +236,10 @@ export function updateScriptEditorLocationMenuInstanceTitle(
 export function updateScriptEditorLocationMenuResourceTitle(
   project: ScriptEditorProjectDefinition,
   resourceId: string,
-  value: string
+  value: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorProjectDefinition {
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
+  const formalizedProject = formalizeScriptEditorProjectMenus(project, playableCatalog);
   return {
     ...formalizedProject,
     menuResources: (formalizedProject.menuResources ?? []).map((resource) =>
@@ -242,11 +256,17 @@ export function updateScriptEditorLocationMenuResourceTitle(
 export function appendScriptEditorLocationMenuEntry(
   project: ScriptEditorProjectDefinition,
   family: ScriptEditorLocationFamily,
-  locationId: string
+  locationId: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorProjectDefinition {
-  const prepared = ensurePrimaryLocationMenuBundle(project, family, locationId);
+  const prepared = ensurePrimaryLocationMenuBundle(
+    project,
+    family,
+    locationId,
+    playableCatalog
+  );
   if (prepared == null) {
-    return formalizeScriptEditorProjectMenus(project);
+    return formalizeScriptEditorProjectMenus(project, playableCatalog);
   }
   const { project: formalizedProject, resourceId } = prepared;
   return formalizeScriptEditorProjectMenus({
@@ -265,17 +285,18 @@ export function appendScriptEditorLocationMenuEntry(
         ],
       };
     }),
-  });
+  }, playableCatalog);
 }
 
 export function removeScriptEditorLocationMenuEntry(
   project: ScriptEditorProjectDefinition,
   instanceId: string,
-  index: number
+  index: number,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorProjectDefinition {
-  const resolved = resolveMenuBundleIds(project, instanceId);
+  const resolved = resolveMenuBundleIds(project, instanceId, playableCatalog);
   if (resolved == null) {
-    return formalizeScriptEditorProjectMenus(project);
+    return formalizeScriptEditorProjectMenus(project, playableCatalog);
   }
 
   return {
@@ -298,11 +319,12 @@ export function updateScriptEditorLocationMenuEntryField(
   instanceId: string,
   index: number,
   field: ScriptEditorMenuEntryEditableField,
-  value: string
+  value: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorProjectDefinition {
-  const resolved = resolveMenuBundleIds(project, instanceId);
+  const resolved = resolveMenuBundleIds(project, instanceId, playableCatalog);
   if (resolved == null) {
-    return formalizeScriptEditorProjectMenus(project);
+    return formalizeScriptEditorProjectMenus(project, playableCatalog);
   }
 
   return {
@@ -351,11 +373,12 @@ export function toggleScriptEditorLocationMenuEntryFlag(
   instanceId: string,
   index: number,
   field: "isVisible" | "isEnabled",
-  checked: boolean
+  checked: boolean,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorProjectDefinition {
-  const resolved = resolveMenuBundleIds(project, instanceId);
+  const resolved = resolveMenuBundleIds(project, instanceId, playableCatalog);
   if (resolved == null) {
-    return formalizeScriptEditorProjectMenus(project);
+    return formalizeScriptEditorProjectMenus(project, playableCatalog);
   }
 
   return {
@@ -441,13 +464,14 @@ function formalizeLocationMenuBindings<TLocation extends ScriptEditorLocationRec
 function ensurePrimaryLocationMenuBundle(
   project: ScriptEditorProjectDefinition,
   family: ScriptEditorLocationFamily,
-  locationId: string
+  locationId: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): {
   project: ScriptEditorProjectDefinition;
   instanceId: string;
   resourceId: string;
 } | null {
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
+  const formalizedProject = formalizeScriptEditorProjectMenus(project, playableCatalog);
   const location = getProjectLocation(formalizedProject, family, locationId);
   if (location == null) {
     return null;
@@ -529,13 +553,14 @@ function findLegacyArrangementActionMenuItemsError(
 
 function resolveMenuBundleIds(
   project: ScriptEditorProjectDefinition,
-  instanceId: string
+  instanceId: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): {
   project: ScriptEditorProjectDefinition;
   resourceId: string;
   locationFamily: ScriptEditorLocationFamily | null;
 } | null {
-  const formalizedProject = formalizeScriptEditorProjectMenus(project);
+  const formalizedProject = formalizeScriptEditorProjectMenus(project, playableCatalog);
   const instance = (formalizedProject.menuInstances ?? []).find(
     (menuInstance) => menuInstance.id === instanceId
   );
@@ -779,8 +804,10 @@ function normalizeMenuTargetFamily(value?: string): MenuTargetFamily {
 }
 
 function formalizeMenuEntriesThroughEvents(
-  project: ScriptEditorProjectDefinition
+  project: ScriptEditorProjectDefinition,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorProjectDefinition {
+  const resolvedPlayableCatalog = resolveScriptEditorPlayableCatalog(playableCatalog);
   const events = [...(project.events ?? [])];
   const minigames = [...(project.minigames ?? [])];
   const projectMinigameIds = new Set(
@@ -805,7 +832,8 @@ function formalizeMenuEntriesThroughEvents(
         minigames,
         entry,
         index,
-        projectMinigameIds
+        projectMinigameIds,
+        resolvedPlayableCatalog
       );
       eventsChanged ||= result.eventsChanged;
       minigamesChanged ||= result.minigamesChanged;
@@ -840,7 +868,8 @@ function formalizeMenuEntryThroughEvent(
   minigames: ScriptEditorMinigameRecord[],
   entry: MenuEntryDefinition,
   index: number,
-  projectMinigameIds: Set<string>
+  projectMinigameIds: Set<string>,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): {
   entry: MenuEntryDefinition;
   eventsChanged: boolean;
@@ -885,7 +914,8 @@ function formalizeMenuEntryThroughEvent(
     entry,
     minigames,
     projectMinigameIds,
-    provisionalMenuEventId
+    provisionalMenuEventId,
+    playableCatalog
   );
   if (minigameResolution != null) {
     minigames.push(minigameResolution.minigame);
@@ -976,8 +1006,10 @@ function resolveMenuEntryMinigamePrototypeDestination(
   entry: MenuEntryDefinition,
   minigames: readonly ScriptEditorMinigameRecord[],
   projectMinigameIds: ReadonlySet<string>,
-  menuEventId: string
+  menuEventId: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): { destination: ScriptEditorEventDestination; minigame: ScriptEditorMinigameRecord } | null {
+  const resolvedPlayableCatalog = resolveScriptEditorPlayableCatalog(playableCatalog);
   if (entry.targetFamily !== "minigame") {
     return null;
   }
@@ -985,17 +1017,15 @@ function resolveMenuEntryMinigamePrototypeDestination(
   if (playableId.length === 0 || projectMinigameIds.has(playableId)) {
     return null;
   }
-  const playableDefinition =
-    builtinScriptEditorPlayableCatalog.getPlayableDefinition(playableId);
+  const playableDefinition = resolvedPlayableCatalog.getPlayableDefinition(playableId);
   if (playableDefinition == null) {
     return null;
   }
 
   const minigameId = allocateNextScriptEditorCanonicalId("minigames", minigames);
-  const builtinIntegration =
-    builtinScriptEditorPlayableCatalog
-      .listPlayableIntegrations()
-      .find((integration) => integration.playableId === playableId);
+  const builtinIntegration = resolvedPlayableCatalog
+    .listPlayableIntegrations()
+    .find((integration) => integration.playableId === playableId);
   const ownerKind =
     builtinIntegration?.ownerDefaults.ownerKind ??
     builtinIntegration?.trigger.ownerKind ??

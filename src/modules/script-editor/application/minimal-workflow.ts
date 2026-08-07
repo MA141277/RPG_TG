@@ -52,6 +52,10 @@ import {
   allocateNextScriptEditorProjectCanonicalId,
   createDefaultScriptEditorCanonicalId,
 } from "./script-editor-id-allocation";
+import {
+  resolveScriptEditorPlayableCatalog,
+  type ScriptEditorPlayableCatalog,
+} from "../host/script-editor-playable-catalog";
 
 export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "storyPack",
@@ -97,7 +101,9 @@ export function isScriptEditorMinimalWorkflowFamily(
 export function createDefaultScriptEditorProjectDefinition(input?: {
   idBase?: string | undefined;
   title?: string | undefined;
+  playableCatalog?: ScriptEditorPlayableCatalog | undefined;
 }): ScriptEditorProjectDefinition {
+  const playableCatalog = resolveScriptEditorPlayableCatalog(input?.playableCatalog);
   const idBase = input?.idBase?.trim() || "script-editor.demo";
   const title = input?.title?.trim() || "Script Editor Demo Project";
   const defaultPortrait = createDefaultScriptEditorPortraitRecord(0);
@@ -235,7 +241,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
     ],
     conditionGroups: [],
     effectBundles: [],
-  });
+  }, playableCatalog);
 }
 
 export function listScriptEditorWorkflowFamilyRecords(

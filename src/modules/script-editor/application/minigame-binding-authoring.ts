@@ -9,7 +9,10 @@
   ScriptEditorMinigameReturnPolicy,
   ScriptEditorMinigameTriggerSource,
 } from "../domain/script-editor-project";
-import { createBuiltinScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
+import {
+  resolveScriptEditorPlayableCatalog,
+  type ScriptEditorPlayableCatalog,
+} from "../host/script-editor-playable-catalog";
 import { createDefaultScriptEditorCanonicalId } from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_MINIGAME_OWNER_KINDS: readonly ScriptEditorMinigameOwnerKind[] = [
@@ -39,43 +42,37 @@ export const SCRIPT_EDITOR_MINIGAME_OUTCOMES: readonly ScriptEditorMinigameOutco
   "cancelled",
 ] as const;
 
-const builtinScriptEditorPlayableCatalog =
-  createBuiltinScriptEditorPlayableCatalog();
-
-const BUILTIN_PLAYABLE_DEFINITIONS =
-  builtinScriptEditorPlayableCatalog.listPlayableDefinitions();
-
-const BUILTIN_PLAYABLE_INTEGRATIONS = Array.from(
-  builtinScriptEditorPlayableCatalog.listPlayableIntegrations()
-).filter((integration) =>
-  BUILTIN_PLAYABLE_DEFINITIONS.some(
-    (definition) => definition.id === integration.playableId
-  )
-);
-
-export function listScriptEditorBuiltinMinigamePlayableOptions(): Array<{
+export function listScriptEditorBuiltinMinigamePlayableOptions(
+  playableCatalog?: ScriptEditorPlayableCatalog | null
+): Array<{
   id: string;
   label: string;
   commandPrefix: string;
 }> {
-  return BUILTIN_PLAYABLE_DEFINITIONS.map((definition) => ({
+  return resolveScriptEditorPlayableCatalog(playableCatalog)
+    .listPlayableDefinitions()
+    .map((definition) => ({
     id: definition.id,
     label: definition.id,
     commandPrefix: definition.commandPrefix,
-  }));
+    }));
 }
 
 export function isScriptEditorShellBackedMinigamePlayableId(
-  playableId: string | undefined
+  playableId: string | undefined,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): playableId is string {
   if (typeof playableId !== "string" || playableId.trim().length === 0) {
     return false;
   }
 
-  return builtinScriptEditorPlayableCatalog.hasPlayableShell(playableId.trim());
+  return resolveScriptEditorPlayableCatalog(playableCatalog).hasPlayableShell(
+    playableId.trim()
+  );
 }
 
 export function listScriptEditorBuiltinMinigameIntegrationOptions(
+  playableCatalog?: ScriptEditorPlayableCatalog | null,
   playableId?: string
 ): Array<{
   integrationId: string;
@@ -85,7 +82,15 @@ export function listScriptEditorBuiltinMinigameIntegrationOptions(
   triggerId: string;
   triggerEvent: string;
 }> {
-  return BUILTIN_PLAYABLE_INTEGRATIONS
+  const resolvedPlayableCatalog = resolveScriptEditorPlayableCatalog(playableCatalog);
+  const playableDefinitions = resolvedPlayableCatalog.listPlayableDefinitions();
+  const playableIntegrations = Array.from(
+    resolvedPlayableCatalog.listPlayableIntegrations()
+  ).filter((integration) =>
+    playableDefinitions.some((definition) => definition.id === integration.playableId)
+  );
+
+  return playableIntegrations
     .filter((integration) =>
       playableId == null || playableId.length === 0
         ? true
@@ -333,10 +338,13 @@ export function updateScriptEditorMinigameField(
 
 export function updateScriptEditorMinigameIntegration(
   record: ScriptEditorMinigameRecord,
-  integrationId: string
+  integrationId: string,
+  playableCatalog?: ScriptEditorPlayableCatalog | null
 ): ScriptEditorMinigameRecord {
   const normalizedIntegrationId = integrationId.trim();
-  const integration = BUILTIN_PLAYABLE_INTEGRATIONS.find(
+  const integration = resolveScriptEditorPlayableCatalog(
+    playableCatalog
+  ).listPlayableIntegrations().find(
     (candidate) => candidate.integrationId === normalizedIntegrationId
   );
   if (integration == null) {

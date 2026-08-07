@@ -50,7 +50,10 @@ import {
 import {
   isScriptEditorShellBackedMinigamePlayableId,
 } from "./minigame-binding-authoring";
-import { createBuiltinScriptEditorPlayableCatalog } from "../host/script-editor-playable-catalog";
+import {
+  resolveScriptEditorPlayableCatalog,
+  type ScriptEditorPlayableCatalog,
+} from "../host/script-editor-playable-catalog";
 
 export type ScriptEditorRuntimeExportDiagnostic = {
   code:
@@ -64,9 +67,6 @@ export type ScriptEditorRuntimeExportDiagnostic = {
   fieldPath: string;
   message: string;
 };
-
-const builtinScriptEditorPlayableCatalog =
-  createBuiltinScriptEditorPlayableCatalog();
 
 type RuntimePackManifestFiles = {
   scenarioProfile: string;
@@ -186,9 +186,17 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
 };
 
 export function validateScriptEditorProjectForRuntimeExport(
-  value: ScriptEditorProjectDefinition
+  value: ScriptEditorProjectDefinition,
+  options: {
+    playableCatalog?: ScriptEditorPlayableCatalog | undefined;
+  } = {}
 ): ScriptEditorRuntimeExportDiagnostic[] {
-  const project = parseScriptEditorProject(value);
+  const playableCatalog = resolveScriptEditorPlayableCatalog(
+    options.playableCatalog
+  );
+  const project = parseScriptEditorProject(value, {
+    playableCatalog,
+  });
   const diagnostics: ScriptEditorRuntimeExportDiagnostic[] = [];
 
   appendCompatibilityImportResidueDiagnostics(project.storyPack, diagnostics);
@@ -196,7 +204,8 @@ export function validateScriptEditorProjectForRuntimeExport(
   appendActivityDiagnostics(project.activities, diagnostics);
   const playableRuntimeFamilies = materializeScriptEditorPlayableRuntimeFamilies(
     project,
-    diagnostics
+    diagnostics,
+    playableCatalog
   );
 
   const scenarioProfile = extractScenarioProfile(project.storyPack, diagnostics);
@@ -214,7 +223,8 @@ export function validateScriptEditorProjectForRuntimeExport(
   const exportedEvents = extractRuntimeEvents(
     project,
     exportedDialogues ?? [],
-    diagnostics
+    diagnostics,
+    playableCatalog
   );
   const exportedEventBindings = extractRuntimeEventBindings(project, diagnostics);
   const sharedRuleDiagnostics: ScriptEditorSharedRuleDiagnostic[] = [];
@@ -906,10 +916,20 @@ function appendMountedBuildingDiagnostics(
 }
 
 export function exportScriptEditorProjectToScenarioPackFiles(
-  value: ScriptEditorProjectDefinition
+  value: ScriptEditorProjectDefinition,
+  options: {
+    playableCatalog?: ScriptEditorPlayableCatalog | undefined;
+  } = {}
 ): Record<string, string> {
-  const project = parseScriptEditorProject(value);
-  const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+  const playableCatalog = resolveScriptEditorPlayableCatalog(
+    options.playableCatalog
+  );
+  const project = parseScriptEditorProject(value, {
+    playableCatalog,
+  });
+  const diagnostics = validateScriptEditorProjectForRuntimeExport(project, {
+    playableCatalog,
+  });
   if (diagnostics.length > 0) {
     throw new Error(formatDiagnostics(diagnostics));
   }
@@ -921,12 +941,18 @@ export function exportScriptEditorProjectToScenarioPackFiles(
   const cityBuildingRuntimeFamilies =
     materializeScriptEditorCityBuildingRuntimeFamilies(project);
   const exportedDialogues = narrativeRuntime.dialogues;
-  const exportedEvents = extractRuntimeEvents(project, exportedDialogues ?? [], []);
+  const exportedEvents = extractRuntimeEvents(
+    project,
+    exportedDialogues ?? [],
+    [],
+    playableCatalog
+  );
   const exportedEventBindings = extractRuntimeEventBindings(project, []);
   const exportedTasks = compileScriptEditorProjectTasks(project, []);
   const playableRuntimeFamilies = materializeScriptEditorPlayableRuntimeFamilies(
     project,
-    []
+    [],
+    playableCatalog
   );
   const exportedMenuResources = materializeRuntimeMenuResources(project);
   if (
@@ -1063,7 +1089,8 @@ export function exportScriptEditorProjectToScenarioPackFiles(
 
 function materializeScriptEditorPlayableRuntimeFamilies(
   project: ScriptEditorProjectDefinition,
-  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[],
+  playableCatalog: ScriptEditorPlayableCatalog
 ): {
   playables: PlayableDefinition[];
   playableIntegrations: PlayableIntegrationDefinition[];
@@ -1093,8 +1120,10 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     if (playableId == null) {
       continue;
     }
-    const usesBuiltinPlayableShell =
-      isScriptEditorShellBackedMinigamePlayableId(playableId);
+    const usesBuiltinPlayableShell = isScriptEditorShellBackedMinigamePlayableId(
+      playableId,
+      playableCatalog
+    );
     const usesAuthoredFlowShell = authoredFlowIds.has(playableId);
     if (!usesBuiltinPlayableShell && !usesAuthoredFlowShell) {
       diagnostics.push({
@@ -1114,7 +1143,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     const triggerEvent = eventLaunchEventId.length > 0 ? eventLaunchEventId : "manual-launch";
 
     const definition = usesBuiltinPlayableShell
-      ? builtinScriptEditorPlayableCatalog.getPlayableDefinition(playableId)
+      ? playableCatalog.getPlayableDefinition(playableId)
       : {
           id: playableId,
           commandPrefix: `playable.${playableId}.`,
@@ -1900,15 +1929,22 @@ function appendScenarioLaunchPolicyDiagnostics(
 function extractRuntimeEvents(
   project: ScriptEditorProjectDefinition,
   exportedDialogues: RuntimeDialogueDefinition[],
-  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[],
+  playableCatalog: ScriptEditorPlayableCatalog
 ): EventDefinition[] | null {
-  return lowerEditorEventsToRuntimeEvents(project, exportedDialogues, diagnostics);
+  return lowerEditorEventsToRuntimeEvents(
+    project,
+    exportedDialogues,
+    diagnostics,
+    playableCatalog
+  );
 }
 
 function lowerEditorEventsToRuntimeEvents(
   project: ScriptEditorProjectDefinition,
   exportedDialogues: RuntimeDialogueDefinition[],
-  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[],
+  playableCatalog: ScriptEditorPlayableCatalog
 ): EventDefinition[] | null {
   const scenarioProfile = project.storyPack.scenarioProfile;
   const chapterId =
@@ -1985,7 +2021,8 @@ function lowerEditorEventsToRuntimeEvents(
       minigamesById,
       flowStartEventIds,
       derivedFlowLaunchActionsByEventId.get(eventRecord.id) ?? [],
-      diagnostics
+      diagnostics,
+      playableCatalog
     );
     if (exportedEvent == null) {
       continue;
@@ -2152,7 +2189,8 @@ function lowerEditorEventToRuntimeEvent(
   minigamesById: Map<string, ScriptEditorProjectDefinition["minigames"][number]>,
   flowStartEventIds: Set<string>,
   derivedFlowActions: EventRouteCommand[],
-  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[],
+  playableCatalog: ScriptEditorPlayableCatalog
 ): EventDefinition | null {
   if (typeof eventRecord.id !== "string" || eventRecord.id.length === 0) {
     diagnostics.push({
@@ -2174,7 +2212,8 @@ function lowerEditorEventToRuntimeEvent(
     eventRecord,
     eventIndex,
     minigamesById,
-    diagnostics
+    diagnostics,
+    playableCatalog
   );
   if (destinationLaunchAction === null) {
     return null;
@@ -2703,7 +2742,8 @@ function lowerEventDestinationLaunchAction(
   eventRecord: ScriptEditorEventRecord,
   eventIndex: number,
   minigamesById: Map<string, ScriptEditorProjectDefinition["minigames"][number]>,
-  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[],
+  playableCatalog: ScriptEditorPlayableCatalog
 ): Extract<EventRouteCommand, { type: "launchPlayable" }> | null | undefined {
   const destination = eventRecord.destination;
   if (destination?.family !== "minigame") {
@@ -2723,8 +2763,7 @@ function lowerEventDestinationLaunchAction(
 
   const minigame = minigamesById.get(targetId);
   if (minigame == null) {
-    const playableDefinition =
-      builtinScriptEditorPlayableCatalog.getPlayableDefinition(targetId);
+    const playableDefinition = playableCatalog.getPlayableDefinition(targetId);
     if (playableDefinition != null) {
       diagnostics.push({
         code: "missing-reference",

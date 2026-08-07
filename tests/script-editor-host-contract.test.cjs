@@ -7,10 +7,11 @@ function readSource(relativePath) {
   return fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
 }
 
-test("script editor host contract uses injected previewHost templateCatalog and publicationCatalog fields", () => {
+test("script editor host contract uses injected previewHost playableCatalog templateCatalog and publicationCatalog fields", () => {
   const source = readSource("src/modules/script-editor/host/script-editor-host.ts");
 
   assert.match(source, /previewHost\?: ScriptEditorPreviewHost/);
+  assert.match(source, /playableCatalog\?: ScriptEditorPlayableCatalog/);
   assert.match(source, /templateCatalog\?: ScriptEditorTemplateCatalog/);
   assert.match(source, /publicationCatalog\?: ScriptEditorPublicationCatalog/);
   assert.doesNotMatch(source, /previewRuntime/);
@@ -70,9 +71,18 @@ test("script editor playable authoring and export use a package-local playable c
     runtimePackExportSource,
     /core\/registry\/builtin-playable-definition-registry/
   );
-  assert.match(menuAuthoringSource, /script-editor-playable-catalog/);
-  assert.match(minigameBindingSource, /script-editor-playable-catalog/);
-  assert.match(runtimePackExportSource, /script-editor-playable-catalog/);
+  assert.doesNotMatch(menuAuthoringSource, /createBuiltinScriptEditorPlayableCatalog/);
+  assert.doesNotMatch(
+    minigameBindingSource,
+    /createBuiltinScriptEditorPlayableCatalog/
+  );
+  assert.doesNotMatch(
+    runtimePackExportSource,
+    /createBuiltinScriptEditorPlayableCatalog/
+  );
+  assert.match(menuAuthoringSource, /ScriptEditorPlayableCatalog/);
+  assert.match(minigameBindingSource, /ScriptEditorPlayableCatalog/);
+  assert.match(runtimePackExportSource, /ScriptEditorPlayableCatalog/);
   assert.equal(
     fs.existsSync(
       path.join(

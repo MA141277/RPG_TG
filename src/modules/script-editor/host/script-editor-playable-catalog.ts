@@ -19,6 +19,8 @@ export type ScriptEditorPlayableCatalog = {
   hasPlayableShell(playableId: string): boolean;
 };
 
+let defaultScriptEditorPlayableCatalog: ScriptEditorPlayableCatalog | null = null;
+
 export function createBuiltinScriptEditorPlayableCatalog(): ScriptEditorPlayableCatalog {
   return {
     getPlayableDefinition(playableId) {
@@ -34,4 +36,20 @@ export function createBuiltinScriptEditorPlayableCatalog(): ScriptEditorPlayable
       return builtinPlayableShellRegistry.get(playableId) != null;
     },
   };
+}
+
+export function setDefaultScriptEditorPlayableCatalog(
+  playableCatalog: ScriptEditorPlayableCatalog
+): void {
+  defaultScriptEditorPlayableCatalog = playableCatalog;
+}
+
+export function resolveScriptEditorPlayableCatalog(
+  playableCatalog?: ScriptEditorPlayableCatalog | null
+): ScriptEditorPlayableCatalog {
+  return (
+    playableCatalog ??
+    defaultScriptEditorPlayableCatalog ??
+    createBuiltinScriptEditorPlayableCatalog()
+  );
 }
