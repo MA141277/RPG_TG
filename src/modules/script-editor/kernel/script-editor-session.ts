@@ -516,6 +516,114 @@ export function createEmbeddedScriptEditorSession(
         return true;
       }
 
+      if (
+        target instanceof HTMLInputElement &&
+        target.matches("[data-script-editor-event-repeatable]")
+      ) {
+        host.applyScriptEditorEventRepeatable(target.checked);
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-event-destination-field]")) {
+        const field = target.dataset.scriptEditorEventDestinationField;
+        if (field === "family" || field === "targetId") {
+          host.applyScriptEditorEventDestinationField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-event-story-node-id]")) {
+        host.applyScriptEditorEventStoryNodeId(target.value);
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-event-preview-field]")) {
+        const field = target.dataset.scriptEditorEventPreviewField;
+        if (field === "previewNotes" || field === "validationNotes") {
+          host.applyScriptEditorEventPreviewField(field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-event-binding-field]")) {
+        const bindingId = target.dataset.scriptEditorEventBindingId;
+        const field = target.dataset.scriptEditorEventBindingField;
+        if (bindingId != null && (field === "eventId" || field === "priority")) {
+          host.applyScriptEditorEventBindingField(bindingId, field, target.value);
+        }
+        return true;
+      }
+
+      if (
+        target instanceof HTMLInputElement &&
+        target.matches("[data-script-editor-event-binding-enabled]")
+      ) {
+        const bindingId = target.dataset.scriptEditorEventBindingId;
+        if (bindingId != null) {
+          host.applyScriptEditorEventBindingField(bindingId, "enabled", target.checked);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-event-binding-owner-field]")) {
+        const bindingId = target.dataset.scriptEditorEventBindingId;
+        const field = target.dataset.scriptEditorEventBindingOwnerField;
+        if (bindingId != null && (field === "family" || field === "id")) {
+          host.applyScriptEditorEventBindingOwnerField(bindingId, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-event-binding-trigger-field]")) {
+        const bindingId = target.dataset.scriptEditorEventBindingId;
+        const field = target.dataset.scriptEditorEventBindingTriggerField;
+        if (bindingId != null && (field === "timing" || field === "action")) {
+          host.applyScriptEditorEventBindingTriggerField(bindingId, field, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-event-binding-condition-operator]")) {
+        const bindingId = target.dataset.scriptEditorEventBindingId;
+        if (bindingId != null) {
+          host.applyScriptEditorEventBindingConditionOperator(bindingId, target.value);
+        }
+        return true;
+      }
+
+      if (target.matches("[data-script-editor-event-binding-condition-item-field]")) {
+        const bindingId = target.dataset.scriptEditorEventBindingId;
+        const field = target.dataset.scriptEditorEventBindingConditionItemField;
+        const index = Number.parseInt(
+          target.dataset.scriptEditorEventBindingConditionItemIndex ?? "-1",
+          10
+        );
+        if (
+          bindingId != null &&
+          [
+            "type",
+            "sourceFamily",
+            "field",
+            "operator",
+            "value",
+            "valueType",
+            "resolverId",
+            "handlerId",
+            "payload",
+          ].includes(field ?? "") &&
+          Number.isInteger(index) &&
+          index >= 0
+        ) {
+          host.applyScriptEditorEventBindingConditionItemField(
+            bindingId,
+            index,
+            field,
+            target.value
+          );
+        }
+        return true;
+      }
+
       if (target.matches("[data-script-editor-building-entry-field]")) {
         const field = target.dataset.scriptEditorBuildingEntryField;
         if (field === "defaultPersonId" || field === "returnTarget") {

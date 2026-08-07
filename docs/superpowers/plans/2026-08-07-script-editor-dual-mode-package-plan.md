@@ -51,6 +51,10 @@
   - Summary: `Extended Task 2 further by moving the settlement/progress change-routing group out of MainUiFlow and into script-editor/kernel/script-editor-session, while deleting the duplicate settlement branch that remained in MainUiFlow.`
   - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
   - Next: `Continue Task 2 by moving the remaining event/minigame/relation/location/building change-routing branches out of MainUiFlow.`
+- 2026-08-07
+  - Summary: `Extended Task 2 again by moving the event change-routing group out of MainUiFlow and into script-editor/kernel/script-editor-session, including repeatable/destination/story-node/preview/binding authoring paths.`
+  - Verification: `npm run build:test`; `node --test tests/script-editor-embedded-session.test.cjs`; `npm run typecheck`
+  - Next: `Continue Task 2 by moving the remaining minigame/relation/location/building change-routing branches out of MainUiFlow.`
 
 ---
 
