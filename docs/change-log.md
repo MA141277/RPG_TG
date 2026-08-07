@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-07 Script Editor Host Convergence Follow-Up
+
+### Changed
+- `src/ui/main-ui/main-ui-flow.js` 现已在构造阶段重新安装剧本编辑器模块方法集，再创建嵌入式 session，避免主界面首次渲染时因缺失 `captureScriptEditorScrollPosition` / `restoreScriptEditorScrollPosition` 而直接黑屏。
+- `src/modules/script-editor/host/script-editor-file-system-host.ts` 现已承接序列化文本文件到导入文件列表的中性转换 helper；`loaded-scenario-pack-preview-host.ts` 不再直接依赖 `browser-file-system`。
+
+### Impact
+- 游戏主菜单恢复正常启动，`剧本编辑 -> 使用模板 -> 运行预览` 的主路径可以继续执行。
+- 运行预览导入链进一步从浏览器具体实现收口到 package 内中性 seam，后续继续把剧本编辑器剥离成可独立使用模块时，这条链不再需要保留浏览器直连依赖。
+
 ## 2026-08-07 Script Editor Dual-Mode Package Migration
 
 ### Changed

@@ -1,5 +1,5 @@
 import { loadScenarioPackFromFiles } from "../application/script-editor-scenario-pack-codec";
-import { createTextImportFilesFromRecord } from "./browser-file-system";
+import { createTextImportFilesFromRecord } from "./script-editor-file-system-host";
 import type { ScriptEditorPreviewHost } from "./script-editor-host";
 
 export type LoadedScenarioPackPreviewHostOptions = {

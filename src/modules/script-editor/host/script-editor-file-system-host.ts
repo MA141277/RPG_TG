@@ -45,3 +45,18 @@ export function resolveScriptEditorFileSystemHost(
   }
   return defaultScriptEditorFileSystemHost;
 }
+
+export function createTextImportFilesFromRecord(
+  files: ScriptEditorSerializedTextFiles
+): File[] {
+  return Object.entries(files).map(([relativePath, content]) => {
+    const fileName = relativePath.split("/").filter(Boolean).pop() ?? relativePath;
+    const file = new File([content], fileName, {
+      type: "application/json",
+    });
+    Object.defineProperty(file, "webkitRelativePath", {
+      value: relativePath,
+    });
+    return file;
+  });
+}

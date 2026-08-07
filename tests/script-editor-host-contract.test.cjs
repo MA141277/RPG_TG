@@ -198,6 +198,19 @@ test("script editor workflow controller consumes file-system host instead of bro
   );
 });
 
+test("script editor loaded preview host consumes neutral text-import files seam", () => {
+  const previewHostSource = readSource(
+    "src/modules/script-editor/host/loaded-scenario-pack-preview-host.ts"
+  );
+  const fileSystemHostSource = readSource(
+    "src/modules/script-editor/host/script-editor-file-system-host.ts"
+  );
+
+  assert.doesNotMatch(previewHostSource, /host\/browser-file-system/);
+  assert.match(previewHostSource, /script-editor-file-system-host/);
+  assert.match(fileSystemHostSource, /createTextImportFilesFromRecord/);
+});
+
 test("script editor playable runtime contract is consumed through a package-local seam", () => {
   const runtimePackExportSource = readSource(
     "src/modules/script-editor/application/runtime-pack-export.ts"

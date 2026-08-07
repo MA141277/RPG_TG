@@ -11,6 +11,7 @@ import {
 } from "../entry-shell/entry-shell-view";
 import {
   createEmbeddedScriptEditorSession,
+  installMainUiFlowScriptEditorModule,
 } from "../../modules/script-editor";
 
 const startScreenLayoutBindings = [
@@ -217,6 +218,7 @@ export class MainUiFlow {
     this.characterDetailTransitionToken = 0;
     this.characterDetailTransitionTimer = 0;
     this.destroyOpeningBackgroundAnimation = null;
+    installMainUiFlowScriptEditorModule(this, options);
     this.scriptEditorSession = createEmbeddedScriptEditorSession({
       host: this,
       hostOptions: options,
