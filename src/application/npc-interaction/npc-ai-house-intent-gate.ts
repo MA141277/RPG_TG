@@ -340,6 +340,10 @@ function resolveRouteFromIntentParts(input: {
 
   switch (routeKind) {
     case "switch-target-npc": {
+      if (input.rawParts.length !== 3) {
+        return null;
+      }
+
       const characterId = normalizeNonEmptyString(input.rawParts[2]);
       return characterId == null
         ? null
@@ -349,6 +353,10 @@ function resolveRouteFromIntentParts(input: {
           };
     }
     case "open-house-action": {
+      if (input.rawParts.length !== 3) {
+        return null;
+      }
+
       const actionId = normalizeNonEmptyString(input.rawParts[2]);
       return actionId == null
         ? null
@@ -358,6 +366,10 @@ function resolveRouteFromIntentParts(input: {
           };
     }
     case "settle-house-service": {
+      if (input.rawParts.length !== 3) {
+        return null;
+      }
+
       const serviceId = normalizeNonEmptyString(input.rawParts[2]);
       return serviceId == null
         ? null
@@ -368,6 +380,10 @@ function resolveRouteFromIntentParts(input: {
           };
     }
     case "go-to-house": {
+      if (input.rawParts.length !== 3) {
+        return null;
+      }
+
       const houseId = normalizeNonEmptyString(input.rawParts[2]);
       return houseId == null
         ? null
@@ -376,11 +392,20 @@ function resolveRouteFromIntentParts(input: {
             houseId,
           };
     }
-    case "leave-house":
+    case "leave-house": {
+      if (input.rawParts.length !== 2) {
+        return null;
+      }
+
       return {
         kind: "leave-house",
       };
+    }
     case "negotiate-story-node": {
+      if (input.rawParts.length !== 4 && input.rawParts.length !== 5) {
+        return null;
+      }
+
       const nodeId = normalizeNonEmptyString(input.rawParts[2]);
       const approach = normalizeNonEmptyString(input.rawParts[3]);
       const targetCharacterId = normalizeNonEmptyString(input.rawParts[4]);
@@ -412,6 +437,13 @@ export function resolveHouseConversationIntentGateDecision(input: {
   if (markerMatches.length !== 1) {
     return {
       issue: "室内意图门禁阶段必须且只返回 1 个 [INTENT: ...]。",
+    };
+  }
+
+  const rawMarker = markerMatches[0]?.[0];
+  if (rawMarker == null || input.rawText.trim() !== rawMarker) {
+    return {
+      issue: "室内意图门禁阶段只能输出 1 个完整的 [INTENT: ...] 标记。",
     };
   }
 

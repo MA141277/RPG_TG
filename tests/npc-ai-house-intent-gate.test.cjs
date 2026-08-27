@@ -162,6 +162,42 @@ test("house intent gate rejects an illegal route target outside the current snap
   );
 });
 
+test("house intent gate rejects extra prose around the approved marker", () => {
+  const {
+    resolveHouseConversationIntentGateDecision,
+  } = require("../.test-dist/application/npc-interaction/npc-ai-house-intent-gate.js");
+
+  assert.match(
+    resolveHouseConversationIntentGateDecision({
+      rawText: "好的，我来判断：[INTENT: chat]",
+      request: createHouseRequest({ customInputText: "最近生意怎么样" }),
+    }).issue,
+    /只能输出 1 个完整的 \[INTENT: \.\.\.\] 标记/u
+  );
+});
+
+test("house intent gate rejects route decisions with surplus pipe fields", () => {
+  const {
+    resolveHouseConversationIntentGateDecision,
+  } = require("../.test-dist/application/npc-interaction/npc-ai-house-intent-gate.js");
+
+  assert.match(
+    resolveHouseConversationIntentGateDecision({
+      rawText: "[INTENT: route|leave-house|unexpected]",
+      request: createHouseRequest({ customInputText: "我先走了" }),
+    }).issue,
+    /格式或参数不正确/u
+  );
+
+  assert.match(
+    resolveHouseConversationIntentGateDecision({
+      rawText: "[INTENT: route|go-to-house|house.kulan.grain_shop|extra]",
+      request: createHouseRequest({ customInputText: "我去粮铺一趟" }),
+    }).issue,
+    /格式或参数不正确/u
+  );
+});
+
 test("house chat and clarify response prompts forbid direct handoff markers and stay inside one visible choice loop", () => {
   const {
     buildHouseConversationChatResponseRequest,
