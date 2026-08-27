@@ -2,6 +2,144 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-27 NPC AI House Intent Gate
+
+### Changed
+- 屋内 AI 玩家回合现在都会先经过隐藏的 `chat / clarify / route` 意图门控，再生成可见 NPC 回复。
+- 含糊请求现在会触发一句短追问并留在普通三选项对话循环中，而不是猜测玩家要跳转到哪个本地功能。
+- 可执行请求仍会先生成短 NPC 过渡台词，再打开既有本地功能或路线；室内唯一可执行交接合同仍是 validated `HouseConversationRoute`。
+- 合法性判断、结算、金钱/背包/剧情变更仍归现有 house / story module owner 处理，AI provider 只负责分类与对话胶水。
+
+### Impact
+- 后续扩展屋内 AI 对话时，应继续把每轮玩家话语收口到 `chat / clarify / route`，并让 `clarify` 保持非执行、`route` 保持能力快照校验后的唯一 handoff。
+- 不应在 `src/main.ts` 或可见 NPC 回复里补新的直接执行业务分支；新增服务、建筑跳转或剧情推进应继续由对应 house/story 模块暴露合法能力并完成结算。
+
+## 2026-08-27 Haozhou Hidden House Conversation Services
+
+### Added
+- 新增共享 `HouseConversationServiceCapability` 能力接缝、`selectHouseConversationServicesFromActiveModule()` helper，以及 `tests/house-conversation-service-contract.test.cjs`，用于把“当前屋内 AI 对话可请求的本地服务”收口成稳定 typed 快照。
+
+### Changed
+- `HouseModuleRequest` 与 `HouseRuntimeSessionRequest` 现在支持 `type: "conversation-service"`，统一携带 `serviceId`、`rawPlayerText` 与可选 `targetCharacterId`；`house-conversation-action-coordinator` 与 `src/main.ts` 只负责通用 capability 选择和 runtime 转发，不新增具体店铺业务分支。
+- 濠州 pilot 的货栈、粮铺、药铺、酒馆、茶馆现在都会通过 `selectConversationServices()` 暴露当前合法服务，并在各自 module 内把 typed service handoff 收回既有买卖、行情、疗伤、配药、喝酒、交活、赌局、请茶、打听等本地 owner 流程；货栈的服务仍只对当前固定东家暴露。
+- `docs/special-house-interface.md` 现已补入隐藏 AI `conversation-service` 合同，明确 AI 只能请求当前合法服务，结算和持久状态写入仍全部归当前 house module。
+
+### Impact
+- 隐藏式屋内 AI 对话现在可以把“买货 / 卖货 / 打听 / 疗伤 / 喝酒 / 赌博 / 请茶”等自然语言请求交回当前建筑 owner 处理，而不需要恢复关键词特判或在 `src/main.ts` 里补 concrete house 分支。
+- 后续其他 house 若想接入这条能力，应继续暴露稳定 `serviceId` 与 `selectConversationServices()`，并在本地 module 内结算结果；AI 层不能直接改钱、背包、剧情或跨建筑乱跳。
+
+## 2026-08-27 Haozhou AI World Intent Pilot
+
+### Added
+- 新增共享 `world-intent` 领域/运行时接缝，包括能力快照、请求构建、外部 provider bootstrap、本地 placeholder provider、shell-safe action coordinator，以及濠州专用的剧情协商节点 registry。
+- 新增 `temple.request-early-begging`、`temple.review-work-plan-negotiation`、`keep.assignment-negotiation` 三个濠州剧情协商节点，并补入 focused 回归，覆盖节点暴露、action id 解析、寺庙/帅府本地 resolver 与非法交涉立场 fail-closed。
+
+### Changed
+- 濠州当前 city / house 壳层现在支持 typed 自然语言 world-intent 输入；AI 只负责分类 `去地点 / 离开 / 找 NPC 说话 / 打开当前服务 / 推进当前可协商剧情`，实际合法性、拒绝、状态变更与功能跳转仍全部交回既有本地 owner。
+- 共享 world-intent coordinator 现在会先经底部对话框完成 narration / clarify / refusal，再把合法结果转发给既有 house runtime / NPC interaction runtime；按钮路径继续保留为本地直接执行，不依赖 AI 可用性。
+- `src/main.ts` 这轮只新增共享 world-intent provider、协商 registry 与 action handoff 的 wiring，并在未提供 `VITE_WORLD_INTENT_*` 时复用现有 `VITE_NPC_AI_*` 配置；没有新增任何具体 house 或剧情业务分支。
+- 皇觉寺与帅府的协商结果现在继续由各自 house module 结算：寺庙请命可本地开启/改派化缘，帅府请领差事会在本地任务表内挑选当前可领差事；AI 不能直接越过模块写剧情状态。
+
+### Impact
+- 濠州 world-intent pilot 现在保持“按钮可回退、AI fail-closed、剧情协商由本地规则结算”的边界，未把整座游戏切成 AI authoritative 模式。
+- 后续其他 house 若想接入 typed world-intent 或剧情协商，应继续暴露稳定 action id / negotiation node，并通过共享 registry 与本地 module resolver 接入，而不是在 prompt、DOM handler 或 `src/main.ts` 里加特判。
+
+## 2026-08-26 NPC Special Action AI Semantic Handoff
+
+### Changed
+- 共享 NPC AI 对话不再在 runtime 内对玩家选项或自定义输入做本地关键词直跳；当前地点可办理的 special action 现会作为 typed metadata 一并发给 AI，由模型判断当前发言是否应转入既有功能。
+- 外部 NPC AI provider 现在支持 `[ACTION: exact_action_id]` 返回形态；当模型决定进入当前地点已有功能时，必须先产出符合人物设定的过渡台词，再输出精确 `actionId`，共享 provider 会把它规范化为独立 `action` step。
+- 共享 NPC interaction runtime 现在只会接受“当前 NPC、当前建筑、当前仍可用”的 `actionId` 交接；玩家需先翻完底部对话框内的过渡台词分页，随后再次点击对话框，才会真正转发到既有 house action。
+
+### Impact
+- 后续 house 模块若想让某个 NPC 对话可转入特殊功能，应继续通过既有 `interactionActions` 暴露稳定 `actionId` 和按钮标签；不要再在共享 runtime、本地 matcher 或 `src/main.ts` 里补关键词特判。
+- 若某个 action 当前不在该 NPC / 该建筑的可用动作列表里，即使 AI 误判，也不会跨建筑、跨 NPC 或跨禁用状态乱跳。
+
+## 2026-08-26 NPC Special Action Keyword Routing
+
+### Added
+- 共享 `NpcInteractionOptionViewModel` 与 `HouseActionViewModel` 现在支持可选 `triggerKeywords` 元数据，用于声明当前 NPC special action 可被哪些自然语言短语命中。
+- 新增 `src/application/npc-interaction/npc-special-action-intent.ts`，负责对 AI 选项文案和玩家自定义输入做本地归一化与关键词匹配。
+
+### Changed
+- 共享 NPC AI runtime 现在会在玩家点击 AI 三选一或提交自定义输入时，先只针对“当前地点、当前目标 NPC、当前可用 special actions”做一次本地关键词识别；命中后会先把玩家这句话写入 NPC 记忆日志，再立刻结束 AI 对话并转发到既有 house `actionId`。
+- 关键词路由不会跨建筑、跨 NPC、跨未暴露动作乱跳；例如商铺里的对话不会因为出现“赌两把”就跳去酒馆赌博。
+- 现有内建 special actions 已补齐首批关键词别名，包括商铺、医馆、茶馆、酒馆、住处与寺庙等 NPC 交互入口。
+- `src/main.ts` 只新增共享 runtime 到既有 house action dispatch 的 wiring，没有新增任何具体 house 业务分支。
+
+### Impact
+- 后续如有新的 NPC special action 希望支持“自然语言直达”，应在 actor-facing `interactionActions` 或其来源 action model 上补 `triggerKeywords`，而不是在 prompt、DOM click handler 或 `src/main.ts` 中新增关键字特判。
+- 如果某个 special action 当前不可用，应继续通过 `disabled` 保持不可触发；共享 AI 关键词路由会跳过禁用动作。
+
+## 2026-08-26 NPC Special Action Intent Profiles
+
+### Added
+- 共享 `npc-special-action-intent` matcher 现在带有按 `actionId` 划分的内建意图词库与动作画像，用于覆盖现有特殊动作的常见自然中文说法，而不要求每个 house 在模块内重复堆同一批词。
+- 新增 focused matcher 回归，覆盖诸如“我想买点东西”“我想卖些货”“你这都卖什么货”“来壶酒”等自然表达。
+
+### Changed
+- 共享 NPC 关键词识别不再只依赖少量 `triggerKeywords` 做简单包含匹配；现已升级为“显式 triggerKeywords + 内建别名短语 + 动作专属语义规则”的组合评分。
+- 现有 built-in special actions 的默认意图覆盖显著扩大，包含商铺买卖与行情询问、医馆疗伤/买药/配药、茶馆请茶/打听/舌战、酒馆工作/喝酒/赌博、寺庙休息/捐香火/做工/交粮、住处学习等常见说法。
+- 酒馆赌博意图现在额外支持“赌 + 数量词 + 把 / 局 / 手 / 盘”类句式，例如“我来赌几把”“来两局”“押两手试试”，不再只依赖固定短语白名单。
+- 现有 built-in special actions 的默认词库现在进一步覆盖更口语、更绕的表达，例如“先让我瞅瞅你这儿都压着啥货”“我想收点货回去”“手头这批货想出掉”“这身子骨不太爽利，劳你给看看”“给我续上一盏茶”“近来外头有什么动静”“想跟你掰扯掰扯这个理”“最近手头紧，想寻个营生”“劳驾给我筛碗酒来”“俺也去耍两把”“今儿想在庙里落个脚”“想给佛前添点灯油钱”“化来的口粮我这就交回寺里”等说法。
+
+### Impact
+- 后续如果某个 built-in action 还有漏识别，不必把业务判断塞进 runtime 主流程；优先在共享 intent profile 或该 action 的 `triggerKeywords` 上补词。
+- 如果 future house 引入新的 special action id，且想复用类似的自然语言直达能力，可以继续沿用同一 matcher seam：共享内建 profile 管通用动作，house `triggerKeywords` 管局部补充。
+
+## 2026-08-25 Global NPC AI Dialogue Seam
+
+### Added
+- 新增共享 `GameState.runtime.npcDialogue` 运行时分支与 `src/domain/npc-ai-dialogue.ts`，用于持久保存按 NPC 归档的对话记忆日志、当前 AI 对话会话状态和 provider 交互契约。
+- 新增共享 `src/core/runtime/npc-interaction-runtime.ts`、NPC AI request builder 和本地 placeholder provider，为后续接入自研 AI 预留统一替换缝。
+- 新增 `src/application/npc-interaction/external-npc-ai-dialogue-provider.ts`，支持通过 `window.__RPG_TG_NPC_AI_CONFIG__` 或 `localStorage["rpg_tg.npc_ai.provider"]` 把 NPC 对话接到外部流式 AI。
+- 新增 `src/application/npc-interaction/npc-ai-dialogue-provider-bootstrap.ts`，用于把本地启动参数转换成共享 NPC AI provider 配置，并保留手动全局配置 / localStorage 覆盖缝。
+- 新增 `src/ui/views/house/fallback-house-view.ts`，让非 module house 的在场人物 roster 也能发出共享 NPC 交互目标/上下文。
+
+### Changed
+- 任意建筑里的 NPC 默认 `谈话` 现在从“静态占位对话”升级为共享 AI 对话面板：保留既有 `头像 -> 菜单 -> 谈话` 入口，支持 transcript、三个 AI 生成选项、自定义输入和随时退出。
+- 共享 NPC runtime 现在负责 provider 启动、取消、陈旧事件屏蔽，以及在每轮完成后把玩家与 NPC 的交换写入目标 NPC 的记忆日志。
+- `src/main.ts` 现在只负责装配“外部 AI provider 优先、无配置回退本地占位 provider”的壳层 wiring，没有新增任何建筑或具体 house 的 AI 业务分支。
+- 共享 NPC runtime 现在会对 zip 风格流式 `step -> complete` 重复前缀做去重，避免同一句 NPC 台词在 transcript 与记忆日志里被写两遍。
+- 复用现有 house `actionContainer` 的默认 NPC 按钮现在也会携带与 roster 相同的共享 NPC context seam，因此“现有菜单 -> 谈话”会先补齐共享 NPC session，再进入 AI 对话，不再因为只有 `characterId` 而空触发。
+- 首次点击 `谈话` 发出的 `start_talk` 请求现在会立刻把当前地点、玩家、NPC 和“谁与谁正在交谈”的信息写入 AI 上下文，而不是只告诉模型“开始交谈”。
+- 首次 `start_talk` 现在还会明确要求 AI 根据当前情况让 NPC 先说一句自然开场白（可为问候、寒暄、试探或提醒），并强调不能 OOC、必须符合人物设定。
+- 外部 OpenAI-compatible NPC provider 现在带有请求超时保护；当上游 `chat/completions` 长时间不返回时，共享 NPC 对话会进入 error 状态并提示重试，而不会永久停留在“正在组织下一句话”。
+- 外部 OpenAI-compatible NPC provider 现在支持按顺序重试 fallback 模型；当首选模型超时或没有返回有效内容时，会继续尝试 `fallbackModels` / `VITE_NPC_AI_FALLBACK_MODELS` 中的后备模型，再决定是否报错。
+- 外部 NPC provider 现在会把 zip 风格 SSE 的 `response` / `narrative` / `stream` token / `options` 归一化为共享 NPC dialogue steps；即使后端不直接返回 marker steps，也能落成 NPC 发言与三选一回复。
+- 外部 NPC provider 现在额外支持 `openai-compatible` 模式：可以把共享 NPC provider request 映射到 `baseUrl + /v1/chat/completions`，消费标准 chat completion JSON，并在返回 marker 文本时还原为共享 dialogue steps。
+- `src/main.ts` 现在会在创建 NPC interaction runtime 前，先从本地 Vite `VITE_NPC_AI_*` 环境变量注入共享 provider 配置，让 localhost 可直接接到 OpenAI 兼容代理而不改业务代码。
+- 共享 NPC AI 对话 UI 不再弹出单独中央窗口；进入 `谈话` 后会直接复用游戏原有底部对话框显示 NPC 发言，并按固定页容量做“向前寻找最近断句标点”的分页。
+- AI 对话激活时，house 中央功能按钮与原有右下离开按钮会被 shell 层临时隐藏；NPC 当前轮全部页播完前不会出现回复选项，播到最后一页后才在中央显示“善意 / 中立 / 恶意”三条 AI 生成回复和一个自定义入口。
+- 自定义回复现在从“常驻输入框”改为第四个入口按钮：玩家点击后才展开输入框，并通过共享 runtime 把输入写回 transcript、记忆日志和下一轮 provider request。
+- 共享 NPC request builder 现在明确要求模型按“善意 / 中立 / 恶意”三种倾向给出三条回复，且第一句话必须由 NPC 主动发起。
+
+### Impact
+- 后续接入自研 AI 时，应接入共享 NPC provider seam，而不是在某个 house、fallback 建筑 renderer 或 `src/main.ts` 中直接写模型调用。
+- 如果你们沿用 zip 里的 `POST /api/visual/session/:sessionId/action/stream` SSE 形态，可以直接使用 `zip-visual-session` 模式；如果后端有自定义协议，可以切到 `structured-sse` 模式发送完整 provider request。
+- 如果你们的自研 AI 或代理站兼容 OpenAI Chat Completions，只要提供 `VITE_NPC_AI_PROVIDER_MODE=openai-compatible`、`VITE_NPC_AI_BASE_URL`、`VITE_NPC_AI_MODEL` 和 `VITE_NPC_AI_API_KEY`，localhost 启动后就会自动接入共享 NPC 对话 loop。
+- 如果代理站上某个首选模型会挂起但同协议下的其他模型可用，可以继续保留首选 `VITE_NPC_AI_MODEL`，再额外提供 `VITE_NPC_AI_FALLBACK_MODELS=模型A,模型B` 作为共享 provider 的自动降级链。
+- 只要建筑 roster 能暴露共享 NPC target/context seam，玩家就可以在任意建筑点击人物头像，经现有菜单进入统一 AI 文游式对话循环。
+- 如果某个 house 把默认 `角色情报 / 谈话 / 送礼` 直接嵌进自己的 `actionContainer`，这些按钮也必须保留共享 NPC context seam，不能只传 `characterId`。
+- 沿用 zip/visual 后端时，不必强制让后端拼出 `[DIALOGUE] / [CHOICE] / [OPTION]` markers；当前 seam 也兼容 plain text + options payload。
+- 这次 UI 收口后，house 模块不需要各自实现“AI 对话弹窗”或分页逻辑；共享 runtime + 共享 renderer 已经把“底部对话分页、中央晚出选项、自定义输入、右下退出”作为通用壳层能力固定下来。
+
+## 2026-08-25 TXT Narrative Place Provider Seam
+
+### Added
+- 新增平行 house host `house.kulan.temple_txt_narrative -> txt-narrative-place`，用于承载皇觉寺 TXT 文游开场，不替换现有 `house.kulan.temple -> temple-house` 路径。
+- `GameState.runtime` 新增统一 `txtNarrative` 分支，持久保存当前 phase、当前叙事地点、TXT flags 与临时地点记录。
+- 新增 `src/domain/txt-narrative.ts`、`src/domain/house-modules/txt-narrative-place-session.ts`、marker parser、place resolver、local placeholder provider、专用 house module、renderer 与样式。
+
+### Changed
+- shared house contract 现在支持 `txt-narrative-provider-event` request，以及 `start-txt-narrative-stream` / `cancel-txt-narrative-stream` side effect。
+- `src/core/runtime/house-runtime.ts` 现在通过共享 provider seam 启动/取消 TXT narrative 流，并在 house leave / supersession 后屏蔽陈旧 provider 事件。
+- `src/main.ts` 只增加了共享 provider 的依赖注入 wiring；没有新增 house-specific business branch。
+
+### Impact
+- 后续接入自研 AI 时，应替换 shared TXT narrative provider 实现，而不是在具体 house、DOM runtime 或 `src/main.ts` 里直接写模型调用。
+- 文字叙事的 transcript、choice、custom-input 与主动推演暂停/恢复，现在都作为 typed house session / overlay 数据流经既有 house framework。
+
 ## 2026-08-06 Tavern Short Stage Notice Contract
 
 ### Added

@@ -25,11 +25,11 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-08-27`
-- Current Focus: `Task 2 provider tri-state orchestration is implemented locally and ready for review; Task 3 documentation/final verification remains next.`
-- Next Step: `Review the Task 2 diff, then execute Task 3 change-log and final verification work.`
-- Verification: `Task 2 GREEN used the cached Node equivalent path: C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` PASS (45 tests, 45 pass); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` PASS. `npm run build:test` and `npm run typecheck` could not run directly because `npm` is unavailable in this PowerShell PATH.
+- Current Focus: `Task 3 documentation and full verification are complete; the child remains completed-but-open because the verified local batch has not been pushed and structured closeout gates are not satisfied.`
+- Next Step: `Review the final local diff, then push and record structured child closeout only after remote push succeeds.`
+- Verification: `Task 3 full verification used cached Node equivalents because npm is unavailable on this PowerShell PATH: C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs PASS (103 files); C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json PASS; Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs PASS (47 tests, 47 pass); C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json PASS; C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\vite\bin\vite.js build PASS with existing asset/chunk warnings.`
 - Notes: `Promoted to the active child after the user selected Subagent-Driven execution. The repo remains in the current checkout because the live AI conversation code and the approved spec/plan exist only as local uncommitted state.`
 
 ## Progress Log
@@ -60,7 +60,7 @@
   - Next: `Generate the Task 2 brief and dispatch the provider tri-state implementer.`
 
 - 2026-08-27
-  - Summary: `Dispatched the Task 2 implementer against the review-clean Task 1 helper seam. This batch now owns the provider-side `chat / clarify / route` orchestration plus the focused external-provider/runtime regressions.`
+  - Summary: `Dispatched the Task 2 implementer against the review-clean Task 1 helper seam. This batch now owns the provider-side chat / clarify / route orchestration plus the focused external-provider/runtime regressions.`
   - Verification: `Governance-only dispatch update; Task 2 implementation verification has not completed yet.`
   - Next: `Wait for the Task 2 implementer report and review the resulting diff.`
 
@@ -68,6 +68,31 @@
   - Summary: `Completed Task 2 locally: provider house select-option/custom-input turns now resolve the hidden intent gate first, then route chat through the dedicated chat choice-loop request, clarify through the one-question clarify request, and route through the existing transition-line plus pending-route handoff path. Added regressions for ambiguous tavern intent clarifying with the exact three-option loop, concrete grain-shop intent routing after dialogue glue, chat staying in ordinary choices, malformed/illegal gate output failing closed after one repair, clarify retaining awaiting-choice/no pendingRoute, and selected-option/custom-input parity for the same spoken route text.`
   - Verification: `RED: C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` FAIL because the clarify gate still fell through to the generic visible request instead of a dedicated clarify continuation. GREEN: cached `tsc -p tsconfig.test.json` PASS; package marker PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` PASS (45 tests, 45 pass); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` PASS.`
   - Next: `Review the Task 2 provider/runtime diff, then proceed to Task 3 documentation and full verification.`
+
+- 2026-08-27
+  - Summary: `Task 2 review found one remaining high-severity gap: chat/clarify prepared requests still preserved executable handoff metadata, so a visible `[ACTION: ...]` could bypass the already-chosen non-route gate decision. Fix round 1 is now in progress with a minimal-scope non-executable guard for chat/clarify variants.`
+  - Verification: `Task 2 implementation remained green on the focused helper/provider/runtime suites and repository typecheck equivalent, but review requested changes because the visible chat/clarify branch was still executable through preserved metadata.`
+  - Next: `Finish Task 2 fix round 1 and rerun Task 2 review before starting Task 3.`
+
+- 2026-08-27
+  - Summary: `Completed Task 2 fix round 1 locally: chat/clarify visible response requests now strip available special actions, house route snapshots, and forced handoff metadata so non-route gate decisions cannot execute indoor handoff markers. The route branch remains unchanged.`
+  - Verification: `RED: cached tsc -p tsconfig.test.json PASS; package marker PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-dialogue-external-provider.test.cjs` FAIL with the new chat and clarify ACTION-leak regressions showing 2 calls instead of the expected 3-call reject/repair/error path. GREEN: cached tsc -p tsconfig.test.json PASS; package marker PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` PASS (47 tests, 47 pass); cached tsc --noEmit -p tsconfig.json PASS; plan lint PASS.`
+  - Next: `Rerun Task 2 review; if review is clean, proceed to Task 3 documentation and final verification.`
+
+- 2026-08-27
+  - Summary: `Task 2 is now review-clean. The fix-round guard that strips executable indoor handoff metadata from chat/clarify visible requests was accepted, so the shared provider now keeps ambiguous/non-route house turns inside ordinary dialogue while preserving route as the only executable indoor handoff contract.`
+  - Verification: `Scoped re-review accepted Task 2 fix round 1 with no new Critical/Important breakage. Task 2 GREEN remains: cached Node `tsc -p tsconfig.test.json` PASS; `.test-dist/package.json` CommonJS marker PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` PASS (47 tests, 47 pass); cached `tsc --noEmit -p tsconfig.json` PASS; plan lint PASS.`
+  - Next: `Dispatch Task 3 for docs/change-log sync, full verification, and final governance updates.`
+
+- 2026-08-27
+  - Summary: `Dispatched the Task 3 implementer for the final docs/change-log sync and verification batch. This task now owns the durable change-log entry, full verification commands, and the move toward completed-but-open governance state for the child.`
+  - Verification: `Governance-only dispatch update; Task 3 verification is pending the implementer report.`
+  - Next: `Wait for the Task 3 report, then review the docs/verification diff and run the final whole-branch review.`
+
+- 2026-08-27
+  - Summary: `Completed Task 3 locally: docs/change-log.md now records the hidden house AI chat / clarify / route gate, ambiguous one-question follow-up behavior, route dialogue glue, and continued house/story ownership of legality and settlement. Governance is synchronized to completed-but-open because the child is verified locally but not pushed or structurally closed.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs` PASS (103 files); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` PASS (47 tests, 47 pass); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\vite\bin\vite.js build` PASS with existing asset/chunk warnings.
+  - Next: `Review the final local diff, then push and add structured child closeout only after remote push succeeds.`
 
 ---
 
@@ -487,7 +512,7 @@ Update this plan file immediately after Task 2 lands:
 - Produces:
   - a durable change-log entry and synchronized governance state for the completed batch
 
-- [ ] **Step 1: Update the change log**
+- [x] **Step 1: Update the change log**
 
 Add a concrete entry to `docs/change-log.md` that records:
 
@@ -496,7 +521,7 @@ Add a concrete entry to `docs/change-log.md` that records:
 - actionable requests still use short NPC dialogue glue before opening an existing local function or route;
 - legality and settlement remain owned by existing house/story modules.
 
-- [ ] **Step 2: Run the full verification batch**
+- [x] **Step 2: Run the full verification batch**
 
 Run:
 
@@ -513,7 +538,7 @@ Expected:
 - `PASS`
 - If any command is skipped, record the exact reason in `Execution State.Verification` and the latest `Progress Log` entry.
 
-- [ ] **Step 3: Sync governance before any closeout or handoff**
+- [x] **Step 3: Sync governance before any closeout or handoff**
 
 Before marking anything complete:
 
@@ -524,18 +549,18 @@ Before marking anything complete:
 
 ## Exit Check
 
-- [ ] Every house `select_option` / `custom_input` turn now runs the hidden intent gate before the visible reply request.
-- [ ] The helper and provider cleanly distinguish `chat`, `clarify`, and `route` without adding a second runtime state machine.
-- [ ] Ambiguous intent asks one short follow-up question and remains in the ordinary bottom-dialogue choice loop.
-- [ ] Concrete legal intent still produces short NPC glue and then executes the validated local route.
-- [ ] Illegal or malformed gate output never bypasses the capability snapshot.
-- [ ] `src/main.ts` remains untouched by this child.
-- [ ] Project progress sync is updated if this child's canonical status changes.
+- [x] Every house `select_option` / `custom_input` turn now runs the hidden intent gate before the visible reply request.
+- [x] The helper and provider cleanly distinguish `chat`, `clarify`, and `route` without adding a second runtime state machine.
+- [x] Ambiguous intent asks one short follow-up question and remains in the ordinary bottom-dialogue choice loop.
+- [x] Concrete legal intent still produces short NPC glue and then executes the validated local route.
+- [x] Illegal or malformed gate output never bypasses the capability snapshot.
+- [x] `src/main.ts` remains untouched by this child.
+- [x] Project progress sync is updated if this child's canonical status changes.
 - [ ] Closeout data is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

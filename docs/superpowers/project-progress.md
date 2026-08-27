@@ -5,18 +5,18 @@
 - Current Stage: `House Local Gameplay`
 - Current Stage Status: `running`
 - Current Task: `NPC AI Per-Turn Intent Gate`
-- Current Task Status: `running`
+- Current Task Status: `completed-but-open`
 - Current Child: `NPC AI Per-Turn Intent Gate`
-- Current Child Status: `running`
+- Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-task-2-implementer-output-and-dispatch-task-2-reviewer-for-provider-tri-state-orchestration`
+- Next Required Action: `review-final-local-diff-push-and-record-structured-closeout-for-npc-ai-per-turn-intent-gate`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-08-27-npc-ai-per-turn-intent-gate-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-08-27-npc-ai-per-turn-intent-gate-plan.md from the Task 2 implementer review step.`
+- Resume From: `Open docs/superpowers/project-progress.md, review docs/superpowers/plans/2026-08-27-npc-ai-per-turn-intent-gate-plan.md completed-but-open state, then push and record structured closeout only after remote push succeeds.`
 
 ## Progress Log
 
@@ -39,6 +39,26 @@
   - Summary: `Task 2 provider tri-state orchestration is implemented locally: house select-option/custom-input turns now gate to chat, clarify, or route before visible generation, while clarify remains ordinary awaiting-choice dialogue and route still uses the existing transition-line/pending-route handoff.`
   - Verification: `RED focused provider/runtime suites failed on the clarify branch falling through to the generic visible request; GREEN cached-Node verification passed tsc -p tsconfig.test.json, the package marker write, npc-ai-house-intent-gate/external-provider/runtime suites with 45/45 tests passing, and tsc --noEmit -p tsconfig.json.`
   - Next: `Review the Task 2 implementer output, then proceed to Task 3 documentation and final verification.`
+
+- 2026-08-27
+  - Summary: `Task 2 review found one remaining high-severity executable-bypass issue: chat/clarify prepared requests still preserve handoff-capable metadata, so a visible `[ACTION: ...]` can bypass the hidden non-route gate decision. The child remains on Task 2 fix round 1.`
+  - Verification: `Task 2 implementation stayed green on the focused helper/provider/runtime suites and repository typecheck equivalent, but task review requested changes because the visible chat/clarify branch remained executable through preserved metadata.`
+  - Next: `Finish Task 2 fix round 1, then rerun Task 2 review.`
+
+- 2026-08-27
+  - Summary: `Task 2 is review-clean after fix round 1. The provider now strips executable indoor handoff metadata from visible chat/clarify follow-ups, so non-route house turns cannot bypass the hidden intent gate while legal route handoff remains intact.`
+  - Verification: `Scoped re-review accepted the Task 2 fix with no new Critical/Important breakage. GREEN verification remains: cached Node tsc -p tsconfig.test.json PASS, .test-dist CommonJS marker PASS, npc-ai-house-intent-gate/external-provider/runtime suites PASS (47/47), cached tsc --noEmit -p tsconfig.json PASS, and plan lint PASS.`
+  - Next: `Generate the Task 3 brief, then dispatch the docs/change-log plus full-verification implementer.`
+
+- 2026-08-27
+  - Summary: `Dispatched the Task 3 implementer for the NPC AI Per-Turn Intent Gate child. The remaining planned work is now confined to the shared change-log entry, the full verification batch, and governance updates toward completed-but-open state.`
+  - Verification: `Governance-only dispatch update; Task 3 verification is pending the implementer report.`
+  - Next: `Read the Task 3 report, generate the review package, and dispatch the task reviewer.`
+
+- 2026-08-27
+  - Summary: `Task 3 completed locally for the NPC AI Per-Turn Intent Gate child: the shared behavior change is recorded in docs/change-log.md, full verification passed through cached Node equivalents, and canonical governance now marks the child/task completed-but-open instead of closed because the batch is still not pushed.`
+  - Verification: `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs` PASS (103 files); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` PASS (47 tests, 47 pass); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\vite\bin\vite.js build` PASS with existing asset/chunk warnings.
+  - Next: `Review the final local diff, then push and record structured child closeout only after remote push succeeds.`
 
 - 2026-08-06
   - Summary: `Applied a local visual follow-up to Tavern Short Public Ghost Sorting: short hand-row public ghost tiles no longer inherit the short-hand opaque overrides and now render as permanent whole-card semi-transparent placeholder ghosts across the full tile stack, while the typed display-order / non-playable reorder contract stays unchanged. The child remains completed-but-open because the verified batch is still local and not pushed.`
