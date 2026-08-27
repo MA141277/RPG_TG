@@ -456,8 +456,7 @@ export function resolveHouseConversationIntentGateDecision(input: {
 
   const rawParts = rawDecision
     .split("|")
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
+    .map((part) => part.trim());
   const intentKind = rawParts[0]?.toLocaleLowerCase() ?? "";
 
   if (intentKind === "chat" && rawParts.length === 1) {

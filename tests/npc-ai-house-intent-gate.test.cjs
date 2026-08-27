@@ -198,6 +198,26 @@ test("house intent gate rejects route decisions with surplus pipe fields", () =>
   );
 });
 
+test("house intent gate rejects route decisions with empty pipe segments", () => {
+  const {
+    resolveHouseConversationIntentGateDecision,
+  } = require("../.test-dist/application/npc-interaction/npc-ai-house-intent-gate.js");
+
+  for (const rawText of [
+    "[INTENT: route|leave-house|]",
+    "[INTENT: route||leave-house]",
+    "[INTENT: route|go-to-house|house.kulan.grain_shop|]",
+  ]) {
+    assert.match(
+      resolveHouseConversationIntentGateDecision({
+        rawText,
+        request: createHouseRequest({ customInputText: "我去粮铺一趟" }),
+      }).issue,
+      /格式或参数不正确/u
+    );
+  }
+});
+
 test("house chat and clarify response prompts forbid direct handoff markers and stay inside one visible choice loop", () => {
   const {
     buildHouseConversationChatResponseRequest,
