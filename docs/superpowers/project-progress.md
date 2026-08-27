@@ -4,21 +4,41 @@
 
 - Current Stage: `House Local Gameplay`
 - Current Stage Status: `running`
-- Current Task: `Tavern Short Public Ghost Sorting`
-- Current Task Status: `completed-but-open`
-- Current Child: `Tavern Short Public Ghost Sorting`
-- Current Child Status: `completed-but-open`
+- Current Task: `NPC AI Per-Turn Intent Gate`
+- Current Task Status: `running`
+- Current Child: `NPC AI Per-Turn Intent Gate`
+- Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-local-diff-and-decide-keep-local-vs-commit-push-for-tavern-short-public-ghost-sorting`
+- Next Required Action: `review-task-2-implementer-output-and-dispatch-task-2-reviewer-for-provider-tri-state-orchestration`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-08-05-tavern-short-public-ghost-sorting-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-08-27-npc-ai-per-turn-intent-gate-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, review docs/superpowers/plans/2026-08-05-tavern-short-public-ghost-sorting-plan.md, then decide whether to keep the verified tavern short public-ghost sorting batch local or commit/push it.`
+- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-08-27-npc-ai-per-turn-intent-gate-plan.md from the Task 2 implementer review step.`
 
 ## Progress Log
+
+- 2026-08-27
+  - Summary: `Switched canonical progress from the completed-but-open tavern child to the NPC AI Per-Turn Intent Gate child after the user selected Subagent-Driven execution for the approved intent-gate plan. The new child now owns the next execution seam in this workspace.`
+  - Verification: `docs/superpowers/plans/2026-08-27-npc-ai-per-turn-intent-gate-plan.md` promoted to `running`; plan lint already passed for the new child.
+  - Next: `Set up the plan-scoped SDD workspace and ledger, generate Task 1 brief, then dispatch the Task 1 implementer.`
+
+- 2026-08-27
+  - Summary: `Task 1 of the NPC AI Per-Turn Intent Gate child is now review-clean after two fix rounds. The helper extraction is accepted, and Task 2 provider tri-state orchestration is the next execution seam.`
+  - Verification: `Task 1 helper suite passed 8/8 with the cached Node equivalent commands; scoped re-review accepted fix round 2 with no new breakage.`
+  - Next: `Generate Task 2 brief/report artifacts, then dispatch the Task 2 implementer.`
+
+- 2026-08-27
+  - Summary: `Dispatched the Task 2 implementer for the provider-side chat / clarify / route integration batch after Task 1 closed review-clean.`
+  - Verification: `Governance-only dispatch update; Task 2 implementation verification is pending the implementer report.`
+  - Next: `Read the Task 2 report, generate the review package, and dispatch the Task 2 reviewer.`
+
+- 2026-08-27
+  - Summary: `Task 2 provider tri-state orchestration is implemented locally: house select-option/custom-input turns now gate to chat, clarify, or route before visible generation, while clarify remains ordinary awaiting-choice dialogue and route still uses the existing transition-line/pending-route handoff.`
+  - Verification: `RED focused provider/runtime suites failed on the clarify branch falling through to the generic visible request; GREEN cached-Node verification passed tsc -p tsconfig.test.json, the package marker write, npc-ai-house-intent-gate/external-provider/runtime suites with 45/45 tests passing, and tsc --noEmit -p tsconfig.json.`
+  - Next: `Review the Task 2 implementer output, then proceed to Task 3 documentation and final verification.`
 
 - 2026-08-06
   - Summary: `Applied a local visual follow-up to Tavern Short Public Ghost Sorting: short hand-row public ghost tiles no longer inherit the short-hand opaque overrides and now render as permanent whole-card semi-transparent placeholder ghosts across the full tile stack, while the typed display-order / non-playable reorder contract stays unchanged. The child remains completed-but-open because the verified batch is still local and not pushed.`

@@ -20,16 +20,16 @@
 - No second visible AI console or second gameplay state machine is introduced.
 - `HouseConversationRoute` remains the only executable indoor handoff contract; `clarify` is not promoted into a new persistent runtime status or a new route kind.
 - The current working tree is already dirty; do not revert unrelated local changes while executing this child.
-- Canonical project progress currently still points at `docs/superpowers/plans/2026-08-05-tavern-short-public-ghost-sorting-plan.md`; keep this child `waiting` and non-canonical until the user explicitly chooses to promote/switch execution.
+- Canonical project progress now points at this owner doc; keep `docs/superpowers/project-progress.md` synchronized whenever this child's status or next action changes.
 - If implementation ends up changing a shared house-module interface, runtime session shape, or cross-module house wiring beyond the approved helper extraction, update `docs/special-house-interface.md` and `docs/change-log.md` in the same batch before claiming completion.
 
 ## Execution State
 
 - Status: `running`
 - Last Updated: `2026-08-27`
-- Current Focus: `Task 1 helper extraction implemented and verified; Task 2 provider tri-state orchestration remains next.`
-- Next Step: `Review the Task 1 helper extraction diff and report, then proceed to Task 2 only after approval.`
-- Verification: `npm run build:test` could not run because `npm` is not on this PowerShell PATH; equivalent GREEN verification passed with `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json`; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline`; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs` PASS (5 tests, 5 pass); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs` PASS.
+- Current Focus: `Task 2 provider tri-state orchestration is implemented locally and ready for review; Task 3 documentation/final verification remains next.`
+- Next Step: `Review the Task 2 diff, then execute Task 3 change-log and final verification work.`
+- Verification: `Task 2 GREEN used the cached Node equivalent path: C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` PASS (45 tests, 45 pass); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` PASS. `npm run build:test` and `npm run typecheck` could not run directly because `npm` is unavailable in this PowerShell PATH.
 - Notes: `Promoted to the active child after the user selected Subagent-Driven execution. The repo remains in the current checkout because the live AI conversation code and the approved spec/plan exist only as local uncommitted state.`
 
 ## Progress Log
@@ -48,6 +48,26 @@
   - Summary: `Completed Task 1 helper extraction locally: added tests/npc-ai-house-intent-gate.test.cjs, created src/application/npc-interaction/npc-ai-house-intent-gate.ts, and moved the house-only intent prompt, route description/examples, route validation parser, and transition request builder out of the external provider while leaving the provider on the existing visible dialogue/route path.`
   - Verification: `RED: C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs` FAIL with `Cannot find module '../.test-dist/application/npc-interaction/npc-ai-house-intent-gate.js'`. GREEN: same compile/package-marker commands PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs` PASS (5 tests, 5 pass); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs` PASS. `npm run build:test` could not run directly because `npm` is unavailable in this PowerShell PATH.`
   - Next: `Proceed to Task 2 provider tri-state orchestration only after Task 1 review/approval.`
+
+- 2026-08-27
+  - Summary: `Task 1 review found the helper parser too permissive. Fix round 1 closed the extra-prose acceptance bug, but scoped re-review still found one remaining exact-marker bypass where empty pipe segments can collapse into a valid route; fix round 2 is now running against that single open finding.`
+  - Verification: `Fix round 1 GREEN used the cached Node equivalent path: C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs` PASS (7 tests, 7 pass). Scoped re-review verdict: extra-prose finding addressed; empty-pipe exact-marker bypass still open.`
+  - Next: `Finish Task 1 fix round 2 and rerun scoped re-review before starting Task 2.`
+
+- 2026-08-27
+  - Summary: `Task 1 reached review-clean after two fix rounds. The helper parser now rejects extra prose around `[INTENT: ...]`, surplus route pipe fields, and empty pipe-segment variants while keeping the extraction scoped to Task 1 only.`
+  - Verification: `Fix round 2 GREEN used the cached Node equivalent path: C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs` PASS (8 tests, 8 pass). Scoped re-review accepted fix round 2 with no new breakage.`
+  - Next: `Generate the Task 2 brief and dispatch the provider tri-state implementer.`
+
+- 2026-08-27
+  - Summary: `Dispatched the Task 2 implementer against the review-clean Task 1 helper seam. This batch now owns the provider-side `chat / clarify / route` orchestration plus the focused external-provider/runtime regressions.`
+  - Verification: `Governance-only dispatch update; Task 2 implementation verification has not completed yet.`
+  - Next: `Wait for the Task 2 implementer report and review the resulting diff.`
+
+- 2026-08-27
+  - Summary: `Completed Task 2 locally: provider house select-option/custom-input turns now resolve the hidden intent gate first, then route chat through the dedicated chat choice-loop request, clarify through the one-question clarify request, and route through the existing transition-line plus pending-route handoff path. Added regressions for ambiguous tavern intent clarifying with the exact three-option loop, concrete grain-shop intent routing after dialogue glue, chat staying in ordinary choices, malformed/illegal gate output failing closed after one repair, clarify retaining awaiting-choice/no pendingRoute, and selected-option/custom-input parity for the same spoken route text.`
+  - Verification: `RED: C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json` PASS; `Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline` PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` FAIL because the clarify gate still fell through to the generic visible request instead of a dedicated clarify continuation. GREEN: cached `tsc -p tsconfig.test.json` PASS; package marker PASS; `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs` PASS (45 tests, 45 pass); `C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json` PASS.`
+  - Next: `Review the Task 2 provider/runtime diff, then proceed to Task 3 documentation and full verification.`
 
 ---
 
@@ -344,7 +364,7 @@ async function resolveOpenAiHouseConversationIntentGate(input: {
 }): Promise<HouseConversationIntentGateDecision | null>;
 ```
 
-- [ ] **Step 1: Write the failing provider/runtime regressions**
+- [x] **Step 1: Write the failing provider/runtime regressions**
 
 Extend the focused tests with these cases:
 
@@ -405,7 +425,7 @@ assert.equal(
 
 - option click and custom input remain behaviorally aligned by feeding the same spoken text through the same house snapshot and observing the same route result after page advance.
 
-- [ ] **Step 2: Run the focused provider/runtime suites to confirm RED**
+- [x] **Step 2: Run the focused provider/runtime suites to confirm RED**
 
 Run:
 
@@ -419,7 +439,7 @@ Expected:
 - `FAIL`
 - The failures should show that the provider still only knows `continue-dialogue` vs direct route and has no clarify branch or dedicated chat-continuation path.
 
-- [ ] **Step 3: Implement the provider-side tri-state flow**
+- [x] **Step 3: Implement the provider-side tri-state flow**
 
 Update `src/application/npc-interaction/external-npc-ai-dialogue-provider.ts` so that:
 
@@ -431,7 +451,7 @@ Update `src/application/npc-interaction/external-npc-ai-dialogue-provider.ts` so
 - malformed/illegal gate output repairs once, then fails closed without fabricating execution;
 - no new session status or `main.ts` branch is introduced while satisfying the new tests.
 
-- [ ] **Step 4: Re-run the focused provider/runtime suites and the repository typecheck**
+- [x] **Step 4: Re-run the focused provider/runtime suites and the repository typecheck**
 
 Run:
 
@@ -446,7 +466,7 @@ Expected:
 - `PASS`
 - The new clarify branch stays inside ordinary dialogue, actionable routes still hand off only after dialogue glue, and the repo typecheck remains clean.
 
-- [ ] **Step 5: Sync plan state after Task 2**
+- [x] **Step 5: Sync plan state after Task 2**
 
 Update this plan file immediately after Task 2 lands:
 

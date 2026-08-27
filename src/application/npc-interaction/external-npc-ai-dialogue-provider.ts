@@ -4,9 +4,6 @@ import type {
   NpcAiDialogueProviderRequest,
   NpcAiDialogueStep,
 } from "../../domain/npc-ai-dialogue";
-import type {
-  HouseConversationRoute,
-} from "../../domain/house-conversation";
 import {
   parsePipeDelimitedChoiceOption,
   parseTxtNarrativeMarkerScript,
@@ -15,9 +12,12 @@ import {
   resolveAvailableHouseConversationRoute,
 } from "../house-conversation/select-house-conversation-capability-snapshot";
 import {
+  buildHouseConversationChatResponseRequest,
+  buildHouseConversationClarifyResponseRequest,
   buildHouseConversationIntentGateRepairRequest,
   buildHouseConversationIntentGateRequest,
   buildHouseConversationRouteTransitionRequest,
+  type HouseConversationIntentGateDecision as ResolvedHouseConversationIntentGateDecision,
   resolveHouseConversationIntentGateDecision,
 } from "./npc-ai-house-intent-gate";
 
@@ -1828,7 +1828,7 @@ function shouldResolveActionRoute(input: {
   );
 }
 
-function shouldResolveHouseConversationRoute(input: {
+function shouldResolveHouseConversationIntentGate(input: {
   config: NpcAiDialogueExternalConfig;
   request: NpcAiDialogueProviderRequest;
 }): input is {
@@ -1843,12 +1843,12 @@ function shouldResolveHouseConversationRoute(input: {
   );
 }
 
-async function resolveOpenAiHouseConversationRoute(input: {
+async function resolveOpenAiHouseConversationIntentGate(input: {
   config: OpenAiCompatibleConfig;
   request: NpcAiDialogueProviderRequest;
   fetchImplementation: FetchImplementation;
   requestTimeoutMs: number;
-}): Promise<HouseConversationRoute | null> {
+}): Promise<ResolvedHouseConversationIntentGateDecision | null> {
   const modelAttempts = buildOpenAiCompatibleModelAttempts(input.config);
   const routeConfig: OpenAiCompatibleConfig = {
     ...input.config,
@@ -1936,7 +1936,7 @@ async function resolveOpenAiHouseConversationRoute(input: {
           return null;
         }
 
-        return result.decision.kind === "route" ? result.decision.route : null;
+        return result.decision;
       } catch {
         if (didTimeout && attemptIndex < modelAttempts.length - 1) {
           continue modelAttemptLoop;
@@ -2147,18 +2147,32 @@ export function createExternalNpcAiDialogueProvider(
         config: input.config,
         request,
       };
-      if (shouldResolveHouseConversationRoute(routeCandidate)) {
+      if (shouldResolveHouseConversationIntentGate(routeCandidate)) {
         await emitStartIfNeeded();
-        const matchedRoute = await resolveOpenAiHouseConversationRoute({
+        const gateDecision = await resolveOpenAiHouseConversationIntentGate({
           config: routeCandidate.config,
           request,
           fetchImplementation,
           requestTimeoutMs,
         });
-        if (matchedRoute != null && matchedRoute.kind !== "continue-dialogue") {
+        if (gateDecision == null) {
+          didEmitError = true;
+          await onEvent({
+            type: "error",
+            requestId: request.requestId,
+            message: "NPC AI 室内意图判断格式不正确，请稍后重试。",
+          });
+          return;
+        }
+
+        if (gateDecision.kind === "chat") {
+          preparedRequest = buildHouseConversationChatResponseRequest(request);
+        } else if (gateDecision.kind === "clarify") {
+          preparedRequest = buildHouseConversationClarifyResponseRequest(request);
+        } else {
           preparedRequest = buildHouseConversationRouteTransitionRequest({
             request,
-            route: matchedRoute,
+            route: gateDecision.route,
           });
         }
       } else if (shouldResolveActionRoute(routeCandidate)) {
