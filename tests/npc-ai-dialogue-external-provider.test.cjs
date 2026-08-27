@@ -1731,6 +1731,254 @@ test("external NPC AI provider keeps house chat intent on the dedicated choice-l
   assert.equal(events[1].allSteps[1].type, "choice");
 });
 
+test("external NPC AI provider rejects ACTION handoff after a chat gate decision", async () => {
+  const {
+    createConfiguredNpcAiDialogueProvider,
+  } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
+
+  const fetchCalls = [];
+  const provider = createConfiguredNpcAiDialogueProvider({
+    globalObject: {
+      __RPG_TG_NPC_AI_CONFIG__: {
+        mode: "openai-compatible",
+        baseUrl: "https://example.com/proxy/",
+        model: "deepseek-v3.1",
+        authToken: "secret-token",
+      },
+      localStorage: {
+        getItem() {
+          return null;
+        },
+      },
+    },
+    fetchImplementation: async (_url, init) => {
+      const body = init?.body == null ? null : JSON.parse(init.body);
+      fetchCalls.push(body);
+
+      return new Response(
+        JSON.stringify({
+          id: `chatcmpl-house-chat-action-leak-${fetchCalls.length}`,
+          object: "chat.completion",
+          model: "deepseek-v3.1",
+          choices: [
+            {
+              index: 0,
+              finish_reason: "stop",
+              message: {
+                role: "assistant",
+                content:
+                  fetchCalls.length === 1
+                    ? "[INTENT: chat]"
+                    : [
+                        `[DIALOGUE: char.test.tavern_boss,酒馆掌柜,"闲话先放一放，我替你开桌。"]`,
+                        "[ACTION: open-gamble]",
+                      ].join("\n"),
+              },
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    },
+  });
+
+  const events = [];
+  await provider.stream(
+    createProviderRequest({
+      metadata: {
+        contextType: "house",
+        npcId: "char.test.tavern_boss",
+        npcName: "酒馆掌柜",
+        inputType: "select_option",
+        houseId: "house.test.tavern",
+        placeName: "测试酒馆",
+        selectedOptionId: "option.ask_rules",
+        selectedOptionLabel: "先说说规矩。",
+        availableSpecialActions: [
+          {
+            id: "open-gamble",
+            label: "赌博",
+          },
+        ],
+        houseConversationCapabilitySnapshot: {
+          cityId: "city.test",
+          houseId: "house.test.tavern",
+          moduleId: "tavern",
+          targetCharacterId: "char.test.tavern_boss",
+          targetCharacterName: "酒馆掌柜",
+          switchableNpcTargets: [
+            {
+              characterId: "char.test.tavern_boss",
+              characterName: "酒馆掌柜",
+              available: true,
+            },
+          ],
+          houseActions: [
+            {
+              actionId: "open-gamble",
+              label: "赌博",
+              available: true,
+            },
+          ],
+          houseServices: [],
+          reachableHouses: [],
+          leaveAction: {
+            actionId: "leave-house",
+            label: "离开酒馆",
+            available: true,
+          },
+          negotiableStoryNodes: [],
+        },
+      },
+    }),
+    (event) => {
+      events.push(event);
+    }
+  );
+
+  assert.equal(fetchCalls.length, 3);
+  assert.deepEqual(
+    events.map((event) => event.type),
+    ["start", "error"]
+  );
+  assert.equal(
+    events[1].message,
+    "NPC AI 功能交接格式不正确，请稍后重试。"
+  );
+});
+
+test("external NPC AI provider rejects ACTION handoff after a clarify gate decision", async () => {
+  const {
+    createConfiguredNpcAiDialogueProvider,
+  } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
+
+  const fetchCalls = [];
+  const provider = createConfiguredNpcAiDialogueProvider({
+    globalObject: {
+      __RPG_TG_NPC_AI_CONFIG__: {
+        mode: "openai-compatible",
+        baseUrl: "https://example.com/proxy/",
+        model: "deepseek-v3.1",
+        authToken: "secret-token",
+      },
+      localStorage: {
+        getItem() {
+          return null;
+        },
+      },
+    },
+    fetchImplementation: async (_url, init) => {
+      const body = init?.body == null ? null : JSON.parse(init.body);
+      fetchCalls.push(body);
+
+      return new Response(
+        JSON.stringify({
+          id: `chatcmpl-house-clarify-action-leak-${fetchCalls.length}`,
+          object: "chat.completion",
+          model: "deepseek-v3.1",
+          choices: [
+            {
+              index: 0,
+              finish_reason: "stop",
+              message: {
+                role: "assistant",
+                content:
+                  fetchCalls.length === 1
+                    ? "[INTENT: clarify]"
+                    : [
+                        `[DIALOGUE: char.test.tavern_boss,酒馆掌柜,"成，那就替你开桌。"]`,
+                        "[ACTION: open-gamble]",
+                      ].join("\n"),
+              },
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    },
+  });
+
+  const events = [];
+  await provider.stream(
+    createProviderRequest({
+      metadata: {
+        contextType: "house",
+        npcId: "char.test.tavern_boss",
+        npcName: "酒馆掌柜",
+        inputType: "custom_input",
+        houseId: "house.test.tavern",
+        placeName: "测试酒馆",
+        customInputText: "我想玩点东西",
+        availableSpecialActions: [
+          {
+            id: "open-gamble",
+            label: "赌博",
+          },
+        ],
+        houseConversationCapabilitySnapshot: {
+          cityId: "city.test",
+          houseId: "house.test.tavern",
+          moduleId: "tavern",
+          targetCharacterId: "char.test.tavern_boss",
+          targetCharacterName: "酒馆掌柜",
+          switchableNpcTargets: [
+            {
+              characterId: "char.test.tavern_boss",
+              characterName: "酒馆掌柜",
+              available: true,
+            },
+          ],
+          houseActions: [
+            {
+              actionId: "open-gamble",
+              label: "赌博",
+              available: true,
+            },
+          ],
+          houseServices: [
+            {
+              serviceId: "tavern-gamble",
+              label: "开赌局",
+              description: "打开酒馆赌局选择与下注流程。",
+              enabled: true,
+            },
+          ],
+          reachableHouses: [],
+          leaveAction: {
+            actionId: "leave-house",
+            label: "离开酒馆",
+            available: true,
+          },
+          negotiableStoryNodes: [],
+        },
+      },
+    }),
+    (event) => {
+      events.push(event);
+    }
+  );
+
+  assert.equal(fetchCalls.length, 3);
+  assert.deepEqual(
+    events.map((event) => event.type),
+    ["start", "error"]
+  );
+  assert.equal(
+    events[1].message,
+    "NPC AI 功能交接格式不正确，请稍后重试。"
+  );
+});
+
 test("external NPC AI provider fails closed when the house intent gate stays malformed after repair", async () => {
   const {
     createConfiguredNpcAiDialogueProvider,

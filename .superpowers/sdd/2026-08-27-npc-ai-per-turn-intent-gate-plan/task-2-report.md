@@ -63,3 +63,66 @@ Result: PASS.
 - `npm` is unavailable on this PowerShell PATH, so the cached Node/TypeScript equivalents were used for `npm run build:test` and `npm run typecheck`.
 - The working tree remains dirty with many unrelated local files. Task 2 edits were limited to the provider, the two focused test files, the owner plan sync, project progress sync, and this report.
 - `docs/change-log.md` remains for Task 3, as specified by the active plan.
+
+## Fix Round 1
+
+### Finding
+
+`chat` / `clarify` gate decisions were still bypassable by visible replies that returned `[ACTION: ...]`, because the prepared chat/clarify visible response requests retained handoff-capable metadata.
+
+### Changes
+
+- Updated `buildHouseConversationChoiceLoopResponseRequest(...)` in `src/application/npc-interaction/npc-ai-house-intent-gate.ts` so chat/clarify response variants strip `availableSpecialActions`, `houseConversationCapabilitySnapshot`, `forcedSpecialActionId`, and `forcedHouseConversationRoute` from the visible response request metadata.
+- Kept the route branch unchanged.
+- Added focused external-provider regressions proving `[ACTION: open-gamble]` is rejected after both `[INTENT: chat]` and `[INTENT: clarify]`.
+
+### RED Evidence
+
+Command:
+
+```powershell
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json
+Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-dialogue-external-provider.test.cjs
+```
+
+Relevant output:
+
+```text
+not ok 17 - external NPC AI provider rejects ACTION handoff after a chat gate decision
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+2 !== 3
+
+not ok 18 - external NPC AI provider rejects ACTION handoff after a clarify gate decision
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+2 !== 3
+
+tests 24
+pass 22
+fail 2
+```
+
+The two-call result showed the provider accepted the visible `[ACTION]` immediately instead of rejecting and repairing the non-route response.
+
+### GREEN Evidence
+
+Commands:
+
+```powershell
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc -p tsconfig.test.json
+Set-Content -LiteralPath .test-dist\package.json -Value '{"type":"commonjs"}' -NoNewline
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test --test-isolation=none tests/npc-ai-house-intent-gate.test.cjs tests/npc-ai-dialogue-external-provider.test.cjs tests/npc-ai-dialogue-runtime.test.cjs
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe .\node_modules\typescript\bin\tsc --noEmit -p tsconfig.json
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tools\lint-superpowers-plans.mjs
+```
+
+Relevant output:
+
+```text
+tests 47
+pass 47
+fail 0
+Superpowers plan lint passed for 103 files.
+```
+
+Repository typecheck exited 0.

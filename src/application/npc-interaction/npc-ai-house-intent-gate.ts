@@ -524,6 +524,13 @@ function buildHouseConversationChoiceLoopResponseRequest(input: {
   instruction: string;
 }): NpcAiDialogueProviderRequest {
   const playerTurnText = resolvePlayerTurnText(input.request) ?? "继续";
+  const {
+    availableSpecialActions: _availableSpecialActions,
+    forcedHouseConversationRoute: _forcedHouseConversationRoute,
+    forcedSpecialActionId: _forcedSpecialActionId,
+    houseConversationCapabilitySnapshot: _houseConversationCapabilitySnapshot,
+    ...nonExecutableMetadata
+  } = input.request.metadata;
 
   return {
     ...input.request,
@@ -543,6 +550,7 @@ function buildHouseConversationChoiceLoopResponseRequest(input: {
         ].join("\n"),
       },
     ],
+    metadata: nonExecutableMetadata,
   };
 }
 
