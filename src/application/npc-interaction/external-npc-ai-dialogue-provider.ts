@@ -1290,6 +1290,8 @@ function resolveChoiceStepFormatIssue(
   const hasLeadInStep = steps.some(
     (step) => step.type === "narration" || step.type === "dialogue"
   );
+  const requiresChoiceLeadIn =
+    request.requestId.endsWith(":house-clarify-response");
 
   if (actionSteps.length > 0 || routeSteps.length > 0) {
     if (actionSteps.length > 0 && routeSteps.length > 0) {
@@ -1417,6 +1419,13 @@ function resolveChoiceStepFormatIssue(
     return createNpcAiDialogueFormatIssue(
       "choice",
       "必须返回恰好 3 个 OPTION。"
+    );
+  }
+
+  if (requiresChoiceLeadIn && !hasLeadInStep) {
+    return createNpcAiDialogueFormatIssue(
+      "choice",
+      "室内澄清回复必须先给出至少 1 句符合人设的旁白或对话，再给出 [CHOICE]。"
     );
   }
 
@@ -1828,6 +1837,16 @@ function shouldResolveActionRoute(input: {
   );
 }
 
+function isHouseConversationIntentGateTurn(
+  request: NpcAiDialogueProviderRequest
+): boolean {
+  return (
+    request.metadata.inputType !== "start_talk" &&
+    request.metadata.houseConversationCapabilitySnapshot != null &&
+    resolvePlayerTurnText(request) != null
+  );
+}
+
 function shouldResolveHouseConversationIntentGate(input: {
   config: NpcAiDialogueExternalConfig;
   request: NpcAiDialogueProviderRequest;
@@ -1837,9 +1856,17 @@ function shouldResolveHouseConversationIntentGate(input: {
 } {
   return (
     input.config.mode === "openai-compatible" &&
-    input.request.metadata.inputType !== "start_talk" &&
-    input.request.metadata.houseConversationCapabilitySnapshot != null &&
-    resolvePlayerTurnText(input.request) != null
+    isHouseConversationIntentGateTurn(input.request)
+  );
+}
+
+function shouldFailClosedHouseConversationIntentGate(input: {
+  config: NpcAiDialogueExternalConfig;
+  request: NpcAiDialogueProviderRequest;
+}): boolean {
+  return (
+    input.config.mode !== "openai-compatible" &&
+    isHouseConversationIntentGateTurn(input.request)
   );
 }
 
@@ -2175,6 +2202,15 @@ export function createExternalNpcAiDialogueProvider(
             route: gateDecision.route,
           });
         }
+      } else if (shouldFailClosedHouseConversationIntentGate(routeCandidate)) {
+        await emitStartIfNeeded();
+        didEmitError = true;
+        await onEvent({
+          type: "error",
+          requestId: request.requestId,
+          message: "当前外部 NPC AI 模式不支持室内意图门禁，请稍后重试。",
+        });
+        return;
       } else if (shouldResolveActionRoute(routeCandidate)) {
         await emitStartIfNeeded();
         const matchedActionId = await resolveOpenAiActionRoute({
