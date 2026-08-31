@@ -1,0 +1,13 @@
+const { createInitialState } = require('./.test-dist/application/state/create-initial-state.js');
+const { ensureCityNpcPoolsForCurrentDay } = require('./.test-dist/application/city-npcs/refresh-city-npc-pools.js');
+const { defaultRuntimeContent } = require('./.test-dist/application/content/default-runtime-content.js');
+const { SettlementTradeService } = require('./.test-dist/application/markets/settlement-trade-service.js');
+const { prototypeCards, prototypeCharacters, prototypeCities, prototypeCityNpcPools, prototypeHouses, prototypeMap, prototypeValuables } = require('./.test-dist/content/prototype-world.js');
+const house = prototypeHouses.find((h) => h.moduleId === 'market-house');
+const playerCharacterId = 'char.player';
+defaultRuntimeContent.cities = prototypeCities;
+const state0 = createInitialState({ currentMapId: prototypeMap.id, currentCityId: 'city.yingtian', currentHouseId: house.id + '.city.yingtian', playerCharacterId, chapterId: 'chapter.prototype', year: 1567, month: 1, day: 1, pinnedCharacterId: playerCharacterId, reviewDateText: 'test', mainHouseMissionText: 'test', cards: { ownedCardIds: prototypeCards.map((c) => c.id), selectedCardId: prototypeCards[0]?.id ?? null }, valuables: { items: prototypeValuables, selectedItemId: prototypeValuables[0]?.id ?? null, equippedWeaponSet: { swordId: prototypeValuables.find((v) => v.category === 'weapon')?.id ?? null, armorId: prototypeValuables.find((v) => v.category === 'armor')?.id ?? null } }, currentView: 'house' });
+const state = ensureCityNpcPoolsForCurrentDay(state0, prototypeCityNpcPools, () => 0.1);
+const service = new SettlementTradeService();
+const summary = service.createInvestigationSummary({ state, cityId: 'city.yingtian', currentDay: 564121 });
+console.log(JSON.stringify(summary, null, 2));

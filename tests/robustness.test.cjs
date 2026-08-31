@@ -8107,7 +8107,7 @@ test("global NPC interaction renderer emits generic menu actions", () => {
   );
 });
 
-test("global NPC default talk renders visible dialogue and close clears the session", () => {
+test("global NPC default talk opens the shared AI dialogue shell and close clears the session", () => {
   const {
     chooseNpcDefaultTalk,
     closeNpcInteraction,
@@ -8127,6 +8127,46 @@ test("global NPC default talk renders visible dialogue and close clears the sess
     "char.tea"
   );
   const talked = chooseNpcDefaultTalk(opened, "char.tea");
+  talked.gameState.ui.npcInteractionSession.dialogue = {
+    ...talked.gameState.ui.npcInteractionSession.dialogue,
+    status: "awaiting-choice",
+    displayPages: [
+      {
+        id: "page-1",
+        type: "dialogue",
+        speakerId: "char.tea",
+        speakerName: "茶博士",
+        text: "客官今日想聊哪一桩？",
+      },
+    ],
+    currentDisplayPageIndex: 0,
+    options: [
+      {
+        id: "option.ask_town",
+        label: "问城里近况",
+        actionText: "问城里近况",
+        actionId: "npc-ai-dialogue-select-option:option.ask_town",
+        kind: "benevolent",
+        recommended: true,
+      },
+      {
+        id: "option.ask_road",
+        label: "问路上见闻",
+        actionText: "问路上见闻",
+        actionId: "npc-ai-dialogue-select-option:option.ask_road",
+        kind: "neutral",
+      },
+      {
+        id: "option.ask_people",
+        label: "问近来人物",
+        actionText: "问近来人物",
+        actionId: "npc-ai-dialogue-select-option:option.ask_people",
+        kind: "hostile",
+      },
+    ],
+    customInputValue: "",
+    customInputOpen: false,
+  };
   const html = renderNpcInteractionDialogue({
     session: talked.gameState.ui.npcInteractionSession,
     targetName: "茶博士",
@@ -8134,19 +8174,21 @@ test("global NPC default talk renders visible dialogue and close clears the sess
   });
   const closed = closeNpcInteraction(talked);
 
-  assert.match(html, /data-npc-dialogue="default-talk"/);
-  assert.match(html, /class="c-grain-shop-center c-grain-shop-center--open[^"]*"/);
-  assert.match(html, /class="c-grain-shop-actions[^"]*"/);
+  assert.match(html, /data-npc-dialogue="ai-dialogue"/);
+  assert.match(html, /class="c-grain-shop-dialogue/u);
+  assert.doesNotMatch(html, /class="c-grain-shop-center c-grain-shop-center--open[^"]*"/);
   assert.doesNotMatch(html, /c-npc-interaction-menu/);
   assert.match(html, /茶博士/);
-  assert.match(html, /谈话/);
+  assert.match(html, /客官今日想聊哪一桩/u);
   assert.match(html, /c-grain-shop-dialogue__npc/);
   assert.match(html, /c-test-portrait/);
+  assert.match(html, /data-npc-action="open-custom-input"/);
   assert.match(html, /data-npc-action="close"/);
-  assert.match(html, /data-npc-action="continue"/);
+  assert.doesNotMatch(html, /data-npc-input="custom"/);
   assert.ok(
-    html.indexOf('data-npc-action="continue"') < html.indexOf('data-npc-action="close"'),
-    "Close should be the bottom-most default talk action."
+    html.indexOf('data-npc-action="open-custom-input"') <
+      html.indexOf('data-npc-action="close"'),
+    "Close should stay below the shared AI dialogue send action."
   );
   assert.equal(closed.gameState.ui.npcInteractionSession, null);
 });
@@ -8164,6 +8206,19 @@ test("global NPC interaction main has a generic blocked open guard", () => {
   assert.match(npcTargetBlock, /isNpcInteractionBlocked/);
   assert.match(npcTargetBlock, /selectNpcInteractionBlockState/);
   assert.doesNotMatch(npcTargetBlock, /tea-house|medicine-house|market-house|tavern|leader-residence/);
+});
+
+test("house NPC target clicks route through the house conversation coordinator so dialogue can be reopened after closing", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const npcTargetBlock =
+    mainSource.match(
+      /const npcTargetButton = targetElement\.closest[\s\S]*?const npcActionButton =/
+    )?.[0] ?? "";
+
+  assert.match(npcTargetBlock, /houseConversationActionCoordinator\?\.handleNpcTargetClick/);
 });
 
 test("global NPC interaction profile detail renders above NPC choices", () => {
@@ -8345,7 +8400,7 @@ test("global NPC default talk opens dialogue without mutating runtime state", ()
   );
   const talked = chooseNpcDefaultTalk(opened, "char.tea");
 
-  assert.equal(talked.gameState.ui.npcInteractionSession?.mode, "dialogue");
+  assert.equal(talked.gameState.ui.npcInteractionSession?.mode, "ai-dialogue");
   assert.deepEqual(
     talked.gameState.runtime.variables,
     baseGameState.runtime.variables
@@ -19303,6 +19358,26 @@ test("global NPC interaction does not add concrete house business branches to ma
   assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']medicine-house["']/);
   assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']tavern["']/);
   assert.match(mainSource, /data-npc-action/);
+});
+
+test("main.ts free of Haozhou house business branches for hidden AI house conversation", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /house\.kulan\.market/u);
+  assert.doesNotMatch(mainSource, /house\.kulan\.grain_shop/u);
+  assert.doesNotMatch(
+    mainSource,
+    /["'](?:market-buy|market-sell|market-investigate|grain-buy|grain-sell|grain-intel|grain-accounting|medicine-heal|medicine-buy|medicine-compound|tavern-work|tavern-drink|tavern-gamble|tea-serve|tea-inquire|tea-debate)["']/u
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /["'](?:world-intent:temple-request-early-begging|world-intent:temple-review-work-plan-negotiation|world-intent:keep-assignment-negotiation)["']/u
+  );
+  assert.match(mainSource, /selectHouseConversationServicesFromActiveModule/);
+  assert.match(mainSource, /selectHaozhouWorldIntentNegotiationNodes/);
 });
 
 test("campaign coordinate travel builds a multi-step adjacent hex path", () => {

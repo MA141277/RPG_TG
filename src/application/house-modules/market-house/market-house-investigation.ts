@@ -52,12 +52,12 @@ function resolveRecommendedGoodsIds(
   summary: ReturnType<SettlementTradeService["createInvestigationSummary"]>,
   featuredDestination: ReturnType<typeof pickFeaturedDestination>
 ): SettlementTradeGoodId[] {
-  const destinationGoodsIds = featuredDestination?.demandedGoodsIds.slice(0, 2) ?? [];
-  if (destinationGoodsIds.length > 0) {
-    return destinationGoodsIds;
+  const headlineGoodsIds = summary.headlineGoodsIds.slice(0, 2);
+  if (headlineGoodsIds.length > 0) {
+    return headlineGoodsIds;
   }
 
-  return summary.headlineGoodsIds.slice(0, 2);
+  return featuredDestination?.demandedGoodsIds.slice(0, 2) ?? [];
 }
 
 function formatRecommendedGoodsSummary(goodsIds: readonly SettlementTradeGoodId[]): string {

@@ -29,10 +29,12 @@ import type {
 import type { SceneDefinition } from "../../domain/action";
 import { assertExists } from "../../shared/assert";
 import type { StorySettlementDefinition } from "../../application/story/story-settlement-continuation";
+import type { TxtNarrativeProvider } from "../../domain/txt-narrative";
 import type {
   ProgressTrackBinding,
   ProgressTrackDefinition,
 } from "../contracts/progression-runtime";
+import type { WorldObservedEvent } from "../../domain/world-intent";
 import {
   builtinHouseModuleRegistry,
   type HouseModuleRegistry,
@@ -86,6 +88,8 @@ export type HouseRuntimeDependencies = {
   houseDefinitionsById?: Record<string, HouseDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
   houseModuleRegistry?: HouseModuleRegistry | undefined;
+  txtNarrativeProvider?: TxtNarrativeProvider | undefined;
+  recordObservedEvents?(events: WorldObservedEvent[]): void;
   syncCouncilPriorityAfterGameStateChange(
     previousGameState: GameState,
     councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
@@ -106,7 +110,18 @@ export type HouseRuntimeBridge = {
 export function createHouseRuntimeBridge(
   dependencies: HouseRuntimeDependencies
 ): HouseRuntimeBridge {
-  const intervalHandles: Record<string, number> = {};
+  const intervalHandles: Record<
+    string,
+    ReturnType<typeof globalThis.setInterval>
+  > = {};
+  const txtNarrativeRequests = new Map<
+    string,
+    {
+      requestId: string;
+      hostHouseId: string;
+      moduleId: HouseModuleId;
+    }
+  >();
   const houseModuleRegistry =
     dependencies.houseModuleRegistry ?? builtinHouseModuleRegistry;
 
@@ -222,6 +237,9 @@ export function createHouseRuntimeBridge(
       },
       characterDefinitions: result.characterDefinitions,
     });
+    if ((result.observedEvents?.length ?? 0) > 0) {
+      dependencies.recordObservedEvents?.(result.observedEvents ?? []);
+    }
 
     applyHouseSideEffects(
       houseDefinition,
@@ -296,10 +314,111 @@ export function createHouseRuntimeBridge(
     }
   }
 
+  function cancelTxtNarrativeRequest(requestId: string): void {
+    if (!txtNarrativeRequests.has(requestId)) {
+      return;
+    }
+
+    txtNarrativeRequests.delete(requestId);
+    void dependencies.txtNarrativeProvider?.cancel?.(requestId);
+  }
+
+  function clearAllTxtNarrativeRequests(): void {
+    Array.from(txtNarrativeRequests.keys()).forEach((requestId) => {
+      cancelTxtNarrativeRequest(requestId);
+    });
+  }
+
+  function canDispatchTxtNarrativeEvent(input: {
+    requestId: string;
+    houseId: string;
+    moduleId: HouseModuleId;
+  }): boolean {
+    const activeRequest = txtNarrativeRequests.get(input.requestId);
+    if (
+      activeRequest == null ||
+      activeRequest.hostHouseId !== input.houseId ||
+      activeRequest.moduleId !== input.moduleId
+    ) {
+      return false;
+    }
+
+    const activeHouse = getActiveHouseDefinition();
+    return (
+      activeHouse?.id === input.houseId && activeHouse.moduleId === input.moduleId
+    );
+  }
+
+  function startTxtNarrativeStream(input: {
+    houseDefinition: HouseDefinition;
+    moduleId: HouseModuleId;
+    requestId: string;
+    payload: Extract<
+      HouseModuleSideEffect,
+      { type: "start-txt-narrative-stream" }
+    >["payload"];
+  }): void {
+    txtNarrativeRequests.set(input.requestId, {
+      requestId: input.requestId,
+      hostHouseId: input.houseDefinition.id,
+      moduleId: input.moduleId,
+    });
+
+    const provider = dependencies.txtNarrativeProvider;
+    if (provider == null) {
+      return;
+    }
+
+    const forwardEvent = (
+      event: Extract<
+        HouseRuntimeSessionRequest,
+        { type: "txt-narrative-provider-event" }
+      >["event"]
+    ): void => {
+      if (
+        !canDispatchTxtNarrativeEvent({
+          requestId: input.requestId,
+          houseId: input.houseDefinition.id,
+          moduleId: input.moduleId,
+        })
+      ) {
+        return;
+      }
+
+      dispatchCurrentHouseRequest({
+        type: "txt-narrative-provider-event",
+        requestId: input.requestId,
+        event,
+      });
+
+      if (event.type === "complete" || event.type === "error") {
+        txtNarrativeRequests.delete(input.requestId);
+      }
+    };
+
+    void Promise.resolve(
+      provider.stream(input.payload, (event) => {
+        if (event.requestId !== input.requestId) {
+          return;
+        }
+
+        forwardEvent(event);
+      })
+    ).catch((error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : "TXT narrative stream failed.";
+      forwardEvent({
+        type: "error",
+        requestId: input.requestId,
+        message,
+      });
+    });
+  }
+
   function stopHouseInterval(intervalId: string): void {
     const handle = intervalHandles[intervalId];
     if (handle != null) {
-      window.clearInterval(handle);
+      globalThis.clearInterval(handle);
       delete intervalHandles[intervalId];
     }
   }
@@ -341,6 +460,21 @@ export function createHouseRuntimeBridge(
         return;
       }
 
+      if (sideEffect.type === "cancel-txt-narrative-stream") {
+        cancelTxtNarrativeRequest(sideEffect.requestId);
+        return;
+      }
+
+      if (sideEffect.type === "start-txt-narrative-stream") {
+        startTxtNarrativeStream({
+          houseDefinition,
+          moduleId,
+          requestId: sideEffect.requestId,
+          payload: sideEffect.payload,
+        });
+        return;
+      }
+
       if (sideEffect.type === "start-map-auto-advance") {
         dependencies.startMapAutoAdvance({
           intervalId: sideEffect.intervalId,
@@ -358,7 +492,7 @@ export function createHouseRuntimeBridge(
       }
 
       stopHouseInterval(sideEffect.intervalId);
-      intervalHandles[sideEffect.intervalId] = window.setInterval(() => {
+      intervalHandles[sideEffect.intervalId] = globalThis.setInterval(() => {
         const activeHouse = getActiveHouseDefinition();
         if (
           activeHouse?.id !== houseDefinition.id ||
@@ -384,6 +518,7 @@ export function createHouseRuntimeBridge(
     );
     assertExists(houseDefinition, `House not found for id "${houseId}".`);
 
+    clearAllTxtNarrativeRequests();
     clearAllHouseIntervals();
 
     const appState = dependencies.getAppState();
@@ -480,6 +615,7 @@ export function createHouseRuntimeBridge(
   }
 
   function leaveCurrentHouse(): void {
+    clearAllTxtNarrativeRequests();
     const activeHouse = getActiveHouseDefinition();
     if (activeHouse?.moduleId != null) {
       const appState = dependencies.getAppState();
@@ -543,6 +679,7 @@ export function createHouseRuntimeBridge(
       return;
     }
 
+    clearAllTxtNarrativeRequests();
     clearAllHouseIntervals();
     const appState = dependencies.getAppState();
     dependencies.setAppState({

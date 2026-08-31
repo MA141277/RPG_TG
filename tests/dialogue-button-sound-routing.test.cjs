@@ -72,20 +72,168 @@ test("npc dialogue actions stay silent instead of falling back to the generic ui
   } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
 
   const html = renderNpcInteractionDialogue({
-    session: { mode: "dialogue", targetCharacterId: "character.test" },
+    session: {
+      mode: "ai-dialogue",
+      targetCharacterId: "character.test",
+      dialogue: {
+        requestSequence: 1,
+        currentRequestId: null,
+        status: "awaiting-choice",
+        transcript: [
+          {
+            id: "turn-1",
+            type: "dialogue",
+            speakerId: "character.test",
+            speakerName: "测试人物",
+            text: "要聊什么？",
+          },
+        ],
+        displayPages: [
+          {
+            id: "page-1",
+            type: "dialogue",
+            speakerId: "character.test",
+            speakerName: "测试人物",
+            text: "要聊什么？",
+          },
+        ],
+        currentDisplayPageIndex: 0,
+        options: [
+          {
+            id: "option.one",
+            label: "问近况",
+            actionText: "问近况",
+            actionId: "npc-ai-dialogue-select-option:option.one",
+            kind: "benevolent",
+            recommended: true,
+          },
+          {
+            id: "option.two",
+            label: "问来路",
+            actionText: "问来路",
+            actionId: "npc-ai-dialogue-select-option:option.two",
+            kind: "neutral",
+          },
+          {
+            id: "option.three",
+            label: "问人物",
+            actionText: "问人物",
+            actionId: "npc-ai-dialogue-select-option:option.three",
+            kind: "hostile",
+          },
+        ],
+        customInputValue: "",
+        customInputOpen: false,
+        statusNotice: null,
+        errorNotice: null,
+      },
+    },
     targetName: "测试人物",
   });
 
   assert.doesNotMatch(
     html,
-    /data-npc-action="continue"[\s\S]*data-button-sound=/
+    /data-npc-action="select-option"[\s\S]*data-button-sound=/
   );
   assert.match(
     html,
-    /data-npc-action="continue"[\s\S]*data-ui-click-sound="none"/
+    /data-npc-action="select-option"[\s\S]*data-ui-click-sound="none"/
+  );
+  assert.match(
+    html,
+    /data-npc-action="open-custom-input"[\s\S]*data-ui-click-sound="none"/
   );
   assert.match(
     html,
     /data-npc-action="close"[\s\S]*data-ui-click-sound="none"/
+  );
+});
+
+test("npc dialogue page advance and custom composer actions stay silent", () => {
+  const {
+    renderNpcInteractionDialogue,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+
+  const pagingHtml = renderNpcInteractionDialogue({
+    session: {
+      mode: "ai-dialogue",
+      targetCharacterId: "character.test",
+      dialogue: {
+        requestSequence: 1,
+        currentRequestId: null,
+        status: "awaiting-advance",
+        transcript: [],
+        displayPages: [
+          {
+            id: "page-1",
+            type: "dialogue",
+            speakerId: "character.test",
+            speakerName: "测试人物",
+            text: "第一页",
+          },
+          {
+            id: "page-2",
+            type: "dialogue",
+            speakerId: "character.test",
+            speakerName: "测试人物",
+            text: "第二页",
+          },
+        ],
+        currentDisplayPageIndex: 0,
+        options: [],
+        customInputValue: "",
+        customInputOpen: false,
+        statusNotice: null,
+        errorNotice: null,
+      },
+    },
+    targetName: "测试人物",
+  });
+
+  assert.doesNotMatch(
+    pagingHtml,
+    /data-npc-action="advance-page"[\s\S]*data-button-sound=/
+  );
+  assert.match(
+    pagingHtml,
+    /data-npc-action="advance-page"[\s\S]*data-ui-click-sound="none"/
+  );
+
+  const customHtml = renderNpcInteractionDialogue({
+    session: {
+      mode: "ai-dialogue",
+      targetCharacterId: "character.test",
+      dialogue: {
+        requestSequence: 1,
+        currentRequestId: null,
+        status: "awaiting-choice",
+        transcript: [],
+        displayPages: [
+          {
+            id: "page-1",
+            type: "dialogue",
+            speakerId: "character.test",
+            speakerName: "测试人物",
+            text: "最后一页",
+          },
+        ],
+        currentDisplayPageIndex: 0,
+        options: [],
+        customInputValue: "我自己说",
+        customInputOpen: true,
+        statusNotice: null,
+        errorNotice: null,
+      },
+    },
+    targetName: "测试人物",
+  });
+
+  assert.match(
+    customHtml,
+    /data-npc-action="submit-custom"[\s\S]*data-ui-click-sound="none"/
+  );
+  assert.match(
+    customHtml,
+    /data-npc-action="cancel-custom-input"[\s\S]*data-ui-click-sound="none"/
   );
 });

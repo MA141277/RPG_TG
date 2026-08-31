@@ -1,5 +1,6 @@
 import type { CharacterDefinition, CharacterId } from "./character";
 import type { ActivityDefinition } from "./activity";
+import type { HouseConversationServiceCapability } from "./house-conversation";
 import type {
   ActivityFortuneBoardCell,
   ActivityFortuneBoardTripletReward,
@@ -19,9 +20,16 @@ import type { MarketHouseSessionState } from "./house-modules/market-house-sessi
 import type { MedicineHouseSessionState } from "./house-modules/medicine-house-session";
 import type { TempleHouseSessionState } from "./house-modules/temple-house-session";
 import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
+import type { TxtNarrativePlaceSessionState } from "./house-modules/txt-narrative-place-session";
 import type { TavernSessionState } from "./house-modules/tavern-session";
 import type { NpcInteractionOptionViewModel } from "./npc-interaction";
 import type { ReviewAssignmentRow, ReviewPolicyPanel } from "./review";
+import type {
+  TxtNarrativeOverlayViewModel,
+  TxtNarrativeProviderEvent,
+  TxtNarrativeProviderRequest,
+} from "./txt-narrative";
+import type { WorldObservedEvent } from "./world-intent";
 
 export type HouseModuleId =
   | "home-house"
@@ -31,6 +39,7 @@ export type HouseModuleId =
   | "market-house"
   | "medicine-house"
   | "temple-house"
+  | "txt-narrative-place"
   | "tea-house"
   | "tavern";
 
@@ -47,6 +56,17 @@ export type HouseModuleRequest =
   | {
       type: "tick";
       tickId: string;
+    }
+  | {
+      type: "conversation-service";
+      serviceId: string;
+      rawPlayerText: string;
+      targetCharacterId?: string | null;
+    }
+  | {
+      type: "txt-narrative-provider-event";
+      requestId: string;
+      event: TxtNarrativeProviderEvent;
     };
 
 export type HouseModuleSessionStateMap = {
@@ -57,6 +77,7 @@ export type HouseModuleSessionStateMap = {
   "market-house": MarketHouseSessionState;
   "medicine-house": MedicineHouseSessionState;
   "temple-house": TempleHouseSessionState;
+  "txt-narrative-place": TxtNarrativePlaceSessionState;
   "tea-house": TeaHouseSessionState;
   tavern: TavernSessionState;
 };
@@ -116,6 +137,15 @@ export type HouseModuleSideEffect =
       playerCharacterId: string;
       delta: number;
       source: "request-pointer";
+    }
+  | {
+      type: "start-txt-narrative-stream";
+      requestId: string;
+      payload: TxtNarrativeProviderRequest;
+    }
+  | {
+      type: "cancel-txt-narrative-stream";
+      requestId: string;
     };
 
 export type HouseActionViewModel = {
@@ -124,6 +154,7 @@ export type HouseActionViewModel = {
   disabled?: boolean;
   tone?: "default" | "accent";
   buttonSound?: "light" | "heavy";
+  triggerKeywords?: string[];
 };
 
 export type HouseActionContainerViewModel = {
@@ -400,6 +431,7 @@ type LongGambleTableOverlay = {
 };
 
 export type HouseOverlayViewModel =
+  | TxtNarrativeOverlayViewModel
   | {
       type: "alert";
       title: string;
@@ -791,6 +823,7 @@ export type HouseModuleTransitionResult<ModuleId extends HouseModuleId = HouseMo
   characterDefinitions: CharacterDefinition[];
   sessionState: HouseModuleSessionState<ModuleId> | null;
   timeAdvanceCost?: number;
+  observedEvents?: WorldObservedEvent[];
   councilArrivalNotice?: {
     speakerCharacterId?: string;
     textLines: string[];
@@ -805,5 +838,8 @@ export type HouseModuleDefinition<ModuleId extends HouseModuleId = HouseModuleId
   enter(input: HouseModuleEnterInput<ModuleId>): HouseModuleTransitionResult<ModuleId>;
   dispatch(input: HouseModuleDispatchInput<ModuleId>): HouseModuleTransitionResult<ModuleId>;
   leave(input: HouseModuleLeaveInput<ModuleId>): HouseModuleTransitionResult<ModuleId>;
+  selectConversationServices?(
+    input: HouseModuleViewModelInput<ModuleId>
+  ): HouseConversationServiceCapability[];
   selectViewModel(input: HouseModuleViewModelInput<ModuleId>): HouseModuleViewModel;
 };

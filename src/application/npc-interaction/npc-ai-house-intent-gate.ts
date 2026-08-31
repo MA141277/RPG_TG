@@ -4,11 +4,14 @@ import type {
   HouseConversationRoute,
 } from "../../domain/house-conversation";
 import { resolveAvailableHouseConversationRoute } from "../house-conversation/select-house-conversation-capability-snapshot";
+import { matchNpcSpecialActionByText } from "./npc-special-action-intent";
 
 const HOUSE_INTENT_GATE_SYSTEM = [
   "你是历史题材游戏的室内对话意图门禁。",
+  "这一阶段不是 NPC 对话，不是旁白，不是剧情续写，不要写台词。",
   "你的唯一任务，是判断玩家刚才这句话应该继续普通聊天、先追问澄清，还是进入当前室内已有合法 route。",
-  "必须且只允许输出 1 个 [INTENT: ...] 标记。",
+  "输出必须只有一行，且必须且只允许输出 1 个完整的 [INTENT: ...] 标记。",
+  "首字符必须是 [，末字符必须是 ]。前后禁止出现空格、引号、代码块、JSON、编号、解释或任何其他文字。",
   "允许的格式只有：",
   "[INTENT: chat]",
   "[INTENT: clarify]",
@@ -19,10 +22,12 @@ const HOUSE_INTENT_GATE_SYSTEM = [
   "[INTENT: route|leave-house]",
   "[INTENT: route|negotiate-story-node|node_id|approach]",
   "[INTENT: route|negotiate-story-node|node_id|approach|target_character_id]",
-  "只能从当前允许列表中选择 route。",
-  "如果玩家只是闲聊、问候、延续话题，输出 [INTENT: chat]。",
-  "如果玩家的话可能要办事但缺少明确目标，输出 [INTENT: clarify]。",
-  "如果玩家已经明确要求切换对象、打开功能、办理服务、前往地点、离开，或推进剧情交涉，输出对应的 [INTENT: route|...] 标记。",
+  "route 的 id 只能从当前允许列表里原样拷贝。禁止改写、翻译、补全、编造任何 id。",
+  "如果玩家只是闲聊、问候、延续话题、评价近况，没有要求切换对象、打开功能、办理服务、前往地点、离开，或推进剧情交涉，输出 [INTENT: chat]。",
+  "如果玩家像是要办事，但目标不唯一、对象不明确，或当前原话不足以确定唯一合法 route，输出 [INTENT: clarify]。",
+  "如果玩家已明确要求切换对象、打开功能、办理服务、前往地点、离开，或推进剧情交涉，哪怕语气委婉、带寒暄、带客套，也必须输出对应的 [INTENT: route|...] 标记，不得输出 chat 或 clarify。",
+  "如果一句话同时包含客套和明确意图，以明确意图优先，输出对应 route。",
+  "如果原话虽短，但结合当前地点和允许 route 已能唯一落到某个合法 route（例如“来几局”“赌两把”“上桌试手气”在酒馆赌局场景），也算明确意图，不得输出 chat 或 clarify。",
   "禁止输出任何解释、寒暄、对话、[CHOICE]、[OPTION]、[ACTION]、[ROUTE]、英文标签或其他文本。",
 ].join("\n");
 
@@ -47,6 +52,83 @@ const HOUSE_ROUTE_TRANSITION_SYSTEM = [
 ].join("\n");
 
 const INTENT_MARKER_PATTERN = /\[INTENT:\s*([^\]\r\n]+?)\s*\]/gu;
+const CODE_FENCE_START_PATTERN = /^```[^\r\n]*[\r\n]+/u;
+const CODE_FENCE_END_PATTERN = /[\r\n]+```$/u;
+const INTENT_JSON_FIELD_CANDIDATES = [
+  "intent",
+  "decision",
+  "result",
+  "content",
+  "text",
+  "output",
+  "response",
+  "rawText",
+] as const;
+const WRAPPED_INTENT_QUOTES: ReadonlyArray<readonly [string, string]> = [
+  ['"', '"'],
+  ["'", "'"],
+  ["`", "`"],
+  ["“", "”"],
+  ["‘", "’"],
+  ["「", "」"],
+  ["『", "』"],
+];
+const HOUSE_TRAVEL_ID_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  "house.kulan.temple": ["寺庙", "寺里", "皇觉寺"],
+  "house.kulan.market": ["商铺", "商店", "货铺", "货栈", "铺子"],
+  "house.kulan.medicine_house": ["药铺", "药房"],
+  "house.kulan.inn": ["客栈", "旅店", "酒店"],
+  "house.kulan.tea_house": ["茶馆", "茶楼"],
+  "house.kulan.keep": ["帅府", "郭子兴那里", "郭帅那里"],
+  "house.kulan.grain_shop": ["粮铺", "米铺", "粮店"],
+  "house.kulan.leader_residence": ["宅邸", "府上"],
+  home_001: ["住处", "家里", "回家"],
+};
+const GENERIC_LEAVE_INTENT_ALIASES = [
+  "离开",
+  "出去",
+  "出门",
+  "先走",
+  "我先走了",
+  "告辞",
+  "走了",
+  "撤了",
+  "回头再来",
+] as const;
+const TARGET_SWITCH_INTENT_PREFIXES = [
+  "找",
+  "见",
+  "叫",
+  "喊",
+  "问",
+  "请",
+  "换",
+  "去找",
+  "想找",
+  "让我找",
+] as const;
+const HOUSE_TRAVEL_INTENT_PREFIXES = [
+  "去",
+  "到",
+  "上",
+  "往",
+  "前往",
+  "想去",
+  "我要去",
+  "俺也去",
+  "去趟",
+  "去一趟",
+] as const;
+const HOUSE_TRAVEL_INTENT_VERBS = [
+  "去",
+  "到",
+  "上",
+  "往",
+  "前往",
+  "转去",
+  "离开",
+  "赶去",
+] as const;
 
 export type HouseConversationIntentGateDecision =
   | { kind: "chat" }
@@ -60,6 +142,115 @@ function normalizeNonEmptyString(value: unknown): string | null {
 
   const trimmed = value.trim();
   return trimmed.length === 0 ? null : trimmed;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value != null;
+}
+
+function unwrapHouseIntentGateJsonEnvelope(value: unknown): string | null {
+  if (typeof value === "string") {
+    return normalizeNonEmptyString(value);
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length !== 1) {
+      return null;
+    }
+
+    return unwrapHouseIntentGateJsonEnvelope(value[0]);
+  }
+
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const directIntentValue = normalizeNonEmptyString(value.intent);
+  if (directIntentValue != null) {
+    return directIntentValue.startsWith("[INTENT:")
+      ? directIntentValue
+      : `[INTENT: ${directIntentValue}]`;
+  }
+
+  for (const fieldName of INTENT_JSON_FIELD_CANDIDATES) {
+    if (fieldName === "intent") {
+      continue;
+    }
+
+    const unwrappedValue = unwrapHouseIntentGateJsonEnvelope(value[fieldName]);
+    if (unwrappedValue != null) {
+      return unwrappedValue;
+    }
+  }
+
+  return null;
+}
+
+function tryUnwrapHouseIntentGateJson(value: string): string | null {
+  try {
+    return unwrapHouseIntentGateJsonEnvelope(JSON.parse(value));
+  } catch {
+    return null;
+  }
+}
+
+function tryStripHouseIntentGateCodeFence(value: string): string | null {
+  const trimmedValue = value.trim();
+  if (
+    !CODE_FENCE_START_PATTERN.test(trimmedValue) ||
+    !CODE_FENCE_END_PATTERN.test(trimmedValue)
+  ) {
+    return null;
+  }
+
+  return trimmedValue
+    .replace(CODE_FENCE_START_PATTERN, "")
+    .replace(CODE_FENCE_END_PATTERN, "")
+    .trim();
+}
+
+function tryStripHouseIntentGateQuotes(value: string): string | null {
+  const trimmedValue = value.trim();
+
+  for (const [prefix, suffix] of WRAPPED_INTENT_QUOTES) {
+    if (
+      trimmedValue.length > prefix.length + suffix.length &&
+      trimmedValue.startsWith(prefix) &&
+      trimmedValue.endsWith(suffix)
+    ) {
+      return trimmedValue.slice(prefix.length, -suffix.length).trim();
+    }
+  }
+
+  return null;
+}
+
+function normalizeHouseIntentGateRawText(rawText: string): string {
+  let normalizedText = rawText.trim();
+
+  for (let unwrapDepth = 0; unwrapDepth < 4; unwrapDepth += 1) {
+    const jsonUnwrapped = tryUnwrapHouseIntentGateJson(normalizedText);
+    if (jsonUnwrapped != null && jsonUnwrapped !== normalizedText) {
+      normalizedText = jsonUnwrapped;
+      continue;
+    }
+
+    const fenceStripped = tryStripHouseIntentGateCodeFence(normalizedText);
+    if (fenceStripped != null && fenceStripped !== normalizedText) {
+      normalizedText = fenceStripped;
+      continue;
+    }
+
+    const quoteStripped = tryStripHouseIntentGateQuotes(normalizedText);
+    if (quoteStripped != null && quoteStripped !== normalizedText) {
+      normalizedText = quoteStripped;
+      continue;
+    }
+
+    break;
+  }
+
+  return normalizedText;
 }
 
 function resolvePlayerTurnText(
@@ -77,6 +268,342 @@ function resolvePlayerTurnText(
   }
 
   return null;
+}
+
+function normalizeDeterministicHouseIntentText(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/[\s\u3000]+/gu, "")
+    .replace(/[，。！？；：、,.!?;:"'`“”‘’()[\]{}<>《》「」【】]/gu, "");
+}
+
+function hasNormalizedMatch(
+  normalizedText: string,
+  candidates: readonly string[]
+): boolean {
+  return candidates.some((candidate) => {
+    const normalizedCandidate =
+      normalizeDeterministicHouseIntentText(candidate);
+    return (
+      normalizedCandidate.length > 0 &&
+      normalizedText.includes(normalizedCandidate)
+    );
+  });
+}
+
+function buildValidatedDeterministicRoute(input: {
+  request: NpcAiDialogueProviderRequest;
+  route: HouseConversationRoute;
+}): HouseConversationRoute | null {
+  const snapshot = input.request.metadata.houseConversationCapabilitySnapshot;
+  if (snapshot == null) {
+    return null;
+  }
+
+  const playerTurnText = resolvePlayerTurnText(input.request) ?? "";
+  return (
+    resolveAvailableHouseConversationRoute({
+      snapshot,
+      route: input.route,
+      ...(playerTurnText.length === 0 ? {} : { rawPlayerText: playerTurnText }),
+    }) ?? null
+  );
+}
+
+function resolveDeterministicLeaveRoute(
+  request: NpcAiDialogueProviderRequest
+): HouseConversationRoute | null {
+  const snapshot = request.metadata.houseConversationCapabilitySnapshot;
+  const playerTurnText = resolvePlayerTurnText(request);
+  if (snapshot == null || playerTurnText == null) {
+    return null;
+  }
+
+  const normalizedPlayerTurnText =
+    normalizeDeterministicHouseIntentText(playerTurnText);
+  if (normalizedPlayerTurnText.length === 0) {
+    return null;
+  }
+
+  const leaveAction = snapshot.leaveAction;
+  const exactLeaveMatch =
+    leaveAction != null &&
+    [leaveAction.label, leaveAction.actionId]
+      .map((candidate) => normalizeNonEmptyString(candidate))
+      .filter((candidate): candidate is string => candidate != null)
+      .some(
+        (candidate) =>
+          normalizeDeterministicHouseIntentText(candidate) ===
+          normalizedPlayerTurnText
+      );
+  if (
+    !exactLeaveMatch &&
+    !hasNormalizedMatch(
+      normalizedPlayerTurnText,
+      GENERIC_LEAVE_INTENT_ALIASES
+    )
+  ) {
+    return null;
+  }
+
+  return buildValidatedDeterministicRoute({
+    request,
+    route: {
+      kind: "leave-house",
+    },
+  });
+}
+
+function resolveDeterministicSwitchTargetRoute(
+  request: NpcAiDialogueProviderRequest
+): HouseConversationRoute | null {
+  const snapshot = request.metadata.houseConversationCapabilitySnapshot;
+  const playerTurnText = resolvePlayerTurnText(request);
+  if (snapshot == null || playerTurnText == null) {
+    return null;
+  }
+
+  const normalizedPlayerTurnText =
+    normalizeDeterministicHouseIntentText(playerTurnText);
+  if (normalizedPlayerTurnText.length === 0) {
+    return null;
+  }
+
+  const currentTargetCharacterId = snapshot.targetCharacterId ?? null;
+  for (const target of snapshot.switchableNpcTargets) {
+    if (
+      currentTargetCharacterId != null &&
+      target.characterId === currentTargetCharacterId
+    ) {
+      continue;
+    }
+
+    const aliases = [target.characterName, target.characterId].filter(
+      (candidate): candidate is string => candidate.trim().length > 0
+    );
+    const matchedAlias = aliases
+      .map((alias) => normalizeDeterministicHouseIntentText(alias))
+      .find(
+        (normalizedAlias) =>
+          normalizedAlias.length > 0 &&
+          (normalizedPlayerTurnText === normalizedAlias ||
+            TARGET_SWITCH_INTENT_PREFIXES.some((prefix) =>
+              normalizedPlayerTurnText.includes(
+                `${normalizeDeterministicHouseIntentText(prefix)}${normalizedAlias}`
+              )
+            ) ||
+            normalizedPlayerTurnText.includes(
+              `跟${normalizedAlias}`
+            ) ||
+            normalizedPlayerTurnText.includes(
+              `和${normalizedAlias}`
+            ) ||
+            normalizedPlayerTurnText.includes(
+              `同${normalizedAlias}`
+            ) ||
+            normalizedPlayerTurnText.includes(
+              `与${normalizedAlias}`
+            ))
+      );
+    if (matchedAlias == null) {
+      continue;
+    }
+
+    const route = buildValidatedDeterministicRoute({
+      request,
+      route: {
+        kind: "switch-target-npc",
+        characterId: target.characterId,
+      },
+    });
+    if (route != null) {
+      return route;
+    }
+  }
+
+  return null;
+}
+
+function collectDeterministicHouseTravelAliases(
+  house: HouseConversationCapabilitySnapshot["reachableHouses"][number]
+): string[] {
+  const aliases = new Set<string>([
+    house.houseName,
+    house.houseId,
+    ...(HOUSE_TRAVEL_ID_ALIASES[house.houseId] ?? []),
+  ]);
+
+  if (house.houseName.includes("寺")) {
+    aliases.add("寺庙");
+    aliases.add("寺里");
+  }
+  if (house.houseName.includes("货") || house.houseName.includes("商")) {
+    aliases.add("货铺");
+    aliases.add("商铺");
+    aliases.add("商店");
+  }
+  if (house.houseName.includes("药")) {
+    aliases.add("药铺");
+    aliases.add("药房");
+  }
+  if (house.houseName.includes("客栈")) {
+    aliases.add("酒店");
+    aliases.add("旅店");
+  }
+  if (house.houseName.includes("茶")) {
+    aliases.add("茶馆");
+    aliases.add("茶楼");
+  }
+  if (house.houseName.includes("粮")) {
+    aliases.add("粮铺");
+    aliases.add("米铺");
+    aliases.add("粮店");
+  }
+  if (house.houseName.includes("府")) {
+    aliases.add("府上");
+  }
+
+  return [...aliases].filter((alias) => alias.trim().length > 0);
+}
+
+function resolveDeterministicTravelRoute(
+  request: NpcAiDialogueProviderRequest
+): HouseConversationRoute | null {
+  const snapshot = request.metadata.houseConversationCapabilitySnapshot;
+  const playerTurnText = resolvePlayerTurnText(request);
+  if (snapshot == null || playerTurnText == null) {
+    return null;
+  }
+
+  const normalizedPlayerTurnText =
+    normalizeDeterministicHouseIntentText(playerTurnText);
+  if (normalizedPlayerTurnText.length === 0) {
+    return null;
+  }
+
+  for (const house of snapshot.reachableHouses) {
+    const normalizedAliases = collectDeterministicHouseTravelAliases(house)
+      .map((alias) => normalizeDeterministicHouseIntentText(alias))
+      .filter((alias) => alias.length > 0);
+    const hasExactAlias = normalizedAliases.some(
+      (alias) => alias === normalizedPlayerTurnText
+    );
+    const hasTravelAlias = normalizedAliases.some(
+      (alias) =>
+        HOUSE_TRAVEL_INTENT_PREFIXES.some((prefix) =>
+          normalizedPlayerTurnText.includes(
+            `${normalizeDeterministicHouseIntentText(prefix)}${alias}`
+          )
+        ) ||
+        (normalizedPlayerTurnText.includes(alias) &&
+          hasNormalizedMatch(
+            normalizedPlayerTurnText,
+            HOUSE_TRAVEL_INTENT_VERBS
+          ))
+    );
+    if (!hasExactAlias && !hasTravelAlias) {
+      continue;
+    }
+
+    const route = buildValidatedDeterministicRoute({
+      request,
+      route: {
+        kind: "go-to-house",
+        houseId: house.houseId,
+      },
+    });
+    if (route != null) {
+      return route;
+    }
+  }
+
+  return null;
+}
+
+function resolveDeterministicServiceRoute(
+  request: NpcAiDialogueProviderRequest
+): HouseConversationRoute | null {
+  const snapshot = request.metadata.houseConversationCapabilitySnapshot;
+  const playerTurnText = resolvePlayerTurnText(request);
+  if (snapshot == null || playerTurnText == null) {
+    return null;
+  }
+
+  const matchedService = matchNpcSpecialActionByText({
+    text: playerTurnText,
+    actions: snapshot.houseServices.map((service) => ({
+      id: service.serviceId,
+      label: service.label,
+      kind: "special" as const,
+    })),
+  });
+  if (matchedService == null) {
+    return null;
+  }
+
+  return buildValidatedDeterministicRoute({
+    request,
+    route: {
+      kind: "settle-house-service",
+      serviceId: matchedService.id,
+      rawPlayerText: playerTurnText,
+    },
+  });
+}
+
+function resolveDeterministicActionRoute(
+  request: NpcAiDialogueProviderRequest
+): HouseConversationRoute | null {
+  const snapshot = request.metadata.houseConversationCapabilitySnapshot;
+  const playerTurnText = resolvePlayerTurnText(request);
+  if (snapshot == null || playerTurnText == null) {
+    return null;
+  }
+
+  const matchedAction = matchNpcSpecialActionByText({
+    text: playerTurnText,
+    actions: snapshot.houseActions.map((action) => ({
+      id: action.actionId,
+      label: action.label,
+      kind: "special" as const,
+    })),
+  });
+  if (matchedAction == null) {
+    return null;
+  }
+
+  return buildValidatedDeterministicRoute({
+    request,
+    route: {
+      kind: "open-house-action",
+      actionId: matchedAction.id,
+    },
+  });
+}
+
+export function resolveDeterministicHouseConversationIntentDecision(
+  request: NpcAiDialogueProviderRequest
+): HouseConversationIntentGateDecision | null {
+  if (
+    request.metadata.houseConversationCapabilitySnapshot == null ||
+    resolvePlayerTurnText(request) == null
+  ) {
+    return null;
+  }
+
+  const route =
+    resolveDeterministicLeaveRoute(request) ??
+    resolveDeterministicSwitchTargetRoute(request) ??
+    resolveDeterministicTravelRoute(request) ??
+    resolveDeterministicServiceRoute(request) ??
+    resolveDeterministicActionRoute(request);
+  return route == null
+    ? null
+    : {
+        kind: "route",
+        route,
+      };
 }
 
 function summarizeHouseConversationCapabilitySnapshot(
@@ -290,13 +817,18 @@ export function buildHouseConversationIntentGateRequest(
       {
         role: "user",
         content: [
-          `玩家刚才的原话：${playerTurnText}`,
+          `玩家刚才的原话（逐字判断，不要改写）：${playerTurnText}`,
           routeSummary,
           ...(routeExamples.length === 0
             ? []
             : [`当前允许的精确 intent 例子：`, ...routeExamples]),
-          "现在不要继续写对话，只做室内意图门禁判断。",
-          "禁止输出任何别的文本。",
+          "判定原则（只在心里执行，不要输出这些说明）：",
+          "1. 先判断这句话是否已经明确要求办事、换人、换地点、离开，或推进剧情。",
+          "2. 如果已经明确，就从当前允许列表里原样拷贝唯一合法 route id，输出对应 [INTENT: route|...]。",
+          "3. 如果只是闲聊，输出 [INTENT: chat]；如果像办事但目标还不够明确，输出 [INTENT: clarify]。",
+          "4. 如果玩家已明确说出要办的事，不得输出 clarify。",
+          "5. 如果原话虽短，但结合当前可用 route 已能唯一落到某个合法 route，也必须输出对应 route。",
+          "再次强调：这一阶段不是 NPC 对话。输出必须只有一行，而且只能是 1 个 [INTENT: ...] 标记。",
         ].join("\n"),
       },
     ],
@@ -323,12 +855,75 @@ export function buildHouseConversationIntentGateRepairRequest(
           ...(routeExamples.length === 0
             ? []
             : [`当前允许的精确 intent 例子：`, ...routeExamples]),
-          "只能输出 1 个 [INTENT: ...] 标记。",
-          "禁止输出任何其他文本。",
+          "不要解释错误原因，不要写台词，不要写 JSON，不要写代码块。",
+          "route 的 id 必须从当前允许列表里原样拷贝。",
+          "如果玩家已明确说出要办的事，不得输出 clarify。",
+          "如果原话虽短，但结合当前可用 route 已能唯一落到某个合法 route，也不得输出 chat 或 clarify。",
+          "输出必须只有一行，而且只能是 1 个 [INTENT: ...] 标记。",
         ].join("\n"),
       },
     ],
   };
+}
+
+export function buildHouseConversationIntentGateConflictRepairRequest(
+  request: NpcAiDialogueProviderRequest,
+  route: HouseConversationRoute
+): NpcAiDialogueProviderRequest {
+  const { routeSummary, routeExamples } = buildRouteSummaryPrompt(request);
+  const snapshot = request.metadata.houseConversationCapabilitySnapshot;
+  const routeLabel =
+    snapshot == null
+      ? route.kind
+      : describeHouseConversationRoute(snapshot, route);
+  const forcedMarker = buildForcedRouteIntentMarker(route);
+
+  return {
+    ...request,
+    requestId: `${request.requestId}:house-intent-conflict-repair`,
+    system: HOUSE_INTENT_GATE_SYSTEM,
+    messages: [
+      resolveContextMessage(request),
+      {
+        role: "user",
+        content: [
+          `玩家刚才的原话（逐字判断，不要改写）：${resolvePlayerTurnText(request) ?? "继续"}`,
+          routeSummary,
+          ...(routeExamples.length === 0
+            ? []
+            : [`当前允许的精确 intent 例子：`, ...routeExamples]),
+          `这句原话在当前语境下已经能唯一落到合法 route：${routeLabel}。`,
+          `高置信候选 marker：${forcedMarker}`,
+          "像“来几局”“赌两把”“上桌试手气”这类短句，只要在当前地点能唯一落到合法 route，就属于明确办事，不是闲聊。",
+          "请重新判断。",
+          "不得继续输出 chat 或 clarify。",
+          "route 的 id 必须从当前允许列表里原样拷贝。",
+          "输出必须只有一行，而且只能是 1 个 [INTENT: ...] 标记。",
+        ].join("\n"),
+      },
+    ],
+  };
+}
+
+function buildForcedRouteIntentMarker(route: HouseConversationRoute): string {
+  switch (route.kind) {
+    case "switch-target-npc":
+      return `[INTENT: route|switch-target-npc|${route.characterId}]`;
+    case "open-house-action":
+      return `[INTENT: route|open-house-action|${route.actionId}]`;
+    case "settle-house-service":
+      return `[INTENT: route|settle-house-service|${route.serviceId}]`;
+    case "go-to-house":
+      return `[INTENT: route|go-to-house|${route.houseId}]`;
+    case "leave-house":
+      return "[INTENT: route|leave-house]";
+    case "negotiate-story-node":
+      return route.targetCharacterId == null
+        ? `[INTENT: route|negotiate-story-node|${route.nodeId}|${route.approach}]`
+        : `[INTENT: route|negotiate-story-node|${route.nodeId}|${route.approach}|${route.targetCharacterId}]`;
+    default:
+      return "[INTENT: chat]";
+  }
 }
 
 function resolveRouteFromIntentParts(input: {
@@ -433,7 +1028,8 @@ export function resolveHouseConversationIntentGateDecision(input: {
 }):
   | { decision: HouseConversationIntentGateDecision; issue?: undefined }
   | { decision?: undefined; issue: string } {
-  const markerMatches = [...input.rawText.matchAll(INTENT_MARKER_PATTERN)];
+  const normalizedRawText = normalizeHouseIntentGateRawText(input.rawText);
+  const markerMatches = [...normalizedRawText.matchAll(INTENT_MARKER_PATTERN)];
   if (markerMatches.length !== 1) {
     return {
       issue: "室内意图门禁阶段必须且只返回 1 个 [INTENT: ...]。",
@@ -441,7 +1037,7 @@ export function resolveHouseConversationIntentGateDecision(input: {
   }
 
   const rawMarker = markerMatches[0]?.[0];
-  if (rawMarker == null || input.rawText.trim() !== rawMarker) {
+  if (rawMarker == null || normalizedRawText !== rawMarker) {
     return {
       issue: "室内意图门禁阶段只能输出 1 个完整的 [INTENT: ...] 标记。",
     };

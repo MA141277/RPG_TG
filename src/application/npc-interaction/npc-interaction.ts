@@ -1,5 +1,9 @@
 import type { CharacterId } from "../../domain/character";
 import type { HouseStandbyActorViewModel } from "../../domain/house-module";
+import {
+  resolveNpcAiDialogueOptionStance,
+  type NpcAiDialogueSessionState,
+} from "../../domain/npc-ai-dialogue";
 import type {
   NpcInteractionContext,
   NpcInteractionMenuViewModel,
@@ -11,12 +15,24 @@ import { NPC_INTERACTION_DEFAULT_OPTIONS } from "../../domain/npc-interaction";
 
 export { NPC_INTERACTION_DEFAULT_OPTION_IDS } from "../../domain/npc-interaction";
 
+export const NPC_AI_DIALOGUE_SELECT_OPTION_ACTION_PREFIX =
+  "npc-ai-dialogue-select-option:";
+export const NPC_AI_DIALOGUE_CUSTOM_INPUT_FIELD_ID =
+  "npc-ai-dialogue-custom-input";
+export const NPC_AI_DIALOGUE_CUSTOM_INPUT_PLACEHOLDER = "输入你想说的话";
+export const NPC_AI_DIALOGUE_CUSTOM_OPEN_ACTION = "open-custom-input";
+export const NPC_AI_DIALOGUE_CUSTOM_SUBMIT_ACTION = "submit-custom";
+export const NPC_AI_DIALOGUE_CUSTOM_CANCEL_ACTION = "cancel-custom-input";
+export const NPC_AI_DIALOGUE_REQUEST_ID_PREFIX = "npc-ai-dialogue-request-";
+export const NPC_AI_DIALOGUE_ADVANCE_PAGE_ACTION = "advance-page";
+
 export type NpcInteractionBlockState = {
   overlayView: string | null;
   modalState: unknown | null;
   locationDialogueState: unknown | null;
   hasHouseOverlay: boolean;
   hasActiveDialogueAdvance: boolean;
+  hasNpcInteractionSession: boolean;
 };
 
 export function createNpcInteractionSession(
@@ -32,6 +48,38 @@ export function createNpcInteractionSession(
 
 export function closeNpcInteractionSession(): null {
   return null;
+}
+
+export function createInitialNpcAiDialogueSessionState(): NpcAiDialogueSessionState {
+  return {
+    requestSequence: 0,
+    currentRequestId: null,
+    status: "idle",
+    transcript: [],
+    displayPages: [],
+    currentDisplayPageIndex: 0,
+    options: [],
+    customInputValue: "",
+    customInputOpen: false,
+    pendingSpecialActionId: null,
+    pendingRoute: null,
+    statusNotice: null,
+    errorNotice: null,
+  };
+}
+
+export function getNpcAiDialogueOptionStanceLabel(
+  stance: ReturnType<typeof resolveNpcAiDialogueOptionStance>
+): string {
+  if (stance === "benevolent") {
+    return "善意";
+  }
+
+  if (stance === "neutral") {
+    return "中立";
+  }
+
+  return "恶意";
 }
 
 export function selectNpcInteractionMenu(input: {
@@ -106,6 +154,7 @@ export function selectNpcInteractionBlockState(input: {
   beggingMiniGameState?: unknown | null;
   activitySession?: unknown | null;
   messageState?: unknown | null;
+  npcInteractionSession?: NpcInteractionSession;
 }): NpcInteractionBlockState {
   return {
     overlayView: input.overlayView,
@@ -117,15 +166,17 @@ export function selectNpcInteractionBlockState(input: {
       input.activitySession != null ||
       input.messageState != null,
     hasActiveDialogueAdvance: input.houseDialogue != null,
+    hasNpcInteractionSession: input.npcInteractionSession != null,
   };
 }
 
 export function isNpcInteractionBlocked(input: NpcInteractionBlockState): boolean {
-  return (
+  return Boolean(
     input.overlayView != null ||
-    input.modalState != null ||
-    input.locationDialogueState != null ||
-    input.hasHouseOverlay ||
-    input.hasActiveDialogueAdvance
+      input.modalState != null ||
+      input.locationDialogueState != null ||
+      input.hasHouseOverlay ||
+      input.hasActiveDialogueAdvance ||
+      input.hasNpcInteractionSession
   );
 }

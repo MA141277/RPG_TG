@@ -2,6 +2,7 @@ import type { CharacterDefinition } from "../../../domain/character";
 import type { HouseDefinition } from "../../../domain/house";
 
 export type HouseViewModel = {
+  houseId: string;
   title: string;
   defaultCharacterId: string | null;
   characterSummaries: Array<{
@@ -30,6 +31,7 @@ export function createHouseViewModel(
     }));
 
   return {
+    houseId: houseDefinition.id,
     title: houseDefinition.name,
     defaultCharacterId: houseDefinition.defaultCharacterId,
     characterSummaries: [...fixedCharacterSummaries, ...cityNpcSummaries],

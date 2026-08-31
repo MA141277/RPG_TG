@@ -123,6 +123,39 @@ function openShortTable(baseState, characters, buyInGold, enableDebugPreset = fa
   });
 }
 
+function openLongTable(baseState, characters, buyInGold) {
+  const entered = tavernHouseModule.enter({
+    gameState: baseState,
+    characterDefinitions: characters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const opened = tavernHouseModule.dispatch({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+    request: { type: "action", actionId: "open-gamble" },
+  });
+  const selected = tavernHouseModule.dispatch({
+    gameState: opened.gameState,
+    characterDefinitions: opened.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: opened.sessionState,
+    request: { type: "action", actionId: "select-gamble-variant:long" },
+  });
+  return tavernHouseModule.dispatch({
+    gameState: selected.gameState,
+    characterDefinitions: selected.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: { ...selected.sessionState, currentWager: buyInGold },
+    request: { type: "action", actionId: "confirm-gamble" },
+  });
+}
+
 function advanceShortHandToHumanClaimWindow(hand) {
   let nextHand = hand;
   for (let step = 0; step < 32; step += 1) {
@@ -186,6 +219,138 @@ test("tavern short buy-in exchanges gold to chips and charges stamina once per t
   assert.equal(
     player.stamina,
     getPlayerCharacter(prototypeCharacters).stamina - ACTIVITY_COMPLETION_STAMINA_COST
+  );
+});
+
+test("tavern conversation-service gamble reuses the existing gamble-choice overlay", () => {
+  const entered = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const opened = tavernHouseModule.dispatch({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+  const serviceResult = tavernHouseModule.dispatch({
+    gameState: opened.gameState,
+    characterDefinitions: opened.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: opened.sessionState,
+    request: {
+      type: "conversation-service",
+      serviceId: "tavern-gamble",
+      rawPlayerText: "我想来赌两把",
+      targetCharacterId: tavernHouse.defaultCharacterId,
+    },
+  });
+
+  assert.equal(serviceResult.sessionState.overlay?.type, "gamble-choice");
+});
+
+test("tavern short table entry emits an observed event for related NPC memory", () => {
+  const started = openShortTable(createBaseState(), prototypeCharacters, 100);
+
+  assert.equal(started.observedEvents?.length, 1);
+  assert.equal(started.observedEvents?.[0]?.type, "tavern:gamble:entered-table");
+  assert.equal(
+    started.observedEvents?.[0]?.houseActionMemory?.kind,
+    "gamble-enter"
+  );
+  assert.equal(
+    started.observedEvents?.[0]?.reactionHints?.[0]?.characterId,
+    tavernHouse.defaultCharacterId
+  );
+});
+
+test("tavern short cash out without playing emits a no-play reaction event", () => {
+  const started = openShortTable(createBaseState(), prototypeCharacters, 100);
+  const cashOut = tavernHouseModule.dispatch({
+    gameState: started.gameState,
+    characterDefinitions: started.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: started.sessionState,
+    request: { type: "action", actionId: "gamble-close" },
+  });
+
+  assert.equal(cashOut.observedEvents?.[0]?.type, "tavern:gamble:left-without-playing");
+  assert.equal(
+    cashOut.observedEvents?.[0]?.houseActionMemory?.kind,
+    "gamble-leave-without-playing"
+  );
+  assert.match(cashOut.observedEvents?.[0]?.summary ?? "", /没真下场/u);
+  assert.match(
+    cashOut.observedEvents?.[0]?.reactionHints?.[0]?.summary ?? "",
+    /没真下场/u
+  );
+});
+
+test("tavern short bust cash out emits a lost-all reaction event", () => {
+  const started = openShortTable(createBaseState(), prototypeCharacters, 100);
+  assert.equal(started.sessionState.gambleSession.variant, "short");
+  const playerSeatId = started.sessionState.gambleSession.table.playerSeatId;
+  const bustedSession = {
+    ...started.sessionState,
+    gambleSession: {
+      ...started.sessionState.gambleSession,
+      table: {
+        ...started.sessionState.gambleSession.table,
+        bankrollBySeatId: {
+          ...started.sessionState.gambleSession.table.bankrollBySeatId,
+          [playerSeatId]: 0,
+        },
+      },
+    },
+  };
+  const busted = tavernHouseModule.dispatch({
+    gameState: started.gameState,
+    characterDefinitions: started.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: bustedSession,
+    request: { type: "action", actionId: "gamble-close" },
+  });
+
+  assert.equal(busted.observedEvents?.[0]?.type, "tavern:gamble:lost-all");
+  assert.equal(
+    busted.observedEvents?.[0]?.houseActionMemory?.kind,
+    "gamble-settlement"
+  );
+  assert.match(
+    busted.observedEvents?.[0]?.reactionHints?.[0]?.summary ?? "",
+    /输光/u
+  );
+});
+
+test("tavern long close without playing emits a no-play reaction event", () => {
+  const started = openLongTable(createBaseState(), prototypeCharacters, 100);
+  assert.equal(started.sessionState.gambleSession.variant, "long");
+
+  const closed = tavernHouseModule.dispatch({
+    gameState: started.gameState,
+    characterDefinitions: started.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: started.sessionState,
+    request: { type: "action", actionId: "gamble-close" },
+  });
+
+  assert.equal(closed.observedEvents?.[0]?.type, "tavern:gamble:left-without-playing");
+  assert.equal(
+    closed.observedEvents?.[0]?.houseActionMemory?.kind,
+    "gamble-leave-without-playing"
+  );
+  assert.match(closed.observedEvents?.[0]?.summary ?? "", /没真下场/u);
+  assert.match(
+    closed.observedEvents?.[0]?.reactionHints?.[0]?.summary ?? "",
+    /没真下场/u
   );
 });
 

@@ -2,6 +2,7 @@
   --grain-shop-scene-bg: url("../../ui/background/lianghang.png");
   --grain-shop-shopkeeper-portrait: url("../../ui/npc/zhanggui.png");
   --grain-shop-shopkeeper-avatar: url("../../ui/npc/zhangguitouxiang.png");
+  --market-house-medicine-merchant-portrait: url("../../ui/npc/yisheng.png");
   --grain-shop-accounting-title: url("../../ui/算术UI/material-202605291354-006.png");
   --grain-shop-accounting-hud: url("../../ui/算术UI/material-202605291354-005.png");
   --grain-shop-accounting-board: url("../../ui/算术UI/material-202605291352-002.png");
@@ -363,6 +364,42 @@
   background: center bottom / auto 100% no-repeat var(--grain-shop-shopkeeper-portrait);
 }
 
+.c-grain-shop-portrait__art.c-market-house-portrait-art--medicine-merchant {
+  background-image: var(--market-house-medicine-merchant-portrait);
+}
+
+.c-grain-shop-portrait__art.c-house-runtime-npc-portrait-art--merchant {
+  background-image: url("../../ui/npc/gudongshang.png");
+}
+
+.c-grain-shop-portrait__art.c-house-runtime-npc-portrait-art--doctor {
+  background-image: url("../../ui/npc/yisheng.png");
+}
+
+.c-grain-shop-portrait__art.c-house-runtime-npc-portrait-art--guard {
+  background-image: url("../../ui/npc/sundeya.png");
+}
+
+.c-grain-shop-portrait__art.c-house-runtime-npc-portrait-art--civilian {
+  background-image: url("../../ui/npc/chaguan.png");
+}
+
+.c-grain-shop-portrait__art.c-house-runtime-npc-portrait-art--innkeeper {
+  background-image: url("../../ui/npc/jiusilaoban.png");
+}
+
+.c-grain-shop-portrait__art.c-house-runtime-npc-portrait-art--grain-shopkeeper {
+  background-image: url("../../ui/npc/zhanggui.png");
+}
+
+.c-grain-shop-portrait__art.c-house-runtime-npc-portrait-art--monk {
+  background-image: url("../../ui/npc/shixiong.png");
+}
+
+.c-grain-shop-portrait__art.c-market-house-portrait-art--empty {
+  background: none;
+}
+
 .c-grain-shop-portrait__image,
 .c-location-dialogue__portrait-image {
   display: block;
@@ -712,7 +749,9 @@
   transform: translateY(-3px);
 }
 
-.c-grain-shop-leave {
+.c-grain-shop-leave,
+.c-npc-interaction-exit,
+.c-npc-interaction-leave-house {
   position: fixed;
   right: var(--space-4);
   bottom: var(--space-4);
@@ -3355,7 +3394,8 @@
     font-size: 0.95rem;
   }
 
-  .c-grain-shop-leave {
+  .c-grain-shop-leave,
+  .c-npc-interaction-exit {
     right: var(--space-3);
     bottom: var(--space-3);
   }

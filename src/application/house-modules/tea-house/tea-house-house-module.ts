@@ -63,6 +63,8 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import { createHouseActionMemoryObservedEvent } from "../../house/house-action-memory-event";
+import { resolveHouseRuntimeNpcPortraitHooks } from "../../house/house-runtime-npc-portrait-hooks";
 import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
@@ -89,6 +91,21 @@ function getPlayerCharacter(
   return playerCharacter;
 }
 
+function resolveTeaHouseActorPortraitHooks(
+  actor: TeaHouseActor
+): ReturnType<typeof resolveHouseRuntimeNpcPortraitHooks> {
+  if (actor.isFixedHost) {
+    return {};
+  }
+
+  return resolveHouseRuntimeNpcPortraitHooks({
+    moduleId: "tea-house",
+    characterId: actor.id,
+    name: actor.name,
+    title: actor.title,
+  });
+}
+
 function readNumericVariable(
   state: HouseModuleDispatchInput["gameState"],
   key: string,
@@ -111,6 +128,138 @@ function createTransitionResult(
     sessionState: patch?.sessionState ?? input.sessionState,
     ...(patch?.sideEffects == null ? {} : { sideEffects: patch.sideEffects }),
   };
+}
+
+function createTeaHouseObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"tea-house">["houseDefinition"];
+  actorId?: string | null;
+  type: string;
+  summary: string;
+  reactionSummary?: string;
+  houseActionMemory: NonNullable<
+    ReturnType<typeof createHouseActionMemoryObservedEvent>["houseActionMemory"]
+  >;
+}) {
+  return createHouseActionMemoryObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: input.type,
+    summary: input.summary,
+    reactionSummary: input.reactionSummary,
+    reactionCharacterId:
+      input.actorId ??
+      input.houseDefinition.defaultCharacterId ??
+      teaHouseBossProfile.actorId,
+    houseActionMemory: input.houseActionMemory,
+  });
+}
+
+function createTeaServeSuccessObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"tea-house">["houseDefinition"];
+  actor: TeaHouseActor;
+}) {
+  return createTeaHouseObservedEvent({
+    houseDefinition: input.houseDefinition,
+    actorId: input.actor.id,
+    type: "tea:serve:success",
+    summary: `玩家在茶馆请${input.actor.name}喝了一盏茶。`,
+    reactionSummary: "他刚请我喝了茶。",
+    houseActionMemory: {
+      kind: "service-success",
+      serviceId: "tea-serve",
+      serviceLabel: "请喝茶",
+      goldDelta: -teaHouseTeaCost,
+      resultKind: "success",
+    },
+  });
+}
+
+function createTeaInquireSuccessObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"tea-house">["houseDefinition"];
+  actor: TeaHouseActor;
+}) {
+  return createTeaHouseObservedEvent({
+    houseDefinition: input.houseDefinition,
+    actorId: input.actor.id,
+    type: "tea:inquire:success",
+    summary: `玩家在茶馆向${input.actor.name}打听了消息。`,
+    reactionSummary: "他刚跟我打听了些消息。",
+    houseActionMemory: {
+      kind: "service-success",
+      serviceId: "tea-inquire",
+      serviceLabel: "打听消息",
+      resultKind: "success",
+    },
+  });
+}
+
+function createTeaDebatePreviewObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"tea-house">["houseDefinition"];
+  actor: TeaHouseActor;
+}) {
+  return createTeaHouseObservedEvent({
+    houseDefinition: input.houseDefinition,
+    actorId: input.actor.id,
+    type: "tea:debate:preview",
+    summary: `玩家在茶馆向${input.actor.name}摆开了舌战的架势。`,
+    houseActionMemory: {
+      kind: "service-preview",
+      serviceId: "tea-debate",
+      serviceLabel: "舌战",
+      resultKind: "preview",
+    },
+  });
+}
+
+function createTeaDebateCancelObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"tea-house">["houseDefinition"];
+  actor: TeaHouseActor;
+}) {
+  return createTeaHouseObservedEvent({
+    houseDefinition: input.houseDefinition,
+    actorId: input.actor.id,
+    type: "tea:debate:cancel",
+    summary: `玩家在茶馆刚摆开舌战的架势，又暂时作罢。`,
+    reactionSummary: "他刚摆开舌战的架势，却又先按下不谈了。",
+    houseActionMemory: {
+      kind: "service-cancel",
+      serviceId: "tea-debate",
+      serviceLabel: "舌战",
+      resultKind: "cancel",
+    },
+  });
+}
+
+function createTeaDebateSuccessObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"tea-house">["houseDefinition"];
+  actor: TeaHouseActor;
+  winner: "player" | "npc" | "draw";
+}) {
+  const summary =
+    input.winner === "player"
+      ? `玩家在茶馆与${input.actor.name}的舌战里占了上风。`
+      : input.winner === "npc"
+        ? `玩家在茶馆与${input.actor.name}的舌战里落了下风。`
+        : `玩家在茶馆与${input.actor.name}舌战了一场，双方平分秋色。`;
+  const reactionSummary =
+    input.winner === "player"
+      ? "他刚和我辩了一场，还真占了些上风。"
+      : input.winner === "npc"
+        ? "他刚和我辩了一场，到底还是我压住了他。"
+        : "他刚和我辩了一场，算是各有来回。";
+
+  return createTeaHouseObservedEvent({
+    houseDefinition: input.houseDefinition,
+    actorId: input.actor.id,
+    type: "tea:debate:success",
+    summary,
+    reactionSummary,
+    houseActionMemory: {
+      kind: "service-success",
+      serviceId: "tea-debate",
+      serviceLabel: "舌战",
+      resultKind: "success",
+    },
+  });
 }
 
 function withSessionState(
@@ -436,7 +585,8 @@ function finalizeInteraction(
   outcome: TeaHouseActionOutcome,
   title: string,
   extraParagraphs: string[] = [],
-  tone?: "info" | "success" | "warning"
+  tone?: "info" | "success" | "warning",
+  observedEvents?: HouseModuleTransitionResult<"tea-house">["observedEvents"]
 ): HouseModuleTransitionResult<"tea-house"> {
   const mutation = applyTeaHouseOutcome(input, actor, outcome);
 
@@ -456,6 +606,7 @@ function finalizeInteraction(
               tone
             ),
           },
+    ...(observedEvents == null ? {} : { observedEvents }),
     timeAdvanceCost: outcome.timeCost,
   };
 }
@@ -690,8 +841,15 @@ function resolveDebateTurn(
                   : roundResult.outcome.winner === "npc"
                     ? "warning"
                     : "info"
-              ),
+                ),
             },
+      observedEvents: [
+        createTeaDebateSuccessObservedEvent({
+          houseDefinition: input.houseDefinition,
+          actor,
+          winner: roundResult.outcome.winner,
+        }),
+      ],
       sideEffects: [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }],
       timeAdvanceCost: convertHouseActivityDaysToSegments(
         finishedOutcome.timeCost
@@ -767,10 +925,14 @@ function handleActorAction(
     return createTransitionResult(input);
   }
 
-  if (
-    input.request.actionId === "close-alert" ||
-    input.request.actionId === CANCEL_ACTIVITY_CONFIRM_ACTION_ID
-  ) {
+  const selectedActor = getSelectedActor(
+    input.gameState,
+    input.houseDefinition.id,
+    input.houseDefinition.cityId,
+    sessionState
+  );
+
+  if (input.request.actionId === "close-alert") {
     return withSessionState(
       input,
       sessionState,
@@ -779,12 +941,30 @@ function handleActorAction(
     );
   }
 
-  const selectedActor = getSelectedActor(
-    input.gameState,
-    input.houseDefinition.id,
-    input.houseDefinition.cityId,
-    sessionState
-  );
+  if (input.request.actionId === CANCEL_ACTIVITY_CONFIRM_ACTION_ID) {
+    const cancelResult = withSessionState(
+      input,
+      sessionState,
+      { overlay: null },
+      [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }]
+    );
+    const overlay = sessionState?.overlay;
+
+    return overlay?.type === "activity-confirm" &&
+      overlay.confirmActionId === CONFIRM_START_DEBATE_ACTION_ID &&
+      selectedActor != null
+      ? {
+          ...cancelResult,
+          observedEvents: [
+            createTeaDebateCancelObservedEvent({
+              houseDefinition: input.houseDefinition,
+              actor: selectedActor,
+            }),
+          ],
+        }
+      : cancelResult;
+  }
+
   const actorId = parseActorActionId(input.request.actionId);
   if (actorId != null) {
     const nextActor = createTeaHouseActors(
@@ -980,7 +1160,13 @@ function handleActorAction(
         },
         "请喝茶",
         [`花费 ${teaHouseTeaCost} 文。`],
-        "success"
+        "success",
+        [
+          createTeaServeSuccessObservedEvent({
+            houseDefinition: input.houseDefinition,
+            actor: selectedActor,
+          }),
+        ]
       );
     }
     case "inquire": {
@@ -1014,7 +1200,13 @@ function handleActorAction(
             "runtime.zhu_yuanzhang.tea_house.inquire.overlay.001"
           ),
         ],
-        "success"
+        "success",
+        [
+          createTeaInquireSuccessObservedEvent({
+            houseDefinition: input.houseDefinition,
+            actor: selectedActor,
+          }),
+        ]
       );
     }
     case "start-debate": {
@@ -1063,16 +1255,24 @@ function handleActorAction(
         });
       }
 
-      return withSessionState(input, sessionState, {
-        overlay: createActivityConfirmOverlay(
-          "舌战",
-          [
-            `（抬手压住茶盏）真要论起来，照你如今的辩才，这一场少说也要磨上 ${durationDays} 天。`,
-            formatHouseActivityCostLine(durationDays),
-          ],
-          CONFIRM_START_DEBATE_ACTION_ID
-        ),
-      });
+      return {
+        ...withSessionState(input, sessionState, {
+          overlay: createActivityConfirmOverlay(
+            "舌战",
+            [
+              `（抬手压住茶盏）真要论起来，照你如今的辩才，这一场少说也要磨上 ${durationDays} 天。`,
+              formatHouseActivityCostLine(durationDays),
+            ],
+            CONFIRM_START_DEBATE_ACTION_ID
+          ),
+        }),
+        observedEvents: [
+          createTeaDebatePreviewObservedEvent({
+            houseDefinition: input.houseDefinition,
+            actor: selectedActor,
+          }),
+        ],
+      };
     }
     default:
       return createTransitionResult(input);
@@ -1173,6 +1373,46 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
       return handleTick(input, input.sessionState);
     }
 
+    if (input.request.type === "conversation-service") {
+      switch (input.request.serviceId) {
+        case "tea-serve":
+          return handleActorAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "serve-tea",
+              },
+            },
+            input.sessionState
+          );
+        case "tea-inquire":
+          return handleActorAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "inquire",
+              },
+            },
+            input.sessionState
+          );
+        case "tea-debate":
+          return handleActorAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "start-debate",
+              },
+            },
+            input.sessionState
+          );
+        default:
+          return createTransitionResult(input);
+      }
+    }
+
     return handleActorAction(input, input.sessionState);
   },
   leave(input) {
@@ -1182,6 +1422,28 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
       sessionState: null,
       sideEffects: [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }],
     };
+  },
+  selectConversationServices() {
+    return [
+      {
+        serviceId: "tea-serve",
+        label: "请茶",
+        description: "直接请对方喝茶并结算茶钱。",
+        enabled: true,
+      },
+      {
+        serviceId: "tea-inquire",
+        label: "打听消息",
+        description: "直接向当前茶客打听消息。",
+        enabled: true,
+      },
+      {
+        serviceId: "tea-debate",
+        label: "舌战",
+        description: "转入茶馆舌战确认与辩论流程。",
+        enabled: true,
+      },
+    ];
   },
   selectViewModel(input): HouseModuleViewModel {
     const sessionState =
@@ -1226,6 +1488,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
         characterId: actor.id,
         name: actor.name,
         title: actor.title,
+        ...resolveTeaHouseActorPortraitHooks(actor),
         actionId:
           actor.id === selectedActor?.id
             ? "open-npc-dialogue"
@@ -1236,9 +1499,21 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
             id: "serve-tea",
             label: "请茶",
             kind: "special",
+            triggerKeywords: ["请茶", "喝茶", "来杯茶", "上茶"],
             disabled: playerCharacter.stats.gold < teaHouseTeaCost,
           },
-          { id: "inquire", label: "打听", kind: "special" },
+          {
+            id: "inquire",
+            label: "打听",
+            kind: "special",
+            triggerKeywords: [
+              "打听",
+              "打听消息",
+              "探听",
+              "问消息",
+              "消息",
+            ],
+          },
           {
             id: "start-debate",
             label: formatPlayableSkillActionLabel(
@@ -1248,6 +1523,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
             ),
             kind: "special",
             tone: "accent",
+            triggerKeywords: ["舌战", "论战", "辩论", "斗嘴"],
           },
         ],
       })),
@@ -1266,6 +1542,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
               mode: "character",
               speakerName: selectedActor.name,
               characterId: selectedActor.id,
+              ...resolveTeaHouseActorPortraitHooks(selectedActor),
               position: "right",
               textLines:
                 sessionState.dialogueLines.length > 0

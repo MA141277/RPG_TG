@@ -13,6 +13,7 @@ import { renderMedicineHouseHouseView } from "./medicine-house-house-view";
 import { renderTavernHouseView } from "./tavern-house-view";
 import { renderTeaHouseHouseView } from "./tea-house-house-view";
 import { renderTempleHouseView } from "./temple-house-view";
+import { renderTxtNarrativePlaceHouseView } from "./txt-narrative-place-house-view";
 
 function withHouseButtonSoundPolicy(
   render: HouseModuleViewRenderer
@@ -54,6 +55,10 @@ export const builtinHouseRendererRegistrations: HouseModuleRegistration[] = [
   {
     moduleId: "temple-house",
     render: withHouseButtonSoundPolicy(renderTempleHouseView),
+  },
+  {
+    moduleId: "txt-narrative-place",
+    render: withHouseButtonSoundPolicy(renderTxtNarrativePlaceHouseView),
   },
   {
     moduleId: "tavern",

@@ -26,6 +26,7 @@ import type {
   HouseModuleViewModel,
   HouseOverlayViewModel,
 } from "../../../domain/house-module";
+import type { WorldObservedEvent } from "../../../domain/world-intent";
 import {
   getTavernDrinkCountVariableKey,
   getTavernTimeVariableKey,
@@ -33,6 +34,7 @@ import {
 } from "../../../domain/tavern";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
+import { createHouseActionMemoryObservedEvent } from "../../house/house-action-memory-event";
 import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import {
   advanceTavernGambleMeldCountdown,
@@ -355,6 +357,35 @@ function randomTargetStart(round: number): number {
 
 function randomTargetWidth(round: number): number {
   return round === 3 ? 16 : round === 2 ? 18 : 22;
+}
+
+function findCharacterById(
+  characterDefinitions: CharacterDefinition[],
+  characterId: string
+): CharacterDefinition | null {
+  return (
+    characterDefinitions.find(
+      (characterDefinition) => characterDefinition.id === characterId
+    ) ?? null
+  );
+}
+
+function createTavernObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"tavern">["houseDefinition"];
+  type: string;
+  summary: string;
+  reactionSummary?: string;
+  houseActionMemory: NonNullable<WorldObservedEvent["houseActionMemory"]>;
+}): WorldObservedEvent {
+  return createHouseActionMemoryObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: input.type,
+    summary: input.summary,
+    reactionSummary: input.reactionSummary,
+    reactionCharacterId:
+      input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
+    houseActionMemory: input.houseActionMemory,
+  });
 }
 
 function createDishwashingOverlay(
@@ -1217,6 +1248,18 @@ function getGambleNetResult(session: TavernGambleSession): number {
   return Math.floor(session.pot / winners.length) - human.committed;
 }
 
+function isLongGambleNoPlayExit(session: TavernGambleSession): boolean {
+  const human = getHumanGamblePlayer(session);
+  return (
+    session.showdown == null &&
+    session.street === "pre-flop" &&
+    session.phase === "betting" &&
+    session.bettingRound === 1 &&
+    !human.folded &&
+    human.committed <= 0
+  );
+}
+
 function resolveLongGambleSettlement(
   input: HouseModuleDispatchInput<"tavern">,
   sessionState: TavernSessionState,
@@ -1239,6 +1282,11 @@ function resolveLongGambleSettlement(
           input.playerCharacterId,
           delta
         );
+  const playerCharacter = findCharacterById(
+    goldMutation.characterDefinitions,
+    input.playerCharacterId
+  );
+  const lostAll = delta < 0 && (playerCharacter?.stats.gold ?? 1) <= 0;
   return {
     gameState: goldMutation.state,
     characterDefinitions: goldMutation.characterDefinitions,
@@ -1292,6 +1340,32 @@ function resolveLongGambleSettlement(
         delta >= 0 ? "success" : "warning"
       ),
     },
+    observedEvents: [
+      createTavernObservedEvent({
+        houseDefinition: input.houseDefinition,
+        type: lostAll
+          ? "tavern:gamble:lost-all"
+          : delta >= 0
+            ? "tavern:gamble:settled-win"
+            : "tavern:gamble:settled-loss",
+        summary: lostAll
+          ? "玩家在酒馆牌局里输了个精光。"
+          : delta >= 0
+            ? `玩家在酒馆牌局里赢了 ${delta} 文。`
+            : `玩家在酒馆牌局里输了 ${Math.abs(delta)} 文。`,
+        reactionSummary: lostAll
+          ? "刚才那桌他手气差得很，竟把身上的钱都输光了。"
+          : delta >= 0
+            ? `他刚在牌桌上赢了 ${delta} 文，看着还在兴头上。`
+            : `他刚在牌桌上输了 ${Math.abs(delta)} 文，神色有些不痛快。`,
+        houseActionMemory: {
+          kind: "gamble-settlement",
+          goldDelta: delta,
+          resultKind:
+            lostAll ? "failure" : delta < 0 ? "failure" : delta === 0 ? "no-action" : "success",
+        },
+      }),
+    ],
     sideEffects: [{ type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID }],
     timeAdvanceCost: 1,
   };
@@ -1449,35 +1523,49 @@ function withLongGambleSession(
   sessionState: TavernSessionState,
   gambleSession: TavernGambleSession
 ): HouseModuleTransitionResult<"tavern"> {
-  return withSessionState(
-    input,
-    sessionState,
-    {
-      gambleSession: {
-        variant: "long",
-        session: gambleSession,
-      },
-      overlay: {
-        type: "gamble-table",
-        session: {
+  return {
+    ...withSessionState(
+      input,
+      sessionState,
+      {
+        gambleSession: {
           variant: "long",
           session: gambleSession,
         },
+        overlay: {
+          type: "gamble-table",
+          session: {
+            variant: "long",
+            session: gambleSession,
+          },
+        },
+        dialoguePhase: "open",
+        dialogueLines: [
+          resolveTavernText(
+            getTavernTextEntries(input.textEntriesById),
+            "runtime.zhu_yuanzhang.tavern.gamble.start.001"
+          ),
+          resolveTavernText(
+            getTavernTextEntries(input.textEntriesById),
+            "runtime.zhu_yuanzhang.tavern.gamble.start.002"
+          ),
+        ],
       },
-      dialoguePhase: "open",
-      dialogueLines: [
-        resolveTavernText(
-          getTavernTextEntries(input.textEntriesById),
-          "runtime.zhu_yuanzhang.tavern.gamble.start.001"
-        ),
-        resolveTavernText(
-          getTavernTextEntries(input.textEntriesById),
-          "runtime.zhu_yuanzhang.tavern.gamble.start.002"
-        ),
-      ],
-    },
-    getLongGambleSideEffects(gambleSession)
-  );
+      getLongGambleSideEffects(gambleSession)
+    ),
+    observedEvents: [
+      createTavernObservedEvent({
+        houseDefinition: input.houseDefinition,
+        type: "tavern:gamble:entered-table",
+        summary: "玩家在酒馆坐上了牌桌。",
+        reactionSummary: "他刚在牌桌边坐下，看样子准备下场试试手气。",
+        houseActionMemory: {
+          kind: "gamble-enter",
+          resultKind: "preview",
+        },
+      }),
+    ],
+  };
 }
 
 function withShortGambleSession(
@@ -1485,26 +1573,40 @@ function withShortGambleSession(
   sessionState: TavernSessionState,
   table: TavernShortTableSession
 ): HouseModuleTransitionResult<"tavern"> {
-  return withSessionState(
-    input,
-    sessionState,
-    {
-      gambleSession: {
-        variant: "short",
-        table,
-      },
-      overlay: {
-        type: "gamble-table",
-        session: {
+  return {
+    ...withSessionState(
+      input,
+      sessionState,
+      {
+        gambleSession: {
           variant: "short",
           table,
         },
+        overlay: {
+          type: "gamble-table",
+          session: {
+            variant: "short",
+            table,
+          },
+        },
+        dialoguePhase: "open",
+        dialogueLines: getShortTableDialogueLines(input, table),
       },
-      dialoguePhase: "open",
-      dialogueLines: getShortTableDialogueLines(input, table),
-    },
-    getShortGambleSideEffects(table)
-  );
+      getShortGambleSideEffects(table)
+    ),
+    observedEvents: [
+      createTavernObservedEvent({
+        houseDefinition: input.houseDefinition,
+        type: "tavern:gamble:entered-table",
+        summary: "玩家在酒馆坐上了牌桌。",
+        reactionSummary: "他刚在牌桌边坐下，看样子准备下场试试手气。",
+        houseActionMemory: {
+          kind: "gamble-enter",
+          resultKind: "preview",
+        },
+      }),
+    ],
+  };
 }
 
 function handleGambleTick(
@@ -1693,6 +1795,70 @@ function resolveShortTableCashOut(
 ): HouseModuleTransitionResult<"tavern"> {
   const entries = getTavernTextEntries(input.textEntriesById);
   const { goldDelta, leftoverChips } = cashOutTavernShortTableSession(table);
+  const netDelta = goldDelta - table.buyInGoldTotal;
+  const playedAnyHand = table.lastCompletedHand != null;
+  const recordedPlayerBankroll = table.bankrollBySeatId[table.playerSeatId] ?? 0;
+  const lostAll =
+    table.buyInGoldTotal > 0 &&
+    (recordedPlayerBankroll <= 0 || (goldDelta <= 0 && leftoverChips <= 0));
+  const observedEvent = lostAll
+    ? createTavernObservedEvent({
+        houseDefinition: input.houseDefinition,
+        type: "tavern:gamble:lost-all",
+        summary: "玩家在酒馆短局里把带去的赌本都输光了。",
+        reactionSummary: "他刚才在短局桌上把钱输光了，手气实在不佳。",
+        houseActionMemory: {
+          kind: "gamble-settlement",
+          goldDelta: netDelta,
+          resultKind: "failure",
+        },
+      })
+    : !playedAnyHand
+    ? createTavernObservedEvent({
+        houseDefinition: input.houseDefinition,
+        type: "tavern:gamble:left-without-playing",
+        summary: "玩家刚坐到酒馆牌桌边，却没真下场就退了回来。",
+        reactionSummary: "他刚坐到牌桌边，却没真下场玩就退了回来。",
+        houseActionMemory: {
+          kind: "gamble-leave-without-playing",
+          resultKind: "no-action",
+        },
+      })
+    : netDelta > 0
+        ? createTavernObservedEvent({
+            houseDefinition: input.houseDefinition,
+            type: "tavern:gamble:cashed-out-win",
+            summary: `玩家在酒馆短局里赢了 ${netDelta} 文后退桌。`,
+            reactionSummary: `他刚从短局桌上赢了 ${netDelta} 文退下来，脸上还带着笑。`,
+            houseActionMemory: {
+              kind: "gamble-settlement",
+              goldDelta: netDelta,
+              resultKind: "success",
+            },
+          })
+        : netDelta < 0
+          ? createTavernObservedEvent({
+              houseDefinition: input.houseDefinition,
+              type: "tavern:gamble:cashed-out-loss",
+              summary: `玩家在酒馆短局里输了 ${Math.abs(netDelta)} 文后退桌。`,
+              reactionSummary: `他刚从短局桌上退下来，输了 ${Math.abs(netDelta)} 文。`,
+              houseActionMemory: {
+                kind: "gamble-settlement",
+                goldDelta: netDelta,
+                resultKind: "failure",
+              },
+            })
+          : createTavernObservedEvent({
+              houseDefinition: input.houseDefinition,
+              type: "tavern:gamble:cashed-out-even",
+              summary: "玩家在酒馆短局里不输不赢，平手退桌。",
+              reactionSummary: "他这趟上桌没赚没赔，平平常常就退了下来。",
+              houseActionMemory: {
+                kind: "gamble-settlement",
+                goldDelta: 0,
+                resultKind: "no-action",
+              },
+            });
   const cashOutOverlay = createAlertOverlay(
     resolveTavernText(
       entries,
@@ -1751,6 +1917,7 @@ function resolveShortTableCashOut(
             }
           : cashOutOverlay,
     },
+    observedEvents: [observedEvent],
     sideEffects: [
       { type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID },
       {
@@ -2231,15 +2398,33 @@ function handleGambleAction(
       return resolveLongGambleSettlement(input, sessionState, longSession);
     }
     if (actionId === "gamble-close") {
-      return withSessionState(
-        input,
-        sessionState,
-        {
-          gambleSession: null,
-          overlay: null,
-        },
-        [{ type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID }]
-      );
+      return {
+        ...withSessionState(
+          input,
+          sessionState,
+          {
+            gambleSession: null,
+            overlay: null,
+          },
+          [{ type: "stop-interval", intervalId: TAVERN_GAMBLE_NPC_INTERVAL_ID }]
+        ),
+        ...(isLongGambleNoPlayExit(longSession)
+          ? {
+              observedEvents: [
+                createTavernObservedEvent({
+                  houseDefinition: input.houseDefinition,
+                  type: "tavern:gamble:left-without-playing",
+                  summary: "玩家刚坐到酒馆牌桌边，却没真下场就退了回来。",
+                  reactionSummary: "他刚坐到牌桌边，却没真下场玩就退了回来。",
+                  houseActionMemory: {
+                    kind: "gamble-leave-without-playing",
+                    resultKind: "no-action",
+                  },
+                }),
+              ],
+            }
+          : {}),
+      };
     }
     return createTransitionResult(input);
   }
@@ -2763,6 +2948,46 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       return handleTavernWorkTick(input, input.sessionState);
     }
 
+    if (input.request.type === "conversation-service") {
+      switch (input.request.serviceId) {
+        case "tavern-work":
+          return handleWorkAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "open-work",
+              },
+            },
+            input.sessionState
+          );
+        case "tavern-drink":
+          return handleDrinkAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "confirm-drink",
+              },
+            },
+            input.sessionState
+          );
+        case "tavern-gamble":
+          return handleGambleAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "open-gamble",
+              },
+            },
+            input.sessionState
+          );
+        default:
+          return createTransitionResult(input);
+      }
+    }
+
     if (input.request.type !== "action") {
       return createTransitionResult(input);
     }
@@ -2892,6 +3117,28 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       ],
     };
   },
+  selectConversationServices() {
+    return [
+      {
+        serviceId: "tavern-work",
+        label: "找活",
+        description: "打开酒馆当前的接活与提交流程。",
+        enabled: true,
+      },
+      {
+        serviceId: "tavern-drink",
+        label: "喝酒",
+        description: "直接让掌柜上酒并结算酒钱。",
+        enabled: true,
+      },
+      {
+        serviceId: "tavern-gamble",
+        label: "开赌局",
+        description: "打开酒馆赌局选择与下注流程。",
+        enabled: true,
+      },
+    ];
+  },
   selectViewModel(input): HouseModuleViewModel {
     const playerCharacter = getPlayerCharacter(
       input.characterDefinitions,
@@ -2943,6 +3190,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
           id: "open-work",
           label: "工作",
           kind: "special" as const,
+          triggerKeywords: ["工作", "找活", "接活", "干活"],
           disabled:
             lists.availableOffers.length === 0 &&
             lists.acceptedOffers.length === 0,
@@ -2951,6 +3199,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
           id: "order-drink",
           label: "喝酒",
           kind: "special" as const,
+          triggerKeywords: ["喝酒", "饮酒", "来杯酒", "上酒"],
           disabled: playerCharacter.stats.gold < tavernDrinkPrice,
         },
         {
@@ -2958,6 +3207,7 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
           label: "赌博",
           kind: "special" as const,
           tone: "accent" as const,
+          triggerKeywords: ["赌博", "赌钱", "赌两把", "玩两把"],
           disabled: playerCharacter.stats.gold < tavernWagerStep,
         },
       ],

@@ -7,6 +7,7 @@ import type {
 } from "../../../domain/house-module";
 import { getReviewCompletionGradeLabel } from "../../../application/review/faction-review";
 import { NPC_INTERACTION_DEFAULT_OPTIONS } from "../../../domain/npc-interaction";
+import type { NpcInteractionContext } from "../../../domain/npc-interaction";
 import {
   renderDialogueTypewriterHint,
   renderDialogueTypewriterLines,
@@ -440,6 +441,18 @@ export function renderHouseActionContainer(
   );
   const targetCharacterId =
     targetActor == null ? null : escapeHtml(targetActor.characterId);
+  const targetNpcContext =
+    targetActor == null
+      ? null
+      : escapeHtml(
+          JSON.stringify({
+            type: "house",
+            houseId: viewModel.houseId,
+            ...(viewModel.moduleId == null
+              ? {}
+              : { moduleId: viewModel.moduleId }),
+          })
+        );
   const primaryHouseActions = viewModel.actionContainer.actions.filter(
     (action) => !isDismissHouseAction(action)
   );
@@ -475,6 +488,14 @@ export function renderHouseActionContainer(
               )}"
               data-npc-action="${escapeHtml(option.kind)}"
               data-character-id="${targetCharacterId}"
+              ${targetNpcContext == null ? "" : `data-npc-context="${targetNpcContext}"`}
+              data-npc-context-type="house"
+              data-house-id="${escapeHtml(viewModel.houseId)}"
+              ${
+                viewModel.moduleId == null
+                  ? ""
+                  : `data-house-module-id="${escapeHtml(viewModel.moduleId)}"`
+              }
               ${buttonSoundAttribute}
               ${disabled ? "disabled" : ""}
             >
@@ -550,30 +571,56 @@ export function renderHouseNpcTargetAttributes(
   viewModel: HouseModuleViewModel,
   actor: HouseStandbyActorViewModel
 ): string {
-  const houseId = escapeHtml(viewModel.houseId);
-  const moduleId = escapeHtml(viewModel.moduleId);
+  return renderNpcTargetAttributes({
+    context: {
+      type: "house",
+      houseId: viewModel.houseId,
+      moduleId: viewModel.moduleId,
+    },
+    characterId: actor.characterId,
+    disabled: actor.disabled === true,
+  });
+}
 
-  if (actor.disabled === true) {
+export function renderNpcTargetAttributes(input: {
+  context: NpcInteractionContext;
+  characterId: string;
+  disabled?: boolean;
+}): string {
+  const houseId =
+    input.context.type === "house" ? escapeHtml(input.context.houseId) : null;
+  const moduleId =
+    input.context.type === "house" && input.context.moduleId != null
+      ? escapeHtml(input.context.moduleId)
+      : null;
+
+  if (input.disabled === true) {
     return `
-      data-npc-context-type="house"
-      data-house-id="${houseId}"
-      data-house-module-id="${moduleId}"
+      ${input.context.type === "house" ? `data-npc-context-type="house"` : ""}
+      ${houseId == null ? "" : `data-house-id="${houseId}"`}
+      ${moduleId == null ? "" : `data-house-module-id="${moduleId}"`}
       disabled
     `;
   }
 
-  const npcContext = JSON.stringify({
-    type: "house",
-    houseId: viewModel.houseId,
-    moduleId: viewModel.moduleId,
-  });
+  const npcContext = JSON.stringify(input.context);
 
   return `
-    data-npc-target="${escapeHtml(actor.characterId)}"
+    data-npc-target="${escapeHtml(input.characterId)}"
     data-npc-context="${escapeHtml(npcContext)}"
-    data-npc-context-type="house"
-    data-house-id="${houseId}"
-    data-house-module-id="${moduleId}"
+    ${input.context.type === "house" ? `data-npc-context-type="house"` : ""}
+    ${houseId == null ? "" : `data-house-id="${houseId}"`}
+    ${moduleId == null ? "" : `data-house-module-id="${moduleId}"`}
+  `;
+}
+
+export function renderHouseWorldIntentAnchor(): string {
+  return `
+    <div
+      class="c-house-world-intent-anchor"
+      data-world-intent-surface="house"
+      aria-hidden="true"
+    ></div>
   `;
 }
 

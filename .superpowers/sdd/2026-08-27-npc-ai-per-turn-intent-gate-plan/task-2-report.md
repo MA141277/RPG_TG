@@ -126,3 +126,9 @@ Superpowers plan lint passed for 103 files.
 ```
 
 Repository typecheck exited 0.
+
+### Commit Addendum
+
+- Status: committed fix round 1.
+- Commit: `845a7df3`
+- Note: The commit includes the metadata-stripping helper change, the two ACTION-leak provider regressions, and the recovered fix-round report section.

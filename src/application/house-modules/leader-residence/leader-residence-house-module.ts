@@ -15,6 +15,7 @@ import type {
 import type { LeaderResidenceSessionState } from "../../../domain/house-modules/leader-residence-session";
 import { assertExists } from "../../../shared/assert";
 import { resolveCharacterFactionLabel } from "../../faction/faction-affiliation-runtime";
+import { createHouseActionMemoryObservedEvent } from "../../house/house-action-memory-event";
 import { createInitialLeaderResidenceSessionState } from "./leader-residence-session-state";
 
 const ACTION_GREETING = "leader-residence:greeting";
@@ -84,7 +85,17 @@ function createTransitionResult(
     gameState: patch?.gameState ?? input.gameState,
     characterDefinitions: patch?.characterDefinitions ?? input.characterDefinitions,
     sessionState: patch?.sessionState ?? input.sessionState,
+    ...(patch?.timeAdvanceCost == null
+      ? {}
+      : { timeAdvanceCost: patch.timeAdvanceCost }),
+    ...(patch?.observedEvents == null
+      ? {}
+      : { observedEvents: patch.observedEvents }),
+    ...(patch?.councilArrivalNotice == null
+      ? {}
+      : { councilArrivalNotice: patch.councilArrivalNotice }),
     ...(patch?.sideEffects == null ? {} : { sideEffects: patch.sideEffects }),
+    ...(patch?.navigation == null ? {} : { navigation: patch.navigation }),
   };
 }
 
@@ -177,6 +188,80 @@ function incrementSkill(
 function getPreferredSkillKey(characterDefinition: CharacterDefinition): SkillKey | null {
   const skillKeys = getLeaderResidenceSkillKeys(characterDefinition);
   return skillKeys[0] ?? null;
+}
+
+function createLeaderResidenceObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"leader-residence">["houseDefinition"];
+  characterId: string;
+  type: string;
+  summary: string;
+  reactionSummary?: string;
+  houseActionMemory: NonNullable<
+    ReturnType<typeof createHouseActionMemoryObservedEvent>["houseActionMemory"]
+  >;
+}) {
+  return createHouseActionMemoryObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: input.type,
+    summary: input.summary,
+    reactionSummary: input.reactionSummary,
+    reactionCharacterId: input.characterId,
+    houseActionMemory: input.houseActionMemory,
+  });
+}
+
+function createLeaderResidenceLearnObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"leader-residence">["houseDefinition"];
+  visitedCharacter: CharacterDefinition;
+  skillKey: SkillKey;
+}) {
+  const skillLabel = SKILL_LABELS[input.skillKey] ?? input.skillKey;
+
+  return createLeaderResidenceObservedEvent({
+    houseDefinition: input.houseDefinition,
+    characterId: input.visitedCharacter.id,
+    type: "leader-residence:learn:complete",
+    summary: `玩家在将领府向${input.visitedCharacter.name}请教了${skillLabel}。`,
+    reactionSummary: `他刚向我请教了${skillLabel}。`,
+    houseActionMemory: {
+      kind: "work-complete",
+      actionId: ACTION_LEARN,
+      offerId: input.skillKey,
+      offerTitle: skillLabel,
+      resultKind: "success",
+    },
+  });
+}
+
+function shouldEmitLeaderResidenceLeaveObservedEvent(
+  gameState: HouseModuleDispatchInput<"leader-residence">["gameState"],
+  sessionState: LeaderResidenceSessionState,
+  visitedCharacter: CharacterDefinition
+): boolean {
+  return (
+    sessionState.mode === "learning" ||
+    sessionState.overlay != null ||
+    getRelationValue(gameState, visitedCharacter.id) > 0
+  );
+}
+
+function createLeaderResidenceLeaveObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"leader-residence">["houseDefinition"];
+  visitedCharacter: CharacterDefinition;
+}) {
+  return createLeaderResidenceObservedEvent({
+    houseDefinition: input.houseDefinition,
+    characterId: input.visitedCharacter.id,
+    type: "leader-residence:leave",
+    summary: `玩家从${input.visitedCharacter.name}的府邸告辞离开。`,
+    reactionSummary: "他刚从我府上告辞离开。",
+    houseActionMemory: {
+      kind: "house-leave",
+      actionId: ACTION_LEAVE,
+      offerId: input.visitedCharacter.id,
+      offerTitle: input.visitedCharacter.name,
+    },
+  });
 }
 
 function createActionContainer(
@@ -346,16 +431,56 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
           "success"
         ),
         timeAdvanceCost: 1,
+        observedEvents: [
+          createLeaderResidenceLearnObservedEvent({
+            houseDefinition: input.houseDefinition,
+            visitedCharacter,
+            skillKey,
+          }),
+        ],
       });
     }
 
     return createTransitionResult(input);
   },
   leave(input) {
-    return {
+    const sessionState = input.sessionState;
+    if (sessionState == null) {
+      return {
+        gameState: input.gameState,
+        characterDefinitions: input.characterDefinitions,
+        sessionState: null,
+      };
+    }
+
+    const visitedCharacter = getVisitedCharacter(
+      input.characterDefinitions,
+      sessionState.selectedCharacterId
+    );
+    const leaveResult = {
       gameState: input.gameState,
       characterDefinitions: input.characterDefinitions,
       sessionState: null,
+    };
+
+    if (
+      !shouldEmitLeaderResidenceLeaveObservedEvent(
+        input.gameState,
+        sessionState,
+        visitedCharacter
+      )
+    ) {
+      return leaveResult;
+    }
+
+    return {
+      ...leaveResult,
+      observedEvents: [
+        createLeaderResidenceLeaveObservedEvent({
+          houseDefinition: input.houseDefinition,
+          visitedCharacter,
+        }),
+      ],
     };
   },
   selectViewModel(input): HouseModuleViewModel {
@@ -394,6 +519,13 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
               kind: "special",
               disabled: teachableSkillKeys.length === 0,
               tone: "accent",
+              triggerKeywords: [
+                "学习",
+                "请教",
+                "受教",
+                "学本事",
+                "指点",
+              ],
             },
           ],
         },

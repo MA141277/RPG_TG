@@ -14,26 +14,170 @@
   margin-top: 8px;
 }
 
-.c-npc-interaction-stack {
+.l-stage[data-house-npc-dialogue-active="true"] .c-grain-shop-center,
+.l-stage[data-house-npc-dialogue-active="true"] .c-grain-shop-leave {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.c-npc-interaction-inline {
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--z-scene-overlay) + 8);
+  pointer-events: none;
+}
+
+.c-npc-interaction-dialogue {
+  z-index: calc(var(--z-scene-overlay) + 8);
+}
+
+.c-npc-interaction-dialogue .c-grain-shop-dialogue__text {
+  pointer-events: auto;
+}
+
+.c-npc-interaction-dialogue-npc {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.c-npc-interaction-inline-actions,
+.c-npc-interaction-inline-composer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: calc(var(--z-scene-overlay) + 10);
+  width: min(32vw, 520px);
+  max-width: calc(100vw - 2 * var(--space-6));
+  pointer-events: auto;
+  transform: translate(-50%, calc(-44% - min(4vh, 36px)));
+}
+
+.c-npc-interaction-inline-actions {
   display: grid;
-  justify-items: center;
-  gap: 14px;
-  width: min(44vw, 360px);
-  pointer-events: auto;
-  transform: translateY(calc(-9vh + 60px));
+  gap: var(--space-3);
 }
 
-.c-npc-interaction-stack .c-npc-interaction-actions {
+.c-npc-interaction-inline-actions.c-grain-shop-actions .c-npc-interaction-reply {
+  display: grid;
+  align-items: start;
+  justify-items: start;
+  justify-content: start;
+  height: auto;
+  min-height: calc(var(--space-6) * 3);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  white-space: normal;
+}
+
+.c-npc-interaction-reply {
+  display: grid;
+  gap: var(--space-1);
+  align-items: start;
+  justify-items: start;
   width: 100%;
-  transform: none;
+  min-height: 70px;
+  padding: 12px 18px 14px;
+  text-align: left;
+  white-space: normal;
 }
 
-.c-npc-interaction-dialogue-text {
-  width: 100%;
-  color: #3f2a18;
+.c-npc-interaction-reply__stance {
+  color: rgb(102 71 38 / 88%);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+}
+
+.c-npc-interaction-reply__text {
+  color: var(--color-ink-strong);
+  font-size: 1rem;
+  line-height: 1.56;
+}
+
+.c-npc-interaction-option--recommended {
+  box-shadow: 0 0 0 1px rgb(197 110 71 / 42%);
+}
+
+.c-npc-interaction-inline-composer {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-panel);
+  border-radius: var(--radius-panel);
+  background: rgb(26 16 9 / 88%);
+  box-shadow: 0 16px 44px rgb(0 0 0 / 28%);
+}
+
+.c-npc-interaction-inline-composer__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.c-npc-interaction-inline-footer-actions {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: calc(var(--z-scene-overlay) + 11);
+  display: grid;
+  gap: var(--space-2);
+  justify-items: end;
   pointer-events: auto;
 }
 
-.c-npc-interaction-dialogue-text p {
+.c-npc-interaction-inline-footer-actions .c-npc-interaction-exit,
+.c-npc-interaction-inline-footer-actions .c-npc-interaction-leave-house {
+  position: static;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+}
+
+.c-grain-shop-text-field {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--space-4);
+  border: var(--border-panel);
+  border-radius: var(--radius-button);
+  background: rgb(239 226 194 / 96%);
+  color: var(--color-ink-strong);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.c-grain-shop-text-field::placeholder {
+  color: rgb(44 41 36 / 58%);
+}
+
+.c-grain-shop-text-field:focus {
+  outline: 2px solid rgb(197 110 71 / 68%);
+  outline-offset: 1px;
+}
+
+.c-npc-interaction-notice {
   margin: 0;
+  color: rgb(44 41 36 / 78%);
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.c-npc-interaction-notice--error {
+  color: var(--color-accent);
+}
+
+.c-npc-interaction-exit {
+  z-index: calc(var(--z-scene-overlay) + 11);
+}
+
+@media (max-width: 960px) {
+  .c-npc-interaction-inline-actions,
+  .c-npc-interaction-inline-composer {
+    width: min(72vw, 520px);
+    transform: translate(-50%, calc(-46% - min(3vh, 20px)));
+  }
+
+  .c-npc-interaction-reply {
+    min-height: 64px;
+  }
 }

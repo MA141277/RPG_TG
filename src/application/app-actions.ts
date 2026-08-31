@@ -28,6 +28,7 @@ import {
 import {
   closeNpcInteractionSession,
   createNpcInteractionSession,
+  createInitialNpcAiDialogueSessionState,
 } from "./npc-interaction/npc-interaction";
 import {
   applyBackpackItemAction,
@@ -481,6 +482,28 @@ export function openNpcInteraction(
   };
 }
 
+export function ensureNpcInteractionSessionForTarget(
+  appState: AppState,
+  input: {
+    context: NpcInteractionContext | null;
+    targetCharacterId: string;
+  }
+): AppState {
+  const activeSession = appState.gameState.ui.npcInteractionSession;
+  if (
+    activeSession != null &&
+    activeSession.targetCharacterId === input.targetCharacterId
+  ) {
+    return appState;
+  }
+
+  if (input.context == null) {
+    return appState;
+  }
+
+  return openNpcInteraction(appState, input.context, input.targetCharacterId);
+}
+
 export function closeNpcInteraction(appState: AppState): AppState {
   return {
     ...appState,
@@ -511,7 +534,8 @@ export function chooseNpcDefaultTalk(
         ...appState.gameState.ui,
         npcInteractionSession: {
           ...session,
-          mode: "dialogue",
+          mode: "ai-dialogue",
+          dialogue: createInitialNpcAiDialogueSessionState(),
         },
       },
     },

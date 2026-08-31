@@ -33,6 +33,12 @@ import {
   renderNpcInteractionDialogue,
   renderNpcInteractionMenu,
 } from "./components/npc-interaction/npc-interaction-menu";
+import { renderNpcInteractionDialoguePanel } from "./components/npc-interaction/npc-interaction-dialogue-panel";
+import {
+  applyHouseConversationViewState,
+  selectHouseConversationViewState,
+  type HouseConversationViewState,
+} from "../application/presenter/house-conversation-view-state";
 import {
   isNpcInteractionBlocked,
   selectNpcInteractionBlockState,
@@ -54,6 +60,7 @@ import { renderCity3dView } from "./views/city/city-3d-view";
 import { renderCityView } from "./views/city/city-view";
 import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging-minigame-view";
 import { createHouseViewModel } from "./views/house/house-view";
+import { renderFallbackHouseView } from "./views/house/fallback-house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import { renderTroopEditorView } from "./views/troop-editor/troop-editor-view";
@@ -65,6 +72,7 @@ import { formatCardDrawResultLabel } from "./animations/card-draw-animation";
 import { resolveCharacterFactionLabel } from "../application/faction/faction-affiliation-runtime";
 import { defaultEquipmentLoadoutService } from "../domain/equipment/equipment-loadout-service";
 import type { EquipmentSlotId } from "../domain/equipment/equipment-slot-registry";
+import { renderWorldIntentBar } from "./components/world-intent/world-intent-bar";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
 
@@ -285,6 +293,17 @@ function renderModal(
 }
 
 function renderNpcInteractionOverlay(input: AppRenderInput): string {
+  const houseConversationViewState =
+    input.presenterOutput.stage.type === "house"
+      ? selectHouseConversationViewState({
+          appState: input.appState,
+          stageOutput: input.presenterOutput.stage,
+        })
+      : null;
+  if (houseConversationViewState?.renderInlineNpcDialogue === true) {
+    return "";
+  }
+
   const session = input.appState.gameState.ui.npcInteractionSession;
   const stage = input.presenterOutput.stage;
   const specialActions =
@@ -352,6 +371,52 @@ function renderNpcInteractionOverlay(input: AppRenderInput): string {
       portraitArtClassName: targetPortraitArtClassName,
     })
   );
+}
+
+function renderInlineHouseNpcDialogue(
+  input: AppRenderInput,
+  viewState: HouseConversationViewState
+): string {
+  if (!viewState.renderInlineNpcDialogue) {
+    return "";
+  }
+
+  const session = input.appState.gameState.ui.npcInteractionSession;
+  const stage = input.presenterOutput.stage;
+  if (session == null || stage.type !== "house" || stage.moduleViewModel == null) {
+    return "";
+  }
+
+  const targetHouseActor =
+    stage.moduleViewModel?.standbyRoster.find(
+      (actor) => actor.characterId === session.targetCharacterId
+    ) ?? null;
+  const targetCharacterDefinition =
+    input.appState.characterDefinitions.find(
+      (characterDefinition) =>
+        characterDefinition.id === session.targetCharacterId
+    ) ?? null;
+  const targetName =
+    targetHouseActor?.name ?? targetCharacterDefinition?.name ?? null;
+  const targetPortraitImageUrl =
+    targetHouseActor?.portraitImageUrl ??
+    (targetCharacterDefinition == null
+      ? null
+      : resolveCharacterPortraitImageUrl(targetCharacterDefinition));
+  const targetPortraitArtClassName = targetHouseActor?.portraitArtClassName ?? null;
+
+  return `
+    <div data-house-npc-dialogue="inline">
+      ${renderNpcInteractionDialoguePanel({
+        session,
+        targetName,
+        portraitImageUrl: targetPortraitImageUrl,
+        portraitArtClassName: targetPortraitArtClassName,
+        inlineHouseMode: true,
+        inlineHouseLeaveAction: stage.moduleViewModel.leaveAction,
+      })}
+    </div>
+  `;
 }
 
 function applyHouseNpcInteractionBlockedState(
@@ -516,6 +581,51 @@ function renderCampaignTravelBanner(
   `;
 }
 
+function renderWorldIntentShellControl(input: AppRenderInput): string {
+  const houseConversationViewState =
+    input.presenterOutput.stage.type === "house"
+      ? selectHouseConversationViewState({
+          appState: input.appState,
+          stageOutput: input.presenterOutput.stage,
+        })
+      : null;
+  if (
+    houseConversationViewState != null &&
+    houseConversationViewState.hideWorldIntentBar === true
+  ) {
+    return "";
+  }
+
+  const worldIntentState = input.presenterOutput.overlay.worldIntentState;
+  if (worldIntentState == null) {
+    return "";
+  }
+
+  const surface =
+    input.presenterOutput.stage.type === "house"
+      ? "house"
+      : input.presenterOutput.stage.type === "city"
+        ? "city"
+        : null;
+  if (surface == null) {
+    return "";
+  }
+
+  return renderWorldIntentBar({
+    surface,
+    draftText: worldIntentState.draftText,
+    status: worldIntentState.status,
+    placeholder:
+      surface === "house"
+        ? "直接说你想做什么，或想去哪里"
+        : "直接说你要去哪里，或想找谁",
+    disabled: worldIntentState.status === "classifying",
+    ...(worldIntentState.lastError == null
+      ? {}
+      : { statusText: worldIntentState.lastError }),
+  });
+}
+
 function renderStage(
   input: AppRenderInput,
   playerCharacter: CharacterDefinition
@@ -566,26 +676,34 @@ function renderStage(
 
   if (stage.type === "house") {
     if (stage.moduleViewModel != null) {
+      const houseConversationViewState = selectHouseConversationViewState({
+        appState: input.appState,
+        stageOutput: stage,
+      });
+      const houseViewModel = applyHouseConversationViewState(
+        stage.moduleViewModel,
+        houseConversationViewState
+      );
       const npcInteractionBlocked = isNpcInteractionBlocked(
         selectNpcInteractionBlockState({
           overlayView: input.presenterOutput.overlay.overlayView,
           modalState: input.presenterOutput.overlay.modalState,
           locationDialogueState:
             input.presenterOutput.overlay.locationDialogueState,
-          houseOverlay: stage.moduleViewModel.overlay,
-          houseDialogue: stage.moduleViewModel.dialogue,
+          houseOverlay: houseViewModel.overlay,
+          houseDialogue: houseViewModel.dialogue,
           beggingMiniGameState: input.appState.beggingMiniGameState,
           activitySession: input.appState.gameState.runtime.activitySession,
+          npcInteractionSession: input.appState.gameState.ui.npcInteractionSession,
         })
       );
-      return renderHouseModuleView(
-        withResolvedHousePortraits(
-          applyHouseNpcInteractionBlockedState(
-            stage.moduleViewModel,
-            npcInteractionBlocked
-          ),
-          input.appState.characterDefinitions
-        )
+      return (
+        renderHouseModuleView(
+          withResolvedHousePortraits(
+            applyHouseNpcInteractionBlockedState(houseViewModel, npcInteractionBlocked),
+            input.appState.characterDefinitions
+          )
+        ) + renderInlineHouseNpcDialogue(input, houseConversationViewState)
       );
     }
 
@@ -595,39 +713,7 @@ function renderStage(
       stage.cityNpcSummaries
     );
 
-    return `
-      <section class="view-house">
-        <div class="c-stage-header">
-          <div>
-            <p class="c-stage-header__eyebrow">屋敷</p>
-            <h1 class="c-stage-header__title">${houseViewModel.title}</h1>
-          </div>
-          <button class="c-button c-button--ghost" data-action="leave-house">${houseViewModel.backButtonLabel}</button>
-        </div>
-        <div class="c-house-interior">
-          <div class="c-house-interior__hero c-panel">
-            <strong class="c-house-interior__hero-name">
-              ${houseViewModel.defaultCharacterId == null ? "无人接待" : "默认角色已展开"}
-            </strong>
-            <p class="c-house-interior__hero-text">
-              这里是 ${houseViewModel.title}。后续可以在这里接入角色功能、事件入口和小游戏。
-            </p>
-          </div>
-          <div class="c-house-roster">
-            ${houseViewModel.characterSummaries
-              .map(
-                (characterSummary) => `
-                  <article class="c-roster-card c-panel">
-                    <span class="c-roster-card__title">${characterSummary.title ?? "在场人物"}</span>
-                    <strong class="c-roster-card__name">${characterSummary.name}</strong>
-                  </article>
-                `
-              )
-              .join("")}
-          </div>
-        </div>
-      </section>
-    `;
+    return renderFallbackHouseView(houseViewModel);
   }
 
   if (stage.type === "scene") {
@@ -759,13 +845,20 @@ export function renderApp(input: AppRenderInput): string {
       : { coinAnchorEditor: input.coinRewardAnchorEditor }),
   };
   const stageMarkup = renderStage(input, playerCharacter);
+  const houseNpcDialogueActive =
+    input.presenterOutput.stage.type === "house" &&
+    input.appState.gameState.ui.npcInteractionSession?.mode === "ai-dialogue";
 
   return `
     <div class="l-viewport">
       <div class="l-game-frame">
         <div class="l-game-screen">
           <div class="l-shell l-shell--prototype">
-            <main class="l-stage">
+            <main class="l-stage"${
+              houseNpcDialogueActive
+                ? ' data-house-npc-dialogue-active="true"'
+                : ""
+            }>
               ${stageMarkup}
               <div class="l-overlay-ui">
                 ${renderCampaignTravelBanner(input.presenterOutput.overlay.campaignTravelState)}
@@ -778,6 +871,7 @@ export function renderApp(input: AppRenderInput): string {
                       <button class="c-backpack-shortcut" type="button" data-action="open-backpack">背包</button>`
                     : ""
                 }
+                ${renderWorldIntentShellControl(input)}
               </div>
             </main>
             ${renderLocationDialogue(

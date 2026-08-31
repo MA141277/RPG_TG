@@ -51,7 +51,10 @@ type HouseRuntimeDependencies = {
 export type HouseRuntime = ReturnType<typeof createHouseRuntime>;
 
 export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
-  const intervalHandles: Record<string, number> = {};
+  const intervalHandles: Record<
+    string,
+    ReturnType<typeof globalThis.setInterval>
+  > = {};
   const houseModuleRegistry =
     dependencies.houseModuleRegistry ?? builtinHouseModuleRegistry;
 
@@ -184,12 +187,19 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         return;
       }
 
-      if (sideEffect.everyMs == null || sideEffect.request == null) {
+      if (
+        sideEffect.type === "start-txt-narrative-stream" ||
+        sideEffect.type === "cancel-txt-narrative-stream"
+      ) {
+        return;
+      }
+
+      if (sideEffect.type !== "start-interval") {
         return;
       }
 
       stopHouseInterval(sideEffect.intervalId);
-      intervalHandles[sideEffect.intervalId] = window.setInterval(() => {
+      intervalHandles[sideEffect.intervalId] = globalThis.setInterval(() => {
         const activeHouse = getActiveHouseDefinition();
         if (
           activeHouse?.id !== houseDefinition.id ||
@@ -213,7 +223,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
   function stopHouseInterval(intervalId: string): void {
     const handle = intervalHandles[intervalId];
     if (handle != null) {
-      window.clearInterval(handle);
+      globalThis.clearInterval(handle);
       delete intervalHandles[intervalId];
     }
   }

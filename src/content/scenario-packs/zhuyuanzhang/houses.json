@@ -42,6 +42,23 @@
     }
   },
   {
+    "id": "house.kulan.temple_txt_narrative",
+    "cityId": "city.kulan",
+    "name": "皇觉寺（文游）",
+    "type": "temple",
+    "moduleId": "txt-narrative-place",
+    "characterIds": [
+      "char.player",
+      "char.kulan_temple_abbot",
+      "char.kulan_temple_senior_monk"
+    ],
+    "defaultCharacterId": "char.kulan_temple_abbot",
+    "backAction": {
+      "label": "返回濠州",
+      "targetView": "city"
+    }
+  },
+  {
     "id": "home_001",
     "cityId": "city.kulan",
     "name": "自宅",

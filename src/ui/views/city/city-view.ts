@@ -304,6 +304,16 @@ function renderLocationsDeckView(): string {
   return "";
 }
 
+export function renderCityWorldIntentAnchor(): string {
+  return `
+    <div
+      class="c-city-world-intent-anchor"
+      data-world-intent-surface="city"
+      aria-hidden="true"
+    ></div>
+  `;
+}
+
 function renderCityMenuPanel(input: {
   cityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];

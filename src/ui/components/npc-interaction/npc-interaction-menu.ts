@@ -1,5 +1,8 @@
-import type { NpcInteractionMenuViewModel } from "../../../domain/npc-interaction";
-import type { NpcInteractionSession } from "../../../domain/npc-interaction";
+import type {
+  NpcInteractionMenuViewModel,
+  NpcInteractionSession,
+} from "../../../domain/npc-interaction";
+import { renderNpcInteractionDialoguePanel } from "./npc-interaction-dialogue-panel";
 
 function escapeHtml(value: string): string {
   return value
@@ -92,67 +95,8 @@ export function renderNpcInteractionDialogue(input: {
   portraitImageUrl?: string | null;
   portraitArtClassName?: string | null;
 }): string {
-  if (
-    input.session == null ||
-    input.session.mode !== "dialogue" ||
-    input.targetName == null
-  ) {
-    return "";
-  }
-
-  const targetName = escapeHtml(input.targetName);
-  const greetingText = escapeHtml(`你与 ${input.targetName} 简短交谈。`);
-  const portraitImageUrl =
-    input.portraitImageUrl == null ? null : escapeHtml(input.portraitImageUrl);
-  const portraitArtClassName =
-    input.portraitArtClassName == null
-      ? ""
-      : ` ${escapeHtml(input.portraitArtClassName)}`;
-
-  return `
-    <div
-      class="c-grain-shop-center c-grain-shop-center--open c-npc-interaction-overlay"
-      data-npc-dialogue="default-talk"
-      role="dialog"
-      aria-modal="true"
-      aria-label="${targetName} 谈话"
-    >
-      <div class="c-npc-interaction-stack">
-        <div class="c-grain-shop-dialogue__text c-grain-shop-skin-card c-npc-interaction-dialogue-text">
-          <p class="c-grain-shop-dialogue__speaker">${targetName}</p>
-          <p class="c-grain-shop-dialogue__line">${greetingText}</p>
-        </div>
-        <div class="c-grain-shop-dialogue__npc c-npc-interaction-dialogue-npc">
-          <div class="c-grain-shop-portrait" aria-hidden="true">
-            ${
-              portraitImageUrl == null
-                ? `<span class="c-grain-shop-portrait__art${portraitArtClassName}"></span>`
-                : `<img class="c-grain-shop-portrait__image" src="${portraitImageUrl}" alt="">`
-            }
-          </div>
-          <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-            ${targetName}
-          </p>
-        </div>
-        <nav class="c-grain-shop-actions c-npc-interaction-actions" aria-label="${targetName} 谈话选项">
-          <button
-            type="button"
-            class="c-button c-grain-shop-button c-grain-shop-button--gold"
-            data-npc-action="continue"
-            data-ui-click-sound="none"
-          >
-            继续
-          </button>
-          <button
-            type="button"
-            class="c-button c-grain-shop-button c-grain-shop-button--paper c-npc-interaction-dismiss"
-            data-npc-action="close"
-            data-ui-click-sound="none"
-          >
-            关闭
-          </button>
-        </nav>
-      </div>
-    </div>
-  `;
+  return renderNpcInteractionDialoguePanel({
+    ...input,
+    inlineHouseMode: false,
+  });
 }

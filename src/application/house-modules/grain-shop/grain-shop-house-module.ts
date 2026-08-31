@@ -32,6 +32,7 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import { createHouseActionMemoryObservedEvent } from "../../house/house-action-memory-event";
 import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import {
@@ -155,6 +156,123 @@ function withDialoguePhase(
       ...(dialogueLines == null ? {} : { dialogueLines }),
     },
   };
+}
+
+function getGrainTradeMemoryPanelId(mode: "buy" | "sell"): string {
+  return mode === "buy" ? "grain-buy" : "grain-sell";
+}
+
+function getGrainTradeMemoryPanelLabel(mode: "buy" | "sell"): string {
+  return mode === "buy" ? "买粮" : "卖粮";
+}
+
+function createGrainShopObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"grain-shop">["houseDefinition"];
+  type: string;
+  summary: string;
+  reactionSummary?: string;
+  houseActionMemory: NonNullable<
+    ReturnType<typeof createHouseActionMemoryObservedEvent>["houseActionMemory"]
+  >;
+}) {
+  return createHouseActionMemoryObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: input.type,
+    summary: input.summary,
+    reactionSummary: input.reactionSummary,
+    houseActionMemory: input.houseActionMemory,
+  });
+}
+
+function createGrainTradePreviewObservedEvent(
+  houseDefinition: HouseModuleDispatchInput<"grain-shop">["houseDefinition"],
+  mode: "buy" | "sell"
+) {
+  return createGrainShopObservedEvent({
+    houseDefinition,
+    type: `grain:${mode}:preview`,
+    summary:
+      mode === "buy"
+        ? "玩家在粮铺翻看了买粮单。"
+        : "玩家在粮铺翻看了卖粮信息。",
+    houseActionMemory: {
+      kind: "panel-open",
+      panelId: getGrainTradeMemoryPanelId(mode),
+      panelLabel: getGrainTradeMemoryPanelLabel(mode),
+      resultKind: "preview",
+    },
+  });
+}
+
+function createGrainTradeCancelObservedEvent(
+  houseDefinition: HouseModuleDispatchInput<"grain-shop">["houseDefinition"],
+  mode: "buy" | "sell"
+) {
+  return createGrainShopObservedEvent({
+    houseDefinition,
+    type: `grain:${mode}:cancel`,
+    summary:
+      mode === "buy"
+        ? "玩家在粮铺看了看买粮单，却没有成交。"
+        : "玩家在粮铺看了看卖粮价，却没有成交。",
+    reactionSummary:
+      mode === "buy"
+        ? "他刚看了看买粮单，却没真下手买粮。"
+        : "他刚问了问卖粮价，却没真出手卖粮。",
+    houseActionMemory: {
+      kind: "panel-close-without-action",
+      panelId: getGrainTradeMemoryPanelId(mode),
+      panelLabel: getGrainTradeMemoryPanelLabel(mode),
+      resultKind: "no-action",
+    },
+  });
+}
+
+function createGrainTradeSuccessObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"grain-shop">["houseDefinition"];
+  mode: "buy" | "sell";
+  quantity: number;
+  goldDelta: number;
+}) {
+  return createGrainShopObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: `grain:${input.mode}:success`,
+    summary:
+      input.mode === "buy"
+        ? `玩家在粮铺买入了 ${input.quantity} 石粮食。`
+        : `玩家在粮铺卖出了 ${input.quantity} 石粮食。`,
+    reactionSummary:
+      input.mode === "buy"
+        ? `他刚买了 ${input.quantity} 石粮食。`
+        : `他刚卖了 ${input.quantity} 石粮食。`,
+    houseActionMemory: {
+      kind: input.mode === "buy" ? "trade-buy-success" : "trade-sell-success",
+      panelId: getGrainTradeMemoryPanelId(input.mode),
+      panelLabel: getGrainTradeMemoryPanelLabel(input.mode),
+      itemId: "grain",
+      itemName: "粮食",
+      quantity: input.quantity,
+      goldDelta: input.goldDelta,
+      resultKind: "success",
+    },
+  });
+}
+
+function createGrainIntelSuccessObservedEvent(
+  houseDefinition: HouseModuleDispatchInput<"grain-shop">["houseDefinition"]
+) {
+  return createGrainShopObservedEvent({
+    houseDefinition,
+    type: "grain:intel:success",
+    summary: "玩家在粮铺打听了本地粮价。",
+    reactionSummary: "他刚跟我打听了本地粮价。",
+    houseActionMemory: {
+      kind: "service-success",
+      serviceId: "grain-intel",
+      serviceLabel: "打听粮价",
+      resultKind: "success",
+    },
+  });
 }
 
 function withOverlay(
@@ -608,20 +726,47 @@ function handleAction(
           createGrainSoldOutOverlay(input.textEntriesById)
         );
       }
-      return openTradeOverlay(input, sessionState, "buy");
+      return {
+        ...openTradeOverlay(input, sessionState, "buy"),
+        observedEvents: [
+          createGrainTradePreviewObservedEvent(input.houseDefinition, "buy"),
+        ],
+      };
     case "sell":
-      return openTradeOverlay(input, sessionState, "sell");
+      return {
+        ...openTradeOverlay(input, sessionState, "sell"),
+        observedEvents: [
+          createGrainTradePreviewObservedEvent(input.houseDefinition, "sell"),
+        ],
+      };
     case CANCEL_GRAIN_INTEL_ACTION_ID:
     case ADVANCE_GRAIN_INTEL_REPORT_ACTION_ID:
       return reopenGrainShopDialogue(input, sessionState);
     case "close-alert":
-    case "close-trade":
     case "close-result":
     case CLOSE_GRAIN_PRICE_REPORT_ACTION_ID:
     case CANCEL_ACTIVITY_CONFIRM_ACTION_ID:
       return withOverlay(input, sessionState, null, [
         { type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID },
       ]);
+    case "close-trade": {
+      const closeResult = withOverlay(input, sessionState, null, [
+        { type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID },
+      ]);
+      const overlay = sessionState?.overlay;
+
+      return overlay?.type !== "trade"
+        ? closeResult
+        : {
+            ...closeResult,
+            observedEvents: [
+              createGrainTradeCancelObservedEvent(
+                input.houseDefinition,
+                overlay.mode
+              ),
+            ],
+          };
+    }
     case "investigate": {
       const offer = grainIntelService.createOffer(input.textEntriesById);
       return withDialoguePhase(
@@ -685,6 +830,9 @@ function handleAction(
                 dialogueLines: getOpenDialogueLines(sessionState),
                 overlay: createGrainPriceReportOverlay(result.report.rows),
               },
+        observedEvents: [
+          createGrainIntelSuccessObservedEvent(input.houseDefinition),
+        ],
         timeAdvanceCost: result.effect.timeDelta,
       };
     }
@@ -731,6 +879,15 @@ function handleAction(
           sessionState,
           toAlertOverlay("成交", [tradeResult.message], "success")
         ),
+        observedEvents: [
+          createGrainTradeSuccessObservedEvent({
+            houseDefinition: input.houseDefinition,
+            mode: overlay.mode,
+            quantity: overlay.quantity,
+            goldDelta:
+              overlay.mode === "buy" ? -overlay.tradeTotal : overlay.tradeTotal,
+          }),
+        ],
         timeAdvanceCost: 1,
       };
     }
@@ -973,6 +1130,57 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
       return handleTick(input, sessionState);
     }
 
+    if (input.request.type === "conversation-service") {
+      switch (input.request.serviceId) {
+        case "grain-buy":
+          return handleAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "buy",
+              },
+            },
+            sessionState
+          );
+        case "grain-sell":
+          return handleAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "sell",
+              },
+            },
+            sessionState
+          );
+        case "grain-intel":
+          return handleAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: GRAIN_INTEL_ACTION_ID,
+              },
+            },
+            sessionState
+          );
+        case "grain-accounting":
+          return handleAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "accounting",
+              },
+            },
+            sessionState
+          );
+        default:
+          return createTransitionResult(input);
+      }
+    }
+
     if (input.request.type === "field") {
       return handleField(input, sessionState);
     }
@@ -1000,6 +1208,34 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
       sessionState: null,
       sideEffects: [{ type: "stop-interval", intervalId: ACCOUNTING_INTERVAL_ID }],
     };
+  },
+  selectConversationServices() {
+    return [
+      {
+        serviceId: "grain-buy",
+        label: "买粮",
+        description: "进入当前粮铺的买粮流程。",
+        enabled: true,
+      },
+      {
+        serviceId: "grain-sell",
+        label: "卖粮",
+        description: "进入当前粮铺的卖粮流程。",
+        enabled: true,
+      },
+      {
+        serviceId: "grain-intel",
+        label: "打听米价",
+        description: "直接询问各地粮价并结算打听费用。",
+        enabled: true,
+      },
+      {
+        serviceId: "grain-accounting",
+        label: "帮忙算账",
+        description: "转入粮铺算账确认与小游戏流程。",
+        enabled: true,
+      },
+    ];
   },
   selectViewModel(input): HouseModuleViewModel {
     const sessionState =

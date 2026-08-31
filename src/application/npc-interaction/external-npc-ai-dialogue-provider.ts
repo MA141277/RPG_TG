@@ -4,6 +4,7 @@ import type {
   NpcAiDialogueProviderRequest,
   NpcAiDialogueStep,
 } from "../../domain/npc-ai-dialogue";
+import type { HouseConversationRoute } from "../../domain/house-conversation";
 import {
   parsePipeDelimitedChoiceOption,
   parseTxtNarrativeMarkerScript,
@@ -14,9 +15,11 @@ import {
 import {
   buildHouseConversationChatResponseRequest,
   buildHouseConversationClarifyResponseRequest,
+  buildHouseConversationIntentGateConflictRepairRequest,
   buildHouseConversationIntentGateRepairRequest,
   buildHouseConversationIntentGateRequest,
   buildHouseConversationRouteTransitionRequest,
+  resolveDeterministicHouseConversationIntentDecision,
   type HouseConversationIntentGateDecision as ResolvedHouseConversationIntentGateDecision,
   resolveHouseConversationIntentGateDecision,
 } from "./npc-ai-house-intent-gate";
@@ -98,6 +101,9 @@ const NPC_AI_DIALOGUE_DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 const NPC_AI_DIALOGUE_MAX_FORMAT_REPAIR_ATTEMPTS = 1;
 const NPC_AI_DIALOGUE_MAX_ACTION_ROUTE_REPAIR_ATTEMPTS = 1;
 const NPC_AI_DIALOGUE_MAX_HOUSE_ROUTE_REPAIR_ATTEMPTS = 1;
+const NPC_AI_DIALOGUE_MAX_START_TALK_REACTION_REPAIR_ATTEMPTS = 1;
+const HOUSE_INTENT_GATE_MAX_TOKENS = 48;
+const HOUSE_INTENT_GATE_STOP_SEQUENCES = ["\n", "\r"] as const;
 
 const ACTION_ROUTE_SYSTEM = [
   "你是历史题材游戏的功能路由器。",
@@ -137,7 +143,56 @@ const PLACEHOLDER_OPTION_TEXT = new Set([
   "恶意回应",
 ]);
 
-type NpcAiDialogueFormatIssueCategory = "choice" | "handoff";
+const START_TALK_REACTION_MEMORY_KEYWORDS = [
+  "货单",
+  "货栈",
+  "买货",
+  "卖货",
+  "买",
+  "卖",
+  "货",
+  "牌桌",
+  "牌局",
+  "赌",
+  "下场",
+  "玩",
+  "赢",
+  "输",
+  "输光",
+  "手气",
+  "兴头",
+  "喝茶",
+  "请茶",
+  "消息",
+  "打听",
+  "疗伤",
+  "抓药",
+  "药材",
+  "药",
+  "算账",
+  "账簿",
+  "账",
+  "粮价",
+  "粮",
+  "米",
+  "布",
+  "盐",
+  "看看",
+  "翻",
+  "退",
+  "回",
+  "没买",
+  "不买",
+  "没下手",
+  "不玩",
+  "没玩",
+  "不下场",
+];
+
+type NpcAiDialogueFormatIssueCategory =
+  | "choice"
+  | "handoff"
+  | "house-intent-gate";
 
 type NpcAiDialogueFormatIssue = {
   category: NpcAiDialogueFormatIssueCategory;
@@ -172,6 +227,10 @@ function createNpcAiDialogueFormatIssue(
 function resolveNpcAiDialogueFormatIssueUserMessage(
   issue: NpcAiDialogueFormatIssue
 ): string {
+  if (issue.category === "house-intent-gate") {
+    return "NPC AI 室内意图判断格式不正确，请稍后重试。";
+  }
+
   return issue.category === "handoff"
     ? "NPC AI 功能交接格式不正确，请稍后重试。"
     : "NPC AI 对话选项格式不正确，请稍后重试。";
@@ -956,6 +1015,8 @@ function buildExternalProviderRequest(input: {
   config: NpcAiDialogueExternalConfig;
   request: NpcAiDialogueProviderRequest;
   modelOverride?: string;
+  temperatureOverride?: number;
+  openAiBodyOverrides?: Record<string, unknown>;
 }): ExternalProviderRequest {
   if (input.config.mode === "zip-visual-session") {
     return {
@@ -975,6 +1036,8 @@ function buildExternalProviderRequest(input: {
 
   if (input.config.mode === "openai-compatible") {
     const model = input.modelOverride ?? input.config.model;
+    const temperature =
+      input.temperatureOverride ?? input.config.temperature ?? undefined;
 
     return {
       responseMode: "openai-compatible",
@@ -983,10 +1046,9 @@ function buildExternalProviderRequest(input: {
       body: {
         model,
         stream: input.config.stream === true,
-        ...(input.config.temperature == null
-          ? {}
-          : { temperature: input.config.temperature }),
+        ...(temperature == null ? {} : { temperature }),
         messages: buildOpenAiCompatibleMessages(input.request),
+        ...(input.openAiBodyOverrides ?? {}),
       },
       headers: buildRequestHeaders(input.config),
       ...(input.config.credentials == null
@@ -1462,12 +1524,18 @@ function buildFormatRepairRequest(
     "如果要继续普通对话，必须且只输出 1 个 [CHOICE]，并且恰好 3 个 OPTION。",
     "如果要转入当前地点已有功能，先输出至少 1 句符合人设的寒暄或引导，再输出 [ACTION: exact_action_id]。",
     "输出 [ACTION] 时禁止同时输出 [CHOICE]。",
+    request.metadata.inputType === "start_talk" &&
+    normalizeNonEmptyString(request.metadata.latestReactionMemorySummary) != null
+      ? `开场第一句必须先直接回应这条最近行为：${request.metadata.latestReactionMemorySummary}。`
+      : null,
     "每个 OPTION 的按钮文案与角色实际说法必须完全相同，并且都要写成玩家此刻会直接说出口的中文台词。",
     "禁止输出“善意回应”“中立回应”“恶意回应”“option 1”“Option 2”“benevolent”“neutral”“hostile”或任何英文标签。",
     availableSpecialActions == null
       ? null
       : `当前允许的 action id 只有：${availableSpecialActions}。`,
-  ].join("");
+  ]
+    .filter((segment): segment is string => segment != null)
+    .join("");
   return {
     ...request,
     messages: [
@@ -1475,6 +1543,77 @@ function buildFormatRepairRequest(
       {
         role: "user",
         content: repairInstruction,
+      },
+    ],
+  };
+}
+
+function extractStartTalkReactionMemoryKeywords(summary: string): string[] {
+  const normalizedSummary = summary.replace(/\s+/gu, "");
+  const matchedKeywords = START_TALK_REACTION_MEMORY_KEYWORDS.filter((keyword) =>
+    normalizedSummary.includes(keyword)
+  );
+  return [...new Set(matchedKeywords)].sort(
+    (left, right) => right.length - left.length
+  );
+}
+
+function resolveFirstLeadInText(steps: NpcAiDialogueStep[]): string | null {
+  const leadInStep = steps.find(
+    (step): step is Extract<NpcAiDialogueStep, { type: "dialogue" | "narration" }> =>
+      step.type === "dialogue" || step.type === "narration"
+  );
+  return leadInStep == null ? null : normalizeNonEmptyString(leadInStep.text);
+}
+
+function shouldRepairStartTalkReactionMemory(input: {
+  request: NpcAiDialogueProviderRequest;
+  steps: NpcAiDialogueStep[];
+}): boolean {
+  if (input.request.metadata.inputType !== "start_talk") {
+    return false;
+  }
+
+  const latestReactionMemorySummary = normalizeNonEmptyString(
+    input.request.metadata.latestReactionMemorySummary
+  );
+  if (latestReactionMemorySummary == null) {
+    return false;
+  }
+
+  const leadInText = resolveFirstLeadInText(input.steps);
+  if (leadInText == null) {
+    return false;
+  }
+
+  const keywords = extractStartTalkReactionMemoryKeywords(
+    latestReactionMemorySummary
+  );
+  if (keywords.length === 0) {
+    return false;
+  }
+
+  const normalizedLeadInText = leadInText.replace(/\s+/gu, "");
+  return !keywords.some((keyword) => normalizedLeadInText.includes(keyword));
+}
+
+function buildStartTalkReactionMemoryRepairRequest(
+  request: NpcAiDialogueProviderRequest,
+  latestReactionMemorySummary: string
+): NpcAiDialogueProviderRequest {
+  return {
+    ...request,
+    messages: [
+      ...request.messages,
+      {
+        role: "user",
+        content: [
+          `你忽略了 NPC 开场必须先回应的最近行为：${latestReactionMemorySummary}`,
+          "请基于同一轮对话重新完整输出。",
+          "第一句 [DIALOGUE] 或 [NARRATION] 必须先直接点到这条最近行为，不得改成泛泛寒暄。",
+          "说完后再继续这一轮正常对话与后续 3 个 OPTION。",
+          "只允许输出保留标记内容，不要输出任何解释。",
+        ].join(""),
       },
     ],
   };
@@ -1874,6 +2013,8 @@ async function resolveOpenAiHouseConversationIntentGate(input: {
   config: OpenAiCompatibleConfig;
   request: NpcAiDialogueProviderRequest;
   fetchImplementation: FetchImplementation;
+  globalObject?: NpcAiDialogueProviderGlobal;
+  initialRequest?: NpcAiDialogueProviderRequest;
   requestTimeoutMs: number;
 }): Promise<ResolvedHouseConversationIntentGateDecision | null> {
   const modelAttempts = buildOpenAiCompatibleModelAttempts(input.config);
@@ -1886,7 +2027,8 @@ async function resolveOpenAiHouseConversationIntentGate(input: {
     attemptIndex,
     modelOverride,
   ] of modelAttempts.entries()) {
-    let activeRequest = buildHouseConversationIntentGateRequest(input.request);
+    let activeRequest =
+      input.initialRequest ?? buildHouseConversationIntentGateRequest(input.request);
 
     for (
       let repairAttempt = 0;
@@ -1897,6 +2039,11 @@ async function resolveOpenAiHouseConversationIntentGate(input: {
       const providerRequest = buildExternalProviderRequest({
         config: routeConfig,
         request: activeRequest,
+        temperatureOverride: 0,
+        openAiBodyOverrides: {
+          max_tokens: HOUSE_INTENT_GATE_MAX_TOKENS,
+          stop: [...HOUSE_INTENT_GATE_STOP_SEQUENCES],
+        },
         ...(modelOverride == null ? {} : { modelOverride }),
       });
       let didTimeout = false;
@@ -1929,6 +2076,17 @@ async function resolveOpenAiHouseConversationIntentGate(input: {
           await response.text()
         );
         if (errorMessage != null) {
+          appendNpcAiDialogueFormatFailureDiagnostic({
+            globalObject: input.globalObject,
+            request: activeRequest,
+            issue: createNpcAiDialogueFormatIssue(
+              "house-intent-gate",
+              errorMessage
+            ),
+            rawText: errorMessage,
+            phase:
+              attemptIndex < modelAttempts.length - 1 ? "repair" : "final-error",
+          });
           if (attemptIndex < modelAttempts.length - 1) {
             continue modelAttemptLoop;
           }
@@ -1936,6 +2094,17 @@ async function resolveOpenAiHouseConversationIntentGate(input: {
         }
 
         if (text == null) {
+          appendNpcAiDialogueFormatFailureDiagnostic({
+            globalObject: input.globalObject,
+            request: activeRequest,
+            issue: createNpcAiDialogueFormatIssue(
+              "house-intent-gate",
+              "室内意图门禁阶段未返回可解析文本。"
+            ),
+            rawText: "",
+            phase:
+              attemptIndex < modelAttempts.length - 1 ? "repair" : "final-error",
+          });
           if (attemptIndex < modelAttempts.length - 1) {
             continue modelAttemptLoop;
           }
@@ -1947,9 +2116,20 @@ async function resolveOpenAiHouseConversationIntentGate(input: {
           request: input.request,
         });
         if (result.issue != null) {
-          if (
-            repairAttempt < NPC_AI_DIALOGUE_MAX_HOUSE_ROUTE_REPAIR_ATTEMPTS
-          ) {
+          const formatIssue = createNpcAiDialogueFormatIssue(
+            "house-intent-gate",
+            result.issue
+          );
+          const canRepairFormatIssue =
+            repairAttempt < NPC_AI_DIALOGUE_MAX_HOUSE_ROUTE_REPAIR_ATTEMPTS;
+          appendNpcAiDialogueFormatFailureDiagnostic({
+            globalObject: input.globalObject,
+            request: activeRequest,
+            issue: formatIssue,
+            rawText: text,
+            phase: canRepairFormatIssue ? "repair" : "final-error",
+          });
+          if (canRepairFormatIssue) {
             activeRequest = buildHouseConversationIntentGateRepairRequest(
               activeRequest,
               result.issue
@@ -2170,36 +2350,65 @@ export function createExternalNpcAiDialogueProvider(
       };
 
       let preparedRequest = request;
+      const deterministicHouseConversationDecision =
+        resolveDeterministicHouseConversationIntentDecision(request);
+      const deterministicHouseConversationRouteDecision =
+        deterministicHouseConversationDecision?.kind === "route"
+          ? deterministicHouseConversationDecision
+          : null;
       const routeCandidate = {
         config: input.config,
         request,
       };
       if (shouldResolveHouseConversationIntentGate(routeCandidate)) {
         await emitStartIfNeeded();
-        const gateDecision = await resolveOpenAiHouseConversationIntentGate({
+        let gateDecision = await resolveOpenAiHouseConversationIntentGate({
           config: routeCandidate.config,
           request,
           fetchImplementation,
+          ...(input.globalObject == null
+            ? {}
+            : { globalObject: input.globalObject }),
           requestTimeoutMs,
         });
-        if (gateDecision == null) {
-          didEmitError = true;
-          await onEvent({
-            type: "error",
-            requestId: request.requestId,
-            message: "NPC AI 室内意图判断格式不正确，请稍后重试。",
-          });
-          return;
-        }
+        let resolvedHouseDecision =
+          gateDecision ?? deterministicHouseConversationDecision;
+        if (
+          deterministicHouseConversationRouteDecision != null &&
+          (gateDecision == null || gateDecision.kind !== "route")
+        ) {
+          if (gateDecision != null) {
+            gateDecision = await resolveOpenAiHouseConversationIntentGate({
+              config: routeCandidate.config,
+              request,
+              fetchImplementation,
+              ...(input.globalObject == null
+                ? {}
+                : { globalObject: input.globalObject }),
+              initialRequest:
+                buildHouseConversationIntentGateConflictRepairRequest(
+                  request,
+                  deterministicHouseConversationRouteDecision.route
+                ),
+              requestTimeoutMs,
+            });
+          }
 
-        if (gateDecision.kind === "chat") {
+          resolvedHouseDecision =
+            gateDecision?.kind === "route"
+              ? gateDecision
+              : deterministicHouseConversationRouteDecision;
+        }
+        if (resolvedHouseDecision == null) {
+          preparedRequest = request;
+        } else if (resolvedHouseDecision.kind === "chat") {
           preparedRequest = buildHouseConversationChatResponseRequest(request);
-        } else if (gateDecision.kind === "clarify") {
+        } else if (resolvedHouseDecision.kind === "clarify") {
           preparedRequest = buildHouseConversationClarifyResponseRequest(request);
         } else {
           preparedRequest = buildHouseConversationRouteTransitionRequest({
             request,
-            route: gateDecision.route,
+            route: resolvedHouseDecision.route,
           });
         }
       } else if (shouldFailClosedHouseConversationIntentGate(routeCandidate)) {
@@ -2232,11 +2441,15 @@ export function createExternalNpcAiDialogueProvider(
         modelOverride,
       ] of modelAttempts.entries()) {
         let activeRequest = preparedRequest;
+        let formatRepairCount = 0;
+        let startTalkReactionRepairCount = 0;
 
         for (
-          let formatRepairAttempt = 0;
-          formatRepairAttempt <= NPC_AI_DIALOGUE_MAX_FORMAT_REPAIR_ATTEMPTS;
-          formatRepairAttempt += 1
+          let repairAttemptIndex = 0;
+          repairAttemptIndex <=
+          NPC_AI_DIALOGUE_MAX_FORMAT_REPAIR_ATTEMPTS +
+            NPC_AI_DIALOGUE_MAX_START_TALK_REACTION_REPAIR_ATTEMPTS;
+          repairAttemptIndex += 1
         ) {
           const controller = new AbortController();
           const providerRequest = buildExternalProviderRequest({
@@ -2246,8 +2459,7 @@ export function createExternalNpcAiDialogueProvider(
           });
           let didTimeout = false;
           let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
-          let pendingFormatRepairRequest: NpcAiDialogueProviderRequest | null =
-            null;
+          let pendingRepairRequest: NpcAiDialogueProviderRequest | null = null;
 
           const clearRequestTimeout = (): void => {
             if (timeoutHandle == null) {
@@ -2291,6 +2503,28 @@ export function createExternalNpcAiDialogueProvider(
               return;
             }
 
+            const latestReactionMemorySummary = normalizeNonEmptyString(
+              activeRequest.metadata.latestReactionMemorySummary
+            );
+            const canRepairStartTalkReactionMemory =
+              completionInput.providerRequest.responseMode ===
+                "openai-compatible" &&
+              latestReactionMemorySummary != null &&
+              startTalkReactionRepairCount <
+                NPC_AI_DIALOGUE_MAX_START_TALK_REACTION_REPAIR_ATTEMPTS &&
+              shouldRepairStartTalkReactionMemory({
+                request: activeRequest,
+                steps: completion.allSteps,
+              });
+            if (canRepairStartTalkReactionMemory) {
+              startTalkReactionRepairCount += 1;
+              pendingRepairRequest = buildStartTalkReactionMemoryRepairRequest(
+                activeRequest,
+                latestReactionMemorySummary
+              );
+              return;
+            }
+
             const choiceStepFormatIssue = resolveChoiceStepFormatIssue(
               completion.allSteps,
               activeRequest
@@ -2299,7 +2533,7 @@ export function createExternalNpcAiDialogueProvider(
               const canRepairFormatIssue =
                 completionInput.providerRequest.responseMode ===
                   "openai-compatible" &&
-                formatRepairAttempt <
+                formatRepairCount <
                   NPC_AI_DIALOGUE_MAX_FORMAT_REPAIR_ATTEMPTS;
               appendNpcAiDialogueFormatFailureDiagnostic({
                 globalObject: input.globalObject,
@@ -2311,7 +2545,8 @@ export function createExternalNpcAiDialogueProvider(
               if (
                 canRepairFormatIssue
               ) {
-                pendingFormatRepairRequest = buildFormatRepairRequest(
+                formatRepairCount += 1;
+                pendingRepairRequest = buildFormatRepairRequest(
                   activeRequest,
                   choiceStepFormatIssue
                 );
@@ -2535,7 +2770,7 @@ export function createExternalNpcAiDialogueProvider(
               !controller.signal.aborted &&
               !didEmitComplete &&
               !didEmitError &&
-              pendingFormatRepairRequest == null
+              pendingRepairRequest == null
             ) {
               await emitResolvedCompletion({
                 controller,
@@ -2543,9 +2778,9 @@ export function createExternalNpcAiDialogueProvider(
               });
             }
 
-            if (pendingFormatRepairRequest != null) {
+            if (pendingRepairRequest != null) {
               clearBufferedAttemptState();
-              activeRequest = pendingFormatRepairRequest;
+              activeRequest = pendingRepairRequest;
               continue;
             }
 

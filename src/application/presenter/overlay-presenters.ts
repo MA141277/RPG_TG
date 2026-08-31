@@ -32,6 +32,7 @@ export function createOverlayPresenterOutput(
     campaignTravelState: input.appState.campaignTravelState,
     modalState: input.appState.modalState,
     locationDialogueState: input.appState.locationDialogueState,
+    worldIntentState: input.appState.worldIntentState ?? null,
   };
 }
 

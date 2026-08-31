@@ -54,7 +54,6 @@ import {
   closeCityDirectory,
   closeCharacterAbilityDetail,
   closeGlobalOverlay,
-  closeNpcInteraction,
   closeTroopEditor,
   closeTroopManagement,
   clearTroopManagementUnit,
@@ -63,13 +62,13 @@ import {
   disbandTroopManagementUnit,
   purchaseTroopEditorShopOffer,
   swapTroopEditorTeams,
-  chooseNpcDefaultTalk,
   openCharacterAbilityDetail,
   openCharacterDetail,
   openBackpack,
   openCityMenu,
   openCityDirectory,
   openNpcInteraction,
+  ensureNpcInteractionSessionForTarget,
   openPlayerDetail,
   openTroopEditor,
   openTroopManagement,
@@ -86,7 +85,10 @@ import {
   moveTroopManagementUnit,
   updateOverlayView,
 } from "./application/app-actions";
-import type { AppState } from "./application/app-shell";
+import {
+  createInitialAppWorldIntentState,
+  type AppState,
+} from "./application/app-shell";
 import { applyCoinReward } from "./application/rewards/coin-reward";
 import { normalizeTroopRuntimeStateUnitDefinitions } from "./domain/troop-editor";
 import {
@@ -136,6 +138,16 @@ import {
 } from "./application/audio/battle-sound";
 import { createAppPresenterOutput } from "./application/presenter/app-presenter";
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
+import {
+  createWorldIntentActionCoordinator,
+  type WorldIntentActionCoordinator,
+} from "./application/runtime/world-intent-action-coordinator";
+import {
+  createHouseConversationActionCoordinator,
+  type HouseConversationActionCoordinator,
+} from "./application/runtime/house-conversation-action-coordinator";
+import { collectHouseWorldObservedEventsForTransition } from "./application/runtime/transition/house-world-observed-event-transition";
+import { selectHouseConversationServicesFromActiveModule } from "./application/house-conversation/select-house-conversation-services";
 import { declaredScrollRestoration } from "./ui/runtime/declared-scroll-restoration";
 import {
   applyCouncilPriorityFollowUp,
@@ -251,6 +263,25 @@ import {
   leaveHouseThroughRuntime,
   type HouseRuntimeBridge,
 } from "./core/runtime/house-runtime";
+import {
+  createNpcInteractionRuntimeBridge,
+  type NpcInteractionRuntimeBridge,
+} from "./core/runtime/npc-interaction-runtime";
+import {
+  createWorldIntentRuntimeBridge,
+  type WorldIntentRuntimeBridge,
+} from "./core/runtime/world-intent-runtime";
+import { createConfiguredNpcAiDialogueProvider } from "./application/npc-interaction/external-npc-ai-dialogue-provider";
+import { primeNpcAiDialogueConfigFromEnv } from "./application/npc-interaction/npc-ai-dialogue-provider-bootstrap";
+import { createLocalPlaceholderNpcAiDialogueProvider } from "./application/npc-interaction/local-placeholder-npc-ai-dialogue-provider";
+import { createLocalPlaceholderTxtNarrativeProvider } from "./application/txt-narrative/local-placeholder-txt-narrative-provider";
+import { createConfiguredWorldIntentProvider } from "./application/world-intent/external-world-intent-provider";
+import { createLocalPlaceholderWorldIntentProvider } from "./application/world-intent/local-placeholder-world-intent-provider";
+import {
+  resolveHaozhouWorldIntentNegotiationAction,
+  selectHaozhouWorldIntentNegotiationNodes,
+} from "./application/world-intent/world-intent-negotiation-registry";
+import { primeWorldIntentConfigFromEnv } from "./application/world-intent/world-intent-provider-bootstrap";
 import {
   createExitInteractiveRequest,
   createInteractiveActionRequest,
@@ -510,6 +541,14 @@ function getCurrentMapDefinition(): MapDefinition | null {
   return (
     getMapDefinitionById(appState.gameState.world.currentMapId) ??
     activeContentContext.maps[0] ??
+    null
+  );
+}
+
+function getCurrentCityDefinition(): CityDefinition | null {
+  return (
+    activeContentContext.cityDefinitionById[appState.gameState.world.currentCityId] ??
+    activeContentContext.cities[0] ??
     null
   );
 }
@@ -1214,6 +1253,218 @@ function syncCoinRewardAnchorEditorView(): void {
 }
 
 let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
+let houseConversationActionCoordinator: HouseConversationActionCoordinator | null =
+  null;
+let worldIntentActionCoordinator: WorldIntentActionCoordinator | null = null;
+let worldIntentRuntime: WorldIntentRuntimeBridge =
+  createWorldIntentRuntimeInstance();
+let npcInteractionRuntime: NpcInteractionRuntimeBridge =
+  createNpcInteractionRuntimeInstance();
+
+function dispatchObservedHouseEvents(events: ReturnType<
+  typeof collectHouseWorldObservedEventsForTransition
+>): void {
+  events.forEach((event) => {
+    worldIntentRuntime.dispatch({
+      type: "observe-event",
+      event,
+    });
+  });
+}
+
+function createProjectedEnteredHouseGameState(houseId: string): GameState {
+  const houseDefinition =
+    activeContentContext.storyContent.houseDefinitionsById[houseId] ?? null;
+
+  return {
+    ...appState.gameState,
+    world: {
+      ...appState.gameState.world,
+      currentCityId:
+        houseDefinition?.cityId ?? appState.gameState.world.currentCityId,
+      currentHouseId: houseId,
+    },
+    ui: {
+      ...appState.gameState.ui,
+      currentView: "house",
+    },
+  };
+}
+
+function enterHouseThroughRuntimeWithObservedEvents(houseId: string): void {
+  const previousGameState = appState.gameState;
+  dispatchObservedHouseEvents(
+    collectHouseWorldObservedEventsForTransition({
+      previousGameState,
+      nextGameState: createProjectedEnteredHouseGameState(houseId),
+      houseDefinitionsById: activeContentContext.storyContent.houseDefinitionsById,
+    })
+  );
+  enterHouseThroughRuntime(houseRuntime, houseId);
+}
+
+function leaveHouseThroughRuntimeWithObservedEvents(): void {
+  const previousGameState = appState.gameState;
+  leaveHouseThroughRuntime(houseRuntime);
+  dispatchObservedHouseEvents(
+    collectHouseWorldObservedEventsForTransition({
+      previousGameState,
+      nextGameState: appState.gameState,
+      houseDefinitionsById: activeContentContext.storyContent.houseDefinitionsById,
+    })
+  );
+}
+
+worldIntentActionCoordinator = createWorldIntentActionCoordinator({
+  getAppState: () => appState,
+  setAppState: (nextAppState) => {
+    appState = nextAppState;
+  },
+  renderApp,
+  getStageOutput: () =>
+    latestPresenterOutput?.stage ?? createCurrentPresenterOutput().stage,
+  cityDefinitions: activeContentContext.cities,
+  houseDefinitions: activeContentContext.houses,
+  houseAccessRefusalRules: activeContentContext.gameContent.houseAccessRefusalRules,
+  worldIntentRuntime,
+  selectNegotiableStoryNodes: ({ appState, stageOutput }) =>
+    selectHaozhouWorldIntentNegotiationNodes({
+      appState,
+      stageOutput,
+    }),
+  enterHouse: (houseId) => {
+    npcInteractionRuntime.closeActiveRequest();
+    appState = {
+      ...appState,
+      cityCardDrawTestState: null,
+    };
+    enterHouseThroughRuntimeWithObservedEvents(houseId);
+  },
+  leaveHouse: () => {
+    npcInteractionRuntime.closeActiveRequest();
+    leaveHouseThroughRuntimeWithObservedEvents();
+  },
+  dispatchHouseAction: (actionId) => {
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "action",
+      actionId,
+    });
+  },
+  negotiateStoryNode: ({ nodeId, targetCharacterId, approach }) => {
+    const resolution = resolveHaozhouWorldIntentNegotiationAction({
+      nodeId,
+      approach,
+      ...(targetCharacterId === undefined ? {} : { targetCharacterId }),
+    });
+    if (resolution == null) {
+      return;
+    }
+
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "action",
+      actionId: resolution.actionId,
+    });
+  },
+  openNpcTalk: ({ targetCharacterId, context }) => {
+    appState = ensureNpcInteractionSessionForTarget(appState, {
+      context,
+      targetCharacterId,
+    });
+    npcInteractionRuntime.dispatch({
+      type: "start-talk",
+    });
+  },
+});
+houseConversationActionCoordinator = createHouseConversationActionCoordinator({
+  getAppState: () => appState,
+  setAppState: (nextAppState) => {
+    appState = nextAppState;
+  },
+  getStageOutput: () =>
+    latestPresenterOutput?.stage ?? createCurrentPresenterOutput().stage,
+  renderApp,
+  cityDefinitions: activeContentContext.cities,
+  houseDefinitions: activeContentContext.houses,
+  houseAccessRefusalRules: activeContentContext.gameContent.houseAccessRefusalRules,
+  openNpcTalk: ({ targetCharacterId, context }) => {
+    appState = ensureNpcInteractionSessionForTarget(appState, {
+      context,
+      targetCharacterId,
+    });
+    npcInteractionRuntime.dispatch({
+      type: "start-talk",
+    });
+  },
+  dispatchHouseAction: (actionId) => {
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "action",
+      actionId,
+    });
+  },
+  enterHouse: (houseId) => {
+    npcInteractionRuntime.closeActiveRequest();
+    appState = {
+      ...appState,
+      cityCardDrawTestState: null,
+    };
+    enterHouseThroughRuntimeWithObservedEvents(houseId);
+  },
+  leaveHouse: () => {
+    npcInteractionRuntime.closeActiveRequest();
+    leaveHouseThroughRuntimeWithObservedEvents();
+  },
+  dispatchNpcRuntimeAction: (request) => {
+    npcInteractionRuntime.dispatch(request);
+  },
+  closeActiveRequest: () => {
+    npcInteractionRuntime.closeActiveRequest();
+  },
+  openNpcProfile: (characterId) => {
+    appState = openCharacterDetail(appState, characterId);
+    renderApp();
+  },
+  selectConversationServices: ({ appState, stageOutput }) =>
+    selectHouseConversationServicesFromActiveModule({
+      appState,
+      stageOutput,
+      playerCharacterId: currentPlayerCharacterId,
+      activityDefinitionsById:
+        activeContentContext.storyContent.activityDefinitionsById,
+      textEntriesById: activeContentContext.storyContent.textEntriesById,
+    }),
+  selectNegotiableStoryNodes: ({ appState, stageOutput }) =>
+    selectHaozhouWorldIntentNegotiationNodes({
+      appState,
+      stageOutput,
+    }),
+  negotiateStoryNode: ({ nodeId, targetCharacterId, approach }) => {
+    const resolution = resolveHaozhouWorldIntentNegotiationAction({
+      nodeId,
+      approach,
+      ...(targetCharacterId === undefined ? {} : { targetCharacterId }),
+    });
+    if (resolution == null) {
+      return;
+    }
+
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "action",
+      actionId: resolution.actionId,
+    });
+  },
+  dispatchHouseConversationService: ({
+    serviceId,
+    rawPlayerText,
+    targetCharacterId,
+  }) => {
+    dispatchHouseRuntimeRequest(houseRuntime, {
+      type: "conversation-service",
+      serviceId,
+      rawPlayerText,
+      ...(targetCharacterId === undefined ? {} : { targetCharacterId }),
+    });
+  },
+});
 mountHouseSortableTileRuntime({
   appElement,
   dispatchReorderAction(actionId) {
@@ -1253,6 +1504,7 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
   setActiveContentContext,
   recreateHouseRuntime: () => {
     houseRuntime = createHouseRuntimeInstance();
+    npcInteractionRuntime = createNpcInteractionRuntimeInstance();
   },
   setGameVisibility,
   hideMainUiFlow: () => {
@@ -1423,6 +1675,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     cityCardDrawTestState: null,
     cityMenuState: null,
     cityDirectoryState: null,
+    worldIntentState: createInitialAppWorldIntentState(),
     autoAdvanceState: null,
     uiLayouts: {
       "global-hud": createDefaultGlobalHudLayout(),
@@ -2080,6 +2333,145 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
     cityDefinitionsById: activeContentContext.storyContent.cityDefinitionsById,
     houseDefinitionsById: activeContentContext.storyContent.houseDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,
+    txtNarrativeProvider: createLocalPlaceholderTxtNarrativeProvider(),
+    recordObservedEvents: dispatchObservedHouseEvents,
+  });
+}
+
+function createWorldIntentRuntimeInstance(): WorldIntentRuntimeBridge {
+  const worldIntentProviderMode =
+    import.meta.env.VITE_WORLD_INTENT_PROVIDER_MODE ??
+    import.meta.env.VITE_NPC_AI_PROVIDER_MODE;
+  const worldIntentBaseUrl =
+    import.meta.env.VITE_WORLD_INTENT_BASE_URL ??
+    import.meta.env.VITE_NPC_AI_BASE_URL;
+  const worldIntentModel =
+    import.meta.env.VITE_WORLD_INTENT_MODEL ??
+    import.meta.env.VITE_NPC_AI_MODEL;
+  const worldIntentFallbackModels =
+    import.meta.env.VITE_WORLD_INTENT_FALLBACK_MODELS ??
+    import.meta.env.VITE_NPC_AI_FALLBACK_MODELS;
+  const worldIntentApiKey =
+    import.meta.env.VITE_WORLD_INTENT_API_KEY ??
+    import.meta.env.VITE_NPC_AI_API_KEY;
+  const worldIntentTemperature =
+    import.meta.env.VITE_WORLD_INTENT_TEMPERATURE ??
+    import.meta.env.VITE_NPC_AI_TEMPERATURE;
+
+  primeWorldIntentConfigFromEnv({
+    env: {
+      ...(worldIntentProviderMode == null
+        ? {}
+        : { mode: worldIntentProviderMode }),
+      ...(worldIntentBaseUrl == null
+        ? {}
+        : { baseUrl: worldIntentBaseUrl }),
+      ...(worldIntentModel == null
+        ? {}
+        : { model: worldIntentModel }),
+      ...(worldIntentFallbackModels == null
+        ? {}
+        : {
+            fallbackModels: worldIntentFallbackModels,
+          }),
+      ...(worldIntentApiKey == null
+        ? {}
+        : { authToken: worldIntentApiKey }),
+      ...(worldIntentTemperature == null
+        ? {}
+        : { temperature: worldIntentTemperature }),
+    },
+    globalObject: window,
+  });
+
+  return createWorldIntentRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp,
+    selectCapabilitySnapshot: () =>
+      worldIntentActionCoordinator?.selectCapabilitySnapshot() ?? {
+        cityId: appState.gameState.world.currentCityId,
+        currentHouseId: appState.gameState.world.currentHouseId,
+        currentHouseModuleId: null,
+        storyStage: null,
+        reachableHouses: [],
+        talkTargets: [],
+        serviceActions: [],
+        negotiableStoryNodes: [],
+        leaveAction: null,
+      },
+    worldIntentProvider: createConfiguredWorldIntentProvider({
+      globalObject: window,
+      fallbackProvider: createLocalPlaceholderWorldIntentProvider(),
+    }),
+    onResolution: ({ requestId, result }) => {
+      worldIntentActionCoordinator?.handleResolvedIntent({
+        requestId,
+        result,
+      });
+    },
+  });
+}
+
+function createNpcInteractionRuntimeInstance(): NpcInteractionRuntimeBridge {
+  primeNpcAiDialogueConfigFromEnv({
+    env: {
+      ...(import.meta.env.VITE_NPC_AI_PROVIDER_MODE == null
+        ? {}
+        : { mode: import.meta.env.VITE_NPC_AI_PROVIDER_MODE }),
+      ...(import.meta.env.VITE_NPC_AI_BASE_URL == null
+        ? {}
+        : { baseUrl: import.meta.env.VITE_NPC_AI_BASE_URL }),
+      ...(import.meta.env.VITE_NPC_AI_MODEL == null
+        ? {}
+        : { model: import.meta.env.VITE_NPC_AI_MODEL }),
+      ...(import.meta.env.VITE_NPC_AI_FALLBACK_MODELS == null
+        ? {}
+        : {
+            fallbackModels: import.meta.env.VITE_NPC_AI_FALLBACK_MODELS,
+          }),
+      ...(import.meta.env.VITE_NPC_AI_API_KEY == null
+        ? {}
+        : { authToken: import.meta.env.VITE_NPC_AI_API_KEY }),
+      ...(import.meta.env.VITE_NPC_AI_STREAM == null
+        ? {}
+        : { stream: import.meta.env.VITE_NPC_AI_STREAM }),
+      ...(import.meta.env.VITE_NPC_AI_TEMPERATURE == null
+        ? {}
+        : { temperature: import.meta.env.VITE_NPC_AI_TEMPERATURE }),
+    },
+    globalObject: window,
+  });
+
+  return createNpcInteractionRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp,
+    houseDefinitionsById: activeContentContext.storyContent.houseDefinitionsById,
+    textEntriesById: activeContentContext.storyContent.textEntriesById,
+    dispatchHouseAction: (actionId) => {
+      houseRuntime.dispatch({
+        type: "dispatch",
+        request: {
+          type: "action",
+          actionId,
+        },
+      });
+    },
+    selectHouseConversationCapabilitySnapshot: ({ targetCharacterId }) =>
+      houseConversationActionCoordinator?.selectCapabilitySnapshot({
+        targetCharacterId,
+      }) ?? null,
+    dispatchHouseConversationRoute: (route) =>
+      houseConversationActionCoordinator?.dispatchResolvedRoute(route) ?? false,
+    npcAiDialogueProvider: createConfiguredNpcAiDialogueProvider({
+      globalObject: window,
+      fallbackProvider: createLocalPlaceholderNpcAiDialogueProvider(),
+    }),
   });
 }
 
@@ -3942,7 +4334,7 @@ function enterMappedCity3dHouseBySceneObjectId(
     return;
   }
 
-  enterHouseThroughRuntime(houseRuntime, mappedHouse.houseId);
+  enterHouseThroughRuntimeWithObservedEvents(mappedHouse.houseId);
 }
 
 window.addEventListener("pointerdown", unlockAppAudioIfNeeded, {
@@ -4546,6 +4938,14 @@ appElement.addEventListener("input", (event) => {
     return;
   }
 
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-world-intent-input")
+  ) {
+    worldIntentActionCoordinator?.handleDraftInput(targetElement.value);
+    return;
+  }
+
   if (handleLayoutEditorInput(event.target)) {
     return;
   }
@@ -4646,6 +5046,17 @@ appElement.addEventListener("input", (event) => {
     }
   }
 
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.npcInput === "custom"
+  ) {
+    npcInteractionRuntime.dispatch({
+      type: "update-custom-input",
+      value: targetElement.value,
+    });
+    return;
+  }
+
   const fieldId = targetElement.dataset.houseField;
   if (fieldId != null) {
     dispatchHouseRuntimeRequest(houseRuntime, {
@@ -4685,6 +5096,16 @@ appElement.addEventListener("keydown", (event) => {
         return;
       }
     }
+  }
+
+  if (
+    event.key === "Enter" &&
+    targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-world-intent-input")
+  ) {
+    event.preventDefault();
+    worldIntentActionCoordinator?.handleSubmit();
+    return;
   }
 
   if (
@@ -5175,10 +5596,30 @@ appElement.addEventListener("click", (event) => {
     }
   }
 
+  const worldIntentActionButton = targetElement.closest<HTMLElement>(
+    "[data-world-intent-action]"
+  );
+  if (worldIntentActionButton != null) {
+    const worldIntentAction = worldIntentActionButton.dataset.worldIntentAction;
+    if (worldIntentAction === "submit") {
+      worldIntentActionCoordinator?.handleSubmit();
+      return;
+    }
+
+    if (worldIntentAction === "clear") {
+      worldIntentActionCoordinator?.handleClear();
+      return;
+    }
+  }
+
   const locationDialogueAction = targetElement.closest<HTMLElement>(
     "[data-action='close-location-dialogue']"
   );
   if (locationDialogueAction != null) {
+    if (worldIntentActionCoordinator?.handleLocationDialogueAdvance() === true) {
+      return;
+    }
+
     appState = {
       ...appState,
       locationDialogueState: null,
@@ -5255,6 +5696,7 @@ appElement.addEventListener("click", (event) => {
       locationDialogueState: appState.locationDialogueState,
       beggingMiniGameState: appState.beggingMiniGameState,
       activitySession: appState.gameState.runtime.activitySession,
+      npcInteractionSession: appState.gameState.ui.npcInteractionSession,
     });
     debugNpcInteraction("npc-target:hit", {
       characterId,
@@ -5267,12 +5709,32 @@ appElement.addEventListener("click", (event) => {
     if (characterId != null && rawContext != null) {
       const context = parseNpcInteractionContext(rawContext);
       if (context != null && !isNpcInteractionBlocked(blockState)) {
-        appState = openNpcInteraction(appState, context, characterId);
+        const pilotState =
+          context.type === "house"
+            ? houseConversationActionCoordinator?.selectPilotState() ?? null
+            : null;
+        const shouldRouteThroughHouseConversationCoordinator =
+          context.type === "house" &&
+          pilotState?.enabled === true &&
+          pilotState.houseId === context.houseId;
+
+        if (shouldRouteThroughHouseConversationCoordinator) {
+          houseConversationActionCoordinator?.handleNpcTargetClick({
+            characterId,
+            context,
+          });
+        } else {
+          appState = openNpcInteraction(appState, context, characterId);
+          renderApp();
+        }
         debugNpcInteraction("npc-target:opened", {
           characterId,
           context,
+          routedThrough:
+            shouldRouteThroughHouseConversationCoordinator
+              ? "house-conversation-coordinator"
+              : "default-npc-interaction",
         });
-        renderApp();
       } else {
         debugNpcInteraction("npc-target:blocked", {
           characterId,
@@ -5288,14 +5750,48 @@ appElement.addEventListener("click", (event) => {
   if (npcActionButton != null) {
     const npcAction = npcActionButton.dataset.npcAction;
     if (npcAction === "close") {
-      appState = closeNpcInteraction(appState);
-      renderApp();
+      npcInteractionRuntime.dispatch({
+        type: "close",
+      });
       return;
     }
 
-    if (npcAction === "continue") {
-      appState = closeNpcInteraction(appState);
-      renderApp();
+    if (npcAction === "select-option") {
+      const optionId = npcActionButton.dataset.npcOptionId;
+      if (optionId != null && optionId.length > 0) {
+        npcInteractionRuntime.dispatch({
+          type: "select-option",
+          optionId,
+        });
+      }
+      return;
+    }
+
+    if (npcAction === "advance-page") {
+      npcInteractionRuntime.dispatch({
+        type: "advance-page",
+      });
+      return;
+    }
+
+    if (npcAction === "open-custom-input") {
+      npcInteractionRuntime.dispatch({
+        type: "open-custom-input",
+      });
+      return;
+    }
+
+    if (npcAction === "cancel-custom-input") {
+      npcInteractionRuntime.dispatch({
+        type: "cancel-custom-input",
+      });
+      return;
+    }
+
+    if (npcAction === "submit-custom") {
+      npcInteractionRuntime.dispatch({
+        type: "submit-custom",
+      });
       return;
     }
 
@@ -5311,8 +5807,16 @@ appElement.addEventListener("click", (event) => {
     if (npcAction === "talk") {
       const characterId = npcActionButton.dataset.characterId;
       if (characterId != null && characterId.length > 0) {
-        appState = chooseNpcDefaultTalk(appState, characterId);
-        renderApp();
+        const rawContext = npcActionButton.dataset.npcContext;
+        const context =
+          rawContext == null ? null : parseNpcInteractionContext(rawContext);
+        appState = ensureNpcInteractionSessionForTarget(appState, {
+          context,
+          targetCharacterId: characterId,
+        });
+        npcInteractionRuntime.dispatch({
+          type: "start-talk",
+        });
       }
       return;
     }
@@ -5747,7 +6251,7 @@ appElement.addEventListener("click", (event) => {
           },
         },
       };
-      enterHouseThroughRuntime(houseRuntime, targetHouseId);
+      enterHouseThroughRuntimeWithObservedEvents(targetHouseId);
     }
     return;
   }
@@ -5848,7 +6352,8 @@ appElement.addEventListener("click", (event) => {
     "[data-action='leave-house']"
   );
   if (leaveHouseButton != null) {
-    leaveHouseThroughRuntime(houseRuntime);
+    npcInteractionRuntime.closeActiveRequest();
+    leaveHouseThroughRuntimeWithObservedEvents();
     return;
   }
 
@@ -5871,7 +6376,7 @@ appElement.addEventListener("click", (event) => {
         ...appState,
         cityCardDrawTestState: null,
       };
-      enterHouseThroughRuntime(houseRuntime, houseId);
+      enterHouseThroughRuntimeWithObservedEvents(houseId);
     }
     return;
   }
@@ -7142,6 +7647,28 @@ function renderApp() {
   renderAppFrame(focusedScaleInput);
 }
 
+let latestPresenterOutput: ReturnType<typeof createAppPresenterOutput> | null =
+  null;
+
+function createCurrentPresenterOutput() {
+  const currentCityDefinition = getCurrentCityDefinition();
+  assertExists(currentCityDefinition, "Missing active city definition for render.");
+
+  return createAppPresenterOutput({
+    appState,
+    playerCharacterId: currentPlayerCharacterId,
+    cityDefinition: currentCityDefinition,
+    cityDefinitions: activeContentContext.cities,
+    houseDefinitions: activeContentContext.houses,
+    cityEntries: activeContentContext.cityEntries,
+    cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
+    cityNameById: activeContentContext.cityNameById,
+    textEntriesById: activeContentContext.textEntriesById,
+    citySceneMappingsByCityId: getZhuYuanzhangCitySceneMappingByCityId(),
+    sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+  });
+}
+
 function renderAppFrame(
   focusedScaleInput: {
     value: string;
@@ -7169,10 +7696,7 @@ function renderAppFrame(
     },
   };
   const currentMapDefinition = getCurrentMapDefinition();
-  const currentCityDefinition =
-    activeContentContext.cityDefinitionById[appState.gameState.world.currentCityId] ??
-    activeContentContext.cities[0] ??
-    null;
+  const currentCityDefinition = getCurrentCityDefinition();
   assertExists(currentMapDefinition, "Missing active map definition for render.");
   assertExists(currentCityDefinition, "Missing active city definition for render.");
   if (shouldKeepCampaignMapStageAlive(appState.gameState.ui.currentView)) {
@@ -7203,19 +7727,8 @@ function renderAppFrame(
     declaredScrollRestoration.capture(appRoot);
   const preservedCoinRewardLayer = captureCoinRewardLayer(appRoot);
   const preservedCityCardDrawOverlay = captureCityCardDrawOverlay(appRoot);
-  const presenterOutput = createAppPresenterOutput({
-    appState,
-    playerCharacterId: currentPlayerCharacterId,
-    cityDefinition: currentCityDefinition,
-    cityDefinitions: activeContentContext.cities,
-    houseDefinitions: activeContentContext.houses,
-    cityEntries: activeContentContext.cityEntries,
-    cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
-    cityNameById: activeContentContext.cityNameById,
-    textEntriesById: activeContentContext.textEntriesById,
-    citySceneMappingsByCityId: getZhuYuanzhangCitySceneMappingByCityId(),
-    sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
-  });
+  const presenterOutput = createCurrentPresenterOutput();
+  latestPresenterOutput = presenterOutput;
   syncAppAudio();
 
   dialogueTypewriterRuntimeHandle?.destroy();
@@ -7344,6 +7857,7 @@ function renderAppFrame(
   });
   syncEmbeddedBattleUiEditor();
   dialogueTypewriterRuntimeHandle = syncDialogueTypewriterRuntime(appRoot);
+  houseConversationActionCoordinator?.syncFromStage();
 }
 
 function syncCityStageDomRuntime(): void {

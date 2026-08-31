@@ -8,6 +8,7 @@ import { medicineHouseHouseModule } from "./medicine-house/medicine-house-house-
 import { tavernHouseModule } from "./tavern/tavern-house-module";
 import { teaHouseHouseModule } from "./tea-house/tea-house-house-module";
 import { templeHouseHouseModule } from "./temple-house/temple-house-house-module";
+import { txtNarrativePlaceHouseModule } from "./txt-narrative-place/txt-narrative-place-house-module";
 
 export const builtinHouseModuleRegistrations: HouseModuleRegistration[] = [
   {
@@ -37,6 +38,10 @@ export const builtinHouseModuleRegistrations: HouseModuleRegistration[] = [
   {
     moduleId: "temple-house",
     module: templeHouseHouseModule,
+  },
+  {
+    moduleId: "txt-narrative-place",
+    module: txtNarrativePlaceHouseModule,
   },
   {
     moduleId: "tavern",

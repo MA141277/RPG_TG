@@ -58,6 +58,7 @@ import {
   ZHU_YUANZHANG_STORY_VARIABLE_KEYS,
   readZhuYuanzhangStoryStage,
 } from "../../../domain/zhu-yuanzhang-story";
+import type { WorldNegotiationApproach } from "../../../domain/world-intent";
 import { assertExists } from "../../../shared/assert";
 import {
   ensurePlayerGrainInventory,
@@ -74,6 +75,7 @@ import {
   formatHouseActivityCostLine,
   getHouseWorkDurationDays,
 } from "../../house/house-activity-costs";
+import { createHouseActionMemoryObservedEvent } from "../../house/house-action-memory-event";
 import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
 import {
@@ -112,6 +114,10 @@ import {
   TEMPLE_FACTION_RANKS,
   writeFactionMerit,
 } from "../../review/faction-review";
+import {
+  TEMPLE_REQUEST_EARLY_BEGGING_ACTION_PREFIX,
+  TEMPLE_REVIEW_WORK_PLAN_NEGOTIATION_ACTION_PREFIX,
+} from "../../world-intent/haozhou-story-negotiation-nodes";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
 
 const DONATION_AMOUNT = 50;
@@ -718,6 +724,105 @@ function createTransitionResult(
     sessionState: patch?.sessionState ?? input.sessionState,
     ...(patch?.sideEffects == null ? {} : { sideEffects: patch.sideEffects }),
   };
+}
+
+function createTempleObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"temple-house">["houseDefinition"];
+  type: string;
+  summary: string;
+  reactionSummary?: string;
+  reactionCharacterId?: string | null;
+  houseActionMemory: NonNullable<
+    ReturnType<typeof createHouseActionMemoryObservedEvent>["houseActionMemory"]
+  >;
+}) {
+  return createHouseActionMemoryObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: input.type,
+    summary: input.summary,
+    reactionSummary: input.reactionSummary,
+    reactionCharacterId: input.reactionCharacterId,
+    houseActionMemory: input.houseActionMemory,
+  });
+}
+
+function createTempleTaskPreviewObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"temple-house">["houseDefinition"];
+  taskDefinition: TempleHouseTaskDefinition;
+}) {
+  return createTempleObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: "temple:task:preview",
+    summary: `玩家在寺庙查看了${input.taskDefinition.title}的安排。`,
+    houseActionMemory: {
+      kind: "work-preview",
+      actionId: `${ASSIGN_TEMPLE_TASK_ACTION_PREFIX}${input.taskDefinition.id}`,
+      offerId: input.taskDefinition.id,
+      offerTitle: input.taskDefinition.title,
+      resultKind: "preview",
+    },
+  });
+}
+
+function createTempleTaskPreviewExitObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"temple-house">["houseDefinition"];
+  taskDefinition: TempleHouseTaskDefinition;
+}) {
+  return createTempleObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: "temple:task:preview-exit",
+    summary: `玩家在寺庙听过${input.taskDefinition.title}的安排后，又暂时按下不办。`,
+    reactionSummary: `他刚听过${input.taskDefinition.title}的安排，却又先按下不办。`,
+    houseActionMemory: {
+      kind: "work-preview-exit",
+      actionId: `${ASSIGN_TEMPLE_TASK_ACTION_PREFIX}${input.taskDefinition.id}`,
+      offerId: input.taskDefinition.id,
+      offerTitle: input.taskDefinition.title,
+      resultKind: "no-action",
+    },
+  });
+}
+
+function createTempleTaskCompleteObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"temple-house">["houseDefinition"];
+  taskDefinition: TempleHouseTaskDefinition;
+  score: number;
+}) {
+  return createTempleObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: "temple:task:complete",
+    summary: `玩家在寺庙完成了${input.taskDefinition.title}，本次贡献 ${input.score}。`,
+    reactionSummary: `他刚把${input.taskDefinition.title}这件差事办完了。`,
+    houseActionMemory: {
+      kind: "work-complete",
+      actionId: `${ASSIGN_TEMPLE_TASK_ACTION_PREFIX}${input.taskDefinition.id}`,
+      offerId: input.taskDefinition.id,
+      offerTitle: input.taskDefinition.title,
+      resultKind: "success",
+    },
+  });
+}
+
+function createTempleBeggingFoodCompleteObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"temple-house">["houseDefinition"];
+  submittedQuantity: number;
+}) {
+  return createTempleObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: "temple:begging-food:complete",
+    summary: `玩家在寺庙交回了${formatTempleGrainAmount(input.submittedQuantity)}粮食。`,
+    reactionSummary: `他刚把${formatTempleGrainAmount(input.submittedQuantity)}粮食交回寺里。`,
+    houseActionMemory: {
+      kind: "work-complete",
+      actionId: SUBMIT_TEMPLE_BEGGING_FOOD_ACTION_ID,
+      itemId: "grain",
+      itemName: "粮食",
+      offerId: "beg-alms",
+      offerTitle: "交粮回寺",
+      quantity: input.submittedQuantity,
+      resultKind: "success",
+    },
+  });
 }
 
 function withSessionState(
@@ -1473,6 +1578,15 @@ function parseQuickCompleteTempleTaskActionId(actionId: string): string | null {
     : null;
 }
 
+function readPreviewedTempleTaskId(
+  sessionState: TempleHouseSessionState
+): string | null {
+  const overlay = sessionState.overlay;
+  return overlay?.type === "activity-confirm"
+    ? parseConfirmTempleTaskActionId(overlay.confirmActionId)
+    : null;
+}
+
 function parseReviewWorkActionId(actionId: string): "temple-help" | "beg-alms" | null {
   if (!actionId.startsWith(SELECT_REVIEW_WORK_ACTION_PREFIX)) {
     return null;
@@ -1480,6 +1594,62 @@ function parseReviewWorkActionId(actionId: string): "temple-help" | "beg-alms" |
 
   const workPlan = actionId.slice(SELECT_REVIEW_WORK_ACTION_PREFIX.length);
   return workPlan === "temple-help" || workPlan === "beg-alms" ? workPlan : null;
+}
+
+function parseTempleNegotiationApproach(
+  value: string
+): WorldNegotiationApproach | null {
+  return value === "deferential" ||
+    value === "plea" ||
+    value === "pragmatic" ||
+    value === "duty" ||
+    value === "competence" ||
+    value === "defiant"
+    ? value
+    : null;
+}
+
+function parseTempleWorldIntentNegotiationAction(input: {
+  actionId: string;
+}):
+  | {
+      type: "request-early-begging";
+      approach: WorldNegotiationApproach;
+    }
+  | {
+      type: "review-work-plan";
+      approach: WorldNegotiationApproach;
+    }
+  | null {
+  if (input.actionId.startsWith(TEMPLE_REQUEST_EARLY_BEGGING_ACTION_PREFIX)) {
+    const approach = parseTempleNegotiationApproach(
+      input.actionId.slice(TEMPLE_REQUEST_EARLY_BEGGING_ACTION_PREFIX.length)
+    );
+    return approach == null
+      ? null
+      : {
+          type: "request-early-begging",
+          approach,
+        };
+  }
+
+  if (
+    input.actionId.startsWith(TEMPLE_REVIEW_WORK_PLAN_NEGOTIATION_ACTION_PREFIX)
+  ) {
+    const approach = parseTempleNegotiationApproach(
+      input.actionId.slice(
+        TEMPLE_REVIEW_WORK_PLAN_NEGOTIATION_ACTION_PREFIX.length
+      )
+    );
+    return approach == null
+      ? null
+      : {
+          type: "review-work-plan",
+          approach,
+        };
+  }
+
+  return null;
 }
 
 function isBeggingUnlocked(gameState: GameState): boolean {
@@ -2280,11 +2450,13 @@ function getTempleRootActions(
         label: "休息",
         tone: "accent",
         buttonSound: "light",
+        triggerKeywords: ["休息", "歇息", "住一宿", "借宿"],
       },
       {
         id: "open-donate",
         label: "捐香火",
         buttonSound: "light",
+        triggerKeywords: ["捐香火", "上香", "添香火", "布施"],
       } satisfies HouseActionViewModel,
       ...(dialoguePhase === "idle"
         ? []
@@ -2306,6 +2478,12 @@ function getTempleRootActions(
             label: `提交粮食：${formatTempleGrainAmount(readTempleAvailableFood(gameState))}`,
             tone: "accent",
             buttonSound: "light",
+            triggerKeywords: [
+              "提交粮食",
+              "交粮",
+              "交粮食",
+              "上交粮食",
+            ],
           } satisfies HouseActionViewModel,
         ]
       : []),
@@ -2315,16 +2493,19 @@ function getTempleRootActions(
       tone: "accent",
       disabled: currentWorkPlan == null,
       buttonSound: "light",
+      triggerKeywords: ["工作", "干活", "帮忙", "寺里有什么活"],
     },
     {
       id: OPEN_TEMPLE_REST_MENU_ACTION_ID,
       label: "休息",
       buttonSound: "light",
+      triggerKeywords: ["休息", "歇息", "住一宿", "借宿"],
     },
     {
       id: "open-donate",
       label: "捐香火",
       buttonSound: "light",
+      triggerKeywords: ["捐香火", "上香", "添香火", "布施"],
     } satisfies HouseActionViewModel,
     ...(dialoguePhase === "idle"
       ? []
@@ -2913,6 +3094,12 @@ function confirmTempleBeggingFoodSubmission(
         ],
       },
     },
+    observedEvents: [
+      createTempleBeggingFoodCompleteObservedEvent({
+        houseDefinition: input.houseDefinition,
+        submittedQuantity,
+      }),
+    ],
     timeAdvanceCost: convertHouseActivityDaysToSegments(durationDays),
   };
 }
@@ -2975,6 +3162,47 @@ function runTempleWorkPlayableRequest(
       runtimeResult.characterDefinitions ?? input.characterDefinitions,
     sessionState: nextSessionState,
     ...(sideEffects == null ? {} : { sideEffects }),
+  };
+}
+
+function createTempleTaskPreviewResult(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  taskDefinition: TempleHouseTaskDefinition
+): HouseModuleTransitionResult<"temple-house"> {
+  const durationDays = getHouseWorkDurationDays();
+  const taskActivityDefinition = findTempleTaskActivityDefinition(
+    taskDefinition.id,
+    input.activityDefinitionsById
+  );
+
+  return {
+    ...withSessionState(
+      {
+        gameState: input.gameState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        overlay: createActivityConfirmOverlay(
+          taskDefinition.title,
+          [],
+          `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
+          createTempleWorkConfirmDetails(
+            input.gameState,
+            taskDefinition,
+            taskActivityDefinition,
+            durationDays
+          )
+        ),
+      }
+    ),
+    observedEvents: [
+      createTempleTaskPreviewObservedEvent({
+        houseDefinition: input.houseDefinition,
+        taskDefinition,
+      }),
+    ],
   };
 }
 
@@ -3145,6 +3373,13 @@ function finalizeTempleWorkScore(
       selectedTaskId: taskId,
     },
     sideEffects: [{ type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID }],
+    observedEvents: [
+      createTempleTaskCompleteObservedEvent({
+        houseDefinition: input.houseDefinition,
+        taskDefinition,
+        score,
+      }),
+    ],
     timeAdvanceCost: convertHouseActivityDaysToSegments(durationDays),
   };
 }
@@ -3347,6 +3582,175 @@ function handleField(
   return createTransitionResult(input, { gameState: nextState });
 }
 
+function shouldTempleNegotiationSucceed(
+  approach: WorldNegotiationApproach
+): boolean {
+  return approach !== "defiant";
+}
+
+function handleTempleRequestEarlyBeggingNegotiation(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  nextState: GameState,
+  approach: WorldNegotiationApproach
+): HouseModuleTransitionResult<"temple-house"> {
+  if (sessionState.mode !== "daily") {
+    return createTransitionResult(input, { gameState: nextState });
+  }
+
+  if (isBeggingUnlocked(nextState)) {
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        dialoguePhase: "open",
+        dialogueLines: ["住持点点头。寺里已经准你外出化缘了。"],
+        dailyActionPanel: "root",
+      }
+    );
+  }
+
+  if (!shouldTempleNegotiationSucceed(approach)) {
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        dialoguePhase: "open",
+        dialogueLines: [
+          "住持皱了皱眉，命你先把眼前寺务做稳，再谈外出之事。",
+          "眼下还不到放你离寺化缘的时候。",
+        ],
+        overlay: createAlertOverlay(
+          "住持驳回了请命",
+          ["住持认为你言辞太急，还不足以破例放你先去化缘。"],
+          "warning"
+        ),
+        dailyActionPanel: "root",
+      }
+    );
+  }
+
+  const unlockedState: GameState = {
+    ...nextState,
+    missions: {
+      ...nextState.missions,
+      activeMissionId: "mission.temple.beg-alms",
+    },
+    ui: {
+      ...nextState.ui,
+      activeMissionId: "mission.temple.beg-alms",
+    },
+    runtime: {
+      ...nextState.runtime,
+      flags: {
+        ...nextState.runtime.flags,
+        [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
+      },
+      variables: {
+        ...nextState.runtime.variables,
+        [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "beg-alms",
+      },
+    },
+  };
+  const mainHouseMissionText = getTempleWorkPlanLabel(
+    unlockedState,
+    "beg-alms",
+    input.textEntriesById
+  );
+
+  return withSessionState(
+    {
+      gameState: {
+        ...unlockedState,
+        ui: {
+          ...unlockedState.ui,
+          mainHouseMissionText,
+        },
+      },
+      characterDefinitions: input.characterDefinitions,
+    },
+    sessionState,
+    {
+      dialoguePhase: "open",
+      dialogueLines: [
+        "住持沉吟片刻，最终点头允你先外出化缘。",
+        "自此寺中把化缘算作你当前差事。",
+      ],
+      overlay: createAlertOverlay(
+        "住持准了你的请命",
+        ["你说服了住持，寺中同意把化缘当作眼下的正式差事。"],
+        "success"
+      ),
+      selectedWorkPlan: "beg-alms",
+      dailyActionPanel: "root",
+    }
+  );
+}
+
+function handleTempleReviewWorkPlanNegotiation(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  nextState: GameState,
+  approach: WorldNegotiationApproach
+): HouseModuleTransitionResult<"temple-house"> {
+  if (
+    sessionState.mode !== "meeting" ||
+    sessionState.meetingStage !== "assign-duty"
+  ) {
+    return createTransitionResult(input, { gameState: nextState });
+  }
+
+  if (!shouldTempleNegotiationSucceed(approach)) {
+    return withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      sessionState,
+      {
+        dialoguePhase: "open",
+        dialogueLines: [
+          "住持摇头，让你先按堂上议定的寺务来。",
+          "想改成化缘，还得拿出更稳妥的理由。",
+        ],
+        overlay: createAlertOverlay(
+          "住持没有改派化缘",
+          ["这次请命没有说动住持，仍需照原先思路安排寺务。"],
+          "warning"
+        ),
+      }
+    );
+  }
+
+  const unlockedState: GameState = isBeggingUnlocked(nextState)
+    ? nextState
+    : {
+        ...nextState,
+        runtime: {
+          ...nextState.runtime,
+          flags: {
+            ...nextState.runtime.flags,
+            [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
+          },
+        },
+      };
+
+  return submitReviewWorkPlan(
+    {
+      ...input,
+      gameState: unlockedState,
+    },
+    sessionState,
+    "beg-alms"
+  );
+}
+
 function handleAction(
   input: HouseModuleDispatchInput<"temple-house">,
   sessionState: TempleHouseSessionState | null
@@ -3373,6 +3777,26 @@ function handleAction(
     "Temple house is missing a senior monk participant for review."
   );
   const nextState = ensureTempleRuntimeState(input.gameState);
+  const negotiationAction = parseTempleWorldIntentNegotiationAction({
+    actionId: input.request.actionId,
+  });
+  if (negotiationAction?.type === "request-early-begging") {
+    return handleTempleRequestEarlyBeggingNegotiation(
+      input,
+      sessionState,
+      nextState,
+      negotiationAction.approach
+    );
+  }
+
+  if (negotiationAction?.type === "review-work-plan") {
+    return handleTempleReviewWorkPlanNegotiation(
+      input,
+      sessionState,
+      nextState,
+      negotiationAction.approach
+    );
+  }
 
   if (input.request.actionId === CLOSE_TEMPLE_LEAVE_REFUSAL_ACTION_ID) {
     return withSessionState(
@@ -4154,7 +4578,8 @@ function handleAction(
   }
 
   if (input.request.actionId === CANCEL_ACTIVITY_CONFIRM_ACTION_ID) {
-    return withSessionState(
+    const previewedTaskId = readPreviewedTempleTaskId(sessionState);
+    const closeResult = withSessionState(
       {
         gameState: nextState,
         characterDefinitions: input.characterDefinitions,
@@ -4164,6 +4589,24 @@ function handleAction(
         overlay: null,
       }
     );
+
+    if (previewedTaskId == null) {
+      return closeResult;
+    }
+
+    return {
+      ...closeResult,
+      observedEvents: [
+        createTempleTaskPreviewExitObservedEvent({
+          houseDefinition: input.houseDefinition,
+          taskDefinition: findTempleTaskDefinition(
+            previewedTaskId,
+            input.activityDefinitionsById,
+            input.textEntriesById
+          ),
+        }),
+      ],
+    };
   }
 
   const selectedReviewWorkPlan = parseReviewWorkActionId(input.request.actionId);
@@ -4241,29 +4684,13 @@ function handleAction(
           taskDefinition.title
         );
       }
-      const taskActivityDefinition = findTempleTaskActivityDefinition(
-        taskDefinition.id,
-        input.activityDefinitionsById
-      );
-      return withSessionState(
+      return createTempleTaskPreviewResult(
         {
+          ...input,
           gameState: nextState,
-          characterDefinitions: input.characterDefinitions,
         },
         sessionState,
-        {
-          overlay: createActivityConfirmOverlay(
-            taskDefinition.title,
-            [],
-            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
-            createTempleWorkConfirmDetails(
-              nextState,
-              taskDefinition,
-              taskActivityDefinition,
-              durationDays
-            )
-          ),
-        }
+        taskDefinition
       );
     }
 
@@ -4298,29 +4725,13 @@ function handleAction(
           taskDefinition.title
         );
       }
-      const taskActivityDefinition = findTempleTaskActivityDefinition(
-        taskDefinition.id,
-        input.activityDefinitionsById
-      );
-      return withSessionState(
+      return createTempleTaskPreviewResult(
         {
+          ...input,
           gameState: nextState,
-          characterDefinitions: input.characterDefinitions,
         },
         sessionState,
-        {
-          overlay: createActivityConfirmOverlay(
-            taskDefinition.title,
-            [],
-            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
-            createTempleWorkConfirmDetails(
-              nextState,
-              taskDefinition,
-              taskActivityDefinition,
-              durationDays
-            )
-          ),
-        }
+        taskDefinition
       );
     }
 

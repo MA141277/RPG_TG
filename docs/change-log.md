@@ -2,6 +2,37 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-08-28 Indoor House Action Memory Batch B
+
+### Added
+- 新增 focused 回归 `tests/house-action-memory-batch-b.test.cjs`，覆盖寺庙工作 preview / preview-exit / completion、帅府领差事 completion、以及将领府学习与离开后的 typed action memory 发射。
+
+### Changed
+- `temple-house` 现在会在稳定 owner-side 结点发出共享 `houseActionMemory` 事件：查看寺务安排时写入 `work-preview`，取消确认时写入 `work-preview-exit`，完成寺内工作或交粮回寺时写入 `work-complete`。
+- `keep-house` 现在会在真正领下差事时发出 `work-complete` 事件，相关 NPC 可在下一次同建筑对话开场时记得玩家刚领了哪项任务。
+- `leader-residence` 现在会在学习成功时发出 `work-complete`，在一次有意义的拜访后离开时发出 `house-leave`；同时修正了该模块本地 transition helper 丢失 `timeAdvanceCost` / `observedEvents` 的问题。
+- `docs/special-house-interface.md` 现已明确 `houseActionMemory` 的 authoring 约束：preview/open 通常保持 ledger-only，cancel/complete/leave 才按需要附带针对性的 `reactionHints`。
+
+### Impact
+- 同建筑相关 NPC 的下一次 AI 开场，现在不仅能记得买卖和赌局，也能记得寺务预览/取消、寺庙结算、帅府领差、将领府学习和离开等工作/剧情动作。
+- 后续其他 work/story house 若要接入同类记忆，应继续沿用共享 `houseActionMemory` typed 语义和 owner-side 稳定发射点，而不是在 prompt、UI 文本或 `src/main.ts` 里补推断逻辑。
+
+## 2026-08-28 AI Event Ledger Phase 1
+
+### Added
+- 共享 `world-intent` runtime 现在持久化 `eventLedger`，并支持在 `WorldObservedEvent` 上附带 `reactionHints`；相关 NPC 的最近反应记忆会写入 `GameState.runtime.npcDialogue.reactionMemoriesByCharacterId`，且每个 NPC 只保留最近 5 条。
+- `HouseModuleTransitionResult` 新增共享 `observedEvents` 合同，`house-runtime` 会统一转发这些事件，不需要在 `src/main.ts` 或具体建筑壳层补 AI 记忆特判。
+- 新增 focused 回归：`tests/ai-event-ledger-runtime.test.cjs` 与 `tests/house-observed-event-forwarding.test.cjs`，覆盖共享账本、NPC 反应记忆、以及 house runtime 的通用事件转发接缝。
+
+### Changed
+- 共享 NPC AI `start_talk` prompt 现在会优先读取当前 NPC 的最新相关反应记忆；若存在这类记忆，模型开场必须先围绕该记忆说话，而不是退回普通寒暄。
+- 酒馆赌局现已接入 Phase 1 事件发射：入桌、没真下场就退桌、赢/输后结算、以及输光赌本，都会写入共享事件账本，并为相关 NPC 生成可复用的反应摘要。
+- `docs/special-house-interface.md` 已补充 `observedEvents` / `reactionHints` 的共享 house 合同，明确建筑模块只负责发出 typed 事件，不直接改 AI 记忆运行时分支。
+
+### Impact
+- 后续其他 house 若也要让 NPC 记住玩家在建筑内做过的事，应继续复用 `observedEvents` + `reactionHints`，而不是在 prompt、DOM handler 或 `src/main.ts` 里追加新分支。
+- 屋内 AI 对话现在可以基于刚发生过的本地行为开场，例如赌桌边坐下又没玩、或把钱输光后退下来；这条能力仍保持“本地结算归 house owner，AI 只读共享记忆”的边界。
+
 ## 2026-08-27 NPC AI House Intent Gate
 
 ### Changed
@@ -2483,6 +2514,20 @@
 
 ### Impact
 - 体力消耗从单点规则改为共享机制，后续新增小游戏或工作流时只需接入统一结算 helper，不必各自复制扣体力逻辑。
+
+## 2026-08-27 Hidden House AI Reopen And Observed Enter/Leave Context
+
+### Added
+- 新增过渡层 [src/application/runtime/transition/house-world-observed-event-transition.ts](/D:/GitHub克隆文件/RPG_TG/RPG_TG/src/application/runtime/transition/house-world-observed-event-transition.ts)，统一把建筑切换成功后的“进入建筑 / 离开建筑”变化收口为可测试的 `WorldObservedEvent`，避免把这类规则继续散落在 `src/main.ts`。
+
+### Changed
+- 濠州隐藏式室内 AI 视图现在会先应用 pilot house view state，再判断左侧待机头像是否需要禁用；这样玩家退出对话但仍留在建筑内时，左侧头像可以再次点击重开对话。
+- NPC AI 对话请求现在会把最近的建筑进入/离开环境事件一起带给模型，让“点击货栈进入建筑后立即开始对话”这类流程能读到明确的地点切换上下文。
+- `src/main.ts` 的建筑进入/离开接线改为通过专门的 observed-event 过渡层发出上下文事件，而不是在入口里内联拼接事件摘要。
+
+### Impact
+- 濠州隐藏式建筑内 AI 对话退出后可立即重新挑起，不再出现“留在建筑内但头像点不动”的状态残留。
+- 玩家通过城市点击、建筑跳转等现有确定性流程进入地点时，AI 会在后台收到“玩家进入了某建筑 / 离开了某建筑”的上下文，但游戏本身仍然不是把进出建筑决策交给 AI。
 
 ## 2026-06-04 Temple House Rest Flow
 

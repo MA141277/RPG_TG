@@ -9,6 +9,7 @@ import {
 import type { ActivityDefinition } from "../../../domain/activity";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
+import type { WorldNegotiationApproach } from "../../../domain/world-intent";
 import type {
   HouseActionViewModel,
   HouseModuleDefinition,
@@ -49,6 +50,8 @@ import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
+import { createHouseActionMemoryObservedEvent } from "../../house/house-action-memory-event";
+import { KEEP_ASSIGNMENT_NEGOTIATION_ACTION_PREFIX } from "../../world-intent/haozhou-story-negotiation-nodes";
 import { createInitialKeepHouseSessionState } from "./keep-house-session-state";
 
 const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
@@ -444,6 +447,45 @@ function createTransitionResult(
   };
 }
 
+function createKeepObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"keep-house">["houseDefinition"];
+  type: string;
+  summary: string;
+  reactionSummary?: string;
+  reactionCharacterId?: string | null;
+  houseActionMemory: NonNullable<
+    ReturnType<typeof createHouseActionMemoryObservedEvent>["houseActionMemory"]
+  >;
+}) {
+  return createHouseActionMemoryObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: input.type,
+    summary: input.summary,
+    reactionSummary: input.reactionSummary,
+    reactionCharacterId: input.reactionCharacterId,
+    houseActionMemory: input.houseActionMemory,
+  });
+}
+
+function createKeepTaskAssignmentObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"keep-house">["houseDefinition"];
+  taskDefinition: KeepHouseTaskDefinition;
+}) {
+  return createKeepObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: "keep:task:assigned",
+    summary: `玩家在帅府领下了${input.taskDefinition.title}的差事。`,
+    reactionSummary: `他刚领下了${input.taskDefinition.title}的差事。`,
+    houseActionMemory: {
+      kind: "work-complete",
+      actionId: `${ASSIGN_TASK_ACTION_PREFIX}${input.taskDefinition.id}`,
+      offerId: input.taskDefinition.id,
+      offerTitle: input.taskDefinition.title,
+      resultKind: "success",
+    },
+  });
+}
+
 function withSessionState(
   input: Pick<
     HouseModuleDispatchInput<"keep-house">,
@@ -748,6 +790,31 @@ function parseTaskActionId(actionId: string): string | null {
     : null;
 }
 
+function parseKeepNegotiationApproach(
+  value: string
+): WorldNegotiationApproach | null {
+  return value === "deferential" ||
+    value === "plea" ||
+    value === "pragmatic" ||
+    value === "duty" ||
+    value === "competence" ||
+    value === "defiant"
+    ? value
+    : null;
+}
+
+function parseKeepWorldIntentNegotiationAction(
+  actionId: string
+): WorldNegotiationApproach | null {
+  if (!actionId.startsWith(KEEP_ASSIGNMENT_NEGOTIATION_ACTION_PREFIX)) {
+    return null;
+  }
+
+  return parseKeepNegotiationApproach(
+    actionId.slice(KEEP_ASSIGNMENT_NEGOTIATION_ACTION_PREFIX.length)
+  );
+}
+
 function assignTaskToPlayer(
   input: HouseModuleDispatchInput<"keep-house">,
   taskDefinition: KeepHouseTaskDefinition
@@ -784,49 +851,112 @@ function assignTaskToPlayer(
     },
   };
 
-  return withSessionState(
-    {
-      gameState: nextState,
-      characterDefinitions: input.characterDefinitions,
-    },
-    input.sessionState,
-    {
-      mode: "meeting",
-      meetingStage: "assigned",
-      dialoguePhase: "open",
-      selectedTaskId: taskDefinition.id,
-      dialogueLines: [
-        ...taskDefinition.orderLines,
-        resolveKeepTemplateText(
-          textEntriesById,
-          "runtime.zhu_yuanzhang.keep.review.assignment.order.001",
-          {
-            taskTitle: taskDefinition.title,
-          }
-        ),
-      ],
-      overlay: createAlertOverlay(
-        resolveKeepText(
-          textEntriesById,
-          "runtime.zhu_yuanzhang.keep.review.assignment.overlay.title"
-        ),
-        [
+  return {
+    ...withSessionState(
+      {
+        gameState: nextState,
+        characterDefinitions: input.characterDefinitions,
+      },
+      input.sessionState,
+      {
+        mode: "meeting",
+        meetingStage: "assigned",
+        dialoguePhase: "open",
+        selectedTaskId: taskDefinition.id,
+        dialogueLines: [
+          ...taskDefinition.orderLines,
           resolveKeepTemplateText(
             textEntriesById,
-            "runtime.zhu_yuanzhang.keep.review.assignment.overlay.001",
+            "runtime.zhu_yuanzhang.keep.review.assignment.order.001",
             {
               taskTitle: taskDefinition.title,
-              taskBriefing: taskDefinition.briefing,
             }
           ),
+        ],
+        overlay: createAlertOverlay(
           resolveKeepText(
             textEntriesById,
-            "runtime.zhu_yuanzhang.keep.review.assignment.overlay.002"
+            "runtime.zhu_yuanzhang.keep.review.assignment.overlay.title"
           ),
-        ],
-        "success"
+          [
+            resolveKeepTemplateText(
+              textEntriesById,
+              "runtime.zhu_yuanzhang.keep.review.assignment.overlay.001",
+              {
+                taskTitle: taskDefinition.title,
+                taskBriefing: taskDefinition.briefing,
+              }
+            ),
+            resolveKeepText(
+              textEntriesById,
+              "runtime.zhu_yuanzhang.keep.review.assignment.overlay.002"
+            ),
+          ],
+          "success"
+        ),
+      }
+    ),
+    observedEvents: [
+      createKeepTaskAssignmentObservedEvent({
+        houseDefinition: input.houseDefinition,
+        taskDefinition,
+      }),
+    ],
+  };
+}
+
+function shouldKeepNegotiationSucceed(
+  approach: WorldNegotiationApproach
+): boolean {
+  return approach !== "defiant";
+}
+
+function handleKeepWorldIntentAssignmentNegotiation(
+  input: HouseModuleDispatchInput<"keep-house">,
+  sessionState: KeepHouseSessionState,
+  playerCharacter: CharacterDefinition,
+  approach: WorldNegotiationApproach
+): HouseModuleTransitionResult<"keep-house"> {
+  if (
+    sessionState.mode !== "meeting" ||
+    sessionState.meetingStage !== "assign-task"
+  ) {
+    return createTransitionResult(input);
+  }
+
+  const textEntriesById = getKeepTextEntries(input);
+
+  if (!shouldKeepNegotiationSucceed(approach)) {
+    return withSessionState(input, sessionState, {
+      dialoguePhase: "open",
+      dialogueLines: [
+        "郭子兴抬手止住了你，让你先收起这股冲劲。",
+        "若真想领差事，就拿出让众人信服的态度再来。",
+      ],
+      overlay: createAlertOverlay(
+        "郭子兴驳回了请命",
+        ["这次请命言辞太冲，未能当场说动郭子兴。"],
+        "warning"
       ),
-    }
+    });
+  }
+
+  const taskChoice = getReviewTaskChoices(input, playerCharacter).find(
+    (candidate) => candidate.disabled !== true
+  );
+  if (taskChoice == null) {
+    return withSessionState(input, sessionState, {
+      overlay: createAlertOverlay(
+        "暂时无可分派差事",
+        ["眼下没有适合你立刻领下的差事，先听候下一步安排。"],
+        "warning"
+      ),
+    });
+  }
+
+  return assignTaskToPlayer(
+    input,
+    resolveKeepTaskDefinition(input, taskChoice.id)
   );
 }
 
@@ -847,6 +977,17 @@ function handleAction(
     input.playerCharacterId
   );
   const textEntriesById = getKeepTextEntries(input);
+  const negotiationApproach = parseKeepWorldIntentNegotiationAction(
+    input.request.actionId
+  );
+  if (negotiationApproach != null) {
+    return handleKeepWorldIntentAssignmentNegotiation(
+      input,
+      sessionState,
+      playerCharacter,
+      negotiationApproach
+    );
+  }
 
   if (input.request.actionId === "advance-keep-dialogue") {
     if (sessionState.mode === "meeting") {

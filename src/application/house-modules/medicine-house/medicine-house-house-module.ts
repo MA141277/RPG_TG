@@ -59,6 +59,7 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import { createHouseActionMemoryObservedEvent } from "../../house/house-action-memory-event";
 import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import {
   createHousePlayableRuntimeState,
@@ -120,6 +121,150 @@ function createTransitionResult(
     sessionState: patch?.sessionState ?? input.sessionState,
     ...(patch?.sideEffects == null ? {} : { sideEffects: patch.sideEffects }),
   };
+}
+
+function createMedicineHouseObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"medicine-house">["houseDefinition"];
+  type: string;
+  summary: string;
+  reactionSummary?: string;
+  houseActionMemory: NonNullable<
+    ReturnType<typeof createHouseActionMemoryObservedEvent>["houseActionMemory"]
+  >;
+}) {
+  return createHouseActionMemoryObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: input.type,
+    summary: input.summary,
+    reactionSummary: input.reactionSummary,
+    reactionCharacterId:
+      input.houseDefinition.defaultCharacterId ?? medicineHouseDoctorProfile.actorId,
+    houseActionMemory: input.houseActionMemory,
+  });
+}
+
+function createMedicineBuyPreviewObservedEvent(
+  houseDefinition: HouseModuleDispatchInput<"medicine-house">["houseDefinition"]
+) {
+  return createMedicineHouseObservedEvent({
+    houseDefinition,
+    type: "medicine:buy:preview",
+    summary: "玩家在药铺翻看了成药药柜。",
+    houseActionMemory: {
+      kind: "service-preview",
+      serviceId: "medicine-buy",
+      serviceLabel: "买药",
+      resultKind: "preview",
+    },
+  });
+}
+
+function createMedicineBuyCancelObservedEvent(
+  houseDefinition: HouseModuleDispatchInput<"medicine-house">["houseDefinition"]
+) {
+  return createMedicineHouseObservedEvent({
+    houseDefinition,
+    type: "medicine:buy:cancel",
+    summary: "玩家在药铺看了看药柜，却没有买药。",
+    reactionSummary: "他刚看了看药柜，却没买一剂药。",
+    houseActionMemory: {
+      kind: "service-cancel",
+      serviceId: "medicine-buy",
+      serviceLabel: "买药",
+      resultKind: "cancel",
+    },
+  });
+}
+
+function createMedicineBuySuccessObservedEvent(input: {
+  houseDefinition: HouseModuleDispatchInput<"medicine-house">["houseDefinition"];
+  medicineId: string;
+  medicineName: string;
+  price: number;
+}) {
+  return createMedicineHouseObservedEvent({
+    houseDefinition: input.houseDefinition,
+    type: "medicine:buy:success",
+    summary: `玩家在药铺买下了${input.medicineName}。`,
+    reactionSummary: `他刚买走了一剂${input.medicineName}。`,
+    houseActionMemory: {
+      kind: "service-success",
+      serviceId: "medicine-buy",
+      serviceLabel: "买药",
+      itemId: input.medicineId,
+      itemName: input.medicineName,
+      goldDelta: -input.price,
+      resultKind: "success",
+    },
+  });
+}
+
+function createMedicineHealSuccessObservedEvent(
+  houseDefinition: HouseModuleDispatchInput<"medicine-house">["houseDefinition"]
+) {
+  return createMedicineHouseObservedEvent({
+    houseDefinition,
+    type: "medicine:heal:success",
+    summary: "玩家在药铺花钱调理了伤势。",
+    reactionSummary: "他刚在我这儿花钱调理了伤势。",
+    houseActionMemory: {
+      kind: "service-success",
+      serviceId: "medicine-heal",
+      serviceLabel: "疗伤",
+      goldDelta: -medicineHouseHealService.cost,
+      resultKind: "success",
+    },
+  });
+}
+
+function createMedicineCompoundingPreviewObservedEvent(
+  houseDefinition: HouseModuleDispatchInput<"medicine-house">["houseDefinition"]
+) {
+  return createMedicineHouseObservedEvent({
+    houseDefinition,
+    type: "medicine:compound:preview",
+    summary: "玩家在药铺看起了配药的活计。",
+    houseActionMemory: {
+      kind: "service-preview",
+      serviceId: "medicine-compound",
+      serviceLabel: "配药",
+      resultKind: "preview",
+    },
+  });
+}
+
+function createMedicineCompoundingCancelObservedEvent(
+  houseDefinition: HouseModuleDispatchInput<"medicine-house">["houseDefinition"]
+) {
+  return createMedicineHouseObservedEvent({
+    houseDefinition,
+    type: "medicine:compound:cancel",
+    summary: "玩家在药铺看了看配药活计，又暂时作罢。",
+    reactionSummary: "他刚看了看配药的活，却又先作罢了。",
+    houseActionMemory: {
+      kind: "service-cancel",
+      serviceId: "medicine-compound",
+      serviceLabel: "配药",
+      resultKind: "cancel",
+    },
+  });
+}
+
+function createMedicineCompoundingSuccessObservedEvent(
+  houseDefinition: HouseModuleDispatchInput<"medicine-house">["houseDefinition"]
+) {
+  return createMedicineHouseObservedEvent({
+    houseDefinition,
+    type: "medicine:compound:success",
+    summary: "玩家在药铺完成了一轮配药。",
+    reactionSummary: "他刚在药铺里配完了一轮药。",
+    houseActionMemory: {
+      kind: "service-success",
+      serviceId: "medicine-compound",
+      serviceLabel: "配药",
+      resultKind: "success",
+    },
+  });
 }
 
 function withSessionState(
@@ -304,7 +449,8 @@ function finalizeInteraction(
   title: string,
   dialogueLines: string[],
   outcome: MedicineHouseActionOutcome,
-  tone?: "info" | "success" | "warning"
+  tone?: "info" | "success" | "warning",
+  observedEvents?: HouseModuleTransitionResult<"medicine-house">["observedEvents"]
 ): HouseModuleTransitionResult<"medicine-house"> {
   const mutation = applyMedicineHouseOutcome(
     input.gameState,
@@ -330,6 +476,7 @@ function finalizeInteraction(
               tone
             ),
           },
+    ...(observedEvents == null ? {} : { observedEvents }),
     timeAdvanceCost: outcome.timeCost,
   };
 }
@@ -478,7 +625,10 @@ function finalizeCompounding(
               summaryLines: gradeResult.summaryLines,
               rewardLines,
             },
-          },
+            },
+    observedEvents: [
+      createMedicineCompoundingSuccessObservedEvent(input.houseDefinition),
+    ],
     sideEffects: [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }],
     timeAdvanceCost: convertHouseActivityDaysToSegments(outcome.timeCost),
   };
@@ -531,7 +681,6 @@ function handleAction(
     case "dismiss-dialogue":
       return withDialoguePhase(input, sessionState, "idle");
     case "close-alert":
-    case "close-buy":
     case "close-result":
       return withSessionState(
         input,
@@ -539,6 +688,18 @@ function handleAction(
         { overlay: null },
         [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }]
       );
+    case "close-buy":
+      return {
+        ...withSessionState(
+          input,
+          sessionState,
+          { overlay: null },
+          [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }]
+        ),
+        observedEvents: [
+          createMedicineBuyCancelObservedEvent(input.houseDefinition),
+        ],
+      };
     case "talk": {
       const entries = getMedicineHouseTextEntries(input.textEntriesById);
       const line = pickRandomResolvedMedicineHouseText(
@@ -601,16 +762,22 @@ function handleAction(
           inventoryChange: [],
           timeCost: 1,
         },
-        "success"
+        "success",
+        [createMedicineHealSuccessObservedEvent(input.houseDefinition)]
       );
     }
     case "open-buy":
-      return withSessionState(input, sessionState, {
-        overlay: {
-          type: "buy",
-          selectedItemId: medicineHousePreparedMedicines[0]?.id ?? null,
-        },
-      });
+      return {
+        ...withSessionState(input, sessionState, {
+          overlay: {
+            type: "buy",
+            selectedItemId: medicineHousePreparedMedicines[0]?.id ?? null,
+          },
+        }),
+        observedEvents: [
+          createMedicineBuyPreviewObservedEvent(input.houseDefinition),
+        ],
+      };
     case "confirm-buy": {
       const overlay = sessionState?.overlay;
       if (overlay?.type !== "buy" || overlay.selectedItemId == null) {
@@ -647,7 +814,15 @@ function handleAction(
           inventoryChange: [{ itemId: medicine.id, quantity: 1 }],
           timeCost: 1,
         },
-        "success"
+        "success",
+        [
+          createMedicineBuySuccessObservedEvent({
+            houseDefinition: input.houseDefinition,
+            medicineId: medicine.id,
+            medicineName: medicine.name,
+            price: medicine.price,
+          }),
+        ]
       );
     }
     case "start-compounding": {
@@ -691,12 +866,17 @@ function handleAction(
         });
       }
 
-      return withSessionState(input, sessionState, {
-        overlay: createActivityConfirmOverlay("配药", [
-          `（把药筛与药杵一并推了过来）照你现在的医术火候，这一炉药要配得稳妥，至少得花上 ${durationDays} 天。`,
-          formatHouseActivityCostLine(durationDays),
-        ], CONFIRM_START_COMPOUNDING_ACTION_ID),
-      });
+      return {
+        ...withSessionState(input, sessionState, {
+          overlay: createActivityConfirmOverlay("配药", [
+            `（把药筛与药杵一并推了过来）照你现在的医术火候，这一炉药要配得稳妥，至少得花上 ${durationDays} 天。`,
+            formatHouseActivityCostLine(durationDays),
+          ], CONFIRM_START_COMPOUNDING_ACTION_ID),
+        }),
+        observedEvents: [
+          createMedicineCompoundingPreviewObservedEvent(input.houseDefinition),
+        ],
+      };
     }
     case CONFIRM_START_COMPOUNDING_ACTION_ID: {
       const medicineSkill = getPlayerMedicineSkill(playerCharacter);
@@ -739,8 +919,20 @@ function handleAction(
         ]
       );
     }
-    case CANCEL_ACTIVITY_CONFIRM_ACTION_ID:
-      return withSessionState(input, sessionState, { overlay: null });
+    case CANCEL_ACTIVITY_CONFIRM_ACTION_ID: {
+      const cancelResult = withSessionState(input, sessionState, { overlay: null });
+      const overlay = sessionState?.overlay;
+
+      return overlay?.type === "activity-confirm" &&
+        overlay.confirmActionId === CONFIRM_START_COMPOUNDING_ACTION_ID
+        ? {
+            ...cancelResult,
+            observedEvents: [
+              createMedicineCompoundingCancelObservedEvent(input.houseDefinition),
+            ],
+          }
+        : cancelResult;
+    }
     case COMPOUND_CLEAR_ACTION_ID: {
       const overlay = sessionState?.overlay;
       if (overlay?.type !== "compounding" || overlay.selections.length === 0) {
@@ -969,6 +1161,46 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
       return handleTick(input, input.sessionState);
     }
 
+    if (input.request.type === "conversation-service") {
+      switch (input.request.serviceId) {
+        case "medicine-heal":
+          return handleAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "heal",
+              },
+            },
+            input.sessionState
+          );
+        case "medicine-buy":
+          return handleAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "open-buy",
+              },
+            },
+            input.sessionState
+          );
+        case "medicine-compound":
+          return handleAction(
+            {
+              ...input,
+              request: {
+                type: "action",
+                actionId: "start-compounding",
+              },
+            },
+            input.sessionState
+          );
+        default:
+          return createTransitionResult(input);
+      }
+    }
+
     return handleAction(input, input.sessionState);
   },
   leave(input) {
@@ -993,6 +1225,28 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
       sessionState: null,
       sideEffects: [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }],
     };
+  },
+  selectConversationServices() {
+    return [
+      {
+        serviceId: "medicine-heal",
+        label: "疗伤",
+        description: "直接让郎中接手疗伤结算。",
+        enabled: true,
+      },
+      {
+        serviceId: "medicine-buy",
+        label: "买药",
+        description: "打开药铺成药购买流程。",
+        enabled: true,
+      },
+      {
+        serviceId: "medicine-compound",
+        label: "配药",
+        description: "转入药铺配药确认与配药流程。",
+        enabled: true,
+      },
+    ];
   },
   selectViewModel(input): HouseModuleViewModel {
     const sessionState =
@@ -1047,9 +1301,27 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
                     id: "heal",
                     label: "疗伤",
                     kind: "special",
+                    triggerKeywords: [
+                      "疗伤",
+                      "治伤",
+                      "看伤",
+                      "医伤",
+                      "治病",
+                    ],
                     disabled: playerCharacter.stats.gold < medicineHouseHealService.cost,
                   },
-                  { id: "open-buy", label: "买药", kind: "special" },
+                  {
+                    id: "open-buy",
+                    label: "买药",
+                    kind: "special",
+                    triggerKeywords: [
+                      "买药",
+                      "抓药",
+                      "药材",
+                      "卖什么药",
+                      "买些药",
+                    ],
+                  },
                   {
                     id: "start-compounding",
                     label: formatPlayableSkillActionLabel(
@@ -1059,6 +1331,7 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
                     ),
                     kind: "special",
                     tone: "accent",
+                    triggerKeywords: ["配药", "制药", "炼药", "熬药"],
                   },
                 ],
               },

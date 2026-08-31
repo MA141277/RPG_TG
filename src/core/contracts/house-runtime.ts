@@ -1,3 +1,5 @@
+import type { TxtNarrativeProviderEvent } from "../../domain/txt-narrative";
+
 export type HouseRuntimeSessionRequest =
   | {
       type: "action";
@@ -11,6 +13,17 @@ export type HouseRuntimeSessionRequest =
   | {
       type: "tick";
       tickId: string;
+    }
+  | {
+      type: "conversation-service";
+      serviceId: string;
+      rawPlayerText: string;
+      targetCharacterId?: string | null;
+    }
+  | {
+      type: "txt-narrative-provider-event";
+      requestId: string;
+      event: TxtNarrativeProviderEvent;
     };
 
 export type HouseRuntimeDispatchContext = {

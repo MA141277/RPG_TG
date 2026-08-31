@@ -42,14 +42,16 @@ function createProviderRequest(overrides = {}) {
 
 function createRecordingLocalStorage() {
   const writes = [];
+  let storedValue = null;
 
   return {
     writes,
     storage: {
       getItem() {
-        return null;
+        return storedValue;
       },
       setItem(key, value) {
+        storedValue = value;
         writes.push({ key, value });
       },
     },
@@ -929,6 +931,149 @@ test("external NPC AI provider collapses placeholder option labels down to the d
   );
 });
 
+test("external NPC AI provider silently repairs a generic start_talk opening when it ignores the latest reaction memory", async () => {
+  const {
+    createConfiguredNpcAiDialogueProvider,
+  } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
+
+  const fetchCalls = [];
+  const provider = createConfiguredNpcAiDialogueProvider({
+    globalObject: {
+      __RPG_TG_NPC_AI_CONFIG__: {
+        mode: "openai-compatible",
+        baseUrl: "https://example.com/proxy/",
+        model: "deepseek-v3.1",
+        authToken: "secret-token",
+      },
+      localStorage: {
+        getItem() {
+          return null;
+        },
+      },
+    },
+    fetchImplementation: async (_url, init) => {
+      const body = init?.body == null ? null : JSON.parse(init.body);
+      fetchCalls.push(body);
+
+      if (fetchCalls.length === 1) {
+        return new Response(
+          JSON.stringify({
+            id: "chatcmpl-memory-miss-1",
+            object: "chat.completion",
+            model: "deepseek-v3.1",
+            choices: [
+              {
+                index: 0,
+                finish_reason: "stop",
+                message: {
+                  role: "assistant",
+                  content: [
+                    `[DIALOGUE: char.kulan_merchant,钱掌柜,"客官今儿想聊点什么？"]`,
+                    "[CHOICE: 你想怎么接话？]",
+                    "[OPTION: option.ask_goods|我想看看货单。|我想看看货单。|benevolent|true]",
+                    "[OPTION: option.ask_price|最近行情如何？|最近行情如何？|neutral|false]",
+                    "[OPTION: option.ask_rivals|同行最近在忙什么？|同行最近在忙什么？|hostile|false]",
+                    "[END_CHOICE]",
+                  ].join("\n"),
+                },
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          id: "chatcmpl-memory-fixed-1",
+          object: "chat.completion",
+          model: "deepseek-v3.1",
+          choices: [
+            {
+              index: 0,
+              finish_reason: "stop",
+              message: {
+                role: "assistant",
+                content: [
+                  `[DIALOGUE: char.kulan_merchant,钱掌柜,"方才翻了货单却没下手买货，可是嫌这批货价不合？"]`,
+                  "[CHOICE: 你想怎么接话？]",
+                  "[OPTION: option.ask_goods|我想再仔细看看货单。|我想再仔细看看货单。|benevolent|true]",
+                  "[OPTION: option.ask_price|我先问问你这批货怎么卖。|我先问问你这批货怎么卖。|neutral|false]",
+                  "[OPTION: option.ask_leave|没事，我先随便转转。|没事，我先随便转转。|hostile|false]",
+                  "[END_CHOICE]",
+                ].join("\n"),
+              },
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    },
+  });
+
+  const events = [];
+  await provider.stream(
+    createProviderRequest({
+      messages: [
+        {
+          role: "user",
+          content: [
+            "当前地点：测试货栈",
+            "当前玩家：朱元璋",
+            "当前NPC：钱掌柜",
+            "当前对话双方：朱元璋 与 钱掌柜",
+            "此人对玩家最近行为的反应记忆（优先开场）：",
+            "他方才翻了翻货单，却没下手买货。",
+          ].join("\n"),
+        },
+        {
+          role: "user",
+          content: [
+            "开始和这个人交谈。",
+            "开场第一句必须先直接回应这条最近行为：他方才翻了翻货单，却没下手买货。",
+          ].join("\n"),
+        },
+      ],
+      metadata: {
+        contextType: "house",
+        npcId: "char.kulan_merchant",
+        npcName: "钱掌柜",
+        inputType: "start_talk",
+        houseId: "house.kulan.market",
+        placeName: "测试货栈",
+        latestReactionMemorySummary: "他方才翻了翻货单，却没下手买货。",
+      },
+    }),
+    (event) => {
+      events.push(event);
+    }
+  );
+
+  assert.equal(fetchCalls.length, 2);
+  assert.match(
+    fetchCalls[1].messages[fetchCalls[1].messages.length - 1].content,
+    /你忽略了 NPC 开场必须先回应的最近行为：他方才翻了翻货单，却没下手买货。/u
+  );
+  assert.deepEqual(
+    events.map((event) => event.type),
+    ["start", "complete"]
+  );
+  assert.equal(
+    events[1].allSteps[0].text,
+    "方才翻了货单却没下手买货，可是嫌这批货价不合？"
+  );
+});
+
 test("external NPC AI provider retries when the model returns stance placeholders instead of direct spoken Chinese reply text", async () => {
   const {
     createConfiguredNpcAiDialogueProvider,
@@ -1414,6 +1559,10 @@ test("external NPC AI provider falls back to a local transition lead-in when a h
   );
 
   assert.equal(fetchCalls.length, 2);
+  assert.match(
+    fetchCalls[1].messages.map((message) => message.content).join("\n"),
+    /本轮已经确认要直接达成的合法意图：.*开赌局/u
+  );
   assert.deepEqual(
     events.map((event) => event.type),
     ["start", "complete"]
@@ -1620,7 +1769,946 @@ test("external NPC AI provider clarifies ambiguous house intent instead of guess
   ]);
 });
 
-test("external NPC AI provider fails closed for non-OpenAI house follow-up turns before visible generation", async () => {
+test("external NPC AI provider accepts wrapped house intent gate markers and sends a strongly constrained gate request", async () => {
+  const {
+    createConfiguredNpcAiDialogueProvider,
+  } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
+
+  const fetchCalls = [];
+  const provider = createConfiguredNpcAiDialogueProvider({
+    globalObject: {
+      __RPG_TG_NPC_AI_CONFIG__: {
+        mode: "openai-compatible",
+        baseUrl: "https://example.com/proxy/",
+        model: "deepseek-v3.1",
+        authToken: "secret-token",
+        temperature: 0.4,
+      },
+      localStorage: {
+        getItem() {
+          return null;
+        },
+      },
+    },
+    fetchImplementation: async (_url, init) => {
+      const body = init?.body == null ? null : JSON.parse(init.body);
+      fetchCalls.push(body);
+
+      if (fetchCalls.length === 1) {
+        return new Response(
+          JSON.stringify({
+            id: "chatcmpl-house-clarify-gate-wrapped-1",
+            object: "chat.completion",
+            model: "deepseek-v3.1",
+            choices: [
+              {
+                index: 0,
+                finish_reason: "stop",
+                message: {
+                  role: "assistant",
+                  content: "```text\n[INTENT: clarify]\n```",
+                },
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          id: "chatcmpl-house-clarify-visible-wrapped-1",
+          object: "chat.completion",
+          model: "deepseek-v3.1",
+          choices: [
+            {
+              index: 0,
+              finish_reason: "stop",
+              message: {
+                role: "assistant",
+                content: [
+                  `[DIALOGUE: char.test.tavern_boss,酒馆掌柜,"成，你是想开赌局，还是先问问规矩与玩法？"]`,
+                  "[CHOICE: 你想怎么接话？]",
+                  "[OPTION: option.ask_rules|先说说规矩。|先说说规矩。]",
+                  "[OPTION: option.open_short|我想先玩几句短局。|我想先玩几句短局。]",
+                  "[OPTION: option.leave|那我先看看别的。|那我先看看别的。]",
+                  "[END_CHOICE]",
+                ].join("\n"),
+              },
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    },
+  });
+
+  const events = [];
+  await provider.stream(
+    createProviderRequest({
+      messages: [
+        {
+          role: "user",
+          content: [
+            "当前地点：测试酒馆",
+            "当前玩家：朱重八",
+            "当前NPC：酒馆掌柜",
+            "当前对话双方：朱重八 与 酒馆掌柜",
+          ].join("\n"),
+        },
+        {
+          role: "user",
+          content: "我想玩点东西",
+        },
+      ],
+      metadata: {
+        contextType: "house",
+        npcId: "char.test.tavern_boss",
+        npcName: "酒馆掌柜",
+        inputType: "custom_input",
+        houseId: "house.test.tavern",
+        placeName: "测试酒馆",
+        customInputText: "我想玩点东西",
+        houseConversationCapabilitySnapshot: {
+          cityId: "city.test",
+          houseId: "house.test.tavern",
+          moduleId: "tavern",
+          targetCharacterId: "char.test.tavern_boss",
+          targetCharacterName: "酒馆掌柜",
+          switchableNpcTargets: [
+            {
+              characterId: "char.test.tavern_boss",
+              characterName: "酒馆掌柜",
+              available: true,
+            },
+          ],
+          houseActions: [
+            {
+              actionId: "open-gamble",
+              label: "赌博",
+              available: true,
+            },
+          ],
+          houseServices: [
+            {
+              serviceId: "tavern-gamble",
+              label: "开赌局",
+              description: "打开酒馆赌局选择与下注流程。",
+              enabled: true,
+            },
+          ],
+          reachableHouses: [],
+          leaveAction: {
+            actionId: "leave-house",
+            label: "离开酒馆",
+            available: true,
+          },
+          negotiableStoryNodes: [],
+        },
+      },
+    }),
+    (event) => {
+      events.push(event);
+    }
+  );
+
+  assert.equal(fetchCalls.length, 2);
+  assert.equal(fetchCalls[0].temperature, 0);
+  assert.equal(fetchCalls[0].max_tokens, 48);
+  assert.deepEqual(fetchCalls[0].stop, ["\n", "\r"]);
+  assert.match(
+    fetchCalls[0].messages.map((message) => message.content).join("\n"),
+    /这一阶段不是 NPC 对话/u
+  );
+  assert.deepEqual(
+    events.map((event) => event.type),
+    ["start", "complete"]
+  );
+  assert.equal(events[1].allSteps[0].type, "dialogue");
+  assert.equal(events[1].allSteps[1].type, "choice");
+});
+
+test("external NPC AI provider sends explicit leave-house selections through the AI intent gate before transition generation", async () => {
+  const {
+    createConfiguredNpcAiDialogueProvider,
+  } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
+
+  const fetchCalls = [];
+  const provider = createConfiguredNpcAiDialogueProvider({
+    globalObject: {
+      __RPG_TG_NPC_AI_CONFIG__: {
+        mode: "openai-compatible",
+        baseUrl: "https://example.com/proxy/",
+        model: "deepseek-v3.1",
+        authToken: "secret-token",
+      },
+      localStorage: {
+        getItem() {
+          return null;
+        },
+      },
+    },
+    fetchImplementation: async (_url, init) => {
+      const body = init?.body == null ? null : JSON.parse(init.body);
+      fetchCalls.push(body);
+
+      return new Response(
+        JSON.stringify({
+          id: `chatcmpl-leave-short-circuit-${fetchCalls.length}`,
+          object: "chat.completion",
+          model: "deepseek-v3.1",
+          choices: [
+            {
+              index: 0,
+              finish_reason: "stop",
+              message: {
+                role: "assistant",
+                content:
+                  fetchCalls.length === 1
+                    ? "[INTENT: route|leave-house]"
+                    : `[DIALOGUE: char.test.tavern_boss,酒馆掌柜,"行，你自便。"]`,
+              },
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    },
+  });
+
+  const events = [];
+  await provider.stream(
+    createProviderRequest({
+      messages: [
+        {
+          role: "user",
+          content: [
+            "当前地点：测试酒馆",
+            "当前玩家：朱重八",
+            "当前NPC：酒馆掌柜",
+            "当前对话双方：朱重八 与 酒馆掌柜",
+            "当前可直接办理的功能（只有这些才能跳转）：",
+            "open-gamble：赌博",
+            "当前可直接办理的语义服务：",
+            "tavern-gamble：开赌局",
+            "当前可离开方式：",
+            "leave-house：离开酒馆",
+          ].join("\n"),
+        },
+        {
+          role: "user",
+          content: "离开酒馆",
+        },
+      ],
+      metadata: {
+        contextType: "house",
+        npcId: "char.test.tavern_boss",
+        npcName: "酒馆掌柜",
+        inputType: "select_option",
+        houseId: "house.test.tavern",
+        placeName: "测试酒馆",
+        selectedOptionId: "option.leave_house",
+        selectedOptionLabel: "离开酒馆",
+        availableSpecialActions: [
+          {
+            id: "open-gamble",
+            label: "赌博",
+          },
+        ],
+        houseConversationCapabilitySnapshot: {
+          cityId: "city.test",
+          houseId: "house.test.tavern",
+          moduleId: "tavern",
+          targetCharacterId: "char.test.tavern_boss",
+          targetCharacterName: "酒馆掌柜",
+          switchableNpcTargets: [
+            {
+              characterId: "char.test.tavern_boss",
+              characterName: "酒馆掌柜",
+              available: true,
+            },
+          ],
+          houseActions: [
+            {
+              actionId: "open-gamble",
+              label: "赌博",
+              available: true,
+            },
+          ],
+          houseServices: [
+            {
+              serviceId: "tavern-gamble",
+              label: "开赌局",
+              description: "打开酒馆赌局选择与下注流程。",
+              enabled: true,
+            },
+          ],
+          reachableHouses: [],
+          leaveAction: {
+            actionId: "leave-house",
+            label: "离开酒馆",
+            available: true,
+          },
+          negotiableStoryNodes: [],
+        },
+      },
+    }),
+    (event) => {
+      events.push(event);
+    }
+  );
+
+  assert.equal(fetchCalls.length, 2);
+  assert.match(
+    fetchCalls[0].messages.map((message) => message.content).join("\n"),
+    /离开酒馆/u
+  );
+  assert.deepEqual(
+    events.map((event) => event.type),
+    ["start", "complete"]
+  );
+  assert.deepEqual(events[1].allSteps, [
+    {
+      type: "dialogue",
+      speakerId: "char.test.tavern_boss",
+      speakerName: "酒馆掌柜",
+      text: "行，你自便。",
+    },
+    {
+      type: "route",
+      route: {
+        kind: "leave-house",
+      },
+    },
+  ]);
+});
+
+test("external NPC AI provider still runs the AI intent gate before transitioning a deterministic indoor service phrase", async () => {
+  const {
+    createConfiguredNpcAiDialogueProvider,
+  } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
+
+  const fetchCalls = [];
+  const provider = createConfiguredNpcAiDialogueProvider({
+    globalObject: {
+      __RPG_TG_NPC_AI_CONFIG__: {
+        mode: "openai-compatible",
+        baseUrl: "https://example.com/proxy/",
+        model: "deepseek-v3.1",
+        authToken: "secret-token",
+      },
+      localStorage: {
+        getItem() {
+          return null;
+        },
+      },
+    },
+    fetchImplementation: async (_url, init) => {
+      const body = init?.body == null ? null : JSON.parse(init.body);
+      fetchCalls.push(body);
+
+      if (fetchCalls.length === 1) {
+        return new Response(
+          JSON.stringify({
+            id: "chatcmpl-house-service-gate-1",
+            object: "chat.completion",
+            model: "deepseek-v3.1",
+            choices: [
+              {
+                index: 0,
+                finish_reason: "stop",
+                message: {
+                  role: "assistant",
+                  content: "[INTENT: route|settle-house-service|market-buy]",
+                },
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          id: "chatcmpl-house-local-route-1",
+          object: "chat.completion",
+          model: "deepseek-v3.1",
+          choices: [
+            {
+              index: 0,
+              finish_reason: "stop",
+              message: {
+                role: "assistant",
+                content:
+                  '[DIALOGUE: char.test.npc,钱掌柜,"行，你若要买货，我这就把货册替你翻出来。"]',
+              },
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    },
+  });
+
+  const events = [];
+  await provider.stream(
+    createProviderRequest({
+      messages: [
+        {
+          role: "user",
+          content: [
+            "当前地点：测试货栈",
+            "当前玩家：朱重八",
+            "当前NPC：钱掌柜",
+            "当前对话双方：朱重八 与 钱掌柜",
+          ].join("\n"),
+        },
+        {
+          role: "user",
+          content: "我想买点东西",
+        },
+      ],
+      metadata: {
+        contextType: "house",
+        npcId: "char.test.npc",
+        npcName: "钱掌柜",
+        inputType: "custom_input",
+        houseId: "house.test.market",
+        placeName: "测试货栈",
+        customInputText: "我想买点东西",
+        houseConversationCapabilitySnapshot: {
+          cityId: "city.kulan",
+          houseId: "house.test.market",
+          moduleId: "market-house",
+          targetCharacterId: "char.test.npc",
+          targetCharacterName: "钱掌柜",
+          switchableNpcTargets: [
+            {
+              characterId: "char.test.npc",
+              characterName: "钱掌柜",
+              available: true,
+            },
+            {
+              characterId: "char.kulan_apothecary",
+              characterName: "孙药商",
+              available: true,
+            },
+          ],
+          houseActions: [
+            {
+              actionId: "buy-goods",
+              label: "买入货物",
+              available: true,
+            },
+          ],
+          houseServices: [
+            {
+              serviceId: "market-buy",
+              label: "买货",
+              description: "让钱掌柜接手买货，进入当前货栈的买货流程。",
+              enabled: true,
+            },
+          ],
+          reachableHouses: [
+            {
+              houseId: "house.kulan.grain_shop",
+              houseName: "粮铺",
+              available: true,
+            },
+          ],
+          leaveAction: {
+            actionId: "leave-house",
+            label: "离开货栈",
+            available: true,
+          },
+          negotiableStoryNodes: [],
+        },
+      },
+    }),
+    (event) => {
+      events.push(event);
+    }
+  );
+
+  assert.equal(fetchCalls.length, 2);
+  assert.match(
+    fetchCalls[0].messages.map((message) => message.content).join("\n"),
+    /玩家刚才的原话（逐字判断，不要改写）：我想买点东西/u
+  );
+  assert.match(
+    fetchCalls[1].messages.map((message) => message.content).join("\n"),
+    /本轮已经确认要直接达成的合法意图：.*买货/u
+  );
+  assert.deepEqual(
+    events.map((event) => event.type),
+    ["start", "complete"]
+  );
+  assert.deepEqual(events[1].allSteps, [
+    {
+      type: "dialogue",
+      speakerId: "char.test.npc",
+      speakerName: "钱掌柜",
+      text: "行，你若要买货，我这就把货册替你翻出来。",
+    },
+    {
+      type: "route",
+      route: {
+        kind: "settle-house-service",
+        serviceId: "market-buy",
+        rawPlayerText: "我想买点东西",
+      },
+    },
+  ]);
+});
+
+test("external NPC AI provider falls back to a deterministic house route only after the AI gate keeps failing", async () => {
+  const {
+    createConfiguredNpcAiDialogueProvider,
+  } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
+
+  const fetchCalls = [];
+  const provider = createConfiguredNpcAiDialogueProvider({
+    globalObject: {
+      __RPG_TG_NPC_AI_CONFIG__: {
+        mode: "openai-compatible",
+        baseUrl: "https://example.com/proxy/",
+        model: "deepseek-v3.1",
+        authToken: "secret-token",
+      },
+      localStorage: {
+        getItem() {
+          return null;
+        },
+      },
+    },
+    fetchImplementation: async (_url, init) => {
+      const body = init?.body == null ? null : JSON.parse(init.body);
+      fetchCalls.push(body);
+
+      if (fetchCalls.length === 1) {
+        return new Response(
+          JSON.stringify({
+            id: "chatcmpl-house-gate-bad-1",
+            object: "chat.completion",
+            model: "deepseek-v3.1",
+            choices: [
+              {
+                index: 0,
+                finish_reason: "stop",
+                message: {
+                  role: "assistant",
+                  content: "我替你想想。",
+                },
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      if (fetchCalls.length === 2) {
+        return new Response(
+          JSON.stringify({
+            id: "chatcmpl-house-gate-bad-2",
+            object: "chat.completion",
+            model: "deepseek-v3.1",
+            choices: [
+              {
+                index: 0,
+                finish_reason: "stop",
+                message: {
+                  role: "assistant",
+                  content: "[INTENT: route|go-to-house|house.kulan.keep]",
+                },
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          id: "chatcmpl-house-local-fallback-transition-1",
+          object: "chat.completion",
+          model: "deepseek-v3.1",
+          choices: [
+            {
+              index: 0,
+              finish_reason: "stop",
+              message: {
+                role: "assistant",
+                content:
+                  '[DIALOGUE: char.test.npc,钱掌柜,"行，你若要买货，我这就把货册替你翻出来。"]',
+              },
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    },
+  });
+
+  const events = [];
+  await provider.stream(
+    createProviderRequest({
+      messages: [
+        {
+          role: "user",
+          content: [
+            "当前地点：测试货栈",
+            "当前玩家：朱重八",
+            "当前NPC：钱掌柜",
+            "当前对话双方：朱重八 与 钱掌柜",
+          ].join("\n"),
+        },
+        {
+          role: "user",
+          content: "我想买点东西",
+        },
+      ],
+      metadata: {
+        contextType: "house",
+        npcId: "char.test.npc",
+        npcName: "钱掌柜",
+        inputType: "custom_input",
+        houseId: "house.test.market",
+        placeName: "测试货栈",
+        customInputText: "我想买点东西",
+        houseConversationCapabilitySnapshot: {
+          cityId: "city.kulan",
+          houseId: "house.test.market",
+          moduleId: "market-house",
+          targetCharacterId: "char.test.npc",
+          targetCharacterName: "钱掌柜",
+          switchableNpcTargets: [
+            {
+              characterId: "char.test.npc",
+              characterName: "钱掌柜",
+              available: true,
+            },
+          ],
+          houseActions: [
+            {
+              actionId: "buy-goods",
+              label: "买入货物",
+              available: true,
+            },
+          ],
+          houseServices: [
+            {
+              serviceId: "market-buy",
+              label: "买货",
+              description: "让钱掌柜接手买货，进入当前货栈的买货流程。",
+              enabled: true,
+            },
+          ],
+          reachableHouses: [
+            {
+              houseId: "house.kulan.grain_shop",
+              houseName: "粮铺",
+              available: true,
+            },
+          ],
+          leaveAction: {
+            actionId: "leave-house",
+            label: "离开货栈",
+            available: true,
+          },
+          negotiableStoryNodes: [],
+        },
+      },
+    }),
+    (event) => {
+      events.push(event);
+    }
+  );
+
+  assert.equal(fetchCalls.length, 3);
+  assert.match(
+    fetchCalls[1].messages.map((message) => message.content).join("\n"),
+    /格式不合法/u
+  );
+  assert.match(
+    fetchCalls[2].messages.map((message) => message.content).join("\n"),
+    /本轮已经确认要直接达成的合法意图：.*买货/u
+  );
+  assert.deepEqual(
+    events.map((event) => event.type),
+    ["start", "complete"]
+  );
+  assert.deepEqual(events[1].allSteps, [
+    {
+      type: "dialogue",
+      speakerId: "char.test.npc",
+      speakerName: "钱掌柜",
+      text: "行，你若要买货，我这就把货册替你翻出来。",
+    },
+    {
+      type: "route",
+      route: {
+        kind: "settle-house-service",
+        serviceId: "market-buy",
+        rawPlayerText: "我想买点东西",
+      },
+    },
+  ]);
+});
+
+test("external NPC AI provider repairs an explicit tavern-gamble phrase back into a house route when the AI gate wrongly answers chat first", async () => {
+  const {
+    createConfiguredNpcAiDialogueProvider,
+  } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
+
+  const fetchCalls = [];
+  const provider = createConfiguredNpcAiDialogueProvider({
+    globalObject: {
+      __RPG_TG_NPC_AI_CONFIG__: {
+        mode: "openai-compatible",
+        baseUrl: "https://example.com/proxy/",
+        model: "deepseek-v3.1",
+        authToken: "secret-token",
+      },
+      localStorage: {
+        getItem() {
+          return null;
+        },
+      },
+    },
+    fetchImplementation: async (_url, init) => {
+      const body = init?.body == null ? null : JSON.parse(init.body);
+      fetchCalls.push(body);
+
+      if (fetchCalls.length === 1) {
+        return new Response(
+          JSON.stringify({
+            id: "chatcmpl-house-gamble-chat-misfire-1",
+            object: "chat.completion",
+            model: "deepseek-v3.1",
+            choices: [
+              {
+                index: 0,
+                finish_reason: "stop",
+                message: {
+                  role: "assistant",
+                  content: "[INTENT: chat]",
+                },
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      if (fetchCalls.length === 2) {
+        return new Response(
+          JSON.stringify({
+            id: "chatcmpl-house-gamble-chat-misfire-2",
+            object: "chat.completion",
+            model: "deepseek-v3.1",
+            choices: [
+              {
+                index: 0,
+                finish_reason: "stop",
+                message: {
+                  role: "assistant",
+                  content: "[INTENT: chat]",
+                },
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          id: "chatcmpl-house-gamble-transition-1",
+          object: "chat.completion",
+          model: "deepseek-v3.1",
+          choices: [
+            {
+              index: 0,
+              finish_reason: "stop",
+              message: {
+                role: "assistant",
+                content:
+                  '[DIALOGUE: char.test.tavern_boss,酒馆掌柜,"成，你既要来几局，我这就替你把桌子张罗开。"]',
+              },
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    },
+  });
+
+  const events = [];
+  await provider.stream(
+    createProviderRequest({
+      messages: [
+        {
+          role: "user",
+          content: [
+            "当前地点：测试酒馆",
+            "当前玩家：朱重八",
+            "当前NPC：酒馆掌柜",
+            "当前对话双方：朱重八 与 酒馆掌柜",
+            "当前可直接办理的功能（只有这些才能跳转）：",
+            "open-gamble：赌博",
+            "当前可直接办理的语义服务：",
+            "tavern-gamble：开赌局",
+          ].join("\n"),
+        },
+        {
+          role: "user",
+          content: "我想来几局短局牌",
+        },
+      ],
+      metadata: {
+        contextType: "house",
+        npcId: "char.test.tavern_boss",
+        npcName: "酒馆掌柜",
+        inputType: "custom_input",
+        houseId: "house.test.tavern",
+        placeName: "测试酒馆",
+        customInputText: "我想来几局短局牌",
+        availableSpecialActions: [
+          {
+            id: "open-gamble",
+            label: "赌博",
+          },
+        ],
+        houseConversationCapabilitySnapshot: {
+          cityId: "city.test",
+          houseId: "house.test.tavern",
+          moduleId: "tavern",
+          targetCharacterId: "char.test.tavern_boss",
+          targetCharacterName: "酒馆掌柜",
+          switchableNpcTargets: [
+            {
+              characterId: "char.test.tavern_boss",
+              characterName: "酒馆掌柜",
+              available: true,
+            },
+          ],
+          houseActions: [
+            {
+              actionId: "open-gamble",
+              label: "赌博",
+              available: true,
+            },
+          ],
+          houseServices: [
+            {
+              serviceId: "tavern-gamble",
+              label: "开赌局",
+              description: "打开酒馆赌局选择与下注流程。",
+              enabled: true,
+            },
+          ],
+          reachableHouses: [],
+          leaveAction: {
+            actionId: "leave-house",
+            label: "离开酒馆",
+            available: true,
+          },
+          negotiableStoryNodes: [],
+        },
+      },
+    }),
+    (event) => {
+      events.push(event);
+    }
+  );
+
+  assert.equal(fetchCalls.length, 3);
+  assert.match(
+    fetchCalls[1].messages.map((message) => message.content).join("\n"),
+    /不得继续输出 chat 或 clarify/u
+  );
+  assert.match(
+    fetchCalls[2].messages.map((message) => message.content).join("\n"),
+    /本轮已经确认要直接达成的合法意图：.*开赌局/u
+  );
+  assert.deepEqual(
+    events.map((event) => event.type),
+    ["start", "complete"]
+  );
+  assert.deepEqual(events[1].allSteps, [
+    {
+      type: "dialogue",
+      speakerId: "char.test.tavern_boss",
+      speakerName: "酒馆掌柜",
+      text: "成，你既要来几局，我这就替你把桌子张罗开。",
+    },
+    {
+      type: "route",
+      route: {
+        kind: "settle-house-service",
+        serviceId: "tavern-gamble",
+        rawPlayerText: "我想来几局短局牌",
+      },
+    },
+  ]);
+});
+
+test("non-OpenAI NPC AI providers fail closed on house follow-up turns because they cannot run the AI intent gate", async () => {
   const {
     createConfiguredNpcAiDialogueProvider,
   } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
@@ -2298,11 +3386,12 @@ test("external NPC AI provider rejects ACTION handoff after a clarify gate decis
   );
 });
 
-test("external NPC AI provider fails closed when the house intent gate stays malformed after repair", async () => {
+test("external NPC AI provider falls back to normal visible house dialogue when the house intent gate stays malformed after repair", async () => {
   const {
     createConfiguredNpcAiDialogueProvider,
   } = require("../.test-dist/application/npc-interaction/external-npc-ai-dialogue-provider.js");
 
+  const { writes, storage } = createRecordingLocalStorage();
   const fetchCalls = [];
   const provider = createConfiguredNpcAiDialogueProvider({
     globalObject: {
@@ -2312,11 +3401,7 @@ test("external NPC AI provider fails closed when the house intent gate stays mal
         model: "deepseek-v3.1",
         authToken: "secret-token",
       },
-      localStorage: {
-        getItem() {
-          return null;
-        },
-      },
+      localStorage: storage,
     },
     fetchImplementation: async (_url, init) => {
       const body = init?.body == null ? null : JSON.parse(init.body);
@@ -2336,7 +3421,16 @@ test("external NPC AI provider fails closed when the house intent gate stays mal
                 content:
                   fetchCalls.length === 1
                     ? "我替你想想。"
-                    : "[INTENT: route|go-to-house|house.kulan.keep]",
+                    : fetchCalls.length === 2
+                      ? "[INTENT: route|go-to-house|house.kulan.keep]"
+                      : [
+                          `[DIALOGUE: char.test.npc,钱掌柜,"帅府我替你做不得主，你若真有事，不如先把来意说清。"]`,
+                          "[CHOICE: 你想怎么接话？]",
+                          "[OPTION: option.ask_way|那你告诉我该去找谁。|那你告诉我该去找谁。]",
+                          "[OPTION: option.ask_market|那我先问问你这里的货。|那我先问问你这里的货。]",
+                          "[OPTION: option.leave|那我先不提这事。|那我先不提这事。]",
+                          "[END_CHOICE]",
+                        ].join("\n"),
               },
             },
           ],
@@ -2398,16 +3492,29 @@ test("external NPC AI provider fails closed when the house intent gate stays mal
     }
   );
 
-  assert.equal(fetchCalls.length, 2);
+  assert.equal(fetchCalls.length, 3);
   assert.match(
     fetchCalls[1].messages.map((message) => message.content).join("\n"),
     /格式不合法/u
   );
   assert.deepEqual(
     events.map((event) => event.type),
-    ["start", "error"]
+    ["start", "complete"]
   );
-  assert.match(events[1].message, /室内意图判断/u);
+  assert.equal(events[1].allSteps[0].type, "dialogue");
+  assert.equal(events[1].allSteps[1].type, "choice");
+  assert.equal(writes.length > 0, true);
+  const recordedLogs = JSON.parse(writes[writes.length - 1].value);
+  assert.equal(Array.isArray(recordedLogs), true);
+  assert.equal(
+    recordedLogs.some(
+      (entry) =>
+        entry.category === "house-intent-gate" &&
+        entry.phase === "final-error" &&
+        /house\.kulan\.keep/u.test(entry.rawText ?? "")
+    ),
+    true
+  );
 });
 
 test("external NPC AI provider accepts explicit AI action handoff markers when the action id is declared in the current special action list", async () => {
@@ -2859,10 +3966,6 @@ test("external NPC AI provider resolves a hidden indoor house-jump route into a 
   );
 
   assert.equal(fetchCalls.length, 2);
-  assert.match(
-    fetchCalls[0].messages.map((message) => message.content).join("\n"),
-    /\[INTENT:\s*route\|go-to-house\|house\.kulan\.grain_shop\]/u
-  );
   assert.match(
     fetchCalls[1].messages.map((message) => message.content).join("\n"),
     /粮铺/u

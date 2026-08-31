@@ -59,11 +59,15 @@ Example:
 ```ts
 export type HouseModuleId =
   | "home-house"
-  | "grain-shop"
-  | "tea-house"
   | "keep-house"
   | "leader-residence"
-  | "temple-house";
+  | "grain-shop"
+  | "market-house"
+  | "medicine-house"
+  | "temple-house"
+  | "txt-narrative-place"
+  | "tea-house"
+  | "tavern";
 ```
 
 `HouseDefinition` should point to a module through stable metadata, for example:
@@ -124,13 +128,73 @@ rather than adding city-entry branches in `main.ts`.
 
 Each special house must implement a consistent lifecycle.
 
+### NPC AI Handoff Rule
+
+If a house exposes NPC-facing `interactionActions` that may be reached from the
+shared AI dialogue loop:
+
+- treat AI handoff as the same stable `actionId` contract as a normal button click
+- keep the action discoverable through the current actor-facing action list, not through ad hoc keyword branches
+- do not add local natural-language matching in `main.ts` or in a concrete house DOM handler
+- assume the shared NPC AI layer may ask to hand off only to actions that are currently exposed and enabled for that NPC in that house
+
+In short: house modules own the stable action ids and availability rules; the
+shared NPC AI seam owns the semantic decision and transition dialogue.
+
+### Hidden Conversation-Service Rule
+
+If the shared indoor AI dialogue loop may hand player speech off to a typed
+house-owned service instead of a visible button action:
+
+- expose the currently legal services through `selectConversationServices?(input)`
+- keep each service on a stable `serviceId` contract with player-facing `label`,
+  `description`, and current `enabled` state
+- accept the handoff through `HouseModuleRequest` and shared house runtime wiring
+  with `type: "conversation-service"`
+- treat `rawPlayerText` and optional `targetCharacterId` as context only; they
+  may refine local interpretation, but must not bypass legality, price, stock,
+  or story checks
+- keep the owning house module as the only authority for settlement, inventory,
+  money, flags, tasks, and follow-up dialogue
+- do not rebuild prompt-only routing, keyword-only shell matching, or
+  cross-house jumps inside `src/main.ts`
+
+In short: the shared AI layer may propose a legal service attempt, but the
+current house module still settles it.
+
+### World-Intent Story Negotiation Rule
+
+If a house-specific story gate should be reachable from the shared
+world-intent classifier:
+
+- expose it through a shared negotiation capability registry that returns a stable `nodeId`, label, optional `targetCharacterId`, and the currently legal `allowedApproaches`
+- keep `src/main.ts` limited to stable wiring that passes the active registry snapshot into the shared world-intent coordinator and forwards resolved handoff ids back into generic house dispatch
+- do not map concrete negotiation node ids to story outcomes in `src/main.ts`
+- the shared world-intent layer may validate `nodeId + approach` against the current capability snapshot, but it must not decide success, failure, follow-up narration, or state mutation
+- the owning house module must remain the only authority for negotiation settlement and any resulting mission, flag, variable, or dialogue changes
+- resolver handoff into the house must still use stable typed action ids or another documented shared contract, not prompt-only strings
+
+In short: the AI/world-intent layer proposes a legal negotiation attempt; the
+owning house module settles it.
+
 Recommended interface:
 
 ```ts
 export type HouseModuleRequest =
   | { type: "action"; actionId: string }
   | { type: "field"; fieldId: string; value: string }
-  | { type: "tick"; tickId: string };
+  | { type: "tick"; tickId: string }
+  | {
+      type: "conversation-service";
+      serviceId: string;
+      rawPlayerText: string;
+      targetCharacterId?: string | null;
+    }
+  | {
+      type: "txt-narrative-provider-event";
+      requestId: string;
+      event: TxtNarrativeProviderEvent;
+    };
 
 export type HouseModuleSideEffect =
   | {
@@ -161,6 +225,15 @@ export type HouseModuleSideEffect =
       playerCharacterId: string;
       delta: number;
       source: "request-pointer";
+    }
+  | {
+      type: "start-txt-narrative-stream";
+      requestId: string;
+      payload: TxtNarrativeProviderRequest;
+    }
+  | {
+      type: "cancel-txt-narrative-stream";
+      requestId: string;
     };
 
 export type MapAutoAdvanceSnapshot = {
@@ -182,10 +255,14 @@ export type HouseMapAutoAdvanceCompletion =
 export type HouseModuleSessionStateMap = {
   "home-house": HomeHouseSessionState;
   "grain-shop": GrainShopSessionState;
+  "market-house": MarketHouseSessionState;
+  "medicine-house": MedicineHouseSessionState;
   "keep-house": KeepHouseSessionState;
   "leader-residence": LeaderResidenceSessionState;
   "temple-house": TempleHouseSessionState;
+  "txt-narrative-place": TxtNarrativePlaceSessionState;
   "tea-house": TeaHouseSessionState;
+  tavern: TavernSessionState;
 };
 
 export type HouseModuleSessionState<ModuleId extends HouseModuleId> =
@@ -204,7 +281,15 @@ export type HouseModuleTransitionResult<
     advanceHintText?: string;
   };
   sideEffects?: HouseModuleSideEffect[];
+  observedEvents?: WorldObservedEvent[];
   navigation?: { type: "stay-in-house" };
+};
+
+export type HouseConversationServiceCapability = {
+  serviceId: string;
+  label: string;
+  description: string;
+  enabled: boolean;
 };
 
 export type HouseModuleDefinition<
@@ -220,6 +305,9 @@ export type HouseModuleDefinition<
   leave(
     input: HouseModuleLeaveInput<ModuleId>
   ): HouseModuleTransitionResult<ModuleId>;
+  selectConversationServices?(
+    input: HouseModuleViewModelInput<ModuleId>
+  ): HouseConversationServiceCapability[];
   selectViewModel(input: HouseModuleViewModelInput<ModuleId>): HouseModuleViewModel;
 };
 ```
@@ -244,6 +332,70 @@ If a module needs timer-driven behavior, use:
 
 - `HouseModuleRequest` with `type: "tick"`
 - `HouseModuleSideEffect` with `start-interval` / `stop-interval`
+
+If a module needs shared async provider work such as TXT/AI narrative streaming, use:
+
+- `HouseModuleSideEffect` with `start-txt-narrative-stream` / `cancel-txt-narrative-stream`
+- `HouseModuleRequest` with `type: "txt-narrative-provider-event"`
+
+Rules for this seam:
+
+- the house module owns only typed state transitions, transcript/choice projection, and provider request payload creation
+- the shared house runtime owns provider startup, cancellation, stale-event suppression, and dispatching provider events back into the active house session
+- do not start fetch/SSE/WebSocket/provider work directly from `src/main.ts`, DOM event handlers, or ad hoc globals for one concrete house
+
+If a module needs related NPCs to remember a meaningful player-facing result on the
+next AI conversation opening, use:
+
+- `HouseModuleTransitionResult.observedEvents`
+- shared `WorldObservedEvent` summaries plus optional `reactionHints`
+
+Rules for this seam:
+
+- emit `observedEvents` only from stable house-owned result points such as entry,
+  settlement, cash-out, leave, or another completed local transition
+- if the event should participate in same-house NPC opening memory, fill the
+  shared `houseActionMemory` payload with a stable semantic kind such as
+  `panel-open`, `service-success`, `work-preview`, `work-preview-exit`,
+  `work-complete`, or `house-leave`
+- prefer stable owner-side action/service/task ids in `houseActionMemory` fields
+  such as `actionId`, `serviceId`, `offerId`, and `offerTitle`; do not ask the
+  shared runtime or AI prompt builder to infer gameplay meaning from overlay
+  titles, DOM state, or free-form summary text
+- keep the house module authoritative for whether the event happened and what it
+  means; the shared runtime only records it and derives downstream AI memory
+- use `reactionHints` only for NPCs who should react to that result; do not
+  broadcast every event to every NPC in the city
+- preview/open events are usually ledger-only and should omit `reactionHints`
+  unless that transient beat is socially meaningful enough for a later NPC
+  reaction; cancel/complete/leave events may add targeted `reactionHints` when
+  the next same-house talk opener should acknowledge them
+- do not mutate shared world-intent or NPC dialogue memory branches directly
+  from the house module; return typed `observedEvents` and let shared house/world
+  runtime wiring forward them
+- do not reintroduce tavern/grain-shop/temple-specific AI memory branches in
+  `src/main.ts`
+
+If a module needs the shared indoor AI dialogue loop to hand off a typed local
+service, use:
+
+- `HouseModuleDefinition.selectConversationServices()`
+- `HouseModuleRequest` with `type: "conversation-service"`
+
+Rules for this seam:
+
+- `selectConversationServices()` must return only the services that are
+  currently legal for the active house/session/actor context
+- service ids are stable module-owned contracts; prompts and providers may
+  mention them, but generic runtime wiring must still validate against the
+  current capability snapshot before dispatch
+- `rawPlayerText` and optional `targetCharacterId` are context for the owning
+  module; they must not become a second hidden state-mutation path
+- the shared house runtime may forward the request generically, but it must not
+  resolve stock, prices, money, story outcomes, or inventory writes itself
+- local house modules should translate `serviceId` back into their own typed
+  actions or typed settlement helpers inside the house-owned dispatch path
+- do not restore keyword-only matching as the primary routing mechanism
 
 If a module needs to hand control back to the world layer for reusable time-skip / wait-until-review behavior, use shared side effects such as:
 
@@ -753,9 +905,35 @@ The shared menu owns default actions:
 - `谈话`
 - `送礼`
 
-House modules may contribute special actions for the selected actor, and those special actions must render above the default actions. The generic NPC shell must not understand house-specific business rules. Special actions dispatch back through the owning house module lifecycle.
+House modules may contribute special actions for the selected actor, and those
+special actions must render above the default actions. The generic NPC shell
+must not understand house-specific business rules. Special actions dispatch
+back through the owning house module lifecycle.
+
+Actor-specific special actions may still provide optional `triggerKeywords`
+aliases as secondary metadata or prompt hints, but shared AI handoff should
+prefer the current typed action/service capability snapshot and provider-driven
+semantic routing. House-owned additions or overrides must still flow through
+the typed action model rather than ad hoc DOM or shell logic.
 
 Default `谈话` replaces visible `闲谈` labels as the baseline conversation behavior. Default `送礼` must use shared inventory and must not mutate relationship or inventory until an item is selected and confirmed. Until shared gift inventory settlement exists, `送礼` must stay disabled or render an empty state that performs no persistent mutation.
+
+Default `谈话` now enters the shared NPC AI dialogue loop rather than a house-owned static placeholder. The shared NPC interaction runtime owns:
+
+- provider request construction from the active house context, target NPC, transcript summary, and NPC memory summary
+- provider startup, cancellation, and stale-event suppression
+- projection of transcript, exactly three generated reply options, custom player input, and explicit exit back into the NPC interaction session
+- persistence of completed exchange memory under unified runtime state such as `GameState.runtime.npcDialogue`
+
+Rules:
+
+- house modules may add actor-specific special actions, but they must not replace baseline `谈话` with a one-off AI branch in `src/main.ts`
+- if a special action should be reachable from the shared AI dialogue loop, expose it through the current typed action/service capability snapshot and let the shared provider/runtime decide the semantic handoff; optional `triggerKeywords` remain secondary metadata only
+- shared AI semantic routing must only target the current NPC's currently exposed and enabled special actions/services; it must not jump across buildings, across NPCs, or into actions that are not available right now
+- disabled special actions must not trigger from AI reply text or custom player input
+- fallback or non-module house rosters must still expose the same shared NPC target/context seam as module-owned rosters so the default AI dialogue loop works everywhere
+- if a house reuses the default NPC buttons inside its own `actionContainer` instead of opening the standalone shared NPC menu first, those buttons must still preserve the same shared NPC context seam so baseline `谈话` can seed the shared NPC session before runtime dispatch
+- do not start model/provider calls directly from house-owned DOM handlers, module renderers, or ad hoc globals; the shared NPC interaction runtime is the only async owner for baseline `谈话`
 
 ### Primary Actor Roster Rule
 

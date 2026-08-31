@@ -20,6 +20,9 @@ import type { TaskRuntimeState } from "../core/contracts/task-runtime";
 import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
 import type { CampaignMapExplorationState } from "./map-exploration";
 import type { RuntimeProgressState } from "../core/contracts/progression-runtime";
+import type { TxtNarrativeRuntimeState } from "./txt-narrative";
+import type { NpcAiDialogueRuntimeState } from "./npc-ai-dialogue";
+import type { WorldAiContextRuntimeState } from "./world-intent";
 
 export type ViewName =
   | "map"
@@ -110,6 +113,9 @@ export type GameState = {
     troops: TroopRuntimeState;
     mapExploration: CampaignMapExplorationState;
     progression?: RuntimeProgressState;
+    txtNarrative?: TxtNarrativeRuntimeState;
+    npcDialogue?: NpcAiDialogueRuntimeState;
+    worldIntent?: WorldAiContextRuntimeState;
     eventHistory: Record<
       EventId,
       {

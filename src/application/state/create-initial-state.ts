@@ -2,6 +2,8 @@ import type { CardInventory } from "../../domain/card";
 import type { GameState } from "../../domain/game-state";
 import type { EquipmentLoadout } from "../../domain/equipment/equipment-loadout-service";
 import { normalizeEquipmentLoadout } from "../../domain/equipment/equipment-loadout-service";
+import { createInitialNpcAiDialogueRuntimeState } from "../../domain/npc-ai-dialogue";
+import { createInitialTxtNarrativeRuntimeState } from "../../domain/txt-narrative";
 import type {
   ValuableItemId,
   ValuableItemInventory,
@@ -9,6 +11,7 @@ import type {
 import { createDefaultTroopRuntimeState } from "../../domain/troop-editor";
 import type { TaskRuntimeState } from "../../core/contracts/task-runtime";
 import { createInitialCampaignMapExplorationState } from "../map/campaign-map-exploration";
+import { createInitialWorldIntentRuntimeState } from "../../domain/world-intent";
 
 type LegacyEquippedWeaponSet = {
   swordId: ValuableItemId | null;
@@ -146,6 +149,9 @@ export function createInitialState(input: InitialStateInput): GameState {
       activitySession: null,
       troops: createDefaultTroopRuntimeState(input.playerCharacterId),
       mapExploration: createInitialCampaignMapExplorationState(),
+      txtNarrative: createInitialTxtNarrativeRuntimeState(),
+      npcDialogue: createInitialNpcAiDialogueRuntimeState(),
+      worldIntent: createInitialWorldIntentRuntimeState(),
       eventHistory: {},
     },
   };

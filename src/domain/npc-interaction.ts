@@ -1,18 +1,32 @@
 import type { CharacterId } from "./character";
 import type { HouseModuleId } from "./house-module";
+import type { NpcAiDialogueSessionState } from "./npc-ai-dialogue";
 
 export type NpcInteractionContext =
   | { type: "house"; houseId: string; moduleId?: HouseModuleId | null }
   | { type: "city"; cityId: string; locationId?: string }
   | { type: "scene"; sceneId: string };
 
-export type NpcInteractionMode = "menu" | "dialogue" | "gift-select";
+export type NpcInteractionMode = "menu" | "ai-dialogue" | "gift-select";
 
-export type NpcInteractionSession = {
-  context: NpcInteractionContext;
-  targetCharacterId: CharacterId;
-  mode: NpcInteractionMode;
-} | null;
+export type NpcInteractionSession =
+  | {
+      context: NpcInteractionContext;
+      targetCharacterId: CharacterId;
+      mode: "menu";
+    }
+  | {
+      context: NpcInteractionContext;
+      targetCharacterId: CharacterId;
+      mode: "ai-dialogue";
+      dialogue: NpcAiDialogueSessionState;
+    }
+  | {
+      context: NpcInteractionContext;
+      targetCharacterId: CharacterId;
+      mode: "gift-select";
+    }
+  | null;
 
 export type NpcPoolActorViewModel = {
   characterId: CharacterId;
@@ -37,6 +51,7 @@ export type NpcInteractionOptionViewModel = {
   disabled?: boolean;
   tone?: "default" | "accent";
   buttonSound?: "light" | "heavy";
+  triggerKeywords?: string[];
 };
 
 export const NPC_INTERACTION_DEFAULT_OPTION_IDS = {

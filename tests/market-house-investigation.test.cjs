@@ -14,11 +14,17 @@ const {
   marketHouseHouseModule,
 } = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
 const {
+  getMarketHouseGuestActorIdsVariableKey,
+} = require("../.test-dist/domain/market-house.js");
+const {
   renderMarketHouseView,
 } = require("../.test-dist/ui/views/house/market-house-view.js");
 const {
   defaultPackTextEntries,
 } = require("../.test-dist/content/pack-content-access.js");
+const {
+  getCompactCityDisplayName,
+} = require("../.test-dist/shared/city-display-name.js");
 const {
   prototypeCards,
   prototypeCharacters,
@@ -44,7 +50,9 @@ function createOtherCityNamePattern(currentCityId) {
   return new RegExp(
     prototypeCities
       .filter((cityDefinition) => cityDefinition.id !== currentCityId)
-      .map((cityDefinition) => escapeRegex(cityDefinition.name))
+      .map((cityDefinition) =>
+        escapeRegex(getCompactCityDisplayName(cityDefinition.name))
+      )
       .join("|"),
     "u"
   );
@@ -113,11 +121,32 @@ function createRuntimeCitiesWithNameOverrides(nameOverrides) {
   }));
 }
 
+function withVariable(state, key, value) {
+  return {
+    ...state,
+    runtime: {
+      ...state.runtime,
+      variables: {
+        ...state.runtime.variables,
+        [key]: value,
+      },
+    },
+  };
+}
+
 async function openMarketHouse(houseDefinition = marketHouse, options = {}) {
   defaultRuntimeContent.cities = options.runtimeCities ?? prototypeCities;
   defaultRuntimeContent.textEntriesById = defaultPackTextEntries;
+  const seededState =
+    Array.isArray(options.guestActorIds) && options.guestActorIds.length > 0
+      ? withVariable(
+          createBaseState(houseDefinition),
+          getMarketHouseGuestActorIdsVariableKey(houseDefinition.id),
+          options.guestActorIds.join(",")
+        )
+      : createBaseState(houseDefinition);
   const state = ensureCityNpcPoolsForCurrentDay(
-    createBaseState(houseDefinition),
+    seededState,
     prototypeCityNpcPools,
     () => 0.1
   );
@@ -145,10 +174,8 @@ async function openMarketHouse(houseDefinition = marketHouse, options = {}) {
   };
 }
 
-function selectGuestActor(openResult, houseDefinition = marketHouse) {
-  const guestActorId = openResult.sessionState?.guestActorIds[0];
-
-  assert.equal(typeof guestActorId, "string");
+function selectActor(openResult, actorId, houseDefinition = marketHouse) {
+  assert.equal(typeof actorId, "string");
 
   return marketHouseHouseModule.dispatch({
     gameState: openResult.gameState,
@@ -158,9 +185,17 @@ function selectGuestActor(openResult, houseDefinition = marketHouse) {
     sessionState: openResult.sessionState,
     request: {
       type: "action",
-      actionId: `select-market-actor:${guestActorId}`,
+      actionId: `select-market-actor:${actorId}`,
     },
   });
+}
+
+function selectGuestActor(openResult, houseDefinition = marketHouse) {
+  const guestActorId = openResult.sessionState?.guestActorIds[0];
+
+  assert.equal(typeof guestActorId, "string");
+
+  return selectActor(openResult, guestActorId, houseDefinition);
 }
 
 function selectViewModel(openResult, houseDefinition = marketHouse) {
@@ -247,6 +282,52 @@ test("market house only exposes investigate market on the fixed shopkeeper", asy
   );
 });
 
+test("market house medicine guest keeps a dedicated right-side portrait without overriding the left avatar", async () => {
+  const { openResult } = await openMarketHouse(marketHouse, {
+    guestActorIds: ["medicine_merchant"],
+  });
+  const guestResult = selectActor(openResult, "medicine_merchant");
+  const guestViewModel = selectViewModel(guestResult);
+  const guestRosterEntry = guestViewModel.standbyRoster.find(
+    (entry) => entry.characterId === "medicine_merchant"
+  );
+
+  assert.ok(guestRosterEntry);
+  assert.equal(guestRosterEntry.avatarArtClassName ?? null, null);
+  assert.equal(
+    guestRosterEntry.portraitArtClassName,
+    "c-market-house-portrait-art--medicine-merchant"
+  );
+  assert.equal(guestViewModel.dialogue?.avatarArtClassName ?? null, null);
+  assert.equal(
+    guestViewModel.dialogue?.portraitArtClassName,
+    "c-market-house-portrait-art--medicine-merchant"
+  );
+});
+
+test("market house generic guest actors do not reuse the fixed host portrait art", async () => {
+  const { openResult } = await openMarketHouse(marketHouse, {
+    guestActorIds: ["horse_merchant"],
+  });
+  const guestResult = selectActor(openResult, "horse_merchant");
+  const guestViewModel = selectViewModel(guestResult);
+  const guestRosterEntry = guestViewModel.standbyRoster.find(
+    (entry) => entry.characterId === "horse_merchant"
+  );
+
+  assert.ok(guestRosterEntry);
+  assert.equal(guestRosterEntry.avatarArtClassName ?? null, null);
+  assert.equal(
+    guestRosterEntry.portraitArtClassName,
+    "c-house-runtime-npc-portrait-art--merchant"
+  );
+  assert.equal(guestViewModel.dialogue?.avatarArtClassName ?? null, null);
+  assert.equal(
+    guestViewModel.dialogue?.portraitArtClassName,
+    "c-house-runtime-npc-portrait-art--merchant"
+  );
+});
+
 test("market house investigate market enters shopkeeper report dialogue and hides actions", async () => {
   const yingtianHouse = createCityMarketHouse("city.yingtian");
   const { openResult } = await openMarketHouse(yingtianHouse);
@@ -261,6 +342,18 @@ test("market house investigate market enters shopkeeper report dialogue and hide
   assert.equal(reportResult.sessionState?.overlay, null);
   assert.equal(reportResult.sessionState?.dialoguePhase, "investigation-report");
   assert.equal(reportResult.sessionState?.dialogueLines.length, 1);
+  assert.equal(
+    reportResult.observedEvents?.[0]?.houseActionMemory?.kind,
+    "service-success"
+  );
+  assert.equal(
+    reportResult.observedEvents?.[0]?.houseActionMemory?.serviceId,
+    "market-investigate"
+  );
+  assert.equal(
+    reportResult.observedEvents?.[0]?.reactionHints?.[0]?.characterId,
+    yingtianHouse.defaultCharacterId
+  );
   assert.equal(reportViewModel.actionContainer, null);
   assert.equal(
     reportViewModel.dialogue?.advanceActionId,
@@ -290,6 +383,60 @@ test("market house investigate market enters shopkeeper report dialogue and hide
   assert.doesNotMatch(reportMarkup, /\*\*[^*]+\*\*/);
 });
 
+test("market house conversation-service investigation reuses the shopkeeper report flow", async () => {
+  const yingtianHouse = createCityMarketHouse("city.yingtian");
+  const { openResult } = await openMarketHouse(yingtianHouse);
+  const reportResult = withMockedMathRandom(0, () =>
+    marketHouseHouseModule.dispatch({
+      gameState: openResult.gameState,
+      characterDefinitions: openResult.characterDefinitions,
+      houseDefinition: yingtianHouse,
+      playerCharacterId,
+      sessionState: openResult.sessionState,
+      request: {
+        type: "conversation-service",
+        serviceId: "market-investigate",
+        rawPlayerText: "你这都有什么货",
+        targetCharacterId: yingtianHouse.defaultCharacterId,
+      },
+    })
+  );
+
+  assert.equal(reportResult.timeAdvanceCost, 1);
+  assert.equal(reportResult.sessionState?.overlay, null);
+  assert.equal(reportResult.sessionState?.dialoguePhase, "investigation-report");
+  assert.equal(reportResult.sessionState?.dialogueLines.length, 1);
+  assert.equal(
+    reportResult.observedEvents?.[0]?.houseActionMemory?.kind,
+    "service-success"
+  );
+  assert.equal(
+    reportResult.observedEvents?.[0]?.houseActionMemory?.serviceId,
+    "market-investigate"
+  );
+});
+
+test("market house investigate market emits a typed service-success memory event", async () => {
+  const yingtianHouse = createCityMarketHouse("city.yingtian");
+  const { openResult } = await openMarketHouse(yingtianHouse);
+  const reportResult = withMockedMathRandom(0, () =>
+    investigateMarket(openResult, yingtianHouse)
+  );
+
+  assert.equal(
+    reportResult.observedEvents?.[0]?.houseActionMemory?.kind,
+    "service-success"
+  );
+  assert.equal(
+    reportResult.observedEvents?.[0]?.houseActionMemory?.serviceId,
+    "market-investigate"
+  );
+  assert.equal(
+    reportResult.observedEvents?.[0]?.reactionHints?.[0]?.characterId,
+    yingtianHouse.defaultCharacterId
+  );
+});
+
 test("market house investigate market reports specialty intel in Chinese", async () => {
   const yingtianHouse = createCityMarketHouse("city.yingtian");
   const { openResult } = await openMarketHouse(yingtianHouse);
@@ -312,13 +459,20 @@ test("market house investigate market reports specialty intel in Chinese", async
 });
 
 test("market house investigate market shows compact destination city names", async () => {
-  const kulanHouse = createCityMarketHouse("city.kulan");
+  const yingtianHouse = createCityMarketHouse("city.yingtian");
   const runtimeCities = createRuntimeCitiesWithNameOverrides({
     "city.luzhou": "庐州路※合肥",
   });
-  const { openResult } = await openMarketHouse(kulanHouse, { runtimeCities });
+  const originalRandom = Math.random;
+  Math.random = () => 0;
+  let openResult;
+  try {
+    ({ openResult } = await openMarketHouse(yingtianHouse, { runtimeCities }));
+  } finally {
+    Math.random = originalRandom;
+  }
   const reportResult = withMockedMathRandom(0, () =>
-    investigateMarket(openResult, kulanHouse)
+    investigateMarket(openResult, yingtianHouse)
   );
   const reportLine = reportResult.sessionState?.dialogueLines[0] ?? "";
   const emphasizedTokens = [...reportLine.matchAll(/\*\*([^*]+)\*\*/g)].map(

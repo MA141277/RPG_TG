@@ -249,6 +249,18 @@ test("market house specialty goods buy result overlay uses readable Chinese summ
   const overlayViewModel = selectViewModel(overlayResult, houseDefinition);
   const specialtyGoodsId = pickYingtianSpecialtyGoodsId(overlayViewModel.overlay);
   assertOnlyYingtianSpecialtyRows(overlayViewModel.overlay);
+  assert.equal(
+    overlayResult.observedEvents?.[0]?.houseActionMemory?.kind,
+    "panel-open"
+  );
+  assert.equal(
+    overlayResult.observedEvents?.[0]?.houseActionMemory?.panelId,
+    "market-buy"
+  );
+  assert.equal(
+    overlayResult.observedEvents?.[0]?.houseActionMemory?.resultKind,
+    "preview"
+  );
 
   const selectedResult = marketHouseHouseModule.dispatch({
     gameState: overlayResult.gameState,
@@ -291,6 +303,109 @@ test("market house specialty goods buy result overlay uses readable Chinese summ
   assert.equal(
     buyResult.sessionState.overlay.paragraphs.some((line) => line.startsWith("时间 ")),
     true
+  );
+  assert.equal(
+    buyResult.observedEvents?.[0]?.houseActionMemory?.kind,
+    "trade-buy-success"
+  );
+  assert.equal(
+    buyResult.observedEvents?.[0]?.houseActionMemory?.panelId,
+    "market-buy"
+  );
+  assert.equal(
+    buyResult.observedEvents?.[0]?.houseActionMemory?.quantity,
+    1
+  );
+  assert.equal(
+    (buyResult.observedEvents?.[0]?.houseActionMemory?.goldDelta ?? 0) < 0,
+    true
+  );
+  assert.equal(
+    buyResult.observedEvents?.[0]?.reactionHints?.[0]?.characterId,
+    houseDefinition.defaultCharacterId
+  );
+});
+
+test("market house conversation service can directly settle a generic cloth purchase into the backpack", () => {
+  const { houseDefinition, openResult } = openMarketHouse("city.kulan", 5000);
+
+  const directBuyResult = marketHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: {
+      type: "conversation-service",
+      serviceId: "market-buy",
+      rawPlayerText: "那就给我来一匹布，先拿回去用。",
+      targetCharacterId: houseDefinition.defaultCharacterId,
+    },
+  });
+
+  const playerCharacter = directBuyResult.characterDefinitions.find(
+    (character) => character.id === playerCharacterId
+  );
+
+  assert.equal(directBuyResult.sessionState?.overlay?.type, "alert");
+  assert.ok(playerCharacter);
+  assert.equal(playerCharacter.stats.gold < 5000, true);
+  assert.equal(
+    directBuyResult.gameState.runtime.variables[
+      getPlayerItemQuantityVariableKey("ramie_cloth")
+    ],
+    1
+  );
+  assert.equal(
+    directBuyResult.sessionState?.overlay?.paragraphs.some((line) =>
+      line.includes("麻布")
+    ),
+    true
+  );
+  assert.equal(
+    directBuyResult.observedEvents?.[0]?.houseActionMemory?.kind,
+    "trade-buy-success"
+  );
+  assert.equal(
+    directBuyResult.observedEvents?.[0]?.houseActionMemory?.itemId,
+    "ramie_cloth"
+  );
+  assert.equal(
+    directBuyResult.observedEvents?.[0]?.reactionHints?.[0]?.characterId,
+    houseDefinition.defaultCharacterId
+  );
+});
+
+test("market house closing the buy overlay without settling emits a no-action memory event", () => {
+  const { houseDefinition, openResult } = openMarketHouse("city.kulan", 5000);
+  const overlayResult = marketHouseHouseModule.dispatch({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+    request: { type: "action", actionId: "buy-goods" },
+  });
+  const closeResult = marketHouseHouseModule.dispatch({
+    gameState: overlayResult.gameState,
+    characterDefinitions: overlayResult.characterDefinitions,
+    houseDefinition,
+    playerCharacterId,
+    sessionState: overlayResult.sessionState,
+    request: { type: "action", actionId: "close-trade" },
+  });
+
+  assert.equal(
+    closeResult.observedEvents?.[0]?.houseActionMemory?.kind,
+    "panel-close-without-action"
+  );
+  assert.equal(
+    closeResult.observedEvents?.[0]?.houseActionMemory?.panelId,
+    "market-buy"
+  );
+  assert.equal(
+    closeResult.observedEvents?.[0]?.reactionHints?.[0]?.characterId,
+    houseDefinition.defaultCharacterId
   );
 });
 

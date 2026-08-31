@@ -9,6 +9,8 @@ import type {
   LayoutEditorState,
   UiLayoutByTargetId,
 } from "../domain/ui-layout";
+import type { WorldAiIntentResponse } from "../domain/world-intent";
+import type { HouseConversationPilotState } from "../domain/house-conversation";
 import type { CityMenuState } from "./city-menu/city-menu";
 import type { GridCoordinate } from "./navigation/travel-to-coordinate";
 import type { createInitialState } from "./state/create-initial-state";
@@ -41,7 +43,35 @@ export type AppLocationDialogueState =
       advanceHintText: string;
       targetHouseId: string;
     }
+  | {
+      type: "world-intent-feedback";
+      speakerCharacterId: string;
+      textLines: string[];
+      advanceHintText: string;
+      intentStatus: "narration" | "clarify" | "refusal";
+    }
   | null;
+
+export type AppWorldIntentState = {
+  draftText: string;
+  status: "idle" | "classifying" | "awaiting-follow-up" | "error";
+  currentRequestId: string | null;
+  pendingResolution: {
+    requestId: string;
+    result: WorldAiIntentResponse;
+  } | null;
+  lastError: string | null;
+};
+
+export function createInitialAppWorldIntentState(): AppWorldIntentState {
+  return {
+    draftText: "",
+    status: "idle",
+    currentRequestId: null,
+    pendingResolution: null,
+    lastError: null,
+  };
+}
 
 export type AppCityCardDrawTestState = {
   sessionId: number;
@@ -76,6 +106,8 @@ export type AppState = {
         options: CityEntryOption[];
       }
     | null;
+  worldIntentState?: AppWorldIntentState;
+  houseConversationPilotState?: HouseConversationPilotState;
   autoAdvanceState:
     | {
         intervalId: string;

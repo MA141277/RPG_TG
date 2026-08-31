@@ -144,6 +144,7 @@ test("shared NPC AI dialogue contracts expose the runtime seam and persistent me
 
   assert.match(npcDialogueSource, /NpcAiDialogueProvider/u);
   assert.match(npcDialogueSource, /memoriesByCharacterId/u);
+  assert.match(npcDialogueSource, /reactionMemoriesByCharacterId/u);
   assert.match(npcDialogueSource, /type:\s*"complete"/u);
   assert.match(npcInteractionRuntimeSource, /createNpcInteractionRuntimeBridge/u);
   assert.match(npcInteractionRuntimeSource, /npcAiDialogueProvider/u);
@@ -167,6 +168,47 @@ test("shared NPC AI dialogue runtime starts provider streams and persists the co
     },
     "char.test.npc"
   );
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      runtime: {
+        ...appState.gameState.runtime,
+        npcDialogue: {
+          ...appState.gameState.runtime.npcDialogue,
+          reactionMemoriesByCharacterId: {
+            "char.test.npc": {
+              characterId: "char.test.npc",
+              updatedAtEventId: "event-3",
+              entries: [
+                {
+                  id: "reaction-1",
+                  eventId: "event-1",
+                  eventType: "tavern:gamble:entered-table",
+                  houseId: "house.test.tea",
+                  summary: "他刚在牌桌边坐下看了看。",
+                },
+                {
+                  id: "reaction-2",
+                  eventId: "event-2",
+                  eventType: "market:trade-buy-success",
+                  houseId: "house.test.market",
+                  summary: "他刚在货栈里买走了一匹布。",
+                },
+                {
+                  id: "reaction-3",
+                  eventId: "event-3",
+                  eventType: "tavern:gamble:left-without-playing",
+                  houseId: "house.test.tea",
+                  summary: "他刚坐到牌桌边，却没真下场玩就退了回来。",
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+  };
   const providerRequests = [];
 
   const runtime = createNpcInteractionRuntimeBridge({
@@ -256,8 +298,24 @@ test("shared NPC AI dialogue runtime starts provider streams and persists the co
     /当前对话双方：朱重八 与 茶博士/u
   );
   assert.match(
+    providerRequests[0].messages[0].content,
+    /此人对玩家最近行为的反应记忆（优先开场）/u
+  );
+  assert.match(
+    providerRequests[0].messages[0].content,
+    /他刚坐到牌桌边，却没真下场玩就退了回来。/u
+  );
+  assert.doesNotMatch(
+    providerRequests[0].messages[0].content,
+    /他刚在货栈里买走了一匹布。/u
+  );
+  assert.match(
     providerRequests[0].messages[1].content,
     /根据当前情况/u
+  );
+  assert.match(
+    providerRequests[0].messages[1].content,
+    /必须先围绕第一条最新反应记忆开场/u
   );
   assert.match(
     providerRequests[0].messages[1].content,
@@ -315,6 +373,119 @@ test("shared NPC AI dialogue runtime starts provider streams and persists the co
   assert.equal(
     appState.gameState.ui.npcInteractionSession?.dialogue?.status,
     "awaiting-choice"
+  );
+});
+
+test("shared NPC AI dialogue runtime forwards recent house enter and leave observations into the next provider request", async () => {
+  const {
+    createNpcInteractionRuntimeBridge,
+  } = require("../.test-dist/core/runtime/npc-interaction-runtime.js");
+
+  let appState = openNpcInteraction(
+    createBaseAppState(),
+    {
+      type: "house",
+      houseId: "house.test.tea",
+    },
+    "char.test.npc"
+  );
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      runtime: {
+        ...appState.gameState.runtime,
+        worldIntent: {
+          ...appState.gameState.runtime.worldIntent,
+          recentEvents: [
+            {
+              type: "system:enter-house",
+              cityId: "city.kulan",
+              houseId: "house.test.tea",
+              summary: "玩家进入了测试茶馆。",
+            },
+            {
+              type: "system:leave-house",
+              cityId: "city.kulan",
+              houseId: null,
+              summary: "玩家离开了旧地点，又折返回测试茶馆门前。",
+            },
+          ],
+        },
+      },
+    },
+  };
+  const providerRequests = [];
+
+  const runtime = createNpcInteractionRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {},
+    houseDefinitionsById: {
+      "house.test.tea": createHouseDefinition(),
+    },
+    npcAiDialogueProvider: {
+      async stream(request, onEvent) {
+        providerRequests.push(request);
+        await onEvent({
+          type: "complete",
+          requestId: request.requestId,
+          rawText: `
+[DIALOGUE: char.test.npc,茶博士,"客官今日想从哪头说起？"]
+[CHOICE: 你想怎么接话？]
+[OPTION: option.ask_town|问城里近况|问城里近况|benevolent|true]
+[OPTION: option.ask_road|问路上见闻|问路上见闻|neutral|false]
+[OPTION: option.ask_people|问近来人物|问近来人物|hostile|false]
+          `,
+          allSteps: [
+            {
+              type: "dialogue",
+              speakerId: "char.test.npc",
+              speakerName: "茶博士",
+              text: "客官今日想从哪头说起？",
+            },
+            {
+              type: "choice",
+              prompt: "你想怎么接话？",
+              options: [
+                {
+                  id: "option.ask_town",
+                  label: "问城里近况",
+                  actionText: "问城里近况",
+                  recommended: true,
+                },
+                {
+                  id: "option.ask_road",
+                  label: "问路上见闻",
+                  actionText: "问路上见闻",
+                },
+                {
+                  id: "option.ask_people",
+                  label: "问近来人物",
+                  actionText: "问近来人物",
+                },
+              ],
+            },
+          ],
+        });
+      },
+    },
+  });
+
+  runtime.dispatch({
+    type: "start-talk",
+  });
+
+  await Promise.resolve();
+
+  assert.equal(providerRequests.length, 1);
+  assert.match(providerRequests[0].messages[0].content, /最近环境事件/u);
+  assert.match(providerRequests[0].messages[0].content, /玩家进入了测试茶馆/u);
+  assert.match(
+    providerRequests[0].messages[0].content,
+    /玩家离开了旧地点，又折返回测试茶馆门前/u
   );
 });
 
@@ -638,6 +809,121 @@ test("shared NPC AI dialogue runtime does not duplicate streamed steps when the 
       : 0,
     3
   );
+});
+
+test("shared NPC AI dialogue runtime includes the current house state summary in start_talk requests", async () => {
+  const {
+    createNpcInteractionRuntimeBridge,
+  } = require("../.test-dist/core/runtime/npc-interaction-runtime.js");
+
+  let appState = {
+    ...createBaseAppState(),
+    gameState: createBaseGameState("house.test.temple"),
+    characterDefinitions: [
+      createCharacterDefinition(playerCharacterId, "朱元璋", "house.test.temple", "行者"),
+      createCharacterDefinition(
+        "char.test.abbot",
+        "方丈",
+        "house.test.temple",
+        "住持"
+      ),
+    ],
+  };
+  appState = openNpcInteraction(
+    appState,
+    {
+      type: "house",
+      houseId: "house.test.temple",
+    },
+    "char.test.abbot"
+  );
+
+  const providerRequests = [];
+
+  const runtime = createNpcInteractionRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {},
+    houseDefinitionsById: {
+      "house.test.temple": createHouseDefinition({
+        id: "house.test.temple",
+        name: "皇觉寺",
+        type: "temple",
+        moduleId: "temple-house",
+        characterIds: [playerCharacterId, "char.test.abbot"],
+        defaultCharacterId: "char.test.abbot",
+      }),
+    },
+    houseModuleRegistry: {
+      getModule() {
+        return {
+          selectViewModel() {
+            return {
+              moduleId: "temple-house",
+              houseId: "house.test.temple",
+              sceneTitle: "皇觉寺",
+              sceneSubtitle: "皇觉寺 / 挂单修行 / 寺中评定",
+              standbyRoster: [
+                {
+                  characterId: "char.test.abbot",
+                  name: "方丈",
+                },
+              ],
+              dialogue: null,
+              actionContainer: {
+                title: "工作",
+                actions: [],
+              },
+              statusCard: {
+                eyebrow: "寺中身份",
+                title: "寺中评定",
+                subtitle: "住持安排 / 日常寺务",
+                metrics: [
+                  {
+                    label: "当前差事",
+                    value: "寺内帮忙",
+                  },
+                  {
+                    label: "寺中贡献",
+                    value: "18 / 30",
+                  },
+                  {
+                    label: "当前周次",
+                    value: "第 1 周",
+                  },
+                ],
+              },
+              overlay: null,
+              leaveAction: {
+                id: "leave-house",
+                label: "离开寺庙",
+              },
+            };
+          },
+        };
+      },
+    },
+    npcAiDialogueProvider: {
+      async stream(request) {
+        providerRequests.push(request);
+      },
+    },
+  });
+
+  runtime.dispatch({
+    type: "start-talk",
+  });
+
+  await Promise.resolve();
+
+  assert.equal(providerRequests.length, 1);
+  assert.match(providerRequests[0].messages[0].content, /当前房内状态/u);
+  assert.match(providerRequests[0].messages[0].content, /挂单修行/u);
+  assert.match(providerRequests[0].messages[0].content, /当前差事：寺内帮忙/u);
+  assert.match(providerRequests[0].messages[0].content, /寺中贡献：18 \/ 30/u);
+  assert.match(providerRequests[0].messages[1].content, /绝不能把玩家称作施主/u);
 });
 
 test("shared NPC AI dialogue runtime lets the player switch into custom input mode and sends the typed line back through the provider", async () => {
